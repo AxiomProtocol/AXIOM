@@ -208,7 +208,7 @@ export default function LaunchpadPage() {
               <div className="text-sm text-gray-400">Total Supply</div>
             </div>
             <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-              <div className="text-3xl font-bold text-amber-400 mb-1">22+</div>
+              <div className="text-3xl font-bold text-amber-400 mb-1">23</div>
               <div className="text-sm text-gray-400">Smart Contracts</div>
             </div>
             <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
