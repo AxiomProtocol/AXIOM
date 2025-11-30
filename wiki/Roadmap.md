@@ -29,11 +29,11 @@ Building America's first on-chain sovereign smart city economy.
 ## Phase 2: Growth (Q1-Q2 2025)
 
 ### Q1 2025
-- [ ] External security audit (Token, Staking, Treasury)
 - [ ] KeyGrow beta launch
 - [ ] DePIN node deployment (Phase 1)
 - [ ] Token listing applications
 - [ ] Investor relations
+- [ ] Security audit preparation
 
 ### Q2 2025
 - [ ] KeyGrow public launch

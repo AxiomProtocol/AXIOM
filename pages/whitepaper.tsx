@@ -1084,8 +1084,7 @@ export default function WhitePaper() {
                         <li>○ CoinGecko & CoinMarketCap live listings</li>
                         <li>○ Public token sale</li>
                         <li>○ Exchange listings (CEX partnerships)</li>
-                        <li>○ External security audit</li>
-                        <li>○ Bug bounty program launch</li>
+                        <li>○ TGE soft cap completion</li>
                       </ul>
                     </div>
                   </div>
@@ -1097,11 +1096,11 @@ export default function WhitePaper() {
                     <div className="flex-1 border-l-2 border-gray-300 pl-6 pb-6">
                       <h4 className="font-bold text-gray-900">Ecosystem Expansion</h4>
                       <ul className="text-gray-600 text-sm mt-2 space-y-1">
+                        <li>○ External security audit (Post-TGE funding)</li>
+                        <li>○ Bug bounty program launch</li>
                         <li>○ DePIN node hardware partnerships</li>
                         <li>○ First physical nodes deployed</li>
                         <li>○ Mobile app launch (iOS/Android)</li>
-                        <li>○ Additional property integrations</li>
-                        <li>○ Cross-chain bridge deployment</li>
                       </ul>
                     </div>
                   </div>
@@ -1231,7 +1230,7 @@ export default function WhitePaper() {
                   </div>
                   <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg">
                     <h4 className="font-bold text-amber-800">External Audit Pending</h4>
-                    <p className="text-amber-700 text-sm mt-1">While internal security measures are extensive, external third-party security audit is scheduled for Q1 2026 prior to TGE.</p>
+                    <p className="text-amber-700 text-sm mt-1">While internal security measures are extensive, external third-party security audit is scheduled for Q2 2026 following TGE soft cap completion.</p>
                   </div>
                   <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg">
                     <h4 className="font-bold text-red-800">Market Volatility</h4>

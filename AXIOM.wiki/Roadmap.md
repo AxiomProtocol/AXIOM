@@ -29,11 +29,11 @@ Building America's first on-chain sovereign smart city economy.
 ## Phase 2: Growth (Q1-Q2 2025)
 
 ### Q1 2025
-- [ ] External security audit (Token, Staking, Treasury)
 - [ ] KeyGrow beta launch
 - [ ] DePIN node deployment (Phase 1)
 - [ ] Token listing applications
 - [ ] Investor relations
+- [ ] Security audit preparation
 
 ### Q2 2025
 - [ ] KeyGrow public launch
@@ -110,7 +110,7 @@ Building America's first on-chain sovereign smart city economy.
 |-----------|--------|--------|
 | Smart contracts deployed | Q4 2024 | Complete |
 | 23 contracts verified | Q4 2024 | Complete |
-| Security audit | Q1 2025 | Planned |
+| Security audit | Q2 2026 | Planned |
 | KeyGrow beta | Q1 2025 | Planned |
 | DePIN Phase 1 | Q1 2025 | Planned |
 | Banking launch | Q3 2025 | Planned |
