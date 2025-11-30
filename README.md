@@ -20,11 +20,18 @@ Axiom Protocol is America's first on-chain sovereign smart city economy - a comp
 
 ## Technology Stack
 
-- Blockchain: Arbitrum One (L2) → Universe Blockchain (L3)
-- Smart Contracts: Solidity 0.8.20+, ERC-1155, ERC-20
-- Compliance: ISO 20022, GENIUS Act
+- Blockchain: Arbitrum One (Chain ID: 42161)
+- Smart Contracts: 23 verified production contracts (Solidity 0.8.20+)
+- Token Standards: ERC-20 (AXM), ERC-1155 (KeyGrow properties)
+- Compliance: ISO 20022, GENIUS Act ready
 - Frontend: React, Next.js, TypeScript
 - Backend: Node.js, Express, PostgreSQL
+
+## Deployed Contracts
+
+See [docs/contract_registry.md](docs/contract_registry.md) for the complete list of 23 deployed and verified contracts on Arbitrum One.
+
+**AXM Token:** `0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D`
 
 ## Intellectual Property
 
@@ -98,6 +105,31 @@ This software is protected by:
 - Trade Secret Laws
 
 Violations will be pursued to the fullest extent of the law.
+
+---
+
+## Licensing and Use
+
+This code is provided for:
+- Review and evaluation purposes
+- Security auditing (with NDA)
+- Integration planning discussions
+
+**Any commercial, revenue-generating, or production deployment requires a separate commercial license agreement with Axiom Protocol.**
+
+See the [LICENSE](LICENSE) file for complete terms. Contact licensing@axiomprotocol.io for commercial license options.
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Tokenomics](docs/tokenomics.md) | Canonical AXM token specification |
+| [Contract Registry](docs/contract_registry.md) | All 23 deployed contracts |
+| [Security](docs/security.md) | Audit status and admin controls |
+| [KeyGrow](docs/keygrow.md) | Rent-to-own technical specification |
+| [Verify AXM](docs/verify_axiom.md) | How to verify the token |
 
 ---
 

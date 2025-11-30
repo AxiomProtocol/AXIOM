@@ -2,7 +2,7 @@
 
 ## Overview
 
-Axiom Protocol has deployed 23+ verified smart contracts on Arbitrum One, with additional contracts planned for the Universe Blockchain (L3).
+Axiom Protocol has deployed 23 verified smart contracts on Arbitrum One, with additional contracts planned for the Universe Blockchain (L3).
 
 > **Patent Pending:** Smart contract designs are proprietary and protected.
 
@@ -10,106 +10,74 @@ Axiom Protocol has deployed 23+ verified smart contracts on Arbitrum One, with a
 
 ## Deployed Contracts (Arbitrum One)
 
-### Core Protocol
+For the complete list of all 23 contracts with addresses and verification status, see [docs/contract_registry.md](../docs/contract_registry.md).
 
-| Contract | Address | Purpose |
-|----------|---------|---------|
-| AxiomProtocolToken | `0x...` | ERC-20 governance token |
-| AxiomGovernance | `0x...` | DAO governance |
-| AxiomTreasury | `0x...` | Protocol treasury |
-| AxiomStaking | `0x...` | Token staking |
-
-### Identity & Compliance
+### Core Protocol (6 contracts)
 
 | Contract | Purpose |
 |----------|---------|
+| AxiomV2 (AXM Token) | ERC-20 governance token with fee routing |
 | AxiomIdentityComplianceHub | KYC/AML verification hub |
-| AxiomIdentityRegistry | User identity management |
-| AxiomComplianceOracle | Regulatory compliance checks |
+| AxiomTreasuryAndRevenueHub | Protocol treasury and revenue distribution |
+| AxiomStakingAndEmissionsHub | Token staking and emissions |
+| CitizenCredentialRegistry | Citizen identity credentials |
+| AxiomLandAndAssetRegistry | Land parcels and property registration |
 
-### DePIN Infrastructure
-
-| Contract | Purpose |
-|----------|---------|
-| AxiomDePINRegistry | Node registration |
-| AxiomDePINStaking | Node operator staking |
-| AxiomDePINRewards | Reward distribution |
-| AxiomIoTDataValidator | IoT data validation |
-
-### Real Estate (KeyGrow)
+### Real Estate / KeyGrow (3 contracts)
 
 | Contract | Purpose |
 |----------|---------|
-| KeyGrowPropertyRegistry | Property tokenization (ERC-1155) |
-| KeyGrowEnrollment | Tenant enrollment |
-| KeyGrowStaking | Option consideration staking |
-| KeyGrowEquityTracker | Equity accumulation |
+| LeaseAndRentEngine | Lease management and equity conversion |
+| RealtorModule | Realtor registration and commissions |
+| CapitalPoolsAndFunds | Investment pools and option staking |
 
-### Banking & Finance
-
-| Contract | Purpose |
-|----------|---------|
-| AxiomBankingCore | Core banking logic |
-| AxiomLending | Loan origination |
-| AxiomSavings | Savings accounts |
-| AxiomPayments | Payment processing |
-
-### DEX & Trading
+### DePIN Infrastructure (4 contracts)
 
 | Contract | Purpose |
 |----------|---------|
-| AxiomDEXRouter | Swap routing |
-| AxiomLiquidityPool | AMM pools |
-| AxiomOrderBook | Limit orders |
-| MarketsAndListingsHub | Securities trading |
+| DePINNodeSuite | Node staking and leasing |
+| DePINNodeSales | Node sales with ETH/AXM payments |
+| IoTOracleNetwork | IoT data validation |
+| UtilityAndMeteringHub | Smart city utility metering |
 
-### Cross-Chain
+### DEX & Trading (3 contracts)
 
 | Contract | Purpose |
 |----------|---------|
-| AxiomBridge | Cross-chain transfers |
-| AxiomRelayer | Message relaying |
+| AxiomExchangeHub | Internal DEX for token swaps |
+| MarketsAndListingsHub | Tokenized securities trading |
+| OracleAndMetricsRelay | Price feeds and metrics |
+
+### Cross-Chain & Advanced (4 contracts)
+
+| Contract | Purpose |
+|----------|---------|
+| CrossChainAndLaunchModule | Cross-chain operations |
+| CitizenReputationOracle | Reputation scoring |
+| TransportAndLogisticsHub | Transport tracking |
+| SustainabilityHub | Carbon credits and sustainability |
+
+### Community & Engagement (3 contracts)
+
+| Contract | Purpose |
+|----------|---------|
+| CommunitySocialHub | Community features |
+| AxiomAcademyHub | Educational content |
+| GamificationHub | Rewards and achievements |
 
 ---
 
-## Contract Categories
+## Contract Summary
 
-### 1. DePIN Contracts (8)
-- Node management
-- Staking and rewards
-- Data validation
-- Infrastructure coordination
-
-### 2. Governance Contracts (6)
-- Token voting
-- Proposal management
-- Council elections
-- Treasury control
-
-### 3. Treasury Contracts (4)
-- Fund management
-- Buybacks
-- Grants
-- Revenue distribution
-
-### 4. Property/Real Estate (7)
-- Property tokenization
-- Ownership tracking
-- Transfer management
-- Rental integration
-
-### 5. Cross-Chain (4)
-- Bridge contracts
-- Message passing
-- State synchronization
-
-### 6. Smart City (12+)
-- Energy management
-- Water rights
-- Land parcels
-- Citizen identity
-- Civic governance
-- Business licensing
+| Category | Count |
+|----------|-------|
+| Core Protocol | 6 |
+| Real Estate (KeyGrow) | 3 |
+| DePIN Infrastructure | 4 |
+| DEX & Trading | 3 |
+| Cross-Chain & Advanced | 4 |
+| Community & Engagement | 3 |
+| **Total Production Contracts** | **23** |
 
 ---
 
@@ -121,11 +89,12 @@ Axiom Protocol has deployed 23+ verified smart contracts on Arbitrum One, with a
 - **ERC-721** - Unique certificates (planned)
 
 ### Security Features
-- OpenZeppelin contracts base
-- Reentrancy guards
-- Access control (roles)
+- OpenZeppelin Contracts v5.x base
+- Solidity 0.8.20+ with overflow protection
+- ReentrancyGuard on state-changing functions
+- Role-based AccessControl
 - Pausable functionality
-- Upgradeable proxies
+- Immutable (non-upgradeable) contracts
 
 ### Compliance
 - ISO 20022 data formats
@@ -139,7 +108,7 @@ Axiom Protocol has deployed 23+ verified smart contracts on Arbitrum One, with a
 
 ```
 Solidity 0.8.20+
-├── OpenZeppelin Contracts
+├── OpenZeppelin Contracts v5.x
 ├── Hardhat (development)
 ├── Ethers.js (interaction)
 └── Arbitrum One (deployment)
@@ -147,43 +116,13 @@ Solidity 0.8.20+
 
 ---
 
-## Upgrade Strategy
-
-### Proxy Pattern
-- UUPS upgradeable proxies
-- Transparent proxy for governance
-- Minimal proxy for factories
-
-### Governance Upgrades
-1. Proposal submission
-2. Community voting
-3. Timelock delay
-4. Execution
-
----
-
 ## Security Audits
 
 - Internal security review: Complete
 - External audit: Planned Q1 2025
-- Bug bounty: Active
+- Bug bounty: Planned
 
----
-
-## Integration Points
-
-### For Developers
-All commercial integration requires a license.
-
-Available integrations:
-- Read-only contract queries
-- Event subscriptions
-- Data indexing
-
-### API Access
-- REST API for off-chain data
-- GraphQL endpoint (planned)
-- WebSocket for real-time
+See [docs/security.md](../docs/security.md) for complete security documentation.
 
 ---
 
@@ -191,14 +130,9 @@ Available integrations:
 
 ### Universe Blockchain (L3)
 - Native AXM as gas token
-- Optimized for smart city ops
+- Optimized for smart city operations
 - Custom precompiles
 - Higher throughput
-
-### Reactive Network
-- Automated contract triggers
-- Event-driven execution
-- Cross-chain reactions
 
 ---
 

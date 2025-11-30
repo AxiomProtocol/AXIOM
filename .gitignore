@@ -65,3 +65,27 @@ replit.nix
 # OS files
 Thumbs.db
 .DS_Store
+
+# Sensitive data files - NEVER commit these
+*cookies*.txt
+*session*.txt
+*_cookies.txt
+*_session.txt
+browser_cookies.txt
+enhanced_session.txt
+early_access_signups.json
+*_signups.json
+
+# Private keys and credentials
+*private-keys*.txt
+*wallet*.json
+*.env.local
+
+# User data exports
+attached_assets/*.json
+attached_assets/*.txt
+
+# Temporary files
+*.tmp
+*.temp
+zitDykih

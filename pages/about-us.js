@@ -25,7 +25,7 @@ const VALUES = [
 
 const MILESTONES = [
   { year: "2024", event: "Axiom concept development and smart contract architecture design" },
-  { year: "Q1 2025", event: "Core infrastructure deployed on Arbitrum One with 22+ smart contracts" },
+  { year: "Q1 2025", event: "Core infrastructure deployed on Arbitrum One with 23 verified smart contracts" },
   { year: "Q2 2025", event: "DePIN node operator program launch and institutional partnerships" },
   { year: "Q3 2025", event: "Real estate tokenization framework and banking product rollout" },
   { year: "2026", event: "Token Generation Event (TGE) and Axiom Orbit Chain (L3) launch" },

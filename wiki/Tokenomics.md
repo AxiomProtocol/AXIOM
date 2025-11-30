@@ -1,14 +1,19 @@
 # AXM Token Economics
 
+> **Reference Document:** For the complete canonical tokenomics specification, see [docs/tokenomics.md](../docs/tokenomics.md). This wiki page provides a summary.
+
+---
+
 ## Token Overview
 
 | Attribute | Value |
 |-----------|-------|
 | **Name** | Axiom Protocol Token |
 | **Symbol** | AXM |
-| **Max Supply** | 15,000,000,000 |
-| **Initial Circulating** | 200,000,000 (at TGE) |
-| **Network** | Arbitrum One → Universe Blockchain (L3) |
+| **Max Supply** | 15,000,000,000 (15 billion) |
+| **Initial Circulating** | ~200,000,000 (at TGE) |
+| **Network** | Arbitrum One (Chain ID: 42161) |
+| **Contract** | `0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D` |
 | **Standard** | ERC-20 |
 | **TGE** | Q1 2026 |
 
@@ -23,7 +28,7 @@
 | **Team & Advisors** | 15% | 2,250,000,000 | 24 months, 12mo cliff |
 | **Private Sale** | 12% | 1,800,000,000 | 18 months, 6mo cliff |
 | **Public Sale** | 8% | 1,200,000,000 | 10% TGE, 12mo linear |
-| **Liquidity** | 5% | 750,000,000 | Immediate unlock |
+| **Liquidity** | 5% | 750,000,000 | Immediate at TGE |
 | **Strategic Partners** | 5% | 750,000,000 | 24 months, 6mo cliff |
 
 ---
@@ -64,43 +69,14 @@
 
 ## Emission Schedule
 
-### Year 1
-- TGE unlock: ~200M AXM
-- Monthly emissions: ~150M AXM
-- End of Y1: ~2B circulating
-
-### Year 2
-- Monthly emissions: ~120M AXM
-- End of Y2: ~3.5B circulating
-
-### Year 3
-- Monthly emissions: ~100M AXM
-- End of Y3: ~4.7B circulating
-
-### Year 4+
-- Decreasing emissions
-- Full unlock by Year 5
-
----
-
-## Value Accrual
-
-### Revenue Sources
-1. **Transaction fees** - 0.1-0.5% on platform transactions
-2. **Banking fees** - Interest spreads, service fees
-3. **Property fees** - Listing, transfer, management
-4. **DePIN fees** - Data validation, infrastructure usage
-5. **Trading fees** - DEX and securities trading
-
-### Treasury Buybacks
-- Portion of fees used for buybacks
-- Burned or redistributed to stakers
-- Reduces circulating supply
-
-### Staking Rewards
-- Base APR: 5-15% depending on tier
-- Bonus for long-term staking
-- Additional rewards for node operators
+| Period | Circulating Supply (Approx.) |
+|--------|------------------------------|
+| TGE (Day 1) | ~200,000,000 |
+| End of Year 1 | ~2,000,000,000 |
+| End of Year 2 | ~3,500,000,000 |
+| End of Year 3 | ~4,700,000,000 |
+| End of Year 4 | ~6,500,000,000 |
+| Full Unlock (Year 5) | 15,000,000,000 |
 
 ---
 
@@ -113,17 +89,17 @@
 
 ---
 
-## Price Discovery
+## Verification
 
-### Pre-TGE
-- Private sale: $0.008
-- Strategic: $0.012
-- Public sale: $0.015
+To verify the AXM token:
 
-### Post-TGE
-- Market-determined pricing
-- DEX liquidity pools
-- CEX listings planned
+1. Visit [Arbitrum Blockscout](https://arbitrum.blockscout.com/address/0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D)
+2. Confirm contract address matches
+3. Verify token name: "Axiom Protocol Token"
+4. Verify symbol: "AXM"
+5. Verify max supply: 15 billion
+
+See [docs/verify_axiom.md](../docs/verify_axiom.md) for step-by-step verification guide.
 
 ---
 
@@ -134,29 +110,6 @@
 - Governance
 - Smart City
 - Real Estate
-
----
-
-## Smart Contracts
-
-### Core Token
-- `AxiomProtocolToken.sol` - ERC-20 token
-- `AxiomTokenVesting.sol` - Vesting schedules
-- `AxiomGovernance.sol` - Voting and proposals
-
-### Staking
-- `AxiomStaking.sol` - General staking
-- `AxiomDePINStaking.sol` - Node staking
-- `AxiomLiquidityMining.sol` - LP rewards
-
----
-
-## Regulatory Notes
-
-- Utility token classification
-- Not a security offering
-- Geographic restrictions apply
-- KYC/AML for certain products
 
 ---
 

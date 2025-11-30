@@ -4,6 +4,8 @@
 
 Building America's first on-chain sovereign smart city economy.
 
+> **Note:** All dates are targets and subject to adjustment based on market conditions, regulatory developments, and technical milestones.
+
 ---
 
 ## Phase 1: Foundation (Q4 2024)
@@ -12,9 +14,10 @@ Building America's first on-chain sovereign smart city economy.
 - [x] Smart contract development
 - [x] Platform architecture
 - [x] Database infrastructure
-- [x] 23+ contracts deployed on Arbitrum One
+- [x] 23 contracts deployed and verified on Arbitrum One
 - [x] Whitepaper publication
 - [x] IP protection and licensing
+- [x] Contract registry and documentation
 
 ### In Progress
 - [ ] Security audit preparation
@@ -26,7 +29,7 @@ Building America's first on-chain sovereign smart city economy.
 ## Phase 2: Growth (Q1-Q2 2025)
 
 ### Q1 2025
-- [ ] External security audit
+- [ ] External security audit (Token, Staking, Treasury)
 - [ ] KeyGrow beta launch
 - [ ] DePIN node deployment (Phase 1)
 - [ ] Token listing applications
@@ -47,46 +50,52 @@ Building America's first on-chain sovereign smart city economy.
 - [ ] National Bank of Axiom launch
 - [ ] DEX live trading
 - [ ] MarketsAndListingsHub beta
-- [ ] 100+ DePIN nodes
+- [ ] 100+ DePIN nodes operational
 - [ ] Strategic acquisitions
 
 ### Q4 2025
-- [ ] Token Generation Event (TGE)
-- [ ] CEX listings
 - [ ] Full banking product suite
 - [ ] Governance activation
 - [ ] Treasury operations begin
+- [ ] CEX listing preparations
 
 ---
 
-## Phase 4: Scale (2026)
+## Phase 4: Token Generation Event (Q1 2026)
 
-### Q1 2026
+### TGE Milestones
+- [ ] Token Generation Event (TGE)
+- [ ] Initial circulating supply: ~200M AXM
+- [ ] CEX listings
+- [ ] Full governance activation
+- [ ] Community airdrop distribution
+
+> **TGE Target:** Q1 2026
+> See [docs/tokenomics.md](../docs/tokenomics.md) for complete token economics.
+
+---
+
+## Phase 5: Scale (2026)
+
+### Q2-Q3 2026
 - [ ] Universe Blockchain (L3) development
 - [ ] Cross-chain bridge deployment
 - [ ] 500+ DePIN nodes
 - [ ] KeyGrow 100+ properties
 - [ ] International expansion planning
 
-### Q2 2026
+### Q4 2026
 - [ ] Universe Blockchain testnet
-- [ ] AXM as native gas token
+- [ ] AXM as native L3 gas token
 - [ ] Institutional partnerships
 - [ ] Government pilot programs
-- [ ] Real estate portfolio $100M+
-
-### Q3-Q4 2026
-- [ ] Universe Blockchain mainnet
-- [ ] Migration from Arbitrum One
-- [ ] Full smart city operations
-- [ ] 1,000+ DePIN nodes
-- [ ] Banking AUM $1B+ target
+- [ ] Real estate portfolio $100M+ target
 
 ---
 
-## Phase 5: Sovereignty (2027+)
+## Phase 6: Sovereignty (2027+)
 
-### Goals
+### Long-Term Goals
 - Physical city development (1,000 acres)
 - Municipal service integration
 - Autonomous governance
@@ -97,15 +106,16 @@ Building America's first on-chain sovereign smart city economy.
 
 ## Key Milestones
 
-| Milestone | Target Date | Status |
-|-----------|-------------|--------|
-| Smart contracts deployed | Q4 2024 | ✅ Complete |
+| Milestone | Target | Status |
+|-----------|--------|--------|
+| Smart contracts deployed | Q4 2024 | Complete |
+| 23 contracts verified | Q4 2024 | Complete |
 | Security audit | Q1 2025 | Planned |
 | KeyGrow beta | Q1 2025 | Planned |
 | DePIN Phase 1 | Q1 2025 | Planned |
 | Banking launch | Q3 2025 | Planned |
-| TGE | Q4 2025 | Planned |
-| Universe Blockchain | Q2 2026 | Planned |
+| **TGE** | **Q1 2026** | **Planned** |
+| Universe Blockchain | Q3 2026 | Planned |
 | Physical city | 2027+ | Long-term |
 
 ---
@@ -131,36 +141,19 @@ Building America's first on-chain sovereign smart city economy.
 ## Risk Mitigation
 
 ### Regulatory
-- Proactive compliance
+- Proactive compliance approach
 - Legal counsel engaged
-- Regulatory-first approach
+- ISO 20022 and GENIUS Act alignment
 
 ### Technical
-- Multiple audits
+- Multiple security audits planned
 - Bug bounty program
-- Gradual rollout
+- Gradual rollout strategy
 
 ### Market
-- Diversified revenue
+- Diversified revenue streams
 - Real asset backing
-- Strong treasury
-
----
-
-## Community Involvement
-
-### How to Participate
-- Join early access program
-- Run DePIN nodes
-- Participate in governance
-- Provide feedback
-- Spread awareness
-
-### Rewards
-- Early adopter benefits
-- Airdrop eligibility
-- Priority access
-- Governance rights
+- Strong treasury management
 
 ---
 
