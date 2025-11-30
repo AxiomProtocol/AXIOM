@@ -1,0 +1,494 @@
+import React, { useMemo, useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { z } from "zod";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { UploadCloud, Globe, ShieldCheck, Wallet, Coins, FileText, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
+
+// ------------------------------------------------------------
+// International Investor Onboarding (GENIUS Act Edition)
+// Full-featured React component designed to slot into
+// the existing AXIOM React app under the investor module.
+//
+// Design: shadcn/ui + Tailwind. Production-ready structure with
+// strong validation, a stepper UX, and integration hooks for:
+// - KYC/AML (Persona or similar)
+// - Wallet screening (Chainalysis or similar)
+// - Stablecoin escrow (Fireblocks/Anchorage/Circle)
+// - Accreditation verification (Middesk or similar)
+// - Document e-sign (HelloSign/Docusign)
+//
+// NOTE: Replace the placeholder API endpoints with your backend URLs.
+// ------------------------------------------------------------
+
+// ---------- Types & Schemas ----------
+const countries = [
+  "United Arab Emirates",
+  "Singapore",
+  "Brazil",
+  "Nigeria",
+  "United Kingdom",
+  "Switzerland",
+  "Turkey",
+  "Saudi Arabia",
+  "Qatar",
+  "India",
+  "Hong Kong",
+  "Other",
+];
+
+const chains = [
+  { id: "bsc", label: "BNB Smart Chain (BSC)" },
+  { id: "polygon", label: "Polygon" },
+  { id: "arbitrum", label: "Arbitrum" },
+];
+
+const stablecoins = [
+  { id: "usdc", label: "USDC" },
+  { id: "usdt", label: "USDT" },
+  { id: "busd", label: "BUSD" },
+];
+
+const escrowProviders = [
+  { id: "circle", label: "Circle Escrow" },
+  { id: "anchorage", label: "Anchorage Digital" },
+  { id: "fireblocks", label: "Fireblocks" },
+];
+
+const accreditationSchema = z.object({
+  isAccredited: z.enum(["yes", "no", "unknown"]).default("unknown"),
+  basis: z.enum(["income", "networth", "entity", "na"]).default("na"),
+});
+
+const kycSchema = z.object({
+  fullName: z.string().min(2),
+  email: z.string().email(),
+  nationality: z.string().min(2),
+  country: z.string().min(2),
+  pep: z.boolean().default(false), // politically exposed person
+  ofacAttestation: z.boolean().default(false),
+});
+
+const walletSchema = z.object({
+  chain: z.enum(["bsc", "polygon", "arbitrum"]),
+  address: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/i, "Enter a valid EVM wallet address (0x…)")
+});
+
+const fundingSchema = z.object({
+  preferredStablecoin: z.enum(["usdc", "usdt", "busd"]),
+  escrow: z.enum(["circle", "anchorage", "fireblocks"]),
+  amount: z
+    .number({ invalid_type_error: "Enter a number" })
+    .min(500, "Minimum commitment is $500")
+    .max(5000000, "Maximum single commitment is $5,000,000"),
+  tranchePlan: z.enum(["single", "monthly", "quarterly"]).default("single"),
+});
+
+const disclosuresSchema = z.object({
+  fatcaCrsSelfCert: z.boolean(),
+  understandsRisk: z.boolean(),
+  agreesToTerms: z.boolean(),
+});
+
+export type InternationalInvestorOnboardingProps = {
+  apiBaseUrl?: string; // e.g., "/api/investors"
+  existingInvestorId?: string | null;
+  onComplete?: (payload: Record<string, any>) => void;
+};
+
+// ---------- Helper UI ----------
+function StepHeader({ icon: Icon, title, subtitle }: { icon: any; title: string; subtitle?: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="rounded-2xl p-2 bg-primary/10">
+        <Icon className="h-6 w-6 text-primary" />
+      </div>
+      <div>
+        <h3 className="text-xl font-semibold">{title}</h3>
+        {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+      </div>
+    </div>
+  );
+}
+
+function Row({ children }: { children: React.ReactNode }) {
+  return <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>;
+}
+
+// ---------- Main Component ----------
+export default function InternationalInvestorOnboarding({ apiBaseUrl = "/api/investors", existingInvestorId = null, onComplete, }: InternationalInvestorOnboardingProps) {
+  const [step, setStep] = useState(0);
+  const totalSteps = 6;
+
+  // form state
+  const [kyc, setKyc] = useState<z.infer<typeof kycSchema>>({
+    fullName: "",
+    email: "",
+    nationality: "",
+    country: "",
+    pep: false,
+    ofacAttestation: false,
+  });
+
+  const [accreditation, setAccreditation] = useState<z.infer<typeof accreditationSchema>>({ isAccredited: "unknown", basis: "na" });
+
+  const [wallet, setWallet] = useState<z.infer<typeof walletSchema>>({ chain: "bsc", address: "" });
+
+  const [funding, setFunding] = useState<z.infer<typeof fundingSchema>>({ preferredStablecoin: "usdc", escrow: "circle", amount: 500, tranchePlan: "single" });
+
+  const [disclosures, setDisclosures] = useState<z.infer<typeof disclosuresSchema>>({ fatcaCrsSelfCert: false, understandsRisk: false, agreesToTerms: false });
+
+  const progress = useMemo(() => Math.round(((step + 1) / totalSteps) * 100), [step]);
+
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    setApiError(null);
+  }, [step]);
+
+  const canNext = useMemo(() => {
+    try {
+      if (step === 0) kycSchema.parse(kyc);
+      if (step === 1) accreditationSchema.parse(accreditation);
+      if (step === 2) walletSchema.parse(wallet);
+      if (step === 3) fundingSchema.parse(funding);
+      if (step === 4) disclosuresSchema.parse(disclosures);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }, [step, kyc, accreditation, wallet, funding, disclosures]);
+
+  async function handleSubmit() {
+    setSubmitting(true);
+    setApiError(null);
+    try {
+      // final validation
+      kycSchema.parse(kyc);
+      accreditationSchema.parse(accreditation);
+      walletSchema.parse(wallet);
+      fundingSchema.parse(funding);
+      disclosuresSchema.parse(disclosures);
+
+      const payload = {
+        existingInvestorId,
+        kyc,
+        accreditation,
+        wallet,
+        funding,
+        disclosures,
+        geniusActVersion: "2025-10",
+        module: "international-onboarding",
+      };
+
+      // POST to backend (replace endpoint as needed)
+      const res = await fetch(`${apiBaseUrl}/international/onboarding`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+
+      const data = await res.json();
+      setSuccess(true);
+      onComplete?.(data);
+      setStep(totalSteps - 1);
+    } catch (err: any) {
+      setApiError(err?.message || "Something went wrong");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function next() { if (step < totalSteps - 1) setStep(step + 1); }
+  function back() { if (step > 0) setStep(step - 1); }
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto space-y-6">
+      <Card className="shadow-lg border-muted">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl">International Investor Onboarding</CardTitle>
+              <CardDescription>GENIUS Act–aligned flow for offshore partners, DAOs, and family offices.</CardDescription>
+            </div>
+            <Badge variant="secondary">GENIUS Act Ready</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              <p className="text-sm text-muted-foreground">KYC/AML • OFAC wallet screening • Stablecoin escrow • Accreditation verification • Automated tax</p>
+            </div>
+            <Progress value={progress} />
+          </div>
+
+          {apiError && (
+            <Alert variant="destructive">
+              <AlertTitle>Submission error</AlertTitle>
+              <AlertDescription>{apiError}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Step 1: KYC */}
+          {step === 0 && (
+            <div className="space-y-6">
+              <StepHeader icon={Globe} title="KYC / Jurisdiction" subtitle="Tell us who you are and where you invest from." />
+              <Row>
+                <div className="space-y-2">
+                  <Label>Full name</Label>
+                  <Input placeholder="Jane Doe" value={kyc.fullName} onChange={(e) => setKyc({ ...kyc, fullName: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input placeholder="jane@company.com" value={kyc.email} onChange={(e) => setKyc({ ...kyc, email: e.target.value })} />
+                </div>
+              </Row>
+              <Row>
+                <div className="space-y-2">
+                  <Label>Nationality</Label>
+                  <Input placeholder="e.g., Singaporean" value={kyc.nationality} onChange={(e) => setKyc({ ...kyc, nationality: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Country of residence</Label>
+                  <Select value={kyc.country} onValueChange={(v) => setKyc({ ...kyc, country: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </Row>
+              <Row>
+                <div className="flex items-center gap-2">
+                  <Checkbox id="pep" checked={kyc.pep} onCheckedChange={(v) => setKyc({ ...kyc, pep: Boolean(v) })} />
+                  <Label htmlFor="pep">I am a Politically Exposed Person (PEP)</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox id="ofac" checked={kyc.ofacAttestation} onCheckedChange={(v) => setKyc({ ...kyc, ofacAttestation: Boolean(v) })} />
+                  <Label htmlFor="ofac">I attest I’m not subject to OFAC sanctions</Label>
+                </div>
+              </Row>
+            </div>
+          )}
+
+          {/* Step 2: Accreditation */}
+          {step === 1 && (
+            <div className="space-y-6">
+              <StepHeader icon={ShieldCheck} title="Accreditation" subtitle="Tell us if you qualify as an accredited investor." />
+              <RadioGroup value={accreditation.isAccredited} onValueChange={(v: any) => setAccreditation({ ...accreditation, isAccredited: v })} className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="flex items-center space-x-2 p-3 rounded-xl border"><RadioGroupItem value="yes" id="yes" /><Label htmlFor="yes">Yes</Label></div>
+                <div className="flex items-center space-x-2 p-3 rounded-xl border"><RadioGroupItem value="no" id="no" /><Label htmlFor="no">No</Label></div>
+                <div className="flex items-center space-x-2 p-3 rounded-xl border"><RadioGroupItem value="unknown" id="unknown" /><Label htmlFor="unknown">Unsure</Label></div>
+              </RadioGroup>
+              <Label className="text-sm text-muted-foreground">Basis (if yes)</Label>
+              <RadioGroup value={accreditation.basis} onValueChange={(v: any) => setAccreditation({ ...accreditation, basis: v })} className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="flex items-center space-x-2 p-3 rounded-xl border"><RadioGroupItem value="income" id="income" /><Label htmlFor="income">Income</Label></div>
+                <div className="flex items-center space-x-2 p-3 rounded-xl border"><RadioGroupItem value="networth" id="networth" /><Label htmlFor="networth">Net Worth</Label></div>
+                <div className="flex items-center space-x-2 p-3 rounded-xl border"><RadioGroupItem value="entity" id="entity" /><Label htmlFor="entity">Entity</Label></div>
+              </RadioGroup>
+            </div>
+          )}
+
+          {/* Step 3: Wallet & Chain */}
+          {step === 2 && (
+            <div className="space-y-6">
+              <StepHeader icon={Wallet} title="Wallet & Chain" subtitle="Provide the wallet you will fund from and the chain you prefer." />
+              <Row>
+                <div className="space-y-2">
+                  <Label>Network</Label>
+                  <Select value={wallet.chain} onValueChange={(v: any) => setWallet({ ...wallet, chain: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select chain" /></SelectTrigger>
+                    <SelectContent>
+                      {chains.map((c) => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Funding wallet address</Label>
+                  <Input placeholder="0x…" value={wallet.address} onChange={(e) => setWallet({ ...wallet, address: e.target.value })} />
+                </div>
+              </Row>
+              <Alert>
+                <AlertTitle>Security Notice</AlertTitle>
+                <AlertDescription>We will perform OFAC screening and risk scoring on this wallet prior to accepting funds.</AlertDescription>
+              </Alert>
+            </div>
+          )}
+
+          {/* Step 4: Funding Preferences */}
+          {step === 3 && (
+            <div className="space-y-6">
+              <StepHeader icon={Coins} title="Funding & Escrow" subtitle="Choose stablecoin, escrow provider, and commitment size." />
+              <Row>
+                <div className="space-y-2">
+                  <Label>Stablecoin</Label>
+                  <Select value={funding.preferredStablecoin} onValueChange={(v: any) => setFunding({ ...funding, preferredStablecoin: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select stablecoin" /></SelectTrigger>
+                    <SelectContent>
+                      {stablecoins.map((s) => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Escrow provider</Label>
+                  <Select value={funding.escrow} onValueChange={(v: any) => setFunding({ ...funding, escrow: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select escrow" /></SelectTrigger>
+                    <SelectContent>
+                      {escrowProviders.map((e) => <SelectItem key={e.id} value={e.id}>{e.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </Row>
+              <Row>
+                <div className="space-y-2">
+                  <Label>Commitment amount (USD)</Label>
+                  <Input type="number" min={500} max={5000000} value={funding.amount} onChange={(e) => setFunding({ ...funding, amount: Number(e.target.value) })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tranche plan</Label>
+                  <Select value={funding.tranchePlan} onValueChange={(v: any) => setFunding({ ...funding, tranchePlan: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select plan" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single">Single transfer</SelectItem>
+                      <SelectItem value="monthly">Monthly tranches</SelectItem>
+                      <SelectItem value="quarterly">Quarterly tranches</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </Row>
+              <Alert>
+                <AlertTitle>Indicative Wire-Up</AlertTitle>
+                <AlertDescription>
+                  Upon approval, you’ll receive escrow deposit instructions (chain, token, and memo). Transfers settle in minutes; receipts are recorded on-chain and mirrored to your investor dashboard.
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+
+          {/* Step 5: Disclosures & Docs */}
+          {step === 4 && (
+            <div className="space-y-6">
+              <StepHeader icon={FileText} title="Disclosures & Documents" subtitle="Final attestations and document upload (if requested)." />
+              <div className="space-y-3">
+                <div className="flex items-start gap-2">
+                  <Checkbox id="fatca" checked={disclosures.fatcaCrsSelfCert} onCheckedChange={(v) => setDisclosures({ ...disclosures, fatcaCrsSelfCert: Boolean(v) })} />
+                  <Label htmlFor="fatca">I certify my tax residency status (FATCA/CRS self-certification) and agree to provide forms upon request.</Label>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Checkbox id="risk" checked={disclosures.understandsRisk} onCheckedChange={(v) => setDisclosures({ ...disclosures, understandsRisk: Boolean(v) })} />
+                  <Label htmlFor="risk">I understand digital assets and tokenized securities may be volatile; principal is at risk.</Label>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Checkbox id="terms" checked={disclosures.agreesToTerms} onCheckedChange={(v) => setDisclosures({ ...disclosures, agreesToTerms: Boolean(v) })} />
+                  <Label htmlFor="terms">I agree to the Subscription Agreement and the Axiom Platform Terms.</Label>
+                </div>
+              </div>
+              <div className="rounded-xl border p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <UploadCloud className="h-5 w-5" />
+                  <div>
+                    <p className="font-medium">Optional document upload</p>
+                    <p className="text-sm text-muted-foreground">If your jurisdiction requires proof, upload here (PDF, JPG, PNG).</p>
+                  </div>
+                </div>
+                <Button variant="outline" disabled>Upload (connect to storage)</Button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 6: Review & Submit */}
+          {step === 5 && (
+            <div className="space-y-6">
+              <StepHeader icon={CheckCircle2} title="Review & Submit" subtitle="Confirm details before we trigger compliance checks." />
+              <div className="rounded-2xl border p-4 space-y-4 bg-muted/30">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-semibold">Identity & Jurisdiction</h4>
+                    <p className="text-sm text-muted-foreground">{kyc.fullName} • {kyc.email}</p>
+                    <p className="text-sm text-muted-foreground">{kyc.nationality} • {kyc.country}</p>
+                    <p className="text-xs text-muted-foreground">PEP: {kyc.pep ? "Yes" : "No"} • OFAC Attestation: {kyc.ofacAttestation ? "Yes" : "No"}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Accreditation</h4>
+                    <p className="text-sm text-muted-foreground">Status: {accreditation.isAccredited}</p>
+                    <p className="text-sm text-muted-foreground">Basis: {accreditation.basis}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Wallet</h4>
+                    <p className="text-sm text-muted-foreground">{chains.find(c=>c.id===wallet.chain)?.label}</p>
+                    <p className="text-xs font-mono break-all">{wallet.address}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Funding</h4>
+                    <p className="text-sm text-muted-foreground">{stablecoins.find(s=>s.id===funding.preferredStablecoin)?.label} via {escrowProviders.find(e=>e.id===funding.escrow)?.label}</p>
+                    <p className="text-sm text-muted-foreground">Amount: ${funding.amount.toLocaleString()} • Plan: {funding.tranchePlan}</p>
+                  </div>
+                </div>
+              </div>
+              {success ? (
+                <Alert>
+                  <AlertTitle>Submitted</AlertTitle>
+                  <AlertDescription>Your application has been received. Compliance checks will complete shortly. You’ll get funding instructions in your dashboard and email.</AlertDescription>
+                </Alert>
+              ) : null}
+            </div>
+          )}
+        </CardContent>
+        <CardFooter className="flex items-center justify-between">
+          <Button variant="ghost" onClick={back} disabled={step===0}><ArrowLeft className="h-4 w-4 mr-2"/>Back</Button>
+          {step < totalSteps - 1 ? (
+            <Button onClick={next} disabled={!canNext}><ArrowRight className="h-4 w-4 mr-2"/>Next</Button>
+          ) : (
+            <Button onClick={handleSubmit} disabled={submitting || success || !canNext}>{submitting ? "Submitting…" : success ? "Completed" : "Submit for Compliance"}</Button>
+          )}
+        </CardFooter>
+      </Card>
+
+      {/* Developer Notes */}
+      <Card className="bg-muted/30 border-dashed">
+        <CardHeader>
+          <CardTitle>Integration Notes</CardTitle>
+          <CardDescription>Hook this module into your existing investor router and services.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <ul className="list-disc pl-5 space-y-2">
+            <li>Replace <code>{`fetch(${apiBaseUrl}/international/onboarding)`}</code> with your backend route. Expect to run Persona session creation, Chainalysis screening, and escrow intent creation server-side.</li>
+            <li>On <strong>success</strong>, redirect to your escrow instruction view. Consider emitting a WebSocket event to refresh the investor dashboard.</li>
+            <li>Connect file uploads to S3 / GCS via a signed URL or to your document vault provider. Replace the disabled Upload button.</li>
+            <li>Localize labels by injecting an i18n dictionary via context or props. Current text is English-only.</li>
+            <li>If you maintain a global store, lift state up (kyc, accreditation, wallet, funding, disclosures) and persist drafts for later completion.</li>
+            <li>Add reCAPTCHA or wallet signature challenge before submission if you want anti-bot hardening.</li>
+          </ul>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}

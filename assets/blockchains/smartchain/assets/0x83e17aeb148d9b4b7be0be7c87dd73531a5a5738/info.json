@@ -1,0 +1,11 @@
+{
+  "name": "Sovran Wealth Fund",
+  "symbol": "SWF",
+  "type": "ERC20",
+  "decimals": 18,
+  "description": "Sovran Wealth Fund is a DeFi-powered token used for land acquisition, staking, real estate investment, and economic sovereignty.",
+  "website": "https://sovranwealthfund.org",
+  "explorer": "https://bscscan.com/token/0x83e17aeb148d9b4b7be0be7c87dd73531a5a5738",
+  "status": "active",
+  "id": "swf-token"
+}

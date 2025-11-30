@@ -1,0 +1,74 @@
+{
+  "title": "Tribevest | About",
+  "headings": [
+    {
+      "level": "h1",
+      "text": "It all started whenour CEO wanted to investwith his brothers."
+    },
+    {
+      "level": "h3",
+      "text": "Meet the team behind Tribevest."
+    },
+    {
+      "level": "h3",
+      "text": "How it all started"
+    },
+    {
+      "level": "h3",
+      "text": "How it’s going"
+    },
+    {
+      "level": "h3",
+      "text": "Where we’re headed"
+    },
+    {
+      "level": "h3",
+      "text": "Join us on this mission"
+    },
+    {
+      "level": "h2",
+      "text": "It takes good peopleto do good things."
+    },
+    {
+      "level": "h2",
+      "text": "For friends and family who want toinvest together"
+    }
+  ],
+  "features": [
+    {
+      "title": "Meet the team behind Tribevest.",
+      "description": "We're people who believe that everyone should be able to invest and build wealth with the people they trust."
+    },
+    {
+      "title": "How it all started",
+      "description": "Tribevest CEO, Travis Smith, dreamed out loud about building generational wealth and forever altering our family’s financial trajectory. However, he’d never been introduced to ways of private investing, and wealth-building seemed out of reach. Travis and his brothers realized that they could overcome our lack of experience and know-how if we worked together.But they had to confront the more obvious and immediate barrier — we lacked the capital required to break into wealth-building, freedom investments. By forming and funding an Investor Tribe, they unlocked a new future and the secrets of the wealthy."
+    }
+  ],
+  "buttons": [
+    {
+      "type": "login",
+      "text": "login",
+      "url": "https://app.tribevest.com/login"
+    },
+    {
+      "type": "login",
+      "text": "login",
+      "url": "https://app.tribevest.com/login"
+    },
+    {
+      "type": "signup",
+      "text": "get started",
+      "url": "https://app.tribevest.com/register"
+    },
+    {
+      "type": "login",
+      "text": "login",
+      "url": "https://app.tribevest.com/login"
+    },
+    {
+      "type": "signup",
+      "text": "get started",
+      "url": "https://6mwuftnqt4v.typeform.com/to/xZk799cA"
+    }
+  ]
+}

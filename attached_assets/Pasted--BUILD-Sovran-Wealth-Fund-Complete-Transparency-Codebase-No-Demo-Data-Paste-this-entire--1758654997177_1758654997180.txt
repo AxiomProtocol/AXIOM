@@ -1,0 +1,755 @@
+
+🚀 BUILD — Sovran Wealth Fund • Complete Transparency Codebase (No Demo Data)
+
+> Paste this entire instruction into Replit when you’re ready.
+Tech: Next.js + API routes, Tailwind, Recharts, PDFKit, ChartJS Node Canvas, Replit DB, Nodemailer.
+
+
+
+
+---
+
+0) Initialize & install deps
+
+npm init -y
+
+npm install next react react-dom
+npm install tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+
+npm install recharts xlsx file-saver
+npm install pdfkit chartjs-node-canvas
+npm install @replit/database
+npm install nodemailer
+
+
+---
+
+1) Project config files
+
+package.json (merge/replace scripts)
+
+{
+  "name": "sovran-wealth-fund",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "snapshot": "node scripts/saveReserveSnapshot.js"
+  },
+  "dependencies": {
+    "@replit/database": "^2.0.0",
+    "autoprefixer": "^10.4.19",
+    "chartjs-node-canvas": "^4.1.7",
+    "file-saver": "^2.0.5",
+    "next": "14.2.4",
+    "nodemailer": "^6.9.8",
+    "pdfkit": "^0.15.0",
+    "postcss": "^8.4.33",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "recharts": "^2.12.7",
+    "tailwindcss": "^3.4.10",
+    "xlsx": "^0.18.5"
+  }
+}
+
+tailwind.config.js
+
+module.exports = {
+  content: ["./pages/**/*.{js,jsx}", "./components/**/*.{js,jsx}"],
+  theme: { extend: {} },
+  plugins: []
+}
+
+postcss.config.js
+
+module.exports = { plugins: { tailwindcss: {}, autoprefixer: {} } }
+
+styles/globals.css
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+pages/_app.js
+
+import '../styles/globals.css'
+export default function App({ Component, pageProps }) { return <Component {...pageProps} /> }
+
+
+---
+
+2) Environment variables (Replit “Secrets”)
+
+Set ALL of these; if missing, APIs return empty results (no placeholders):
+
+ETHERSCAN_API_KEY
+
+BSCSCAN_API_KEY
+
+(Optional more chains later)
+
+SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_FROM, EMAIL_TO
+
+TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+
+
+Wallets (DO NOT use test wallets; use only real):
+
+ETHEREUM_WALLET
+
+BSC_WALLET
+
+XRP_WALLET
+
+SUI_WALLET
+
+
+
+---
+
+3) Public assets
+
+mkdir -p public/images public/docs
+
+Put your real logo at public/images/logo.png
+
+Put real PDF reports in public/docs/ (proof of reserves, audits, financials)
+
+
+
+---
+
+4) Components
+
+components/FAQAccordion.js
+
+import React, { useState } from "react";
+export default function FAQAccordion({ faqs }) {
+  const [open, setOpen] = useState(null);
+  return (
+    <div className="max-w-3xl mx-auto space-y-4">
+      {faqs.map((f,i)=>(
+        <div key={i} className="border rounded-lg shadow-sm">
+          <button onClick={()=>setOpen(open===i?null:i)} className="w-full p-4 flex justify-between text-left">
+            <span className="font-semibold text-lg">{f.question}</span><span>{open===i?"−":"+"}</span>
+          </button>
+          {open===i && <div className="px-4 pb-4 text-gray-700">{f.answer}</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+components/RoadmapTimeline.js
+
+import React from "react";
+export default function RoadmapTimeline({ milestones }) {
+  return (
+    <div className="max-w-4xl mx-auto">
+      <ol className="relative border-l border-gray-300">
+        {milestones.map((m,i)=>(
+          <li key={i} className="mb-10 ml-6">
+            <span className="absolute flex items-center justify-center w-6 h-6 bg-indigo-600 rounded-full -left-3 ring-8 ring-white text-white text-sm">{i+1}</span>
+            <h3 className="mb-1 text-lg font-semibold">{m.title}
+              {m.status && <span className={`ml-3 text-xs px-2.5 py-0.5 rounded ${m.status==="completed"?"bg-green-100 text-green-800":m.status==="in-progress"?"bg-yellow-100 text-yellow-800":"bg-gray-100 text-gray-800"}`}>{m.status.replace("-"," ")}</span>}
+            </h3>
+            <time className="block mb-2 text-sm text-gray-500">{m.date}</time>
+            <p className="text-gray-700">{m.description}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+components/TokenomicsPieChart.js
+
+import React from "react";
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+export default function TokenomicsPieChart({ data }) {
+  const COLORS=["#4F46E5","#22C55E","#F59E0B","#EF4444","#3B82F6","#10B981","#6366F1"];
+  return (
+    <div className="w-full h-96">
+      <ResponsiveContainer>
+        <PieChart>
+          <Pie data={data} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={5} dataKey="value" label>
+            {data.map((_,i)=><Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
+          </Pie>
+          <Tooltip/><Legend verticalAlign="bottom" height={36}/>
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+Transparency & Analytics
+
+components/TransparencyReportsTable.js
+
+components/ProofOfReserves.js
+
+components/ReservesSummary.js
+
+components/ReservesHistoryChart.js
+
+components/GrowthMetric.js
+
+components/ExportButtons.js
+
+components/DownloadPDF.js
+
+
+// components/TransparencyReportsTable.js
+import React,{useEffect,useState} from "react";
+export default function TransparencyReportsTable({ fetchReportsUrl }) {
+  const [reports,setReports]=useState([]); const [loading,setLoading]=useState(true); const [error,setError]=useState(null);
+  useEffect(()=>{(async()=>{try{
+    const r=await fetch(fetchReportsUrl);
+    if(r.status===204){setReports([]);return setLoading(false);}
+    if(!r.ok) throw new Error(String(r.status));
+    const d=await r.json(); setReports(d.reports||[]);
+  }catch(e){setError("Could not load reports.");}finally{setLoading(false);}})();},[fetchReportsUrl]);
+  if(loading) return <p>Loading reports...</p>;
+  if(error) return <p className="text-red-600">{error}</p>;
+  if(reports.length===0) return <p>No reports available yet.</p>;
+  return (<div className="overflow-x-auto"><table className="min-w-full bg-white border">
+    <thead><tr className="bg-gray-100"><th className="px-4 py-2 text-left">Report Type</th><th className="px-4 py-2 text-left">Date</th><th className="px-4 py-2 text-left">Description</th><th className="px-4 py-2 text-left">Link</th></tr></thead>
+    <tbody>{reports.map((r,i)=><tr key={i} className="border-t hover:bg-gray-50">
+      <td className="px-4 py-2">{r.type}</td><td className="px-4 py-2">{r.date}</td><td className="px-4 py-2">{r.description}</td>
+      <td className="px-4 py-2">{r.link?<a className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer" href={r.link}>View</a>:"—"}</td>
+    </tr>)}</tbody></table></div>);
+}
+
+// components/ProofOfReserves.js
+import React,{useEffect,useState} from "react";
+export default function ProofOfReserves({ fetchUrl }) {
+  const [reserves,setReserves]=useState([]); const [loading,setLoading]=useState(true); const [error,setError]=useState(null);
+  useEffect(()=>{(async()=>{try{
+    const r=await fetch(fetchUrl);
+    if(r.status===204){setReserves([]);return setLoading(false);}
+    if(!r.ok) throw new Error("fetch");
+    const d=await r.json(); setReserves(d.reserves||[]);
+  }catch(e){setError("Could not load proof of reserves.");}finally{setLoading(false);}})();},[fetchUrl]);
+  if(loading) return <p>Loading reserves...</p>;
+  if(error) return <p className="text-red-600">{error}</p>;
+  return (
+    <div className="overflow-x-auto mt-8">
+      <h2 className="text-2xl font-semibold mb-4">On-Chain Proof of Reserves</h2>
+      {reserves.length===0 ? <p>No tracked reserves yet.</p> :
+      <table className="min-w-full bg-white border">
+        <thead><tr className="bg-gray-100"><th className="px-4 py-2 text-left">Chain</th><th className="px-4 py-2 text-left">Wallet</th><th className="px-4 py-2 text-left">Balance</th><th className="px-4 py-2 text-left">USD</th></tr></thead>
+        <tbody>{reserves.map((r,i)=><tr key={i} className="border-t hover:bg-gray-50">
+          <td className="px-4 py-2">{r.chain}</td>
+          <td className="px-4 py-2 font-mono truncate max-w-xs">{r.address}</td>
+          <td className="px-4 py-2">{r.balance} {r.symbol}</td>
+          <td className="px-4 py-2">${(r.usdValue||0).toLocaleString()}</td>
+        </tr>)}</tbody>
+      </table>}
+    </div>
+  );
+}
+
+// components/ReservesSummary.js
+import React,{useEffect,useState} from "react";
+export default function ReservesSummary({ fetchUrl }) {
+  const [totalUSD,setTotalUSD]=useState(null); const [loading,setLoading]=useState(true);
+  useEffect(()=>{(async()=>{try{
+    const r=await fetch(fetchUrl);
+    if(!r.ok) throw new Error("fetch");
+    const d=await r.json(); setTotalUSD(d.totalUSD ?? 0);
+  }catch(e){setTotalUSD(null);}finally{setLoading(false);}})();},[fetchUrl]);
+  if(loading) return <p>Loading total reserves...</p>;
+  if(totalUSD===null) return <p>Unable to load total reserves.</p>;
+  return (<div className="bg-indigo-600 text-white rounded-lg shadow-md p-6 mb-8">
+    <h2 className="text-2xl font-semibold mb-2">Total On-Chain Reserves</h2>
+    <p className="text-4xl font-bold">${totalUSD.toLocaleString(undefined,{minimumFractionDigits:2})}</p>
+    <p className="text-sm mt-2 opacity-80">Aggregated across configured wallets</p>
+  </div>);
+}
+
+// components/ReservesHistoryChart.js
+import React,{useEffect,useState} from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+export default function ReservesHistoryChart({ fetchUrl }) {
+  const [history,setHistory]=useState([]); const [loading,setLoading]=useState(true);
+  useEffect(()=>{(async()=>{try{
+    const r=await fetch(fetchUrl);
+    if(r.status===204){setHistory([]);} else { const d=await r.json(); setHistory(d.history||[]); }
+  }catch(e){}finally{setLoading(false);}})();},[fetchUrl]);
+  if(loading) return <p>Loading reserve history...</p>;
+  if(history.length===0) return <p>No reserve history available.</p>;
+  return (<div className="w-full h-96 mt-10">
+    <h2 className="text-2xl font-semibold mb-4">Reserves Over Time</h2>
+    <ResponsiveContainer><LineChart data={history} margin={{top:20,right:30,left:0,bottom:0}}>
+      <CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="date"/><YAxis tickFormatter={v=>`$${(v/1000).toFixed(0)}k`}/>
+      <Tooltip formatter={v=>[`$${Number(v).toLocaleString()}`,"Total USD"]}/><Line type="monotone" dataKey="totalUSD" stroke="#4F46E5" strokeWidth={3} dot={{r:3}}/>
+    </LineChart></ResponsiveContainer></div>);
+}
+
+// components/GrowthMetric.js
+import React,{useEffect,useState} from "react";
+export default function GrowthMetric({ fetchUrl }) {
+  const [g,setG]=useState(null); const [loading,setLoading]=useState(true);
+  useEffect(()=>{(async()=>{try{
+    const r=await fetch(fetchUrl); if(!r.ok) throw new Error();
+    const d=await r.json(); const h=d.history||[];
+    if(h.length>=2){ const first=h[0].totalUSD, last=h[h.length-1].totalUSD; const pct=((last-first)/first)*100;
+      setG({percentage:pct.toFixed(1), start:first, end:last}); }
+  }catch(e){}finally{setLoading(false);}})();},[fetchUrl]);
+  if(loading) return <p>Loading growth data...</p>;
+  if(!g) return <p>No growth data available.</p>;
+  return (<div className="bg-green-600 text-white rounded-lg shadow-md p-6 mb-8">
+    <h2 className="text-2xl font-semibold mb-2">Cumulative Growth</h2>
+    <p className="text-4xl font-bold">{g.percentage}%</p>
+    <p className="text-sm mt-2 opacity-80">Since launch (${g.start.toLocaleString()} → ${g.end.toLocaleString()})</p>
+  </div>);
+}
+
+// components/ExportButtons.js
+import React,{useEffect,useState} from "react";
+import { exportToCSV, exportToExcel } from "../utils/exportReserves";
+export default function ExportButtons({ fetchUrl }) {
+  const [history,setHistory]=useState([]);
+  useEffect(()=>{(async()=>{try{const r=await fetch(fetchUrl); const d=await r.json(); setHistory(d.history||[]);}catch(e){}})();},[fetchUrl]);
+  if(history.length===0) return null;
+  return (<div className="flex space-x-4 mt-6">
+    <button onClick={()=>exportToCSV(history)} className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700">Download CSV</button>
+    <button onClick={()=>exportToExcel(history)} className="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">Download Excel</button>
+  </div>);
+}
+
+// components/DownloadPDF.js
+import React from "react";
+export default function DownloadPDF({ email, code }) {
+  const qp=new URLSearchParams(); if(email) qp.append("email",email); if(code) qp.append("code",code);
+  return (<a href={`/api/reports/generate-pdf?${qp.toString()}`} className="bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700" download>
+    Download Monthly PDF Report
+  </a>);
+}
+
+
+---
+
+5) Utils
+
+utils/exportReserves.js
+
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+export function exportToCSV(history){const ws=XLSX.utils.json_to_sheet(history);const csv=XLSX.utils.sheet_to_csv(ws);saveAs(new Blob([csv],{type:"text/csv;charset=utf-8;"}),"reserves_history.csv");}
+export function exportToExcel(history){const ws=XLSX.utils.json_to_sheet(history);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"ReservesHistory");const buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});saveAs(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),"reserves_history.xlsx");}
+
+utils/pdfCoverPage.js
+
+export function addCoverPage(doc, logoPath) {
+  doc.rect(0,0,doc.page.width,doc.page.height).fill("#4F46E5"); doc.fillColor("white");
+  if(logoPath){try{doc.image(logoPath, doc.page.width/2-60, 80, {width:120});}catch{}}
+  doc.fontSize(28).text("Sovran Wealth Fund",{align:"center"}).moveDown(2);
+  doc.fontSize(20).text("Monthly Transparency Report",{align:"center"}).moveDown(2);
+  doc.fontSize(14).text(`Generated on ${new Date().toLocaleDateString()}`,{align:"center"});
+  doc.addPage();
+}
+
+utils/pdfTOC.js
+
+export function addTableOfContents(doc, sections) {
+  doc.addPage(); doc.fillColor("#111").fontSize(20).text("Table of Contents",{underline:true}).moveDown(2);
+  sections.forEach((s,i)=>{ doc.fontSize(14).fillColor("blue").text(`${i+1}. ${s.title}`); doc.moveDown(0.5); });
+}
+
+utils/pdfAppendix.js
+
+export function addAppendix(doc){
+  doc.addPage(); doc.fontSize(20).fillColor("#111").text("Appendix",{underline:true}).moveDown(2);
+  doc.fontSize(16).text("Disclaimers",{underline:true}).moveDown(0.5);
+  doc.fontSize(12).fillColor("gray").text("This Transparency Report is informational only and not investment advice. Values may change.");
+  doc.moveDown(2); doc.fontSize(16).fillColor("#111").text("Methodology",{underline:true}).moveDown(0.5);
+  doc.fontSize(12).text("Reserves are aggregated from Sovran-controlled wallets via chain explorers and priced using CoinGecko spot rates. Daily snapshots stored for history.");
+  doc.moveDown(2); doc.fontSize(16).text("Definitions",{underline:true}).moveDown(0.5);
+  doc.fontSize(12).list([
+    "Proof of Reserves: Verifiable on-chain holdings for Sovran wallets.",
+    "Cumulative Growth: % change from initial snapshot to current total.",
+    "Total USD Reserves: Sum of tracked wallets converted to USD."
+  ]);
+}
+
+utils/pdfFooter.js
+
+export function addFooter(doc){
+  const range=doc.bufferedPageRange();
+  for(let i=range.start;i<range.start+range.count;i++){
+    doc.switchToPage(i); const n=i+1; doc.fontSize(9).fillColor("gray");
+    doc.text("Sovran Wealth Fund Transparency Report",50,doc.page.height-40,{align:"left"});
+    doc.text(`Page ${n}`,-50,doc.page.height-40,{align:"right"});
+  }
+}
+
+utils/pdfWatermark.js
+
+export function addWatermark(doc, text="Confidential • Sovran Wealth Fund"){
+  const range=doc.bufferedPageRange();
+  for(let i=range.start;i<range.start+range.count;i++){
+    doc.switchToPage(i); const {width,height}=doc.page; doc.save();
+    doc.rotate(-45,{origin:[width/2,height/2]}).fontSize(40).fillColor("lightgray").opacity(0.2)
+      .text(text, width/2-250, height/2, {align:"center", width:500});
+    doc.restore();
+  }
+}
+
+utils/pdfLogger.js
+
+import Database from "@replit/database"; const db=new Database();
+export async function logDownload(email, code, watermark){
+  const timestamp=new Date().toISOString();
+  const entry={email:email||null, code:code||null, watermark, timestamp};
+  await db.set(`download:${timestamp}:${code||email||"anon"}`, entry);
+  return entry;
+}
+
+utils/notifier.js
+
+import nodemailer from "nodemailer";
+export async function sendEmailNotification(p){
+  const {SMTP_HOST,SMTP_PORT,SMTP_USER,SMTP_PASS,EMAIL_FROM,EMAIL_TO}=process.env;
+  if(!SMTP_HOST||!SMTP_PORT||!SMTP_USER||!SMTP_PASS||!EMAIL_FROM||!EMAIL_TO) return;
+  const t=nodemailer.createTransport({host:SMTP_HOST,port:Number(SMTP_PORT),secure:Number(SMTP_PORT)===465,auth:{user:SMTP_USER,pass:SMTP_PASS}});
+  const subject=`Transparency Report Download — ${p.email||p.code||"anonymous"}`;
+  const text=`Timestamp: ${p.timestamp}\nEmail: ${p.email||"-"}\nCode: ${p.code||"-"}\nWatermark: ${p.watermark}\nIP: ${p.ip||"-"}\nUA: ${p.userAgent||"-"}`;
+  await t.sendMail({from:EMAIL_FROM,to:EMAIL_TO,subject,text});
+}
+export async function sendTelegramNotification(p){
+  const {TELEGRAM_BOT_TOKEN,TELEGRAM_CHAT_ID}=process.env; if(!TELEGRAM_BOT_TOKEN||!TELEGRAM_CHAT_ID) return;
+  const msg=`*Transparency Report Download*\n*Time:* ${p.timestamp}\n*Email:* ${p.email||"-"}\n*Code:* ${p.code||"-"}\n*Watermark:* ${p.watermark}\n*IP:* ${p.ip||"-"}\n*UA:* ${p.userAgent||"-"}`;
+  await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({chat_id:TELEGRAM_CHAT_ID,text:msg,parse_mode:"Markdown",disable_web_page_preview:true})
+  });
+}
+
+utils/rateLimiter.js
+
+const last=new Map();
+export function shouldNotify(key, cooldownMs=60000){const now=Date.now(),prev=last.get(key)||0; if(now-prev<cooldownMs) return false; last.set(key,now); return true;}
+
+
+---
+
+6) API routes (NO demo data—only real sources)
+
+Create folder: pages/api/reports/
+
+pages/api/reports/proof-of-reserves.js (multi-chain + USD aggregation; empty if wallets unset)
+
+export default async function handler(req,res){
+  try{
+    const ETHERSCAN_API_KEY=process.env.ETHERSCAN_API_KEY;
+    const BSCSCAN_API_KEY=process.env.BSCSCAN_API_KEY;
+    const ETHEREUM_WALLET=process.env.ETHEREUM_WALLET;
+    const BSC_WALLET=process.env.BSC_WALLET;
+    const XRP_WALLET=process.env.XRP_WALLET;
+    const SUI_WALLET=process.env.SUI_WALLET;
+
+    const wallets=[
+      ETHEREUM_WALLET?{chain:"Ethereum",symbol:"ETH",address:ETHEREUM_WALLET, api:(a,k)=>`https://api.etherscan.io/api?module=account&action=balance&address=${a}&tag=latest&apikey=${k}`} : null,
+      BSC_WALLET?{chain:"BSC",symbol:"BNB",address:BSC_WALLET, api:(a,k)=>`https://api.bscscan.com/api?module=account&action=balance&address=${a}&tag=latest&apikey=${k}`} : null,
+      XRP_WALLET?{chain:"XRP",symbol:"XRP",address:XRP_WALLET, api:(a)=>`https://api.xrpscan.com/api/v1/account/${a}`} : null,
+      SUI_WALLET?{chain:"Sui",symbol:"SUI",address:SUI_WALLET, api:(a)=>`https://fullnode.mainnet.sui.io:443/v1/account/${a}/balance`} : null
+    ].filter(Boolean);
+
+    if(wallets.length===0) return res.status(204).end();
+
+    const priceRes=await fetch("https://api.coingecko.com/api/v3/simple/price?ids=ethereum,binancecoin,ripple,sui&vs_currencies=usd");
+    const prices=await priceRes.json(); const priceMap={ETH:prices.ethereum?.usd||0, BNB:prices.binancecoin?.usd||0, XRP:prices.ripple?.usd||0, SUI:prices.sui?.usd||0};
+
+    const results=[];
+    for(const w of wallets){
+      let balance=0;
+      try{
+        if(w.chain==="Ethereum"){ const r=await fetch(w.api(w.address,ETHERSCAN_API_KEY)); const d=await r.json(); balance=Number(d.result)/1e18; }
+        else if(w.chain==="BSC"){ const r=await fetch(w.api(w.address,BSCSCAN_API_KEY)); const d=await r.json(); balance=Number(d.result)/1e18; }
+        else if(w.chain==="XRP"){ const r=await fetch(w.api(w.address)); const d=await r.json(); balance=(d.account_data?.Balance||0)/1_000_000; }
+        else if(w.chain==="Sui"){ const r=await fetch(w.api(w.address)); const d=await r.json(); balance=(d.totalBalance||0)/1e9; }
+      }catch(e){}
+      const usdValue=balance*(priceMap[w.symbol]||0);
+      results.push({chain:w.chain,address:w.address,balance,symbol:w.symbol,usdValue});
+    }
+    const totalUSD=results.reduce((s,r)=>s+(r.usdValue||0),0);
+    return res.status(200).json({reserves:results,totalUSD});
+  }catch(e){return res.status(500).json({error:"Unable to fetch multi-chain reserves."});}
+}
+
+pages/api/reports/transparency.js (reads real PDFs from public/docs/ index via filesystem or DB; if none, 204)
+
+import fs from "fs"; import path from "path";
+export default async function handler(req,res){
+  try{
+    const docsDir=path.join(process.cwd(),"public","docs");
+    if(!fs.existsSync(docsDir)) return res.status(204).end();
+    const files=fs.readdirSync(docsDir).filter(f=>f.toLowerCase().endsWith(".pdf"));
+    if(files.length===0) return res.status(204).end();
+    const reports=files.map(f=>({type:inferType(f),date:inferDate(f),description:humanize(f),link:`/docs/${f}`}));
+    return res.status(200).json({reports});
+  }catch(e){return res.status(500).json({error:"Could not load reports."});}
+}
+function inferType(fname){const n=fname.toLowerCase(); if(n.includes("audit"))return"Audi­t"; if(n.includes("reserve"))return"Proof of Reserves"; if(n.includes("financial"))return"Financial Report"; return "Report";}
+function inferDate(fname){const m=fname.match(/\d{4}[-_]?q[1-4]|\d{4}[-_]\d{2}[-_]\d{2}|\d{4}/i); return m?m[0].replace(/_/g,"-").toUpperCase():"—";}
+function humanize(fname){return fname.replace(/[_-]/g," ").replace(/\.pdf$/i,"");}
+
+pages/api/reports/reserves-history.js (DB only; returns 204 if empty)
+
+import Database from "@replit/database"; const db=new Database();
+export default async function handler(req,res){
+  try{
+    const keys=await db.list("reserves:");
+    if(!keys || keys.length===0) return res.status(204).end();
+    const history=[]; for(const k of keys){ const s=await db.get(k); if(s) history.push(s); }
+    history.sort((a,b)=>new Date(a.date)-new Date(b.date));
+    return res.status(200).json({history});
+  }catch(e){return res.status(500).json({error:"Unable to load reserves history."});}
+}
+
+pages/api/reports/run-snapshot.js (exec snapshot script)
+
+import { exec } from "child_process";
+export default function handler(req,res){
+  exec("npm run snapshot",(err,stdout,stderr)=>{
+    if(err) return res.status(500).json({error:"Snapshot failed"});
+    return res.status(200).json({success:true, output: stdout || stderr});
+  });
+}
+
+pages/api/reports/download-logs.js
+
+import Database from "@replit/database"; const db=new Database();
+export default async function handler(req,res){
+  try{
+    const keys=await db.list("download:"); if(!keys||keys.length===0) return res.status(200).json({logs:[]});
+    const logs=[]; for(const k of keys){ const e=await db.get(k); if(e) logs.push(e); }
+    logs.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+    return res.status(200).json({logs});
+  }catch(e){return res.status(500).json({error:"Unable to fetch logs."});}
+}
+
+pages/api/reports/generate-pdf.js (branded PDF, charts, watermark, logging, alerts; no fake data)
+
+import PDFDocument from "pdfkit";
+import { Readable } from "stream";
+import { ChartJSNodeCanvas } from "chartjs-node-canvas";
+import { addCoverPage } from "../../../utils/pdfCoverPage";
+import { addTableOfContents } from "../../../utils/pdfTOC";
+import { addAppendix } from "../../../utils/pdfAppendix";
+import { addFooter } from "../../../utils/pdfFooter";
+import { addWatermark } from "../../../utils/pdfWatermark";
+import { logDownload } from "../../../utils/pdfLogger";
+import { sendEmailNotification, sendTelegramNotification } from "../../../utils/notifier";
+import { shouldNotify } from "../../../utils/rateLimiter";
+
+export default async function handler(req,res){
+  try{
+    const { email, code } = req.query;
+
+    // Pull real data (may be empty)
+    const reservesR=await fetch(`http://localhost:3000/api/reports/proof-of-reserves`);
+    const reservesData= reservesR.status===200 ? await reservesR.json() : {reserves:[],totalUSD:0};
+
+    const historyR=await fetch(`http://localhost:3000/api/reports/reserves-history`);
+    const historyData= historyR.status===200 ? await historyR.json() : {history:[]};
+
+    const chartCanvas=new ChartJSNodeCanvas({width:600,height:400});
+    const pieImage=await chartOrNull(()=>chartCanvas.renderToBuffer({
+      type:"pie", data:{labels:reservesData.reserves.map(r=>r.chain),
+      datasets:[{label:"Reserves USD", data:reservesData.reserves.map(r=>r.usdValue), backgroundColor:["#4F46E5","#22C55E","#F59E0B","#EF4444","#3B82F6"]}]}
+    }));
+    const lineImage=await chartOrNull(()=>chartCanvas.renderToBuffer({
+      type:"line", data:{labels:historyData.history.map(h=>h.date),
+      datasets:[{label:"Total USD Reserves", data:historyData.history.map(h=>h.totalUSD), fill:false, borderColor:"#4F46E5", tension:0.1}]}
+    }));
+
+    const doc=new PDFDocument({margin:50, bufferPages:true}); const stream=new Readable().wrap(doc);
+    res.setHeader("Content-Type","application/pdf");
+    res.setHeader("Content-Disposition","attachment; filename=transparency_report.pdf"); stream.pipe(res);
+
+    addCoverPage(doc, "public/images/logo.png");
+    addTableOfContents(doc, [
+      {title:"Executive Summary"},{title:"Chain Balances"},{title:"Charts & Visualizations"},{title:"Reserves History"},{title:"Appendix"}
+    ]);
+
+    // Executive Summary
+    doc.addPage(); doc.fontSize(20).fillColor("#111").text("Executive Summary",{underline:true}).moveDown();
+    doc.fontSize(14).text(`Total On-Chain Reserves: $${Number(reservesData.totalUSD||0).toLocaleString(undefined,{minimumFractionDigits:2})}`);
+    if((historyData.history||[]).length>=2){
+      const first=historyData.history[0].totalUSD, last=historyData.history.slice(-1)[0].totalUSD;
+      const growth=((last-first)/first)*100; doc.text(`Cumulative Growth: ${growth.toFixed(1)}% since launch`);
+    }
+    doc.moveDown(2);
+
+    // Chain Balances
+    doc.addPage(); doc.fontSize(18).text("Chain Balances",{underline:true}).moveDown();
+    (reservesData.reserves||[]).forEach(r=>{ doc.fontSize(12).text(`${r.chain} (${r.symbol}): ${r.balance} ${r.symbol} — $${(r.usdValue||0).toLocaleString()}`); });
+
+    // Charts
+    doc.addPage(); doc.fontSize(18).text("Charts & Visualizations",{underline:true}).moveDown();
+    if(pieImage){ doc.fontSize(14).text("Reserves Allocation by Chain").moveDown(0.5); doc.image(pieImage,{fit:[450,300]}); doc.moveDown(1); }
+    if(lineImage){ doc.fontSize(14).text("Reserves Growth Over Time").moveDown(0.5); doc.image(lineImage,{fit:[450,300]}); }
+
+    // History
+    doc.addPage(); doc.fontSize(18).text("Reserves History",{underline:true}).moveDown();
+    (historyData.history||[]).forEach(h=> doc.fontSize(12).text(`${h.date}: $${Number(h.totalUSD).toLocaleString()}`));
+
+    // Appendix
+    addAppendix(doc);
+
+    // Footer + Watermark + Logging + Alerts
+    addFooter(doc);
+    const watermarkText = email||code ? `Confidential • Sovran Wealth Fund • ${email || code}` : "Confidential • Sovran Wealth Fund";
+    addWatermark(doc, watermarkText);
+    const entry = await logDownload(email, code, watermarkText);
+    const ip=(req.headers["x-forwarded-for"]||req.socket?.remoteAddress||"")+"";
+    const userAgent=req.headers["user-agent"]||"";
+    const payload={...entry, ip, userAgent};
+    const key=email||code||ip||"anon";
+    if(shouldNotify(key, 60000)){ await Promise.allSettled([ sendEmailNotification(payload), sendTelegramNotification(payload) ]); }
+
+    doc.end();
+  }catch(e){ console.error(e); return res.status(500).json({error:"Failed to generate PDF"}); }
+}
+async function chartOrNull(fn){ try{ return await fn(); }catch{ return null; } }
+
+
+---
+
+7) Snapshot script (daily history; no fake data)
+
+scripts/saveReserveSnapshot.js
+
+import fetch from "node-fetch";
+import Database from "@replit/database";
+const db=new Database();
+const reservesUrl="http://localhost:3000/api/reports/proof-of-reserves";
+(async function save(){
+  try{
+    const r=await fetch(reservesUrl); if(!r.ok) throw new Error("fetch");
+    const d=await r.json(); const totalUSD=d.totalUSD ?? 0;
+    const today=new Date().toISOString().split("T")[0];
+    await db.set(`reserves:${today}`, {date:today, totalUSD});
+    console.log("✅ Snapshot saved", today, totalUSD);
+  }catch(e){console.error("❌ Snapshot error", e?.message||e);}
+})();
+
+
+---
+
+8) Admin page
+
+pages/admin/download-logs.js
+
+import React,{useEffect,useState} from "react";
+export default function DownloadLogsPage(){
+  const [logs,setLogs]=useState([]);
+  useEffect(()=>{(async()=>{const r=await fetch("/api/reports/download-logs"); const d=await r.json(); setLogs(d.logs||[]);})();},[]);
+  return (<div className="max-w-5xl mx-auto px-6 py-12">
+    <h1 className="text-3xl font-bold mb-6">PDF Download Logs</h1>
+    <table className="min-w-full bg-white border">
+      <thead><tr className="bg-gray-100"><th className="px-4 py-2 text-left">Timestamp</th><th className="px-4 py-2 text-left">Email</th><th className="px-4 py-2 text-left">Code</th><th className="px-4 py-2 text-left">Watermark</th></tr></thead>
+      <tbody>{logs.map((l,i)=><tr key={i} className="border-t"><td className="px-4 py-2">{l.timestamp}</td><td className="px-4 py-2">{l.email||"-"}</td><td className="px-4 py-2">{l.code||"-"}</td><td className="px-4 py-2">{l.watermark}</td></tr>)}</tbody>
+    </table>
+  </div>);
+}
+
+
+---
+
+9) Pages (content only—no placeholders)
+
+Create these pages (we’ve already drafted content earlier; included here in compact form):
+
+Legal/Compliance pages:
+
+pages/terms-and-conditions.js
+
+pages/privacy-policy.js
+
+pages/security.js
+
+pages/compliance.js
+
+
+Paste the boilerplate sections you approved earlier (Introduction, Eligibility, Services, Risk, Liability, Governing Law; Privacy: Data, Use, Sharing, Rights, Cookies; Security: Contracts, User Protection, Incident, Bounty; Compliance: Regulatory, KYC/AML, Jurisdictions, Transparency).
+
+Informational pages:
+
+pages/about-us.js (mission/vision/values/history)
+
+pages/team.js (cards with team/advisors)
+
+pages/faq.js (uses FAQAccordion with the Q&A we wrote)
+
+pages/pricing.js (clear fee table — fill with your real fees)
+
+pages/roadmap.js (uses RoadmapTimeline; fill milestone dates/status)
+
+pages/contact.js (contact form action → your real support inbox)
+
+pages/tokenomics.js (uses TokenomicsPieChart; use real allocation)
+
+pages/transparency-reports.js (the full dashboard)
+
+
+Example pages/transparency-reports.js:
+
+import React from "react";
+import TransparencyReportsTable from "../components/TransparencyReportsTable";
+import ProofOfReserves from "../components/ProofOfReserves";
+import ReservesSummary from "../components/ReservesSummary";
+import ReservesHistoryChart from "../components/ReservesHistoryChart";
+import GrowthMetric from "../components/GrowthMetric";
+import ExportButtons from "../components/ExportButtons";
+import DownloadPDF from "../components/DownloadPDF";
+
+export default function TransparencyReportsPage(){
+  const investor = { email: null, code: null }; // wire to your auth/session
+  return (
+    <div className="max-w-5xl mx-auto px-6 py-12">
+      <h1 className="text-4xl font-bold mb-8">Transparency Reports</h1>
+      <ReservesSummary fetchUrl="/api/reports/proof-of-reserves" />
+      <GrowthMetric fetchUrl="/api/reports/reserves-history" />
+      <ReservesHistoryChart fetchUrl="/api/reports/reserves-history" />
+      <ExportButtons fetchUrl="/api/reports/reserves-history" />
+      <DownloadPDF email={investor.email} code={investor.code}/>
+      <p className="mb-6 text-lg text-gray-700 mt-8">
+        Access live proof of reserves, audits, and financial statements. No sample data is displayed—only real on-chain and published documents.
+      </p>
+      <ProofOfReserves fetchUrl="/api/reports/proof-of-reserves" />
+      <TransparencyReportsTable fetchReportsUrl="/api/reports/transparency" />
+    </div>
+  );
+}
+
+
+---
+
+10) Final checks (no placeholders)
+
+If wallet env vars missing → /api/reports/proof-of-reserves returns 204 and UI shows “No tracked reserves yet.”
+
+If no PDFs in public/docs/ → /api/reports/transparency returns 204 and UI shows “No reports available yet.”
+
+If no snapshots in DB → /api/reports/reserves-history returns 204 and UI shows “No reserve history available.”
+
+No file contains any hardcoded demo arrays. All data is from env, DB, real PDFs, or chain APIs.
+
+
+
+---
+
+11) Run & schedule
+
+npm run dev
+
+Optional daily snapshot (use UptimeRobot/cron-job.org to ping):
+
+https://YOUR-APP-URL/api/reports/run-snapshot
+

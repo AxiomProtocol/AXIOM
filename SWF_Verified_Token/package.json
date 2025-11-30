@@ -1,0 +1,27 @@
+{
+  "name": "sovran-wealth-fund-token",
+  "version": "1.0.0",
+  "description": "Verified ERC20 token for the Sovran Wealth Fund ecosystem",
+  "main": "index.js",
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.js --network polygon",
+    "deploy:test": "hardhat run scripts/deploy.js --network mumbai",
+    "verify": "hardhat verify --network polygon",
+    "verify:test": "hardhat verify --network mumbai",
+    "node": "hardhat node",
+    "console": "hardhat console"
+  },
+  "author": "Sovran Wealth Fund Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-etherscan": "^3.1.7",
+    "@openzeppelin/contracts": "^4.9.3",
+    "chai": "^4.3.7",
+    "dotenv": "^16.0.3",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.17.1"
+  }
+}

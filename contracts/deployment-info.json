@@ -1,0 +1,44 @@
+{
+  "network": "Arbitrum One",
+  "chainId": 42161,
+  "rpcUrl": "https://arb1.arbitrum.io/rpc",
+  "explorer": "https://arbitrum.blockscout.com",
+  "contracts": {
+    "AxiomV2": {
+      "address": "0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D",
+      "name": "Axiom Protocol Token",
+      "symbol": "AXM",
+      "decimals": 18,
+      "maxSupply": "15000000000000000000000000000",
+      "verified": true,
+      "verifiedAt": "Nov 19 2025 23:48:38 PM (-06:00 UTC)",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D",
+      "compiler": {
+        "version": "0.8.20",
+        "optimizationRuns": 200,
+        "evmVersion": "default"
+      },
+      "constructorArgs": {
+        "admin": "0x2bB2c2A7a1d82097488bf0b9c2a59c1910CD8D5d",
+        "distributionVault": "0x2bB2c2A7a1d82097488bf0b9c2a59c1910CD8D5d",
+        "burnVault": "0x2bB2c2A7a1d82097488bf0b9c2a59c1910CD8D5d",
+        "stakingVault": "0x2bB2c2A7a1d82097488bf0b9c2a59c1910CD8D5d",
+        "liquidityVault": "0x2bB2c2A7a1d82097488bf0b9c2a59c1910CD8D5d",
+        "dividendVault": "0x2bB2c2A7a1d82097488bf0b9c2a59c1910CD8D5d",
+        "treasuryVault": "0x2bB2c2A7a1d82097488bf0b9c2a59c1910CD8D5d"
+      },
+      "features": [
+        "ERC20",
+        "ERC20Burnable",
+        "ERC20Permit",
+        "ERC20Votes",
+        "Pausable",
+        "AccessControl",
+        "ReentrancyGuard",
+        "Dynamic Fee Routing",
+        "Compliance Module Support",
+        "Identity Registry Integration"
+      ]
+    }
+  }
+}

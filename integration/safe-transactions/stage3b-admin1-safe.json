@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "chainId": "42161",
+  "createdAt": 1732305600000,
+  "meta": {
+    "name": "Axiom Stage 3b: DePIN Suite Oracle",
+    "description": "1 role grant for IoT Oracle on DePIN Suite",
+    "txBuilderVersion": "1.16.3"
+  },
+  "transactions": [
+    {
+      "to": "0x16dC3884d88b767D99E0701Ba026a1ed39a250F1",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0xb3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d",
+        "account": "0xe38B3443E17A07953d10F7841D5568a27A73ec1a"
+      }
+    }
+  ]
+}

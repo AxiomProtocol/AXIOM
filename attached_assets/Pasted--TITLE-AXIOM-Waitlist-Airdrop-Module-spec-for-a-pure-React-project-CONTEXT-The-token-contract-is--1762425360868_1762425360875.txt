@@ -1,0 +1,266 @@
+
+TITLE
+AXIOM Waitlist Airdrop Module — spec for a pure React project
+
+CONTEXT
+The token contract is Sovran Wealth Fund SWF rebranded to AXIOM. Contracts are already deployed or available locally. Reuse existing contracts in the repo. Look in the contracts folder for token, staking, referral or distributor contracts that can support an airdrop claim, staking boost, and on-chain accounting. If functions are missing, design adapters in the frontend to call the closest equivalents and note gaps.
+
+GOAL
+Add a growth airdrop to the waitlist page that increases conversions and referrals while staying GENIUS Act compliant. The airdrop must support tiers, referral tracking, staking boost, progress visuals, and an optional mystery multiplier. Everything is client-side React with ethers.js and the project’s existing wallet connector.
+
+TECH AND CONSTRAINTS
+
+Pure React components only; do not inject raw HTML strings.
+
+Use the project’s existing styling system and theme tokens.
+
+Use ethers.js already in the project for on-chain reads and writes.
+
+Keep all environment values in .env files, not hardcoded.
+
+Respect existing routing and state patterns. If none, use React Context or Zustand.
+
+No server code. Where server endpoints are referenced, assume the project already has an API layer; define the contracts for those endpoints only.
+
+
+CONTRACT INTEGRATION CHECKLIST
+
+Inspect contracts folder for the rebranded SWF token now AXIOM. Identify
+
+ERC20 interface or custom functions for mint, claim, transfer restrictions
+
+Any Distributor, MerkleAirdrop, RewardsVault, Staking, or Referral contracts
+
+Any Pausable, Ownable, AccessControl roles needed for claims
+
+
+Record the addresses in a config file per network
+
+PEAQ main or test network if applicable
+
+BSC or Polygon if bridges exist
+
+
+For airdrop claims, prefer a Merkle-based or signature-based pattern. If neither exists, specify a ClaimRegistry mapping address to amount and include a read-only check that disables the claim button.
+
+
+DATA AND CONFIG
+Create airdrop.json in a config folder with
+
+programStart, programEnd, totalPool, poolSymbol, decimals
+
+tier rules and rewards
+
+stakingBoost rules
+
+mysteryMultiplier min and max
+
+eligibility gates KYC required, email verified, wallet screened
+
+copy strings for all UI text
+
+
+STATE MANAGEMENT
+Create AirdropStore using Context or Zustand that holds
+
+user wallet address, connection status, chain id
+
+user profile from waitlist email if available
+
+KYC status pending, approved
+
+referralCode for the current user
+
+counts for referrals, verifiedReferrals
+
+tier currentTier and progress to next
+
+on-chain balances: tokenBalance, stakedBalance, claimableAmount
+
+program stats claimedTotal, participants, time remaining
+Expose actions connectWallet, fetchUserState, claimAirdrop, stakeClaimed, generateReferralLink, copyLink, syncKYC, refreshStats.
+
+
+COMPONENTS TO IMPLEMENT
+
+AirdropHero
+Short pitch and CTA buttons Join waitlist, Connect wallet, Claim tokens
+
+ProgressPanel
+Shows total tokens claimed versus totalPool, countdown timer, and a live participants count
+
+TierSteps
+Bronze, Silver, Gold, Platinum with requirements and rewards; display current step and what’s left to reach the next tier
+
+ReferralCard
+Displays personal referral link, copy and share buttons, total referrals, verified referrals, and estimated bonus
+
+ClaimCard
+Shows claimable amount, compliance gates passed or failed, claim button, post-claim actions stake now
+
+StakingBoostBanner
+If user stakes within the promotional window, show extra APY duration and an action button
+
+Leaderboard
+Top referrers weekly and all-time with pagination; anonymize by default, show first and last characters of wallet
+
+MysteryReveal
+After launch or upon meeting a condition, reveal randomized bonus multiplier per user and add to claimable
+
+ComplianceBadges
+Wallet screen pass, GENIUS Act aligned, KYC AML
+
+FAQDrawer
+Five to eight short Q and A entries about compliance, fees, and settlement
+
+
+USER FLOWS
+
+Visitor lands on the waitlist page
+1 Connects wallet. If on wrong chain, show guided network switch.
+2 Enters email or confirms existing waitlist profile.
+3 Gets a personal referral link format axiomprotocol.app/waitlist r userId or r wallet.
+4 Sees current tier, progress to next, and what to do to upgrade.
+
+Claim flow
+1 Run client checks KYC ok, wallet screened ok via API, within dates.
+2 Read on-chain allowance to claim from Distributor or compute Merkle proof from airdrop list served by API.
+3 Enable Claim button. On success, refresh token balance and mark as claimed in UI.
+4 Offer stake now with boost; call staking contract stake function with claimed amount.
+
+Referral flow
+1 Copy link.
+2 When a new user joins through the link and verifies email and wallet, increment verifiedReferrals and update tier.
+
+Mystery multiplier
+1 If enabled, request a server-signed multiplier for the user within min max bounds.
+2 Add preview of potential bonus and reveal at launch or after staking.
+
+
+BACKEND ENDPOINT CONTRACTS TO CALL FROM THE FRONTEND
+Define these as fetch methods in an api client module. Replit AI should not write server code, only define usage.
+
+GET api waitlist me returns profile, KYC status, referralCode, stats
+
+POST api waitlist join body email, wallet returns profile
+
+GET api airdrop status returns programStart, programEnd, totalPool, claimedTotal, participants
+
+GET api airdrop claim-info params wallet returns merkleProof or signed payload and claimableAmount
+
+POST api referrals record body referrer, referee, status returns updated counts
+
+GET api leaderboard params window weekly alltime returns list of entries
+
+GET api compliance wallet-screen params wallet returns pass or fail
+
+GET api bonus mystery params wallet returns multiplier if eligible
+
+
+WALLET AND CHAIN BEHAVIOR
+
+Use the app’s existing connector. If none, specify RainbowKit or Wagmi style connectors but do not add code.
+
+Validate network is the one where AXIOM token and Distributor contracts live.
+
+For PEAQ or other non-EVM chains in the future, isolate web3 calls behind an adapter.
+
+
+TIERS AND REWARDS
+
+Bronze join waitlist and connect wallet reward 50 AXIOM
+
+Silver complete KYC or two verified referrals reward additional 100 AXIOM
+
+Gold become Founding Member or list a property reward additional 500 AXIOM
+
+Platinum bring ten verified referrals or onboard a wholesaler reward additional 1000 AXIOM plus entry to a shared revenue pool if contract exists
+
+All rewards are additive and displayed as pending until compliance checks return true.
+
+
+STAKING BOOST
+
+If user stakes any amount of claimed tokens within the promotional window defined in config, apply a two times APY boost for sixty days.
+
+Do not calculate APY client-side; read it from staking contract or a config endpoint.
+
+Display boost end date and a countdown.
+
+
+LEADERBOARD AND PROGRESS BAR
+
+Leaderboard uses API data. Keep identities pseudonymous by default.
+
+Progress bar uses claimedTotal divided by totalPool; include an animated tick when numbers update.
+
+Show remaining supply and end date.
+
+
+GENIUS ACT AND COMPLIANCE GUARDRAILS
+
+Before claim enablement show three checks
+1 KYC AML via Persona status approved
+2 Wallet screening pass via Chainalysis status green
+3 Jurisdiction allowed boolean from backend
+
+If any fail, show informative gating messages and a link to support.
+
+
+COPY AND MICROTEXT
+
+Headline We are not giving away tokens. We are inviting you to co-build the first DePIN real estate network.
+
+Subhead Earn AXIOM by joining, referring, staking, and helping onboard real properties.
+
+Buttons Claim, Stake now, Copy link, Share link, Complete KYC, View rules.
+
+
+ANALYTICS EVENTS
+Fire events through the app’s existing analytics layer
+
+airdrop view, connect wallet, join, claim start, claim success, stake start, stake success, referral link copied, referral verified, tier advanced, mystery revealed.
+
+
+ACCESSIBILITY AND PERFORMANCE
+
+All interactive elements keyboard reachable and labelled.
+
+Lazy load leaderboard rows.
+
+Poll status endpoints with exponential backoff, not more than once every fifteen seconds.
+
+
+QA AND ACCEPTANCE
+
+Wallet connect works on desktop and mobile.
+
+Wrong chain prompts a guided switch.
+
+Claim button disabled until all gates pass.
+
+After claim, balances refresh without a reload.
+
+Referral increments only upon verified referee.
+
+Staking boost visibly applied with an end date.
+
+Leaderboard and progress bar update within fifteen seconds of actions.
+
+All text strings configurable in airdrop.json.
+
+
+DELIVERABLES
+
+New route or section appended to the existing waitlist page named Airdrop
+
+Components listed above with props documented
+
+Config files for networks and program rules
+
+api client methods with request and response shapes
+
+Readme paragraph describing how to toggle the program and where to set contract addresses.
+
+
+Build according to this spec and keep the code consistent with the project’s current patterns and folder structure.

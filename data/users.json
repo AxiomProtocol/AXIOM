@@ -1,0 +1,54 @@
+[
+  {
+    "id": 136817688,
+    "firstName": "Channel",
+    "lastName": "",
+    "username": "Channel_Bot",
+    "referralCode": "74b70964",
+    "referralLink": "https://t.me/SovranReferralBot?start=74b70964",
+    "registrationDate": "2025-05-15T17:31:33.447Z",
+    "brandingSettings": {
+      "customName": "/myreferral@SovranReferralBot",
+      "tagline": "🔗 My Referral Link",
+      "isCustomized": true
+    },
+    "tutorialProgress": {
+      "started": false,
+      "currentStep": 0,
+      "completed": false,
+      "lastInteraction": null
+    },
+    "referralStats": {
+      "directReferrals": 1,
+      "indirectReferrals": 0,
+      "totalReferrals": 1,
+      "rewardsEarned": 0
+    }
+  },
+  {
+    "id": 5973158135,
+    "firstName": "Hasan Sa’Raam Bey Al-Moabiyah",
+    "lastName": "",
+    "username": "HasanSaRaamBey",
+    "referralCode": "e613e2fb",
+    "referralLink": "https://t.me/SovranReferralBot?start=e613e2fb",
+    "registrationDate": "2025-05-15T17:31:33.448Z",
+    "brandingSettings": {
+      "customName": "/myreferral",
+      "tagline": "/myreferral",
+      "isCustomized": true
+    },
+    "tutorialProgress": {
+      "started": false,
+      "currentStep": 0,
+      "completed": false,
+      "lastInteraction": null
+    },
+    "referralStats": {
+      "directReferrals": 0,
+      "indirectReferrals": 0,
+      "totalReferrals": 0,
+      "rewardsEarned": 0
+    }
+  }
+]

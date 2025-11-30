@@ -1,0 +1,4 @@
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+export function exportToCSV(history){const ws=XLSX.utils.json_to_sheet(history);const csv=XLSX.utils.sheet_to_csv(ws);saveAs(new Blob([csv],{type:"text/csv;charset=utf-8;"}),"reserves_history.csv");}
+export function exportToExcel(history){const ws=XLSX.utils.json_to_sheet(history);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"ReservesHistory");const buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});saveAs(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),"reserves_history.xlsx");}

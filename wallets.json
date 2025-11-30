@@ -1,0 +1,104 @@
+[
+  {
+    "name": "SWF Bank Wallet",
+    "address": "0xEcDdb7dFF2f61E1caC7AC767337A38E1aD851eD6",
+    "allocation": "29%",
+    "staticBalance": 2900290000
+  },
+  {
+    "name": "Admin Wallet",
+    "address": "0x2A5269E92C48829fdF21D8892c23E894B11D15e3",
+    "allocation": "0%",
+    "staticBalance": 0
+  },
+  {
+    "name": "Treasury Wallet",
+    "address": "0xE6a77F089F2F74fe01661b8DB2aaDf95DBA3A7E9",
+    "allocation": "6.5%",
+    "staticBalance": 650065000
+  },
+  {
+    "name": "Development Wallet",
+    "address": "0x62c62b5Bcb31cA7F04910d6Be28d74E07DB24bA5",
+    "allocation": "15%",
+    "staticBalance": 1500150000
+  },
+  {
+    "name": "Marketing Wallet",
+    "address": "0x5013Ae54fBaEC83106afA6cD26C06Ba64D2f718d",
+    "allocation": "5%",
+    "staticBalance": 500050000
+  },
+  {
+    "name": "Team Wallet",
+    "address": "0x62850718f02f8f5874c0ADf156876eF01Ae8Be8C",
+    "allocation": "10%",
+    "staticBalance": 1000100000
+  },
+  {
+    "name": "Partners Wallet",
+    "address": "0x8Af1399af51Fc53DD7575e331Fbb039Cf029e2DF",
+    "allocation": "5%",
+    "staticBalance": 500050000
+  },
+  {
+    "name": "Foundation Wallet",
+    "address": "0xFE60C780Ba081a03F2111d7eadD4ABcd34B60f78",
+    "allocation": "10%",
+    "staticBalance": 1000100000
+  },
+  {
+    "name": "Buyback Wallet",
+    "address": "0x2362Ce3B64130c20B917776Ac9700474aE2b5EA9",
+    "allocation": "5%",
+    "staticBalance": 500050000
+  },
+  {
+    "name": "Solo Operator Wallet",
+    "address": "0x9a74977D5c7263eD00B026491cBD734A2acfc3d1",
+    "allocation": "5%",
+    "staticBalance": 500050000
+  },
+  {
+    "name": "Rewards Wallet",
+    "address": "0xaaC7C3F9d46a29c9E0e7F37dEF88104b5059e65E",
+    "allocation": "4%",
+    "staticBalance": 400040000
+  },
+  {
+    "name": "Liquidity Wallet",
+    "address": "0x02514Df630f9d9F6Aaff8a89b9caF3E34c0Fc1c1",
+    "allocation": "0%",
+    "staticBalance": 0
+  },
+  {
+    "name": "Governance Wallet",
+    "address": "0x62c6E924e4739B018D8b99588E5998904e1d9730",
+    "allocation": "0%",
+    "staticBalance": 0
+  },
+  {
+    "name": "Advisors Wallet",
+    "address": "0x6F8681dAC26fBDD3662e7b1a621333FD63187D0a",
+    "allocation": "0%",
+    "staticBalance": 0
+  },
+  {
+    "name": "Community Wallet",
+    "address": "0xF0ad95Ea3A1a9fbE12dA9a8CD01708F2B2D03ad0",
+    "allocation": "2%",
+    "staticBalance": 200020000
+  },
+  {
+    "name": "Reserve Wallet",
+    "address": "0xaaBb02A0C4E3bb336F3B947DB27131F39b411dC1",
+    "allocation": "2.5%",
+    "staticBalance": 250025000
+  },
+  {
+    "name": "Charity Wallet",
+    "address": "0xAeBf499B8F7c8a430B10288CBB064C79A62Fec6C",
+    "allocation": "0.5%",
+    "staticBalance": 50005000
+  }
+]

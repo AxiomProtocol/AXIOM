@@ -1,0 +1,856 @@
+{
+  "url": "https://www.tribevest.com/business-account",
+  "title": "Tribevest - Business Account",
+  "meta_description": "Tribevest provides a full-service business account for your Tribe to pool capital for group investments.",
+  "headings": [
+    {
+      "level": 1,
+      "text": "Fully integrated business account for your LLC"
+    },
+    {
+      "level": 2,
+      "text": "Your Business Account includes"
+    },
+    {
+      "level": 2,
+      "text": "Every Tribe has a Business Account"
+    },
+    {
+      "level": 2,
+      "text": "Business account in minutes, not days"
+    },
+    {
+      "level": 2,
+      "text": "Full-service business account"
+    },
+    {
+      "level": 2,
+      "text": "Visibility for all your members"
+    },
+    {
+      "level": 2,
+      "text": "Frequently Asked Questions"
+    },
+    {
+      "level": 2,
+      "text": "Start your partnership today."
+    }
+  ],
+  "main_content": "✅ KYC check on all members\n\n✅ Send funds via ACH or Wire (fees may apply)\n\n✅ Order a business credit card\n\n✅ Remote check deposit capture\n\n✅ Same-day ACH\n\n✅ Automatically creates all members to be Payees with the ability for additional Payees\n\nOnce your LLC and EIN are completed, we open your business account.\n\nEveryone can see what is coming in and going out of the business account at all times.\n\nThere is no limit on the total amount an individual member can contribute. However, daily contribution limits may apply. Larger contributions can easily be split into more than one contribution if daily contribution limits are exceeded.\n\nYes, the tribe can use funding rounds to start pooling capital contributions. Each member's contributions will be held in their Wallet.\n\nAll members can track their contribution from the tribe dashboard. Once a business account is set up, the member can easily move their funds into the business account.\n\nFrom the Tribe dashboard you can send payments via Wire Transfer (fees may apply). After the Wire has been sent, you can see the status and details of your transfer like the IMAD and OMAD numbers associated.\n\nYou can link your bank account from your user dashboard. You'll be prompted by Plaid to locate your bank, provide login credentials and select the account you would like to link.\n\nYou can easily add a Payee in the Tribe dashboard under the Business Account tab.\n\nOnly designated admins can control the movement of money in the business account. All other members simply have visibility through the dashboard.",
+  "links": [
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/multi-member-llc",
+      "text": "LLC formation"
+    },
+    {
+      "url": "https://www.tribevest.com/business-account",
+      "text": "Business account"
+    },
+    {
+      "url": "https://www.tribevest.com/tribe-dashboard",
+      "text": "Tribe dashboard"
+    },
+    {
+      "url": "https://www.tribevest.com/operating-agreement",
+      "text": "Operating Agreement"
+    },
+    {
+      "url": "https://www.tribevest.com/distributions-communications",
+      "text": "Distributions & Communications"
+    },
+    {
+      "url": "https://www.tribevest.com/taxes",
+      "text": "Tax services"
+    },
+    {
+      "url": "https://www.tribevest.com/partnerships",
+      "text": "Partners"
+    },
+    {
+      "url": "https://www.tribevest.com/lead-sponsors",
+      "text": "Lead Sponsors"
+    },
+    {
+      "url": "https://www.tribevest.com/masterclass/passive-investing",
+      "text": "Masterclass"
+    },
+    {
+      "url": "https://www.tribevest.com/upcoming-events",
+      "text": "Upcoming Events"
+    },
+    {
+      "url": "https://www.tribevest.com/multi-member-llc",
+      "text": "LLC formation"
+    },
+    {
+      "url": "https://www.tribevest.com/business-account",
+      "text": "Business account"
+    },
+    {
+      "url": "https://www.tribevest.com/tribe-dashboard",
+      "text": "Tribe dashboard"
+    },
+    {
+      "url": "https://www.tribevest.com/operating-agreement",
+      "text": "Operating Agreement"
+    },
+    {
+      "url": "https://www.tribevest.com/distributions-communications",
+      "text": "Distributions & Communications"
+    },
+    {
+      "url": "https://www.tribevest.com/taxes",
+      "text": "Tax services"
+    },
+    {
+      "url": "https://www.tribevest.com/partnerships",
+      "text": "Partners"
+    },
+    {
+      "url": "https://www.tribevest.com/lead-sponsors",
+      "text": "Lead Sponsors"
+    },
+    {
+      "url": "https://www.tribevest.com/masterclass/passive-investing",
+      "text": "Masterclass"
+    },
+    {
+      "url": "https://www.tribevest.com/upcoming-events",
+      "text": "Upcoming Events"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/multi-member-llc",
+      "text": "LLC Formation"
+    },
+    {
+      "url": "https://www.tribevest.com/business-account",
+      "text": "Business Account"
+    },
+    {
+      "url": "https://www.tribevest.com/tribe-dashboard",
+      "text": "Tribe Dashboard"
+    },
+    {
+      "url": "https://www.tribevest.com/operating-agreement",
+      "text": "Operating Agreement"
+    },
+    {
+      "url": "https://www.tribevest.com/distributions-communications",
+      "text": "Distributions"
+    },
+    {
+      "url": "https://www.tribevest.com/taxes",
+      "text": "Tax Services"
+    },
+    {
+      "url": "https://www.tribevest.com/privacy-policy",
+      "text": "Privacy Policy"
+    },
+    {
+      "url": "https://www.tribevest.com/disclosures",
+      "text": "Terms of Use"
+    }
+  ],
+  "forms": [],
+  "navigation": [
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "Pricing"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "Features"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "About"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "Support"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.lean-labs.com/blog/how-to-find-high-value-keywords",
+      "text": "How to Find High-Value Keywords You Can Rank For"
+    },
+    {
+      "url": "https://www.lean-labs.com/blog/hubspot-marketing-pricing",
+      "text": "HubSpot Marketing Pricing: 4 Things You Need to Know"
+    },
+    {
+      "url": "https://www.lean-labs.com/blog/brand-narrative-faster-cheaper-easier",
+      "text": "Why Your Brand Narrative Shouldnt Promise To Be Faster, Cheaper, or Easier"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "Pricing"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "Features"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "About"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "Support"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.lean-labs.com/blog/how-to-find-high-value-keywords",
+      "text": "How to Find High-Value Keywords You Can Rank For"
+    },
+    {
+      "url": "https://www.lean-labs.com/blog/hubspot-marketing-pricing",
+      "text": "HubSpot Marketing Pricing: 4 Things You Need to Know"
+    },
+    {
+      "url": "https://www.lean-labs.com/blog/brand-narrative-faster-cheaper-easier",
+      "text": "Why Your Brand Narrative Shouldnt Promise To Be Faster, Cheaper, or Easier"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "Pricing"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "Features"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "About"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "Support"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.lean-labs.com/blog/how-to-find-high-value-keywords",
+      "text": "How to Find High-Value Keywords You Can Rank For"
+    },
+    {
+      "url": "https://www.lean-labs.com/blog/hubspot-marketing-pricing",
+      "text": "HubSpot Marketing Pricing: 4 Things You Need to Know"
+    },
+    {
+      "url": "https://www.lean-labs.com/blog/brand-narrative-faster-cheaper-easier",
+      "text": "Why Your Brand Narrative Shouldnt Promise To Be Faster, Cheaper, or Easier"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "Pricing"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "Features"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "About"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": "Support"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/#navbar_global",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/multi-member-llc",
+      "text": "LLC formation"
+    },
+    {
+      "url": "https://www.tribevest.com/business-account",
+      "text": "Business account"
+    },
+    {
+      "url": "https://www.tribevest.com/tribe-dashboard",
+      "text": "Tribe dashboard"
+    },
+    {
+      "url": "https://www.tribevest.com/operating-agreement",
+      "text": "Operating Agreement"
+    },
+    {
+      "url": "https://www.tribevest.com/distributions-communications",
+      "text": "Distributions & Communications"
+    },
+    {
+      "url": "https://www.tribevest.com/taxes",
+      "text": "Tax services"
+    },
+    {
+      "url": "https://www.tribevest.com/partnerships",
+      "text": "Partners"
+    },
+    {
+      "url": "https://www.tribevest.com/lead-sponsors",
+      "text": "Lead Sponsors"
+    },
+    {
+      "url": "https://www.tribevest.com/masterclass/passive-investing",
+      "text": "Masterclass"
+    },
+    {
+      "url": "https://www.tribevest.com/upcoming-events",
+      "text": "Upcoming Events"
+    },
+    {
+      "url": "https://app.tribevest.com/login",
+      "text": "Login"
+    },
+    {
+      "url": "https://www.tribevest.com/multi-member-llc",
+      "text": "LLC formation"
+    },
+    {
+      "url": "https://www.tribevest.com/business-account",
+      "text": "Business account"
+    },
+    {
+      "url": "https://www.tribevest.com/tribe-dashboard",
+      "text": "Tribe dashboard"
+    },
+    {
+      "url": "https://www.tribevest.com/operating-agreement",
+      "text": "Operating Agreement"
+    },
+    {
+      "url": "https://www.tribevest.com/distributions-communications",
+      "text": "Distributions & Communications"
+    },
+    {
+      "url": "https://www.tribevest.com/taxes",
+      "text": "Tax services"
+    },
+    {
+      "url": "https://www.tribevest.com/partnerships",
+      "text": "Partners"
+    },
+    {
+      "url": "https://www.tribevest.com/lead-sponsors",
+      "text": "Lead Sponsors"
+    },
+    {
+      "url": "https://www.tribevest.com/masterclass/passive-investing",
+      "text": "Masterclass"
+    },
+    {
+      "url": "https://www.tribevest.com/upcoming-events",
+      "text": "Upcoming Events"
+    },
+    {
+      "url": "https://app.tribevest.com/login",
+      "text": "Login"
+    },
+    {
+      "url": "https://6mwuftnqt4v.typeform.com/to/xZk799cA?utm_source=xxxxx&utm_medium=xxxxx",
+      "text": "Get Started"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/#navbar_global",
+      "text": ""
+    },
+    {
+      "url": "https://www.tribevest.com/multi-member-llc",
+      "text": "LLC formation"
+    },
+    {
+      "url": "https://www.tribevest.com/business-account",
+      "text": "Business account"
+    },
+    {
+      "url": "https://www.tribevest.com/tribe-dashboard",
+      "text": "Tribe dashboard"
+    },
+    {
+      "url": "https://www.tribevest.com/operating-agreement",
+      "text": "Operating Agreement"
+    },
+    {
+      "url": "https://www.tribevest.com/distributions-communications",
+      "text": "Distributions & Communications"
+    },
+    {
+      "url": "https://www.tribevest.com/taxes",
+      "text": "Tax services"
+    },
+    {
+      "url": "https://www.tribevest.com/partnerships",
+      "text": "Partners"
+    },
+    {
+      "url": "https://www.tribevest.com/lead-sponsors",
+      "text": "Lead Sponsors"
+    },
+    {
+      "url": "https://www.tribevest.com/masterclass/passive-investing",
+      "text": "Masterclass"
+    },
+    {
+      "url": "https://www.tribevest.com/upcoming-events",
+      "text": "Upcoming Events"
+    },
+    {
+      "url": "https://app.tribevest.com/login",
+      "text": "Login"
+    },
+    {
+      "url": "https://www.tribevest.com/multi-member-llc",
+      "text": "LLC formation"
+    },
+    {
+      "url": "https://www.tribevest.com/business-account",
+      "text": "Business account"
+    },
+    {
+      "url": "https://www.tribevest.com/tribe-dashboard",
+      "text": "Tribe dashboard"
+    },
+    {
+      "url": "https://www.tribevest.com/operating-agreement",
+      "text": "Operating Agreement"
+    },
+    {
+      "url": "https://www.tribevest.com/distributions-communications",
+      "text": "Distributions & Communications"
+    },
+    {
+      "url": "https://www.tribevest.com/taxes",
+      "text": "Tax services"
+    },
+    {
+      "url": "https://www.tribevest.com/partnerships",
+      "text": "Partners"
+    },
+    {
+      "url": "https://www.tribevest.com/lead-sponsors",
+      "text": "Lead Sponsors"
+    },
+    {
+      "url": "https://www.tribevest.com/masterclass/passive-investing",
+      "text": "Masterclass"
+    },
+    {
+      "url": "https://www.tribevest.com/upcoming-events",
+      "text": "Upcoming Events"
+    },
+    {
+      "url": "https://app.tribevest.com/login",
+      "text": "Login"
+    },
+    {
+      "url": "https://6mwuftnqt4v.typeform.com/to/xZk799cA?utm_source=xxxxx&utm_medium=xxxxx",
+      "text": "Get Started"
+    },
+    {
+      "url": "https://www.tribevest.com/multi-member-llc",
+      "text": "LLC formation"
+    },
+    {
+      "url": "https://www.tribevest.com/business-account",
+      "text": "Business account"
+    },
+    {
+      "url": "https://www.tribevest.com/tribe-dashboard",
+      "text": "Tribe dashboard"
+    },
+    {
+      "url": "https://www.tribevest.com/operating-agreement",
+      "text": "Operating Agreement"
+    },
+    {
+      "url": "https://www.tribevest.com/distributions-communications",
+      "text": "Distributions & Communications"
+    },
+    {
+      "url": "https://www.tribevest.com/taxes",
+      "text": "Tax services"
+    },
+    {
+      "url": "https://www.tribevest.com/partnerships",
+      "text": "Partners"
+    },
+    {
+      "url": "https://www.tribevest.com/lead-sponsors",
+      "text": "Lead Sponsors"
+    },
+    {
+      "url": "https://www.tribevest.com/masterclass/passive-investing",
+      "text": "Masterclass"
+    },
+    {
+      "url": "https://www.tribevest.com/upcoming-events",
+      "text": "Upcoming Events"
+    },
+    {
+      "url": "https://app.tribevest.com/login",
+      "text": "Login"
+    },
+    {
+      "url": "https://www.tribevest.com/multi-member-llc",
+      "text": "LLC formation"
+    },
+    {
+      "url": "https://www.tribevest.com/business-account",
+      "text": "Business account"
+    },
+    {
+      "url": "https://www.tribevest.com/tribe-dashboard",
+      "text": "Tribe dashboard"
+    },
+    {
+      "url": "https://www.tribevest.com/operating-agreement",
+      "text": "Operating Agreement"
+    },
+    {
+      "url": "https://www.tribevest.com/distributions-communications",
+      "text": "Distributions & Communications"
+    },
+    {
+      "url": "https://www.tribevest.com/taxes",
+      "text": "Tax services"
+    },
+    {
+      "url": "https://www.tribevest.com/multi-member-llc",
+      "text": "LLC formation"
+    },
+    {
+      "url": "https://www.tribevest.com/business-account",
+      "text": "Business account"
+    },
+    {
+      "url": "https://www.tribevest.com/tribe-dashboard",
+      "text": "Tribe dashboard"
+    },
+    {
+      "url": "https://www.tribevest.com/operating-agreement",
+      "text": "Operating Agreement"
+    },
+    {
+      "url": "https://www.tribevest.com/distributions-communications",
+      "text": "Distributions & Communications"
+    },
+    {
+      "url": "https://www.tribevest.com/taxes",
+      "text": "Tax services"
+    },
+    {
+      "url": "https://www.tribevest.com/partnerships",
+      "text": "Partners"
+    },
+    {
+      "url": "https://www.tribevest.com/lead-sponsors",
+      "text": "Lead Sponsors"
+    },
+    {
+      "url": "https://www.tribevest.com/masterclass/passive-investing",
+      "text": "Masterclass"
+    },
+    {
+      "url": "https://www.tribevest.com/upcoming-events",
+      "text": "Upcoming Events"
+    },
+    {
+      "url": "https://app.tribevest.com/login",
+      "text": "Login"
+    },
+    {
+      "url": "https://www.tribevest.com/multi-member-llc",
+      "text": "LLC formation"
+    },
+    {
+      "url": "https://www.tribevest.com/business-account",
+      "text": "Business account"
+    },
+    {
+      "url": "https://www.tribevest.com/tribe-dashboard",
+      "text": "Tribe dashboard"
+    },
+    {
+      "url": "https://www.tribevest.com/operating-agreement",
+      "text": "Operating Agreement"
+    },
+    {
+      "url": "https://www.tribevest.com/distributions-communications",
+      "text": "Distributions & Communications"
+    },
+    {
+      "url": "https://www.tribevest.com/taxes",
+      "text": "Tax services"
+    },
+    {
+      "url": "https://www.tribevest.com/",
+      "text": ""
+    },
+    {
+      "url": "https://www.facebook.com/tribevest",
+      "text": ""
+    },
+    {
+      "url": "https://www.youtube.com/channel/UC5o_sFxVQb5mvCLlaIcG3DQ",
+      "text": ""
+    },
+    {
+      "url": "https://www.linkedin.com/company/tribevest/",
+      "text": ""
+    },
+    {
+      "url": "https://www.instagram.com/tribevest",
+      "text": ""
+    },
+    {
+      "url": "https://twitter.com/tribevest",
+      "text": ""
+    },
+    {
+      "url": "javascript:;",
+      "text": "How it Works"
+    },
+    {
+      "url": "https://www.tribevest.com/multi-member-llc",
+      "text": "LLC Formation"
+    },
+    {
+      "url": "https://www.tribevest.com/business-account",
+      "text": "Business Account"
+    },
+    {
+      "url": "https://www.tribevest.com/tribe-dashboard",
+      "text": "Tribe Dashboard"
+    },
+    {
+      "url": "https://www.tribevest.com/operating-agreement",
+      "text": "Operating Agreement"
+    },
+    {
+      "url": "https://www.tribevest.com/distributions-communications",
+      "text": "Distributions"
+    },
+    {
+      "url": "https://www.tribevest.com/taxes",
+      "text": "Tax Services"
+    },
+    {
+      "url": "javascript:;",
+      "text": "Tribevest"
+    },
+    {
+      "url": "https://tribevest.notion.site/tribevest/Job-Board-68afe90faaa0478bb63217147a960120",
+      "text": "Careers"
+    },
+    {
+      "url": "https://help.tribevest.com",
+      "text": "Help Center"
+    },
+    {
+      "url": "https://app.tribevest.com/login",
+      "text": "Login"
+    },
+    {
+      "url": "https://6mwuftnqt4v.typeform.com/to/xZk799cA",
+      "text": "Get Started"
+    },
+    {
+      "url": "javascript:;",
+      "text": "How it Works"
+    },
+    {
+      "url": "https://www.tribevest.com/multi-member-llc",
+      "text": "LLC Formation"
+    },
+    {
+      "url": "https://www.tribevest.com/business-account",
+      "text": "Business Account"
+    },
+    {
+      "url": "https://www.tribevest.com/tribe-dashboard",
+      "text": "Tribe Dashboard"
+    },
+    {
+      "url": "https://www.tribevest.com/operating-agreement",
+      "text": "Operating Agreement"
+    },
+    {
+      "url": "https://www.tribevest.com/distributions-communications",
+      "text": "Distributions"
+    },
+    {
+      "url": "https://www.tribevest.com/taxes",
+      "text": "Tax Services"
+    },
+    {
+      "url": "javascript:;",
+      "text": "Tribevest"
+    },
+    {
+      "url": "https://tribevest.notion.site/tribevest/Job-Board-68afe90faaa0478bb63217147a960120",
+      "text": "Careers"
+    },
+    {
+      "url": "https://help.tribevest.com",
+      "text": "Help Center"
+    },
+    {
+      "url": "https://app.tribevest.com/login",
+      "text": "Login"
+    },
+    {
+      "url": "https://6mwuftnqt4v.typeform.com/to/xZk799cA",
+      "text": "Get Started"
+    },
+    {
+      "url": "https://www.tribevest.com/multi-member-llc",
+      "text": "LLC Formation"
+    },
+    {
+      "url": "https://www.tribevest.com/business-account",
+      "text": "Business Account"
+    },
+    {
+      "url": "https://www.tribevest.com/tribe-dashboard",
+      "text": "Tribe Dashboard"
+    },
+    {
+      "url": "https://www.tribevest.com/operating-agreement",
+      "text": "Operating Agreement"
+    },
+    {
+      "url": "https://www.tribevest.com/distributions-communications",
+      "text": "Distributions"
+    },
+    {
+      "url": "https://www.tribevest.com/taxes",
+      "text": "Tax Services"
+    },
+    {
+      "url": "https://tribevest.notion.site/tribevest/Job-Board-68afe90faaa0478bb63217147a960120",
+      "text": "Careers"
+    },
+    {
+      "url": "https://help.tribevest.com",
+      "text": "Help Center"
+    },
+    {
+      "url": "https://app.tribevest.com/login",
+      "text": "Login"
+    },
+    {
+      "url": "https://6mwuftnqt4v.typeform.com/to/xZk799cA",
+      "text": "Get Started"
+    }
+  ],
+  "buttons": [
+    {
+      "element": "a",
+      "text": "Get Started",
+      "id": "",
+      "class": "cta_button",
+      "href": "https://6mwuftnqt4v.typeform.com/to/xZk799cA?utm_source=xxxxx&utm_medium=xxxxx"
+    },
+    {
+      "element": "a",
+      "text": "Get Started",
+      "id": "",
+      "class": "cta_button",
+      "href": "https://6mwuftnqt4v.typeform.com/to/xZk799cA"
+    },
+    {
+      "element": "a",
+      "text": "Get Started",
+      "id": "",
+      "class": "cta_button",
+      "href": "https://6mwuftnqt4v.typeform.com/to/xZk799cA"
+    }
+  ]
+}

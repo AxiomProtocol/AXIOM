@@ -1,0 +1,4 @@
+[
+  {"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"vaults","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"bytes32","name":"streamId","type":"bytes32"}],"name":"getRevenueRule","outputs":[{"internalType":"bool","name":"exists","type":"bool"},{"internalType":"address","name":"token","type":"address"},{"internalType":"bytes32[]","name":"vaultIds","type":"bytes32[]"},{"internalType":"uint16[]","name":"sharesBps","type":"uint16[]"}],"stateMutability":"view","type":"function"}
+]

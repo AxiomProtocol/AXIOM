@@ -1,0 +1,149 @@
+{
+  "strategy_name": "Elite $60K Truck Driver Investment Strategy",
+  "total_annual_target": 60000,
+  "start_date": "2025-06-21",
+  "pools": {
+    "SWF/BNB Core": {
+      "annual_target": 12000,
+      "monthly_target": 1000,
+      "expected_apy": 24,
+      "current_invested": 0,
+      "backing_type": "SWF Utility + BNB Network",
+      "priority": 1
+    },
+    "Gold Certificates": {
+      "annual_target": 10000,
+      "monthly_target": 833,
+      "expected_apy": 18,
+      "current_invested": 0,
+      "backing_type": "Physical Gold + KAU Tokens",
+      "priority": 2
+    },
+    "Manhattan Commercial": {
+      "annual_target": 15000,
+      "monthly_target": 1250,
+      "expected_apy": 22,
+      "current_invested": 0,
+      "backing_type": "Commercial Real Estate",
+      "priority": 3
+    },
+    "Austin Residential": {
+      "annual_target": 8000,
+      "monthly_target": 667,
+      "expected_apy": 19,
+      "current_invested": 0,
+      "backing_type": "Residential Properties",
+      "priority": 4
+    },
+    "ETH/SWF Bridge": {
+      "annual_target": 10000,
+      "monthly_target": 833,
+      "expected_apy": 28,
+      "current_invested": 0,
+      "backing_type": "Cross-Chain Bridge",
+      "priority": 5
+    },
+    "MetalOfTheGods NFT": {
+      "annual_target": 5000,
+      "monthly_target": 417,
+      "expected_apy": 35,
+      "current_invested": 0,
+      "backing_type": "NFT Staking Rewards",
+      "priority": 6
+    }
+  },
+  "land_acquisition": {
+    "target_property": "Tract 26 at White River Arkansas",
+    "property_details": {
+      "size": "10 acres",
+      "location": "White River South, Arkansas",
+      "features": [
+        "Heavily wooded with red oak, white oak, hickories",
+        "Black walnut trees, sycamore, chestnut, apple trees",
+        "Seasonal creek with native rock and ozark gravel",
+        "Private gravel easement road access",
+        "2 miles from World Famous White River",
+        "No building permits required",
+        "Excellent hunting and fishing location"
+      ],
+      "price": 49500,
+      "down_payment_options": {
+        "option_1": {
+          "down_payment": 1500,
+          "interest_rate": 7.75,
+          "monthly_payment": 456.82
+        },
+        "option_2": {
+          "down_payment": 2500,
+          "interest_rate": 6.75,
+          "monthly_payment": 420.91
+        },
+        "option_3": {
+          "down_payment": 5000,
+          "interest_rate": 5.75,
+          "monthly_payment": 374.54
+        }
+      },
+      "benefits": [
+        "10% discount for early payoff within 5 years ($4,950 savings)",
+        "Property taxes only $60/year (included in payment)",
+        "No prepayment penalties",
+        "12 months to increase down payment for better rates"
+      ]
+    }
+  },
+  "monthly_schedule": {
+    "week_1": {
+      "total_amount": 1500,
+      "pools": ["SWF/BNB Core", "Gold Certificates"],
+      "timing": "Home Time - Full Portfolio Review"
+    },
+    "week_2": {
+      "total_amount": 1200,
+      "pools": ["Manhattan Commercial", "Austin Residential"],
+      "timing": "On Road - Mobile Investing"
+    },
+    "week_3": {
+      "total_amount": 1300,
+      "pools": ["ETH/SWF Bridge", "MetalOfTheGods NFT"],
+      "timing": "On Road - Quick Investments"
+    },
+    "week_4": {
+      "total_amount": 1000,
+      "pools": ["SWF/BNB Core", "Land Fund"],
+      "timing": "Home Time - Land Acquisition Planning"
+    }
+  },
+  "milestones": {
+    "month_3": "Foundation Building - $15K invested across 3 core pools",
+    "month_6": "Diversification Phase - All 6 pools active with $30K total",
+    "month_9": "Land Acquisition - Down payment secured for White River property",
+    "month_12": "Elite Status - $60K invested, $1,048/month passive income"
+  },
+  "truck_driver_optimization": {
+    "home_time_activities": [
+      "Portfolio rebalancing and strategy review",
+      "Land acquisition research and planning",
+      "High-value investment transactions",
+      "Performance analysis and optimization"
+    ],
+    "on_road_activities": [
+      "Mobile app investments during breaks",
+      "Quick pool contributions via smartphone",
+      "Automated investment monitoring",
+      "Real-time performance tracking"
+    ],
+    "income_correlation": {
+      "target_ratio": "20% of trucking income into investments",
+      "expected_trucking_income": 300000,
+      "investment_percentage": 20,
+      "passive_income_goal": 12576
+    }
+  },
+  "platform_impact": {
+    "tvl_increase_potential": "274%",
+    "governance_influence": "Significant voting power with large holdings",
+    "referral_network": "3.5M truck drivers accessible through industry connections",
+    "cross_chain_leadership": "Early positioning for multi-chain expansion"
+  }
+}
