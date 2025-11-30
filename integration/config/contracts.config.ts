@@ -404,4 +404,4 @@ export function resolveDependencies(contractKey: string): Record<string, string>
  * Export contract count for validation
  */
 export const CONTRACT_COUNT = Object.keys(ALL_CONTRACTS).length;
-console.assert(CONTRACT_COUNT === 22, `Expected 22 contracts, found ${CONTRACT_COUNT}`);
+console.assert(CONTRACT_COUNT === 23, `Expected 23 contracts, found ${CONTRACT_COUNT}`);

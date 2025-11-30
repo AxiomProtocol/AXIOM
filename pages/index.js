@@ -61,7 +61,7 @@ const CONTRACT_CATEGORIES = [
 ];
 
 const QUICK_STATS = [
-  { label: 'Smart Contracts', value: 22, suffix: 'Deployed' },
+  { label: 'Smart Contracts', value: 23, suffix: 'Deployed' },
   { label: 'Network', value: 'Arbitrum', suffix: 'One (L2)', isText: true },
   { label: 'Total Supply', value: 15, suffix: 'B AXM Tokens' },
   { label: 'Land Area', value: 1000, suffix: 'Acres' }
@@ -541,7 +541,7 @@ export default function Home() {
               />
               <span className="text-sm text-amber-700 font-medium">Live on Arbitrum One</span>
               <span className="text-gray-400">•</span>
-              <span className="text-sm text-gray-600">22 Contracts Deployed</span>
+              <span className="text-sm text-gray-600">23 Contracts Deployed</span>
             </motion.div>
 
             <motion.h1
@@ -698,7 +698,7 @@ export default function Home() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl lg:text-4xl font-bold mb-4 text-gray-900">
-              <span className="text-amber-600">22 Smart Contracts</span> Deployed & Verified
+              <span className="text-amber-600">23 Smart Contracts</span> Deployed & Verified
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Complete infrastructure deployed on Arbitrum One. All contracts verified and auditable on Blockscout.

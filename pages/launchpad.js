@@ -28,7 +28,7 @@ const TGE_BENEFITS = [
   { icon: '⚡', title: 'Ultra-Low Fees', description: 'Built on Arbitrum One. Gas fees significantly lower than Ethereum mainnet.' },
   { icon: '🔐', title: 'Enterprise-Grade Security', description: 'Pausable in emergencies, role-based access control, and anti-whale protection.' },
   { icon: '✍️', title: 'Gasless Approvals (ERC20Permit)', description: 'Save on gas with signature-based approvals. No separate approval transactions needed.' },
-  { icon: '🏆', title: 'Proven Team', description: '22 deployed smart contracts on Arbitrum One. Real revenue. Real utility. Real assets.' },
+  { icon: '🏆', title: 'Proven Team', description: '23 deployed smart contracts on Arbitrum One. Real revenue. Real utility. Real assets.' },
 ];
 
 export default function LaunchpadPage() {

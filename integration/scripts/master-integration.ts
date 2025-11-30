@@ -101,7 +101,7 @@ async function main() {
   console.log("   Market Infrastructure (2 contracts)");
   console.log("   Community & Ecosystem (4 contracts)");
   console.log("   ─────────────────────────────");
-  console.log("   TOTAL: 22 contracts fully integrated ✅");
+  console.log("   TOTAL: 23 contracts fully integrated ✅");
   console.log("\n");
 
   console.log("📝 NEXT STEPS:");
@@ -112,7 +112,7 @@ async function main() {
   console.log("\n");
 
   console.log("🎊 Axiom Smart City integration complete!");
-  console.log("   All 22 contracts are now connected and ready for production use.\n");
+  console.log("   All 23 contracts are now connected and ready for production use.\n");
 }
 
 main()

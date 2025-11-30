@@ -130,7 +130,7 @@ const AXIOM_ADDRESSES: Record<string, { role: WalletRole; description: string }>
   },
   "0xDFf9e47eb007bF02e47477d577De9ffA99791528": {
     role: WalletRole.DEPLOYER,
-    description: "Contract deployer wallet - all 22 contracts deployed"
+    description: "Contract deployer wallet - all 23 contracts deployed"
   }
 };
 
