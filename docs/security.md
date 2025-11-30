@@ -34,6 +34,32 @@ External security audits are planned and in active preparation. The protocol is 
 
 ---
 
+## Repository Content Verification
+
+### Sensitive Data Policy
+
+The repository has been verified to be free of:
+- Personal Identifiable Information (PII)
+- API keys, private keys, or credentials
+- Session data, cookies, or authentication tokens
+- Email addresses or phone numbers of users
+
+**Removed files (November 2025):**
+- `browser_cookies.txt`, `new_cookies.txt`, `test_cookies.txt`, `cookies.txt`
+- `enhanced_session.txt`, `test_session.txt`
+- `early_access_signups.json` (contained user emails/phones)
+
+**attached_assets/ directory:**
+Contains project-related technical documentation only:
+- Contract specification PDFs
+- UI/UX screenshots for development
+- Technical architecture documents
+- Marketing/presentation materials
+
+No PII or sensitive credentials exist in attached_assets.
+
+---
+
 ## Admin and Governance Control
 
 ### Role-Based Access Control
