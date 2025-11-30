@@ -95,7 +95,7 @@ For the complete list of pausable contracts and their pause controllers, see [do
 
 **No external security audits have been completed yet.**
 
-The core contracts are being prepared for third-party audits before mainnet launch and TGE.
+The core contracts are being prepared for third-party audits following TGE soft cap completion, which will provide funding for comprehensive security reviews.
 
 ### Internal Testing
 
@@ -103,18 +103,18 @@ The core contracts are being prepared for third-party audits before mainnet laun
 - **Methodology**: Manual code review and static analysis
 - **Findings**: Issues identified during internal review were addressed before deployment
 
-> **Disclaimer:** Internal reviews do not substitute for independent third-party security audits. External audits are planned before TGE.
+> **Disclaimer:** Internal reviews do not substitute for independent third-party security audits. External audits are planned post-TGE once funding is secured.
 
 ### Audit Roadmap
 
 | Priority | Component | Target Timeline |
 |----------|-----------|-----------------|
-| 1 | AxiomV2 Token | Q1 2025 |
-| 2 | Staking & Treasury | Q1 2025 |
-| 3 | KeyGrow Contracts | Q2 2025 |
-| 4 | DePIN Infrastructure | Q2 2025 |
-| 5 | Market Contracts | Q3 2025 |
-| 6 | Remaining Contracts | Q3-Q4 2025 |
+| 1 | AxiomV2 Token | Q2 2026 (Post-TGE) |
+| 2 | Staking & Treasury | Q2 2026 |
+| 3 | KeyGrow Contracts | Q3 2026 |
+| 4 | DePIN Infrastructure | Q3 2026 |
+| 5 | Market Contracts | Q4 2026 |
+| 6 | Remaining Contracts | Q4 2026 |
 
 ### Rollout Strategy
 

@@ -110,7 +110,7 @@ Building America's first on-chain sovereign smart city economy.
 |-----------|--------|--------|
 | Smart contracts deployed | Q4 2024 | Complete |
 | 23 contracts verified | Q4 2024 | Complete |
-| Security audit | Q1 2025 | Planned |
+| Security audit | Q2 2026 | Planned |
 | KeyGrow beta | Q1 2025 | Planned |
 | DePIN Phase 1 | Q1 2025 | Planned |
 | Banking launch | Q3 2025 | Planned |
