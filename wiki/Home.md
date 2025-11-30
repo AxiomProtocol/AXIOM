@@ -27,9 +27,9 @@ Welcome to the official Axiom Protocol documentation. This wiki contains compreh
 - [[MarketsAndListingsHub]]
 
 ### Technical
-- [[Smart Contracts]]
+- [[Smart Contracts]] - 23 verified contracts on Arbitrum One
 - [[API Documentation]]
-- [[Security]]
+- [[Security]] - Security architecture, audits, and responsible disclosure
 
 ### Legal & Compliance
 - [[Licensing]]

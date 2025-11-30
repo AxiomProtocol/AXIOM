@@ -28,7 +28,7 @@ const MILESTONES = [
   { year: "Q1 2025", event: "Core infrastructure deployed on Arbitrum One with 23 verified smart contracts" },
   { year: "Q2 2025", event: "DePIN node operator program launch and institutional partnerships" },
   { year: "Q3 2025", event: "Real estate tokenization framework and banking product rollout" },
-  { year: "2026", event: "Token Generation Event (TGE) and Axiom Orbit Chain (L3) launch" },
+  { year: "Q1 2026", event: "Token Generation Event (TGE) and Universe Blockchain (L3) launch" },
 ];
 
 export default function AboutUs() {
@@ -171,7 +171,7 @@ export default function AboutUs() {
             <div className="text-gray-600">Acres of Land</div>
           </div>
           <div className="bg-gradient-to-br from-amber-50 to-white border border-amber-200 rounded-2xl p-6 text-center">
-            <div className="text-4xl font-bold text-amber-600 mb-2">22+</div>
+            <div className="text-4xl font-bold text-amber-600 mb-2">23</div>
             <div className="text-gray-600">Smart Contracts</div>
           </div>
           <div className="bg-gradient-to-br from-amber-50 to-white border border-amber-200 rounded-2xl p-6 text-center">

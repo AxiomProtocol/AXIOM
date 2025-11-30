@@ -85,8 +85,8 @@ Tokenized securities exchange:
 |-------|----------|------------|
 | Foundation | Q4 2024 | Smart contracts, platform launch |
 | Growth | Q1-Q2 2025 | KeyGrow beta, DePIN deployment |
-| Expansion | Q3-Q4 2025 | Banking products, TGE |
-| Scale | 2026+ | Universe Blockchain, full city ops |
+| Expansion | Q3-Q4 2025 | Banking products, governance activation |
+| TGE & Scale | Q1 2026+ | Token Generation Event, Universe Blockchain |
 
 ---
 

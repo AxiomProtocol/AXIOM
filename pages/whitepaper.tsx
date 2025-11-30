@@ -158,7 +158,7 @@ export default function WhitePaper() {
                 
                 <div className="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-lg mb-8">
                   <p className="text-gray-800 leading-relaxed m-0">
-                    <strong>Axiom Protocol</strong> represents a paradigm shift in urban development: a fully integrated, blockchain-native smart city infrastructure designed to serve as a sovereign digital-physical economy. Built on Arbitrum One with plans to launch a dedicated Layer 3 (Axiom Orbit Chain), the protocol combines tokenized real estate, decentralized physical infrastructure (DePIN), comprehensive governance, and institutional-grade financial services into a unified ecosystem.
+                    <strong>Axiom Protocol</strong> represents a paradigm shift in urban development: a fully integrated, blockchain-native smart city infrastructure designed to serve as a sovereign digital-physical economy. Built on Arbitrum One with plans to launch Universe Blockchain (L3), the protocol combines tokenized real estate, decentralized physical infrastructure (DePIN), comprehensive governance, and institutional-grade financial services into a unified ecosystem.
                   </p>
                 </div>
 
@@ -407,9 +407,9 @@ export default function WhitePaper() {
                   <div><span className="text-blue-400">Token:</span> 0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D</div>
                 </div>
 
-                <h4 className="text-lg font-semibold text-gray-900 mt-6 mb-3">Future: Axiom Orbit Chain (L3)</h4>
+                <h4 className="text-lg font-semibold text-gray-900 mt-6 mb-3">Future: Universe Blockchain (L3)</h4>
                 <p className="text-gray-700 leading-relaxed">
-                  Post-TGE, Axiom will launch a dedicated Layer 3 chain built on Arbitrum Orbit technology. This "Universe Blockchain" will use AXM as the native gas token, enabling:
+                  Post-TGE, Axiom will launch Universe Blockchain, a dedicated Layer 3 chain built on Arbitrum Orbit technology. This custom chain will use AXM as the native gas token, enabling:
                 </p>
                 <ul className="list-disc pl-6 text-gray-700 space-y-2">
                   <li>Zero external gas costs for ecosystem transactions</li>
@@ -1113,7 +1113,7 @@ export default function WhitePaper() {
                     <div className="flex-1 border-l-2 border-gray-300 pl-6 pb-6">
                       <h4 className="font-bold text-gray-900">Layer 3 Launch</h4>
                       <ul className="text-gray-600 text-sm mt-2 space-y-1">
-                        <li>○ Axiom Orbit Chain (L3) testnet</li>
+                        <li>○ Universe Blockchain (L3) testnet</li>
                         <li>○ AXM as native gas token</li>
                         <li>○ IoT data throughput optimization</li>
                         <li>○ Institutional partnerships</li>

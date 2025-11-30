@@ -116,13 +116,15 @@ Solidity 0.8.20+
 
 ---
 
-## Security Audits
+## Security
 
 - Internal security review: Complete
 - External audit: Planned Q1 2025
 - Bug bounty: Planned
 
-See [docs/security.md](../docs/security.md) for complete security documentation.
+For complete security documentation including admin controls, audit roadmap, and responsible disclosure, see:
+- [[Security]] - Wiki security overview (investor/auditor friendly)
+- [docs/security.md](../docs/security.md) - Technical security documentation
 
 ---
 

@@ -293,7 +293,7 @@ export default function TokenomicsPage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-amber-500 rounded-full" />
-                  <strong>Gas Token:</strong> Native gas for Axiom Orbit Chain (L3) post-migration
+                  <strong>Gas Token:</strong> Native gas for Universe Blockchain (L3) post-migration
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-amber-500 rounded-full" />

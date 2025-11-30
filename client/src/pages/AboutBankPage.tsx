@@ -138,7 +138,7 @@ const AboutBankPage: React.FC = () => {
               <ul className="space-y-2 text-sm text-gray-300">
                 <li>• <strong>Current:</strong> Arbitrum One (L2)</li>
                 <li>• <strong>Chain ID:</strong> 42161</li>
-                <li>• <strong>Future:</strong> Axiom Orbit Chain (L3)</li>
+                <li>• <strong>Future:</strong> Universe Blockchain (L3)</li>
                 <li>• <strong>Gas Token:</strong> AXM</li>
               </ul>
             </div>

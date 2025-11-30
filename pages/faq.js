@@ -16,11 +16,11 @@ const faqs = [
   },
   { 
     question: "When is the Token Generation Event (TGE)?", 
-    answer: "The AXM Token Generation Event is scheduled for January 1, 2026. Early participants can join through our waitlist and private sale programs." 
+    answer: "The AXM Token Generation Event (TGE) is planned for Q1 2026, aligned with the launch of the first phase of our Universe Blockchain (L3) rollout. Early participants can join through our waitlist and private sale programs." 
   },
   { 
     question: "What blockchain does Axiom use?", 
-    answer: "Axiom is currently deployed on Arbitrum One (Layer 2). Post-TGE, we plan to launch our own Axiom Orbit Chain (Layer 3) using AXM as the native gas token." 
+    answer: "Axiom is currently deployed on Arbitrum One (Layer 2) with 23 verified smart contracts. Post-TGE, we plan to launch Universe Blockchain, our custom Layer 3 chain, using AXM as the native gas token." 
   },
   { 
     question: "How does governance work?", 

@@ -40,13 +40,13 @@ const milestones = [
   { 
     phase: "Phase 4", 
     title: "Scale", 
-    date: "2026", 
+    date: "Q1 2026+", 
     status: "upcoming",
     items: [
-      "Axiom Orbit Chain (L3) deployment",
+      "Token Generation Event (TGE) - Q1 2026",
+      "Universe Blockchain (L3) deployment",
       "Wall Street integration modules",
-      "Smart city IoT infrastructure",
-      "Global expansion initiatives"
+      "Smart city IoT infrastructure"
     ]
   },
 ];

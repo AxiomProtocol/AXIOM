@@ -13,10 +13,10 @@ The Axiom Smart City project aims to establish America's first on-chain sovereig
 The frontend features a modular design with a professional gold/black theme, yellow accents for tabbed interfaces, and responsive design. Branding prominently displays "AXIOM" with a golden circular token logo, golden gradient text, and the tagline "America's First On-Chain Smart City." A "Why Axiom Will Be #1" comparison page is integrated into the main navigation.
 
 ### Technical Implementations
-The core **Axiom Protocol Token (AXM)** is an ERC20 governance and fee-routing token, initially on Arbitrum One, with plans to transition to a custom Axiom Orbit Chain (L3) named "Universe Blockchain" using AXM as native gas. The **Smart Contract Architecture** is multi-phase, starting on Arbitrum One and migrating to the Axiom Orbit Chain, encompassing identity, treasury, staking, emissions, land/asset registry, and future modules for DEX, credit scoring, IoT, Wall Street/RWA markets, and community features. A **Complete Banking Product Suite** offers over 30 product families including deposit/savings, credit/lending, payments, investments, tokenized assets, and institutional services, supported by an internal DEX. The architecture incorporates 46+ smart contracts covering DePIN, Governance, Treasury, Property/Real Estate, Cross-Chain, Realtor System, and new Smart City Expansion modules for energy, water rights, land parcel management, citizen identity, civic governance, and business licensing.
+The core **Axiom Protocol Token (AXM)** is an ERC20 governance and fee-routing token, initially on Arbitrum One, with plans to transition to Universe Blockchain (L3) using AXM as native gas. The **Smart Contract Architecture** is multi-phase, starting on Arbitrum One and migrating to Universe Blockchain, encompassing identity, treasury, staking, emissions, land/asset registry, and future modules for DEX, credit scoring, IoT, Wall Street/RWA markets, and community features. A **Complete Banking Product Suite** offers over 30 product families including deposit/savings, credit/lending, payments, investments, tokenized assets, and institutional services, supported by an internal DEX. The architecture incorporates 46+ smart contracts covering DePIN, Governance, Treasury, Property/Real Estate, Cross-Chain, Realtor System, and new Smart City Expansion modules for energy, water rights, land parcel management, citizen identity, civic governance, and business licensing.
 
 ### System Design Choices
-The architecture follows a "Product Factory Approach" for scalable product expansion. The blockchain network is currently deployed on Arbitrum One (L2), with plans to transition to a custom Axiom Orbit Chain (L3) named "Universe Blockchain" post-TGE. Data management utilizes PostgreSQL with Drizzle ORM for relational data and MongoDB for specific analytics. The backend features a centralized contract configuration, a dedicated contract service, and chain validation middleware enforcing Arbitrum One for Web3 operations. API responses consistently return `axmBalance` and `axmUsdValue` fields.
+The architecture follows a "Product Factory Approach" for scalable product expansion. The blockchain network is currently deployed on Arbitrum One (L2), with plans to transition to Universe Blockchain (L3) post-TGE. Data management utilizes PostgreSQL with Drizzle ORM for relational data and MongoDB for specific analytics. The backend features a centralized contract configuration, a dedicated contract service, and chain validation middleware enforcing Arbitrum One for Web3 operations. API responses consistently return `axmBalance` and `axmUsdValue` fields.
 
 Key features include:
 - **Axiom Nodes Marketplace**: For purchasing and managing DePIN nodes with tiered rewards.
@@ -37,7 +37,7 @@ Key features include:
 - **TGE Timeline:** Q1 2026
 
 ## External Dependencies
--   **Blockchain Networks:** Arbitrum One, custom Axiom Orbit Chain (L3), Reactive Network
+-   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3), Reactive Network
 -   **Blockchain RPC Provider:** Alchemy API
 -   **Reactive Network RPC:** `https://mainnet-rpc.rnk.dev/`
 -   **Wallet Integration:** MetaMask SDK
