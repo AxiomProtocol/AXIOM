@@ -1,10 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import bcrypt from 'bcrypt';
-import { Pool } from '../../../../lib/db';
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import { pool } from '../../../../lib/db';
 
 const ALLOWED_ADMIN_EMAIL = 'akiliaggroup@gmail.com';
 const SETUP_SECRET = process.env.ADMIN_SETUP_SECRET;

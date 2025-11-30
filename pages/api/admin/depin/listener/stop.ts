@@ -1,10 +1,6 @@
 import type { NextApiResponse } from 'next';
-import { Pool } from '../../../../../lib/db';
+import { pool } from '../../../../../lib/db';
 import { withAdminAuth, AuthenticatedRequest } from '../../../../../lib/adminAuth';
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

@@ -23,8 +23,9 @@ export class Pool {
     } else {
       this.pool = new PgPool({ 
         connectionString,
-        max: 5,
+        max: 10,
         idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 5000,
       });
     }
   }
@@ -41,5 +42,16 @@ export class Pool {
     return this.pool.end();
   }
 }
+
+let sharedPool: Pool | null = null;
+
+export function getSharedPool(): Pool {
+  if (!sharedPool) {
+    sharedPool = new Pool();
+  }
+  return sharedPool;
+}
+
+export const pool = getSharedPool();
 
 export default Pool;

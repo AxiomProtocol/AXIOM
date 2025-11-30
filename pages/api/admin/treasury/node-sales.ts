@@ -1,18 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import { Pool } from '../../../../lib/db';
+import { pool } from '../../../../lib/db';
 import { withAdminAuth, AuthenticatedRequest } from '../../../../lib/adminAuth';
+import { getConfig } from '../../../../lib/config';
 
-const DEPIN_SALES_CONTRACT = '0x876951CaE4Ad48bdBfba547Ef4316Db576A9Edbd';
-const DEPIN_SUITE_CONTRACT = '0x16dC3884d88b767D99E0701Ba026a1ed39a250F1';
-const TREASURY_VAULT = '0x2bb2c2a7a1d82097488bf0b9c2a59c1910cd8d5d';
-const AXM_TOKEN = '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D';
+const config = getConfig();
+const DEPIN_SALES_CONTRACT = config.contracts.depinSales;
+const DEPIN_SUITE_CONTRACT = config.contracts.depinSuite;
+const TREASURY_VAULT = config.contracts.treasuryVault;
+const AXM_TOKEN = config.contracts.axmToken;
 
-const provider = new ethers.JsonRpcProvider('https://arb1.arbitrum.io/rpc');
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+const provider = new ethers.JsonRpcProvider(config.rpcUrl);
 
 const DEFAULT_TIER_PRICES_ETH = [0.02, 0.05, 0.08, 0.15, 0.25];
 const DEFAULT_TIER_PRICES_AXM = [51, 127.5, 204, 382.5, 637.5];

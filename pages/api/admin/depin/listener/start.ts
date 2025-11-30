@@ -1,15 +1,13 @@
 import type { NextApiResponse } from 'next';
-import { Pool } from '../../../../../lib/db';
+import { pool } from '../../../../../lib/db';
 import { ethers } from 'ethers';
 import { withAdminAuth, AuthenticatedRequest } from '../../../../../lib/adminAuth';
+import { getConfig } from '../../../../../lib/config';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-
-const ARBITRUM_RPC = 'https://arb1.arbitrum.io/rpc';
-const DEPIN_SALES_ADDRESS = '0x876951CaE4Ad48bdBfba547Ef4316Db576A9Edbd';
-const DEPIN_SUITE_ADDRESS = '0x16dC3884d88b767D99E0701Ba026a1ed39a250F1';
+const config = getConfig();
+const ARBITRUM_RPC = config.rpcUrl;
+const DEPIN_SALES_ADDRESS = config.contracts.depinSales;
+const DEPIN_SUITE_ADDRESS = config.contracts.depinSuite;
 
 const DEPIN_SALES_ABI = [
   "event NodePurchasedWithETH(address indexed buyer, uint256 indexed tierId, uint8 indexed category, uint256 ethPaid, uint256 purchaseId, uint256 timestamp)",

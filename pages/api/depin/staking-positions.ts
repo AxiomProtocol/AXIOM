@@ -1,9 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { Pool } from '../../../lib/db';
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import { pool } from '../../../lib/db';
 
 const TIER_CONFIG = {
   bronze: { minStake: 0, apy: 5, icon: '🥉' },

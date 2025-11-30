@@ -1,10 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
-import { Pool } from '../../../../lib/db';
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import { pool } from '../../../../lib/db';
 
 function getJWTSecret(): string {
   const secret = process.env.SESSION_SECRET || process.env.JWT_SECRET;
