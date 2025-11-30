@@ -1,0 +1,118 @@
+AXIOM PROTOCOL PROPRIETARY LICENSE
+Version 1.0, November 2024
+
+Copyright (c) 2024 Axiom Protocol. All Rights Reserved.
+
+NOTICE: This software and all associated documentation, smart contracts, 
+algorithms, designs, and intellectual property (collectively, the "Software") 
+are the exclusive property of Axiom Protocol and are protected by copyright, 
+patent, trade secret, and other intellectual property laws.
+
+================================================================================
+                              LICENSE TERMS
+================================================================================
+
+1. GRANT OF LICENSE
+   
+   This license grants you NO RIGHTS to use, copy, modify, merge, publish, 
+   distribute, sublicense, or sell the Software or any portion thereof.
+   
+   Viewing of this source code is permitted for evaluation purposes only.
+
+2. RESTRICTIONS
+   
+   You may NOT, without prior written authorization from Axiom Protocol:
+   
+   a) Use the Software or any component for commercial purposes
+   b) Use the Software to build competing products or services
+   c) Copy, reproduce, or duplicate any portion of the Software
+   d) Modify, adapt, or create derivative works based on the Software
+   e) Distribute, sublicense, lease, or lend the Software
+   f) Reverse engineer, decompile, or disassemble the Software
+   g) Remove or alter any proprietary notices, labels, or marks
+   h) Use any Axiom Protocol trademarks, logos, or branding
+   i) Deploy any smart contracts derived from this codebase
+   j) Integrate any components into third-party applications
+
+3. INTELLECTUAL PROPERTY
+   
+   The following are protected intellectual property of Axiom Protocol:
+   
+   - KeyGrow Rent-to-Own Tokenization System
+   - ERC-1155 Fractional Property Share Architecture (100,000 shares/property)
+   - Option Consideration Staking Mechanism (8% APR)
+   - National Bank of Axiom Digital Banking Architecture
+   - MarketsAndListingsHub Securities Tokenization System
+   - Axiom DePIN Node Infrastructure
+   - AXM Token Economics and Fee Routing System
+   - Smart City Digital-Physical Economy Framework
+   - All smart contract designs and implementations
+   - All user interface designs and components
+
+4. PATENT PENDING
+   
+   Certain technologies and methods embodied in this Software are the subject 
+   of pending patent applications. Any unauthorized use may result in patent 
+   infringement claims in addition to copyright infringement.
+
+5. COMMERCIAL LICENSING
+   
+   To obtain a commercial license for any component of this Software, 
+   contact Axiom Protocol:
+   
+   Email: licensing@axiomprotocol.io
+   Website: https://axiomprotocol.io/licensing
+   
+   Commercial licenses are available for:
+   - Full platform deployment
+   - Individual smart contract usage
+   - Component integration
+   - White-label solutions
+   - API access
+
+6. EVALUATION LICENSE
+   
+   A limited evaluation license may be granted for:
+   - Academic research (non-commercial)
+   - Security auditing (with NDA)
+   - Due diligence review (with NDA)
+   
+   Contact licensing@axiomprotocol.io for evaluation requests.
+
+7. NO WARRANTY
+   
+   THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+   FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+8. LIMITATION OF LIABILITY
+   
+   IN NO EVENT SHALL AXIOM PROTOCOL BE LIABLE FOR ANY CLAIM, DAMAGES, OR 
+   OTHER LIABILITY ARISING FROM THE USE OR INABILITY TO USE THE SOFTWARE.
+
+9. TERMINATION
+   
+   Any unauthorized use of this Software automatically terminates any implied 
+   license and may result in legal action for damages and injunctive relief.
+
+10. GOVERNING LAW
+    
+    This license shall be governed by the laws of the United States of America 
+    and the State of Delaware, without regard to conflict of law provisions.
+
+================================================================================
+                           CONTACT INFORMATION
+================================================================================
+
+For licensing inquiries, partnership opportunities, or authorization requests:
+
+Axiom Protocol
+Email: licensing@axiomprotocol.io
+Website: https://axiomprotocol.io
+
+================================================================================
+
+BY ACCESSING THIS REPOSITORY, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, 
+AND AGREE TO BE BOUND BY THE TERMS OF THIS LICENSE.
+
+All rights not expressly granted herein are reserved by Axiom Protocol.

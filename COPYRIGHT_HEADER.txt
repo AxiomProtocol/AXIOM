@@ -1,0 +1,15 @@
+/**
+ * ================================================================================
+ * AXIOM PROTOCOL - PROPRIETARY AND CONFIDENTIAL
+ * ================================================================================
+ * 
+ * Copyright (c) 2024 Axiom Protocol. All Rights Reserved.
+ * 
+ * NOTICE: This file contains proprietary information belonging to Axiom Protocol.
+ * Unauthorized copying, modification, distribution, or use of this file, via any
+ * medium, is strictly prohibited without express written permission.
+ * 
+ * For licensing inquiries: licensing@axiomprotocol.io
+ * 
+ * ================================================================================
+ */
