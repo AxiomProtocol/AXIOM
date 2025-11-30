@@ -162,6 +162,14 @@ A bug bounty program is planned for launch concurrent with external audits.
 
 ---
 
+## Licensing
+
+Axiom Protocol smart contracts and architecture are proprietary and protected by copyright and patent-pending claims. While the code is visible on public block explorers for transparency and security review, all commercial use requires a paid license.
+
+For licensing inquiries, see [[Licensing]] or contact licensing@axiomprotocol.io.
+
+---
+
 ## Related Documentation
 
 - [[Smart Contracts]] - Full contract list and addresses
