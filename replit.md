@@ -30,6 +30,12 @@ Key features include:
 - **Reactive Network Integration (Planned)**: Autonomous, event-driven smart contract automation for DePIN, Governance, Treasury, DEX, Cross-Chain, and Smart City IoT.
 - **Whitepaper Documentation**: Comprehensive 14-section whitepaper at `/whitepaper` covering executive summary, market opportunity, technology architecture, tokenomics, ecosystem components, National Bank of Axiom (30+ banking products), Wall Street integration (MarketsAndListingsHub), governance & compliance (ISO 20022 + GENIUS Act), roadmap, financials, risks & mitigations, and legal disclosures.
 
+## Project Resources
+- **GitHub Main Repository:** https://github.com/AxiomProtocol/AXIOM
+- **GitHub Wiki (Documentation):** https://github.com/AxiomProtocol/AXIOM/wiki
+- **Contract Count:** 23 verified contracts on Arbitrum One
+- **TGE Timeline:** Q1 2026
+
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, custom Axiom Orbit Chain (L3), Reactive Network
 -   **Blockchain RPC Provider:** Alchemy API
