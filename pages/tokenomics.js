@@ -111,6 +111,101 @@ export default function TokenomicsPage() {
           <p className="text-lg text-gray-600">The economic model powering America's first on-chain smart city.</p>
         </div>
 
+        <div id="token-contract" className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 mb-12 border border-amber-500/30">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center">
+              <img src="/images/axiom-token.png" alt="AXM" className="w-10 h-10 rounded-full" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">Official AXM Token Contract</h2>
+              <p className="text-amber-400 text-sm">Verified on Arbitrum One</p>
+            </div>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700">
+              <div className="text-gray-400 text-sm mb-2">Contract Address</div>
+              <code className="text-amber-400 font-mono text-sm md:text-base break-all block mb-3">
+                0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D
+              </code>
+              <a 
+                href="https://arbitrum.blockscout.com/address/0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-amber-400 hover:text-amber-300 transition-colors"
+              >
+                <span>View on Blockscout</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+            
+            <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-gray-400 text-sm mb-1">Network</div>
+                  <div className="text-white font-medium">Arbitrum One</div>
+                </div>
+                <div>
+                  <div className="text-gray-400 text-sm mb-1">Chain ID</div>
+                  <div className="text-white font-medium">42161</div>
+                </div>
+                <div>
+                  <div className="text-gray-400 text-sm mb-1">Token Standard</div>
+                  <div className="text-white font-medium">ERC-20</div>
+                </div>
+                <div>
+                  <div className="text-gray-400 text-sm mb-1">Token Symbol</div>
+                  <div className="text-white font-medium">AXM</div>
+                </div>
+                <div>
+                  <div className="text-gray-400 text-sm mb-1">Total Supply</div>
+                  <div className="text-white font-medium">15,000,000,000</div>
+                </div>
+                <div>
+                  <div className="text-gray-400 text-sm mb-1">Decimals</div>
+                  <div className="text-white font-medium">18</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-6 flex flex-wrap gap-3">
+            <a 
+              href="https://arbitrum.blockscout.com/address/0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D?tab=contract" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Verified Contract
+            </a>
+            <a 
+              href="https://arbitrum.blockscout.com/token/0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
+            >
+              Token Info
+            </a>
+            <a 
+              href="/launchpad"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-gray-900 rounded-lg text-sm font-medium hover:bg-amber-400 transition-colors"
+            >
+              TGE Launchpad
+            </a>
+          </div>
+          
+          <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+            <p className="text-amber-400 text-sm">
+              <strong>Pre-TGE Status:</strong> The AXM token contract is deployed and verified. Trading and liquidity pools will be activated at Token Generation Event (TGE) in Q1 2026.
+            </p>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-4 gap-6 mb-12">
           {keyMetrics.map((metric, i) => (
             <div key={i} className="bg-gradient-to-br from-amber-50 to-white border border-amber-200 rounded-xl p-6">
@@ -304,10 +399,6 @@ export default function TokenomicsPage() {
           </div>
         </div>
 
-        <div className="mt-8 p-4 bg-gray-100 rounded-xl text-center text-sm text-gray-500">
-          <p>Contract Address: <code className="bg-gray-200 px-2 py-1 rounded text-xs">0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D</code></p>
-          <p className="mt-1">Network: Arbitrum One (Chain ID: 42161)</p>
-        </div>
       </div>
     </Layout>
   );
