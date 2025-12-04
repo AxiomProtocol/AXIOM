@@ -871,6 +871,89 @@ export default function Home() {
         </motion.div>
       </section>
 
+      <section id="token-contract" className="py-16 bg-gradient-to-br from-gray-900 to-gray-800">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="max-w-5xl mx-auto px-4 sm:px-6"
+        >
+          <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
+            <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <img src="/images/axiom-token.png" alt="AXM" className="w-14 h-14 rounded-full" />
+            </div>
+            <div className="text-center md:text-left">
+              <h2 className="text-2xl lg:text-3xl font-bold text-white">Official AXM Token Contract</h2>
+              <p className="text-amber-400">Verified on Arbitrum One | Chain ID: 42161</p>
+            </div>
+          </div>
+          
+          <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700 mb-6">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
+              <div className="flex-1 w-full">
+                <div className="text-gray-400 text-sm mb-2">Contract Address</div>
+                <code className="text-amber-400 font-mono text-sm md:text-lg break-all block">
+                  0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D
+                </code>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <a 
+                  href="https://arbitrum.blockscout.com/address/0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D?tab=contract" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Verified
+                </a>
+                <a 
+                  href="https://arbitrum.blockscout.com/token/0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
+                >
+                  View Token
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gray-800/30 rounded-xl p-4 text-center border border-gray-700/50">
+              <div className="text-gray-400 text-xs mb-1">Token</div>
+              <div className="text-white font-bold">AXM</div>
+            </div>
+            <div className="bg-gray-800/30 rounded-xl p-4 text-center border border-gray-700/50">
+              <div className="text-gray-400 text-xs mb-1">Standard</div>
+              <div className="text-white font-bold">ERC-20</div>
+            </div>
+            <div className="bg-gray-800/30 rounded-xl p-4 text-center border border-gray-700/50">
+              <div className="text-gray-400 text-xs mb-1">Total Supply</div>
+              <div className="text-white font-bold">15B</div>
+            </div>
+            <div className="bg-gray-800/30 rounded-xl p-4 text-center border border-gray-700/50">
+              <div className="text-gray-400 text-xs mb-1">Decimals</div>
+              <div className="text-white font-bold">18</div>
+            </div>
+          </div>
+          
+          <div className="text-center">
+            <Link 
+              href="/tokenomics#token-contract"
+              className="inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 transition-colors text-sm"
+            >
+              View Full Tokenomics
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+        </motion.div>
+      </section>
+
       <footer className="border-t border-gray-200 py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid md:grid-cols-4 gap-8">
