@@ -93,12 +93,23 @@ export default function LaunchpadPage() {
     }
 
     try {
-      console.log('TGE notification email submitted:', email);
-      setEmailSubmitted(true);
-      setTimeout(() => {
-        setEmail('');
-        setEmailSubmitted(false);
-      }, 5000);
+      const response = await fetch('/api/tge/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setEmailSubmitted(true);
+        setTimeout(() => {
+          setEmail('');
+          setEmailSubmitted(false);
+        }, 5000);
+      } else {
+        setEmailError(data.error || 'Failed to subscribe. Please try again.');
+      }
     } catch (error) {
       setEmailError('Failed to submit email. Please try again.');
     }
