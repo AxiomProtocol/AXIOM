@@ -201,8 +201,115 @@ export default function TokenomicsPage() {
           
           <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
             <p className="text-amber-400 text-sm">
-              <strong>Pre-TGE Status:</strong> The AXM token contract is deployed and verified. Trading and liquidity pools will be activated at Token Generation Event (TGE) in Q1 2026.
+              <strong>Pre-TGE Status:</strong> The AXM token contract is deployed and verified. Full liquidity will be activated at Token Generation Event (TGE) in Q1 2026.
             </p>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 mb-12 border border-cyan-500/30">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-cyan-500 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">Liquidity & Trading</h2>
+              <p className="text-cyan-400 text-sm">Live on Uniswap V3 (Arbitrum One)</p>
+            </div>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700">
+              <div className="flex items-center gap-3 mb-4">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Uniswap_Logo.svg/64px-Uniswap_Logo.svg.png" alt="Uniswap" className="w-8 h-8" />
+                <div>
+                  <div className="text-white font-medium">Uniswap V3</div>
+                  <div className="text-gray-400 text-sm">AXM/WETH Pool</div>
+                </div>
+              </div>
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Network</span>
+                  <span className="text-white">Arbitrum One</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Fee Tier</span>
+                  <span className="text-white">0.3%</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Pair Address</span>
+                  <span className="text-cyan-400 font-mono text-xs">0x234f...f227</span>
+                </div>
+              </div>
+              <a 
+                href="https://defined.fi/arb/0x234fa8521" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+              >
+                <span>View on Defined.fi</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+            
+            <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700">
+              <div className="text-gray-400 text-sm mb-3">Additional Trackers</div>
+              <div className="space-y-3">
+                <a 
+                  href="https://defined.fi/arb/0x234fa8521" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">D</div>
+                  <div>
+                    <div className="text-white text-sm font-medium">Defined.fi</div>
+                    <div className="text-gray-400 text-xs">Real-time DEX analytics</div>
+                  </div>
+                </a>
+                <a 
+                  href="https://dexscreener.com/arbitrum/0x234fa8521" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">DS</div>
+                  <div>
+                    <div className="text-white text-sm font-medium">DEXScreener</div>
+                    <div className="text-gray-400 text-xs">Chart & trading data</div>
+                  </div>
+                </a>
+                <a 
+                  href="https://www.geckoterminal.com/arbitrum/pools/0x234fa8521" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  <div className="w-8 h-8 bg-lime-500 rounded-full flex items-center justify-center text-white font-bold text-sm">GT</div>
+                  <div>
+                    <div className="text-white text-sm font-medium">GeckoTerminal</div>
+                    <div className="text-gray-400 text-xs">CoinGecko DEX tracker</div>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-6 flex flex-wrap gap-3">
+            <a 
+              href="https://app.uniswap.org/swap?chain=arbitrum&inputCurrency=ETH&outputCurrency=0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-pink-600 text-white rounded-lg text-sm font-medium hover:bg-pink-700 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              Trade on Uniswap
+            </a>
           </div>
         </div>
 
