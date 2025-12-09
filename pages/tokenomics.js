@@ -239,11 +239,11 @@ export default function TokenomicsPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Pair Address</span>
-                  <span className="text-cyan-400 font-mono text-xs">0x234f...f227</span>
+                  <span className="text-cyan-400 font-mono text-xs">0x234fa852...f227</span>
                 </div>
               </div>
               <a 
-                href="https://defined.fi/arb/0x234fa8521" 
+                href="https://www.defined.fi/arb/0x234fa8521e614e7ad19c1348e4604e46c564f227" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
@@ -259,7 +259,7 @@ export default function TokenomicsPage() {
               <div className="text-gray-400 text-sm mb-3">Additional Trackers</div>
               <div className="space-y-3">
                 <a 
-                  href="https://defined.fi/arb/0x234fa8521" 
+                  href="https://www.defined.fi/arb/0x234fa8521e614e7ad19c1348e4604e46c564f227" 
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors"
@@ -271,7 +271,7 @@ export default function TokenomicsPage() {
                   </div>
                 </a>
                 <a 
-                  href="https://dexscreener.com/arbitrum/0x234fa8521" 
+                  href="https://dexscreener.com/arbitrum/0x234fa8521e614e7ad19c1348e4604e46c564f227" 
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors"
@@ -283,7 +283,7 @@ export default function TokenomicsPage() {
                   </div>
                 </a>
                 <a 
-                  href="https://www.geckoterminal.com/arbitrum/pools/0x234fa8521" 
+                  href="https://www.geckoterminal.com/arbitrum/pools/0x234fa8521e614e7ad19c1348e4604e46c564f227" 
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors"
