@@ -256,7 +256,7 @@ export default function TokenomicsPage() {
             </div>
             
             <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700">
-              <div className="text-gray-400 text-sm mb-3">Additional Trackers</div>
+              <div className="text-gray-400 text-sm mb-3">DEX Analytics</div>
               <div className="space-y-3">
                 <a 
                   href="https://www.defined.fi/arb/0x234fa8521e614e7ad19c1348e4604e46c564f227" 
@@ -268,30 +268,6 @@ export default function TokenomicsPage() {
                   <div>
                     <div className="text-white text-sm font-medium">Defined.fi</div>
                     <div className="text-gray-400 text-xs">Real-time DEX analytics</div>
-                  </div>
-                </a>
-                <a 
-                  href="https://dexscreener.com/arbitrum/0x234fa8521e614e7ad19c1348e4604e46c564f227" 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">DS</div>
-                  <div>
-                    <div className="text-white text-sm font-medium">DEXScreener</div>
-                    <div className="text-gray-400 text-xs">Chart & trading data</div>
-                  </div>
-                </a>
-                <a 
-                  href="https://www.geckoterminal.com/arbitrum/pools/0x234fa8521e614e7ad19c1348e4604e46c564f227" 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  <div className="w-8 h-8 bg-lime-500 rounded-full flex items-center justify-center text-white font-bold text-sm">GT</div>
-                  <div>
-                    <div className="text-white text-sm font-medium">GeckoTerminal</div>
-                    <div className="text-gray-400 text-xs">CoinGecko DEX tracker</div>
                   </div>
                 </a>
               </div>
