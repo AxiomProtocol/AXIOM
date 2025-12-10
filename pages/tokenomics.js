@@ -114,7 +114,7 @@ export default function TokenomicsPage() {
         <div id="token-contract" className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 mb-12 border border-amber-500/30">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center">
-              <img src="/images/axiom-token.png" alt="AXM" className="w-10 h-10 rounded-full" />
+              <img src="/images/axiom-token.png" alt="AXM" className="w-10 h-10 rounded-full" onError={(e) => { e.target.onerror = null; e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23f59e0b"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold">AXM</text></svg>'; }} />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">Official AXM Token Contract</h2>
@@ -448,7 +448,7 @@ export default function TokenomicsPage() {
         <div className="bg-gradient-to-br from-amber-50 to-white border border-amber-200 rounded-2xl p-8">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <img src="/images/axiom-token.png" alt="AXM" className="w-8 h-8 rounded-full" />
+              <img src="/images/axiom-token.png" alt="AXM" className="w-8 h-8 rounded-full" onError={(e) => { e.target.onerror = null; e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23f59e0b"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold">AXM</text></svg>'; }} />
             </div>
             <div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Token Utility</h3>

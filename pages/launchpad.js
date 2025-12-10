@@ -164,7 +164,7 @@ export default function LaunchpadPage() {
           {/* Desktop Header */}
           <div className="hidden md:flex justify-between items-center mb-8">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/images/axiom-token.png" alt="Axiom" className="w-10 h-10 rounded-full" />
+              <img src="/images/axiom-token.png" alt="Axiom" className="w-10 h-10 rounded-full" onError={(e) => { e.target.onerror = null; e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23f59e0b"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold">AXM</text></svg>'; }} />
               <span className="text-xl font-bold text-white">AXIOM</span>
             </Link>
             <div className="flex gap-6">
@@ -183,7 +183,7 @@ export default function LaunchpadPage() {
           <div className="md:hidden">
             <div className="flex items-center justify-between mb-4">
               <Link href="/" className="flex items-center gap-2">
-                <img src="/images/axiom-token.png" alt="Axiom" className="w-8 h-8 rounded-full" />
+                <img src="/images/axiom-token.png" alt="Axiom" className="w-8 h-8 rounded-full" onError={(e) => { e.target.onerror = null; e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23f59e0b"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold">AXM</text></svg>'; }} />
                 <span className="text-lg font-bold text-white">AXIOM</span>
               </Link>
             </div>
@@ -672,7 +672,7 @@ export default function LaunchpadPage() {
       <footer className="border-t border-gray-700 py-12 text-center text-gray-400">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <img src="/images/axiom-token.png" alt="Axiom" className="w-8 h-8 rounded-full" />
+            <img src="/images/axiom-token.png" alt="Axiom" className="w-8 h-8 rounded-full" onError={(e) => { e.target.onerror = null; e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23f59e0b"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold">AXM</text></svg>'; }} />
             <span className="font-bold text-white">AXIOM</span>
           </div>
           <p className="text-sm mb-4">America's First On-Chain Smart City</p>

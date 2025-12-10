@@ -247,6 +247,11 @@ function TokenOrbit() {
             className="w-48 h-48 lg:w-56 lg:h-56 rounded-full object-cover shadow-2xl shadow-amber-500/40"
             animate={shouldReduceMotion ? {} : { scale: [1, 1.05, 1] }}
             transition={shouldReduceMotion ? { duration: 0 } : { duration: 2, repeat: Infinity }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23f59e0b"/><text x="50" y="55" text-anchor="middle" fill="white" font-size="24" font-weight="bold">AXM</text></svg>';
+            }}
+            loading="eager"
           />
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-4 py-1 bg-amber-500 rounded-full text-white font-bold text-sm shadow-lg">
             AXM
@@ -883,7 +888,7 @@ export default function Home() {
         >
           <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
             <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
-              <img src="/images/axiom-token.png" alt="AXM" className="w-14 h-14 rounded-full" />
+              <img src="/images/axiom-token.png" alt="AXM" className="w-14 h-14 rounded-full" onError={(e) => { e.target.onerror = null; e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23f59e0b"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold">AXM</text></svg>'; }} />
             </div>
             <div className="text-center md:text-left">
               <h2 className="text-2xl lg:text-3xl font-bold text-white">Official AXM Token Contract</h2>

@@ -39,6 +39,7 @@ export default function Layout({ children, showWallet = true }) {
                   src="/images/axiom-token.png"
                   alt="Axiom Token"
                   className="w-10 h-10 rounded-full object-cover shadow-lg"
+                  onError={(e) => { e.target.onerror = null; e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23f59e0b"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold">AXM</text></svg>'; }}
                 />
                 <span className="text-xl font-bold text-gray-900">AXIOM</span>
               </div>
@@ -79,6 +80,7 @@ export default function Layout({ children, showWallet = true }) {
                     src="/images/axiom-token.png"
                     alt="Axiom Token"
                     className="w-8 h-8 rounded-full object-cover shadow-lg"
+                    onError={(e) => { e.target.onerror = null; e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23f59e0b"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold">AXM</text></svg>'; }}
                   />
                   <span className="text-lg font-bold text-gray-900">AXIOM</span>
                 </div>
@@ -128,6 +130,7 @@ export default function Layout({ children, showWallet = true }) {
                     src="/images/axiom-token.png" 
                     alt="Axiom Token"
                     className="w-8 h-8 rounded-full object-cover shadow-md"
+                    onError={(e) => { e.target.onerror = null; e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23f59e0b"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold">AXM</text></svg>'; }}
                   />
                   <span className="font-bold text-gray-900">AXIOM</span>
                 </div>
