@@ -1,5 +1,10 @@
 import Layout from "../components/Layout";
-import TokenomicsPieChart from "../components/TokenomicsPieChart";
+import dynamic from "next/dynamic";
+
+const TokenomicsPieChart = dynamic(
+  () => import("../components/TokenomicsPieChart"),
+  { ssr: false, loading: () => <div className="w-full h-80 bg-gray-100 rounded-xl animate-pulse flex items-center justify-center"><span className="text-gray-400">Loading chart...</span></div> }
+);
 
 const TOTAL_SUPPLY = 15000000000;
 
