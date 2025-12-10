@@ -10,6 +10,7 @@
     "build:production": "next build",
     "start": "next start -p ${PORT:-5000}",
     "snapshot": "node scripts/saveReserveSnapshot.js",
+    "admin:reset-password": "node scripts/reset-admin-password.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "legacy-start": "node unified-platform.js",
     "legacy-dev": "node unified-platform.js",
