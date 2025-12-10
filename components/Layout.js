@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { name: 'Grants', href: '/governance/grants' },
   { name: 'Services', href: '/services/utility-pay' },
   { name: 'Tokenomics', href: '/tokenomics' },
+  { name: 'Admin', href: '/admin/whitelist' },
 ];
 
 export default function Layout({ children, showWallet = true }) {

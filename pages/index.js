@@ -436,6 +436,7 @@ export default function Home() {
                 { name: 'Axiom Nodes', href: '/axiom-nodes' },
                 { name: 'Governance', href: '/governance' },
                 { name: 'Tokenomics', href: '/tokenomics' },
+                { name: 'Admin', href: '/admin/whitelist' },
               ].map((item, i) => (
                 <motion.div
                   key={item.name}
@@ -497,6 +498,7 @@ export default function Home() {
                   { name: 'Axiom Nodes', href: '/axiom-nodes' },
                   { name: 'Governance', href: '/governance' },
                   { name: 'Tokenomics', href: '/tokenomics' },
+                  { name: 'Admin', href: '/admin/whitelist' },
                 ].map((item) => (
                   <Link 
                     key={item.name}
