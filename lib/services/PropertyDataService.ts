@@ -150,8 +150,8 @@ class PropertyDataService {
   private attomBaseUrl = 'https://api.gateway.attomdata.com';
   private rentcastBaseUrl = 'https://api.rentcast.io/v1';
   private walkScoreBaseUrl = 'https://api.walkscore.com';
-  private maxRetries = 2;
-  private requestTimeout = 15000;
+  private maxRetries = 1;
+  private requestTimeout = 7000;
 
   private get attomApiKey(): string | undefined {
     return process.env.ATTOM_API_KEY || process.env.ATTOM_API_KET;

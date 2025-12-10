@@ -1,6 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { propertyDataService } from '../../../lib/services/PropertyDataService';
 
+const API_TIMEOUT = 8000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))
+  ]);
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -36,30 +45,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
+    const zipCode = (postalCode as string) || '78244';
+    const sampleFallback = {
+      properties: propertyDataService.getSampleProperties(zipCode),
+      total: 3,
+      page: 1,
+      pageSize: 20,
+      usingSampleData: true,
+      apiError: 'Request timed out - showing sample properties'
+    };
+
     let result;
 
     if (postalCode && typeof postalCode === 'string') {
-      result = await propertyDataService.fetchPropertiesByZipCode({
-        postalCode,
-        propertyType: propertyType as string,
-        orderBy: orderBy as string,
-        page: parseInt(page as string) || 1,
-        pageSize: Math.min(parseInt(pageSize as string) || 20, 50),
-        minValue: minValue ? parseInt(minValue as string) : undefined,
-        maxValue: maxValue ? parseInt(maxValue as string) : undefined
-      });
+      result = await withTimeout(
+        propertyDataService.fetchPropertiesByZipCode({
+          postalCode,
+          propertyType: propertyType as string,
+          orderBy: orderBy as string,
+          page: parseInt(page as string) || 1,
+          pageSize: Math.min(parseInt(pageSize as string) || 20, 50),
+          minValue: minValue ? parseInt(minValue as string) : undefined,
+          maxValue: maxValue ? parseInt(maxValue as string) : undefined
+        }),
+        API_TIMEOUT,
+        sampleFallback
+      );
     } else if (city && state && typeof city === 'string' && typeof state === 'string') {
-      result = await propertyDataService.fetchPropertiesByCity({
-        city,
-        state,
-        propertyType: propertyType as string,
-        minBeds: minBeds ? parseInt(minBeds as string) : undefined,
-        minBaths: minBaths ? parseInt(minBaths as string) : undefined,
-        minValue: minValue ? parseInt(minValue as string) : undefined,
-        maxValue: maxValue ? parseInt(maxValue as string) : undefined,
-        page: parseInt(page as string) || 1,
-        pageSize: Math.min(parseInt(pageSize as string) || 20, 50)
-      });
+      result = await withTimeout(
+        propertyDataService.fetchPropertiesByCity({
+          city,
+          state,
+          propertyType: propertyType as string,
+          minBeds: minBeds ? parseInt(minBeds as string) : undefined,
+          minBaths: minBaths ? parseInt(minBaths as string) : undefined,
+          minValue: minValue ? parseInt(minValue as string) : undefined,
+          maxValue: maxValue ? parseInt(maxValue as string) : undefined,
+          page: parseInt(page as string) || 1,
+          pageSize: Math.min(parseInt(pageSize as string) || 20, 50)
+        }),
+        API_TIMEOUT,
+        sampleFallback
+      );
     } else {
       return res.status(400).json({
         success: false,
