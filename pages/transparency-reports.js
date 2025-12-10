@@ -2,10 +2,15 @@ import Layout from "../components/Layout";
 import TransparencyReportsTable from "../components/TransparencyReportsTable";
 import ProofOfReserves from "../components/ProofOfReserves";
 import ReservesSummary from "../components/ReservesSummary";
-import ReservesHistoryChart from "../components/ReservesHistoryChart";
+import dynamic from "next/dynamic";
 import GrowthMetric from "../components/GrowthMetric";
 import ExportButtons from "../components/ExportButtons";
 import DownloadPDF from "../components/DownloadPDF";
+
+const ReservesHistoryChart = dynamic(
+  () => import("../components/ReservesHistoryChart"),
+  { ssr: false, loading: () => <div className="w-full h-64 bg-gray-100 rounded-xl animate-pulse flex items-center justify-center"><span className="text-gray-400">Loading chart...</span></div> }
+);
 
 export default function TransparencyReportsPage() {
   const investor = { email: null, code: null };
