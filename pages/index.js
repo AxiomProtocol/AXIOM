@@ -249,7 +249,7 @@ function TokenOrbit() {
             transition={shouldReduceMotion ? { duration: 0 } : { duration: 2, repeat: Infinity }}
             onError={(e) => {
               e.target.onerror = null;
-              e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23f59e0b"/><text x="50" y="55" text-anchor="middle" fill="white" font-size="24" font-weight="bold">AXM</text></svg>';
+              e.target.src = '/images/axiom-token-fallback.svg';
             }}
             loading="eager"
           />
@@ -888,7 +888,7 @@ export default function Home() {
         >
           <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
             <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
-              <img src="/images/axiom-token.png" alt="AXM" className="w-14 h-14 rounded-full" onError={(e) => { e.target.onerror = null; e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23f59e0b"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold">AXM</text></svg>'; }} />
+              <img src="/images/axiom-token.png" alt="AXM" className="w-14 h-14 rounded-full" onError={(e) => { e.target.onerror = null; e.target.src = '/images/axiom-token-fallback.svg'; }} />
             </div>
             <div className="text-center md:text-left">
               <h2 className="text-2xl lg:text-3xl font-bold text-white">Official AXM Token Contract</h2>
