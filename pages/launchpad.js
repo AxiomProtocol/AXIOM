@@ -42,6 +42,7 @@ const COUNTRIES = [
 
 const INVESTMENT_RANGES = [
   { value: '', label: 'Select investment range (optional)' },
+  { value: '$20-$100', label: '$20 - $100' },
   { value: '$100-$500', label: '$100 - $500' },
   { value: '$500-$1K', label: '$500 - $1,000' },
   { value: '$1K-$5K', label: '$1,000 - $5,000' },
