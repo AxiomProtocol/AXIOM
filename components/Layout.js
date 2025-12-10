@@ -172,6 +172,7 @@ export default function Layout({ children, showWallet = true }) {
                 <Link href="/privacy-policy" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Privacy Policy</Link>
                 <Link href="/compliance" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Compliance</Link>
                 <Link href="/admin/treasury" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Admin Dashboard</Link>
+                <Link href="/admin/whitelist" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Whitelist Management</Link>
               </div>
             </div>
           </div>
