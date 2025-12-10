@@ -31,6 +31,24 @@ const TGE_BENEFITS = [
   { icon: '🏆', title: 'Proven Team', description: '23 deployed smart contracts on Arbitrum One. Real revenue. Real utility. Real assets.' },
 ];
 
+const COUNTRIES = [
+  'United States', 'Canada', 'United Kingdom', 'Australia', 'Germany', 'France', 'Japan', 'South Korea',
+  'Singapore', 'Hong Kong', 'Switzerland', 'Netherlands', 'Sweden', 'Norway', 'Denmark', 'Finland',
+  'Ireland', 'New Zealand', 'Austria', 'Belgium', 'Italy', 'Spain', 'Portugal', 'Poland', 'Czech Republic',
+  'India', 'Brazil', 'Mexico', 'Argentina', 'Chile', 'Colombia', 'South Africa', 'Nigeria', 'Kenya',
+  'United Arab Emirates', 'Saudi Arabia', 'Israel', 'Turkey', 'Thailand', 'Malaysia', 'Indonesia',
+  'Philippines', 'Vietnam', 'Taiwan', 'Other'
+];
+
+const INVESTMENT_RANGES = [
+  { value: '', label: 'Select investment range (optional)' },
+  { value: '$100-$500', label: '$100 - $500' },
+  { value: '$500-$1K', label: '$500 - $1,000' },
+  { value: '$1K-$5K', label: '$1,000 - $5,000' },
+  { value: '$5K-$10K', label: '$5,000 - $10,000' },
+  { value: '$10K+', label: '$10,000+' },
+];
+
 export default function LaunchpadPage() {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -39,6 +57,9 @@ export default function LaunchpadPage() {
     seconds: 0
   });
   const [email, setEmail] = useState('');
+  const [walletAddress, setWalletAddress] = useState('');
+  const [country, setCountry] = useState('');
+  const [investmentInterest, setInvestmentInterest] = useState('');
   const [emailSubmitted, setEmailSubmitted] = useState(false);
   const [emailError, setEmailError] = useState('');
 
@@ -92,11 +113,26 @@ export default function LaunchpadPage() {
       return;
     }
 
+    if (!country) {
+      setEmailError('Please select your country');
+      return;
+    }
+
+    if (walletAddress && !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+      setEmailError('Please enter a valid Ethereum wallet address (0x...)');
+      return;
+    }
+
     try {
       const response = await fetch('/api/tge/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ 
+          email,
+          walletAddress: walletAddress || null,
+          country,
+          investmentInterest: investmentInterest || null
+        })
       });
 
       const data = await response.json();
@@ -105,13 +141,16 @@ export default function LaunchpadPage() {
         setEmailSubmitted(true);
         setTimeout(() => {
           setEmail('');
+          setWalletAddress('');
+          setCountry('');
+          setInvestmentInterest('');
           setEmailSubmitted(false);
         }, 5000);
       } else {
         setEmailError(data.error || 'Failed to subscribe. Please try again.');
       }
     } catch (error) {
-      setEmailError('Failed to submit email. Please try again.');
+      setEmailError('Failed to submit. Please try again.');
     }
   };
 
@@ -295,27 +334,58 @@ export default function LaunchpadPage() {
 
             {!emailSubmitted ? (
               <form onSubmit={handleEmailSubmit} className="max-w-2xl mx-auto">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address"
-                    className="flex-1 px-6 py-4 bg-gray-800 border-2 border-green-500/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-400 transition-colors text-lg"
-                    required
-                  />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Email address *"
+                      className="w-full px-4 py-3 bg-gray-800 border-2 border-green-500/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-400 transition-colors"
+                      required
+                    />
+                    <select
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-800 border-2 border-green-500/50 rounded-lg text-white focus:outline-none focus:border-green-400 transition-colors"
+                      required
+                    >
+                      <option value="">Select country *</option>
+                      {COUNTRIES.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      value={walletAddress}
+                      onChange={(e) => setWalletAddress(e.target.value)}
+                      placeholder="Wallet address (optional, for whitelist)"
+                      className="w-full px-4 py-3 bg-gray-800 border-2 border-green-500/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-400 transition-colors font-mono text-sm"
+                    />
+                    <select
+                      value={investmentInterest}
+                      onChange={(e) => setInvestmentInterest(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-800 border-2 border-green-500/50 rounded-lg text-white focus:outline-none focus:border-green-400 transition-colors"
+                    >
+                      {INVESTMENT_RANGES.map((range) => (
+                        <option key={range.value} value={range.value}>{range.label}</option>
+                      ))}
+                    </select>
+                  </div>
                   <button
                     type="submit"
-                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-8 py-4 rounded-lg font-bold text-lg shadow-lg transition-all"
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-8 py-4 rounded-lg font-bold text-lg shadow-lg transition-all"
                   >
-                    Notify Me
+                    Join Whitelist
                   </button>
                 </div>
                 {emailError && (
-                  <p className="text-red-400 text-sm mt-2 text-center">{emailError}</p>
+                  <p className="text-red-400 text-sm mt-3 text-center">{emailError}</p>
                 )}
                 <p className="text-gray-400 text-sm mt-4 text-center">
-                  We respect your privacy. No spam, just important TGE updates.
+                  * Required fields. Wallet address is optional but recommended for whitelist eligibility.
                 </p>
               </form>
             ) : (
