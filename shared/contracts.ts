@@ -121,6 +121,14 @@ export const SUSTAINABILITY_CONTRACTS = {
   SUSTAINABILITY: '0xAf4dF8a7733BAB64b7Ce83F2494d6446eF9eC046'
 } as const;
 
+// Community Savings Contracts (24)
+export const COMMUNITY_SAVINGS_CONTRACTS = {
+  // Contract 24: AxiomSusuHub (Rotating Savings Groups)
+  // Deployed: December 11, 2025 | Verified on Blockscout
+  // Features: ROSCA/SUSU pools, configurable cycles, treasury fee routing
+  SUSU_HUB: '0x6C69D730327930B49A7997B7b5fb0865F30c95A5'
+} as const;
+
 // All contracts in a single object for easy access
 export const ALL_CONTRACTS = {
   ...CORE_CONTRACTS,
@@ -129,7 +137,8 @@ export const ALL_CONTRACTS = {
   ...ADVANCED_DEFI_CONTRACTS,
   ...MARKET_CONTRACTS,
   ...COMMUNITY_CONTRACTS,
-  ...SUSTAINABILITY_CONTRACTS
+  ...SUSTAINABILITY_CONTRACTS,
+  ...COMMUNITY_SAVINGS_CONTRACTS
 } as const;
 
 // Deployer Address
