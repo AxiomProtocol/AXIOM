@@ -29,11 +29,12 @@ Key features include:
 - **KeyGrow Rent-to-Own Program**: A first-of-its-kind real estate program enabling tenants to build equity through ERC-1155 tokenized fractional property shares (100,000 shares per property). Features property browsing, seller portal, enrollment, equity tracking, and integration with ATTOM Data and RentCast. KeyGrow tables use a dedicated schema module (`shared/keygrowSchema.ts`) to avoid Next.js/webpack compilation issues with large shared schema files. Enhanced with financial analysis metrics including price-to-rent ratio, affordability index, equity projections (1/3/5 year), monthly ownership costs breakdown, cap rate, and time-to-ownership estimates. Walk Score integration ready for walkability, transit, and bike scores. Properties filtered to affordable range ($50K-$375K). **Option Consideration System**: $500 option fee from tenants (legally correct term for rent-to-own, replacing "good faith deposit") is staked in AXM tokens at 8% APR, with rewards accumulating toward the tenant's down payment and credited toward purchase price at closing. Tracked via `keygrow_deposits` table with full staking rewards calculation.
 - **Reactive Network Integration (Planned)**: Autonomous, event-driven smart contract automation for DePIN, Governance, Treasury, DEX, Cross-Chain, and Smart City IoT.
 - **Whitepaper Documentation**: Comprehensive 14-section whitepaper at `/whitepaper` covering executive summary, market opportunity, technology architecture, tokenomics, ecosystem components, National Bank of Axiom (30+ banking products), Wall Street integration (MarketsAndListingsHub), governance & compliance (ISO 20022 + GENIUS Act), roadmap, financials, risks & mitigations, and legal disclosures.
+- **Axiom SUSU (Rotating Savings Groups)**: On-chain ROSCA (Rotating Savings and Credit Association) system enabling community-based savings pools. Members contribute fixed amounts each cycle, with one member receiving the pooled funds each round until everyone has received once. Features include configurable pool parameters (2-50 members, AXM or ERC20 tokens, flexible cycle durations), sequential or randomized payout order, grace periods for late payments, protocol fee routing to treasury, and comprehensive event logging. Integrates with existing AxiomV2 token and treasury vault. Contract: `AxiomSusuHub.sol`, documentation at `docs/SUSU_USER_GUIDE.md`.
 
 ## Project Resources
 - **GitHub Main Repository:** https://github.com/AxiomProtocol/AXIOM
 - **GitHub Wiki (Documentation):** https://github.com/AxiomProtocol/AXIOM/wiki
-- **Contract Count:** 23 verified contracts on Arbitrum One
+- **Contract Count:** 24 verified contracts on Arbitrum One (including AxiomSusuHub)
 - **TGE Timeline:** Q1 2026
 
 ## External Dependencies
