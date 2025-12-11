@@ -35,14 +35,40 @@ interface WhitelistStats {
   airdropCompleted: number;
 }
 
+interface EarlyAccessMember {
+  id: number;
+  email: string;
+  referral_code: string;
+  referred_by: string | null;
+  referral_count: number;
+  referral_reward: number;
+  base_reward: number;
+  verified: boolean;
+  ip_address: string | null;
+  created_at: string;
+}
+
+interface EarlyAccessStats {
+  total: number;
+  today: number;
+  thisWeek: number;
+  referredSignups: number;
+  spotsRemaining: number;
+  totalBaseRewards: number;
+  totalReferralRewards: number;
+  totalRewardsCommitted: number;
+}
+
 export default function WhitelistDashboard() {
   const router = useRouter();
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [members, setMembers] = useState<WhitelistMember[]>([]);
   const [stats, setStats] = useState<WhitelistStats | null>(null);
+  const [earlyAccessMembers, setEarlyAccessMembers] = useState<EarlyAccessMember[]>([]);
+  const [earlyAccessStats, setEarlyAccessStats] = useState<EarlyAccessStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'airdrop'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'airdrop' | 'early-access'>('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCountry, setFilterCountry] = useState('');
   const [filterWallet, setFilterWallet] = useState<'all' | 'with' | 'without'>('all');
@@ -90,13 +116,17 @@ export default function WhitelistDashboard() {
 
   const fetchData = async () => {
     try {
-      const [membersRes, statsRes] = await Promise.all([
+      const [membersRes, statsRes, earlyMembersRes, earlyStatsRes] = await Promise.all([
         fetch('/api/admin/whitelist/members'),
-        fetch('/api/admin/whitelist/stats')
+        fetch('/api/admin/whitelist/stats'),
+        fetch('/api/admin/early-access/members'),
+        fetch('/api/admin/early-access/stats')
       ]);
 
       if (membersRes.ok) setMembers(await membersRes.json());
       if (statsRes.ok) setStats(await statsRes.json());
+      if (earlyMembersRes.ok) setEarlyAccessMembers(await earlyMembersRes.json());
+      if (earlyStatsRes.ok) setEarlyAccessStats(await earlyStatsRes.json());
     } catch (error) {
       console.error('Error fetching whitelist data:', error);
     } finally {
@@ -248,7 +278,7 @@ export default function WhitelistDashboard() {
         </div>
 
         <div className="flex gap-2 mb-6">
-          {(['overview', 'members', 'airdrop'] as const).map(tab => (
+          {(['overview', 'members', 'airdrop', 'early-access'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -256,7 +286,7 @@ export default function WhitelistDashboard() {
                 activeTab === tab ? 'bg-amber-500 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'
               }`}
             >
-              {tab}
+              {tab === 'early-access' ? 'Early Access' : tab}
             </button>
           ))}
         </div>
@@ -499,6 +529,92 @@ export default function WhitelistDashboard() {
                     <li>Execute the airdrop using your preferred method (Disperse.app, script, etc.)</li>
                     <li>After tokens are sent, mark selected members as "Completed"</li>
                   </ol>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'early-access' && (
+              <div className="space-y-6">
+                {earlyAccessStats && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                      <div className="text-3xl font-bold text-amber-400">{earlyAccessStats.total}</div>
+                      <div className="text-gray-400 text-sm">Total Signups</div>
+                    </div>
+                    <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                      <div className="text-3xl font-bold text-green-400">{earlyAccessStats.today}</div>
+                      <div className="text-gray-400 text-sm">Today</div>
+                    </div>
+                    <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                      <div className="text-3xl font-bold text-blue-400">{earlyAccessStats.spotsRemaining}</div>
+                      <div className="text-gray-400 text-sm">Spots Remaining</div>
+                    </div>
+                    <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                      <div className="text-3xl font-bold text-purple-400">{earlyAccessStats.referredSignups}</div>
+                      <div className="text-gray-400 text-sm">Via Referral</div>
+                    </div>
+                  </div>
+                )}
+
+                {earlyAccessStats && (
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="bg-green-900/30 border border-green-500/50 rounded-xl p-6">
+                      <div className="text-2xl font-bold text-green-400">{earlyAccessStats.totalBaseRewards.toLocaleString()} AXM</div>
+                      <div className="text-gray-300 text-sm">Base Rewards Committed</div>
+                    </div>
+                    <div className="bg-purple-900/30 border border-purple-500/50 rounded-xl p-6">
+                      <div className="text-2xl font-bold text-purple-400">{earlyAccessStats.totalReferralRewards.toLocaleString()} AXM</div>
+                      <div className="text-gray-300 text-sm">Referral Rewards Committed</div>
+                    </div>
+                    <div className="bg-amber-900/30 border border-amber-500/50 rounded-xl p-6">
+                      <div className="text-2xl font-bold text-amber-400">{earlyAccessStats.totalRewardsCommitted.toLocaleString()} AXM</div>
+                      <div className="text-gray-300 text-sm">Total Rewards Committed</div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+                  <div className="p-4 border-b border-gray-700">
+                    <h3 className="text-lg font-bold text-white">Early Access Signups</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-900">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-gray-400">Email</th>
+                          <th className="px-4 py-3 text-left text-gray-400">Referral Code</th>
+                          <th className="px-4 py-3 text-left text-gray-400">Referred By</th>
+                          <th className="px-4 py-3 text-left text-gray-400">Referrals</th>
+                          <th className="px-4 py-3 text-left text-gray-400">Base Reward</th>
+                          <th className="px-4 py-3 text-left text-gray-400">Referral Reward</th>
+                          <th className="px-4 py-3 text-left text-gray-400">Signed Up</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {earlyAccessMembers.map(member => (
+                          <tr key={member.id} className="border-t border-gray-700 hover:bg-gray-700/50">
+                            <td className="px-4 py-3 text-white">{member.email}</td>
+                            <td className="px-4 py-3 text-amber-400 font-mono text-xs">{member.referral_code}</td>
+                            <td className="px-4 py-3 text-gray-400 font-mono text-xs">{member.referred_by || '-'}</td>
+                            <td className="px-4 py-3 text-white">{member.referral_count}</td>
+                            <td className="px-4 py-3 text-green-400">{member.base_reward} AXM</td>
+                            <td className="px-4 py-3 text-purple-400">{member.referral_reward} AXM</td>
+                            <td className="px-4 py-3 text-gray-400">{new Date(member.created_at).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                        {earlyAccessMembers.length === 0 && (
+                          <tr>
+                            <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                              No early access signups yet
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="p-4 border-t border-gray-700 text-gray-400 text-sm">
+                    Showing {earlyAccessMembers.length} signups
+                  </div>
                 </div>
               </div>
             )}
