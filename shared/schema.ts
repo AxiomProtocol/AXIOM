@@ -2479,3 +2479,49 @@ export const earlyAccessSignups = pgTable("early_access_signups", {
 
 export type EarlyAccessSignup = typeof earlyAccessSignups.$inferSelect;
 export type InsertEarlyAccessSignup = typeof earlyAccessSignups.$inferInsert;
+
+// ============================================
+// PMA (PRIVATE MEMBERSHIP ASSOCIATION) APPLICATIONS
+// ============================================
+
+export const pmaApplicationStatusEnum = pgEnum('pma_application_status', [
+  'pending',
+  'under_review',
+  'approved',
+  'rejected',
+  'withdrawn'
+]);
+
+export const pmaMembershipTypeEnum = pgEnum('pma_membership_type', [
+  'founding',
+  'standard',
+  'associate'
+]);
+
+export const pmaApplications = pgTable("pma_applications", {
+  id: serial("id").primaryKey(),
+  fullName: varchar("full_name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).unique().notNull(),
+  walletAddress: varchar("wallet_address", { length: 42 }).unique().notNull(),
+  membershipType: pmaMembershipTypeEnum("membership_type").default('standard').notNull(),
+  country: varchar("country", { length: 10 }).notNull(),
+  status: pmaApplicationStatusEnum("status").default('pending').notNull(),
+  acceptedDeclaration: boolean("accepted_declaration").default(false).notNull(),
+  acceptedBylaws: boolean("accepted_bylaws").default(false).notNull(),
+  acceptedMembership: boolean("accepted_membership").default(false).notNull(),
+  acceptedRisks: boolean("accepted_risks").default(false).notNull(),
+  acceptedPrivate: boolean("accepted_private").default(false).notNull(),
+  reviewNotes: text("review_notes"),
+  reviewedBy: varchar("reviewed_by", { length: 255 }),
+  reviewedAt: timestamp("reviewed_at"),
+  memberNumber: varchar("member_number", { length: 20 }).unique(),
+  submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  emailIdx: index("pma_applications_email_idx").on(table.email),
+  walletIdx: index("pma_applications_wallet_idx").on(table.walletAddress),
+  statusIdx: index("pma_applications_status_idx").on(table.status),
+}));
+
+export type PmaApplication = typeof pmaApplications.$inferSelect;
+export type InsertPmaApplication = typeof pmaApplications.$inferInsert;

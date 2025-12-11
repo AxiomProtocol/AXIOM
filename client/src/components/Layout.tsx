@@ -204,6 +204,7 @@ const Layout: React.FC<LayoutProps> = ({
     { path: '/comparison', label: 'Why Axiom Will Be #1', isExternal: false },
     { path: '/axiom-dashboard', label: 'Axiom Dashboard', isExternal: false },
     { path: '/launchpad', label: 'Token Launchpad', isExternal: false },
+    { path: '/pma', label: '🏛️ PMA Trust (Private Association)', isExternal: true },
     { path: '/axiom-banking', label: 'National Bank (32 Products)', isExternal: false },
     { path: '/axiom-depin-nodes', label: '🚀 DePIN Nodes ($40-750)', isExternal: false },
     { path: '/axiom-defi', label: 'DeFi Opportunities', isExternal: false },
