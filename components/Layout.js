@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { name: 'DePIN', href: '/axiom-nodes' },
   { name: 'Node Market', href: '/nodes/marketplace' },
   { name: 'SUSU', href: '/susu' },
+  { name: 'PMA Trust', href: '/pma' },
   { name: 'Governance', href: '/governance' },
   { name: 'Grants', href: '/governance/grants' },
   { name: 'Services', href: '/services/utility-pay' },
@@ -149,6 +150,7 @@ export default function Layout({ children, showWallet = true }) {
                 <Link href="/launchpad" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Launchpad (TGE)</Link>
                 <Link href="/axiom-nodes" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">DePIN Network</Link>
                 <Link href="/nodes/marketplace" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Node Marketplace</Link>
+                <Link href="/pma" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">PMA Trust</Link>
                 <Link href="/governance" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Governance</Link>
                 <Link href="/governance/grants" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Treasury Grants</Link>
                 <Link href="/tokenomics" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Tokenomics</Link>
