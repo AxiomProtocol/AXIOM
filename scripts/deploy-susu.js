@@ -7,7 +7,7 @@ async function main() {
   console.log("Deploying with account:", deployer.address);
   
   // Configuration - update these for your deployment
-  const TREASURY_VAULT = process.env.TREASURY_VAULT || "0x2bB2c2A7a1d82097488bf0b9c2a59c1910CD8D5d";
+  const TREASURY_VAULT = process.env.TREASURY_VAULT || "0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d";
   const ADMIN_ADDRESS = process.env.ADMIN_ADDRESS || deployer.address;
   
   // Deploy AxiomSusuHub

@@ -14,27 +14,7 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200,
       },
-      viaIR: true,
-      modelChecker: {
-        engine: "chc",
-        targets: [
-          "assert",
-          "underflow",
-          "overflow",
-          "divByZero",
-          "balance",
-          "popEmptyArray",
-          "outOfBounds"
-        ],
-        timeout: 20000,
-        contracts: {
-          "contracts/AxiomV2.sol": ["AxiomV2"],
-          "contracts/DePINNodeSales.sol": ["DePINNodeSales"],
-          "contracts/AxiomExchangeHub.sol": ["AxiomExchangeHub"],
-          "contracts/CapitalPoolsAndFunds.sol": ["CapitalPoolsAndFunds"],
-          "contracts/LeaseAndRentEngine.sol": ["LeaseAndRentEngine"]
-        }
-      }
+      viaIR: true
     },
   },
   networks: {

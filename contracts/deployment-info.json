@@ -39,6 +39,37 @@
         "Compliance Module Support",
         "Identity Registry Integration"
       ]
+    },
+    "AxiomSusuHub": {
+      "address": "0x6C69D730327930B49A7997B7b5fb0865F30c95A5",
+      "name": "Axiom SUSU Hub",
+      "description": "On-chain Rotating Savings and Credit Association (ROSCA) system",
+      "verified": true,
+      "verifiedAt": "Dec 11 2025 04:57:09 AM (UTC)",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0x6C69D730327930B49A7997B7b5fb0865F30c95A5#code",
+      "compiler": {
+        "version": "0.8.20",
+        "optimizationRuns": 200,
+        "viaIR": true
+      },
+      "constructorArgs": {
+        "treasuryVault": "0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d",
+        "admin": "0xDFf9e47eb007bF02e47477d577De9ffA99791528"
+      },
+      "features": [
+        "Rotating Savings Pools (2-50 members)",
+        "Sequential or Randomized Payout Order",
+        "Configurable Cycle Duration (1-90 days)",
+        "Protocol Fee Routing to Treasury",
+        "Grace Periods for Late Payments",
+        "Late Payment Penalties",
+        "Member Ejection",
+        "Pool Cancellation with Refunds",
+        "AccessControl",
+        "ReentrancyGuard",
+        "Pausable",
+        "SafeERC20"
+      ]
     }
   }
 }
