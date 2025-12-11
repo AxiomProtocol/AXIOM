@@ -1,10 +1,13 @@
 import '../styles/globals.css'
 import { WalletProvider } from '../components/WalletConnect/WalletContext'
+import ErrorBoundary from '../components/ErrorBoundary'
 
 export default function App({ Component, pageProps }) {
   return (
-    <WalletProvider>
-      <Component {...pageProps} />
-    </WalletProvider>
+    <ErrorBoundary>
+      <WalletProvider>
+        <Component {...pageProps} />
+      </WalletProvider>
+    </ErrorBoundary>
   )
 }
