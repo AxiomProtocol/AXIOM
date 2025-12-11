@@ -37,6 +37,8 @@ const ERC20_ABI = [
   "function symbol() external view returns (string)"
 ];
 
+const tokenCache: Map<string, { symbol: string; decimals: number }> = new Map();
+
 export enum PoolStatus {
   Pending = 0,
   Active = 1,
@@ -127,26 +129,47 @@ export class SusuService {
     };
   }
 
+  async getTokenInfo(tokenAddress: string): Promise<{ symbol: string; decimals: number }> {
+    if (tokenCache.has(tokenAddress.toLowerCase())) {
+      return tokenCache.get(tokenAddress.toLowerCase())!;
+    }
+    
+    let symbol = 'AXM';
+    let decimals = 18;
+    
+    try {
+      const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, this.provider);
+      const [tokenSymbol, tokenDecimals] = await Promise.all([
+        tokenContract.symbol(),
+        tokenContract.decimals()
+      ]);
+      symbol = tokenSymbol;
+      decimals = Number(tokenDecimals);
+    } catch (e) {
+      console.error('Error fetching token info:', e);
+    }
+    
+    const info = { symbol, decimals };
+    tokenCache.set(tokenAddress.toLowerCase(), info);
+    return info;
+  }
+
   async getPool(poolId: number): Promise<SusuPool | null> {
     try {
-      const pool = await this.susuContract.getPool(poolId);
-      const members = await this.susuContract.getPoolMembers(poolId);
+      const [pool, members] = await Promise.all([
+        this.susuContract.getPool(poolId),
+        this.susuContract.getPoolMembers(poolId)
+      ]);
       
-      let tokenSymbol = 'AXM';
-      try {
-        const tokenContract = new ethers.Contract(pool.token, ERC20_ABI, this.provider);
-        tokenSymbol = await tokenContract.symbol();
-      } catch (e) {
-        console.error('Error fetching token symbol:', e);
-      }
+      const tokenInfo = await this.getTokenInfo(pool.token);
 
       return {
         poolId: Number(pool.poolId),
         creator: pool.creator,
         token: pool.token,
-        tokenSymbol,
+        tokenSymbol: tokenInfo.symbol,
         memberCount: Number(pool.memberCount),
-        contributionAmount: ethers.formatEther(pool.contributionAmount),
+        contributionAmount: ethers.formatUnits(pool.contributionAmount, tokenInfo.decimals),
         cycleDuration: Number(pool.cycleDuration),
         startTime: Number(pool.startTime),
         currentCycle: Number(pool.currentCycle),
@@ -159,9 +182,9 @@ export class SusuService {
         status: Number(pool.status) as PoolStatus,
         createdAt: Number(pool.createdAt),
         lastPayoutTime: Number(pool.lastPayoutTime),
-        totalContributed: ethers.formatEther(pool.totalContributed),
-        totalPaidOut: ethers.formatEther(pool.totalPaidOut),
-        totalFeesPaid: ethers.formatEther(pool.totalFeesPaid),
+        totalContributed: ethers.formatUnits(pool.totalContributed, tokenInfo.decimals),
+        totalPaidOut: ethers.formatUnits(pool.totalPaidOut, tokenInfo.decimals),
+        totalFeesPaid: ethers.formatUnits(pool.totalFeesPaid, tokenInfo.decimals),
         currentMemberCount: members.length
       };
     } catch (error) {
@@ -189,19 +212,21 @@ export class SusuService {
     return await this.susuContract.getPoolMembers(poolId);
   }
 
-  async getMember(poolId: number, wallet: string): Promise<SusuMember | null> {
+  async getMember(poolId: number, wallet: string, tokenDecimals?: number): Promise<SusuMember | null> {
     try {
       const member = await this.susuContract.getMember(poolId, wallet);
       if (member.wallet === ethers.ZeroAddress) return null;
+      
+      const decimals = tokenDecimals ?? 18;
       
       return {
         wallet: member.wallet,
         payoutPosition: Number(member.payoutPosition),
         joinedAt: Number(member.joinedAt),
-        totalContributed: ethers.formatEther(member.totalContributed),
-        totalReceived: ethers.formatEther(member.totalReceived),
+        totalContributed: ethers.formatUnits(member.totalContributed, decimals),
+        totalReceived: ethers.formatUnits(member.totalReceived, decimals),
         missedPayments: Number(member.missedPayments),
-        lateFees: ethers.formatEther(member.lateFees),
+        lateFees: ethers.formatUnits(member.lateFees, decimals),
         hasReceivedPayout: member.hasReceivedPayout,
         status: Number(member.status) as MemberStatus
       };
@@ -229,12 +254,13 @@ export class SusuService {
     return await this.susuContract.getCurrentRecipient(poolId);
   }
 
-  async getExpectedPayout(poolId: number): Promise<{ gross: string; net: string; fee: string }> {
+  async getExpectedPayout(poolId: number, tokenDecimals?: number): Promise<{ gross: string; net: string; fee: string }> {
     const [gross, net, fee] = await this.susuContract.getExpectedPayout(poolId);
+    const decimals = tokenDecimals ?? 18;
     return {
-      gross: ethers.formatEther(gross),
-      net: ethers.formatEther(net),
-      fee: ethers.formatEther(fee)
+      gross: ethers.formatUnits(gross, decimals),
+      net: ethers.formatUnits(net, decimals),
+      fee: ethers.formatUnits(fee, decimals)
     };
   }
 
