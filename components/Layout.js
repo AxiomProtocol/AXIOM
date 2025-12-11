@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { name: 'Launchpad', href: '/launchpad' },
   { name: 'DePIN', href: '/axiom-nodes' },
   { name: 'Node Market', href: '/nodes/marketplace' },
+  { name: 'SUSU', href: '/susu' },
   { name: 'Governance', href: '/governance' },
   { name: 'Grants', href: '/governance/grants' },
   { name: 'Services', href: '/services/utility-pay' },
