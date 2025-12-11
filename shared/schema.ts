@@ -2453,3 +2453,29 @@ export type KeygrowPropertyEnrichment = typeof keygrowPropertyEnrichment.$inferS
 export type InsertKeygrowPropertyEnrichment = typeof keygrowPropertyEnrichment.$inferInsert;
 export type KeygrowEquitySchedule = typeof keygrowEquitySchedules.$inferSelect;
 export type InsertKeygrowEquitySchedule = typeof keygrowEquitySchedules.$inferInsert;
+
+// ============================================
+// EARLY ACCESS SIGNUPS
+// ============================================
+
+export const earlyAccessSignups = pgTable("early_access_signups", {
+  id: serial("id").primaryKey(),
+  email: varchar("email", { length: 255 }).unique().notNull(),
+  referralCode: varchar("referral_code", { length: 50 }).unique().notNull(),
+  referredBy: varchar("referred_by", { length: 50 }),
+  referralCount: integer("referral_count").default(0).notNull(),
+  referralReward: integer("referral_reward").default(0).notNull(),
+  baseReward: integer("base_reward").default(100).notNull(),
+  verified: boolean("verified").default(false).notNull(),
+  ipAddress: varchar("ip_address", { length: 50 }),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  emailIdx: index("early_access_email_idx").on(table.email),
+  referralCodeIdx: index("early_access_referral_code_idx").on(table.referralCode),
+  referredByIdx: index("early_access_referred_by_idx").on(table.referredBy),
+}));
+
+export type EarlyAccessSignup = typeof earlyAccessSignups.$inferSelect;
+export type InsertEarlyAccessSignup = typeof earlyAccessSignups.$inferInsert;
