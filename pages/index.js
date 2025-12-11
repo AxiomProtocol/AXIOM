@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { motion, useScroll, useTransform, useInView, useMotionValue, useSpring, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import { WalletConnectButton } from '../components/WalletConnect/WalletConnectButton';
+import { NAV_ITEMS } from '../lib/navigation';
 
 function useAccessibleMotion() {
   const shouldReduceMotion = useReducedMotion();
@@ -432,18 +433,7 @@ export default function Home() {
             
             {/* Desktop Navigation */}
             <nav className="flex items-center gap-6">
-              {[
-                { name: 'About', href: '/about-us' },
-                { name: 'Bank', href: '/bank' },
-                { name: 'DEX', href: '/dex' },
-                { name: 'KeyGrow', href: '/keygrow' },
-                { name: 'Launchpad', href: '/launchpad' },
-                { name: 'Axiom Nodes', href: '/axiom-nodes' },
-                { name: 'PMA Trust', href: '/pma' },
-                { name: 'Governance', href: '/governance' },
-                { name: 'Tokenomics', href: '/tokenomics' },
-                { name: 'Admin', href: '/admin/whitelist' },
-              ].map((item, i) => (
+              {NAV_ITEMS.map((item, i) => (
                 <motion.div
                   key={item.name}
                   initial={{ opacity: 0, y: -20 }}
@@ -495,18 +485,7 @@ export default function Home() {
             {/* Row 2: Navigation Pills */}
             <div className="pb-3">
               <div className="flex overflow-x-auto gap-2 -mx-4 px-4" style={{ WebkitOverflowScrolling: 'touch' }}>
-                {[
-                  { name: 'About', href: '/about-us' },
-                  { name: 'Bank', href: '/bank' },
-                  { name: 'DEX', href: '/dex' },
-                  { name: 'KeyGrow', href: '/keygrow' },
-                  { name: 'Launchpad', href: '/launchpad' },
-                  { name: 'Axiom Nodes', href: '/axiom-nodes' },
-                  { name: 'PMA Trust', href: '/pma' },
-                  { name: 'Governance', href: '/governance' },
-                  { name: 'Tokenomics', href: '/tokenomics' },
-                  { name: 'Admin', href: '/admin/whitelist' },
-                ].map((item) => (
+                {NAV_ITEMS.map((item) => (
                   <Link 
                     key={item.name}
                     href={item.href}

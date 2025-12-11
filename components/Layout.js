@@ -1,22 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { WalletConnectButton } from './WalletConnect/WalletConnectButton';
-
-const NAV_ITEMS = [
-  { name: 'About', href: '/about-us' },
-  { name: 'Bank', href: '/bank' },
-  { name: 'DEX', href: '/dex' },
-  { name: 'Launchpad', href: '/launchpad' },
-  { name: 'DePIN', href: '/axiom-nodes' },
-  { name: 'Node Market', href: '/nodes/marketplace' },
-  { name: 'SUSU', href: '/susu' },
-  { name: 'PMA Trust', href: '/pma' },
-  { name: 'Governance', href: '/governance' },
-  { name: 'Grants', href: '/governance/grants' },
-  { name: 'Services', href: '/services/utility-pay' },
-  { name: 'Tokenomics', href: '/tokenomics' },
-  { name: 'Admin', href: '/admin/whitelist' },
-];
+import { NAV_ITEMS, FOOTER_ECOSYSTEM, FOOTER_RESOURCES, FOOTER_COMPANY } from '../lib/navigation';
 
 export default function Layout({ children, showWallet = true }) {
   const [pathname, setPathname] = useState('');
@@ -145,41 +130,27 @@ export default function Layout({ children, showWallet = true }) {
             <div>
               <h4 className="font-semibold text-gray-900 mb-4">Ecosystem</h4>
               <div className="space-y-2">
-                <Link href="/bank" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">National Bank</Link>
-                <Link href="/dex" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">DEX Exchange</Link>
-                <Link href="/launchpad" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Launchpad (TGE)</Link>
-                <Link href="/axiom-nodes" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">DePIN Network</Link>
-                <Link href="/nodes/marketplace" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Node Marketplace</Link>
-                <Link href="/pma" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">PMA Trust</Link>
-                <Link href="/governance" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Governance</Link>
-                <Link href="/governance/grants" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Treasury Grants</Link>
-                <Link href="/tokenomics" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Tokenomics</Link>
+                {FOOTER_ECOSYSTEM.map((item) => (
+                  <Link key={item.href} href={item.href} className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">{item.name}</Link>
+                ))}
               </div>
             </div>
 
             <div>
               <h4 className="font-semibold text-gray-900 mb-4">Resources</h4>
               <div className="space-y-2">
-                <Link href="/whitepaper" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Whitepaper</Link>
-                <Link href="/transparency" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Trust & Transparency</Link>
-                <Link href="/transparency-reports" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Financial Reports</Link>
-                <Link href="/services/utility-pay" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Utility Payments</Link>
-                <Link href="/admin/iot-dashboard" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">IoT Dashboard</Link>
-                <Link href="/faq" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">FAQ</Link>
-                <Link href="/roadmap" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Roadmap</Link>
+                {FOOTER_RESOURCES.map((item) => (
+                  <Link key={item.href} href={item.href} className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">{item.name}</Link>
+                ))}
               </div>
             </div>
 
             <div>
               <h4 className="font-semibold text-gray-900 mb-4">Company</h4>
               <div className="space-y-2">
-                <Link href="/about-us" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">About Us</Link>
-                <Link href="/team" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Team</Link>
-                <Link href="/terms-and-conditions" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Terms of Service</Link>
-                <Link href="/privacy-policy" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Privacy Policy</Link>
-                <Link href="/compliance" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Compliance</Link>
-                <Link href="/admin/treasury" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Admin Dashboard</Link>
-                <Link href="/admin/whitelist" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Whitelist Management</Link>
+                {FOOTER_COMPANY.map((item) => (
+                  <Link key={item.href} href={item.href} className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">{item.name}</Link>
+                ))}
               </div>
             </div>
           </div>
