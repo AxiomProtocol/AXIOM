@@ -275,9 +275,9 @@ export default function JoinPMA() {
                         <p className="text-gray-600 text-sm mt-1">
                           I have read and understand the Declaration of Trust, including the purpose, structure, and governance of the Axiom PMA Trust.
                         </p>
-                        <a href="/docs/PMA_TRUST_DECLARATION.md" target="_blank" className="text-amber-600 hover:text-amber-700 text-sm font-medium mt-2 inline-block">
+                        <Link href="/pma/declaration" className="text-amber-600 hover:text-amber-700 text-sm font-medium mt-2 inline-block">
                           Read Document →
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -296,9 +296,9 @@ export default function JoinPMA() {
                         <p className="text-gray-600 text-sm mt-1">
                           I have read and agree to abide by the Bylaws of the Axiom PMA Trust, including membership rules, governance procedures, and obligations.
                         </p>
-                        <a href="/docs/PMA_BYLAWS.md" target="_blank" className="text-amber-600 hover:text-amber-700 text-sm font-medium mt-2 inline-block">
+                        <Link href="/pma/bylaws" className="text-amber-600 hover:text-amber-700 text-sm font-medium mt-2 inline-block">
                           Read Document →
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -317,9 +317,9 @@ export default function JoinPMA() {
                         <p className="text-gray-600 text-sm mt-1">
                           I have read and agree to the terms of the Membership Agreement, including my rights, responsibilities, and the binding nature of this agreement.
                         </p>
-                        <a href="/docs/PMA_MEMBERSHIP_AGREEMENT.md" target="_blank" className="text-amber-600 hover:text-amber-700 text-sm font-medium mt-2 inline-block">
+                        <Link href="/pma/membership-agreement" className="text-amber-600 hover:text-amber-700 text-sm font-medium mt-2 inline-block">
                           Read Document →
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   </div>

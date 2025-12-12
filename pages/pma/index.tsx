@@ -528,18 +528,18 @@ export default function PMAInfo() {
               <div className="bg-gray-100 rounded-xl p-6 mt-12 not-prose">
                 <h4 className="font-bold text-gray-900 mb-4">Legal Documents</h4>
                 <div className="grid md:grid-cols-3 gap-4">
-                  <a href="/docs/PMA_TRUST_DECLARATION.md" target="_blank" className="flex items-center gap-2 bg-white rounded-lg p-4 border border-gray-200 hover:border-amber-500 transition-colors">
+                  <Link href="/pma/declaration" className="flex items-center gap-2 bg-white rounded-lg p-4 border border-gray-200 hover:border-amber-500 transition-colors">
                     <span className="text-2xl">📜</span>
                     <span className="text-sm font-medium text-gray-700">Declaration of Trust</span>
-                  </a>
-                  <a href="/docs/PMA_BYLAWS.md" target="_blank" className="flex items-center gap-2 bg-white rounded-lg p-4 border border-gray-200 hover:border-amber-500 transition-colors">
+                  </Link>
+                  <Link href="/pma/bylaws" className="flex items-center gap-2 bg-white rounded-lg p-4 border border-gray-200 hover:border-amber-500 transition-colors">
                     <span className="text-2xl">📋</span>
                     <span className="text-sm font-medium text-gray-700">Bylaws</span>
-                  </a>
-                  <a href="/docs/PMA_MEMBERSHIP_AGREEMENT.md" target="_blank" className="flex items-center gap-2 bg-white rounded-lg p-4 border border-gray-200 hover:border-amber-500 transition-colors">
+                  </Link>
+                  <Link href="/pma/membership-agreement" className="flex items-center gap-2 bg-white rounded-lg p-4 border border-gray-200 hover:border-amber-500 transition-colors">
                     <span className="text-2xl">✍️</span>
                     <span className="text-sm font-medium text-gray-700">Membership Agreement</span>
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>
