@@ -972,6 +972,7 @@ export default function Home() {
                 <Link href="/launchpad" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Launchpad (TGE)</Link>
                 <Link href="/axiom-nodes" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">DePIN Network</Link>
                 <Link href="/nodes/marketplace" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Node Marketplace</Link>
+                <Link href="/pma" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">PMA Trust</Link>
                 <Link href="/governance" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Governance</Link>
                 <Link href="/governance/grants" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Treasury Grants</Link>
                 <Link href="/tokenomics" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Tokenomics</Link>
