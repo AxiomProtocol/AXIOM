@@ -1,6 +1,6 @@
 import { NextPageContext } from 'next';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ErrorProps {
   statusCode: number;
@@ -8,7 +8,11 @@ interface ErrorProps {
 }
 
 function Error({ statusCode, message }: ErrorProps) {
+  const [timestamp, setTimestamp] = useState<string>('');
+
   useEffect(() => {
+    setTimestamp(new Date().toISOString());
+    
     if (typeof window !== 'undefined') {
       console.error(`[CLIENT ERROR] Status: ${statusCode}, Message: ${message || 'Unknown error'}, URL: ${window.location.href}`);
       
@@ -64,9 +68,11 @@ function Error({ statusCode, message }: ErrorProps) {
             Return Home
           </Link>
           
-          <div className="text-sm text-gray-500">
-            Error Code: {statusCode} | Time: {new Date().toISOString()}
-          </div>
+          {timestamp && (
+            <div className="text-sm text-gray-500">
+              Error Code: {statusCode} | Time: {timestamp}
+            </div>
+          )}
         </div>
       </div>
     </div>
