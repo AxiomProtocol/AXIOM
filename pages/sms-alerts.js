@@ -218,7 +218,7 @@ export default function SMSAlerts() {
                   />
                   <span className="text-sm text-gray-700">
                     I agree to the{' '}
-                    <Link href="/terms" className="text-amber-600 hover:underline">Terms of Service</Link>
+                    <Link href="/terms-and-conditions" className="text-amber-600 hover:underline">Terms of Service</Link>
                     {' '}and{' '}
                     <Link href="/privacy-policy" className="text-amber-600 hover:underline">Privacy Policy</Link>.
                   </span>
@@ -248,7 +248,7 @@ export default function SMSAlerts() {
               <div className="flex flex-wrap gap-4 text-sm">
                 <Link href="/about" className="text-amber-600 hover:underline">About Us</Link>
                 <Link href="/privacy-policy" className="text-amber-600 hover:underline">Privacy Policy</Link>
-                <Link href="/terms" className="text-amber-600 hover:underline">Terms of Service</Link>
+                <Link href="/terms-and-conditions" className="text-amber-600 hover:underline">Terms of Service</Link>
                 <Link href="/contact" className="text-amber-600 hover:underline">Contact</Link>
               </div>
             </div>
