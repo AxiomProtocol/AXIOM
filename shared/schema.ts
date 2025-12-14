@@ -2525,3 +2525,33 @@ export const pmaApplications = pgTable("pma_applications", {
 
 export type PmaApplication = typeof pmaApplications.$inferSelect;
 export type InsertPmaApplication = typeof pmaApplications.$inferInsert;
+
+// ============================================
+// SMS SUBSCRIBERS
+// ============================================
+
+export const smsSubscriberStatusEnum = pgEnum('sms_subscriber_status', [
+  'active',
+  'unsubscribed',
+  'pending'
+]);
+
+export const smsSubscribers = pgTable("sms_subscribers", {
+  id: serial("id").primaryKey(),
+  phone: varchar("phone", { length: 20 }).unique().notNull(),
+  name: varchar("name", { length: 255 }),
+  email: varchar("email", { length: 255 }),
+  categories: text("categories").notNull(),
+  status: smsSubscriberStatusEnum("status").default('active').notNull(),
+  optInIp: varchar("opt_in_ip", { length: 45 }),
+  optInTimestamp: timestamp("opt_in_timestamp").defaultNow().notNull(),
+  optOutTimestamp: timestamp("opt_out_timestamp"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  phoneIdx: index("sms_subscribers_phone_idx").on(table.phone),
+  statusIdx: index("sms_subscribers_status_idx").on(table.status),
+}));
+
+export type SmsSubscriber = typeof smsSubscribers.$inferSelect;
+export type InsertSmsSubscriber = typeof smsSubscribers.$inferInsert;
