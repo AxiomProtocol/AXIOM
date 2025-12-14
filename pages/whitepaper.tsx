@@ -57,7 +57,7 @@ const TABLE_OF_CONTENTS: Section[] = [
   { id: 'ecosystem', title: '7. Ecosystem Components', subsections: ['7.1 KeyGrow Rent-to-Own', '7.2 DePIN Node Network', '7.3 Decentralized Exchange', '7.4 Governance System', '7.5 Axiom SUSU'] },
   { id: 'banking', title: '8. National Bank of Axiom', subsections: ['8.1 Personal Banking', '8.2 Business Banking', '8.3 Investment Services', '8.4 Credit Products'] },
   { id: 'wall-street', title: '9. Wall Street Integration', subsections: ['9.1 Tokenized Securities', '9.2 RWA Marketplace', '9.3 Future Development'] },
-  { id: 'governance', title: '10. Governance & Compliance', subsections: ['10.1 DAO Structure', '10.2 ISO 20022 Compliance', '10.3 GENIUS Act Compliance', '10.4 KYC/AML', '10.5 PMA Trust Structure'] },
+  { id: 'governance', title: '10. Governance & Compliance', subsections: ['10.1 DAO Structure', '10.2 External Interface: ISO 20022', '10.3 External Interface: GENIUS Act', '10.4 KYC/AML', '10.5 Internal Operations: PMA Trust'] },
   { id: 'roadmap', title: '11. Development Roadmap' },
   { id: 'financials', title: '12. Financial Projections' },
   { id: 'risks', title: '13. Risk Factors & Mitigations' },
@@ -1020,6 +1020,26 @@ export default function WhitePaper() {
               <section id="governance" className="mb-16">
                 <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">10. Governance & Compliance</h2>
                 
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 mb-8">
+                  <h4 className="font-bold text-blue-900 mb-3">Regulatory Philosophy: Dual-Layer Approach</h4>
+                  <p className="text-blue-800 text-sm leading-relaxed mb-4">
+                    Axiom operates with a dual-layer regulatory framework that distinguishes between <strong>internal member activities</strong> and <strong>external interface operations</strong>:
+                  </p>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div className="bg-white/60 rounded-lg p-4">
+                      <div className="font-semibold text-blue-900 mb-2">Internal Layer (PMA Trust)</div>
+                      <p className="text-blue-700">Member-to-member transactions, private association governance, and internal token operations are conducted within the Private Membership Association framework under constitutional protections.</p>
+                    </div>
+                    <div className="bg-white/60 rounded-lg p-4">
+                      <div className="font-semibold text-blue-900 mb-2">External Layer (Regulatory Compliance)</div>
+                      <p className="text-blue-700">External interfaces with traditional finance (bank connections, fiat on/off ramps, institutional partnerships) implement ISO 20022, GENIUS Act, and KYC/AML compliance standards.</p>
+                    </div>
+                  </div>
+                  <p className="text-blue-700 text-xs mt-4 italic">
+                    This approach enables private economic activity among consenting members while maintaining compliant bridges to the public financial system when needed.
+                  </p>
+                </div>
+
                 <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.1 DAO Structure</h3>
                 <p className="text-gray-700 leading-relaxed">
                   Axiom operates as a Decentralized Autonomous Organization with progressive decentralization. Initially, core team retains certain admin keys for rapid iteration, with planned transition to full community control:
@@ -1030,38 +1050,44 @@ export default function WhitePaper() {
                   <li><strong>Phase 3 (Mature):</strong> Full DAO control, admin keys burned or transferred to governance</li>
                 </ul>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.2 ISO 20022 Compliance</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.2 External Interface: ISO 20022 Compliance</h3>
                 <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
                   <div className="flex items-center gap-3 mb-3">
                     <span className="text-2xl">✅</span>
-                    <h4 className="font-bold text-green-900">Implemented</h4>
+                    <h4 className="font-bold text-green-900">Implemented for External Interfaces</h4>
                   </div>
                   <p className="text-green-800 text-sm mb-3">
-                    Axiom's financial messaging infrastructure is designed for ISO 20022 compatibility, the global standard for electronic data interchange between financial institutions:
+                    When Axiom interfaces with traditional financial institutions (bank integrations, payment processors, fiat on/off ramps), our infrastructure implements ISO 20022 compatibility—the global standard for electronic data interchange:
                   </p>
                   <ul className="text-green-700 text-sm space-y-1">
-                    <li>Structured payment messaging format support</li>
-                    <li>Rich remittance information capabilities</li>
-                    <li>Cross-border payment interoperability</li>
-                    <li>Machine-readable transaction data</li>
+                    <li>Structured payment messaging format support for external transfers</li>
+                    <li>Rich remittance information for cross-system transactions</li>
+                    <li>Cross-border payment interoperability with traditional banking rails</li>
+                    <li>Machine-readable transaction data for institutional integrations</li>
                   </ul>
+                  <p className="text-green-600 text-xs mt-3 italic">
+                    Note: Internal member-to-member AXM transfers within the PMA operate outside this framework under private association rules.
+                  </p>
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.3 GENIUS Act Compliance</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.3 External Interface: GENIUS Act Compliance</h3>
                 <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
                   <div className="flex items-center gap-3 mb-3">
                     <span className="text-2xl">✅</span>
-                    <h4 className="font-bold text-green-900">Implemented</h4>
+                    <h4 className="font-bold text-green-900">Implemented for Public Commerce Interfaces</h4>
                   </div>
                   <p className="text-green-800 text-sm mb-3">
-                    The platform is designed with GENIUS Act (Guiding and Establishing National Innovation for U.S. Stablecoins) compliance considerations:
+                    For stablecoin operations that interface with public commerce and traditional financial systems, the platform implements GENIUS Act (Guiding and Establishing National Innovation for U.S. Stablecoins) compliance:
                   </p>
                   <ul className="text-green-700 text-sm space-y-1">
-                    <li>Reserve requirements and proof-of-reserves infrastructure</li>
-                    <li>Consumer protection mechanisms</li>
-                    <li>Anti-money laundering (AML) compliance hooks</li>
-                    <li>Regulatory reporting capabilities</li>
+                    <li>Reserve requirements and proof-of-reserves for public-facing stablecoin products</li>
+                    <li>Consumer protection mechanisms for external users</li>
+                    <li>Anti-money laundering (AML) compliance hooks for fiat bridges</li>
+                    <li>Regulatory reporting capabilities for institutional partnerships</li>
                   </ul>
+                  <p className="text-green-600 text-xs mt-3 italic">
+                    Note: AXM governance tokens used within the private association are not classified as stablecoins and operate under PMA member agreements.
+                  </p>
                 </div>
 
                 <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.4 KYC/AML Compliance</h3>
@@ -1076,15 +1102,18 @@ export default function WhitePaper() {
                   <li><strong>COMPLIANCE_ROLE:</strong> Role-based access control for compliance officers</li>
                 </ul>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.5 PMA Trust Structure</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.5 Internal Operations: PMA Trust Structure</h3>
                 <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 mb-6">
                   <h4 className="font-bold text-gray-900 mb-3">Private Membership Association</h4>
-                  <p className="text-gray-700 text-sm leading-relaxed">
-                    Axiom operates as a <strong>Private Membership Association (PMA) Trust</strong> - a private, unincorporated organization that operates outside of public commerce under constitutional rights of freedom of association and contract. This structure provides enhanced privacy and contractual flexibility for members.
+                  <p className="text-gray-700 text-sm leading-relaxed mb-3">
+                    Axiom operates as a <strong>Private Membership Association (PMA) Trust</strong> - a private, unincorporated organization that conducts internal member activities outside of public commerce under constitutional rights of freedom of association and contract. This structure provides enhanced privacy and contractual flexibility for members.
+                  </p>
+                  <p className="text-gray-600 text-xs leading-relaxed">
+                    <strong>Scope of PMA Operations:</strong> The PMA framework governs member-to-member transactions, internal governance votes, AXM token transfers between members, private association services, and community savings pools (SUSU). Activities that interface with external financial systems (bank transfers, fiat conversions, institutional services) utilize the compliant external interfaces described in Sections 10.2-10.4.
                   </p>
                 </div>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  Constitutional protections for PMA members include:
+                  Constitutional protections for PMA members engaged in internal association activities include:
                 </p>
                 <div className="grid md:grid-cols-2 gap-4 not-prose mb-6">
                   <div className="border border-blue-200 bg-blue-50 rounded-xl p-4">
