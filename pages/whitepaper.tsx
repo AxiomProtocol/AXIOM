@@ -3,8 +3,8 @@ import Layout from '../components/Layout';
 import Link from 'next/link';
 import Logo3D from '../components/Logo3D';
 
-const VERSION = "1.0";
-const LAST_UPDATED = "November 2025";
+const VERSION = "1.1";
+const LAST_UPDATED = "December 2025";
 
 const CONTRACTS = {
   AXM_TOKEN: '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D',
@@ -29,7 +29,8 @@ const CONTRACTS = {
   COMMUNITY: '0xC2f82eD5C2585B525E01F19eA5C28811AB43aF49',
   ACADEMY: '0x30667931BEe54a58B76D387D086A975aB37206F4',
   GAMIFICATION: '0x7F455b4614E05820AAD52067Ef223f30b1936f93',
-  SUSTAINABILITY: '0xAf4dF8a7733BAB64b7Ce83F2494d6446eF9eC046'
+  SUSTAINABILITY: '0xAf4dF8a7733BAB64b7Ce83F2494d6446eF9eC046',
+  SUSU_HUB: '0x6C69D730327930B49A7997B7b5fb0865F30c95A5'
 };
 
 const SUPPLY_DATA = {
@@ -53,10 +54,10 @@ const TABLE_OF_CONTENTS: Section[] = [
   { id: 'solution', title: '4. The Axiom Solution', subsections: ['4.1 Platform Overview', '4.2 Key Innovations', '4.3 Competitive Advantages'] },
   { id: 'technology', title: '5. Technology Architecture', subsections: ['5.1 Blockchain Infrastructure', '5.2 Smart Contract Suite', '5.3 Security Framework'] },
   { id: 'tokenomics', title: '6. Tokenomics', subsections: ['6.1 AXM Token', '6.2 Supply Distribution', '6.3 Utility & Value Accrual'] },
-  { id: 'ecosystem', title: '7. Ecosystem Components', subsections: ['7.1 KeyGrow Rent-to-Own', '7.2 DePIN Node Network', '7.3 Decentralized Exchange', '7.4 Governance System'] },
+  { id: 'ecosystem', title: '7. Ecosystem Components', subsections: ['7.1 KeyGrow Rent-to-Own', '7.2 DePIN Node Network', '7.3 Decentralized Exchange', '7.4 Governance System', '7.5 Axiom SUSU'] },
   { id: 'banking', title: '8. National Bank of Axiom', subsections: ['8.1 Personal Banking', '8.2 Business Banking', '8.3 Investment Services', '8.4 Credit Products'] },
   { id: 'wall-street', title: '9. Wall Street Integration', subsections: ['9.1 Tokenized Securities', '9.2 RWA Marketplace', '9.3 Future Development'] },
-  { id: 'governance', title: '10. Governance & Compliance', subsections: ['10.1 DAO Structure', '10.2 ISO 20022 Compliance', '10.3 GENIUS Act Compliance', '10.4 KYC/AML'] },
+  { id: 'governance', title: '10. Governance & Compliance', subsections: ['10.1 DAO Structure', '10.2 ISO 20022 Compliance', '10.3 GENIUS Act Compliance', '10.4 KYC/AML', '10.5 PMA Trust Structure'] },
   { id: 'roadmap', title: '11. Development Roadmap' },
   { id: 'financials', title: '12. Financial Projections' },
   { id: 'risks', title: '13. Risk Factors & Mitigations' },
@@ -172,7 +173,7 @@ export default function WhitePaper() {
                   </div>
                   <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                     <div className="text-3xl mb-3">🔗</div>
-                    <h4 className="font-bold text-gray-900 mb-2">23 Verified Smart Contracts</h4>
+                    <h4 className="font-bold text-gray-900 mb-2">24 Verified Smart Contracts</h4>
                     <p className="text-gray-600 text-sm">Comprehensive contract suite covering identity, treasury, staking, real estate, DePIN, governance, and cross-chain operations.</p>
                   </div>
                   <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
@@ -506,7 +507,7 @@ export default function WhitePaper() {
                       <tr>
                         <td className="px-4 py-3 font-medium">OpenZeppelin Contracts</td>
                         <td className="px-4 py-3 text-gray-600">AccessControl, Pausable, ReentrancyGuard, SafeERC20</td>
-                        <td className="px-4 py-3 text-gray-500 text-xs font-mono">All 23 contracts</td>
+                        <td className="px-4 py-3 text-gray-500 text-xs font-mono">All 24 contracts</td>
                       </tr>
                       <tr>
                         <td className="px-4 py-3 font-medium">Role-Based Access Control</td>
@@ -516,7 +517,7 @@ export default function WhitePaper() {
                       <tr>
                         <td className="px-4 py-3 font-medium">Pausable Contracts</td>
                         <td className="px-4 py-3 text-gray-600">Emergency pause via onlyRole(ADMIN_ROLE)</td>
-                        <td className="px-4 py-3 text-gray-500 text-xs font-mono">All 23 contracts</td>
+                        <td className="px-4 py-3 text-gray-500 text-xs font-mono">All 24 contracts</td>
                       </tr>
                       <tr>
                         <td className="px-4 py-3 font-medium">Reentrancy Guards</td>
@@ -576,7 +577,7 @@ export default function WhitePaper() {
                       <tr>
                         <td className="px-4 py-3 font-medium">Static Analysis</td>
                         <td className="px-4 py-3 text-gray-600">Slither analysis: zero critical vulnerabilities</td>
-                        <td className="px-4 py-3 text-gray-500 text-xs font-mono">All 23 contracts</td>
+                        <td className="px-4 py-3 text-gray-500 text-xs font-mono">All 24 contracts</td>
                       </tr>
                     </tbody>
                   </table>
@@ -826,6 +827,31 @@ export default function WhitePaper() {
                   <li><strong>Treasury Grants:</strong> DAO-controlled grants for ecosystem development</li>
                   <li><strong>Parameter Changes:</strong> Community votes on fees, rates, and thresholds</li>
                 </ul>
+
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">7.5 Axiom SUSU - Community Savings Pools</h3>
+                <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-6 mb-6">
+                  <h4 className="font-bold text-gray-900 mb-3">On-Chain Rotating Savings (ROSCA)</h4>
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    SUSU is a time-tested community savings system brought on-chain. Members pool funds together, and each person takes turns receiving the full pot. This traditional practice used globally for generations is now transparent, secure, and automated through smart contracts.
+                  </p>
+                </div>
+                <p className="text-gray-700 leading-relaxed">
+                  The AxiomSusuHub contract ({`{CONTRACTS.SUSU_HUB}`}) enables community-based rotating savings pools:
+                </p>
+                <ul className="list-disc pl-6 text-gray-700 space-y-2">
+                  <li><strong>Flexible Pool Sizes:</strong> 2-50 members per pool with configurable contribution amounts</li>
+                  <li><strong>Cycle Options:</strong> Weekly, monthly, or custom duration (1-90 days)</li>
+                  <li><strong>Payout Order:</strong> Sequential or randomized rotation for fairness</li>
+                  <li><strong>Grace Periods:</strong> Configurable grace periods with late payment penalties</li>
+                  <li><strong>Multi-Token:</strong> Supports AXM and any ERC20 token</li>
+                  <li><strong>Protocol Fees:</strong> 1% default fee routed to Axiom treasury</li>
+                </ul>
+                <div className="bg-gray-50 rounded-xl p-5 mt-6">
+                  <h4 className="font-bold text-gray-900 mb-3">Example SUSU Pool</h4>
+                  <p className="text-gray-600 text-sm">
+                    10 members each contribute 100 AXM monthly. Each month, one member receives 990 AXM (after 1% protocol fee). After 10 months, every member has received the pot exactly once - creating a powerful community savings mechanism without traditional banking.
+                  </p>
+                </div>
               </section>
 
               {/* National Bank of Axiom */}
@@ -1049,6 +1075,38 @@ export default function WhitePaper() {
                   <li><strong>Tiered Access:</strong> Different verification levels for different activities</li>
                   <li><strong>COMPLIANCE_ROLE:</strong> Role-based access control for compliance officers</li>
                 </ul>
+
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.5 PMA Trust Structure</h3>
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 mb-6">
+                  <h4 className="font-bold text-gray-900 mb-3">Private Membership Association</h4>
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    Axiom operates as a <strong>Private Membership Association (PMA) Trust</strong> - a private, unincorporated organization that operates outside of public commerce under constitutional rights of freedom of association and contract. This structure provides enhanced privacy and contractual flexibility for members.
+                  </p>
+                </div>
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  Constitutional protections for PMA members include:
+                </p>
+                <div className="grid md:grid-cols-2 gap-4 not-prose mb-6">
+                  <div className="border border-blue-200 bg-blue-50 rounded-xl p-4">
+                    <div className="font-bold text-blue-800 mb-1">1st Amendment</div>
+                    <p className="text-blue-700 text-sm">Freedom of Association & Assembly</p>
+                  </div>
+                  <div className="border border-green-200 bg-green-50 rounded-xl p-4">
+                    <div className="font-bold text-green-800 mb-1">4th Amendment</div>
+                    <p className="text-green-700 text-sm">Right to Privacy</p>
+                  </div>
+                  <div className="border border-purple-200 bg-purple-50 rounded-xl p-4">
+                    <div className="font-bold text-purple-800 mb-1">5th & 14th Amendment</div>
+                    <p className="text-purple-700 text-sm">Due Process Rights</p>
+                  </div>
+                  <div className="border border-orange-200 bg-orange-50 rounded-xl p-4">
+                    <div className="font-bold text-orange-800 mb-1">9th & 10th Amendment</div>
+                    <p className="text-orange-700 text-sm">Unenumerated & Reserved Rights</p>
+                  </div>
+                </div>
+                <p className="text-gray-700 leading-relaxed">
+                  The PMA Trust structure enables tokenized membership using whitelist-only ERC-1155/1400 tokens as membership certificates (not securities), with transfer restrictions and revocability clauses. Full documentation available at <Link href="/pma" className="text-amber-600 hover:underline">/pma</Link>.
+                </p>
               </section>
 
               {/* Roadmap */}
@@ -1063,7 +1121,7 @@ export default function WhitePaper() {
                     <div className="flex-1 border-l-2 border-green-500 pl-6 pb-6">
                       <h4 className="font-bold text-gray-900">Foundation Phase (Current)</h4>
                       <ul className="text-gray-600 text-sm mt-2 space-y-1">
-                        <li>✓ Deploy 23 smart contracts on Arbitrum One</li>
+                        <li>✓ Deploy 24 smart contracts on Arbitrum One</li>
                         <li>✓ Verify all contracts on Arbiscan & Blockscout</li>
                         <li>✓ Launch KeyGrow rent-to-own platform</li>
                         <li>✓ Establish liquidity on Camelot Exchange</li>
@@ -1275,7 +1333,7 @@ export default function WhitePaper() {
                 <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">Appendix A: Verified Contract Addresses</h2>
                 
                 <p className="text-gray-700 leading-relaxed mb-6">
-                  All 23 smart contracts are deployed on Arbitrum One (Chain ID: 42161) and verified on both Arbiscan and Blockscout explorers. Click any address to view the verified source code.
+                  All 24 smart contracts are deployed on Arbitrum One (Chain ID: 42161) and verified on both Arbiscan and Blockscout explorers. Click any address to view the verified source code.
                 </p>
 
                 <div className="overflow-x-auto">
@@ -1338,12 +1396,17 @@ export default function WhitePaper() {
                         <td className="px-4 py-2"><a href={`https://arbiscan.io/address/${CONTRACTS.CROSSCHAIN}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{CONTRACTS.CROSSCHAIN}</a></td>
                         <td className="px-4 py-2 text-gray-600 font-sans">Cross-chain/TGE</td>
                       </tr>
+                      <tr className="bg-purple-50">
+                        <td className="px-4 py-2 font-medium text-gray-900">AxiomSusuHub</td>
+                        <td className="px-4 py-2"><a href={`https://arbiscan.io/address/${CONTRACTS.SUSU_HUB}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{CONTRACTS.SUSU_HUB}</a></td>
+                        <td className="px-4 py-2 text-gray-600 font-sans">Community savings (ROSCA)</td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
 
                 <p className="text-gray-500 text-xs mt-4 italic">
-                  Full list of all 23 contracts available on the <Link href="/transparency" className="text-amber-600 hover:underline">Transparency Report</Link> page.
+                  Full list of all 24 contracts available on the <Link href="/transparency" className="text-amber-600 hover:underline">Transparency Report</Link> page.
                 </p>
               </section>
 
