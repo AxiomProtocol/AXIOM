@@ -1,15 +1,34 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../lib/db';
+import { isDatabaseConfigured } from '../../../lib/envValidation';
+
+const DEFAULT_STATS = {
+  totalProposals: 0,
+  passedProposals: 0,
+  activeProposals: 0,
+  totalVoters: 0,
+  totalVotingPower: '0 AXM',
+  averageParticipation: '0%',
+  treasuryBalance: '0 AXM'
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  if (!isDatabaseConfigured()) {
+    return res.status(503).json({
+      success: false,
+      error: 'Database not configured',
+      stats: DEFAULT_STATS
+    });
+  }
+
+  let client;
   try {
-    const client = await pool.connect();
-    try {
-      const statsResult = await client.query(`
+    client = await pool.connect();
+    const statsResult = await client.query(`
         SELECT 
           COUNT(*) as total_proposals,
           COUNT(*) FILTER (WHERE status IN ('approved', 'funded', 'completed')) as passed_proposals,
@@ -34,22 +53,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ? `${(totalVotingPower / 1000000).toFixed(1)}M AXM`
           : `${totalVotingPower.toLocaleString()} AXM`;
 
-      res.json({
-        stats: {
-          totalProposals: parseInt(stats.total_proposals) || 0,
-          passedProposals: parseInt(stats.passed_proposals) || 0,
-          activeProposals: parseInt(stats.active_proposals) || 0,
-          totalVoters: parseInt(voters.total_voters) || 0,
-          totalVotingPower: formattedVotingPower,
-          averageParticipation: '0%',
-          treasuryBalance: '0 AXM'
-        }
-      });
-    } finally {
-      client.release();
-    }
+    res.json({
+      stats: {
+        totalProposals: parseInt(stats.total_proposals) || 0,
+        passedProposals: parseInt(stats.passed_proposals) || 0,
+        activeProposals: parseInt(stats.active_proposals) || 0,
+        totalVoters: parseInt(voters.total_voters) || 0,
+        totalVotingPower: formattedVotingPower,
+        averageParticipation: '0%',
+        treasuryBalance: '0 AXM'
+      }
+    });
   } catch (error: any) {
     console.error('Error fetching governance stats:', error);
-    res.status(500).json({ error: 'Failed to fetch stats' });
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to fetch stats',
+      stats: DEFAULT_STATS
+    });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 }

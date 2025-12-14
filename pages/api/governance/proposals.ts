@@ -1,15 +1,24 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../lib/db';
+import { isDatabaseConfigured, createDatabaseErrorResponse } from '../../../lib/envValidation';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  if (!isDatabaseConfigured()) {
+    return res.status(503).json({
+      success: false,
+      error: 'Database not configured',
+      proposals: []
+    });
+  }
+
+  let client;
   try {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(`
+    client = await pool.connect();
+    const result = await client.query(`
         SELECT 
           g.id,
           g.proposer_address,
@@ -52,13 +61,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         requestedAmount: parseFloat(row.requested_amount || '0')
       }));
 
-      res.json({ proposals });
-    } finally {
-      client.release();
-    }
+    res.json({ proposals });
   } catch (error: any) {
     console.error('Error fetching governance proposals:', error);
-    res.status(500).json({ error: 'Failed to fetch proposals' });
+    
+    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+      return res.status(503).json(createDatabaseErrorResponse(error));
+    }
+    
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to fetch proposals',
+      proposals: [] 
+    });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 }
 
