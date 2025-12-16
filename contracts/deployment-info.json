@@ -70,6 +70,68 @@
         "Pausable",
         "SafeERC20"
       ]
+    },
+    "DePINNodeSuite_v2": {
+      "address": "0x223dF824B320beD4A8Fd0648b242621e4d01aAEF",
+      "name": "DePIN Node Suite (Security Fixed)",
+      "description": "DePIN node registration, leasing, and staking with security fixes for H-01",
+      "verified": true,
+      "verifiedAt": "Dec 16 2025 (UTC)",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0x223dF824B320beD4A8Fd0648b242621e4d01aAEF#code",
+      "previousVersion": "0x16dC3884d88b767D99E0701Ba026a1ed39a250F1",
+      "securityFix": "H-01: Split createLease into createLease() + createLeaseAsAdmin() to prevent arbitrary transferFrom",
+      "compiler": {
+        "version": "0.8.20",
+        "optimizationRuns": 200,
+        "viaIR": true
+      },
+      "constructorArgs": {
+        "axmToken": "0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D",
+        "adminSafe": "0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d",
+        "treasurySafe": "0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d"
+      },
+      "features": [
+        "Node Registration & Management",
+        "Node Leasing with Pre-deposit Pattern",
+        "createLease() - User direct call",
+        "createLeaseAsAdmin() - Admin with pre-deposited funds",
+        "depositForLease() / withdrawLeaseDeposit()",
+        "AccessControl",
+        "ReentrancyGuard",
+        "Pausable"
+      ]
+    },
+    "LeaseAndRentEngine_v2": {
+      "address": "0x00591d360416dE7b016bBedbC6AA1AE798eA873B",
+      "name": "Lease And Rent Engine (Security Fixed)",
+      "description": "Real estate lease management with rent-to-own features and security fixes for H-02",
+      "verified": true,
+      "verifiedAt": "Dec 16 2025 (UTC)",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0x00591d360416dE7b016bBedbC6AA1AE798eA873B#code",
+      "previousVersion": "0x26a20dEa57F951571AD6e518DFb3dC60634D5297",
+      "securityFix": "H-02: Split createLease into createLease() + createLeaseAsAdmin() to prevent arbitrary transferFrom",
+      "compiler": {
+        "version": "0.8.20",
+        "optimizationRuns": 200,
+        "viaIR": true
+      },
+      "constructorArgs": {
+        "axmToken": "0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D",
+        "adminSafe": "0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d",
+        "complianceSafe": "0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d"
+      },
+      "features": [
+        "Lease Creation & Management",
+        "Rent-to-Own with Equity Accrual",
+        "createLease() - Tenant direct call",
+        "createLeaseAsAdmin() - Admin with pre-deposited funds",
+        "depositForLease() / withdrawLeaseDeposit()",
+        "Multiple Settlement Modes",
+        "Referral Rewards",
+        "AccessControl",
+        "ReentrancyGuard",
+        "Pausable"
+      ]
     }
   }
 }
