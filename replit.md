@@ -35,6 +35,24 @@ Key features include:
 - **Axiom SUSU (Rotating Savings Groups)**: On-chain ROSCA (Rotating Savings and Credit Association) system enabling community-based savings pools. Members contribute fixed amounts each cycle, with one member receiving the pooled funds each round until everyone has received once. Features include configurable pool parameters (2-50 members, AXM or ERC20 tokens, flexible cycle durations), sequential or randomized payout order, grace periods for late payments, protocol fee routing to treasury, and comprehensive event logging. Integrates with existing AxiomV2 token and treasury vault. Contract: `AxiomSusuHub.sol`, documentation at `docs/SUSU_USER_GUIDE.md`.
 - **PMA Trust (Private Membership Association)**: Axiom operates as a Private Membership Association Trust, providing constitutional protections under 1st Amendment (freedom of association), 4th Amendment (privacy), 5th & 14th Amendment (due process), 9th Amendment (unenumerated rights), and 10th Amendment (reserved powers). Structure: Non-charitable private membership trust with Grantor → Trustee Board → Protector/Council → Members hierarchy. Tokenized membership using whitelist-only ERC-1155/1400 tokens as membership certificates (not securities), with transfer restrictions and revocability clauses. Pages: `/pma` (information), `/pma/join` (application), `/pma/governance` (trust structure). Legal documents: `docs/PMA_TRUST_DECLARATION.md`, `docs/PMA_BYLAWS.md`, `docs/PMA_MEMBERSHIP_AGREEMENT.md`. Applications stored in `pmaApplications` database table.
 
+## Security Audit (December 2025)
+A comprehensive security audit was completed covering all 24 deployed smart contracts:
+- **Audit Report:** `docs/AXIOM_SECURITY_AUDIT_REPORT.md` - Publishable report with findings, triage, and recommendations
+- **Risk Register:** `docs/risk_register.json` - Machine-readable risk data for tracking
+- **Verification Script:** `scripts/audit.sh` - On-chain verification checklist
+- **Slither Reports:** `slither-report.json`, `slither-report.sarif` - Raw static analysis output
+
+**Summary:** 12 Slither HIGH findings triaged to 3 actionable issues:
+1. DePINNodeSuite.createLease() - arbitrary transferFrom (needs msg.sender validation)
+2. LeaseAndRentEngine.createLease() - arbitrary transferFrom (needs msg.sender validation)
+3. AxiomSusuHub._generateRandomOrder() - weak PRNG (consider Chainlink VRF)
+
+**Architecture Highlights:**
+- No upgradeable proxy patterns (all immutable deployments)
+- Consistent OpenZeppelin AccessControl across all contracts
+- ReentrancyGuard and Pausable on all critical functions
+- Centralized admin at treasury vault address
+
 ## Project Resources
 - **GitHub Main Repository:** https://github.com/AxiomProtocol/AXIOM
 - **GitHub Wiki (Documentation):** https://github.com/AxiomProtocol/AXIOM/wiki
