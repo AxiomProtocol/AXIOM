@@ -26,7 +26,13 @@
         "falsePositive": 1,
         "lowRisk": 8
       },
-      "notes": "3 VALID HIGH: H-01 (DePINNodeSuite), H-02 (LeaseAndRentEngine, 2 transfers counted as 1), H-03 (AxiomSusuHub weak-prng)"
+      "notes": "3 VALID HIGH findings all addressed: H-01 FIXED, H-02 FIXED, H-03 DOCUMENTED"
+    },
+    "remediationStatus": {
+      "fixed": 2,
+      "documented": 1,
+      "open": 0,
+      "lastUpdated": "2025-12-16"
     }
   },
   "keyAddresses": {
@@ -142,14 +148,16 @@
       "contract": "DePINNodeSuite",
       "address": "0x16dC3884d88b767D99E0701Ba026a1ed39a250F1",
       "file": "contracts/DePINNodeSuite.sol",
-      "lines": "376-418",
-      "function": "createLease",
+      "lines": "390-475",
+      "function": "createLease / createLeaseAsAdmin",
       "category": "arbitrary-send-erc20",
       "description": "Function uses safeTransferFrom with caller-provided lessee address without validating msg.sender == lessee. If victim has approved contract, attacker can drain their tokens.",
       "recommendation": "Add validation: require(msg.sender == lessee, 'Sender must be lessee')",
-      "status": "OPEN",
-      "exploitable": true,
-      "cvss": 7.5
+      "status": "FIXED",
+      "fixDate": "2025-12-16",
+      "fixDescription": "Split into createLease() (lessee calls, transfers from msg.sender) and createLeaseAsAdmin() (admin-only, uses pre-deposited funds)",
+      "exploitable": false,
+      "cvss": 0
     },
     {
       "id": "H-02",
@@ -160,14 +168,16 @@
       "contract": "LeaseAndRentEngine",
       "address": "0x26a20dEa57F951571AD6e518DFb3dC60634D5297",
       "file": "contracts/LeaseAndRentEngine.sol",
-      "lines": "241-315",
-      "function": "createLease",
+      "lines": "255-422",
+      "function": "createLease / createLeaseAsAdmin",
       "category": "arbitrary-send-erc20",
       "description": "Function transfers tokens from caller-provided tenant address without validating msg.sender == tenant. Two separate transfers affected.",
       "recommendation": "Add sender validation: require(msg.sender == tenant, 'Sender must be tenant')",
-      "status": "OPEN",
-      "exploitable": true,
-      "cvss": 7.5
+      "status": "FIXED",
+      "fixDate": "2025-12-16",
+      "fixDescription": "Split into createLease() (tenant calls, transfers from msg.sender) and createLeaseAsAdmin() (admin-only, uses pre-deposited funds)",
+      "exploitable": false,
+      "cvss": 0
     },
     {
       "id": "H-03",
@@ -178,12 +188,14 @@
       "contract": "AxiomSusuHub",
       "address": "0x6C69D730327930B49A7997B7b5fb0865F30c95A5",
       "file": "contracts/AxiomSusuHub.sol",
-      "lines": "583-607",
+      "lines": "583-625",
       "function": "_generateRandomOrder",
       "category": "weak-prng",
       "description": "Randomization uses block-based entropy (blockhash, block.timestamp) which is predictable. Miners/validators can influence payout order.",
       "recommendation": "Use Chainlink VRF for secure randomness or implement commit-reveal scheme",
-      "status": "OPEN",
+      "status": "DOCUMENTED",
+      "fixDate": "2025-12-16",
+      "fixDescription": "Added comprehensive NatSpec warning documenting the limitation. Acceptable for trusted communities/low-value pools. Recommends Chainlink VRF for high-stakes pools.",
       "exploitable": true,
       "cvss": 6.0
     },
