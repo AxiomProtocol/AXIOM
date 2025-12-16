@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { WalletConnectButton } from './WalletConnect/WalletConnectButton';
 import { NAV_ITEMS, FOOTER_ECOSYSTEM, FOOTER_RESOURCES, FOOTER_COMPANY } from '../lib/navigation';
 
@@ -22,11 +23,13 @@ export default function Layout({ children, showWallet = true }) {
           <div className="hidden md:flex justify-between items-center h-16">
             <Link href="/">
               <div className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity">
-                <img
+                <Image
                   src="/images/axiom-token.png"
                   alt="Axiom Token"
-                  className="w-10 h-10 rounded-full object-cover shadow-lg"
-                  onError={(e) => { e.target.onerror = null; e.target.src = '/images/axiom-token-fallback.svg'; }}
+                  width={40}
+                  height={40}
+                  className="rounded-full object-cover shadow-lg"
+                  priority
                 />
                 <span className="text-xl font-bold text-gray-900">AXIOM</span>
               </div>
@@ -63,11 +66,13 @@ export default function Layout({ children, showWallet = true }) {
             <div className="flex items-center justify-between h-14">
               <Link href="/">
                 <div className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity">
-                  <img
+                  <Image
                     src="/images/axiom-token.png"
                     alt="Axiom Token"
-                    className="w-8 h-8 rounded-full object-cover shadow-lg"
-                    onError={(e) => { e.target.onerror = null; e.target.src = '/images/axiom-token-fallback.svg'; }}
+                    width={32}
+                    height={32}
+                    className="rounded-full object-cover shadow-lg"
+                    priority
                   />
                   <span className="text-lg font-bold text-gray-900">AXIOM</span>
                 </div>
@@ -113,11 +118,12 @@ export default function Layout({ children, showWallet = true }) {
             <div>
               <Link href="/">
                 <div className="flex items-center gap-2 mb-4 cursor-pointer">
-                  <img 
-                    src="/images/axiom-token.png" 
+                  <Image
+                    src="/images/axiom-token.png"
                     alt="Axiom Token"
-                    className="w-8 h-8 rounded-full object-cover shadow-md"
-                    onError={(e) => { e.target.onerror = null; e.target.src = '/images/axiom-token-fallback.svg'; }}
+                    width={32}
+                    height={32}
+                    className="rounded-full object-cover shadow-md"
                   />
                   <span className="font-bold text-gray-900">AXIOM</span>
                 </div>
