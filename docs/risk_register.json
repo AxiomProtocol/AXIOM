@@ -1,0 +1,483 @@
+{
+  "metadata": {
+    "title": "Axiom Protocol Security Risk Register",
+    "version": "1.0",
+    "auditDate": "2025-12-16",
+    "network": "Arbitrum One",
+    "chainId": 42161,
+    "totalContracts": 24,
+    "compiler": "solc 0.8.20"
+  },
+  "summary": {
+    "critical": 0,
+    "high": 6,
+    "medium": 8,
+    "low": 12,
+    "informational": 89
+  },
+  "keyAddresses": {
+    "deployer": "0xDFf9e47eb007bF02e47477d577De9ffA99791528",
+    "treasury": "0x2bB2c2A7a1d82097488bf0b9c2a59c1910CD8D5d",
+    "axmToken": "0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D"
+  },
+  "findings": [
+    {
+      "id": "H-01",
+      "title": "Arbitrary transferFrom in DePINNodeSuite.createLease()",
+      "severity": "HIGH",
+      "impact": "HIGH",
+      "likelihood": "LOW",
+      "contract": "DePINNodeSuite",
+      "address": "0x16dC3884d88b767D99E0701Ba026a1ed39a250F1",
+      "file": "contracts/DePINNodeSuite.sol",
+      "lines": "376-418",
+      "function": "createLease",
+      "category": "arbitrary-send-erc20",
+      "description": "Function uses safeTransferFrom with caller-provided lessee address without validating msg.sender == lessee. If victim has approved contract, attacker can drain their tokens.",
+      "recommendation": "Add validation: require(msg.sender == lessee, 'Sender must be lessee')",
+      "status": "OPEN",
+      "exploitable": true,
+      "cvss": 7.5
+    },
+    {
+      "id": "H-02",
+      "title": "Arbitrary transferFrom in LeaseAndRentEngine.createLease()",
+      "severity": "HIGH",
+      "impact": "HIGH",
+      "likelihood": "LOW",
+      "contract": "LeaseAndRentEngine",
+      "address": "0x26a20dEa57F951571AD6e518DFb3dC60634D5297",
+      "file": "contracts/LeaseAndRentEngine.sol",
+      "lines": "241-315",
+      "function": "createLease",
+      "category": "arbitrary-send-erc20",
+      "description": "Similar to H-01. Function transfers tokens from caller-provided tenant address without validating ownership.",
+      "recommendation": "Add sender validation: require(msg.sender == tenant, 'Sender must be tenant')",
+      "status": "OPEN",
+      "exploitable": true,
+      "cvss": 7.5
+    },
+    {
+      "id": "H-03",
+      "title": "Weak PRNG in AxiomSusuHub._generateRandomOrder()",
+      "severity": "HIGH",
+      "impact": "HIGH",
+      "likelihood": "MEDIUM",
+      "contract": "AxiomSusuHub",
+      "address": "0x6C69D730327930B49A7997B7b5fb0865F30c95A5",
+      "file": "contracts/AxiomSusuHub.sol",
+      "lines": "583-607",
+      "function": "_generateRandomOrder",
+      "category": "weak-prng",
+      "description": "Randomization uses block-based entropy (blockhash, block.timestamp) which is predictable. Miners/validators can influence payout order.",
+      "recommendation": "Use Chainlink VRF for secure randomness or implement commit-reveal scheme",
+      "status": "OPEN",
+      "exploitable": true,
+      "cvss": 6.0
+    },
+    {
+      "id": "H-04",
+      "title": "ETH Sent to Arbitrary Address in emergencyWithdrawETH()",
+      "severity": "HIGH",
+      "impact": "HIGH",
+      "likelihood": "LOW",
+      "contract": "DePINNodeSales",
+      "address": "0x876951CaE4Ad48bdBfba547Ef4316Db576A9Edbd",
+      "file": "contracts/DePINNodeSales.sol",
+      "lines": "661-669",
+      "function": "emergencyWithdrawETH",
+      "category": "arbitrary-send-eth",
+      "description": "Sends all ETH to treasurySafe which is mutable. Compromised admin can redirect funds.",
+      "recommendation": "Implement timelock for treasury changes and multisig approval",
+      "status": "OPEN",
+      "exploitable": true,
+      "cvss": 5.5
+    },
+    {
+      "id": "H-05",
+      "title": "Unprotected withdraw() Function",
+      "severity": "HIGH",
+      "impact": "CRITICAL",
+      "likelihood": "HIGH",
+      "contract": "SustainabilityHub",
+      "address": "0xAf4dF8a7733BAB64b7Ce83F2494d6446eF9eC046",
+      "file": "contracts/SustainabilityHub.sol",
+      "lines": "648-650",
+      "function": "withdraw",
+      "category": "access-control",
+      "description": "withdraw() allows any caller to drain all ETH from contract. No access control.",
+      "recommendation": "Add onlyRole(ADMIN_ROLE) modifier immediately",
+      "status": "OPEN",
+      "exploitable": true,
+      "cvss": 9.8
+    },
+    {
+      "id": "H-06",
+      "title": "Uninitialized State Variable Arrays",
+      "severity": "HIGH",
+      "impact": "MEDIUM",
+      "likelihood": "LOW",
+      "contract": "Multiple",
+      "address": "various",
+      "file": "Multiple files",
+      "lines": "various",
+      "function": "various",
+      "category": "uninitialized-state",
+      "description": "Several mapping arrays never explicitly initialized: assetOracles, courseModules, moduleLessons, postComments, questObjectives",
+      "recommendation": "Add explicit initialization in constructors or document expected behavior",
+      "status": "OPEN",
+      "exploitable": false,
+      "cvss": 4.0
+    },
+    {
+      "id": "M-01",
+      "title": "Divide Before Multiply Precision Loss",
+      "severity": "MEDIUM",
+      "impact": "MEDIUM",
+      "likelihood": "MEDIUM",
+      "contract": "Multiple",
+      "address": "various",
+      "file": "Multiple files",
+      "lines": "various",
+      "function": "various",
+      "category": "precision-loss",
+      "description": "Several calculations divide before multiplying, causing precision loss with small amounts.",
+      "recommendation": "Use OpenZeppelin Math.mulDiv for precise calculations",
+      "status": "OPEN",
+      "exploitable": false,
+      "cvss": 4.5
+    },
+    {
+      "id": "M-02",
+      "title": "Timestamp Dependency",
+      "severity": "MEDIUM",
+      "impact": "MEDIUM",
+      "likelihood": "LOW",
+      "contract": "Multiple",
+      "address": "various",
+      "file": "Multiple files",
+      "lines": "various",
+      "function": "various",
+      "category": "timestamp-dependency",
+      "description": "Many functions use block.timestamp for critical logic. Can be manipulated by validators within ~15 seconds.",
+      "recommendation": "Use block numbers or external time oracles for high-value operations",
+      "status": "ACKNOWLEDGED",
+      "exploitable": false,
+      "cvss": 3.5
+    },
+    {
+      "id": "M-03",
+      "title": "Missing Zero-Address Checks",
+      "severity": "MEDIUM",
+      "impact": "MEDIUM",
+      "likelihood": "LOW",
+      "contract": "Multiple",
+      "address": "various",
+      "file": "Multiple files",
+      "lines": "various",
+      "function": "setter functions",
+      "category": "input-validation",
+      "description": "Some setter functions for critical addresses lack zero-address validation.",
+      "recommendation": "Add require(newAddress != address(0)) checks",
+      "status": "OPEN",
+      "exploitable": false,
+      "cvss": 3.0
+    },
+    {
+      "id": "M-04",
+      "title": "No Maximum Fee Limit",
+      "severity": "MEDIUM",
+      "impact": "MEDIUM",
+      "likelihood": "LOW",
+      "contract": "AxiomV2",
+      "address": "0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D",
+      "file": "contracts/AxiomV2.sol",
+      "lines": "311-325",
+      "function": "setFeeConfig",
+      "category": "business-logic",
+      "description": "setFeeConfig allows transfer fees up to 100% (10000 BPS).",
+      "recommendation": "Implement reasonable maximum fee caps (e.g., 10% max)",
+      "status": "OPEN",
+      "exploitable": false,
+      "cvss": 3.5
+    },
+    {
+      "id": "M-05",
+      "title": "OpenZeppelin Math.mulDiv XOR False Positive",
+      "severity": "MEDIUM",
+      "impact": "NONE",
+      "likelihood": "NONE",
+      "contract": "OpenZeppelin (dependency)",
+      "address": "N/A",
+      "file": "node_modules/@openzeppelin/contracts/utils/math/Math.sol",
+      "lines": "257",
+      "function": "mulDiv",
+      "category": "false-positive",
+      "description": "Slither flags XOR usage as potential exponentiation issue. This is intentional bitwise optimization in OZ library.",
+      "recommendation": "No action required - false positive",
+      "status": "FALSE_POSITIVE",
+      "exploitable": false,
+      "cvss": 0
+    },
+    {
+      "id": "M-06",
+      "title": "Centralized Admin Control",
+      "severity": "MEDIUM",
+      "impact": "HIGH",
+      "likelihood": "LOW",
+      "contract": "All",
+      "address": "0x2bB2c2A7a1d82097488bf0b9c2a59c1910CD8D5d",
+      "file": "All contracts",
+      "lines": "constructors",
+      "function": "constructor",
+      "category": "centralization",
+      "description": "Single address holds all admin roles across all contracts. Single point of failure.",
+      "recommendation": "Implement timelock and multisig governance",
+      "status": "ACKNOWLEDGED",
+      "exploitable": false,
+      "cvss": 5.0
+    },
+    {
+      "id": "M-07",
+      "title": "No Timelock on Critical Functions",
+      "severity": "MEDIUM",
+      "impact": "HIGH",
+      "likelihood": "LOW",
+      "contract": "All",
+      "address": "various",
+      "file": "All contracts",
+      "lines": "various",
+      "function": "admin functions",
+      "category": "governance",
+      "description": "Admin functions execute immediately without timelock delay. Users cannot react to malicious changes.",
+      "recommendation": "Add OpenZeppelin TimelockController for critical operations",
+      "status": "OPEN",
+      "exploitable": false,
+      "cvss": 5.0
+    },
+    {
+      "id": "M-08",
+      "title": "Reentrancy Guard Consistency",
+      "severity": "MEDIUM",
+      "impact": "LOW",
+      "likelihood": "LOW",
+      "contract": "Various",
+      "address": "various",
+      "file": "Various",
+      "lines": "various",
+      "function": "external functions",
+      "category": "reentrancy",
+      "description": "Most but not all external functions with ETH/token transfers use nonReentrant modifier.",
+      "recommendation": "Review and add nonReentrant to all functions with external calls",
+      "status": "ACKNOWLEDGED",
+      "exploitable": false,
+      "cvss": 3.0
+    }
+  ],
+  "contracts": [
+    {
+      "name": "AxiomV2",
+      "address": "0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D",
+      "category": "Core Token",
+      "verified": true,
+      "pausable": true,
+      "roles": ["DEFAULT_ADMIN_ROLE", "PAUSER_ROLE", "MINTER_ROLE", "COMPLIANCE_ROLE", "RESCUER_ROLE", "FEE_MANAGER_ROLE", "ORACLE_MANAGER_ROLE", "TREASURY_ROLE"],
+      "findings": ["M-04"],
+      "riskScore": 3.5
+    },
+    {
+      "name": "AxiomIdentityComplianceHub",
+      "address": "0xf88bb44511E5752Ee69953166C5d5dC0cfC8B3ED",
+      "category": "Identity",
+      "verified": true,
+      "pausable": true,
+      "roles": ["DEFAULT_ADMIN_ROLE", "ADMIN_ROLE", "COMPLIANCE_ROLE"],
+      "findings": [],
+      "riskScore": 2.0
+    },
+    {
+      "name": "AxiomTreasuryAndRevenueHub",
+      "address": "0x3fD63728288546AC41dAe3bf25ca383061c3A929",
+      "category": "Treasury",
+      "verified": true,
+      "pausable": true,
+      "roles": ["DEFAULT_ADMIN_ROLE", "ADMIN_ROLE", "TREASURY_ROLE"],
+      "findings": [],
+      "riskScore": 4.0
+    },
+    {
+      "name": "AxiomStakingAndEmissionsHub",
+      "address": "0x8b99cDeefB3116cA87AF24A9E10D5580dA07B885",
+      "category": "Staking",
+      "verified": true,
+      "pausable": true,
+      "roles": ["DEFAULT_ADMIN_ROLE", "ADMIN_ROLE"],
+      "findings": [],
+      "riskScore": 3.0
+    },
+    {
+      "name": "DePINNodeSuite",
+      "address": "0x16dC3884d88b767D99E0701Ba026a1ed39a250F1",
+      "category": "DePIN",
+      "verified": true,
+      "pausable": true,
+      "roles": ["DEFAULT_ADMIN_ROLE", "ADMIN_ROLE", "NODE_MANAGER_ROLE"],
+      "findings": ["H-01"],
+      "riskScore": 7.5
+    },
+    {
+      "name": "DePINNodeSales",
+      "address": "0x876951CaE4Ad48bdBfba547Ef4316Db576A9Edbd",
+      "category": "DePIN",
+      "verified": true,
+      "pausable": true,
+      "roles": ["DEFAULT_ADMIN_ROLE", "ADMIN_ROLE", "OPERATOR_ROLE", "PRICE_MANAGER_ROLE"],
+      "findings": ["H-04"],
+      "riskScore": 5.5
+    },
+    {
+      "name": "LeaseAndRentEngine",
+      "address": "0x26a20dEa57F951571AD6e518DFb3dC60634D5297",
+      "category": "Real Estate",
+      "verified": true,
+      "pausable": true,
+      "roles": ["DEFAULT_ADMIN_ROLE", "ADMIN_ROLE"],
+      "findings": ["H-02"],
+      "riskScore": 7.5
+    },
+    {
+      "name": "AxiomSusuHub",
+      "address": "0x6C69D730327930B49A7997B7b5fb0865F30c95A5",
+      "category": "Community",
+      "verified": true,
+      "pausable": true,
+      "roles": ["DEFAULT_ADMIN_ROLE", "ADMIN_ROLE", "TREASURY_ROLE", "POOL_MANAGER_ROLE"],
+      "findings": ["H-03"],
+      "riskScore": 6.0
+    },
+    {
+      "name": "SustainabilityHub",
+      "address": "0xAf4dF8a7733BAB64b7Ce83F2494d6446eF9eC046",
+      "category": "Sustainability",
+      "verified": true,
+      "pausable": true,
+      "roles": ["DEFAULT_ADMIN_ROLE", "ADMIN_ROLE"],
+      "findings": ["H-05"],
+      "riskScore": 9.8
+    },
+    {
+      "name": "AxiomExchangeHub",
+      "address": "0xF660d260a0bBC690a8ab0f1e6A41049FC919A34D",
+      "category": "DEX",
+      "verified": true,
+      "pausable": true,
+      "roles": ["DEFAULT_ADMIN_ROLE", "ADMIN_ROLE"],
+      "findings": [],
+      "riskScore": 4.0
+    }
+  ],
+  "architectureFindings": {
+    "upgradeability": {
+      "status": "NONE",
+      "proxyPattern": false,
+      "uups": false,
+      "transparent": false,
+      "beacon": false,
+      "risk": "LOW",
+      "note": "All contracts are immutable. No upgrade path exists."
+    },
+    "accessControl": {
+      "pattern": "OpenZeppelin AccessControl",
+      "centralized": true,
+      "adminAddress": "0x2bB2c2A7a1d82097488bf0b9c2a59c1910CD8D5d",
+      "multisig": false,
+      "timelock": false,
+      "risk": "MEDIUM",
+      "note": "Single address controls all admin roles"
+    },
+    "reentrancy": {
+      "guardUsed": true,
+      "pattern": "OpenZeppelin ReentrancyGuard",
+      "coverage": "PARTIAL",
+      "risk": "LOW",
+      "note": "Most fund-handling functions protected"
+    },
+    "pausability": {
+      "implemented": true,
+      "pattern": "OpenZeppelin Pausable",
+      "coverage": "ALL",
+      "risk": "LOW",
+      "note": "All critical contracts can be paused by admin"
+    }
+  },
+  "recommendations": {
+    "critical": [
+      {
+        "priority": 1,
+        "action": "Fix SustainabilityHub.withdraw() - Add onlyRole(ADMIN_ROLE) modifier",
+        "effort": "LOW",
+        "impact": "CRITICAL"
+      },
+      {
+        "priority": 2,
+        "action": "Fix arbitrary transferFrom in DePINNodeSuite.createLease() and LeaseAndRentEngine.createLease()",
+        "effort": "LOW",
+        "impact": "HIGH"
+      },
+      {
+        "priority": 3,
+        "action": "Implement timelock for admin functions changing critical addresses",
+        "effort": "MEDIUM",
+        "impact": "HIGH"
+      }
+    ],
+    "high": [
+      {
+        "priority": 4,
+        "action": "Replace weak PRNG in AxiomSusuHub with Chainlink VRF",
+        "effort": "HIGH",
+        "impact": "HIGH"
+      },
+      {
+        "priority": 5,
+        "action": "Add maximum fee limits in AxiomV2.setFeeConfig()",
+        "effort": "LOW",
+        "impact": "MEDIUM"
+      },
+      {
+        "priority": 6,
+        "action": "Implement multisig governance for treasury address",
+        "effort": "MEDIUM",
+        "impact": "HIGH"
+      }
+    ],
+    "medium": [
+      {
+        "priority": 7,
+        "action": "Add zero-address checks to all setter functions",
+        "effort": "LOW",
+        "impact": "LOW"
+      },
+      {
+        "priority": 8,
+        "action": "Add comprehensive event emissions for all state changes",
+        "effort": "MEDIUM",
+        "impact": "LOW"
+      },
+      {
+        "priority": 9,
+        "action": "Improve NatSpec documentation coverage",
+        "effort": "MEDIUM",
+        "impact": "LOW"
+      }
+    ]
+  },
+  "slitherStats": {
+    "high": 12,
+    "medium": 30,
+    "low": 137,
+    "informational": 89,
+    "reportFile": "slither-report.json",
+    "sarifFile": "slither-report.sarif"
+  }
+}
