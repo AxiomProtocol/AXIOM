@@ -51,8 +51,9 @@ export const CORE_CONTRACTS = {
 
 // Real Estate & Rental Contracts (7-9)
 export const REAL_ESTATE_CONTRACTS = {
-  // Contract 7: LeaseAndRentEngine
-  LEASE_RENT_ENGINE: '0x26a20dEa57F951571AD6e518DFb3dC60634D5297',
+  // Contract 7: LeaseAndRentEngine (Security Fixed v2 - Dec 16, 2025)
+  LEASE_RENT_ENGINE: '0x00591d360416dE7b016bBedbC6AA1AE798eA873B',
+  // Legacy (paused): 0x26a20dEa57F951571AD6e518DFb3dC60634D5297
   
   // Contract 8: RealtorModule
   REALTOR_MODULE: '0x579EA6FC512E5f1b4FC77d5f4f03aA976fa40412',
@@ -69,8 +70,9 @@ export const DEFI_UTILITY_CONTRACTS = {
   // Contract 11: TransportAndLogisticsHub
   TRANSPORT_LOGISTICS: '0x959c5dd99B170e2b14B1F9b5a228f323946F514e',
   
-  // Contract 12: DePINNodeSuite (Operational - AXM staking/leasing)
-  DEPIN_NODES: '0x16dC3884d88b767D99E0701Ba026a1ed39a250F1',
+  // Contract 12: DePINNodeSuite (Security Fixed v2 - Dec 16, 2025)
+  DEPIN_NODES: '0x223dF824B320beD4A8Fd0648b242621e4d01aAEF',
+  // Legacy (paused): 0x16dC3884d88b767D99E0701Ba026a1ed39a250F1
   
   // Contract 13: DePINNodeSales V2 (ETH + AXM Payments + DEX Integration)
   // Deployed: November 26, 2025 | Verified on Blockscout

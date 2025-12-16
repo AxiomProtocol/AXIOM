@@ -123,9 +123,9 @@ export const CORE_CONTRACTS = {
  * REAL ESTATE & RENTAL (Contracts 7-9)
  */
 export const REAL_ESTATE_CONTRACTS = {
-  // Contract 7: Lease and Rent Engine
+  // Contract 7: Lease and Rent Engine (Security Fixed v2 - Dec 16, 2025)
   LEASE_RENT_ENGINE: {
-    address: "0x26a20dEa57F951571AD6e518DFb3dC60634D5297",
+    address: "0x00591d360416dE7b016bBedbC6AA1AE798eA873B",
     name: "LeaseAndRentEngine",
     roles: {
       DEFAULT_ADMIN_ROLE: "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -215,9 +215,9 @@ export const UTILITY_CONTRACTS = {
     }
   },
 
-  // Contract 12: DePIN Node Suite
+  // Contract 12: DePIN Node Suite (Security Fixed v2 - Dec 16, 2025)
   DEPIN_NODE_SUITE: {
-    address: "0x16dC3884d88b767D99E0701Ba026a1ed39a250F1",
+    address: "0x223dF824B320beD4A8Fd0648b242621e4d01aAEF",
     name: "DePINNodeSuite",
     roles: {
       DEFAULT_ADMIN_ROLE: "0x0000000000000000000000000000000000000000000000000000000000000000",
