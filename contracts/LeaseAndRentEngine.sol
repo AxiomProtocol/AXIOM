@@ -124,6 +124,7 @@ contract LeaseAndRentEngine is AccessControl, ReentrancyGuard, Pausable {
     mapping(uint256 => PaymentRecord[]) public paymentHistory;
     mapping(address => uint256) public referralRewards; // Unclaimed referral rewards
     mapping(address => uint256) public tenantBoosterRewards; // Tenant incentive rewards
+    mapping(address => uint256) public pendingLeaseDeposits; // Pre-deposited funds for leases
     
     // ============================================
     // EVENTS
@@ -171,6 +172,16 @@ contract LeaseAndRentEngine is AccessControl, ReentrancyGuard, Pausable {
         address indexed tenant,
         LeaseStatus finalStatus,
         uint256 refundedDeposit
+    );
+    
+    event LeaseDepositReceived(
+        address indexed depositor,
+        uint256 amount
+    );
+    
+    event LeaseDepositWithdrawn(
+        address indexed recipient,
+        uint256 amount
     );
     
     event MaintenanceWithdrawal(
@@ -227,9 +238,8 @@ contract LeaseAndRentEngine is AccessControl, ReentrancyGuard, Pausable {
     // ============================================
     
     /**
-     * @notice Create a new lease agreement
+     * @notice Create a new lease agreement (called by tenant directly)
      * @param parcelId ID of the property from LandAndAssetRegistry
-     * @param tenant Address of the tenant
      * @param propertyOwner Address of the property owner
      * @param monthlyRent Monthly rent amount in AXM
      * @param leaseDuration Duration in months
@@ -237,8 +247,39 @@ contract LeaseAndRentEngine is AccessControl, ReentrancyGuard, Pausable {
      * @param purchasePrice Total purchase price (only for rent-to-own)
      * @param isRentToOwn Whether this is a rent-to-own lease
      * @param referrer Address of referrer (address(0) if none)
+     * @dev SECURITY: Caller IS the tenant - transfers only from msg.sender
      */
     function createLease(
+        uint256 parcelId,
+        address propertyOwner,
+        uint256 monthlyRent,
+        uint256 leaseDuration,
+        uint256 securityDeposit,
+        uint256 purchasePrice,
+        bool isRentToOwn,
+        SettlementMode settlementMode,
+        address referrer
+    ) external whenNotPaused returns (uint256) {
+        return _createLeaseInternal(
+            parcelId, msg.sender, propertyOwner, monthlyRent, leaseDuration,
+            securityDeposit, purchasePrice, isRentToOwn, settlementMode, referrer, true
+        );
+    }
+    
+    /**
+     * @notice Create a lease on behalf of tenant (admin only)
+     * @param parcelId ID of the property from LandAndAssetRegistry
+     * @param tenant Address of the tenant (must have pre-deposited funds)
+     * @param propertyOwner Address of the property owner
+     * @param monthlyRent Monthly rent amount in AXM
+     * @param leaseDuration Duration in months
+     * @param securityDeposit Security deposit amount
+     * @param purchasePrice Total purchase price (only for rent-to-own)
+     * @param isRentToOwn Whether this is a rent-to-own lease
+     * @param referrer Address of referrer (address(0) if none)
+     * @dev SECURITY: Admin-only, uses tenant's pre-deposited funds, NO transferFrom from tenant
+     */
+    function createLeaseAsAdmin(
         uint256 parcelId,
         address tenant,
         address propertyOwner,
@@ -250,6 +291,29 @@ contract LeaseAndRentEngine is AccessControl, ReentrancyGuard, Pausable {
         SettlementMode settlementMode,
         address referrer
     ) external onlyRole(LEASE_MANAGER_ROLE) whenNotPaused returns (uint256) {
+        return _createLeaseInternal(
+            parcelId, tenant, propertyOwner, monthlyRent, leaseDuration,
+            securityDeposit, purchasePrice, isRentToOwn, settlementMode, referrer, false
+        );
+    }
+    
+    /**
+     * @dev Internal lease creation logic
+     * @param isTenantCalling True if tenant is calling directly, false if admin is calling
+     */
+    function _createLeaseInternal(
+        uint256 parcelId,
+        address tenant,
+        address propertyOwner,
+        uint256 monthlyRent,
+        uint256 leaseDuration,
+        uint256 securityDeposit,
+        uint256 purchasePrice,
+        bool isRentToOwn,
+        SettlementMode settlementMode,
+        address referrer,
+        bool isTenantCalling
+    ) internal returns (uint256) {
         require(tenant != address(0), "Invalid tenant");
         require(propertyOwner != address(0), "Invalid owner");
         require(monthlyRent > 0, "Invalid rent");
@@ -286,21 +350,38 @@ contract LeaseAndRentEngine is AccessControl, ReentrancyGuard, Pausable {
                 require(purchasePrice >= leaseDuration, "Purchase price too low for progressive mode");
                 lease.purchasePortionPerMonth = purchasePrice / leaseDuration;
                 lease.purchaseRemainder = purchasePrice % leaseDuration;
-                // Remainder will be distributed across earliest installments
             }
         }
         
         tenantLeases[tenant].push(leaseId);
         ownerProperties[propertyOwner].push(leaseId);
         
-        // Collect security deposit
+        // Handle security deposit
         if (securityDeposit > 0) {
-            IERC20(axmToken).safeTransferFrom(tenant, address(this), securityDeposit);
+            if (isTenantCalling) {
+                // Tenant calling - transfer from msg.sender (which IS the tenant)
+                IERC20(axmToken).safeTransferFrom(msg.sender, address(this), securityDeposit);
+            } else {
+                // Admin calling - use tenant's pre-deposited funds only
+                require(
+                    pendingLeaseDeposits[tenant] >= securityDeposit,
+                    "Tenant must deposit security first"
+                );
+                pendingLeaseDeposits[tenant] -= securityDeposit;
+            }
         }
         
         // ESCROW_UPFRONT: Collect full purchase price upfront
         if (isRentToOwn && settlementMode == SettlementMode.ESCROW_UPFRONT) {
-            IERC20(axmToken).safeTransferFrom(tenant, address(this), purchasePrice);
+            if (isTenantCalling) {
+                IERC20(axmToken).safeTransferFrom(msg.sender, address(this), purchasePrice);
+            } else {
+                require(
+                    pendingLeaseDeposits[tenant] >= purchasePrice,
+                    "Tenant must deposit purchase price first"
+                );
+                pendingLeaseDeposits[tenant] -= purchasePrice;
+            }
             lease.escrowedPurchaseFunds = purchasePrice;
         }
         
@@ -312,6 +393,29 @@ contract LeaseAndRentEngine is AccessControl, ReentrancyGuard, Pausable {
         emit LeaseCreated(leaseId, parcelId, tenant, propertyOwner, monthlyRent, isRentToOwn);
         
         return leaseId;
+    }
+    
+    /**
+     * @notice Deposit funds for a lease (called by tenant before admin creates lease)
+     * @param amount Amount to deposit
+     * @dev Only msg.sender can deposit to their own balance
+     */
+    function depositForLease(uint256 amount) external whenNotPaused {
+        require(amount > 0, "Amount must be positive");
+        IERC20(axmToken).safeTransferFrom(msg.sender, address(this), amount);
+        pendingLeaseDeposits[msg.sender] += amount;
+        emit LeaseDepositReceived(msg.sender, amount);
+    }
+    
+    /**
+     * @notice Withdraw unused lease deposit
+     * @dev Only msg.sender can withdraw their own deposits
+     */
+    function withdrawLeaseDeposit(uint256 amount) external nonReentrant whenNotPaused {
+        require(pendingLeaseDeposits[msg.sender] >= amount, "Insufficient deposit");
+        pendingLeaseDeposits[msg.sender] -= amount;
+        IERC20(axmToken).safeTransfer(msg.sender, amount);
+        emit LeaseDepositWithdrawn(msg.sender, amount);
     }
     
     /**

@@ -140,6 +140,7 @@ contract DePINNodeSuite is AccessControl, ReentrancyGuard, Pausable {
     mapping(uint256 => RevenueDistribution[]) public revenueHistory;
     mapping(address => uint256) public pendingWithdrawals;  // Accumulated earnings
     mapping(uint256 => uint256) public escrowedRevenue;      // Operational revenue escrowed per node
+    mapping(address => uint256) public pendingLeaseDeposits; // Pre-deposited funds for leases
     
     // ============================================
     // EVENTS
@@ -203,6 +204,16 @@ contract DePINNodeSuite is AccessControl, ReentrancyGuard, Pausable {
     event OperationalRevenueDeposited(
         uint256 indexed nodeId,
         address indexed depositor,
+        uint256 amount
+    );
+    
+    event LeaseDepositReceived(
+        address indexed depositor,
+        uint256 amount
+    );
+    
+    event LeaseDepositWithdrawn(
+        address indexed recipient,
         uint256 amount
     );
     
@@ -366,20 +377,53 @@ contract DePINNodeSuite is AccessControl, ReentrancyGuard, Pausable {
     // ============================================
     
     /**
-     * @notice Create a lease for a node
+     * @notice Create a lease for a node (called by lessee directly)
      * @param nodeId Node to lease
-     * @param lessee Address leasing the node
      * @param monthlyFee Monthly lease fee in AXM
      * @param leaseDuration Duration in months
      * @param securityDeposit Security deposit amount
+     * @dev SECURITY: Caller IS the lessee - transfers only from msg.sender
      */
     function createLease(
+        uint256 nodeId,
+        uint256 monthlyFee,
+        uint256 leaseDuration,
+        uint256 securityDeposit
+    ) external whenNotPaused returns (uint256) {
+        return _createLeaseInternal(nodeId, msg.sender, monthlyFee, leaseDuration, securityDeposit, true);
+    }
+    
+    /**
+     * @notice Create a lease for a node on behalf of lessee (admin only)
+     * @param nodeId Node to lease
+     * @param lessee Address leasing the node (must have pre-deposited funds)
+     * @param monthlyFee Monthly lease fee in AXM
+     * @param leaseDuration Duration in months
+     * @param securityDeposit Security deposit amount
+     * @dev SECURITY: Admin-only, uses lessee's pre-deposited funds, NO transferFrom from lessee
+     */
+    function createLeaseAsAdmin(
         uint256 nodeId,
         address lessee,
         uint256 monthlyFee,
         uint256 leaseDuration,
         uint256 securityDeposit
     ) external onlyRole(NODE_MANAGER_ROLE) whenNotPaused returns (uint256) {
+        return _createLeaseInternal(nodeId, lessee, monthlyFee, leaseDuration, securityDeposit, false);
+    }
+    
+    /**
+     * @dev Internal lease creation logic
+     * @param isLesseeCalling True if lessee is calling directly, false if admin is calling
+     */
+    function _createLeaseInternal(
+        uint256 nodeId,
+        address lessee,
+        uint256 monthlyFee,
+        uint256 leaseDuration,
+        uint256 securityDeposit,
+        bool isLesseeCalling
+    ) internal returns (uint256) {
         Node storage node = nodes[nodeId];
         require(node.status == NodeStatus.Active, "Node not active");
         require(!node.isLeased, "Node already leased");
@@ -409,12 +453,45 @@ contract DePINNodeSuite is AccessControl, ReentrancyGuard, Pausable {
         
         // Collect security deposit
         if (securityDeposit > 0) {
-            IERC20(axmToken).safeTransferFrom(lessee, address(this), securityDeposit);
+            if (isLesseeCalling) {
+                // Lessee calling - transfer from msg.sender (which IS the lessee)
+                IERC20(axmToken).safeTransferFrom(msg.sender, address(this), securityDeposit);
+            } else {
+                // Admin calling - use lessee's pre-deposited funds only
+                require(
+                    pendingLeaseDeposits[lessee] >= securityDeposit,
+                    "Lessee must deposit security first"
+                );
+                pendingLeaseDeposits[lessee] -= securityDeposit;
+            }
         }
         
         emit NodeLeaseCreated(leaseId, nodeId, lessee, monthlyFee, leaseDuration);
         
         return leaseId;
+    }
+    
+    /**
+     * @notice Deposit security funds for a lease (called by lessee before admin creates lease)
+     * @param amount Amount to deposit
+     * @dev Only msg.sender can deposit to their own balance
+     */
+    function depositForLease(uint256 amount) external whenNotPaused {
+        require(amount > 0, "Amount must be positive");
+        IERC20(axmToken).safeTransferFrom(msg.sender, address(this), amount);
+        pendingLeaseDeposits[msg.sender] += amount;
+        emit LeaseDepositReceived(msg.sender, amount);
+    }
+    
+    /**
+     * @notice Withdraw unused lease deposit
+     * @dev Only msg.sender can withdraw their own deposits
+     */
+    function withdrawLeaseDeposit(uint256 amount) external nonReentrant whenNotPaused {
+        require(pendingLeaseDeposits[msg.sender] >= amount, "Insufficient deposit");
+        pendingLeaseDeposits[msg.sender] -= amount;
+        IERC20(axmToken).safeTransfer(msg.sender, amount);
+        emit LeaseDepositWithdrawn(msg.sender, amount);
     }
     
     /**

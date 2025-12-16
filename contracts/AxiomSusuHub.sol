@@ -579,12 +579,27 @@ contract AxiomSusuHub is AccessControl, ReentrancyGuard, Pausable {
     
     /**
      * @dev Generate randomized payout order using blockhash
+     * 
+     * SECURITY WARNING: This function uses block-based randomness which is NOT cryptographically
+     * secure. Validators/miners can potentially predict or influence the outcome. 
+     * 
+     * Acceptable use cases:
+     * - Community-based savings pools where members trust each other
+     * - Low-value pools where manipulation incentive is minimal
+     * 
+     * For high-value pools or adversarial environments, consider:
+     * - Using Chainlink VRF for secure randomness (requires LINK tokens)
+     * - Implementing a commit-reveal scheme
+     * - Defaulting to sequential order (_generateSequentialOrder)
+     * 
+     * Pool creators should be aware of this limitation when choosing randomized order.
      */
     function _generateRandomOrder(uint256 poolId) internal {
         address[] memory memberList = poolMembers[poolId];
         uint256 n = memberList.length;
         
-        // Fisher-Yates shuffle
+        // Fisher-Yates shuffle using block-based entropy
+        // WARNING: Predictable by validators - see NatSpec above
         for (uint256 i = n - 1; i > 0; i--) {
             uint256 j = uint256(keccak256(abi.encodePacked(
                 blockhash(block.number - 1),
