@@ -15,13 +15,27 @@ This security audit covers all 24 smart contracts deployed by Axiom Protocol on 
 
 ### Risk Overview
 
-| Severity | Count | Status |
-|----------|-------|--------|
-| Critical | 0 | - |
-| High | 6 | Acknowledged |
-| Medium | 8 | Acknowledged |
-| Low | 12 | Informational |
-| Informational | 89+ | Informational |
+| Severity | Slither Raw | After Triage | Status |
+|----------|-------------|--------------|--------|
+| Critical | 0 | 0 | - |
+| High | 12 | **3** | 9 triaged (see below) |
+| Medium | 30 | 8 | Acknowledged |
+| Low | 137 | 12 | Informational |
+| Informational | 89 | 89 | Informational |
+
+### Slither HIGH Finding Triage Summary
+
+| Slither # | Finding | Contract | Verdict | Rationale |
+|-----------|---------|----------|---------|-----------|
+| 1 | arbitrary-send-erc20 | DePINNodeSuite | **VALID HIGH** | msg.sender != lessee |
+| 2-3 | arbitrary-send-erc20 | LeaseAndRentEngine | **VALID HIGH** | msg.sender != tenant (2 transfers, 1 fix) |
+| 4 | arbitrary-send-eth | DePINNodeSales | **LOW RISK** | Sends to treasurySafe, admin-only |
+| 5 | arbitrary-send-eth | SustainabilityHub | **LOW RISK** | Has onlyRole(ADMIN_ROLE), sends to admin |
+| 6 | weak-prng | AxiomSusuHub | **VALID HIGH** | Block-based randomness is predictable |
+| 7 | incorrect-exp | Math (OpenZeppelin) | **FALSE POSITIVE** | Intentional XOR in OZ Newton-Raphson |
+| 8-12 | uninitialized-state | Multiple (5) | **LOW RISK** | Solidity auto-initializes mappings |
+
+**Summary:** 3 VALID HIGH findings require action (H-01, H-02, H-03). 9 findings triaged as low risk or false positive.
 
 ### Key Findings Summary
 
@@ -202,45 +216,79 @@ The `emergencyWithdrawETH` function sends all contract ETH to `treasurySafe` whi
 
 ---
 
-#### H-05: Unprotected withdraw() in SustainabilityHub
+#### H-05: ETH Sent to Admin Caller in SustainabilityHub.withdraw() (Triaged: LOW RISK)
 
 **File:** `contracts/SustainabilityHub.sol:648-650`  
-**Impact:** High  
-**Likelihood:** High  
-
-**Description:**
-The `withdraw` function allows anyone to call it and transfers all ETH to `msg.sender`:
-
-```solidity
-function withdraw() external {
-    address(msg.sender).transfer(address(this).balance);
-}
-```
-
-**Critical Risk:** Any caller can drain all ETH from this contract.
-
-**Mitigation:**
-Add access control: `onlyRole(ADMIN_ROLE)`
-
----
-
-#### H-06: Uninitialized State Variable Arrays
-
-**Files:** Multiple contracts  
-**Impact:** High  
+**Slither Category:** arbitrary-send-eth  
+**Impact:** Low (after triage)  
 **Likelihood:** Low  
 
 **Description:**
-Several mapping arrays are never explicitly initialized:
-- `OracleAndMetricsRelay.assetOracles`
-- `AxiomAcademyHub.courseModules`
-- `AxiomAcademyHub.moduleLessons`
-- `CommunitySocialHub.postComments`
-- `GamificationHub.questObjectives`
+Slither flags this function as "sends ETH to arbitrary user":
 
-**Risk:** While Solidity auto-initializes mappings, this pattern can lead to unexpected behavior with nested mappings or array push operations.
+```solidity
+function withdraw() external onlyRole(ADMIN_ROLE) {
+    payable(msg.sender).transfer(address(this).balance);
+}
+```
 
-**Mitigation:** Add explicit initialization in constructors or document expected behavior.
+**Triage Analysis:**
+Upon manual review, this function **does have access control** via `onlyRole(ADMIN_ROLE)`. The ETH is sent to the admin caller, not an arbitrary user. Slither reports this pattern because technically any admin can withdraw, but this is **intentional behavior** for admin-controlled fund recovery.
+
+**Residual Risk:**
+- If admin private key is compromised, attacker could drain contract ETH
+- Recommend using a dedicated treasury address instead of msg.sender
+
+**Recommendation:** Consider routing funds to a fixed treasury address instead of msg.sender for additional safety.
+
+---
+
+#### H-06: Uninitialized State Variable Arrays (Triaged: LOW RISK)
+
+**Files:** Multiple contracts  
+**Slither Category:** uninitialized-state  
+**Impact:** Low (after triage)  
+**Likelihood:** Low  
+
+**Description:**
+Slither flags 5 mapping arrays as "never initialized":
+- `OracleAndMetricsRelay.assetOracles` (line 135)
+- `AxiomAcademyHub.courseModules` (line 160)
+- `AxiomAcademyHub.moduleLessons` (line 161)
+- `CommunitySocialHub.postComments` (line 156)
+- `GamificationHub.questObjectives` (line 168)
+
+**Triage Analysis:**
+In Solidity, mappings are **automatically initialized** to their default values (empty). The pattern used is standard:
+```solidity
+mapping(uint256 => Module[]) public courseModules;
+```
+
+When `courseModules[courseId].push(module)` is called, Solidity creates the dynamic array automatically. This is **expected behavior** and not a vulnerability.
+
+**Verdict:** LOW RISK - Standard Solidity mapping behavior, no action required.
+
+---
+
+#### H-07: OpenZeppelin Math.mulDiv XOR Operator (FALSE POSITIVE)
+
+**File:** `node_modules/@openzeppelin/contracts/utils/math/Math.sol:257`  
+**Slither Category:** incorrect-exp  
+**Impact:** None  
+**Likelihood:** None  
+
+**Description:**
+Slither flags this line as potentially using XOR (`^`) instead of exponentiation (`**`):
+```solidity
+inverse = (3 * denominator) ^ 2
+```
+
+**Triage Analysis:**
+This is a **known false positive**. The OpenZeppelin `Math.mulDiv` implementation uses **intentional bitwise XOR** as part of Newton-Raphson iteration for modular inverse calculation. This is a well-documented optimization technique.
+
+**Reference:** [OpenZeppelin Math Library](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol)
+
+**Verdict:** FALSE POSITIVE - Intentional OpenZeppelin implementation, no action required.
 
 ---
 
@@ -438,14 +486,14 @@ The project implements a Private Membership Association structure which may prov
 
 ### 8.1 Critical (Immediate Action Required)
 
-1. **Fix SustainabilityHub.withdraw()** - Add access control immediately
-2. **Fix arbitrary transferFrom** - Validate msg.sender in lease functions
-3. **Implement timelock** for admin functions changing critical addresses
+1. **Fix arbitrary transferFrom in DePINNodeSuite.createLease()** - Add `require(msg.sender == lessee, "Sender must be lessee")`
+2. **Fix arbitrary transferFrom in LeaseAndRentEngine.createLease()** - Add `require(msg.sender == tenant, "Sender must be tenant")`
 
 ### 8.2 High Priority
 
-4. **Replace weak PRNG** in AxiomSusuHub with Chainlink VRF
-5. **Add maximum fee limits** in AxiomV2
+3. **Replace weak PRNG** in AxiomSusuHub with Chainlink VRF (or document limitation for users)
+4. **Implement timelock** for admin functions changing critical addresses
+5. **Add maximum fee limits** in AxiomV2 (e.g., cap at 10%)
 6. **Implement multisig** for treasury address
 
 ### 8.3 Medium Priority
@@ -495,12 +543,23 @@ The centralized admin structure presents operational risks that should be mitiga
 
 Full Slither report available in `slither-report.json` and `slither-report.sarif`.
 
+### Raw Slither Output
+
 | Severity | Count |
 |----------|-------|
 | High | 12 |
 | Medium | 30 |
 | Low | 137 |
 | Informational | 89 |
+
+### After Triage
+
+| Severity | Count | Notes |
+|----------|-------|-------|
+| High | **3** | 2 arbitrary-send-erc20 (DePINNodeSuite, LeaseAndRentEngine), 1 weak-prng |
+| Medium | 8 | Precision loss, timestamps, centralization |
+| Triaged Low | 8 | 5 uninitialized-state, 2 arbitrary-send-eth (admin-protected), 1 duplicate |
+| False Positive | 1 | OpenZeppelin Math.mulDiv XOR |
 
 ## Appendix B: Contract Verification Status
 
