@@ -905,7 +905,7 @@ KeyGrow gives you a real, transparent path to owning your home. The technology i
     category: 'Finance',
     difficulty: 'beginner',
     durationMinutes: 90,
-    requiredTier: 'free',
+    requiredTier: 'pro',
     isFeatured: true,
     lessons: [
       {
@@ -1516,7 +1516,7 @@ As wealth grows, consider:
     category: 'Blockchain',
     difficulty: 'intermediate',
     durationMinutes: 75,
-    requiredTier: 'free',
+    requiredTier: 'pro',
     isFeatured: false,
     lessons: [
       {
@@ -1940,7 +1940,7 @@ Plan for various scenarios:
     category: 'Community',
     difficulty: 'beginner',
     durationMinutes: 30,
-    requiredTier: 'free',
+    requiredTier: 'pro',
     isFeatured: false,
     lessons: [
       {
@@ -2250,7 +2250,7 @@ Have policies ready before issues arise.`,
     category: 'Governance',
     difficulty: 'intermediate',
     durationMinutes: 45,
-    requiredTier: 'basic',
+    requiredTier: 'pro',
     isFeatured: false,
     lessons: [
       {
@@ -2682,6 +2682,1194 @@ Axiom governance matters beyond token holders:
           'New voting mechanisms like quadratic voting address these issues',
           'Axiom is continuously improving its governance systems',
           'Your participation helps build models for future digital governance'
+        ]
+      }
+    ]
+  },
+  {
+    id: 7,
+    slug: 'real-estate-investing',
+    title: 'Real Estate Investment Strategies',
+    description: 'Advanced strategies for building wealth through real estate, from traditional investing to tokenized property ownership.',
+    category: 'Finance',
+    difficulty: 'advanced',
+    durationMinutes: 60,
+    requiredTier: 'pro',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'Introduction to Real Estate Investing',
+        duration: 10,
+        content: `Real estate has created more millionaires than any other asset class. Learn why and how to get started.
+
+## Why Real Estate?
+
+Real estate offers unique advantages:
+
+- **Tangible asset**: You can see, touch, and improve it
+- **Cash flow**: Monthly rental income
+- **Appreciation**: Property values tend to rise over time
+- **Leverage**: Use borrowed money to amplify returns
+- **Tax benefits**: Depreciation, deductions, and 1031 exchanges
+- **Inflation hedge**: Rents and values typically rise with inflation
+
+## Types of Real Estate Investments
+
+### Direct Ownership
+- Single-family rentals
+- Multi-family properties (2-4 units)
+- Commercial real estate
+- Land development
+
+### Indirect Ownership
+- REITs (Real Estate Investment Trusts)
+- Real estate crowdfunding
+- Tokenized property shares
+- Real estate funds
+
+## The BRRRR Strategy
+
+A popular wealth-building approach:
+
+1. **Buy**: Purchase undervalued property
+2. **Rehab**: Renovate to increase value
+3. **Rent**: Find quality tenants
+4. **Refinance**: Pull out your capital
+5. **Repeat**: Use that capital for the next deal
+
+## Getting Started
+
+Before your first investment:
+
+- Build emergency fund (3-6 months expenses)
+- Improve credit score (700+ ideal)
+- Save for down payment (20-25% for investment properties)
+- Research target markets
+- Build your team (agent, lender, contractor, property manager)`,
+        keyTakeaways: [
+          'Real estate builds wealth through cash flow, appreciation, leverage, and tax benefits',
+          'Multiple investment approaches exist from direct ownership to tokenized shares',
+          'The BRRRR strategy allows continuous portfolio growth',
+          'Proper preparation and team-building are essential before investing'
+        ]
+      },
+      {
+        id: 2,
+        title: 'Analyzing Investment Properties',
+        duration: 12,
+        content: `Success in real estate comes down to buying right. Learn how to analyze deals like a pro.
+
+## The 1% Rule
+
+Quick screening tool:
+
+- Monthly rent should be at least 1% of purchase price
+- $100,000 property should rent for $1,000/month minimum
+- Higher percentages indicate better cash flow potential
+
+## Cash Flow Analysis
+
+Calculate Net Operating Income (NOI):
+
+**Gross Rental Income**
+- Monthly rent x 12 months
+- Minus vacancy allowance (typically 5-10%)
+= Effective Gross Income
+
+**Operating Expenses**
+- Property taxes
+- Insurance
+- Utilities (if landlord paid)
+- Property management (8-12%)
+- Maintenance (10% of rent)
+- Repairs allowance
+- HOA fees
+- Lawn care/snow removal
+
+**NOI = Effective Gross Income - Operating Expenses**
+
+## Cap Rate
+
+Cap Rate = NOI / Property Value
+
+- 4-6%: Appreciation markets (coastal cities)
+- 7-9%: Balanced markets
+- 10%+: Cash flow markets (Midwest, South)
+
+## Cash-on-Cash Return
+
+Annual Cash Flow / Total Cash Invested x 100
+
+Example:
+- Purchase price: $150,000
+- Down payment (20%): $30,000
+- Closing costs: $5,000
+- Total invested: $35,000
+- Annual cash flow: $4,200
+
+Cash-on-Cash = $4,200 / $35,000 = 12%
+
+## Red Flags to Avoid
+
+Watch out for:
+
+- Deferred maintenance
+- Foundation issues
+- Environmental problems
+- Bad neighborhoods declining further
+- Properties requiring specialized knowledge
+- Sellers hiding information`,
+        keyTakeaways: [
+          'The 1% rule quickly screens potential investments',
+          'Cash flow analysis reveals true profitability after all expenses',
+          'Cap rate helps compare properties across different markets',
+          'Cash-on-cash return measures the efficiency of your invested capital'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Financing Your Investments',
+        duration: 10,
+        content: `Understanding financing options can make or break your real estate success.
+
+## Conventional Loans
+
+Traditional bank financing:
+
+- 20-25% down for investment properties
+- 15 or 30-year fixed terms
+- Best rates with good credit (720+)
+- Limited to 10 financed properties per person
+- Income documentation required
+
+## Portfolio Loans
+
+Held by local banks:
+
+- More flexible qualification
+- Can own unlimited properties
+- Higher rates (0.5-1% above conventional)
+- Relationship-based lending
+- Great for scaling beyond 10 properties
+
+## DSCR Loans
+
+Debt Service Coverage Ratio loans:
+
+- Based on property income, not personal income
+- DSCR = NOI / Debt Payments (target 1.25+)
+- No tax returns or W2s needed
+- Faster closing
+- Higher rates
+
+## Creative Financing
+
+Alternative approaches:
+
+- **Seller financing**: Owner becomes the bank
+- **Subject-to**: Take over existing mortgage
+- **Lease options**: Control without ownership
+- **Hard money**: Short-term, asset-based loans
+- **Private money**: Loans from individuals
+
+## Leverage Wisely
+
+Balance risk and return:
+
+- More leverage = higher returns but more risk
+- 75-80% LTV is conservative
+- Keep cash reserves for vacancies and repairs
+- Consider fixed-rate loans for predictability
+- Don't over-leverage in a rising rate environment`,
+        keyTakeaways: [
+          'Different loan types suit different investor situations',
+          'DSCR loans enable scaling without income documentation limits',
+          'Creative financing opens doors when traditional lending fails',
+          'Smart leverage amplifies returns while managing risk'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Tokenized Real Estate',
+        duration: 10,
+        content: `Blockchain technology is revolutionizing how we invest in real estate.
+
+## What is Tokenized Real Estate?
+
+Tokenization divides property ownership into digital tokens:
+
+- Each token represents fractional ownership
+- Recorded on blockchain for transparency
+- Can be traded on secondary markets
+- Lower minimum investments
+- Programmable compliance and dividends
+
+## Benefits Over Traditional REITs
+
+| Feature | REITs | Tokenized |
+|---------|-------|-----------|
+| Minimum | $1-100 | $10-500 |
+| Liquidity | Exchange hours | 24/7 |
+| Settlement | T+2 days | Minutes |
+| Transparency | Quarterly reports | Real-time |
+| Geographic access | Limited | Global |
+
+## KeyGrow: Rent-to-Own Tokenization
+
+Axiom's KeyGrow program uniquely tokenizes:
+
+- 100,000 shares per property
+- Earn shares through rent payments
+- Track equity on blockchain
+- Transparent ownership records
+- Path to full ownership
+
+## Due Diligence for Token Investments
+
+Before investing in tokenized real estate:
+
+1. Verify underlying property exists
+2. Confirm legal structure and rights
+3. Review smart contract audits
+4. Understand secondary market liquidity
+5. Check platform track record
+6. Review fee structures
+
+## The Future of Real Estate
+
+Tokenization enables:
+
+- Global investment in local properties
+- Fractional ownership of trophy assets
+- Instant settlement and transfers
+- Programmable rental distributions
+- Portfolio diversification at any budget`,
+        keyTakeaways: [
+          'Tokenization divides property into tradeable digital shares',
+          'Benefits include lower minimums, 24/7 trading, and global access',
+          'KeyGrow uniquely combines rent-to-own with tokenization',
+          'Always perform thorough due diligence on tokenized investments'
+        ]
+      },
+      {
+        id: 5,
+        title: 'Building Your Real Estate Portfolio',
+        duration: 10,
+        content: `A strategic approach to growing your real estate empire.
+
+## Portfolio Strategy
+
+Define your approach:
+
+- **Cash flow focused**: Maximize monthly income
+- **Appreciation focused**: Target growth markets
+- **Balanced**: Mix of both strategies
+- **Value-add**: Buy, improve, profit
+
+## The Path to 10 Properties
+
+Milestone approach:
+
+**Property 1-2: Learn the basics**
+- Single-family homes or duplexes
+- Close to home for easy management
+- Build systems and experience
+
+**Property 3-5: Scale up**
+- Consider small multifamily (3-4 units)
+- Hire property management
+- Refine your buy box
+
+**Property 6-10: Accelerate**
+- Portfolio lending
+- Larger commercial properties
+- Syndication opportunities
+- Geographic diversification
+
+## Geographic Diversification
+
+Spread risk across markets:
+
+- Don't put everything in one city
+- Consider landlord-friendly states
+- Balance appreciation and cash flow markets
+- Research economic drivers
+- Evaluate population and job trends
+
+## Exit Strategies
+
+Plan before you buy:
+
+- **Hold forever**: Generational wealth
+- **1031 exchange**: Defer taxes, upgrade
+- **Refinance**: Access equity tax-free
+- **Sell to tenant**: KeyGrow model
+- **Sell to investor**: Quick exit
+
+## Tax Optimization
+
+Legal strategies to minimize taxes:
+
+- Depreciation deductions
+- Cost segregation studies
+- 1031 exchanges
+- Qualified opportunity zones
+- Self-directed IRA investments
+- Real estate professional status`,
+        keyTakeaways: [
+          'Define your portfolio strategy before buying',
+          'Progress from simpler to more complex properties',
+          'Geographic diversification reduces concentration risk',
+          'Plan exit strategies and tax optimization from day one'
+        ]
+      }
+    ]
+  },
+  {
+    id: 8,
+    slug: 'blockchain-security',
+    title: 'Blockchain Security & Privacy',
+    description: 'Protect your digital assets with advanced security practices, wallet management, and privacy protection strategies.',
+    category: 'Blockchain',
+    difficulty: 'intermediate',
+    durationMinutes: 50,
+    requiredTier: 'pro',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'Understanding Crypto Threats',
+        duration: 10,
+        content: `The blockchain is secure, but users are vulnerable. Learn what threats you face.
+
+## Common Attack Vectors
+
+### Phishing
+Most crypto is lost to social engineering:
+
+- Fake websites mimicking exchanges
+- Fraudulent emails from "support"
+- Impersonators in Discord/Telegram
+- Malicious links in social media
+
+**Rule**: Never click links in messages about crypto.
+
+### Malware
+Software designed to steal:
+
+- Clipboard hijackers change wallet addresses
+- Keyloggers capture seed phrases
+- Screen capture malware
+- Fake wallet apps
+
+### SIM Swapping
+Attackers take over your phone number:
+
+- Call carrier pretending to be you
+- Transfer number to their SIM
+- Intercept 2FA codes
+- Access accounts
+
+### Smart Contract Exploits
+Bugs in code:
+
+- Infinite mint vulnerabilities
+- Reentrancy attacks
+- Oracle manipulation
+- Logic errors
+
+## The Human Element
+
+Technical security means nothing if:
+
+- You share your seed phrase
+- You approve malicious transactions
+- You connect to fake dApps
+- You trust strangers online
+
+## Security Mindset
+
+Adopt these principles:
+
+1. Assume you're a target
+2. Verify everything independently
+3. Use hardware security
+4. Limit attack surface
+5. Have recovery plans`,
+        keyTakeaways: [
+          'Phishing and social engineering are the biggest threats',
+          'Multiple attack vectors target crypto holders',
+          'Human error causes most security failures',
+          'A security-first mindset is essential'
+        ]
+      },
+      {
+        id: 2,
+        title: 'Wallet Security Best Practices',
+        duration: 10,
+        content: `Your wallet is your bank vault. Secure it properly.
+
+## Wallet Types
+
+### Hot Wallets
+Connected to internet:
+- Browser extensions (MetaMask)
+- Mobile apps
+- Desktop applications
+
+**Best for**: Small amounts, frequent transactions
+
+### Cold Wallets
+Offline storage:
+- Hardware wallets (Ledger, Trezor)
+- Paper wallets
+- Air-gapped computers
+
+**Best for**: Large holdings, long-term storage
+
+## Hardware Wallet Setup
+
+Essential steps:
+
+1. Buy directly from manufacturer
+2. Verify tamper-proof packaging
+3. Generate new seed phrase on device
+4. Write seed phrase on metal plate
+5. Never store seed digitally
+6. Test recovery before funding
+
+## Seed Phrase Protection
+
+Your seed phrase IS your crypto:
+
+**Do:**
+- Write on metal or titanium plate
+- Store in fireproof safe
+- Consider geographic distribution
+- Use sealed tamper-evident bags
+
+**Don't:**
+- Take photos
+- Store in password manager
+- Email to yourself
+- Keep on computer
+- Tell anyone
+
+## Multi-Signature Security
+
+Require multiple approvals:
+
+- 2-of-3 or 3-of-5 setups
+- Distribute keys geographically
+- Mix device types
+- Protect against single point of failure
+
+## Transaction Verification
+
+Before signing anything:
+
+1. Verify destination address (check multiple characters)
+2. Review transaction details on hardware wallet screen
+3. Confirm amounts match expectations
+4. Be suspicious of urgent requests
+5. When in doubt, don't sign`,
+        keyTakeaways: [
+          'Use cold storage for significant holdings',
+          'Seed phrase security is paramount - metal backups in secure locations',
+          'Multi-sig adds extra protection for large amounts',
+          'Always verify transactions on hardware wallet display'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Privacy in Blockchain',
+        duration: 10,
+        content: `Blockchain transparency is a double-edged sword. Protect your privacy.
+
+## The Privacy Challenge
+
+Public blockchains reveal:
+
+- All transaction history
+- Wallet balances
+- Connection between addresses
+- Timing patterns
+- Token holdings
+
+Anyone can analyze your entire financial history.
+
+## Privacy Risks
+
+Why this matters:
+
+- Targeted for theft (criminals see your balance)
+- Business intelligence leakage
+- Personal safety concerns
+- Unwanted marketing
+- Social engineering using your data
+
+## Privacy Practices
+
+### Address Hygiene
+- Use fresh addresses for receiving
+- Don't reuse addresses
+- Separate addresses by purpose
+- Avoid linking addresses publicly
+
+### Timing and Amounts
+- Avoid round numbers
+- Vary transaction timing
+- Break large transactions into smaller ones
+- Wait between related transactions
+
+### ENS and Identity
+- ENS names link to addresses permanently
+- Consider using for receiving only
+- Think before posting addresses publicly
+
+## Privacy Tools
+
+### Mixing Services
+Combine transactions to break links:
+- Understand legal implications
+- Use reputable services
+- Consider regulatory requirements
+
+### Privacy Chains
+Native privacy features:
+- Zcash (shielded transactions)
+- Monero (default privacy)
+- Secret Network (private smart contracts)
+
+### Layer 2 Privacy
+- Aztec Network
+- zkSync privacy features
+- Polygon Miden
+
+## The Regulatory Balance
+
+Navigate carefully:
+
+- Comply with local regulations
+- Understand reporting requirements
+- Privacy ≠ illegal activity
+- Legitimate privacy interests exist`,
+        keyTakeaways: [
+          'Public blockchain transparency creates real privacy risks',
+          'Good address hygiene limits exposure',
+          'Various tools exist but have trade-offs',
+          'Balance privacy with regulatory compliance'
+        ]
+      },
+      {
+        id: 4,
+        title: 'dApp Security',
+        duration: 10,
+        content: `Every dApp connection is a potential vulnerability. Learn to interact safely.
+
+## Connection Risks
+
+When you connect your wallet:
+
+- dApp sees your address
+- dApp can request transactions
+- Approvals may give unlimited access
+- Malicious sites mimic legitimate ones
+
+## Smart Approval Management
+
+### Token Approvals
+When you "approve" a token:
+- You're giving permission to spend
+- Often set to unlimited by default
+- Persists until you revoke
+- Can be exploited if contract is compromised
+
+### Limiting Approvals
+- Approve only what you need
+- Use exact amounts when possible
+- Revoke unused approvals regularly
+- Check approvals at revoke.cash or etherscan
+
+## Verifying dApps
+
+Before connecting:
+
+1. Check URL carefully (homograph attacks)
+2. Verify through official sources
+3. Look for audit reports
+4. Check contract verification on block explorer
+5. Research team and history
+6. Start with small amounts
+
+## Transaction Simulation
+
+Preview before signing:
+
+- Use tools like Pocket Universe or Fire
+- Simulate transaction outcomes
+- See what you're actually approving
+- Catch malicious transactions
+
+## Wallet Segregation
+
+Separate by risk:
+
+**Hot Wallet**: Small amounts for frequent dApp use
+
+**Vault Wallet**: Main holdings, rarely connected
+
+**Burner Wallet**: For new/risky dApps
+
+Never connect your main holdings to unknown dApps.
+
+## Recovering from Compromise
+
+If wallet is compromised:
+
+1. Don't panic - act quickly but carefully
+2. From CLEAN device, transfer assets to new wallet
+3. Revoke all approvals
+4. Report to relevant platforms
+5. Document for potential investigation
+6. Learn from the experience`,
+        keyTakeaways: [
+          'Wallet connections and approvals create ongoing risks',
+          'Regularly audit and revoke unused token approvals',
+          'Use separate wallets for different risk levels',
+          'Transaction simulation tools catch malicious requests'
+        ]
+      },
+      {
+        id: 5,
+        title: 'Operational Security',
+        duration: 10,
+        content: `Security extends beyond your wallet to your entire digital life.
+
+## Device Security
+
+Protect the hardware:
+
+- Keep operating systems updated
+- Use reputable antivirus/anti-malware
+- Enable disk encryption
+- Use strong device passwords
+- Avoid public computers for crypto
+
+## Network Security
+
+Protect connections:
+
+- Use VPN on public WiFi
+- Consider dedicated device for crypto
+- Avoid WiFi with sensitive transactions
+- Be aware of network monitoring
+
+## Account Security
+
+Protect online accounts:
+
+- Unique passwords for every site
+- Password manager (hardware key stored)
+- Hardware security keys (YubiKey)
+- Avoid SMS 2FA when possible
+- Use authenticator apps
+
+## SIM Swap Protection
+
+Protect your phone number:
+
+- Add PIN to carrier account
+- Request port-out protection
+- Consider Google Voice for crypto
+- Minimize phone number usage
+- Be wary of calls from "carrier"
+
+## Physical Security
+
+Don't advertise:
+
+- Avoid discussing holdings publicly
+- Be careful with crypto merchandise
+- Secure home office
+- Consider decoy wallet ($5 wrench attack)
+- Travel security for conferences
+
+## Incident Response Plan
+
+Before something happens:
+
+1. Document all accounts and access methods
+2. Create step-by-step emergency procedures
+3. Designate trusted contacts
+4. Secure backup access methods
+5. Practice your response plan
+
+## Estate Planning
+
+For the worst case:
+
+- Secure inheritance instructions
+- Consider dead man's switch services
+- Lawyer-held instructions
+- Trusted family member briefing
+- Test your inheritance plan`,
+        keyTakeaways: [
+          'Security extends to devices, networks, and accounts',
+          'Protect against SIM swapping and physical threats',
+          'Have incident response and estate plans ready',
+          'Operational security is an ongoing practice, not a one-time setup'
+        ]
+      }
+    ]
+  },
+  {
+    id: 9,
+    slug: 'web3-wealth-building',
+    title: 'Building Wealth in Web3',
+    description: 'Comprehensive strategies for generating income and building wealth in the blockchain economy.',
+    category: 'Finance',
+    difficulty: 'advanced',
+    durationMinutes: 55,
+    requiredTier: 'pro',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'Web3 Income Streams',
+        duration: 10,
+        content: `The blockchain economy offers unprecedented opportunities for wealth building.
+
+## Active Income Strategies
+
+### Development and Skills
+- Smart contract development
+- Frontend dApp development
+- Security auditing
+- Protocol contributions
+- Bug bounties
+
+### Content and Education
+- Technical writing
+- Video tutorials
+- Community management
+- Social media influence
+- Newsletter writing
+
+### Trading and Arbitrage
+- Spot trading
+- Derivatives trading
+- Cross-exchange arbitrage
+- DEX/CEX arbitrage
+- NFT flipping
+
+## Passive Income Strategies
+
+### Staking
+Earn by securing networks:
+- Proof of Stake validation
+- Liquid staking (Lido, Rocket Pool)
+- Delegated staking
+- Returns: 4-15% APY typically
+
+### Lending
+Provide liquidity for borrowers:
+- Aave, Compound protocols
+- Stablecoin lending
+- Variable and fixed rates
+- Returns: 2-10% APY
+
+### Liquidity Provision
+Supply to trading pools:
+- DEX liquidity pools
+- Concentrated liquidity (Uniswap V3)
+- Cross-chain bridges
+- Returns: Variable, can be 10-100%+
+- Risk: Impermanent loss
+
+### DePIN Participation
+Provide infrastructure:
+- Storage (Filecoin)
+- Compute (Render)
+- Wireless (Helium)
+- Data (Axiom Nodes)
+
+## Choosing Your Path
+
+Consider:
+- Your skills and interests
+- Time availability
+- Risk tolerance
+- Capital available
+- Long-term goals`,
+        keyTakeaways: [
+          'Web3 offers both active and passive income opportunities',
+          'Match strategies to your skills, time, and capital',
+          'Diversify across multiple income streams',
+          'Understand risks before committing capital'
+        ]
+      },
+      {
+        id: 2,
+        title: 'DeFi Yield Strategies',
+        duration: 12,
+        content: `DeFi offers yields impossible in traditional finance, but with risks to match.
+
+## Understanding APY vs APR
+
+**APR**: Simple interest rate
+**APY**: Includes compounding
+
+$10,000 at 10% for one year:
+- 10% APR = $11,000
+- 10% APY (daily compound) = $11,052
+
+## Stablecoin Strategies
+
+Lower risk approaches:
+
+### Basic Lending
+- Deposit USDC/USDT/DAI on Aave or Compound
+- Earn 2-8% depending on market conditions
+- Principal relatively stable
+- Smart contract risk remains
+
+### Curve Finance
+- Provide stablecoin liquidity
+- Earn trading fees + CRV rewards
+- Low impermanent loss (similar assets)
+- Stake LP tokens for boosted rewards
+
+## Higher Yield Strategies
+
+More risk, more reward:
+
+### Leveraged Lending
+1. Deposit collateral (ETH)
+2. Borrow stablecoins
+3. Deposit stablecoins for yield
+4. Repeat (loop)
+
+Risk: Liquidation if collateral drops
+
+### Concentrated Liquidity
+- Uniswap V3 positions
+- Higher capital efficiency
+- Requires active management
+- Higher IL risk if price moves out of range
+
+### Cross-Chain Yields
+- Bridge to lower-competition chains
+- Higher yields, newer protocols
+- Additional bridge and chain risk
+
+## Yield Farming
+
+Maximize rewards:
+
+1. Identify high-APY opportunities
+2. Deposit and stake
+3. Claim and compound rewards
+4. Exit before rewards dilute
+
+Warning: High APY usually means high inflation. Token rewards may drop in value.
+
+## Risk Management
+
+Protect your capital:
+
+- Never invest more than you can lose
+- Diversify across protocols
+- Monitor positions regularly
+- Set liquidation alerts
+- Keep some capital uninvested for opportunities`,
+        keyTakeaways: [
+          'Understand APY vs APR and how compounding works',
+          'Stablecoin strategies offer lower risk entry points',
+          'Higher yields come with proportionally higher risks',
+          'Active management and risk monitoring are essential'
+        ]
+      },
+      {
+        id: 3,
+        title: 'NFT Economics',
+        duration: 10,
+        content: `Beyond digital art, NFTs represent new economic models for creators and collectors.
+
+## NFT Value Drivers
+
+What makes NFTs valuable:
+
+- **Scarcity**: Limited supply
+- **Utility**: Access, benefits, rights
+- **Community**: Belonging to a group
+- **Status**: Social signaling
+- **Art**: Aesthetic appreciation
+- **Speculation**: Future value expectations
+
+## Creator Economics
+
+NFTs change creator income:
+
+### Primary Sales
+- Direct to collector
+- No gallery/label cut
+- Global audience
+- Set your own prices
+
+### Royalties
+- Earn on every resale
+- Typically 5-10%
+- Passive income forever
+- Enforced by smart contract
+
+### Membership NFTs
+- Sell access passes
+- Recurring revenue potential
+- Community building
+- Tiered benefits
+
+## Collector Strategies
+
+Building valuable collections:
+
+### Blue Chip
+- Established projects (CryptoPunks, BAYC)
+- Higher entry cost
+- More stable value
+- Status and community
+
+### Early Projects
+- New artists and projects
+- Lower entry cost
+- High upside potential
+- Higher risk
+
+### Utility Focus
+- Gaming assets
+- Membership passes
+- Domain names
+- Revenue-generating NFTs
+
+## Evaluating NFT Investments
+
+Due diligence:
+
+1. Team credibility and track record
+2. Community size and engagement
+3. Roadmap feasibility
+4. Art quality and uniqueness
+5. Secondary market volume
+6. Holder distribution
+7. Long-term utility
+
+## NFT Flipping
+
+Active trading approach:
+
+- Monitor new drops
+- Quick entry on promising projects
+- Exit within hours/days
+- Requires market knowledge
+- Time intensive`,
+        keyTakeaways: [
+          'NFT value comes from multiple factors beyond art',
+          'Creators benefit from royalties and direct sales',
+          'Different strategies suit different risk profiles',
+          'Research projects thoroughly before investing'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Portfolio Management',
+        duration: 12,
+        content: `Managing a Web3 portfolio requires different thinking than traditional finance.
+
+## Asset Allocation
+
+Building a balanced portfolio:
+
+### Core Holdings (50-70%)
+- Bitcoin
+- Ethereum
+- Major L1s
+- Blue-chip DeFi tokens
+
+### Growth (20-30%)
+- Emerging L1/L2s
+- New DeFi protocols
+- NFT projects
+- Gaming tokens
+
+### Speculation (5-15%)
+- Memecoins
+- Early projects
+- High-risk/high-reward plays
+
+### Stables (10-20%)
+- USDC, USDT, DAI
+- Dry powder for opportunities
+- Earning yield in DeFi
+
+## Rebalancing
+
+Maintain target allocation:
+
+- Monthly or quarterly review
+- Sell winners to target %
+- Add to underweight positions
+- Consider tax implications
+- Don't rebalance too frequently
+
+## Tracking Performance
+
+Tools and metrics:
+
+- DeBank for portfolio tracking
+- Zapper for DeFi positions
+- Dune dashboards for research
+- Tax software (Koinly, CoinTracker)
+
+Key metrics:
+- Total portfolio value
+- Return vs BTC/ETH
+- Yield income
+- Gas costs
+- Tax liability
+
+## Dollar Cost Averaging
+
+Reduce timing risk:
+
+- Regular purchases regardless of price
+- Removes emotion from investing
+- Best for long-term holdings
+- Automate with recurring buys
+
+## Taking Profits
+
+Essential for wealth building:
+
+- Set targets before entering positions
+- Take partial profits on the way up
+- Move profits to stables or BTC/ETH
+- Pay yourself (real world spending)
+- Reinvest systematically
+
+## Bear Market Strategy
+
+When markets crash:
+
+- Don't panic sell
+- Maintain stablecoin allocation
+- Continue DCA on conviction holdings
+- Avoid high-leverage positions
+- Build for the next cycle`,
+        keyTakeaways: [
+          'Allocate across risk levels with core, growth, and speculative tiers',
+          'Regular rebalancing maintains your target risk profile',
+          'Track performance and tax liability with proper tools',
+          'Systematic profit-taking turns paper gains into real wealth'
+        ]
+      },
+      {
+        id: 5,
+        title: 'Long-Term Wealth Building',
+        duration: 11,
+        content: `Building generational wealth through Web3 requires patience and strategy.
+
+## The Compound Effect
+
+Time is your greatest asset:
+
+- $10,000 at 15% for 10 years = $40,455
+- $10,000 at 15% for 20 years = $163,665
+- $10,000 at 15% for 30 years = $662,117
+
+Start early, stay consistent.
+
+## Conviction Investing
+
+Holding through volatility:
+
+- Deeply understand what you own
+- Invest in technology, not just price
+- Ignore short-term noise
+- Review thesis periodically
+- Know when you're wrong
+
+## Building Real Assets
+
+Beyond speculation:
+
+### Income-Producing Crypto
+- Staking yields
+- DePIN nodes
+- Rental income from virtual land
+- Revenue-sharing tokens
+
+### Real World Assets
+- Tokenized real estate (KeyGrow)
+- Tokenized commodities
+- Revenue-based tokens
+- RWA lending
+
+### Ownership Stakes
+- DAO tokens with treasury claims
+- Protocol revenue shares
+- Equity tokens (where legal)
+
+## Tax Efficiency
+
+Keep more of what you earn:
+
+- Long-term capital gains rates
+- Tax-loss harvesting
+- Opportunity zones
+- Charitable giving (crypto donations)
+- Self-directed IRAs
+- Relocating to favorable jurisdictions
+
+## Creating Multiple Income Streams
+
+Wealth stability:
+
+1. Active income (job/business)
+2. Staking/lending yields
+3. DePIN rewards
+4. Real estate income
+5. Protocol fees/royalties
+6. Trading profits
+
+## Wealth Preservation
+
+Protecting what you've built:
+
+- Diversification across asset classes
+- Geographic diversification
+- Cold storage security
+- Estate planning
+- Insurance where available
+- Stay informed on regulation
+
+## The Axiom Advantage
+
+Building wealth within the ecosystem:
+
+- AXM staking rewards
+- DePIN node operation
+- KeyGrow equity accumulation
+- SUSU community participation
+- Governance participation
+- Ecosystem growth
+
+> "The goal isn't just to get rich in crypto—it's to build sustainable, generational wealth that improves your life and community."`,
+        keyTakeaways: [
+          'Compounding over time creates exponential wealth growth',
+          'Focus on income-producing assets, not just speculation',
+          'Tax efficiency significantly impacts long-term returns',
+          'Multiple income streams provide stability and acceleration'
         ]
       }
     ]
