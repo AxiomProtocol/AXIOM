@@ -53,8 +53,8 @@ const STARTER_COURSES: Course[] = [
     category: 'Finance',
     difficulty: 'beginner',
     durationMinutes: 90,
-    lessonsCount: 12,
-    requiredTier: 'free',
+    lessonsCount: 8,
+    requiredTier: 'pro',
     isFeatured: true
   },
   {
@@ -66,8 +66,8 @@ const STARTER_COURSES: Course[] = [
     category: 'Blockchain',
     difficulty: 'intermediate',
     durationMinutes: 75,
-    lessonsCount: 10,
-    requiredTier: 'free',
+    lessonsCount: 7,
+    requiredTier: 'pro',
     isFeatured: false
   },
   {
@@ -80,7 +80,7 @@ const STARTER_COURSES: Course[] = [
     difficulty: 'beginner',
     durationMinutes: 30,
     lessonsCount: 4,
-    requiredTier: 'free',
+    requiredTier: 'pro',
     isFeatured: false
   },
   {
@@ -93,7 +93,46 @@ const STARTER_COURSES: Course[] = [
     difficulty: 'intermediate',
     durationMinutes: 45,
     lessonsCount: 6,
-    requiredTier: 'basic',
+    requiredTier: 'pro',
+    isFeatured: false
+  },
+  {
+    id: 7,
+    slug: 'real-estate-investing',
+    title: 'Real Estate Investment Strategies',
+    description: 'Advanced strategies for building wealth through real estate, from traditional investing to tokenized property ownership.',
+    thumbnailUrl: '/images/courses/real-estate.jpg',
+    category: 'Finance',
+    difficulty: 'advanced',
+    durationMinutes: 60,
+    lessonsCount: 5,
+    requiredTier: 'pro',
+    isFeatured: false
+  },
+  {
+    id: 8,
+    slug: 'blockchain-security',
+    title: 'Blockchain Security & Privacy',
+    description: 'Protect your digital assets with advanced security practices, wallet management, and privacy protection strategies.',
+    thumbnailUrl: '/images/courses/security.jpg',
+    category: 'Blockchain',
+    difficulty: 'intermediate',
+    durationMinutes: 50,
+    lessonsCount: 5,
+    requiredTier: 'pro',
+    isFeatured: false
+  },
+  {
+    id: 9,
+    slug: 'web3-wealth-building',
+    title: 'Building Wealth in Web3',
+    description: 'Comprehensive strategies for generating income and building wealth in the blockchain economy.',
+    thumbnailUrl: '/images/courses/web3-wealth.jpg',
+    category: 'Finance',
+    difficulty: 'advanced',
+    durationMinutes: 55,
+    lessonsCount: 5,
+    requiredTier: 'pro',
     isFeatured: false
   }
 ];

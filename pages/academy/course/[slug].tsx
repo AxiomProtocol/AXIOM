@@ -9,31 +9,108 @@ export default function CoursePage() {
   const { slug } = router.query;
   const [progress, setProgress] = useState<Record<number, boolean>>({});
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [hasMembership, setHasMembership] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const course = COURSES_DATA.find(c => c.slug === slug);
+  const requiresProMembership = course?.requiredTier === 'pro';
 
   useEffect(() => {
+    const checkMembership = async () => {
+      if (!requiresProMembership) {
+        setHasMembership(true);
+        setIsLoading(false);
+        return;
+      }
+
+      const savedMembership = localStorage.getItem('axiom_academy_membership');
+      if (savedMembership) {
+        try {
+          const membership = JSON.parse(savedMembership);
+          const expiresAt = new Date(membership.expiresAt);
+          if (expiresAt > new Date() && (membership.tier === 'pro' || membership.tier === 'enterprise')) {
+            setHasMembership(true);
+            setIsLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error('Error parsing membership:', e);
+        }
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
+      
+      if (sessionId) {
+        try {
+          const response = await fetch('/api/academy/check-membership', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId })
+          });
+          const data = await response.json();
+          
+          if (data.hasMembership) {
+            localStorage.setItem('axiom_academy_membership', JSON.stringify({
+              tier: data.tier,
+              expiresAt: data.expiresAt,
+              status: data.status
+            }));
+            setHasMembership(true);
+            setIsLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error('Error checking session:', e);
+        }
+      }
+
+      setHasMembership(false);
+      setIsLoading(false);
+    };
+
     if (slug) {
+      checkMembership();
+      
       const savedProgress = localStorage.getItem(`course_progress_${slug}`);
       if (savedProgress) {
         setProgress(JSON.parse(savedProgress));
         setIsEnrolled(true);
       }
     }
-  }, [slug]);
+  }, [slug, requiresProMembership]);
 
   const handleEnroll = () => {
     setIsEnrolled(true);
     localStorage.setItem(`course_progress_${slug}`, JSON.stringify({}));
   };
 
+  const handleUpgrade = async () => {
+    setCheckoutLoading(true);
+    try {
+      const response = await fetch('/api/academy/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier: 'pro' })
+      });
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      setCheckoutLoading(false);
+    }
+  };
+
   if (!course) {
     return (
       <Layout>
-        <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-white mb-4">Course Not Found</h1>
-            <Link href="/academy" className="text-yellow-400 hover:underline">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">Course Not Found</h1>
+            <Link href="/academy" className="text-yellow-600 hover:underline">
               Back to Academy
             </Link>
           </div>
@@ -56,6 +133,19 @@ export default function CoursePage() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-gradient-to-b from-gray-100 via-white to-gray-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading course...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-b from-gray-100 via-white to-gray-100">
@@ -76,6 +166,9 @@ export default function CoursePage() {
                 {course.difficulty}
               </span>
               <span className="text-gray-400 text-sm">{course.category}</span>
+              {requiresProMembership && (
+                <span className="bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded">PRO</span>
+              )}
             </div>
 
             <h1 className="text-4xl font-bold text-gray-900 mb-4">{course.title}</h1>
@@ -96,7 +189,35 @@ export default function CoursePage() {
               </div>
             </div>
 
-            {!isEnrolled ? (
+            {requiresProMembership && !hasMembership ? (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">Pro Membership Required</h3>
+                    <p className="text-gray-600">Unlock this course and 6 more with Pro</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleUpgrade}
+                  disabled={checkoutLoading}
+                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-6 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {checkoutLoading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>Upgrade to Pro - $25/month</>
+                  )}
+                </button>
+              </div>
+            ) : !isEnrolled ? (
               <button
                 onClick={handleEnroll}
                 className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-bold py-3 px-8 rounded-lg transition-all"
@@ -129,7 +250,9 @@ export default function CoursePage() {
             
             {course.lessons.map((lesson, index) => {
               const isCompleted = progress[lesson.id];
-              const isLocked = !isEnrolled && index > 0;
+              const isLockedByEnrollment = !isEnrolled && index > 0;
+              const isLockedByMembership = requiresProMembership && !hasMembership;
+              const isLocked = isLockedByEnrollment || isLockedByMembership;
 
               return (
                 <div
@@ -147,11 +270,17 @@ export default function CoursePage() {
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
                         isCompleted 
                           ? 'bg-green-500 text-white' 
-                          : 'bg-gray-200 text-gray-600'
+                          : isLocked
+                            ? 'bg-gray-300 text-gray-500'
+                            : 'bg-gray-200 text-gray-600'
                       }`}>
                         {isCompleted ? (
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : isLocked ? (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                           </svg>
                         ) : (
                           index + 1
@@ -163,7 +292,14 @@ export default function CoursePage() {
                       </div>
                     </div>
                     
-                    {isLocked ? (
+                    {isLockedByMembership ? (
+                      <div className="text-yellow-600 flex items-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span className="text-sm font-medium">Pro Required</span>
+                      </div>
+                    ) : isLockedByEnrollment ? (
                       <div className="text-gray-400 flex items-center gap-2">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
