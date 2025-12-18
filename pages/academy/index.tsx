@@ -289,9 +289,10 @@ export default function Academy() {
             
             <div className="grid md:grid-cols-3 gap-6">
               {featuredCourses.map((course) => (
-                <div
+                <Link
+                  href={`/academy/course/${course.slug}`}
                   key={course.id}
-                  className="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden hover:border-yellow-500/50 transition-all group"
+                  className="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden hover:border-yellow-500/50 transition-all group block"
                 >
                   <div className="h-40 bg-gradient-to-br from-yellow-500/20 to-gray-800 flex items-center justify-center relative">
                     <span className="text-6xl">📚</span>
@@ -315,7 +316,7 @@ export default function Academy() {
                       <span>{course.durationMinutes} min</span>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -343,9 +344,10 @@ export default function Academy() {
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredCourses.map((course) => (
-                <div
+                <Link
+                  href={`/academy/course/${course.slug}`}
                   key={course.id}
-                  className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-6 hover:border-yellow-500/30 transition-all relative"
+                  className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-6 hover:border-yellow-500/30 transition-all relative block"
                 >
                   {getTierBadge(course.requiredTier)}
                   <div className="flex items-center gap-2 mb-3">
@@ -353,13 +355,13 @@ export default function Academy() {
                       {course.difficulty}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">{course.title}</h3>
+                  <h3 className="text-lg font-bold text-white mb-2 hover:text-yellow-400 transition-colors">{course.title}</h3>
                   <p className="text-gray-400 text-sm mb-4 line-clamp-2">{course.description}</p>
                   <div className="flex items-center justify-between text-sm text-gray-500">
                     <span>{course.lessonsCount} lessons</span>
                     <span>{course.durationMinutes} min</span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
