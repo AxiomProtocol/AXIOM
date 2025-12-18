@@ -229,10 +229,10 @@ export default function Academy() {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'beginner': return 'bg-green-500/20 text-green-400';
-      case 'intermediate': return 'bg-yellow-500/20 text-yellow-400';
-      case 'advanced': return 'bg-red-500/20 text-red-400';
-      default: return 'bg-gray-500/20 text-gray-400';
+      case 'beginner': return 'bg-green-100 text-green-700';
+      case 'intermediate': return 'bg-yellow-100 text-yellow-700';
+      case 'advanced': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
     }
   };
 
@@ -249,17 +249,17 @@ export default function Academy() {
     <Layout>
       <Toaster position="top-right" />
       
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-900">
+      <div className="min-h-screen bg-gradient-to-b from-gray-100 via-white to-gray-100">
         
         <div className="relative py-20 px-4 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-yellow-100 to-transparent"></div>
           <div className="max-w-6xl mx-auto relative z-10">
             <h1 className="text-5xl md:text-6xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent">
                 Axiom Academy
               </span>
             </h1>
-            <p className="text-xl text-gray-300 max-w-2xl mb-8">
+            <p className="text-xl text-gray-600 max-w-2xl mb-8">
               Master smart city technology, financial literacy, and blockchain fundamentals. 
               Build real skills for the digital economy.
             </p>
@@ -270,12 +270,12 @@ export default function Academy() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
-                className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-yellow-500 focus:outline-none"
+                className="flex-1 bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:border-yellow-500 focus:outline-none shadow-sm"
               />
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-bold py-3 px-6 rounded-lg transition-all disabled:opacity-50"
+                className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-bold py-3 px-6 rounded-lg transition-all disabled:opacity-50 shadow-sm"
               >
                 {isSubmitting ? 'Joining...' : 'Start Learning'}
               </button>
@@ -283,18 +283,18 @@ export default function Academy() {
           </div>
         </div>
 
-        <div className="py-16 px-4 bg-gray-900/50">
+        <div className="py-16 px-4 bg-gray-50">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold text-white mb-8">Featured Courses</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-8">Featured Courses</h2>
             
             <div className="grid md:grid-cols-3 gap-6">
               {featuredCourses.map((course) => (
                 <Link
                   href={`/academy/course/${course.slug}`}
                   key={course.id}
-                  className="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden hover:border-yellow-500/50 transition-all group block"
+                  className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-yellow-400 hover:shadow-lg transition-all group block shadow-sm"
                 >
-                  <div className="h-40 bg-gradient-to-br from-yellow-500/20 to-gray-800 flex items-center justify-center relative">
+                  <div className="h-40 bg-gradient-to-br from-yellow-100 to-gray-100 flex items-center justify-center relative">
                     <span className="text-6xl">📚</span>
                     {getTierBadge(course.requiredTier)}
                   </div>
@@ -305,10 +305,10 @@ export default function Academy() {
                       </span>
                       <span className="text-xs text-gray-500">{course.category}</span>
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-yellow-400 transition-colors">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-yellow-600 transition-colors">
                       {course.title}
                     </h3>
-                    <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                       {course.description}
                     </p>
                     <div className="flex items-center justify-between text-sm text-gray-500">
@@ -324,7 +324,7 @@ export default function Academy() {
 
         <div className="py-16 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold text-white mb-8">All Courses</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-8">All Courses</h2>
             
             <div className="flex flex-wrap gap-2 mb-8">
               {categories.map((cat) => (
@@ -334,7 +334,7 @@ export default function Academy() {
                   className={`px-4 py-2 rounded-lg font-medium transition-all ${
                     selectedCategory === cat
                       ? 'bg-yellow-500 text-black'
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   {cat === 'all' ? 'All Categories' : cat}
@@ -347,7 +347,7 @@ export default function Academy() {
                 <Link
                   href={`/academy/course/${course.slug}`}
                   key={course.id}
-                  className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-6 hover:border-yellow-500/30 transition-all relative block"
+                  className="bg-white border border-gray-200 rounded-xl p-6 hover:border-yellow-400 hover:shadow-md transition-all relative block shadow-sm"
                 >
                   {getTierBadge(course.requiredTier)}
                   <div className="flex items-center gap-2 mb-3">
@@ -355,8 +355,8 @@ export default function Academy() {
                       {course.difficulty}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2 hover:text-yellow-400 transition-colors">{course.title}</h3>
-                  <p className="text-gray-400 text-sm mb-4 line-clamp-2">{course.description}</p>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 hover:text-yellow-600 transition-colors">{course.title}</h3>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{course.description}</p>
                   <div className="flex items-center justify-between text-sm text-gray-500">
                     <span>{course.lessonsCount} lessons</span>
                     <span>{course.durationMinutes} min</span>
@@ -367,11 +367,11 @@ export default function Academy() {
           </div>
         </div>
 
-        <div className="py-20 px-4 bg-gradient-to-b from-gray-900/50 to-black">
+        <div className="py-20 px-4 bg-gray-50">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold text-white mb-4">Membership Plans</h2>
-              <p className="text-gray-400 max-w-xl mx-auto">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">Membership Plans</h2>
+              <p className="text-gray-600 max-w-xl mx-auto">
                 Choose the plan that fits your learning goals. Upgrade anytime.
               </p>
             </div>
@@ -380,10 +380,10 @@ export default function Academy() {
               {MEMBERSHIP_TIERS.map((tier) => (
                 <div
                   key={tier.name}
-                  className={`rounded-2xl p-8 ${
+                  className={`rounded-2xl p-8 shadow-sm ${
                     tier.highlighted
-                      ? 'bg-gradient-to-b from-yellow-500/20 to-yellow-600/10 border-2 border-yellow-500'
-                      : 'bg-gray-800/50 border border-gray-700'
+                      ? 'bg-gradient-to-b from-yellow-50 to-yellow-100 border-2 border-yellow-500'
+                      : 'bg-white border border-gray-200'
                   }`}
                 >
                   {tier.highlighted && (
@@ -391,15 +391,15 @@ export default function Academy() {
                       MOST POPULAR
                     </span>
                   )}
-                  <h3 className="text-2xl font-bold text-white mb-2">{tier.name}</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{tier.name}</h3>
                   <div className="mb-6">
-                    <span className="text-4xl font-bold text-white">${tier.price}</span>
-                    {tier.price > 0 && <span className="text-gray-400">/month</span>}
+                    <span className="text-4xl font-bold text-gray-900">${tier.price}</span>
+                    {tier.price > 0 && <span className="text-gray-500">/month</span>}
                   </div>
                   <ul className="space-y-3 mb-8">
                     {tier.features.map((feature, i) => (
-                      <li key={i} className="flex items-start gap-2 text-gray-300">
-                        <span className="text-yellow-400 mt-1">✓</span>
+                      <li key={i} className="flex items-start gap-2 text-gray-700">
+                        <span className="text-yellow-600 mt-1">✓</span>
                         <span>{feature}</span>
                       </li>
                     ))}
@@ -410,7 +410,7 @@ export default function Academy() {
                     className={`w-full py-3 px-6 rounded-lg font-bold transition-all disabled:opacity-50 ${
                       tier.highlighted
                         ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
-                        : 'bg-gray-700 hover:bg-gray-600 text-white'
+                        : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
                     }`}
                   >
                     {checkoutLoading === tier.name ? 'Loading...' : tier.buttonText}
@@ -421,24 +421,24 @@ export default function Academy() {
           </div>
         </div>
 
-        <div className="py-16 px-4">
+        <div className="py-16 px-4 bg-white">
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-4 gap-8 text-center">
               <div>
-                <p className="text-4xl font-bold text-yellow-400 mb-2">6+</p>
-                <p className="text-gray-400">Courses Available</p>
+                <p className="text-4xl font-bold text-yellow-600 mb-2">6+</p>
+                <p className="text-gray-600">Courses Available</p>
               </div>
               <div>
-                <p className="text-4xl font-bold text-yellow-400 mb-2">50+</p>
-                <p className="text-gray-400">Video Lessons</p>
+                <p className="text-4xl font-bold text-yellow-600 mb-2">50+</p>
+                <p className="text-gray-600">Video Lessons</p>
               </div>
               <div>
-                <p className="text-4xl font-bold text-yellow-400 mb-2">1,000+</p>
-                <p className="text-gray-400">Students Enrolled</p>
+                <p className="text-4xl font-bold text-yellow-600 mb-2">1,000+</p>
+                <p className="text-gray-600">Students Enrolled</p>
               </div>
               <div>
-                <p className="text-4xl font-bold text-yellow-400 mb-2">100%</p>
-                <p className="text-gray-400">Free to Start</p>
+                <p className="text-4xl font-bold text-yellow-600 mb-2">100%</p>
+                <p className="text-gray-600">Free to Start</p>
               </div>
             </div>
           </div>
