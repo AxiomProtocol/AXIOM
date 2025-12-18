@@ -2555,3 +2555,169 @@ export const smsSubscribers = pgTable("sms_subscribers", {
 
 export type SmsSubscriber = typeof smsSubscribers.$inferSelect;
 export type InsertSmsSubscriber = typeof smsSubscribers.$inferInsert;
+
+// ============================================
+// LEADS / EMAIL CAPTURE
+// ============================================
+
+export const leadSourceEnum = pgEnum('lead_source', [
+  'equity_calculator',
+  'academy',
+  'keygrow',
+  'susu',
+  'whitepaper',
+  'newsletter',
+  'referral',
+  'tiktok',
+  'other'
+]);
+
+export const leads = pgTable("leads", {
+  id: serial("id").primaryKey(),
+  email: varchar("email", { length: 255 }).unique().notNull(),
+  firstName: varchar("first_name", { length: 100 }),
+  lastName: varchar("last_name", { length: 100 }),
+  source: leadSourceEnum("source").default('other').notNull(),
+  utmSource: varchar("utm_source", { length: 100 }),
+  utmMedium: varchar("utm_medium", { length: 100 }),
+  utmCampaign: varchar("utm_campaign", { length: 100 }),
+  calculatorData: jsonb("calculator_data"),
+  isSubscribed: boolean("is_subscribed").default(true).notNull(),
+  isConverted: boolean("is_converted").default(false).notNull(),
+  convertedAt: timestamp("converted_at"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  emailIdx: index("leads_email_idx").on(table.email),
+  sourceIdx: index("leads_source_idx").on(table.source),
+  createdAtIdx: index("leads_created_at_idx").on(table.createdAt),
+}));
+
+export type Lead = typeof leads.$inferSelect;
+export type InsertLead = typeof leads.$inferInsert;
+
+// ============================================
+// ACADEMY COURSES & MEMBERSHIPS
+// ============================================
+
+export const academyMembershipTierEnum = pgEnum('academy_membership_tier', [
+  'free',
+  'basic',
+  'pro',
+  'enterprise'
+]);
+
+export const academyCourseStatusEnum = pgEnum('academy_course_status', [
+  'draft',
+  'published',
+  'archived'
+]);
+
+export const academyCourses = pgTable("academy_courses", {
+  id: serial("id").primaryKey(),
+  slug: varchar("slug", { length: 100 }).unique().notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  thumbnailUrl: varchar("thumbnail_url", { length: 500 }),
+  category: varchar("category", { length: 100 }).notNull(),
+  difficulty: varchar("difficulty", { length: 20 }).default('beginner'),
+  durationMinutes: integer("duration_minutes").default(0),
+  lessonsCount: integer("lessons_count").default(0),
+  requiredTier: academyMembershipTierEnum("required_tier").default('free').notNull(),
+  status: academyCourseStatusEnum("status").default('draft').notNull(),
+  isFeatured: boolean("is_featured").default(false),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  slugIdx: index("academy_courses_slug_idx").on(table.slug),
+  categoryIdx: index("academy_courses_category_idx").on(table.category),
+  statusIdx: index("academy_courses_status_idx").on(table.status),
+}));
+
+export const academyLessons = pgTable("academy_lessons", {
+  id: serial("id").primaryKey(),
+  courseId: integer("course_id").references(() => academyCourses.id).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content"),
+  videoUrl: varchar("video_url", { length: 500 }),
+  durationMinutes: integer("duration_minutes").default(0),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  courseIdx: index("academy_lessons_course_idx").on(table.courseId),
+}));
+
+export const academyMemberships = pgTable("academy_memberships", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  tier: academyMembershipTierEnum("tier").default('free').notNull(),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdx: index("academy_memberships_user_idx").on(table.userId),
+  stripeCustomerIdx: index("academy_memberships_stripe_customer_idx").on(table.stripeCustomerId),
+}));
+
+export const academyProgress = pgTable("academy_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  courseId: integer("course_id").references(() => academyCourses.id).notNull(),
+  lessonId: integer("lesson_id").references(() => academyLessons.id).notNull(),
+  completedAt: timestamp("completed_at").defaultNow().notNull(),
+}, (table) => ({
+  userCourseIdx: index("academy_progress_user_course_idx").on(table.userId, table.courseId),
+}));
+
+export const academyCertificates = pgTable("academy_certificates", {
+  id: serial("id").primaryKey(),
+  certificateId: varchar("certificate_id", { length: 50 }).unique().notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  courseId: integer("course_id").references(() => academyCourses.id).notNull(),
+  issuedAt: timestamp("issued_at").defaultNow().notNull(),
+  shareableUrl: varchar("shareable_url", { length: 500 }),
+}, (table) => ({
+  userIdx: index("academy_certificates_user_idx").on(table.userId),
+  certificateIdIdx: index("academy_certificates_id_idx").on(table.certificateId),
+}));
+
+export type AcademyCourse = typeof academyCourses.$inferSelect;
+export type InsertAcademyCourse = typeof academyCourses.$inferInsert;
+export type AcademyLesson = typeof academyLessons.$inferSelect;
+export type InsertAcademyLesson = typeof academyLessons.$inferInsert;
+export type AcademyMembership = typeof academyMemberships.$inferSelect;
+export type InsertAcademyMembership = typeof academyMemberships.$inferInsert;
+export type AcademyProgress = typeof academyProgress.$inferSelect;
+export type AcademyCertificate = typeof academyCertificates.$inferSelect;
+
+// ============================================
+// PLATFORM IMPACT METRICS
+// ============================================
+
+export const platformMetrics = pgTable("platform_metrics", {
+  id: serial("id").primaryKey(),
+  metricDate: timestamp("metric_date").defaultNow().notNull(),
+  totalMembers: integer("total_members").default(0),
+  totalEquityDistributed: decimal("total_equity_distributed", { precision: 18, scale: 2 }).default('0'),
+  keygrowEnrollments: integer("keygrow_enrollments").default(0),
+  susuPoolsCreated: integer("susu_pools_created").default(0),
+  susuTotalSaved: decimal("susu_total_saved", { precision: 18, scale: 2 }).default('0'),
+  depinNodesActive: integer("depin_nodes_active").default(0),
+  governanceProposals: integer("governance_proposals").default(0),
+  carbonCreditsGenerated: decimal("carbon_credits_generated", { precision: 18, scale: 2 }).default('0'),
+  academyCompletions: integer("academy_completions").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  dateIdx: index("platform_metrics_date_idx").on(table.metricDate),
+}));
+
+export type PlatformMetric = typeof platformMetrics.$inferSelect;
+export type InsertPlatformMetric = typeof platformMetrics.$inferInsert;
