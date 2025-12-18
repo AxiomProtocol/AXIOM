@@ -1,10 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../server/db';
-import { academyMemberships } from '../../../shared/schema';
-import { eq, and, gte } from 'drizzle-orm';
 import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_API_KEY || '');
 
 export default async function handler(
   req: NextApiRequest,
@@ -16,6 +11,18 @@ export default async function handler(
 
   try {
     const { email, sessionId } = req.body;
+
+    if (!process.env.STRIPE_API_KEY) {
+      return res.status(200).json({
+        hasMembership: false,
+        tier: 'free',
+        expiresAt: null,
+        status: null,
+        message: 'Payment service not configured'
+      });
+    }
+
+    const stripe = new Stripe(process.env.STRIPE_API_KEY);
 
     if (sessionId) {
       const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -69,9 +76,12 @@ export default async function handler(
 
   } catch (error: any) {
     console.error('Membership check error:', error);
-    return res.status(500).json({ 
-      message: 'Failed to check membership',
-      error: error.message 
+    return res.status(200).json({
+      hasMembership: false,
+      tier: 'free',
+      expiresAt: null,
+      status: null,
+      error: error.message
     });
   }
 }

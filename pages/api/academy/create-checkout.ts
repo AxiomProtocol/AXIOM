@@ -1,8 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_API_KEY || '');
-
 const MEMBERSHIP_PRICES = {
   pro: {
     name: 'Axiom Academy Pro',
@@ -23,6 +21,15 @@ export default async function handler(
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
+
+  if (!process.env.STRIPE_API_KEY) {
+    return res.status(503).json({ 
+      message: 'Payment service not configured',
+      error: 'Stripe API key is not set'
+    });
+  }
+
+  const stripe = new Stripe(process.env.STRIPE_API_KEY);
 
   try {
     const { tier, email } = req.body;
