@@ -555,11 +555,11 @@ export default function Academy() {
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-4 gap-8 text-center">
               <div>
-                <p className="text-4xl font-bold text-yellow-600 mb-2">6+</p>
+                <p className="text-4xl font-bold text-yellow-600 mb-2">16+</p>
                 <p className="text-gray-600">Courses Available</p>
               </div>
               <div>
-                <p className="text-4xl font-bold text-yellow-600 mb-2">50+</p>
+                <p className="text-4xl font-bold text-yellow-600 mb-2">70+</p>
                 <p className="text-gray-600">Video Lessons</p>
               </div>
               <div>
