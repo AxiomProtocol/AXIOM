@@ -134,6 +134,97 @@ const STARTER_COURSES: Course[] = [
     lessonsCount: 5,
     requiredTier: 'pro',
     isFeatured: false
+  },
+  {
+    id: 10,
+    slug: 'cryptocurrency-basics',
+    title: 'Cryptocurrency Basics',
+    description: 'Your first steps into the world of digital currencies. Learn what cryptocurrency is, how it works, and why it matters.',
+    thumbnailUrl: '/images/courses/crypto-basics.jpg',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 35,
+    lessonsCount: 4,
+    requiredTier: 'free',
+    isFeatured: false
+  },
+  {
+    id: 11,
+    slug: 'wallet-setup-guide',
+    title: 'Wallet Setup & Safety',
+    description: 'Learn how to set up your first cryptocurrency wallet, understand different wallet types, and keep your assets secure.',
+    thumbnailUrl: '/images/courses/wallet-setup.jpg',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 40,
+    lessonsCount: 4,
+    requiredTier: 'free',
+    isFeatured: false
+  },
+  {
+    id: 12,
+    slug: 'blockchain-fundamentals',
+    title: 'Blockchain Fundamentals',
+    description: 'Understand how blockchain technology works, from blocks and chains to consensus mechanisms and smart contracts.',
+    thumbnailUrl: '/images/courses/blockchain-fundamentals.jpg',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 45,
+    lessonsCount: 4,
+    requiredTier: 'free',
+    isFeatured: false
+  },
+  {
+    id: 13,
+    slug: 'intro-to-defi',
+    title: 'Introduction to DeFi',
+    description: 'Discover decentralized finance (DeFi) and how it provides financial services without traditional banks or intermediaries.',
+    thumbnailUrl: '/images/courses/intro-defi.jpg',
+    category: 'Finance',
+    difficulty: 'beginner',
+    durationMinutes: 40,
+    lessonsCount: 4,
+    requiredTier: 'free',
+    isFeatured: false
+  },
+  {
+    id: 14,
+    slug: 'nft-essentials',
+    title: 'NFT Essentials',
+    description: 'Learn what NFTs are, how they work, and their applications beyond digital art including gaming, membership, and real-world assets.',
+    thumbnailUrl: '/images/courses/nft-essentials.jpg',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 35,
+    lessonsCount: 4,
+    requiredTier: 'free',
+    isFeatured: false
+  },
+  {
+    id: 15,
+    slug: 'tokenomics-101',
+    title: 'Tokenomics 101',
+    description: 'Understand how token economics work, from supply and distribution to utility and value drivers.',
+    thumbnailUrl: '/images/courses/tokenomics.jpg',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 40,
+    lessonsCount: 4,
+    requiredTier: 'free',
+    isFeatured: false
+  },
+  {
+    id: 16,
+    slug: 'web3-community-guide',
+    title: 'Web3 Community Guide',
+    description: 'Learn how to participate in Web3 communities, join DAOs, and contribute to decentralized projects.',
+    thumbnailUrl: '/images/courses/web3-community.jpg',
+    category: 'Community',
+    difficulty: 'beginner',
+    durationMinutes: 35,
+    lessonsCount: 4,
+    requiredTier: 'free',
+    isFeatured: false
   }
 ];
 
@@ -142,7 +233,7 @@ const MEMBERSHIP_TIERS = [
     name: 'Free',
     price: 0,
     features: [
-      'Access to 5 foundational courses',
+      'Access to 9 foundational courses',
       'Community forum access',
       'Monthly newsletter',
       'Certificate of completion'

@@ -3873,5 +3873,1903 @@ Building wealth within the ecosystem:
         ]
       }
     ]
+  },
+  {
+    id: 10,
+    slug: 'cryptocurrency-basics',
+    title: 'Cryptocurrency Basics',
+    description: 'Your first steps into the world of digital currencies. Learn what cryptocurrency is, how it works, and why it matters.',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 35,
+    requiredTier: 'free',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'What is Cryptocurrency?',
+        duration: 8,
+        content: `Cryptocurrency is digital money that exists only on the internet. Unlike dollars or euros, no government or bank controls it.
+
+## Digital Money Explained
+
+Think of cryptocurrency like digital cash:
+
+- **Exists only online**: No physical coins or bills
+- **Decentralized**: No single company or government controls it
+- **Secure**: Protected by advanced mathematics
+- **Borderless**: Send anywhere in the world instantly
+
+## How It's Different from Regular Money
+
+| Feature | Regular Money | Cryptocurrency |
+|---------|--------------|----------------|
+| Who controls it | Banks & governments | Computer network |
+| Where it exists | Physical & digital | Only digital |
+| Transfer speed | Days for international | Minutes |
+| Transaction fees | Can be high | Usually low |
+| Privacy | Limited | More private |
+
+## Why People Use Cryptocurrency
+
+Different people use crypto for different reasons:
+
+- **Store value**: Like digital gold
+- **Send money**: Faster and cheaper than banks
+- **Access finance**: No bank account needed
+- **Privacy**: More control over your money
+- **Investment**: Potential for growth
+
+## Common Cryptocurrencies
+
+The most well-known include:
+
+- **Bitcoin (BTC)**: The first and largest
+- **Ethereum (ETH)**: Powers smart contracts
+- **Stablecoins**: Value tied to dollars
+- **AXM**: Axiom's ecosystem token`,
+        keyTakeaways: [
+          'Cryptocurrency is digital money not controlled by banks or governments',
+          'It exists only online and is secured by mathematics',
+          'People use crypto for payments, savings, and investment',
+          'Bitcoin and Ethereum are the most popular cryptocurrencies'
+        ]
+      },
+      {
+        id: 2,
+        title: 'How Cryptocurrency Works',
+        duration: 10,
+        content: `Behind every cryptocurrency is a technology called blockchain. Understanding the basics helps you use crypto confidently.
+
+## The Blockchain
+
+Think of blockchain as a public record book:
+
+- Every transaction is written down
+- Everyone can see the record
+- No one can erase or change past entries
+- Copies exist on thousands of computers
+
+## How Transactions Work
+
+When you send cryptocurrency:
+
+1. You create a transaction (like writing a check)
+2. Your wallet signs it with your private key
+3. The network verifies it's valid
+4. It gets added to the blockchain
+5. The recipient sees their balance update
+
+## Mining and Validation
+
+Who keeps the blockchain running?
+
+- **Miners/Validators**: Computers that process transactions
+- **Rewards**: They earn crypto for their work
+- **Security**: Makes it nearly impossible to cheat
+
+## Public and Private Keys
+
+Your crypto identity has two parts:
+
+**Public Key (Address)**
+- Like your email address
+- Share it to receive crypto
+- Anyone can see it
+
+**Private Key**
+- Like your password
+- NEVER share it
+- Controls your funds
+
+## Transaction Fees
+
+Every transaction has a small fee:
+
+- Pays the network validators
+- Varies by network congestion
+- Higher fees = faster processing`,
+        keyTakeaways: [
+          'Blockchain is a public record of all transactions',
+          'Transactions are verified by a network of computers',
+          'Your private key controls your funds - never share it',
+          'Small fees pay the network to process transactions'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Getting Your First Crypto',
+        duration: 8,
+        content: `Ready to get started? Here are the common ways to acquire cryptocurrency.
+
+## Cryptocurrency Exchanges
+
+The most common method:
+
+- **Centralized exchanges**: Coinbase, Kraken, Binance
+- Create account with ID verification
+- Link bank account or card
+- Buy crypto with regular money
+
+## Peer-to-Peer
+
+Buy directly from other people:
+
+- Platforms connect buyers and sellers
+- More privacy but more responsibility
+- Meet in safe locations for cash deals
+
+## Earn Crypto
+
+Get paid in cryptocurrency:
+
+- Some employers offer crypto payments
+- Freelance platforms with crypto options
+- Complete tasks for crypto rewards
+- Participate in DePIN networks
+
+## Receive as Payment
+
+Accept crypto for goods or services:
+
+- Set up a wallet to receive
+- Share your public address
+- Great for online businesses
+
+## What to Buy First
+
+For beginners, consider:
+
+1. **Bitcoin**: Most established, widely accepted
+2. **Ethereum**: Second largest, powers DeFi
+3. **Stablecoins**: No price volatility, good for learning
+
+## Start Small
+
+Important advice:
+
+- Only invest what you can afford to lose
+- Start with a small amount to learn
+- Understand before investing more
+- Never rush into big purchases`,
+        keyTakeaways: [
+          'Exchanges are the easiest way to buy crypto',
+          'You can also earn crypto through work or DePIN',
+          'Start with established coins like Bitcoin or Ethereum',
+          'Only invest what you can afford to lose'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Using Cryptocurrency Safely',
+        duration: 9,
+        content: `Crypto gives you control, but that means you're responsible for security. Follow these practices.
+
+## Protect Your Keys
+
+Your private key is everything:
+
+- Write it down on paper (not digitally)
+- Store in a safe, secure location
+- Never share with anyone
+- Consider a metal backup for fire protection
+
+## Recognize Scams
+
+Common crypto scams to avoid:
+
+- **"Send crypto to get more back"**: Always a scam
+- **Fake customer support**: Real support never asks for keys
+- **Too good to be true returns**: If it sounds impossible, it is
+- **Phishing sites**: Always check the URL carefully
+- **Romance scams**: Beware of online "friends" wanting crypto
+
+## Verify Before Sending
+
+Crypto transactions are irreversible:
+
+- Double-check addresses before sending
+- Send a small test amount first
+- Verify you're on legitimate websites
+- Don't rush important transactions
+
+## Keep Software Updated
+
+Stay protected:
+
+- Update wallet apps regularly
+- Keep your phone/computer updated
+- Use reputable wallet software only
+- Enable all available security features
+
+## Start with Trusted Platforms
+
+For beginners:
+
+- Use well-known exchanges
+- Enable two-factor authentication
+- Start with small amounts
+- Learn before taking risks`,
+        keyTakeaways: [
+          'Your private key controls your funds - protect it carefully',
+          'Never send crypto to "get more back" - always a scam',
+          'Double-check addresses before sending - transactions are irreversible',
+          'Use trusted platforms and keep software updated'
+        ]
+      }
+    ]
+  },
+  {
+    id: 11,
+    slug: 'wallet-setup-guide',
+    title: 'Wallet Setup & Safety',
+    description: 'Learn how to set up your first cryptocurrency wallet, understand different wallet types, and keep your assets secure.',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 40,
+    requiredTier: 'free',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'Understanding Crypto Wallets',
+        duration: 8,
+        content: `A cryptocurrency wallet is your gateway to the blockchain world. Let's understand what it really is.
+
+## What is a Wallet?
+
+A crypto wallet doesn't actually "hold" your crypto:
+
+- Your crypto lives on the blockchain
+- The wallet holds your keys to access it
+- Think of it as a keychain, not a safe
+
+## Wallet Components
+
+Every wallet has:
+
+**Public Address**
+- Your receiving address (like an email)
+- Safe to share with anyone
+- Example: 0x742d35Cc6634C0532925a3b844Bc9e7595f1
+
+**Private Key**
+- Your secret password
+- NEVER share with anyone
+- Whoever has this controls your funds
+
+**Seed Phrase**
+- 12-24 words that generate your keys
+- Your ultimate backup
+- Write down and store securely
+
+## Types of Wallets
+
+Different wallets for different needs:
+
+- **Hot Wallets**: Connected to internet
+- **Cold Wallets**: Offline storage
+- **Custodial**: Someone else holds keys
+- **Non-custodial**: You control keys
+
+## Choosing the Right Wallet
+
+Consider:
+
+- How much crypto will you store?
+- How often will you transact?
+- What's your technical comfort level?
+- Which cryptocurrencies do you need?`,
+        keyTakeaways: [
+          'Wallets hold your keys, not your crypto',
+          'Your seed phrase is the ultimate backup - protect it',
+          'Never share your private key or seed phrase',
+          'Different wallet types suit different needs'
+        ]
+      },
+      {
+        id: 2,
+        title: 'Setting Up MetaMask',
+        duration: 10,
+        content: `MetaMask is the most popular wallet for Ethereum and compatible networks. Here's how to set it up.
+
+## Installing MetaMask
+
+Step by step:
+
+1. Go to metamask.io (verify URL carefully)
+2. Click "Download" for your browser
+3. Install the browser extension
+4. Click "Create a new wallet"
+
+## Creating Your Wallet
+
+The setup process:
+
+1. Create a strong password
+2. Watch the security video
+3. Reveal your Secret Recovery Phrase
+4. Write down ALL 12 words in order
+5. Verify by entering words in correct order
+
+## Critical: Backup Your Seed Phrase
+
+Your 12 words are your wallet:
+
+**DO:**
+- Write on paper immediately
+- Store in multiple secure locations
+- Consider a metal backup
+
+**DON'T:**
+- Screenshot or photograph
+- Store digitally (no notes app, email)
+- Share with anyone ever
+
+## Connecting to Axiom
+
+To use Axiom ecosystem:
+
+1. Open MetaMask
+2. Click network dropdown
+3. Add Arbitrum One network
+4. You're ready for Axiom!
+
+## First Transaction
+
+Before sending large amounts:
+
+- Add a small amount to practice
+- Send a tiny test transaction
+- Verify everything works
+- Then proceed with confidence`,
+        keyTakeaways: [
+          'Only download MetaMask from metamask.io',
+          'Write your seed phrase on paper - never digitally',
+          'Store backups in multiple secure locations',
+          'Practice with small amounts before large transactions'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Hot Wallets vs Cold Wallets',
+        duration: 10,
+        content: `Understanding when to use each type of wallet keeps your crypto secure.
+
+## Hot Wallets
+
+Connected to the internet:
+
+**Examples:**
+- MetaMask (browser)
+- Trust Wallet (mobile)
+- Coinbase Wallet (mobile)
+
+**Best For:**
+- Daily transactions
+- Small amounts
+- Interacting with dApps
+- Convenience
+
+**Risks:**
+- Vulnerable to hacks
+- Malware can target them
+- Phishing attacks
+
+## Cold Wallets
+
+Offline storage:
+
+**Examples:**
+- Ledger (hardware device)
+- Trezor (hardware device)
+- Paper wallets
+
+**Best For:**
+- Long-term storage
+- Large amounts
+- Maximum security
+
+**Trade-offs:**
+- Less convenient
+- Cost money to buy
+- Can be lost physically
+
+## The Smart Approach
+
+Use both strategically:
+
+**Hot Wallet** (checking account)
+- Keep small amounts
+- Use for regular activity
+- Acceptable loss if compromised
+
+**Cold Wallet** (savings account)
+- Store majority of holdings
+- Access only when needed
+- Maximum security for value
+
+## How Much in Each?
+
+General guidelines:
+
+- Hot: Amount you'd carry in regular wallet
+- Cold: Everything else
+- Adjust based on your activity level`,
+        keyTakeaways: [
+          'Hot wallets are convenient but less secure',
+          'Cold wallets are secure but less convenient',
+          'Use hot wallets like a checking account',
+          'Keep majority in cold storage like savings'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Wallet Security Best Practices',
+        duration: 12,
+        content: `Your crypto is only as safe as your security practices. Follow these guidelines.
+
+## Seed Phrase Protection
+
+The most important rule:
+
+- **Physical backup**: Paper or metal
+- **Multiple locations**: Home safe + bank box
+- **No digital copies**: No photos, no cloud
+- **Tell no one**: Not even family (unless estate planning)
+
+## Password Security
+
+For your wallet password:
+
+- Use unique, strong passwords
+- Enable password manager
+- Never reuse passwords
+- Change if any suspicion of compromise
+
+## Device Security
+
+Protect your devices:
+
+- Keep operating system updated
+- Use antivirus software
+- Avoid suspicious downloads
+- Don't use public WiFi for crypto
+
+## Recognizing Threats
+
+Watch for:
+
+- Fake wallet apps
+- Phishing emails pretending to be support
+- Malicious browser extensions
+- Fake websites (check URLs carefully)
+- Anyone asking for your seed phrase
+
+## Recovery Planning
+
+Prepare for emergencies:
+
+- Test recovery process with small amounts
+- Document wallet types and locations
+- Consider inheritance planning
+- Have trusted backup access method
+
+## Regular Security Checks
+
+Monthly routine:
+
+- Check wallet connections
+- Revoke unused approvals
+- Update software
+- Verify backup accessibility`,
+        keyTakeaways: [
+          'Physical seed phrase backups in multiple secure locations',
+          'Never store seed phrase digitally or share with anyone',
+          'Keep devices updated and use security software',
+          'Test your recovery process before you need it'
+        ]
+      }
+    ]
+  },
+  {
+    id: 12,
+    slug: 'blockchain-fundamentals',
+    title: 'Blockchain Fundamentals',
+    description: 'Understand how blockchain technology works, from blocks and chains to consensus mechanisms and smart contracts.',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 45,
+    requiredTier: 'free',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'What is a Blockchain?',
+        duration: 10,
+        content: `Blockchain is the technology behind cryptocurrency. Understanding it helps you navigate the crypto world confidently.
+
+## The Simple Explanation
+
+A blockchain is:
+
+- A digital record book
+- Shared across many computers
+- That no one can change or erase
+
+## Blocks and Chains
+
+How it's structured:
+
+**Blocks**
+- Containers of transaction data
+- Created every few seconds/minutes
+- Has a unique fingerprint (hash)
+
+**Chain**
+- Blocks linked in order
+- Each references the previous one
+- Creates an unbreakable sequence
+
+## Why It's Special
+
+Traditional databases vs blockchain:
+
+| Traditional | Blockchain |
+|-------------|------------|
+| Controlled by one entity | Distributed globally |
+| Can be changed | Immutable record |
+| Private | Transparent |
+| Trust the company | Trust the math |
+
+## Real-World Analogy
+
+Think of blockchain like a Google Doc:
+
+- Everyone sees the same document
+- Changes are visible to all
+- History is preserved
+- No one can secretly edit
+
+But even better:
+- No single owner
+- Can't be shut down
+- Mathematically secured
+
+## Key Benefits
+
+Why blockchain matters:
+
+- **Transparency**: Anyone can verify
+- **Security**: Nearly impossible to hack
+- **Decentralization**: No single point of failure
+- **Immutability**: History can't be changed`,
+        keyTakeaways: [
+          'Blockchain is a shared, unchangeable digital record',
+          'Blocks contain transactions and link together in a chain',
+          'No single entity controls the blockchain',
+          'Transparency and security are built into the design'
+        ]
+      },
+      {
+        id: 2,
+        title: 'How Transactions Work',
+        duration: 10,
+        content: `Every time crypto changes hands, a specific process ensures the transaction is valid and recorded.
+
+## Creating a Transaction
+
+When you send crypto:
+
+1. You specify recipient address
+2. You specify amount to send
+3. Your wallet creates the transaction
+4. You sign it with your private key
+
+## The Signature
+
+Digital signatures prove:
+
+- You authorized this transaction
+- You own the sending address
+- The transaction hasn't been tampered with
+
+Like a handwritten signature, but:
+- Mathematically verifiable
+- Impossible to forge
+- Unique to each transaction
+
+## Broadcasting
+
+Once signed:
+
+1. Transaction sent to the network
+2. Nodes receive and validate it
+3. Pending until included in a block
+4. Once in a block, it's confirmed
+
+## Confirmation
+
+What confirmation means:
+
+- **0 confirmations**: Transaction sent, not yet in block
+- **1 confirmation**: Included in one block
+- **6+ confirmations**: Considered final
+
+More confirmations = more security
+
+## Transaction Fees
+
+Every transaction includes a fee:
+
+- Paid to validators/miners
+- Higher fee = faster processing
+- Varies by network congestion
+- Some networks have very low fees`,
+        keyTakeaways: [
+          'Transactions are signed with your private key',
+          'The network validates before adding to blockchain',
+          'More confirmations means more security',
+          'Fees incentivize network validators'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Consensus Mechanisms',
+        duration: 12,
+        content: `How do thousands of computers agree on what's true? Consensus mechanisms make this possible.
+
+## The Problem
+
+In a decentralized network:
+
+- No central authority
+- Anyone can participate
+- Some might try to cheat
+- Need agreement on truth
+
+## Proof of Work (PoW)
+
+The original method (Bitcoin):
+
+- Computers solve complex puzzles
+- First to solve adds the next block
+- Requires massive computing power
+- Very secure but uses lots of energy
+
+## Proof of Stake (PoS)
+
+Modern approach (Ethereum, Arbitrum):
+
+- Validators lock up crypto as stake
+- Selected to create blocks based on stake
+- Cheaters lose their staked funds
+- Much more energy efficient
+
+## Comparing Approaches
+
+| Feature | Proof of Work | Proof of Stake |
+|---------|--------------|----------------|
+| Energy use | Very high | Low |
+| Hardware | Expensive | Standard |
+| Security | Battle-tested | Proven secure |
+| Speed | Slower | Faster |
+
+## Why This Matters
+
+Consensus mechanisms ensure:
+
+- Everyone agrees on transaction history
+- No double-spending
+- Network stays secure
+- Decentralization is maintained
+
+## Axiom's Approach
+
+Axiom uses Arbitrum (Layer 2):
+
+- Inherits Ethereum security
+- Faster transactions
+- Lower fees
+- Proof of Stake based`,
+        keyTakeaways: [
+          'Consensus lets decentralized networks agree on truth',
+          'Proof of Work uses computing power for security',
+          'Proof of Stake uses staked crypto for security',
+          'Axiom on Arbitrum benefits from efficient PoS security'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Smart Contracts Explained',
+        duration: 13,
+        content: `Smart contracts are programs that run on blockchain. They power most of modern crypto.
+
+## What is a Smart Contract?
+
+A smart contract is:
+
+- Code stored on blockchain
+- Executes automatically
+- When conditions are met
+- Cannot be changed once deployed
+
+## Simple Example
+
+A basic smart contract:
+
+"If Bob sends 1 ETH, then send him 100 tokens"
+
+The contract:
+- Waits for Bob's payment
+- Verifies the amount
+- Automatically sends tokens
+- No human intervention needed
+
+## Real-World Applications
+
+Smart contracts power:
+
+- **DeFi**: Lending, borrowing, trading
+- **NFTs**: Digital ownership
+- **DAOs**: Decentralized organizations
+- **Token sales**: Automated distributions
+- **Gaming**: In-game assets and rewards
+
+## Benefits
+
+Why smart contracts matter:
+
+- **Trustless**: No intermediary needed
+- **Transparent**: Code is public
+- **Automatic**: Executes without delay
+- **Immutable**: Terms can't change
+
+## Risks to Know
+
+Be aware:
+
+- Bugs can cause losses
+- Code is law (no reversals)
+- Scammers create malicious contracts
+- Always verify before interacting
+
+## Axiom Smart Contracts
+
+Axiom uses smart contracts for:
+
+- AXM token transfers
+- DePIN node rewards
+- KeyGrow equity tracking
+- SUSU savings pools
+- Governance voting`,
+        keyTakeaways: [
+          'Smart contracts are self-executing code on blockchain',
+          'They run automatically when conditions are met',
+          'They power DeFi, NFTs, DAOs, and more',
+          'Always verify contracts before interacting'
+        ]
+      }
+    ]
+  },
+  {
+    id: 13,
+    slug: 'intro-to-defi',
+    title: 'Introduction to DeFi',
+    description: 'Discover decentralized finance (DeFi) and how it provides financial services without traditional banks or intermediaries.',
+    category: 'Finance',
+    difficulty: 'beginner',
+    durationMinutes: 40,
+    requiredTier: 'free',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'What is DeFi?',
+        duration: 10,
+        content: `DeFi (Decentralized Finance) recreates financial services using blockchain instead of banks.
+
+## Traditional Finance vs DeFi
+
+The old way:
+- Banks hold your money
+- Banks decide who gets loans
+- Banks take profits
+- Limited hours and access
+
+The DeFi way:
+- You control your money
+- Algorithms determine lending
+- Users share profits
+- 24/7 access globally
+
+## Core DeFi Services
+
+What you can do with DeFi:
+
+- **Lending**: Earn interest on your crypto
+- **Borrowing**: Get loans without credit checks
+- **Trading**: Swap tokens directly
+- **Earning**: Provide liquidity for rewards
+- **Saving**: Earn yield on deposits
+
+## Why DeFi Matters
+
+Benefits over traditional finance:
+
+- **Permissionless**: No application or approval
+- **Transparent**: See exactly how it works
+- **Global**: Anyone with internet can participate
+- **Interoperable**: Services work together
+- **Non-custodial**: You keep control
+
+## The Building Blocks
+
+DeFi is built on:
+
+- Smart contracts (automated rules)
+- Cryptocurrencies (digital money)
+- Wallets (your access point)
+- Protocols (the services)`,
+        keyTakeaways: [
+          'DeFi provides financial services without banks',
+          'You maintain control of your funds',
+          'Anyone can access DeFi with just an internet connection',
+          'Smart contracts automate all operations'
+        ]
+      },
+      {
+        id: 2,
+        title: 'Key DeFi Concepts',
+        duration: 10,
+        content: `Understanding DeFi requires knowing some key concepts and terminology.
+
+## Liquidity
+
+What it means:
+
+- Funds available for trading
+- More liquidity = easier trades
+- Users provide liquidity
+- Earn fees in return
+
+## Liquidity Pools
+
+How decentralized trading works:
+
+- Users deposit token pairs
+- Traders swap against the pool
+- Fees distributed to depositors
+- No order book needed
+
+## Yield
+
+Earning returns in DeFi:
+
+- **APR**: Annual percentage rate (simple)
+- **APY**: Includes compounding
+- Yields vary by risk
+- Higher yield usually = higher risk
+
+## Collateral
+
+For DeFi loans:
+
+- Must deposit assets to borrow
+- Usually over-collateralized (150%+)
+- Protects lenders
+- Liquidated if value drops
+
+## Gas Fees
+
+The cost of transactions:
+
+- Paid to network validators
+- Varies by network activity
+- Can be high on Ethereum mainnet
+- Much lower on Layer 2s like Arbitrum
+
+## Slippage
+
+Price movement during trades:
+
+- Difference between expected and actual price
+- Higher for larger trades
+- Lower with more liquidity
+- Set tolerance to protect yourself`,
+        keyTakeaways: [
+          'Liquidity pools enable decentralized trading',
+          'Yield rewards come with varying risk levels',
+          'DeFi loans require over-collateralization',
+          'Gas fees pay for transaction processing'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Common DeFi Applications',
+        duration: 10,
+        content: `Explore the main types of DeFi applications and what they offer.
+
+## Decentralized Exchanges (DEXs)
+
+Trade without intermediaries:
+
+- **Uniswap**: Largest DEX
+- **Curve**: Stablecoin trading
+- Swap any supported token
+- You keep custody of funds
+
+## Lending Protocols
+
+Earn or borrow:
+
+- **Aave**: Major lending platform
+- **Compound**: Algorithmic rates
+- Deposit to earn interest
+- Borrow against collateral
+
+## Stablecoins
+
+Crypto with stable value:
+
+- **USDC**: Backed by dollars
+- **DAI**: Crypto-collateralized
+- Essential for DeFi operations
+- Avoid volatility while staying in crypto
+
+## Yield Aggregators
+
+Optimize your returns:
+
+- Auto-compound rewards
+- Find best yields
+- Save gas fees
+- Simplify complex strategies
+
+## Derivatives
+
+Advanced financial products:
+
+- Options and futures
+- Synthetic assets
+- Leverage trading
+- Higher risk, higher potential reward
+
+## Axiom DeFi
+
+Our ecosystem includes:
+
+- AXM staking
+- Liquidity provision
+- SUSU savings circles
+- Future: Full DEX functionality`,
+        keyTakeaways: [
+          'DEXs let you trade without giving up custody',
+          'Lending protocols pay interest on deposits',
+          'Stablecoins provide stability in volatile markets',
+          'Axiom offers multiple DeFi opportunities'
+        ]
+      },
+      {
+        id: 4,
+        title: 'DeFi Risks and Safety',
+        duration: 10,
+        content: `DeFi offers opportunities but comes with real risks. Know what to watch for.
+
+## Smart Contract Risk
+
+Code vulnerabilities:
+
+- Bugs can cause losses
+- Hacks have cost billions
+- Look for audited protocols
+- New contracts are riskier
+
+## Impermanent Loss
+
+For liquidity providers:
+
+- Occurs when prices change
+- Can reduce your returns
+- More volatile pairs = more risk
+- Calculate before providing liquidity
+
+## Liquidation Risk
+
+For borrowers:
+
+- If collateral value drops
+- Position may be liquidated
+- You lose your collateral
+- Monitor positions carefully
+
+## Rug Pulls
+
+Scam projects:
+
+- Creators steal user funds
+- Often unaudited protocols
+- Promises of high returns
+- Always research thoroughly
+
+## Protecting Yourself
+
+Best practices:
+
+1. Start with established protocols
+2. Begin with small amounts
+3. Understand before investing
+4. Check for audits
+5. Never invest more than you can lose
+6. Diversify across protocols
+
+## Due Diligence
+
+Before using any DeFi protocol:
+
+- How long has it operated?
+- Total value locked (TVL)?
+- Has it been audited?
+- Is the team known?
+- What do others say?`,
+        keyTakeaways: [
+          'Smart contract bugs can cause permanent losses',
+          'Impermanent loss affects liquidity providers',
+          'Always research protocols before depositing',
+          'Start small and use established protocols'
+        ]
+      }
+    ]
+  },
+  {
+    id: 14,
+    slug: 'nft-essentials',
+    title: 'NFT Essentials',
+    description: 'Learn what NFTs are, how they work, and their applications beyond digital art including gaming, membership, and real-world assets.',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 35,
+    requiredTier: 'free',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'What are NFTs?',
+        duration: 9,
+        content: `NFTs (Non-Fungible Tokens) represent unique digital ownership. Let's understand what makes them special.
+
+## Fungible vs Non-Fungible
+
+**Fungible** (interchangeable):
+- One dollar = any other dollar
+- One Bitcoin = any other Bitcoin
+- Identical and replaceable
+
+**Non-Fungible** (unique):
+- Your house deed
+- A signed baseball card
+- Original artwork
+- Each one is different
+
+## What NFTs Represent
+
+NFTs can represent ownership of:
+
+- Digital art
+- Music and videos
+- Virtual real estate
+- Gaming items
+- Event tickets
+- Membership passes
+- Real-world assets
+
+## How NFTs Work
+
+Technical basics:
+
+- Stored on blockchain (usually Ethereum)
+- Each has unique identifier
+- Ownership publicly verifiable
+- Can be bought, sold, transferred
+
+## What You Actually Own
+
+Important distinction:
+
+- You own the token on blockchain
+- May or may not include copyright
+- May or may not include physical item
+- Read terms carefully
+
+## Why NFTs Matter
+
+The innovation:
+
+- Prove digital ownership
+- Enable creator royalties
+- Create digital scarcity
+- Build communities around ownership`,
+        keyTakeaways: [
+          'NFTs are unique tokens representing ownership',
+          'They can represent digital or physical assets',
+          'Ownership is verifiable on the blockchain',
+          'What you own depends on the specific NFT terms'
+        ]
+      },
+      {
+        id: 2,
+        title: 'NFT Use Cases',
+        duration: 9,
+        content: `NFTs go far beyond digital art. Explore the many applications.
+
+## Digital Art and Collectibles
+
+The most famous use:
+
+- Artists sell directly to collectors
+- Earn royalties on resales
+- Prove authenticity
+- Build collector communities
+
+## Gaming
+
+In-game ownership:
+
+- Own your characters and items
+- Trade across games potentially
+- Sell when you stop playing
+- True ownership vs renting
+
+## Membership and Access
+
+Digital passes:
+
+- Exclusive community access
+- Event tickets
+- VIP benefits
+- Loyalty programs
+
+## Music and Media
+
+Creator economy:
+
+- Musicians sell directly to fans
+- Royalty sharing with holders
+- Exclusive content access
+- Fan engagement tools
+
+## Real-World Assets
+
+Physical world connection:
+
+- Real estate deeds
+- Luxury goods authentication
+- Supply chain tracking
+- Identity documents
+
+## Axiom NFT Applications
+
+How Axiom uses NFTs:
+
+- KeyGrow property shares (ERC-1155)
+- DePIN node certificates
+- PMA membership tokens
+- Governance credentials`,
+        keyTakeaways: [
+          'NFTs power gaming economies and true item ownership',
+          'Membership NFTs provide access and community',
+          'Real-world assets can be tokenized as NFTs',
+          'Axiom uses NFTs for property shares and membership'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Buying and Selling NFTs',
+        duration: 8,
+        content: `Ready to participate? Here's how NFT marketplaces work.
+
+## NFT Marketplaces
+
+Where to find NFTs:
+
+- **OpenSea**: Largest marketplace
+- **Blur**: Trader-focused
+- **Magic Eden**: Multi-chain
+- Project-specific mints
+
+## Buying an NFT
+
+The process:
+
+1. Connect wallet to marketplace
+2. Browse collections
+3. Make offer or buy at listed price
+4. Confirm transaction
+5. NFT appears in your wallet
+
+## Minting
+
+Getting NFTs at launch:
+
+- "Mint" means create new NFT
+- Often cheaper than secondary
+- May require allowlist spot
+- Check project legitimacy first
+
+## Selling an NFT
+
+To sell what you own:
+
+1. List on marketplace
+2. Set price (fixed or auction)
+3. Buyer purchases
+4. Receive payment minus fees
+
+## Fees Involved
+
+Costs to know:
+
+- **Gas fees**: Network transaction costs
+- **Platform fees**: Marketplace cut (2-5%)
+- **Royalties**: Creator share (0-10%)
+
+## Safety Tips
+
+Protect yourself:
+
+- Verify collection contracts
+- Beware fake collections
+- Use burner wallets for new mints
+- Don't click random links`,
+        keyTakeaways: [
+          'OpenSea is the largest NFT marketplace',
+          'Minting is often cheaper than buying secondary',
+          'Factor in gas, platform fees, and royalties',
+          'Always verify collections before buying'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Evaluating NFT Projects',
+        duration: 9,
+        content: `Not all NFT projects are created equal. Learn how to assess them.
+
+## Red Flags
+
+Warning signs:
+
+- Anonymous team with no track record
+- Promises of guaranteed returns
+- Pressure to buy immediately
+- No clear utility or roadmap
+- Copied art from other projects
+
+## Green Flags
+
+Positive indicators:
+
+- Experienced, doxxed team
+- Clear utility and vision
+- Active community engagement
+- Reasonable expectations
+- Original creative vision
+
+## Research Checklist
+
+Before buying:
+
+1. Who is the team?
+2. What is the utility?
+3. How active is the community?
+4. What is the roadmap?
+5. Is the smart contract verified?
+6. What do trusted voices say?
+
+## Community Matters
+
+Strong communities have:
+
+- Active Discord/Telegram
+- Organic engagement
+- Long-term holders
+- Real value creation
+
+## Valuation Factors
+
+What affects NFT prices:
+
+- Rarity within collection
+- Historical sales data
+- Floor price trends
+- Team reputation
+- Market conditions
+- Utility provided
+
+## Long-term Thinking
+
+Sustainable approach:
+
+- Buy what you'd enjoy owning
+- Don't chase quick flips
+- Understand the risks
+- Only spend what you can lose`,
+        keyTakeaways: [
+          'Avoid anonymous teams and guaranteed return promises',
+          'Research team, utility, and community before buying',
+          'Strong communities indicate healthier projects',
+          'Only invest what you can afford to lose'
+        ]
+      }
+    ]
+  },
+  {
+    id: 15,
+    slug: 'tokenomics-101',
+    title: 'Tokenomics 101',
+    description: 'Understand how token economics work, from supply and distribution to utility and value drivers.',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 40,
+    requiredTier: 'free',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'What is Tokenomics?',
+        duration: 10,
+        content: `Tokenomics is the economics of cryptocurrency tokens. Understanding it helps you evaluate projects.
+
+## Token Economics
+
+Tokenomics covers:
+
+- How many tokens exist
+- How they're distributed
+- What they're used for
+- How supply changes over time
+
+## Why It Matters
+
+Good tokenomics can:
+
+- Align incentives
+- Create sustainable value
+- Encourage participation
+- Support long-term growth
+
+Bad tokenomics can:
+
+- Benefit insiders only
+- Create selling pressure
+- Lead to price crashes
+- Kill project momentum
+
+## Key Components
+
+What to analyze:
+
+1. **Supply**: How many tokens?
+2. **Distribution**: Who gets them?
+3. **Utility**: What are they for?
+4. **Emission**: How are new ones created?
+5. **Burning**: How are they removed?
+
+## Supply Basics
+
+Types of supply:
+
+- **Circulating**: Currently tradeable
+- **Total**: All created so far
+- **Max**: Maximum that will ever exist
+
+## First Look Questions
+
+When evaluating a token:
+
+- What percentage is in circulation?
+- Who holds the largest amounts?
+- Is there a maximum supply?
+- How fast are new tokens released?`,
+        keyTakeaways: [
+          'Tokenomics determines how a token economy works',
+          'Good tokenomics aligns incentives for all participants',
+          'Understand supply, distribution, utility, and emissions',
+          'Poor tokenomics can doom even good projects'
+        ]
+      },
+      {
+        id: 2,
+        title: 'Token Distribution',
+        duration: 10,
+        content: `How tokens are distributed reveals who benefits and potential risks.
+
+## Common Allocations
+
+Typical distribution categories:
+
+- **Public Sale**: Sold to community
+- **Team/Founders**: Project creators
+- **Investors**: Early backers (VCs)
+- **Treasury**: Project reserves
+- **Ecosystem**: Rewards and incentives
+- **Advisors**: Early contributors
+
+## Healthy Distribution
+
+Good signs:
+
+- Fair public allocation (30%+)
+- Team tokens locked/vesting
+- Reasonable investor allocation
+- Transparent breakdowns
+
+## Red Flags
+
+Warning signs:
+
+- Team holds majority
+- No vesting periods
+- Hidden allocations
+- Large "marketing" reserves
+
+## Vesting Schedules
+
+Token release over time:
+
+- **Cliff**: Initial lock period
+- **Vesting**: Gradual release
+- Example: 1-year cliff, 3-year vest
+
+Why it matters:
+- Prevents immediate selling
+- Aligns long-term incentives
+- Protects token price
+
+## Analyzing Distribution
+
+Questions to ask:
+
+- What percentage can be sold now?
+- When do large unlocks happen?
+- Are team tokens locked?
+- Is distribution transparent?`,
+        keyTakeaways: [
+          'Fair distribution gives community reasonable allocation',
+          'Team and investor tokens should have vesting',
+          'Watch for upcoming large unlock events',
+          'Transparency in distribution is essential'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Token Utility',
+        duration: 10,
+        content: `What can you actually do with a token? Utility drives real demand.
+
+## Types of Utility
+
+Common token uses:
+
+**Governance**
+- Vote on proposals
+- Influence project direction
+- Delegate to representatives
+
+**Staking**
+- Lock tokens for rewards
+- Secure the network
+- Earn passive income
+
+**Payments**
+- Pay for services
+- Transaction fees
+- Platform access
+
+**Access**
+- Unlock features
+- Premium benefits
+- Community membership
+
+## Evaluating Utility
+
+Strong utility means:
+
+- Clear use cases
+- Necessary for the ecosystem
+- Creates genuine demand
+- Not easily replaceable
+
+Weak utility:
+
+- Vague promises
+- Could use any currency
+- No real necessity
+- Just for speculation
+
+## Value Accrual
+
+How value flows to token:
+
+- Fee revenue sharing
+- Buyback and burn
+- Staking rewards
+- Growing ecosystem use
+
+## AXM Token Utility
+
+Axiom's token provides:
+
+- Governance voting
+- Staking rewards
+- Platform fee discounts
+- DePIN participation
+- SUSU pool contributions
+- Future: Native gas token`,
+        keyTakeaways: [
+          'Strong utility creates real demand for tokens',
+          'Governance, staking, and access are common utilities',
+          'Value should flow back to token holders',
+          'Beware tokens with vague or unnecessary utility'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Supply Dynamics',
+        duration: 10,
+        content: `How token supply changes over time significantly impacts value.
+
+## Inflationary Tokens
+
+Supply increases over time:
+
+- New tokens minted regularly
+- Often for staking rewards
+- Can dilute existing holders
+- Requires growing demand
+
+## Deflationary Tokens
+
+Supply decreases over time:
+
+- Tokens burned (destroyed)
+- Creates scarcity
+- Can increase value per token
+- Popular mechanism
+
+## Burn Mechanisms
+
+Ways tokens get burned:
+
+- Transaction fee burns
+- Buyback and burn programs
+- Deflationary mechanics
+- Community burns
+
+## Emission Schedules
+
+How new tokens enter circulation:
+
+- Mining/staking rewards
+- Scheduled releases
+- Ecosystem grants
+- Usually decreases over time
+
+## Supply Analysis
+
+What to check:
+
+- Current inflation rate
+- Planned emission schedule
+- Burn mechanisms in place
+- Net supply change
+
+## Practical Impact
+
+Why this matters:
+
+**High inflation** (10%+ annually)
+- Need strong demand growth
+- Staking rewards must compensate
+- Often decreases over time
+
+**Low inflation or deflationary**
+- Easier to maintain value
+- Scarcity increases
+- Long-term holder friendly`,
+        keyTakeaways: [
+          'Inflationary tokens require growing demand to maintain value',
+          'Deflationary mechanisms create scarcity',
+          'Understand emission schedules and burn rates',
+          'Net supply change impacts long-term value'
+        ]
+      }
+    ]
+  },
+  {
+    id: 16,
+    slug: 'web3-community-guide',
+    title: 'Web3 Community Guide',
+    description: 'Learn how to participate in Web3 communities, join DAOs, and contribute to decentralized projects.',
+    category: 'Community',
+    difficulty: 'beginner',
+    durationMinutes: 35,
+    requiredTier: 'free',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'Joining Web3 Communities',
+        duration: 9,
+        content: `Web3 communities are different from traditional organizations. Here's how to get started.
+
+## Where Communities Live
+
+Main platforms:
+
+- **Discord**: Primary hub for most projects
+- **Telegram**: Quick communication
+- **Twitter/X**: News and networking
+- **Farcaster**: Decentralized social
+
+## Finding Communities
+
+How to discover projects:
+
+- Follow crypto Twitter accounts
+- Join popular Discords
+- Read crypto news sites
+- Attend virtual events
+- Ask for recommendations
+
+## Getting Started
+
+First steps in a new community:
+
+1. Read the rules and FAQs
+2. Introduce yourself
+3. Listen and learn first
+4. Ask genuine questions
+5. Start contributing value
+
+## Community Culture
+
+What to expect:
+
+- Welcome atmosphere
+- Meme-friendly communication
+- Fast-moving conversations
+- Global participation
+- 24/7 activity
+
+## Building Your Presence
+
+Stand out positively:
+
+- Be helpful to newcomers
+- Share useful information
+- Engage constructively
+- Build relationships
+- Stay consistent`,
+        keyTakeaways: [
+          'Discord is the primary hub for Web3 communities',
+          'Listen and learn before contributing heavily',
+          'Add value through helpful participation',
+          'Consistency builds reputation over time'
+        ]
+      },
+      {
+        id: 2,
+        title: 'Understanding DAOs',
+        duration: 9,
+        content: `DAOs (Decentralized Autonomous Organizations) are community-governed entities. Here's how they work.
+
+## What is a DAO?
+
+Key characteristics:
+
+- Governed by token holders
+- Rules encoded in smart contracts
+- Treasury managed collectively
+- Decisions made by voting
+
+## DAO vs Traditional Organization
+
+| Aspect | Traditional | DAO |
+|--------|------------|-----|
+| Leadership | Executives | Community |
+| Rules | Legal contracts | Smart contracts |
+| Decisions | Top-down | Voting |
+| Membership | Employment | Token ownership |
+| Transparency | Limited | Full |
+
+## Types of DAOs
+
+Different purposes:
+
+- **Protocol DAOs**: Govern DeFi protocols
+- **Investment DAOs**: Pool funds for investing
+- **Social DAOs**: Community membership
+- **Service DAOs**: Provide services
+- **Collector DAOs**: Acquire assets
+
+## How Decisions Work
+
+Typical governance process:
+
+1. Member creates proposal
+2. Community discussion
+3. Formal voting period
+4. If passed, execution
+5. Results recorded on-chain
+
+## Getting Involved
+
+Ways to participate:
+
+- Hold governance tokens
+- Vote on proposals
+- Join working groups
+- Contribute skills
+- Delegate your votes`,
+        keyTakeaways: [
+          'DAOs are community-governed organizations',
+          'Token holders vote on decisions',
+          'Different DAOs serve different purposes',
+          'Participation options range from voting to active contribution'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Contributing to Projects',
+        duration: 9,
+        content: `Web3 rewards contributors. Here's how to add value and get recognized.
+
+## Ways to Contribute
+
+Non-technical contributions:
+
+- Community moderation
+- Content creation
+- Translation
+- Marketing support
+- User support
+- Event organization
+
+Technical contributions:
+
+- Development
+- Security auditing
+- Documentation
+- Testing
+- Design
+
+## Starting Small
+
+Build experience:
+
+- Answer questions in Discord
+- Write helpful guides
+- Create educational content
+- Report bugs constructively
+- Participate in discussions
+
+## Bounty Programs
+
+Earn for contributions:
+
+- Many DAOs offer bounties
+- Complete specific tasks
+- Earn tokens or stablecoins
+- Build reputation
+
+## Building Reputation
+
+What matters:
+
+- Consistent participation
+- Quality over quantity
+- Following through on commitments
+- Being helpful and positive
+- Building relationships
+
+## Contributor Paths
+
+Career opportunities:
+
+- Start as community member
+- Take on small responsibilities
+- Build track record
+- Get paid contributor roles
+- Join core team potentially`,
+        keyTakeaways: [
+          'Many contribution types beyond coding',
+          'Start small and build experience',
+          'Bounty programs offer paid opportunities',
+          'Consistent quality work builds reputation'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Community Safety',
+        duration: 8,
+        content: `Web3 communities attract scammers. Protect yourself with these practices.
+
+## Common Scams
+
+What to watch for:
+
+- **Fake moderators**: Real mods never DM first
+- **Phishing links**: Malicious websites
+- **Impersonators**: Fake accounts mimicking leaders
+- **Fake airdrops**: Free tokens that steal
+- **"Support" scams**: Never give seed phrases
+
+## Red Flags
+
+Warning signs:
+
+- Unsolicited direct messages
+- Urgency to act immediately
+- Requests for private keys
+- Too-good-to-be-true offers
+- Links from unknown sources
+
+## Protecting Yourself
+
+Best practices:
+
+- Never share seed phrase
+- Verify links independently
+- Use burner wallets for testing
+- Don't click DM links
+- Verify announcements in official channels
+
+## Verifying Information
+
+How to confirm legitimacy:
+
+- Check official announcements channel
+- Verify Twitter accounts (blue checkmarks, history)
+- Cross-reference multiple sources
+- Ask in public channels
+- When in doubt, wait
+
+## If Something Goes Wrong
+
+What to do:
+
+- Don't panic
+- Revoke token approvals
+- Move remaining funds to new wallet
+- Report to community moderators
+- Share experience to warn others`,
+        keyTakeaways: [
+          'Real moderators never DM first asking for info',
+          'Never share your seed phrase with anyone',
+          'Verify all links and announcements officially',
+          'Use burner wallets when testing new things'
+        ]
+      }
+    ]
   }
 ];
