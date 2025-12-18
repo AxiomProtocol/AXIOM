@@ -145,6 +145,43 @@ export default function Academy() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  const handleMembershipClick = async (tierName: string) => {
+    if (tierName === 'Free') {
+      (document.querySelector('input[type="email"]') as HTMLInputElement)?.focus();
+      return;
+    }
+    
+    if (tierName === 'Enterprise') {
+      window.location.href = 'mailto:support@axiomprotocol.io?subject=Axiom Academy Enterprise';
+      return;
+    }
+
+    setCheckoutLoading(tierName);
+    try {
+      const response = await fetch('/api/academy/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tier: tierName.toLowerCase(),
+          email: email || undefined
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.message || 'Failed to start checkout');
+      }
+    } catch (error) {
+      toast.error('Failed to start checkout');
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
 
   const categories = ['all', 'Smart City', 'Real Estate', 'Finance', 'Blockchain', 'Community', 'Governance'];
 
@@ -366,13 +403,15 @@ export default function Academy() {
                     ))}
                   </ul>
                   <button
-                    className={`w-full py-3 px-6 rounded-lg font-bold transition-all ${
+                    onClick={() => handleMembershipClick(tier.name)}
+                    disabled={checkoutLoading === tier.name}
+                    className={`w-full py-3 px-6 rounded-lg font-bold transition-all disabled:opacity-50 ${
                       tier.highlighted
                         ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
                         : 'bg-gray-700 hover:bg-gray-600 text-white'
                     }`}
                   >
-                    {tier.buttonText}
+                    {checkoutLoading === tier.name ? 'Loading...' : tier.buttonText}
                   </button>
                 </div>
               ))}
