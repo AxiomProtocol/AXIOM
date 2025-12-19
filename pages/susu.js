@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useWallet } from '../components/WalletConnect/WalletContext';
+import { ethers } from 'ethers';
 
 const STATUS_LABELS = {
   0: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
@@ -8,6 +9,20 @@ const STATUS_LABELS = {
   2: { label: 'Completed', color: 'bg-blue-100 text-blue-700 border-blue-200' },
   3: { label: 'Cancelled', color: 'bg-red-100 text-red-700 border-red-200' }
 };
+
+const SUSU_CONTRACT = '0x6C69D730327930B49A7997B7b5fb0865F30c95A5';
+const AXM_TOKEN = '0x8fbd7971C5E2A9f8a536eb777C3c8008CF791237';
+
+const SUSU_ABI = [
+  "function createPool(address token, uint256 memberCount, uint256 contributionAmount, uint256 cycleDuration, uint256 startTime, bool randomizedOrder, bool openJoin, uint16 protocolFeeBps) external returns (uint256)",
+  "function joinPool(uint256 poolId) external",
+  "function contribute(uint256 poolId) external"
+];
+
+const ERC20_ABI = [
+  "function approve(address spender, uint256 amount) external returns (bool)",
+  "function allowance(address owner, address spender) external view returns (uint256)"
+];
 
 const formatDuration = (seconds) => {
   if (seconds < 3600) return `${Math.floor(seconds / 60)} min`;
@@ -40,6 +55,17 @@ export default function SusuPage() {
   const [poolDetails, setPoolDetails] = useState(null);
   const [stats, setStats] = useState({ totalPools: 0, defaultParams: null });
   const [contractAddress, setContractAddress] = useState('');
+  
+  const [createForm, setCreateForm] = useState({
+    memberCount: 5,
+    contributionAmount: 100,
+    cycleDuration: 'monthly',
+    randomizedOrder: false,
+    openJoin: true
+  });
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [createSuccess, setCreateSuccess] = useState('');
 
   useEffect(() => {
     fetchPools();
@@ -61,7 +87,7 @@ export default function SusuPage() {
           totalPools: data.totalPools || 0,
           defaultParams: data.defaultParams
         });
-        setContractAddress(data.contractAddress || '');
+        setContractAddress(data.contractAddress || SUSU_CONTRACT);
       }
     } catch (error) {
       console.error('Error fetching pools:', error);
@@ -99,14 +125,83 @@ export default function SusuPage() {
     fetchPoolDetails(pool.poolId);
   };
 
+  const getCycleDurationSeconds = (duration) => {
+    switch (duration) {
+      case 'daily': return 86400;
+      case 'weekly': return 604800;
+      case 'biweekly': return 1209600;
+      case 'monthly': return 2592000;
+      default: return 2592000;
+    }
+  };
+
+  const handleCreatePool = async () => {
+    if (!walletState?.address) {
+      setCreateError('Please connect your wallet first');
+      return;
+    }
+
+    setCreating(true);
+    setCreateError('');
+    setCreateSuccess('');
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      
+      const contributionWei = ethers.parseEther(createForm.contributionAmount.toString());
+      const cycleDurationSeconds = getCycleDurationSeconds(createForm.cycleDuration);
+      const startTime = Math.floor(Date.now() / 1000) + 86400;
+      
+      const tokenContract = new ethers.Contract(AXM_TOKEN, ERC20_ABI, signer);
+      const susuContract = new ethers.Contract(SUSU_CONTRACT, SUSU_ABI, signer);
+      
+      const tx = await susuContract.createPool(
+        AXM_TOKEN,
+        createForm.memberCount,
+        contributionWei,
+        cycleDurationSeconds,
+        startTime,
+        createForm.randomizedOrder,
+        createForm.openJoin,
+        100
+      );
+      
+      setCreateSuccess('Transaction submitted! Waiting for confirmation...');
+      await tx.wait();
+      
+      setCreateSuccess('Pool created successfully! It will appear in the list shortly.');
+      setCreateForm({
+        memberCount: 5,
+        contributionAmount: 100,
+        cycleDuration: 'monthly',
+        randomizedOrder: false,
+        openJoin: true
+      });
+      
+      setTimeout(() => {
+        fetchPools();
+        setActiveTab('browse');
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Error creating pool:', error);
+      setCreateError(error.message || 'Failed to create pool. Please try again.');
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const filteredPools = pools.filter(p => 
     filterStatus === 'all' || p.status === parseInt(filterStatus)
   );
 
   const tabs = [
     { id: 'browse', label: 'Browse Pools', icon: '🔍' },
+    { id: 'create', label: 'Create Pool', icon: '➕' },
     { id: 'my-pools', label: 'My Pools', icon: '👤' },
     { id: 'how-it-works', label: 'How It Works', icon: '📖' },
+    { id: 'safety', label: 'Safety & Trust', icon: '🛡️' },
   ];
 
   return (
@@ -120,9 +215,15 @@ export default function SusuPage() {
               </div>
               <div>
                 <h1 className="text-4xl font-bold mb-1">Axiom SUSU</h1>
-                <p className="text-gray-300">On-Chain Rotating Savings Groups (ROSCA)</p>
+                <p className="text-gray-300">On-Chain Community Savings Circles</p>
               </div>
             </div>
+
+            <p className="text-gray-400 max-w-2xl mt-4 mb-6">
+              SUSU is a trusted community savings tradition used for generations worldwide. 
+              Axiom brings this system on-chain with smart contract security, full transparency, 
+              and automated fair payouts. Save together, build together.
+            </p>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
@@ -196,14 +297,12 @@ export default function SusuPage() {
                   <div className="text-5xl mb-4">🏦</div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">No Pools Found</h3>
                   <p className="text-gray-500 mb-6">Be the first to create a SUSU savings pool!</p>
-                  <a 
-                    href={`https://arbitrum.blockscout.com/address/${contractAddress}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-amber-600 hover:text-amber-700 text-sm"
+                  <button
+                    onClick={() => setActiveTab('create')}
+                    className="px-6 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors"
                   >
-                    View Contract on Blockscout
-                  </a>
+                    Create Your First Pool
+                  </button>
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -256,6 +355,136 @@ export default function SusuPage() {
             </div>
           )}
 
+          {activeTab === 'create' && (
+            <div className="max-w-2xl mx-auto">
+              <div className="bg-white rounded-2xl border border-gray-200 p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Create a SUSU Pool</h2>
+                <p className="text-gray-500 mb-8">Start a community savings circle with friends, family, or colleagues.</p>
+
+                {!walletState?.address ? (
+                  <div className="text-center py-8">
+                    <div className="text-5xl mb-4">🔐</div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Connect Your Wallet</h3>
+                    <p className="text-gray-500 mb-6">Connect your wallet to create a SUSU pool</p>
+                    <button
+                      onClick={connectMetaMask}
+                      className="px-6 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors"
+                    >
+                      Connect Wallet
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Number of Members
+                      </label>
+                      <input
+                        type="number"
+                        min="2"
+                        max="50"
+                        value={createForm.memberCount}
+                        onChange={(e) => setCreateForm({...createForm, memberCount: parseInt(e.target.value) || 2})}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Between 2 and 50 members. Each member receives the pot once.</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Contribution Amount (AXM)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={createForm.contributionAmount}
+                        onChange={(e) => setCreateForm({...createForm, contributionAmount: parseFloat(e.target.value) || 1})}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Fixed amount each member contributes per cycle.</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Cycle Duration
+                      </label>
+                      <select
+                        value={createForm.cycleDuration}
+                        onChange={(e) => setCreateForm({...createForm, cycleDuration: e.target.value})}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                      >
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="biweekly">Bi-Weekly</option>
+                        <option value="monthly">Monthly</option>
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">How often members contribute and payouts occur.</p>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={createForm.randomizedOrder}
+                          onChange={(e) => setCreateForm({...createForm, randomizedOrder: e.target.checked})}
+                          className="w-5 h-5 text-amber-500 rounded focus:ring-amber-500"
+                        />
+                        <span className="text-sm text-gray-700">Randomize payout order</span>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={createForm.openJoin}
+                          onChange={(e) => setCreateForm({...createForm, openJoin: e.target.checked})}
+                          className="w-5 h-5 text-amber-500 rounded focus:ring-amber-500"
+                        />
+                        <span className="text-sm text-gray-700">Allow anyone to join (open pool)</span>
+                      </label>
+                    </div>
+
+                    <div className="bg-amber-50 rounded-xl p-4">
+                      <h4 className="font-semibold text-amber-800 mb-2">Pool Summary</h4>
+                      <div className="space-y-1 text-sm text-amber-700">
+                        <p>Members: {createForm.memberCount}</p>
+                        <p>Contribution: {createForm.contributionAmount} AXM per {createForm.cycleDuration.replace('ly', '')}</p>
+                        <p>Total pool per cycle: {createForm.memberCount * createForm.contributionAmount} AXM</p>
+                        <p>Payout per member: ~{(createForm.memberCount * createForm.contributionAmount * 0.99).toFixed(2)} AXM (after 1% fee)</p>
+                        <p>Duration: {createForm.memberCount} {createForm.cycleDuration.replace('ly', '')}s</p>
+                      </div>
+                    </div>
+
+                    {createError && (
+                      <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
+                        {createError}
+                      </div>
+                    )}
+
+                    {createSuccess && (
+                      <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-green-700">
+                        {createSuccess}
+                      </div>
+                    )}
+
+                    <button
+                      onClick={handleCreatePool}
+                      disabled={creating}
+                      className="w-full py-4 bg-amber-500 text-white rounded-xl font-bold text-lg hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {creating ? 'Creating Pool...' : 'Create Pool'}
+                    </button>
+
+                    <p className="text-xs text-gray-500 text-center">
+                      Creating a pool requires a transaction on Arbitrum. You will be the first member automatically.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {activeTab === 'my-pools' && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">My Pools</h2>
@@ -277,12 +506,20 @@ export default function SusuPage() {
                   <div className="text-5xl mb-4">📭</div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">No Pools Yet</h3>
                   <p className="text-gray-500 mb-6">You haven't joined any SUSU pools yet</p>
-                  <button
-                    onClick={() => setActiveTab('browse')}
-                    className="px-6 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors"
-                  >
-                    Browse Pools
-                  </button>
+                  <div className="flex gap-4 justify-center">
+                    <button
+                      onClick={() => setActiveTab('browse')}
+                      className="px-6 py-3 bg-gray-200 text-gray-800 rounded-xl font-medium hover:bg-gray-300 transition-colors"
+                    >
+                      Browse Pools
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('create')}
+                      className="px-6 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors"
+                    >
+                      Create a Pool
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -353,7 +590,7 @@ export default function SusuPage() {
                   <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-xl flex-shrink-0">2</div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">Everyone Contributes Each Cycle</h3>
-                    <p className="text-gray-600">Each cycle (e.g., weekly or monthly), all members contribute the same fixed amount to the pool. Contributions are tracked on-chain.</p>
+                    <p className="text-gray-600">Each cycle (e.g., weekly or monthly), all members contribute the same fixed amount to the pool. Contributions are tracked on-chain for complete transparency.</p>
                   </div>
                 </div>
 
@@ -361,7 +598,7 @@ export default function SusuPage() {
                   <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-xl flex-shrink-0">3</div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">One Member Receives the Pot</h3>
-                    <p className="text-gray-600">At the end of each cycle, one member receives the entire pooled amount (minus a small protocol fee). The order is either sequential or randomized at pool creation.</p>
+                    <p className="text-gray-600">At the end of each cycle, one member receives the entire pooled amount (minus a small 1% protocol fee). The order is either sequential or randomized at pool creation.</p>
                   </div>
                 </div>
 
@@ -369,26 +606,177 @@ export default function SusuPage() {
                   <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-xl flex-shrink-0">4</div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">Everyone Gets Their Turn</h3>
-                    <p className="text-gray-600">The pool continues until every member has received the pot once. Early recipients effectively receive an interest-free loan, while later recipients earn returns on their contributions.</p>
+                    <p className="text-gray-600">The pool continues until every member has received the pot once. Early recipients effectively receive an interest-free advance, while later recipients save consistently.</p>
                   </div>
                 </div>
               </div>
 
               <div className="mt-8 p-6 bg-amber-50 rounded-xl">
-                <h3 className="font-semibold text-amber-800 mb-3">Example Scenario</h3>
-                <p className="text-amber-700 text-sm">
-                  10 friends create a monthly SUSU pool with 100 AXM contributions each. Each month, the pool collects 1,000 AXM, and one member receives ~990 AXM (after 1% protocol fee). After 10 months, everyone has contributed 1,000 AXM and received ~990 AXM once.
-                </p>
+                <h3 className="font-semibold text-amber-800 mb-3">Example: 10-Member Monthly Pool</h3>
+                <div className="text-amber-700 text-sm space-y-2">
+                  <p><strong>Setup:</strong> 10 friends create a pool with 100 AXM monthly contributions</p>
+                  <p><strong>Each month:</strong> Everyone contributes 100 AXM = 1,000 AXM total</p>
+                  <p><strong>Payout:</strong> One member receives ~990 AXM (after 1% fee)</p>
+                  <p><strong>Duration:</strong> 10 months until everyone has received once</p>
+                  <p><strong>Result:</strong> Each person contributes 1,000 AXM total, receives ~990 AXM</p>
+                </div>
               </div>
 
-              <div className="mt-6 p-6 bg-blue-50 rounded-xl">
-                <h3 className="font-semibold text-blue-800 mb-3">Benefits</h3>
-                <ul className="text-blue-700 text-sm space-y-2">
-                  <li>• Access large sums without traditional loans or credit checks</li>
-                  <li>• Build savings discipline through regular contributions</li>
-                  <li>• Community-based mutual aid with on-chain transparency</li>
-                  <li>• Smart contract enforcement ensures fair payouts</li>
+              <div className="mt-6 p-6 bg-green-50 rounded-xl">
+                <h3 className="font-semibold text-green-800 mb-3">Why Use SUSU?</h3>
+                <ul className="text-green-700 text-sm space-y-2">
+                  <li>✓ Access large sums without loans or credit checks</li>
+                  <li>✓ Build savings discipline through regular contributions</li>
+                  <li>✓ Community-based mutual aid with friends you trust</li>
+                  <li>✓ Smart contract enforcement ensures fair payouts</li>
+                  <li>✓ No interest charges - just community savings</li>
+                  <li>✓ Fully transparent on-chain records</li>
                 </ul>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'safety' && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-2xl border border-gray-200 p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-2xl">🛡️</div>
+                  <h2 className="text-2xl font-bold text-gray-900">Safety & Trust</h2>
+                </div>
+                
+                <p className="text-gray-600 mb-8">
+                  Axiom SUSU is designed with your security as the top priority. Here's how we protect your funds and ensure fair treatment for all members.
+                </p>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-blue-50 rounded-xl p-6">
+                    <h3 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                      <span>🔐</span> Smart Contract Security
+                    </h3>
+                    <ul className="text-blue-700 text-sm space-y-2">
+                      <li>• All funds held by audited smart contract, not individuals</li>
+                      <li>• No single person can access or redirect funds</li>
+                      <li>• Code executes automatically without human intervention</li>
+                      <li>• Built with OpenZeppelin security standards</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-purple-50 rounded-xl p-6">
+                    <h3 className="font-semibold text-purple-800 mb-3 flex items-center gap-2">
+                      <span>👁️</span> Full Transparency
+                    </h3>
+                    <ul className="text-purple-700 text-sm space-y-2">
+                      <li>• Every contribution visible on Arbitrum blockchain</li>
+                      <li>• Every payout verifiable by anyone</li>
+                      <li>• Pool rules set at creation and cannot change</li>
+                      <li>• View contract on Blockscout anytime</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-green-50 rounded-xl p-6">
+                    <h3 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                      <span>⚖️</span> Fair Payouts
+                    </h3>
+                    <ul className="text-green-700 text-sm space-y-2">
+                      <li>• Payout order set at pool start (sequential or random)</li>
+                      <li>• Cannot be changed after pool begins</li>
+                      <li>• Everyone receives exactly once</li>
+                      <li>• Automatic execution - no favoritism possible</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-amber-50 rounded-xl p-6">
+                    <h3 className="font-semibold text-amber-800 mb-3 flex items-center gap-2">
+                      <span>⏰</span> Grace Periods & Protection
+                    </h3>
+                    <ul className="text-amber-700 text-sm space-y-2">
+                      <li>• 24-hour grace period for late contributions</li>
+                      <li>• Small late fee incentivizes on-time payment</li>
+                      <li>• Emergency pause if critical issues arise</li>
+                      <li>• Pro-rata refunds if pool is cancelled</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-200 p-8">
+                <h3 className="text-xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h3>
+                
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">What happens if someone doesn't pay?</h4>
+                    <p className="text-gray-600 text-sm">There's a 24-hour grace period for late payments with a small 2% late fee. If a member repeatedly misses payments, they can be ejected from the pool to protect other members.</p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Can someone run away with the money after receiving their payout?</h4>
+                    <p className="text-gray-600 text-sm">Members are expected to continue contributing after receiving their payout. If they stop, they forfeit their position and any future participation. The smart contract tracks all obligations transparently.</p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Who holds the funds?</h4>
+                    <p className="text-gray-600 text-sm">The smart contract holds all funds. No individual - not even the pool creator - can access funds outside of the normal contribution and payout process. The contract code is public and verifiable.</p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">What if I need to leave early?</h4>
+                    <p className="text-gray-600 text-sm">You can exit a pool early, but if you've already received your payout, you forfeit any remaining contributions. If you haven't received yet, your contributions may be partially refunded depending on pool rules.</p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Is my money safe?</h4>
+                    <p className="text-gray-600 text-sm">Your funds are secured by audited smart contracts on Arbitrum, a proven Layer 2 blockchain. The code follows industry-standard security practices from OpenZeppelin. However, as with any blockchain application, you should only participate with funds you can afford to have locked for the pool duration.</p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">How do I know I'll get paid?</h4>
+                    <p className="text-gray-600 text-sm">Payouts are automatic and enforced by code. When all members contribute for a cycle, the designated recipient automatically receives the pooled funds. No human can stop or redirect this payment.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-900 rounded-2xl p-8 text-white">
+                <h3 className="text-xl font-bold mb-4">Best Practices for Safe Participation</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="flex gap-3">
+                    <span className="text-green-400">✓</span>
+                    <p className="text-gray-300 text-sm">Start with pools involving people you know and trust</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-green-400">✓</span>
+                    <p className="text-gray-300 text-sm">Only contribute amounts you can comfortably afford</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-green-400">✓</span>
+                    <p className="text-gray-300 text-sm">Understand the full pool duration before joining</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-green-400">✓</span>
+                    <p className="text-gray-300 text-sm">Set reminders for contribution deadlines</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-green-400">✓</span>
+                    <p className="text-gray-300 text-sm">Verify the smart contract address before transacting</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-green-400">✓</span>
+                    <p className="text-gray-300 text-sm">Keep your wallet secure and never share your seed phrase</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <a
+                  href={`https://arbitrum.blockscout.com/address/${contractAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 font-medium"
+                >
+                  View Smart Contract on Blockscout
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
               </div>
             </div>
           )}
