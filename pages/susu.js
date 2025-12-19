@@ -11,7 +11,7 @@ const STATUS_LABELS = {
 };
 
 const SUSU_CONTRACT = '0x6C69D730327930B49A7997B7b5fb0865F30c95A5';
-const AXM_TOKEN = '0x8fbd7971C5E2A9f8a536eb777C3c8008CF791237';
+const AXM_TOKEN = '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D';
 
 const SUSU_ABI = [
   "function createPool(address token, uint256 memberCount, uint256 contributionAmount, uint256 cycleDuration, uint256 startTime, bool randomizedOrder, bool openJoin, uint16 protocolFeeBps) external returns (uint256)",
