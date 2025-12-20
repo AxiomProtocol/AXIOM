@@ -141,7 +141,7 @@ export default function DisclosureBanner({
                       Read more
                     </button>
                   ) : (
-                    <p className="text-gray-300 text-sm mt-1">{disclosure.content}</p>
+                    <p className="text-white/90 text-sm mt-1">{disclosure.content}</p>
                   )}
                 </div>
               </div>
@@ -155,7 +155,7 @@ export default function DisclosureBanner({
                     I Understand
                   </button>
                 ) : (
-                  <span className="ml-4 px-3 py-1 bg-gray-700/50 border border-gray-600 text-gray-400 text-xs rounded whitespace-nowrap">
+                  <span className="ml-4 px-3 py-1 bg-gray-700/50 border border-gray-500 text-gray-200 text-xs rounded whitespace-nowrap">
                     Connect wallet to acknowledge
                   </span>
                 )
