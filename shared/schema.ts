@@ -2856,3 +2856,194 @@ export type SusuGroupMember = typeof susuGroupMembers.$inferSelect;
 export type InsertSusuGroupMember = typeof susuGroupMembers.$inferInsert;
 export type SusuInvitation = typeof susuInvitations.$inferSelect;
 export type InsertSusuInvitation = typeof susuInvitations.$inferInsert;
+
+// ==================== COMPLIANCE & TRUST CENTER TABLES ====================
+
+export const complianceClaimStatusEnum = pgEnum('compliance_claim_status', [
+  'active',
+  'verified',
+  'pending_verification',
+  'deprecated',
+  'retracted'
+]);
+
+export const complianceClaimCategoryEnum = pgEnum('compliance_claim_category', [
+  'security',
+  'tokenomics',
+  'governance',
+  'kyc_aml',
+  'regulatory',
+  'smart_contract',
+  'treasury',
+  'keygrow',
+  'depin',
+  'banking',
+  'general'
+]);
+
+export const evidenceTypeEnum = pgEnum('evidence_type', [
+  'contract_address',
+  'transaction_hash',
+  'document',
+  'audit_report',
+  'screenshot',
+  'api_endpoint',
+  'external_link',
+  'code_reference'
+]);
+
+export const complaintStatusEnum = pgEnum('complaint_status', [
+  'submitted',
+  'under_review',
+  'investigating',
+  'resolved',
+  'rejected',
+  'escalated'
+]);
+
+export const complaintCategoryEnum = pgEnum('complaint_category', [
+  'misleading_claim',
+  'security_concern',
+  'fund_dispute',
+  'service_issue',
+  'technical_bug',
+  'regulatory_concern',
+  'other'
+]);
+
+export const complianceClaims = pgTable("compliance_claims", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description").notNull(),
+  category: complianceClaimCategoryEnum("category").notNull(),
+  status: complianceClaimStatusEnum("status").default('active'),
+  featureId: varchar("feature_id", { length: 100 }),
+  contractAddress: varchar("contract_address", { length: 42 }),
+  displayOrder: integer("display_order").default(0),
+  isPublic: boolean("is_public").default(true),
+  verifiedAt: timestamp("verified_at"),
+  verifiedBy: varchar("verified_by", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  categoryIdx: index("compliance_claims_category_idx").on(table.category),
+  statusIdx: index("compliance_claims_status_idx").on(table.status),
+  featureIdx: index("compliance_claims_feature_idx").on(table.featureId),
+}));
+
+export const complianceEvidence = pgTable("compliance_evidence", {
+  id: serial("id").primaryKey(),
+  claimId: integer("claim_id").references(() => complianceClaims.id).notNull(),
+  type: evidenceTypeEnum("type").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  url: text("url"),
+  hash: varchar("hash", { length: 66 }),
+  metadata: jsonb("metadata"),
+  isVerified: boolean("is_verified").default(false),
+  verifiedAt: timestamp("verified_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  claimIdx: index("compliance_evidence_claim_idx").on(table.claimId),
+  typeIdx: index("compliance_evidence_type_idx").on(table.type),
+}));
+
+export const complianceDisclosures = pgTable("compliance_disclosures", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 200 }).notNull(),
+  content: text("content").notNull(),
+  category: complianceClaimCategoryEnum("category").notNull(),
+  featureId: varchar("feature_id", { length: 100 }),
+  requiresAcknowledgement: boolean("requires_acknowledgement").default(false),
+  displayLocation: varchar("display_location", { length: 100 }),
+  isActive: boolean("is_active").default(true),
+  effectiveDate: timestamp("effective_date").defaultNow(),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  categoryIdx: index("compliance_disclosures_category_idx").on(table.category),
+  featureIdx: index("compliance_disclosures_feature_idx").on(table.featureId),
+  activeIdx: index("compliance_disclosures_active_idx").on(table.isActive),
+}));
+
+export const complianceAcknowledgements = pgTable("compliance_acknowledgements", {
+  id: serial("id").primaryKey(),
+  disclosureId: integer("disclosure_id").references(() => complianceDisclosures.id).notNull(),
+  userId: integer("user_id").references(() => users.id),
+  walletAddress: varchar("wallet_address", { length: 42 }),
+  acknowledgedAt: timestamp("acknowledged_at").defaultNow(),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+}, (table) => ({
+  disclosureIdx: index("compliance_ack_disclosure_idx").on(table.disclosureId),
+  userIdx: index("compliance_ack_user_idx").on(table.userId),
+  walletIdx: index("compliance_ack_wallet_idx").on(table.walletAddress),
+}));
+
+export const complianceComplaints = pgTable("compliance_complaints", {
+  id: serial("id").primaryKey(),
+  ticketNumber: varchar("ticket_number", { length: 20 }).unique().notNull(),
+  category: complaintCategoryEnum("category").notNull(),
+  subject: varchar("subject", { length: 200 }).notNull(),
+  description: text("description").notNull(),
+  claimId: integer("claim_id").references(() => complianceClaims.id),
+  status: complaintStatusEnum("status").default('submitted'),
+  priority: varchar("priority", { length: 20 }).default('normal'),
+  submitterEmail: varchar("submitter_email", { length: 255 }),
+  submitterWallet: varchar("submitter_wallet", { length: 42 }),
+  submitterId: integer("submitter_id").references(() => users.id),
+  assignedTo: varchar("assigned_to", { length: 100 }),
+  resolution: text("resolution"),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  ticketIdx: index("compliance_complaints_ticket_idx").on(table.ticketNumber),
+  statusIdx: index("compliance_complaints_status_idx").on(table.status),
+  categoryIdx: index("compliance_complaints_category_idx").on(table.category),
+  claimIdx: index("compliance_complaints_claim_idx").on(table.claimId),
+}));
+
+export const complianceComplaintUpdates = pgTable("compliance_complaint_updates", {
+  id: serial("id").primaryKey(),
+  complaintId: integer("complaint_id").references(() => complianceComplaints.id).notNull(),
+  updateType: varchar("update_type", { length: 50 }).notNull(),
+  message: text("message").notNull(),
+  isPublic: boolean("is_public").default(true),
+  createdBy: varchar("created_by", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  complaintIdx: index("compliance_updates_complaint_idx").on(table.complaintId),
+}));
+
+export const complianceEvents = pgTable("compliance_events", {
+  id: serial("id").primaryKey(),
+  eventType: varchar("event_type", { length: 100 }).notNull(),
+  entityType: varchar("entity_type", { length: 50 }).notNull(),
+  entityId: integer("entity_id"),
+  description: text("description"),
+  metadata: jsonb("metadata"),
+  performedBy: varchar("performed_by", { length: 100 }),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  eventTypeIdx: index("compliance_events_type_idx").on(table.eventType),
+  entityIdx: index("compliance_events_entity_idx").on(table.entityType, table.entityId),
+  createdAtIdx: index("compliance_events_created_idx").on(table.createdAt),
+}));
+
+export type ComplianceClaim = typeof complianceClaims.$inferSelect;
+export type InsertComplianceClaim = typeof complianceClaims.$inferInsert;
+export type ComplianceEvidence = typeof complianceEvidence.$inferSelect;
+export type InsertComplianceEvidence = typeof complianceEvidence.$inferInsert;
+export type ComplianceDisclosure = typeof complianceDisclosures.$inferSelect;
+export type InsertComplianceDisclosure = typeof complianceDisclosures.$inferInsert;
+export type ComplianceAcknowledgement = typeof complianceAcknowledgements.$inferSelect;
+export type InsertComplianceAcknowledgement = typeof complianceAcknowledgements.$inferInsert;
+export type ComplianceComplaint = typeof complianceComplaints.$inferSelect;
+export type InsertComplianceComplaint = typeof complianceComplaints.$inferInsert;
+export type ComplianceComplaintUpdate = typeof complianceComplaintUpdates.$inferSelect;
+export type InsertComplianceComplaintUpdate = typeof complianceComplaintUpdates.$inferInsert;
+export type ComplianceEvent = typeof complianceEvents.$inferSelect;
+export type InsertComplianceEvent = typeof complianceEvents.$inferInsert;
