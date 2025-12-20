@@ -411,6 +411,7 @@ export default function SusuPage() {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">Discover Purpose Groups</h2>
                   <p className="text-gray-500 mt-1">Find savings groups by region and purpose, or start your own</p>
+                  <p className="text-xs text-blue-600 mt-1">New to SUSU? Check the "How It Works" tab to learn about community savings!</p>
                 </div>
                 <button
                   onClick={() => setShowCreateGroup(true)}
@@ -959,6 +960,71 @@ export default function SusuPage() {
                   <li>✓ Fully transparent on-chain records</li>
                 </ul>
               </div>
+
+              <div className="mt-8 border-t border-gray-200 pt-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Finding Your Savings Community</h2>
+                <p className="text-gray-600 mb-6">
+                  Not sure where to start? Use our Discovery System to find or create a savings group that matches your goals and location.
+                </p>
+
+                <div className="space-y-6">
+                  <div className="bg-blue-50 rounded-xl p-6">
+                    <h3 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                      <span className="text-xl">🌍</span> Step 1: Browse by Region
+                    </h3>
+                    <p className="text-blue-700 text-sm">
+                      Interest Hubs are regional communities - your city, state, or country. Filter by region to find people near you who share similar financial goals. Local groups often work better because members can build real relationships.
+                    </p>
+                  </div>
+
+                  <div className="bg-purple-50 rounded-xl p-6">
+                    <h3 className="font-semibold text-purple-800 mb-3 flex items-center gap-2">
+                      <span className="text-xl">🎯</span> Step 2: Choose Your Purpose
+                    </h3>
+                    <p className="text-purple-700 text-sm mb-3">
+                      Purpose Groups are organized around savings goals. We offer 12 categories to help you find like-minded savers:
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-purple-600 text-xs">
+                      <span>🛡️ Emergency Fund</span>
+                      <span>🏠 Home Down Payment</span>
+                      <span>🚀 Business Startup</span>
+                      <span>📚 Education</span>
+                      <span>💍 Wedding/Celebration</span>
+                      <span>✈️ Travel</span>
+                      <span>🚗 Vehicle</span>
+                      <span>👶 Family Planning</span>
+                      <span>🏥 Medical/Health</span>
+                      <span>💳 Debt Payoff</span>
+                      <span>📈 Investment</span>
+                      <span>🌟 General Savings</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-amber-50 rounded-xl p-6">
+                    <h3 className="font-semibold text-amber-800 mb-3 flex items-center gap-2">
+                      <span className="text-xl">👥</span> Step 3: Join a Purpose Group
+                    </h3>
+                    <p className="text-amber-700 text-sm">
+                      Purpose Groups are pre-commitment groups where members gather before creating an on-chain pool. This is your chance to meet potential pool members, discuss terms, and build trust. Once enough committed members join, the group can "graduate" to become an official on-chain SUSU Circle.
+                    </p>
+                  </div>
+
+                  <div className="bg-green-50 rounded-xl p-6">
+                    <h3 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                      <span className="text-xl">✨</span> Step 4: Graduate to On-Chain Circle
+                    </h3>
+                    <p className="text-green-700 text-sm">
+                      When your Purpose Group has enough committed members (usually 3-10), the organizer can create an official on-chain SUSU pool. At this point, the smart contract takes over: contributions are locked, payouts are automated, and everything is transparent on the blockchain.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 p-4 bg-gray-100 rounded-xl">
+                  <p className="text-gray-600 text-sm text-center">
+                    <strong>Tip:</strong> Can't find a group that fits? Click "+ Start a Group" to create your own Purpose Group and invite others to join!
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1245,9 +1311,16 @@ export default function SusuPage() {
                 </button>
               </div>
               
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-5">
+                <div className="bg-blue-50 rounded-xl p-4 mb-4">
+                  <p className="text-blue-800 text-sm">
+                    <strong>What is a Purpose Group?</strong> It's a pre-commitment group where people gather before creating an on-chain savings pool. Build trust first, then graduate to an official SUSU Circle.
+                  </p>
+                </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Region Hub</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Region Hub *</label>
+                  <p className="text-xs text-gray-500 mb-2">Choose the region where your group will be based. Local groups build stronger connections.</p>
                   <select
                     value={newGroupForm.hubId}
                     onChange={(e) => setNewGroupForm({...newGroupForm, hubId: e.target.value})}
@@ -1258,10 +1331,14 @@ export default function SusuPage() {
                       <option key={hub.id} value={hub.id}>{hub.regionDisplay}</option>
                     ))}
                   </select>
+                  {discoverHubs.length === 0 && (
+                    <p className="text-xs text-amber-600 mt-1">No regions available yet. Contact support to add your region.</p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Savings Purpose</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Savings Purpose *</label>
+                  <p className="text-xs text-gray-500 mb-2">What are you all saving for? This helps members with the same goal find each other.</p>
                   <select
                     value={newGroupForm.purposeCategoryId}
                     onChange={(e) => setNewGroupForm({...newGroupForm, purposeCategoryId: e.target.value})}
@@ -1276,7 +1353,8 @@ export default function SusuPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Contribution (AXM)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Contribution (AXM)</label>
+                    <p className="text-xs text-gray-500 mb-2">Amount each person contributes per cycle</p>
                     <input
                       type="number"
                       min="1"
@@ -1286,7 +1364,8 @@ export default function SusuPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Cycle (days)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Cycle Length</label>
+                    <p className="text-xs text-gray-500 mb-2">How often members contribute</p>
                     <select
                       value={newGroupForm.cycleLengthDays}
                       onChange={(e) => setNewGroupForm({...newGroupForm, cycleLengthDays: parseInt(e.target.value)})}
@@ -1301,7 +1380,8 @@ export default function SusuPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Min Members</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Min Members</label>
+                    <p className="text-xs text-gray-500 mb-2">Needed to activate the pool</p>
                     <input
                       type="number"
                       min="2"
@@ -1312,7 +1392,8 @@ export default function SusuPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Max Members</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Max Members</label>
+                    <p className="text-xs text-gray-500 mb-2">Group capacity limit</p>
                     <input
                       type="number"
                       min="2"
@@ -1325,11 +1406,12 @@ export default function SusuPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Description (optional)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
+                  <p className="text-xs text-gray-500 mb-2">Add details to attract the right members - goals, rules, or expectations</p>
                   <textarea
                     value={newGroupForm.description}
                     onChange={(e) => setNewGroupForm({...newGroupForm, description: e.target.value})}
-                    placeholder="Describe the purpose of this group..."
+                    placeholder="Example: Looking for 5 friends to save for a group vacation next summer. Monthly contributions, trusted friends only!"
                     rows={3}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                   />
