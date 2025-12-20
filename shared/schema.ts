@@ -2721,3 +2721,138 @@ export const platformMetrics = pgTable("platform_metrics", {
 
 export type PlatformMetric = typeof platformMetrics.$inferSelect;
 export type InsertPlatformMetric = typeof platformMetrics.$inferInsert;
+
+// ============================================
+// SUSU REGIONAL INTEREST HUBS & PURPOSE GROUPS
+// ============================================
+
+export const susuRegionTypeEnum = pgEnum('susu_region_type', [
+  'city',
+  'metro',
+  'state',
+  'country'
+]);
+
+export const susuHubRoleEnum = pgEnum('susu_hub_role', [
+  'member',
+  'moderator',
+  'regional_admin',
+  'regional_owner'
+]);
+
+export const susuGroupRoleEnum = pgEnum('susu_group_role', [
+  'member',
+  'organizer'
+]);
+
+export const susuInviteStatusEnum = pgEnum('susu_invite_status', [
+  'pending',
+  'accepted',
+  'declined',
+  'expired'
+]);
+
+export const susuInterestHubs = pgTable("susu_interest_hubs", {
+  id: serial("id").primaryKey(),
+  regionId: varchar("region_id", { length: 100 }).notNull(),
+  regionDisplay: varchar("region_display", { length: 200 }).notNull(),
+  regionType: susuRegionTypeEnum("region_type").default('city'),
+  description: text("description"),
+  coverImageUrl: varchar("cover_image_url", { length: 500 }),
+  memberCount: integer("member_count").default(0),
+  createdBy: integer("created_by").references(() => users.id),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  regionIdIdx: index("susu_hubs_region_id_idx").on(table.regionId),
+  isActiveIdx: index("susu_hubs_active_idx").on(table.isActive),
+  memberCountIdx: index("susu_hubs_member_count_idx").on(table.memberCount),
+}));
+
+export const susuPurposeCategories = pgTable("susu_purpose_categories", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  icon: varchar("icon", { length: 50 }),
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+});
+
+export const susuPurposeGroups = pgTable("susu_purpose_groups", {
+  id: serial("id").primaryKey(),
+  hubId: integer("hub_id").references(() => susuInterestHubs.id).notNull(),
+  purposeCategoryId: integer("purpose_category_id").references(() => susuPurposeCategories.id).notNull(),
+  customPurposeLabel: varchar("custom_purpose_label", { length: 200 }),
+  contributionAmount: decimal("contribution_amount", { precision: 18, scale: 8 }).notNull(),
+  contributionCurrency: varchar("contribution_currency", { length: 20 }).default('AXM'),
+  cycleLengthDays: integer("cycle_length_days").notNull(),
+  displayName: varchar("display_name", { length: 300 }),
+  description: text("description"),
+  memberCount: integer("member_count").default(0),
+  minMembersToActivate: integer("min_members_to_activate").default(3),
+  maxMembers: integer("max_members").default(50),
+  isActive: boolean("is_active").default(true),
+  createdBy: integer("created_by").references(() => users.id),
+  graduatedToPoolId: integer("graduated_to_pool_id"),
+  graduatedAt: timestamp("graduated_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  hubIdIdx: index("susu_groups_hub_id_idx").on(table.hubId),
+  purposeIdx: index("susu_groups_purpose_idx").on(table.purposeCategoryId),
+  isActiveIdx: index("susu_groups_active_idx").on(table.isActive),
+  graduatedIdx: index("susu_groups_graduated_idx").on(table.graduatedToPoolId),
+}));
+
+export const susuHubMembers = pgTable("susu_hub_members", {
+  id: serial("id").primaryKey(),
+  hubId: integer("hub_id").references(() => susuInterestHubs.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  role: susuHubRoleEnum("role").default('member'),
+  joinedAt: timestamp("joined_at").defaultNow(),
+}, (table) => ({
+  hubUserIdx: index("susu_hub_members_hub_user_idx").on(table.hubId, table.userId),
+  userIdx: index("susu_hub_members_user_idx").on(table.userId),
+}));
+
+export const susuGroupMembers = pgTable("susu_group_members", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").references(() => susuPurposeGroups.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  role: susuGroupRoleEnum("role").default('member'),
+  commitmentConfirmed: boolean("commitment_confirmed").default(false),
+  joinedAt: timestamp("joined_at").defaultNow(),
+}, (table) => ({
+  groupUserIdx: index("susu_group_members_group_user_idx").on(table.groupId, table.userId),
+  userIdx: index("susu_group_members_user_idx").on(table.userId),
+}));
+
+export const susuInvitations = pgTable("susu_invitations", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").references(() => susuPurposeGroups.id),
+  hubId: integer("hub_id").references(() => susuInterestHubs.id),
+  invitedBy: integer("invited_by").references(() => users.id).notNull(),
+  inviteePhoneHash: varchar("invitee_phone_hash", { length: 128 }),
+  inviteeName: varchar("invitee_name", { length: 100 }),
+  status: susuInviteStatusEnum("status").default('pending'),
+  token: varchar("token", { length: 64 }).unique().notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at"),
+}, (table) => ({
+  tokenIdx: index("susu_invitations_token_idx").on(table.token),
+  statusIdx: index("susu_invitations_status_idx").on(table.status),
+}));
+
+export type SusuInterestHub = typeof susuInterestHubs.$inferSelect;
+export type InsertSusuInterestHub = typeof susuInterestHubs.$inferInsert;
+export type SusuPurposeCategory = typeof susuPurposeCategories.$inferSelect;
+export type InsertSusuPurposeCategory = typeof susuPurposeCategories.$inferInsert;
+export type SusuPurposeGroup = typeof susuPurposeGroups.$inferSelect;
+export type InsertSusuPurposeGroup = typeof susuPurposeGroups.$inferInsert;
+export type SusuHubMember = typeof susuHubMembers.$inferSelect;
+export type InsertSusuHubMember = typeof susuHubMembers.$inferInsert;
+export type SusuGroupMember = typeof susuGroupMembers.$inferSelect;
+export type InsertSusuGroupMember = typeof susuGroupMembers.$inferInsert;
+export type SusuInvitation = typeof susuInvitations.$inferSelect;
+export type InsertSusuInvitation = typeof susuInvitations.$inferInsert;

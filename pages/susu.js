@@ -49,7 +49,7 @@ export default function SusuPage() {
   const [pools, setPools] = useState([]);
   const [userPools, setUserPools] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('browse');
+  const [activeTab, setActiveTab] = useState('discover');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedPool, setSelectedPool] = useState(null);
   const [poolDetails, setPoolDetails] = useState(null);
@@ -67,8 +67,32 @@ export default function SusuPage() {
   const [createError, setCreateError] = useState('');
   const [createSuccess, setCreateSuccess] = useState('');
 
+  // Discovery state
+  const [discoverGroups, setDiscoverGroups] = useState([]);
+  const [discoverHubs, setDiscoverHubs] = useState([]);
+  const [discoverCategories, setDiscoverCategories] = useState([]);
+  const [discoverLoading, setDiscoverLoading] = useState(false);
+  const [discoverFilters, setDiscoverFilters] = useState({
+    region: '',
+    purposeId: '',
+    q: ''
+  });
+  const [selectedHub, setSelectedHub] = useState(null);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [newGroupForm, setNewGroupForm] = useState({
+    hubId: '',
+    purposeCategoryId: '',
+    contributionAmount: 50,
+    cycleLengthDays: 30,
+    description: '',
+    minMembersToActivate: 3,
+    maxMembers: 10
+  });
+  const [creatingGroup, setCreatingGroup] = useState(false);
+
   useEffect(() => {
     fetchPools();
+    fetchDiscoveryData();
   }, []);
 
   useEffect(() => {
@@ -76,6 +100,120 @@ export default function SusuPage() {
       fetchUserPools();
     }
   }, [walletState?.address]);
+
+  const fetchDiscoveryData = async () => {
+    setDiscoverLoading(true);
+    try {
+      const [hubsRes, categoriesRes, groupsRes] = await Promise.all([
+        fetch('/api/susu/hubs'),
+        fetch('/api/susu/categories'),
+        fetch('/api/susu/discover')
+      ]);
+      
+      if (hubsRes.ok) {
+        const data = await hubsRes.json();
+        setDiscoverHubs(data.hubs || []);
+      }
+      if (categoriesRes.ok) {
+        const data = await categoriesRes.json();
+        setDiscoverCategories(data.categories || []);
+      }
+      if (groupsRes.ok) {
+        const data = await groupsRes.json();
+        setDiscoverGroups(data.groups || []);
+      }
+    } catch (error) {
+      console.error('Error fetching discovery data:', error);
+    } finally {
+      setDiscoverLoading(false);
+    }
+  };
+
+  const searchGroups = async () => {
+    setDiscoverLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (discoverFilters.region) params.append('region', discoverFilters.region);
+      if (discoverFilters.purposeId) params.append('purposeId', discoverFilters.purposeId);
+      if (discoverFilters.q) params.append('q', discoverFilters.q);
+      
+      const res = await fetch(`/api/susu/discover?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDiscoverGroups(data.groups || []);
+      }
+    } catch (error) {
+      console.error('Error searching groups:', error);
+    } finally {
+      setDiscoverLoading(false);
+    }
+  };
+
+  const handleJoinGroup = async (groupId) => {
+    if (!walletState?.address) {
+      alert('Please connect your wallet first');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/susu/groups/${groupId}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress: walletState.address })
+      });
+      if (res.ok) {
+        alert('Successfully joined the group!');
+        fetchDiscoveryData();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to join group');
+      }
+    } catch (error) {
+      alert('Error joining group');
+    }
+  };
+
+  const handleCreateGroup = async () => {
+    if (!walletState?.address) {
+      alert('Please connect your wallet first');
+      return;
+    }
+    if (!newGroupForm.hubId || !newGroupForm.purposeCategoryId) {
+      alert('Please select a region hub and purpose category');
+      return;
+    }
+    setCreatingGroup(true);
+    try {
+      const res = await fetch('/api/susu/groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newGroupForm,
+          walletAddress: walletState.address
+        })
+      });
+      if (res.ok) {
+        alert('Purpose group created successfully!');
+        setShowCreateGroup(false);
+        setNewGroupForm({
+          hubId: '',
+          purposeCategoryId: '',
+          contributionAmount: 50,
+          cycleLengthDays: 30,
+          description: '',
+          minMembersToActivate: 3,
+          maxMembers: 10
+        });
+        fetchDiscoveryData();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to create group');
+      }
+    } catch (error) {
+      alert('Error creating group');
+    } finally {
+      setCreatingGroup(false);
+    }
+  };
 
   const fetchPools = async () => {
     try {
@@ -197,6 +335,7 @@ export default function SusuPage() {
   );
 
   const tabs = [
+    { id: 'discover', label: 'Discover Groups', icon: '🌍' },
     { id: 'browse', label: 'Browse Pools', icon: '🔍' },
     { id: 'create', label: 'Create Pool', icon: '➕' },
     { id: 'my-pools', label: 'My Pools', icon: '👤' },
@@ -266,6 +405,193 @@ export default function SusuPage() {
         </div>
 
         <div className="max-w-6xl mx-auto px-6 py-8">
+          {activeTab === 'discover' && (
+            <div>
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Discover Purpose Groups</h2>
+                  <p className="text-gray-500 mt-1">Find savings groups by region and purpose, or start your own</p>
+                </div>
+                <button
+                  onClick={() => setShowCreateGroup(true)}
+                  className="px-6 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors flex items-center gap-2"
+                >
+                  <span>+</span> Start a Group
+                </button>
+              </div>
+
+              <div className="grid md:grid-cols-4 gap-4 mb-6">
+                <input
+                  type="text"
+                  placeholder="Search groups..."
+                  value={discoverFilters.q}
+                  onChange={(e) => setDiscoverFilters({...discoverFilters, q: e.target.value})}
+                  onKeyDown={(e) => e.key === 'Enter' && searchGroups()}
+                  className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                />
+                <select
+                  value={discoverFilters.region}
+                  onChange={(e) => { setDiscoverFilters({...discoverFilters, region: e.target.value}); }}
+                  className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                >
+                  <option value="">All Regions</option>
+                  {discoverHubs.map(hub => (
+                    <option key={hub.id} value={hub.regionId}>{hub.regionDisplay}</option>
+                  ))}
+                </select>
+                <select
+                  value={discoverFilters.purposeId}
+                  onChange={(e) => { setDiscoverFilters({...discoverFilters, purposeId: e.target.value}); }}
+                  className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                >
+                  <option value="">All Purposes</option>
+                  {discoverCategories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={searchGroups}
+                  className="px-6 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors"
+                >
+                  Search
+                </button>
+              </div>
+
+              {discoverHubs.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Regional Interest Hubs</h3>
+                  <div className="flex gap-3 overflow-x-auto pb-2">
+                    {discoverHubs.map(hub => (
+                      <div
+                        key={hub.id}
+                        onClick={() => setDiscoverFilters({...discoverFilters, region: hub.regionId})}
+                        className={`flex-shrink-0 bg-white rounded-xl border-2 p-4 cursor-pointer transition-all ${
+                          discoverFilters.region === hub.regionId 
+                            ? 'border-amber-500 shadow-lg' 
+                            : 'border-gray-200 hover:border-amber-300'
+                        }`}
+                      >
+                        <div className="font-semibold text-gray-900">{hub.regionDisplay}</div>
+                        <div className="text-sm text-gray-500">{hub.memberCount || 0} members</div>
+                      </div>
+                    ))}
+                    <div
+                      onClick={() => setShowCreateGroup(true)}
+                      className="flex-shrink-0 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 p-4 cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-all flex items-center gap-2"
+                    >
+                      <span className="text-2xl text-gray-400">+</span>
+                      <span className="text-gray-600">New Region</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {discoverCategories.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Savings Purposes</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {discoverCategories.map(cat => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setDiscoverFilters({...discoverFilters, purposeId: discoverFilters.purposeId === cat.id.toString() ? '' : cat.id.toString()})}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-2 ${
+                          discoverFilters.purposeId === cat.id.toString()
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-amber-100'
+                        }`}
+                      >
+                        <span>{cat.icon}</span>
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Available Purpose Groups
+                {discoverGroups.length > 0 && <span className="text-gray-500 font-normal ml-2">({discoverGroups.length})</span>}
+              </h3>
+
+              {discoverLoading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full mx-auto mb-4" />
+                  <p className="text-gray-500">Loading groups...</p>
+                </div>
+              ) : discoverGroups.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
+                  <div className="text-5xl mb-4">🌱</div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No Groups Yet</h3>
+                  <p className="text-gray-500 mb-6">Be the first to start a purpose group in your area!</p>
+                  <button
+                    onClick={() => setShowCreateGroup(true)}
+                    className="px-6 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors"
+                  >
+                    Start a Purpose Group
+                  </button>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {discoverGroups.map(group => (
+                    <div
+                      key={group.id}
+                      className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg transition-all"
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">{group.purposeIcon}</span>
+                          <span className="font-semibold text-gray-900">{group.purposeName}</span>
+                        </div>
+                        {group.isReadyToActivate && (
+                          <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                            Ready!
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="text-sm text-gray-500 mb-4">{group.regionDisplay}</div>
+
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Contribution</span>
+                          <span className="font-medium">{parseFloat(group.contributionAmount).toLocaleString()} {group.contributionCurrency}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Cycle</span>
+                          <span className="font-medium">{group.cycleLengthDays} days</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Members</span>
+                          <span className="font-medium">{group.memberCount || 0} / {group.maxMembers}</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="bg-amber-500 h-full transition-all"
+                            style={{ width: `${((group.memberCount || 0) / (group.maxMembers || 10)) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {group.availableSlots > 0 && (
+                        <button
+                          onClick={() => handleJoinGroup(group.id)}
+                          className="w-full py-2 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-colors"
+                        >
+                          Join Group ({group.availableSlots} slots left)
+                        </button>
+                      )}
+                      {group.availableSlots <= 0 && (
+                        <div className="w-full py-2 bg-gray-100 text-gray-500 rounded-lg font-medium text-center">
+                          Group Full
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'browse' && (
             <div>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -896,6 +1222,135 @@ export default function SusuPage() {
                     View on Blockscout
                   </a>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showCreateGroup && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-200 flex justify-between items-start">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Start a Purpose Group</h3>
+                  <p className="text-sm text-gray-500">Create a savings group for your community</p>
+                </div>
+                <button
+                  onClick={() => setShowCreateGroup(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Region Hub</label>
+                  <select
+                    value={newGroupForm.hubId}
+                    onChange={(e) => setNewGroupForm({...newGroupForm, hubId: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  >
+                    <option value="">Select a region...</option>
+                    {discoverHubs.map(hub => (
+                      <option key={hub.id} value={hub.id}>{hub.regionDisplay}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Savings Purpose</label>
+                  <select
+                    value={newGroupForm.purposeCategoryId}
+                    onChange={(e) => setNewGroupForm({...newGroupForm, purposeCategoryId: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  >
+                    <option value="">Select a purpose...</option>
+                    {discoverCategories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Contribution (AXM)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={newGroupForm.contributionAmount}
+                      onChange={(e) => setNewGroupForm({...newGroupForm, contributionAmount: parseFloat(e.target.value) || 1})}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Cycle (days)</label>
+                    <select
+                      value={newGroupForm.cycleLengthDays}
+                      onChange={(e) => setNewGroupForm({...newGroupForm, cycleLengthDays: parseInt(e.target.value)})}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    >
+                      <option value={7}>Weekly (7 days)</option>
+                      <option value={14}>Bi-Weekly (14 days)</option>
+                      <option value={30}>Monthly (30 days)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Min Members</label>
+                    <input
+                      type="number"
+                      min="2"
+                      max="50"
+                      value={newGroupForm.minMembersToActivate}
+                      onChange={(e) => setNewGroupForm({...newGroupForm, minMembersToActivate: parseInt(e.target.value) || 3})}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Max Members</label>
+                    <input
+                      type="number"
+                      min="2"
+                      max="50"
+                      value={newGroupForm.maxMembers}
+                      onChange={(e) => setNewGroupForm({...newGroupForm, maxMembers: parseInt(e.target.value) || 10})}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Description (optional)</label>
+                  <textarea
+                    value={newGroupForm.description}
+                    onChange={(e) => setNewGroupForm({...newGroupForm, description: e.target.value})}
+                    placeholder="Describe the purpose of this group..."
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  />
+                </div>
+
+                <div className="bg-amber-50 rounded-xl p-4">
+                  <h4 className="font-semibold text-amber-800 mb-2">Group Summary</h4>
+                  <div className="space-y-1 text-sm text-amber-700">
+                    <p>Contribution: {newGroupForm.contributionAmount} AXM every {newGroupForm.cycleLengthDays} days</p>
+                    <p>Members: {newGroupForm.minMembersToActivate} min, {newGroupForm.maxMembers} max</p>
+                    <p>Pool per cycle: {newGroupForm.contributionAmount * newGroupForm.maxMembers} AXM (at max capacity)</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleCreateGroup}
+                  disabled={creatingGroup || !newGroupForm.hubId || !newGroupForm.purposeCategoryId}
+                  className="w-full py-4 bg-amber-500 text-white rounded-xl font-bold text-lg hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {creatingGroup ? 'Creating...' : 'Create Purpose Group'}
+                </button>
               </div>
             </div>
           </div>
