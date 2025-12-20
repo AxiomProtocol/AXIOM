@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import Layout from '../components/Layout';
 import Link from 'next/link';
 
@@ -283,14 +284,30 @@ const KEYGROW_PROTECTIONS = [
 ];
 
 export default function TransparencyPage() {
+  const router = useRouter();
   const [treasuryBalance, setTreasuryBalance] = useState<string | null>(null);
   const [stakingTVL, setStakingTVL] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'contracts' | 'tokenomics' | 'keygrow' | 'audits'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'contracts' | 'tokenomics' | 'keygrow' | 'audits' | 'compliance'>('overview');
+  const [complianceStats, setComplianceStats] = useState<any>(null);
+  const [complaintForm, setComplaintForm] = useState({ category: 'general', subject: '', description: '', email: '', walletAddress: '' });
+  const [complaintSubmitting, setComplaintSubmitting] = useState(false);
+  const [complaintResult, setComplaintResult] = useState<any>(null);
+  const [lookupQuery, setLookupQuery] = useState('');
+  const [lookupResult, setLookupResult] = useState<any>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
 
   useEffect(() => {
     fetchTransparencyData();
+    fetchComplianceStats();
   }, []);
+
+  useEffect(() => {
+    const tab = router.query.tab;
+    if (tab && ['overview', 'contracts', 'tokenomics', 'keygrow', 'audits', 'compliance'].includes(tab as string)) {
+      setActiveTab(tab as typeof activeTab);
+    }
+  }, [router.query.tab]);
 
   const fetchTransparencyData = async () => {
     try {
@@ -304,6 +321,61 @@ export default function TransparencyPage() {
       console.error('Error fetching transparency data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchComplianceStats = async () => {
+    try {
+      const res = await fetch('/api/compliance/stats');
+      if (res.ok) {
+        const data = await res.json();
+        setComplianceStats(data);
+      }
+    } catch (err) {
+      console.error('Error fetching compliance stats:', err);
+    }
+  };
+
+  const submitComplaint = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setComplaintSubmitting(true);
+    setComplaintResult(null);
+    try {
+      const res = await fetch('/api/compliance/complaints', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(complaintForm)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setComplaintResult({ success: true, ticketNumber: data.ticketNumber, message: 'Your complaint has been submitted. Save your ticket number for tracking.' });
+        setComplaintForm({ category: 'general', subject: '', description: '', email: '', walletAddress: '' });
+      } else {
+        setComplaintResult({ success: false, message: data.error || 'Failed to submit complaint' });
+      }
+    } catch (err) {
+      setComplaintResult({ success: false, message: 'Failed to submit complaint. Please try again.' });
+    } finally {
+      setComplaintSubmitting(false);
+    }
+  };
+
+  const lookupComplaint = async () => {
+    if (!lookupQuery.trim()) return;
+    setLookupLoading(true);
+    setLookupResult(null);
+    try {
+      const res = await fetch(`/api/compliance/complaints?ticketNumber=${encodeURIComponent(lookupQuery.trim())}`);
+      const data = await res.json();
+      if (res.ok && data.complaint) {
+        setLookupResult({ success: true, complaint: data.complaint, updates: data.updates });
+      } else {
+        setLookupResult({ success: false, message: data.error || 'No complaint found with that ticket number' });
+      }
+    } catch (err) {
+      setLookupResult({ success: false, message: 'Error looking up complaint' });
+    } finally {
+      setLookupLoading(false);
     }
   };
 
@@ -377,7 +449,8 @@ export default function TransparencyPage() {
               { key: 'contracts', label: 'Smart Contracts', icon: '📜' },
               { key: 'tokenomics', label: 'Token Distribution', icon: '🪙' },
               { key: 'keygrow', label: 'KeyGrow Protections', icon: '🏠' },
-              { key: 'audits', label: 'Audits & Reports', icon: '📋' }
+              { key: 'audits', label: 'Audits & Reports', icon: '📋' },
+              { key: 'compliance', label: 'Compliance', icon: '⚖️' }
             ].map(tab => (
               <button
                 key={tab.key}
@@ -869,6 +942,267 @@ export default function TransparencyPage() {
                     <span className="font-medium">Gnosis Safe</span>
                     <p className="text-xs text-slate-400 mt-1">Multi-sig txns</p>
                   </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'compliance' && (
+            <div className="space-y-8">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Compliance & Regulatory</h2>
+                <p className="text-gray-600 mb-6">
+                  Our commitment to legal and regulatory compliance across all jurisdictions.
+                </p>
+
+                {complianceStats && (
+                  <div className="grid md:grid-cols-3 gap-4 mb-8">
+                    <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
+                      <p className="text-emerald-600 text-sm font-medium">Verified Claims</p>
+                      <p className="text-2xl font-bold text-emerald-700">{complianceStats.claims?.verified || 0}</p>
+                    </div>
+                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                      <p className="text-blue-600 text-sm font-medium">Active Disclosures</p>
+                      <p className="text-2xl font-bold text-blue-700">{complianceStats.disclosures?.active || 0}</p>
+                    </div>
+                    <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
+                      <p className="text-amber-600 text-sm font-medium">Complaints Resolved</p>
+                      <p className="text-2xl font-bold text-amber-700">{complianceStats.complaints?.resolved || 0}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <span>🔍</span> KYC & AML
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-4">
+                      Axiom Smart City follows strict Know Your Customer (KYC) and Anti-Money 
+                      Laundering (AML) procedures to ensure compliance with applicable regulations.
+                    </p>
+                    <ul className="space-y-2 text-gray-600 text-sm">
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                        Identity verification for all investors and high-value transactions
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                        Ongoing monitoring for suspicious activity
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                        Compliance with FATF guidelines and local regulations
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <span>📜</span> Regulatory Framework
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-4">
+                      We work with legal advisors to ensure our operations comply with applicable 
+                      securities laws and regulations in all jurisdictions where we operate.
+                    </p>
+                    <ul className="space-y-2 text-gray-600 text-sm">
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                        Token classification and securities compliance
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                        Cross-border transaction compliance
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                        Regular legal and compliance audits
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-amber-50 rounded-2xl border border-amber-200 p-8">
+                <div className="flex items-start gap-4">
+                  <span className="text-3xl">🌍</span>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">Jurisdictional Considerations</h3>
+                    <p className="text-gray-700 mb-3">
+                      Access to certain Axiom services may be restricted based on your jurisdiction. 
+                      Users are responsible for ensuring their participation complies with local laws.
+                    </p>
+                    <div className="bg-amber-100 border border-amber-300 rounded-xl p-4">
+                      <p className="text-amber-800 text-sm">
+                        <strong>Note:</strong> Residents of certain jurisdictions may be restricted from 
+                        participating in token sales or certain platform features.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">Submit a Complaint</h3>
+                  <p className="text-gray-600 text-sm mb-6">
+                    Have an issue or concern? Submit a complaint and we'll investigate promptly.
+                  </p>
+                  <form onSubmit={submitComplaint} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                      <select 
+                        value={complaintForm.category}
+                        onChange={(e) => setComplaintForm({...complaintForm, category: e.target.value})}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                      >
+                        <option value="general">General</option>
+                        <option value="kyc">KYC/AML Issue</option>
+                        <option value="transaction">Transaction Dispute</option>
+                        <option value="security">Security Concern</option>
+                        <option value="service">Service Quality</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                      <input 
+                        type="text"
+                        value={complaintForm.subject}
+                        onChange={(e) => setComplaintForm({...complaintForm, subject: e.target.value})}
+                        required
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                        placeholder="Brief description of the issue"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <textarea 
+                        value={complaintForm.description}
+                        onChange={(e) => setComplaintForm({...complaintForm, description: e.target.value})}
+                        required
+                        rows={4}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                        placeholder="Please provide details about your complaint"
+                      />
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3 mb-2">
+                      <p className="text-xs text-gray-500 mb-2">At least one contact method is required:</p>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                          <input 
+                            type="email"
+                            value={complaintForm.email}
+                            onChange={(e) => setComplaintForm({...complaintForm, email: e.target.value})}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                            placeholder="For receiving updates"
+                          />
+                        </div>
+                        <div className="text-center text-xs text-gray-400">- or -</div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Wallet Address</label>
+                          <input 
+                            type="text"
+                            value={complaintForm.walletAddress}
+                            onChange={(e) => setComplaintForm({...complaintForm, walletAddress: e.target.value})}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                            placeholder="0x..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <button 
+                      type="submit"
+                      disabled={complaintSubmitting}
+                      className="w-full bg-amber-500 text-white py-3 rounded-xl font-medium hover:bg-amber-600 transition disabled:opacity-50"
+                    >
+                      {complaintSubmitting ? 'Submitting...' : 'Submit Complaint'}
+                    </button>
+                  </form>
+                  {complaintResult && (
+                    <div className={`mt-4 p-4 rounded-xl ${complaintResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                      <p className={complaintResult.success ? 'text-green-700' : 'text-red-700'}>
+                        {complaintResult.message}
+                      </p>
+                      {complaintResult.ticketNumber && (
+                        <p className="text-green-800 font-bold mt-2">
+                          Ticket #: {complaintResult.ticketNumber}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">Check Complaint Status</h3>
+                  <p className="text-gray-600 text-sm mb-6">
+                    Track the status of a previously submitted complaint.
+                  </p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Ticket Number</label>
+                      <input 
+                        type="text"
+                        value={lookupQuery}
+                        onChange={(e) => setLookupQuery(e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                        placeholder="Enter your ticket number"
+                      />
+                    </div>
+                    <button 
+                      onClick={lookupComplaint}
+                      disabled={lookupLoading || !lookupQuery.trim()}
+                      className="w-full bg-slate-700 text-white py-3 rounded-xl font-medium hover:bg-slate-800 transition disabled:opacity-50"
+                    >
+                      {lookupLoading ? 'Looking up...' : 'Look Up Complaint'}
+                    </button>
+                  </div>
+                  {lookupResult && (
+                    <div className={`mt-4 p-4 rounded-xl ${lookupResult.success ? 'bg-blue-50 border border-blue-200' : 'bg-red-50 border border-red-200'}`}>
+                      {lookupResult.success ? (
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600 text-sm">Status:</span>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              lookupResult.complaint.status === 'resolved' ? 'bg-green-100 text-green-700' :
+                              lookupResult.complaint.status === 'under_review' ? 'bg-blue-100 text-blue-700' :
+                              lookupResult.complaint.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                              {lookupResult.complaint.status?.replace('_', ' ').toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 text-sm">Category:</span>
+                            <span className="text-gray-900 text-sm">{lookupResult.complaint.category}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 text-sm">Submitted:</span>
+                            <span className="text-gray-900 text-sm">
+                              {new Date(lookupResult.complaint.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="pt-2 border-t border-blue-100">
+                            <p className="text-gray-600 text-sm">Subject: {lookupResult.complaint.subject}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-red-700">{lookupResult.message}</p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-8 pt-6 border-t border-gray-200">
+                    <h4 className="font-bold text-gray-900 mb-3">Compliance Inquiries</h4>
+                    <p className="text-gray-600 text-sm">
+                      For compliance-related questions or to request documentation, please contact 
+                      our compliance team at{' '}
+                      <a href="mailto:compliance@axiomcity.io" className="text-amber-600 font-medium hover:text-amber-700">
+                        compliance@axiomcity.io
+                      </a>
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
