@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import DisclosureBanner from '../components/DisclosureBanner';
 
 const USE_OF_PROCEEDS = [
   { name: 'Smart City Infrastructure', percentage: 35, color: '#f59e0b', description: 'DePIN nodes, IoT networks, energy grids, and physical infrastructure development' },
@@ -204,6 +205,12 @@ export default function LaunchpadPage() {
         </div>
 
         <div className="relative max-w-6xl mx-auto px-4 py-16 text-center text-white">
+          <div className="max-w-3xl mx-auto mb-8">
+            <DisclosureBanner 
+              featureId="launchpad"
+              compact={true}
+            />
+          </div>
           <div className="inline-block mb-8">
             <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-2 border-amber-500 rounded-full px-8 py-3">
               <span className="text-amber-400 font-bold flex items-center gap-2">

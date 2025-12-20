@@ -3,6 +3,7 @@ import { useWallet } from '../components/WalletConnect/WalletContext';
 import toast, { Toaster } from 'react-hot-toast';
 import { ethers } from 'ethers';
 import Link from 'next/link';
+import DisclosureBanner from '../components/DisclosureBanner';
 
 interface Property {
   id: number;
@@ -448,6 +449,10 @@ export default function KeyGrowPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
+        <DisclosureBanner 
+          featureId="keygrow" 
+          walletAddress={walletState.address || undefined}
+        />
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-8 mb-8 text-white shadow-xl">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div>

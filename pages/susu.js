@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import { ethers } from 'ethers';
+import DisclosureBanner from '../components/DisclosureBanner';
 
 const STATUS_LABELS = {
   0: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
@@ -405,6 +406,10 @@ export default function SusuPage() {
         </div>
 
         <div className="max-w-6xl mx-auto px-6 py-8">
+          <DisclosureBanner 
+            featureId="susu" 
+            walletAddress={walletState?.address}
+          />
           {activeTab === 'discover' && (
             <div>
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">

@@ -5,6 +5,7 @@ import Layout from '../components/Layout';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import toast, { Toaster } from 'react-hot-toast';
 import { ethers } from 'ethers';
+import DisclosureBanner from '../components/DisclosureBanner';
 
 const AdvancedTradingChart = dynamic(() => import('../components/AdvancedTradingChart'), { ssr: false });
 
@@ -885,6 +886,12 @@ export default function DexPage() {
             <div className="text-lg sm:text-2xl font-bold text-amber-600">Arbitrum One</div>
           </div>
         </div>
+
+        <DisclosureBanner 
+          featureId="dex" 
+          walletAddress={account}
+          compact={true}
+        />
 
         <div className="flex gap-1.5 sm:gap-2 mb-4 sm:mb-6 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0">
           {tabs.map(tab => (
