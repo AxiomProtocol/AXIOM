@@ -127,7 +127,7 @@ export default function DisclosureBanner({
               <div className="flex items-start gap-3 flex-1">
                 <span className="text-xl">{style.icon}</span>
                 <div className="flex-1">
-                  <h4 className="text-white font-semibold text-sm flex items-center gap-2">
+                  <h4 className="text-red-500 font-semibold text-sm flex items-center gap-2">
                     {disclosure.title}
                     {disclosure.requires_acknowledgement && isAcknowledged && (
                       <span className="text-green-400 text-xs">✓ Acknowledged</span>
@@ -141,7 +141,7 @@ export default function DisclosureBanner({
                       Read more
                     </button>
                   ) : (
-                    <p className="text-white/90 text-sm mt-1">{disclosure.content}</p>
+                    <p className="text-green-400 text-sm mt-1">{disclosure.content}</p>
                   )}
                 </div>
               </div>
