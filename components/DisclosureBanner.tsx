@@ -150,7 +150,7 @@ export default function DisclosureBanner({
                 walletAddress ? (
                   <button
                     onClick={() => handleAcknowledge(disclosure.id)}
-                    className="ml-4 px-3 py-1 bg-yellow-500/20 border border-yellow-500 text-yellow-400 text-xs rounded hover:bg-yellow-500/30 transition-colors whitespace-nowrap"
+                    className="ml-4 px-3 py-1 bg-red-500/20 border border-red-500 text-red-400 text-xs rounded hover:bg-red-500/30 transition-colors whitespace-nowrap"
                   >
                     I Understand
                   </button>

@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       let query = `
         SELECT disclosure_id FROM compliance_acknowledgements
-        WHERE user_wallet = $1
+        WHERE wallet_address = $1
       `;
       const params: any[] = [wallet.toLowerCase()];
       
@@ -46,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       const existingCheck = await pool.query(
         `SELECT id FROM compliance_acknowledgements 
-         WHERE disclosure_id = $1 AND user_wallet = $2`,
+         WHERE disclosure_id = $1 AND wallet_address = $2`,
         [disclosureId, walletLower]
       );
       
@@ -66,10 +66,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       const result = await pool.query(
         `INSERT INTO compliance_acknowledgements 
-         (disclosure_id, user_wallet, user_email, ip_address, user_agent)
-         VALUES ($1, $2, $3, $4, $5)
+         (disclosure_id, wallet_address, ip_address, user_agent)
+         VALUES ($1, $2, $3, $4)
          RETURNING id`,
-        [disclosureId, walletLower, userEmail || null, ipAddress, userAgent]
+        [disclosureId, walletLower, ipAddress, userAgent]
       );
       
       await pool.query(
