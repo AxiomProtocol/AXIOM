@@ -18,18 +18,18 @@ interface DisclosureBannerProps {
 }
 
 const categoryStyles: Record<string, { bg: string; border: string; icon: string }> = {
-  tokenomics: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '📋' },
-  regulatory: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '📋' },
-  keygrow: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '🏠' },
-  treasury: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '💰' },
-  security: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '🔒' },
-  governance: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '🗳️' },
-  depin: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '⚡' },
-  banking: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '🏦' },
-  smart_contract: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '📜' },
-  kyc_aml: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '🔍' },
-  general: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: 'ℹ️' },
-  default: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: 'ℹ️' }
+  tokenomics: { bg: 'bg-gray-900', border: 'border-yellow-500/50', icon: '📋' },
+  regulatory: { bg: 'bg-gray-900', border: 'border-yellow-500/50', icon: '📋' },
+  keygrow: { bg: 'bg-gray-900', border: 'border-yellow-500/50', icon: '🏠' },
+  treasury: { bg: 'bg-gray-900', border: 'border-yellow-500/50', icon: '💰' },
+  security: { bg: 'bg-gray-900', border: 'border-yellow-500/50', icon: '🔒' },
+  governance: { bg: 'bg-gray-900', border: 'border-yellow-500/50', icon: '🗳️' },
+  depin: { bg: 'bg-gray-900', border: 'border-yellow-500/50', icon: '⚡' },
+  banking: { bg: 'bg-gray-900', border: 'border-yellow-500/50', icon: '🏦' },
+  smart_contract: { bg: 'bg-gray-900', border: 'border-yellow-500/50', icon: '📜' },
+  kyc_aml: { bg: 'bg-gray-900', border: 'border-yellow-500/50', icon: '🔍' },
+  general: { bg: 'bg-gray-900', border: 'border-yellow-500/50', icon: 'ℹ️' },
+  default: { bg: 'bg-gray-900', border: 'border-yellow-500/50', icon: 'ℹ️' }
 };
 
 export default function DisclosureBanner({ 
