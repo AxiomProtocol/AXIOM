@@ -2795,6 +2795,7 @@ export const susuPurposeGroups = pgTable("susu_purpose_groups", {
   isActive: boolean("is_active").default(true),
   createdBy: integer("created_by").references(() => users.id),
   graduatedToPoolId: integer("graduated_to_pool_id"),
+  graduationTxHash: varchar("graduation_tx_hash", { length: 66 }),
   graduatedAt: timestamp("graduated_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -2804,6 +2805,35 @@ export const susuPurposeGroups = pgTable("susu_purpose_groups", {
   isActiveIdx: index("susu_groups_active_idx").on(table.isActive),
   graduatedIdx: index("susu_groups_graduated_idx").on(table.graduatedToPoolId),
 }));
+
+export const susuAnalyticsEventTypeEnum = pgEnum('susu_analytics_event_type', [
+  'hub_join',
+  'hub_leave',
+  'group_join',
+  'group_leave',
+  'group_create',
+  'graduation',
+  'invitation_sent',
+  'invitation_accepted'
+]);
+
+export const susuAnalyticsEvents = pgTable("susu_analytics_events", {
+  id: serial("id").primaryKey(),
+  eventType: susuAnalyticsEventTypeEnum("event_type").notNull(),
+  hubId: integer("hub_id").references(() => susuInterestHubs.id),
+  groupId: integer("group_id").references(() => susuPurposeGroups.id),
+  userId: varchar("user_id", { length: 42 }),
+  metadata: text("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  eventTypeIdx: index("susu_analytics_event_type_idx").on(table.eventType),
+  hubIdIdx: index("susu_analytics_hub_id_idx").on(table.hubId),
+  groupIdIdx: index("susu_analytics_group_id_idx").on(table.groupId),
+  createdAtIdx: index("susu_analytics_created_at_idx").on(table.createdAt),
+}));
+
+export type SusuAnalyticsEvent = typeof susuAnalyticsEvents.$inferSelect;
+export type InsertSusuAnalyticsEvent = typeof susuAnalyticsEvents.$inferInsert;
 
 export const susuHubMembers = pgTable("susu_hub_members", {
   id: serial("id").primaryKey(),
@@ -2856,6 +2886,19 @@ export type SusuGroupMember = typeof susuGroupMembers.$inferSelect;
 export type InsertSusuGroupMember = typeof susuGroupMembers.$inferInsert;
 export type SusuInvitation = typeof susuInvitations.$inferSelect;
 export type InsertSusuInvitation = typeof susuInvitations.$inferInsert;
+
+export const susuFeatureFlags = pgTable("susu_feature_flags", {
+  id: serial("id").primaryKey(),
+  flagKey: varchar("flag_key", { length: 100 }).unique().notNull(),
+  flagValue: boolean("flag_value").default(false),
+  description: text("description"),
+  updatedBy: varchar("updated_by", { length: 42 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type SusuFeatureFlag = typeof susuFeatureFlags.$inferSelect;
+export type InsertSusuFeatureFlag = typeof susuFeatureFlags.$inferInsert;
 
 // ==================== COMPLIANCE & TRUST CENTER TABLES ====================
 

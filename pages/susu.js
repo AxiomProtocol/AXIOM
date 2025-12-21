@@ -173,6 +173,63 @@ export default function SusuPage() {
     }
   };
 
+  const handleGraduateGroup = async (group) => {
+    if (!walletState?.address) {
+      alert('Please connect your wallet first');
+      return;
+    }
+    
+    if (!window.confirm(`Graduate "${group.displayName || group.purposeName}" to an on-chain circle? This will create a smart contract pool.`)) {
+      return;
+    }
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(SUSU_CONTRACT, SUSU_ABI, signer);
+      
+      const cycleDurationSeconds = (group.cycleLengthDays || 30) * 24 * 60 * 60;
+      const contributionWei = ethers.parseEther(String(group.contributionAmount || '100'));
+      const memberCount = group.memberCount || group.minMembersToActivate || 3;
+      const startTime = Math.floor(Date.now() / 1000) + 3600;
+      
+      const tx = await contract.createPool(
+        AXM_TOKEN,
+        memberCount,
+        contributionWei,
+        cycleDurationSeconds,
+        startTime,
+        false,
+        false,
+        100
+      );
+      
+      const receipt = await tx.wait();
+      const poolId = receipt.logs[0]?.args?.[0] || 1;
+
+      const res = await fetch(`/api/susu/groups/${group.id}/graduate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          walletAddress: walletState.address,
+          poolId: Number(poolId),
+          txHash: tx.hash
+        })
+      });
+      
+      if (res.ok) {
+        alert('Group successfully graduated to on-chain circle!');
+        fetchDiscoveryData();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Pool created but failed to update group');
+      }
+    } catch (error) {
+      console.error('Error graduating group:', error);
+      alert('Error creating on-chain pool: ' + (error.message || 'Unknown error'));
+    }
+  };
+
   const handleCreateGroup = async () => {
     if (!walletState?.address) {
       alert('Please connect your wallet first');
@@ -578,19 +635,29 @@ export default function SusuPage() {
                         </div>
                       </div>
 
-                      {group.availableSlots > 0 && (
-                        <button
-                          onClick={() => handleJoinGroup(group.id)}
-                          className="w-full py-2 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-colors"
-                        >
-                          Join Group ({group.availableSlots} slots left)
-                        </button>
-                      )}
-                      {group.availableSlots <= 0 && (
-                        <div className="w-full py-2 bg-gray-100 text-gray-500 rounded-lg font-medium text-center">
-                          Group Full
-                        </div>
-                      )}
+                      <div className="space-y-2">
+                        {group.availableSlots > 0 && (
+                          <button
+                            onClick={() => handleJoinGroup(group.id)}
+                            className="w-full py-2 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-colors"
+                          >
+                            Join Group ({group.availableSlots} slots left)
+                          </button>
+                        )}
+                        {group.availableSlots <= 0 && (
+                          <div className="w-full py-2 bg-gray-100 text-gray-500 rounded-lg font-medium text-center">
+                            Group Full
+                          </div>
+                        )}
+                        {group.isReadyToActivate && !group.graduatedToPoolId && (
+                          <button
+                            onClick={() => handleGraduateGroup(group)}
+                            className="w-full py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                          >
+                            <span>Graduate to On-Chain</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

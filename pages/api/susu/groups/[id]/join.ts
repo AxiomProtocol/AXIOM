@@ -66,6 +66,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const updatedGroup = updatedResult.rows[0];
     const isReadyToActivate = (updatedGroup.memberCount || 0) >= (updatedGroup.minMembersToActivate || 3);
 
+    await pool.query(
+      `INSERT INTO susu_analytics_events (event_type, group_id, hub_id, user_id, created_at)
+       VALUES ('group_join', $1, (SELECT hub_id FROM susu_purpose_groups WHERE id = $1), $2, NOW())`,
+      [groupId, walletAddress.toLowerCase()]
+    );
+
     res.status(200).json({ 
       success: true, 
       message: 'Successfully joined group',

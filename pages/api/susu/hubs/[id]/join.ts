@@ -50,6 +50,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       [hubId]
     );
 
+    await pool.query(
+      `INSERT INTO susu_analytics_events (event_type, hub_id, user_id, created_at)
+       VALUES ('hub_join', $1, $2, NOW())`,
+      [hubId, normalizedWallet]
+    );
+
     res.status(200).json({ success: true, message: 'Successfully joined hub' });
   } catch (error: any) {
     console.error('Error joining hub:', error);

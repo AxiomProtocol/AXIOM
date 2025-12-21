@@ -175,6 +175,12 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
       );
     }
 
+    await pool.query(
+      `INSERT INTO susu_analytics_events (event_type, group_id, hub_id, user_id, metadata, created_at)
+       VALUES ('group_create', $1, $2, $3, $4, NOW())`,
+      [newGroup.id, hubId, normalizedWallet, JSON.stringify({ contributionAmount, cycleLengthDays })]
+    );
+
     res.status(201).json({ success: true, group: newGroup });
   } catch (error: any) {
     console.error('Error creating group:', error);
