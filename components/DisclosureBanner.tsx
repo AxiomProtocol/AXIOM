@@ -18,18 +18,18 @@ interface DisclosureBannerProps {
 }
 
 const categoryStyles: Record<string, { bg: string; border: string; icon: string }> = {
-  tokenomics: { bg: 'bg-red-900/30', border: 'border-red-500', icon: '⚠️' },
-  regulatory: { bg: 'bg-red-900/30', border: 'border-red-500', icon: '⚠️' },
-  keygrow: { bg: 'bg-yellow-900/30', border: 'border-yellow-500', icon: '🏠' },
-  treasury: { bg: 'bg-green-900/30', border: 'border-green-500', icon: '💵' },
-  security: { bg: 'bg-orange-900/30', border: 'border-orange-500', icon: '🔒' },
-  governance: { bg: 'bg-purple-900/30', border: 'border-purple-500', icon: '🗳️' },
-  depin: { bg: 'bg-blue-900/30', border: 'border-blue-500', icon: '⚡' },
-  banking: { bg: 'bg-teal-900/30', border: 'border-teal-500', icon: '🏦' },
-  smart_contract: { bg: 'bg-indigo-900/30', border: 'border-indigo-500', icon: '📜' },
-  kyc_aml: { bg: 'bg-pink-900/30', border: 'border-pink-500', icon: '🔍' },
-  general: { bg: 'bg-gray-800/50', border: 'border-gray-600', icon: 'ℹ️' },
-  default: { bg: 'bg-gray-800/50', border: 'border-gray-600', icon: 'ℹ️' }
+  tokenomics: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '📋' },
+  regulatory: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '📋' },
+  keygrow: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '🏠' },
+  treasury: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '💰' },
+  security: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '🔒' },
+  governance: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '🗳️' },
+  depin: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '⚡' },
+  banking: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '🏦' },
+  smart_contract: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '📜' },
+  kyc_aml: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: '🔍' },
+  general: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: 'ℹ️' },
+  default: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', icon: 'ℹ️' }
 };
 
 export default function DisclosureBanner({ 
