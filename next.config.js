@@ -25,6 +25,15 @@ const nextConfig = {
       '@safe-global/protocol-kit',
       '@safe-global/api-kit',
     ],
+    outputFileTracingIncludes: {
+      '/*': [
+        'node_modules/ethers/**/*',
+        'node_modules/react-hot-toast/**/*',
+        'node_modules/viem/**/*',
+        'node_modules/wagmi/**/*',
+        'node_modules/@metamask/**/*',
+      ],
+    },
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
