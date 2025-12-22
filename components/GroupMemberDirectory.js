@@ -32,10 +32,10 @@ export default function GroupMemberDirectory({ groupId, groupName }) {
 
   const getRoleBadge = (role) => {
     switch (role) {
-      case 'creator':
-        return <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-500 text-xs rounded-full">Creator</span>;
-      case 'admin':
-        return <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded-full">Admin</span>;
+      case 'organizer':
+        return <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-500 text-xs rounded-full">Organizer</span>;
+      case 'member':
+        return null;
       default:
         return null;
     }

@@ -31,9 +31,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       JOIN users u ON u.id = gm.user_id
       WHERE gm.group_id = $1
       ORDER BY 
-        CASE WHEN gm.role = 'creator' THEN 0 
-             WHEN gm.role = 'admin' THEN 1 
-             ELSE 2 END,
+        CASE WHEN gm.role = 'organizer' THEN 0 
+             ELSE 1 END,
         gm.joined_at ASC`,
       [groupId]
     );
