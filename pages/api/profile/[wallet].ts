@@ -12,14 +12,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'GET') {
     try {
+      const { viewer } = req.query;
+      const isOwner = viewer && typeof viewer === 'string' && viewer.toLowerCase() === normalizedWallet;
+
       const result = await pool.query(
         `SELECT 
           id, first_name, last_name, username, bio, purpose_statement,
           occupation, skills, location, website, social_links,
           profile_image_url, wallet_address,
-          CASE WHEN show_email THEN email ELSE NULL END as email,
-          CASE WHEN show_phone THEN phone ELSE NULL END as phone,
-          CASE WHEN show_whatsapp THEN whatsapp ELSE NULL END as whatsapp,
+          email, phone, whatsapp,
           show_email, show_phone, show_whatsapp,
           created_at
         FROM users 
@@ -32,7 +33,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(404).json({ error: 'User not found' });
       }
 
-      res.status(200).json({ success: true, profile: result.rows[0] });
+      const profile = result.rows[0];
+      
+      if (!isOwner) {
+        if (!profile.show_email) profile.email = null;
+        if (!profile.show_phone) profile.phone = null;
+        if (!profile.show_whatsapp) profile.whatsapp = null;
+      }
+
+      res.status(200).json({ success: true, profile, isOwner });
     } catch (error: any) {
       console.error('Error fetching profile:', error);
       res.status(500).json({ error: error.message || 'Failed to fetch profile' });
