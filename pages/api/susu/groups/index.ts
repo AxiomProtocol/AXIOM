@@ -149,6 +149,18 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
 
     const normalizedWallet = walletAddress ? walletAddress.toLowerCase() : null;
     
+    // Look up user by wallet address if provided
+    let userId = null;
+    if (normalizedWallet) {
+      const userResult = await pool.query(
+        `SELECT id FROM users WHERE LOWER(wallet_address) = $1 LIMIT 1`,
+        [normalizedWallet]
+      );
+      if (userResult.rows.length > 0) {
+        userId = userResult.rows[0].id;
+      }
+    }
+    
     const insertResult = await pool.query(
       `INSERT INTO susu_purpose_groups 
        (hub_id, purpose_category_id, custom_purpose_label, contribution_amount, contribution_currency,
@@ -162,16 +174,16 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
                  max_members as "maxMembers", created_at as "createdAt"`,
       [hubId, purposeCategoryId, customPurposeLabel, contributionAmount.toString(), contributionCurrency,
        cycleLengthDays, displayName, description, minMembersToActivate, maxMembers,
-       normalizedWallet ? 1 : 0, normalizedWallet]
+       userId ? 1 : 0, userId]
     );
 
     const newGroup = insertResult.rows[0];
 
-    if (normalizedWallet) {
+    if (userId) {
       await pool.query(
         `INSERT INTO susu_group_members (group_id, user_id, role, commitment_confirmed, joined_at)
          VALUES ($1, $2, 'organizer', true, NOW())`,
-        [newGroup.id, normalizedWallet]
+        [newGroup.id, userId]
       );
     }
 
