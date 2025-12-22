@@ -100,8 +100,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const organizerCheck = await pool.query(
-      `SELECT role FROM susu_group_members 
-       WHERE group_id = $1 AND user_id = $2 AND role = 'organizer'`,
+      `SELECT gm.role FROM susu_group_members gm
+       JOIN users u ON u.id = gm.user_id
+       WHERE gm.group_id = $1 AND LOWER(u.wallet_address) = $2 AND gm.role = 'organizer'`,
       [groupId, walletAddress.toLowerCase()]
     );
     
