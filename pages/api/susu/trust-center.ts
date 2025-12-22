@@ -10,20 +10,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const [claims, disclosures, thresholds, stats] = await Promise.all([
       pool.query(`
         SELECT 
-          id, claim_type, claim_text, feature_scope, evidence_type, evidence_url,
-          verified_at, is_active, created_at
+          id, title, description, category, status, feature_id,
+          verified_at, is_public, created_at
         FROM compliance_claims
-        WHERE is_active = true
-        ORDER BY created_at DESC
+        WHERE is_public = true
+        ORDER BY display_order ASC, created_at DESC
         LIMIT 50
       `),
       pool.query(`
         SELECT 
-          id, disclosure_type, title, content, feature_scope,
-          risk_level, is_required, is_active, created_at
+          id, title, content, category, feature_id,
+          requires_acknowledgement, is_active, created_at
         FROM compliance_disclosures
-        WHERE is_active = true AND feature_scope LIKE '%susu%'
-        ORDER BY risk_level DESC, created_at DESC
+        WHERE is_active = true AND feature_id LIKE '%susu%'
+        ORDER BY created_at DESC
       `),
       pool.query(`
         SELECT threshold_key, threshold_value, description, updated_at
@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ]);
 
     const susuClaims = claims.rows.filter(c => 
-      c.feature_scope?.includes('susu') || c.claim_type?.includes('susu')
+      c.feature_id?.includes('susu') || c.category?.includes('susu')
     );
 
     const trustCenter = {
