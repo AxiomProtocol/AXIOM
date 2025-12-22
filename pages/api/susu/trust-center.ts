@@ -59,7 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       riskDisclosures: [
         {
           category: 'Participation Risk',
-          description: 'SUSU pools depend on all members making timely contributions. If a member fails to pay, other members may not receive their expected payout.'
+          description: 'SUSU pools depend on all members making timely contributions. If a member fails to pay, other members may not receive their expected payout. While risk mitigation features reduce this risk, they do not eliminate it entirely.'
         },
         {
           category: 'No Guarantee',
@@ -76,6 +76,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         {
           category: 'Regulatory Status',
           description: 'SUSU operates as a peer-to-peer mutual aid arrangement. It is not a securities offering or investment contract.'
+        },
+        {
+          category: 'Collateral Forfeiture',
+          description: 'Groups may require collateral deposits. If you fail to make timely contributions, your collateral may be partially or fully forfeited to compensate affected members. Forfeiture decisions are final.'
+        },
+        {
+          category: 'Payout Priority',
+          description: 'Payout order may be determined by reliability scores, tenure, and collateral amounts. Members with lower priority scores may receive payouts later in the rotation cycle.'
+        },
+        {
+          category: 'Membership Vetting',
+          description: 'Some groups require approval from existing members before you can join. Your application may be rejected. Vetting decisions are made by group members, not Axiom.'
+        },
+        {
+          category: 'Insurance Limitations',
+          description: 'The SUSU Insurance Pool provides partial coverage for defaults (up to 80% of losses). Coverage is not guaranteed and depends on available pool funds. The insurance pool is funded by protocol fees, not external insurance.'
+        },
+        {
+          category: 'Residual Risk',
+          description: 'Risk mitigation features (collateral, vetting, priority, insurance) reduce but do not eliminate participation risk. In worst-case scenarios, you may still experience losses despite these protections.'
         }
       ],
 
@@ -94,7 +114,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         'Community savings circles',
         'Traditional ROSCA model',
         'Transparent rotation schedule',
-        'Member-driven governance'
+        'Member-driven governance',
+        'Optional collateral deposits for added security',
+        'Reliability-based payout priority',
+        'Community vetting for trusted membership',
+        'Partial default coverage through insurance pool'
       ],
 
       operationalStats: stats.rows[0],
