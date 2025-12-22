@@ -1,0 +1,633 @@
+{
+  "version": "1.0.0",
+  "generated_at": "2025-12-22T00:00:00Z",
+  "products": [
+    {
+      "id": "susu_pool_creation",
+      "name": "SUSU Pool Creation",
+      "description": "Create a new rotating savings pool with configurable parameters including member count, contribution amount, cycle duration, and payout order",
+      "custody_status": "non-custodial",
+      "value_flow_type": "pooled_rotation",
+      "risks": [
+        "Pool parameters cannot be changed once pool starts",
+        "Organizer sets initial terms binding all members",
+        "Gas fees required for on-chain creation",
+        "Protocol fees apply to all contributions"
+      ],
+      "required_disclosures": [
+        {
+          "id": "pool_terms",
+          "title": "Pool Terms",
+          "content": "This pool operates under fixed terms that cannot be modified once started. All members agree to the same contribution schedule and payout rotation."
+        },
+        {
+          "id": "protocol_fees",
+          "title": "Protocol Fees",
+          "content": "A protocol fee of up to 2.5% is deducted from each contribution to support platform operations. This fee is non-refundable."
+        },
+        {
+          "id": "smart_contract_risk",
+          "title": "Smart Contract Risk",
+          "content": "This pool operates via smart contract on Arbitrum One. While contracts are audited, blockchain transactions are irreversible."
+        }
+      ],
+      "required_acknowledgements": [
+        "I understand pool terms are fixed once the pool starts",
+        "I understand protocol fees will be deducted from contributions",
+        "I understand this involves smart contract interaction"
+      ],
+      "required_evidence_artifacts": [],
+      "required_audit_events": [
+        "pool_created",
+        "pool_parameters_set"
+      ],
+      "marketing_claim_boundaries": {
+        "allowed": [
+          "Community savings circles",
+          "Rotating savings and credit association",
+          "Traditional SUSU/ROSCA format",
+          "Smart contract managed",
+          "Transparent rotation schedule"
+        ],
+        "prohibited": [
+          "Investment returns",
+          "Guaranteed profits",
+          "Interest earnings",
+          "Yield generation",
+          "Bank-grade security",
+          "FDIC insured",
+          "Risk-free"
+        ]
+      },
+      "capital_mode_trigger": true
+    },
+    {
+      "id": "susu_contribution",
+      "name": "SUSU Contribution",
+      "description": "Make a contribution to a SUSU pool during an active cycle. Tokens are transferred to the pool for later distribution to the designated recipient.",
+      "custody_status": "non-custodial",
+      "value_flow_type": "pooled_rotation",
+      "risks": [
+        "Contributions are locked until your payout cycle",
+        "Late contributions may incur penalties",
+        "Missing contributions affects all pool members",
+        "Tokens cannot be recovered until pool completion or exit"
+      ],
+      "required_disclosures": [
+        {
+          "id": "contribution_commitment",
+          "title": "Contribution Commitment",
+          "content": "By contributing, you commit to making all future cycle contributions. Missing contributions may affect your standing and other members."
+        },
+        {
+          "id": "token_transfer",
+          "title": "Token Transfer",
+          "content": "Your tokens will be transferred to the pool smart contract. They are held non-custodially until payout distribution."
+        },
+        {
+          "id": "grace_period",
+          "title": "Grace Period",
+          "content": "Contributions must be made within the cycle window. A grace period may apply for late contributions, subject to pool rules."
+        }
+      ],
+      "required_acknowledgements": [
+        "I understand my tokens will be transferred to the pool",
+        "I commit to making future contributions as scheduled",
+        "I understand missing contributions affects other members"
+      ],
+      "required_evidence_artifacts": [
+        "transaction_hash",
+        "contribution_receipt"
+      ],
+      "required_audit_events": [
+        "contribution_made",
+        "token_transfer"
+      ],
+      "marketing_claim_boundaries": {
+        "allowed": [
+          "Pool contributions",
+          "Group savings",
+          "Shared commitment",
+          "Rotating access to pooled funds"
+        ],
+        "prohibited": [
+          "Deposit",
+          "Investment",
+          "Stake",
+          "Earn interest",
+          "Generate returns"
+        ]
+      },
+      "capital_mode_trigger": true
+    },
+    {
+      "id": "susu_payout",
+      "name": "SUSU Payout",
+      "description": "Receive the pooled contributions for the current cycle according to the predetermined rotation order.",
+      "custody_status": "non-custodial",
+      "value_flow_type": "pooled_rotation",
+      "risks": [
+        "Payout amount depends on all members contributing",
+        "Protocol fees are deducted before payout",
+        "Payout order is fixed once pool starts",
+        "Early recipients have obligation to continue contributing"
+      ],
+      "required_disclosures": [
+        {
+          "id": "payout_calculation",
+          "title": "Payout Calculation",
+          "content": "Your payout equals total contributions minus protocol fees. If any member misses a contribution, the payout amount may be reduced."
+        },
+        {
+          "id": "rotation_order",
+          "title": "Rotation Order",
+          "content": "The payout order was determined when the pool started. This order cannot be changed during pool operation."
+        }
+      ],
+      "required_acknowledgements": [
+        "I understand the payout amount may vary based on contributions",
+        "I will continue contributing after receiving my payout"
+      ],
+      "required_evidence_artifacts": [
+        "transaction_hash",
+        "payout_receipt"
+      ],
+      "required_audit_events": [
+        "payout_processed",
+        "cycle_advanced"
+      ],
+      "marketing_claim_boundaries": {
+        "allowed": [
+          "Receive pooled funds",
+          "Rotating distribution",
+          "Community fund access"
+        ],
+        "prohibited": [
+          "Profits",
+          "Returns",
+          "Interest payment",
+          "Dividends"
+        ]
+      },
+      "capital_mode_trigger": true
+    },
+    {
+      "id": "susu_pool_join",
+      "name": "Join SUSU Pool",
+      "description": "Join an existing SUSU pool that accepts new members before it starts.",
+      "custody_status": "non-custodial",
+      "value_flow_type": "onboarding",
+      "risks": [
+        "Joining commits you to full pool participation",
+        "You cannot choose your payout position in some pools",
+        "Pool terms are set by organizer",
+        "You must have sufficient tokens for all contributions"
+      ],
+      "required_disclosures": [
+        {
+          "id": "pool_commitment",
+          "title": "Pool Commitment",
+          "content": "By joining, you commit to participating for the full duration of the pool. Exiting early may result in forfeiture of contributed funds."
+        },
+        {
+          "id": "terms_acceptance",
+          "title": "Terms Acceptance",
+          "content": "You are agreeing to the pool charter set by the organizer. Review all terms before joining."
+        }
+      ],
+      "required_acknowledgements": [
+        "I have reviewed and accept the pool charter",
+        "I commit to participating for the full pool duration",
+        "I understand exit may result in forfeiture"
+      ],
+      "required_evidence_artifacts": [],
+      "required_audit_events": [
+        "member_joined",
+        "charter_accepted"
+      ],
+      "marketing_claim_boundaries": {
+        "allowed": [
+          "Join a savings circle",
+          "Participate in community savings",
+          "Access rotating fund pool"
+        ],
+        "prohibited": [
+          "Investment opportunity",
+          "Guaranteed returns",
+          "Passive income"
+        ]
+      },
+      "capital_mode_trigger": false
+    },
+    {
+      "id": "susu_pool_exit",
+      "name": "Exit SUSU Pool",
+      "description": "Leave a SUSU pool before completion. May result in forfeiture of contributions depending on pool rules.",
+      "custody_status": "non-custodial",
+      "value_flow_type": "disputes",
+      "risks": [
+        "Early exit may forfeit all contributions",
+        "Penalties may apply based on charter",
+        "Affects remaining pool members",
+        "Decision is irreversible once processed"
+      ],
+      "required_disclosures": [
+        {
+          "id": "forfeiture_terms",
+          "title": "Forfeiture Terms",
+          "content": "Exiting before your payout cycle may result in forfeiture of some or all contributions. Review the charter for specific terms."
+        },
+        {
+          "id": "member_impact",
+          "title": "Impact on Members",
+          "content": "Your exit affects the pool dynamics and may impact other members' payout amounts."
+        }
+      ],
+      "required_acknowledgements": [
+        "I understand I may forfeit my contributions",
+        "I accept any exit penalties per the charter",
+        "I understand this affects other pool members"
+      ],
+      "required_evidence_artifacts": [
+        "exit_receipt"
+      ],
+      "required_audit_events": [
+        "member_exited",
+        "forfeiture_amount"
+      ],
+      "marketing_claim_boundaries": {
+        "allowed": [
+          "Voluntary exit option",
+          "Charter-defined exit terms"
+        ],
+        "prohibited": [
+          "No-risk exit",
+          "Full refund guaranteed"
+        ]
+      },
+      "capital_mode_trigger": false
+    },
+    {
+      "id": "susu_purpose_group",
+      "name": "Purpose Group",
+      "description": "Off-chain group for coordinating interest before forming an on-chain SUSU pool. No funds move until graduation.",
+      "custody_status": "non-custodial",
+      "value_flow_type": "onboarding",
+      "risks": [
+        "Group may not reach minimum members to graduate",
+        "No binding commitment until on-chain graduation",
+        "Terms may change before graduation"
+      ],
+      "required_disclosures": [
+        {
+          "id": "off_chain_status",
+          "title": "Off-Chain Status",
+          "content": "This is a coordination group only. No funds are involved until the group graduates to an on-chain pool."
+        },
+        {
+          "id": "graduation_requirements",
+          "title": "Graduation Requirements",
+          "content": "The group must meet minimum member requirements before graduating to an on-chain pool."
+        }
+      ],
+      "required_acknowledgements": [
+        "I understand this is an off-chain coordination group",
+        "I understand no funds move until graduation"
+      ],
+      "required_evidence_artifacts": [],
+      "required_audit_events": [
+        "group_created",
+        "group_joined"
+      ],
+      "marketing_claim_boundaries": {
+        "allowed": [
+          "Find like-minded savers",
+          "Coordinate before committing",
+          "Purpose-driven groups"
+        ],
+        "prohibited": [
+          "Pre-investment",
+          "Early access returns"
+        ]
+      },
+      "capital_mode_trigger": false
+    },
+    {
+      "id": "susu_graduation",
+      "name": "Graduation to On-Chain",
+      "description": "Transition a purpose group to a fully on-chain SUSU pool. This creates binding smart contract commitments.",
+      "custody_status": "non-custodial",
+      "value_flow_type": "onboarding",
+      "risks": [
+        "Graduation is irreversible",
+        "Creates binding financial commitment",
+        "Smart contract terms cannot be changed",
+        "Gas fees required for all members"
+      ],
+      "required_disclosures": [
+        {
+          "id": "on_chain_transition",
+          "title": "On-Chain Transition",
+          "content": "This action creates a permanent smart contract on Arbitrum One. All future interactions will be on-chain."
+        },
+        {
+          "id": "binding_commitment",
+          "title": "Binding Commitment",
+          "content": "By graduating, all members enter a binding agreement to contribute and participate per the charter."
+        },
+        {
+          "id": "smart_contract_permanence",
+          "title": "Smart Contract Permanence",
+          "content": "The pool terms are encoded in an immutable smart contract. No party, including Axiom, can modify these terms."
+        }
+      ],
+      "required_acknowledgements": [
+        "I understand this creates an irreversible on-chain commitment",
+        "I accept the charter terms encoded in the smart contract",
+        "I understand Axiom cannot modify pool terms after graduation"
+      ],
+      "required_evidence_artifacts": [
+        "charter_hash",
+        "member_signatures"
+      ],
+      "required_audit_events": [
+        "graduation_initiated",
+        "pool_created",
+        "charter_locked"
+      ],
+      "marketing_claim_boundaries": {
+        "allowed": [
+          "Transition to blockchain",
+          "Smart contract activation",
+          "Binding group commitment"
+        ],
+        "prohibited": [
+          "Investment launch",
+          "Token generation event"
+        ]
+      },
+      "capital_mode_trigger": true
+    },
+    {
+      "id": "susu_interest_hub",
+      "name": "Regional Interest Hub",
+      "description": "Regional grouping for discovering purpose groups in your area. No financial function.",
+      "custody_status": "non-custodial",
+      "value_flow_type": "onboarding",
+      "risks": [
+        "Hub membership is informational only",
+        "No guarantee of group availability"
+      ],
+      "required_disclosures": [
+        {
+          "id": "hub_purpose",
+          "title": "Hub Purpose",
+          "content": "Hubs are for discovery and community building. No funds move through hubs."
+        }
+      ],
+      "required_acknowledgements": [],
+      "required_evidence_artifacts": [],
+      "required_audit_events": [
+        "hub_joined"
+      ],
+      "marketing_claim_boundaries": {
+        "allowed": [
+          "Discover local groups",
+          "Community networking",
+          "Regional savings circles"
+        ],
+        "prohibited": [
+          "Investment network",
+          "Financial returns"
+        ]
+      },
+      "capital_mode_trigger": false
+    },
+    {
+      "id": "susu_charter",
+      "name": "SUSU Charter",
+      "description": "Governance document defining pool terms, rotation rules, dispute resolution, and exit policies.",
+      "custody_status": "non-custodial",
+      "value_flow_type": "templates",
+      "risks": [
+        "Charter terms are binding once accepted",
+        "Cannot be modified mid-pool",
+        "Dispute resolution follows charter terms"
+      ],
+      "required_disclosures": [
+        {
+          "id": "charter_binding",
+          "title": "Binding Agreement",
+          "content": "The charter is a binding agreement between all pool members. Review all terms carefully before accepting."
+        }
+      ],
+      "required_acknowledgements": [
+        "I have read and understood the charter",
+        "I agree to be bound by charter terms"
+      ],
+      "required_evidence_artifacts": [
+        "charter_hash",
+        "acceptance_signature"
+      ],
+      "required_audit_events": [
+        "charter_created",
+        "charter_accepted"
+      ],
+      "marketing_claim_boundaries": {
+        "allowed": [
+          "Clear governance rules",
+          "Transparent terms",
+          "Member-agreed policies"
+        ],
+        "prohibited": [
+          "Legal contract",
+          "Court-enforceable agreement"
+        ]
+      },
+      "capital_mode_trigger": false
+    },
+    {
+      "id": "susu_member_ejection",
+      "name": "Member Ejection",
+      "description": "Remove a member from a SUSU pool for charter violations or non-participation.",
+      "custody_status": "non-custodial",
+      "value_flow_type": "disputes",
+      "risks": [
+        "Ejected member may lose contributions",
+        "Affects pool rotation order",
+        "May trigger dispute process",
+        "Organizer discretion applies"
+      ],
+      "required_disclosures": [
+        {
+          "id": "ejection_grounds",
+          "title": "Ejection Grounds",
+          "content": "Members may be ejected for charter violations including missed contributions, fraudulent behavior, or disruption."
+        },
+        {
+          "id": "ejection_impact",
+          "title": "Impact of Ejection",
+          "content": "Ejected members may forfeit contributions. The pool rotation will be adjusted accordingly."
+        }
+      ],
+      "required_acknowledgements": [
+        "I understand the grounds for ejection",
+        "I understand ejection may result in forfeiture"
+      ],
+      "required_evidence_artifacts": [
+        "ejection_reason",
+        "violation_evidence"
+      ],
+      "required_audit_events": [
+        "member_ejected",
+        "ejection_reason_logged"
+      ],
+      "marketing_claim_boundaries": {
+        "allowed": [
+          "Charter enforcement",
+          "Community standards"
+        ],
+        "prohibited": [
+          "Arbitrary removal",
+          "No-reason ejection"
+        ]
+      },
+      "capital_mode_trigger": false
+    },
+    {
+      "id": "susu_reliability_profile",
+      "name": "Reliability Profile",
+      "description": "Track record of a user's SUSU participation including on-time contributions, completed pools, and peer ratings.",
+      "custody_status": "non-custodial",
+      "value_flow_type": "reputation",
+      "risks": [
+        "Profile reflects actual behavior",
+        "Cannot be edited or deleted",
+        "Visible to other SUSU members"
+      ],
+      "required_disclosures": [
+        {
+          "id": "profile_visibility",
+          "title": "Profile Visibility",
+          "content": "Your reliability profile is visible to other SUSU members when you join groups or pools."
+        },
+        {
+          "id": "profile_data",
+          "title": "Data Tracked",
+          "content": "We track on-time contributions, completed pools, exit history, and peer ratings."
+        }
+      ],
+      "required_acknowledgements": [
+        "I understand my participation creates a public profile"
+      ],
+      "required_evidence_artifacts": [],
+      "required_audit_events": [
+        "profile_updated",
+        "rating_received"
+      ],
+      "marketing_claim_boundaries": {
+        "allowed": [
+          "Build savings reputation",
+          "Track record visibility",
+          "Peer accountability"
+        ],
+        "prohibited": [
+          "Credit score",
+          "Financial rating",
+          "Loan qualification"
+        ]
+      },
+      "capital_mode_trigger": false
+    },
+    {
+      "id": "susu_mission_card",
+      "name": "Mission Card",
+      "description": "Shareable card showing SUSU participation goals and progress. Used for social engagement and referrals.",
+      "custody_status": "non-custodial",
+      "value_flow_type": "templates",
+      "risks": [
+        "Sharing reveals participation info",
+        "Goals are non-binding"
+      ],
+      "required_disclosures": [
+        {
+          "id": "sharing_info",
+          "title": "Information Sharing",
+          "content": "Mission cards share your SUSU goals publicly. You control what is shared."
+        }
+      ],
+      "required_acknowledgements": [],
+      "required_evidence_artifacts": [],
+      "required_audit_events": [
+        "mission_card_created",
+        "mission_card_shared"
+      ],
+      "marketing_claim_boundaries": {
+        "allowed": [
+          "Share your savings goals",
+          "Invite friends",
+          "Progress tracking"
+        ],
+        "prohibited": [
+          "Referral bonuses",
+          "Earn money by sharing",
+          "MLM structure"
+        ]
+      },
+      "capital_mode_trigger": false
+    },
+    {
+      "id": "susu_template",
+      "name": "SUSU Template",
+      "description": "Pre-configured pool settings for common use cases like emergency funds, home savings, or business capital.",
+      "custody_status": "non-custodial",
+      "value_flow_type": "templates",
+      "risks": [
+        "Templates are starting points only",
+        "Organizer can modify before pool starts"
+      ],
+      "required_disclosures": [
+        {
+          "id": "template_nature",
+          "title": "Template Nature",
+          "content": "Templates provide suggested settings. Final pool terms are set by the organizer."
+        }
+      ],
+      "required_acknowledgements": [],
+      "required_evidence_artifacts": [],
+      "required_audit_events": [
+        "template_used"
+      ],
+      "marketing_claim_boundaries": {
+        "allowed": [
+          "Quick start templates",
+          "Community-tested configurations",
+          "Popular pool formats"
+        ],
+        "prohibited": [
+          "Optimized returns",
+          "Best investment structure"
+        ]
+      },
+      "capital_mode_trigger": false
+    }
+  ],
+  "capital_mode_thresholds": {
+    "description": "Thresholds that trigger Capital Mode with enhanced disclosures and controls",
+    "defaults": {
+      "contribution_amount_per_period_usd": 500,
+      "total_pot_estimate_usd": 10000,
+      "group_size": 10,
+      "cycle_length_days": 30
+    },
+    "purpose_category_multipliers": {
+      "housing": 0.8,
+      "land": 0.7,
+      "business": 0.8,
+      "emergency": 1.5,
+      "tuition": 1.0,
+      "mutual_aid": 1.5,
+      "other": 1.0
+    }
+  }
+}
