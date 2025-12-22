@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Layout from '../../components/Layout';
 import { useWallet } from '../../components/WalletConnect/WalletContext';
 import { ethers } from 'ethers';
@@ -399,6 +400,7 @@ export default function SusuPage() {
     { id: 'my-pools', label: 'My Pools', icon: '👤' },
     { id: 'how-it-works', label: 'How It Works', icon: '📖' },
     { id: 'safety', label: 'Safety & Trust', icon: '🛡️' },
+    { id: 'admin', label: 'Admin', icon: '⚙️', href: '/susu/admin' },
   ];
 
   return (
@@ -446,18 +448,29 @@ export default function SusuPage() {
         <div className="max-w-6xl mx-auto px-6 -mt-6">
           <div className="flex overflow-x-auto gap-2 pb-2">
             {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25'
-                    : 'bg-white text-gray-600 hover:bg-amber-50 border border-gray-200'
-                }`}
-              >
-                <span>{tab.icon}</span>
-                {tab.label}
-              </button>
+              tab.href ? (
+                <Link
+                  key={tab.id}
+                  href={tab.href}
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap bg-white text-gray-600 hover:bg-amber-50 border border-gray-200"
+                >
+                  <span>{tab.icon}</span>
+                  {tab.label}
+                </Link>
+              ) : (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25'
+                      : 'bg-white text-gray-600 hover:bg-amber-50 border border-gray-200'
+                  }`}
+                >
+                  <span>{tab.icon}</span>
+                  {tab.label}
+                </button>
+              )
             ))}
           </div>
         </div>
