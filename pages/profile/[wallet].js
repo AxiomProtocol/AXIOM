@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '../../components/Layout';
-import { useWallet } from '../../lib/walletContext';
+import { useWallet } from '../../components/WalletConnect/WalletContext';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { wallet: viewWallet } = router.query;
-  const { address: connectedWallet } = useWallet();
+  const { walletState } = useWallet();
+  const connectedWallet = walletState?.address;
   
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
