@@ -3090,3 +3090,140 @@ export type ComplianceComplaintUpdate = typeof complianceComplaintUpdates.$infer
 export type InsertComplianceComplaintUpdate = typeof complianceComplaintUpdates.$inferInsert;
 export type ComplianceEvent = typeof complianceEvents.$inferSelect;
 export type InsertComplianceEvent = typeof complianceEvents.$inferInsert;
+
+// ==================== SUSU DUAL-MODE ARCHITECTURE ====================
+
+export const susuModeEnum = pgEnum('susu_mode', [
+  'community',
+  'capital'
+]);
+
+export const susuModeThresholds = pgTable("susu_mode_thresholds", {
+  id: serial("id").primaryKey(),
+  thresholdKey: varchar("threshold_key", { length: 100 }).unique().notNull(),
+  thresholdValue: decimal("threshold_value", { precision: 18, scale: 2 }).notNull(),
+  description: text("description"),
+  updatedBy: varchar("updated_by", { length: 42 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const susuPurposeCategoryMultipliers = pgTable("susu_purpose_category_multipliers", {
+  id: serial("id").primaryKey(),
+  purposeCategoryId: integer("purpose_category_id").references(() => susuPurposeCategories.id).notNull(),
+  multiplier: decimal("multiplier", { precision: 5, scale: 2 }).default('1.0'),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const susuCharters = pgTable("susu_charters", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").references(() => susuPurposeGroups.id),
+  poolId: integer("pool_id"),
+  version: integer("version").default(1),
+  purpose: text("purpose").notNull(),
+  category: varchar("category", { length: 50 }).notNull(),
+  contributionAmount: decimal("contribution_amount", { precision: 18, scale: 8 }).notNull(),
+  contributionFrequency: varchar("contribution_frequency", { length: 20 }).notNull(),
+  startDate: timestamp("start_date"),
+  rotationMethod: varchar("rotation_method", { length: 20 }).default('sequential'),
+  payoutOrderLocked: boolean("payout_order_locked").default(false),
+  gracePeriodDays: integer("grace_period_days").default(3),
+  latePenaltyBps: integer("late_penalty_bps").default(0),
+  exitPolicy: text("exit_policy"),
+  disputePolicy: text("dispute_policy"),
+  custodyModel: varchar("custody_model", { length: 30 }).default('non-custodial'),
+  charterText: text("charter_text"),
+  charterHash: varchar("charter_hash", { length: 66 }),
+  effectiveDate: timestamp("effective_date"),
+  mode: susuModeEnum("mode").default('community'),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  groupIdx: index("susu_charters_group_idx").on(table.groupId),
+  poolIdx: index("susu_charters_pool_idx").on(table.poolId),
+  modeIdx: index("susu_charters_mode_idx").on(table.mode),
+}));
+
+export const susuCharterAcceptances = pgTable("susu_charter_acceptances", {
+  id: serial("id").primaryKey(),
+  charterId: integer("charter_id").references(() => susuCharters.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  charterVersion: integer("charter_version").notNull(),
+  acceptedAt: timestamp("accepted_at").defaultNow(),
+  walletSignature: text("wallet_signature"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+}, (table) => ({
+  charterUserIdx: index("susu_charter_acceptances_charter_user_idx").on(table.charterId, table.userId),
+}));
+
+export const susuReliabilityProfiles = pgTable("susu_reliability_profiles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).unique().notNull(),
+  totalPoolsJoined: integer("total_pools_joined").default(0),
+  totalPoolsCompleted: integer("total_pools_completed").default(0),
+  totalContributions: integer("total_contributions").default(0),
+  onTimeContributions: integer("on_time_contributions").default(0),
+  lateContributions: integer("late_contributions").default(0),
+  missedContributions: integer("missed_contributions").default(0),
+  earlyExits: integer("early_exits").default(0),
+  ejections: integer("ejections").default(0),
+  reliabilityScore: decimal("reliability_score", { precision: 5, scale: 2 }).default('100.00'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("susu_reliability_user_idx").on(table.userId),
+  scoreIdx: index("susu_reliability_score_idx").on(table.reliabilityScore),
+}));
+
+export const susuMissionCards = pgTable("susu_mission_cards", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  goalDescription: text("goal_description"),
+  targetAmount: decimal("target_amount", { precision: 18, scale: 2 }),
+  currentAmount: decimal("current_amount", { precision: 18, scale: 2 }).default('0'),
+  targetDate: timestamp("target_date"),
+  purposeCategoryId: integer("purpose_category_id").references(() => susuPurposeCategories.id),
+  isPublic: boolean("is_public").default(true),
+  shareCount: integer("share_count").default(0),
+  isCompleted: boolean("is_completed").default(false),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("susu_mission_cards_user_idx").on(table.userId),
+  publicIdx: index("susu_mission_cards_public_idx").on(table.isPublic),
+}));
+
+export const susuTemplates = pgTable("susu_templates", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  purposeCategoryId: integer("purpose_category_id").references(() => susuPurposeCategories.id),
+  suggestedContribution: decimal("suggested_contribution", { precision: 18, scale: 8 }),
+  suggestedCycleDays: integer("suggested_cycle_days"),
+  suggestedMemberCount: integer("suggested_member_count"),
+  rotationMethod: varchar("rotation_method", { length: 20 }).default('sequential'),
+  defaultCharterText: text("default_charter_text"),
+  usageCount: integer("usage_count").default(0),
+  isActive: boolean("is_active").default(true),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  purposeIdx: index("susu_templates_purpose_idx").on(table.purposeCategoryId),
+  activeIdx: index("susu_templates_active_idx").on(table.isActive),
+}));
+
+export type SusuModeThreshold = typeof susuModeThresholds.$inferSelect;
+export type InsertSusuModeThreshold = typeof susuModeThresholds.$inferInsert;
+export type SusuCharter = typeof susuCharters.$inferSelect;
+export type InsertSusuCharter = typeof susuCharters.$inferInsert;
+export type SusuCharterAcceptance = typeof susuCharterAcceptances.$inferSelect;
+export type InsertSusuCharterAcceptance = typeof susuCharterAcceptances.$inferInsert;
+export type SusuReliabilityProfile = typeof susuReliabilityProfiles.$inferSelect;
+export type InsertSusuReliabilityProfile = typeof susuReliabilityProfiles.$inferInsert;
+export type SusuMissionCard = typeof susuMissionCards.$inferSelect;
+export type InsertSusuMissionCard = typeof susuMissionCards.$inferInsert;
+export type SusuTemplate = typeof susuTemplates.$inferSelect;
+export type InsertSusuTemplate = typeof susuTemplates.$inferInsert;
