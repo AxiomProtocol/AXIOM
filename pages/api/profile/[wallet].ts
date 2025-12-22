@@ -55,43 +55,69 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         show_email, show_phone, show_whatsapp
       } = req.body;
 
-      const result = await pool.query(
-        `UPDATE users SET
-          first_name = COALESCE($2, first_name),
-          last_name = COALESCE($3, last_name),
-          username = COALESCE($4, username),
-          bio = COALESCE($5, bio),
-          purpose_statement = COALESCE($6, purpose_statement),
-          occupation = COALESCE($7, occupation),
-          skills = COALESCE($8, skills),
-          location = COALESCE($9, location),
-          website = COALESCE($10, website),
-          social_links = COALESCE($11, social_links),
-          profile_image_url = COALESCE($12, profile_image_url),
-          phone = COALESCE($13, phone),
-          whatsapp = COALESCE($14, whatsapp),
-          show_email = COALESCE($15, show_email),
-          show_phone = COALESCE($16, show_phone),
-          show_whatsapp = COALESCE($17, show_whatsapp),
-          updated_at = NOW()
-        WHERE LOWER(wallet_address) = $1
-        RETURNING id`,
-        [
-          normalizedWallet, first_name, last_name, username, bio, purpose_statement,
-          occupation, skills, location, website, social_links,
-          profile_image_url, phone, whatsapp,
-          show_email, show_phone, show_whatsapp
-        ]
+      const existingUser = await pool.query(
+        `SELECT id FROM users WHERE LOWER(wallet_address) = $1 LIMIT 1`,
+        [normalizedWallet]
       );
 
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'User not found' });
+      let result;
+      if (existingUser.rows.length === 0) {
+        const crypto = require('crypto');
+        const placeholderEmail = email || `${normalizedWallet}@wallet.axiom.city`;
+        const randomPasswordHash = crypto.createHash('sha256').update(crypto.randomBytes(32)).digest('hex');
+        
+        result = await pool.query(
+          `INSERT INTO users (
+            wallet_address, email, password, first_name, last_name, username, 
+            bio, purpose_statement, occupation, skills, location, website, 
+            social_links, profile_image_url, phone, whatsapp,
+            show_email, show_phone, show_whatsapp, created_at
+          ) VALUES (
+            LOWER($1), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, NOW()
+          ) RETURNING id`,
+          [
+            normalizedWallet, placeholderEmail, randomPasswordHash,
+            first_name, last_name, username, bio, purpose_statement,
+            occupation, skills, location, website, social_links,
+            profile_image_url, phone, whatsapp,
+            show_email ?? true, show_phone ?? false, show_whatsapp ?? false
+          ]
+        );
+      } else {
+        result = await pool.query(
+          `UPDATE users SET
+            first_name = COALESCE($2, first_name),
+            last_name = COALESCE($3, last_name),
+            username = COALESCE($4, username),
+            bio = COALESCE($5, bio),
+            purpose_statement = COALESCE($6, purpose_statement),
+            occupation = COALESCE($7, occupation),
+            skills = COALESCE($8, skills),
+            location = COALESCE($9, location),
+            website = COALESCE($10, website),
+            social_links = COALESCE($11, social_links),
+            profile_image_url = COALESCE($12, profile_image_url),
+            phone = COALESCE($13, phone),
+            whatsapp = COALESCE($14, whatsapp),
+            show_email = COALESCE($15, show_email),
+            show_phone = COALESCE($16, show_phone),
+            show_whatsapp = COALESCE($17, show_whatsapp),
+            updated_at = NOW()
+          WHERE LOWER(wallet_address) = $1
+          RETURNING id`,
+          [
+            normalizedWallet, first_name, last_name, username, bio, purpose_statement,
+            occupation, skills, location, website, social_links,
+            profile_image_url, phone, whatsapp,
+            show_email, show_phone, show_whatsapp
+          ]
+        );
       }
 
-      res.status(200).json({ success: true, message: 'Profile updated' });
+      res.status(200).json({ success: true, message: 'Profile saved' });
     } catch (error: any) {
-      console.error('Error updating profile:', error);
-      res.status(500).json({ error: error.message || 'Failed to update profile' });
+      console.error('Error saving profile:', error);
+      res.status(500).json({ error: error.message || 'Failed to save profile' });
     }
   } else {
     res.status(405).json({ error: 'Method not allowed' });
