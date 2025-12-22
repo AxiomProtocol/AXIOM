@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '../../../components/Layout';
 import GroupMemberDirectory from '../../../components/GroupMemberDirectory';
-import { useWallet } from '../../../lib/walletContext';
+import { useWallet } from '../../../components/WalletConnect/WalletContext';
 
 export default function GroupDetailPage() {
   const router = useRouter();
   const { id } = router.query;
-  const { address } = useWallet();
+  const { walletState } = useWallet();
+  const address = walletState?.address;
   
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
