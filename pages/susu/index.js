@@ -92,10 +92,21 @@ export default function SusuPage() {
   });
   const [creatingGroup, setCreatingGroup] = useState(false);
 
+  // Trust Center state
+  const [trustData, setTrustData] = useState(null);
+  const [trustLoading, setTrustLoading] = useState(false);
+  const [trustSection, setTrustSection] = useState('safety');
+
   useEffect(() => {
     fetchPools();
     fetchDiscoveryData();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'safety' && !trustData && !trustLoading) {
+      fetchTrustCenterData();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (walletState?.address) {
@@ -128,6 +139,21 @@ export default function SusuPage() {
       console.error('Error fetching discovery data:', error);
     } finally {
       setDiscoverLoading(false);
+    }
+  };
+
+  const fetchTrustCenterData = async () => {
+    setTrustLoading(true);
+    try {
+      const res = await fetch('/api/susu/trust-center');
+      if (res.ok) {
+        const data = await res.json();
+        setTrustData(data.trustCenter);
+      }
+    } catch (error) {
+      console.error('Error fetching trust center data:', error);
+    } finally {
+      setTrustLoading(false);
     }
   };
 
@@ -1118,128 +1144,252 @@ export default function SusuPage() {
               <div className="bg-white rounded-2xl border border-gray-200 p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-2xl">🛡️</div>
-                  <h2 className="text-2xl font-bold text-gray-900">Safety & Trust</h2>
-                </div>
-                
-                <p className="text-gray-600 mb-8">
-                  Axiom SUSU is designed with your security as the top priority. Here's how we protect your funds and ensure fair treatment for all members.
-                </p>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="bg-blue-50 rounded-xl p-6">
-                    <h3 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
-                      <span>🔐</span> Smart Contract Security
-                    </h3>
-                    <ul className="text-blue-700 text-sm space-y-2">
-                      <li>• All funds held by audited smart contract, not individuals</li>
-                      <li>• No single person can access or redirect funds</li>
-                      <li>• Code executes automatically without human intervention</li>
-                      <li>• Built with OpenZeppelin security standards</li>
-                    </ul>
-                  </div>
-
-                  <div className="bg-purple-50 rounded-xl p-6">
-                    <h3 className="font-semibold text-purple-800 mb-3 flex items-center gap-2">
-                      <span>👁️</span> Full Transparency
-                    </h3>
-                    <ul className="text-purple-700 text-sm space-y-2">
-                      <li>• Every contribution visible on Arbitrum blockchain</li>
-                      <li>• Every payout verifiable by anyone</li>
-                      <li>• Pool rules set at creation and cannot change</li>
-                      <li>• View contract on Blockscout anytime</li>
-                    </ul>
-                  </div>
-
-                  <div className="bg-green-50 rounded-xl p-6">
-                    <h3 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
-                      <span>⚖️</span> Fair Payouts
-                    </h3>
-                    <ul className="text-green-700 text-sm space-y-2">
-                      <li>• Payout order set at pool start (sequential or random)</li>
-                      <li>• Cannot be changed after pool begins</li>
-                      <li>• Everyone receives exactly once</li>
-                      <li>• Automatic execution - no favoritism possible</li>
-                    </ul>
-                  </div>
-
-                  <div className="bg-amber-50 rounded-xl p-6">
-                    <h3 className="font-semibold text-amber-800 mb-3 flex items-center gap-2">
-                      <span>⏰</span> Grace Periods & Protection
-                    </h3>
-                    <ul className="text-amber-700 text-sm space-y-2">
-                      <li>• 24-hour grace period for late contributions</li>
-                      <li>• Small late fee incentivizes on-time payment</li>
-                      <li>• Emergency pause if critical issues arise</li>
-                      <li>• Pro-rata refunds if pool is cancelled</li>
-                    </ul>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Safety & Trust Center</h2>
+                    <p className="text-gray-500 text-sm">Complete transparency about how Axiom SUSU works</p>
                   </div>
                 </div>
-              </div>
 
-              <div className="bg-white rounded-2xl border border-gray-200 p-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h3>
-                
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">What happens if someone doesn't pay?</h4>
-                    <p className="text-gray-600 text-sm">There's a 24-hour grace period for late payments with a small 2% late fee. If a member repeatedly misses payments, they can be ejected from the pool to protect other members.</p>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Can someone run away with the money after receiving their payout?</h4>
-                    <p className="text-gray-600 text-sm">Members are expected to continue contributing after receiving their payout. If they stop, they forfeit their position and any future participation. The smart contract tracks all obligations transparently.</p>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Who holds the funds?</h4>
-                    <p className="text-gray-600 text-sm">The smart contract holds all funds. No individual - not even the pool creator - can access funds outside of the normal contribution and payout process. The contract code is public and verifiable.</p>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">What if I need to leave early?</h4>
-                    <p className="text-gray-600 text-sm">You can exit a pool early, but if you've already received your payout, you forfeit any remaining contributions. If you haven't received yet, your contributions may be partially refunded depending on pool rules.</p>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Is my money safe?</h4>
-                    <p className="text-gray-600 text-sm">Your funds are secured by audited smart contracts on Arbitrum, a proven Layer 2 blockchain. The code follows industry-standard security practices from OpenZeppelin. However, as with any blockchain application, you should only participate with funds you can afford to have locked for the pool duration.</p>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">How do I know I'll get paid?</h4>
-                    <p className="text-gray-600 text-sm">Payouts are automatic and enforced by code. When all members contribute for a cycle, the designated recipient automatically receives the pooled funds. No human can stop or redirect this payment.</p>
-                  </div>
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {[
+                    { id: 'safety', label: 'Security' },
+                    { id: 'custody', label: 'Custody Model' },
+                    { id: 'risks', label: 'Risk Disclosures' },
+                    { id: 'claims', label: 'Marketing Claims' },
+                    { id: 'faq', label: 'FAQ' },
+                    { id: 'stats', label: 'Operational Stats' }
+                  ].map(section => (
+                    <button
+                      key={section.id}
+                      onClick={() => setTrustSection(section.id)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        trustSection === section.id
+                          ? 'bg-amber-500 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {section.label}
+                    </button>
+                  ))}
                 </div>
-              </div>
 
-              <div className="bg-gray-900 rounded-2xl p-8 text-white">
-                <h3 className="text-xl font-bold mb-4">Best Practices for Safe Participation</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="flex gap-3">
-                    <span className="text-green-400">✓</span>
-                    <p className="text-gray-300 text-sm">Start with pools involving people you know and trust</p>
+                {trustSection === 'safety' && (
+                  <div className="space-y-6">
+                    <p className="text-gray-600">
+                      Axiom SUSU is designed with your security as the top priority. Here's how we protect your funds and ensure fair treatment for all members.
+                    </p>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="bg-blue-50 rounded-xl p-6">
+                        <h3 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                          <span>🔐</span> Smart Contract Security
+                        </h3>
+                        <ul className="text-blue-700 text-sm space-y-2">
+                          <li>• All funds held by audited smart contract, not individuals</li>
+                          <li>• No single person can access or redirect funds</li>
+                          <li>• Code executes automatically without human intervention</li>
+                          <li>• Built with OpenZeppelin security standards</li>
+                        </ul>
+                      </div>
+                      <div className="bg-purple-50 rounded-xl p-6">
+                        <h3 className="font-semibold text-purple-800 mb-3 flex items-center gap-2">
+                          <span>👁️</span> Full Transparency
+                        </h3>
+                        <ul className="text-purple-700 text-sm space-y-2">
+                          <li>• Every contribution visible on Arbitrum blockchain</li>
+                          <li>• Every payout verifiable by anyone</li>
+                          <li>• Pool rules set at creation and cannot change</li>
+                          <li>• View contract on Blockscout anytime</li>
+                        </ul>
+                      </div>
+                      <div className="bg-green-50 rounded-xl p-6">
+                        <h3 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                          <span>⚖️</span> Fair Payouts
+                        </h3>
+                        <ul className="text-green-700 text-sm space-y-2">
+                          <li>• Payout order set at pool start (sequential or random)</li>
+                          <li>• Cannot be changed after pool begins</li>
+                          <li>• Everyone receives exactly once</li>
+                          <li>• Automatic execution - no favoritism possible</li>
+                        </ul>
+                      </div>
+                      <div className="bg-amber-50 rounded-xl p-6">
+                        <h3 className="font-semibold text-amber-800 mb-3 flex items-center gap-2">
+                          <span>⏰</span> Grace Periods & Protection
+                        </h3>
+                        <ul className="text-amber-700 text-sm space-y-2">
+                          <li>• 24-hour grace period for late contributions</li>
+                          <li>• Small late fee incentivizes on-time payment</li>
+                          <li>• Emergency pause if critical issues arise</li>
+                          <li>• Pro-rata refunds if pool is cancelled</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div className="bg-gray-900 rounded-2xl p-6 text-white">
+                      <h3 className="text-lg font-bold mb-4">Best Practices for Safe Participation</h3>
+                      <div className="grid md:grid-cols-2 gap-3">
+                        <div className="flex gap-2"><span className="text-green-400">✓</span><p className="text-gray-300 text-sm">Start with pools involving people you know and trust</p></div>
+                        <div className="flex gap-2"><span className="text-green-400">✓</span><p className="text-gray-300 text-sm">Only contribute amounts you can comfortably afford</p></div>
+                        <div className="flex gap-2"><span className="text-green-400">✓</span><p className="text-gray-300 text-sm">Understand the full pool duration before joining</p></div>
+                        <div className="flex gap-2"><span className="text-green-400">✓</span><p className="text-gray-300 text-sm">Set reminders for contribution deadlines</p></div>
+                        <div className="flex gap-2"><span className="text-green-400">✓</span><p className="text-gray-300 text-sm">Verify the smart contract address before transacting</p></div>
+                        <div className="flex gap-2"><span className="text-green-400">✓</span><p className="text-gray-300 text-sm">Keep your wallet secure and never share your seed phrase</p></div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex gap-3">
-                    <span className="text-green-400">✓</span>
-                    <p className="text-gray-300 text-sm">Only contribute amounts you can comfortably afford</p>
+                )}
+
+                {trustSection === 'custody' && (
+                  <div className="space-y-6">
+                    {trustLoading ? (
+                      <div className="text-center py-8 text-gray-500">Loading custody information...</div>
+                    ) : trustData?.custodyModel ? (
+                      <>
+                        <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+                          <div className="flex items-center gap-3 mb-3">
+                            <span className="text-2xl">🔒</span>
+                            <span className="text-xl font-bold text-green-700 uppercase">{trustData.custodyModel.type}</span>
+                          </div>
+                          <p className="text-green-800">{trustData.custodyModel.description}</p>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl p-6">
+                          <h3 className="font-semibold text-gray-900 mb-4">Smart Contract Details</h3>
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-500">Contract Address:</span>
+                              <a href={`https://arbiscan.io/address/${trustData.custodyModel.contractAddress}`} target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline font-mono text-sm">{trustData.custodyModel.contractAddress}</a>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-500">Network:</span>
+                              <span className="text-gray-900">{trustData.custodyModel.network}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="bg-gray-50 rounded-xl p-6">
+                        <p className="text-gray-600">All funds are held in audited smart contracts on Arbitrum One. No individual can access or redirect funds outside of normal pool operations.</p>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex gap-3">
-                    <span className="text-green-400">✓</span>
-                    <p className="text-gray-300 text-sm">Understand the full pool duration before joining</p>
+                )}
+
+                {trustSection === 'risks' && (
+                  <div className="space-y-4">
+                    <p className="text-gray-600 mb-4">Please read and understand these risks before participating in any SUSU pool.</p>
+                    {trustData?.riskDisclosures?.map((risk, index) => (
+                      <div key={index} className="bg-amber-50 rounded-xl p-5 border-l-4 border-amber-400">
+                        <h4 className="font-semibold text-amber-800 mb-2">{risk.category}</h4>
+                        <p className="text-amber-700 text-sm">{risk.description}</p>
+                      </div>
+                    )) || (
+                      <>
+                        <div className="bg-amber-50 rounded-xl p-5 border-l-4 border-amber-400">
+                          <h4 className="font-semibold text-amber-800 mb-2">Smart Contract Risk</h4>
+                          <p className="text-amber-700 text-sm">While contracts are audited, bugs may still exist. Only participate with funds you can afford to lock.</p>
+                        </div>
+                        <div className="bg-amber-50 rounded-xl p-5 border-l-4 border-amber-400">
+                          <h4 className="font-semibold text-amber-800 mb-2">Counterparty Risk</h4>
+                          <p className="text-amber-700 text-sm">Pool members may default on contributions. Late fees and ejection mechanisms exist to mitigate this.</p>
+                        </div>
+                        <div className="bg-amber-50 rounded-xl p-5 border-l-4 border-amber-400">
+                          <h4 className="font-semibold text-amber-800 mb-2">Token Volatility</h4>
+                          <p className="text-amber-700 text-sm">AXM token value may fluctuate. Your contribution's USD value at payout may differ from deposit time.</p>
+                        </div>
+                      </>
+                    )}
                   </div>
-                  <div className="flex gap-3">
-                    <span className="text-green-400">✓</span>
-                    <p className="text-gray-300 text-sm">Set reminders for contribution deadlines</p>
+                )}
+
+                {trustSection === 'claims' && (
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-green-700 mb-4 flex items-center gap-2"><span>✓</span> What We CAN Say</h3>
+                      <ul className="space-y-2">
+                        {(trustData?.allowedClaims || [
+                          "Funds are secured by smart contracts",
+                          "All transactions are transparent on-chain",
+                          "Payouts are automated and verifiable",
+                          "Built with OpenZeppelin security standards"
+                        ]).map((claim, i) => (
+                          <li key={i} className="flex items-start gap-2 text-gray-700 text-sm"><span className="text-green-500 mt-0.5">•</span>{claim}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-red-700 mb-4 flex items-center gap-2"><span>✗</span> What We CANNOT Say</h3>
+                      <ul className="space-y-2">
+                        {(trustData?.prohibitedClaims || [
+                          "Guaranteed returns or profits",
+                          "Risk-free investment",
+                          "FDIC insured or bank-backed",
+                          "Regulated financial product"
+                        ]).map((claim, i) => (
+                          <li key={i} className="flex items-start gap-2 text-gray-700 text-sm"><span className="text-red-500 mt-0.5">•</span>{claim}</li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                  <div className="flex gap-3">
-                    <span className="text-green-400">✓</span>
-                    <p className="text-gray-300 text-sm">Verify the smart contract address before transacting</p>
+                )}
+
+                {trustSection === 'faq' && (
+                  <div className="space-y-6">
+                    {[
+                      { q: "What happens if someone doesn't pay?", a: "There's a 24-hour grace period for late payments with a small 2% late fee. If a member repeatedly misses payments, they can be ejected from the pool to protect other members." },
+                      { q: "Can someone run away with the money after receiving their payout?", a: "Members are expected to continue contributing after receiving their payout. If they stop, they forfeit their position and any future participation. The smart contract tracks all obligations transparently." },
+                      { q: "Who holds the funds?", a: "The smart contract holds all funds. No individual - not even the pool creator - can access funds outside of the normal contribution and payout process. The contract code is public and verifiable." },
+                      { q: "What if I need to leave early?", a: "You can exit a pool early, but if you've already received your payout, you forfeit any remaining contributions. If you haven't received yet, your contributions may be partially refunded depending on pool rules." },
+                      { q: "Is my money safe?", a: "Your funds are secured by audited smart contracts on Arbitrum, a proven Layer 2 blockchain. The code follows industry-standard security practices from OpenZeppelin. However, as with any blockchain application, you should only participate with funds you can afford to have locked for the pool duration." },
+                      { q: "How do I know I'll get paid?", a: "Payouts are automatic and enforced by code. When all members contribute for a cycle, the designated recipient automatically receives the pooled funds. No human can stop or redirect this payment." }
+                    ].map((item, i) => (
+                      <div key={i}>
+                        <h4 className="font-semibold text-gray-900 mb-2">{item.q}</h4>
+                        <p className="text-gray-600 text-sm">{item.a}</p>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex gap-3">
-                    <span className="text-green-400">✓</span>
-                    <p className="text-gray-300 text-sm">Keep your wallet secure and never share your seed phrase</p>
+                )}
+
+                {trustSection === 'stats' && (
+                  <div className="space-y-6">
+                    {trustLoading ? (
+                      <div className="text-center py-8 text-gray-500">Loading statistics...</div>
+                    ) : (
+                      <>
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <div className="bg-gray-50 rounded-xl p-5">
+                            <div className="text-2xl font-bold text-amber-600">{trustData?.operationalStats?.active_hubs || 0}</div>
+                            <div className="text-gray-500 text-sm">Active Regional Hubs</div>
+                          </div>
+                          <div className="bg-gray-50 rounded-xl p-5">
+                            <div className="text-2xl font-bold text-amber-600">{trustData?.operationalStats?.active_groups || 0}</div>
+                            <div className="text-gray-500 text-sm">Active Purpose Groups</div>
+                          </div>
+                          <div className="bg-gray-50 rounded-xl p-5">
+                            <div className="text-2xl font-bold text-amber-600">{trustData?.operationalStats?.total_participants || 0}</div>
+                            <div className="text-gray-500 text-sm">Total Participants</div>
+                          </div>
+                          <div className="bg-gray-50 rounded-xl p-5">
+                            <div className="text-2xl font-bold text-amber-600">{trustData?.operationalStats?.graduated_pools || 0}</div>
+                            <div className="text-gray-500 text-sm">Graduated to On-Chain</div>
+                          </div>
+                          <div className="bg-gray-50 rounded-xl p-5">
+                            <div className="text-2xl font-bold text-amber-600">{trustData?.operationalStats?.total_charters || 0}</div>
+                            <div className="text-gray-500 text-sm">Total Charters Created</div>
+                          </div>
+                          <div className="bg-gray-50 rounded-xl p-5">
+                            <div className="text-2xl font-bold text-amber-600">{trustData?.operationalStats?.total_charter_acceptances || 0}</div>
+                            <div className="text-gray-500 text-sm">Charter Acceptances</div>
+                          </div>
+                        </div>
+                        {trustData?.lastUpdated && (
+                          <div className="text-sm text-gray-400 text-center">
+                            Last updated: {new Date(trustData.lastUpdated).toLocaleString()}
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="text-center">
