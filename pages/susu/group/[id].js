@@ -20,6 +20,21 @@ export default function GroupDetailPage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  const [health, setHealth] = useState(null);
+  const [healthLoading, setHealthLoading] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [newMessage, setNewMessage] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [contributions, setContributions] = useState([]);
+  const [contributionsLoading, setContributionsLoading] = useState(false);
+  const [invitations, setInvitations] = useState([]);
+  const [invitationsLoading, setInvitationsLoading] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [sendingInvite, setSendingInvite] = useState(false);
+  const [showInviteLink, setShowInviteLink] = useState(false);
+  const [inviteLink, setInviteLink] = useState('');
   
   const [formData, setFormData] = useState({
     first_name: '',
@@ -49,6 +64,30 @@ export default function GroupDetailPage() {
       fetchProfile();
     }
   }, [address, activeTab]);
+
+  useEffect(() => {
+    if (id && activeTab === 'health') {
+      fetchHealth();
+    }
+  }, [id, activeTab]);
+
+  useEffect(() => {
+    if (id && activeTab === 'messages') {
+      fetchMessages();
+    }
+  }, [id, activeTab]);
+
+  useEffect(() => {
+    if (id && activeTab === 'contributions') {
+      fetchContributions();
+    }
+  }, [id, activeTab]);
+
+  useEffect(() => {
+    if (id && activeTab === 'invites') {
+      fetchInvitations();
+    }
+  }, [id, activeTab]);
 
   const fetchGroupDetails = async () => {
     try {
@@ -96,6 +135,133 @@ export default function GroupDetailPage() {
     } finally {
       setProfileLoading(false);
     }
+  };
+
+  const fetchHealth = async () => {
+    try {
+      setHealthLoading(true);
+      const res = await fetch(`/api/susu/groups/${id}/health`);
+      const data = await res.json();
+      if (data.success) {
+        setHealth(data.health);
+      }
+    } catch (err) {
+      console.error('Failed to load health:', err);
+    } finally {
+      setHealthLoading(false);
+    }
+  };
+
+  const fetchMessages = async () => {
+    try {
+      setMessagesLoading(true);
+      const res = await fetch(`/api/susu/groups/${id}/messages`);
+      const data = await res.json();
+      if (data.success) {
+        setMessages(data.messages || []);
+      }
+    } catch (err) {
+      console.error('Failed to load messages:', err);
+    } finally {
+      setMessagesLoading(false);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !address) return;
+    try {
+      setSendingMessage(true);
+      const res = await fetch(`/api/susu/groups/${id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress: address, content: newMessage }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNewMessage('');
+        fetchMessages();
+      }
+    } catch (err) {
+      console.error('Failed to send message:', err);
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const fetchContributions = async () => {
+    try {
+      setContributionsLoading(true);
+      const res = await fetch(`/api/susu/groups/${id}/contributions`);
+      const data = await res.json();
+      if (data.success) {
+        setContributions(data.contributions || []);
+      }
+    } catch (err) {
+      console.error('Failed to load contributions:', err);
+    } finally {
+      setContributionsLoading(false);
+    }
+  };
+
+  const fetchInvitations = async () => {
+    try {
+      setInvitationsLoading(true);
+      const res = await fetch(`/api/susu/groups/${id}/invite`);
+      const data = await res.json();
+      if (data.success) {
+        setInvitations(data.invitations || []);
+      }
+    } catch (err) {
+      console.error('Failed to load invitations:', err);
+    } finally {
+      setInvitationsLoading(false);
+    }
+  };
+
+  const generateInviteLink = async () => {
+    try {
+      const res = await fetch(`/api/susu/groups/${id}/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress: address }),
+      });
+      const data = await res.json();
+      if (data.success && data.inviteLink) {
+        setInviteLink(data.inviteLink);
+        setShowInviteLink(true);
+        fetchInvitations();
+      }
+    } catch (err) {
+      console.error('Failed to generate invite link:', err);
+    }
+  };
+
+  const sendEmailInvite = async () => {
+    if (!inviteEmail.trim() || !address) return;
+    try {
+      setSendingInvite(true);
+      const res = await fetch(`/api/susu/groups/${id}/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress: address, inviteeName: inviteEmail }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setInviteEmail('');
+        setInviteLink(data.inviteLink || '');
+        setShowInviteLink(!!data.inviteLink);
+        fetchInvitations();
+      }
+    } catch (err) {
+      console.error('Failed to send invite:', err);
+    } finally {
+      setSendingInvite(false);
+    }
+  };
+
+  const copyInviteLink = () => {
+    navigator.clipboard.writeText(inviteLink);
+    alert('Link copied to clipboard!');
   };
 
   const handleSaveProfile = async () => {
@@ -202,6 +368,10 @@ export default function GroupDetailPage() {
 
   const tabs = [
     { id: 'members', label: 'Members' },
+    { id: 'health', label: 'Health' },
+    { id: 'contributions', label: 'Contributions' },
+    { id: 'messages', label: 'Messages' },
+    { id: 'invites', label: 'Invites' },
     { id: 'profile', label: 'My Profile' },
     { id: 'about', label: 'About' },
   ];
@@ -272,6 +442,302 @@ export default function GroupDetailPage() {
             <div className="p-6">
               {activeTab === 'members' && (
                 <GroupMemberDirectory groupId={id} groupName={group.name} />
+              )}
+
+              {activeTab === 'health' && (
+                <div>
+                  {healthLoading ? (
+                    <div className="text-center py-8 text-yellow-500">Loading health data...</div>
+                  ) : health ? (
+                    <div className="space-y-6">
+                      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="bg-gray-800 rounded-lg p-4 text-center">
+                          <div className="text-3xl font-bold text-yellow-500">{Math.round(health.readinessScore || 0)}%</div>
+                          <div className="text-gray-400 text-sm">Readiness Score</div>
+                        </div>
+                        <div className="bg-gray-800 rounded-lg p-4 text-center">
+                          <div className="text-3xl font-bold text-white">{health.memberCount || 0}/{health.readinessChecks?.minMembers?.required || 3}</div>
+                          <div className="text-gray-400 text-sm">Members Required</div>
+                        </div>
+                        <div className="bg-gray-800 rounded-lg p-4 text-center">
+                          <div className="text-3xl font-bold text-green-400">{health.readinessChecks?.walletsConnected?.current || 0}</div>
+                          <div className="text-gray-400 text-sm">Wallets Connected</div>
+                        </div>
+                        <div className="bg-gray-800 rounded-lg p-4 text-center">
+                          <div className="text-3xl font-bold text-blue-400">{Math.round(health.avgReliabilityScore || 50)}%</div>
+                          <div className="text-gray-400 text-sm">Avg Reliability</div>
+                        </div>
+                      </div>
+
+                      <div className="bg-gray-800 rounded-lg p-5">
+                        <h3 className="text-lg font-semibold text-white mb-4">Graduation Checklist</h3>
+                        <div className="space-y-3">
+                          {health.readinessChecks && Object.values(health.readinessChecks).map((check, idx) => (
+                            <div key={idx} className="flex items-center gap-3">
+                              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${check.met ? 'bg-green-500' : 'bg-gray-700'}`}>
+                                {check.met ? (
+                                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                ) : (
+                                  <div className="w-2 h-2 bg-gray-500 rounded-full" />
+                                )}
+                              </div>
+                              <span className={check.met ? 'text-white' : 'text-gray-400'}>
+                                {check.label} ({check.current}/{check.required})
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {health.payoutSchedule && health.payoutSchedule.length > 0 && (
+                        <div className="bg-gray-800 rounded-lg p-5">
+                          <h3 className="text-lg font-semibold text-white mb-4">Payout Schedule</h3>
+                          <div className="space-y-3">
+                            {health.payoutSchedule.slice(0, 5).map((payout, idx) => (
+                              <div key={idx} className="flex items-center justify-between py-2 border-b border-gray-700 last:border-0">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500 font-medium">
+                                    {payout.cycle}
+                                  </div>
+                                  <span className="text-white">{payout.member}</span>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-white font-medium">${payout.amount}</div>
+                                  <div className="text-gray-400 text-sm">{formatDate(payout.estimatedDate)}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {health.isReadyToGraduate && (
+                        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                          <div className="flex items-center gap-3">
+                            <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div>
+                              <div className="text-green-400 font-medium">Ready to Graduate!</div>
+                              <div className="text-gray-400 text-sm">This group meets all requirements to go on-chain</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-400">No health data available</div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'contributions' && (
+                <div>
+                  {contributionsLoading ? (
+                    <div className="text-center py-8 text-yellow-500">Loading contributions...</div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="bg-gray-800 rounded-lg p-5">
+                        <h3 className="text-lg font-semibold text-white mb-4">Contribution Progress</h3>
+                        <div className="w-full bg-gray-700 rounded-full h-4 mb-2">
+                          <div 
+                            className="bg-yellow-500 h-4 rounded-full transition-all"
+                            style={{ width: `${contributions.length > 0 ? Math.min((contributions.filter(c => c.status === 'paid').length / contributions.length) * 100, 100) : 0}%` }}
+                          />
+                        </div>
+                        <div className="text-gray-400 text-sm">
+                          {contributions.filter(c => c.status === 'paid').length} of {contributions.length} contributions paid
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        {contributions.length > 0 ? (
+                          contributions.map((contrib, idx) => (
+                            <div key={idx} className="bg-gray-800 rounded-lg p-4 flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                  contrib.status === 'paid' ? 'bg-green-500/20 text-green-400' :
+                                  contrib.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                                  'bg-gray-700 text-gray-400'
+                                }`}>
+                                  {contrib.status === 'paid' ? (
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  ) : (
+                                    <span className="text-sm font-medium">#{contrib.cycle_number || idx + 1}</span>
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="text-white font-medium">Cycle {contrib.cycle_number || idx + 1}</div>
+                                  <div className="text-gray-400 text-sm">
+                                    {contrib.first_name || contrib.username || formatWallet(contrib.wallet_address)}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-white font-medium">${contrib.amount}</div>
+                                <div className={`text-sm capitalize ${
+                                  contrib.status === 'paid' ? 'text-green-400' :
+                                  contrib.status === 'pending' ? 'text-yellow-500' : 'text-gray-400'
+                                }`}>
+                                  {contrib.status}
+                                  {contrib.is_late && <span className="ml-2 text-red-400">(Late)</span>}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-8 text-gray-400">
+                            No contributions yet. Contributions will appear once the group is active.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'messages' && (
+                <div className="space-y-4">
+                  <div className="bg-gray-800 rounded-lg p-4">
+                    <div className="flex gap-3">
+                      <textarea
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder={address ? "Write a message to the group..." : "Connect wallet to send messages"}
+                        disabled={!address}
+                        className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-yellow-500 focus:outline-none resize-none disabled:opacity-50"
+                        rows={2}
+                      />
+                      <button
+                        onClick={sendMessage}
+                        disabled={!address || !newMessage.trim() || sendingMessage}
+                        className="px-4 py-2 bg-yellow-500 text-black rounded-lg font-medium hover:bg-yellow-400 transition disabled:opacity-50 disabled:cursor-not-allowed h-fit"
+                      >
+                        {sendingMessage ? 'Sending...' : 'Send'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {messagesLoading ? (
+                    <div className="text-center py-8 text-yellow-500">Loading messages...</div>
+                  ) : messages.length > 0 ? (
+                    <div className="space-y-3">
+                      {messages.map((msg, idx) => (
+                        <div key={idx} className="bg-gray-800 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500 font-medium">
+                              {(msg.sender_name?.[0] || msg.wallet_address?.slice(2, 4) || '?').toUpperCase()}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-white font-medium">{msg.sender_name || formatWallet(msg.wallet_address)}</span>
+                                <span className="text-gray-500 text-sm">{formatDate(msg.created_at)}</span>
+                                {msg.is_announcement && (
+                                  <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-500 text-xs rounded">Announcement</span>
+                                )}
+                              </div>
+                              <p className="text-gray-300">{msg.content}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-400">
+                      No messages yet. Be the first to start the conversation!
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'invites' && (
+                <div className="space-y-6">
+                  <div className="bg-gray-800 rounded-lg p-5">
+                    <h3 className="text-lg font-semibold text-white mb-4">Invite New Members</h3>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <button
+                          onClick={generateInviteLink}
+                          disabled={!address}
+                          className="px-4 py-2 bg-yellow-500 text-black rounded-lg font-medium hover:bg-yellow-400 transition disabled:opacity-50"
+                        >
+                          Generate Invite Link
+                        </button>
+                      </div>
+
+                      {showInviteLink && inviteLink && (
+                        <div className="bg-gray-900 rounded-lg p-4">
+                          <div className="text-sm text-gray-400 mb-2">Share this link:</div>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={inviteLink}
+                              readOnly
+                              className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm"
+                            />
+                            <button
+                              onClick={copyInviteLink}
+                              className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="border-t border-gray-700 pt-4">
+                        <div className="text-sm text-gray-400 mb-2">Or send an email invite:</div>
+                        <div className="flex gap-2">
+                          <input
+                            type="email"
+                            value={inviteEmail}
+                            onChange={(e) => setInviteEmail(e.target.value)}
+                            placeholder="Enter email address"
+                            disabled={!address}
+                            className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-yellow-500 focus:outline-none disabled:opacity-50"
+                          />
+                          <button
+                            onClick={sendEmailInvite}
+                            disabled={!address || !inviteEmail.trim() || sendingInvite}
+                            className="px-4 py-2 bg-yellow-500 text-black rounded-lg font-medium hover:bg-yellow-400 transition disabled:opacity-50"
+                          >
+                            {sendingInvite ? 'Sending...' : 'Send'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {invitationsLoading ? (
+                    <div className="text-center py-4 text-yellow-500">Loading invitations...</div>
+                  ) : invitations.length > 0 ? (
+                    <div className="bg-gray-800 rounded-lg p-5">
+                      <h3 className="text-lg font-semibold text-white mb-4">Sent Invitations</h3>
+                      <div className="space-y-3">
+                        {invitations.map((inv, idx) => (
+                          <div key={idx} className="flex items-center justify-between py-2 border-b border-gray-700 last:border-0">
+                            <div>
+                              <div className="text-white">{inv.email || 'Link Invite'}</div>
+                              <div className="text-gray-400 text-sm">Sent {formatDate(inv.created_at)}</div>
+                            </div>
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              inv.status === 'accepted' ? 'bg-green-500/20 text-green-400' :
+                              inv.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                              'bg-gray-700 text-gray-400'
+                            }`}>
+                              {inv.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
               )}
 
               {activeTab === 'profile' && (
