@@ -52,11 +52,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       userId = userResult.rows[0].id;
     } else {
       // Auto-register the user with their wallet address
+      // Generate a unique placeholder email and password for wallet-only users
+      const placeholderEmail = `${walletAddress.toLowerCase()}@wallet.axiom.city`;
+      const placeholderPassword = 'wallet-auth-only';
+      
       const newUserResult = await pool.query(
-        `INSERT INTO users (wallet_address, created_at) 
-         VALUES (LOWER($1), NOW()) 
+        `INSERT INTO users (wallet_address, email, password, created_at) 
+         VALUES (LOWER($1), $2, $3, NOW()) 
          RETURNING id`,
-        [walletAddress]
+        [walletAddress, placeholderEmail, placeholderPassword]
       );
       userId = newUserResult.rows[0].id;
     }
