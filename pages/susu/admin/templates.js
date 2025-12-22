@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import Layout from '../../components/Layout';
-import { useWallet } from '../../components/WalletConnect/WalletContext';
+import Layout from '../../../components/Layout';
+import { useWallet } from '../../../components/WalletConnect/WalletContext';
 
 const ADMIN_WALLETS = ['0x8d7892cf226b43d48b6e3ce988a1274e6d114c96'];
 
