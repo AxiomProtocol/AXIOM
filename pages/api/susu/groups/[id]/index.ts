@@ -94,8 +94,9 @@ async function handleDelete(groupId: number, req: NextApiRequest, res: NextApiRe
     try {
       await pool.query(`DELETE FROM susu_group_members WHERE group_id = $1`, [groupId]);
       await pool.query(`DELETE FROM susu_invitations WHERE group_id = $1`, [groupId]);
-      await pool.query(`DELETE FROM susu_group_messages WHERE group_id = $1`, [groupId]);
+      await pool.query(`DELETE FROM susu_messages WHERE group_id = $1`, [groupId]);
       await pool.query(`DELETE FROM susu_contributions WHERE group_id = $1`, [groupId]);
+      await pool.query(`DELETE FROM susu_analytics_events WHERE group_id = $1`, [groupId]);
       await pool.query(`DELETE FROM susu_purpose_groups WHERE id = $1`, [groupId]);
       
       await pool.query('COMMIT');
