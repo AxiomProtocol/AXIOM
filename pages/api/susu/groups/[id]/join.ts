@@ -40,32 +40,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Group is full' });
     }
 
-    // Look up the user ID from the wallet address
-    const userResult = await pool.query(
+    // Look up the user ID from the wallet address, or create user if not exists
+    let userResult = await pool.query(
       `SELECT id FROM users WHERE LOWER(wallet_address) = LOWER($1) LIMIT 1`,
       [walletAddress]
     );
     
-    const userId = userResult.rows.length > 0 ? userResult.rows[0].id : null;
-
-    // Check if user is already a member (by wallet address in case user_id is null)
-    let existingResult;
-    if (userId) {
-      existingResult = await pool.query(
-        `SELECT id FROM susu_group_members WHERE group_id = $1 AND user_id = $2 LIMIT 1`,
-        [groupId, userId]
-      );
+    let userId: number;
+    
+    if (userResult.rows.length > 0) {
+      userId = userResult.rows[0].id;
     } else {
-      existingResult = { rows: [] };
+      // Auto-register the user with their wallet address
+      const newUserResult = await pool.query(
+        `INSERT INTO users (wallet_address, created_at) 
+         VALUES (LOWER($1), NOW()) 
+         RETURNING id`,
+        [walletAddress]
+      );
+      userId = newUserResult.rows[0].id;
     }
+
+    // Check if user is already a member
+    const existingResult = await pool.query(
+      `SELECT id FROM susu_group_members WHERE group_id = $1 AND user_id = $2 LIMIT 1`,
+      [groupId, userId]
+    );
 
     if (existingResult.rows.length > 0) {
       return res.status(400).json({ error: 'Already a member of this group' });
-    }
-
-    // Only insert if we have a valid user ID
-    if (!userId) {
-      return res.status(400).json({ error: 'User not found. Please ensure your wallet is registered.' });
     }
 
     await pool.query(
