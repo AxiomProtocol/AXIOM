@@ -273,8 +273,8 @@ export default function GroupDetailPage() {
       const res = await fetch(`/api/susu/groups/${id}/members`);
       const data = await res.json();
       if (data.success && data.members) {
-        const creatorMember = data.members.find(m => m.role === 'creator');
-        if (creatorMember && creatorMember.wallet_address?.toLowerCase() === address.toLowerCase()) {
+        const organizerMember = data.members.find(m => m.role === 'organizer');
+        if (organizerMember && organizerMember.wallet_address?.toLowerCase() === address.toLowerCase()) {
           setIsCreator(true);
         }
       }

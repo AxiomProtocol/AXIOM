@@ -40,17 +40,17 @@ async function handleDelete(groupId: number, req: NextApiRequest, res: NextApiRe
       `SELECT gm.user_id, u.wallet_address
        FROM susu_group_members gm
        JOIN users u ON u.id = gm.user_id
-       WHERE gm.group_id = $1 AND gm.role = 'creator'`,
+       WHERE gm.group_id = $1 AND gm.role = 'organizer'`,
       [groupId]
     );
 
     if (creatorCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'Group has no creator on record' });
+      return res.status(403).json({ error: 'Group has no organizer on record' });
     }
 
     const creatorWallet = creatorCheck.rows[0].wallet_address?.toLowerCase();
     if (creatorWallet !== walletLower) {
-      return res.status(403).json({ error: 'Only the group creator can delete this group' });
+      return res.status(403).json({ error: 'Only the group organizer can delete this group' });
     }
 
     const memberCount = await pool.query(
