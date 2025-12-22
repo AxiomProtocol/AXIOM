@@ -248,13 +248,163 @@ Expected: Returns pre-configured templates
 - Reliability scores range 0-100, starting at 100 for new users
 - Templates track usage count for analytics
 
+---
+
+## Phase 10: Risk Mitigation Features (Complete)
+**Implementation Date:** December 22, 2025
+
+### Overview
+Four comprehensive risk mitigation features have been implemented to protect SUSU pool members from participation risk (members failing to pay).
+
+### 1. Collateral Staking System
+
+**Purpose:** Members stake AXM tokens as a security deposit that can be forfeited if they default.
+
+**Database table:** `susu_collateral_stakes`
+- Tracks stake amount, token type (AXM/stablecoin)
+- Status: staked, released, forfeited, partial_forfeit
+- Records transaction hashes for on-chain verification
+
+**API endpoint:** `GET/POST/PATCH /api/susu/collateral`
+- `GET` - Retrieve stakes by user, group, pool, or status
+- `POST` - Create new collateral stake
+- `PATCH` - Release or forfeit stake
+
+**Features:**
+- Configurable collateral amount per group
+- Automatic release upon successful pool completion
+- Partial forfeit for partial defaults
+- Full audit trail with transaction hashes
+
+### 2. Payout Priority System
+
+**Purpose:** Members with higher reliability scores receive earlier payouts, incentivizing consistent participation.
+
+**Database tables:**
+- `susu_payout_priority_configs` - Priority calculation weights
+- `susu_payout_order` - Calculated payout order per group/pool
+
+**API endpoint:** `GET/POST/PATCH /api/susu/payout-priority`
+- `action=configure` - Set priority weights
+- `action=calculate` - Calculate payout order for all members
+
+**Priority Calculation Formula:**
+```
+Priority Score = (Reliability × 0.70) + (Tenure × 0.20) + (Collateral × 0.10)
+```
+
+**Configurable weights:**
+| Factor | Default Weight | Description |
+|--------|---------------|-------------|
+| Reliability | 70% | Based on on-time payment history |
+| Tenure | 20% | Days as group member (max 1 year = 100%) |
+| Collateral | 10% | Staked collateral amount (max 1000 AXM = 100%) |
+
+### 3. Mutual Vetting System
+
+**Purpose:** Existing members vote on new applicants to ensure trusted participants only.
+
+**Database tables:**
+- `susu_vetting_requests` - Membership applications
+- `susu_vetting_votes` - Member votes on applications
+
+**API endpoint:** `GET/POST /api/susu/vetting`
+- `action=apply` - Submit membership application
+- `action=vote` - Cast vote (approve/reject) with optional reason
+- `action=withdraw` - Withdraw pending application
+
+**Vetting Flow:**
+1. Applicant submits application with optional message
+2. Existing members receive voting deadline (default 3 days)
+3. Each member votes approve/reject
+4. When minimum votes reached, calculate approval rate
+5. If approval ≥ threshold (default 66%), auto-add to group
+6. If rejected, applicant can reapply after cooldown
+
+**Features:**
+- Reliability score captured at application time
+- Only group members can vote (verified)
+- Prevents duplicate voting
+- Configurable quorum and threshold per group
+
+### 4. Insurance Pool System
+
+**Purpose:** Protocol fees fund an insurance pool that covers losses from member defaults.
+
+**Database tables:**
+- `susu_insurance_pools` - Insurance pool configuration and balance
+- `susu_insurance_contributions` - Fee contributions to pool
+- `susu_insurance_claims` - Default claims and payouts
+
+**API endpoint:** `GET/POST /api/susu/insurance`
+- `action=pool` - View pool details and recent contributions
+- `action=claims` - View all claims
+- `action=claim` - View single claim
+- `action=contribute` - Add funds to insurance pool
+- `action=claim` - Submit insurance claim for default
+- `action=review` - Approve/reject claim (admin)
+- `action=payout` - Process approved claim payout
+
+**Default Insurance Pool Configuration:**
+| Setting | Value | Description |
+|---------|-------|-------------|
+| Fee Allocation | 25% | Portion of protocol fees to insurance |
+| Max Claim Coverage | 80% | Maximum coverage per claim |
+| Min Pool Balance | 1,000 AXM | Reserve floor |
+
+**Claim Flow:**
+1. Member misses expected payout due to default
+2. Affected member files insurance claim
+3. Admin reviews claim, verifies default
+4. Claim approved/rejected with notes
+5. If approved, payout processed (up to 80% coverage)
+6. Forfeited collateral from defaulter recovers additional funds
+
+### 5. Risk Settings Configuration
+
+**Purpose:** Unified configuration for all risk mitigation features per group.
+
+**Database table:** `susu_risk_settings`
+
+**API endpoint:** `GET/POST /api/susu/risk-settings`
+
+**Configurable settings per group:**
+```json
+{
+  "collateral_required": true,
+  "min_collateral_amount": 100,
+  "collateral_multiplier": 1.0,
+  "vetting_required": true,
+  "vetting_votes_required": 3,
+  "vetting_approval_threshold": 0.66,
+  "vetting_period_days": 3,
+  "priority_enabled": true,
+  "priority_method": "reliability",
+  "insurance_enabled": true
+}
+```
+
+### Admin Dashboard
+
+**UI page:** `/admin/susu/risk-management`
+
+**Tabs:**
+1. **Overview** - Key metrics across all risk features
+2. **Collateral Stakes** - View all stakes with status
+3. **Vetting Requests** - Pending applications with vote counts
+4. **Insurance Pool** - Pool details and contribution history
+5. **Claims** - Review and approve/reject insurance claims
+
+---
+
 ## Summary
 
 The Axiom SUSU dual-mode system has been fully implemented with:
-- **7 new database tables** for governance, compliance, and viral features
-- **8 new API endpoints** for mode detection, charters, reliability, templates
-- **3 new UI pages** for Trust Center and admin management
+- **16 new database tables** for governance, compliance, viral features, and risk mitigation
+- **13 new API endpoints** for mode detection, charters, reliability, templates, collateral, vetting, insurance, and risk settings
+- **4 new UI pages** for Trust Center, admin management, and risk management
 - **Enhanced graduation flow** with automatic mode detection and charter creation
 - **Complete documentation** including scan artifacts, classification matrix, and this report
+- **Comprehensive risk mitigation** with collateral staking, payout priority, mutual vetting, and insurance pool
 
 All changes are additive, non-breaking, and built around the existing AxiomSusuHub smart contract. The system is ready for production use with appropriate feature flag controls.
