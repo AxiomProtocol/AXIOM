@@ -270,13 +270,10 @@ export default function GroupDetailPage() {
   const checkIfCreator = async () => {
     if (!address || !id) return;
     try {
-      const res = await fetch(`/api/susu/groups/${id}/members`);
+      const res = await fetch(`/api/susu/groups/${id}/check-owner?wallet=${address}`);
       const data = await res.json();
-      if (data.success && data.members) {
-        const organizerMember = data.members.find(m => m.role === 'organizer');
-        if (organizerMember && organizerMember.wallet_address?.toLowerCase() === address.toLowerCase()) {
-          setIsCreator(true);
-        }
+      if (data.success && data.canDelete) {
+        setIsCreator(true);
       }
     } catch (err) {
       console.error('Failed to check creator status:', err);
@@ -471,7 +468,7 @@ export default function GroupDetailPage() {
                 <p className="mt-4 text-gray-300">{group.description}</p>
               )}
 
-              {isCreator && (group.member_count || 0) <= 1 && (
+              {isCreator && (
                 <div className="mt-4 pt-4 border-t border-yellow-500/20">
                   {!showDeleteConfirm ? (
                     <button
