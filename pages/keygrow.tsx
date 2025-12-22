@@ -268,18 +268,14 @@ export default function KeyGrowPage() {
       const params = new URLSearchParams({
         postalCode: zip,
         page: page.toString(),
-        pageSize: '20',
+        pageSize: '6',
         minValue: '50000',
         maxValue: '375000'
       });
       if (type) params.append('propertyType', type);
       
-      console.log('[KeyGrow] Starting fetch...');
       const res = await fetch(`/api/keygrow/attom-properties?${params}`);
-      console.log('[KeyGrow] Fetch complete, status:', res.status);
-      const text = await res.text();
-      console.log('[KeyGrow] Response length:', text.length);
-      const data = JSON.parse(text);
+      const data = await res.json();
       console.log('[KeyGrow] API Response:', { success: data.success, count: data.properties?.length, total: data.total });
       
       if (data.success) {
