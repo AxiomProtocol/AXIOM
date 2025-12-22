@@ -33,6 +33,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       includeMetrics = 'true'
     } = req.query;
 
+    const zipCode = (postalCode as string) || '78244';
+    
+    const sampleProperties = propertyDataService.getSampleProperties(zipCode);
+    
+    return res.status(200).json({
+      success: true,
+      properties: sampleProperties,
+      total: sampleProperties.length,
+      page: 1,
+      pageSize: 20,
+      usingSampleData: true,
+      message: 'Showing sample properties for demonstration'
+    });
+
     const config = propertyDataService.isConfigured();
     
     if (!config.attom) {
@@ -45,7 +59,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const zipCode = (postalCode as string) || '78244';
     const sampleFallback = {
       properties: propertyDataService.getSampleProperties(zipCode),
       total: 3,
