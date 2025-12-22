@@ -507,12 +507,12 @@ export default function GroupDetailPage() {
             </div>
 
             <div className="border-b border-gray-700">
-              <div className="flex">
+              <div className="flex overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-6 py-3 font-medium transition ${
+                    className={`px-6 py-3 font-medium transition whitespace-nowrap flex-shrink-0 ${
                       activeTab === tab.id
                         ? 'text-yellow-500 border-b-2 border-yellow-500'
                         : 'text-gray-400 hover:text-white'
