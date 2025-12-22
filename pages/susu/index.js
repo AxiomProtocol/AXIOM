@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import Layout from '../../components/Layout';
 import { useWallet } from '../../components/WalletConnect/WalletContext';
 import { ethers } from 'ethers';
@@ -47,6 +48,7 @@ const formatAddress = (address) => {
 };
 
 export default function SusuPage() {
+  const router = useRouter();
   const { walletState, connectMetaMask } = useWallet();
   const [pools, setPools] = useState([]);
   const [userPools, setUserPools] = useState([]);
@@ -277,7 +279,7 @@ export default function SusuPage() {
         })
       });
       if (res.ok) {
-        alert('Purpose group created successfully!');
+        const data = await res.json();
         setShowCreateGroup(false);
         setNewGroupForm({
           hubId: '',
@@ -288,7 +290,11 @@ export default function SusuPage() {
           minMembersToActivate: 3,
           maxMembers: 10
         });
-        fetchDiscoveryData();
+        if (data.group?.id) {
+          router.push(`/susu/group/${data.group.id}`);
+        } else {
+          fetchDiscoveryData();
+        }
       } else {
         const data = await res.json();
         alert(data.error || 'Failed to create group');
@@ -637,7 +643,8 @@ export default function SusuPage() {
                   {discoverGroups.map(group => (
                     <div
                       key={group.id}
-                      className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg transition-all"
+                      className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg hover:border-amber-300 transition-all cursor-pointer"
+                      onClick={() => router.push(`/susu/group/${group.id}`)}
                     >
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-2">
@@ -677,7 +684,7 @@ export default function SusuPage() {
                       <div className="space-y-2">
                         {group.availableSlots > 0 && (
                           <button
-                            onClick={() => handleJoinGroup(group.id)}
+                            onClick={(e) => { e.stopPropagation(); handleJoinGroup(group.id); }}
                             className="w-full py-2 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-colors"
                           >
                             Join Group ({group.availableSlots} slots left)
@@ -690,12 +697,22 @@ export default function SusuPage() {
                         )}
                         {group.isReadyToActivate && !group.graduatedToPoolId && (
                           <button
-                            onClick={() => handleGraduateGroup(group)}
+                            onClick={(e) => { e.stopPropagation(); handleGraduateGroup(group); }}
                             className="w-full py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                           >
                             <span>Graduate to On-Chain</span>
                           </button>
                         )}
+                      </div>
+                      
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <span className="text-xs text-amber-600 font-medium flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          Click to view group details & members
+                        </span>
                       </div>
                     </div>
                   ))}
