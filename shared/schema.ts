@@ -3227,3 +3227,236 @@ export type SusuMissionCard = typeof susuMissionCards.$inferSelect;
 export type InsertSusuMissionCard = typeof susuMissionCards.$inferInsert;
 export type SusuTemplate = typeof susuTemplates.$inferSelect;
 export type InsertSusuTemplate = typeof susuTemplates.$inferInsert;
+
+// ============================================
+// SUSU Risk Mitigation Tables (December 2025)
+// ============================================
+
+// Collateral stake status enum
+export const susuCollateralStatusEnum = pgEnum('susu_collateral_status', [
+  'staked',      // Active stake
+  'released',    // Successfully completed, returned to member
+  'forfeited',   // Member defaulted, stake claimed
+  'partial_forfeit' // Partial default, partial claim
+]);
+
+// 1. Collateral Staking - Members stake AXM tokens as security deposit
+export const susuCollateralStakes = pgTable("susu_collateral_stakes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  groupId: integer("group_id").references(() => susuPurposeGroups.id),
+  poolId: varchar("pool_id", { length: 100 }), // On-chain pool ID
+  stakeAmount: decimal("stake_amount", { precision: 18, scale: 8 }).notNull(),
+  tokenType: varchar("token_type", { length: 20 }).default('AXM'), // AXM or stablecoin
+  status: susuCollateralStatusEnum("status").default('staked'),
+  stakeTxHash: varchar("stake_tx_hash", { length: 66 }),
+  releaseTxHash: varchar("release_tx_hash", { length: 66 }),
+  forfeitTxHash: varchar("forfeit_tx_hash", { length: 66 }),
+  forfeitAmount: decimal("forfeit_amount", { precision: 18, scale: 8 }),
+  forfeitReason: text("forfeit_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+  releasedAt: timestamp("released_at"),
+  forfeitedAt: timestamp("forfeited_at"),
+}, (table) => ({
+  userIdx: index("susu_collateral_user_idx").on(table.userId),
+  groupIdx: index("susu_collateral_group_idx").on(table.groupId),
+  poolIdx: index("susu_collateral_pool_idx").on(table.poolId),
+  statusIdx: index("susu_collateral_status_idx").on(table.status),
+}));
+
+// Vetting request status enum
+export const susuVettingStatusEnum = pgEnum('susu_vetting_status', [
+  'pending',     // Awaiting votes
+  'approved',    // Member accepted
+  'rejected',    // Member denied
+  'expired',     // Voting period ended without quorum
+  'withdrawn'    // Applicant withdrew
+]);
+
+// 2. Mutual Vetting - Vetting requests for new members
+export const susuVettingRequests = pgTable("susu_vetting_requests", {
+  id: serial("id").primaryKey(),
+  applicantUserId: integer("applicant_user_id").references(() => users.id).notNull(),
+  groupId: integer("group_id").references(() => susuPurposeGroups.id).notNull(),
+  status: susuVettingStatusEnum("status").default('pending'),
+  votesRequired: integer("votes_required").default(3), // Min votes for quorum
+  approvalThreshold: decimal("approval_threshold", { precision: 5, scale: 2 }).default('0.66'), // 66% approval
+  votingDeadline: timestamp("voting_deadline"),
+  applicationMessage: text("application_message"),
+  reliabilityScoreAtApplication: integer("reliability_score_at_application"),
+  approvedAt: timestamp("approved_at"),
+  rejectedAt: timestamp("rejected_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  applicantIdx: index("susu_vetting_applicant_idx").on(table.applicantUserId),
+  groupIdx: index("susu_vetting_group_idx").on(table.groupId),
+  statusIdx: index("susu_vetting_status_idx").on(table.status),
+}));
+
+// Vetting votes from existing members
+export const susuVettingVotes = pgTable("susu_vetting_votes", {
+  id: serial("id").primaryKey(),
+  vettingRequestId: integer("vetting_request_id").references(() => susuVettingRequests.id).notNull(),
+  voterUserId: integer("voter_user_id").references(() => users.id).notNull(),
+  vote: boolean("vote").notNull(), // true = approve, false = reject
+  voteReason: text("vote_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  requestVoterIdx: index("susu_vetting_votes_request_voter_idx").on(table.vettingRequestId, table.voterUserId),
+}));
+
+// 3. Payout Priority Configuration per group
+export const susuPayoutPriorityConfigs = pgTable("susu_payout_priority_configs", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").references(() => susuPurposeGroups.id),
+  poolId: varchar("pool_id", { length: 100 }),
+  priorityMethod: varchar("priority_method", { length: 30 }).default('reliability'), // reliability, hybrid, random
+  reliabilityWeight: decimal("reliability_weight", { precision: 5, scale: 2 }).default('0.70'), // 70% weight for reliability
+  tenureWeight: decimal("tenure_weight", { precision: 5, scale: 2 }).default('0.20'), // 20% weight for time in group
+  collateralWeight: decimal("collateral_weight", { precision: 5, scale: 2 }).default('0.10'), // 10% weight for collateral amount
+  minReliabilityForEarlyPayout: integer("min_reliability_for_early_payout").default(80),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  groupIdx: index("susu_priority_group_idx").on(table.groupId),
+  poolIdx: index("susu_priority_pool_idx").on(table.poolId),
+}));
+
+// Calculated payout order for members
+export const susuPayoutOrder = pgTable("susu_payout_order", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").references(() => susuPurposeGroups.id),
+  poolId: varchar("pool_id", { length: 100 }),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  payoutPosition: integer("payout_position").notNull(), // 1 = first, 2 = second, etc.
+  priorityScore: decimal("priority_score", { precision: 8, scale: 4 }),
+  reliabilityComponent: decimal("reliability_component", { precision: 8, scale: 4 }),
+  tenureComponent: decimal("tenure_component", { precision: 8, scale: 4 }),
+  collateralComponent: decimal("collateral_component", { precision: 8, scale: 4 }),
+  isPaid: boolean("is_paid").default(false),
+  paidAt: timestamp("paid_at"),
+  payoutTxHash: varchar("payout_tx_hash", { length: 66 }),
+  calculatedAt: timestamp("calculated_at").defaultNow(),
+}, (table) => ({
+  groupUserIdx: index("susu_payout_order_group_user_idx").on(table.groupId, table.userId),
+  poolUserIdx: index("susu_payout_order_pool_user_idx").on(table.poolId, table.userId),
+  positionIdx: index("susu_payout_order_position_idx").on(table.payoutPosition),
+}));
+
+// 4. Insurance Pool - Protocol fee allocation for default coverage
+export const susuInsurancePools = pgTable("susu_insurance_pools", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).default('Global SUSU Insurance Pool'),
+  totalBalance: decimal("total_balance", { precision: 18, scale: 8 }).default('0'),
+  totalContributions: decimal("total_contributions", { precision: 18, scale: 8 }).default('0'),
+  totalClaimsPaid: decimal("total_claims_paid", { precision: 18, scale: 8 }).default('0'),
+  feeAllocationPercent: decimal("fee_allocation_percent", { precision: 5, scale: 2 }).default('25.00'), // 25% of protocol fees
+  maxClaimPercent: decimal("max_claim_percent", { precision: 5, scale: 2 }).default('80.00'), // Max 80% coverage per claim
+  minPoolBalance: decimal("min_pool_balance", { precision: 18, scale: 8 }).default('1000'), // Minimum reserve
+  isActive: boolean("is_active").default(true),
+  lastContributionAt: timestamp("last_contribution_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Insurance contributions from protocol fees
+export const susuInsuranceContributions = pgTable("susu_insurance_contributions", {
+  id: serial("id").primaryKey(),
+  insurancePoolId: integer("insurance_pool_id").references(() => susuInsurancePools.id).notNull(),
+  sourcePoolId: varchar("source_pool_id", { length: 100 }), // Which SUSU pool the fee came from
+  sourceGroupId: integer("source_group_id").references(() => susuPurposeGroups.id),
+  amount: decimal("amount", { precision: 18, scale: 8 }).notNull(),
+  originalFeeAmount: decimal("original_fee_amount", { precision: 18, scale: 8 }),
+  txHash: varchar("tx_hash", { length: 66 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  poolIdx: index("susu_insurance_contrib_pool_idx").on(table.insurancePoolId),
+  sourcePoolIdx: index("susu_insurance_contrib_source_idx").on(table.sourcePoolId),
+}));
+
+// Insurance claim status enum
+export const susuInsuranceClaimStatusEnum = pgEnum('susu_insurance_claim_status', [
+  'pending',     // Awaiting review
+  'approved',    // Claim approved, payment pending
+  'paid',        // Claim paid out
+  'partial',     // Partially paid (pool had insufficient funds)
+  'rejected',    // Claim denied
+  'withdrawn'    // Claimant withdrew
+]);
+
+// Insurance claims for defaults
+export const susuInsuranceClaims = pgTable("susu_insurance_claims", {
+  id: serial("id").primaryKey(),
+  insurancePoolId: integer("insurance_pool_id").references(() => susuInsurancePools.id).notNull(),
+  claimantUserId: integer("claimant_user_id").references(() => users.id).notNull(), // Member who missed payout
+  defaulterUserId: integer("defaulter_user_id").references(() => users.id).notNull(), // Member who defaulted
+  groupId: integer("group_id").references(() => susuPurposeGroups.id),
+  poolId: varchar("pool_id", { length: 100 }),
+  cycleNumber: integer("cycle_number"),
+  claimAmount: decimal("claim_amount", { precision: 18, scale: 8 }).notNull(),
+  approvedAmount: decimal("approved_amount", { precision: 18, scale: 8 }),
+  paidAmount: decimal("paid_amount", { precision: 18, scale: 8 }),
+  status: susuInsuranceClaimStatusEnum("status").default('pending'),
+  claimReason: text("claim_reason"),
+  reviewNotes: text("review_notes"),
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  payoutTxHash: varchar("payout_tx_hash", { length: 66 }),
+  collateralRecovered: decimal("collateral_recovered", { precision: 18, scale: 8 }).default('0'),
+  createdAt: timestamp("created_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+  paidAt: timestamp("paid_at"),
+}, (table) => ({
+  poolIdx: index("susu_claims_pool_idx").on(table.insurancePoolId),
+  claimantIdx: index("susu_claims_claimant_idx").on(table.claimantUserId),
+  defaulterIdx: index("susu_claims_defaulter_idx").on(table.defaulterUserId),
+  statusIdx: index("susu_claims_status_idx").on(table.status),
+  groupIdx: index("susu_claims_group_idx").on(table.groupId),
+}));
+
+// Risk mitigation settings per group
+export const susuRiskSettings = pgTable("susu_risk_settings", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").references(() => susuPurposeGroups.id),
+  poolId: varchar("pool_id", { length: 100 }),
+  // Collateral settings
+  collateralRequired: boolean("collateral_required").default(false),
+  minCollateralAmount: decimal("min_collateral_amount", { precision: 18, scale: 8 }),
+  collateralMultiplier: decimal("collateral_multiplier", { precision: 5, scale: 2 }).default('1.00'), // 1x contribution
+  // Vetting settings
+  vettingRequired: boolean("vetting_required").default(false),
+  vettingVotesRequired: integer("vetting_votes_required").default(3),
+  vettingApprovalThreshold: decimal("vetting_approval_threshold", { precision: 5, scale: 2 }).default('0.66'),
+  vettingPeriodDays: integer("vetting_period_days").default(3),
+  // Priority settings
+  priorityEnabled: boolean("priority_enabled").default(true),
+  priorityMethod: varchar("priority_method", { length: 30 }).default('reliability'),
+  // Insurance settings
+  insuranceEnabled: boolean("insurance_enabled").default(true),
+  insurancePoolId: integer("insurance_pool_id").references(() => susuInsurancePools.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  groupIdx: index("susu_risk_settings_group_idx").on(table.groupId),
+  poolIdx: index("susu_risk_settings_pool_idx").on(table.poolId),
+}));
+
+// Export types for risk mitigation tables
+export type SusuCollateralStake = typeof susuCollateralStakes.$inferSelect;
+export type InsertSusuCollateralStake = typeof susuCollateralStakes.$inferInsert;
+export type SusuVettingRequest = typeof susuVettingRequests.$inferSelect;
+export type InsertSusuVettingRequest = typeof susuVettingRequests.$inferInsert;
+export type SusuVettingVote = typeof susuVettingVotes.$inferSelect;
+export type InsertSusuVettingVote = typeof susuVettingVotes.$inferInsert;
+export type SusuPayoutPriorityConfig = typeof susuPayoutPriorityConfigs.$inferSelect;
+export type InsertSusuPayoutPriorityConfig = typeof susuPayoutPriorityConfigs.$inferInsert;
+export type SusuPayoutOrder = typeof susuPayoutOrder.$inferSelect;
+export type InsertSusuPayoutOrder = typeof susuPayoutOrder.$inferInsert;
+export type SusuInsurancePool = typeof susuInsurancePools.$inferSelect;
+export type InsertSusuInsurancePool = typeof susuInsurancePools.$inferInsert;
+export type SusuInsuranceContribution = typeof susuInsuranceContributions.$inferSelect;
+export type InsertSusuInsuranceContribution = typeof susuInsuranceContributions.$inferInsert;
+export type SusuInsuranceClaim = typeof susuInsuranceClaims.$inferSelect;
+export type InsertSusuInsuranceClaim = typeof susuInsuranceClaims.$inferInsert;
+export type SusuRiskSettings = typeof susuRiskSettings.$inferSelect;
+export type InsertSusuRiskSettings = typeof susuRiskSettings.$inferInsert;
