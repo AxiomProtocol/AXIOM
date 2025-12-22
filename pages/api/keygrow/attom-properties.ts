@@ -33,21 +33,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       includeMetrics = 'true'
     } = req.query;
 
+    const config = propertyDataService.isConfigured();
     const zipCode = (postalCode as string) || '78244';
     
     const sampleProperties = propertyDataService.getSampleProperties(zipCode);
-    
     return res.status(200).json({
       success: true,
       properties: sampleProperties,
       total: sampleProperties.length,
       page: 1,
       pageSize: 20,
-      usingSampleData: true,
-      message: 'Showing sample properties for demonstration'
+      usingSampleData: true
     });
-
-    const config = propertyDataService.isConfigured();
     
     if (!config.attom) {
       return res.status(503).json({
