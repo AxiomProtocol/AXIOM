@@ -1,5 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../server/db';
+import { seedHubsIfEmpty } from '../../../../server/seedHubs';
+
+let seeded = false;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
@@ -12,6 +15,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 async function handleGet(req: NextApiRequest, res: NextApiResponse) {
   try {
+    if (!seeded) {
+      await seedHubsIfEmpty();
+      seeded = true;
+    }
+
     const { region, limit = '50', offset = '0' } = req.query;
     const limitNum = parseInt(limit as string);
     const offsetNum = parseInt(offset as string);
