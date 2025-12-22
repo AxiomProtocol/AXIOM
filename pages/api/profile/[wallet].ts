@@ -114,6 +114,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         );
       }
 
+      // Check if user created any SUSU groups but wasn't added as a member
+      const userId = result.rows[0]?.id;
+      if (userId) {
+        // Find groups created by this user where they're not a member
+        const orphanedGroups = await pool.query(
+          `SELECT g.id FROM susu_purpose_groups g
+           LEFT JOIN susu_group_members gm ON gm.group_id = g.id AND gm.user_id = $1
+           WHERE g.created_by = $1 AND gm.id IS NULL`,
+          [userId]
+        );
+        
+        // Add user as organizer to any groups they created
+        for (const group of orphanedGroups.rows) {
+          await pool.query(
+            `INSERT INTO susu_group_members (group_id, user_id, role, commitment_confirmed, joined_at)
+             VALUES ($1, $2, 'organizer', true, NOW())
+             ON CONFLICT DO NOTHING`,
+            [group.id, userId]
+          );
+          // Update member count
+          await pool.query(
+            `UPDATE susu_purpose_groups SET member_count = member_count + 1 WHERE id = $1`,
+            [group.id]
+          );
+        }
+      }
+
       res.status(200).json({ success: true, message: 'Profile saved' });
     } catch (error: any) {
       console.error('Error saving profile:', error);

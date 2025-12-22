@@ -149,7 +149,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
 
     const normalizedWallet = walletAddress ? walletAddress.toLowerCase() : null;
     
-    // Look up user by wallet address if provided
+    // Look up user by wallet address, create if doesn't exist
     let userId = null;
     if (normalizedWallet) {
       const userResult = await pool.query(
@@ -158,6 +158,19 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
       );
       if (userResult.rows.length > 0) {
         userId = userResult.rows[0].id;
+      } else {
+        // Auto-create user entry for group creator
+        const crypto = require('crypto');
+        const placeholderEmail = `${normalizedWallet}@wallet.axiom.city`;
+        const randomPasswordHash = crypto.createHash('sha256').update(crypto.randomBytes(32)).digest('hex');
+        
+        const newUserResult = await pool.query(
+          `INSERT INTO users (wallet_address, email, password, created_at)
+           VALUES (LOWER($1), $2, $3, NOW())
+           RETURNING id`,
+          [normalizedWallet, placeholderEmail, randomPasswordHash]
+        );
+        userId = newUserResult.rows[0].id;
       }
     }
     
