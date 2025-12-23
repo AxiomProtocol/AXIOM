@@ -16,36 +16,66 @@ function useAccessibleMotion() {
   };
 }
 
-const ECOSYSTEM_PILLARS = [
+const JOURNEY_STEPS = [
+  {
+    icon: '📚',
+    step: 1,
+    title: 'Learn',
+    description: 'Build your financial foundation. Money mindset, discipline, budgeting basics, and community wealth principles.',
+    stats: 'Step 1',
+    link: '/academy',
+    cta: 'Start Learning'
+  },
+  {
+    icon: '🤝',
+    step: 2,
+    title: 'Connect',
+    description: 'Find your community by location and goals. No money required — build trust first with people who share your vision.',
+    stats: 'Step 2',
+    link: '/susu',
+    cta: 'Find Groups'
+  },
+  {
+    icon: '💰',
+    step: 3,
+    title: 'Save Together',
+    description: 'Join SUSU savings circles with clear rules and transparency. Start small, build consistency, grow over time.',
+    stats: 'Step 3',
+    link: '/susu',
+    cta: 'Start Saving'
+  }
+];
+
+const ADVANCED_MODULES = [
+  {
+    icon: '🌱',
+    title: 'Grow',
+    description: 'After you build consistency, explore rent-to-own opportunities and build equity toward home ownership.',
+    stats: 'After Step 3',
+    link: '/keygrow',
+    cta: 'Explore KeyGrow'
+  },
+  {
+    icon: '🔧',
+    title: 'Banking Tools',
+    description: 'Banking-style coordination tools for advanced members. Payments, credit scoring, and financial products.',
+    stats: 'Advanced',
+    link: '/bank',
+    cta: 'View Tools'
+  },
   {
     icon: '🏗️',
-    title: 'Axiom Nodes',
-    description: 'Register and operate physical infrastructure nodes. Validators, storage, compute, IoT sensors, and network nodes earning real revenue.',
-    stats: '5 Node Types',
+    title: 'Node Network',
+    description: 'Operate infrastructure nodes and earn rewards. Part of Axiom\'s long-term decentralized buildout.',
+    stats: 'Advanced',
     link: '/axiom-nodes',
-    cta: 'Become an Operator'
-  },
-  {
-    icon: '🏦',
-    title: 'Digital Banking',
-    description: 'Full-service on-chain banking with 30+ product families. Deposits, lending, payments, credit scoring, and institutional services.',
-    stats: '30+ Products',
-    link: '/governance',
-    cta: 'Explore Banking'
-  },
-  {
-    icon: '🏘️',
-    title: 'Real Estate',
-    description: 'Tokenized land parcels and property registry. Smart lease management, realtor marketplace, and capital pools for development.',
-    stats: '1,000 Acres',
-    link: '/transparency-reports',
-    cta: 'View Properties'
+    cta: 'Learn More'
   },
   {
     icon: '🗳️',
     title: 'Governance',
-    description: 'Community-owned and governed smart city. Stake AXM tokens, delegate voting power, and shape the future of Axiom.',
-    stats: 'DAO Controlled',
+    description: 'Community-owned and member-governed. Stake AXM tokens, delegate voting power, and shape the future.',
+    stats: 'Advanced',
     link: '/governance',
     cta: 'Participate'
   }
@@ -557,16 +587,16 @@ export default function Home() {
               variants={itemVariants}
               className="text-2xl sm:text-3xl text-amber-600 font-semibold mb-4"
             >
-              America's First On-Chain Smart City
+              Build wealth through discipline, structure, and community.
             </motion.p>
             
             <motion.p
               variants={itemVariants}
               className="text-lg text-gray-600 max-w-2xl mx-auto mb-10"
             >
-              A 1,000-acre sovereign digital-physical economy. Full-service banking, 
-              tokenized real estate, DePIN infrastructure, and community governance — 
-              all powered by the AXM token on Arbitrum.
+              Learn. Connect. Save together — with clear rules and transparency.
+              Start your journey with financial education, find your community, 
+              and grow together through structured savings circles.
             </motion.p>
 
             <motion.div
@@ -575,18 +605,18 @@ export default function Home() {
             >
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
                 <Link 
-                  href="/axiom-nodes"
+                  href="/susu"
                   className="inline-block px-8 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all shadow-lg shadow-amber-500/25"
                 >
-                  Become a Node Operator
+                  Start a Savings Circle
                 </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
                 <Link 
-                  href="/governance"
+                  href="/academy"
                   className="inline-block px-8 py-4 bg-white border-2 border-amber-500 text-amber-600 font-bold rounded-lg hover:bg-amber-50 transition-all"
                 >
-                  Explore Governance
+                  Learn First
                 </Link>
               </motion.div>
             </motion.div>
@@ -617,7 +647,7 @@ export default function Home() {
               Discover <span className="text-amber-600">Axiom</span>
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Watch our introduction video to learn how Axiom is building America's first on-chain smart city
+              Watch our introduction video to learn how Axiom helps communities build wealth together
             </p>
           </motion.div>
 
@@ -631,7 +661,7 @@ export default function Home() {
             <div className="aspect-video">
               <iframe
                 src="https://www.youtube.com/embed/IzuCdyNFssE"
-                title="Axiom Smart City Introduction"
+                title="Axiom Introduction"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 className="w-full h-full"
@@ -661,15 +691,36 @@ export default function Home() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl lg:text-4xl font-bold mb-4 text-gray-900">
-              The Complete <span className="text-amber-600">Smart City Ecosystem</span>
+              Your <span className="text-amber-600">Journey</span> to Financial Freedom
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Four integrated pillars working together to create America's first fully on-chain sovereign economy
+              Three simple steps to build wealth through discipline, community, and structured savings
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
-            {ECOSYSTEM_PILLARS.map((pillar, i) => (
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 mb-16">
+            {JOURNEY_STEPS.map((pillar, i) => (
+              <PillarCard key={i} pillar={pillar} index={i} />
+            ))}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-8 mt-16"
+          >
+            <h3 className="text-xl font-semibold mb-2 text-gray-700">
+              Ready for more? <span className="text-amber-600">Advanced Modules</span>
+            </h3>
+            <p className="text-gray-500 text-sm max-w-xl mx-auto">
+              After building consistency with Steps 1-3, explore these advanced opportunities
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {ADVANCED_MODULES.map((pillar, i) => (
               <PillarCard key={i} pillar={pillar} index={i} />
             ))}
           </div>
@@ -758,8 +809,8 @@ export default function Home() {
                   AXM Protocol Token
                 </h2>
                 <p className="text-gray-600 mb-6 leading-relaxed">
-                  The native governance and fee-routing token of Axiom Smart City. 
-                  Stake to participate in governance, earn protocol revenue, and access exclusive city services.
+                  The native governance and coordination token of Axiom Protocol. 
+                  Stake to participate in governance, earn protocol rewards, and access community services.
                 </p>
                 
                 <div className="grid grid-cols-2 gap-4 mb-8">
@@ -823,8 +874,8 @@ export default function Home() {
             Ready to Build the Future?
           </h2>
           <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
-            Join the first wave of infrastructure operators, investors, and citizens 
-            building America's first on-chain smart city.
+            Join community members who are building wealth through discipline, 
+            structure, and transparent savings circles.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -960,14 +1011,17 @@ export default function Home() {
                 </motion.div>
               </Link>
               <p className="text-sm text-gray-500">
-                America's First On-Chain Smart City
+                Build wealth through discipline, structure, and community.
               </p>
             </div>
 
             <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Ecosystem</h4>
+              <h4 className="font-semibold text-gray-900 mb-4">Your Journey</h4>
               <div className="space-y-2">
-                <Link href="/bank" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">National Bank</Link>
+                <Link href="/academy" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Learn (Academy)</Link>
+                <Link href="/susu" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Connect & Save Together (SUSU)</Link>
+                <Link href="/keygrow" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Grow (KeyGrow)</Link>
+                <Link href="/bank" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Banking Tools</Link>
                 <Link href="/dex" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">DEX Exchange</Link>
                 <Link href="/launchpad" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Launchpad (TGE)</Link>
                 <Link href="/axiom-nodes" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">DePIN Network</Link>
@@ -1007,7 +1061,7 @@ export default function Home() {
 
           <div className="border-t border-gray-200 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-500">
-              © 2025 Axiom Smart City. All rights reserved.
+              © 2025 Axiom Protocol. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-500">Deployed on</span>
