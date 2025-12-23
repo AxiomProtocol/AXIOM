@@ -187,8 +187,8 @@ export default function AboutUs() {
         <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-3xl p-8 md:p-12 text-center text-white">
           <h2 className="text-3xl font-bold mb-4">Join the Movement</h2>
           <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
-            Whether you're an infrastructure operator, investor, developer, or future citizen — 
-            there's a place for you in Axiom. Be part of building the first truly on-chain city.
+            Whether you're looking to save, learn, or build — there's a place for you in Axiom. 
+            Join our community and start your journey toward financial freedom.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 

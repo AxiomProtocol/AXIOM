@@ -44,9 +44,9 @@ export default function TokenPage() {
     <>
       <Head>
         <title>AXM Token | Axiom Protocol</title>
-        <meta name="description" content="AXM is the governance and utility token powering Axiom Protocol - America's first on-chain smart city economy." />
+        <meta name="description" content="AXM is the governance and utility token powering Axiom Protocol - a community-first wealth-building platform." />
         <meta property="og:title" content="AXM Token | Axiom Protocol" />
-        <meta property="og:description" content="The governance and utility token powering America's first on-chain smart city." />
+        <meta property="og:description" content="The governance and utility token powering the Axiom community economy." />
         <meta property="og:type" content="website" />
       </Head>
 
@@ -68,7 +68,7 @@ export default function TokenPage() {
                 <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">AXM</span> Token
               </h1>
               <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-                The governance and utility token powering America's first on-chain smart city economy
+                The governance and utility token powering the Axiom community economy
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <Link href="/dex" className="px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl font-semibold hover:from-amber-600 hover:to-orange-600 transition shadow-lg">

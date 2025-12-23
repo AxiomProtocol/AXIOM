@@ -52,7 +52,7 @@ const CORE_VALUES = [
   { icon: '🌟', title: 'Transparency', description: '100% on-chain transactions with full audit trails' },
   { icon: '🤝', title: 'Community-First', description: 'Governed by AXM token holders, for the community' },
   { icon: '🔒', title: 'Security', description: 'Audited smart contracts and institutional-grade protection' },
-  { icon: '🚀', title: 'Innovation', description: 'First sovereign on-chain banking system in America' },
+  { icon: '🚀', title: 'Innovation', description: 'Building the future of community financial coordination' },
 ];
 
 export default function BankPage() {
@@ -98,8 +98,8 @@ export default function BankPage() {
           </h1>
           
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            America's first fully on-chain sovereign banking system. Over 30 financial products 
-            powered by blockchain technology and smart contracts on Arbitrum One.
+            Community financial coordination tools powered by blockchain. Over 30 products 
+            designed for transparency and accessibility on Arbitrum One.
           </p>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
@@ -129,10 +129,9 @@ export default function BankPage() {
             <div className="text-5xl mb-4">🎯</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h2>
             <p className="text-gray-700 leading-relaxed">
-              To establish the first sovereign digital-physical economy in America 
-              through blockchain-powered banking infrastructure. We provide transparent, 
-              accessible financial services that empower individuals, businesses, and 
-              communities to participate in the future of finance.
+              To build transparent, community-governed financial coordination tools 
+              that empower individuals, businesses, and communities. We provide accessible 
+              financial services on blockchain so everyone can participate in building wealth.
             </p>
           </div>
 
@@ -140,10 +139,9 @@ export default function BankPage() {
             <div className="text-5xl mb-4">🚀</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Vision</h2>
             <p className="text-gray-700 leading-relaxed">
-              To become the leading model for smart city banking worldwide, 
-              demonstrating how blockchain technology can create sovereign, 
-              community-governed financial systems that rival and surpass 
-              traditional Wall Street institutions.
+              To demonstrate how blockchain technology can create community-governed 
+              financial systems that prioritize transparency, accessibility, and 
+              long-term wealth building for all members.
             </p>
           </div>
         </div>

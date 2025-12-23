@@ -6,7 +6,7 @@ import StepProgressBanner from '../components/StepProgressBanner';
 
 const COUNCIL_MEMBERS = [
   { name: 'Genesis Council', role: 'Founding Members', members: 7, votingPower: '15%', focus: 'Protocol Development' },
-  { name: 'Citizen Assembly', role: 'Token Holders', members: 'All', votingPower: '60%', focus: 'General Proposals' },
+  { name: 'Member Assembly', role: 'Token Holders', members: 'All', votingPower: '60%', focus: 'General Proposals' },
   { name: 'Technical Committee', role: 'Engineers', members: 5, votingPower: '10%', focus: 'Smart Contracts' },
   { name: 'Treasury Stewards', role: 'Financial Oversight', members: 5, votingPower: '10%', focus: 'Fund Allocation' },
   { name: 'Sustainability Board', role: 'Environment', members: 3, votingPower: '5%', focus: 'Green Initiatives' },
