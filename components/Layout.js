@@ -129,7 +129,7 @@ export default function Layout({ children, showWallet = true }) {
                 </div>
               </Link>
               <p className="text-sm text-gray-500">
-                America's First On-Chain Smart City
+                Build wealth through discipline, structure, and community.
               </p>
             </div>
 
@@ -163,7 +163,7 @@ export default function Layout({ children, showWallet = true }) {
 
           <div className="border-t border-gray-200 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-500">
-              © 2025 Axiom Smart City. All rights reserved.
+              © 2025 Axiom Protocol. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-500">Deployed on</span>
