@@ -680,19 +680,7 @@ export default function AxiomDePINNodes() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)', color: '#fff' }}>
-      <div className="bg-amber-50 border-b border-amber-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs font-medium rounded">Advanced Module</span>
-              <span className="text-sm text-gray-600">Part of Axiom's long-term infrastructure buildout</span>
-            </div>
-            <Link href="/susu" className="text-sm text-amber-600 hover:text-amber-700 font-medium">
-              Start with Learn → Connect → Save Together →
-            </Link>
-          </div>
-        </div>
-      </div>
+      <StepProgressBanner isAdvanced={true} />
       <Toaster position="top-right" />
       
       {/* Navigation */}
