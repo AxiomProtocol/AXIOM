@@ -154,6 +154,53 @@ export default function TokenPage() {
               </div>
             </div>
 
+            <Link href="/launchpad" className="block mb-12 group">
+              <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-2xl p-8 text-white shadow-xl hover:shadow-2xl transition-all hover:scale-[1.01]">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <span className="text-4xl">🚀</span>
+                  </div>
+                  <div className="flex-1 text-center md:text-left">
+                    <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
+                      <h3 className="text-2xl font-bold">Token Generation Event (TGE)</h3>
+                      <span className="px-3 py-1 bg-white/20 rounded-full text-sm font-medium">Q1 2026</span>
+                    </div>
+                    <p className="text-purple-100 mb-4">
+                      Be among the first to participate in the AXM public sale. Early supporters get priority access and exclusive bonuses.
+                    </p>
+                    <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm">
+                      <span className="flex items-center gap-2">
+                        <svg className="w-5 h-5 text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        5% of supply available
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <svg className="w-5 h-5 text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        750M AXM tokens
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <svg className="w-5 h-5 text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        100% unlocked at TGE
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <div className="px-6 py-3 bg-white text-purple-600 rounded-xl font-semibold group-hover:bg-gray-100 transition flex items-center gap-2">
+                      Learn More
+                      <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+
             <div className="mb-12">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Token Utility</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
