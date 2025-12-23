@@ -6,6 +6,7 @@ import { useWallet } from '../../components/WalletConnect/WalletContext';
 import { ethers } from 'ethers';
 import DisclosureBanner from '../../components/DisclosureBanner';
 import StepProgressBanner from '../../components/StepProgressBanner';
+import { SUSU_ROUTES } from '../../lib/susuRoutes';
 
 const STATUS_LABELS = {
   0: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
@@ -116,6 +117,24 @@ export default function SusuPage() {
       fetchUserPools();
     }
   }, [walletState?.address]);
+
+  useEffect(() => {
+    const { tab, action, filter } = router.query;
+    if (tab === 'create') {
+      setActiveTab('create');
+    } else if (tab === 'browse') {
+      setActiveTab('browse');
+    } else if (tab === 'discover') {
+      setActiveTab('discover');
+      if (filter === 'purpose' && discoverCategories.length > 0) {
+        setDiscoverFilters(prev => ({ ...prev, purposeId: discoverCategories[0]?.id?.toString() || '' }));
+      }
+    }
+    if (action === 'create-group') {
+      setActiveTab('discover');
+      setShowCreateGroup(true);
+    }
+  }, [router.query, discoverCategories]);
 
   const fetchDiscoveryData = async () => {
     setDiscoverLoading(true);
@@ -453,13 +472,21 @@ export default function SusuPage() {
             </div>
 
             <p className="text-amber-200 text-sm mb-2">Step 3: Save Together — Start small, build consistency, grow over time.</p>
-            <p className="text-gray-400 max-w-2xl mt-2 mb-6">
+            <p className="text-gray-400 max-w-2xl mt-2 mb-4">
               SUSU is a trusted community savings tradition used for generations worldwide. 
               Axiom brings this system on-chain with clear rules, full transparency, 
               and automated fair payouts. Save together, build together.
             </p>
+            <div className="flex flex-wrap gap-4 mb-4">
+              <Link href={SUSU_ROUTES.SUSU_START_PATH} className="text-amber-400 hover:text-amber-300 underline text-sm">
+                New to SUSU? Start here
+              </Link>
+              <Link href={SUSU_ROUTES.SUSU_FAQ_PATH} className="text-gray-400 hover:text-gray-300 underline text-sm">
+                Read the SUSU FAQ
+              </Link>
+            </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                 <div className="text-2xl font-bold text-amber-400">{stats.totalPools}</div>
                 <div className="text-sm text-gray-300">Total Pools</div>
@@ -630,16 +657,38 @@ export default function SusuPage() {
                   <p className="text-gray-500">Loading groups...</p>
                 </div>
               ) : discoverGroups.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-                  <div className="text-5xl mb-4">🌱</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No Groups Yet</h3>
-                  <p className="text-gray-500 mb-6">Be the first to start a purpose group in your area!</p>
-                  <button
-                    onClick={() => setShowCreateGroup(true)}
-                    className="px-6 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors"
-                  >
-                    Start a Purpose Group
-                  </button>
+                <div className="bg-white rounded-2xl border border-gray-200 p-8">
+                  <div className="text-center mb-8">
+                    <div className="text-5xl mb-4">🌱</div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No local groups yet.</h3>
+                    <p className="text-gray-600">That's normal early on. You can still connect and start building trust today.</p>
+                  </div>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <Link
+                      href={SUSU_ROUTES.GOAL_GROUPS_PATH}
+                      className="block bg-amber-50 rounded-xl border border-amber-200 p-5 hover:shadow-lg hover:border-amber-400 transition-all"
+                    >
+                      <div className="text-2xl mb-2">🎯</div>
+                      <h4 className="font-semibold text-gray-900 mb-1">Join a Goal Group</h4>
+                      <p className="text-sm text-gray-600">Connect with people saving for the same goal, regardless of location.</p>
+                    </Link>
+                    <div
+                      onClick={() => setShowCreateGroup(true)}
+                      className="block bg-gray-50 rounded-xl border border-gray-200 p-5 hover:shadow-lg hover:border-amber-400 transition-all cursor-pointer"
+                    >
+                      <div className="text-2xl mb-2">➕</div>
+                      <h4 className="font-semibold text-gray-900 mb-1">Start a Group</h4>
+                      <p className="text-sm text-gray-600">Invite friends, family, or coworkers. Set the goal and rules together.</p>
+                    </div>
+                    <Link
+                      href={SUSU_ROUTES.LEARN_PATH}
+                      className="block bg-blue-50 rounded-xl border border-blue-200 p-5 hover:shadow-lg hover:border-blue-400 transition-all"
+                    >
+                      <div className="text-2xl mb-2">📖</div>
+                      <h4 className="font-semibold text-gray-900 mb-1">Learn How Group Saving Works</h4>
+                      <p className="text-sm text-gray-600">A short guide to the Learn, Connect, Save Together journey.</p>
+                    </Link>
+                  </div>
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
