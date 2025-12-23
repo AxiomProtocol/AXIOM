@@ -3,6 +3,7 @@ import { useWallet } from '../components/WalletConnect/WalletContext';
 import toast, { Toaster } from 'react-hot-toast';
 import { ethers } from 'ethers';
 import Link from 'next/link';
+import StepProgressBanner from '../components/StepProgressBanner';
 
 const DEPIN_SUITE_ADDRESS = '0x16dC3884d88b767D99E0701Ba026a1ed39a250F1';
 const DEPIN_SALES_ADDRESS = '0x876951CaE4Ad48bdBfba547Ef4316Db576A9Edbd';
@@ -679,6 +680,19 @@ export default function AxiomDePINNodes() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)', color: '#fff' }}>
+      <div className="bg-amber-50 border-b border-amber-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs font-medium rounded">Advanced Module</span>
+              <span className="text-sm text-gray-600">Part of Axiom's long-term infrastructure buildout</span>
+            </div>
+            <Link href="/susu" className="text-sm text-amber-600 hover:text-amber-700 font-medium">
+              Start with Learn → Connect → Save Together →
+            </Link>
+          </div>
+        </div>
+      </div>
       <Toaster position="top-right" />
       
       {/* Navigation */}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { DelegationPanel } from '../components/Governance/DelegationPanel';
 import { useWallet } from '../components/WalletConnect/WalletContext';
+import StepProgressBanner from '../components/StepProgressBanner';
 
 const COUNCIL_MEMBERS = [
   { name: 'Genesis Council', role: 'Founding Members', members: 7, votingPower: '15%', focus: 'Protocol Development' },
@@ -107,6 +108,7 @@ export default function GovernancePage() {
 
   return (
     <Layout>
+      <StepProgressBanner isAdvanced={true} />
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
         <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white py-16">
           <div className="max-w-6xl mx-auto px-6">
@@ -116,7 +118,7 @@ export default function GovernancePage() {
               </div>
               <div>
                 <h1 className="text-4xl font-bold mb-1">Axiom Governance</h1>
-                <p className="text-gray-300">Decentralized decision-making for America's first on-chain smart city</p>
+                <p className="text-gray-300">Community-owned and member-governed decision-making</p>
               </div>
             </div>
 

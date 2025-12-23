@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Layout from '../components/Layout';
+import StepProgressBanner from '../components/StepProgressBanner';
 
 const BANKING_PRODUCTS = [
   { id: 'checking-standard', name: 'Standard Checking Account', category: 'deposit', description: 'Basic checking account with instant AXM transfers and no monthly fees', apy: '0.5%', minimumBalance: '100 AXM', fees: 'No monthly fees', features: ['Instant transfers', 'Mobile banking', 'Bill pay', 'Direct deposit'], icon: '💳', riskLevel: 'low' },
@@ -82,6 +83,7 @@ export default function BankPage() {
 
   return (
     <Layout>
+      <StepProgressBanner isAdvanced={true} />
       <div className="bg-gradient-to-br from-amber-50 via-white to-orange-50 py-16 px-4">
         <div className="max-w-6xl mx-auto text-center">
           <div className="inline-block bg-amber-100 border border-amber-300 rounded-full px-6 py-2 mb-6">

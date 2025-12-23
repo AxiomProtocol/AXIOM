@@ -6,6 +6,7 @@ import { useWallet } from '../components/WalletConnect/WalletContext';
 import toast, { Toaster } from 'react-hot-toast';
 import { ethers } from 'ethers';
 import DisclosureBanner from '../components/DisclosureBanner';
+import StepProgressBanner from '../components/StepProgressBanner';
 
 const AdvancedTradingChart = dynamic(() => import('../components/AdvancedTradingChart'), { ssr: false });
 
@@ -860,12 +861,13 @@ export default function DexPage() {
 
   return (
     <Layout>
+      <StepProgressBanner isAdvanced={true} />
       <Toaster position="top-right" />
       
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">Axiom Exchange</h1>
-          <p className="text-gray-600 text-sm sm:text-lg px-2">Decentralized trading on America's first on-chain smart city</p>
+          <p className="text-gray-600 text-sm sm:text-lg px-2">Decentralized trading powered by the Axiom Protocol</p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8">
