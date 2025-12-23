@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Layout from '../components/Layout';
+import StepProgressBanner from '../components/StepProgressBanner';
 
 const TOKEN_INFO = {
   name: 'Axiom Protocol Token',
@@ -51,6 +52,7 @@ export default function TokenPage() {
       </Head>
 
       <Layout>
+        <StepProgressBanner isAdvanced={true} />
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
           <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-20 px-4">
             <div className="max-w-4xl mx-auto text-center">

@@ -6,7 +6,7 @@ const STEPS = [
   { id: 'save', label: 'Save Together', href: '/susu', description: 'SUSU savings circles with clear rules' },
 ];
 
-export default function StepProgressBanner({ currentStep, isAdvanced = false }) {
+export default function StepProgressBanner({ currentStep = null, isAdvanced = false }) {
   if (isAdvanced) {
     return (
       <div className="bg-amber-50 border-b border-amber-200">

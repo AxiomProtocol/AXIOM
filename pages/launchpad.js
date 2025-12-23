@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import DisclosureBanner from '../components/DisclosureBanner';
+import StepProgressBanner from '../components/StepProgressBanner';
 
 const USE_OF_PROCEEDS = [
   { name: 'Community Infrastructure', percentage: 35, color: '#f59e0b', description: 'DePIN nodes, IoT networks, energy grids, and physical infrastructure development' },
@@ -158,6 +159,7 @@ export default function LaunchpadPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+      <StepProgressBanner isAdvanced={true} />
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/30 via-purple-900/30 to-pink-900/30"></div>
         
