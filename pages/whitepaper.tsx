@@ -3,7 +3,7 @@ import Layout from '../components/Layout';
 import Link from 'next/link';
 import Logo3D from '../components/Logo3D';
 
-const VERSION = "1.1";
+const VERSION = "2.0";
 const LAST_UPDATED = "December 2025";
 
 const CONTRACTS = {
@@ -52,16 +52,17 @@ const TABLE_OF_CONTENTS: Section[] = [
   { id: 'introduction', title: '2. Introduction', subsections: ['2.1 Vision', '2.2 Mission', '2.3 Problem Statement'] },
   { id: 'market-opportunity', title: '3. Market Opportunity', subsections: ['3.1 Smart City Market', '3.2 Real Estate Tokenization', '3.3 DePIN Infrastructure'] },
   { id: 'solution', title: '4. The Axiom Solution', subsections: ['4.1 Platform Overview', '4.2 Key Innovations', '4.3 Competitive Advantages'] },
-  { id: 'technology', title: '5. Technology Architecture', subsections: ['5.1 Blockchain Infrastructure', '5.2 Smart Contract Suite', '5.3 Security Framework'] },
-  { id: 'tokenomics', title: '6. Tokenomics', subsections: ['6.1 AXM Token', '6.2 Supply Distribution', '6.3 Utility & Value Accrual'] },
-  { id: 'ecosystem', title: '7. Ecosystem Components', subsections: ['7.1 KeyGrow Rent-to-Own', '7.2 DePIN Node Network', '7.3 Decentralized Exchange', '7.4 Governance System', '7.5 Axiom SUSU'] },
-  { id: 'banking', title: '8. National Bank of Axiom', subsections: ['8.1 Personal Banking', '8.2 Business Banking', '8.3 Investment Services', '8.4 Credit Products'] },
-  { id: 'wall-street', title: '9. Wall Street Integration', subsections: ['9.1 Tokenized Securities', '9.2 RWA Marketplace', '9.3 Future Development'] },
-  { id: 'governance', title: '10. Governance & Compliance', subsections: ['10.1 DAO Structure', '10.2 External Interface: ISO 20022', '10.3 External Interface: GENIUS Act', '10.4 KYC/AML', '10.5 Internal Operations: PMA Trust'] },
-  { id: 'roadmap', title: '11. Development Roadmap' },
-  { id: 'financials', title: '12. Financial Projections' },
-  { id: 'risks', title: '13. Risk Factors & Mitigations' },
-  { id: 'legal', title: '14. Legal Disclosures' },
+  { id: 'member-experience', title: '5. Member Experience Platform', subsections: ['5.1 The Journey Framework', '5.2 Community Features', '5.3 Growth Strategy'] },
+  { id: 'technology', title: '6. Technology Architecture', subsections: ['6.1 Blockchain Infrastructure', '6.2 Smart Contract Suite', '6.3 Security Framework'] },
+  { id: 'tokenomics', title: '7. Tokenomics', subsections: ['7.1 AXM Token', '7.2 Supply Distribution', '7.3 Utility & Value Accrual'] },
+  { id: 'ecosystem', title: '8. Ecosystem Components', subsections: ['8.1 KeyGrow Rent-to-Own', '8.2 DePIN Node Network', '8.3 Decentralized Exchange', '8.4 Governance System', '8.5 Axiom SUSU'] },
+  { id: 'banking', title: '9. National Bank of Axiom', subsections: ['9.1 Personal Banking', '9.2 Business Banking', '9.3 Investment Services', '9.4 Credit Products'] },
+  { id: 'wall-street', title: '10. Wall Street Integration', subsections: ['10.1 Tokenized Securities', '10.2 RWA Marketplace', '10.3 Future Development'] },
+  { id: 'governance', title: '11. Governance & Compliance', subsections: ['11.1 DAO Structure', '11.2 External Interface: ISO 20022', '11.3 External Interface: GENIUS Act', '11.4 KYC/AML', '11.5 Internal Operations: PMA Trust'] },
+  { id: 'roadmap', title: '12. Development Roadmap' },
+  { id: 'financials', title: '13. Financial Projections' },
+  { id: 'risks', title: '14. Risk Factors & Mitigations' },
+  { id: 'legal', title: '15. Legal Disclosures' },
 ];
 
 export default function WhitePaper() {
@@ -159,7 +160,7 @@ export default function WhitePaper() {
                 
                 <div className="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-lg mb-8">
                   <p className="text-gray-800 leading-relaxed m-0">
-                    <strong>Axiom Protocol</strong> represents a paradigm shift in urban development: a fully integrated, blockchain-native smart city infrastructure designed to serve as a sovereign digital-physical economy. Built on Arbitrum One with plans to launch Universe Blockchain (L3), the protocol combines tokenized real estate, decentralized physical infrastructure (DePIN), comprehensive governance, and institutional-grade financial services into a unified ecosystem.
+                    <strong>Axiom Protocol</strong> represents a paradigm shift in urban development and community wealth-building: a fully integrated, blockchain-native smart city infrastructure designed to serve as a sovereign digital-physical economy. Built on Arbitrum One with plans to launch Universe Blockchain (L3), the protocol combines tokenized real estate, decentralized physical infrastructure (DePIN), comprehensive governance, community savings circles (SUSU), and institutional-grade financial services into a unified ecosystem. At its core, Axiom is a <strong>community-first platform</strong> focused on human connection, financial empowerment, and collective prosperity.
                   </p>
                 </div>
 
@@ -185,6 +186,16 @@ export default function WhitePaper() {
                     <div className="text-3xl mb-3">💎</div>
                     <h4 className="font-bold text-gray-900 mb-2">15 Billion AXM Supply</h4>
                     <p className="text-gray-600 text-sm">Hard-capped governance and utility token with fee routing, staking rewards, and planned native gas functionality on L3.</p>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                    <div className="text-3xl mb-3">🤝</div>
+                    <h4 className="font-bold text-gray-900 mb-2">Community-First Savings</h4>
+                    <p className="text-gray-600 text-sm">SUSU rotating savings circles bring traditional community wealth-building on-chain, fostering human connection and collective prosperity.</p>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                    <div className="text-3xl mb-3">🚀</div>
+                    <h4 className="font-bold text-gray-900 mb-2">70,000 Member Goal</h4>
+                    <p className="text-gray-600 text-sm">Viral growth strategy through personal journeys, community stories, referral rewards, and member empowerment.</p>
                   </div>
                 </div>
 
@@ -385,11 +396,146 @@ export default function WhitePaper() {
                 </ul>
               </section>
 
+              {/* Member Experience Platform */}
+              <section id="member-experience" className="mb-16">
+                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">5. Member Experience Platform</h2>
+                
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 p-6 rounded-r-lg mb-8">
+                  <p className="text-gray-800 leading-relaxed m-0">
+                    At its heart, Axiom is about <strong>people helping people</strong>. While the technical infrastructure enables secure, transparent transactions, the Member Experience Platform creates the human connections that drive lasting community wealth. Our goal is to build a movement of 70,000+ members united by shared purpose: financial empowerment through collective action.
+                  </p>
+                </div>
+
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">5.1 The Journey Framework: Learn → Connect → Save Together</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  Every member follows a guided path from discovery to active participation:
+                </p>
+
+                <div className="grid md:grid-cols-3 gap-6 my-8 not-prose">
+                  <div className="bg-white border-2 border-amber-400 rounded-xl p-6 shadow-md">
+                    <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+                      <span className="text-2xl">📚</span>
+                    </div>
+                    <h4 className="font-bold text-gray-900 mb-2">Step 1: Learn</h4>
+                    <p className="text-gray-600 text-sm">Discover the power of community savings through Axiom Academy courses, equity calculators, and educational resources.</p>
+                    <ul className="text-xs text-gray-500 mt-3 space-y-1">
+                      <li>• Smart City 101 Course</li>
+                      <li>• KeyGrow Rent-to-Own Guide</li>
+                      <li>• Financial Literacy Modules</li>
+                      <li>• SUSU Savings Principles</li>
+                    </ul>
+                  </div>
+                  <div className="bg-white border-2 border-purple-400 rounded-xl p-6 shadow-md">
+                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                      <span className="text-2xl">🌍</span>
+                    </div>
+                    <h4 className="font-bold text-gray-900 mb-2">Step 2: Connect</h4>
+                    <p className="text-gray-600 text-sm">Join regional interest hubs and purpose groups to find like-minded savers in your community.</p>
+                    <ul className="text-xs text-gray-500 mt-3 space-y-1">
+                      <li>• Regional Interest Hubs</li>
+                      <li>• Purpose-Based Groups</li>
+                      <li>• Member Profiles & Stories</li>
+                      <li>• Community Success Hub</li>
+                    </ul>
+                  </div>
+                  <div className="bg-white border-2 border-green-400 rounded-xl p-6 shadow-md">
+                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                      <span className="text-2xl">💰</span>
+                    </div>
+                    <h4 className="font-bold text-gray-900 mb-2">Step 3: Save Together</h4>
+                    <p className="text-gray-600 text-sm">Commit to a SUSU savings circle and build wealth together through consistent contributions.</p>
+                    <ul className="text-xs text-gray-500 mt-3 space-y-1">
+                      <li>• SUSU Savings Circles</li>
+                      <li>• KeyGrow Property Equity</li>
+                      <li>• Staking Rewards</li>
+                      <li>• Community Accountability</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">5.2 Community Features</h3>
+                
+                <div className="grid md:grid-cols-2 gap-6 my-6 not-prose">
+                  <div className="border border-gray-200 rounded-xl p-6 bg-white">
+                    <div className="text-2xl mb-3">👤</div>
+                    <h4 className="font-bold text-gray-900 mb-2">Member Profiles</h4>
+                    <p className="text-gray-600 text-sm">Personal profile pages showcasing member achievements, savings milestones, and community contributions. Shareable on social media with rich Open Graph previews.</p>
+                  </div>
+                  <div className="border border-gray-200 rounded-xl p-6 bg-white">
+                    <div className="text-2xl mb-3">🚀</div>
+                    <h4 className="font-bold text-gray-900 mb-2">My Journey Dashboard</h4>
+                    <p className="text-gray-600 text-sm">Personal progress tracking showing completed milestones, current streaks, achievement badges, and the path to financial freedom.</p>
+                  </div>
+                  <div className="border border-gray-200 rounded-xl p-6 bg-white">
+                    <div className="text-2xl mb-3">🏆</div>
+                    <h4 className="font-bold text-gray-900 mb-2">Community Success Hub</h4>
+                    <p className="text-gray-600 text-sm">Real stories from real members who have achieved their savings goals, bought homes through KeyGrow, or built thriving SUSU circles.</p>
+                  </div>
+                  <div className="border border-gray-200 rounded-xl p-6 bg-white">
+                    <div className="text-2xl mb-3">📊</div>
+                    <h4 className="font-bold text-gray-900 mb-2">Impact Dashboard</h4>
+                    <p className="text-gray-600 text-sm">Live platform metrics showing community members, total savings, KeyGrow enrollments, active SUSU pools, and global reach.</p>
+                  </div>
+                </div>
+
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">5.3 Growth Strategy</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  Our viral growth strategy is designed to attract, engage, and retain 70,000+ members through human connection and shared success:
+                </p>
+
+                <div className="bg-gray-50 rounded-xl p-6 my-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h5 className="font-bold text-gray-900 mb-3">Acquisition</h5>
+                      <ul className="text-sm text-gray-600 space-y-2">
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-500">✓</span>
+                          <span><strong>Referral System:</strong> Members earn rewards for inviting friends</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-500">✓</span>
+                          <span><strong>Social Sharing:</strong> Profile pages with OG tags for viral spread</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-500">✓</span>
+                          <span><strong>Success Stories:</strong> Testimonials that inspire action</span>
+                        </li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h5 className="font-bold text-gray-900 mb-3">Retention</h5>
+                      <ul className="text-sm text-gray-600 space-y-2">
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-500">✓</span>
+                          <span><strong>Streak Tracking:</strong> Daily engagement with milestone rewards</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-500">✓</span>
+                          <span><strong>Achievement Badges:</strong> Recognition for progress and contributions</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-500">✓</span>
+                          <span><strong>Guided Onboarding:</strong> Clear path from signup to first savings</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-purple-50 border border-purple-200 rounded-xl p-6 my-6">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-2xl">🎯</span>
+                    <h4 className="font-bold text-purple-900">70,000 Member Milestone</h4>
+                  </div>
+                  <p className="text-purple-800 text-sm">At 70,000 active members with an average savings contribution of $100/month, the Axiom community will collectively save $7 million monthly—a powerful demonstration of community-powered finance.</p>
+                </div>
+              </section>
+
               {/* Technology Architecture */}
               <section id="technology" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">5. Technology Architecture</h2>
+                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">6. Technology Architecture</h2>
                 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">5.1 Blockchain Infrastructure</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">6.1 Blockchain Infrastructure</h3>
                 <p className="text-gray-700 leading-relaxed">
                   Axiom Protocol is deployed on Arbitrum One, a leading Ethereum Layer 2 solution providing:
                 </p>
@@ -419,7 +565,7 @@ export default function WhitePaper() {
                   <li>Sovereign sequencer revenue flowing to the treasury</li>
                 </ul>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">5.2 Smart Contract Suite</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">6.2 Smart Contract Suite</h3>
                 <p className="text-gray-700 leading-relaxed">
                   The Axiom Protocol comprises 23 verified smart contracts organized into functional modules:
                 </p>
@@ -489,7 +635,7 @@ export default function WhitePaper() {
                   </div>
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">5.3 Security Framework</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">6.3 Security Framework</h3>
                 <p className="text-gray-700 leading-relaxed">
                   Security is paramount for a protocol managing real estate and financial services. Axiom implements 22 active security features across all 23 deployed contracts:
                 </p>
@@ -594,9 +740,9 @@ export default function WhitePaper() {
 
               {/* Tokenomics */}
               <section id="tokenomics" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">6. Tokenomics</h2>
+                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">7. Tokenomics</h2>
                 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">6.1 AXM Token</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">7.1 AXM Token</h3>
                 <p className="text-gray-700 leading-relaxed">
                   The Axiom Protocol Token (AXM) is the native governance and utility token powering the entire ecosystem. Key specifications:
                 </p>
@@ -646,7 +792,7 @@ export default function WhitePaper() {
                   </div>
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">6.2 Supply Distribution</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">7.2 Supply Distribution</h3>
                 
                 <div className="overflow-x-auto my-8">
                   <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
@@ -713,7 +859,7 @@ export default function WhitePaper() {
                   </table>
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">6.3 Utility & Value Accrual</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">7.3 Utility & Value Accrual</h3>
                 <p className="text-gray-700 leading-relaxed">
                   AXM token accrues value through multiple utility mechanisms:
                 </p>
@@ -754,9 +900,9 @@ export default function WhitePaper() {
 
               {/* Ecosystem Components */}
               <section id="ecosystem" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">7. Ecosystem Components</h2>
+                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">8. Ecosystem Components</h2>
                 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">7.1 KeyGrow Rent-to-Own</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">8.1 KeyGrow Rent-to-Own</h3>
                 <p className="text-gray-700 leading-relaxed">
                   KeyGrow is the flagship real estate product enabling tenants to build ownership equity through tokenized property shares.
                 </p>
@@ -777,7 +923,7 @@ export default function WhitePaper() {
                   KeyGrow properties are sourced through integration with ATTOM Data (property valuations) and RentCast (rental estimates), filtered to the affordable range ($50,000 - $375,000). Financial metrics including price-to-rent ratio, affordability index, and time-to-ownership estimates help tenants make informed decisions.
                 </p>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">7.2 DePIN Node Network</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">8.2 DePIN Node Network</h3>
                 <p className="text-gray-700 leading-relaxed">
                   The Axiom DePIN network enables community ownership of smart city infrastructure through tiered node products:
                 </p>
@@ -802,7 +948,7 @@ export default function WhitePaper() {
                   </table>
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">7.3 Decentralized Exchange</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">8.3 Decentralized Exchange</h3>
                 <p className="text-gray-700 leading-relaxed">
                   The Axiom Exchange Hub provides internal DEX functionality for ecosystem tokens:
                 </p>
@@ -816,7 +962,7 @@ export default function WhitePaper() {
                   External liquidity is provided through Camelot Exchange and Uniswap V3 on Arbitrum, ensuring price discovery and accessibility for the broader DeFi ecosystem.
                 </p>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">7.4 Governance System</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">8.4 Governance System</h3>
                 <p className="text-gray-700 leading-relaxed">
                   Axiom implements comprehensive on-chain governance:
                 </p>
@@ -828,7 +974,7 @@ export default function WhitePaper() {
                   <li><strong>Parameter Changes:</strong> Community votes on fees, rates, and thresholds</li>
                 </ul>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">7.5 Axiom SUSU - Community Savings Pools</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">8.5 Axiom SUSU - Community Savings Pools</h3>
                 <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-6 mb-6">
                   <h4 className="font-bold text-gray-900 mb-3">On-Chain Rotating Savings (ROSCA)</h4>
                   <p className="text-gray-700 text-sm leading-relaxed">
@@ -856,7 +1002,7 @@ export default function WhitePaper() {
 
               {/* National Bank of Axiom */}
               <section id="banking" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">8. National Bank of Axiom</h2>
+                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">9. National Bank of Axiom</h2>
                 
                 <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg mb-8">
                   <p className="text-gray-800 leading-relaxed m-0">
@@ -864,7 +1010,7 @@ export default function WhitePaper() {
                   </p>
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">8.1 Personal Banking</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">9.1 Personal Banking</h3>
                 <p className="text-gray-700 leading-relaxed mb-4">
                   Personal banking products designed for everyday financial needs with competitive on-chain yields:
                 </p>
@@ -893,7 +1039,7 @@ export default function WhitePaper() {
                   </div>
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">8.2 Business Banking</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">9.2 Business Banking</h3>
                 <p className="text-gray-700 leading-relaxed mb-4">
                   Enterprise-grade business banking with global payment capabilities and instant settlements:
                 </p>
@@ -906,7 +1052,7 @@ export default function WhitePaper() {
                   <li><strong>Treasury Management:</strong> Enterprise-grade cash pooling and liquidity optimization</li>
                 </ul>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">8.3 Investment Services</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">9.3 Investment Services</h3>
                 <p className="text-gray-700 leading-relaxed mb-4">
                   Complete investment platform with tokenized securities and on-chain wealth management:
                 </p>
@@ -930,7 +1076,7 @@ export default function WhitePaper() {
                   </table>
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">8.4 Credit Products</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">9.4 Credit Products</h3>
                 <p className="text-gray-700 leading-relaxed mb-4">
                   Credit products accessible to all citizens, with crypto-native collateral options:
                 </p>
@@ -944,7 +1090,7 @@ export default function WhitePaper() {
 
               {/* Wall Street Integration */}
               <section id="wall-street" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">9. Wall Street Integration</h2>
+                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">10. Wall Street Integration</h2>
                 
                 <div className="bg-purple-50 border-l-4 border-purple-500 p-6 rounded-r-lg mb-8">
                   <p className="text-gray-800 leading-relaxed m-0">
@@ -952,7 +1098,7 @@ export default function WhitePaper() {
                   </p>
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">9.1 Tokenized Securities</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.1 Tokenized Securities</h3>
                 <p className="text-gray-700 leading-relaxed mb-4">
                   The platform supports multiple tokenized asset types:
                 </p>
@@ -979,7 +1125,7 @@ export default function WhitePaper() {
                   </div>
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">9.2 RWA Marketplace</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.2 RWA Marketplace</h3>
                 <p className="text-gray-700 leading-relaxed mb-4">
                   The Real World Asset marketplace includes:
                 </p>
@@ -992,7 +1138,7 @@ export default function WhitePaper() {
                   <li><strong>Price Oracles:</strong> Fair market value integration for accurate pricing</li>
                 </ul>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">9.3 Future Development</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.3 Future Development</h3>
                 <div className="bg-gray-50 rounded-xl p-6 mb-6">
                   <h4 className="font-bold text-gray-900 mb-4">Axiom Stock Exchange Roadmap</h4>
                   <ul className="text-gray-700 space-y-3 text-sm">
@@ -1018,7 +1164,7 @@ export default function WhitePaper() {
 
               {/* Governance & Compliance */}
               <section id="governance" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">10. Governance & Compliance</h2>
+                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">11. Governance & Compliance</h2>
                 
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 mb-8">
                   <h4 className="font-bold text-blue-900 mb-3">Regulatory Philosophy: Dual-Layer Approach</h4>
@@ -1040,7 +1186,7 @@ export default function WhitePaper() {
                   </p>
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.1 DAO Structure</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">11.1 DAO Structure</h3>
                 <p className="text-gray-700 leading-relaxed">
                   Axiom operates as a Decentralized Autonomous Organization with progressive decentralization. Initially, core team retains certain admin keys for rapid iteration, with planned transition to full community control:
                 </p>
@@ -1050,7 +1196,7 @@ export default function WhitePaper() {
                   <li><strong>Phase 3 (Mature):</strong> Full DAO control, admin keys burned or transferred to governance</li>
                 </ul>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.2 External Interface: ISO 20022 Compliance</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">11.2 External Interface: ISO 20022 Compliance</h3>
                 <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
                   <div className="flex items-center gap-3 mb-3">
                     <span className="text-2xl">✅</span>
@@ -1070,7 +1216,7 @@ export default function WhitePaper() {
                   </p>
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.3 External Interface: GENIUS Act Compliance</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">11.3 External Interface: GENIUS Act Compliance</h3>
                 <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
                   <div className="flex items-center gap-3 mb-3">
                     <span className="text-2xl">✅</span>
@@ -1090,7 +1236,7 @@ export default function WhitePaper() {
                   </p>
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.4 KYC/AML Compliance</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">11.4 KYC/AML Compliance</h3>
                 <p className="text-gray-700 leading-relaxed">
                   The AxiomIdentityComplianceHub (0xf88bb44511E5752Ee69953166C5d5dC0cfC8B3ED) provides built-in compliance infrastructure:
                 </p>
@@ -1102,7 +1248,7 @@ export default function WhitePaper() {
                   <li><strong>COMPLIANCE_ROLE:</strong> Role-based access control for compliance officers</li>
                 </ul>
 
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">10.5 Internal Operations: PMA Trust Structure</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">11.5 Internal Operations: PMA Trust Structure</h3>
                 <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 mb-6">
                   <h4 className="font-bold text-gray-900 mb-3">Private Membership Association</h4>
                   <p className="text-gray-700 text-sm leading-relaxed mb-3">
@@ -1140,7 +1286,7 @@ export default function WhitePaper() {
 
               {/* Roadmap */}
               <section id="roadmap" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">11. Development Roadmap</h2>
+                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">12. Development Roadmap</h2>
                 
                 <div className="space-y-8 my-8">
                   <div className="flex gap-4">
@@ -1228,7 +1374,7 @@ export default function WhitePaper() {
 
               {/* Financial Projections */}
               <section id="financials" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">12. Financial Projections</h2>
+                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">13. Financial Projections</h2>
                 
                 <p className="text-gray-700 leading-relaxed">
                   Revenue projections are based on conservative adoption assumptions across platform services:
@@ -1269,7 +1415,7 @@ export default function WhitePaper() {
 
               {/* Risk Factors & Mitigations */}
               <section id="risks" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">13. Risk Factors & Mitigations</h2>
+                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">14. Risk Factors & Mitigations</h2>
                 
                 <p className="text-gray-700 leading-relaxed mb-6">
                   Prospective participants should carefully consider the following risk factors. We have implemented significant mitigations for many of these risks:
@@ -1336,7 +1482,7 @@ export default function WhitePaper() {
 
               {/* Legal Disclosures */}
               <section id="legal" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">14. Legal Disclosures</h2>
+                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">15. Legal Disclosures</h2>
                 
                 <div className="bg-gray-50 rounded-xl p-6 text-sm text-gray-600 space-y-4">
                   <p>
