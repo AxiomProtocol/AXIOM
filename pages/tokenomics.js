@@ -12,7 +12,7 @@ const tokenAllocation = [
   { name: "Community & Ecosystem", value: 40, color: "#f59e0b", tokens: "6,000,000,000", description: "DePIN rewards, staking incentives, grants, airdrops, and ecosystem growth" },
   { name: "Treasury Reserve", value: 20, color: "#10b981", tokens: "3,000,000,000", description: "Protocol-controlled treasury for strategic initiatives and emergencies" },
   { name: "Team & Development", value: 15, color: "#3b82f6", tokens: "2,250,000,000", description: "Core team, founders, and future hires (4-year vesting)" },
-  { name: "Private Sale", value: 10, color: "#8b5cf6", tokens: "1,500,000,000", description: "Seed and strategic investors" },
+  { name: "Private Sale", value: 10, color: "#8b5cf6", tokens: "1,500,000,000", description: "Seed and strategic partners" },
   { name: "Advisors & Partners", value: 5, color: "#ec4899", tokens: "750,000,000", description: "Advisory board and strategic partnerships" },
   { name: "Liquidity Provision", value: 5, color: "#06b6d4", tokens: "750,000,000", description: "DEX/CEX liquidity and market making" },
   { name: "Public Sale (TGE)", value: 5, color: "#f97316", tokens: "750,000,000", description: "Token Generation Event - open to public" },
@@ -64,7 +64,7 @@ const vestingSchedule = [
     vesting: "18 months linear", 
     tge: "5%",
     tgeTokens: "75M",
-    notes: "Early investors with vesting to prevent dumps"
+    notes: "Early supporters with vesting to prevent dumps"
   },
   { 
     category: "Advisors & Partners", 
@@ -113,7 +113,7 @@ export default function TokenomicsPage() {
       <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-3">AXM Tokenomics</h1>
-          <p className="text-lg text-gray-600">The economic model powering America's first on-chain smart city.</p>
+          <p className="text-lg text-gray-600">The economic model powering the Axiom community economy.</p>
         </div>
 
         <div id="token-contract" className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 mb-12 border border-amber-500/30">

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import DisclosureBanner from '../components/DisclosureBanner';
 
 const USE_OF_PROCEEDS = [
-  { name: 'Smart City Infrastructure', percentage: 35, color: '#f59e0b', description: 'DePIN nodes, IoT networks, energy grids, and physical infrastructure development' },
+  { name: 'Community Infrastructure', percentage: 35, color: '#f59e0b', description: 'DePIN nodes, IoT networks, energy grids, and physical infrastructure development' },
   { name: 'Technology Development', percentage: 25, color: '#3b82f6', description: 'Smart contract development, security audits, platform engineering, and L3 chain launch' },
   { name: 'Liquidity & DEX', percentage: 15, color: '#8b5cf6', description: 'DEX liquidity pools, market making, and cross-chain bridge reserves' },
   { name: 'Real Estate Acquisition', percentage: 10, color: '#10b981', description: 'Land purchases, property tokenization, and development permits' },
@@ -25,7 +25,7 @@ const TGE_BENEFITS = [
   { icon: '💰', title: 'Early Access Pricing', description: 'Participate at 1:1 ratio before public listing. Early supporters get the best price.' },
   { icon: '🗳️', title: 'Governance Rights (ERC20Votes)', description: 'Vote on protocol decisions, fee adjustments, vault allocations, and treasury spending.' },
   { icon: '📈', title: 'Staking Rewards', description: 'Stake your AXM for dynamic APR rewards. Earn passive income from day one.' },
-  { icon: '🏠', title: 'Real Utility', description: 'Access KeyGrow rent-to-own, fractional real estate, DePIN rewards, and smart city services.' },
+  { icon: '🏠', title: 'Real Utility', description: 'Access KeyGrow rent-to-own, fractional real estate, DePIN rewards, and community services.' },
   { icon: '⚡', title: 'Ultra-Low Fees', description: 'Built on Arbitrum One. Gas fees significantly lower than Ethereum mainnet.' },
   { icon: '🔐', title: 'Enterprise-Grade Security', description: 'Pausable in emergencies, role-based access control, and anti-whale protection.' },
   { icon: '✍️', title: 'Gasless Approvals (ERC20Permit)', description: 'Save on gas with signature-based approvals. No separate approval transactions needed.' },
@@ -89,7 +89,7 @@ export default function LaunchpadPage() {
 
   const handleShare = (platform) => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
-    const text = 'Join the AXIOM Token Generation Event - America\'s First On-Chain Smart City!';
+    const text = 'Join the AXIOM Token Generation Event - Build Wealth Through Community!';
     
     switch(platform) {
       case 'twitter':
@@ -228,12 +228,12 @@ export default function LaunchpadPage() {
             Token Generation Event
           </h2>
           <h2 className="text-3xl md:text-4xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
-            America's First On-Chain Smart City
+            Build Wealth Through Community
           </h2>
 
           <p className="text-xl text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed">
-            Join the revolution in decentralized city infrastructure. 15 billion hard-capped AXM tokens powering 
-            real estate, DePIN infrastructure, and the future of sovereign digital economies on Arbitrum One.
+            Join the community-first wealth-building platform. 15 billion hard-capped AXM tokens powering 
+            real estate, DePIN infrastructure, and transparent financial coordination on Arbitrum One.
           </p>
 
           {/* TGE Introduction Video */}
@@ -444,7 +444,7 @@ export default function LaunchpadPage() {
             <div className="text-4xl mb-4">💵</div>
             <h3 className="text-3xl font-bold text-amber-400 mb-3">Use of Proceeds</h3>
             <p className="text-gray-300 max-w-2xl mx-auto">
-              Every dollar raised will be transparently allocated to build America's first on-chain smart city.
+              Every dollar raised will be transparently allocated to build community infrastructure.
               All fund usage is tracked on-chain and governed by the DAO.
             </p>
           </div>
@@ -545,7 +545,7 @@ export default function LaunchpadPage() {
             </div>
             <p className="text-gray-300 text-lg leading-relaxed mb-4">
               Power the decentralized physical infrastructure network. Run nodes, earn rewards, 
-              and build the future of the smart city ecosystem.
+              and build the future of the community ecosystem.
             </p>
             <ul className="space-y-2 text-sm text-gray-300">
               <li className="flex items-center gap-2"><span className="text-purple-400">•</span> 5 node tiers available</li>
@@ -647,7 +647,7 @@ export default function LaunchpadPage() {
             </li>
             <li className="flex items-start gap-3">
               <span className="text-amber-400 mt-1">•</span>
-              <span>US accredited investors and non-US persons eligible to participate</span>
+              <span>US accredited participants and non-US persons eligible to participate</span>
             </li>
           </ul>
         </div>
@@ -656,8 +656,8 @@ export default function LaunchpadPage() {
           <div className="text-6xl mb-6">🚀</div>
           <h3 className="text-4xl font-bold text-white mb-4">Ready to Join?</h3>
           <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Be part of building America's first on-chain smart city. Join thousands of early 
-            supporters shaping the future of sovereign digital economies.
+            Be part of building the Axiom community economy. Join thousands of early 
+            supporters shaping the future of wealth-building through discipline and structure.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -682,7 +682,7 @@ export default function LaunchpadPage() {
             <img src="/images/axiom-token.png" alt="Axiom" className="w-8 h-8 rounded-full" onError={(e) => { e.target.onerror = null; e.target.src = '/images/axiom-token-fallback.svg'; }} />
             <span className="font-bold text-white">AXIOM</span>
           </div>
-          <p className="text-sm mb-4">America's First On-Chain Smart City</p>
+          <p className="text-sm mb-4">Build Wealth Through Community</p>
           <div className="flex flex-wrap justify-center gap-6 text-sm">
             <Link href="/about-us" className="hover:text-white transition-colors">About</Link>
             <Link href="/tokenomics" className="hover:text-white transition-colors">Tokenomics</Link>
@@ -691,7 +691,7 @@ export default function LaunchpadPage() {
             <Link href="/terms-and-conditions" className="hover:text-white transition-colors">Terms</Link>
             <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy</Link>
           </div>
-          <p className="text-xs mt-6">© 2025 Axiom Smart City. All rights reserved.</p>
+          <p className="text-xs mt-6">© 2025 Axiom Protocol. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -20,7 +20,7 @@ const milestones = [
     status: "in-progress",
     items: [
       "Real estate tokenization framework",
-      "Institutional investor onboarding",
+      "Strategic partner onboarding",
       "Cross-chain bridge deployment",
       "Advanced staking mechanisms"
     ]
@@ -31,7 +31,7 @@ const milestones = [
     date: "Q3-Q4 2025", 
     status: "upcoming",
     items: [
-      "Community rollout and citizen onboarding",
+      "Community rollout and member onboarding",
       "Sovran Bank PMA integration",
       "Full banking product suite launch",
       "Mobile app release"
@@ -45,8 +45,8 @@ const milestones = [
     items: [
       "Token Generation Event (TGE) - Q1 2026",
       "Universe Blockchain (L3) deployment",
-      "Wall Street integration modules",
-      "Smart city IoT infrastructure"
+      "Advanced financial coordination tools",
+      "Community IoT infrastructure"
     ]
   },
 ];
@@ -69,7 +69,7 @@ export default function RoadmapPage() {
       <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-3">Roadmap</h1>
-          <p className="text-lg text-gray-600">Our journey to build America's first on-chain smart city.</p>
+          <p className="text-lg text-gray-600">Our journey to build a community-first wealth-building platform.</p>
         </div>
 
         <div className="space-y-8">
