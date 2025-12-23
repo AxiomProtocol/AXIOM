@@ -73,6 +73,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name", { length: 100 }),
   lastName: varchar("last_name", { length: 100 }),
   profileImageUrl: varchar("profile_image_url"),
+  bannerImageUrl: varchar("banner_image_url"), // Profile header/banner image
   
   // Wallet and blockchain data
   walletAddress: varchar("wallet_address", { length: 42 }),
@@ -85,16 +86,38 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").default(false),
   twoFactorEnabled: boolean("two_factor_enabled").default(false),
   
-  // Profile and preferences
+  // Enhanced profile fields
   bio: text("bio"),
+  headline: varchar("headline", { length: 150 }), // Short tagline/title for OG sharing
+  purposeStatement: text("purpose_statement"), // Member's goals/purpose
+  occupation: varchar("occupation", { length: 100 }),
+  skills: jsonb("skills"), // Array of skills
   location: varchar("location", { length: 100 }),
   website: varchar("website"),
   socialLinks: jsonb("social_links"), // Twitter, LinkedIn, etc.
+  phone: varchar("phone", { length: 20 }),
+  whatsapp: varchar("whatsapp", { length: 20 }),
+  showEmail: boolean("show_email").default(false),
+  showPhone: boolean("show_phone").default(false),
+  showWhatsapp: boolean("show_whatsapp").default(false),
+  
+  // Platform engagement and achievements
+  memberSince: timestamp("member_since").defaultNow(),
+  memberTier: varchar("member_tier", { length: 20 }).default('explorer'), // explorer, builder, leader
+  totalGroupsJoined: integer("total_groups_joined").default(0),
+  totalSavingsContributions: integer("total_savings_contributions").default(0),
+  coursesCompleted: integer("courses_completed").default(0),
+  referralCount: integer("referral_count").default(0),
+  referralCode: varchar("referral_code", { length: 20 }).unique(),
+  referredBy: integer("referred_by").references((): any => users.id),
   
   // Platform engagement
   lastLoginAt: timestamp("last_login_at"),
   loginCount: integer("login_count").default(0),
   premiumExpiresAt: timestamp("premium_expires_at"),
+  
+  // Profile visibility settings
+  profileVisibility: varchar("profile_visibility", { length: 20 }).default('public'), // public, members, private
   
   // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
