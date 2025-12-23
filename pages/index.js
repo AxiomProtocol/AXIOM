@@ -644,7 +644,7 @@ export default function Home() {
             className="text-center mb-10"
           >
             <h2 className="text-3xl lg:text-4xl font-bold mb-4 text-gray-900">
-              Discover <span className="text-amber-600">Axiom SUSU</span>
+              Discover <span className="text-amber-600">The Wealth Practice</span>
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Watch our introduction video to learn how Axiom helps communities build wealth together

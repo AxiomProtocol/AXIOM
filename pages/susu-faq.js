@@ -6,16 +6,16 @@ import { SUSU_ROUTES } from '../lib/susuRoutes';
 
 const faqItems = [
   {
-    question: "What is a SUSU?",
-    answer: "A SUSU is a rotating savings circle. A group agrees on an amount and schedule. Each cycle, everyone contributes and one person receives the pooled amount. The rotation continues until everyone has received once."
+    question: "What is The Wealth Practice?",
+    answer: "The Wealth Practice is a structured group savings practice based on the traditional SUSU method. Members follow agreed rules to build consistency together."
   },
   {
-    question: "Is Axiom SUSU an investment?",
-    answer: "No. Axiom SUSU is a group saving and coordination tool. It does not promise profits or returns."
+    question: "Is this an investment?",
+    answer: "No. The Wealth Practice is not an investment product and does not promise profits or returns."
   },
   {
     question: "Is Axiom a bank?",
-    answer: "No. Axiom is not a bank. It provides software tools that help groups coordinate saving and shared goals."
+    answer: "No. Axiom is not a bank. Axiom provides coordination tools for group saving and financial discipline."
   },
   {
     question: "Do you guarantee payouts?",
@@ -23,35 +23,35 @@ const faqItems = [
   },
   {
     question: "Can I lose money?",
-    answer: "Yes. Like any group savings arrangement, there is risk if members fail to contribute as agreed. Only join circles you understand and are comfortable with."
+    answer: "Yes. Like any group saving arrangement, participation involves risk if members do not follow agreed rules."
   },
   {
-    question: "Do I need a wallet to use SUSU?",
+    question: "Do I need a wallet to use this?",
     answer: "Some features may require a wallet connection. The platform may offer different onboarding steps depending on your setup."
   },
   {
     question: "Do I need AXM to participate?",
-    answer: "Not necessarily. Participation requirements depend on how a circle is configured."
+    answer: "Not necessarily. Participation requirements depend on how a group is configured."
   },
   {
     question: "What are Interest Groups and why do they matter?",
-    answer: "Interest Groups help people connect by location or goal before any money is involved. They are designed to support trust-building and clarity before joining a circle."
+    answer: "Interest Groups help people connect by location or goal before any money is involved. They are designed to support trust-building and clarity before joining a group."
   },
   {
     question: "Is this legal?",
-    answer: "Rotating savings circles are common globally. Laws vary by jurisdiction and by structure. This page is informational only and not legal advice."
+    answer: "Rotating savings systems are common globally. Laws vary by jurisdiction and by structure. This page is informational only and not legal advice."
   },
   {
     question: "Is it insured?",
-    answer: "No. A SUSU circle is not an insured financial product."
+    answer: "No. This is not an insured financial product."
   },
   {
     question: "Are there fees?",
-    answer: "If fees apply, they should be clearly shown before you join or create a circle. Always review the terms before committing."
+    answer: "If fees apply, they should be clearly shown before you join or start. Always review the terms before committing."
   },
   {
     question: "What should I do before joining?",
-    answer: "Read the circle rules, confirm the schedule fits your budget, understand late or missed payment handling, and start small until you gain confidence."
+    answer: "Read the group rules, confirm the schedule fits your budget, understand late or missed payment handling, and start small until you gain confidence."
   }
 ];
 
@@ -80,8 +80,8 @@ export default function SusuFaqPage() {
   return (
     <Layout>
       <Head>
-        <title>Axiom SUSU FAQ | Frequently Asked Questions</title>
-        <meta name="description" content="Common questions about Axiom SUSU savings circles, how they work, and what to expect." />
+        <title>The Wealth Practice FAQ | Frequently Asked Questions</title>
+        <meta name="description" content="Common questions about The Wealth Practice structured savings groups, how they work, and what to expect." />
       </Head>
 
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -90,8 +90,8 @@ export default function SusuFaqPage() {
             <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg mx-auto mb-6">
               ❓
             </div>
-            <h1 className="text-4xl font-bold mb-4">Axiom SUSU FAQ</h1>
-            <p className="text-gray-300 mb-8">Common questions about savings circles and how Axiom SUSU works.</p>
+            <h1 className="text-4xl font-bold mb-4">The Wealth Practice FAQ</h1>
+            <p className="text-gray-300 mb-8">Common questions about structured savings groups and how The Wealth Practice works.</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href={SUSU_ROUTES.GROUPS_NEARBY_PATH}
@@ -103,7 +103,7 @@ export default function SusuFaqPage() {
                 href={SUSU_ROUTES.START_CIRCLE_PATH}
                 className="px-6 py-3 bg-white/10 text-white border border-white/30 rounded-xl font-medium hover:bg-white/20 transition-colors"
               >
-                Start a Savings Circle
+                Start a Wealth Practice
               </Link>
             </div>
           </div>
@@ -136,11 +136,11 @@ export default function SusuFaqPage() {
                 href={SUSU_ROUTES.START_CIRCLE_PATH}
                 className="px-6 py-3 bg-white/10 text-white border border-white/30 rounded-xl font-medium hover:bg-white/20 transition-colors"
               >
-                Start a Savings Circle
+                Start a Wealth Practice
               </Link>
             </div>
             <Link href={SUSU_ROUTES.SUSU_START_PATH} className="text-amber-400 hover:text-amber-300 underline">
-              Back to SUSU Introduction
+              Back to The Wealth Practice Introduction
             </Link>
           </div>
         </div>

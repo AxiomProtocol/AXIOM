@@ -466,23 +466,22 @@ export default function SusuPage() {
                 🤝
               </div>
               <div>
-                <h1 className="text-4xl font-bold mb-1">Axiom SUSU</h1>
-                <p className="text-gray-300">On-Chain Community Savings Circles</p>
+                <h1 className="text-4xl font-bold mb-1">The Wealth Practice</h1>
+                <p className="text-gray-300">Structured Savings Built With Others</p>
               </div>
             </div>
 
-            <p className="text-amber-200 text-sm mb-2">Step 3: Save Together — Start small, build consistency, grow over time.</p>
+            <p className="text-amber-200 text-sm mb-2">Step 3: Practice Wealth — Start small, build consistency, grow over time.</p>
             <p className="text-gray-400 max-w-2xl mt-2 mb-4">
-              SUSU is a trusted community savings tradition used for generations worldwide. 
-              Axiom brings this system on-chain with clear rules, full transparency, 
-              and automated fair payouts. Save together, build together.
+              A structured savings practice built with others. Focus on consistency, discipline, and alignment — not investing or speculation.
             </p>
+            <p className="text-gray-500 text-xs mb-4">Based on the traditional SUSU (rotating savings) method.</p>
             <div className="flex flex-wrap gap-4 mb-4">
               <Link href={SUSU_ROUTES.SUSU_START_PATH} className="text-amber-400 hover:text-amber-300 underline text-sm">
-                New to SUSU? Start here
+                New to The Wealth Practice? Start here
               </Link>
               <Link href={SUSU_ROUTES.SUSU_FAQ_PATH} className="text-gray-400 hover:text-gray-300 underline text-sm">
-                Read the SUSU FAQ
+                Read the FAQ
               </Link>
             </div>
 
