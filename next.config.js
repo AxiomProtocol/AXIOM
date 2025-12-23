@@ -12,6 +12,7 @@ const nextConfig = {
   images: {
     unoptimized: true
   },
+  generateBuildId: async () => 'build-' + Date.now(),
   experimental: {
     workerThreads: false,
     cpus: 1,
@@ -25,16 +26,10 @@ const nextConfig = {
       'pdfkit',
       '@safe-global/protocol-kit',
       '@safe-global/api-kit',
+      'ethers',
+      'viem',
+      'wagmi',
     ],
-    outputFileTracingIncludes: {
-      '/*': [
-        'node_modules/ethers/**/*',
-        'node_modules/react-hot-toast/**/*',
-        'node_modules/viem/**/*',
-        'node_modules/wagmi/**/*',
-        'node_modules/@metamask/**/*',
-      ],
-    },
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
