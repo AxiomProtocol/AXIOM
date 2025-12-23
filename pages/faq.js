@@ -3,12 +3,12 @@ import Layout from "../components/Layout";
 
 const faqs = [
   { 
-    question: "What is Axiom Smart City?", 
-    answer: "Axiom is America's first on-chain sovereign smart city — a 1,000-acre digital-physical economy with full-service banking, tokenized real estate, DePIN infrastructure, and community governance, all powered by the AXM token on Arbitrum." 
+    question: "What is Axiom?", 
+    answer: "Axiom is a community-owned digital economy focused on building wealth through discipline, structure, and community. We offer educational resources, rotating savings groups (SUSU), rent-to-own housing (KeyGrow), and banking-style tools — all powered by the AXM token on Arbitrum." 
   },
   { 
     question: "What is the AXM token?", 
-    answer: "AXM is the native governance and utility token of Axiom Smart City. It's an ERC-20 token on Arbitrum One with a total supply of 15 billion. AXM is used for governance voting, DePIN node staking, fee payments, and accessing premium services." 
+    answer: "AXM is the native governance and utility token of the Axiom Protocol. It's an ERC-20 token on Arbitrum One with a total supply of 15 billion. AXM is used for governance voting, DePIN node staking, fee payments, and accessing premium services." 
   },
   { 
     question: "How can I become a DePIN node operator?", 
@@ -70,7 +70,7 @@ export default function FAQPage() {
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-3">Frequently Asked Questions</h1>
-          <p className="text-lg text-gray-600">Find answers to common questions about Axiom Smart City.</p>
+          <p className="text-lg text-gray-600">Find answers to common questions about the Axiom Protocol.</p>
         </div>
 
         <div className="space-y-4">

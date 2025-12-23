@@ -9,12 +9,12 @@ const VALUES = [
   {
     icon: "🤝",
     title: "Community Ownership",
-    description: "Axiom is governed by its citizens. AXM token holders vote on proposals, elect council members, and shape the future of the city together."
+    description: "Axiom is governed by its members. AXM token holders vote on proposals, elect council members, and shape the future of the platform together."
   },
   {
     icon: "🔒",
     title: "Security First",
-    description: "Multi-signature wallets, audited smart contracts, and enterprise-grade infrastructure protect citizen assets and city operations."
+    description: "Multi-signature wallets, audited smart contracts, and enterprise-grade infrastructure protect member assets and platform operations."
   },
   {
     icon: "🌱",
@@ -38,7 +38,7 @@ export default function AboutUs() {
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">About Axiom</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Building America's first on-chain sovereign smart city — where blockchain meets real-world infrastructure.
+            Building a community-owned digital economy — where discipline, structure, and community create real wealth.
           </p>
         </div>
 
@@ -60,8 +60,8 @@ export default function AboutUs() {
             tangible value of real-world assets and infrastructure.
           </p>
           <p className="text-lg text-gray-600 leading-relaxed">
-            We believe that cities of the future should be owned by their citizens, not controlled by 
-            centralized institutions. Axiom is pioneering a new model where every resident is a 
+            We believe that the wealth of the future should be owned by community members, not controlled by 
+            centralized institutions. Axiom is pioneering a new model where every member is a 
             stakeholder, every transaction is transparent, and governance is truly democratic.
           </p>
         </div>
@@ -70,21 +70,21 @@ export default function AboutUs() {
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Vision</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Axiom Smart City represents the future of urban development — a 1,000-acre 
-              sovereign digital-physical economy that merges blockchain innovation with 
-              real-world infrastructure. We're creating a complete ecosystem where citizens 
-              can bank, invest, govern, and build together on-chain.
+              Axiom represents a new approach to community wealth building — a 
+              member-owned digital economy that merges blockchain innovation with 
+              real-world financial tools. We're creating a complete ecosystem where members 
+              can learn, save, invest, govern, and build together on-chain.
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Unlike traditional cities governed by opaque bureaucracies, Axiom operates as a 
+              Unlike traditional financial systems governed by opaque institutions, Axiom operates as a 
               Decentralized Autonomous Organization (DAO) where every major decision is voted 
-              on by the community. From budget allocations to infrastructure projects, citizens 
-              have direct control over their city's future.
+              on by the community. From treasury allocations to new features, members 
+              have direct control over the platform's future.
             </p>
             <p className="text-gray-600 leading-relaxed">
-              Our goal is to prove that a blockchain-native city isn't just possible — it's 
+              Our goal is to prove that a community-owned financial platform isn't just possible — it's 
               better. More efficient, more transparent, more equitable, and more responsive 
-              to the needs of its people.
+              to the needs of its members.
             </p>
           </div>
           <div className="flex justify-center items-center">

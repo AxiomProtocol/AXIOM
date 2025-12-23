@@ -4,6 +4,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { ethers } from 'ethers';
 import Link from 'next/link';
 import DisclosureBanner from '../components/DisclosureBanner';
+import StepProgressBanner from '../components/StepProgressBanner';
 
 interface Property {
   id: number;
@@ -393,6 +394,19 @@ export default function KeyGrowPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
+      <div className="bg-green-50 border-b border-green-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-1 bg-green-500 text-white text-xs font-medium rounded">Step 4: Grow</span>
+              <span className="text-sm text-gray-600">Build real equity through rent-to-own home ownership</span>
+            </div>
+            <Link href="/susu" className="text-sm text-green-600 hover:text-green-700 font-medium">
+              ← Back to Save Together
+            </Link>
+          </div>
+        </div>
+      </div>
       <Toaster position="top-right" />
       
       <header className="bg-white border-b border-amber-200 shadow-sm">
