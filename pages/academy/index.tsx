@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
+import StepProgressBanner from '../../components/StepProgressBanner';
 
 interface Course {
   id: number;
@@ -21,10 +22,10 @@ const STARTER_COURSES: Course[] = [
   {
     id: 1,
     slug: 'smart-city-101',
-    title: 'Smart City 101',
-    description: 'Understand the fundamentals of smart city technology, infrastructure, and how blockchain enables transparent governance.',
+    title: 'Financial Foundations 101',
+    description: 'Understand the fundamentals of building wealth through discipline, community, and structured savings.',
     thumbnailUrl: '/images/courses/smart-city.jpg',
-    category: 'Smart City',
+    category: 'Finance',
     difficulty: 'beginner',
     durationMinutes: 45,
     lessonsCount: 6,
@@ -313,7 +314,7 @@ export default function Academy() {
     }
   };
 
-  const categories = ['all', 'Smart City', 'Real Estate', 'Finance', 'Blockchain', 'Community', 'Governance'];
+  const categories = ['all', 'Real Estate', 'Finance', 'Blockchain', 'Community', 'Governance'];
 
   const filteredCourses = selectedCategory === 'all' 
     ? STARTER_COURSES 
@@ -377,6 +378,7 @@ export default function Academy() {
 
   return (
     <Layout>
+      <StepProgressBanner currentStep="learn" />
       <Toaster position="top-right" />
       
       <div className="min-h-screen bg-gradient-to-b from-gray-100 via-white to-gray-100">
@@ -384,14 +386,15 @@ export default function Academy() {
         <div className="relative py-20 px-4 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-yellow-100 to-transparent"></div>
           <div className="max-w-6xl mx-auto relative z-10">
+            <p className="text-amber-600 text-sm mb-3 font-medium">Step 1: Learn — Build your financial foundation through education and discipline.</p>
             <h1 className="text-5xl md:text-6xl font-bold mb-6">
               <span className="bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent">
                 Axiom Academy
               </span>
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mb-8">
-              Master smart city technology, financial literacy, and blockchain fundamentals. 
-              Build real skills for the digital economy.
+              Master financial literacy, budgeting, wealth building, and blockchain fundamentals. 
+              Build real skills for long-term financial health.
             </p>
             
             <form onSubmit={handleEnroll} className="flex flex-col sm:flex-row gap-4 max-w-md">

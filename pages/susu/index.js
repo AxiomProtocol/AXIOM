@@ -5,6 +5,7 @@ import Layout from '../../components/Layout';
 import { useWallet } from '../../components/WalletConnect/WalletContext';
 import { ethers } from 'ethers';
 import DisclosureBanner from '../../components/DisclosureBanner';
+import StepProgressBanner from '../../components/StepProgressBanner';
 
 const STATUS_LABELS = {
   0: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
@@ -437,6 +438,7 @@ export default function SusuPage() {
 
   return (
     <Layout>
+      <StepProgressBanner currentStep="save" />
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
         <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white py-16">
           <div className="max-w-6xl mx-auto px-6">
@@ -450,9 +452,10 @@ export default function SusuPage() {
               </div>
             </div>
 
-            <p className="text-gray-400 max-w-2xl mt-4 mb-6">
+            <p className="text-amber-200 text-sm mb-2">Step 3: Save Together — Start small, build consistency, grow over time.</p>
+            <p className="text-gray-400 max-w-2xl mt-2 mb-6">
               SUSU is a trusted community savings tradition used for generations worldwide. 
-              Axiom brings this system on-chain with smart contract security, full transparency, 
+              Axiom brings this system on-chain with clear rules, full transparency, 
               and automated fair payouts. Save together, build together.
             </p>
 
