@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '../../../components/Layout';
 import GroupMemberDirectory from '../../../components/GroupMemberDirectory';
+import GraduationProgress from '../../../components/GraduationProgress';
 import { useWallet } from '../../../components/WalletConnect/WalletContext';
 
 export default function GroupDetailPage() {
@@ -416,6 +417,7 @@ export default function GroupDetailPage() {
 
   const tabs = [
     { id: 'members', label: 'Members' },
+    { id: 'graduation', label: 'Graduation' },
     { id: 'health', label: 'Health' },
     { id: 'contributions', label: 'Contributions' },
     { id: 'messages', label: 'Messages' },
@@ -527,6 +529,34 @@ export default function GroupDetailPage() {
             <div className="p-6">
               {activeTab === 'members' && (
                 <GroupMemberDirectory groupId={id} groupName={group.name} />
+              )}
+
+              {activeTab === 'graduation' && (
+                <GraduationProgress 
+                  groupId={id} 
+                  isCreator={isCreator}
+                  onGraduate={async () => {
+                    const poolId = Math.floor(Math.random() * 1000) + 1;
+                    if (confirm('Graduate this group to on-chain status? This will create a charter and enable access to larger investment opportunities.')) {
+                      try {
+                        const res = await fetch(`/api/susu/groups/${id}/graduate`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ walletAddress: address, poolId })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          alert(`Group graduated successfully! Mode: ${data.charter?.mode || 'community'}`);
+                          fetchGroupDetails();
+                        } else {
+                          alert(data.error || 'Graduation failed');
+                        }
+                      } catch (err) {
+                        alert('Failed to graduate group');
+                      }
+                    }
+                  }}
+                />
               )}
 
               {activeTab === 'health' && (

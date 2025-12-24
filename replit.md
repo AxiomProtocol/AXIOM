@@ -47,7 +47,14 @@ Key features include:
   - **Mode Detection**: Community Mode (<$1K contribution, <$10K pot) vs Capital Mode ($1K+ or $10K+ pot)
   - **Capital Opportunities API** (`/api/wealth/opportunities`): Live data from CapitalPoolsAndFunds contract (`0xFcCdC1E353b24936f9A8D08D21aF684c620fa701`)
   - **Graduated Groups API** (`/api/wealth/graduated-groups`): Tracks groups that have graduated to investment pools
-  - **Graduation Button**: Group organizers can graduate their SUSU circles from the Health tab
+  - **Graduation Readiness Dashboard**: New "Graduation" tab on group pages showing:
+    - Current mode (Community vs Capital) with visual indicators
+    - Basic readiness progress (members, wallets, commitments)
+    - Capital Mode progress bars for all 4 thresholds
+    - Estimated graduation timeline
+    - One-click graduation button for organizers
+  - **Graduation Status API** (`/api/susu/groups/[id]/graduation-status`): Detailed progress metrics
+  - **GraduationProgress Component**: Full-featured dashboard with mode detection and progress visualization
   - **WealthAdvancement Component**: Displays tier progression (Community → Capital → Wealth Practice) with live stats
 - **Policy Guard Service** (`lib/services/PolicyGuardService.ts`): Soft enforcement layer that validates member credentials, AXM stake requirements, commitment signatures, and reputation scores before allowing SUSU participation.
 - **Staking Dashboard** (`/staking`): Complete staking interface for AXM tokens with stake/unstake functionality, pending rewards display, tier system (Bronze/Silver/Gold/Platinum/Diamond), and APR calculation.
