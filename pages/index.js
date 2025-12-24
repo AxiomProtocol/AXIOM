@@ -658,14 +658,16 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="relative rounded-2xl overflow-hidden shadow-2xl shadow-amber-500/20 border border-amber-200"
           >
-            <div className="aspect-video">
-              <iframe
-                src="https://www.youtube.com/embed/TbdIulFg1hA"
-                title="Axiom Introduction"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="w-full h-full"
-              />
+            <div className="aspect-video bg-gradient-to-br from-gray-900 via-amber-900/20 to-gray-900 flex items-center justify-center">
+              <div className="text-center p-8">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-amber-500/20 flex items-center justify-center">
+                  <svg className="w-10 h-10 text-amber-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">Introduction Video Coming Soon</h3>
+                <p className="text-gray-400 max-w-md">Learn how Axiom helps communities build wealth together through structured savings and cooperative economics.</p>
+              </div>
             </div>
           </motion.div>
         </div>
