@@ -33,15 +33,12 @@ export default function DEXLiquidityPanel() {
     );
   }
 
-  if (!data) {
-    return (
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
-        <p className="text-gray-400">Failed to load DEX data</p>
-      </div>
-    );
+  if (!data || !data.success) {
+    return null;
   }
 
   const { dex, pools } = data;
+  const hasLiquidity = parseFloat(dex.totalLiquidity) > 0 || parseFloat(dex.axmInDex) > 0;
 
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">

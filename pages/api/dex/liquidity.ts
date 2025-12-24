@@ -56,17 +56,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const pools: Array<{id: number; name: string; token0: string; token1: string; reserve0: string; reserve1: string; fee: string; tvl: string}> = [];
     
-    if (dexAxmBalance > 0) {
-      pools.push({
-        id: 1,
-        name: 'AXM Pool',
-        token0: 'AXM',
-        token1: 'ETH',
-        reserve0: ethers.formatEther(dexAxmBalance),
-        reserve1: '0',
-        fee: '0.30%',
-        tvl: ethers.formatEther(dexAxmBalance)
-      });
+    const poolTotal = Number(poolCount);
+    if (poolTotal > 0) {
+      for (let i = 0; i < Math.min(poolTotal, 10); i++) {
+        try {
+          const poolData = await dexContract.getPool(i);
+          if (poolData && poolData.reserve0 > 0) {
+            pools.push({
+              id: i + 1,
+              name: `Pool ${i + 1}`,
+              token0: poolData.token0?.slice(0, 8) || 'Token0',
+              token1: poolData.token1?.slice(0, 8) || 'Token1',
+              reserve0: ethers.formatEther(poolData.reserve0 || 0),
+              reserve1: ethers.formatEther(poolData.reserve1 || 0),
+              fee: `${Number(poolData.fee || 0) / 100}%`,
+              tvl: ethers.formatEther((poolData.reserve0 || BigInt(0)) + (poolData.reserve1 || BigInt(0)))
+            });
+          }
+        } catch (poolError) {
+          console.log(`Could not fetch pool ${i}`);
+        }
+      }
     }
 
     res.status(200).json({

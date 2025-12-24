@@ -33,16 +33,13 @@ export default function EmissionsChart() {
     );
   }
 
-  if (!data) {
-    return (
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
-        <p className="text-gray-400">Failed to load emissions data</p>
-      </div>
-    );
+  if (!data || !data.success) {
+    return null;
   }
 
   const { staking, emissions } = data;
-  const progress = parseFloat(emissions.progress);
+  const progress = parseFloat(emissions.progress || 0);
+  const hasStakingData = parseFloat(staking.totalStaked) > 0 || parseFloat(staking.apr) > 0;
 
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
@@ -76,37 +73,41 @@ export default function EmissionsChart() {
         </div>
       </div>
 
-      <div className="mb-6">
-        <div className="flex justify-between text-sm mb-2">
-          <span className="text-gray-400">Emission Progress</span>
-          <span className="text-white">{progress.toFixed(1)}%</span>
+      {emissions.hasSchedule && (
+        <div className="mb-6">
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-gray-400">Emission Progress</span>
+            <span className="text-white">{progress.toFixed(1)}%</span>
+          </div>
+          <div className="h-4 bg-gray-700 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-xs text-gray-500 mt-2">
+            <span>{new Date(emissions.startTime).toLocaleDateString()}</span>
+            <span>{new Date(emissions.endTime).toLocaleDateString()}</span>
+          </div>
         </div>
-        <div className="h-4 bg-gray-700 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <div className="flex justify-between text-xs text-gray-500 mt-2">
-          <span>{new Date(emissions.startTime).toLocaleDateString()}</span>
-          <span>{new Date(emissions.endTime).toLocaleDateString()}</span>
-        </div>
-      </div>
+      )}
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-gray-900/30 border border-gray-700 rounded-lg p-4">
-          <div className="text-sm text-gray-400 mb-1">Total Emissions Pool</div>
-          <div className="text-lg font-semibold text-white">
-            {parseFloat(emissions.totalEmissions).toLocaleString(undefined, { maximumFractionDigits: 0 })} AXM
+      {emissions.hasSchedule && (
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-gray-900/30 border border-gray-700 rounded-lg p-4">
+            <div className="text-sm text-gray-400 mb-1">Total Emissions Pool</div>
+            <div className="text-lg font-semibold text-white">
+              {parseFloat(emissions.totalEmissions).toLocaleString(undefined, { maximumFractionDigits: 0 })} AXM
+            </div>
+          </div>
+          <div className="bg-gray-900/30 border border-gray-700 rounded-lg p-4">
+            <div className="text-sm text-gray-400 mb-1">Remaining</div>
+            <div className="text-lg font-semibold text-white">
+              {parseFloat(emissions.remainingEmissions).toLocaleString(undefined, { maximumFractionDigits: 0 })} AXM
+            </div>
           </div>
         </div>
-        <div className="bg-gray-900/30 border border-gray-700 rounded-lg p-4">
-          <div className="text-sm text-gray-400 mb-1">Remaining</div>
-          <div className="text-lg font-semibold text-white">
-            {parseFloat(emissions.remainingEmissions).toLocaleString(undefined, { maximumFractionDigits: 0 })} AXM
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

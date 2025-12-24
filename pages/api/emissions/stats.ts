@@ -40,12 +40,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    let emissionData = {
-      startTime: Date.now() - (90 * 24 * 60 * 60 * 1000),
-      endTime: Date.now() + (275 * 24 * 60 * 60 * 1000),
-      totalEmissions: '750000000',
+    let emissionData: {
+      startTime: number;
+      endTime: number;
+      totalEmissions: string;
+      emittedToDate: string;
+      remainingEmissions: string;
+      hasSchedule: boolean;
+    } = {
+      startTime: 0,
+      endTime: 0,
+      totalEmissions: '0',
       emittedToDate: '0',
-      remainingEmissions: '750000000'
+      remainingEmissions: '0',
+      hasSchedule: false
     };
 
     try {
@@ -55,21 +63,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         stakingContract.remainingEmissions().catch(() => BigInt(0))
       ]);
 
-      if (schedule) {
+      if (schedule && schedule.totalEmissions > 0) {
         emissionData.startTime = Number(schedule.startTime) * 1000;
         emissionData.endTime = Number(schedule.endTime) * 1000;
         emissionData.totalEmissions = ethers.formatEther(schedule.totalEmissions);
+        emissionData.hasSchedule = true;
       }
       emissionData.emittedToDate = ethers.formatEther(emitted);
       emissionData.remainingEmissions = ethers.formatEther(remaining);
     } catch (e) {
-      console.log('Using estimated emission data');
+      console.log('Emission schedule not available from contract');
     }
 
-    const now = Date.now();
-    const elapsedTime = now - emissionData.startTime;
-    const totalDuration = emissionData.endTime - emissionData.startTime;
-    const progress = Math.min(100, Math.max(0, (elapsedTime / totalDuration) * 100));
+    let progress = 0;
+    let dailyEmission = '0';
+    if (emissionData.hasSchedule && emissionData.endTime > emissionData.startTime) {
+      const now = Date.now();
+      const elapsedTime = now - emissionData.startTime;
+      const totalDuration = emissionData.endTime - emissionData.startTime;
+      progress = Math.min(100, Math.max(0, (elapsedTime / totalDuration) * 100));
+      dailyEmission = (parseFloat(emissionData.totalEmissions) / (totalDuration / (24 * 60 * 60 * 1000))).toFixed(2);
+    }
 
     res.status(200).json({
       success: true,
@@ -80,9 +94,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         stakersCount: 0
       },
       emissions: {
-        ...emissionData,
+        startTime: emissionData.startTime,
+        endTime: emissionData.endTime,
+        totalEmissions: emissionData.totalEmissions,
+        emittedToDate: emissionData.emittedToDate,
+        remainingEmissions: emissionData.remainingEmissions,
         progress: progress.toFixed(2),
-        dailyEmission: (parseFloat(emissionData.totalEmissions) / (totalDuration / (24 * 60 * 60 * 1000))).toFixed(2)
+        dailyEmission,
+        hasSchedule: emissionData.hasSchedule
       },
       contractAddress: CORE_CONTRACTS.STAKING_EMISSIONS,
       lastUpdated: new Date().toISOString()
@@ -94,19 +113,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       staking: {
         totalStaked: '0',
         rewardRate: '0',
-        apr: '8.00',
+        apr: '0',
         stakersCount: 0
       },
       emissions: {
-        startTime: Date.now() - (90 * 24 * 60 * 60 * 1000),
-        endTime: Date.now() + (275 * 24 * 60 * 60 * 1000),
-        totalEmissions: '750000000',
+        startTime: 0,
+        endTime: 0,
+        totalEmissions: '0',
         emittedToDate: '0',
-        remainingEmissions: '750000000',
-        progress: '25.00',
-        dailyEmission: '2054794.52'
+        remainingEmissions: '0',
+        progress: '0',
+        dailyEmission: '0',
+        hasSchedule: false
       },
-      error: 'Failed to fetch live data'
+      error: 'Failed to fetch live contract data'
     });
   }
 }

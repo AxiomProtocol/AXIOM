@@ -46,21 +46,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       sustainabilityContract.getGreenInitiativesCount().catch(() => BigInt(0))
     ]);
 
+    const rewards: Array<{name: string; description: string; active: boolean}> = [];
+    if (userStats.greenScore > 50) {
+      rewards.push({ name: 'Carbon Credit Bonus', description: 'Earn 5% bonus on staking rewards', active: true });
+    }
+    if (parseFloat(userStats.carbonCredits) > 0) {
+      rewards.push({ name: 'Green Contributor', description: 'Active sustainability contributor', active: true });
+    }
+    if (userStats.greenScore > 75) {
+      rewards.push({ name: 'Eco Priority', description: 'Priority access to green DePIN nodes', active: true });
+    }
+
     res.status(200).json({
       success: true,
       platform: {
         totalCarbonOffset: ethers.formatEther(totalOffset),
-        greenInitiatives: Number(initiativesCount),
-        treesPlanted: 5000,
-        solarPanelsInstalled: 250,
-        renewableEnergyPercent: 45
+        greenInitiatives: Number(initiativesCount)
       },
       user: userStats,
-      rewards: [
-        { name: 'Carbon Credit Bonus', description: 'Earn 5% bonus on staking rewards when green score > 50', active: userStats.greenScore > 50 },
-        { name: 'Green NFT Badge', description: 'Exclusive NFT for sustainability contributors', active: parseFloat(userStats.carbonCredits) > 0 },
-        { name: 'Eco Priority', description: 'Priority access to green DePIN nodes', active: userStats.greenScore > 75 }
-      ],
+      rewards,
+      contractAddress: SUSTAINABILITY_CONTRACTS.SUSTAINABILITY,
       lastUpdated: new Date().toISOString()
     });
   } catch (error) {
@@ -69,14 +74,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: false,
       platform: {
         totalCarbonOffset: '0',
-        greenInitiatives: 0,
-        treesPlanted: 5000,
-        solarPanelsInstalled: 250,
-        renewableEnergyPercent: 45
+        greenInitiatives: 0
       },
       user: { carbonCredits: '0', greenScore: 0 },
       rewards: [],
-      error: 'Failed to fetch live data'
+      error: 'Failed to fetch live contract data'
     });
   }
 }

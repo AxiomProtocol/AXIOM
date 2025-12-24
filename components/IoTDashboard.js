@@ -35,15 +35,12 @@ export default function IoTDashboard({ compact = false }) {
     );
   }
 
-  if (!data) {
-    return (
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
-        <p className="text-gray-400">Failed to load IoT data</p>
-      </div>
-    );
+  if (!data || !data.success) {
+    return null;
   }
 
   const { sales, network, iot, sensors } = data;
+  const hasData = sales.totalNodesSold > 0 || network.activeNodes > 0 || iot.totalDevices > 0;
 
   if (compact) {
     return (

@@ -60,8 +60,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       totalDevices: 0,
       activeDevices: 0,
       totalDataPoints: 0,
-      averageUptime: 99.5,
-      networkHealth: 'Good'
+      averageUptime: 0,
+      networkHealth: 'Unknown'
     };
 
     try {
@@ -69,8 +69,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         iotContract.getTotalDevices().catch(() => BigInt(0)),
         iotContract.getActiveDevices().catch(() => BigInt(0)),
         iotContract.getTotalDataPoints().catch(() => BigInt(0)),
-        iotContract.getAverageUptime().catch(() => BigInt(9950)),
-        iotContract.getNetworkHealth().catch(() => 1)
+        iotContract.getAverageUptime().catch(() => BigInt(0)),
+        iotContract.getNetworkHealth().catch(() => 0)
       ]);
 
       const healthLabels = ['Offline', 'Good', 'Excellent', 'Optimal'];
@@ -80,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         activeDevices: Number(activeDevices),
         totalDataPoints: Number(totalDataPoints),
         averageUptime: Number(avgUptime) / 100,
-        networkHealth: healthLabels[Number(health)] || 'Good'
+        networkHealth: healthLabels[Number(health)] || 'Unknown'
       };
     } catch (e) {
       console.log('Using estimated IoT stats');
@@ -90,7 +90,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       activeNodes: 0,
       totalStaked: '0',
       totalRewards: '0',
-      networkUptime: 99.5
+      networkUptime: 0
     };
 
     try {
@@ -98,7 +98,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         depinSuiteContract.getActiveNodeCount().catch(() => BigInt(0)),
         depinSuiteContract.getTotalStaked().catch(() => BigInt(0)),
         depinSuiteContract.getTotalRewardsDistributed().catch(() => BigInt(0)),
-        depinSuiteContract.getNetworkUptime().catch(() => BigInt(9950))
+        depinSuiteContract.getNetworkUptime().catch(() => BigInt(0))
       ]);
 
       nodeStats = {
