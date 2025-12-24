@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { WalletConnectButton } from './WalletConnect/WalletConnectButton';
-import { NAV_ITEMS, FOOTER_ECOSYSTEM, FOOTER_RESOURCES, FOOTER_COMPANY } from '../lib/navigation';
+import { NAV_ITEMS, ADVANCED_DROPDOWN, MOBILE_NAV_ITEMS, FOOTER_ECOSYSTEM, FOOTER_RESOURCES, FOOTER_COMPANY } from '../lib/navigation';
 
 export default function Layout({ children, showWallet = true }) {
   const [pathname, setPathname] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -14,6 +15,16 @@ export default function Layout({ children, showWallet = true }) {
       setPathname(window.location.pathname);
     }
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showAdvanced && !e.target.closest('.advanced-dropdown')) {
+        setShowAdvanced(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showAdvanced]);
   
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -38,6 +49,42 @@ export default function Layout({ children, showWallet = true }) {
             <nav className="flex items-center gap-6">
               {NAV_ITEMS.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                
+                if (item.isDropdown) {
+                  return (
+                    <div key={item.name} className="relative advanced-dropdown">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowAdvanced(!showAdvanced);
+                        }}
+                        className={`text-sm font-medium transition-colors flex items-center gap-1 ${
+                          showAdvanced ? 'text-amber-600' : 'text-gray-600 hover:text-amber-600'
+                        }`}
+                      >
+                        {item.name}
+                        <svg className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {showAdvanced && (
+                        <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+                          {ADVANCED_DROPDOWN.map((dropItem) => (
+                            <Link
+                              key={dropItem.href}
+                              href={dropItem.href}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                              onClick={() => setShowAdvanced(false)}
+                            >
+                              {dropItem.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                
                 return (
                   <Link 
                     key={item.name}
@@ -86,7 +133,7 @@ export default function Layout({ children, showWallet = true }) {
                 className="flex overflow-x-auto gap-2 -mx-4 px-4"
                 style={{ WebkitOverflowScrolling: 'touch' }}
               >
-                {NAV_ITEMS.map((item) => {
+                {(MOBILE_NAV_ITEMS || NAV_ITEMS).map((item) => {
                   const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
                   return (
                     <Link 
