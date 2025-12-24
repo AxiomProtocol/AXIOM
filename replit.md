@@ -75,6 +75,13 @@ Key features include:
 - **Staking Dashboard** (`/staking`): Complete staking interface for AXM tokens with stake/unstake functionality, pending rewards display, tier system (Bronze/Silver/Gold/Platinum/Diamond), and APR calculation.
 - **Gamification System**: Achievement badges earned through platform participation (12 badges total), points tracking, and progress visualization.
 - **Sustainability Rewards API**: Integration with SustainabilityHub contract for carbon credits, green scores, and eco rewards.
+- **Onramp Center** (`/onramp`): Multi-provider fiat-to-crypto gateway for purchasing tokens:
+  - Providers: MoonPay, Ramp, Transak (configurable via environment variables)
+  - Features: Wallet address input, chain/asset selection, fiat currency/amount configuration
+  - Database: `onramp_purchase_intents` table tracks purchase intents
+  - APIs: `/api/onramp/config`, `/api/onramp/intent`, `/api/onramp/status`
+  - Compliance: Clear disclaimers about third-party processing, KYC, and non-investment nature
+  - Environment variables: `MOONPAY_PUBLISHABLE_KEY`, `RAMP_API_KEY`, `TRANSAK_API_KEY` (server-only where applicable)
 - **Governance System**: 
   - Current: API-based voting with voting power = AXM balance + staked AXM
   - Future: On-chain voting via GovernanceHub contract (specification in `contracts/GovernanceHub.sol.spec.md`)
