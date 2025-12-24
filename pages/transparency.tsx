@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '../components/Layout';
 import Link from 'next/link';
+import EmissionsChart from '../components/EmissionsChart';
+import DEXLiquidityPanel from '../components/DEXLiquidityPanel';
 
 interface ContractInfo {
   name: string;
@@ -525,6 +527,17 @@ export default function TransparencyPage() {
                       </li>
                     </ul>
                   </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Live Protocol Metrics</h2>
+                <p className="text-gray-600 mb-6">
+                  Real-time data from our deployed smart contracts on Arbitrum One.
+                </p>
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <EmissionsChart />
+                  <DEXLiquidityPanel />
                 </div>
               </div>
             </div>

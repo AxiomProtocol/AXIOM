@@ -52,6 +52,8 @@ Key features include:
   - Future: On-chain voting via GovernanceHub contract (specification in `contracts/GovernanceHub.sol.spec.md`)
   - Feature flags in `lib/governance/config.ts` for easy switching between API and on-chain modes
   - Service layer in `lib/governance/service.ts` with automatic fallback
+- **Emissions & DEX Dashboard**: Live protocol metrics on Transparency page showing token emissions progress and DEX liquidity from deployed contracts.
+- **IoT Network Telemetry**: DePIN nodes page includes IoTDashboard component with live data from node sales and IoT oracle contracts.
 
 ## External Dependencies
 - **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3), Reactive Network

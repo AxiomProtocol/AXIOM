@@ -4,6 +4,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { ethers } from 'ethers';
 import Link from 'next/link';
 import StepProgressBanner from '../components/StepProgressBanner';
+import IoTDashboard from '../components/IoTDashboard';
 
 const DEPIN_SUITE_ADDRESS = '0x16dC3884d88b767D99E0701Ba026a1ed39a250F1';
 const DEPIN_SALES_ADDRESS = '0x876951CaE4Ad48bdBfba547Ef4316Db576A9Edbd';
@@ -930,6 +931,11 @@ export default function AxiomDePINNodes() {
                   View Options
                 </button>
               </div>
+            </div>
+
+            {/* IoT Network Telemetry */}
+            <div style={{ marginBottom: '2rem' }}>
+              <IoTDashboard />
             </div>
 
             {/* Quick Comparison */}
