@@ -102,7 +102,7 @@ export default function WealthPracticePage() {
                     <p className="text-gray-400">Take your savings circle to the next level</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Link href="/susu" className="block bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-lg p-4 transition-all">
                     <div className="font-bold text-white mb-1">Join a SUSU Circle</div>
                     <div className="text-sm text-gray-400">Start with community savings</div>
@@ -110,6 +110,10 @@ export default function WealthPracticePage() {
                   <Link href="/susu/create" className="block bg-yellow-500 hover:bg-yellow-400 rounded-lg p-4 transition-all">
                     <div className="font-bold text-black mb-1">Create a Circle</div>
                     <div className="text-sm text-black/70">Organize your own group</div>
+                  </Link>
+                  <Link href="/onramp" className="block bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 rounded-lg p-4 transition-all">
+                    <div className="font-bold text-white mb-1">Get Axiom Units</div>
+                    <div className="text-sm text-purple-200">Buy crypto with card or bank</div>
                   </Link>
                 </div>
               </div>

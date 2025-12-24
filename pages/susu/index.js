@@ -484,6 +484,9 @@ export default function SusuPage() {
               <Link href={SUSU_ROUTES.SUSU_FAQ_PATH} className="text-gray-400 hover:text-gray-300 underline text-sm">
                 Read the FAQ
               </Link>
+              <Link href="/onramp" className="text-purple-400 hover:text-purple-300 underline text-sm">
+                Get Axiom Units
+              </Link>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
