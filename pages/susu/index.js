@@ -6,6 +6,7 @@ import { useWallet } from '../../components/WalletConnect/WalletContext';
 import { ethers } from 'ethers';
 import DisclosureBanner from '../../components/DisclosureBanner';
 import StepProgressBanner from '../../components/StepProgressBanner';
+import PolicyComplianceCard from '../../components/PolicyComplianceCard';
 import { SUSU_ROUTES } from '../../lib/susuRoutes';
 
 const STATUS_LABELS = {
@@ -881,6 +882,17 @@ export default function SusuPage() {
                   </div>
                 ) : (
                   <div className="space-y-6">
+                    <PolicyComplianceCard 
+                      contributionAmount={createForm.contributionAmount}
+                      onComplianceCheck={(result) => {
+                        if (!result.passed) {
+                          setCreateError('Please meet all membership requirements before creating a pool.');
+                        } else {
+                          setCreateError('');
+                        }
+                      }}
+                    />
+                    
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Number of Members

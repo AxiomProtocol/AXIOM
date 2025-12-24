@@ -3483,3 +3483,88 @@ export type SusuInsuranceClaim = typeof susuInsuranceClaims.$inferSelect;
 export type InsertSusuInsuranceClaim = typeof susuInsuranceClaims.$inferInsert;
 export type SusuRiskSettings = typeof susuRiskSettings.$inferSelect;
 export type InsertSusuRiskSettings = typeof susuRiskSettings.$inferInsert;
+
+// ==== POLICY GUARD SYSTEM - Member Credentials & Reputation ====
+
+// Member credentials for identity verification and trust tracking
+export const memberCredentials = pgTable("member_credentials", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).unique().notNull(),
+  isVerified: boolean("is_verified").default(false),
+  verificationLevel: integer("verification_level").default(0),
+  verifiedAt: timestamp("verified_at"),
+  reputationScore: integer("reputation_score").default(50),
+  completedRotations: integer("completed_rotations").default(0),
+  defaultCount: integer("default_count").default(0),
+  onTimePayments: integer("on_time_payments").default(0),
+  latePayments: integer("late_payments").default(0),
+  totalContributed: decimal("total_contributed", { precision: 18, scale: 8 }).default('0'),
+  totalReceived: decimal("total_received", { precision: 18, scale: 8 }).default('0'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  walletIdx: index("member_credentials_wallet_idx").on(table.walletAddress),
+  reputationIdx: index("member_credentials_reputation_idx").on(table.reputationScore),
+}));
+
+// Policy commitments for 2-rotation minimum agreements
+export const policyCommitments = pgTable("policy_commitments", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  poolId: integer("pool_id").notNull(),
+  minRotations: integer("min_rotations").default(2),
+  completedRotations: integer("completed_rotations").default(0),
+  signedAt: timestamp("signed_at"),
+  fulfilledAt: timestamp("fulfilled_at"),
+  breachedAt: timestamp("breached_at"),
+  forfeitAmount: decimal("forfeit_amount", { precision: 18, scale: 8 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  walletPoolIdx: index("policy_commitments_wallet_pool_idx").on(table.walletAddress, table.poolId),
+  walletIdx: index("policy_commitments_wallet_idx").on(table.walletAddress),
+}));
+
+// Reputation events for tracking member behavior
+export const reputationEventTypeEnum = pgEnum('reputation_event_type', [
+  'contribution',
+  'payout_received',
+  'rotation_completed',
+  'default',
+  'early_exit',
+  'on_time_payment',
+  'late_payment',
+  'identity_verified',
+  'vouched_for_member',
+  'received_vouch'
+]);
+
+export const reputationSeverityEnum = pgEnum('reputation_severity', [
+  'positive',
+  'neutral',
+  'negative'
+]);
+
+export const reputationEvents = pgTable("reputation_events", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  eventType: reputationEventTypeEnum("event_type").notNull(),
+  severity: reputationSeverityEnum("severity").notNull(),
+  scoreChange: integer("score_change").default(0),
+  poolId: integer("pool_id"),
+  groupId: integer("group_id"),
+  metadata: jsonb("metadata"),
+  oracleTxHash: varchar("oracle_tx_hash", { length: 66 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  walletIdx: index("reputation_events_wallet_idx").on(table.walletAddress),
+  eventTypeIdx: index("reputation_events_type_idx").on(table.eventType),
+  createdAtIdx: index("reputation_events_created_idx").on(table.createdAt),
+}));
+
+// Export types for policy guard tables
+export type MemberCredential = typeof memberCredentials.$inferSelect;
+export type InsertMemberCredential = typeof memberCredentials.$inferInsert;
+export type PolicyCommitment = typeof policyCommitments.$inferSelect;
+export type InsertPolicyCommitment = typeof policyCommitments.$inferInsert;
+export type ReputationEvent = typeof reputationEvents.$inferSelect;
+export type InsertReputationEvent = typeof reputationEvents.$inferInsert;

@@ -30,6 +30,72 @@ export default function GovernancePage() {
   const [proposals, setProposals] = useState([]);
   const [governanceStats, setGovernanceStats] = useState(DEFAULT_STATS);
   const [loading, setLoading] = useState(true);
+  const [votingState, setVotingState] = useState({ proposalId: null, pending: false, error: '', success: '' });
+  const [userVotingPower, setUserVotingPower] = useState('0');
+
+  const handleCastVote = async (proposalId, support) => {
+    if (!walletState?.address) {
+      setVotingState({ proposalId, pending: false, error: 'Please connect your wallet first', success: '' });
+      return;
+    }
+
+    setVotingState({ proposalId, pending: true, error: '', success: '' });
+
+    try {
+      const response = await fetch('/api/governance/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposalId,
+          support,
+          voterAddress: walletState.address
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to record vote');
+      }
+      
+      setVotingState({ proposalId, pending: false, error: '', success: 'Vote recorded successfully!' });
+      
+      await fetchGovernanceData();
+      
+      setTimeout(() => setVotingState({ proposalId: null, pending: false, error: '', success: '' }), 3000);
+    } catch (err) {
+      console.error('Voting error:', err);
+      setVotingState({ 
+        proposalId, 
+        pending: false, 
+        error: err.message || 'Failed to cast vote', 
+        success: '' 
+      });
+    }
+  };
+
+  const fetchUserVotingPower = async () => {
+    if (!walletState?.address) return;
+    
+    try {
+      const response = await fetch(`/api/governance/voting-power?wallet=${walletState.address}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUserVotingPower(data.votingPower || walletState.axmBalance || '0');
+      } else {
+        setUserVotingPower(walletState.axmBalance || '0');
+      }
+    } catch (err) {
+      console.error('Error fetching voting power:', err);
+      setUserVotingPower(walletState.axmBalance || '0');
+    }
+  };
+
+  useEffect(() => {
+    if (walletState?.address) {
+      fetchUserVotingPower();
+    }
+  }, [walletState?.address]);
 
   useEffect(() => {
     fetchGovernanceData();
@@ -292,16 +358,43 @@ export default function GovernancePage() {
                           </div>
 
                           {proposal.status === 'active' && walletState.isConnected && (
-                            <div className="flex gap-3">
-                              <button className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-colors">
-                                Vote For
-                              </button>
-                              <button className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors">
-                                Vote Against
-                              </button>
-                              <button className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl transition-colors">
-                                Abstain
-                              </button>
+                            <div className="space-y-3">
+                              <div className="flex gap-3">
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleCastVote(proposal.id, 1); }}
+                                  disabled={votingState.pending}
+                                  className="flex-1 py-3 bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white font-bold rounded-xl transition-colors"
+                                >
+                                  {votingState.proposalId === proposal.id && votingState.pending ? 'Voting...' : 'Vote For'}
+                                </button>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleCastVote(proposal.id, 0); }}
+                                  disabled={votingState.pending}
+                                  className="flex-1 py-3 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white font-bold rounded-xl transition-colors"
+                                >
+                                  {votingState.proposalId === proposal.id && votingState.pending ? 'Voting...' : 'Vote Against'}
+                                </button>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleCastVote(proposal.id, 2); }}
+                                  disabled={votingState.pending}
+                                  className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 text-gray-700 font-bold rounded-xl transition-colors"
+                                >
+                                  Abstain
+                                </button>
+                              </div>
+                              {votingState.proposalId === proposal.id && votingState.error && (
+                                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                                  {votingState.error}
+                                </div>
+                              )}
+                              {votingState.proposalId === proposal.id && votingState.success && (
+                                <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-600">
+                                  {votingState.success}
+                                </div>
+                              )}
+                              <div className="text-xs text-gray-500 text-center">
+                                Your voting power: {parseFloat(userVotingPower).toLocaleString()} AXM
+                              </div>
                             </div>
                           )}
 

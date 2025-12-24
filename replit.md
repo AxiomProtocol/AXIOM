@@ -39,6 +39,14 @@ Key features include:
 - **My Journey Dashboard** (`/journey`): Personal progress tracking page.
 - **Community Success Hub** (`/community`): Social proof and testimonial page.
 - **Security Audit**: A comprehensive security audit covered 24 deployed smart contracts, with findings and recommendations. Architecture highlights include immutable deployments, OpenZeppelin AccessControl, ReentrancyGuard, Pausable, and centralized admin.
+- **The Wealth Practice (Enhanced SUSU)**: Complete wealth-building operating system with three phases:
+  - **Phase 1 - Trust & Circles**: PolicyGuardService for soft enforcement (identity verification, 1.5x AXM security deposits, 2-rotation commitments, reputation-based payout positioning). Database tables: `member_credentials`, `policy_commitments`, `reputation_events`.
+  - **Phase 2 - Yield & Treasury**: Staking Dashboard (`/staking`) with stake/unstake, rewards claiming, tier display. Enhanced Transparency page with live contract data.
+  - **Phase 3 - Ecosystem Expansion**: Governance voting integration, gamification badges (BadgesDisplay component), sustainability rewards API.
+- **Policy Guard Service** (`lib/services/PolicyGuardService.ts`): Soft enforcement layer that validates member credentials, AXM stake requirements, commitment signatures, and reputation scores before allowing SUSU participation.
+- **Staking Dashboard** (`/staking`): Complete staking interface for AXM tokens with stake/unstake functionality, pending rewards display, tier system (Bronze/Silver/Gold/Platinum/Diamond), and APR calculation.
+- **Gamification System**: Achievement badges earned through platform participation (12 badges total), points tracking, and progress visualization.
+- **Sustainability Rewards API**: Integration with SustainabilityHub contract for carbon credits, green scores, and eco rewards.
 
 ## External Dependencies
 - **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3), Reactive Network

@@ -1,12 +1,31 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
+import { CORE_CONTRACTS, NETWORK_CONFIG, DEFI_UTILITY_CONTRACTS } from '../../../shared/contracts';
 
-const ARBITRUM_RPC = process.env.ALCHEMY_ARBITRUM_URL || 'https://arb1.arbitrum.io/rpc';
+const ARBITRUM_RPC = process.env.ALCHEMY_ARBITRUM_URL || NETWORK_CONFIG.rpcUrl;
 
-const TRACKED_WALLETS = {
-  treasury: process.env.TREASURY_ADDRESS || '',
-  staking: process.env.STAKING_CONTRACT_ADDRESS || '',
-  liquidity: process.env.LP_ADDRESS || '',
+const AXM_TOKEN_ABI = [
+  "function balanceOf(address account) external view returns (uint256)",
+  "function totalSupply() external view returns (uint256)"
+];
+
+const STAKING_ABI = [
+  "function totalStaked() external view returns (uint256)"
+];
+
+const TREASURY_ABI = [
+  "function getBalance(address token) external view returns (uint256)",
+  "function totalRevenue() external view returns (uint256)"
+];
+
+const NODE_ABI = [
+  "function totalNodesStaked() external view returns (uint256)"
+];
+
+const formatUSD = (amount: number): string => {
+  if (amount >= 1000000) return `$${(amount / 1000000).toFixed(2)}M`;
+  if (amount >= 1000) return `$${(amount / 1000).toFixed(2)}K`;
+  return `$${amount.toFixed(2)}`;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -15,42 +34,89 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    let treasuryBalance = '$0';
-    let stakingTVL = '$0';
-    let liquidityLocked = '$0';
-    let totalSecured = '$0';
+    const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
+    
+    const axmContract = new ethers.Contract(CORE_CONTRACTS.AXM_TOKEN, AXM_TOKEN_ABI, provider);
+    const stakingContract = new ethers.Contract(CORE_CONTRACTS.STAKING_EMISSIONS, STAKING_ABI, provider);
+    const treasuryContract = new ethers.Contract(CORE_CONTRACTS.TREASURY_REVENUE, TREASURY_ABI, provider);
+    const nodeContract = new ethers.Contract(DEFI_UTILITY_CONTRACTS.DEPIN_NODES, NODE_ABI, provider);
 
-    if (TRACKED_WALLETS.treasury) {
-      try {
-        const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
-        const balance = await provider.getBalance(TRACKED_WALLETS.treasury);
-        const ethBalance = parseFloat(ethers.formatEther(balance));
-        const ethPrice = 3500;
-        treasuryBalance = `$${(ethBalance * ethPrice).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
-      } catch (err) {
-        console.error('Error fetching treasury balance:', err);
-      }
-    }
+    const axmPrice = 0.001;
+    const ethPrice = 3500;
+
+    const [
+      treasuryAxmBalance,
+      treasuryEthBalance,
+      totalStaked,
+      totalNodesStaked,
+      axmTotalSupply
+    ] = await Promise.all([
+      axmContract.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => BigInt(0)),
+      provider.getBalance(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => BigInt(0)),
+      stakingContract.totalStaked().catch(() => BigInt(0)),
+      nodeContract.totalNodesStaked().catch(() => BigInt(0)),
+      axmContract.totalSupply().catch(() => BigInt(0))
+    ]);
+
+    const treasuryAxmUsd = parseFloat(ethers.formatEther(treasuryAxmBalance)) * axmPrice;
+    const treasuryEthUsd = parseFloat(ethers.formatEther(treasuryEthBalance)) * ethPrice;
+    const treasuryTotalUsd = treasuryAxmUsd + treasuryEthUsd;
+    
+    const stakingTvlAxm = parseFloat(ethers.formatEther(totalStaked));
+    const stakingTvlUsd = stakingTvlAxm * axmPrice;
+
+    const nodesTvlAxm = Number(totalNodesStaked) * 5000;
+    const nodesTvlUsd = nodesTvlAxm * axmPrice;
+
+    const totalSecuredUsd = treasuryTotalUsd + stakingTvlUsd + nodesTvlUsd;
 
     res.status(200).json({
       success: true,
-      treasuryBalance,
-      stakingTVL,
-      liquidityLocked,
-      totalSecured,
-      lastUpdated: new Date().toISOString(),
-      wallets: {
-        treasury: TRACKED_WALLETS.treasury ? `${TRACKED_WALLETS.treasury.slice(0, 6)}...${TRACKED_WALLETS.treasury.slice(-4)}` : 'Not configured',
-        staking: TRACKED_WALLETS.staking ? `${TRACKED_WALLETS.staking.slice(0, 6)}...${TRACKED_WALLETS.staking.slice(-4)}` : 'Not configured',
-      }
+      treasuryBalance: formatUSD(treasuryTotalUsd),
+      treasuryBreakdown: {
+        axm: {
+          amount: ethers.formatEther(treasuryAxmBalance),
+          usd: formatUSD(treasuryAxmUsd)
+        },
+        eth: {
+          amount: ethers.formatEther(treasuryEthBalance),
+          usd: formatUSD(treasuryEthUsd)
+        }
+      },
+      stakingTVL: formatUSD(stakingTvlUsd),
+      stakingDetails: {
+        totalStakedAxm: stakingTvlAxm.toFixed(2),
+        stakersCount: 'N/A'
+      },
+      nodesTVL: formatUSD(nodesTvlUsd),
+      nodesDetails: {
+        totalNodes: Number(totalNodesStaked),
+        totalStakedAxm: nodesTvlAxm
+      },
+      totalSecured: formatUSD(totalSecuredUsd),
+      tokenMetrics: {
+        totalSupply: ethers.formatEther(axmTotalSupply),
+        price: axmPrice,
+        marketCap: formatUSD(parseFloat(ethers.formatEther(axmTotalSupply)) * axmPrice)
+      },
+      contractAddresses: {
+        treasury: CORE_CONTRACTS.TREASURY_REVENUE,
+        staking: CORE_CONTRACTS.STAKING_EMISSIONS,
+        axmToken: CORE_CONTRACTS.AXM_TOKEN,
+        nodes: DEFI_UTILITY_CONTRACTS.DEPIN_NODES
+      },
+      lastUpdated: new Date().toISOString()
     });
   } catch (error) {
     console.error('Transparency stats error:', error);
-    res.status(500).json({
+    res.status(200).json({
       success: false,
-      error: 'Failed to fetch transparency stats',
       treasuryBalance: '$0',
-      stakingTVL: '$0'
+      stakingTVL: '$0',
+      nodesTVL: '$0',
+      totalSecured: '$0',
+      error: 'Failed to fetch live data',
+      lastUpdated: new Date().toISOString()
     });
   }
 }
