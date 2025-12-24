@@ -5,7 +5,7 @@ import { SUSU_ROUTES } from '../lib/susuRoutes';
 
 export default function SusuStartPage() {
   return (
-    <Layout>
+    <Layout showWallet={false}>
       <Head>
         <title>The Wealth Practice | Save Money with People You Trust</title>
         <meta name="description" content="The Wealth Practice is a structured savings practice built with others. Connect with a group, agree on the amount and schedule, and take turns receiving the pooled money." />
