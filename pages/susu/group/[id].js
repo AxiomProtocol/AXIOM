@@ -600,14 +600,44 @@ export default function GroupDetailPage() {
 
                       {health.isReadyToGraduate && (
                         <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                          <div className="flex items-center gap-3">
-                            <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <div>
-                              <div className="text-green-400 font-medium">Ready to Graduate!</div>
-                              <div className="text-gray-400 text-sm">This group meets all requirements to go on-chain</div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <div>
+                                <div className="text-green-400 font-medium">Ready to Graduate!</div>
+                                <div className="text-gray-400 text-sm">This group meets all requirements to go on-chain</div>
+                              </div>
                             </div>
+                            {isCreator && (
+                              <button
+                                onClick={async () => {
+                                  if (confirm('Graduate this group to on-chain status? This will create a charter and enable access to larger investment opportunities.')) {
+                                    try {
+                                      const res = await fetch(`/api/susu/groups/${id}/graduate`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ wallet_address: address })
+                                      });
+                                      const data = await res.json();
+                                      if (data.success) {
+                                        alert(`Group graduated successfully! Mode: ${data.charter?.mode || 'community'}`);
+                                        fetchGroupDetails();
+                                        fetchHealth();
+                                      } else {
+                                        alert(data.error || 'Graduation failed');
+                                      }
+                                    } catch (err) {
+                                      alert('Failed to graduate group');
+                                    }
+                                  }
+                                }}
+                                className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold rounded-lg hover:from-yellow-400 hover:to-amber-500 transition-all text-sm"
+                              >
+                                Graduate Now
+                              </button>
+                            )}
                           </div>
                         </div>
                       )}
