@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Layout from '../components/Layout';
 import WealthAdvancement from '../components/WealthAdvancement';
 import WealthTransparencyReport from '../components/WealthTransparencyReport';
+import OrganizerTraining from '../components/OrganizerTraining';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import StepProgressBanner from '../components/StepProgressBanner';
 
@@ -14,6 +15,7 @@ export default function WealthPracticePage() {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: '🏛️' },
     { id: 'opportunities', label: 'Opportunities', icon: '📈' },
+    { id: 'training', label: 'Training', icon: '🎓' },
     { id: 'reports', label: 'Reports', icon: '📊' },
     { id: 'my-groups', label: 'My Groups', icon: '👥' },
     { id: 'learn', label: 'Learn', icon: '📚' }
@@ -111,6 +113,23 @@ export default function WealthPracticePage() {
                   </Link>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'training' && (
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/30 rounded-xl p-6 mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="text-4xl">🎓</div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Organizer Training & Certification</h2>
+                    <p className="text-gray-400">
+                      Complete training modules to earn certifications and unlock advanced organizer capabilities.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <OrganizerTraining />
             </div>
           )}
 

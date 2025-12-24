@@ -3568,3 +3568,48 @@ export type PolicyCommitment = typeof policyCommitments.$inferSelect;
 export type InsertPolicyCommitment = typeof policyCommitments.$inferInsert;
 export type ReputationEvent = typeof reputationEvents.$inferSelect;
 export type InsertReputationEvent = typeof reputationEvents.$inferInsert;
+
+// Organizer certification level enum
+export const organizerCertLevelEnum = pgEnum('organizer_cert_level', [
+  'none',
+  'foundation',
+  'certified',
+  'master'
+]);
+
+// Organizer training progress
+export const organizerTrainingProgress = pgTable("organizer_training_progress", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  moduleId: varchar("module_id", { length: 50 }).notNull(),
+  quizScore: integer("quiz_score"),
+  passed: boolean("passed").default(false),
+  attempts: integer("attempts").default(0),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  walletModuleIdx: index("organizer_training_wallet_module_idx").on(table.walletAddress, table.moduleId),
+  walletIdx: index("organizer_training_wallet_idx").on(table.walletAddress),
+}));
+
+// Organizer certifications earned
+export const organizerCertifications = pgTable("organizer_certifications", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  certificationLevel: organizerCertLevelEnum("certification_level").notNull(),
+  earnedAt: timestamp("earned_at").defaultNow(),
+  expiresAt: timestamp("expires_at"),
+  isActive: boolean("is_active").default(true),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  walletIdx: index("organizer_cert_wallet_idx").on(table.walletAddress),
+  levelIdx: index("organizer_cert_level_idx").on(table.certificationLevel),
+}));
+
+// Export types for organizer training
+export type OrganizerTrainingProgress = typeof organizerTrainingProgress.$inferSelect;
+export type InsertOrganizerTrainingProgress = typeof organizerTrainingProgress.$inferInsert;
+export type OrganizerCertification = typeof organizerCertifications.$inferSelect;
+export type InsertOrganizerCertification = typeof organizerCertifications.$inferInsert;

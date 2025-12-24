@@ -64,6 +64,13 @@ Key features include:
     - Recently graduated groups with transaction links
     - Monthly trends (last 12 months)
   - **Transparency Report API** (`/api/wealth/transparency-report`): Comprehensive report data combining database and on-chain sources
+- **Organizer Training & Certification** (`/wealth-practice` Training tab): Complete training and certification system for SUSU organizers:
+  - 6 training modules: SUSU Fundamentals, Member Management, Conflict Resolution, Financial Literacy, Graduation Management, Advanced Strategies
+  - 3 certification levels: Foundation Organizer, Certified Organizer, Master Organizer
+  - Interactive quizzes with passing scores (80%)
+  - Progress tracking and certification badges
+  - Database tables: `organizer_training_progress`, `organizer_certifications`
+  - APIs: `/api/training/progress`, `/api/training/submit-quiz`, `/api/training/module/[id]`
 - **Policy Guard Service** (`lib/services/PolicyGuardService.ts`): Soft enforcement layer that validates member credentials, AXM stake requirements, commitment signatures, and reputation scores before allowing SUSU participation.
 - **Staking Dashboard** (`/staking`): Complete staking interface for AXM tokens with stake/unstake functionality, pending rewards display, tier system (Bronze/Silver/Gold/Platinum/Diamond), and APR calculation.
 - **Gamification System**: Achievement badges earned through platform participation (12 badges total), points tracking, and progress visualization.
