@@ -56,6 +56,14 @@ Key features include:
   - **Graduation Status API** (`/api/susu/groups/[id]/graduation-status`): Detailed progress metrics
   - **GraduationProgress Component**: Full-featured dashboard with mode detection and progress visualization
   - **WealthAdvancement Component**: Displays tier progression (Community → Capital → Wealth Practice) with live stats
+  - **Transparency Reports** (`/wealth-practice` Reports tab): Public dashboard showing graduated groups and performance:
+    - Summary stats: graduated groups, active groups, capital mobilized
+    - Mode distribution (Community vs Capital)
+    - On-chain stats from CapitalPoolsAndFunds contract
+    - Category performance with graduation rates
+    - Recently graduated groups with transaction links
+    - Monthly trends (last 12 months)
+  - **Transparency Report API** (`/api/wealth/transparency-report`): Comprehensive report data combining database and on-chain sources
 - **Policy Guard Service** (`lib/services/PolicyGuardService.ts`): Soft enforcement layer that validates member credentials, AXM stake requirements, commitment signatures, and reputation scores before allowing SUSU participation.
 - **Staking Dashboard** (`/staking`): Complete staking interface for AXM tokens with stake/unstake functionality, pending rewards display, tier system (Bronze/Silver/Gold/Platinum/Diamond), and APR calculation.
 - **Gamification System**: Achievement badges earned through platform participation (12 badges total), points tracking, and progress visualization.

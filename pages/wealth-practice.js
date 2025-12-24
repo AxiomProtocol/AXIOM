@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Layout from '../components/Layout';
 import WealthAdvancement from '../components/WealthAdvancement';
+import WealthTransparencyReport from '../components/WealthTransparencyReport';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import StepProgressBanner from '../components/StepProgressBanner';
 
@@ -13,6 +14,7 @@ export default function WealthPracticePage() {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: '🏛️' },
     { id: 'opportunities', label: 'Opportunities', icon: '📈' },
+    { id: 'reports', label: 'Reports', icon: '📊' },
     { id: 'my-groups', label: 'My Groups', icon: '👥' },
     { id: 'learn', label: 'Learn', icon: '📚' }
   ];
@@ -110,6 +112,10 @@ export default function WealthPracticePage() {
                 </div>
               </div>
             </div>
+          )}
+
+          {activeTab === 'reports' && (
+            <WealthTransparencyReport />
           )}
 
           {activeTab === 'my-groups' && (
