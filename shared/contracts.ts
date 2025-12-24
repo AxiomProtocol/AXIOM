@@ -117,6 +117,14 @@ export const COMMUNITY_CONTRACTS = {
   GAMIFICATION: '0x7F455b4614E05820AAD52067Ef223f30b1936f93'
 } as const;
 
+// Governance Contract (Future Deployment)
+// When GovernanceHub is deployed, update this address and set USE_ONCHAIN_VOTING = true in lib/governance/config.ts
+export const GOVERNANCE_CONTRACTS = {
+  // Contract: AxiomGovernanceHub (Not yet deployed)
+  // See contracts/GovernanceHub.sol.spec.md for specification
+  GOVERNANCE_HUB: null as string | null
+} as const;
+
 // Sustainability Contracts (22)
 export const SUSTAINABILITY_CONTRACTS = {
   // Contract 22: SustainabilityHub

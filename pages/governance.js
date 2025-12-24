@@ -4,6 +4,12 @@ import { DelegationPanel } from '../components/Governance/DelegationPanel';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import StepProgressBanner from '../components/StepProgressBanner';
 
+const GOVERNANCE_MODE = {
+  isOnchain: false,
+  contractAddress: null,
+  statusMessage: 'Governance votes are recorded via API. On-chain voting will be enabled when GovernanceHub contract is deployed.',
+};
+
 const COUNCIL_MEMBERS = [
   { name: 'Genesis Council', role: 'Founding Members', members: 7, votingPower: '15%', focus: 'Protocol Development' },
   { name: 'Member Assembly', role: 'Token Holders', members: 'All', votingPower: '60%', focus: 'General Proposals' },

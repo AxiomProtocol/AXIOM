@@ -47,6 +47,11 @@ Key features include:
 - **Staking Dashboard** (`/staking`): Complete staking interface for AXM tokens with stake/unstake functionality, pending rewards display, tier system (Bronze/Silver/Gold/Platinum/Diamond), and APR calculation.
 - **Gamification System**: Achievement badges earned through platform participation (12 badges total), points tracking, and progress visualization.
 - **Sustainability Rewards API**: Integration with SustainabilityHub contract for carbon credits, green scores, and eco rewards.
+- **Governance System**: 
+  - Current: API-based voting with voting power = AXM balance + staked AXM
+  - Future: On-chain voting via GovernanceHub contract (specification in `contracts/GovernanceHub.sol.spec.md`)
+  - Feature flags in `lib/governance/config.ts` for easy switching between API and on-chain modes
+  - Service layer in `lib/governance/service.ts` with automatic fallback
 
 ## External Dependencies
 - **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3), Reactive Network
