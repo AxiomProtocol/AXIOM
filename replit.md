@@ -43,6 +43,12 @@ Key features include:
   - **Phase 1 - Trust & Circles**: PolicyGuardService for soft enforcement (identity verification, 1.5x AXM security deposits, 2-rotation commitments, reputation-based payout positioning). Database tables: `member_credentials`, `policy_commitments`, `reputation_events`.
   - **Phase 2 - Yield & Treasury**: Staking Dashboard (`/staking`) with stake/unstake, rewards claiming, tier display. Enhanced Transparency page with live contract data.
   - **Phase 3 - Ecosystem Expansion**: Governance voting integration, gamification badges (BadgesDisplay component), sustainability rewards API.
+- **Wealth Practice Advancement** (`/wealth-practice`): Graduation pathway from community savings to capital investments:
+  - **Mode Detection**: Community Mode (<$1K contribution, <$10K pot) vs Capital Mode ($1K+ or $10K+ pot)
+  - **Capital Opportunities API** (`/api/wealth/opportunities`): Live data from CapitalPoolsAndFunds contract (`0xFcCdC1E353b24936f9A8D08D21aF684c620fa701`)
+  - **Graduated Groups API** (`/api/wealth/graduated-groups`): Tracks groups that have graduated to investment pools
+  - **Graduation Button**: Group organizers can graduate their SUSU circles from the Health tab
+  - **WealthAdvancement Component**: Displays tier progression (Community → Capital → Wealth Practice) with live stats
 - **Policy Guard Service** (`lib/services/PolicyGuardService.ts`): Soft enforcement layer that validates member credentials, AXM stake requirements, commitment signatures, and reputation scores before allowing SUSU participation.
 - **Staking Dashboard** (`/staking`): Complete staking interface for AXM tokens with stake/unstake functionality, pending rewards display, tier system (Bronze/Silver/Gold/Platinum/Diamond), and APR calculation.
 - **Gamification System**: Achievement badges earned through platform participation (12 badges total), points tracking, and progress visualization.

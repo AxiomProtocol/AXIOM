@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const graduatedResult = await pool.query(`
       SELECT 
         g.id,
-        g.name,
+        g.display_name as name,
         g.description,
         g.contribution_amount as "contributionAmount",
         g.member_count as "memberCount",
@@ -53,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const userResult = await pool.query(`
         SELECT 
           g.id,
-          g.name,
+          g.display_name as name,
           g.graduated_to_pool_id as "graduatedPoolId",
           gm.role,
           c.mode
