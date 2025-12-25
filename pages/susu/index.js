@@ -8,6 +8,7 @@ import DisclosureBanner from '../../components/DisclosureBanner';
 import StepProgressBanner from '../../components/StepProgressBanner';
 import PolicyComplianceCard from '../../components/PolicyComplianceCard';
 import { SUSU_ROUTES } from '../../lib/susuRoutes';
+import CustodyDisclosure from '../../components/CustodyDisclosure';
 
 const STATUS_LABELS = {
   0: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
@@ -506,6 +507,14 @@ export default function SusuPage() {
                 <div className="text-2xl font-bold text-amber-400">{userPools.length}</div>
                 <div className="text-sm text-gray-300">Your Pools</div>
               </div>
+            </div>
+            
+            <div className="mt-6">
+              <CustodyDisclosure 
+                custodyType="pooled" 
+                productName="SUSU Savings Circles"
+                compact={true}
+              />
             </div>
           </div>
         </div>

@@ -6,6 +6,7 @@ import WealthTransparencyReport from '../components/WealthTransparencyReport';
 import OrganizerTraining from '../components/OrganizerTraining';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import StepProgressBanner from '../components/StepProgressBanner';
+import CustodyDisclosure from '../components/CustodyDisclosure';
 
 export default function WealthPracticePage() {
   const { walletState } = useWallet();
@@ -37,6 +38,14 @@ export default function WealthPracticePage() {
               Graduate from community savings to larger financial opportunities. 
               Build wealth together through SUSU circles and investment pools.
             </p>
+            
+            <div className="max-w-2xl mx-auto mt-6">
+              <CustodyDisclosure 
+                custodyType="pooled" 
+                productName="Wealth Practice Programs"
+                compact={true}
+              />
+            </div>
           </div>
 
           <div className="flex flex-wrap justify-center gap-2 mb-8">
