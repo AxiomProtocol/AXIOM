@@ -246,7 +246,7 @@ export default function SMSAlerts() {
                 Axiom Protocol is America's first on-chain sovereign smart city economy. We provide tokenized real estate through KeyGrow, DePIN infrastructure, decentralized governance, and comprehensive digital banking services—all powered by the AXM token on Arbitrum.
               </p>
               <div className="flex flex-wrap gap-4 text-sm">
-                <Link href="/about" className="text-amber-600 hover:underline">About Us</Link>
+                <Link href="/about-us" className="text-amber-600 hover:underline">About Us</Link>
                 <Link href="/privacy-policy" className="text-amber-600 hover:underline">Privacy Policy</Link>
                 <Link href="/terms-and-conditions" className="text-amber-600 hover:underline">Terms of Service</Link>
                 <Link href="/contact" className="text-amber-600 hover:underline">Contact</Link>

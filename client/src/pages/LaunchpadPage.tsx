@@ -666,7 +666,7 @@ export default function LaunchpadPage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-sm text-gray-400">
-            <a href="/about" className="hover:text-blue-400 transition">About Us</a>
+            <a href="/about-us" className="hover:text-blue-400 transition">About Us</a>
             <a href="/contact-us" className="hover:text-blue-400 transition">Contact</a>
             <a href="/learn-how-it-works" className="hover:text-blue-400 transition">Learn How It Works</a>
             <a href="/pricing" className="hover:text-blue-400 transition">Pricing</a>
