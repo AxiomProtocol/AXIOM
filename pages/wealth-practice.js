@@ -42,7 +42,7 @@ export default function WealthPracticePage() {
             <div className="max-w-2xl mx-auto mt-6">
               <CustodyDisclosure 
                 custodyType="pooled" 
-                productName="Wealth Practice Programs"
+                productName="The Wealth Practice"
                 compact={true}
               />
             </div>

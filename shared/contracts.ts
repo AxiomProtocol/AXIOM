@@ -131,12 +131,18 @@ export const SUSTAINABILITY_CONTRACTS = {
   SUSTAINABILITY: '0xAf4dF8a7733BAB64b7Ce83F2494d6446eF9eC046'
 } as const;
 
-// Community Savings Contracts (24)
+// Community Savings Contracts (24-25)
 export const COMMUNITY_SAVINGS_CONTRACTS = {
-  // Contract 24: AxiomSusuHub (Rotating Savings Groups)
+  // Contract 24: AxiomSusuHub (Rotating Savings Groups - Pooled Custody)
   // Deployed: December 11, 2025 | Verified on Blockscout
   // Features: ROSCA/SUSU pools, configurable cycles, treasury fee routing
-  SUSU_HUB: '0x6C69D730327930B49A7997B7b5fb0865F30c95A5'
+  SUSU_HUB: '0x6C69D730327930B49A7997B7b5fb0865F30c95A5',
+  
+  // Contract 25: SusuPersonalVault (Self-Custody SUSU)
+  // Deployed: December 25, 2025 | Verified on Blockscout
+  // Features: Personal commitment vaults, segregated funds, early exit with penalty
+  // Custody: Smart Contract (user-controlled, not pooled)
+  SUSU_PERSONAL_VAULT: '0x7F474D9D5aF702D587A126c49aDa43318c1420E5'
 } as const;
 
 // All contracts in a single object for easy access

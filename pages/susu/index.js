@@ -9,6 +9,7 @@ import StepProgressBanner from '../../components/StepProgressBanner';
 import PolicyComplianceCard from '../../components/PolicyComplianceCard';
 import { SUSU_ROUTES } from '../../lib/susuRoutes';
 import CustodyDisclosure from '../../components/CustodyDisclosure';
+import SusuModeSelector from '../../components/SusuModeSelector';
 
 const STATUS_LABELS = {
   0: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
@@ -18,12 +19,23 @@ const STATUS_LABELS = {
 };
 
 const SUSU_CONTRACT = '0x6C69D730327930B49A7997B7b5fb0865F30c95A5';
+const SUSU_PERSONAL_VAULT = '0x7F474D9D5aF702D587A126c49aDa43318c1420E5';
 const AXM_TOKEN = '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D';
 
 const SUSU_ABI = [
   "function createPool(address token, uint256 memberCount, uint256 contributionAmount, uint256 cycleDuration, uint256 startTime, bool randomizedOrder, bool openJoin, uint16 protocolFeeBps) external returns (uint256)",
   "function joinPool(uint256 poolId) external",
   "function contribute(uint256 poolId) external"
+];
+
+const SUSU_PERSONAL_VAULT_ABI = [
+  "function createCircle(address token, uint256 targetMembers, uint256 contributionPerCycle, uint256 cycleDuration, uint256 startTime) external returns (uint256)",
+  "function commitToVault(uint256 circleId, uint256 preferredPosition) external",
+  "function processPayout(uint256 circleId) external",
+  "function exitEarly(uint256 circleId) external",
+  "function getCircle(uint256 circleId) external view returns (tuple(uint256 circleId, address organizer, address token, uint256 targetMembers, uint256 contributionPerCycle, uint256 totalCycles, uint256 cycleDuration, uint256 startTime, uint256 currentCycle, uint16 protocolFeeBps, uint16 earlyExitPenaltyBps, uint8 status, uint256 createdAt, uint256 totalCommitted, uint256 totalPaidOut))",
+  "function getVault(uint256 circleId, address member) external view returns (tuple(address owner, uint256 lockedAmount, uint256 availableForPayout, uint256 payoutPosition, uint256 committedAt, uint256 totalReceived, bool hasReceivedPayout, uint8 status))",
+  "function getRequiredCommitment(uint256 circleId) external view returns (uint256)"
 ];
 
 const ERC20_ABI = [
@@ -65,6 +77,7 @@ export default function SusuPage() {
   const [contractAddress, setContractAddress] = useState('');
   
   const [createForm, setCreateForm] = useState({
+    mode: 'pooled',
     memberCount: 5,
     contributionAmount: 100,
     cycleDuration: 'monthly',
@@ -402,27 +415,49 @@ export default function SusuPage() {
       
       const contributionWei = ethers.parseEther(createForm.contributionAmount.toString());
       const cycleDurationSeconds = getCycleDurationSeconds(createForm.cycleDuration);
-      const startTime = Math.floor(Date.now() / 1000) + 86400;
+      const startTime = Math.floor(Date.now() / 1000) + (7 * 86400);
+
+      let tx;
+
+      if (createForm.mode === 'solo') {
+        const soloContract = new ethers.Contract(SUSU_PERSONAL_VAULT, SUSU_PERSONAL_VAULT_ABI, signer);
+        
+        tx = await soloContract.createCircle(
+          AXM_TOKEN,
+          createForm.memberCount,
+          contributionWei,
+          cycleDurationSeconds,
+          startTime
+        );
+        
+        setCreateSuccess('Transaction submitted! Creating Personal Vault circle...');
+      } else {
+        const pooledStartTime = Math.floor(Date.now() / 1000) + 86400;
+        const susuContract = new ethers.Contract(SUSU_CONTRACT, SUSU_ABI, signer);
+        
+        tx = await susuContract.createPool(
+          AXM_TOKEN,
+          createForm.memberCount,
+          contributionWei,
+          cycleDurationSeconds,
+          pooledStartTime,
+          createForm.randomizedOrder,
+          createForm.openJoin,
+          100
+        );
+        
+        setCreateSuccess('Transaction submitted! Creating Community Pool...');
+      }
       
-      const tokenContract = new ethers.Contract(AXM_TOKEN, ERC20_ABI, signer);
-      const susuContract = new ethers.Contract(SUSU_CONTRACT, SUSU_ABI, signer);
-      
-      const tx = await susuContract.createPool(
-        AXM_TOKEN,
-        createForm.memberCount,
-        contributionWei,
-        cycleDurationSeconds,
-        startTime,
-        createForm.randomizedOrder,
-        createForm.openJoin,
-        100
-      );
-      
-      setCreateSuccess('Transaction submitted! Waiting for confirmation...');
       await tx.wait();
       
-      setCreateSuccess('Pool created successfully! It will appear in the list shortly.');
+      const successMessage = createForm.mode === 'solo' 
+        ? 'Personal Vault circle created! Share the circle ID with members to join.'
+        : 'Community Pool created! It will appear in the browse list shortly.';
+      
+      setCreateSuccess(successMessage);
       setCreateForm({
+        mode: 'pooled',
         memberCount: 5,
         contributionAmount: 100,
         cycleDuration: 'monthly',
@@ -437,7 +472,7 @@ export default function SusuPage() {
       
     } catch (error) {
       console.error('Error creating pool:', error);
-      setCreateError(error.message || 'Failed to create pool. Please try again.');
+      setCreateError(error.message || 'Failed to create circle. Please try again.');
     } finally {
       setCreating(false);
     }
@@ -512,7 +547,7 @@ export default function SusuPage() {
             <div className="mt-6">
               <CustodyDisclosure 
                 custodyType="pooled" 
-                productName="SUSU Savings Circles"
+                productName="The Wealth Practice"
                 compact={true}
               />
             </div>
@@ -877,14 +912,14 @@ export default function SusuPage() {
           {activeTab === 'create' && (
             <div className="max-w-2xl mx-auto">
               <div className="bg-white rounded-2xl border border-gray-200 p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Create a SUSU Pool</h2>
-                <p className="text-gray-500 mb-8">Start a community savings circle with friends, family, or colleagues.</p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Create a SUSU Circle</h2>
+                <p className="text-gray-500 mb-6">Start a community savings circle with friends, family, or colleagues.</p>
 
                 {!walletState?.address ? (
                   <div className="text-center py-8">
                     <div className="text-5xl mb-4">🔐</div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">Connect Your Wallet</h3>
-                    <p className="text-gray-500 mb-6">Connect your wallet to create a SUSU pool</p>
+                    <p className="text-gray-500 mb-6">Connect your wallet to create a SUSU circle</p>
                     <button
                       onClick={connectMetaMask}
                       className="px-6 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors"
@@ -894,11 +929,18 @@ export default function SusuPage() {
                   </div>
                 ) : (
                   <div className="space-y-6">
+                    <SusuModeSelector 
+                      selectedMode={createForm.mode}
+                      onModeSelect={(mode) => setCreateForm({...createForm, mode})}
+                      contributionAmount={createForm.contributionAmount}
+                      memberCount={createForm.memberCount}
+                    />
+
                     <PolicyComplianceCard 
                       contributionAmount={createForm.contributionAmount}
                       onComplianceCheck={(result) => {
                         if (!result.passed) {
-                          setCreateError('Please meet all membership requirements before creating a pool.');
+                          setCreateError('Please meet all membership requirements before creating a circle.');
                         } else {
                           setCreateError('');
                         }
@@ -912,12 +954,16 @@ export default function SusuPage() {
                       <input
                         type="number"
                         min="2"
-                        max="50"
+                        max={createForm.mode === 'solo' ? 20 : 50}
                         value={createForm.memberCount}
                         onChange={(e) => setCreateForm({...createForm, memberCount: parseInt(e.target.value) || 2})}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Between 2 and 50 members. Each member receives the pot once.</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {createForm.mode === 'solo' 
+                          ? 'Between 2 and 20 members for Personal Vault mode (requires upfront commitment).'
+                          : 'Between 2 and 50 members. Each member receives the pot once.'}
+                      </p>
                     </div>
 
                     <div>
@@ -951,40 +997,58 @@ export default function SusuPage() {
                       <p className="text-xs text-gray-500 mt-1">How often members contribute and payouts occur.</p>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={createForm.randomizedOrder}
-                          onChange={(e) => setCreateForm({...createForm, randomizedOrder: e.target.checked})}
-                          className="w-5 h-5 text-amber-500 rounded focus:ring-amber-500"
-                        />
-                        <span className="text-sm text-gray-700">Randomize payout order</span>
-                      </label>
-                    </div>
+                    {createForm.mode === 'pooled' && (
+                      <>
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={createForm.randomizedOrder}
+                              onChange={(e) => setCreateForm({...createForm, randomizedOrder: e.target.checked})}
+                              className="w-5 h-5 text-amber-500 rounded focus:ring-amber-500"
+                            />
+                            <span className="text-sm text-gray-700">Randomize payout order</span>
+                          </label>
+                        </div>
 
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={createForm.openJoin}
-                          onChange={(e) => setCreateForm({...createForm, openJoin: e.target.checked})}
-                          className="w-5 h-5 text-amber-500 rounded focus:ring-amber-500"
-                        />
-                        <span className="text-sm text-gray-700">Allow anyone to join (open pool)</span>
-                      </label>
-                    </div>
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={createForm.openJoin}
+                              onChange={(e) => setCreateForm({...createForm, openJoin: e.target.checked})}
+                              className="w-5 h-5 text-amber-500 rounded focus:ring-amber-500"
+                            />
+                            <span className="text-sm text-gray-700">Allow anyone to join (open pool)</span>
+                          </label>
+                        </div>
+                      </>
+                    )}
 
-                    <div className="bg-amber-50 rounded-xl p-4">
-                      <h4 className="font-semibold text-amber-800 mb-2">Pool Summary</h4>
-                      <div className="space-y-1 text-sm text-amber-700">
-                        <p>Members: {createForm.memberCount}</p>
-                        <p>Contribution: {createForm.contributionAmount} AXM per {createForm.cycleDuration.replace('ly', '')}</p>
-                        <p>Total pool per cycle: {createForm.memberCount * createForm.contributionAmount} AXM</p>
-                        <p>Payout per member: ~{(createForm.memberCount * createForm.contributionAmount * 0.99).toFixed(2)} AXM (after 1% fee)</p>
-                        <p>Duration: {createForm.memberCount} {createForm.cycleDuration.replace('ly', '')}s</p>
+                    {createForm.mode === 'pooled' ? (
+                      <div className="bg-amber-50 rounded-xl p-4">
+                        <h4 className="font-semibold text-amber-800 mb-2">Pool Summary (Community Pool)</h4>
+                        <div className="space-y-1 text-sm text-amber-700">
+                          <p>Members: {createForm.memberCount}</p>
+                          <p>Contribution: {createForm.contributionAmount} AXM per {createForm.cycleDuration.replace('ly', '')}</p>
+                          <p>Total pool per cycle: {createForm.memberCount * createForm.contributionAmount} AXM</p>
+                          <p>Payout per member: ~{(createForm.memberCount * createForm.contributionAmount * 0.99).toFixed(2)} AXM (after 1% fee)</p>
+                          <p>Duration: {createForm.memberCount} {createForm.cycleDuration.replace('ly', '')}s</p>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="bg-blue-50 rounded-xl p-4">
+                        <h4 className="font-semibold text-blue-800 mb-2">Circle Summary (Personal Vault)</h4>
+                        <div className="space-y-1 text-sm text-blue-700">
+                          <p>Members: {createForm.memberCount}</p>
+                          <p>Contribution per cycle: {createForm.contributionAmount} AXM</p>
+                          <p className="font-semibold">Your upfront commitment: {(createForm.memberCount * createForm.contributionAmount).toLocaleString()} AXM</p>
+                          <p>Payout per member: ~{(createForm.memberCount * createForm.contributionAmount * 0.99).toFixed(2)} AXM (after 1% fee)</p>
+                          <p>Duration: {createForm.memberCount} {createForm.cycleDuration.replace('ly', '')}s</p>
+                          <p className="text-xs mt-2 text-blue-600">Early exit penalty: 10% of remaining locked funds</p>
+                        </div>
+                      </div>
+                    )}
 
                     {createError && (
                       <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
@@ -1001,13 +1065,21 @@ export default function SusuPage() {
                     <button
                       onClick={handleCreatePool}
                       disabled={creating}
-                      className="w-full py-4 bg-amber-500 text-white rounded-xl font-bold text-lg hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className={`w-full py-4 text-white rounded-xl font-bold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                        createForm.mode === 'solo' 
+                          ? 'bg-blue-500 hover:bg-blue-600' 
+                          : 'bg-amber-500 hover:bg-amber-600'
+                      }`}
                     >
-                      {creating ? 'Creating Pool...' : 'Create Pool'}
+                      {creating 
+                        ? (createForm.mode === 'solo' ? 'Creating Personal Vault Circle...' : 'Creating Community Pool...') 
+                        : (createForm.mode === 'solo' ? 'Create Personal Vault Circle' : 'Create Community Pool')}
                     </button>
 
                     <p className="text-xs text-gray-500 text-center">
-                      Creating a pool requires a transaction on Arbitrum. You will be the first member automatically.
+                      {createForm.mode === 'solo' 
+                        ? 'Creating a Personal Vault circle requires a transaction on Arbitrum. Members will lock funds in their own vaults when joining.'
+                        : 'Creating a pool requires a transaction on Arbitrum. You will be the first member automatically.'}
                     </p>
                   </div>
                 )}
