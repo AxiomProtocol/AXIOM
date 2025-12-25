@@ -10,6 +10,7 @@ import PolicyComplianceCard from '../../components/PolicyComplianceCard';
 import { SUSU_ROUTES } from '../../lib/susuRoutes';
 import CustodyDisclosure from '../../components/CustodyDisclosure';
 import SusuModeSelector from '../../components/SusuModeSelector';
+import WealthPracticePathway from '../../components/WealthPracticePathway';
 
 const STATUS_LABELS = {
   0: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
@@ -545,11 +546,7 @@ export default function SusuPage() {
             </div>
             
             <div className="mt-6">
-              <CustodyDisclosure 
-                custodyType="pooled" 
-                productName="The Wealth Practice"
-                compact={true}
-              />
+              <WealthPracticePathway compact={true} />
             </div>
           </div>
         </div>

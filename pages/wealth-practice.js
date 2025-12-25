@@ -7,6 +7,7 @@ import OrganizerTraining from '../components/OrganizerTraining';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import StepProgressBanner from '../components/StepProgressBanner';
 import CustodyDisclosure from '../components/CustodyDisclosure';
+import WealthPracticePathway from '../components/WealthPracticePathway';
 
 export default function WealthPracticePage() {
   const { walletState } = useWallet();
@@ -39,12 +40,8 @@ export default function WealthPracticePage() {
               Build wealth together through SUSU circles and investment pools.
             </p>
             
-            <div className="max-w-2xl mx-auto mt-6">
-              <CustodyDisclosure 
-                custodyType="pooled" 
-                productName="The Wealth Practice"
-                compact={true}
-              />
+            <div className="max-w-3xl mx-auto mt-6">
+              <WealthPracticePathway compact={true} />
             </div>
           </div>
 
