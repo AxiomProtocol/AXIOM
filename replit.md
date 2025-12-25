@@ -38,7 +38,8 @@ Key features include:
 -   **Axiom SUSU (Rotating Savings Groups)**: On-chain ROSCA system branded as "The Wealth Practice" with two custody modes:
     - **Community Pool** (0x6C69D730327930B49A7997B7b5fb0865F30c95A5): Traditional pooled custody, pay-as-you-go, 2-50 members
     - **Personal Vault** (0x7F474D9D5aF702D587A126c49aDa43318c1420E5): Self-custody with upfront commitment, segregated funds, 2-20 members, 10% early exit penalty
-    - Key files: `components/SusuModeSelector.js`, `components/SoloSusuJoin.js`, `contracts/SusuPersonalVault.sol`
+    - **Trust Bridge**: Modal explainer on /susu page explaining trust tiers (Interest Hubs → Purpose Groups → SUSU Circles) and graduation process. Non-investment disclaimer on /wealth-practice. Whitepaper links on both pages.
+    - Key files: `components/SusuModeSelector.js`, `components/SoloSusuJoin.js`, `components/TrustGraduationModal.js`, `contracts/SusuPersonalVault.sol`
 -   **PMA Trust**: Axiom operates as a Private Membership Association Trust with tokenized whitelist-only ERC-1155/1400 memberships.
 -   **Equity Calculator**: Interactive rent-to-own equity calculator.
 -   **Axiom Academy**: Educational platform.
