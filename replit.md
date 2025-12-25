@@ -15,6 +15,29 @@ The frontend features a modular design with a professional gold/black theme, yel
 ### Technical Implementations
 The core **Axiom Protocol Token (AXM)** is an ERC20 governance and fee-routing token, initially on Arbitrum One, with plans to transition to Universe Blockchain (L3) using AXM as native gas. The **Smart Contract Architecture** is multi-phase, starting on Arbitrum One and migrating to Universe Blockchain, encompassing identity, treasury, staking, emissions, land/asset registry, and future modules. A **Complete Banking Product Suite** offers over 30 product families. The architecture incorporates 23 verified smart contracts on Arbitrum One, covering DePIN, Governance, Treasury, Property/Real Estate, Cross-Chain, Realtor System, and Smart City modules.
 
+### Production SSR Patterns (CRITICAL)
+To prevent 500 errors in production deployments, follow these patterns:
+
+1. **Static/Marketing Pages**: Use `<Layout showWallet={false}>` for pages that don't need wallet functionality (e.g., `/susu-start`, `/roadmap`). This prevents SSR crashes from wallet components accessing `window`/`localStorage`.
+
+2. **react-hot-toast**: Never import directly at the top level. Use dynamic import pattern:
+   ```tsx
+   import dynamic from 'next/dynamic';
+   const Toaster = dynamic(() => import('react-hot-toast').then((mod) => mod.Toaster), { ssr: false });
+   
+   let toastLib: typeof import('react-hot-toast') | null = null;
+   if (typeof window !== 'undefined') {
+     import('react-hot-toast').then((mod) => { toastLib = mod; });
+   }
+   const showToast = {
+     success: (msg: string, opts?: any) => toastLib?.toast.success(msg, opts),
+     error: (msg: string, opts?: any) => toastLib?.toast.error(msg, opts),
+     loading: (msg: string, opts?: any) => toastLib?.toast.loading(msg, opts),
+   };
+   ```
+
+3. **Browser-only libraries**: Any library that accesses `window`, `document`, or `localStorage` must be wrapped with `typeof window !== 'undefined'` checks or loaded via `next/dynamic` with `{ ssr: false }`.
+
 ### System Design Choices
 The architecture follows a "Product Factory Approach" for scalable product expansion. The blockchain network is currently deployed on Arbitrum One (L2), with plans to transition to Universe Blockchain (L3). Data management utilizes PostgreSQL with Drizzle ORM for relational data and MongoDB for specific analytics. The backend features a centralized contract configuration, a dedicated contract service, and chain validation middleware enforcing Arbitrum One for Web3 operations. API responses consistently return `axmBalance` and `axmUsdValue` fields.
 
