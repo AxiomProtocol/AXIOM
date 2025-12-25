@@ -35,7 +35,10 @@ Key features include:
 -   **Admin Authentication**: JWT-based authentication for `/admin/*` routes.
 -   **API Security**: Input validation, sanitization, error handling, and EIP-4361 SIWE authentication.
 -   **KeyGrow Rent-to-Own Program**: Real estate program using ERC-1155 tokenized fractional property shares, integrated with ATTOM Data and RentCast.
--   **Axiom SUSU (Rotating Savings Groups)**: On-chain ROSCA system with Community Pool (pooled custody) and Personal Vault (smart contract custody) modes.
+-   **Axiom SUSU (Rotating Savings Groups)**: On-chain ROSCA system branded as "The Wealth Practice" with two custody modes:
+    - **Community Pool** (0x6C69D730327930B49A7997B7b5fb0865F30c95A5): Traditional pooled custody, pay-as-you-go, 2-50 members
+    - **Personal Vault** (0x7F474D9D5aF702D587A126c49aDa43318c1420E5): Self-custody with upfront commitment, segregated funds, 2-20 members, 10% early exit penalty
+    - Key files: `components/SusuModeSelector.js`, `components/SoloSusuJoin.js`, `contracts/SusuPersonalVault.sol`
 -   **PMA Trust**: Axiom operates as a Private Membership Association Trust with tokenized whitelist-only ERC-1155/1400 memberships.
 -   **Equity Calculator**: Interactive rent-to-own equity calculator.
 -   **Axiom Academy**: Educational platform.
