@@ -15,6 +15,34 @@ The frontend features a modular design with a professional gold/black theme, yel
 ### Technical Implementations
 The core **Axiom Protocol Token (AXM)** is an ERC20 governance and fee-routing token, initially on Arbitrum One, with plans to transition to Universe Blockchain (L3) using AXM as native gas. The **Smart Contract Architecture** is multi-phase, starting on Arbitrum One and migrating to Universe Blockchain, encompassing identity, treasury, staking, emissions, land/asset registry, and future modules. A **Complete Banking Product Suite** offers over 30 product families. The architecture incorporates 23 verified smart contracts on Arbitrum One, covering DePIN, Governance, Treasury, Property/Real Estate, Cross-Chain, Realtor System, and Smart City modules.
 
+### Custody Model Architecture (CRITICAL)
+Axiom operates a HYBRID CUSTODY model. Understanding this is essential for accurate product disclosures:
+
+**Custody Types:**
+1. **Self-Custody** (Default): User holds tokens in their own wallet. Protocol cannot access funds.
+   - Products: AXM token holdings, basic wallet operations
+   - Risks: No FDIC insurance, crypto volatility, regulatory changes
+   
+2. **Smart Contract Custody**: Funds held by audited smart contracts with defined rules.
+   - Products: Staking, KeyGrow deposits
+   - Risks: All self-custody risks PLUS smart contract bugs, lock-up periods
+   
+3. **Pooled Custody**: Funds combined with other users, distributions controlled by group/fund rules.
+   - Products: SUSU circles, Capital Pools, DEX LP positions
+   - Risks: All smart contract risks PLUS counterparty default, liquidity constraints
+
+**Key Files:**
+- `lib/custody/disclosure.ts`: Canonical custody type definitions and risk warnings
+- `components/CustodyDisclosure.js`: UI component for displaying custody info
+- `/bank` page: Product catalog with LIVE vs PLANNED labels
+
+**What We DON'T Have (Removed Claims):**
+- No FDIC insurance on any product
+- No ACH/wire transfers (planned, not live)
+- No lending/credit products (planned, not live)
+- No guaranteed yields
+- No fiat bank accounts
+
 ### Production SSR Patterns (CRITICAL)
 To prevent 500 errors in production deployments, follow these patterns:
 
