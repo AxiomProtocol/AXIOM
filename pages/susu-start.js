@@ -126,6 +126,64 @@ export default function SusuStartPage() {
           </div>
         </div>
 
+        <div className="py-16 bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 text-white">
+          <div className="max-w-4xl mx-auto px-6">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <span className="text-4xl">🏠</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-center">
+                Can You Use The Wealth Practice for Big Purchases Like a Home?
+              </h2>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-8">
+              <p className="text-lg text-blue-100 mb-6">
+                You may hear people say community savings or SUSU money can't be used to buy a house.
+              </p>
+              <p className="text-2xl font-bold text-white mb-6">
+                The truth is simple:
+              </p>
+              <div className="bg-amber-500/20 border border-amber-400/30 rounded-xl p-6 mb-6">
+                <p className="text-xl font-semibold text-amber-300">
+                  Banks don't reject savings.<br/>
+                  They reject money they can't trace.
+                </p>
+              </div>
+              <p className="text-blue-100 mb-4">
+                Traditional savings circles are often informal. Contributions may be made in cash or loosely tracked, which makes it hard for lenders to verify where the money came from or how long it existed.
+              </p>
+            </div>
+
+            <div className="bg-amber-500 text-gray-900 rounded-2xl p-8 mb-8">
+              <h3 className="text-2xl font-bold mb-4">The Wealth Practice is different.</h3>
+              <p className="text-lg font-semibold mb-4">
+                It turns community savings into documented savings.
+              </p>
+              <p className="text-gray-800">
+                Contributions happen on a clear schedule, follow agreed rules, and are recorded over time. Funds are classified as member savings — not income, not a loan, and not an investment.
+              </p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-8">
+              <p className="text-blue-100 mb-6">
+                Because savings are built consistently and documented, participants create a visible history instead of a sudden lump-sum deposit.
+              </p>
+              <div className="border-l-4 border-amber-400 pl-6">
+                <p className="text-blue-200 italic">
+                  The Wealth Practice does not replace banks and does not guarantee loan approval.
+                </p>
+                <p className="text-white font-semibold mt-2">
+                  What it provides is something traditional savings circles often lack: clear records.
+                </p>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <p className="text-2xl font-bold text-amber-400 mb-2">Community savings, with documentation.</p>
+              <p className="text-2xl font-bold text-white">Discipline, with proof.</p>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-gray-50 py-16">
           <div className="max-w-4xl mx-auto px-6">
             <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
