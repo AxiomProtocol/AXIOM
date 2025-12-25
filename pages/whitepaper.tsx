@@ -322,43 +322,65 @@ export default function WhitePaper() {
                 <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">5. Axiom SUSU Overview</h2>
                 
                 <p className="text-gray-700 leading-relaxed">
-                  Axiom SUSU modernizes traditional community savings systems by adding:
+                  Axiom SUSU uses a graduated approach where trust and commitment build over time. Members progress through three distinct stages:
                 </p>
 
-                <div className="grid md:grid-cols-2 gap-4 my-6 not-prose">
-                  <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-                    <div className="text-2xl mb-2">📊</div>
-                    <h4 className="font-bold text-gray-900">Transparent Contribution Tracking</h4>
-                    <p className="text-gray-600 text-sm mt-1">Every contribution is recorded and visible to all members</p>
+                <div className="space-y-6 my-8 not-prose">
+                  {/* Stage 1 */}
+                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-xl">1</div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-blue-900 text-lg">Purpose Groups</h4>
+                        <p className="text-blue-700 text-sm mt-1">Goal-aligned pre-commitment groups where members discuss savings objectives and build trust through vouches, profile completion, and group engagement. Members join through regional Interest Hubs. No financial commitment occurs at this level.</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-                    <div className="text-2xl mb-2">⚙️</div>
-                    <h4 className="font-bold text-gray-900">Automated Rotation Rules</h4>
-                    <p className="text-gray-600 text-sm mt-1">Fair, predictable payout schedules enforced automatically</p>
+
+                  {/* Stage 2 */}
+                  <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xl">2</div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-green-900 text-lg">SUSU Circles</h4>
+                        <p className="text-green-700 text-sm mt-1">On-chain rotating savings groups activated after trust thresholds are met. Members choose between two custody modes:</p>
+                        <div className="grid md:grid-cols-2 gap-3 mt-3">
+                          <div className="bg-white/50 rounded-lg p-3 border border-green-200">
+                            <p className="font-medium text-green-900 text-sm">Personal Vault (Self-Custody)</p>
+                            <p className="text-green-700 text-xs mt-1">Upfront commitment with segregated funds</p>
+                          </div>
+                          <div className="bg-white/50 rounded-lg p-3 border border-green-200">
+                            <p className="font-medium text-green-900 text-sm">Community Pool (Pooled Custody)</p>
+                            <p className="text-green-700 text-xs mt-1">Pay-as-you-go with traditional pooled structure</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-                    <div className="text-2xl mb-2">📜</div>
-                    <h4 className="font-bold text-gray-900">Clear Participation History</h4>
-                    <p className="text-gray-600 text-sm mt-1">Track record of reliability builds over time</p>
-                  </div>
-                  <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-                    <div className="text-2xl mb-2">🤝</div>
-                    <h4 className="font-bold text-gray-900">Community Accountability</h4>
-                    <p className="text-gray-600 text-sm mt-1">Peer support and social commitment strengthen discipline</p>
+
+                  {/* Stage 3 */}
+                  <div className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-amber-500 text-white rounded-full flex items-center justify-center font-bold text-xl">3</div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-amber-900 text-lg">The Wealth Practice</h4>
+                        <p className="text-amber-700 text-sm mt-1">After completing 3+ successful SUSU rounds OR 6+ months with all members in good standing, groups graduate into The Wealth Practice. This unlocks access to larger financial opportunities including real estate pools, DePIN infrastructure, and enhanced governance participation.</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 <div className="bg-gray-50 rounded-xl p-6 my-8 border border-gray-200">
-                  <h4 className="font-bold text-gray-900 mb-3">How It Works</h4>
+                  <h4 className="font-bold text-gray-900 mb-3">How SUSU Circles Work</h4>
                   <p className="text-gray-700 leading-relaxed">
-                    Members contribute a fixed amount over a defined period. Each member receives the pooled amount once per cycle.
+                    Members contribute a fixed amount over a defined period. Each member receives the pooled amount once per cycle. Smart contracts enforce contribution schedules and automate payouts transparently.
                   </p>
                 </div>
 
                 <div className="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-lg">
                   <p className="text-gray-800 leading-relaxed m-0">
                     <strong>There is no yield promise. There is no speculation.</strong><br/>
-                    Only structure, consistency, and trust.
+                    Only structure, consistency, and trust. Wealth together.
                   </p>
                 </div>
               </section>
