@@ -11,7 +11,7 @@ TABLE OF CONTENTS
 2. The Problem: Financial Exclusion and Coordination Risk
 3. Traditional SUSU / ROSCA Systems
 4. The Axiom SUSU Approach
-5. Three-Tier Trust Architecture
+5. Three-Stage Progression
 6. Technical Infrastructure
 7. Smart Contract Coordination
 8. Trust and Safety Framework
@@ -84,19 +84,24 @@ The protocol introduces a graduated participation model where users:
 This ensures that financial coordination follows social validation, not the reverse.
 
 
-5. THREE-TIER TRUST ARCHITECTURE
+5. THREE-STAGE PROGRESSION
 
-Tier 1: Interest Hubs  
-Non-financial community spaces organized by region or diaspora.  
-No contributions occur at this level.
+Axiom SUSU uses a graduated approach where trust and commitment build over time. Members progress through three distinct stages, each with its own graduation requirements.
 
-Tier 2: Purpose Groups  
-Goal-aligned pre-commitment groups where members discuss savings objectives and establish expectations.
+Stage 1: Purpose Groups  
+Goal-aligned pre-commitment groups where members discuss savings objectives and establish expectations. Members join through regional Interest Hubs (geographic filters for discovery) and build trust through vouches, profile completion, and group engagement. No financial commitment occurs at this level.
 
-Tier 3: SUSU Circles  
-On-chain rotating savings groups activated only after predefined readiness conditions are met.
+Stage 2: SUSU Circles  
+On-chain rotating savings groups activated only after predefined readiness conditions are met. Members choose between two custody modes:
+• Personal Vault (Self-Custody): Upfront commitment with segregated funds
+• Community Pool (Pooled Custody): Pay-as-you-go with traditional pooled structure
 
-This architecture minimizes coordination risk and promotes accountability.
+Smart contracts enforce contribution schedules and automate payouts.
+
+Stage 3: The Wealth Practice  
+After completing 3+ successful SUSU rounds OR 6+ months with all members in good standing, groups graduate into The Wealth Practice. This unlocks access to larger financial opportunities including real estate pools, DePIN infrastructure investments, and enhanced governance participation within the Axiom ecosystem.
+
+This architecture ensures that financial commitment follows social validation, and larger opportunities follow demonstrated reliability.
 
 
 6. TECHNICAL INFRASTRUCTURE
@@ -182,10 +187,12 @@ Participation involves equal contribution and receipt, without profit derived fr
 13. ROADMAP
 
 Future development areas may include:
-• Improved discovery tools
-• Enhanced group analytics
-• Broader network support
-• Interoperability with other Axiom modules
+• Improved discovery tools and regional hub expansion
+• Enhanced group analytics and reputation tracking
+• Broader network support and cross-chain compatibility
+• Deeper integration with The Wealth Practice ecosystem
+• Capital Mode opportunities for graduated groups
+• Real estate and DePIN investment pools
 
 All features are subject to testing, governance review, and legal evaluation.
 
@@ -199,6 +206,7 @@ By combining community, transparency, and rule-based execution, the protocol ena
 Trust first.
 Coordination second.
 Capital last.
+Wealth together.
 
 ────────────────────────────────────────────────────────────
 
