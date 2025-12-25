@@ -1,7 +1,25 @@
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useWallet } from '../components/WalletConnect/WalletContext';
-import toast, { Toaster } from 'react-hot-toast';
 import { ethers } from 'ethers';
+
+const Toaster = dynamic(
+  () => import('react-hot-toast').then((mod) => mod.Toaster),
+  { ssr: false }
+);
+
+let toastLib: typeof import('react-hot-toast') | null = null;
+if (typeof window !== 'undefined') {
+  import('react-hot-toast').then((mod) => {
+    toastLib = mod;
+  });
+}
+
+const showToast = {
+  success: (msg: string, opts?: any) => toastLib?.toast.success(msg, opts),
+  error: (msg: string, opts?: any) => toastLib?.toast.error(msg, opts),
+  loading: (msg: string, opts?: any) => toastLib?.toast.loading(msg, opts),
+};
 import Link from 'next/link';
 import StepProgressBanner from '../components/StepProgressBanner';
 import IoTDashboard from '../components/IoTDashboard';
@@ -340,18 +358,18 @@ export default function AxiomDePINNodes() {
   // Claim rewards function
   const handleClaimRewards = async () => {
     if (!isConnected || !account) {
-      toast.error('Please connect your wallet first');
+      showToast.error('Please connect your wallet first');
       return;
     }
     
     const rewardAmount = parseFloat(pendingRewards);
     if (rewardAmount <= 0) {
-      toast.error('No rewards to claim');
+      showToast.error('No rewards to claim');
       return;
     }
     
     setClaimingRewards(true);
-    const loadingToast = toast.loading('Claiming your rewards...');
+    const loadingToast = showToast.loading('Claiming your rewards...');
     
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -359,11 +377,11 @@ export default function AxiomDePINNodes() {
       const suiteContract = new ethers.Contract(DEPIN_SUITE_ADDRESS, DEPIN_SUITE_ABI, signer);
       
       const tx = await suiteContract.withdraw();
-      toast.loading('Transaction submitted. Waiting for confirmation...', { id: loadingToast });
+      showToast.loading('Transaction submitted. Waiting for confirmation...', { id: loadingToast });
       
       await tx.wait();
       
-      toast.success(`Successfully claimed ${parseFloat(pendingRewards).toFixed(2)} AXM!`, { id: loadingToast });
+      showToast.success(`Successfully claimed ${parseFloat(pendingRewards).toFixed(2)} AXM!`, { id: loadingToast });
       setPendingRewards('0');
       
       // Refresh balances
@@ -373,7 +391,7 @@ export default function AxiomDePINNodes() {
       
     } catch (err: any) {
       console.error('Failed to claim rewards:', err);
-      toast.error(err.reason || 'Failed to claim rewards', { id: loadingToast });
+      showToast.error(err.reason || 'Failed to claim rewards', { id: loadingToast });
     }
     
     setClaimingRewards(false);
@@ -402,20 +420,20 @@ export default function AxiomDePINNodes() {
 
   const handleNodePurchase = async (node: typeof NODE_TIERS[0]) => {
     if (!isConnected || !account) {
-      toast.error('Please connect your wallet first');
+      showToast.error('Please connect your wallet first');
       await connectMetaMask();
       return;
     }
 
     setPurchasing(`node-${node.tierId}`);
-    const loadingToast = toast.loading(`Preparing your ${node.name}...`);
+    const loadingToast = showToast.loading(`Preparing your ${node.name}...`);
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const network = await provider.getNetwork();
       
       if (network.chainId !== 42161n) {
-        toast.loading('Switching to Arbitrum One...', { id: loadingToast });
+        showToast.loading('Switching to Arbitrum One...', { id: loadingToast });
         try {
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
@@ -450,20 +468,20 @@ export default function AxiomDePINNodes() {
         if (balance < totalNeeded) {
           const balanceInEth = ethers.formatEther(balance);
           const neededInEth = ethers.formatEther(totalNeeded);
-          toast.error(
+          showToast.error(
             `Insufficient ETH balance. You have ${Number(balanceInEth).toFixed(4)} ETH but need ${Number(neededInEth).toFixed(4)} ETH (${node.priceEth} + gas). Please bridge ETH to Arbitrum One.`,
             { id: loadingToast, duration: 8000 }
           );
           return;
         }
 
-        toast.loading('Confirm ETH payment in your wallet...', { id: loadingToast });
+        showToast.loading('Confirm ETH payment in your wallet...', { id: loadingToast });
         const tx = await salesContract.purchaseNodeWithETH(node.tierId, node.category, metadata, {
           value: ethers.parseEther(node.priceEth)
         });
-        toast.loading('Transaction submitted! Confirming...', { id: loadingToast });
+        showToast.loading('Transaction submitted! Confirming...', { id: loadingToast });
         await tx.wait();
-        toast.success(`${node.name} purchased with ETH! Node activated.`, { id: loadingToast, duration: 5000 });
+        showToast.success(`${node.name} purchased with ETH! Node activated.`, { id: loadingToast, duration: 5000 });
       } else {
         const axmContract = new ethers.Contract(AXM_TOKEN_ADDRESS, AXM_ABI, signer);
         const axmPrice = axmPrices[node.tierId] || '0';
@@ -471,25 +489,25 @@ export default function AxiomDePINNodes() {
         const userAxmBal = await axmContract.balanceOf(account);
 
         if (userAxmBal < requiredAxm) {
-          toast.error(
+          showToast.error(
             `Insufficient AXM balance. You have ${Number(ethers.formatEther(userAxmBal)).toFixed(0)} AXM but need ${Number(axmPrice).toFixed(0)} AXM (15% discount applied).`,
             { id: loadingToast, duration: 8000 }
           );
           return;
         }
 
-        toast.loading('Approving AXM spending...', { id: loadingToast });
+        showToast.loading('Approving AXM spending...', { id: loadingToast });
         const allowance = await axmContract.allowance(account, DEPIN_SALES_ADDRESS);
         if (allowance < requiredAxm) {
           const approveTx = await axmContract.approve(DEPIN_SALES_ADDRESS, requiredAxm);
           await approveTx.wait();
         }
 
-        toast.loading('Confirm AXM payment in your wallet...', { id: loadingToast });
+        showToast.loading('Confirm AXM payment in your wallet...', { id: loadingToast });
         const tx = await salesContract.purchaseNodeWithAXM(node.tierId, node.category, metadata);
-        toast.loading('Transaction submitted! Confirming...', { id: loadingToast });
+        showToast.loading('Transaction submitted! Confirming...', { id: loadingToast });
         await tx.wait();
-        toast.success(`${node.name} purchased with AXM (15% discount)! Node activated.`, { id: loadingToast, duration: 5000 });
+        showToast.success(`${node.name} purchased with AXM (15% discount)! Node activated.`, { id: loadingToast, duration: 5000 });
       }
 
       const axmContract = new ethers.Contract(AXM_TOKEN_ADDRESS, AXM_ABI, provider);
@@ -502,7 +520,7 @@ export default function AxiomDePINNodes() {
       
     } catch (error: any) {
       console.error('Purchase error:', error);
-      toast.error(error?.reason || error?.message || 'Purchase failed', { id: loadingToast });
+      showToast.error(error?.reason || error?.message || 'Purchase failed', { id: loadingToast });
     } finally {
       setPurchasing(null);
     }
@@ -510,25 +528,25 @@ export default function AxiomDePINNodes() {
 
   const handleStandardNodePurchase = async (node: typeof STANDARD_NODE_TIERS[0]) => {
     if (!isConnected || !account) {
-      toast.error('Please connect your wallet first');
+      showToast.error('Please connect your wallet first');
       await connectMetaMask();
       return;
     }
 
     if (!standardForm.nodeName) {
-      toast.error('Please enter a name for your node');
+      showToast.error('Please enter a name for your node');
       return;
     }
 
     setPurchasing(`standard-${node.tierId}`);
-    const loadingToast = toast.loading('Setting up your node...');
+    const loadingToast = showToast.loading('Setting up your node...');
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const network = await provider.getNetwork();
       
       if (network.chainId !== 42161n) {
-        toast.loading('Switching to Arbitrum One...', { id: loadingToast });
+        showToast.loading('Switching to Arbitrum One...', { id: loadingToast });
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: '0xa4b1' }],
@@ -546,7 +564,7 @@ export default function AxiomDePINNodes() {
       if (balance < totalNeeded) {
         const balanceInEth = ethers.formatEther(balance);
         const neededInEth = ethers.formatEther(totalNeeded);
-        toast.error(
+        showToast.error(
           `Insufficient ETH balance. You have ${Number(balanceInEth).toFixed(4)} ETH but need ${Number(neededInEth).toFixed(4)} ETH (${node.priceEth} + gas). Please bridge ETH to Arbitrum One.`,
           { id: loadingToast, duration: 8000 }
         );
@@ -555,21 +573,21 @@ export default function AxiomDePINNodes() {
 
       const metadata = generateMetadata(standardForm, node.name);
       
-      toast.loading('Confirm transaction in your wallet...', { id: loadingToast });
+      showToast.loading('Confirm transaction in your wallet...', { id: loadingToast });
 
       const tx = await contract.mintNode(1, node.tierId, {
         value: ethers.parseEther(node.priceEth)
       });
 
-      toast.loading('Transaction submitted! Confirming...', { id: loadingToast });
+      showToast.loading('Transaction submitted! Confirming...', { id: loadingToast });
       await tx.wait();
       
-      toast.success(`${node.name} node registered! Download the app to start earning.`, { id: loadingToast, duration: 6000 });
+      showToast.success(`${node.name} node registered! Download the app to start earning.`, { id: loadingToast, duration: 6000 });
       setStandardForm({ ...standardForm, nodeName: '' });
       
     } catch (error: any) {
       console.error('Purchase error:', error);
-      toast.error(error?.reason || error?.message || 'Registration failed', { id: loadingToast });
+      showToast.error(error?.reason || error?.message || 'Registration failed', { id: loadingToast });
     } finally {
       setPurchasing(null);
     }
@@ -577,30 +595,30 @@ export default function AxiomDePINNodes() {
 
   const handleProOperatorRegistration = async () => {
     if (!isConnected || !account) {
-      toast.error('Please connect your wallet first');
+      showToast.error('Please connect your wallet first');
       await connectMetaMask();
       return;
     }
 
     if (!proForm.selectedType) {
-      toast.error('Please select a node type');
+      showToast.error('Please select a node type');
       return;
     }
 
     if (!proForm.ipAddress) {
-      toast.error('Please enter your node IP address or domain');
+      showToast.error('Please enter your node IP address or domain');
       return;
     }
 
     setRegistering(proForm.selectedType.id);
-    const loadingToast = toast.loading('Preparing registration...');
+    const loadingToast = showToast.loading('Preparing registration...');
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const network = await provider.getNetwork();
       
       if (network.chainId !== 42161n) {
-        toast.loading('Switching to Arbitrum One...', { id: loadingToast });
+        showToast.loading('Switching to Arbitrum One...', { id: loadingToast });
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: '0xa4b1' }],
@@ -613,24 +631,24 @@ export default function AxiomDePINNodes() {
 
       const requiredStake = ethers.parseEther(proForm.selectedType.stake.replace(/,/g, ''));
 
-      toast.loading('Checking AXM balance and allowance...', { id: loadingToast });
+      showToast.loading('Checking AXM balance and allowance...', { id: loadingToast });
       const allowance = await axmContract.allowance(account, DEPIN_SUITE_ADDRESS);
 
       if (allowance < requiredStake) {
-        toast.loading('Approve AXM spending in your wallet...', { id: loadingToast });
+        showToast.loading('Approve AXM spending in your wallet...', { id: loadingToast });
         const approveTx = await axmContract.approve(DEPIN_SUITE_ADDRESS, requiredStake);
         await approveTx.wait();
       }
 
       const metadata = generateMetadata(proForm, proForm.selectedType.name);
 
-      toast.loading('Confirm registration in your wallet...', { id: loadingToast });
+      showToast.loading('Confirm registration in your wallet...', { id: loadingToast });
       const tx = await depinContract.registerNode(proForm.selectedType.id, proForm.ipAddress, metadata);
 
-      toast.loading('Transaction submitted! Confirming...', { id: loadingToast });
+      showToast.loading('Transaction submitted! Confirming...', { id: loadingToast });
       await tx.wait();
       
-      toast.success(`${proForm.selectedType.name} registered! Pending admin activation.`, { id: loadingToast, duration: 7000 });
+      showToast.success(`${proForm.selectedType.name} registered! Pending admin activation.`, { id: loadingToast, duration: 7000 });
       
       setProForm({
         selectedType: null,
@@ -649,7 +667,7 @@ export default function AxiomDePINNodes() {
 
     } catch (error: any) {
       console.error('Registration error:', error);
-      toast.error(error?.reason || error?.message || 'Registration failed', { id: loadingToast });
+      showToast.error(error?.reason || error?.message || 'Registration failed', { id: loadingToast });
     } finally {
       setRegistering(null);
     }

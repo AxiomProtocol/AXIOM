@@ -65,7 +65,7 @@ const statusLabels = {
 
 export default function RoadmapPage() {
   return (
-    <Layout>
+    <Layout showWallet={false}>
       <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-3">Roadmap</h1>
