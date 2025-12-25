@@ -44,14 +44,14 @@ export default function TrustGraduationModal({ isOpen, onClose }) {
           <section>
             <h3 className="text-lg font-semibold text-yellow-400 mb-3 flex items-center gap-2">
               <span className="w-6 h-6 bg-yellow-500/20 rounded-full flex items-center justify-center text-sm">2</span>
-              The Two Stages
+              The Three Stages
             </h3>
             <div className="space-y-3">
               <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="text-2xl">👥</div>
                   <h4 className="font-semibold text-white">Purpose Groups</h4>
-                  <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded-full">Step 1</span>
+                  <span className="px-2 py-0.5 bg-gray-600/50 text-gray-300 text-xs rounded-full">Step 1</span>
                 </div>
                 <p className="text-gray-400 text-sm">
                   Join a regional hub to find like-minded members. Align on a shared goal and contribution level, 
@@ -61,15 +61,31 @@ export default function TrustGraduationModal({ isOpen, onClose }) {
               <div className="flex justify-center">
                 <div className="text-gray-500 text-xl">↓</div>
               </div>
-              <div className="bg-gray-800/50 border border-yellow-500/30 rounded-lg p-4">
+              <div className="bg-gray-800/50 border border-amber-500/30 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="text-2xl">🔗</div>
                   <h4 className="font-semibold text-white">SUSU Circles</h4>
-                  <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">Step 2</span>
+                  <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded-full">Step 2</span>
                 </div>
                 <p className="text-gray-400 text-sm">
-                  Activate an on-chain circle after the group meets readiness thresholds. 
-                  The smart contract enforces contributions and payouts.
+                  Graduate to an on-chain circle after the group meets readiness thresholds. 
+                  Choose Personal Vault (self-custody) or Community Pool (pooled custody). 
+                  Smart contracts enforce contributions and payouts.
+                </p>
+              </div>
+              <div className="flex justify-center">
+                <div className="text-gray-500 text-xl">↓</div>
+              </div>
+              <div className="bg-gray-800/50 border border-green-500/30 rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="text-2xl">🏛️</div>
+                  <h4 className="font-semibold text-white">The Wealth Practice</h4>
+                  <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">Step 3</span>
+                </div>
+                <p className="text-gray-400 text-sm">
+                  After completing successful SUSU rounds, graduate into The Wealth Practice for 
+                  access to larger investment opportunities, real estate pools, DePIN infrastructure, 
+                  and enhanced governance power.
                 </p>
               </div>
             </div>
@@ -81,9 +97,9 @@ export default function TrustGraduationModal({ isOpen, onClose }) {
               What "Graduation" Means
             </h3>
             <p className="text-gray-300 leading-relaxed">
-              A Purpose Group can graduate into a SUSU Circle after members confirm commitment, 
-              complete profiles, and meet trust and reputation thresholds. Then the smart contract 
-              takes over to enforce contributions and automate payouts.
+              Each stage has graduation requirements. Purpose Groups graduate to SUSU Circles when 
+              members meet trust thresholds. SUSU Circles graduate to The Wealth Practice after 
+              completing 3+ successful rounds or 6+ months with all members in good standing.
             </p>
           </section>
 
