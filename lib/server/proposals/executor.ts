@@ -96,39 +96,10 @@ async function captureBeforeState(
 function simulateAfterState(
   proposal: ProposalRecord,
   beforeState: Record<string, unknown> | null
-): Record<string, unknown> | null {
-  if (!beforeState) return null;
-  
+): Record<string, unknown> {
   const payload = proposal.payload;
-  const simulated = { ...beforeState };
   
   switch (proposal.actionType) {
-    case 'transaction_reverse':
-    case 'transaction_refund':
-      simulated.status = 'reversed';
-      simulated.simulated = true;
-      break;
-    case 'payout_reverse':
-      simulated.status = 'reversed';
-      simulated.simulated = true;
-      break;
-    case 'payout_override':
-      if (payload && typeof payload === 'object' && 'newStatus' in payload) {
-        simulated.status = (payload as { newStatus: string }).newStatus;
-      }
-      simulated.simulated = true;
-      break;
-    case 'role_escalation':
-      if (payload && typeof payload === 'object' && 'newRole' in payload) {
-        simulated.role = (payload as { newRole: string }).newRole;
-      }
-      simulated.simulated = true;
-      break;
-    case 'disable_privileged_user':
-    case 'moderation_ban_privileged':
-      simulated.disabled = true;
-      simulated.simulated = true;
-      break;
     case 'user_create_privileged':
       return {
         userId: '[SIMULATED_UUID]',
@@ -136,11 +107,44 @@ function simulateAfterState(
         role: (payload as { role?: string })?.role ?? 'unknown',
         simulated: true,
       };
+    case 'transaction_reverse':
+    case 'transaction_refund':
+      return {
+        ...(beforeState ?? {}),
+        status: 'reversed',
+        simulated: true,
+      };
+    case 'payout_reverse':
+      return {
+        ...(beforeState ?? {}),
+        status: 'reversed',
+        simulated: true,
+      };
+    case 'payout_override':
+      return {
+        ...(beforeState ?? {}),
+        status: (payload as { newStatus?: string })?.newStatus ?? 'unknown',
+        simulated: true,
+      };
+    case 'role_escalation':
+      return {
+        ...(beforeState ?? {}),
+        role: (payload as { newRole?: string })?.newRole ?? 'unknown',
+        simulated: true,
+      };
+    case 'disable_privileged_user':
+    case 'moderation_ban_privileged':
+      return {
+        ...(beforeState ?? {}),
+        disabled: true,
+        simulated: true,
+      };
     default:
-      simulated.simulated = true;
+      return {
+        ...(beforeState ?? {}),
+        simulated: true,
+      };
   }
-  
-  return simulated;
 }
 
 async function executeTransactionReverse(

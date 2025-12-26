@@ -126,6 +126,17 @@ export function requireNonProduction(operationName: string): void {
   requireStaging(operationName);
 }
 
+export function assertNotProduction(operationName: string): { allowed: boolean; reason?: string } {
+  const config = getEnvConfig();
+  if (config.isProduction) {
+    return {
+      allowed: false,
+      reason: `Operation "${operationName}" is blocked in production environment`,
+    };
+  }
+  return { allowed: true };
+}
+
 export function getBaseUrl(): string {
   const config = getEnvConfig();
   if (config.isProduction && config.prodBaseUrl) {
