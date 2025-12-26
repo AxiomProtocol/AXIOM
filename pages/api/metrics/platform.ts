@@ -1,12 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../server/db';
-import { 
-  users, 
-  susuPurposeGroups, 
-  susuInterestHubs,
-  platformMetrics
-} from '../../../shared/schema';
-import { count, sum, eq, desc } from 'drizzle-orm';
+import { pool } from '../../../server/db';
 
 export default async function handler(
   req: NextApiRequest,
@@ -25,33 +18,27 @@ export default async function handler(
     let useLiveData = false;
 
     try {
-      const [userStats] = await db
-        .select({ totalUsers: count(users.id) })
-        .from(users);
-      totalMembers = userStats?.totalUsers || 0;
+      const userResult = await pool.query('SELECT COUNT(*) as count FROM users');
+      totalMembers = parseInt(userResult.rows[0]?.count || '0');
 
-      const allGroups = await db
-        .select({
-          id: susuPurposeGroups.id,
-          isActive: susuPurposeGroups.isActive,
-          graduatedToPoolId: susuPurposeGroups.graduatedToPoolId,
-          memberCount: susuPurposeGroups.memberCount
-        })
-        .from(susuPurposeGroups);
+      const groupsResult = await pool.query(`
+        SELECT id, is_active, graduated_to_pool_id, member_count
+        FROM susu_purpose_groups
+      `);
 
-      activeGroups = allGroups.filter(g => g.isActive).length;
-      graduatedGroups = allGroups.filter(g => g.graduatedToPoolId !== null).length;
-      const totalGroupMembers = allGroups.reduce((sum, g) => sum + (g.memberCount || 0), 0);
+      const allGroups = groupsResult.rows;
+      activeGroups = allGroups.filter(g => g.is_active).length;
+      graduatedGroups = allGroups.filter(g => g.graduated_to_pool_id !== null).length;
+      const totalGroupMembers = allGroups.reduce((sum, g) => sum + (parseInt(g.member_count) || 0), 0);
       avgMembersPerGroup = activeGroups > 0 ? Math.round(totalGroupMembers / activeGroups * 10) / 10 : 0;
 
-      const latestMetrics = await db
-        .select()
-        .from(platformMetrics)
-        .orderBy(desc(platformMetrics.metricDate))
-        .limit(1);
+      const metricsResult = await pool.query(`
+        SELECT susu_total_saved FROM platform_metrics
+        ORDER BY metric_date DESC LIMIT 1
+      `);
 
-      if (latestMetrics[0]?.susuTotalSaved) {
-        totalSaved = parseFloat(latestMetrics[0].susuTotalSaved);
+      if (metricsResult.rows[0]?.susu_total_saved) {
+        totalSaved = parseFloat(metricsResult.rows[0].susu_total_saved);
       }
 
       useLiveData = totalMembers > 0 || activeGroups > 0;

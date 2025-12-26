@@ -1,11 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../server/db';
-import { 
-  susuPurposeGroups, 
-  susuInterestHubs,
-  susuPurposeCategories
-} from '../../../shared/schema';
-import { eq, desc } from 'drizzle-orm';
+import { pool } from '../../../server/db';
 
 interface GroupData {
   id: string;
@@ -114,37 +108,29 @@ export default async function handler(
     let dataSource = 'sample';
 
     try {
-      const dbGroups = await db
-        .select({
-          id: susuPurposeGroups.id,
-          displayName: susuPurposeGroups.displayName,
-          memberCount: susuPurposeGroups.memberCount,
-          contributionAmount: susuPurposeGroups.contributionAmount,
-          graduatedToPoolId: susuPurposeGroups.graduatedToPoolId,
-          isActive: susuPurposeGroups.isActive,
-          hubId: susuPurposeGroups.hubId,
-          purposeCategoryId: susuPurposeGroups.purposeCategoryId
-        })
-        .from(susuPurposeGroups)
-        .where(eq(susuPurposeGroups.isActive, true))
-        .orderBy(desc(susuPurposeGroups.memberCount))
-        .limit(50);
+      const result = await pool.query(`
+        SELECT id, display_name, member_count, contribution_amount, graduated_to_pool_id
+        FROM susu_purpose_groups
+        WHERE is_active = true
+        ORDER BY member_count DESC NULLS LAST
+        LIMIT 50
+      `);
 
-      if (dbGroups.length > 0) {
-        groups = dbGroups.map((group) => {
-          const memberCount = group.memberCount || 0;
-          const contributionAmount = parseFloat(group.contributionAmount || '0');
+      if (result.rows.length > 0) {
+        groups = result.rows.map((group) => {
+          const memberCount = group.member_count || 0;
+          const contributionAmount = parseFloat(group.contribution_amount || '0');
           const completedCycles = Math.max(1, Math.floor(memberCount / 2));
           const totalContributed = Math.round(contributionAmount * memberCount * completedCycles);
           const graduationProgress = calculateGraduationProgress(completedCycles, memberCount);
-          const hasGraduated = group.graduatedToPoolId !== null;
+          const hasGraduated = group.graduated_to_pool_id !== null;
           const stage = determineStage(graduationProgress, hasGraduated);
           const trustScore = 70 + Math.min(completedCycles * 5, 28);
           const paymentRate = 85 + Math.min(completedCycles * 2, 14);
           
           return {
             id: `grp_${group.id}`,
-            name: group.displayName || `Group #${group.id}`,
+            name: group.display_name || `Group ${group.id}`,
             memberCount,
             completedCycles,
             totalContributed,
@@ -162,15 +148,14 @@ export default async function handler(
 
     if (groups.length === 0) {
       groups = sampleGroups;
+      dataSource = 'sample';
     }
 
     const summary = {
       totalGroups: groups.length,
       totalMembers: groups.reduce((sum, g) => sum + g.memberCount, 0),
       totalSaved: groups.reduce((sum, g) => sum + g.totalContributed, 0),
-      averageProgress: groups.length > 0 
-        ? Math.round(groups.reduce((sum, g) => sum + g.graduationProgress, 0) / groups.length)
-        : 0
+      averageProgress: Math.round(groups.reduce((sum, g) => sum + g.graduationProgress, 0) / groups.length)
     };
 
     return res.status(200).json({
@@ -179,12 +164,11 @@ export default async function handler(
       summary,
       dataSource
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Graduation overview error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return res.status(500).json({
       success: false,
-      error: errorMessage
+      error: 'Failed to fetch graduation overview'
     });
   }
 }
