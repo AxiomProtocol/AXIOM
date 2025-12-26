@@ -1,4 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { db } from '../../../server/db';
+import { userNotifications, users } from '../../../shared/schema';
+import { eq, desc, and, sql, count } from 'drizzle-orm';
 
 export default async function handler(
   req: NextApiRequest,
@@ -8,7 +11,62 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const { userId, limit = '20' } = req.query;
+
   try {
+    if (userId && typeof userId === 'string') {
+      const userIdNum = parseInt(userId, 10);
+      
+      if (isNaN(userIdNum) || userIdNum <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid userId parameter - must be a positive integer'
+        });
+      }
+      
+      const dbNotifications = await db
+        .select({
+          id: userNotifications.id,
+          title: userNotifications.title,
+          message: userNotifications.message,
+          type: userNotifications.type,
+          isRead: userNotifications.isRead,
+          actionUrl: userNotifications.actionUrl,
+          createdAt: userNotifications.createdAt
+        })
+        .from(userNotifications)
+        .where(eq(userNotifications.userId, userIdNum))
+        .orderBy(desc(userNotifications.createdAt))
+        .limit(parseInt(limit as string, 10));
+
+      if (dbNotifications.length > 0) {
+        const [unreadStats] = await db
+          .select({
+            count: count(userNotifications.id)
+          })
+          .from(userNotifications)
+          .where(and(
+            eq(userNotifications.userId, userIdNum),
+            eq(userNotifications.isRead, false)
+          ));
+
+        return res.status(200).json({
+          success: true,
+          notifications: dbNotifications.map(n => ({
+            id: `notif_${n.id}`,
+            type: n.type || 'general',
+            title: n.title,
+            message: n.message,
+            read: n.isRead,
+            actionUrl: n.actionUrl,
+            createdAt: n.createdAt?.toISOString()
+          })),
+          unreadCount: unreadStats?.count || 0,
+          dataSource: 'database'
+        });
+      }
+    }
+
     const notifications = [
       {
         id: 'notif_001',
@@ -55,7 +113,8 @@ export default async function handler(
     return res.status(200).json({
       success: true,
       notifications,
-      unreadCount: notifications.filter(n => !n.read).length
+      unreadCount: notifications.filter(n => !n.read).length,
+      dataSource: 'sample'
     });
   } catch (error: unknown) {
     console.error('Notification list error:', error);
