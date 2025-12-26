@@ -33,6 +33,16 @@ Key features include:
 -   **DEX Exchange**: A comprehensive decentralized exchange.
 -   **Governance**: A full-featured governance system.
 -   **Admin Authentication**: JWT-based authentication for `/admin/*` routes.
+-   **Admin RBAC & Two-Step Approval System**: Production-grade admin authorization with:
+    - **Roles**: superadmin, admin, finance, moderator (hierarchical)
+    - **Two-Step Approvals**: Sensitive actions require proposal + approval by distinct admins
+    - **Threshold Policy**: $5000 threshold - under threshold any allowed role can approve, at/over requires superadmin
+    - **Always Superadmin**: Payout reversals, payout overrides, role escalation, and privileged user operations
+    - **Audit Logging**: Immutable logs with before/after state snapshots
+    - **Supabase Integration**: JWT verification + service role for user management
+    - Key files: `lib/server/adminAuth.ts`, `lib/server/adminPolicy.ts`, `lib/server/proposals/executor.ts`
+    - API routes: `pages/api/admin/proposals/*`, `pages/api/admin/users/*`, `pages/api/admin/payouts/*`, `pages/api/admin/transactions/*`, `pages/api/admin/moderation/*`, `pages/api/admin/audit/*`
+    - Documentation: `docs/ADMIN_RBAC.md`, `docs/ADMIN_PROPOSALS.md`
 -   **API Security**: Input validation, sanitization, error handling, and EIP-4361 SIWE authentication.
 -   **KeyGrow Rent-to-Own Program**: Real estate program using ERC-1155 tokenized fractional property shares, integrated with ATTOM Data and RentCast.
 -   **Axiom SUSU (Rotating Savings Groups)**: On-chain ROSCA system branded as "The Wealth Practice" with two custody modes:
@@ -72,3 +82,4 @@ Key features include:
 -   **Property Data:** ATTOM Data
 -   **Rental Estimates:** RentCast API
 -   **Location Scores:** Walk Score API
+-   **Auth Provider:** Supabase (JWT verification + admin service role)

@@ -1,4 +1,5 @@
-const { pgTable, serial, text, boolean, timestamp, varchar, decimal, integer, jsonb } = require('drizzle-orm/pg-core');
+const { pgTable, serial, text, boolean, timestamp, varchar, decimal, integer, jsonb, uuid, numeric, index, uniqueIndex } = require('drizzle-orm/pg-core');
+const { sql } = require('drizzle-orm');
 
 // User table - match the exact column names in the database
 const users = pgTable('users', {
@@ -333,6 +334,118 @@ const complianceAudit = pgTable('compliance_audit', {
   timestamp: timestamp('timestamp').defaultNow().notNull()
 });
 
+// ============================================
+// ADMIN RBAC & TWO-STEP APPROVAL SYSTEM
+// ============================================
+
+// User Roles table - assigns roles to Supabase auth users
+const userRoles = pgTable('user_roles', {
+  userId: uuid('user_id').primaryKey(),
+  role: text('role').notNull(), // superadmin, admin, finance, moderator
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  createdByAdminId: uuid('created_by_admin_id')
+}, (table) => ({
+  roleIdx: index('user_roles_role_idx').on(table.role)
+}));
+
+// Admin Proposals table - two-step approval workflow
+const adminProposals = pgTable('admin_proposals', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  actionType: text('action_type').notNull(), // transaction_reverse, transaction_refund, payout_reverse, payout_override, role_escalation, disable_privileged_user
+  targetType: text('target_type').notNull(), // transaction, payout, user, etc.
+  targetId: text('target_id').notNull(),
+  amount: numeric('amount', { precision: 20, scale: 6 }), // used for threshold logic
+  payload: jsonb('payload').notNull(),
+  status: text('status').notNull().default('pending'), // pending, executed, rejected, cancelled, expired
+  reason: text('reason').notNull(),
+  approvalReason: text('approval_reason'),
+  createdBy: uuid('created_by').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  expiresAt: timestamp('expires_at'),
+  approvedBy: uuid('approved_by'),
+  approvedAt: timestamp('approved_at'),
+  executedBy: uuid('executed_by'),
+  executedAt: timestamp('executed_at'),
+  rejectedBy: uuid('rejected_by'),
+  rejectedAt: timestamp('rejected_at'),
+  cancelledBy: uuid('cancelled_by'),
+  cancelledAt: timestamp('cancelled_at'),
+  requestId: text('request_id').notNull(),
+  uniqueKey: text('unique_key').notNull().unique(), // idempotency key
+  executionResult: jsonb('execution_result')
+}, (table) => ({
+  statusIdx: index('admin_proposals_status_idx').on(table.status),
+  actionTypeIdx: index('admin_proposals_action_type_idx').on(table.actionType),
+  createdByIdx: index('admin_proposals_created_by_idx').on(table.createdBy),
+  targetIdx: index('admin_proposals_target_idx').on(table.targetType, table.targetId)
+}));
+
+// Admin Proposal Events table - append-only event stream
+const adminProposalEvents = pgTable('admin_proposal_events', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  proposalId: uuid('proposal_id').notNull(),
+  eventType: text('event_type').notNull(), // created, approved, executed, rejected, cancelled, expired
+  actorUserId: uuid('actor_user_id').notNull(),
+  actorRole: text('actor_role').notNull(),
+  requestId: text('request_id').notNull(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  eventPayload: jsonb('event_payload'),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+}, (table) => ({
+  proposalIdIdx: index('admin_proposal_events_proposal_id_idx').on(table.proposalId),
+  eventTypeIdx: index('admin_proposal_events_event_type_idx').on(table.eventType)
+}));
+
+// Admin Audit Log table - append-only audit trail
+const adminAuditLog = pgTable('admin_audit_log', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  actorUserId: uuid('actor_user_id').notNull(),
+  actorRole: text('actor_role').notNull(),
+  action: text('action').notNull(),
+  targetType: text('target_type').notNull(),
+  targetId: text('target_id').notNull(),
+  requestId: text('request_id').notNull(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  beforeState: jsonb('before_state'),
+  afterState: jsonb('after_state'),
+  reason: text('reason'),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+}, (table) => ({
+  actorIdx: index('admin_audit_log_actor_idx').on(table.actorUserId),
+  actionIdx: index('admin_audit_log_action_idx').on(table.action),
+  targetIdx: index('admin_audit_log_target_idx').on(table.targetType, table.targetId),
+  createdAtIdx: index('admin_audit_log_created_at_idx').on(table.createdAt)
+}));
+
+// Payout State History table - tracks payout status transitions
+const payoutStateHistory = pgTable('payout_state_history', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  payoutId: text('payout_id').notNull(),
+  fromStatus: text('from_status').notNull(),
+  toStatus: text('to_status').notNull(),
+  changedBy: uuid('changed_by').notNull(),
+  proposalId: uuid('proposal_id'),
+  reason: text('reason').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+}, (table) => ({
+  payoutIdIdx: index('payout_state_history_payout_id_idx').on(table.payoutId)
+}));
+
+// Transaction Reversals table - tracks reversed transactions
+const transactionReversals = pgTable('transaction_reversals', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  originalTransactionId: text('original_transaction_id').notNull(),
+  reversalTransactionId: text('reversal_transaction_id').notNull(),
+  createdBy: uuid('created_by').notNull(),
+  proposalId: uuid('proposal_id'),
+  reason: text('reason').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+}, (table) => ({
+  originalTxIdx: index('transaction_reversals_original_tx_idx').on(table.originalTransactionId)
+}));
+
 module.exports = {
   users,
   savingsAccounts,
@@ -357,5 +470,11 @@ module.exports = {
   marketDataSnapshots,
   userInvestingSettings,
   adminControls,
-  complianceAudit
+  complianceAudit,
+  userRoles,
+  adminProposals,
+  adminProposalEvents,
+  adminAuditLog,
+  payoutStateHistory,
+  transactionReversals
 };
