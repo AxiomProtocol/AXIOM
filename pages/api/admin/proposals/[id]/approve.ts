@@ -6,6 +6,7 @@ import { allowedApproverRoles, isValidActionType, ActionType } from '../../../..
 
 interface ApproveRequest {
   approval_reason: string;
+  dry_run?: boolean;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -85,18 +86,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const result = await executeProposal(id, actor, body.approval_reason);
+    const dryRun = body.dry_run === true;
+    
+    const result = await executeProposal(id, actor, body.approval_reason, { dryRun });
 
     if (!result.success) {
       return res.status(400).json({
         error: result.error,
         requestId: actor.requestId,
+        dryRun,
       });
     }
 
     return res.status(200).json({
       ...result,
       requestId: actor.requestId,
+      message: dryRun 
+        ? 'Dry run completed - no changes were made' 
+        : 'Proposal approved and executed successfully',
     });
   } catch (error) {
     console.error(`[${actor.requestId}] Error approving proposal:`, error);

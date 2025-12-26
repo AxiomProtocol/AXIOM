@@ -25,6 +25,18 @@ export interface ExecutionResult {
   requestId?: string;
   result?: Record<string, unknown>;
   error?: string;
+  dryRun?: boolean;
+  dryRunDetails?: {
+    wouldExecute: boolean;
+    validationPassed: boolean;
+    beforeState: Record<string, unknown> | null;
+    simulatedAfterState: Record<string, unknown> | null;
+    warnings: string[];
+  };
+}
+
+export interface ExecuteOptions {
+  dryRun?: boolean;
 }
 
 export interface ProposalRecord {
@@ -79,6 +91,56 @@ async function captureBeforeState(
   } catch {
     return null;
   }
+}
+
+function simulateAfterState(
+  proposal: ProposalRecord,
+  beforeState: Record<string, unknown> | null
+): Record<string, unknown> | null {
+  if (!beforeState) return null;
+  
+  const payload = proposal.payload;
+  const simulated = { ...beforeState };
+  
+  switch (proposal.actionType) {
+    case 'transaction_reverse':
+    case 'transaction_refund':
+      simulated.status = 'reversed';
+      simulated.simulated = true;
+      break;
+    case 'payout_reverse':
+      simulated.status = 'reversed';
+      simulated.simulated = true;
+      break;
+    case 'payout_override':
+      if (payload && typeof payload === 'object' && 'newStatus' in payload) {
+        simulated.status = (payload as { newStatus: string }).newStatus;
+      }
+      simulated.simulated = true;
+      break;
+    case 'role_escalation':
+      if (payload && typeof payload === 'object' && 'newRole' in payload) {
+        simulated.role = (payload as { newRole: string }).newRole;
+      }
+      simulated.simulated = true;
+      break;
+    case 'disable_privileged_user':
+    case 'moderation_ban_privileged':
+      simulated.disabled = true;
+      simulated.simulated = true;
+      break;
+    case 'user_create_privileged':
+      return {
+        userId: '[SIMULATED_UUID]',
+        email: (payload as { email?: string })?.email ?? 'unknown',
+        role: (payload as { role?: string })?.role ?? 'unknown',
+        simulated: true,
+      };
+    default:
+      simulated.simulated = true;
+  }
+  
+  return simulated;
 }
 
 async function executeTransactionReverse(
@@ -338,9 +400,12 @@ async function executeModerationBanPrivileged(
 export async function executeProposal(
   proposalId: string,
   approverActor: ActorContext,
-  approvalReason: string
+  approvalReason: string,
+  options: ExecuteOptions = {}
 ): Promise<ExecutionResult> {
+  const { dryRun = false } = options;
   const client = await pool.connect();
+  const warnings: string[] = [];
 
   try {
     await client.query('BEGIN');
@@ -359,6 +424,7 @@ export async function executeProposal(
         executedAt: new Date().toISOString(),
         executedBy: approverActor.userId,
         error: 'Proposal not found',
+        dryRun,
       };
     }
 
@@ -373,6 +439,7 @@ export async function executeProposal(
         executedAt: proposal.executedAt?.toISOString() ?? new Date().toISOString(),
         executedBy: proposal.executedBy ?? approverActor.userId,
         result: proposal.executionResult as Record<string, unknown>,
+        dryRun,
       };
     }
 
@@ -385,15 +452,21 @@ export async function executeProposal(
         executedAt: new Date().toISOString(),
         executedBy: approverActor.userId,
         error: `Proposal status is '${proposal.status}', expected 'pending'`,
+        dryRun,
       };
     }
 
     if (proposal.expiresAt && new Date(proposal.expiresAt) < new Date()) {
-      await client.query(
-        `UPDATE admin_proposals SET status = 'expired' WHERE id = $1`,
-        [proposalId]
-      );
-      await client.query('COMMIT');
+      if (!dryRun) {
+        await client.query(
+          `UPDATE admin_proposals SET status = 'expired' WHERE id = $1`,
+          [proposalId]
+        );
+        await client.query('COMMIT');
+      } else {
+        await client.query('ROLLBACK');
+        warnings.push('Proposal would be marked as expired');
+      }
       return {
         success: false,
         proposalId,
@@ -401,6 +474,7 @@ export async function executeProposal(
         executedAt: new Date().toISOString(),
         executedBy: approverActor.userId,
         error: 'Proposal has expired',
+        dryRun,
       };
     }
 
@@ -413,6 +487,7 @@ export async function executeProposal(
         executedAt: new Date().toISOString(),
         executedBy: approverActor.userId,
         error: 'Approver must be a different user than the proposer',
+        dryRun,
       };
     }
 
@@ -425,6 +500,7 @@ export async function executeProposal(
         executedAt: new Date().toISOString(),
         executedBy: approverActor.userId,
         error: `Invalid action type: ${proposal.actionType}`,
+        dryRun,
       };
     }
 
@@ -444,6 +520,29 @@ export async function executeProposal(
     }
 
     const beforeState = await captureBeforeState(proposal.targetType, proposal.targetId);
+
+    if (dryRun) {
+      await client.query('ROLLBACK');
+      
+      const simulatedAfterState = simulateAfterState(proposal, beforeState);
+      
+      return {
+        success: true,
+        proposalId,
+        action: proposal.actionType,
+        executedAt: new Date().toISOString(),
+        executedBy: approverActor.userId,
+        requestId: proposal.requestId,
+        dryRun: true,
+        dryRunDetails: {
+          wouldExecute: true,
+          validationPassed: true,
+          beforeState,
+          simulatedAfterState,
+          warnings,
+        },
+      };
+    }
 
     let actionResult: Record<string, unknown>;
 
@@ -481,6 +580,7 @@ export async function executeProposal(
           executedAt: new Date().toISOString(),
           executedBy: approverActor.userId,
           error: `Unhandled action type: ${proposal.actionType}`,
+          dryRun,
         };
     }
 
