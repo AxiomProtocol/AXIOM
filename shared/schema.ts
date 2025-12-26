@@ -2881,6 +2881,30 @@ export const susuGroupMembers = pgTable("susu_group_members", {
   userIdx: index("susu_group_members_user_idx").on(table.userId),
 }));
 
+export const susuPurposeRegistrations = pgTable("susu_purpose_registrations", {
+  id: serial("id").primaryKey(),
+  hubId: integer("hub_id").references(() => susuInterestHubs.id),
+  groupId: integer("group_id").references(() => susuPurposeGroups.id),
+  region: varchar("region", { length: 100 }).notNull(),
+  purpose: varchar("purpose", { length: 100 }).notNull(),
+  memberName: varchar("member_name", { length: 255 }).notNull(),
+  memberEmail: varchar("member_email", { length: 255 }).notNull(),
+  memberPhone: varchar("member_phone", { length: 50 }),
+  commitmentAmount: decimal("commitment_amount", { precision: 10, scale: 2 }).notNull(),
+  commitmentDuration: integer("commitment_duration").notNull(),
+  status: varchar("status", { length: 50 }).default('pending'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  hubIdIdx: index("susu_registrations_hub_id_idx").on(table.hubId),
+  groupIdIdx: index("susu_registrations_group_id_idx").on(table.groupId),
+  emailIdx: index("susu_registrations_email_idx").on(table.memberEmail),
+  statusIdx: index("susu_registrations_status_idx").on(table.status),
+}));
+
+export type SusuPurposeRegistration = typeof susuPurposeRegistrations.$inferSelect;
+export type InsertSusuPurposeRegistration = typeof susuPurposeRegistrations.$inferInsert;
+
 export const susuInvitations = pgTable("susu_invitations", {
   id: serial("id").primaryKey(),
   groupId: integer("group_id").references(() => susuPurposeGroups.id),

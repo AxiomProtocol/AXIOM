@@ -85,6 +85,9 @@ Key features include:
 -   **Investment Matching**: Capital Mode opportunities matched to group profiles including real estate pools, DePIN infrastructure, and treasury yields. Key files: `components/InvestmentMatching.js`, `pages/api/investments/matching.ts`.
 -   **Notification System**: Email (SendGrid) and in-app notifications for payment reminders, milestones, and graduation events. Key files: `components/NotificationCenter.js`, `pages/api/notifications/send.ts`.
 -   **Platform Metrics Dashboard**: Real-time analytics including user engagement, financial health, SUSU metrics, graduation stats, and system health. Page: `/platform-metrics`.
+-   **Purpose Group Onboarding**: 5-step guided wizard for new members joining regional Interest Hubs. Includes region selection, purpose categories, commitment levels, AI-powered insights, and database persistence. Page: `/purpose-group-onboarding`. Key files: `pages/purpose-group-onboarding.js`, `pages/api/susu/join-purpose-group.ts`. Database table: `susu_purpose_registrations`.
+-   **AI Group Health Analysis**: Gemini-powered endpoint for analyzing SUSU group metrics and providing actionable recommendations. Endpoint: `/api/ai/group-health`.
+-   **AI Personalized Insights**: Journey summaries, goal tracking, and weekly personalized guidance using Gemini AI. Endpoint: `/api/ai/personalized-insights`.
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)

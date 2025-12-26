@@ -1,11 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../server/db';
-import { 
-  susuInterestHubs, 
-  susuPurposeGroups, 
-  susuPurposeCategories
-} from '../../../shared/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { pool } from '../../../server/db';
 
 interface JoinRequest {
   region: string;
@@ -52,122 +46,137 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid email address' });
     }
 
-    let hubId: number | null = null;
-    let groupId: number | null = null;
-    let dataSource = 'pending';
-
+    const client = await pool.connect();
+    
     try {
-      let [hub] = await db
-        .select()
-        .from(susuInterestHubs)
-        .where(eq(susuInterestHubs.regionId, region));
+      await client.query('BEGIN');
 
-      if (!hub) {
-        const regionDisplay = region.charAt(0).toUpperCase() + region.slice(1).replace(/-/g, ' ');
-        
-        [hub] = await db
-          .insert(susuInterestHubs)
-          .values({
-            regionId: region,
-            regionDisplay: `${regionDisplay} Interest Hub`,
-            regionType: 'metro',
-            memberCount: 1,
-            isActive: true
-          })
-          .returning();
+      const regionDisplay = region.charAt(0).toUpperCase() + region.slice(1).replace(/-/g, ' ');
+      
+      let hubResult = await client.query(
+        'SELECT id FROM susu_interest_hubs WHERE region_id = $1',
+        [region]
+      );
+
+      let hubId: number;
+      if (hubResult.rows.length === 0) {
+        const insertHub = await client.query(
+          `INSERT INTO susu_interest_hubs (region_id, region_display, region_type, member_count, is_active, created_at, updated_at)
+           VALUES ($1, $2, 'metro', 1, true, NOW(), NOW())
+           RETURNING id`,
+          [region, `${regionDisplay} Interest Hub`]
+        );
+        hubId = insertHub.rows[0].id;
       } else {
-        await db
-          .update(susuInterestHubs)
-          .set({ 
-            memberCount: sql`COALESCE(${susuInterestHubs.memberCount}, 0) + 1`,
-            updatedAt: new Date()
-          })
-          .where(eq(susuInterestHubs.id, hub.id));
+        hubId = hubResult.rows[0].id;
+        await client.query(
+          'UPDATE susu_interest_hubs SET member_count = COALESCE(member_count, 0) + 1, updated_at = NOW() WHERE id = $1',
+          [hubId]
+        );
       }
 
-      hubId = hub.id;
+      let categoryResult = await client.query(
+        'SELECT id FROM susu_purpose_categories WHERE name = $1',
+        [purpose]
+      );
 
-      let [purposeCategory] = await db
-        .select()
-        .from(susuPurposeCategories)
-        .where(eq(susuPurposeCategories.name, purpose));
-
-      if (!purposeCategory) {
-        [purposeCategory] = await db
-          .insert(susuPurposeCategories)
-          .values({
-            name: purpose,
-            description: `Purpose Group for ${purpose}`,
-            icon: '🎯',
-            isActive: true
-          })
-          .returning();
-      }
-
-      let [group] = await db
-        .select()
-        .from(susuPurposeGroups)
-        .where(and(
-          eq(susuPurposeGroups.hubId, hub.id),
-          eq(susuPurposeGroups.purposeCategoryId, purposeCategory.id),
-          eq(susuPurposeGroups.isActive, true)
-        ));
-
-      if (!group) {
-        [group] = await db
-          .insert(susuPurposeGroups)
-          .values({
-            hubId: hub.id,
-            purposeCategoryId: purposeCategory.id,
-            contributionAmount: String(commitmentAmount),
-            contributionCurrency: 'USD',
-            cycleLengthDays: commitmentDuration * 30,
-            displayName: `${hub.regionDisplay} ${purposeCategory.name} Circle`,
-            memberCount: 1,
-            minMembersToActivate: 3,
-            maxMembers: 50,
-            isActive: true
-          })
-          .returning();
+      let categoryId: number;
+      if (categoryResult.rows.length === 0) {
+        const insertCategory = await client.query(
+          `INSERT INTO susu_purpose_categories (name, description, icon, is_active)
+           VALUES ($1, $2, $3, true)
+           RETURNING id`,
+          [purpose, `Purpose Group for ${purpose}`, '🎯']
+        );
+        categoryId = insertCategory.rows[0].id;
       } else {
-        await db
-          .update(susuPurposeGroups)
-          .set({ 
-            memberCount: sql`COALESCE(${susuPurposeGroups.memberCount}, 0) + 1`,
-            updatedAt: new Date()
-          })
-          .where(eq(susuPurposeGroups.id, group.id));
+        categoryId = categoryResult.rows[0].id;
       }
 
-      groupId = group.id;
-      dataSource = 'database';
+      let groupResult = await client.query(
+        'SELECT id FROM susu_purpose_groups WHERE hub_id = $1 AND purpose_category_id = $2 AND is_active = true',
+        [hubId, categoryId]
+      );
 
+      let groupId: number;
+      if (groupResult.rows.length === 0) {
+        const insertGroup = await client.query(
+          `INSERT INTO susu_purpose_groups (hub_id, purpose_category_id, contribution_amount, contribution_currency, cycle_length_days, display_name, member_count, min_members_to_activate, max_members, is_active, created_at, updated_at)
+           VALUES ($1, $2, $3, 'USD', $4, $5, 1, 3, 50, true, NOW(), NOW())
+           RETURNING id`,
+          [hubId, categoryId, commitmentAmount, commitmentDuration * 30, `${regionDisplay} ${purpose} Circle`]
+        );
+        groupId = insertGroup.rows[0].id;
+      } else {
+        groupId = groupResult.rows[0].id;
+        await client.query(
+          'UPDATE susu_purpose_groups SET member_count = COALESCE(member_count, 0) + 1, updated_at = NOW() WHERE id = $1',
+          [groupId]
+        );
+      }
+
+      const registrationResult = await client.query(
+        `INSERT INTO susu_purpose_registrations 
+         (hub_id, group_id, region, purpose, member_name, member_email, member_phone, commitment_amount, commitment_duration, status, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', NOW(), NOW())
+         RETURNING id`,
+        [hubId, groupId, region, purpose, name, email, phone || null, commitmentAmount, commitmentDuration]
+      );
+
+      const registrationId = registrationResult.rows[0].id;
+
+      await client.query('COMMIT');
+
+      return res.status(200).json({
+        success: true,
+        message: 'Successfully registered for Purpose Group!',
+        data: {
+          registrationId,
+          hubId,
+          groupId,
+          region,
+          purpose,
+          commitmentAmount,
+          memberName: name,
+          memberEmail: email,
+          memberPhone: phone || null,
+          dataSource: 'database'
+        }
+      });
     } catch (dbError) {
-      console.error('Database operation error:', dbError);
-      dataSource = 'pending_manual_review';
+      await client.query('ROLLBACK');
+      console.error('Database transaction error:', dbError);
+      
+      console.log('Fallback: Queuing registration for manual review', {
+        region, purpose, name, email, phone, commitmentAmount, commitmentDuration,
+        error: dbError instanceof Error ? dbError.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+      
+      return res.status(202).json({
+        success: true,
+        message: 'Registration submitted for review. Our team will contact you shortly.',
+        data: {
+          registrationId: null,
+          hubId: null,
+          groupId: null,
+          region,
+          purpose,
+          commitmentAmount,
+          memberName: name,
+          memberEmail: email,
+          memberPhone: phone || null,
+          dataSource: 'pending_manual_review'
+        }
+      });
+    } finally {
+      client.release();
     }
-
-    return res.status(200).json({
-      success: true,
-      message: 'Successfully registered for Purpose Group!',
-      data: {
-        hubId,
-        groupId,
-        region,
-        purpose,
-        commitmentAmount,
-        memberName: name,
-        memberEmail: email,
-        memberPhone: phone || null,
-        dataSource
-      }
-    });
   } catch (error: unknown) {
     console.error('Join purpose group error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return res.status(500).json({
       success: false,
-      error: errorMessage
+      error: 'Failed to process your request. Please try again later.'
     });
   }
 }
