@@ -79,7 +79,31 @@ export default function WealthPracticePage() {
           </div>
 
           {activeTab === 'overview' && (
-            <WealthAdvancement wallet={address} />
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <Link href="/organizer-dashboard" className="block bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-500/30 rounded-xl p-4 hover:border-purple-400 transition-all">
+                  <div className="text-2xl mb-2">📊</div>
+                  <h3 className="font-bold text-purple-400">Organizer Dashboard</h3>
+                  <p className="text-xs text-gray-400 mt-1">Manage your groups with AI insights</p>
+                </Link>
+                <Link href="/analytics-dashboard" className="block bg-gradient-to-br from-blue-600/20 to-blue-800/20 border border-blue-500/30 rounded-xl p-4 hover:border-blue-400 transition-all">
+                  <div className="text-2xl mb-2">📈</div>
+                  <h3 className="font-bold text-blue-400">Analytics</h3>
+                  <p className="text-xs text-gray-400 mt-1">Real-time platform metrics</p>
+                </Link>
+                <Link href="/notification-settings" className="block bg-gradient-to-br from-green-600/20 to-green-800/20 border border-green-500/30 rounded-xl p-4 hover:border-green-400 transition-all">
+                  <div className="text-2xl mb-2">🔔</div>
+                  <h3 className="font-bold text-green-400">Notifications</h3>
+                  <p className="text-xs text-gray-400 mt-1">Customize your alerts</p>
+                </Link>
+                <Link href="/graduation-dashboard" className="block bg-gradient-to-br from-yellow-600/20 to-amber-800/20 border border-yellow-500/30 rounded-xl p-4 hover:border-yellow-400 transition-all">
+                  <div className="text-2xl mb-2">🎓</div>
+                  <h3 className="font-bold text-yellow-400">Graduation</h3>
+                  <p className="text-xs text-gray-400 mt-1">Track group progress</p>
+                </Link>
+              </div>
+              <WealthAdvancement wallet={address} />
+            </div>
           )}
 
           {activeTab === 'opportunities' && (
@@ -145,14 +169,20 @@ export default function WealthPracticePage() {
           {activeTab === 'training' && (
             <div className="space-y-6">
               <div className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/30 rounded-xl p-6 mb-6">
-                <div className="flex items-center gap-4">
-                  <div className="text-4xl">🎓</div>
-                  <div>
-                    <h2 className="text-xl font-bold text-white">Organizer Training & Certification</h2>
-                    <p className="text-gray-400">
-                      Complete training modules to earn certifications and unlock advanced organizer capabilities.
-                    </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="text-4xl">🎓</div>
+                    <div>
+                      <h2 className="text-xl font-bold text-white">Organizer Training & Certification</h2>
+                      <p className="text-gray-400">
+                        Complete training modules to earn certifications and unlock advanced organizer capabilities.
+                      </p>
+                    </div>
                   </div>
+                  <Link href="/organizer-dashboard" className="hidden md:flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-all">
+                    <span>📊</span>
+                    Organizer Dashboard
+                  </Link>
                 </div>
               </div>
               <OrganizerTraining />

@@ -1,7 +1,7 @@
 # Axiom Smart City - Sovereign Digital-Physical Economy
 
 ## Overview
-The Axiom Smart City project aims to establish America's first on-chain sovereign smart city economy: a 1,000-acre fintech smart city with comprehensive digital-physical infrastructure. It functions as a bank operating system and a complete sovereign economic engine. Key capabilities include a governance token economy (AXM), full-service digital banking, real estate tokenization, DePIN infrastructure, smart city services, Wall Street integration, cross-chain interoperability, and sustainability initiatives, all while being decentralized and community-governed. The business vision is to create a sovereign digital-physical economy, serving as a model for future smart cities.
+The Axiom Smart City project aims to establish America's first on-chain sovereign smart city economy. This 1,000-acre fintech smart city will feature comprehensive digital-physical infrastructure, functioning as a bank operating system and a complete sovereign economic engine. Key capabilities include a governance token economy (AXM), full-service digital banking, real estate tokenization, DePIN infrastructure, smart city services, Wall Street integration, cross-chain interoperability, and sustainability initiatives, all within a decentralized and community-governed framework. The project's vision is to create a model for future sovereign digital-physical economies.
 
 ## User Preferences
 - **Communication style**: Simple, everyday language explaining technical concepts.
@@ -10,92 +10,65 @@ The Axiom Smart City project aims to establish America's first on-chain sovereig
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend features a modular design with a professional gold/black theme, yellow accents, and responsive design. Branding prominently displays "AXIOM" with a golden circular token logo, golden gradient text, and the tagline "America's First On-Chain Smart City." Navigation menus are centrally managed in `lib/navigation.js`, structured around a Learn → Connect → Save Together journey with a `StepProgressBanner`.
+The frontend utilizes a modular design with a professional gold/black theme, yellow accents, and responsive design. Branding includes "AXIOM" with a golden circular token logo, golden gradient text, and the tagline "America's First On-Chain Smart City." Navigation is managed in `lib/navigation.js` following a Learn → Connect → Save Together journey with a `StepProgressBanner`.
 
 ### Technical Implementations
-The core **Axiom Protocol Token (AXM)** is an ERC20 governance and fee-routing token on Arbitrum One, planning transition to Universe Blockchain (L3) as native gas. The **Smart Contract Architecture** is multi-phase, beginning on Arbitrum One and migrating to Universe Blockchain, covering identity, treasury, staking, emissions, land/asset registry, and future modules. A **Complete Banking Product Suite** offers over 30 product families. The architecture incorporates 23 verified smart contracts on Arbitrum One across DePIN, Governance, Treasury, Property/Real Estate, Cross-Chain, Realtor System, and Smart City modules.
+The core **Axiom Protocol Token (AXM)** is an ERC20 governance and fee-routing token on Arbitrum One, with plans to transition to Universe Blockchain (L3). The **Smart Contract Architecture** is multi-phase, starting on Arbitrum One and migrating to Universe Blockchain, covering identity, treasury, staking, emissions, land/asset registry, and future modules. A **Complete Banking Product Suite** offers over 30 product families. The architecture includes 23 verified smart contracts on Arbitrum One across DePIN, Governance, Treasury, Property/Real Estate, Cross-Chain, Realtor System, and Smart City modules.
 
 ### Custody Model Architecture
-Axiom operates a HYBRID CUSTODY model with three types:
-1.  **Self-Custody**: User holds tokens directly.
-2.  **Smart Contract Custody**: Funds held by audited smart contracts (e.g., Staking, KeyGrow).
-3.  **Pooled Custody**: Funds combined with other users, distributions by group rules (e.g., SUSU circles).
-Key files for custody definitions and UI components are `lib/custody/disclosure.ts` and `components/CustodyDisclosure.js`. No products are FDIC insured, and certain traditional banking features like ACH/wire transfers or lending are planned but not live.
+Axiom employs a HYBRID CUSTODY model: Self-Custody, Smart Contract Custody (e.g., Staking), and Pooled Custody (e.g., SUSU circles). Key files are `lib/custody/disclosure.ts` and `components/CustodyDisclosure.js`. No products are FDIC insured.
 
 ### Production SSR Patterns
-To prevent 500 errors, static/marketing pages use `<Layout showWallet={false}>`. `react-hot-toast` and other browser-only libraries are dynamically imported with `{ ssr: false }` or guarded by `typeof window !== 'undefined'` checks.
+Static/marketing pages use `<Layout showWallet={false}>`. Browser-only libraries are dynamically imported with `{ ssr: false }` or guarded by `typeof window !== 'undefined'` checks to prevent SSR issues.
 
 ### System Design Choices
-The architecture uses a "Product Factory Approach" for scalability. The blockchain network is on Arbitrum One, with plans for Universe Blockchain (L3). Data management uses PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend features centralized contract configuration, a dedicated contract service, and chain validation middleware for Arbitrum One. API responses consistently include `axmBalance` and `axmUsdValue`.
+The architecture follows a "Product Factory Approach" for scalability. The blockchain network is Arbitrum One, with a planned migration to Universe Blockchain (L3). Data management uses PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend features centralized contract configuration, a dedicated contract service, and chain validation middleware for Arbitrum One. API responses consistently include `axmBalance` and `axmUsdValue`.
 
 Key features include:
 -   **Axiom Nodes Marketplace**: For DePIN node management.
 -   **DEX Exchange**: A comprehensive decentralized exchange.
 -   **Governance**: A full-featured governance system.
--   **Admin Authentication**: JWT-based authentication for `/admin/*` routes.
--   **Admin RBAC & Two-Step Approval System**: Production-grade admin authorization with:
-    - **Roles**: superadmin, admin, finance, moderator (hierarchical)
-    - **Two-Step Approvals**: Sensitive actions require proposal + approval by distinct admins
-    - **Threshold Policy**: $5000 threshold - under threshold any allowed role can approve, at/over requires superadmin
-    - **Always Superadmin**: Payout reversals, payout overrides, role escalation, and privileged user operations
-    - **Audit Logging**: Immutable logs with before/after state snapshots
-    - **Supabase Integration**: JWT verification + service role for user management
-    - Key files: `lib/server/adminAuth.ts`, `lib/server/adminPolicy.ts`, `lib/server/proposals/executor.ts`
-    - API routes: `pages/api/admin/proposals/*`, `pages/api/admin/users/*`, `pages/api/admin/payouts/*`, `pages/api/admin/transactions/*`, `pages/api/admin/moderation/*`, `pages/api/admin/audit/*`, `pages/api/admin/agent/*`
-    - Documentation: `docs/ADMIN_RBAC.md`, `docs/ADMIN_PROPOSALS.md`
--   **AI Agent & Upgrade Framework**: Security-first framework for AI agents and automated operations:
-    - **Environment Configuration**: `lib/server/envConfig.ts` with AXIOM_ENV (local/staging/production), AI_AGENT_MODE (off/observe/propose), and AUDIT_LOG_SINK (database/console/file)
-    - **Production Safety**: AI agent mode defaults to "off" in production; requires AI_AGENT_PRODUCTION_OVERRIDE=true for explicit opt-in
-    - **Dry-Run Mode**: Two-step approval supports dry_run option to simulate execution without state changes
-    - **AI Agent Query Endpoint**: Read-only endpoint at `/api/admin/agent/query` for proposal status, audit summaries, and system health (staging-only)
-    - **Audit Logging**: `lib/server/auditLogger.ts` with automatic secret redaction, correlationId, and IP tracking
-    - **Idempotency**: `lib/server/idempotency.ts` for request deduplication with cached responses
-    - **Release Governance**: `scripts/release-governance.sh` and `docs/ops/RELEASE_PROCESS.md` for deployment safety
-    - **Prompt Templates**: `prompts/` folder with diagnose.txt, patch.txt, review.txt, spec.txt, release.txt
-    - **Smart Contract Tests**: `integration/tests/SusuPersonalVault.test.ts` for Hardhat test coverage
+-   **Admin Authentication & RBAC**: JWT-based authentication for `/admin/*` routes with a hierarchical role-based access control (superadmin, admin, finance, moderator) and a two-step approval system for sensitive actions, including a $5000 threshold policy and audit logging.
+-   **AI Agent & Upgrade Framework**: A security-first framework for AI agents with configurable modes (off/observe/propose), production safety defaults, dry-run capabilities, a read-only query endpoint, robust audit logging with secret redaction, idempotency, and release governance. Prompt templates are stored in `prompts/`.
 -   **API Security**: Input validation, sanitization, error handling, and EIP-4361 SIWE authentication.
--   **KeyGrow Rent-to-Own Program**: Real estate program using ERC-1155 tokenized fractional property shares, integrated with ATTOM Data and RentCast.
--   **Axiom SUSU (Rotating Savings Groups)**: On-chain ROSCA system branded as "The Wealth Practice" with two custody modes:
-    - **Community Pool** (0x6C69D730327930B49A7997B7b5fb0865F30c95A5): Traditional pooled custody, pay-as-you-go, 2-50 members
-    - **Personal Vault** (0x7F474D9D5aF702D587A126c49aDa43318c1420E5): Self-custody with upfront commitment, segregated funds, 2-20 members, 10% early exit penalty
-    - **Trust Bridge**: Modal explainer on /susu page explaining three-stage trust system (Purpose Groups → SUSU Circles → The Wealth Practice) and graduation process. Non-investment disclaimer on /wealth-practice. Whitepaper links on both pages.
-    - Key files: `components/SusuModeSelector.js`, `components/SoloSusuJoin.js`, `components/TrustGraduationModal.js`, `contracts/SusuPersonalVault.sol`
--   **PMA Trust**: Axiom operates as a Private Membership Association Trust with tokenized whitelist-only ERC-1155/1400 memberships.
+-   **KeyGrow Rent-to-Own Program**: Real estate program using ERC-1155 tokenized fractional property shares.
+-   **Axiom SUSU (Rotating Savings Groups)**: On-chain ROSCA system ("The Wealth Practice") with Community Pool and Personal Vault custody modes, including a Trust Bridge explainer for the three-stage trust system.
+-   **PMA Trust**: Operates as a Private Membership Association Trust with tokenized ERC-1155/1400 memberships.
 -   **Equity Calculator**: Interactive rent-to-own equity calculator.
 -   **Axiom Academy**: Educational platform.
 -   **Impact Dashboard**: Real-time platform metrics.
 -   **Member Profile System**: Comprehensive personal profile pages.
 -   **My Journey Dashboard**: Personal progress tracking.
 -   **Community Success Hub**: Testimonial page.
--   **Security Audit**: Covered 24 deployed smart contracts, emphasizing immutable deployments, OpenZeppelin AccessControl, ReentrancyGuard, and Pausable.
--   **The Wealth Practice**: A wealth-building system with phases for Trust & Circles (PolicyGuardService for soft enforcement), Yield & Treasury (Staking Dashboard), and Ecosystem Expansion (governance, gamification, sustainability rewards). Includes a **Wealth Practice Advancement** pathway for graduating groups to capital investments, with a **GraduationProgress Component** and **Transparency Reports**.
--   **Organizer Training & Certification**: System for SUSU organizers with modules, certification levels, and progress tracking.
--   **Staking Dashboard**: AXM staking interface with tiers and APR calculation.
+-   **Security Audit**: Covered 24 deployed smart contracts, focusing on immutable deployments, OpenZeppelin AccessControl, ReentrancyGuard, and Pausable.
+-   **The Wealth Practice**: A wealth-building system with phases for Trust & Circles, Yield & Treasury, and Ecosystem Expansion, including a **Wealth Practice Advancement** pathway and **Transparency Reports**.
+-   **Organizer Training & Certification**: System for SUSU organizers.
+-   **Staking Dashboard**: AXM staking interface.
 -   **Gamification System**: Achievement badges and points tracking.
 -   **Sustainability Rewards API**: Integration with a SustainabilityHub contract.
--   **Onramp Center**: Multi-provider fiat-to-crypto gateway (MoonPay, Ramp, Transak).
--   **Governance System**: Currently API-based, transitioning to on-chain via GovernanceHub contract.
+-   **Onramp Center**: Multi-provider fiat-to-crypto gateway.
+-   **Governance System**: Currently API-based, transitioning to on-chain.
 -   **Emissions & DEX Dashboard**: Live protocol metrics.
 -   **IoT Network Telemetry**: DePIN nodes page with data from node sales and IoT oracle contracts.
--   **AI Member Support**: Gemini-powered chat assistant accessible from all pages via floating button. Helps members understand The Wealth Practice, SUSU options, and platform features. Key files: `components/AIMemberSupport.js`, `pages/api/ai/member-support.ts`.
--   **Smart Organizer Assistant**: AI-powered insights for certified SUSU organizers including group health analysis, payment reminders, and conflict resolution guidance. Key files: `components/OrganizerAssistant.js`, `pages/api/ai/organizer-assistant.ts`.
--   **Content Generation API**: Auto-generates transparency reports, graduation summaries, and personalized journey insights. Endpoint: `/api/ai/generate-report`.
--   **Graduation Dashboard**: Visual tracking of group progression from Purpose Groups to Capital Mode. Shows readiness status and graduation requirements. Page: `/graduation-dashboard`.
--   **Trust Score Analytics**: Payment consistency, member participation, and communication metrics with trend analysis. Key files: `components/TrustScoreCard.js`, `pages/api/susu/trust-analytics.ts`.
--   **Investment Matching**: Capital Mode opportunities matched to group profiles including real estate pools, DePIN infrastructure, and treasury yields. Key files: `components/InvestmentMatching.js`, `pages/api/investments/matching.ts`.
--   **Notification System**: Email (SendGrid) and in-app notifications for payment reminders, milestones, and graduation events. Key files: `components/NotificationCenter.js`, `pages/api/notifications/send.ts`.
--   **Platform Metrics Dashboard**: Real-time analytics including user engagement, financial health, SUSU metrics, graduation stats, and system health. Page: `/platform-metrics`.
--   **Purpose Group Onboarding**: 5-step guided wizard for new members joining regional Interest Hubs. Includes region selection, purpose categories, commitment levels, AI-powered insights, and database persistence. Page: `/purpose-group-onboarding`. Key files: `pages/purpose-group-onboarding.js`, `pages/api/susu/join-purpose-group.ts`. Database table: `susu_purpose_registrations`.
--   **AI Group Health Analysis**: Gemini-powered endpoint for analyzing SUSU group metrics and providing actionable recommendations. Endpoint: `/api/ai/group-health`.
--   **AI Personalized Insights**: Journey summaries, goal tracking, and weekly personalized guidance using Gemini AI. Endpoint: `/api/ai/personalized-insights`.
--   **AI Weekly Summary**: Gemini-powered weekly organizer summaries with executive overview, highlights, attention items, and recommendations. Endpoint: `/api/ai/weekly-summary`. Key file: `pages/api/ai/weekly-summary.ts`.
--   **AI Savings Tips**: Personalized savings advice based on member behavior and contribution history. Endpoint: `/api/ai/savings-tips`. Key file: `pages/api/ai/savings-tips.ts`.
--   **AI Smart Matching**: AI-powered group matching for new members with weighted scoring algorithm (purpose 30%, region 25%, contribution 20%, activity 15%, availability 10%). Endpoint: `/api/ai/smart-matching`. Key file: `pages/api/ai/smart-matching.ts`.
--   **Purpose Group Matching Algorithm**: Weighted scoring system for matching members to compatible SUSU groups based on purpose alignment, region, contribution levels, trust score, and group size. Endpoint: `/api/groups/matching`. Key file: `pages/api/groups/matching.ts`.
--   **Organizer Dashboard**: Comprehensive 5-tab dashboard (Overview, Groups, Members, Payments, AI Assistant) for certified SUSU organizers with weekly AI summaries and quick actions. Page: `/organizer-dashboard`. Key file: `pages/organizer-dashboard.js`.
--   **Enhanced Analytics Dashboard**: Real-time platform metrics with 5 sections (Overview, Engagement, Financial, Graduation, Trust Scores), progress bars, and trend indicators. Page: `/analytics-dashboard`. Key file: `pages/analytics-dashboard.js`.
--   **Notification Preferences System**: User-configurable email/in-app notification toggles with frequency controls and quiet hours. Database table: `user_notification_preferences`. Endpoint: `/api/notifications/preferences`. Pages: `/notification-settings`.
--   **Email Notification Testing**: SendGrid integration verification endpoint. Endpoint: `/api/notifications/test-email`.
+-   **AI Member Support**: Gemini-powered chat assistant for platform guidance.
+-   **Smart Organizer Assistant**: AI-powered insights for SUSU organizers.
+-   **Content Generation API**: Auto-generates reports and insights.
+-   **Graduation Dashboard**: Tracks group progression.
+-   **Trust Score Analytics**: Provides trust metrics and trend analysis.
+-   **Investment Matching**: Matches Capital Mode opportunities to group profiles.
+-   **Notification System**: Email (SendGrid) and in-app notifications.
+-   **Platform Metrics Dashboard**: Real-time analytics.
+-   **Purpose Group Onboarding**: 5-step guided wizard for new members.
+-   **AI Group Health Analysis**: Gemini-powered analysis of SUSU group metrics.
+-   **AI Personalized Insights**: Gemini AI for journey summaries and guidance.
+-   **AI Weekly Summary**: Gemini-powered weekly organizer summaries.
+-   **AI Savings Tips**: Personalized savings advice.
+-   **AI Smart Matching**: AI-powered group matching.
+-   **Purpose Group Matching Algorithm**: Weighted scoring system for group matching.
+-   **Organizer Dashboard**: Comprehensive dashboard for certified SUSU organizers.
+-   **Enhanced Analytics Dashboard**: Real-time platform metrics.
+-   **Notification Preferences System**: User-configurable notification toggles.
+-   **Email Notification Testing**: SendGrid integration verification.
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
@@ -111,5 +84,5 @@ Key features include:
 -   **Property Data:** ATTOM Data
 -   **Rental Estimates:** RentCast API
 -   **Location Scores:** Walk Score API
--   **Auth Provider:** Supabase (JWT verification + admin service role)
--   **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image) with unified service module at `lib/server/gemini.ts`. Chrome DevTools MCP for AI agent browser debugging (staging/local only).
+-   **Auth Provider:** Supabase
+-   **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image) with a unified service module at `lib/server/gemini.ts`.
