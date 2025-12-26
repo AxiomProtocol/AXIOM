@@ -88,6 +88,14 @@ Key features include:
 -   **Purpose Group Onboarding**: 5-step guided wizard for new members joining regional Interest Hubs. Includes region selection, purpose categories, commitment levels, AI-powered insights, and database persistence. Page: `/purpose-group-onboarding`. Key files: `pages/purpose-group-onboarding.js`, `pages/api/susu/join-purpose-group.ts`. Database table: `susu_purpose_registrations`.
 -   **AI Group Health Analysis**: Gemini-powered endpoint for analyzing SUSU group metrics and providing actionable recommendations. Endpoint: `/api/ai/group-health`.
 -   **AI Personalized Insights**: Journey summaries, goal tracking, and weekly personalized guidance using Gemini AI. Endpoint: `/api/ai/personalized-insights`.
+-   **AI Weekly Summary**: Gemini-powered weekly organizer summaries with executive overview, highlights, attention items, and recommendations. Endpoint: `/api/ai/weekly-summary`. Key file: `pages/api/ai/weekly-summary.ts`.
+-   **AI Savings Tips**: Personalized savings advice based on member behavior and contribution history. Endpoint: `/api/ai/savings-tips`. Key file: `pages/api/ai/savings-tips.ts`.
+-   **AI Smart Matching**: AI-powered group matching for new members with weighted scoring algorithm (purpose 30%, region 25%, contribution 20%, activity 15%, availability 10%). Endpoint: `/api/ai/smart-matching`. Key file: `pages/api/ai/smart-matching.ts`.
+-   **Purpose Group Matching Algorithm**: Weighted scoring system for matching members to compatible SUSU groups based on purpose alignment, region, contribution levels, trust score, and group size. Endpoint: `/api/groups/matching`. Key file: `pages/api/groups/matching.ts`.
+-   **Organizer Dashboard**: Comprehensive 5-tab dashboard (Overview, Groups, Members, Payments, AI Assistant) for certified SUSU organizers with weekly AI summaries and quick actions. Page: `/organizer-dashboard`. Key file: `pages/organizer-dashboard.js`.
+-   **Enhanced Analytics Dashboard**: Real-time platform metrics with 5 sections (Overview, Engagement, Financial, Graduation, Trust Scores), progress bars, and trend indicators. Page: `/analytics-dashboard`. Key file: `pages/analytics-dashboard.js`.
+-   **Notification Preferences System**: User-configurable email/in-app notification toggles with frequency controls and quiet hours. Database table: `user_notification_preferences`. Endpoint: `/api/notifications/preferences`. Pages: `/notification-settings`.
+-   **Email Notification Testing**: SendGrid integration verification endpoint. Endpoint: `/api/notifications/test-email`.
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
