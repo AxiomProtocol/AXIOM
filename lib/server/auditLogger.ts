@@ -177,4 +177,53 @@ export async function logAdminAction(
   });
 }
 
+export interface SimpleAuditParams {
+  action: string;
+  actorUserId: string;
+  actorRole: string;
+  targetType: string;
+  targetId: string;
+  requestId?: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  reason?: string;
+  beforeState?: Record<string, unknown> | null;
+  afterState?: Record<string, unknown> | null;
+  metadata?: Record<string, unknown>;
+}
+
+export async function logAudit(params: SimpleAuditParams): Promise<void> {
+  const config = getEnvConfig();
+  const requestId = params.requestId || generateRequestId();
+  
+  const redactedBefore = redactSensitiveData(params.beforeState);
+  const redactedAfter = redactSensitiveData(params.afterState);
+  const redactedMetadata = params.metadata ? redactSensitiveData(params.metadata) : null;
+  
+  const entry = {
+    actorUserId: params.actorUserId,
+    actorRole: params.actorRole,
+    action: params.action,
+    targetType: params.targetType,
+    targetId: params.targetId,
+    requestId,
+    ipAddress: params.ipAddress || null,
+    userAgent: params.userAgent || null,
+    beforeState: redactedBefore,
+    afterState: redactedAfter ? { ...redactedAfter, metadata: redactedMetadata } : redactedMetadata ? { metadata: redactedMetadata } : null,
+    reason: params.reason || null,
+  };
+  
+  if (config.auditLogSink === 'console') {
+    console.log('[AUDIT]', JSON.stringify(entry, null, 2));
+    return;
+  }
+  
+  try {
+    await db.insert(adminAuditLog).values(entry);
+  } catch (error) {
+    console.error(`[${requestId}] Audit log failed:`, error);
+  }
+}
+
 export { generateRequestId, redactSensitiveData };

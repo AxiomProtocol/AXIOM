@@ -41,8 +41,18 @@ Key features include:
     - **Audit Logging**: Immutable logs with before/after state snapshots
     - **Supabase Integration**: JWT verification + service role for user management
     - Key files: `lib/server/adminAuth.ts`, `lib/server/adminPolicy.ts`, `lib/server/proposals/executor.ts`
-    - API routes: `pages/api/admin/proposals/*`, `pages/api/admin/users/*`, `pages/api/admin/payouts/*`, `pages/api/admin/transactions/*`, `pages/api/admin/moderation/*`, `pages/api/admin/audit/*`
+    - API routes: `pages/api/admin/proposals/*`, `pages/api/admin/users/*`, `pages/api/admin/payouts/*`, `pages/api/admin/transactions/*`, `pages/api/admin/moderation/*`, `pages/api/admin/audit/*`, `pages/api/admin/agent/*`
     - Documentation: `docs/ADMIN_RBAC.md`, `docs/ADMIN_PROPOSALS.md`
+-   **AI Agent & Upgrade Framework**: Security-first framework for AI agents and automated operations:
+    - **Environment Configuration**: `lib/server/envConfig.ts` with AXIOM_ENV (local/staging/production), AI_AGENT_MODE (off/observe/propose), and AUDIT_LOG_SINK (database/console/file)
+    - **Production Safety**: AI agent mode defaults to "off" in production; requires AI_AGENT_PRODUCTION_OVERRIDE=true for explicit opt-in
+    - **Dry-Run Mode**: Two-step approval supports dry_run option to simulate execution without state changes
+    - **AI Agent Query Endpoint**: Read-only endpoint at `/api/admin/agent/query` for proposal status, audit summaries, and system health (staging-only)
+    - **Audit Logging**: `lib/server/auditLogger.ts` with automatic secret redaction, correlationId, and IP tracking
+    - **Idempotency**: `lib/server/idempotency.ts` for request deduplication with cached responses
+    - **Release Governance**: `scripts/release-governance.sh` and `docs/ops/RELEASE_PROCESS.md` for deployment safety
+    - **Prompt Templates**: `prompts/` folder with diagnose.txt, patch.txt, review.txt, spec.txt, release.txt
+    - **Smart Contract Tests**: `integration/tests/SusuPersonalVault.test.ts` for Hardhat test coverage
 -   **API Security**: Input validation, sanitization, error handling, and EIP-4361 SIWE authentication.
 -   **KeyGrow Rent-to-Own Program**: Real estate program using ERC-1155 tokenized fractional property shares, integrated with ATTOM Data and RentCast.
 -   **Axiom SUSU (Rotating Savings Groups)**: On-chain ROSCA system branded as "The Wealth Practice" with two custody modes:

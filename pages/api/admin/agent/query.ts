@@ -29,20 +29,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       success: false,
       query_type: 'blocked',
       error: safetyCheck.reason,
-      environment: config.environment,
+      environment: config.axiomEnv,
       timestamp,
-      agent_mode: config.agentMode,
+      agent_mode: config.aiAgentMode,
     });
   }
 
-  if (config.agentMode === 'off') {
+  if (config.aiAgentMode === 'off') {
     return res.status(403).json({
       success: false,
       query_type: 'blocked',
       error: 'AI agent mode is disabled. Set AI_AGENT_MODE=observe or AI_AGENT_MODE=propose to enable.',
-      environment: config.environment,
+      environment: config.axiomEnv,
       timestamp,
-      agent_mode: config.agentMode,
+      agent_mode: config.aiAgentMode,
     });
   }
 
@@ -51,9 +51,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       success: false,
       query_type: 'error',
       error: 'Method not allowed',
-      environment: config.environment,
+      environment: config.axiomEnv,
       timestamp,
-      agent_mode: config.agentMode,
+      agent_mode: config.aiAgentMode,
     });
   }
 
@@ -64,9 +64,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       success: false,
       query_type: 'error',
       error: 'query_type is required. Options: proposal_status, recent_proposals, audit_summary, system_health',
-      environment: config.environment,
+      environment: config.axiomEnv,
       timestamp,
-      agent_mode: config.agentMode,
+      agent_mode: config.aiAgentMode,
     });
   }
 
@@ -95,9 +95,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             success: false,
             query_type: body.query_type,
             error: 'proposal_id is required for proposal_status query',
-            environment: config.environment,
+            environment: config.axiomEnv,
             timestamp,
-            agent_mode: config.agentMode,
+            agent_mode: config.aiAgentMode,
           });
         }
         const proposalResult = await pool.query(
@@ -155,8 +155,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           pending_proposals: parseInt(pendingCount.rows[0]?.count ?? '0'),
           executed_today: parseInt(executedToday.rows[0]?.count ?? '0'),
           roles_distribution: roleCount.rows,
-          environment: config.environment,
-          agent_mode: config.agentMode,
+          environment: config.axiomEnv,
+          agent_mode: config.aiAgentMode,
         };
         break;
 
@@ -165,9 +165,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           success: false,
           query_type: body.query_type,
           error: `Unknown query_type: ${body.query_type}`,
-          environment: config.environment,
+          environment: config.axiomEnv,
           timestamp,
-          agent_mode: config.agentMode,
+          agent_mode: config.aiAgentMode,
         });
     }
 
@@ -175,9 +175,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       success: true,
       query_type: body.query_type,
       data,
-      environment: config.environment,
+      environment: config.axiomEnv,
       timestamp,
-      agent_mode: config.agentMode,
+      agent_mode: config.aiAgentMode,
     });
 
   } catch (error) {
@@ -186,9 +186,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       success: false,
       query_type: body.query_type,
       error: 'Internal server error during agent query',
-      environment: config.environment,
+      environment: config.axiomEnv,
       timestamp,
-      agent_mode: config.agentMode,
+      agent_mode: config.aiAgentMode,
     });
   }
 }
