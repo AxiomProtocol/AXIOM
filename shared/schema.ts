@@ -3678,3 +3678,39 @@ export const onrampPurchaseIntents = pgTable("onramp_purchase_intents", {
 // Export types for onramp
 export type OnrampPurchaseIntent = typeof onrampPurchaseIntents.$inferSelect;
 export type InsertOnrampPurchaseIntent = typeof onrampPurchaseIntents.$inferInsert;
+
+// Error log level enum
+export const errorLogLevelEnum = pgEnum('error_log_level', [
+  'error',
+  'warn',
+  'info',
+  'debug'
+]);
+
+// Error logs table for development monitoring
+export const errorLogs = pgTable("error_logs", {
+  id: serial("id").primaryKey(),
+  level: errorLogLevelEnum("level").notNull(),
+  message: text("message").notNull(),
+  path: varchar("path", { length: 500 }),
+  method: varchar("method", { length: 10 }),
+  statusCode: integer("status_code"),
+  stack: text("stack"),
+  userAgent: text("user_agent"),
+  requestBody: jsonb("request_body"),
+  additionalInfo: jsonb("additional_info"),
+  source: varchar("source", { length: 50 }).default('server'),
+  environment: varchar("environment", { length: 20 }).default('development'),
+  resolved: boolean("resolved").default(false),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: varchar("resolved_by", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  levelIdx: index("error_logs_level_idx").on(table.level),
+  createdAtIdx: index("error_logs_created_at_idx").on(table.createdAt),
+  resolvedIdx: index("error_logs_resolved_idx").on(table.resolved),
+}));
+
+// Export types for error logs
+export type ErrorLog = typeof errorLogs.$inferSelect;
+export type InsertErrorLog = typeof errorLogs.$inferInsert;
