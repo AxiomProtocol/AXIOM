@@ -93,3 +93,4 @@ Key features include:
 -   **Rental Estimates:** RentCast API
 -   **Location Scores:** Walk Score API
 -   **Auth Provider:** Supabase (JWT verification + admin service role)
+-   **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image) with unified service module at `lib/server/gemini.ts`. Chrome DevTools MCP for AI agent browser debugging (staging/local only).
