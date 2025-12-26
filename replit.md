@@ -77,6 +77,14 @@ Key features include:
 -   **Governance System**: Currently API-based, transitioning to on-chain via GovernanceHub contract.
 -   **Emissions & DEX Dashboard**: Live protocol metrics.
 -   **IoT Network Telemetry**: DePIN nodes page with data from node sales and IoT oracle contracts.
+-   **AI Member Support**: Gemini-powered chat assistant accessible from all pages via floating button. Helps members understand The Wealth Practice, SUSU options, and platform features. Key files: `components/AIMemberSupport.js`, `pages/api/ai/member-support.ts`.
+-   **Smart Organizer Assistant**: AI-powered insights for certified SUSU organizers including group health analysis, payment reminders, and conflict resolution guidance. Key files: `components/OrganizerAssistant.js`, `pages/api/ai/organizer-assistant.ts`.
+-   **Content Generation API**: Auto-generates transparency reports, graduation summaries, and personalized journey insights. Endpoint: `/api/ai/generate-report`.
+-   **Graduation Dashboard**: Visual tracking of group progression from Purpose Groups to Capital Mode. Shows readiness status and graduation requirements. Page: `/graduation-dashboard`.
+-   **Trust Score Analytics**: Payment consistency, member participation, and communication metrics with trend analysis. Key files: `components/TrustScoreCard.js`, `pages/api/susu/trust-analytics.ts`.
+-   **Investment Matching**: Capital Mode opportunities matched to group profiles including real estate pools, DePIN infrastructure, and treasury yields. Key files: `components/InvestmentMatching.js`, `pages/api/investments/matching.ts`.
+-   **Notification System**: Email (SendGrid) and in-app notifications for payment reminders, milestones, and graduation events. Key files: `components/NotificationCenter.js`, `pages/api/notifications/send.ts`.
+-   **Platform Metrics Dashboard**: Real-time analytics including user engagement, financial health, SUSU metrics, graduation stats, and system health. Page: `/platform-metrics`.
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
