@@ -2,6 +2,17 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import Link from 'next/link';
 
+function cleanAIContent(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/\*\*\*/g, '')
+    .replace(/\*\*/g, '')
+    .replace(/\*/g, '')
+    .replace(/#{1,6}\s/g, '')
+    .replace(/`/g, '')
+    .trim();
+}
+
 const steps = [
   { id: 'welcome', title: 'Welcome', icon: '👋' },
   { id: 'region', title: 'Your Region', icon: '📍' },
@@ -320,7 +331,7 @@ export default function PurposeGroupOnboarding() {
                 <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
                   <span>🤖</span> AI Insights for Your Journey
                 </h3>
-                <p className="text-gray-300 text-sm whitespace-pre-wrap">{aiInsights.slice(0, 500)}...</p>
+                <p className="text-gray-300 text-sm whitespace-pre-wrap">{cleanAIContent(aiInsights).slice(0, 500)}...</p>
               </div>
             )}
           </div>

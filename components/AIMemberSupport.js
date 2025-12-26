@@ -1,5 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 
+function cleanAIContent(text) {
+  if (!text) return '';
+  return text
+    .replace(/\*\*\*/g, '')
+    .replace(/\*\*/g, '')
+    .replace(/\*/g, '')
+    .replace(/#{1,6}\s/g, '')
+    .replace(/`/g, '')
+    .trim();
+}
+
 export default function AIMemberSupport({ isOpen, onClose }) {
   const [messages, setMessages] = useState([
     {
@@ -93,7 +104,7 @@ export default function AIMemberSupport({ isOpen, onClose }) {
                   ? 'bg-yellow-500 text-black' 
                   : 'bg-gray-800 text-gray-100'
               }`}>
-                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                <p className="text-sm whitespace-pre-wrap">{cleanAIContent(msg.content)}</p>
               </div>
             </div>
           ))}

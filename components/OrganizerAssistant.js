@@ -1,5 +1,16 @@
 import { useState } from 'react';
 
+function cleanAIContent(text) {
+  if (!text) return '';
+  return text
+    .replace(/\*\*\*/g, '')
+    .replace(/\*\*/g, '')
+    .replace(/\*/g, '')
+    .replace(/#{1,6}\s/g, '')
+    .replace(/`/g, '')
+    .trim();
+}
+
 export default function OrganizerAssistant({ groupData, className = '' }) {
   const [insight, setInsight] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -92,7 +103,7 @@ export default function OrganizerAssistant({ groupData, className = '' }) {
         {insight && !loading && (
           <div className="space-y-4">
             <div className="prose prose-invert prose-sm max-w-none">
-              <div className="text-gray-200 whitespace-pre-wrap">{insight.content}</div>
+              <div className="text-gray-200 whitespace-pre-wrap">{cleanAIContent(insight.content)}</div>
             </div>
             
             {insight.actionItems && insight.actionItems.length > 0 && (
@@ -104,7 +115,7 @@ export default function OrganizerAssistant({ groupData, className = '' }) {
                   {insight.actionItems.map((item, idx) => (
                     <li key={idx} className="flex items-start gap-2 text-sm">
                       <span className="text-purple-400 mt-1">•</span>
-                      <span className="text-gray-300">{item}</span>
+                      <span className="text-gray-300">{cleanAIContent(item)}</span>
                     </li>
                   ))}
                 </ul>

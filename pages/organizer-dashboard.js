@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 
+function cleanAIContent(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/\*\*\*/g, '')
+    .replace(/\*\*/g, '')
+    .replace(/\*/g, '')
+    .replace(/#{1,6}\s/g, '')
+    .replace(/`/g, '')
+    .trim();
+}
+
 export default function OrganizerDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -161,7 +172,7 @@ export default function OrganizerDashboard() {
                     <span className="text-sm text-gray-400">Week of {weeklySummary.weekOf}</span>
                   </div>
                   
-                  <p className="text-gray-300 mb-4">{weeklySummary.summary.executiveOverview}</p>
+                  <p className="text-gray-300 mb-4">{cleanAIContent(weeklySummary.summary.executiveOverview)}</p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
@@ -171,7 +182,7 @@ export default function OrganizerDashboard() {
                       <ul className="space-y-1">
                         {weeklySummary.summary.highlights?.slice(0, 3).map((h, i) => (
                           <li key={i} className="text-gray-300 text-sm flex items-start">
-                            <span className="text-green-400 mr-2">•</span>{h}
+                            <span className="text-green-400 mr-2">•</span>{cleanAIContent(h)}
                           </li>
                         ))}
                       </ul>
@@ -183,7 +194,7 @@ export default function OrganizerDashboard() {
                       <ul className="space-y-1">
                         {weeklySummary.summary.recommendations?.slice(0, 3).map((r, i) => (
                           <li key={i} className="text-gray-300 text-sm flex items-start">
-                            <span className="text-yellow-400 mr-2">•</span>{r}
+                            <span className="text-yellow-400 mr-2">•</span>{cleanAIContent(r)}
                           </li>
                         ))}
                       </ul>
@@ -192,7 +203,7 @@ export default function OrganizerDashboard() {
 
                   {weeklySummary.summary.motivationMessage && (
                     <div className="mt-4 pt-4 border-t border-gray-700">
-                      <p className="text-purple-300 italic">"{weeklySummary.summary.motivationMessage}"</p>
+                      <p className="text-purple-300 italic">"{cleanAIContent(weeklySummary.summary.motivationMessage)}"</p>
                     </div>
                   )}
                 </div>
@@ -431,7 +442,7 @@ export default function OrganizerDashboard() {
                       AI
                     </div>
                     <div className="flex-1">
-                      <p className="whitespace-pre-wrap">{assistantMessage}</p>
+                      <p className="whitespace-pre-wrap">{cleanAIContent(assistantMessage)}</p>
                     </div>
                   </div>
                 </div>
