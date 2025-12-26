@@ -446,6 +446,22 @@ const transactionReversals = pgTable('transaction_reversals', {
   originalTxIdx: index('transaction_reversals_original_tx_idx').on(table.originalTransactionId)
 }));
 
+// AI Chat Conversations table
+const conversations = pgTable('conversations', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+// AI Chat Messages table
+const messages = pgTable('messages', {
+  id: serial('id').primaryKey(),
+  conversationId: integer('conversation_id').notNull(),
+  role: text('role').notNull(),
+  content: text('content').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
 module.exports = {
   users,
   savingsAccounts,
@@ -476,5 +492,7 @@ module.exports = {
   adminProposalEvents,
   adminAuditLog,
   payoutStateHistory,
-  transactionReversals
+  transactionReversals,
+  conversations,
+  messages
 };
