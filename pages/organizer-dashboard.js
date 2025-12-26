@@ -20,6 +20,8 @@ export default function OrganizerDashboard() {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [assistantMessage, setAssistantMessage] = useState('');
   const [assistantLoading, setAssistantLoading] = useState(false);
+  const [showModal, setShowModal] = useState(null);
+  const [modalContent, setModalContent] = useState('');
 
   useEffect(() => {
     fetchDashboardData();
@@ -84,11 +86,60 @@ export default function OrganizerDashboard() {
     { id: 'assistant', label: 'AI Assistant', icon: '🤖' }
   ];
 
+  const handlePaymentReminder = async () => {
+    setShowModal('reminder');
+    setModalContent('');
+    setAssistantLoading(true);
+    try {
+      const res = await fetch('/api/ai/organizer-assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: 'Draft 3 payment reminder messages for my SUSU group. One for 3 days before, one for the day of payment, and one gentle follow-up for late payments.',
+          groupContext: selectedGroup
+        })
+      });
+      const data = await res.json();
+      setModalContent(data.response || data.message || 'Generated reminder templates');
+    } catch (error) {
+      setModalContent('Failed to generate reminders. Please try again.');
+    } finally {
+      setAssistantLoading(false);
+    }
+  };
+
+  const handleScheduleMeeting = () => {
+    setShowModal('meeting');
+    setModalContent('');
+  };
+
+  const handleMessageMembers = async () => {
+    setShowModal('message');
+    setModalContent('');
+    setAssistantLoading(true);
+    try {
+      const res = await fetch('/api/ai/organizer-assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: 'Draft a friendly group update message to share with my SUSU circle members about our progress and upcoming goals.',
+          groupContext: selectedGroup
+        })
+      });
+      const data = await res.json();
+      setModalContent(data.response || data.message || 'Generated message template');
+    } catch (error) {
+      setModalContent('Failed to generate message. Please try again.');
+    } finally {
+      setAssistantLoading(false);
+    }
+  };
+
   const quickActions = [
-    { label: 'Send Payment Reminder', icon: '📧', action: () => askAssistant('Help me draft a payment reminder for my group') },
-    { label: 'Schedule Meeting', icon: '📅', action: () => {} },
+    { label: 'Send Payment Reminder', icon: '📧', action: handlePaymentReminder },
+    { label: 'Schedule Meeting', icon: '📅', action: handleScheduleMeeting },
     { label: 'View Analytics', icon: '📈', action: () => setActiveTab('overview') },
-    { label: 'Message Members', icon: '💬', action: () => {} }
+    { label: 'Message Members', icon: '💬', action: handleMessageMembers }
   ];
 
   if (loading) {
@@ -468,6 +519,98 @@ export default function OrganizerDashboard() {
           )}
         </div>
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                {showModal === 'reminder' && <><span>📧</span> Payment Reminder Templates</>}
+                {showModal === 'meeting' && <><span>📅</span> Schedule Meeting</>}
+                {showModal === 'message' && <><span>💬</span> Message to Members</>}
+              </h3>
+              <button 
+                onClick={() => setShowModal(null)}
+                className="text-gray-400 hover:text-white text-xl"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              {assistantLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                  <p className="text-gray-400">AI is generating content...</p>
+                </div>
+              ) : showModal === 'meeting' ? (
+                <div className="space-y-4">
+                  <p className="text-gray-300">Schedule a meeting with your group members:</p>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Meeting Title</label>
+                    <input 
+                      type="text" 
+                      placeholder="Weekly SUSU Check-in"
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Date</label>
+                      <input 
+                        type="date" 
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Time</label>
+                      <input 
+                        type="time" 
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Meeting Link (optional)</label>
+                    <input 
+                      type="url" 
+                      placeholder="https://zoom.us/j/..."
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+                  <button className="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-lg font-medium transition-colors mt-4">
+                    Send Meeting Invite
+                  </button>
+                </div>
+              ) : modalContent ? (
+                <div className="space-y-4">
+                  <div className="bg-gray-900/50 rounded-lg p-4">
+                    <p className="text-gray-300 whitespace-pre-wrap">{cleanAIContent(modalContent)}</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(cleanAIContent(modalContent));
+                        alert('Copied to clipboard!');
+                      }}
+                      className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg font-medium transition-colors"
+                    >
+                      📋 Copy to Clipboard
+                    </button>
+                    <button 
+                      onClick={() => setShowModal(null)}
+                      className="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-2 rounded-lg font-medium transition-colors"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-400 text-center py-8">Loading...</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

@@ -45,29 +45,17 @@ export async function getPersistedLogs(options: {
   hoursAgo?: number;
 } = {}): Promise<any[]> {
   try {
-    const { level, limit = 100, resolved, hoursAgo } = options;
+    const { limit = 100 } = options;
     
-    const conditions = [];
+    const result = await db.execute(
+      sql`SELECT * FROM error_logs ORDER BY created_at DESC LIMIT ${limit}`
+    );
     
-    if (level && level !== 'all') {
-      conditions.push(eq(errorLogs.level, level as any));
+    return result.rows || [];
+  } catch (error: any) {
+    if (error?.message?.includes('does not exist') || error?.code === '42P01') {
+      return [];
     }
-    
-    if (resolved !== undefined) {
-      conditions.push(eq(errorLogs.resolved, resolved));
-    }
-    
-    if (hoursAgo) {
-      const cutoff = new Date(Date.now() - hoursAgo * 60 * 60 * 1000);
-      conditions.push(gte(errorLogs.createdAt, cutoff));
-    }
-    
-    const query = conditions.length > 0
-      ? db.select().from(errorLogs).where(and(...conditions)).orderBy(desc(errorLogs.createdAt)).limit(limit)
-      : db.select().from(errorLogs).orderBy(desc(errorLogs.createdAt)).limit(limit);
-    
-    return await query;
-  } catch (error) {
     console.error('Failed to get persisted logs:', error);
     return [];
   }
