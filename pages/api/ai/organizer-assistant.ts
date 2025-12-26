@@ -85,10 +85,37 @@ export default async function handler(
   }
 
   try {
-    const { type, groupData = {} } = req.body;
+    const { type, groupData = {}, question, groupContext } = req.body;
 
+    // Handle freeform question-based requests (from organizer dashboard)
+    if (question) {
+      const contextInfo = groupContext ? `
+Group Context:
+- Name: ${groupContext.name || 'Unknown'}
+- Members: ${groupContext.memberCount || 0}
+- Stage: ${groupContext.stage || 'SUSU Circle'}
+- Trust Score: ${groupContext.trustScore || 0}/100
+` : '';
+
+      const freeformPrompt = `You are an AI assistant helping SUSU group organizers. Answer this question helpfully and concisely:
+
+${contextInfo}
+Question: ${question}
+
+Provide practical, actionable advice. Keep your response under 200 words.`;
+
+      const response = await generateText(freeformPrompt, { model: 'gemini-2.5-flash' });
+      
+      return res.status(200).json({
+        success: true,
+        response: response,
+        message: response
+      });
+    }
+
+    // Handle structured type-based requests (from OrganizerAssistant component)
     if (!type || !['health', 'reminders', 'guidance'].includes(type)) {
-      return res.status(400).json({ error: 'Invalid insight type' });
+      return res.status(400).json({ error: 'Invalid insight type. Provide either "type" (health/reminders/guidance) or "question".' });
     }
 
     const prompt = prompts[type as keyof typeof prompts](groupData as GroupData);
