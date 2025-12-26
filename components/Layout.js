@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { WalletConnectButton } from './WalletConnect/WalletConnectButton';
 import { NAV_ITEMS, ADVANCED_DROPDOWN, MOBILE_NAV_ITEMS, FOOTER_ECOSYSTEM, FOOTER_RESOURCES, FOOTER_COMPANY } from '../lib/navigation';
+
+const AIMemberSupport = dynamic(() => import('./AIMemberSupport'), { ssr: false });
+const NotificationCenter = dynamic(() => import('./NotificationCenter').then(mod => ({ default: mod.default })), { ssr: false });
 
 export default function Layout({ children, showWallet = true }) {
   const [pathname, setPathname] = useState('');
   const [mounted, setMounted] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAIChat, setShowAIChat] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -234,6 +240,21 @@ export default function Layout({ children, showWallet = true }) {
           </div>
         </div>
       </footer>
+
+      {mounted && (
+        <>
+          <button
+            onClick={() => setShowAIChat(true)}
+            className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+            aria-label="Open AI Assistant"
+          >
+            <span className="text-2xl">💬</span>
+          </button>
+          
+          <AIMemberSupport isOpen={showAIChat} onClose={() => setShowAIChat(false)} />
+          <NotificationCenter isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
+        </>
+      )}
     </div>
   );
 }
