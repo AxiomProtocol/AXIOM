@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import { SkeletonWeeklySummary, SkeletonQuickActions, SkeletonStats } from '../components/SkeletonLoader';
+import GroupHealthGauge from '../components/GroupHealthGauge';
+import MobileModal from '../components/MobileModal';
+import { useNotifications } from '../lib/hooks/useNotifications';
 
 function cleanAIContent(text) {
   if (!text) return '';
@@ -22,6 +26,15 @@ export default function OrganizerDashboard() {
   const [assistantLoading, setAssistantLoading] = useState(false);
   const [showModal, setShowModal] = useState(null);
   const [modalContent, setModalContent] = useState('');
+  const [showNotificationBanner, setShowNotificationBanner] = useState(false);
+  
+  const { permission, requestPermission, notifyPaymentReceived, notifyMilestone, isSupported } = useNotifications();
+
+  useEffect(() => {
+    if (isSupported && permission === 'default') {
+      setShowNotificationBanner(true);
+    }
+  }, [isSupported, permission]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -142,19 +155,6 @@ export default function OrganizerDashboard() {
     { label: 'Message Members', icon: '💬', action: handleMessageMembers }
   ];
 
-  if (loading) {
-    return (
-      <Layout showWallet={false}>
-        <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-yellow-500 mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading your dashboard...</p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
   return (
     <Layout showWallet={false}>
       <div className="min-h-screen bg-gray-900 text-white">
@@ -190,30 +190,65 @@ export default function OrganizerDashboard() {
 
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-gray-800 rounded-xl p-6">
-                  <div className="text-3xl mb-2">👥</div>
-                  <p className="text-2xl font-bold">{groups.length}</p>
-                  <p className="text-gray-400 text-sm">Active Groups</p>
+              {showNotificationBanner && (
+                <div className="bg-blue-900/50 border border-blue-500/30 rounded-xl p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🔔</span>
+                    <div>
+                      <p className="font-medium">Enable Browser Notifications</p>
+                      <p className="text-sm text-gray-400">Get real-time updates about payments, members, and milestones</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowNotificationBanner(false)}
+                      className="px-3 py-1.5 text-gray-400 hover:text-white transition-colors"
+                    >
+                      Later
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await requestPermission();
+                        setShowNotificationBanner(false);
+                      }}
+                      className="px-4 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    >
+                      Enable
+                    </button>
+                  </div>
                 </div>
-                <div className="bg-gray-800 rounded-xl p-6">
-                  <div className="text-3xl mb-2">👤</div>
-                  <p className="text-2xl font-bold">{groups.reduce((sum, g) => sum + (g.memberCount || 0), 0)}</p>
-                  <p className="text-gray-400 text-sm">Total Members</p>
-                </div>
-                <div className="bg-gray-800 rounded-xl p-6">
-                  <div className="text-3xl mb-2">✅</div>
-                  <p className="text-2xl font-bold">94%</p>
-                  <p className="text-gray-400 text-sm">On-Time Rate</p>
-                </div>
-                <div className="bg-gray-800 rounded-xl p-6">
-                  <div className="text-3xl mb-2">⭐</div>
-                  <p className="text-2xl font-bold">{weeklySummary?.groupMetrics?.[0]?.healthScore || 87}</p>
-                  <p className="text-gray-400 text-sm">Avg Health Score</p>
-                </div>
-              </div>
+              )}
 
-              {weeklySummary?.summary && (
+              {loading ? (
+                <SkeletonStats count={4} />
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-gray-800 rounded-xl p-6">
+                    <div className="text-3xl mb-2">👥</div>
+                    <p className="text-2xl font-bold">{groups.length}</p>
+                    <p className="text-gray-400 text-sm">Active Groups</p>
+                  </div>
+                  <div className="bg-gray-800 rounded-xl p-6">
+                    <div className="text-3xl mb-2">👤</div>
+                    <p className="text-2xl font-bold">{groups.reduce((sum, g) => sum + (g.memberCount || 0), 0)}</p>
+                    <p className="text-gray-400 text-sm">Total Members</p>
+                  </div>
+                  <div className="bg-gray-800 rounded-xl p-6">
+                    <div className="text-3xl mb-2">✅</div>
+                    <p className="text-2xl font-bold">94%</p>
+                    <p className="text-gray-400 text-sm">On-Time Rate</p>
+                  </div>
+                  <div className="bg-gray-800 rounded-xl p-6">
+                    <div className="text-3xl mb-2">⭐</div>
+                    <p className="text-2xl font-bold">{weeklySummary?.groupMetrics?.[0]?.healthScore || 87}</p>
+                    <p className="text-gray-400 text-sm">Avg Health Score</p>
+                  </div>
+                </div>
+              )}
+
+              {loading ? (
+                <SkeletonWeeklySummary />
+              ) : weeklySummary?.summary ? (
                 <div className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 rounded-xl p-6 border border-purple-500/30">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-bold flex items-center">
@@ -258,23 +293,35 @@ export default function OrganizerDashboard() {
                     </div>
                   )}
                 </div>
+              ) : null}
+
+              {!loading && selectedGroup && (
+                <GroupHealthGauge 
+                  paymentRate={94}
+                  engagementScore={selectedGroup.progress || 78}
+                  trustScore={selectedGroup.trustScore || 85}
+                />
               )}
 
-              <div className="bg-gray-800 rounded-xl p-6">
-                <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {quickActions.map((action, i) => (
-                    <button
-                      key={i}
-                      onClick={action.action}
-                      className="bg-gray-700 hover:bg-gray-600 rounded-lg p-4 text-center transition-colors"
-                    >
-                      <div className="text-2xl mb-2">{action.icon}</div>
-                      <p className="text-sm">{action.label}</p>
-                    </button>
-                  ))}
+              {loading ? (
+                <SkeletonQuickActions />
+              ) : (
+                <div className="bg-gray-800 rounded-xl p-6">
+                  <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {quickActions.map((action, i) => (
+                      <button
+                        key={i}
+                        onClick={action.action}
+                        className="bg-gray-700 hover:bg-gray-600 rounded-lg p-4 text-center transition-colors"
+                      >
+                        <div className="text-2xl mb-2">{action.icon}</div>
+                        <p className="text-sm">{action.label}</p>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
@@ -520,97 +567,87 @@ export default function OrganizerDashboard() {
         </div>
       </div>
 
-      {showModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
-            <div className="p-4 border-b border-gray-700 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                {showModal === 'reminder' && <><span>📧</span> Payment Reminder Templates</>}
-                {showModal === 'meeting' && <><span>📅</span> Schedule Meeting</>}
-                {showModal === 'message' && <><span>💬</span> Message to Members</>}
-              </h3>
-              <button 
-                onClick={() => setShowModal(null)}
-                className="text-gray-400 hover:text-white text-xl"
-              >
-                ✕
+      <MobileModal 
+        isOpen={!!showModal} 
+        onClose={() => setShowModal(null)}
+        title={
+          showModal === 'reminder' ? '📧 Payment Reminder Templates' :
+          showModal === 'meeting' ? '📅 Schedule Meeting' :
+          showModal === 'message' ? '💬 Message to Members' : ''
+        }
+      >
+        <div className="p-6">
+          {assistantLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
+              <p className="text-gray-400">AI is generating content...</p>
+            </div>
+          ) : showModal === 'meeting' ? (
+            <div className="space-y-4">
+              <p className="text-gray-300">Schedule a meeting with your group members:</p>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Meeting Title</label>
+                <input 
+                  type="text" 
+                  placeholder="Weekly SUSU Check-in"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Date</label>
+                  <input 
+                    type="date" 
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Time</label>
+                  <input 
+                    type="time" 
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Meeting Link (optional)</label>
+                <input 
+                  type="url" 
+                  placeholder="https://zoom.us/j/..."
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                />
+              </div>
+              <button className="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-lg font-medium transition-colors mt-4">
+                Send Meeting Invite
               </button>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[60vh]">
-              {assistantLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                  <p className="text-gray-400">AI is generating content...</p>
-                </div>
-              ) : showModal === 'meeting' ? (
-                <div className="space-y-4">
-                  <p className="text-gray-300">Schedule a meeting with your group members:</p>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Meeting Title</label>
-                    <input 
-                      type="text" 
-                      placeholder="Weekly SUSU Check-in"
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Date</label>
-                      <input 
-                        type="date" 
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Time</label>
-                      <input 
-                        type="time" 
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Meeting Link (optional)</label>
-                    <input 
-                      type="url" 
-                      placeholder="https://zoom.us/j/..."
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                    />
-                  </div>
-                  <button className="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-lg font-medium transition-colors mt-4">
-                    Send Meeting Invite
-                  </button>
-                </div>
-              ) : modalContent ? (
-                <div className="space-y-4">
-                  <div className="bg-gray-900/50 rounded-lg p-4">
-                    <p className="text-gray-300 whitespace-pre-wrap">{cleanAIContent(modalContent)}</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <button 
-                      onClick={() => {
-                        navigator.clipboard.writeText(cleanAIContent(modalContent));
-                        alert('Copied to clipboard!');
-                      }}
-                      className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg font-medium transition-colors"
-                    >
-                      📋 Copy to Clipboard
-                    </button>
-                    <button 
-                      onClick={() => setShowModal(null)}
-                      className="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-2 rounded-lg font-medium transition-colors"
-                    >
-                      Done
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-400 text-center py-8">Loading...</p>
-              )}
+          ) : modalContent ? (
+            <div className="space-y-4">
+              <div className="bg-gray-900/50 rounded-lg p-4">
+                <p className="text-gray-300 whitespace-pre-wrap">{cleanAIContent(modalContent)}</p>
+              </div>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(cleanAIContent(modalContent));
+                  }}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg font-medium transition-colors"
+                >
+                  Copy to Clipboard
+                </button>
+                <button 
+                  onClick={() => setShowModal(null)}
+                  className="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-2 rounded-lg font-medium transition-colors"
+                >
+                  Done
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <p className="text-gray-400 text-center py-8">Loading...</p>
+          )}
         </div>
-      )}
+      </MobileModal>
     </Layout>
   );
 }

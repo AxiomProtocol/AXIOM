@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 function cleanAIContent(text) {
   if (!text) return '';
@@ -11,16 +11,71 @@ function cleanAIContent(text) {
     .trim();
 }
 
+const SESSION_KEY = 'axiom_ai_chat_history';
+const MAX_HISTORY = 20;
+
 export default function AIMemberSupport({ isOpen, onClose }) {
-  const [messages, setMessages] = useState([
-    {
+  const [messages, setMessages] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = sessionStorage.getItem(SESSION_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      } catch (e) {}
+    }
+    return [{
       role: 'assistant',
       content: "Hello! I'm your Axiom AI Assistant. I can help you understand The Wealth Practice, SUSU circles, staking, and more. How can I help you today?"
-    }
-  ]);
+    }];
+  });
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [context, setContext] = useState({ topics: [], lastTopic: null });
   const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && messages.length > 1) {
+      try {
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(messages.slice(-MAX_HISTORY)));
+      } catch (e) {}
+    }
+  }, [messages]);
+
+  const extractTopics = useCallback((text) => {
+    const topicKeywords = {
+      susu: ['susu', 'circle', 'savings', 'rotating'],
+      wealth: ['wealth', 'practice', 'stage'],
+      capital: ['capital', 'mode', 'investment', 'graduate'],
+      keygrow: ['keygrow', 'rent', 'property', 'home'],
+      token: ['axm', 'token', 'stake', 'staking'],
+      vault: ['vault', 'personal', 'custody'],
+      pool: ['pool', 'community', 'pooled']
+    };
+    
+    const lower = text.toLowerCase();
+    const found = [];
+    for (const [topic, keywords] of Object.entries(topicKeywords)) {
+      if (keywords.some(k => lower.includes(k))) {
+        found.push(topic);
+      }
+    }
+    return found;
+  }, []);
+
+  const clearHistory = useCallback(() => {
+    setMessages([{
+      role: 'assistant',
+      content: "Chat history cleared. How can I help you today?"
+    }]);
+    setContext({ topics: [], lastTopic: null });
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(SESSION_KEY);
+    }
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -36,6 +91,18 @@ export default function AIMemberSupport({ isOpen, onClose }) {
   const handleSend = async (text = input) => {
     if (!text.trim() || loading) return;
     
+    const topics = extractTopics(text);
+    const nextContext = topics.length > 0 
+      ? { 
+          topics: [...new Set([...context.topics, ...topics])], 
+          lastTopic: topics[0] 
+        }
+      : context;
+    
+    if (topics.length > 0) {
+      setContext(nextContext);
+    }
+    
     const userMessage = { role: 'user', content: text };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
@@ -47,7 +114,8 @@ export default function AIMemberSupport({ isOpen, onClose }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           message: text,
-          history: messages.slice(-6)
+          history: messages.slice(-10),
+          context: { discussedTopics: nextContext.topics, lastTopic: nextContext.lastTopic }
         })
       });
       
@@ -86,14 +154,27 @@ export default function AIMemberSupport({ isOpen, onClose }) {
               <p className="text-xs text-gray-400">Powered by AI</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            {messages.length > 1 && (
+              <button
+                onClick={clearHistory}
+                className="p-2 text-gray-400 hover:text-white transition-colors"
+                title="Clear chat history"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-white transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px]">
