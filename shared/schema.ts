@@ -3848,6 +3848,104 @@ export const protocolMetricsSnapshots = pgTable("protocol_metrics_snapshots", {
   snapshotIdx: index("protocol_metrics_snapshot_idx").on(table.snapshotAt),
 }));
 
+// Lock challenge badges - gamified lock duration achievements
+export const lockChallengeBadges = pgTable("lock_challenge_badges", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  badgeType: varchar("badge_type", { length: 50 }).notNull(),
+  badgeName: varchar("badge_name", { length: 100 }).notNull(),
+  lockDurationYears: integer("lock_duration_years").notNull(),
+  lockAmount: decimal("lock_amount", { precision: 24, scale: 8 }).notNull(),
+  unlockedAt: timestamp("unlocked_at").defaultNow(),
+  displayOnProfile: boolean("display_on_profile").default(true),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  walletIdx: index("lock_badges_wallet_idx").on(table.walletAddress),
+  typeIdx: index("lock_badges_type_idx").on(table.badgeType),
+}));
+
+// Node referral bonuses - rewards for node operator referrals
+export const nodeReferralBonuses = pgTable("node_referral_bonuses", {
+  id: serial("id").primaryKey(),
+  referrerAddress: varchar("referrer_address", { length: 42 }).notNull(),
+  referredAddress: varchar("referred_address", { length: 42 }).notNull(),
+  nodeId: varchar("node_id", { length: 100 }).notNull(),
+  nodeTier: varchar("node_tier", { length: 50 }).notNull(),
+  nodePurchaseAmount: decimal("node_purchase_amount", { precision: 24, scale: 8 }).notNull(),
+  bonusAmount: decimal("bonus_amount", { precision: 24, scale: 8 }).notNull(),
+  bonusPercent: decimal("bonus_percent", { precision: 5, scale: 2 }).default('5.00'),
+  status: varchar("status", { length: 20 }).default('pending'),
+  txHash: varchar("tx_hash", { length: 66 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  paidAt: timestamp("paid_at"),
+}, (table) => ({
+  referrerIdx: index("node_referrals_referrer_idx").on(table.referrerAddress),
+  referredIdx: index("node_referrals_referred_idx").on(table.referredAddress),
+}));
+
+// Insurance claims history - public log of SUSU insurance claims
+export const insuranceClaims = pgTable("insurance_claims", {
+  id: serial("id").primaryKey(),
+  claimantAddress: varchar("claimant_address", { length: 42 }).notNull(),
+  susuPoolId: integer("susu_pool_id").notNull(),
+  susuPoolName: varchar("susu_pool_name", { length: 100 }),
+  claimAmount: decimal("claim_amount", { precision: 24, scale: 8 }).notNull(),
+  claimReason: varchar("claim_reason", { length: 200 }).notNull(),
+  status: varchar("status", { length: 20 }).default('pending'),
+  approvedBy: varchar("approved_by", { length: 42 }),
+  txHash: varchar("tx_hash", { length: 66 }),
+  submittedAt: timestamp("submitted_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  claimantIdx: index("insurance_claims_claimant_idx").on(table.claimantAddress),
+  poolIdx: index("insurance_claims_pool_idx").on(table.susuPoolId),
+  statusIdx: index("insurance_claims_status_idx").on(table.status),
+}));
+
+// Weekly digest subscriptions - for protocol activity summaries
+export const weeklyDigestSubscriptions = pgTable("weekly_digest_subscriptions", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull().unique(),
+  email: varchar("email", { length: 255 }),
+  subscribed: boolean("subscribed").default(true),
+  lastSentAt: timestamp("last_sent_at"),
+  preferences: jsonb("preferences"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  walletIdx: index("digest_subs_wallet_idx").on(table.walletAddress),
+}));
+
+// Credit score actions - tracks which actions improve credit scores
+export const creditScoreActions = pgTable("credit_score_actions", {
+  id: serial("id").primaryKey(),
+  actionType: varchar("action_type", { length: 50 }).notNull(),
+  actionName: varchar("action_name", { length: 100 }).notNull(),
+  description: text("description"),
+  pointsValue: integer("points_value").notNull(),
+  category: varchar("category", { length: 50 }).notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Node upgrade transactions - tracks upgrade path purchases
+export const nodeUpgrades = pgTable("node_upgrades", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  fromNodeId: varchar("from_node_id", { length: 100 }).notNull(),
+  fromTier: varchar("from_tier", { length: 50 }).notNull(),
+  toTier: varchar("to_tier", { length: 50 }).notNull(),
+  creditAmount: decimal("credit_amount", { precision: 24, scale: 8 }).notNull(),
+  additionalPayment: decimal("additional_payment", { precision: 24, scale: 8 }).notNull(),
+  newNodeId: varchar("new_node_id", { length: 100 }),
+  status: varchar("status", { length: 20 }).default('pending'),
+  txHash: varchar("tx_hash", { length: 66 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+}, (table) => ({
+  walletIdx: index("node_upgrades_wallet_idx").on(table.walletAddress),
+}));
+
 // Export types for Wealth Engine V2
 export type YieldVaultPosition = typeof yieldVaultPositions.$inferSelect;
 export type InsertYieldVaultPosition = typeof yieldVaultPositions.$inferInsert;

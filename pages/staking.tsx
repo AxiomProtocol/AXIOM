@@ -4,6 +4,8 @@ import { useWallet } from '../components/WalletConnect/WalletContext';
 import { ethers } from 'ethers';
 import { CORE_CONTRACTS, NETWORK_CONFIG, V2_SOVEREIGN_BANKING_CONTRACTS } from '../shared/contracts';
 import VeAXMLockCalculator from '../components/VeAXMLockCalculator';
+import LockChallengeBadges from '../components/LockChallengeBadges';
+import FeeContributionWidget from '../components/FeeContributionWidget';
 
 const VE_AXM_ABI = [
   "function balanceOf(address user) external view returns (uint256)",
@@ -784,6 +786,11 @@ export default function StakingPage() {
                       </div>
                     </div>
                   </div>
+
+                  <FeeContributionWidget 
+                    amount={parseFloat(stakeAmount) || 0} 
+                    onInfoClick={() => {}}
+                  />
 
                   <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
                     <h3 className="text-lg font-semibold text-white mb-4">Staking Benefits</h3>

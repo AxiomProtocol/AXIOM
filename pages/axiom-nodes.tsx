@@ -3,6 +3,8 @@ import dynamic from 'next/dynamic';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import { ethers } from 'ethers';
 import NodeROICalculator from '../components/NodeROICalculator';
+import NodeReferralWidget from '../components/NodeReferralWidget';
+import NodeUpgradePath from '../components/NodeUpgradePath';
 
 const Toaster = dynamic(
   () => import('react-hot-toast').then((mod) => mod.Toaster),
@@ -1438,6 +1440,18 @@ export default function AxiomDePINNodes() {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {isConnected && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                <NodeReferralWidget walletAddress={walletState?.address} />
+                <NodeUpgradePath 
+                  currentNodeId={userNodes.length > 0 ? userNodes[0].id : undefined}
+                  currentNodeTier={userNodes.length > 0 ? userNodes[0].tier : undefined}
+                  currentNodePrice={userNodes.length > 0 ? parseFloat(userNodes[0].price || '99') : undefined}
+                  walletAddress={walletState?.address}
+                />
               </div>
             )}
 

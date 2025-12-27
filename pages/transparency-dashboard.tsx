@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import ProtocolHealthScore from '../components/ProtocolHealthScore';
 import SUSUInsuranceProgress from '../components/SUSUInsuranceProgress';
+import InsuranceClaimsHistory from '../components/InsuranceClaimsHistory';
 
 interface Metrics {
   tvl: {
@@ -301,6 +302,10 @@ export default function TransparencyDashboard() {
                   pendingClaims: metrics.insurance.pendingClaims || 0
                 }}
               />
+            </section>
+
+            <section>
+              <InsuranceClaimsHistory limit={10} />
             </section>
 
             <section className="bg-gray-800/50 rounded-2xl p-8 border border-gray-700">

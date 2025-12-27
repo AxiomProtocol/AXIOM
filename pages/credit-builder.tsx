@@ -3,6 +3,7 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Layout from '../components/Layout';
 import { useWallet } from '../components/WalletConnect/WalletContext';
+import CreditScoreTracker from '../components/CreditScoreTracker';
 
 const CreditScoreCard = dynamic(() => import('../components/CreditScoreCard'), { ssr: false });
 const CreditScoreHistory = dynamic(() => import('../components/CreditScoreHistory'), { ssr: false });
