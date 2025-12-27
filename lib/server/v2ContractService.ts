@@ -30,8 +30,9 @@ const SUSU_INSURANCE_FUND_ABI = [
   "function totalClaimsPaid() view returns (uint256)",
   "function pendingClaimsCount() view returns (uint256)",
   "function getCoverageCapacity() view returns (uint256)",
-  "function getFundStats() view returns (tuple(uint256 balance, uint256 totalDiverted, uint256 totalPaid, uint256 pendingClaims, uint256 coverageRatio))",
-  "function getClaim(uint256 claimId) view returns (tuple(uint256 claimId, uint256 poolId, address claimant, uint256 amount, string reason, uint256 submittedAt, uint256 processedAt, uint8 status, address processedBy))",
+  "function getFundStats() external view returns (tuple(uint256 balance, uint256 totalDiverted, uint256 totalPaid, uint256 pendingClaims, uint256 coverageRatio))",
+  "function getClaim(uint256 claimId) external view returns (tuple(uint256 claimId, uint256 poolId, address claimant, uint256 amount, string reason, uint256 submittedAt, uint256 processedAt, uint8 status, address processedBy))",
+  "function getUserClaims(address user) external view returns (uint256[])",
   "function submitClaim(uint256 poolId, uint256 amount, string reason) returns (uint256)",
   "event ClaimSubmitted(uint256 indexed claimId, uint256 indexed poolId, address indexed claimant, uint256 amount)",
   "event ClaimPaid(uint256 indexed claimId, address indexed recipient, uint256 amount)"
@@ -134,7 +135,8 @@ export async function getInsuranceFundStats() {
     totalDiverted: ethers.formatEther(stats.totalDiverted),
     totalPaid: ethers.formatEther(stats.totalPaid),
     pendingClaims: Number(stats.pendingClaims),
-    coverageRatio: Number(stats.coverageRatio) / 100 // Convert from basis points percentage
+    coverageRatioBps: Number(stats.coverageRatio),
+    coverageRatioPercent: Number(stats.coverageRatio) / 100
   };
 }
 
@@ -142,6 +144,12 @@ export async function getInsuranceCoverageCapacity(): Promise<string> {
   const contract = getSusuInsuranceFund();
   const capacity = await contract.getCoverageCapacity();
   return ethers.formatEther(capacity);
+}
+
+export async function getUserInsuranceClaims(userAddress: string): Promise<number[]> {
+  const contract = getSusuInsuranceFund();
+  const claimIds = await contract.getUserClaims(userAddress);
+  return claimIds.map((id: bigint) => Number(id));
 }
 
 // veAXM Functions
