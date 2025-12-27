@@ -68,3 +68,39 @@ These V2 contracts implement the AIP-001 Master Architectural Plan for the Sover
 -   **Location Scores:** Walk Score API
 -   **Auth Provider:** Supabase
 -   **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image) with a unified service module at `lib/server/gemini.ts`.
+
+## Engagement & Gamification Features
+
+### Revenue Strengthening Components
+-   **VeAXMLockCalculator**: Interactive lock duration comparison tool showing projected rewards for 1-4 year locks, integrated into staking page.
+-   **NodeROICalculator**: DePIN node ROI calculator with tier comparison, break-even analysis, and uptime adjustment.
+-   **ProtocolHealthScore**: Aggregate protocol health score (0-100) based on TVL, burns, governance, insurance, and community activity.
+-   **FeeContributionWidget**: Shows 0.5% fee contribution breakdown (50% burned, 50% to veAXM) during transactions.
+-   **SUSUInsuranceProgress**: Visual insurance fund coverage indicator showing fund balance, claims history, and per-circle protection.
+
+### Engagement Features
+-   **veAXM Leaderboard** (`/veaxm-leaderboard`): Public ranking of top veAXM holders with timeframe filters (all-time, month, week), voting power display, pagination support, and user rank tracking.
+-   **LockChallengeBadges**: Gamified lock duration badges with 6 badge types (Committed, Dedicated, True Believer, Diamond Hands, Whale Locker, Early Adopter) and 4 rarity tiers (Common, Rare, Epic, Legendary).
+-   **InsuranceClaimsHistory**: Public log of SUSU insurance claims with status tracking (pending, approved, rejected, paid), integrated into transparency dashboard.
+-   **CreditScoreTracker**: Shows 10 actions to improve on-chain credit score across 4 categories (SUSU, staking, governance, community) with points tracking.
+-   **WeeklyDigestCard**: Email subscription for weekly protocol activity summaries including burns, veAXM rewards, insurance fund growth, and new circles/operators.
+-   **NodeReferralWidget**: 5% referral bonus system for node operator referrals, with referral code generation and earnings tracking.
+-   **NodeUpgradePath**: Node tier upgrade system with 80% credit toward higher tiers, supporting 7 node tiers from Lite Starter ($99) to Pro Operator ($9,999).
+
+### Engagement APIs
+-   **Badge Award** (`/api/veaxm/award-badge`): Automatically awards lock challenge badges when users lock veAXM for qualifying durations.
+-   **Referral Code Generation** (`/api/nodes/generate-referral`): Generates unique referral codes for node operators with earnings tracking.
+-   **Weekly Digest Cron** (`/api/cron/weekly-digest`): Scheduled job endpoint to send weekly protocol summaries to subscribers via SendGrid.
+-   **Digest Subscription** (`/api/digest/subscribe`): Manages email subscriptions for weekly protocol digests.
+-   **Insurance Claims** (`/api/insurance/claims`): Public API for SUSU insurance claims history with stats.
+-   **Lock Badges** (`/api/lock-badges`): Tracks and awards gamified lock duration badges.
+-   **Node Referrals** (`/api/nodes/referrals`): Tracks node operator referral bonuses and earnings.
+-   **Leaderboard** (`/api/veaxm/leaderboard`): Paginated veAXM holder rankings with user position.
+
+### Engagement Database Tables
+-   `lock_challenge_badges`: Gamified lock duration achievement badges
+-   `node_referral_bonuses`: Node operator referral rewards tracking
+-   `insurance_claims`: SUSU insurance claims history
+-   `weekly_digest_subscriptions`: Email subscription preferences for protocol digests
+-   `credit_score_actions`: Credit score improvement actions catalog
+-   `node_upgrades`: Node tier upgrade transactions
