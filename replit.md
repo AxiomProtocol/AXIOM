@@ -70,6 +70,13 @@ Key features include:
 -   **Notification Preferences System**: User-configurable notification toggles.
 -   **Email Notification Testing**: SendGrid integration verification.
 
+### AIP-001 V2 Contracts (Sovereign Banking System)
+The following V2 contracts implement the AIP-001 Master Architectural Plan for transitioning to a Sovereign Banking System:
+-   **AxiomScoreSBT** (`0x8Ae0f77e2cB2dED0496Dbe2F827be38F5756B008`): ERC-5192 Soulbound Token for on-chain credit scoring (300-850 range). Extends ERC-721 with transfer blocking, integrates with SUSU for repayment history tracking.
+-   **SusuInsuranceFund** (`0x7B69ce0d83f45C2dBa3e5B73076beA8b1Be1271F`): Default Insurance Fund with 5% node rewards diversion (500 BPS) to cover broken SUSU circles.
+-   **veAXM** (`0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046`): Vote-Escrowed AXM with Curve-style locking (1-4 years), time-weighted voting power, checkpoint system for accurate decay tracking, and epoch-based reward distribution.
+-   **AxiomFeeBurner** (`0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94`): 0.5% fee switch (50 BPS) on banking products with automatic AXM buyback via DEX and burn to 0xdead, plus 50% distribution to veAXM holders.
+
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
 -   **Blockchain RPC Provider:** Alchemy API

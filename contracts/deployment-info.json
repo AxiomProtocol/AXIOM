@@ -132,6 +132,115 @@
         "ReentrancyGuard",
         "Pausable"
       ]
+    },
+    "AxiomScoreSBT": {
+      "address": "0x8Ae0f77e2cB2dED0496Dbe2F827be38F5756B008",
+      "name": "Axiom Credit Score SBT",
+      "description": "ERC-5192 Soulbound Token for on-chain credit scoring (300-850 range)",
+      "verified": true,
+      "verifiedAt": "Dec 27 2025 (UTC)",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0x8Ae0f77e2cB2dED0496Dbe2F827be38F5756B008#code",
+      "compiler": {
+        "version": "0.8.20",
+        "optimizationRuns": 200,
+        "viaIR": true
+      },
+      "constructorArgs": {},
+      "features": [
+        "ERC-721 Base with Transfer Blocking",
+        "ERC-5192 Soulbound Compliance",
+        "Credit Score Range 300-850",
+        "SUSU Integration Hooks",
+        "Score Tiers (Excellent/Good/Fair/Poor)",
+        "Payment History Tracking",
+        "AccessControl",
+        "ReentrancyGuard",
+        "Pausable"
+      ]
+    },
+    "SusuInsuranceFund": {
+      "address": "0x7B69ce0d83f45C2dBa3e5B73076beA8b1Be1271F",
+      "name": "SUSU Insurance Fund",
+      "description": "Default insurance fund with 5% node rewards diversion for broken circle coverage",
+      "verified": true,
+      "verifiedAt": "Dec 27 2025 (UTC)",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0x7B69ce0d83f45C2dBa3e5B73076beA8b1Be1271F#code",
+      "compiler": {
+        "version": "0.8.20",
+        "optimizationRuns": 200,
+        "viaIR": true
+      },
+      "constructorArgs": {
+        "axmToken": "0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D",
+        "treasuryVault": "0x2bb2c2a7a1d82097488bf0b9c2a59c1910cd8d5d"
+      },
+      "features": [
+        "5% Node Rewards Diversion (500 BPS)",
+        "Claims Submission & Approval",
+        "Large Claim Threshold ($10K)",
+        "Direct Contributions",
+        "Coverage Ratio Tracking",
+        "AccessControl",
+        "ReentrancyGuard",
+        "Pausable"
+      ]
+    },
+    "veAXM": {
+      "address": "0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046",
+      "name": "Vote-Escrowed AXM",
+      "description": "Curve-style vote-escrow locking for governance and real yield distribution",
+      "verified": true,
+      "verifiedAt": "Dec 27 2025 (UTC)",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046#code",
+      "compiler": {
+        "version": "0.8.20",
+        "optimizationRuns": 200,
+        "viaIR": true
+      },
+      "constructorArgs": {
+        "axmToken": "0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D"
+      },
+      "features": [
+        "1-4 Year Lock Duration",
+        "Time-Weighted Voting Power",
+        "Checkpoint System for Decay",
+        "balanceOfAt() Historical Queries",
+        "Epoch-Based Reward Distribution",
+        "Lock Extension & Increase",
+        "AccessControl",
+        "ReentrancyGuard",
+        "Pausable"
+      ]
+    },
+    "AxiomFeeBurner": {
+      "address": "0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94",
+      "name": "Axiom Fee Burner",
+      "description": "0.5% fee switch with AXM buyback/burn mechanism for real yield",
+      "verified": true,
+      "verifiedAt": "Dec 27 2025 (UTC)",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94#code",
+      "compiler": {
+        "version": "0.8.20",
+        "optimizationRuns": 200,
+        "viaIR": true
+      },
+      "constructorArgs": {
+        "axmToken": "0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D",
+        "stableToken": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+        "dexHub": "0xF660d260a0bBC690a8ab0f1e6A41049FC919A34D",
+        "treasuryVault": "0x2bb2c2a7a1d82097488bf0b9c2a59c1910cd8d5d"
+      },
+      "features": [
+        "0.5% Fee Rate (50 BPS)",
+        "DEX Integration for Buyback",
+        "Burn to 0xdead Address",
+        "veAXM Reward Distribution (50%)",
+        "Buyback Threshold ($1000)",
+        "Fee Collection Tracking",
+        "AccessControl",
+        "ReentrancyGuard",
+        "Pausable"
+      ]
     }
   }
 }
