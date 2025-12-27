@@ -77,7 +77,7 @@ export default function V2AnalyticsPage() {
               <h1 className="text-4xl font-bold text-white mb-2">
                 Sovereign Banking Analytics
               </h1>
-              <p className="text-gray-400">Real-time metrics from AIP-001 V2 contracts</p>
+              <p className="text-gray-400">Real-time metrics from the Wealth Engine</p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

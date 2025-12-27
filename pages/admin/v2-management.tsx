@@ -90,7 +90,7 @@ export default function V2ManagementPage() {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h1 className="text-3xl font-bold text-white">V2 Contract Management</h1>
-                <p className="text-gray-400">Admin panel for AIP-001 Sovereign Banking contracts</p>
+                <p className="text-gray-400">Admin panel for Wealth Engine contracts</p>
               </div>
               <div className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm">
                 Admin Access

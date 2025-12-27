@@ -75,7 +75,7 @@ Key features include:
 -   **On-Chain Credit Score Display**: CreditScoreCard component with FICO-like visualization (300-850 range), tier display, payment history metrics, and CreditScoreHistory timeline chart.
 -   **Governance Voting UI**: Proposal voting interface for veAXM holders with voting power display, for/against voting, and proposal status tracking.
 
-### AIP-001 V2 Contracts (Sovereign Banking System)
+### Wealth Engine V2 Contracts (Sovereign Banking System)
 The following V2 contracts implement the AIP-001 Master Architectural Plan for transitioning to a Sovereign Banking System:
 -   **AxiomScoreSBT** (`0x8Ae0f77e2cB2dED0496Dbe2F827be38F5756B008`): ERC-5192 Soulbound Token for on-chain credit scoring (300-850 range). Extends ERC-721 with transfer blocking, integrates with SUSU for repayment history tracking.
 -   **SusuInsuranceFund** (`0x7B69ce0d83f45C2dBa3e5B73076beA8b1Be1271F`): Default Insurance Fund with 5% node rewards diversion (500 BPS) to cover broken SUSU circles.

@@ -35,7 +35,7 @@ const SAMPLE_PROPOSALS: Proposal[] = [
   },
   {
     id: 3,
-    title: 'AIP-001: Sovereign Banking System Launch',
+    title: 'Wealth Engine: Sovereign Banking System Launch',
     description: 'Deploy V2 contracts for credit scoring, insurance, veAXM, and fee burner.',
     status: 'passed',
     votesFor: 125000,
