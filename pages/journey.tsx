@@ -4,6 +4,9 @@ import Link from 'next/link';
 import Layout from '../components/Layout';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import toast, { Toaster } from 'react-hot-toast';
+import dynamic from 'next/dynamic';
+
+const CreditScoreCard = dynamic(() => import('../components/CreditScoreCard'), { ssr: false });
 
 interface JourneyData {
   profile: any;
@@ -125,7 +128,7 @@ export default function JourneyDashboard() {
               <p className="text-xl text-gray-600">Track your progress toward financial freedom</p>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-8 mb-12">
+            <div className="grid lg:grid-cols-4 gap-6 mb-12">
               <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Overall Progress</h3>
@@ -172,6 +175,10 @@ export default function JourneyDashboard() {
                   </div>
                 </div>
               </div>
+
+              {address && (
+                <CreditScoreCard walletAddress={address} compact className="bg-gray-800 shadow-lg" />
+              )}
             </div>
 
             <div className="mb-12">
