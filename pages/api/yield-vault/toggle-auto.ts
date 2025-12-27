@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getOrCreateUserData, vaultData } from './index';
+import { getOrCreateUserData, updateUserData } from './index';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -16,13 +16,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ success: false, error: 'Invalid address' });
   }
 
-  const userData = getOrCreateUserData(address);
-  userData.autoCompound = enabled;
-  vaultData[address.toLowerCase()] = userData;
+  try {
+    await getOrCreateUserData(address);
+    await updateUserData(address, { autoCompound: enabled });
 
-  return res.status(200).json({
-    success: true,
-    message: enabled ? 'Auto-compound enabled' : 'Auto-compound disabled',
-    autoCompoundEnabled: enabled,
-  });
+    return res.status(200).json({
+      success: true,
+      message: enabled ? 'Auto-compound enabled' : 'Auto-compound disabled',
+      autoCompoundEnabled: enabled,
+    });
+  } catch (error: any) {
+    console.error('Error toggling auto-compound:', error);
+    return res.status(500).json({ success: false, error: 'Failed to toggle auto-compound' });
+  }
 }

@@ -11,6 +11,8 @@ export const GOVERNANCE_CONFIG = {
   
   GOVERNANCE_CONTRACT_ADDRESS: null as string | null,
   
+  VE_AXM_CONTRACT_ADDRESS: '0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046',
+  
   VOTING_POWER_SOURCES: {
     AXM_BALANCE: true,
     STAKED_AXM: true,

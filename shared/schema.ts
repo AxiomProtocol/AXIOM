@@ -3714,3 +3714,154 @@ export const errorLogs = pgTable("error_logs", {
 // Export types for error logs
 export type ErrorLog = typeof errorLogs.$inferSelect;
 export type InsertErrorLog = typeof errorLogs.$inferInsert;
+
+// ============================================
+// WEALTH ENGINE V2 - SOVEREIGN BANKING TABLES
+// ============================================
+
+// Yield Vault position status enum
+export const vaultPositionStatusEnum = pgEnum('vault_position_status', [
+  'active',
+  'withdrawn',
+  'compounding'
+]);
+
+// Yield Vault positions - persistent storage for auto-compound staking
+export const yieldVaultPositions = pgTable("yield_vault_positions", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  depositAmount: decimal("deposit_amount", { precision: 24, scale: 8 }).default('0').notNull(),
+  rewardsAccrued: decimal("rewards_accrued", { precision: 24, scale: 8 }).default('0').notNull(),
+  autoCompoundEnabled: boolean("auto_compound_enabled").default(true),
+  lastCompoundAt: timestamp("last_compound_at"),
+  totalCompounded: decimal("total_compounded", { precision: 24, scale: 8 }).default('0'),
+  status: vaultPositionStatusEnum("status").default('active'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  walletIdx: index("vault_positions_wallet_idx").on(table.walletAddress),
+  statusIdx: index("vault_positions_status_idx").on(table.status),
+}));
+
+// Yield Vault compound history
+export const yieldVaultCompoundHistory = pgTable("yield_vault_compound_history", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  amountCompounded: decimal("amount_compounded", { precision: 24, scale: 8 }).notNull(),
+  newTotal: decimal("new_total", { precision: 24, scale: 8 }).notNull(),
+  txHash: varchar("tx_hash", { length: 66 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  walletIdx: index("vault_compound_wallet_idx").on(table.walletAddress),
+}));
+
+// Treasury fee events - tracks fees routed through AxiomFeeBurner
+export const treasuryFeeEvents = pgTable("treasury_fee_events", {
+  id: serial("id").primaryKey(),
+  productType: varchar("product_type", { length: 50 }).notNull(),
+  feeAmount: decimal("fee_amount", { precision: 24, scale: 8 }).notNull(),
+  sourceAddress: varchar("source_address", { length: 42 }),
+  txHash: varchar("tx_hash", { length: 66 }),
+  buybackExecuted: boolean("buyback_executed").default(false),
+  axmBurned: decimal("axm_burned", { precision: 24, scale: 8 }),
+  veAxmRewards: decimal("ve_axm_rewards", { precision: 24, scale: 8 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  productIdx: index("fee_events_product_idx").on(table.productType),
+  buybackIdx: index("fee_events_buyback_idx").on(table.buybackExecuted),
+}));
+
+// Badge NFT mints - tracks achievement badge minting
+export const badgeMints = pgTable("badge_mints", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  badgeId: varchar("badge_id", { length: 50 }).notNull(),
+  badgeName: varchar("badge_name", { length: 100 }).notNull(),
+  badgeRarity: varchar("badge_rarity", { length: 20 }).notNull(),
+  tokenId: integer("token_id"),
+  txHash: varchar("tx_hash", { length: 66 }),
+  mintedAt: timestamp("minted_at").defaultNow(),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  walletIdx: index("badge_mints_wallet_idx").on(table.walletAddress),
+  badgeIdx: index("badge_mints_badge_idx").on(table.badgeId),
+}));
+
+// Referral reward claims - tracks on-chain referral payouts
+export const referralRewardClaims = pgTable("referral_reward_claims", {
+  id: serial("id").primaryKey(),
+  referrerAddress: varchar("referrer_address", { length: 42 }).notNull(),
+  referredAddress: varchar("referred_address", { length: 42 }).notNull(),
+  rewardAmount: decimal("reward_amount", { precision: 24, scale: 8 }).notNull(),
+  rewardType: varchar("reward_type", { length: 50 }).notNull(),
+  txHash: varchar("tx_hash", { length: 66 }),
+  claimedAt: timestamp("claimed_at").defaultNow(),
+}, (table) => ({
+  referrerIdx: index("referral_claims_referrer_idx").on(table.referrerAddress),
+}));
+
+// DePIN reward diversions - tracks 5% diversion to SusuInsuranceFund
+export const depinRewardDiversions = pgTable("depin_reward_diversions", {
+  id: serial("id").primaryKey(),
+  nodeId: varchar("node_id", { length: 100 }).notNull(),
+  nodeOwnerAddress: varchar("node_owner_address", { length: 42 }).notNull(),
+  totalReward: decimal("total_reward", { precision: 24, scale: 8 }).notNull(),
+  diversionAmount: decimal("diversion_amount", { precision: 24, scale: 8 }).notNull(),
+  diversionPercent: decimal("diversion_percent", { precision: 5, scale: 2 }).default('5.00'),
+  txHash: varchar("tx_hash", { length: 66 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  nodeIdx: index("depin_diversions_node_idx").on(table.nodeId),
+  ownerIdx: index("depin_diversions_owner_idx").on(table.nodeOwnerAddress),
+}));
+
+// Credit score updates - tracks score changes from SUSU repayments
+export const creditScoreUpdates = pgTable("credit_score_updates", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  previousScore: integer("previous_score"),
+  newScore: integer("new_score").notNull(),
+  changeReason: varchar("change_reason", { length: 100 }).notNull(),
+  susuPoolId: integer("susu_pool_id"),
+  repaymentAmount: decimal("repayment_amount", { precision: 24, scale: 8 }),
+  txHash: varchar("tx_hash", { length: 66 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  walletIdx: index("credit_updates_wallet_idx").on(table.walletAddress),
+  poolIdx: index("credit_updates_pool_idx").on(table.susuPoolId),
+}));
+
+// Protocol metrics snapshots - for transparency dashboard
+export const protocolMetricsSnapshots = pgTable("protocol_metrics_snapshots", {
+  id: serial("id").primaryKey(),
+  totalValueLocked: decimal("total_value_locked", { precision: 24, scale: 8 }),
+  totalAxmBurned: decimal("total_axm_burned", { precision: 24, scale: 8 }),
+  totalVeAxmLocked: decimal("total_ve_axm_locked", { precision: 24, scale: 8 }),
+  totalVeAxmHolders: integer("total_ve_axm_holders"),
+  insuranceFundBalance: decimal("insurance_fund_balance", { precision: 24, scale: 8 }),
+  totalFeesCollected: decimal("total_fees_collected", { precision: 24, scale: 8 }),
+  totalSusuCircles: integer("total_susu_circles"),
+  totalDepinNodes: integer("total_depin_nodes"),
+  averageCreditScore: integer("average_credit_score"),
+  snapshotAt: timestamp("snapshot_at").defaultNow(),
+}, (table) => ({
+  snapshotIdx: index("protocol_metrics_snapshot_idx").on(table.snapshotAt),
+}));
+
+// Export types for Wealth Engine V2
+export type YieldVaultPosition = typeof yieldVaultPositions.$inferSelect;
+export type InsertYieldVaultPosition = typeof yieldVaultPositions.$inferInsert;
+export type YieldVaultCompound = typeof yieldVaultCompoundHistory.$inferSelect;
+export type InsertYieldVaultCompound = typeof yieldVaultCompoundHistory.$inferInsert;
+export type TreasuryFeeEvent = typeof treasuryFeeEvents.$inferSelect;
+export type InsertTreasuryFeeEvent = typeof treasuryFeeEvents.$inferInsert;
+export type BadgeMint = typeof badgeMints.$inferSelect;
+export type InsertBadgeMint = typeof badgeMints.$inferInsert;
+export type ReferralRewardClaim = typeof referralRewardClaims.$inferSelect;
+export type InsertReferralRewardClaim = typeof referralRewardClaims.$inferInsert;
+export type DepinRewardDiversion = typeof depinRewardDiversions.$inferSelect;
+export type InsertDepinRewardDiversion = typeof depinRewardDiversions.$inferInsert;
+export type CreditScoreUpdate = typeof creditScoreUpdates.$inferSelect;
+export type InsertCreditScoreUpdate = typeof creditScoreUpdates.$inferInsert;
+export type ProtocolMetricsSnapshot = typeof protocolMetricsSnapshots.$inferSelect;
+export type InsertProtocolMetricsSnapshot = typeof protocolMetricsSnapshots.$inferInsert;

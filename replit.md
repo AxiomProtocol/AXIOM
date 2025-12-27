@@ -82,6 +82,26 @@ Key features include:
 -   **Governance Proposal Drafting** (`/governance/create`): Full proposal creation UI for veAXM holders with 5 proposal types, preview mode, voting power check (1000 veAXM minimum), and database submission.
 -   **Yield Vault** (`/yield-vault`): Auto-compounding AXM staking with deposit/withdraw, auto-compound toggle, compound history timeline, TVL and APY display.
 -   **Push Notifications** (`/notifications`): PWA service worker for push notifications, notification preferences by category (payments, governance, rewards, groups), browser subscription handling.
+-   **Transparency Dashboard** (`/transparency-dashboard`): Real-time protocol metrics including TVL, burned AXM, veAXM locked, insurance fund balance, SUSU pools, DePIN nodes with auto-refresh.
+
+### Wealth Engine V2 Integration APIs
+The following backend integrations connect the V2 contracts to the platform:
+-   **Fee Router API** (`/api/treasury/fee-router`): Routes 0.5% fees through AxiomFeeBurner with buyback/burn tracking
+-   **Credit Score Updates** (`/api/v2/update-credit-score`): Updates AxiomScoreSBT based on SUSU repayment history
+-   **DePIN Reward Diversions** (`/api/depin/divert-rewards`): Routes 5% of node rewards to SusuInsuranceFund
+-   **Badge NFT Minting** (`/api/badges/mint`): Mints achievement badges as NFTs with 10 badge types and 4 rarity tiers
+-   **Referral Claims** (`/api/referrals/claim`): On-chain referral reward distribution with AXM transfers
+-   **V2 Metrics** (`/api/transparency/v2-metrics`): Aggregated protocol metrics from all V2 contracts
+
+### Database Schema - Wealth Engine V2 Tables
+-   `yield_vault_positions`: Persistent storage for auto-compound staking positions
+-   `yield_vault_compound_history`: Compound event history
+-   `treasury_fee_events`: Fee routing and buyback tracking
+-   `badge_mints`: Achievement badge NFT minting records
+-   `referral_reward_claims`: On-chain referral payouts
+-   `depin_reward_diversions`: 5% insurance fund diversion tracking
+-   `credit_score_updates`: SUSU repayment to credit score changes
+-   `protocol_metrics_snapshots`: Historical protocol metrics
 
 ### Wealth Engine V2 Contracts (Sovereign Banking System)
 The following V2 contracts implement the AIP-001 Master Architectural Plan for transitioning to a Sovereign Banking System:

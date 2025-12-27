@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getOrCreateUserData, vaultData } from './index';
+import { getOrCreateUserData, updateUserData } from './index';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -21,14 +21,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ success: false, error: 'Invalid amount' });
   }
 
-  const userData = getOrCreateUserData(address);
-  userData.deposit += depositAmount;
-  vaultData[address.toLowerCase()] = userData;
+  try {
+    const userData = await getOrCreateUserData(address);
+    const newDeposit = userData.deposit + depositAmount;
+    await updateUserData(address, { deposit: newDeposit });
 
-  return res.status(200).json({
-    success: true,
-    message: 'Deposit successful',
-    txHash: '0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
-    newBalance: userData.deposit.toFixed(2),
-  });
+    return res.status(200).json({
+      success: true,
+      message: 'Deposit successful',
+      txHash: '0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+      newBalance: newDeposit.toFixed(2),
+    });
+  } catch (error: any) {
+    console.error('Error depositing:', error);
+    return res.status(500).json({ success: false, error: 'Failed to deposit' });
+  }
 }
