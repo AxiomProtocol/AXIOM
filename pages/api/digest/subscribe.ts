@@ -1,7 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import db from '../../../lib/db';
-import { weeklyDigestSubscriptions } from '../../../shared/schema';
-import { eq } from 'drizzle-orm';
+import { pool } from '../../../server/db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
@@ -14,22 +12,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const walletLower = wallet.toLowerCase();
 
-      const existing = await db.select()
-        .from(weeklyDigestSubscriptions)
-        .where(eq(weeklyDigestSubscriptions.walletAddress, walletLower))
-        .limit(1);
+      const existingResult = await pool.query(
+        `SELECT id FROM weekly_digest_subscriptions WHERE wallet_address = $1`,
+        [walletLower]
+      );
 
-      if (existing.length > 0) {
-        await db.update(weeklyDigestSubscriptions)
-          .set({ email, subscribed: true })
-          .where(eq(weeklyDigestSubscriptions.walletAddress, walletLower));
+      if (existingResult.rows.length > 0) {
+        await pool.query(
+          `UPDATE weekly_digest_subscriptions SET email = $1, subscribed = true WHERE wallet_address = $2`,
+          [email, walletLower]
+        );
       } else {
-        await db.insert(weeklyDigestSubscriptions).values({
-          walletAddress: walletLower,
-          email,
-          subscribed: true,
-          preferences: { burns: true, rewards: true, insurance: true, circles: true, nodes: true }
-        });
+        await pool.query(
+          `INSERT INTO weekly_digest_subscriptions (wallet_address, email, subscribed, preferences)
+           VALUES ($1, $2, true, $3)`,
+          [walletLower, email, JSON.stringify({ burns: true, rewards: true, insurance: true, circles: true, nodes: true })]
+        );
       }
 
       return res.status(200).json({ success: true, message: 'Subscribed successfully' });
@@ -47,9 +45,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: 'Wallet required' });
       }
 
-      await db.update(weeklyDigestSubscriptions)
-        .set({ subscribed: false })
-        .where(eq(weeklyDigestSubscriptions.walletAddress, wallet.toLowerCase()));
+      await pool.query(
+        `UPDATE weekly_digest_subscriptions SET subscribed = false WHERE wallet_address = $1`,
+        [wallet.toLowerCase()]
+      );
 
       return res.status(200).json({ success: true, message: 'Unsubscribed successfully' });
     } catch (error) {
@@ -66,10 +65,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: 'Wallet required' });
       }
 
-      const subscription = await db.select()
-        .from(weeklyDigestSubscriptions)
-        .where(eq(weeklyDigestSubscriptions.walletAddress, wallet.toLowerCase()))
-        .limit(1);
+      const result = await pool.query(
+        `SELECT email, subscribed FROM weekly_digest_subscriptions WHERE wallet_address = $1`,
+        [wallet.toLowerCase()]
+      );
 
       const latestDigest = {
         axmBurned: 125000,
@@ -84,8 +83,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       return res.status(200).json({
         success: true,
-        isSubscribed: subscription.length > 0 && subscription[0].subscribed,
-        email: subscription[0]?.email || '',
+        isSubscribed: result.rows.length > 0 && result.rows[0].subscribed,
+        email: result.rows[0]?.email || '',
         latestDigest
       });
     } catch (error) {

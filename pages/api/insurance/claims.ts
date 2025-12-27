@@ -1,8 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import db from '../../../lib/db';
-import { insuranceClaims } from '../../../shared/schema';
-import { desc, eq, sql } from 'drizzle-orm';
-import type { InferSelectModel } from 'drizzle-orm';
+import { pool } from '../../../server/db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -13,47 +10,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { limit = '10', status = 'all' } = req.query;
     const limitNum = Math.min(parseInt(limit as string) || 10, 50);
 
-    let claims;
+    let claimsQuery = `
+      SELECT id, claimant_address, susu_pool_id, susu_pool_name, claim_amount, 
+             claim_reason, status, tx_hash, submitted_at, resolved_at
+      FROM insurance_claims
+    `;
+    const params: any[] = [];
+
     if (status !== 'all') {
-      claims = await db.select()
-        .from(insuranceClaims)
-        .where(eq(insuranceClaims.status, status as string))
-        .orderBy(desc(insuranceClaims.submittedAt))
-        .limit(limitNum);
-    } else {
-      claims = await db.select()
-        .from(insuranceClaims)
-        .orderBy(desc(insuranceClaims.submittedAt))
-        .limit(limitNum);
+      claimsQuery += ` WHERE status = $1`;
+      params.push(status);
     }
 
-    const statsResult = await db.select({
-      total: sql<number>`count(*)`,
-      approved: sql<number>`count(*) filter (where status = 'approved' or status = 'paid')`,
-      pending: sql<number>`count(*) filter (where status = 'pending')`,
-      totalPaid: sql<number>`coalesce(sum(claim_amount) filter (where status = 'paid'), 0)`
-    }).from(insuranceClaims);
+    claimsQuery += ` ORDER BY submitted_at DESC LIMIT $${params.length + 1}`;
+    params.push(limitNum);
 
-    const stats = statsResult[0] || { total: 0, approved: 0, pending: 0, totalPaid: 0 };
+    const claimsResult = await pool.query(claimsQuery, params);
+
+    const statsResult = await pool.query(`
+      SELECT 
+        COUNT(*) as total,
+        COUNT(*) FILTER (WHERE status = 'approved' OR status = 'paid') as approved,
+        COUNT(*) FILTER (WHERE status = 'pending') as pending,
+        COALESCE(SUM(claim_amount) FILTER (WHERE status = 'paid'), 0) as total_paid
+      FROM insurance_claims
+    `);
+
+    const stats = statsResult.rows[0] || { total: 0, approved: 0, pending: 0, total_paid: 0 };
 
     return res.status(200).json({
       success: true,
-      claims: claims.map((c: InferSelectModel<typeof insuranceClaims>) => ({
+      claims: claimsResult.rows.map((c: any) => ({
         id: c.id,
-        claimantAddress: c.claimantAddress,
-        susuPoolName: c.susuPoolName || `SUSU Pool #${c.susuPoolId}`,
-        claimAmount: parseFloat(c.claimAmount as string) || 0,
-        claimReason: c.claimReason,
+        claimantAddress: c.claimant_address,
+        susuPoolName: c.susu_pool_name || `SUSU Pool #${c.susu_pool_id}`,
+        claimAmount: parseFloat(c.claim_amount) || 0,
+        claimReason: c.claim_reason,
         status: c.status,
-        submittedAt: c.submittedAt?.toISOString(),
-        resolvedAt: c.resolvedAt?.toISOString(),
-        txHash: c.txHash
+        submittedAt: c.submitted_at?.toISOString(),
+        resolvedAt: c.resolved_at?.toISOString(),
+        txHash: c.tx_hash
       })),
       stats: {
         total: Number(stats.total) || 0,
         approved: Number(stats.approved) || 0,
         pending: Number(stats.pending) || 0,
-        totalPaid: Number(stats.totalPaid) || 0
+        totalPaid: Number(stats.total_paid) || 0
       }
     });
   } catch (error) {

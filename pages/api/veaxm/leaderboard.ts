@@ -24,17 +24,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { limit = '20', timeframe = 'all', wallet } = req.query;
+    const { limit = '20', offset = '0', timeframe = 'all', wallet } = req.query;
     const limitNum = Math.min(parseInt(limit as string) || 20, 100);
+    const offsetNum = Math.max(parseInt(offset as string) || 0, 0);
 
-    const leaderboard = SAMPLE_ADDRESSES.slice(0, limitNum).map((addr, idx) => ({
+    const allEntries = [...Array(156)].map((_, idx) => ({
       rank: idx + 1,
-      address: addr,
-      votingPower: Math.floor(50000 - (idx * 8000) + Math.random() * 2000),
-      lockedAmount: Math.floor(30000 - (idx * 5000) + Math.random() * 1000),
-      lockDuration: 4 - Math.floor(idx / 2),
-      badges: idx === 0 ? ['💎', '🐋'] : idx < 3 ? ['💎'] : []
+      address: `0x${(idx + 1).toString().padStart(4, '0')}...${(9999 - idx).toString().padStart(4, '0')}`,
+      votingPower: Math.floor(50000 - (idx * 300) + Math.random() * 500),
+      lockedAmount: Math.floor(30000 - (idx * 180) + Math.random() * 200),
+      lockDuration: Math.max(1, 4 - Math.floor(idx / 40)),
+      badges: idx === 0 ? ['💎', '🐋'] : idx < 3 ? ['💎'] : idx < 10 ? ['🔒'] : []
     }));
+
+    const leaderboard = allEntries.slice(offsetNum, offsetNum + limitNum);
 
     let userRank = null;
     if (wallet) {
@@ -56,6 +59,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true,
       leaderboard,
       userRank,
+      pagination: {
+        total: 156,
+        limit: limitNum,
+        offset: offsetNum,
+        hasMore: offsetNum + limitNum < 156
+      },
       totalParticipants: 156,
       lastUpdated: new Date().toISOString()
     });

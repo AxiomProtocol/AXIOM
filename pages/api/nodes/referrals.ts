@@ -1,8 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import db from '../../../lib/db';
-import { nodeReferralBonuses } from '../../../shared/schema';
-import { eq, desc, sql } from 'drizzle-orm';
-import type { InferSelectModel } from 'drizzle-orm';
+import { pool } from '../../../server/db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -19,37 +16,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const walletLower = wallet.toLowerCase();
     const referralCode = walletLower.slice(2, 10).toUpperCase();
 
-    const referrals = await db.select()
-      .from(nodeReferralBonuses)
-      .where(eq(nodeReferralBonuses.referrerAddress, walletLower))
-      .orderBy(desc(nodeReferralBonuses.createdAt))
-      .limit(20);
+    const referralsResult = await pool.query(
+      `SELECT id, referred_address, node_tier, bonus_amount, status, created_at
+       FROM node_referral_bonuses
+       WHERE referrer_address = $1
+       ORDER BY created_at DESC
+       LIMIT 20`,
+      [walletLower]
+    );
 
-    const statsResult = await db.select({
-      totalReferrals: sql<number>`count(*)`,
-      totalEarned: sql<number>`coalesce(sum(bonus_amount) filter (where status = 'paid'), 0)`,
-      pendingEarnings: sql<number>`coalesce(sum(bonus_amount) filter (where status = 'pending'), 0)`
-    })
-    .from(nodeReferralBonuses)
-    .where(eq(nodeReferralBonuses.referrerAddress, walletLower));
+    const statsResult = await pool.query(
+      `SELECT 
+        COUNT(*) as total_referrals,
+        COALESCE(SUM(bonus_amount) FILTER (WHERE status = 'paid'), 0) as total_earned,
+        COALESCE(SUM(bonus_amount) FILTER (WHERE status = 'pending'), 0) as pending_earnings
+       FROM node_referral_bonuses
+       WHERE referrer_address = $1`,
+      [walletLower]
+    );
 
-    const stats = statsResult[0] || { totalReferrals: 0, totalEarned: 0, pendingEarnings: 0 };
+    const stats = statsResult.rows[0] || { total_referrals: 0, total_earned: 0, pending_earnings: 0 };
 
     return res.status(200).json({
       success: true,
       stats: {
-        totalReferrals: Number(stats.totalReferrals) || 0,
-        totalEarned: Number(stats.totalEarned) || 0,
-        pendingEarnings: Number(stats.pendingEarnings) || 0,
+        totalReferrals: Number(stats.total_referrals) || 0,
+        totalEarned: Number(stats.total_earned) || 0,
+        pendingEarnings: Number(stats.pending_earnings) || 0,
         referralCode
       },
-      referrals: referrals.map((r: InferSelectModel<typeof nodeReferralBonuses>) => ({
+      referrals: referralsResult.rows.map((r: any) => ({
         id: r.id,
-        referredAddress: r.referredAddress,
-        nodeTier: r.nodeTier,
-        bonusAmount: parseFloat(r.bonusAmount as string) || 0,
+        referredAddress: r.referred_address,
+        nodeTier: r.node_tier,
+        bonusAmount: parseFloat(r.bonus_amount) || 0,
         status: r.status,
-        createdAt: r.createdAt?.toISOString()
+        createdAt: r.created_at?.toISOString()
       }))
     });
   } catch (error) {

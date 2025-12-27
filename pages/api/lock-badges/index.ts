@@ -1,8 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import db from '../../../lib/db';
-import { lockChallengeBadges } from '../../../shared/schema';
-import { eq } from 'drizzle-orm';
-import type { InferSelectModel } from 'drizzle-orm';
+import { pool } from '../../../server/db';
 
 const BADGE_DEFINITIONS = [
   { id: 'committed', name: 'Committed', requiredYears: 1, minAmount: 100, rarity: 'Common' },
@@ -21,22 +18,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: 'Wallet required' });
       }
 
-      const earnedBadges = await db.select()
-        .from(lockChallengeBadges)
-        .where(eq(lockChallengeBadges.walletAddress, wallet.toLowerCase()));
+      const result = await pool.query(
+        `SELECT id, badge_type, badge_name, lock_duration_years, lock_amount, unlocked_at, display_on_profile
+         FROM lock_challenge_badges WHERE wallet_address = $1`,
+        [wallet.toLowerCase()]
+      );
 
       return res.status(200).json({
         success: true,
-        badges: earnedBadges.map((b: InferSelectModel<typeof lockChallengeBadges>) => ({
+        badges: result.rows.map((b: any) => ({
           id: b.id,
-          badgeType: b.badgeType,
-          badgeName: b.badgeName,
-          lockDurationYears: b.lockDurationYears,
-          lockAmount: parseFloat(b.lockAmount as string) || 0,
-          unlockedAt: b.unlockedAt?.toISOString(),
-          displayOnProfile: b.displayOnProfile
+          badgeType: b.badge_type,
+          badgeName: b.badge_name,
+          lockDurationYears: b.lock_duration_years,
+          lockAmount: parseFloat(b.lock_amount) || 0,
+          unlockedAt: b.unlocked_at?.toISOString(),
+          displayOnProfile: b.display_on_profile
         })),
-        earnedBadgeIds: earnedBadges.map((b: InferSelectModel<typeof lockChallengeBadges>) => b.badgeType)
+        earnedBadgeIds: result.rows.map((b: any) => b.badge_type)
       });
     } catch (error) {
       console.error('Get badges error:', error);
@@ -53,11 +52,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const walletLower = wallet.toLowerCase();
-      const existingBadges = await db.select()
-        .from(lockChallengeBadges)
-        .where(eq(lockChallengeBadges.walletAddress, walletLower));
+      const existingResult = await pool.query(
+        `SELECT badge_type FROM lock_challenge_badges WHERE wallet_address = $1`,
+        [walletLower]
+      );
 
-      const existingIds = new Set(existingBadges.map((b: InferSelectModel<typeof lockChallengeBadges>) => b.badgeType));
+      const existingIds = new Set(existingResult.rows.map((b: any) => b.badge_type));
       
       const eligibleBadges = BADGE_DEFINITIONS.filter(badge => 
         lockYears >= badge.requiredYears && 
@@ -65,23 +65,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         !existingIds.has(badge.id)
       );
 
-      const newBadges = [];
+      const newBadges: string[] = [];
       for (const badge of eligibleBadges) {
-        const inserted = await db.insert(lockChallengeBadges).values({
-          walletAddress: walletLower,
-          badgeType: badge.id,
-          badgeName: badge.name,
-          lockDurationYears: lockYears,
-          lockAmount: lockAmount.toString(),
-          displayOnProfile: true,
-          metadata: { rarity: badge.rarity }
-        }).returning();
-        newBadges.push(...inserted);
+        await pool.query(
+          `INSERT INTO lock_challenge_badges (wallet_address, badge_type, badge_name, lock_duration_years, lock_amount, display_on_profile, metadata)
+           VALUES ($1, $2, $3, $4, $5, true, $6)`,
+          [walletLower, badge.id, badge.name, lockYears, lockAmount.toString(), JSON.stringify({ rarity: badge.rarity })]
+        );
+        newBadges.push(badge.id);
       }
 
       return res.status(200).json({
         success: true,
-        newBadges: newBadges.map(b => b.badgeType),
+        newBadges,
         message: newBadges.length > 0 ? `Unlocked ${newBadges.length} new badge(s)!` : 'No new badges unlocked'
       });
     } catch (error) {
