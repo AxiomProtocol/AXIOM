@@ -79,6 +79,9 @@ Key features include:
 -   **Referral System** (`/referrals`): Full referral tracking with unique referral codes, reward history, and community leaderboard.
 -   **Member Badges** (`/badges`): Achievement system with 10 badge types across 4 rarity tiers (Common, Rare, Epic, Legendary) displayed on profiles.
 -   **Group Analytics** (`/group-analytics`): SUSU group performance dashboard with completion rates, trust scores, sorting options, and group comparisons.
+-   **Governance Proposal Drafting** (`/governance/create`): Full proposal creation UI for veAXM holders with 5 proposal types, preview mode, voting power check (1000 veAXM minimum), and database submission.
+-   **Yield Vault** (`/yield-vault`): Auto-compounding AXM staking with deposit/withdraw, auto-compound toggle, compound history timeline, TVL and APY display.
+-   **Push Notifications** (`/notifications`): PWA service worker for push notifications, notification preferences by category (payments, governance, rewards, groups), browser subscription handling.
 
 ### Wealth Engine V2 Contracts (Sovereign Banking System)
 The following V2 contracts implement the AIP-001 Master Architectural Plan for transitioning to a Sovereign Banking System:
