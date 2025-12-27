@@ -131,6 +131,26 @@ export const SUSTAINABILITY_CONTRACTS = {
   SUSTAINABILITY: '0xAf4dF8a7733BAB64b7Ce83F2494d6446eF9eC046'
 } as const;
 
+// AIP-001 V2 Contracts - Sovereign Banking System (26-29)
+// Deployed: December 27, 2025 | All Verified on Blockscout
+export const V2_SOVEREIGN_BANKING_CONTRACTS = {
+  // Contract 26: AxiomScoreSBT (Credit Scoring)
+  // ERC-5192 Soulbound Token for on-chain credit scoring (300-850 range)
+  AXIOM_SCORE_SBT: '0x8Ae0f77e2cB2dED0496Dbe2F827be38F5756B008',
+  
+  // Contract 27: SusuInsuranceFund (Default Protection)
+  // 5% of node rewards diverted to cover broken SUSU circles
+  SUSU_INSURANCE_FUND: '0x7B69ce0d83f45C2dBa3e5B73076beA8b1Be1271F',
+  
+  // Contract 28: veAXM (Vote-Escrowed AXM)
+  // Curve-style locking (1-4 years) for governance and real yield
+  VE_AXM: '0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046',
+  
+  // Contract 29: AxiomFeeBurner (Real Yield)
+  // 0.5% fee switch with buyback/burn mechanism
+  AXIOM_FEE_BURNER: '0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94'
+} as const;
+
 // Community Savings Contracts (24-25)
 export const COMMUNITY_SAVINGS_CONTRACTS = {
   // Contract 24: AxiomSusuHub (Rotating Savings Groups - Pooled Custody)
@@ -154,6 +174,7 @@ export const ALL_CONTRACTS = {
   ...MARKET_CONTRACTS,
   ...COMMUNITY_CONTRACTS,
   ...SUSTAINABILITY_CONTRACTS,
+  ...V2_SOVEREIGN_BANKING_CONTRACTS,
   ...COMMUNITY_SAVINGS_CONTRACTS
 } as const;
 
