@@ -69,6 +69,11 @@ Key features include:
 -   **Enhanced Analytics Dashboard**: Real-time platform metrics.
 -   **Notification Preferences System**: User-configurable notification toggles.
 -   **Email Notification Testing**: SendGrid integration verification.
+-   **V2 Analytics Dashboard** (`/v2-analytics`): Unified dashboard for Sovereign Banking metrics with tabs for Protocol Overview (fee burner, insurance fund, veAXM rewards), Credit & Scoring (credit score card + history chart), and Governance (proposal voting with veAXM power). Includes TokenomicsExplainer accordion component.
+-   **V2 Admin Management** (`/admin/v2-management`): Admin panel for V2 contract management with pause/unpause controls, parameter settings, and action logging. Wallet-gated to authorized addresses.
+-   **veAXM Staking Mode**: Enhanced staking page with mode toggle between "Regular Staking" and "veAXM Vote Lock" with 1-4 year lock durations, voting power preview, and rewards claiming.
+-   **On-Chain Credit Score Display**: CreditScoreCard component with FICO-like visualization (300-850 range), tier display, payment history metrics, and CreditScoreHistory timeline chart.
+-   **Governance Voting UI**: Proposal voting interface for veAXM holders with voting power display, for/against voting, and proposal status tracking.
 
 ### AIP-001 V2 Contracts (Sovereign Banking System)
 The following V2 contracts implement the AIP-001 Master Architectural Plan for transitioning to a Sovereign Banking System:
