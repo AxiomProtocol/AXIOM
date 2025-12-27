@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import { ethers } from 'ethers';
+import NodeROICalculator from '../components/NodeROICalculator';
 
 const Toaster = dynamic(
   () => import('react-hot-toast').then((mod) => mod.Toaster),
@@ -949,6 +950,17 @@ export default function AxiomDePINNodes() {
                   View Options
                 </button>
               </div>
+            </div>
+
+            {/* ROI Calculator */}
+            <div style={{ marginBottom: '2rem' }}>
+              <NodeROICalculator onSelectTier={(tierId) => {
+                const tier = NODE_TIERS.find(t => t.tierId === tierId);
+                if (tier) {
+                  if (tier.category === 0) setActiveTab('lite');
+                  else setActiveTab('standard');
+                }
+              }} />
             </div>
 
             {/* IoT Network Telemetry */}

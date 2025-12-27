@@ -82,7 +82,14 @@ Key features include:
 -   **Governance Proposal Drafting** (`/governance/create`): Full proposal creation UI for veAXM holders with 5 proposal types, preview mode, voting power check (1000 veAXM minimum), and database submission.
 -   **Yield Vault** (`/yield-vault`): Auto-compounding AXM staking with deposit/withdraw, auto-compound toggle, compound history timeline, TVL and APY display.
 -   **Push Notifications** (`/notifications`): PWA service worker for push notifications, notification preferences by category (payments, governance, rewards, groups), browser subscription handling.
--   **Transparency Dashboard** (`/transparency-dashboard`): Real-time protocol metrics including TVL, burned AXM, veAXM locked, insurance fund balance, SUSU pools, DePIN nodes with auto-refresh.
+-   **Transparency Dashboard** (`/transparency-dashboard`): Real-time protocol metrics including TVL, burned AXM, veAXM locked, insurance fund balance, SUSU pools, DePIN nodes with auto-refresh. Features Protocol Health Score and SUSU Insurance Progress components.
+
+### Revenue Strengthening Components
+-   **VeAXMLockCalculator**: Interactive lock duration comparison tool showing projected rewards for 1-4 year locks, integrated into staking page.
+-   **NodeROICalculator**: DePIN node ROI calculator with tier comparison, break-even analysis, and uptime adjustment, integrated into axiom-nodes page.
+-   **ProtocolHealthScore**: Aggregate protocol health score (0-100) based on TVL, burns, governance, insurance, and community activity.
+-   **FeeContributionWidget**: Shows 0.5% fee contribution breakdown (50% burned, 50% to veAXM) during transactions.
+-   **SUSUInsuranceProgress**: Visual insurance fund coverage indicator showing fund balance, claims history, and per-circle protection.
 
 ### Wealth Engine V2 Integration APIs
 The following backend integrations connect the V2 contracts to the platform:

@@ -3,6 +3,7 @@ import Layout from '../components/Layout';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import { ethers } from 'ethers';
 import { CORE_CONTRACTS, NETWORK_CONFIG, V2_SOVEREIGN_BANKING_CONTRACTS } from '../shared/contracts';
+import VeAXMLockCalculator from '../components/VeAXMLockCalculator';
 
 const VE_AXM_ABI = [
   "function balanceOf(address user) external view returns (uint256)",
@@ -608,6 +609,17 @@ export default function StakingPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div className="mt-8">
+                <VeAXMLockCalculator 
+                  axmBalance={stats?.userBalance || '0'}
+                  currentLockYears={hasActiveLock && !isLockExpired ? Math.ceil((veStats?.unlockTime || 0) * 1000 - Date.now()) / (365 * 24 * 60 * 60 * 1000) : undefined}
+                  onSelectDuration={(years) => {
+                    const duration = LOCK_DURATIONS.find(d => Math.round(d.value / (365 * 24 * 60 * 60)) === years);
+                    if (duration) setSelectedDuration(duration);
+                  }}
+                />
               </div>
             </>
           ) : (

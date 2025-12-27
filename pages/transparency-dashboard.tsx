@@ -1,6 +1,8 @@
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import ProtocolHealthScore from '../components/ProtocolHealthScore';
+import SUSUInsuranceProgress from '../components/SUSUInsuranceProgress';
 
 interface Metrics {
   tvl: {
@@ -285,6 +287,20 @@ export default function TransparencyDashboard() {
                   color="green"
                 />
               </div>
+            </section>
+
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ProtocolHealthScore metrics={metrics} />
+              <SUSUInsuranceProgress 
+                stats={{
+                  balance: parseFloat(metrics.insurance.balance) || 0,
+                  totalCoverage: parseFloat(metrics.tvl.susu) * 0.1 || 0,
+                  activeCircles: metrics.susu.totalPools || 0,
+                  totalPooled: parseFloat(metrics.tvl.susu) || 0,
+                  claimsPaid: parseFloat(metrics.insurance.totalClaimsPaid) || 0,
+                  pendingClaims: metrics.insurance.pendingClaims || 0
+                }}
+              />
             </section>
 
             <section className="bg-gray-800/50 rounded-2xl p-8 border border-gray-700">
