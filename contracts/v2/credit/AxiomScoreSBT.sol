@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
@@ -9,13 +10,18 @@ import "../interfaces/IAxiomScore.sol";
 /**
  * @title AxiomScoreSBT
  * @notice Soulbound Token (ERC-5192 compliant) for on-chain credit scoring
- * @dev Non-transferable tokens representing credit history and repayment behavior
+ * @dev Extends ERC-721 with transfers disabled for true soulbound behavior
  * 
  * AIP-001 Implementation:
  * - Soulbound Tokens for repayment history (non-transferable)
  * - On-chain credit scoring (Axiom Score 300-850 range)
  * - Integration hook for SUSU V2 credit-gated joining
- * - Privacy-preserving score tiers (no raw data exposed)
+ * - Full ERC-721 compatibility for wallet/indexer recognition
+ * 
+ * ERC-5192 Compliance:
+ * - locked() returns true for all tokens
+ * - Emits Locked event on mint
+ * - All transfer functions revert
  * 
  * Score Calculation:
  * - Base score: 500
@@ -25,7 +31,7 @@ import "../interfaces/IAxiomScore.sol";
  * - Defaults: -100 points each
  * - Maximum score: 850, Minimum: 300
  */
-contract AxiomScoreSBT is AccessControl, ReentrancyGuard, Pausable, IAxiomScore {
+contract AxiomScoreSBT is ERC721, AccessControl, ReentrancyGuard, Pausable, IAxiomScore {
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant SCORE_UPDATER_ROLE = keccak256("SCORE_UPDATER_ROLE");
@@ -39,51 +45,32 @@ contract AxiomScoreSBT is AccessControl, ReentrancyGuard, Pausable, IAxiomScore 
     uint256 public constant LATE_PAYMENT_PENALTY = 10;
     uint256 public constant DEFAULT_PENALTY = 100;
 
-    string public name = "Axiom Credit Score";
-    string public symbol = "AXMS";
-
     uint256 public totalTokens;
     uint256 public totalProfiles;
 
-    struct ScoreToken {
-        uint256 tokenId;
-        address owner;
-        uint256 mintedAt;
-        bool locked;
-    }
-
     mapping(address => CreditProfile) private profiles;
-    mapping(address => ScoreToken) private tokens;
-    mapping(uint256 => address) private tokenOwners;
+    mapping(address => uint256) private userTokenId;
     mapping(address => uint256[]) private paymentHistory;
 
-    event TokenMinted(address indexed owner, uint256 indexed tokenId);
     event Locked(uint256 indexed tokenId);
     event ProfileCreated(address indexed user, uint256 initialScore);
 
-    constructor() {
+    error SoulboundTokenNonTransferable();
+
+    constructor() ERC721("Axiom Credit Score", "AXMS") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(SCORE_UPDATER_ROLE, msg.sender);
     }
 
     function locked(uint256 tokenId) external view returns (bool) {
-        require(tokenOwners[tokenId] != address(0), "Token does not exist");
+        _requireOwned(tokenId);
         return true;
-    }
-
-    function balanceOf(address owner) external view returns (uint256) {
-        return tokens[owner].tokenId != 0 ? 1 : 0;
-    }
-
-    function ownerOf(uint256 tokenId) external view returns (address) {
-        address owner = tokenOwners[tokenId];
-        require(owner != address(0), "Token does not exist");
-        return owner;
     }
 
     function initializeProfile(address user) external whenNotPaused nonReentrant returns (uint256) {
         require(profiles[user].lastUpdated == 0, "Profile already exists");
+        require(user != address(0), "Invalid user address");
         
         totalProfiles++;
         totalTokens++;
@@ -97,17 +84,11 @@ contract AxiomScoreSBT is AccessControl, ReentrancyGuard, Pausable, IAxiomScore 
             isActive: true
         });
 
-        tokens[user] = ScoreToken({
-            tokenId: totalTokens,
-            owner: user,
-            mintedAt: block.timestamp,
-            locked: true
-        });
+        userTokenId[user] = totalTokens;
         
-        tokenOwners[totalTokens] = user;
+        _safeMint(user, totalTokens);
 
         emit ProfileCreated(user, BASE_SCORE);
-        emit TokenMinted(user, totalTokens);
         emit Locked(totalTokens);
         emit ScoreTokenMinted(user, totalTokens);
 
@@ -130,6 +111,10 @@ contract AxiomScoreSBT is AccessControl, ReentrancyGuard, Pausable, IAxiomScore 
             return false;
         }
         return profiles[user].score >= minScore;
+    }
+
+    function getTokenId(address user) external view returns (uint256) {
+        return userTokenId[user];
     }
 
     function recordRepayment(
@@ -188,8 +173,8 @@ contract AxiomScoreSBT is AccessControl, ReentrancyGuard, Pausable, IAxiomScore 
 
     function recordSusuCompletion(
         address user, 
-        uint256 poolId, 
-        uint256 totalContributed
+        uint256, // poolId - unused but required by interface
+        uint256  // totalContributed - unused but required by interface
     ) external override onlyRole(SUSU_CONTRACT_ROLE) whenNotPaused {
         require(profiles[user].lastUpdated > 0, "Profile does not exist");
         
@@ -209,7 +194,7 @@ contract AxiomScoreSBT is AccessControl, ReentrancyGuard, Pausable, IAxiomScore 
 
     function recordLatePayment(
         address user, 
-        uint256 poolId
+        uint256 // poolId - unused
     ) external onlyRole(SUSU_CONTRACT_ROLE) whenNotPaused {
         require(profiles[user].lastUpdated > 0, "Profile does not exist");
         
@@ -244,6 +229,24 @@ contract AxiomScoreSBT is AccessControl, ReentrancyGuard, Pausable, IAxiomScore 
         return paymentHistory[user].length;
     }
 
+    function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
+        address from = _ownerOf(tokenId);
+        
+        if (from != address(0) && to != address(0)) {
+            revert SoulboundTokenNonTransferable();
+        }
+        
+        return super._update(to, tokenId, auth);
+    }
+
+    function approve(address, uint256) public pure override {
+        revert SoulboundTokenNonTransferable();
+    }
+
+    function setApprovalForAll(address, bool) public pure override {
+        revert SoulboundTokenNonTransferable();
+    }
+
     function grantSusuContractRole(address susuContract) external onlyRole(ADMIN_ROLE) {
         _grantRole(SUSU_CONTRACT_ROLE, susuContract);
     }
@@ -260,7 +263,7 @@ contract AxiomScoreSBT is AccessControl, ReentrancyGuard, Pausable, IAxiomScore 
         _unpause();
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, AccessControl) returns (bool) {
         return 
             interfaceId == 0xb45a3c0e || // ERC-5192
             super.supportsInterface(interfaceId);
