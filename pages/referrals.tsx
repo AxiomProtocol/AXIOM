@@ -27,6 +27,7 @@ export default function ReferralsPage() {
   const [stats, setStats] = useState<ReferralStats | null>(null);
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
@@ -36,8 +37,13 @@ export default function ReferralsPage() {
       fetchLeaderboard();
     } else {
       setLoading(false);
+      setLeaderboardLoading(false);
     }
   }, [address]);
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, []);
 
   const fetchReferralData = async () => {
     try {
@@ -55,6 +61,7 @@ export default function ReferralsPage() {
   };
 
   const fetchLeaderboard = async () => {
+    setLeaderboardLoading(true);
     try {
       const res = await fetch('/api/referrals/leaderboard');
       const data = await res.json();
@@ -63,6 +70,8 @@ export default function ReferralsPage() {
       }
     } catch (err) {
       console.error('Error fetching leaderboard:', err);
+    } finally {
+      setLeaderboardLoading(false);
     }
   };
 
@@ -220,8 +229,15 @@ export default function ReferralsPage() {
                       <p className="text-yellow-400 font-bold">{entry.earned} AXM</p>
                     </div>
                   ))}
-                  {leaderboard.length === 0 && (
-                    <p className="text-gray-400 text-center py-4">Leaderboard loading...</p>
+                  {leaderboardLoading && leaderboard.length === 0 && (
+                    <div className="animate-pulse space-y-3">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="h-12 bg-gray-700 rounded-lg"></div>
+                      ))}
+                    </div>
+                  )}
+                  {!leaderboardLoading && leaderboard.length === 0 && (
+                    <p className="text-gray-400 text-center py-4">No referrers yet</p>
                   )}
                 </div>
               </div>

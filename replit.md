@@ -74,6 +74,11 @@ Key features include:
 -   **veAXM Staking Mode**: Enhanced staking page with mode toggle between "Regular Staking" and "veAXM Vote Lock" with 1-4 year lock durations, voting power preview, and rewards claiming.
 -   **On-Chain Credit Score Display**: CreditScoreCard component with FICO-like visualization (300-850 range), tier display, payment history metrics, and CreditScoreHistory timeline chart.
 -   **Governance Voting UI**: Proposal voting interface for veAXM holders with voting power display, for/against voting, and proposal status tracking.
+-   **Real Yield Rewards** (`/rewards`): Unified rewards page with veAXM claim functionality, claim history timeline, and interactive yield calculator with lock duration projections.
+-   **Credit Builder** (`/credit-builder`): Educational page showing score improvement actions, tier benefits (Poor to Excellent), and on-chain credit score integration.
+-   **Referral System** (`/referrals`): Full referral tracking with unique referral codes, reward history, and community leaderboard.
+-   **Member Badges** (`/badges`): Achievement system with 10 badge types across 4 rarity tiers (Common, Rare, Epic, Legendary) displayed on profiles.
+-   **Group Analytics** (`/group-analytics`): SUSU group performance dashboard with completion rates, trust scores, sorting options, and group comparisons.
 
 ### Wealth Engine V2 Contracts (Sovereign Banking System)
 The following V2 contracts implement the AIP-001 Master Architectural Plan for transitioning to a Sovereign Banking System:
