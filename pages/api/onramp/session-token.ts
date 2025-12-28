@@ -37,23 +37,30 @@ function base64UrlEncode(input: Buffer | string): string {
 function createPrivateKeyFromCDP(rawKey: string): crypto.KeyObject {
   let keyData = rawKey.trim();
   
+  console.log('Raw key starts with:', keyData.substring(0, 30));
+  console.log('Raw key length:', keyData.length);
+  
   keyData = keyData.replace(/\\n/g, '\n');
   
-  try {
-    const parsed = JSON.parse(keyData);
-    console.log('Parsed CDP JSON, extracting privateKey');
-    if (parsed.privateKey) {
-      keyData = parsed.privateKey.replace(/\\n/g, '\n');
-    } else if (parsed.key) {
-      keyData = parsed.key.replace(/\\n/g, '\n');
-    } else if (parsed.apiSecret) {
-      keyData = parsed.apiSecret.replace(/\\n/g, '\n');
+  if (keyData.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(keyData);
+      console.log('Parsed CDP JSON, keys:', Object.keys(parsed));
+      if (parsed.privateKey) {
+        keyData = parsed.privateKey.replace(/\\n/g, '\n');
+        console.log('Extracted privateKey, starts with:', keyData.substring(0, 30));
+      } else if (parsed.key) {
+        keyData = parsed.key.replace(/\\n/g, '\n');
+      } else if (parsed.apiSecret) {
+        keyData = parsed.apiSecret.replace(/\\n/g, '\n');
+      }
+    } catch (e: any) {
+      console.log('JSON parse failed:', e.message);
     }
-  } catch {
   }
   
   if (keyData.includes('-----BEGIN')) {
-    console.log('Parsing PEM key');
+    console.log('Parsing PEM key directly');
     return crypto.createPrivateKey(keyData);
   }
   
