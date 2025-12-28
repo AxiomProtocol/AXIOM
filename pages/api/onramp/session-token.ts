@@ -74,12 +74,9 @@ function createJWT(keyId: string, privateKeyBase64: string): string {
 
   const sign = crypto.createSign('SHA256');
   sign.update(message);
-  const signature = sign.sign(privateKey);
+  const signature = sign.sign({ key: privateKey, dsaEncoding: 'ieee-p1363' });
   
-  const r = signature.slice(4, 36);
-  const s = signature.slice(38, 70);
-  const rawSig = Buffer.concat([r, s]);
-  const base64Sig = rawSig.toString('base64')
+  const base64Sig = signature.toString('base64')
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=/g, '');
