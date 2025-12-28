@@ -52,6 +52,18 @@ These V2 contracts implement the AIP-001 Master Architectural Plan for the Sover
 -   **veAXM**: Vote-Escrowed AXM with Curve-style locking (1-4 years), time-weighted voting power, and epoch-based reward distribution.
 -   **AxiomFeeBurner**: 0.5% fee switch on banking products with automatic AXM buyback/burn and 50% distribution to veAXM holders.
 
+## Business Entity Information
+-   **Legal Entity:** Axiom Nexus LLC
+-   **Manager:** Clarence Fuqua (Sole Member)
+-   **EIN:** 41-3277381
+-   **Name Control:** AXIO
+-   **State:** Mississippi
+-   **Filing Number:** 1522557
+-   **Date Established:** December 26, 2025
+-   **NAICS Code:** 541611 - Administrative Management and General Management Consulting Services
+-   **Registered Agent:** Northwest Registered Agent, Inc.
+-   **Address:** 270 Trace Colony Park STE B, Ridgeland, MS 39157
+
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
 -   **Blockchain RPC Provider:** Alchemy API
