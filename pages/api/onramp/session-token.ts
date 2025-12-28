@@ -164,6 +164,7 @@ function createJWT(keyName: string, privateKey: crypto.KeyObject): string {
   const alg = keyType === 'ed25519' ? 'EdDSA' : 'ES256';
   
   console.log('Creating JWT with algorithm:', alg, 'keyType:', keyType);
+  console.log('Using key name:', keyName);
   
   const header = {
     alg,
@@ -178,8 +179,8 @@ function createJWT(keyName: string, privateKey: crypto.KeyObject): string {
     nbf: now,
     exp: now + 120,
     sub: keyName,
-    aud: ['cdp_service'],
-    uri: 'POST api.developer.coinbase.com/onramp/v1/token'
+    aud: ['https://api.developer.coinbase.com'],
+    uri: 'POST /onramp/v1/token'
   };
 
   const encodedHeader = base64UrlEncode(JSON.stringify(header));
