@@ -184,6 +184,48 @@ export default function AboutUs() {
           </div>
         </div>
 
+        <div className="bg-gray-50 rounded-3xl p-8 md:p-12 mb-16">
+          <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">Business Entity</h2>
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6">
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <span className="block text-gray-500 text-xs mb-1">Legal Entity</span>
+                  <span className="font-semibold text-gray-900">Axiom Nexus LLC</span>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <span className="block text-gray-500 text-xs mb-1">Manager</span>
+                  <span className="font-semibold text-gray-900">Clarence Fuqua (Sole Member)</span>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <span className="block text-gray-500 text-xs mb-1">State of Formation</span>
+                  <span className="font-semibold text-gray-900">Mississippi</span>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <span className="block text-gray-500 text-xs mb-1">Date Established</span>
+                  <span className="font-semibold text-gray-900">December 26, 2025</span>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <span className="block text-gray-500 text-xs mb-1">EIN</span>
+                  <span className="font-semibold text-gray-900">41-3277381</span>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <span className="block text-gray-500 text-xs mb-1">Filing Number</span>
+                  <span className="font-semibold text-gray-900">1522557</span>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg md:col-span-2">
+                  <span className="block text-gray-500 text-xs mb-1">Business Address</span>
+                  <span className="font-semibold text-gray-900">270 Trace Colony Park STE B, Ridgeland, MS 39157</span>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg md:col-span-2">
+                  <span className="block text-gray-500 text-xs mb-1">Registered Agent</span>
+                  <span className="font-semibold text-gray-900">Northwest Registered Agent, Inc.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-3xl p-8 md:p-12 text-center text-white">
           <h2 className="text-3xl font-bold mb-4">Join the Movement</h2>
           <p className="text-gray-300 mb-8 max-w-2xl mx-auto">

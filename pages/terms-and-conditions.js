@@ -6,8 +6,38 @@ export default function TermsAndConditions() {
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-3">Terms & Conditions</h1>
-          <p className="text-lg text-gray-600">Please read these terms carefully before using Axiom Smart City services.</p>
-          <p className="text-sm text-gray-500 mt-2">Last updated: November 2025</p>
+          <p className="text-lg text-gray-600">Please read these terms carefully before using Axiom Nexus LLC services.</p>
+          <p className="text-sm text-gray-500 mt-2">Last updated: December 2025</p>
+        </div>
+
+        <div className="bg-gray-100 rounded-2xl p-6 mb-8">
+          <h3 className="font-bold text-gray-900 mb-3">Business Entity Information</h3>
+          <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
+            <div>
+              <span className="font-medium text-gray-700">Legal Entity:</span> Axiom Nexus LLC
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">Manager:</span> Clarence Fuqua (Sole Member)
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">State of Formation:</span> Mississippi
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">Filing Number:</span> 1522557
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">EIN:</span> 41-3277381
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">Date Established:</span> December 26, 2025
+            </div>
+            <div className="md:col-span-2">
+              <span className="font-medium text-gray-700">Registered Agent:</span> Northwest Registered Agent, Inc.
+            </div>
+            <div className="md:col-span-2">
+              <span className="font-medium text-gray-700">Address:</span> 270 Trace Colony Park STE B, Ridgeland, MS 39157
+            </div>
+          </div>
         </div>
 
         <div className="space-y-8">
@@ -102,10 +132,15 @@ export default function TermsAndConditions() {
 
           <div className="bg-gradient-to-br from-amber-50 to-white border border-amber-200 rounded-2xl p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Contact</h2>
-            <p className="text-gray-600">
+            <p className="text-gray-600 mb-4">
               For questions about these Terms, please contact us at{' '}
               <span className="text-amber-600 font-medium">legal@axiomcity.io</span>
             </p>
+            <div className="text-sm text-gray-500 pt-4 border-t border-amber-200">
+              <p className="font-medium text-gray-700 mb-1">Axiom Nexus LLC</p>
+              <p>270 Trace Colony Park STE B</p>
+              <p>Ridgeland, MS 39157</p>
+            </div>
           </div>
         </div>
       </div>

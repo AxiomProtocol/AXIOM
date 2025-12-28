@@ -229,7 +229,7 @@ export default function Layout({ children, showWallet = true }) {
 
           <div className="border-t border-gray-200 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-500">
-              © 2025 Axiom Protocol. All rights reserved.
+              © 2025 Axiom Nexus LLC. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-500">Deployed on</span>
