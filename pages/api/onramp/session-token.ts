@@ -18,12 +18,28 @@ function isValidEthAddress(address: string): boolean {
 }
 
 function getClientIP(req: NextApiRequest): string {
+  // Check various headers that proxies/load balancers use
+  const cfConnectingIp = req.headers['cf-connecting-ip'];
+  const xRealIp = req.headers['x-real-ip'];
   const forwarded = req.headers['x-forwarded-for'];
+  
+  if (cfConnectingIp) {
+    return Array.isArray(cfConnectingIp) ? cfConnectingIp[0] : cfConnectingIp;
+  }
+  
+  if (xRealIp) {
+    return Array.isArray(xRealIp) ? xRealIp[0] : xRealIp;
+  }
+  
   if (forwarded) {
     const ips = (Array.isArray(forwarded) ? forwarded[0] : forwarded).split(',');
-    return ips[0].trim();
+    const clientIp = ips[0].trim();
+    // Strip IPv6 prefix if present
+    return clientIp.replace(/^::ffff:/, '');
   }
-  return req.socket?.remoteAddress || '0.0.0.0';
+  
+  const remoteAddr = req.socket?.remoteAddress || '0.0.0.0';
+  return remoteAddr.replace(/^::ffff:/, '');
 }
 
 function base64UrlEncode(input: Buffer | string): string {
