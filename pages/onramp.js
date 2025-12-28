@@ -262,7 +262,7 @@ export default function OnrampPage() {
               <div className="lg:col-span-2 space-y-6">
                 <div>
                   <h2 className="text-xl font-semibold text-white mb-4">1. Select Provider</h2>
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid gap-4">
                     {providers.map(provider => (
                       <OnrampProviderCard
                         key={provider.id}

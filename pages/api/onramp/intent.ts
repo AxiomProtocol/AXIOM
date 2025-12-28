@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Invalid wallet address' });
     }
 
-    const validProviders: OnrampProvider[] = ['moonpay', 'ramp', 'transak', 'coinbase'];
+    const validProviders: OnrampProvider[] = ['coinbase'];
     if (!provider || !validProviders.includes(provider)) {
       return res.status(400).json({ error: 'Invalid provider' });
     }
@@ -61,28 +61,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     let widgetUrl: string | null = null;
 
-    if (provider === 'transak') {
-      const transakResponse = await fetch(
-        `${process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000'}/api/onramp/transak-session`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ walletAddress, asset, fiatCurrency, fiatAmount, chainId })
-        }
-      );
-      if (transakResponse.ok) {
-        const transakData = await transakResponse.json();
-        widgetUrl = transakData.widgetUrl;
-      }
-    } else {
-      widgetUrl = getProviderWidgetUrl(provider as OnrampProvider, {
-        walletAddress,
-        asset,
-        fiatCurrency,
-        fiatAmount,
-        chainId
-      });
-    }
+    widgetUrl = getProviderWidgetUrl(provider as OnrampProvider, {
+      walletAddress,
+      asset,
+      fiatCurrency,
+      fiatAmount,
+      chainId
+    });
 
     const client = await pool.connect();
     try {
