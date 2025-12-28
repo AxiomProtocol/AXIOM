@@ -264,9 +264,17 @@ export default async function handler(
       console.error('CDP API error:', response.status, response.statusText);
       console.error('CDP API response body:', errorData);
       console.error('Request used key ID:', cdpKeyId);
+      
+      let userMessage = 'Unable to connect to payment provider. Please try again.';
+      if (response.status === 401) {
+        userMessage = 'Payment service authentication failed. Please contact support.';
+      } else if (response.status === 400 && errorData.includes('private IP')) {
+        userMessage = 'Please try again from your browser.';
+      }
+      
       return res.status(200).json({ 
         token: undefined,
-        error: `CDP API error: ${response.status}`
+        error: userMessage
       });
     }
 

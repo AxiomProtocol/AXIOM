@@ -16,6 +16,7 @@ export default function BuyAXMPage() {
   const [fiatAmount, setFiatAmount] = useState('100');
   const [purchaseComplete, setPurchaseComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [purchaseError, setPurchaseError] = useState(null);
 
   const isConnected = walletState.isConnected;
   const walletAddress = walletState.address;
@@ -27,48 +28,32 @@ export default function BuyAXMPage() {
     }
 
     setIsProcessing(true);
+    setPurchaseError(null);
+    
     try {
-      let widgetOpened = false;
-      
-      try {
-        const tokenRes = await fetch('/api/onramp/session-token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            walletAddress,
-            assets: [selectedAsset, 'ETH', 'USDC'],
-            networks: ['arbitrum']
-          })
-        });
+      const tokenRes = await fetch('/api/onramp/session-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress,
+          assets: [selectedAsset, 'ETH', 'USDC'],
+          networks: ['arbitrum']
+        })
+      });
 
-        const tokenData = await tokenRes.json();
-        
-        if (tokenData.token) {
-          const url = `https://pay.coinbase.com/buy/select-asset?sessionToken=${tokenData.token}&defaultAsset=${selectedAsset}&presetFiatAmount=${fiatAmount}`;
-          window.open(url, '_blank', 'noopener,noreferrer');
-          widgetOpened = true;
-        }
-      } catch (tokenErr) {
-        console.log('Session token not available, using direct URL');
-      }
+      const tokenData = await tokenRes.json();
       
-      if (!widgetOpened) {
-        const appId = process.env.NEXT_PUBLIC_COINBASE_PROJECT_ID || process.env.NEXT_PUBLIC_CDP_PROJECT_ID;
-        const addressParam = JSON.stringify({ [walletAddress]: ['arbitrum'] });
-        const url = new URL('https://pay.coinbase.com/buy/select-asset');
-        if (appId) url.searchParams.set('appId', appId);
-        url.searchParams.set('addresses', addressParam);
-        url.searchParams.set('defaultAsset', selectedAsset);
-        url.searchParams.set('presetFiatAmount', fiatAmount);
-        url.searchParams.set('fiatCurrency', 'USD');
-        url.searchParams.set('defaultPaymentMethod', 'CARD');
-        
-        window.open(url.toString(), '_blank', 'noopener,noreferrer');
+      if (tokenData.token) {
+        const url = `https://pay.coinbase.com/buy/select-asset?sessionToken=${tokenData.token}&defaultAsset=${selectedAsset}&presetFiatAmount=${fiatAmount}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
+        setPurchaseComplete(true);
+      } else {
+        console.error('Session token error:', tokenData.error);
+        setPurchaseError(tokenData.error || 'Unable to start purchase. Please try again.');
       }
-      
-      setPurchaseComplete(true);
     } catch (err) {
       console.error('Failed to start purchase:', err);
+      setPurchaseError('Connection error. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -216,6 +201,12 @@ export default function BuyAXMPage() {
                       <span className="text-white">Coinbase</span>
                     </div>
                   </div>
+
+                  {purchaseError && (
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">
+                      {purchaseError}
+                    </div>
+                  )}
 
                   <button
                     onClick={handleStartPurchase}
