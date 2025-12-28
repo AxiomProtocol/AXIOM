@@ -18,7 +18,6 @@ function isValidEthAddress(address: string): boolean {
 }
 
 function getClientIP(req: NextApiRequest): string {
-  // Check various headers that proxies/load balancers use
   const cfConnectingIp = req.headers['cf-connecting-ip'];
   const xRealIp = req.headers['x-real-ip'];
   const forwarded = req.headers['x-forwarded-for'];
@@ -34,7 +33,6 @@ function getClientIP(req: NextApiRequest): string {
   if (forwarded) {
     const ips = (Array.isArray(forwarded) ? forwarded[0] : forwarded).split(',');
     const clientIp = ips[0].trim();
-    // Strip IPv6 prefix if present
     return clientIp.replace(/^::ffff:/, '');
   }
   
@@ -44,143 +42,29 @@ function getClientIP(req: NextApiRequest): string {
 
 function base64UrlEncode(input: Buffer | string): string {
   const base64 = Buffer.isBuffer(input) ? input.toString('base64') : Buffer.from(input).toString('base64');
-  return base64
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
 function createPrivateKeyFromCDP(rawKey: string): crypto.KeyObject {
-  let keyData = rawKey.trim();
-  
-  console.log('Raw key starts with:', keyData.substring(0, 30));
-  console.log('Raw key length:', keyData.length);
-  
-  keyData = keyData.replace(/\\n/g, '\n');
+  let keyData = rawKey.trim().replace(/\\n/g, '\n');
   
   if (keyData.startsWith('{')) {
     try {
       const parsed = JSON.parse(keyData);
-      console.log('Parsed CDP JSON, keys:', Object.keys(parsed));
-      if (parsed.privateKey) {
-        keyData = parsed.privateKey.replace(/\\n/g, '\n');
-        console.log('Extracted privateKey, starts with:', keyData.substring(0, 30));
-      } else if (parsed.key) {
-        keyData = parsed.key.replace(/\\n/g, '\n');
-      } else if (parsed.apiSecret) {
-        keyData = parsed.apiSecret.replace(/\\n/g, '\n');
-      }
-    } catch (e: any) {
-      console.log('JSON parse failed:', e.message);
-    }
+      keyData = (parsed.privateKey || parsed.key || parsed.apiSecret || '').replace(/\\n/g, '\n');
+    } catch {}
   }
   
   if (keyData.includes('-----BEGIN')) {
-    console.log('Parsing PEM key directly');
     return crypto.createPrivateKey(keyData);
   }
   
-  const cleanKey = keyData.replace(/[\s\n\r]/g, '');
-  const keyBuffer = Buffer.from(cleanKey, 'base64');
-  
-  console.log('Key buffer length:', keyBuffer.length, 'bytes');
-  
-  const derTypes: Array<'sec1' | 'pkcs8'> = ['sec1', 'pkcs8'];
-  for (const type of derTypes) {
-    try {
-      const key = crypto.createPrivateKey({
-        key: keyBuffer,
-        format: 'der',
-        type
-      });
-      console.log('Parsed as DER', type);
-      return key;
-    } catch (e: any) {
-      console.log('DER', type, 'failed:', e.message);
-    }
-  }
-  
-  const pemFormats = [
-    { header: '-----BEGIN EC PRIVATE KEY-----', footer: '-----END EC PRIVATE KEY-----' },
-    { header: '-----BEGIN PRIVATE KEY-----', footer: '-----END PRIVATE KEY-----' }
-  ];
-  
-  for (const fmt of pemFormats) {
-    const pemFormatted = cleanKey.match(/.{1,64}/g)?.join('\n') || cleanKey;
-    const pem = `${fmt.header}\n${pemFormatted}\n${fmt.footer}`;
-    try {
-      const key = crypto.createPrivateKey(pem);
-      console.log('Parsed as PEM');
-      return key;
-    } catch (e: any) {
-      console.log('PEM failed:', e.message);
-    }
-  }
-  
-  if (keyBuffer.length === 64) {
-    try {
-      const key = crypto.createPrivateKey({
-        key: keyBuffer,
-        format: 'der',
-        type: 'pkcs8'
-      });
-      console.log('Parsed as raw 64-byte PKCS8');
-      return key;
-    } catch (e: any) {
-      console.log('64-byte PKCS8 failed:', e.message);
-    }
-    
-    try {
-      const ed25519Prefix = Buffer.from([
-        0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20
-      ]);
-      const privateKeyBytes = keyBuffer.subarray(0, 32);
-      const ed25519Der = Buffer.concat([ed25519Prefix, privateKeyBytes]);
-      const key = crypto.createPrivateKey({
-        key: ed25519Der,
-        format: 'der',
-        type: 'pkcs8'
-      });
-      console.log('Parsed as Ed25519 from 64-byte key');
-      return key;
-    } catch (e: any) {
-      console.log('Ed25519 conversion failed:', e.message);
-    }
-  }
-  
-  if (keyBuffer.length === 32 || keyBuffer.length === 64) {
-    const privateKeyBytes = keyBuffer.length === 64 ? keyBuffer.subarray(0, 32) : keyBuffer;
-    
-    const SEC1_P256_PREFIX = Buffer.from([
-      0x30, 0x41, 0x02, 0x01, 0x01, 0x04, 0x20
-    ]);
-    const SEC1_P256_SUFFIX = Buffer.from([
-      0xa0, 0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07
-    ]);
-    
-    const sec1Der = Buffer.concat([SEC1_P256_PREFIX, privateKeyBytes, SEC1_P256_SUFFIX]);
-    try {
-      const key = crypto.createPrivateKey({
-        key: sec1Der,
-        format: 'der',
-        type: 'sec1'
-      });
-      console.log('Parsed as raw P-256 key from', keyBuffer.length, 'bytes');
-      return key;
-    } catch (e: any) {
-      console.log('Raw P-256 conversion failed:', e.message);
-    }
-  }
-  
-  throw new Error(`Unable to parse private key (${keyBuffer.length} bytes)`);
+  throw new Error('Unable to parse private key');
 }
 
 function createJWT(keyName: string, privateKey: crypto.KeyObject): string {
   const keyType = privateKey.asymmetricKeyType;
   const alg = keyType === 'ed25519' ? 'EdDSA' : 'ES256';
-  
-  console.log('Creating JWT with algorithm:', alg, 'keyType:', keyType);
-  console.log('Using key name:', keyName);
   
   const header = {
     alg,
@@ -212,8 +96,7 @@ function createJWT(keyName: string, privateKey: crypto.KeyObject): string {
     });
   }
 
-  const encodedSignature = base64UrlEncode(signature);
-  return `${message}.${encodedSignature}`;
+  return `${message}.${base64UrlEncode(signature)}`;
 }
 
 export default async function handler(
@@ -243,16 +126,17 @@ export default async function handler(
     }
 
     const clientIP = getClientIP(req);
+    console.log('Client IP detected:', clientIP);
     
     let privateKey: crypto.KeyObject;
     try {
       privateKey = createPrivateKeyFromCDP(cdpPrivateKey);
-      console.log('Private key parsed, type:', privateKey.asymmetricKeyType, 'details:', privateKey.asymmetricKeyDetails);
+      console.log('Private key parsed, type:', privateKey.asymmetricKeyType);
     } catch (keyError: any) {
       console.error('Failed to parse private key:', keyError.message);
       return res.status(200).json({ 
         token: undefined,
-        error: 'Invalid private key format - ensure CDP_API_PRIVATE_KEY is in PEM format'
+        error: 'Invalid private key format'
       });
     }
 
@@ -279,7 +163,6 @@ export default async function handler(
       const errorData = await response.text();
       console.error('CDP API error:', response.status, response.statusText);
       console.error('CDP API response body:', errorData);
-      console.error('Request used key ID:', cdpKeyId);
       
       let userMessage = 'Unable to connect to payment provider. Please try again.';
       if (response.status === 401) {

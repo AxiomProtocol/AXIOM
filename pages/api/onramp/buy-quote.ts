@@ -135,6 +135,7 @@ export default async function handler(
     }
 
     const clientIP = getClientIP(req);
+    console.log('Buy quote - Client IP:', clientIP);
     
     let privateKey: crypto.KeyObject;
     try {
@@ -147,7 +148,7 @@ export default async function handler(
     const uri = 'POST api.developer.coinbase.com/onramp/v1/buy/quote';
     const jwt = createJWT(cdpKeyId, privateKey, uri);
 
-    console.log('Calling buy/quote API with clientIP:', clientIP);
+    console.log('Buy quote JWT generated');
 
     const response = await fetch('https://api.developer.coinbase.com/onramp/v1/buy/quote', {
       method: 'POST',
