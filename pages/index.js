@@ -39,7 +39,7 @@ const JOURNEY_STEPS = [
     icon: '💰',
     step: 3,
     title: 'Save Together',
-    description: 'Join SUSU savings circles with clear rules and transparency. Start small, build consistency, grow over time.',
+    description: 'Join Wealth Practices with clear rules and transparency. Start small, build consistency, grow over time.',
     stats: 'Step 3',
     link: '/susu',
     cta: 'Start Saving'
@@ -95,7 +95,7 @@ const QUICK_STATS = [
   { label: 'Smart Contracts', value: 23, suffix: 'Deployed' },
   { label: 'Network', value: 'Arbitrum', suffix: 'One (L2)', isText: true },
   { label: 'Total Supply', value: 15, suffix: 'B AXM Tokens' },
-  { label: 'Land Area', value: 1000, suffix: 'Acres' }
+  { label: 'Community', value: 'Growing', suffix: 'Together', isText: true }
 ];
 
 function FloatingOrb({ delay, duration, size, left, top, color }) {
@@ -596,7 +596,7 @@ export default function Home() {
             >
               Learn. Connect. Save together — with clear rules and transparency.
               Start your journey with financial education, find your community, 
-              and grow together through structured savings circles.
+              and grow together through Wealth Practices.
             </motion.p>
 
             <motion.div
@@ -608,7 +608,7 @@ export default function Home() {
                   href="/susu"
                   className="inline-block px-8 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all shadow-lg shadow-amber-500/25"
                 >
-                  Start a Savings Circle
+                  Start a Wealth Practice
                 </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
@@ -876,7 +876,7 @@ export default function Home() {
           </h2>
           <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
             Join community members who are building wealth through discipline, 
-            structure, and transparent savings circles.
+            structure, and Wealth Practices.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -1062,7 +1062,7 @@ export default function Home() {
 
           <div className="border-t border-gray-200 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-500">
-              © 2025 Axiom Protocol. All rights reserved.
+              © 2025 Axiom Nexus LLC. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-500">Deployed on</span>
