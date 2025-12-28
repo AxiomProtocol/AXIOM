@@ -51,7 +51,7 @@ const emailTemplates = {
         </div>
         
         <p style="color: #6B7280; font-size: 12px; text-align: center; margin-top: 24px;">
-          Axiom Smart City - America's First On-Chain Smart City
+          Axiom Nexus LLC - Build Wealth Together, On-Chain
         </p>
       </div>
     `

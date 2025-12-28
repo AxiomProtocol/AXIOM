@@ -246,7 +246,7 @@ const Layout: React.FC<LayoutProps> = ({
                   AXIOM
                 </span>
                 <span className="text-xs sm:text-sm text-gray-600 font-medium tracking-wide hidden sm:block">
-                  America's First On-Chain Smart City
+                  Build Wealth Together, On-Chain
                 </span>
               </div>
             </Link>
@@ -803,7 +803,7 @@ const Layout: React.FC<LayoutProps> = ({
               </span>
             </div>
             <p className="text-sm text-gray-600 font-medium">
-              America's First On-Chain Smart City
+              Build Wealth Together, On-Chain
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">

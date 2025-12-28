@@ -126,12 +126,12 @@ export default function Contact() {
                 <img src="/images/axiom-token.png" alt="Axiom" className="w-12 h-12 rounded-full" />
                 <div>
                   <h3 className="font-bold text-gray-900">Axiom Nexus LLC</h3>
-                  <p className="text-sm text-gray-600">America's First On-Chain Smart City</p>
+                  <p className="text-sm text-gray-600">Build Wealth Together, On-Chain</p>
                 </div>
               </div>
               <p className="text-gray-600 text-sm mb-4">
-                Building the future of urban living through blockchain technology, 
-                tokenized real estate, and community governance.
+                Community-owned digital finance powered by blockchain technology, 
+                savings circles, and transparent governance.
               </p>
               <div className="text-sm text-gray-500 pt-4 border-t border-amber-200">
                 <p className="font-medium text-gray-700 mb-1">Business Address</p>

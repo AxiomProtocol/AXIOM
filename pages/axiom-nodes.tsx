@@ -1565,7 +1565,7 @@ export default function AxiomDePINNodes() {
         <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
           <img src="/images/axiom-token.png" alt="Axiom" style={{ width: '50px', height: '50px', borderRadius: '50%', marginBottom: '1rem' }} />
           <h3 style={{ background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: '1.25rem', marginBottom: '0.5rem' }}>AXIOM</h3>
-          <p style={{ color: '#666', marginBottom: '1.5rem' }}>America's First On-Chain Smart City</p>
+          <p style={{ color: '#666', marginBottom: '1.5rem' }}>Build Wealth Together, On-Chain</p>
           <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
             <Link href="/" style={{ color: '#999', textDecoration: 'none' }}>Home</Link>
             <Link href="/about-us" style={{ color: '#999', textDecoration: 'none' }}>About</Link>

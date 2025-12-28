@@ -326,7 +326,7 @@ export default function EarlyAccessPage() {
                 <img src="/images/axiom-token.png" alt="Axiom" className="w-8 h-8 rounded-full" onError={(e) => { (e.target as HTMLImageElement).onerror = null; (e.target as HTMLImageElement).src = '/images/axiom-token-fallback.svg'; }} />
                 <span className="text-xl font-bold text-white">AXIOM</span>
               </div>
-              <p className="text-gray-500 text-sm mb-4">America's First On-Chain Smart City</p>
+              <p className="text-gray-500 text-sm mb-4">Build Wealth Together, On-Chain</p>
               <div className="flex justify-center gap-6 text-gray-400 text-sm">
                 <Link href="/about-us" className="hover:text-amber-400 transition-colors">About</Link>
                 <Link href="/tokenomics" className="hover:text-amber-400 transition-colors">Tokenomics</Link>
