@@ -260,7 +260,9 @@ export default async function handler(
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('CDP API error:', response.status, errorData);
+      console.error('CDP API error:', response.status, response.statusText);
+      console.error('CDP API response body:', errorData);
+      console.error('Request used key ID:', cdpKeyId);
       return res.status(200).json({ 
         token: undefined,
         error: `CDP API error: ${response.status}`
