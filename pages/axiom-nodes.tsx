@@ -1445,12 +1445,12 @@ export default function AxiomDePINNodes() {
 
             {isConnected && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-                <NodeReferralWidget walletAddress={walletState?.address} />
+                <NodeReferralWidget walletAddress={walletState?.address ?? undefined} />
                 <NodeUpgradePath 
                   currentNodeId={userNodes.length > 0 ? userNodes[0].id : undefined}
                   currentNodeTier={userNodes.length > 0 ? userNodes[0].tier : undefined}
                   currentNodePrice={userNodes.length > 0 ? parseFloat(userNodes[0].price || '99') : undefined}
-                  walletAddress={walletState?.address}
+                  walletAddress={walletState?.address ?? undefined}
                 />
               </div>
             )}
