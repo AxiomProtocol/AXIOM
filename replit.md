@@ -33,6 +33,7 @@ Key features include:
 -   **API Security**: Input validation, sanitization, error handling, and EIP-4361 SIWE authentication.
 -   **KeyGrow Rent-to-Own Program**: Real estate program using ERC-1155 tokenized fractional property shares.
 -   **Axiom SUSU (Rotating Savings Groups)**: On-chain ROSCA system ("The Wealth Practice") with Community Pool and Personal Vault custody modes and a Trust Bridge explainer.
+-   **Learn Wealth Practice** (`/learn-wealth-practice`): Comprehensive educational page explaining how The Wealth Practice works, benefits, two custody modes, real-world examples, risks/disclosures, and getting started CTAs.
 -   **PMA Trust**: Operates as a Private Membership Association Trust with tokenized ERC-1155/1400 memberships.
 -   **AI Member Support**: Gemini-powered chat assistant.
 -   **V2 Analytics Dashboard** (`/v2-analytics`): Unified dashboard for Sovereign Banking metrics (Protocol Overview, Credit & Scoring, Governance).
