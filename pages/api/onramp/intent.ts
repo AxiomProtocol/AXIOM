@@ -59,13 +59,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const intentId = generateIntentId();
     
-    const widgetUrl = getProviderWidgetUrl(provider as OnrampProvider, {
-      walletAddress,
-      asset,
-      fiatCurrency,
-      fiatAmount,
-      chainId
-    });
+    let widgetUrl: string | null = null;
+
+    if (provider === 'transak') {
+      const transakResponse = await fetch(
+        `${process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000'}/api/onramp/transak-session`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ walletAddress, asset, fiatCurrency, fiatAmount, chainId })
+        }
+      );
+      if (transakResponse.ok) {
+        const transakData = await transakResponse.json();
+        widgetUrl = transakData.widgetUrl;
+      }
+    } else {
+      widgetUrl = getProviderWidgetUrl(provider as OnrampProvider, {
+        walletAddress,
+        asset,
+        fiatCurrency,
+        fiatAmount,
+        chainId
+      });
+    }
 
     const client = await pool.connect();
     try {
