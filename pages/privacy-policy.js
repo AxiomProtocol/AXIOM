@@ -37,6 +37,43 @@ export default function PrivacyPolicy() {
           </div>
 
           <div className="bg-gray-50 rounded-2xl p-8 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">SMS & Text Message Communications</h2>
+            <p className="text-gray-600 mb-4">
+              When you opt-in to receive SMS alerts from Axiom Protocol:
+            </p>
+            <ul className="space-y-2 text-gray-600">
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-2"></span>
+                <span><strong>Phone Number:</strong> Your mobile phone number is collected to send text message alerts</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-2"></span>
+                <span><strong>Message Types:</strong> Launchpad updates, property alerts, transaction confirmations, governance notifications, and general announcements</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-2"></span>
+                <span><strong>Frequency:</strong> You will receive up to 5 SMS messages per month</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-2"></span>
+                <span><strong>Opt-Out:</strong> Reply STOP to any message to unsubscribe at any time</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-2"></span>
+                <span><strong>Help:</strong> Reply HELP to any message for customer support assistance</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-2"></span>
+                <span><strong>Costs:</strong> Message and data rates may apply based on your mobile carrier plan</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-2"></span>
+                <span><strong>No Sharing:</strong> Your phone number will not be sold or shared with third parties for marketing purposes</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="bg-gray-50 rounded-2xl p-8 mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">How We Use Your Data</h2>
             <ul className="space-y-2 text-gray-600">
               <li className="flex items-start gap-2">
