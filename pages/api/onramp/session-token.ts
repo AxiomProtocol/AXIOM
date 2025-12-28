@@ -175,12 +175,11 @@ function createJWT(keyName: string, privateKey: crypto.KeyObject): string {
 
   const now = Math.floor(Date.now() / 1000);
   const payload = {
-    iss: 'cdp',
+    iss: 'coinbase-cloud',
     nbf: now,
     exp: now + 120,
     sub: keyName,
-    aud: ['https://api.developer.coinbase.com'],
-    uri: 'POST /onramp/v1/token'
+    uri: 'POST api.developer.coinbase.com/onramp/v1/token'
   };
 
   const encodedHeader = base64UrlEncode(JSON.stringify(header));
