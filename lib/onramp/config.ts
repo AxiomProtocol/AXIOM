@@ -37,6 +37,7 @@ const parseChainIds = (envValue: string | undefined): number[] => {
 const parseAssetList = (envValue: string | undefined): { symbol: string; name: string; chainId: number }[] => {
   if (!envValue) {
     return [
+      { symbol: 'AXM', name: 'Axiom Token', chainId: 42161 },
       { symbol: 'ETH', name: 'Ethereum', chainId: 42161 },
       { symbol: 'USDC', name: 'USD Coin', chainId: 42161 },
       { symbol: 'USDT', name: 'Tether', chainId: 42161 }
