@@ -18,6 +18,12 @@ const defaultWalletState: WalletState = {
   axmBalance: '0'
 };
 
+interface SIWEState {
+  isAuthenticated: boolean;
+  isAuthenticating: boolean;
+  authError: string | null;
+}
+
 function ModalPortal({ children }: { children: React.ReactNode }) {
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
   
@@ -53,6 +59,11 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
   className = ''
 }) => {
   const [walletState, setWalletState] = useState<WalletState>(defaultWalletState);
+  const [siweState, setSIWEState] = useState<SIWEState>({
+    isAuthenticated: false,
+    isAuthenticating: false,
+    authError: null
+  });
   const [mounted, setMounted] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -71,6 +82,15 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
         unsubscribe = walletService.subscribe((state: WalletState) => {
           setWalletState(state);
         });
+        
+        // Check SIWE session on init
+        const { siweService } = await import('../../lib/services/SIWEService');
+        const session = await siweService.getSession(true);
+        setSIWEState(prev => ({
+          ...prev,
+          isAuthenticated: session.authenticated,
+          authError: null
+        }));
       } catch (err) {
         console.error('Failed to initialize wallet service:', err);
       }
@@ -107,6 +127,8 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
           
           if (signer && typeof signer.signMessage === 'function') {
             console.log('📝 [MetaMask] Calling siweService.signIn...');
+            setSIWEState(prev => ({ ...prev, isAuthenticating: true, authError: null }));
+            
             const result = await siweService.signIn(
               signer,
               address,
@@ -115,8 +137,10 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
             
             if (result.success) {
               console.log('✅ [MetaMask] SIWE authentication successful');
+              setSIWEState({ isAuthenticated: true, isAuthenticating: false, authError: null });
             } else {
               console.warn('⚠️ [MetaMask] SIWE authentication failed:', result.error);
+              setSIWEState(prev => ({ ...prev, isAuthenticating: false, authError: result.error || 'Authentication failed' }));
             }
           } else {
             console.error('❌ [MetaMask] Signer not valid or signMessage not a function');
@@ -160,6 +184,8 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
           
           if (signer) {
             console.log('📝 Requesting SIWE signature...');
+            setSIWEState(prev => ({ ...prev, isAuthenticating: true, authError: null }));
+            
             const result = await siweService.signIn(
               signer,
               address,
@@ -168,13 +194,15 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
             
             if (result.success) {
               console.log('✅ SIWE authentication successful');
+              setSIWEState({ isAuthenticated: true, isAuthenticating: false, authError: null });
             } else {
               console.warn('⚠️ SIWE authentication failed:', result.error);
+              setSIWEState(prev => ({ ...prev, isAuthenticating: false, authError: result.error || 'Authentication failed' }));
             }
           }
-        } catch (siweErr) {
+        } catch (siweErr: any) {
           console.error('SIWE error:', siweErr);
-          // Don't block wallet connection if SIWE fails
+          setSIWEState(prev => ({ ...prev, isAuthenticating: false, authError: siweErr.message || 'Sign-in failed' }));
         }
         
         setShowModal(false);
@@ -190,10 +218,69 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
     }
   };
 
+  const handleManualSignIn = async () => {
+    if (typeof window === 'undefined' || !walletState.address) return;
+    
+    setSIWEState(prev => ({
+      ...prev,
+      isAuthenticating: true,
+      authError: null
+    }));
+    
+    try {
+      const { WalletService } = await import('../../lib/services/WalletService');
+      const { siweService } = await import('../../lib/services/SIWEService');
+      
+      const walletInstance = WalletService.getInstance();
+      const signer = walletInstance.getSigner();
+      
+      if (!signer) {
+        throw new Error('No signer available. Please reconnect your wallet.');
+      }
+      
+      console.log('📝 Manual SIWE sign-in requested...');
+      const result = await siweService.signIn(
+        signer,
+        walletState.address,
+        walletState.chainId || 42161
+      );
+      
+      if (result.success) {
+        console.log('✅ Manual SIWE authentication successful');
+        setSIWEState({
+          isAuthenticated: true,
+          isAuthenticating: false,
+          authError: null
+        });
+      } else {
+        console.warn('⚠️ Manual SIWE authentication failed:', result.error);
+        setSIWEState(prev => ({
+          ...prev,
+          isAuthenticating: false,
+          authError: result.error || 'Authentication failed'
+        }));
+      }
+    } catch (err: any) {
+      console.error('Manual SIWE error:', err);
+      setSIWEState(prev => ({
+        ...prev,
+        isAuthenticating: false,
+        authError: err.message || 'Sign-in failed'
+      }));
+    }
+  };
+
   const handleDisconnect = async () => {
     if (typeof window === 'undefined') return;
     const { walletService } = await import('../../lib/services/WalletService');
     await walletService.disconnect();
+    
+    // Also clear SIWE state
+    setSIWEState({
+      isAuthenticated: false,
+      isAuthenticating: false,
+      authError: null
+    });
     
     if (onDisconnect) {
       onDisconnect();
@@ -249,6 +336,21 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
             <span className="address">{formatAddress(walletState.address)}</span>
           </div>
           
+          {!siweState.isAuthenticated && (
+            <button 
+              onClick={handleManualSignIn}
+              disabled={siweState.isAuthenticating}
+              className="sign-in-btn"
+              title="Sign message to verify wallet ownership"
+            >
+              {siweState.isAuthenticating ? 'Signing...' : 'Sign In'}
+            </button>
+          )}
+          
+          {siweState.isAuthenticated && (
+            <span className="verified-badge" title="Wallet verified">✓</span>
+          )}
+          
           <button 
             onClick={handleDisconnect}
             className="disconnect-btn"
@@ -257,6 +359,12 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
             <span className="disconnect-text-short">✕</span>
           </button>
         </div>
+        
+        {siweState.authError && (
+          <div className="siwe-error">
+            {siweState.authError}
+          </div>
+        )}
 
         <style jsx>{`
           .wallet-connected {
@@ -393,6 +501,52 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
             font-size: 11px;
             color: #92400e;
             font-weight: 600;
+          }
+
+          .sign-in-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 11px;
+            transition: all 0.2s ease;
+          }
+
+          .sign-in-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            transform: scale(1.02);
+          }
+
+          .sign-in-btn:disabled {
+            opacity: 0.7;
+            cursor: wait;
+          }
+
+          .verified-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            background: #10b981;
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+          }
+
+          .siwe-error {
+            margin-top: 6px;
+            padding: 6px 10px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            color: #dc2626;
+            font-size: 11px;
+            text-align: center;
           }
 
           .disconnect-btn {
