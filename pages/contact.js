@@ -131,7 +131,7 @@ export default function Contact() {
               </div>
               <p className="text-gray-600 text-sm mb-4">
                 Community-owned digital finance powered by blockchain technology, 
-                savings circles, and transparent governance.
+                Wealth Practices, and transparent governance.
               </p>
               <div className="text-sm text-gray-500 pt-4 border-t border-amber-200">
                 <p className="font-medium text-gray-700 mb-1">Business Address</p>
