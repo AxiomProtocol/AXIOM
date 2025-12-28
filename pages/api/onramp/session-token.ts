@@ -101,7 +101,40 @@ function createPrivateKeyFromCDP(rawKey: string): crypto.KeyObject {
     }
   }
   
-  if (keyBuffer.length === 32) {
+  if (keyBuffer.length === 64) {
+    try {
+      const key = crypto.createPrivateKey({
+        key: keyBuffer,
+        format: 'der',
+        type: 'pkcs8'
+      });
+      console.log('Parsed as raw 64-byte PKCS8');
+      return key;
+    } catch (e: any) {
+      console.log('64-byte PKCS8 failed:', e.message);
+    }
+    
+    try {
+      const ed25519Prefix = Buffer.from([
+        0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20
+      ]);
+      const privateKeyBytes = keyBuffer.subarray(0, 32);
+      const ed25519Der = Buffer.concat([ed25519Prefix, privateKeyBytes]);
+      const key = crypto.createPrivateKey({
+        key: ed25519Der,
+        format: 'der',
+        type: 'pkcs8'
+      });
+      console.log('Parsed as Ed25519 from 64-byte key');
+      return key;
+    } catch (e: any) {
+      console.log('Ed25519 conversion failed:', e.message);
+    }
+  }
+  
+  if (keyBuffer.length === 32 || keyBuffer.length === 64) {
+    const privateKeyBytes = keyBuffer.length === 64 ? keyBuffer.subarray(0, 32) : keyBuffer;
+    
     const SEC1_P256_PREFIX = Buffer.from([
       0x30, 0x41, 0x02, 0x01, 0x01, 0x04, 0x20
     ]);
@@ -109,17 +142,17 @@ function createPrivateKeyFromCDP(rawKey: string): crypto.KeyObject {
       0xa0, 0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07
     ]);
     
-    const sec1Der = Buffer.concat([SEC1_P256_PREFIX, keyBuffer, SEC1_P256_SUFFIX]);
+    const sec1Der = Buffer.concat([SEC1_P256_PREFIX, privateKeyBytes, SEC1_P256_SUFFIX]);
     try {
       const key = crypto.createPrivateKey({
         key: sec1Der,
         format: 'der',
         type: 'sec1'
       });
-      console.log('Parsed as raw 32-byte P-256 key');
+      console.log('Parsed as raw P-256 key from', keyBuffer.length, 'bytes');
       return key;
     } catch (e: any) {
-      console.log('32-byte key conversion failed:', e.message);
+      console.log('Raw P-256 conversion failed:', e.message);
     }
   }
   
