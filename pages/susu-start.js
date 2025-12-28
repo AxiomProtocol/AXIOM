@@ -263,6 +263,52 @@ export default function SusuStartPage() {
           </div>
         </div>
 
+        <div className="py-16 bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900">
+          <div className="max-w-4xl mx-auto px-6">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 bg-purple-500/20 text-purple-300 text-sm px-4 py-2 rounded-full mb-4">
+                <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></span>
+                Get Started
+              </div>
+              <h2 className="text-3xl font-bold text-white mb-3">Need AXM tokens to participate?</h2>
+              <p className="text-purple-200">
+                The Wealth Practice uses AXM tokens. Buy with your card in two simple steps.
+              </p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/30">
+              <div className="grid md:grid-cols-2 gap-6 items-center">
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center">
+                      <span className="text-xl font-bold text-white">A</span>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white">Axiom Token (AXM)</h3>
+                      <p className="text-sm text-purple-300">The currency of The Wealth Practice</p>
+                    </div>
+                  </div>
+                  <ul className="space-y-2 text-sm text-purple-200">
+                    <li className="flex items-center gap-2">
+                      <span className="text-amber-400">1.</span> Buy ETH or USDC with your card
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-amber-400">2.</span> Swap for AXM on our exchange
+                    </li>
+                  </ul>
+                </div>
+                <div className="text-center md:text-right">
+                  <Link
+                    href="/buy-axm"
+                    className="inline-block px-8 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl font-semibold hover:from-amber-400 hover:to-amber-500 transition-all text-lg shadow-lg"
+                  >
+                    Buy AXM Tokens
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-gray-900 text-white py-20">
           <div className="max-w-4xl mx-auto px-6 text-center">
             <h2 className="text-3xl font-bold mb-6">Ready to build consistency with a group?</h2>

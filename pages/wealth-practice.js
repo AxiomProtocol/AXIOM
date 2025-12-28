@@ -157,9 +157,9 @@ export default function WealthPracticePage() {
                     <div className="font-bold text-black mb-1">Create a Circle</div>
                     <div className="text-sm text-black/70">Organize your own group</div>
                   </Link>
-                  <Link href="/onramp" className="block bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 rounded-lg p-4 transition-all">
-                    <div className="font-bold text-white mb-1">Get Axiom Units</div>
-                    <div className="text-sm text-purple-200">Buy crypto with card or bank</div>
+                  <Link href="/buy-axm" className="block bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 rounded-lg p-4 transition-all">
+                    <div className="font-bold text-white mb-1">Buy AXM Tokens</div>
+                    <div className="text-sm text-purple-200">Get AXM with card or bank</div>
                   </Link>
                 </div>
               </div>
