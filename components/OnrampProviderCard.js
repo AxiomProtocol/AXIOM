@@ -7,13 +7,15 @@ import { useState } from 'react';
 const providerLogos = {
   moonpay: '/images/moonpay-logo.svg',
   ramp: '/images/ramp-logo.svg',
-  transak: '/images/transak-logo.svg'
+  transak: '/images/transak-logo.svg',
+  coinbase: '/images/coinbase-logo.svg'
 };
 
 const providerColors = {
   moonpay: 'from-purple-600 to-purple-800',
   ramp: 'from-green-600 to-green-800',
-  transak: 'from-blue-600 to-blue-800'
+  transak: 'from-blue-600 to-blue-800',
+  coinbase: 'from-blue-500 to-blue-700'
 };
 
 export default function OnrampProviderCard({ 

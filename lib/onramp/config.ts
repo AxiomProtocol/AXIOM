@@ -6,7 +6,7 @@
  * Only NEXT_PUBLIC_ prefixed keys are client-safe.
  */
 
-export type OnrampProvider = 'moonpay' | 'ramp' | 'transak';
+export type OnrampProvider = 'moonpay' | 'ramp' | 'transak' | 'coinbase';
 export type OnrampStatus = 'created' | 'pending' | 'completed' | 'failed';
 
 export interface ProviderConfig {
@@ -63,6 +63,7 @@ export function getOnrampConfig(): OnrampConfig {
   const moonpayKey = process.env.NEXT_PUBLIC_MOONPAY_PUBLISHABLE_KEY || process.env.MOONPAY_PUBLISHABLE_KEY;
   const rampKey = process.env.NEXT_PUBLIC_RAMP_API_KEY || process.env.RAMP_API_KEY || process.env.RAMP_WIDGET_API_KEY;
   const transakKey = process.env.NEXT_PUBLIC_TRANSAK_API_KEY || process.env.TRANSAK_API_KEY;
+  const coinbaseKey = process.env.COINBASE_PROJECT_ID || process.env.CDP_PROJECT_ID || process.env.NEXT_PUBLIC_CDP_PROJECT_ID;
 
   return {
     defaultChainId,
@@ -102,6 +103,16 @@ export function getOnrampConfig(): OnrampConfig {
         widgetUrl: process.env.TRANSAK_ENV === 'production' 
           ? 'https://global.transak.com'
           : 'https://global-stg.transak.com'
+      },
+      coinbase: {
+        id: 'coinbase',
+        name: 'Coinbase',
+        enabled: !!coinbaseKey,
+        publishableKey: coinbaseKey,
+        supportedPayments: ['Credit/Debit Card', 'Apple Pay', 'ACH Bank Transfer'],
+        supportedRegions: 'US, EU (Strong US coverage)',
+        fees: '~1-2.5% (Free for USDC on Base)',
+        widgetUrl: 'https://pay.coinbase.com'
       }
     }
   };
@@ -186,6 +197,19 @@ export function getProviderWidgetUrl(
       if (fiatAmount) url.searchParams.set('fiatAmount', fiatAmount.toString());
       url.searchParams.set('redirectURL', `${config.callbackBaseUrl}/onramp?status=completed&provider=transak`);
       url.searchParams.set('themeColor', 'd4af37');
+      return url.toString();
+    }
+
+    case 'coinbase': {
+      const url = new URL('https://pay.coinbase.com/buy/select-asset');
+      url.searchParams.set('appId', providerConfig.publishableKey);
+      const cbNetworkMap: Record<number, string> = { 42161: 'arbitrum', 1: 'ethereum', 137: 'polygon', 8453: 'base' };
+      const network = cbNetworkMap[chainId || config.defaultChainId] || 'arbitrum';
+      url.searchParams.set('addresses', JSON.stringify({ [walletAddress]: [network] }));
+      url.searchParams.set('defaultAsset', asset);
+      url.searchParams.set('fiatCurrency', fiatCurrency);
+      if (fiatAmount) url.searchParams.set('presetFiatAmount', fiatAmount.toString());
+      url.searchParams.set('defaultPaymentMethod', 'CARD');
       return url.toString();
     }
     

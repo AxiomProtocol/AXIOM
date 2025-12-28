@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Invalid wallet address' });
     }
 
-    const validProviders: OnrampProvider[] = ['moonpay', 'ramp', 'transak'];
+    const validProviders: OnrampProvider[] = ['moonpay', 'ramp', 'transak', 'coinbase'];
     if (!provider || !validProviders.includes(provider)) {
       return res.status(400).json({ error: 'Invalid provider' });
     }

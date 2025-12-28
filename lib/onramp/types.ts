@@ -2,7 +2,7 @@
  * Axiom Onramp Center - Type Definitions
  */
 
-export type OnrampProvider = 'moonpay' | 'ramp' | 'transak';
+export type OnrampProvider = 'moonpay' | 'ramp' | 'transak' | 'coinbase';
 export type OnrampStatus = 'created' | 'pending' | 'completed' | 'failed';
 
 export interface OnrampIntent {
