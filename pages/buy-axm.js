@@ -28,24 +28,42 @@ export default function BuyAXMPage() {
 
     setIsProcessing(true);
     try {
-      const res = await fetch('/api/onramp/intent', {
+      const tokenRes = await fetch('/api/onramp/session-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           walletAddress,
-          provider: 'coinbase',
-          chainId: 42161,
-          asset: selectedAsset,
-          fiatCurrency: 'USD',
-          fiatAmount: parseFloat(fiatAmount)
+          assets: [selectedAsset, 'ETH', 'USDC'],
+          networks: ['arbitrum']
         })
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.widgetUrl) {
-          window.open(data.widgetUrl, '_blank', 'noopener,noreferrer');
-          setPurchaseComplete(true);
+      const tokenData = await tokenRes.json();
+      
+      if (tokenData.token) {
+        const url = `https://pay.coinbase.com/buy/select-asset?sessionToken=${tokenData.token}&defaultAsset=${selectedAsset}&presetFiatAmount=${fiatAmount}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
+        setPurchaseComplete(true);
+      } else {
+        const res = await fetch('/api/onramp/intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            walletAddress,
+            provider: 'coinbase',
+            chainId: 42161,
+            asset: selectedAsset,
+            fiatCurrency: 'USD',
+            fiatAmount: parseFloat(fiatAmount)
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.widgetUrl) {
+            window.open(data.widgetUrl, '_blank', 'noopener,noreferrer');
+            setPurchaseComplete(true);
+          }
         }
       }
     } catch (err) {
