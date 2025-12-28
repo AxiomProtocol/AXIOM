@@ -159,7 +159,7 @@ function createPrivateKeyFromCDP(rawKey: string): crypto.KeyObject {
   throw new Error(`Unable to parse private key (${keyBuffer.length} bytes)`);
 }
 
-function createJWT(keyId: string, privateKey: crypto.KeyObject): string {
+function createJWT(keyName: string, privateKey: crypto.KeyObject): string {
   const keyType = privateKey.asymmetricKeyType;
   const alg = keyType === 'ed25519' ? 'EdDSA' : 'ES256';
   
@@ -168,7 +168,7 @@ function createJWT(keyId: string, privateKey: crypto.KeyObject): string {
   const header = {
     alg,
     typ: 'JWT',
-    kid: keyId,
+    kid: keyName,
     nonce: crypto.randomBytes(16).toString('hex')
   };
 
@@ -177,8 +177,9 @@ function createJWT(keyId: string, privateKey: crypto.KeyObject): string {
     iss: 'cdp',
     nbf: now,
     exp: now + 120,
-    sub: keyId,
-    aud: ['cdp_service']
+    sub: keyName,
+    aud: ['cdp_service'],
+    uri: 'POST api.developer.coinbase.com/onramp/v1/token'
   };
 
   const encodedHeader = base64UrlEncode(JSON.stringify(header));
@@ -249,12 +250,12 @@ export default async function handler(
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        destination_wallets: [{
+        addresses: [{
           address: walletAddress,
           blockchains: networks || ['arbitrum']
         }],
         assets: assets || ['ETH', 'USDC'],
-        client_ip: clientIP
+        clientIp: clientIP
       })
     });
 
