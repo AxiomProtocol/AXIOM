@@ -26,11 +26,19 @@ function getClientIP(req: NextApiRequest): string {
   return req.socket?.remoteAddress || '0.0.0.0';
 }
 
-function createJWT(keyId: string, privateKey: string): string {
+function base64UrlEncode(data: string): string {
+  return Buffer.from(data).toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+}
+
+function createJWT(keyId: string, privateKeyBase64: string): string {
   const header = {
     alg: 'ES256',
     typ: 'JWT',
-    kid: keyId
+    kid: keyId,
+    nonce: crypto.randomBytes(16).toString('hex')
   };
 
   const now = Math.floor(Date.now() / 1000);
@@ -38,18 +46,45 @@ function createJWT(keyId: string, privateKey: string): string {
     iss: 'cdp',
     nbf: now,
     exp: now + 120,
-    sub: keyId
+    sub: keyId,
+    aud: ['cdp_service']
   };
 
-  const base64Header = Buffer.from(JSON.stringify(header)).toString('base64url');
-  const base64Payload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const base64Header = base64UrlEncode(JSON.stringify(header));
+  const base64Payload = base64UrlEncode(JSON.stringify(payload));
   const message = `${base64Header}.${base64Payload}`;
+
+  const keyBuffer = Buffer.from(privateKeyBase64, 'base64');
+  
+  let privateKey: crypto.KeyObject;
+  if (privateKeyBase64.includes('BEGIN')) {
+    privateKey = crypto.createPrivateKey(privateKeyBase64);
+  } else {
+    const pemKey = `-----BEGIN EC PRIVATE KEY-----\n${keyBuffer.toString('base64').match(/.{1,64}/g)?.join('\n')}\n-----END EC PRIVATE KEY-----`;
+    try {
+      privateKey = crypto.createPrivateKey(pemKey);
+    } catch {
+      privateKey = crypto.createPrivateKey({
+        key: keyBuffer,
+        format: 'der',
+        type: 'sec1'
+      });
+    }
+  }
 
   const sign = crypto.createSign('SHA256');
   sign.update(message);
-  const signature = sign.sign(privateKey, 'base64url');
+  const signature = sign.sign(privateKey);
+  
+  const r = signature.slice(4, 36);
+  const s = signature.slice(38, 70);
+  const rawSig = Buffer.concat([r, s]);
+  const base64Sig = rawSig.toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
 
-  return `${message}.${signature}`;
+  return `${message}.${base64Sig}`;
 }
 
 export default async function handler(
