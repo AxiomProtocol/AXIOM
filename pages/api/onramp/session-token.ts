@@ -160,8 +160,13 @@ function createPrivateKeyFromCDP(rawKey: string): crypto.KeyObject {
 }
 
 function createJWT(keyId: string, privateKey: crypto.KeyObject): string {
+  const keyType = privateKey.asymmetricKeyType;
+  const alg = keyType === 'ed25519' ? 'EdDSA' : 'ES256';
+  
+  console.log('Creating JWT with algorithm:', alg, 'keyType:', keyType);
+  
   const header = {
-    alg: 'ES256',
+    alg,
     typ: 'JWT',
     kid: keyId,
     nonce: crypto.randomBytes(16).toString('hex')
@@ -180,10 +185,15 @@ function createJWT(keyId: string, privateKey: crypto.KeyObject): string {
   const encodedPayload = base64UrlEncode(JSON.stringify(payload));
   const message = `${encodedHeader}.${encodedPayload}`;
 
-  const signature = crypto.sign('SHA256', Buffer.from(message), {
-    key: privateKey,
-    dsaEncoding: 'ieee-p1363'
-  });
+  let signature: Buffer;
+  if (alg === 'EdDSA') {
+    signature = crypto.sign(null, Buffer.from(message), privateKey);
+  } else {
+    signature = crypto.sign('SHA256', Buffer.from(message), {
+      key: privateKey,
+      dsaEncoding: 'ieee-p1363'
+    });
+  }
 
   const encodedSignature = base64UrlEncode(signature);
   return `${message}.${encodedSignature}`;
