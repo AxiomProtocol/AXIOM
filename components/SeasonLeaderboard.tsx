@@ -59,7 +59,7 @@ export default function SeasonLeaderboard({ walletAddress, compact = false }: Se
   });
 
   const boards: { id: LeaderboardType; label: string; icon: string; metric: string }[] = [
-    { id: 'veaxm', label: 'Staking', icon: '🔒', metric: 'veAXM' },
+    { id: 'veaxm', label: 'Wealth Engine', icon: '🔒', metric: 'Lock Power' },
     { id: 'streak', label: 'Streaks', icon: '🔥', metric: 'Days' },
     { id: 'referrals', label: 'Referrals', icon: '👥', metric: 'Friends' },
     { id: 'quests', label: 'Quests', icon: '🎯', metric: 'XP' },

@@ -73,10 +73,10 @@ export default function VeAXMLeaderboardPage() {
         <div className="max-w-6xl mx-auto space-y-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-white mb-2">
-              veAXM <span className="text-yellow-500">Leaderboard</span>
+              Wealth <span className="text-yellow-500">Engine</span>
             </h1>
             <p className="text-gray-400">
-              Top governance power holders and their achievements
+              Lock AXM to power your wealth and governance influence
             </p>
           </div>
 

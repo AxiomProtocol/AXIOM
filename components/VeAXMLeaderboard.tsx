@@ -59,9 +59,9 @@ export default function VeAXMLeaderboard({ currentUserAddress, limit = 20 }: Pro
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <span>🏆</span> veAXM Leaderboard
+              <span>🏆</span> Wealth Engine Rankings
             </h3>
-            <p className="text-sm text-gray-400 mt-1">Top governance power holders</p>
+            <p className="text-sm text-gray-400 mt-1">Top wealth builders by lock power</p>
           </div>
           <div className="flex gap-2">
             {(['all', 'month', 'week'] as const).map((tf) => (

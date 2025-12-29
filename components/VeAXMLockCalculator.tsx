@@ -55,7 +55,7 @@ export default function VeAXMLockCalculator({ axmBalance = '0', currentLockYears
     <div className="bg-gray-800/50 border border-yellow-500/20 rounded-xl p-6">
       <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
         <span className="text-2xl">🔒</span>
-        veAXM Lock Duration Calculator
+        Wealth Engine Calculator
       </h3>
       
       <div className="mb-6">
