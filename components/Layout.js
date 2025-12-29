@@ -12,6 +12,7 @@ export default function Layout({ children, showWallet = true }) {
   const [pathname, setPathname] = useState('');
   const [mounted, setMounted] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showMobileAdvanced, setShowMobileAdvanced] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -157,8 +158,47 @@ export default function Layout({ children, showWallet = true }) {
                     </Link>
                   );
                 })}
+                {/* Advanced dropdown button */}
+                <button
+                  type="button"
+                  onClick={() => setShowMobileAdvanced(!showMobileAdvanced)}
+                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors flex items-center gap-1 ${
+                    showMobileAdvanced 
+                      ? 'bg-amber-500 text-white' 
+                      : 'bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200'
+                  }`}
+                >
+                  Advanced
+                  <svg className={`w-4 h-4 transition-transform ${showMobileAdvanced ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
               </div>
             </div>
+            
+            {/* Mobile Advanced Dropdown Panel */}
+            {showMobileAdvanced && (
+              <div className="pb-4 animate-fadeIn">
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <div className="grid grid-cols-2 gap-2">
+                    {ADVANCED_DROPDOWN.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setShowMobileAdvanced(false)}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          pathname === item.href 
+                            ? 'bg-amber-500 text-white' 
+                            : 'bg-white text-gray-700 hover:bg-amber-100 hover:text-amber-800 border border-gray-200'
+                        }`}
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </header>
