@@ -108,12 +108,12 @@ export default async function handler(
     
     if (availableGroups.length === 0) {
       const sampleGroups = [
-        { id: '1', name: 'Atlanta Wealth Builders', region: 'southeast', purpose: 'home_ownership', members: 8, max: 12, contrib: 150, trust: 92 },
-        { id: '2', name: 'Texas Home Dreamers', region: 'southwest', purpose: 'home_ownership', members: 6, max: 10, contrib: 125, trust: 88 },
-        { id: '3', name: 'NYC Business Starters', region: 'northeast', purpose: 'business', members: 10, max: 15, contrib: 200, trust: 85 },
-        { id: '4', name: 'California Savers Circle', region: 'west', purpose: 'emergency_fund', members: 7, max: 10, contrib: 100, trust: 90 },
-        { id: '5', name: 'Midwest Family Fund', region: 'midwest', purpose: 'education', members: 5, max: 8, contrib: 75, trust: 87 },
-        { id: '6', name: 'National Wealth Warriors', region: 'national', purpose: 'wealth_building', members: 12, max: 20, contrib: 150, trust: 91 }
+        { id: '1', name: 'Atlanta Emergency Fund Circle', region: 'southeast', purpose: 'emergency_fund', members: 0, max: 12, contrib: 50, trust: 70 },
+        { id: '2', name: 'Atlanta Home Buyers Circle', region: 'southeast', purpose: 'home_ownership', members: 0, max: 10, contrib: 200, trust: 70 },
+        { id: '3', name: 'Miami Business Builders', region: 'southeast', purpose: 'business', members: 0, max: 10, contrib: 150, trust: 70 },
+        { id: '4', name: 'Chicago Education Fund', region: 'midwest', purpose: 'education', members: 0, max: 10, contrib: 100, trust: 70 },
+        { id: '5', name: 'Dallas Emergency Savers', region: 'southwest', purpose: 'emergency_fund', members: 0, max: 12, contrib: 50, trust: 70 },
+        { id: '6', name: 'Houston Vehicle Fund', region: 'southwest', purpose: 'vehicle_purchase', members: 0, max: 10, contrib: 125, trust: 70 }
       ];
 
       availableGroups = sampleGroups.map(g => {

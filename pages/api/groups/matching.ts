@@ -146,11 +146,11 @@ export default async function handler(
       console.log('Using algorithm demo with sample data:', dbError);
       
       const sampleGroups = [
-        { id: '1', name: 'Atlanta Home Builders', region: 'southeast', purpose: 'home_ownership', contrib: 150, trust: 92, members: 8, max: 12 },
-        { id: '2', name: 'Texas Wealth Circle', region: 'southwest', purpose: 'wealth_building', contrib: 200, trust: 88, members: 10, max: 15 },
-        { id: '3', name: 'NYC Business Starters', region: 'northeast', purpose: 'business', contrib: 175, trust: 85, members: 6, max: 10 },
-        { id: '4', name: 'California Dream Savers', region: 'west', purpose: 'home_ownership', contrib: 125, trust: 90, members: 7, max: 10 },
-        { id: '5', name: 'National Prosperity Group', region: 'national', purpose: 'wealth_building', contrib: 100, trust: 91, members: 15, max: 20 }
+        { id: '1', name: 'Atlanta Emergency Fund Circle', region: 'southeast', purpose: 'emergency_fund', contrib: 50, trust: 70, members: 0, max: 12 },
+        { id: '2', name: 'Atlanta Home Buyers Circle', region: 'southeast', purpose: 'home_ownership', contrib: 200, trust: 70, members: 0, max: 10 },
+        { id: '3', name: 'Miami Business Builders', region: 'southeast', purpose: 'business', contrib: 150, trust: 70, members: 0, max: 10 },
+        { id: '4', name: 'Chicago Education Fund', region: 'midwest', purpose: 'education', contrib: 100, trust: 70, members: 0, max: 10 },
+        { id: '5', name: 'Dallas Emergency Savers', region: 'southwest', purpose: 'emergency_fund', contrib: 50, trust: 70, members: 0, max: 12 }
       ];
 
       groups = sampleGroups.map(g => {
