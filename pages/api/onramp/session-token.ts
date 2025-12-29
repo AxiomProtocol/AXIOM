@@ -56,6 +56,28 @@ function createPrivateKeyFromCDP(rawKey: string): crypto.KeyObject {
   }
   
   if (keyData.includes('-----BEGIN')) {
+    // Handle case where key is on one line with spaces
+    if (!keyData.includes('\n')) {
+      // Extract header, content, and footer
+      const headerMatch = keyData.match(/-----BEGIN [A-Z ]+-----/);
+      const footerMatch = keyData.match(/-----END [A-Z ]+-----/);
+      
+      if (headerMatch && footerMatch) {
+        const header = headerMatch[0];
+        const footer = footerMatch[0];
+        let content = keyData
+          .replace(header, '')
+          .replace(footer, '')
+          .trim()
+          .replace(/\s+/g, ''); // Remove all whitespace
+        
+        // Format base64 content with proper line breaks (64 chars per line)
+        const lines = content.match(/.{1,64}/g) || [];
+        keyData = `${header}\n${lines.join('\n')}\n${footer}`;
+      }
+    }
+    
+    console.log('Attempting to parse key, first 50 chars:', keyData.substring(0, 50));
     return crypto.createPrivateKey(keyData);
   }
   

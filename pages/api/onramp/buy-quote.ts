@@ -62,6 +62,24 @@ function createPrivateKeyFromCDP(rawKey: string): crypto.KeyObject {
   }
   
   if (keyData.includes('-----BEGIN')) {
+    if (!keyData.includes('\n')) {
+      const headerMatch = keyData.match(/-----BEGIN [A-Z ]+-----/);
+      const footerMatch = keyData.match(/-----END [A-Z ]+-----/);
+      
+      if (headerMatch && footerMatch) {
+        const header = headerMatch[0];
+        const footer = footerMatch[0];
+        let content = keyData
+          .replace(header, '')
+          .replace(footer, '')
+          .trim()
+          .replace(/\s+/g, '');
+        
+        const lines = content.match(/.{1,64}/g) || [];
+        keyData = `${header}\n${lines.join('\n')}\n${footer}`;
+      }
+    }
+    
     return crypto.createPrivateKey(keyData);
   }
   
