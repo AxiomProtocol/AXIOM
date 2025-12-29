@@ -559,7 +559,7 @@ export default function Home() {
               />
               <span className="text-sm text-amber-700 font-medium">Live on Arbitrum One</span>
               <span className="text-gray-400">•</span>
-              <span className="text-sm text-gray-600">23 Contracts Deployed</span>
+              <span className="text-sm text-gray-600">29 Contracts Deployed</span>
             </motion.div>
 
             <motion.h1
