@@ -20,7 +20,12 @@ export default function GuidedOnboarding({ onComplete, onDismiss, initialReferra
   const [hubs, setHubs] = useState([]);
   const [selectedHub, setSelectedHub] = useState(null);
   const [groups, setGroups] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupCategory, setNewGroupCategory] = useState(null);
+  const [newGroupContribution, setNewGroupContribution] = useState('100');
 
   useEffect(() => {
     if (initialReferralCode) {
@@ -118,17 +123,12 @@ export default function GuidedOnboarding({ onComplete, onDismiss, initialReferra
         }),
       });
       const data = await res.json();
-      if (data.success && data.groups) {
-        setGroups(data.groups);
+      if (data.success) {
+        setGroups(data.groups || []);
+        setCategories(data.categories || []);
         setCurrentStep(4);
       } else {
-        const defaultGroups = [
-          { id: 'starter', name: 'Wealth Starters', description: 'Perfect for beginners', contributionAmount: '$100/month', members: 8 },
-          { id: 'builders', name: 'Wealth Builders', description: 'For consistent savers', contributionAmount: '$250/month', members: 12 },
-          { id: 'accelerators', name: 'Wealth Accelerators', description: 'Fast-track your goals', contributionAmount: '$500/month', members: 6 },
-        ];
-        setGroups(defaultGroups);
-        setCurrentStep(4);
+        setError(data.error || 'Failed to load groups');
       }
     } catch (err) {
       setError('Connection error. Please try again.');
@@ -139,10 +139,50 @@ export default function GuidedOnboarding({ onComplete, onDismiss, initialReferra
 
   const handleGroupSelect = (group) => {
     setSelectedGroup(group);
+    setShowCreateGroup(false);
   };
 
-  const handleJoinGroup = async () => {
-    if (!selectedGroup) {
+  const handleCreateGroup = async () => {
+    if (!newGroupName.trim()) {
+      setError('Please enter a group name');
+      return;
+    }
+    if (!newGroupCategory) {
+      setError('Please select a category');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/onboarding/create-group', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hubId: selectedHub?.id,
+          categoryId: newGroupCategory,
+          groupName: newGroupName,
+          contributionAmount: newGroupContribution,
+          walletAddress: walletState.address,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedGroup(data.group);
+        setShowCreateGroup(false);
+        handleJoinGroup(data.group);
+      } else {
+        setError(data.error || 'Failed to create group');
+      }
+    } catch (err) {
+      setError('Connection error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleJoinGroup = async (groupOverride) => {
+    const groupToJoin = groupOverride || selectedGroup;
+    if (!groupToJoin) {
       setError('Please select a group to join');
       return;
     }
@@ -155,7 +195,7 @@ export default function GuidedOnboarding({ onComplete, onDismiss, initialReferra
         body: JSON.stringify({
           sessionId,
           hubId: selectedHub?.id,
-          groupId: selectedGroup?.id,
+          groupId: groupToJoin?.id,
           walletAddress: walletState.address,
           email,
           mode: selectedMode,
@@ -230,7 +270,7 @@ export default function GuidedOnboarding({ onComplete, onDismiss, initialReferra
           disabled={loading}
           className="w-full py-3 bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold rounded-lg hover:from-yellow-400 hover:to-amber-500 transition-all disabled:opacity-50"
         >
-          {loading ? 'Loading Hubs...' : 'Continue to Select Hub →'}
+          {loading ? 'Loading Hubs...' : 'Browse Interest Hubs →'}
         </button>
       )}
       <button
@@ -244,10 +284,11 @@ export default function GuidedOnboarding({ onComplete, onDismiss, initialReferra
 
   const renderStep3 = () => (
     <div className="space-y-4">
-      <p className="text-gray-400 text-sm mb-2">
-        Join an Interest Hub to connect with like-minded members in your area
-      </p>
-      <div className="space-y-2 max-h-64 overflow-y-auto">
+      <div className="flex justify-between items-center mb-2">
+        <p className="text-gray-400 text-sm">Select your Interest Hub</p>
+        <span className="text-xs text-yellow-500">{hubs.length} available</span>
+      </div>
+      <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
         {hubs.length > 0 ? hubs.map((hub) => (
           <button
             key={hub.id}
@@ -259,9 +300,12 @@ export default function GuidedOnboarding({ onComplete, onDismiss, initialReferra
               <span className="text-2xl">🏠</span>
               <div className="flex-1">
                 <h4 className="font-bold text-white">{hub.name}</h4>
-                <p className="text-xs text-gray-400">{hub.description || `${hub.memberCount || 0} members`}</p>
+                <p className="text-xs text-gray-400">{hub.description}</p>
               </div>
-              <span className="text-gray-500">→</span>
+              <div className="text-right">
+                <span className="text-sm text-yellow-500 font-bold">{hub.memberCount}</span>
+                <p className="text-xs text-gray-500">members</p>
+              </div>
             </div>
           </button>
         )) : (
@@ -276,52 +320,142 @@ export default function GuidedOnboarding({ onComplete, onDismiss, initialReferra
 
   const renderStep4 = () => (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-lg">🏠</span>
-        <span className="text-sm text-yellow-500">{selectedHub?.name}</span>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">🏠</span>
+          <span className="text-sm text-yellow-500">{selectedHub?.name}</span>
+        </div>
+        <span className="text-xs text-gray-500">{groups.length} groups</span>
       </div>
-      <p className="text-gray-400 text-sm">
-        Choose a Purpose Group to start saving together
-      </p>
-      <div className="space-y-2 max-h-48 overflow-y-auto">
-        {groups.map((group) => (
-          <button
-            key={group.id}
-            onClick={() => handleGroupSelect(group)}
-            className={`w-full p-3 rounded-xl border-2 text-left transition-all ${
-              selectedGroup?.id === group.id
-                ? 'border-green-500 bg-green-500/10'
-                : 'border-gray-700 hover:border-green-500/50'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">👥</span>
-              <div className="flex-1">
-                <h4 className="font-bold text-white">{group.name}</h4>
-                <p className="text-xs text-gray-400">{group.contributionAmount} • {group.members} members</p>
+
+      {!showCreateGroup ? (
+        <>
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+            {groups.length > 0 ? groups.map((group) => (
+              <button
+                key={group.id}
+                onClick={() => handleGroupSelect(group)}
+                className={`w-full p-3 rounded-xl border-2 text-left transition-all ${
+                  selectedGroup?.id === group.id
+                    ? 'border-green-500 bg-green-500/10'
+                    : 'border-gray-700 hover:border-green-500/50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{group.icon || '👥'}</span>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-white">{group.name}</h4>
+                    <p className="text-xs text-gray-400">{group.contributionAmount}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm text-green-500 font-bold">{group.members}/{group.maxMembers}</span>
+                    <p className="text-xs text-gray-500">{group.spotsLeft} spots left</p>
+                  </div>
+                </div>
+              </button>
+            )) : (
+              <div className="text-center py-6 bg-gray-800/50 rounded-xl border border-dashed border-gray-600">
+                <p className="text-gray-400 mb-2">No groups in this hub yet</p>
+                <p className="text-sm text-gray-500">Be the first to create one!</p>
               </div>
-              {selectedGroup?.id === group.id && (
-                <span className="text-green-500">✓</span>
-              )}
-            </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => setShowCreateGroup(true)}
+            className="w-full py-3 border-2 border-dashed border-yellow-500/50 text-yellow-500 font-bold rounded-lg hover:bg-yellow-500/10 transition-all flex items-center justify-center gap-2"
+          >
+            <span>➕</span> Create New Purpose Group
           </button>
-        ))}
-      </div>
-      {selectedGroup && (
+
+          {selectedGroup && (
+            <button
+              onClick={() => handleJoinGroup()}
+              disabled={loading}
+              className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg hover:from-green-400 hover:to-emerald-500 transition-all disabled:opacity-50"
+            >
+              {loading ? 'Joining...' : `🎉 Join ${selectedGroup.name}`}
+            </button>
+          )}
+        </>
+      ) : (
+        <div className="space-y-3">
+          <h5 className="text-white font-semibold">Create a New Purpose Group</h5>
+          
+          <input
+            type="text"
+            placeholder="Group Name (e.g., Home Buyers 2025)"
+            value={newGroupName}
+            onChange={(e) => setNewGroupName(e.target.value)}
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 text-sm"
+          />
+
+          <div>
+            <label className="text-xs text-gray-400 mb-1 block">Category</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(categories.length > 0 ? categories : [
+                { id: 1, name: 'Emergency Fund', icon: '🏥' },
+                { id: 2, name: 'Home Purchase', icon: '🏠' },
+                { id: 3, name: 'Business Capital', icon: '💼' },
+                { id: 4, name: 'Education', icon: '🎓' },
+                { id: 5, name: 'Travel', icon: '✈️' },
+                { id: 6, name: 'Investment', icon: '📈' },
+              ]).map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setNewGroupCategory(cat.id)}
+                  className={`p-2 rounded-lg border text-xs text-left transition-all ${
+                    newGroupCategory === cat.id
+                      ? 'border-yellow-500 bg-yellow-500/10 text-yellow-500'
+                      : 'border-gray-700 text-gray-400 hover:border-gray-600'
+                  }`}
+                >
+                  <span className="mr-1">{cat.icon}</span> {cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs text-gray-400 mb-1 block">Monthly Contribution</label>
+            <select
+              value={newGroupContribution}
+              onChange={(e) => setNewGroupContribution(e.target.value)}
+              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-yellow-500 text-sm"
+            >
+              <option value="50">$50/month</option>
+              <option value="100">$100/month</option>
+              <option value="250">$250/month</option>
+              <option value="500">$500/month</option>
+              <option value="1000">$1,000/month</option>
+            </select>
+          </div>
+
+          <button
+            onClick={handleCreateGroup}
+            disabled={loading || !newGroupName || !newGroupCategory}
+            className="w-full py-3 bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold rounded-lg hover:from-yellow-400 hover:to-amber-500 transition-all disabled:opacity-50"
+          >
+            {loading ? 'Creating...' : '✨ Create & Join Group'}
+          </button>
+
+          <button
+            onClick={() => setShowCreateGroup(false)}
+            className="w-full py-2 text-gray-400 hover:text-white text-sm transition-colors"
+          >
+            ← Back to existing groups
+          </button>
+        </div>
+      )}
+
+      {!showCreateGroup && (
         <button
-          onClick={handleJoinGroup}
-          disabled={loading}
-          className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg hover:from-green-400 hover:to-emerald-500 transition-all disabled:opacity-50"
+          onClick={() => setCurrentStep(3)}
+          className="w-full py-2 text-gray-400 hover:text-white text-sm transition-colors"
         >
-          {loading ? 'Joining...' : `🎉 Join ${selectedGroup.name}`}
+          ← Choose different hub
         </button>
       )}
-      <button
-        onClick={() => setCurrentStep(3)}
-        className="w-full py-2 text-gray-400 hover:text-white text-sm transition-colors"
-      >
-        ← Choose different hub
-      </button>
     </div>
   );
 
