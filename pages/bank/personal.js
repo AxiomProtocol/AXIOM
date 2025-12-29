@@ -39,7 +39,7 @@ const PERSONAL_PRODUCTS = [
     description: 'Stake AXM tokens to earn protocol rewards and participate in governance voting. Flexible unstaking available.',
     minimumBalance: '50 AXM',
     fees: 'No staking fees',
-    features: ['Governance voting power', 'Protocol rewards', 'Flexible unstaking', 'Tiered rewards', 'Wealth Engine integration', 'Transparent APR'],
+    features: ['Governance voting power', 'Protocol rewards', 'Flexible unstaking', 'Tiered rewards', 'Wealth Engine integration', 'On-chain transparency'],
     icon: '🏆',
     highlight: 'Governance'
   },

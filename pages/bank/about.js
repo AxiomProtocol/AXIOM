@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Layout from '../../components/Layout';
 
 const LEADERSHIP_TEAM = [
-  { name: 'Axiom DAO Council', role: 'Governance Body', description: 'Elected AXM token holders governing major bank decisions', icon: '🗳️' },
+  { name: 'Axiom DAO Council', role: 'Governance Body', description: 'Elected AXM token holders governing major protocol decisions', icon: '🗳️' },
   { name: 'Treasury Committee', role: 'Financial Oversight', description: 'Multi-signature treasury management and reserve monitoring', icon: '🏦' },
   { name: 'Risk Committee', role: 'Risk Management', description: 'Credit, operational, and smart contract risk assessment', icon: '🛡️' },
   { name: 'Compliance Team', role: 'Regulatory Affairs', description: 'KYC/AML compliance and regulatory liaison', icon: '⚖️' },
@@ -26,9 +26,9 @@ const REGULATORY_INFO = [
 
 const CORE_VALUES = [
   { icon: '🌟', title: 'Transparency', description: 'Every transaction, every decision recorded on-chain. Full visibility into reserves, lending, and treasury operations.' },
-  { icon: '🤝', title: 'Community Ownership', description: 'Not a bank run by executives - governed by AXM token holders who vote on rates, products, and policies.' },
+  { icon: '🤝', title: 'Community Ownership', description: 'Not a centralized institution - governed by AXM token holders who vote on protocol parameters and policies.' },
   { icon: '🔒', title: 'Security First', description: 'Multi-signature wallets, audited smart contracts, and enterprise-grade infrastructure protecting every deposit.' },
-  { icon: '🚀', title: 'Innovation', description: 'Pioneering the future of banking with tokenized assets, instant settlements, and programmable money.' },
+  { icon: '🚀', title: 'Innovation', description: 'Pioneering the future of DeFi with tokenized assets, instant settlements, and programmable money.' },
 ];
 
 export default function AboutTreasuryPage() {
@@ -66,8 +66,8 @@ export default function AboutTreasuryPage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h2>
             <p className="text-gray-700 leading-relaxed">
               To establish the first sovereign digital-physical economy in America 
-              through blockchain-powered banking infrastructure. We provide transparent, 
-              accessible financial services that empower individuals, businesses, and 
+              through blockchain-powered DeFi infrastructure. We provide transparent, 
+              accessible DeFi services that empower individuals, businesses, and 
               communities to participate in the future of finance.
             </p>
           </div>
@@ -76,10 +76,10 @@ export default function AboutTreasuryPage() {
             <div className="text-5xl mb-4">🔭</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Vision</h2>
             <p className="text-gray-700 leading-relaxed">
-              To become the leading model for smart city banking worldwide, 
+              To become the leading model for smart city DeFi protocols worldwide, 
               demonstrating how blockchain technology can create sovereign, 
               community-governed financial systems that rival and surpass 
-              traditional Wall Street institutions.
+              traditional centralized institutions.
             </p>
           </div>
         </div>
@@ -200,10 +200,10 @@ export default function AboutTreasuryPage() {
         </div>
 
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-8 md:p-12 text-white text-center">
-          <h2 className="text-3xl font-bold mb-4">Join the Banking Revolution</h2>
+          <h2 className="text-3xl font-bold mb-4">Join the DeFi Revolution</h2>
           <p className="text-amber-100 mb-8 max-w-2xl mx-auto">
-            Be part of history as we build America's first on-chain sovereign banking system. 
-            Your deposits, your governance, your bank.
+            Be part of history as we build America's first on-chain sovereign DeFi protocol. 
+            Your assets, your governance, your community. Not a bank.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/bank" className="px-8 py-3 bg-white text-amber-600 font-bold rounded-lg hover:bg-gray-100 transition-colors">
