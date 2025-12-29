@@ -360,6 +360,39 @@ export default function LearnWealthPracticePage() {
                 </div>
               </div>
             </div>
+
+            <div className="mt-8 bg-gray-800 border border-gray-700 rounded-xl p-6">
+              <h3 className="text-xl font-bold text-yellow-400 mb-4">Community Mode vs Capital Mode</h3>
+              <p className="text-gray-400 mb-4">
+                As your group grows, you can graduate from Community Mode to Capital Mode for access to larger opportunities.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                  <h4 className="font-bold text-green-400 mb-2">Community Mode</h4>
+                  <ul className="text-sm text-gray-300 space-y-1">
+                    <li className="flex items-center gap-2"><span className="text-green-400">•</span> Up to <span className="text-yellow-400 font-semibold">$1,000</span> per contribution</li>
+                    <li className="flex items-center gap-2"><span className="text-green-400">•</span> Up to <span className="text-yellow-400 font-semibold">$10,000</span> total pot</li>
+                    <li className="flex items-center gap-2"><span className="text-green-400">•</span> Up to 20 members</li>
+                    <li className="flex items-center gap-2"><span className="text-green-400">•</span> Standard rotating payouts</li>
+                  </ul>
+                </div>
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                  <h4 className="font-bold text-yellow-400 mb-2">Capital Mode</h4>
+                  <ul className="text-sm text-gray-300 space-y-1">
+                    <li className="flex items-center gap-2"><span className="text-yellow-400">•</span> <span className="text-yellow-400 font-semibold">$1,000+</span> per contribution</li>
+                    <li className="flex items-center gap-2"><span className="text-yellow-400">•</span> <span className="text-yellow-400 font-semibold">$10,000+</span> total pot</li>
+                    <li className="flex items-center gap-2"><span className="text-yellow-400">•</span> Unlimited members</li>
+                    <li className="flex items-center gap-2"><span className="text-yellow-400">•</span> Access to investment pools</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="mt-4 text-center">
+                <a href="/wealth-dashboard" className="inline-flex items-center gap-2 text-yellow-400 hover:text-yellow-300 font-medium">
+                  <span>View opportunities in Wealth Dashboard</span>
+                  <span>→</span>
+                </a>
+              </div>
+            </div>
           </section>
 
           <section id="examples" className="scroll-mt-20">
