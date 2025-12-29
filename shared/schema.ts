@@ -3946,6 +3946,24 @@ export const nodeUpgrades = pgTable("node_upgrades", {
   walletIdx: index("node_upgrades_wallet_idx").on(table.walletAddress),
 }));
 
+// User quest progress tracking for milestone quests
+export const userQuestProgress = pgTable("user_quest_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  questId: varchar("quest_id", { length: 50 }).notNull(),
+  progress: integer("progress").default(0),
+  maxProgress: integer("max_progress").default(1),
+  status: varchar("status", { length: 20 }).default('active'),
+  xpEarned: integer("xp_earned").default(0),
+  axmEarned: decimal("axm_earned", { precision: 24, scale: 8 }).default('0'),
+  creditBoostEarned: integer("credit_boost_earned").default(0),
+  claimedAt: timestamp("claimed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userQuestIdx: index("user_quest_idx").on(table.userId, table.questId),
+}));
+
 // Export types for Wealth Engine V2
 export type YieldVaultPosition = typeof yieldVaultPositions.$inferSelect;
 export type InsertYieldVaultPosition = typeof yieldVaultPositions.$inferInsert;

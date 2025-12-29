@@ -12,6 +12,10 @@ import GuidedOnboarding from '../components/GuidedOnboarding';
 import ReferralWidget from '../components/ReferralWidget';
 
 const WealthCoach = dynamic(() => import('../components/WealthCoach'), { ssr: false });
+const MilestoneQuestSystem = dynamic(() => import('../components/MilestoneQuestSystem'), { ssr: false });
+const FeeRebateTracker = dynamic(() => import('../components/FeeRebateTracker'), { ssr: false });
+const StreakTracker = dynamic(() => import('../components/StreakTracker'), { ssr: false });
+const CommunityCreatorPortal = dynamic(() => import('../components/CommunityCreatorPortal'), { ssr: false });
 
 export default function WealthDashboardPage() {
   const { walletState } = useWallet();
@@ -41,10 +45,13 @@ export default function WealthDashboardPage() {
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: '🏛️' },
+    { id: 'quests', label: 'Quests', icon: '🎮' },
+    { id: 'streaks', label: 'Streaks', icon: '🔥' },
+    { id: 'rebates', label: 'Rebates', icon: '💸' },
+    { id: 'creator', label: 'Creator', icon: '🌟' },
     { id: 'opportunities', label: 'Opportunities', icon: '📈' },
     { id: 'training', label: 'Training', icon: '🎓' },
     { id: 'reports', label: 'Reports', icon: '📊' },
-    { id: 'my-groups', label: 'My Groups', icon: '👥' },
   ];
 
   return (
@@ -120,30 +127,54 @@ export default function WealthDashboardPage() {
 
               {activeTab === 'overview' && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <Link href="/organizer-dashboard" className="block bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-500/30 rounded-xl p-4 hover:border-purple-400 transition-all">
-                      <div className="text-2xl mb-2">📊</div>
-                      <h3 className="font-bold text-purple-400">Organizer Dashboard</h3>
-                      <p className="text-xs text-gray-400 mt-1">Manage your groups with AI insights</p>
-                    </Link>
-                    <Link href="/analytics-dashboard" className="block bg-gradient-to-br from-blue-600/20 to-blue-800/20 border border-blue-500/30 rounded-xl p-4 hover:border-blue-400 transition-all">
-                      <div className="text-2xl mb-2">📈</div>
-                      <h3 className="font-bold text-blue-400">Analytics</h3>
-                      <p className="text-xs text-gray-400 mt-1">Real-time platform metrics</p>
-                    </Link>
-                    <Link href="/notifications" className="block bg-gradient-to-br from-green-600/20 to-green-800/20 border border-green-500/30 rounded-xl p-4 hover:border-green-400 transition-all">
-                      <div className="text-2xl mb-2">🔔</div>
-                      <h3 className="font-bold text-green-400">Notifications</h3>
-                      <p className="text-xs text-gray-400 mt-1">Customize your alerts</p>
-                    </Link>
-                    <Link href="/graduation-dashboard" className="block bg-gradient-to-br from-yellow-600/20 to-amber-800/20 border border-yellow-500/30 rounded-xl p-4 hover:border-yellow-400 transition-all">
-                      <div className="text-2xl mb-2">🎓</div>
-                      <h3 className="font-bold text-yellow-400">Graduation</h3>
-                      <p className="text-xs text-gray-400 mt-1">Track group progress</p>
-                    </Link>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="md:col-span-2">
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <Link href="/organizer-dashboard" className="block bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-500/30 rounded-xl p-4 hover:border-purple-400 transition-all">
+                          <div className="text-2xl mb-2">📊</div>
+                          <h3 className="font-bold text-purple-400">Organizer Dashboard</h3>
+                          <p className="text-xs text-gray-400 mt-1">Manage groups with AI</p>
+                        </Link>
+                        <Link href="/analytics-dashboard" className="block bg-gradient-to-br from-blue-600/20 to-blue-800/20 border border-blue-500/30 rounded-xl p-4 hover:border-blue-400 transition-all">
+                          <div className="text-2xl mb-2">📈</div>
+                          <h3 className="font-bold text-blue-400">Analytics</h3>
+                          <p className="text-xs text-gray-400 mt-1">Real-time metrics</p>
+                        </Link>
+                        <Link href="/notifications" className="block bg-gradient-to-br from-green-600/20 to-green-800/20 border border-green-500/30 rounded-xl p-4 hover:border-green-400 transition-all">
+                          <div className="text-2xl mb-2">🔔</div>
+                          <h3 className="font-bold text-green-400">Notifications</h3>
+                          <p className="text-xs text-gray-400 mt-1">Customize alerts</p>
+                        </Link>
+                        <Link href="/graduation-dashboard" className="block bg-gradient-to-br from-yellow-600/20 to-amber-800/20 border border-yellow-500/30 rounded-xl p-4 hover:border-yellow-400 transition-all">
+                          <div className="text-2xl mb-2">🎓</div>
+                          <h3 className="font-bold text-yellow-400">Graduation</h3>
+                          <p className="text-xs text-gray-400 mt-1">Track progress</p>
+                        </Link>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <MilestoneQuestSystem walletAddress={address} compact={true} />
+                      <StreakTracker walletAddress={address} compact={true} />
+                    </div>
                   </div>
                   <WealthAdvancement wallet={address} />
                 </div>
+              )}
+
+              {activeTab === 'quests' && (
+                <MilestoneQuestSystem walletAddress={address} />
+              )}
+
+              {activeTab === 'streaks' && (
+                <StreakTracker walletAddress={address} />
+              )}
+
+              {activeTab === 'rebates' && (
+                <FeeRebateTracker walletAddress={address} />
+              )}
+
+              {activeTab === 'creator' && (
+                <CommunityCreatorPortal walletAddress={address} />
               )}
 
               {activeTab === 'opportunities' && (
