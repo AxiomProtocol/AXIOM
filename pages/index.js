@@ -759,7 +759,7 @@ export default function Home() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl lg:text-4xl font-bold mb-4 text-gray-900">
-              <span className="text-amber-600">23 Smart Contracts</span> Deployed & Verified
+              <span className="text-amber-600">29 Smart Contracts</span> Deployed & Verified
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Complete infrastructure deployed on Arbitrum One. All contracts verified and auditable on Blockscout.
