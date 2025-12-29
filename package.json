@@ -52,6 +52,7 @@
     "hardhat": "^2.27.0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@coinbase/cbpay-js": "^2.4.0",
     "@coinbase/cdp-sdk": "^1.40.1",
     "@google-cloud/storage": "^7.17.1",
