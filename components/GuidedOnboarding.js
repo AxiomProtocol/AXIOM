@@ -432,8 +432,9 @@ export default function GuidedOnboarding({ onComplete, onDismiss, initialReferra
           </div>
 
           <button
+            type="button"
             onClick={handleCreateGroup}
-            disabled={loading || !newGroupName || !newGroupCategory}
+            disabled={loading}
             className="w-full py-3 bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold rounded-lg hover:from-yellow-400 hover:to-amber-500 transition-all disabled:opacity-50"
           >
             {loading ? 'Creating...' : '✨ Create & Join Group'}
