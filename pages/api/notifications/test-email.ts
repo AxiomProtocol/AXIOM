@@ -109,7 +109,7 @@ export default async function handler(
               <div style="font-size: 64px; margin-bottom: 16px;">🎓</div>
               <h2 style="margin: 0; color: #FCD34D;">Congratulations! (Test)</h2>
               <p style="font-size: 20px;">Your Group Has Graduated to Capital Mode</p>
-              <a href="https://axiom.city/wealth-practice" style="display: inline-block; background: #FCD34D; color: black; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 16px;">Explore Opportunities</a>
+              <a href="https://axiom.city/learn-wealth-practice" style="display: inline-block; background: #FCD34D; color: black; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 16px;">Explore Opportunities</a>
             </div>
           </div>
         `

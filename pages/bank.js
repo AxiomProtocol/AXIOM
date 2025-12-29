@@ -379,7 +379,7 @@ export default function BankPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
-              href="/wealth-practice" 
+              href="/learn-wealth-practice" 
               className="px-8 py-3 bg-amber-500 text-white font-bold rounded-lg hover:bg-amber-600 transition-colors"
             >
               Explore Wealth Practice

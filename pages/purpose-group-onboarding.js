@@ -456,7 +456,7 @@ export default function PurposeGroupOnboarding() {
                 Go to Dashboard
               </Link>
               <Link 
-                href="/wealth-practice"
+                href="/learn-wealth-practice"
                 className="px-6 py-3 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors"
               >
                 Learn More

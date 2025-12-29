@@ -103,7 +103,7 @@ const emailTemplates = {
             </ul>
           </div>
           
-          <a href="${data.actionUrl || 'https://axiom.city/wealth-practice'}" 
+          <a href="${data.actionUrl || 'https://axiom.city/learn-wealth-practice'}" 
              style="display: inline-block; background: #FCD34D; color: black; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
             Explore Opportunities
           </a>
