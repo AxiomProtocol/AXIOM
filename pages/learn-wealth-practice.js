@@ -205,21 +205,21 @@ export default function LearnWealthPracticePage() {
             <div className="bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border border-yellow-500/30 rounded-2xl p-6">
               <h3 className="text-xl font-bold text-yellow-400 mb-4">The Simple Math</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                <div className="bg-gray-800/50 rounded-xl p-4">
-                  <div className="text-3xl mb-2">10</div>
-                  <div className="text-gray-400">Members</div>
+                <div className="bg-gray-900 border border-gray-700 rounded-xl p-4">
+                  <div className="text-3xl font-bold text-yellow-400 mb-2">10</div>
+                  <div className="text-gray-300">Members</div>
                 </div>
-                <div className="bg-gray-800/50 rounded-xl p-4">
-                  <div className="text-3xl mb-2">$100</div>
-                  <div className="text-gray-400">Each Per Round</div>
+                <div className="bg-gray-900 border border-gray-700 rounded-xl p-4">
+                  <div className="text-3xl font-bold text-yellow-400 mb-2">$100</div>
+                  <div className="text-gray-300">Each Per Round</div>
                 </div>
-                <div className="bg-gray-800/50 rounded-xl p-4">
-                  <div className="text-3xl text-yellow-400 mb-2">$1,000</div>
-                  <div className="text-gray-400">Pot Per Round</div>
+                <div className="bg-gray-900 border border-yellow-500/50 rounded-xl p-4">
+                  <div className="text-3xl font-bold text-yellow-400 mb-2">$1,000</div>
+                  <div className="text-gray-300">Pot Per Round</div>
                 </div>
               </div>
-              <p className="text-center text-gray-400 mt-4">
-                Each round, someone receives $1,000. After 10 rounds, everyone has paid $1,000 total and received $1,000 once.
+              <p className="text-center text-gray-300 mt-4">
+                Each round, someone receives <span className="text-yellow-400 font-semibold">$1,000</span>. After 10 rounds, everyone has paid <span className="text-yellow-400 font-semibold">$1,000</span> total and received <span className="text-yellow-400 font-semibold">$1,000</span> once.
               </p>
             </div>
           </section>
