@@ -54,7 +54,7 @@ const SECTIONS: ExplainerSection[] = [
     title: 'Fee Burner & Buyback',
     icon: '🔥',
     content: [
-      '0.5% fee on all banking products (deposits, withdrawals, etc.)',
+      '0.5% fee on all DeFi products (vaults, staking, etc.)',
       '50% of fees used to buy back AXM from the DEX',
       'Purchased AXM is permanently burned (sent to 0xdead)',
       '50% of fees distributed to veAXM holders as real yield',
@@ -73,7 +73,7 @@ export default function TokenomicsExplainer() {
         <h3 className="text-xl font-bold text-white flex items-center gap-2">
           <span className="text-2xl">📚</span> How Axiom V2 Works
         </h3>
-        <p className="text-gray-400 text-sm mt-1">Understanding the Sovereign Banking System</p>
+        <p className="text-gray-400 text-sm mt-1">Understanding the DeFi Treasury System</p>
       </div>
 
       <div className="divide-y divide-gray-700">

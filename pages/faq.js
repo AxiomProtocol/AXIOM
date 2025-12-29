@@ -4,7 +4,7 @@ import Layout from "../components/Layout";
 const faqs = [
   { 
     question: "What is Axiom?", 
-    answer: "Axiom is a community-owned digital economy focused on building wealth through discipline, structure, and community. We offer educational resources, rotating savings groups (SUSU), rent-to-own housing (KeyGrow), and banking-style tools — all powered by the AXM token on Arbitrum." 
+    answer: "Axiom is a community-owned digital economy focused on building wealth through discipline, structure, and community. We offer educational resources, rotating savings groups (SUSU), rent-to-own housing (KeyGrow), and DeFi treasury tools — all powered by the AXM token on Arbitrum. Not a bank." 
   },
   { 
     question: "What is the AXM token?", 

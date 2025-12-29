@@ -22,7 +22,7 @@ export default function RewardsPage() {
                 Real Yield Rewards
               </h1>
               <p className="text-gray-400">
-                Earn from the Wealth Engine's 0.5% fee switch on all banking products
+                Earn from the Wealth Engine's 0.5% fee switch on all DeFi products
               </p>
             </div>
 

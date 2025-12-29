@@ -32,8 +32,8 @@ const milestones = [
     status: "upcoming",
     items: [
       "Community rollout and member onboarding",
-      "Sovran Bank PMA integration",
-      "Full banking product suite launch",
+      "Sovran PMA integration",
+      "Full DeFi treasury product suite launch",
       "Mobile app release"
     ]
   },

@@ -435,7 +435,7 @@ export default function LearnWealthPracticePage() {
               <ul className="space-y-3 text-gray-300">
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 font-bold">•</span>
-                  <span><strong>Not FDIC Insured:</strong> Cryptocurrency deposits are not insured by any government agency. This is not a bank account.</span>
+                  <span><strong>Not Insured:</strong> Cryptocurrency deposits are not insured by any government agency. This is not a traditional financial product.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 font-bold">•</span>
@@ -527,7 +527,7 @@ export default function LearnWealthPracticePage() {
           <div className="max-w-4xl mx-auto px-6 text-center text-sm text-gray-500 space-y-2">
             <p>This page is for informational purposes only and does not constitute financial, legal, or investment advice.</p>
             <p>Participation involves risk. Consult qualified professionals for advice specific to your situation.</p>
-            <p>Not FDIC insured. Not a bank. Axiom Nexus LLC provides coordination tools, not financial products.</p>
+            <p>Not insured. Not a bank. Axiom Nexus LLC provides coordination tools, not financial products.</p>
           </div>
         </div>
       </div>

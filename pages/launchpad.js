@@ -25,7 +25,7 @@ const TOKEN_ALLOCATION = [
 const TGE_BENEFITS = [
   { icon: '💰', title: 'Early Access Pricing', description: 'Participate at 1:1 ratio before public listing. Early supporters get the best price.' },
   { icon: '🗳️', title: 'Governance Rights (ERC20Votes)', description: 'Vote on protocol decisions, fee adjustments, vault allocations, and treasury spending.' },
-  { icon: '📈', title: 'Staking Rewards', description: 'Stake your AXM for dynamic APR rewards. Earn passive income from day one.' },
+  { icon: '📈', title: 'Staking Rewards', description: 'Stake your AXM for variable protocol rewards. Earn from day one.' },
   { icon: '🏠', title: 'Real Utility', description: 'Access KeyGrow rent-to-own, fractional real estate, DePIN rewards, and community services.' },
   { icon: '⚡', title: 'Ultra-Low Fees', description: 'Built on Arbitrum One. Gas fees significantly lower than Ethereum mainnet.' },
   { icon: '🔐', title: 'Enterprise-Grade Security', description: 'Pausable in emergencies, role-based access control, and anti-whale protection.' },
@@ -172,7 +172,7 @@ export default function LaunchpadPage() {
             </Link>
             <div className="flex gap-6">
               <Link href="/about-us" className="text-gray-300 hover:text-amber-400 text-sm transition-colors">About</Link>
-              <Link href="/bank" className="text-gray-300 hover:text-amber-400 text-sm transition-colors">Bank</Link>
+              <Link href="/bank" className="text-gray-300 hover:text-amber-400 text-sm transition-colors">Treasury</Link>
               <Link href="/dex" className="text-gray-300 hover:text-amber-400 text-sm transition-colors">DEX</Link>
               <Link href="/launchpad" className="text-amber-400 text-sm font-semibold">Launchpad</Link>
               <Link href="/axiom-nodes" className="text-gray-300 hover:text-amber-400 text-sm transition-colors">Axiom Nodes</Link>
@@ -195,7 +195,7 @@ export default function LaunchpadPage() {
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
               <Link href="/about-us" className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-gray-800/50 text-gray-300 border border-gray-600 hover:bg-gray-700/50 transition-colors">About</Link>
-              <Link href="/bank" className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-gray-800/50 text-gray-300 border border-gray-600 hover:bg-gray-700/50 transition-colors">Bank</Link>
+              <Link href="/bank" className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-gray-800/50 text-gray-300 border border-gray-600 hover:bg-gray-700/50 transition-colors">Treasury</Link>
               <Link href="/dex" className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-gray-800/50 text-gray-300 border border-gray-600 hover:bg-gray-700/50 transition-colors">DEX</Link>
               <Link href="/launchpad" className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-amber-500 text-white">Launchpad</Link>
               <Link href="/axiom-nodes" className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-gray-800/50 text-gray-300 border border-gray-600 hover:bg-gray-700/50 transition-colors">Axiom Nodes</Link>

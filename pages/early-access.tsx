@@ -112,7 +112,7 @@ export default function EarlyAccessPage() {
               </Link>
               <div className="flex gap-6">
                 <Link href="/about-us" className="text-gray-300 hover:text-amber-400 text-sm transition-colors">About</Link>
-                <Link href="/bank" className="text-gray-300 hover:text-amber-400 text-sm transition-colors">Bank</Link>
+                <Link href="/bank" className="text-gray-300 hover:text-amber-400 text-sm transition-colors">Treasury</Link>
                 <Link href="/dex" className="text-gray-300 hover:text-amber-400 text-sm transition-colors">DEX</Link>
                 <Link href="/launchpad" className="text-gray-300 hover:text-amber-400 text-sm transition-colors">Launchpad</Link>
                 <Link href="/early-access" className="text-amber-400 text-sm font-semibold">Early Access</Link>

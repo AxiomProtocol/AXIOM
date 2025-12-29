@@ -57,8 +57,8 @@ const ADVANCED_MODULES = [
   },
   {
     icon: '🔧',
-    title: 'Banking Tools',
-    description: 'Banking-style coordination tools for advanced members. Payments, credit scoring, and financial products.',
+    title: 'Treasury Tools',
+    description: 'DeFi coordination tools for advanced members. Payments, credit scoring, and protocol products.',
     stats: 'Advanced',
     link: '/bank',
     cta: 'View Tools'
@@ -1043,7 +1043,7 @@ export default function Home() {
                 <Link href="/academy" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Learn (Academy)</Link>
                 <Link href="/susu" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Connect & Save Together (SUSU)</Link>
                 <Link href="/keygrow" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Grow (KeyGrow)</Link>
-                <Link href="/bank" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Banking Tools</Link>
+                <Link href="/bank" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Treasury Tools</Link>
                 <Link href="/dex" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">DEX Exchange</Link>
                 <Link href="/launchpad" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Launchpad (TGE)</Link>
                 <Link href="/axiom-nodes" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">DePIN Network</Link>

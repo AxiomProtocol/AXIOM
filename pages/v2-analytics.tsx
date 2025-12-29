@@ -66,8 +66,8 @@ export default function V2AnalyticsPage() {
   return (
     <>
       <Head>
-        <title>V2 Analytics | Axiom Sovereign Banking</title>
-        <meta name="description" content="Real-time analytics for Axiom's Sovereign Banking System V2 contracts" />
+        <title>V2 Analytics | Axiom DeFi Treasury</title>
+        <meta name="description" content="Real-time analytics for Axiom's DeFi Treasury System V2 contracts" />
       </Head>
 
       <Layout showWallet={true}>
@@ -75,7 +75,7 @@ export default function V2AnalyticsPage() {
           <div className="max-w-7xl mx-auto px-4 py-8">
             <div className="text-center mb-8">
               <h1 className="text-4xl font-bold text-white mb-2">
-                Sovereign Banking Analytics
+                DeFi Treasury Analytics
               </h1>
               <p className="text-gray-400">Real-time metrics from the Wealth Engine</p>
             </div>

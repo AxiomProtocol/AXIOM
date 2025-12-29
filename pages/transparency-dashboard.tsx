@@ -127,7 +127,7 @@ export default function TransparencyDashboard() {
             Protocol Transparency Dashboard
           </h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Real-time metrics from the Axiom Sovereign Banking System. All data is pulled directly from on-chain contracts.
+            Real-time metrics from the Axiom DeFi Treasury System. All data is pulled directly from on-chain contracts. Not a bank.
           </p>
           {lastUpdated && (
             <p className="text-gray-500 text-sm mt-2">

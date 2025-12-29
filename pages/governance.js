@@ -453,7 +453,7 @@ export default function GovernancePage() {
               ) : (
                 <div className="mb-8">
                   <div className="bg-gray-50 rounded-2xl p-6 mb-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Your Account</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Your Wallet</h3>
                     <div className="grid md:grid-cols-3 gap-4">
                       <div className="bg-white rounded-xl p-4 border border-gray-200">
                         <div className="text-sm text-gray-500 mb-1">Wallet Address</div>

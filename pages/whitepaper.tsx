@@ -459,7 +459,7 @@ export default function WhitePaper() {
                       <span className="text-2xl">🏦</span>
                       <h4 className="font-bold text-gray-900">Financial Coordination Tools</h4>
                     </div>
-                    <p className="text-gray-600 text-sm">Banking-style tools for advanced needs</p>
+                    <p className="text-gray-600 text-sm">DeFi treasury tools for advanced needs</p>
                   </div>
                 </div>
 

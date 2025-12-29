@@ -468,11 +468,11 @@ export default function TokenomicsPage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-amber-500 rounded-full" />
-                  <strong>Fee Payment:</strong> Pay for city services, banking products, and transactions
+                  <strong>Fee Payment:</strong> Pay for city services, DeFi products, and transactions
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-amber-500 rounded-full" />
-                  <strong>Premium Access:</strong> Unlock exclusive banking tiers and investment opportunities
+                  <strong>Premium Access:</strong> Unlock exclusive treasury tiers and investment opportunities
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-amber-500 rounded-full" />

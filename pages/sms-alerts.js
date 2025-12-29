@@ -243,7 +243,7 @@ export default function SMSAlerts() {
             <div className="mt-8 pt-6 border-t border-gray-200">
               <h3 className="font-semibold text-gray-900 mb-3">About Axiom Protocol</h3>
               <p className="text-sm text-gray-600 mb-4">
-                Axiom Protocol is America's first on-chain sovereign smart city economy. We provide tokenized real estate through KeyGrow, DePIN infrastructure, decentralized governance, and comprehensive digital banking services—all powered by the AXM token on Arbitrum.
+                Axiom Protocol is America's first on-chain sovereign smart city economy. We provide tokenized real estate through KeyGrow, DePIN infrastructure, decentralized governance, and comprehensive DeFi treasury services—all powered by the AXM token on Arbitrum. Not a bank.
               </p>
               <div className="flex flex-wrap gap-4 text-sm">
                 <Link href="/about-us" className="text-amber-600 hover:underline">About Us</Link>

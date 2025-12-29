@@ -27,7 +27,7 @@ const MILESTONES = [
   { year: "2024", event: "Axiom concept development and smart contract architecture design" },
   { year: "Q1 2025", event: "Core infrastructure deployed on Arbitrum One with 23 verified smart contracts" },
   { year: "Q2 2025", event: "DePIN node operator program launch and institutional partnerships" },
-  { year: "Q3 2025", event: "Real estate tokenization framework and banking product rollout" },
+  { year: "Q3 2025", event: "Real estate tokenization framework and DeFi treasury product rollout" },
   { year: "Q1 2026", event: "Token Generation Event (TGE) and Universe Blockchain (L3) launch" },
 ];
 
@@ -124,9 +124,9 @@ export default function AboutUs() {
             </div>
             <div className="bg-white rounded-2xl p-6 text-center border border-gray-200">
               <div className="text-4xl mb-3">🏦</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Digital Banking</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">DeFi Treasury</h3>
               <p className="text-sm text-gray-600">
-                Full-service on-chain banking with 30+ products — deposits, lending, payments, credit scoring, and more.
+                Full-service on-chain DeFi with 30+ products — vaults, staking, payments, credit scoring, and more. Not a bank.
               </p>
             </div>
             <div className="bg-white rounded-2xl p-6 text-center border border-gray-200">
@@ -180,7 +180,7 @@ export default function AboutUs() {
           </div>
           <div className="bg-gradient-to-br from-amber-50 to-white border border-amber-200 rounded-2xl p-6 text-center">
             <div className="text-4xl font-bold text-amber-600 mb-2">30+</div>
-            <div className="text-gray-600">Banking Products</div>
+            <div className="text-gray-600">DeFi Products</div>
           </div>
         </div>
 

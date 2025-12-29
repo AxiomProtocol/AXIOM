@@ -722,7 +722,7 @@ export default function AxiomDePINNodes() {
           </Link>
           <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <Link href="/about-us" style={{ color: '#ccc', textDecoration: 'none', fontSize: '0.9rem' }}>About</Link>
-            <Link href="/bank" style={{ color: '#ccc', textDecoration: 'none', fontSize: '0.9rem' }}>Bank</Link>
+            <Link href="/bank" style={{ color: '#ccc', textDecoration: 'none', fontSize: '0.9rem' }}>Treasury</Link>
             <Link href="/governance" style={{ color: '#ccc', textDecoration: 'none', fontSize: '0.9rem' }}>Governance</Link>
           </div>
         </div>
@@ -1569,7 +1569,7 @@ export default function AxiomDePINNodes() {
           <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
             <Link href="/" style={{ color: '#999', textDecoration: 'none' }}>Home</Link>
             <Link href="/about-us" style={{ color: '#999', textDecoration: 'none' }}>About</Link>
-            <Link href="/bank" style={{ color: '#999', textDecoration: 'none' }}>Bank</Link>
+            <Link href="/bank" style={{ color: '#999', textDecoration: 'none' }}>Treasury</Link>
             <Link href="/governance" style={{ color: '#999', textDecoration: 'none' }}>Governance</Link>
           </div>
           <p style={{ color: '#666', fontSize: '0.85rem' }}>© 2025 Axiom Smart City. Built on Arbitrum One.</p>
