@@ -20,7 +20,7 @@ const faqs = [
   },
   { 
     question: "What blockchain does Axiom use?", 
-    answer: "Axiom is currently deployed on Arbitrum One (Layer 2) with 23 verified smart contracts. Post-TGE, we plan to launch Universe Blockchain, our custom Layer 3 chain, using AXM as the native gas token." 
+    answer: "Axiom is currently deployed on Arbitrum One (Layer 2) with 29 verified smart contracts. Post-TGE, we plan to launch Universe Blockchain, our custom Layer 3 chain, using AXM as the native gas token." 
   },
   { 
     question: "How does governance work?", 

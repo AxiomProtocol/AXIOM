@@ -84,15 +84,15 @@ const ADVANCED_MODULES = [
 const CONTRACT_CATEGORIES = [
   { name: 'Core Infrastructure', count: 6, color: '#d97706' },
   { name: 'Real Estate & Rental', count: 3, color: '#059669' },
-  { name: 'DeFi & Utilities', count: 3, color: '#2563eb' },
+  { name: 'DeFi & Treasury', count: 8, color: '#2563eb' },
   { name: 'Cross-Chain & DEX', count: 4, color: '#7c3aed' },
   { name: 'Markets & Oracles', count: 2, color: '#ea580c' },
-  { name: 'Community & Social', count: 3, color: '#db2777' },
+  { name: 'Community & Savings', count: 5, color: '#db2777' },
   { name: 'Sustainability', count: 1, color: '#0891b2' }
 ];
 
 const QUICK_STATS = [
-  { label: 'Smart Contracts', value: 23, suffix: 'Deployed' },
+  { label: 'Smart Contracts', value: 29, suffix: 'Deployed' },
   { label: 'Network', value: 'Arbitrum', suffix: 'One (L2)', isText: true },
   { label: 'Total Supply', value: 15, suffix: 'B AXM Tokens' },
   { label: 'Community', value: 'Growing', suffix: 'Together', isText: true }
