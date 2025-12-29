@@ -8,7 +8,7 @@ const STEPS = [
   { id: 4, title: 'Join a Circle', icon: '👥', description: 'Get matched with your first group' },
 ];
 
-export default function GuidedOnboarding({ onComplete, onDismiss }) {
+export default function GuidedOnboarding({ onComplete, onDismiss, initialReferralCode }) {
   const { walletState, connectWallet } = useWallet();
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState('');
@@ -17,6 +17,16 @@ export default function GuidedOnboarding({ onComplete, onDismiss }) {
   const [error, setError] = useState('');
   const [matchedCircle, setMatchedCircle] = useState(null);
   const [sessionId, setSessionId] = useState(null);
+  const [referralCode, setReferralCode] = useState(initialReferralCode || '');
+
+  useEffect(() => {
+    if (initialReferralCode) {
+      setReferralCode(initialReferralCode);
+    } else if (typeof window !== 'undefined') {
+      const storedCode = localStorage.getItem('axiom_referral_code');
+      if (storedCode) setReferralCode(storedCode);
+    }
+  }, [initialReferralCode]);
 
   useEffect(() => {
     if (walletState.isConnected && currentStep === 2) {
@@ -35,7 +45,7 @@ export default function GuidedOnboarding({ onComplete, onDismiss }) {
       const res = await fetch('/api/onboarding/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, referralCode }),
       });
       const data = await res.json();
       if (data.success) {
@@ -103,6 +113,7 @@ export default function GuidedOnboarding({ onComplete, onDismiss }) {
           walletAddress: walletState.address,
           email,
           mode: selectedMode,
+          referralCode,
         }),
       });
       const data = await res.json();
