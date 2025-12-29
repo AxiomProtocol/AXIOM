@@ -3,31 +3,27 @@ import Link from 'next/link';
 import Layout from '../components/Layout';
 import StepProgressBanner from '../components/StepProgressBanner';
 
-const BANKING_PRODUCTS = [
+const TREASURY_PRODUCTS = [
   { id: 'wallet-self-custody', name: 'Self-Custody Wallet', category: 'deposit', description: 'Your AXM tokens in your own wallet. You control your keys, you control your funds.', status: 'live', custodyType: 'self', features: ['Full control', 'No intermediary', 'Instant transfers', 'Connect any wallet'], icon: '🔐', riskLevel: 'low' },
-  { id: 'susu-savings', name: 'Community Savings Circles (SUSU)', category: 'deposit', description: 'Rotating savings groups where members pool funds and take turns receiving payouts', apy: 'Variable', status: 'live', custodyType: 'pooled', features: ['Community-based', '2-50 members', 'Configurable cycles', 'On-chain transparency'], icon: '🤝', riskLevel: 'medium', contractAddress: '0x6C69D730327930B49A7997B7b5fb0865F30c95A5' },
-  { id: 'capital-pools', name: 'Capital Investment Pools', category: 'investments', description: 'Managed investment funds for real estate, infrastructure, and node operations', apy: 'Variable', status: 'live', custodyType: 'pooled', features: ['Fund manager oversight', 'Lock-up periods', 'Yield distribution', 'Share-based ownership'], icon: '📈', riskLevel: 'high', contractAddress: '0xFcCdC1E353b24936f9A8D08D21aF684c620fa701' },
-  { id: 'dex-liquidity', name: 'DEX Liquidity Provision', category: 'investments', description: 'Provide liquidity to token pairs and earn swap fees', apy: 'Variable (0.3% fees)', status: 'live', custodyType: 'pooled', features: ['AMM pools', 'Proportional redemption', 'Swap fee earnings', 'Impermanent loss risk'], icon: '💧', riskLevel: 'high' },
+  { id: 'susu-savings', name: 'Community Savings Circles (SUSU)', category: 'deposit', description: 'Rotating savings groups where members pool funds and take turns receiving payouts', status: 'live', custodyType: 'pooled', features: ['Community-based', '2-50 members', 'Configurable cycles', 'On-chain transparency'], icon: '🤝', riskLevel: 'medium', contractAddress: '0x6C69D730327930B49A7997B7b5fb0865F30c95A5' },
+  { id: 'capital-pools', name: 'Capital Investment Pools', category: 'investments', description: 'Managed investment funds for real estate, infrastructure, and node operations', status: 'live', custodyType: 'pooled', features: ['Fund manager oversight', 'Lock-up periods', 'Yield distribution', 'Share-based ownership'], icon: '📈', riskLevel: 'high', contractAddress: '0xFcCdC1E353b24936f9A8D08D21aF684c620fa701' },
+  { id: 'dex-liquidity', name: 'DEX Liquidity Provision', category: 'investments', description: 'Provide liquidity to token pairs and earn swap fees', status: 'live', custodyType: 'pooled', features: ['AMM pools', 'Proportional redemption', 'Swap fee earnings', 'Impermanent loss risk'], icon: '💧', riskLevel: 'high' },
   { id: 'instant-pay', name: 'Instant Pay (P2P)', category: 'payments', description: 'Send AXM instantly to any wallet address on Arbitrum One', fees: 'Network gas only', status: 'live', custodyType: 'self', features: ['Instant settlement', 'Wallet-to-wallet', 'No intermediary', 'Full control'], icon: '⚡', riskLevel: 'low' },
-  { id: 'staking', name: 'AXM Staking', category: 'investments', description: 'Stake AXM tokens to earn rewards and participate in governance', apy: 'Variable', status: 'live', custodyType: 'contract', features: ['Tiered rewards', 'Governance power', 'Flexible unstaking', 'Reward claiming'], icon: '🏆', riskLevel: 'medium' },
+  { id: 'staking', name: 'AXM Staking', category: 'investments', description: 'Stake AXM tokens to earn protocol rewards and participate in governance', status: 'live', custodyType: 'contract', features: ['Tiered rewards', 'Governance power', 'Flexible unstaking', 'Reward claiming'], icon: '🏆', riskLevel: 'medium' },
   { id: 'keygrow-rto', name: 'KeyGrow Rent-to-Own', category: 'tokenized', description: 'Build equity through rent payments with tokenized property shares', status: 'live', custodyType: 'contract', features: ['Equity accrual', 'Property tokens', 'Seller marketplace', 'Transparent tracking'], icon: '🏠', riskLevel: 'medium' },
-  { id: 'checking-standard', name: 'Standard Checking Account', category: 'deposit', description: 'Basic checking account with instant AXM transfers', apy: '0.5%', status: 'planned', custodyType: 'contract', features: ['Instant transfers', 'Mobile banking', 'Bill pay', 'Direct deposit'], icon: '💳', riskLevel: 'low' },
-  { id: 'checking-premium', name: 'Premium Checking Account', category: 'deposit', description: 'High-yield checking with governance rewards', apy: '2.5%', status: 'planned', custodyType: 'contract', features: ['Higher APY', 'Governance voting', 'Priority support', 'Fee rebates'], icon: '👑', riskLevel: 'low' },
-  { id: 'savings-standard', name: 'High-Yield Savings Vault', category: 'deposit', description: 'Earn yield on AXM deposits through smart contract vaults', apy: 'TBD', status: 'planned', custodyType: 'contract', features: ['Transparent yield', 'Opt-in only', 'Withdrawal anytime', 'Risk disclosure'], icon: '🏦', riskLevel: 'medium' },
-  { id: 'personal-loan', name: 'Personal Loan', category: 'lending', description: 'Unsecured personal loans for community members', apy: 'TBD', status: 'planned', custodyType: 'contract', features: ['Credit assessment', 'Fixed rates', 'Community backed', 'Transparent terms'], icon: '💰', riskLevel: 'medium' },
-  { id: 'crypto-backed-loan', name: 'Crypto-Backed Loan', category: 'lending', description: 'Collateralized loans using AXM or other tokens', apy: 'TBD', status: 'planned', custodyType: 'contract', features: ['Collateral vault', 'Liquidation protection', 'Keep upside', 'Flexible terms'], icon: '🔐', riskLevel: 'high' },
-  { id: 'home-mortgage', name: 'Tokenized Mortgage', category: 'lending', description: 'Tokenized mortgages for Axiom community properties', apy: 'TBD', status: 'planned', custodyType: 'contract', features: ['Tokenized title', 'Community verification', 'On-chain settlement', 'Equity tracking'], icon: '🏠', riskLevel: 'medium' },
-  { id: 'real-estate-tokens', name: 'Fractional Real Estate', category: 'tokenized', description: 'Own fractions of Axiom community properties via tokens', apy: 'TBD', status: 'planned', custodyType: 'pooled', features: ['Fractional ownership', 'Rental income', 'Secondary market', 'Transparent management'], icon: '🏘️', riskLevel: 'medium' },
-  { id: 'renewable-energy', name: 'Green Energy Credits', category: 'tokenized', description: 'Invest in solar panels and renewable infrastructure', apy: 'TBD', status: 'planned', custodyType: 'pooled', features: ['Sustainability rewards', 'Carbon offsets', 'ESG certified', 'Impact tracking'], icon: '☀️', riskLevel: 'medium' },
-  { id: 'onramp', name: 'Fiat-to-Crypto Onramp', category: 'payments', description: 'Purchase AXM and other tokens using fiat currency', status: 'live', custodyType: 'self', features: ['Multiple providers', 'Card payments', 'Bank transfers', 'Direct to wallet'], icon: '💵', riskLevel: 'low' },
+  { id: 'yield-vault', name: 'Yield Vault', category: 'deposit', description: 'Deposit AXM into smart contract vaults for protocol rewards', status: 'planned', custodyType: 'contract', features: ['Smart contract custody', 'Protocol rewards', 'Withdraw anytime', 'Risk disclosure'], icon: '🏦', riskLevel: 'medium' },
+  { id: 'collateral-vault', name: 'Collateral Vault', category: 'lending', description: 'Collateralized positions using AXM or other tokens', status: 'planned', custodyType: 'contract', features: ['Collateral lockup', 'Liquidation protection', 'Transparent terms', 'On-chain settlement'], icon: '🔐', riskLevel: 'high' },
+  { id: 'real-estate-tokens', name: 'Fractional Real Estate', category: 'tokenized', description: 'Own fractions of Axiom community properties via tokens', status: 'planned', custodyType: 'pooled', features: ['Fractional ownership', 'Rental distributions', 'Secondary market', 'Transparent management'], icon: '🏘️', riskLevel: 'medium' },
+  { id: 'renewable-energy', name: 'Green Energy Credits', category: 'tokenized', description: 'Invest in solar panels and renewable infrastructure', status: 'planned', custodyType: 'pooled', features: ['Sustainability rewards', 'Carbon offsets', 'ESG certified', 'Impact tracking'], icon: '☀️', riskLevel: 'medium' },
+  { id: 'onramp', name: 'Fiat-to-Crypto Onramp', category: 'payments', description: 'Purchase AXM and other tokens using fiat currency', status: 'live', custodyType: 'self', features: ['Multiple providers', 'Card payments', 'Direct to wallet'], icon: '💵', riskLevel: 'low' },
 ];
 
 const CATEGORIES = [
   { id: 'all', name: 'All Products', icon: '🏛️', color: 'gray' },
-  { id: 'deposit', name: 'Deposit & Savings', icon: '🏦', color: 'blue' },
-  { id: 'lending', name: 'Credit & Lending', icon: '💰', color: 'green' },
-  { id: 'payments', name: 'Payment Services', icon: '💸', color: 'purple' },
-  { id: 'investments', name: 'Investment Products', icon: '📈', color: 'amber' },
+  { id: 'deposit', name: 'Vaults & Savings', icon: '🏦', color: 'blue' },
+  { id: 'lending', name: 'Collateral & Positions', icon: '💰', color: 'green' },
+  { id: 'payments', name: 'Transfers & Onramp', icon: '💸', color: 'purple' },
+  { id: 'investments', name: 'Pools & Staking', icon: '📈', color: 'amber' },
   { id: 'tokenized', name: 'Tokenized Assets', icon: '🏘️', color: 'pink' },
 ];
 
@@ -49,7 +45,7 @@ export default function BankPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCustodyInfo, setShowCustodyInfo] = useState(false);
 
-  const filteredProducts = BANKING_PRODUCTS.filter(product => {
+  const filteredProducts = TREASURY_PRODUCTS.filter(product => {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     const matchesSearch = searchQuery === '' || 
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -57,12 +53,12 @@ export default function BankPage() {
     return matchesCategory && matchesSearch;
   });
 
-  const liveProducts = BANKING_PRODUCTS.filter(p => p.status === 'live').length;
-  const plannedProducts = BANKING_PRODUCTS.filter(p => p.status === 'planned').length;
+  const liveProducts = TREASURY_PRODUCTS.filter(p => p.status === 'live').length;
+  const plannedProducts = TREASURY_PRODUCTS.filter(p => p.status === 'planned').length;
 
   const getCategoryCount = (categoryId) => {
-    if (categoryId === 'all') return BANKING_PRODUCTS.length;
-    return BANKING_PRODUCTS.filter(p => p.category === categoryId).length;
+    if (categoryId === 'all') return TREASURY_PRODUCTS.length;
+    return TREASURY_PRODUCTS.filter(p => p.category === categoryId).length;
   };
 
   const getRiskBadgeColor = (risk) => {
@@ -102,19 +98,19 @@ export default function BankPage() {
       <div className="bg-gradient-to-br from-amber-50 via-white to-orange-50 py-16 px-4">
         <div className="max-w-6xl mx-auto text-center">
           <div className="inline-block bg-amber-100 border border-amber-300 rounded-full px-6 py-2 mb-6">
-            <span className="text-amber-700 font-semibold">AXIOM FINANCIAL SERVICES</span>
+            <span className="text-amber-700 font-semibold">AXIOM TREASURY</span>
           </div>
           
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-500">
-              Financial Coordination
+              DeFi Treasury
             </span>
             <span className="text-gray-900"> Hub</span>
           </h1>
           
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Community financial tools powered by smart contracts on Arbitrum One. 
-            Self-custody by default. Transparent on-chain operations.
+            Community DeFi tools powered by smart contracts on Arbitrum One. 
+            Self-custody by default. Transparent on-chain operations. Not a bank.
           </p>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">

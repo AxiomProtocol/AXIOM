@@ -3,143 +3,120 @@ import Layout from '../../components/Layout';
 
 const INVESTMENT_PRODUCTS = [
   {
-    id: 'brokerage',
-    name: 'Self-Directed Brokerage',
-    description: 'Trade tokenized stocks, bonds, and ETFs on-chain with zero commissions. Access extended trading hours and advanced research tools.',
-    fees: '$0 commissions',
-    features: ['Zero trading commissions', 'Fractional shares', 'Extended hours trading', 'Research tools & screeners', 'Real-time quotes', 'Options trading'],
+    id: 'dex-trading',
+    name: 'DEX Trading',
+    description: 'Trade AXM and other tokens on decentralized exchanges. Self-custody with transparent on-chain execution.',
+    fees: '0.3% swap fee',
+    features: ['Self-custody trading', 'On-chain execution', 'No KYC required', 'Multiple token pairs', 'Limit orders', 'LP opportunities'],
     icon: '📈',
     highlight: 'Popular'
   },
   {
-    id: 'robo-advisor',
-    name: 'Automated Portfolio Management',
-    description: 'AI-driven portfolio management tailored to your risk profile. Set it and forget it with automatic rebalancing.',
-    fees: '0.25% annually',
-    features: ['AI-powered allocation', 'Auto-rebalancing', 'Tax-loss harvesting', 'ESG options available', 'Retirement planning', 'Goal-based investing'],
-    icon: '🤖'
+    id: 'liquidity-pools',
+    name: 'Liquidity Pools',
+    description: 'Provide liquidity to token pairs and earn swap fees. Automated market maker (AMM) rewards.',
+    fees: 'Earn 0.3% of swaps',
+    features: ['Swap fee earnings', 'LP token rewards', 'Proportional redemption', 'Impermanent loss risk', 'Auto-compound options', 'Multiple pools'],
+    icon: '💧',
+    highlight: 'Yield'
   },
   {
-    id: 'retirement-ira',
-    name: 'Crypto IRA',
-    description: 'Tax-advantaged retirement accounts that can hold AXM and other cryptocurrencies. Build your future with digital assets.',
-    fees: '$50/year',
-    features: ['Traditional & Roth options', 'Self-custody available', 'Tax-deferred growth', 'Estate planning tools', 'Rollover from 401(k)', 'Crypto diversification'],
-    icon: '🏖️',
-    highlight: 'Tax-Advantaged'
+    id: 'staking-pools',
+    name: 'Staking Pools',
+    description: 'Stake AXM to earn protocol rewards and participate in governance. Variable rewards based on protocol activity.',
+    fees: 'No staking fees',
+    features: ['Protocol rewards', 'Governance voting', 'Flexible unstaking', 'Tiered rewards', 'Transparent on-chain', 'Risk disclosures'],
+    icon: '🏆'
   },
   {
-    id: 'mutual-funds',
-    name: 'Axiom Index Funds',
-    description: 'Low-cost index funds tracking the smart city economy. Diversified exposure with automatic dividend reinvestment.',
-    apy: '8-12% historical',
-    fees: '0.05% expense ratio',
-    features: ['Diversified holdings', 'Ultra-low fees', 'Auto-invest feature', 'Dividend reinvestment', 'Monthly rebalancing', 'Transparent holdings'],
-    icon: '📊'
+    id: 'wealth-engine',
+    name: 'Wealth Engine',
+    description: 'Lock AXM for 1-4 years to maximize voting power and fee share rewards. veAXM tokenomics.',
+    minimumInvestment: '100 AXM',
+    features: ['Boosted voting power', 'Fee share rewards', '1-4 year locks', 'veAXM tokens', 'Protocol governance', 'Curve-style mechanics'],
+    icon: '💎',
+    highlight: 'Max Power'
   },
   {
     id: 'real-estate-tokens',
     name: 'Fractional Real Estate',
-    description: 'Own fractions of Axiom Smart City properties. Earn monthly rental income with professional property management.',
-    apy: '6-9% rental yield',
+    description: 'Own fractions of Axiom Smart City properties. Earn rental distributions proportional to your share.',
     minimumInvestment: '100 AXM',
-    features: ['Fractional ownership', 'Monthly dividends', 'Liquid secondary market', 'Professional management', 'Property appreciation', 'Diversified portfolio'],
+    features: ['Fractional ownership', 'Rental distributions', 'Secondary market', 'Professional management', 'On-chain transparency', 'Diversification'],
     icon: '🏘️',
     highlight: 'Passive Income'
   },
   {
-    id: 'infrastructure-bonds',
-    name: 'Smart City Infrastructure Bonds',
-    description: 'Municipal bonds funding Axiom infrastructure projects. Fixed income with tax-advantaged returns.',
-    apy: '4.5%',
-    minimumInvestment: '5,000 AXM',
-    features: ['Tax-free income', 'Government backed', 'Fixed income stream', 'Transferable tokens', 'Infrastructure funding', 'Community impact'],
-    icon: '🌉'
+    id: 'capital-pools',
+    name: 'Capital Investment Pools',
+    description: 'Managed investment pools for real estate, infrastructure, and node operations. Professional management.',
+    minimumInvestment: '1,000 AXM',
+    features: ['Fund manager oversight', 'Lock-up periods', 'Yield distributions', 'Share-based ownership', 'On-chain governance', 'Risk disclosures'],
+    icon: '🏢'
   },
   {
-    id: 'business-equity',
-    name: 'Tokenized Business Equity',
-    description: 'Invest directly in local Axiom businesses. Earn profit sharing and voting rights as a stakeholder.',
-    apy: 'Variable',
-    minimumInvestment: '1,000 AXM',
-    features: ['Direct equity ownership', 'Voting rights', 'Profit sharing', 'Secondary market', 'Business updates', 'Due diligence reports'],
-    icon: '🏪'
+    id: 'depin-nodes',
+    name: 'DePIN Node Staking',
+    description: 'Stake AXM to participate in decentralized physical infrastructure network operations.',
+    minimumInvestment: '500 AXM',
+    features: ['Infrastructure rewards', 'Node operations', 'Network participation', 'Variable returns', 'Insurance fund backed', 'On-chain tracking'],
+    icon: '🌐'
   },
   {
     id: 'renewable-energy',
     name: 'Green Energy Credits',
-    description: 'Invest in solar panels and renewable infrastructure. Earn returns while supporting sustainability.',
-    apy: '5-7%',
+    description: 'Invest in solar panels and renewable infrastructure. Sustainability-focused DeFi.',
     minimumInvestment: '500 AXM',
-    features: ['Sustainability rewards', 'Energy credits', 'Carbon offsets', 'ESG certified', 'Quarterly dividends', 'Impact reporting'],
+    features: ['Sustainability rewards', 'Energy credits', 'Carbon offsets', 'ESG certified', 'Quarterly distributions', 'Impact reporting'],
     icon: '☀️',
     highlight: 'ESG'
-  },
-  {
-    id: 'wealth-management',
-    name: 'Private Wealth Management',
-    description: 'Dedicated financial advisor for high-net-worth individuals. Customized strategies for complex financial situations.',
-    fees: '0.75% annually',
-    minimumBalance: '500,000 AXM',
-    features: ['Personal advisor', 'Custom strategies', 'Estate planning', 'Tax optimization', 'Alternative investments', 'Concierge service'],
-    icon: '💼',
-    highlight: 'Premium'
-  },
-  {
-    id: 'trust-services',
-    name: 'Trust & Estate Services',
-    description: 'Smart contract-based trusts for generational wealth transfer. Automated distributions with multi-signature control.',
-    fees: 'Custom pricing',
-    features: ['Revocable trusts', 'Living trusts', 'On-chain settlement', 'Multi-sig control', 'Beneficiary management', 'Automated distributions'],
-    icon: '🏛️'
   }
 ];
 
 const INVESTMENT_CATEGORIES = [
-  { name: 'Trading', description: 'Buy and sell tokenized securities', icon: '📈', products: ['brokerage'] },
-  { name: 'Managed', description: 'Professionally managed portfolios', icon: '🤖', products: ['robo-advisor', 'wealth-management'] },
-  { name: 'Retirement', description: 'Tax-advantaged accounts', icon: '🏖️', products: ['retirement-ira'] },
-  { name: 'Real Assets', description: 'Property and infrastructure', icon: '🏘️', products: ['real-estate-tokens', 'infrastructure-bonds', 'renewable-energy'] },
-  { name: 'Private', description: 'Business equity and alternatives', icon: '🏪', products: ['business-equity', 'trust-services'] }
+  { name: 'Trading', description: 'DEX trading and swaps', icon: '📈', products: ['dex-trading'] },
+  { name: 'Yield', description: 'Liquidity and staking pools', icon: '💧', products: ['liquidity-pools', 'staking-pools', 'wealth-engine'] },
+  { name: 'Real Assets', description: 'Property and infrastructure', icon: '🏘️', products: ['real-estate-tokens', 'capital-pools'] },
+  { name: 'DePIN', description: 'Infrastructure network participation', icon: '🌐', products: ['depin-nodes', 'renewable-energy'] }
 ];
 
-export default function InvestmentsPage() {
+export default function InvestmentPoolsPage() {
   return (
     <Layout>
       <div className="bg-gradient-to-br from-purple-50 via-white to-pink-50 py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-2 mb-4">
-            <Link href="/bank" className="text-amber-600 hover:text-amber-700 text-sm">Bank</Link>
+            <Link href="/bank" className="text-amber-600 hover:text-amber-700 text-sm">Treasury</Link>
             <span className="text-gray-400">/</span>
-            <span className="text-gray-600 text-sm">Investments</span>
+            <span className="text-gray-600 text-sm">Pools & Staking</span>
           </div>
           
           <div className="text-center">
             <div className="inline-block bg-purple-100 border border-purple-300 rounded-full px-6 py-2 mb-6">
-              <span className="text-purple-700 font-semibold">💎 INVESTMENT PRODUCTS</span>
+              <span className="text-purple-700 font-semibold">💎 POOLS & STAKING</span>
             </div>
             
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Grow Your Wealth On-Chain
+              DeFi Investment Pools
             </h1>
             
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              From self-directed trading to managed portfolios, discover investment opportunities 
-              that leverage blockchain technology for transparency and efficiency.
+              Participate in liquidity pools, staking, and yield opportunities. 
+              All returns are variable. This is not a bank or investment advisor.
             </p>
 
             <div className="flex flex-wrap justify-center gap-4 mb-8">
               <div className="bg-white rounded-xl px-6 py-4 shadow-sm border border-gray-100">
-                <div className="text-2xl font-bold text-purple-600">$0</div>
-                <div className="text-sm text-gray-500">Trading Fees</div>
+                <div className="text-2xl font-bold text-purple-600">Self</div>
+                <div className="text-sm text-gray-500">Custody First</div>
               </div>
               <div className="bg-white rounded-xl px-6 py-4 shadow-sm border border-gray-100">
-                <div className="text-2xl font-bold text-green-600">10+</div>
-                <div className="text-sm text-gray-500">Investment Options</div>
+                <div className="text-2xl font-bold text-green-600">Variable</div>
+                <div className="text-sm text-gray-500">Protocol Rewards</div>
               </div>
               <div className="bg-white rounded-xl px-6 py-4 shadow-sm border border-gray-100">
                 <div className="text-2xl font-bold text-blue-600">24/7</div>
-                <div className="text-sm text-gray-500">Market Access</div>
+                <div className="text-sm text-gray-500">On-Chain Access</div>
               </div>
             </div>
           </div>

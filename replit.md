@@ -1,7 +1,9 @@
 # Axiom Smart City - Sovereign Digital-Physical Economy
 
 ## Overview
-The Axiom Smart City project aims to establish America's first 1,000-acre on-chain sovereign smart city economy. This fintech smart city will function as a bank operating system and a complete sovereign economic engine. Key capabilities include a governance token (AXM), digital banking, real estate tokenization, DePIN infrastructure, smart city services, Wall Street integration, cross-chain interoperability, and sustainability initiatives within a decentralized, community-governed framework. The project's vision is to create a model for future sovereign digital-physical economies.
+The Axiom Smart City project aims to establish America's first 1,000-acre on-chain sovereign smart city economy. This DeFi protocol operates as a community-governed treasury system and economic engine. Key capabilities include a governance token (AXM), DeFi treasury tools, real estate tokenization, DePIN infrastructure, smart city services, cross-chain interoperability, and sustainability initiatives within a decentralized, community-governed framework. The project's vision is to create a model for future sovereign digital-physical economies.
+
+**COMPLIANCE NOTE (Dec 2024)**: All "banking" terminology has been rebranded to DeFi-compliant language for Coinbase Onramp integration. "National Bank of Axiom" → "Axiom Treasury", "accounts" → "vaults", "banking" → "DeFi protocol", FDIC references removed, specific APY promises replaced with "variable protocol rewards". Platform emphasizes self-custody model and non-custodial DeFi operations.
 
 ## User Preferences
 - **Communication style**: Simple, everyday language explaining technical concepts.
@@ -13,7 +15,7 @@ The Axiom Smart City project aims to establish America's first 1,000-acre on-cha
 The frontend features a modular design with a professional gold/black theme and yellow accents, ensuring responsiveness. Branding includes "AXIOM" with a golden circular token logo, golden gradient text, and the tagline "Build Wealth Together, On-Chain." Navigation, defined in `lib/navigation.js`, guides users through a Learn → Connect → Save Together journey, complemented by a `StepProgressBanner`.
 
 ### Technical Implementations
-The core Axiom Protocol Token (AXM) is an ERC20 governance and fee-routing token on Arbitrum One, slated for migration to Universe Blockchain (L3). The multi-phase Smart Contract Architecture, initially on Arbitrum One, covers identity, treasury, staking, emissions, land/asset registry, and future modules. The platform offers a Complete Banking Product Suite with over 30 product families, supported by 23 verified smart contracts on Arbitrum One across various domains. Axiom utilizes a HYBRID CUSTODY model, incorporating Self-Custody, Smart Contract Custody, and Pooled Custody, with disclosures managed via `lib/custody/disclosure.ts` and `components/CustodyDisclosure.js`.
+The core Axiom Protocol Token (AXM) is an ERC20 governance and fee-routing token on Arbitrum One, slated for migration to Universe Blockchain (L3). The multi-phase Smart Contract Architecture, initially on Arbitrum One, covers identity, treasury, staking, emissions, land/asset registry, and future modules. The platform offers a Complete DeFi Treasury Suite with self-custody vaults, savings circles, staking, and investment pools, supported by 23 verified smart contracts on Arbitrum One across various domains. Axiom utilizes a HYBRID CUSTODY model, incorporating Self-Custody, Smart Contract Custody, and Pooled Custody, with disclosures managed via `lib/custody/disclosure.ts` and `components/CustodyDisclosure.js`.
 
 ### System Design Choices
 The architecture employs a "Product Factory Approach" for scalability. Arbitrum One serves as the current blockchain network, with a planned migration to Universe Blockchain (L3). Data management is handled by PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend includes centralized contract configuration, a dedicated contract service, and chain validation middleware for Arbitrum One, with API responses consistently providing `axmBalance` and `axmUsdValue`.
@@ -29,7 +31,7 @@ Key features include:
 -   **Axiom SUSU (Rotating Savings Groups)**: On-chain ROSCA system ("The Wealth Practice") with Community Pool and Personal Vault custody modes.
 -   **PMA Trust**: Operates as a Private Membership Association Trust with tokenized ERC-1155/1400 memberships.
 -   **AI Member Support**: Gemini-powered chat assistant.
--   **V2 Analytics Dashboard**: Unified dashboard for Sovereign Banking metrics.
+-   **V2 Analytics Dashboard**: Unified dashboard for DeFi protocol metrics.
 -   **Wealth Engine**: Enhanced AXM locking page (formerly veAXM Staking) with lock durations and voting power preview.
 -   **On-Chain Credit Score Display**: `CreditScoreCard` component with FICO-like visualization.
 -   **Referral System**: Full referral tracking with unique codes and leaderboards.
@@ -39,11 +41,11 @@ Key features include:
 -   **Push Notifications**: PWA service worker for push notifications with preference settings.
 -   **Transparency Dashboard**: Real-time protocol metrics including TVL, burned AXM, veAXM locked, insurance fund balance, SUSU pools, and DePIN nodes.
 
-Wealth Engine V2 Contracts (Sovereign Banking System) implement AIP-001 Master Architectural Plan:
+Wealth Engine V2 Contracts (DeFi Treasury System) implement AIP-001 Master Architectural Plan:
 -   **AxiomScoreSBT**: ERC-5192 Soulbound Token for on-chain credit scoring (300-850 range), integrated with SUSU repayment history.
 -   **SusuInsuranceFund**: Default Insurance Fund with 5% node rewards diversion to cover broken SUSU circles.
 -   **veAXM**: Vote-Escrowed AXM with Curve-style locking (1-4 years), time-weighted voting power, and epoch-based reward distribution.
--   **AxiomFeeBurner**: 0.5% fee switch on banking products with automatic AXM buyback/burn and 50% distribution to veAXM holders.
+-   **AxiomFeeBurner**: 0.5% fee switch on treasury products with automatic AXM buyback/burn and 50% distribution to veAXM holders.
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)

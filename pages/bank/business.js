@@ -3,100 +3,90 @@ import Layout from '../../components/Layout';
 
 const BUSINESS_PRODUCTS = [
   {
-    id: 'business-checking',
-    name: 'Business Checking Account',
-    description: 'Feature-rich business checking with unlimited transactions, multi-user access, and seamless payroll integration.',
-    fees: '$15/month (waived with $10K balance)',
-    features: ['Unlimited transactions', 'Multi-user access & permissions', 'Payroll integration', 'Cash management tools', 'Accounts payable/receivable', 'Real-time reporting'],
-    icon: '🏦',
-    highlight: 'Essential'
+    id: 'business-wallet',
+    name: 'Business Multi-Sig Wallet',
+    description: 'Self-custody business wallet with multi-signature controls and role-based permissions.',
+    fees: 'Network gas only',
+    features: ['Multi-sig security', 'Role-based permissions', 'Transaction approvals', 'Full self-custody', 'Hardware wallet support', 'Audit trails'],
+    icon: '🔐',
+    highlight: 'Self-Custody'
   },
   {
-    id: 'business-savings',
-    name: 'Business Savings Account',
-    description: 'Grow your business reserves with competitive interest rates. Perfect for emergency funds and future investments.',
-    apy: '4.5%',
-    fees: 'No fees',
-    features: ['Competitive APY', 'Unlimited deposits', 'Easy fund transfers', 'Tiered interest rates', 'Auto-sweep from checking', 'No minimum balance'],
+    id: 'business-vault',
+    name: 'Business Yield Vault',
+    description: 'Deposit business reserves into smart contract vaults for variable protocol rewards.',
+    fees: 'No deposit fees',
+    features: ['Variable protocol rewards', 'Withdraw anytime', 'Smart contract custody', 'Multi-sig controls', 'Transparent on-chain', 'Risk disclosures'],
     icon: '💰',
-    highlight: 'High Yield'
+    highlight: 'Yield'
   },
   {
     id: 'merchant-services',
     name: 'Merchant Payment Processing',
-    description: 'Accept AXM and fiat payments at your business with low fees and instant settlement.',
+    description: 'Accept AXM and crypto payments at your business with low fees and instant settlement.',
     fees: '1.5% + $0.10 per transaction',
-    features: ['POS system integration', 'Online checkout widgets', 'Instant settlement', 'Fraud protection', 'Chargeback management', 'Multi-currency support'],
+    features: ['POS system integration', 'Online checkout widgets', 'Instant settlement', 'Fraud protection', 'Multi-currency support', 'On-chain receipts'],
     icon: '🛒'
   },
   {
-    id: 'business-loan',
-    name: 'Small Business Loan',
-    description: 'Flexible funding for Axiom-based businesses with revenue-based repayment options.',
-    apr: '6.5% APR',
-    amount: 'Up to 500,000 AXM',
-    features: ['Revenue-based repayment', 'Quick approval (24-48 hrs)', 'No collateral under 25K', 'Flexible terms 1-7 years', 'Working capital & expansion', 'Equipment financing'],
-    icon: '🏢'
-  },
-  {
-    id: 'merchant-cash-advance',
-    name: 'Merchant Cash Advance',
-    description: 'Fast working capital based on your future revenue. Perfect for seasonal businesses or urgent needs.',
-    fees: 'Factor rate 1.2-1.4',
-    features: ['Funding in 24 hours', 'No collateral required', 'Revenue-based repayment', 'No fixed monthly payments', 'Use for any purpose', 'Simple application'],
-    icon: '💵',
-    highlight: 'Fast Funding'
+    id: 'capital-pool',
+    name: 'Capital Investment Pool',
+    description: 'Managed investment pools for real estate, infrastructure, and node operations.',
+    fees: 'Management fee applies',
+    features: ['Fund manager oversight', 'Lock-up periods', 'Yield distribution', 'Share-based ownership', 'Transparent reporting', 'On-chain governance'],
+    icon: '🏢',
+    highlight: 'Pooled'
   },
   {
     id: 'treasury-management',
-    name: 'Treasury Management',
-    description: 'Enterprise-grade cash management and liquidity solutions for larger businesses.',
+    name: 'Treasury Protocol',
+    description: 'Enterprise-grade liquidity management and yield optimization for larger organizations.',
     minimumBalance: '100,000 AXM',
     fees: 'Custom pricing',
-    features: ['Cash pooling & concentration', 'Liquidity management', 'Yield optimization', 'Multi-currency accounts', 'API integration', 'Dedicated account manager'],
+    features: ['Liquidity management', 'Yield optimization', 'Multi-chain support', 'API integration', 'Dedicated support', 'Custom strategies'],
     icon: '💎',
     highlight: 'Enterprise'
   }
 ];
 
 const BUSINESS_BENEFITS = [
-  { icon: '⚡', title: 'Instant Settlements', description: 'Receive payments instantly on-chain, no waiting for bank processing' },
-  { icon: '🌍', title: 'Global Reach', description: 'Accept payments from anywhere in the world with low forex fees' },
-  { icon: '📊', title: 'Real-Time Analytics', description: 'Track your business performance with live dashboards and reports' },
+  { icon: '⚡', title: 'Instant Settlements', description: 'Receive payments instantly on-chain, no waiting for traditional processing' },
+  { icon: '🌍', title: 'Global Reach', description: 'Accept crypto payments from anywhere in the world' },
+  { icon: '📊', title: 'Real-Time Analytics', description: 'Track your business performance with live on-chain dashboards' },
   { icon: '🔐', title: 'Enterprise Security', description: 'Multi-signature wallets and role-based access controls' },
-  { icon: '🤖', title: 'API Integration', description: 'Connect your existing systems with our robust banking APIs' },
-  { icon: '📱', title: 'Mobile Management', description: 'Manage your business finances from anywhere' }
+  { icon: '🤖', title: 'API Integration', description: 'Connect your existing systems with our protocol APIs' },
+  { icon: '📱', title: 'Mobile Management', description: 'Manage your business from anywhere' }
 ];
 
-export default function BusinessBankingPage() {
+export default function BusinessVaultsPage() {
   return (
     <Layout>
       <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-2 mb-4">
-            <Link href="/bank" className="text-amber-600 hover:text-amber-700 text-sm">Bank</Link>
+            <Link href="/bank" className="text-amber-600 hover:text-amber-700 text-sm">Treasury</Link>
             <span className="text-gray-400">/</span>
-            <span className="text-gray-600 text-sm">Business Banking</span>
+            <span className="text-gray-600 text-sm">Business Vaults</span>
           </div>
           
           <div className="text-center">
             <div className="inline-block bg-indigo-100 border border-indigo-300 rounded-full px-6 py-2 mb-6">
-              <span className="text-indigo-700 font-semibold">🏢 BUSINESS BANKING</span>
+              <span className="text-indigo-700 font-semibold">🏢 BUSINESS VAULTS</span>
             </div>
             
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Business Banking Solutions
+              Business DeFi Solutions
             </h1>
             
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              Powerful financial tools built for modern businesses. From startups to enterprises, 
-              we provide the banking infrastructure to scale your operations on-chain.
+              DeFi tools built for modern businesses. From startups to enterprises, 
+              scale your operations with on-chain treasury management. Not a bank.
             </p>
 
             <div className="flex flex-wrap justify-center gap-4 mb-8">
               <div className="bg-white rounded-xl px-6 py-4 shadow-sm border border-gray-100">
-                <div className="text-2xl font-bold text-indigo-600">500K+</div>
-                <div className="text-sm text-gray-500">Max Business Loan</div>
+                <div className="text-2xl font-bold text-indigo-600">Multi-Sig</div>
+                <div className="text-sm text-gray-500">Security Default</div>
               </div>
               <div className="bg-white rounded-xl px-6 py-4 shadow-sm border border-gray-100">
                 <div className="text-2xl font-bold text-green-600">1.5%</div>

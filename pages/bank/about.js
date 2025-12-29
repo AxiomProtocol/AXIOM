@@ -9,12 +9,12 @@ const LEADERSHIP_TEAM = [
 ];
 
 const MILESTONES = [
-  { year: '2024', event: 'Axiom Banking concept development and smart contract architecture', status: 'completed' },
-  { year: 'Q1 2025', event: 'Core banking contracts deployed on Arbitrum One', status: 'completed' },
-  { year: 'Q2 2025', event: 'Deposit accounts and payment services launch', status: 'current' },
-  { year: 'Q3 2025', event: 'Lending products and credit scoring system', status: 'upcoming' },
-  { year: 'Q4 2025', event: 'Investment products and tokenized assets marketplace', status: 'upcoming' },
-  { year: '2026', event: 'Full banking license and FDIC-equivalent insurance', status: 'upcoming' },
+  { year: '2024', event: 'Axiom Treasury concept development and smart contract architecture', status: 'completed' },
+  { year: 'Q1 2025', event: 'Core DeFi contracts deployed on Arbitrum One', status: 'completed' },
+  { year: 'Q2 2025', event: 'Vaults and payment services launch', status: 'current' },
+  { year: 'Q3 2025', event: 'Collateral positions and credit scoring system', status: 'upcoming' },
+  { year: 'Q4 2025', event: 'Investment pools and tokenized assets marketplace', status: 'upcoming' },
+  { year: '2026', event: 'Expanded DeFi integrations and cross-chain support', status: 'upcoming' },
 ];
 
 const REGULATORY_INFO = [
@@ -31,29 +31,29 @@ const CORE_VALUES = [
   { icon: '🚀', title: 'Innovation', description: 'Pioneering the future of banking with tokenized assets, instant settlements, and programmable money.' },
 ];
 
-export default function AboutBankPage() {
+export default function AboutTreasuryPage() {
   return (
     <Layout>
       <div className="bg-gradient-to-br from-orange-50 via-white to-amber-50 py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-2 mb-4">
-            <Link href="/bank" className="text-amber-600 hover:text-amber-700 text-sm">Bank</Link>
+            <Link href="/bank" className="text-amber-600 hover:text-amber-700 text-sm">Treasury</Link>
             <span className="text-gray-400">/</span>
-            <span className="text-gray-600 text-sm">About the Bank</span>
+            <span className="text-gray-600 text-sm">About the Treasury</span>
           </div>
           
           <div className="text-center">
             <div className="inline-block bg-orange-100 border border-orange-300 rounded-full px-6 py-2 mb-6">
-              <span className="text-orange-700 font-semibold">🏛️ ABOUT THE BANK</span>
+              <span className="text-orange-700 font-semibold">🏛️ ABOUT AXIOM TREASURY</span>
             </div>
             
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              About National Bank of Axiom
+              About Axiom Treasury
             </h1>
             
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              America's first fully on-chain sovereign banking system. Regulated, transparent, 
-              and powered by blockchain technology to serve the Axiom Smart City economy.
+              A community-governed DeFi protocol on Arbitrum One. Transparent, non-custodial, 
+              and powered by smart contracts to serve the Axiom ecosystem. Not a bank.
             </p>
           </div>
         </div>
@@ -98,7 +98,7 @@ export default function AboutBankPage() {
         </div>
 
         <div className="mb-16">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Bank Overview</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Protocol Overview</h2>
           <div className="grid md:grid-cols-4 gap-6">
             {REGULATORY_INFO.map((info, i) => (
               <div key={i} className="bg-gray-50 rounded-xl p-6 text-center border border-gray-200">
