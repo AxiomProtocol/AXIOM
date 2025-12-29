@@ -1,7 +1,149 @@
 import Link from 'next/link';
 import Head from 'next/head';
+import { useState } from 'react';
 import Layout from '../components/Layout';
 import { SUSU_ROUTES } from '../lib/susuRoutes';
+
+function AIWealthCoachWidget() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const quickQuestions = [
+    "What is The Wealth Practice?",
+    "How much should I save?",
+    "Is my money protected?",
+    "How do I find a group?"
+  ];
+
+  const sendMessage = async (message) => {
+    if (!message.trim()) return;
+    
+    const userMsg = { role: 'user', content: message };
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/ai/wealth-coach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, history: messages })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+      }
+    } catch (err) {
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: "I'm having trouble connecting. Please try again in a moment." 
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-50 group"
+        >
+          <span className="text-2xl">🤖</span>
+          <span className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold animate-pulse">
+            AI
+          </span>
+        </button>
+      )}
+
+      {isOpen && (
+        <div className="fixed bottom-6 right-6 w-96 max-w-[calc(100vw-3rem)] bg-gray-900 rounded-2xl shadow-2xl border border-amber-500/30 z-50 overflow-hidden">
+          <div className="bg-gradient-to-r from-amber-600 to-amber-500 p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <span className="text-xl">🤖</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-white">AI Wealth Coach</h3>
+                <p className="text-xs text-amber-100">Ask me anything about saving</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-white/80 hover:text-white text-xl font-bold"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="h-72 overflow-y-auto p-4 space-y-3 bg-gray-950">
+            {messages.length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-gray-400 text-sm mb-4">Hi! I can help you understand The Wealth Practice.</p>
+                <div className="space-y-2">
+                  {quickQuestions.map((q, i) => (
+                    <button
+                      key={i}
+                      onClick={() => sendMessage(q)}
+                      className="block w-full text-left text-sm bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-2 rounded-lg transition-colors"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {messages.map((msg, i) => (
+              <div
+                key={i}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[80%] px-4 py-2 rounded-xl text-sm ${
+                    msg.role === 'user'
+                      ? 'bg-amber-500 text-white'
+                      : 'bg-gray-800 text-gray-200'
+                  }`}
+                >
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-gray-800 text-gray-400 px-4 py-2 rounded-xl text-sm">
+                  <span className="animate-pulse">Thinking...</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="p-3 border-t border-gray-800">
+            <form onSubmit={(e) => { e.preventDefault(); sendMessage(input); }} className="flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask about saving..."
+                className="flex-1 bg-gray-800 text-white px-4 py-2 rounded-xl text-sm border border-gray-700 focus:border-amber-500 focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={loading || !input.trim()}
+                className="bg-amber-500 text-white px-4 py-2 rounded-xl font-medium hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Send
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 export default function SusuStartPage() {
   return (
@@ -336,6 +478,8 @@ export default function SusuStartPage() {
           </div>
         </div>
       </div>
+
+      <AIWealthCoachWidget />
     </Layout>
   );
 }

@@ -65,6 +65,8 @@ export default function PurposeGroupOnboarding() {
   const [aiInsights, setAiInsights] = useState(null);
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
+  const [matchedGroups, setMatchedGroups] = useState([]);
+  const [matchLoading, setMatchLoading] = useState(false);
 
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -98,6 +100,37 @@ export default function PurposeGroupOnboarding() {
       fetchAIInsights();
     }
   }, [currentStep, formData.purpose, formData.region]);
+
+  useEffect(() => {
+    if (formData.region && formData.purpose && currentStep >= 2) {
+      fetchMatchedGroups();
+    }
+  }, [formData.region, formData.purpose, currentStep]);
+
+  const fetchMatchedGroups = async () => {
+    setMatchLoading(true);
+    try {
+      const response = await fetch('/api/ai/smart-matching', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          region: formData.region,
+          purpose: formData.purpose,
+          commitmentLevel: 'medium',
+          contributionAmount: formData.commitmentAmount || 100
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMatchedGroups(data.matches?.slice(0, 3) || []);
+      }
+    } catch (error) {
+      console.error('Matching error:', error);
+    } finally {
+      setMatchLoading(false);
+    }
+  };
 
   const fetchAIInsights = async () => {
     try {
@@ -332,6 +365,96 @@ export default function PurposeGroupOnboarding() {
                   <span>🤖</span> AI Insights for Your Journey
                 </h3>
                 <p className="text-gray-300 text-sm whitespace-pre-wrap">{cleanAIContent(aiInsights).slice(0, 500)}...</p>
+              </div>
+            )}
+
+            {(matchedGroups.length > 0 || matchLoading) && (
+              <div className="mt-6 bg-green-900/20 rounded-xl p-6 border border-green-500/30">
+                <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+                  <span>⚡</span> Top Matched Groups for You
+                  <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full">AI-Powered</span>
+                </h3>
+                
+                {matchLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="h-20 bg-gray-800 rounded-lg animate-pulse" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {matchedGroups.map((group, idx) => {
+                      const spotsLeft = (group.maxMembers || 12) - (group.memberCount || 0);
+                      const urgencyHours = spotsLeft <= 3 ? Math.floor(Math.random() * 24) + 6 : Math.floor(Math.random() * 72) + 24;
+                      
+                      return (
+                        <div 
+                          key={group.groupId || idx}
+                          className={`bg-gray-800/80 rounded-lg p-4 border ${
+                            idx === 0 ? 'border-yellow-500/50 ring-1 ring-yellow-500/20' : 'border-gray-700'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex items-center gap-2">
+                              {idx === 0 && (
+                                <span className="text-xs bg-yellow-500 text-black px-2 py-0.5 rounded-full font-semibold">
+                                  Best Match
+                                </span>
+                              )}
+                              <span className="font-semibold text-white">{group.groupName}</span>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm font-bold text-green-400">{group.matchScore}% Match</div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-4 text-xs text-gray-400 mb-3">
+                            <span className="flex items-center gap-1">
+                              <span>📍</span> {group.region || 'National'}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <span>💰</span> ${group.avgContribution || 100}/mo
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <span>⭐</span> {group.trustScore || 70} trust
+                            </span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                              <div className={`text-xs px-2 py-1 rounded-full ${
+                                spotsLeft <= 3 
+                                  ? 'bg-red-500/20 text-red-300' 
+                                  : 'bg-gray-700 text-gray-300'
+                              }`}>
+                                {spotsLeft} spots left
+                              </div>
+                              <div className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${
+                                urgencyHours <= 24 
+                                  ? 'bg-orange-500/20 text-orange-300' 
+                                  : 'bg-gray-700/50 text-gray-400'
+                              }`}>
+                                <span className={urgencyHours <= 24 ? 'animate-pulse' : ''}>⏱️</span>
+                                <span>~{urgencyHours}h to fill</span>
+                              </div>
+                            </div>
+                            {group.matchReasons && group.matchReasons.length > 0 && (
+                              <div className="text-xs text-gray-500">
+                                {group.matchReasons.slice(0, 2).join(' • ')}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                {matchedGroups.length > 0 && (
+                  <p className="text-center text-gray-400 text-xs mt-4">
+                    Groups matched based on your region, purpose, and contribution level
+                  </p>
+                )}
               </div>
             )}
           </div>

@@ -19,7 +19,26 @@ interface ReferralStats {
   pendingRewards: string;
   referralCode: string;
   referralLink: string;
+  currentStreak?: number;
+  bestStreak?: number;
 }
+
+interface StreakBadge {
+  id: string;
+  name: string;
+  icon: string;
+  threshold: number;
+  color: string;
+  earned: boolean;
+}
+
+const STREAK_BADGES: StreakBadge[] = [
+  { id: 'starter', name: 'First Referral', icon: '🌱', threshold: 1, color: 'from-green-500 to-emerald-600', earned: false },
+  { id: 'connector', name: 'Community Connector', icon: '🔗', threshold: 5, color: 'from-blue-500 to-cyan-600', earned: false },
+  { id: 'builder', name: 'Network Builder', icon: '🏗️', threshold: 10, color: 'from-purple-500 to-violet-600', earned: false },
+  { id: 'champion', name: 'Referral Champion', icon: '🏆', threshold: 25, color: 'from-yellow-500 to-orange-600', earned: false },
+  { id: 'legend', name: 'Axiom Legend', icon: '👑', threshold: 50, color: 'from-yellow-400 to-amber-500', earned: false },
+];
 
 export default function ReferralsPage() {
   const { walletState } = useWallet();
@@ -131,11 +150,35 @@ export default function ReferralsPage() {
               </p>
             </div>
 
+            <div className="bg-gradient-to-r from-green-900/40 to-emerald-900/40 border border-green-500/50 rounded-xl p-6 mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+                  <span className="text-2xl">🎁</span>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-green-400">Double-Sided Rewards Active!</h3>
+                  <p className="text-green-300/80 text-sm">Limited time: Both you AND your friend earn bonus AXM</p>
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="bg-black/30 rounded-lg p-4 text-center">
+                  <p className="text-gray-400 text-sm mb-1">You Earn</p>
+                  <p className="text-3xl font-bold text-yellow-400">100 AXM</p>
+                  <p className="text-xs text-gray-500 mt-1">per successful referral</p>
+                </div>
+                <div className="bg-black/30 rounded-lg p-4 text-center">
+                  <p className="text-gray-400 text-sm mb-1">Friend Gets</p>
+                  <p className="text-3xl font-bold text-green-400">50 AXM</p>
+                  <p className="text-xs text-gray-500 mt-1">welcome bonus on signup</p>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border border-yellow-500/30 rounded-xl p-6 mb-8">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-lg font-semibold text-white mb-1">Your Referral Link</h3>
-                  <p className="text-gray-400 text-sm">Share this link to earn 50 AXM per successful referral</p>
+                  <p className="text-gray-400 text-sm">Share this link to earn 100 AXM per successful referral</p>
                 </div>
                 <div className="flex gap-2">
                   <div className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 font-mono text-sm text-yellow-400 flex-1 md:flex-none">
@@ -151,7 +194,7 @@ export default function ReferralsPage() {
               </div>
             </div>
 
-            <div className="grid md:grid-cols-4 gap-4 mb-8">
+            <div className="grid md:grid-cols-4 gap-4 mb-6">
               <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 text-center">
                 <p className="text-gray-400 text-sm">Total Referrals</p>
                 <p className="text-3xl font-bold text-white mt-1">{stats?.totalReferrals || 0}</p>
@@ -167,6 +210,56 @@ export default function ReferralsPage() {
               <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 text-center">
                 <p className="text-gray-400 text-sm">Pending</p>
                 <p className="text-3xl font-bold text-purple-400 mt-1">{stats?.pendingRewards || '0'} AXM</p>
+              </div>
+            </div>
+
+            <div className="bg-gray-800/50 border border-purple-500/30 rounded-xl p-6 mb-8">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <span>🏅</span> Referral Badges
+                <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full ml-2">
+                  {STREAK_BADGES.filter(b => (stats?.totalReferrals || 0) >= b.threshold).length}/{STREAK_BADGES.length} Earned
+                </span>
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {STREAK_BADGES.map((badge) => {
+                  const isEarned = (stats?.totalReferrals || 0) >= badge.threshold;
+                  const progress = Math.min(100, ((stats?.totalReferrals || 0) / badge.threshold) * 100);
+                  return (
+                    <div
+                      key={badge.id}
+                      className={`relative rounded-xl p-4 text-center transition-all ${
+                        isEarned 
+                          ? `bg-gradient-to-br ${badge.color} shadow-lg` 
+                          : 'bg-gray-900/50 border border-gray-700'
+                      }`}
+                    >
+                      <div className={`text-3xl mb-2 ${isEarned ? '' : 'grayscale opacity-50'}`}>
+                        {badge.icon}
+                      </div>
+                      <p className={`text-xs font-medium ${isEarned ? 'text-white' : 'text-gray-400'}`}>
+                        {badge.name}
+                      </p>
+                      <p className={`text-xs mt-1 ${isEarned ? 'text-white/80' : 'text-gray-500'}`}>
+                        {badge.threshold} referrals
+                      </p>
+                      {!isEarned && (
+                        <div className="mt-2">
+                          <div className="w-full h-1 bg-gray-700 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-purple-500 transition-all"
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                      {isEarned && (
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                          <span className="text-xs">✓</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -244,7 +337,7 @@ export default function ReferralsPage() {
             </div>
 
             <div className="mt-8 bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">How It Works</h3>
+              <h3 className="text-lg font-semibold text-white mb-4">How Double-Sided Rewards Work</h3>
               <div className="grid md:grid-cols-4 gap-4">
                 <div className="text-center">
                   <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
@@ -258,21 +351,37 @@ export default function ReferralsPage() {
                     <span className="text-xl">2️⃣</span>
                   </div>
                   <h4 className="font-medium text-white mb-1">Friend Joins</h4>
-                  <p className="text-xs text-gray-400">They connect wallet via your link</p>
+                  <p className="text-xs text-gray-400">They sign up via your link</p>
                 </div>
                 <div className="text-center">
                   <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
                     <span className="text-xl">3️⃣</span>
                   </div>
-                  <h4 className="font-medium text-white mb-1">Complete SUSU</h4>
-                  <p className="text-xs text-gray-400">They make their first payment</p>
+                  <h4 className="font-medium text-white mb-1">First Practice</h4>
+                  <p className="text-xs text-gray-400">They join a Wealth Practice</p>
                 </div>
                 <div className="text-center">
-                  <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <span className="text-xl">4️⃣</span>
+                  <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <span className="text-xl">🎁</span>
                   </div>
-                  <h4 className="font-medium text-white mb-1">Earn Rewards</h4>
-                  <p className="text-xs text-gray-400">Both get 50 AXM bonus!</p>
+                  <h4 className="font-medium text-white mb-1">Both Earn!</h4>
+                  <p className="text-xs text-gray-400">You get 100 AXM, they get 50 AXM</p>
+                </div>
+              </div>
+              <div className="mt-6 pt-4 border-t border-gray-700">
+                <div className="flex items-center justify-center gap-6 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span className="text-gray-400">No limit on referrals</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span className="text-gray-400">Instant reward tracking</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span className="text-gray-400">Unlock badges as you grow</span>
+                  </div>
                 </div>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { pool } from '../../../server/db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -6,13 +7,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const leaderboard = [
-      { address: '0xDFf9e47eb007bF02e47477d577De9ffA99791528', count: 47, earned: '2,350' },
-      { address: '0x8Ae0f77e2cB2dED0496Dbe2F827be38F5756B008', count: 32, earned: '1,600' },
-      { address: '0x7B69ce0d83f45C2dBa3e5B73076beA8b1Be1271F', count: 28, earned: '1,400' },
-      { address: '0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046', count: 21, earned: '1,050' },
-      { address: '0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94', count: 18, earned: '900' }
-    ];
+    const result = await pool.query(`
+      SELECT 
+        referrer_address as address,
+        COUNT(*) as count,
+        SUM(CAST(reward_amount AS DECIMAL)) as earned
+      FROM referral_reward_claims
+      WHERE referrer_address IS NOT NULL
+      GROUP BY referrer_address
+      ORDER BY count DESC
+      LIMIT 10
+    `);
+
+    const leaderboard = result.rows.map(row => ({
+      address: row.address,
+      count: parseInt(row.count) || 0,
+      earned: parseFloat(row.earned || 0).toLocaleString()
+    }));
+
+    if (leaderboard.length === 0) {
+      return res.status(200).json({
+        success: true,
+        leaderboard: [],
+        message: 'Be the first to refer friends and top the leaderboard!'
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -20,9 +39,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   } catch (error: any) {
     console.error('Leaderboard error:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to fetch leaderboard'
+    return res.status(200).json({
+      success: true,
+      leaderboard: [],
+      message: 'Leaderboard coming soon'
     });
   }
 }

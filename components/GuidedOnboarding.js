@@ -217,10 +217,17 @@ export default function GuidedOnboarding({ onComplete, onDismiss, initialReferra
 
   const renderStep1 = () => (
     <div className="space-y-4">
+      <div className="bg-green-900/30 border border-green-500/30 rounded-lg p-3 mb-2">
+        <div className="flex items-center gap-2 text-green-400 text-sm font-semibold">
+          <span>🎁</span> Welcome Bonus: Get 50 AXM when you join!
+        </div>
+      </div>
+      
       <p className="text-gray-400 text-sm">
         Start your wealth-building journey in under 2 minutes
       </p>
-      <div>
+      
+      <div className="space-y-3">
         <input
           type="email"
           placeholder="Enter your email"
@@ -228,57 +235,81 @@ export default function GuidedOnboarding({ onComplete, onDismiss, initialReferra
           onChange={(e) => setEmail(e.target.value)}
           className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500"
         />
+        
+        {referralCode && (
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-gray-500">Referred by:</span>
+            <span className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded font-mono">
+              {referralCode}
+            </span>
+            <span className="text-green-400">+50 AXM bonus!</span>
+          </div>
+        )}
       </div>
+      
       <button
         onClick={handleEmailSubmit}
         disabled={loading}
         className="w-full py-3 bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold rounded-lg hover:from-yellow-400 hover:to-amber-500 transition-all disabled:opacity-50"
       >
-        {loading ? 'Starting...' : 'Continue →'}
+        {loading ? 'Starting...' : 'Get Started →'}
       </button>
-      <p className="text-xs text-gray-500 text-center">
-        No wallet required to start. You can connect one later.
-      </p>
+      
+      <div className="flex items-center gap-2 text-xs text-gray-500 justify-center">
+        <span>✓ No wallet required</span>
+        <span>•</span>
+        <span>✓ Free to start</span>
+        <span>•</span>
+        <span>✓ 2 min setup</span>
+      </div>
     </div>
   );
 
   const renderStep2 = () => (
     <div className="space-y-4">
-      <p className="text-gray-400 text-sm">
-        Connect your wallet to participate in Wealth Practices and earn rewards
+      <div className="grid grid-cols-2 gap-3 mb-2">
+        <button
+          onClick={handleWalletConnect}
+          disabled={loading || walletState.isConnected}
+          className={`p-4 rounded-xl border-2 text-center transition-all ${
+            walletState.isConnected 
+              ? 'border-green-500 bg-green-500/10' 
+              : 'border-purple-500/50 bg-purple-500/10 hover:border-purple-400'
+          }`}
+        >
+          <div className="text-2xl mb-1">{walletState.isConnected ? '✓' : '🦊'}</div>
+          <div className={`text-sm font-semibold ${walletState.isConnected ? 'text-green-400' : 'text-purple-400'}`}>
+            {walletState.isConnected ? 'Connected!' : 'Connect Wallet'}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">Full features</div>
+        </button>
+        
+        <button
+          onClick={loadHubs}
+          disabled={loading}
+          className="p-4 rounded-xl border-2 border-yellow-500/50 bg-yellow-500/10 hover:border-yellow-400 text-center transition-all"
+        >
+          <div className="text-2xl mb-1">📧</div>
+          <div className="text-sm font-semibold text-yellow-400">
+            Email Only
+          </div>
+          <div className="text-xs text-gray-500 mt-1">Connect later</div>
+        </button>
+      </div>
+      
+      <p className="text-gray-500 text-xs text-center">
+        You can always connect a wallet later to unlock all features
       </p>
-      <button
-        onClick={handleWalletConnect}
-        disabled={loading || walletState.isConnected}
-        className="w-full py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold rounded-lg hover:from-purple-400 hover:to-indigo-500 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-      >
-        {walletState.isConnected ? (
-          <>
-            <span className="text-green-400">✓</span> Wallet Connected
-          </>
-        ) : loading ? (
-          'Connecting...'
-        ) : (
-          <>
-            <span>🦊</span> Connect MetaMask
-          </>
-        )}
-      </button>
+      
       {walletState.isConnected && (
         <button
           onClick={loadHubs}
           disabled={loading}
           className="w-full py-3 bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold rounded-lg hover:from-yellow-400 hover:to-amber-500 transition-all disabled:opacity-50"
         >
-          {loading ? 'Loading Hubs...' : 'Browse Interest Hubs →'}
+          {loading ? 'Loading Hubs...' : 'Continue →'}
         </button>
       )}
-      <button
-        onClick={loadHubs}
-        className="w-full py-2 text-gray-400 hover:text-white text-sm transition-colors"
-      >
-        Skip wallet for now →
-      </button>
     </div>
   );
 
