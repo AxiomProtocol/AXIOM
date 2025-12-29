@@ -80,7 +80,13 @@ function createPrivateKeyFromCDP(rawKey: string): crypto.KeyObject {
       }
     }
     
-    return crypto.createPrivateKey(keyData);
+    const key = crypto.createPrivateKey(keyData);
+    
+    if (key.asymmetricKeyType !== 'ec' && key.asymmetricKeyType !== 'ed25519') {
+      throw new Error('Unsupported key type - must be EC or Ed25519');
+    }
+    
+    return key;
   }
   
   throw new Error('Unable to parse private key');

@@ -77,8 +77,14 @@ function createPrivateKeyFromCDP(rawKey: string): crypto.KeyObject {
       }
     }
     
-    console.log('Attempting to parse key, first 50 chars:', keyData.substring(0, 50));
-    return crypto.createPrivateKey(keyData);
+    const key = crypto.createPrivateKey(keyData);
+    
+    // Validate key type
+    if (key.asymmetricKeyType !== 'ec' && key.asymmetricKeyType !== 'ed25519') {
+      throw new Error('Unsupported key type - must be EC or Ed25519');
+    }
+    
+    return key;
   }
   
   throw new Error('Unable to parse private key');
@@ -153,7 +159,6 @@ export default async function handler(
     let privateKey: crypto.KeyObject;
     try {
       privateKey = createPrivateKeyFromCDP(cdpPrivateKey);
-      console.log('Private key parsed, type:', privateKey.asymmetricKeyType);
     } catch (keyError: any) {
       console.error('Failed to parse private key:', keyError.message);
       return res.status(200).json({ 
