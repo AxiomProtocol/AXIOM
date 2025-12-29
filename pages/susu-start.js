@@ -23,16 +23,10 @@ export default function SusuStartPage() {
             <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8 leading-relaxed">
               The Wealth Practice is a structured savings practice built with others. You connect with a group, agree on the amount and schedule, and take turns receiving the pooled money. Clear rules. Shared accountability. No middleman.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+            <div className="flex justify-center mb-6">
               <Link
-                href={SUSU_ROUTES.GROUPS_NEARBY_PATH}
-                className="px-8 py-4 bg-amber-500 text-white rounded-xl font-semibold hover:bg-amber-600 transition-colors text-lg"
-              >
-                Find a Group Near You
-              </Link>
-              <Link
-                href={SUSU_ROUTES.START_CIRCLE_PATH}
-                className="px-8 py-4 bg-white/10 text-white border border-white/30 rounded-xl font-semibold hover:bg-white/20 transition-colors text-lg"
+                href="/purpose-group-onboarding"
+                className="px-10 py-5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-gray-900 rounded-xl font-bold hover:from-amber-600 hover:via-yellow-500 hover:to-amber-600 transition-all text-xl shadow-lg ring-2 ring-amber-300 ring-offset-2 ring-offset-gray-900"
               >
                 Start a Wealth Practice
               </Link>
