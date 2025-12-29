@@ -22,13 +22,13 @@ const steps = [
 ];
 
 const regions = [
-  { id: 'atlanta', name: 'Atlanta Metro', members: 245, icon: '🏙️' },
-  { id: 'houston', name: 'Houston Area', members: 189, icon: '🤠' },
-  { id: 'chicago', name: 'Chicago Region', members: 167, icon: '🌆' },
-  { id: 'brooklyn', name: 'Brooklyn/NYC', members: 312, icon: '🗽' },
-  { id: 'la', name: 'Los Angeles', members: 278, icon: '🌴' },
-  { id: 'miami', name: 'Miami/South FL', members: 156, icon: '🌊' },
-  { id: 'dallas', name: 'Dallas/DFW', members: 134, icon: '⛪' },
+  { id: 'atlanta', name: 'Atlanta Metro', members: 0, icon: '🏙️' },
+  { id: 'houston', name: 'Houston Area', members: 0, icon: '🤠' },
+  { id: 'chicago', name: 'Chicago Region', members: 0, icon: '🌆' },
+  { id: 'brooklyn', name: 'Brooklyn/NYC', members: 0, icon: '🗽' },
+  { id: 'la', name: 'Los Angeles', members: 0, icon: '🌴' },
+  { id: 'miami', name: 'Miami/South FL', members: 0, icon: '🌊' },
+  { id: 'dallas', name: 'Dallas/DFW', members: 0, icon: '⛪' },
   { id: 'other', name: 'Other Region', members: 0, icon: '🌍' }
 ];
 
