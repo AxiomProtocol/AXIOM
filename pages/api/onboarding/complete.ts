@@ -1,8 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../server/db';
-import { users, userOnboarding, referralRewardClaims } from '../../../shared/schema';
-import { eq } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
+import { pool } from '../../../server/db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -10,77 +7,98 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { sessionId, circleId, walletAddress, email, mode, referralCode } = req.body;
+    const { sessionId, hubId, groupId, walletAddress, email, mode, referralCode } = req.body;
 
     if (!email || !mode) {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
 
-    const existingUser = await db.select()
-      .from(users)
-      .where(eq(users.email, email.toLowerCase()))
-      .limit(1);
+    const normalizedEmail = email.toLowerCase();
+
+    const existingUserResult = await pool.query(
+      'SELECT id, wallet_address, referral_code FROM users WHERE email = $1 LIMIT 1',
+      [normalizedEmail]
+    );
 
     let userId: number;
+    let userReferralCode: string;
 
-    if (existingUser.length > 0) {
-      userId = existingUser[0].id;
-      
-      if (walletAddress && !existingUser[0].walletAddress) {
-        await db.update(users)
-          .set({ walletAddress })
-          .where(eq(users.id, userId));
+    if (existingUserResult.rows.length > 0) {
+      userId = existingUserResult.rows[0].id;
+      userReferralCode = existingUserResult.rows[0].referral_code;
+
+      if (walletAddress && !existingUserResult.rows[0].wallet_address) {
+        await pool.query(
+          'UPDATE users SET wallet_address = $1 WHERE id = $2',
+          [walletAddress, userId]
+        );
       }
     } else {
-      const userReferralCode = generateReferralCode();
-      
-      const [newUser] = await db.insert(users).values({
-        email: email.toLowerCase(),
-        walletAddress: walletAddress || null,
-        referralCode: userReferralCode,
-        referralCount: 0,
-        createdAt: new Date(),
-      }).returning();
-      
-      userId = newUser.id;
+      userReferralCode = generateReferralCode();
+
+      const insertResult = await pool.query(
+        `INSERT INTO users (email, wallet_address, referral_code, referral_count, created_at)
+         VALUES ($1, $2, $3, 0, NOW())
+         RETURNING id`,
+        [normalizedEmail, walletAddress || null, userReferralCode]
+      );
+
+      userId = insertResult.rows[0].id;
     }
 
-    await db.insert(userOnboarding).values({
-      userId,
-      onboardingData: {
-        sessionId,
-        completedAt: new Date().toISOString(),
+    await pool.query(
+      `INSERT INTO user_onboarding (user_id, onboarding_data, current_step, selected_path, is_completed, completed_at, created_at)
+       VALUES ($1, $2, 4, $3, true, NOW(), NOW())
+       ON CONFLICT (user_id) DO UPDATE SET 
+         onboarding_data = $2, current_step = 4, selected_path = $3, is_completed = true, completed_at = NOW()`,
+      [
+        userId,
+        JSON.stringify({
+          sessionId,
+          completedAt: new Date().toISOString(),
+          mode,
+          hubId,
+          groupId,
+          walletAddress,
+          referralCode: referralCode || null,
+        }),
         mode,
-        circleId,
-        walletAddress,
-        referralCode: referralCode || null,
-      },
-      currentStep: 4,
-      selectedPath: mode,
-      isCompleted: true,
-      completedAt: new Date(),
-      createdAt: new Date(),
-    });
+      ]
+    );
+
+    if (groupId && groupId !== 'auto-match') {
+      await pool.query(
+        `INSERT INTO susu_group_members (group_id, wallet_address, role, joined_at)
+         VALUES ($1, $2, 'member', NOW())
+         ON CONFLICT DO NOTHING`,
+        [groupId, walletAddress || normalizedEmail]
+      );
+
+      await pool.query(
+        'UPDATE susu_purpose_groups SET member_count = member_count + 1 WHERE id = $1',
+        [groupId]
+      );
+    }
 
     if (referralCode) {
-      const referrer = await db.select()
-        .from(users)
-        .where(eq(users.referralCode, referralCode))
-        .limit(1);
-      
-      if (referrer.length > 0 && referrer[0].walletAddress) {
-        await db.insert(referralRewardClaims).values({
-          referrerAddress: referrer[0].walletAddress,
-          referredAddress: walletAddress || email,
-          rewardAmount: '5',
-          rewardType: 'signup_bonus',
-          txHash: null,
-          claimedAt: new Date(),
-        });
+      const referrerResult = await pool.query(
+        'SELECT id, wallet_address, referral_count FROM users WHERE referral_code = $1 LIMIT 1',
+        [referralCode]
+      );
 
-        await db.update(users)
-          .set({ referralCount: (referrer[0].referralCount || 0) + 1 })
-          .where(eq(users.id, referrer[0].id));
+      if (referrerResult.rows.length > 0) {
+        const referrer = referrerResult.rows[0];
+
+        await pool.query(
+          `INSERT INTO referral_reward_claims (referrer_address, referred_address, reward_amount, reward_type, claimed_at)
+           VALUES ($1, $2, '5', 'signup_bonus', NOW())`,
+          [referrer.wallet_address || `user:${referrer.id}`, walletAddress || normalizedEmail]
+        );
+
+        await pool.query(
+          'UPDATE users SET referral_count = $1 WHERE id = $2',
+          [(referrer.referral_count || 0) + 1, referrer.id]
+        );
       }
     }
 
@@ -88,8 +106,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true,
       message: 'Welcome to Axiom! You are now part of the community.',
       userId,
-      circleId,
+      hubId,
+      groupId,
       mode,
+      referralCode: userReferralCode,
       nextSteps: [
         'Complete your first contribution',
         'Explore the Wealth Dashboard',
