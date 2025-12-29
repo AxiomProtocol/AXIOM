@@ -60,7 +60,9 @@ export default function Layout({ children, showWallet = true }) {
                   return (
                     <div key={item.name} className="relative advanced-dropdown">
                       <button
+                        type="button"
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           setShowAdvanced(!showAdvanced);
                         }}
