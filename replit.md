@@ -117,3 +117,42 @@ These V2 contracts implement the AIP-001 Master Architectural Plan for the Sover
 -   `weekly_digest_subscriptions`: Email subscription preferences for protocol digests
 -   `credit_score_actions`: Credit score improvement actions catalog
 -   `node_upgrades`: Node tier upgrade transactions
+
+## Growth Acceleration Plan (70K Users in 30 Days)
+**Last Updated:** December 29, 2025
+**Status:** In Progress - Phase 1 Quick Wins
+
+### Implementation Principle
+Always integrate and upgrade existing pages/components first. Avoid building new pages unless absolutely necessary.
+
+### Phase 1: Quick Wins (Days 1-3)
+- [ ] **Referral Sprint** - Double-sided AXM rewards + time-limited streak badges on existing `/referrals` page
+- [ ] **AI Wealth Coach Widget** - Embed on landing, `/susu-start`, and dashboard pages (use existing `wealth-coach.ts` API)
+- [ ] **Fast-Track Group Matching** - Auto-suggest top 3 matches with capacity + countdown timers in `/purpose-group-onboarding`
+- [ ] **Email Capture** - Progressive capture in `GuidedOnboarding.js` component
+
+### Phase 2: Medium-Term Features (Days 4-14)
+- [ ] **Milestone Quest System** - On-chain achievements via AxiomScoreSBT + existing GamificationHub
+- [ ] **Fee Rebate Incentives** - Groups completing rotations get AxiomFeeBurner rebates
+- [ ] **Community Creator Portal** - Power users spin up Interest Hubs with marketing kits
+- [ ] **Streak Tracking** - Expose weekly practice streaks in dashboard
+
+### Phase 3: Viral Growth Mechanics (Days 15-30)
+- [ ] **Social Unlock Missions** - Complete onboarding + invite 5 friends = shared AXM rewards
+- [ ] **Shareable Progress Reels** - AI-generated (Gemini) progress cards with referral links
+- [ ] **Season-Based Leaderboards** - veAXM staking, streak length, group growth competitions
+- [ ] **Lifecycle Messaging** - AI-personalized nudges based on commitment level and activity
+
+### Critical Friction Points to Fix
+1. **Wallet step causes drop-off** → Offer "continue without wallet" / email-first mode
+2. **Unclear contribution expectations** → AI-calculated affordability guidance before wallet connect
+3. **Manual group discovery** → Auto-match with real-time capacity and countdown timers
+
+### Key Files to Enhance
+- `pages/susu-start.js` - Main entry point for Wealth Practice
+- `pages/purpose-group-onboarding.js` - Group selection and onboarding flow
+- `components/GuidedOnboarding.js` - Step-by-step onboarding wizard
+- `pages/referrals.js` - Referral system with leaderboards
+- `pages/api/ai/wealth-coach.ts` - Anthropic-powered AI coaching
+- `pages/api/ai/smart-matching.ts` - Gemini-powered group matching
+- `components/Layout.js` - Global layout for widget embedding
