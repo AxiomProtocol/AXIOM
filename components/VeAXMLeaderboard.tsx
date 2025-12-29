@@ -90,7 +90,7 @@ export default function VeAXMLeaderboard({ currentUserAddress, limit = 20 }: Pro
         <div className="divide-y divide-gray-800">
           {leaderboard.length === 0 ? (
             <div className="p-8 text-center text-gray-400">
-              No veAXM holders yet. Be the first to lock!
+              No Wealth Engine lockers yet. Be the first to power up!
             </div>
           ) : (
             leaderboard.map((entry, idx) => {

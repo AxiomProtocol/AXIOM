@@ -30,7 +30,7 @@ Key features include:
 -   **PMA Trust**: Operates as a Private Membership Association Trust with tokenized ERC-1155/1400 memberships.
 -   **AI Member Support**: Gemini-powered chat assistant.
 -   **V2 Analytics Dashboard**: Unified dashboard for Sovereign Banking metrics.
--   **veAXM Staking Mode**: Enhanced staking page with lock durations and voting power preview.
+-   **Wealth Engine**: Enhanced AXM locking page (formerly veAXM Staking) with lock durations and voting power preview.
 -   **On-Chain Credit Score Display**: `CreditScoreCard` component with FICO-like visualization.
 -   **Referral System**: Full referral tracking with unique codes and leaderboards.
 -   **Member Badges**: Achievement system with 10 badge types across 4 rarity tiers.

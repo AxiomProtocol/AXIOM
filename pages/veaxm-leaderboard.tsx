@@ -83,19 +83,19 @@ export default function VeAXMLeaderboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <VeAXMLeaderboard 
-                currentUserAddress={walletState?.address}
+                currentUserAddress={walletState?.address || undefined}
                 limit={20}
               />
             </div>
             <div className="space-y-6">
               <LockChallengeBadges 
-                walletAddress={walletState?.address}
+                walletAddress={walletState?.address || undefined}
                 earnedBadges={earnedBadges}
                 lockYears={0}
                 lockAmount={0}
               />
               <WeeklyDigestCard 
-                walletAddress={walletState?.address}
+                walletAddress={walletState?.address || undefined}
                 isSubscribed={digestData?.isSubscribed || false}
                 email={digestData?.email || ''}
                 latestDigest={digestData?.latestDigest}

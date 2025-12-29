@@ -9,7 +9,7 @@ const MILESTONE_QUESTS = [
   { id: 'week_streak', title: 'Weekly Warrior', description: 'Login for 7 consecutive days', category: 'community', xpReward: 150, axmReward: 30, creditBoost: 10, maxProgress: 7, icon: '🔥', tier: 'starter' },
   { id: 'invite_friend', title: 'Community Builder', description: 'Invite 3 friends who join', category: 'community', xpReward: 300, axmReward: 100, creditBoost: 20, maxProgress: 3, icon: '👥', tier: 'builder' },
   { id: 'complete_cycle', title: 'Full Circle', description: 'Complete an entire SUSU rotation', category: 'susu', xpReward: 500, axmReward: 150, creditBoost: 50, maxProgress: 1, icon: '🎯', tier: 'builder' },
-  { id: 'lock_veaxm', title: 'Diamond Hands', description: 'Lock 1000 AXM as veAXM', category: 'staking', xpReward: 400, axmReward: 75, creditBoost: 35, maxProgress: 1000, icon: '💎', tier: 'builder' },
+  { id: 'lock_veaxm', title: 'Diamond Hands', description: 'Lock 1000 AXM in Wealth Engine', category: 'staking', xpReward: 400, axmReward: 75, creditBoost: 35, maxProgress: 1000, icon: '💎', tier: 'builder' },
   { id: 'vote_3', title: 'Active Citizen', description: 'Vote on 3 governance proposals', category: 'governance', xpReward: 250, axmReward: 60, creditBoost: 20, maxProgress: 3, icon: '🗳️', tier: 'builder' },
   { id: 'month_streak', title: 'Consistency Champion', description: 'Make on-time payments for 3 months', category: 'susu', xpReward: 750, axmReward: 200, creditBoost: 75, maxProgress: 3, icon: '🏆', tier: 'champion' },
   { id: 'lead_group', title: 'Circle Leader', description: 'Become an organizer of a SUSU circle', category: 'community', xpReward: 600, axmReward: 250, creditBoost: 40, maxProgress: 1, icon: '👑', tier: 'champion' },

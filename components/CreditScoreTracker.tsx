@@ -16,7 +16,7 @@ const CREDIT_ACTIONS: CreditAction[] = [
   { id: 'ontime_payment', name: 'On-Time Payment', description: 'Make contribution before deadline', points: 10, category: 'susu', status: 'available' },
   { id: 'streak_3', name: '3-Month Streak', description: 'Pay on-time for 3 consecutive months', points: 30, category: 'susu', status: 'available' },
   { id: 'streak_6', name: '6-Month Streak', description: 'Pay on-time for 6 consecutive months', points: 75, category: 'susu', status: 'available' },
-  { id: 'lock_veaxm', name: 'Lock veAXM', description: 'Lock tokens for governance power', points: 40, category: 'staking', status: 'available' },
+  { id: 'lock_veaxm', name: 'Power Up Wealth Engine', description: 'Lock AXM tokens for governance power', points: 40, category: 'staking', status: 'available' },
   { id: 'vote_proposal', name: 'Vote on Proposal', description: 'Participate in governance voting', points: 15, category: 'governance', status: 'available' },
   { id: 'create_proposal', name: 'Create Proposal', description: 'Submit a governance proposal', points: 50, category: 'governance', status: 'available' },
   { id: 'refer_member', name: 'Refer New Member', description: 'Bring someone new to the platform', points: 20, category: 'community', status: 'available' },
