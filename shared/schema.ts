@@ -3964,6 +3964,77 @@ export const userQuestProgress = pgTable("user_quest_progress", {
   userQuestIdx: index("user_quest_idx").on(table.userId, table.questId),
 }));
 
+// Social mission progress tracking for viral growth
+export const socialMissionProgress = pgTable("social_mission_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  missionId: varchar("mission_id", { length: 50 }).notNull(),
+  progress: integer("progress").default(0),
+  status: varchar("status", { length: 20 }).default('in_progress'),
+  rewardClaimed: decimal("reward_claimed", { precision: 24, scale: 8 }).default('0'),
+  claimedAt: timestamp("claimed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userMissionIdx: index("social_mission_user_idx").on(table.userId, table.missionId),
+}));
+
+// Dismissed nudges tracking for lifecycle messaging
+export const dismissedNudges = pgTable("dismissed_nudges", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  nudgeId: varchar("nudge_id", { length: 50 }).notNull(),
+  dismissedAt: timestamp("dismissed_at").defaultNow(),
+}, (table) => ({
+  userNudgeIdx: index("dismissed_nudges_user_idx").on(table.userId, table.nudgeId),
+}));
+
+// User streaks for activity tracking
+export const userStreaks = pgTable("user_streaks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(),
+  currentStreak: integer("current_streak").default(0),
+  longestStreak: integer("longest_streak").default(0),
+  lastActivity: timestamp("last_activity").defaultNow(),
+  totalActiveDays: integer("total_active_days").default(0),
+  weeklyActivity: jsonb("weekly_activity"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userStreakIdx: index("user_streaks_user_idx").on(table.userId),
+}));
+
+// Community interest hubs for creator portal
+export const interestHubs = pgTable("interest_hubs", {
+  id: serial("id").primaryKey(),
+  creatorId: integer("creator_id").references(() => users.id).notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  hubType: varchar("hub_type", { length: 50 }).notNull(),
+  memberCount: integer("member_count").default(0),
+  isActive: boolean("is_active").default(true),
+  settings: jsonb("settings"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  creatorIdx: index("interest_hubs_creator_idx").on(table.creatorId),
+}));
+
+// Fee rebate tracking for SUSU completion rewards
+export const feeRebates = pgTable("fee_rebates", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  tier: varchar("tier", { length: 20 }).notNull(),
+  rebateRate: decimal("rebate_rate", { precision: 5, scale: 2 }).notNull(),
+  totalRebatesEarned: decimal("total_rebates_earned", { precision: 24, scale: 8 }).default('0'),
+  rotationsCompleted: integer("rotations_completed").default(0),
+  nextTierProgress: integer("next_tier_progress").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userRebateIdx: index("fee_rebates_user_idx").on(table.userId),
+}));
+
 // Export types for Wealth Engine V2
 export type YieldVaultPosition = typeof yieldVaultPositions.$inferSelect;
 export type InsertYieldVaultPosition = typeof yieldVaultPositions.$inferInsert;

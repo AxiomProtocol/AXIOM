@@ -1,7 +1,7 @@
 # Axiom Smart City - Sovereign Digital-Physical Economy
 
 ## Overview
-The Axiom Smart City project aims to establish America's first 1,000-acre on-chain sovereign smart city economy. This fintech smart city will function as a bank operating system and a complete sovereign economic engine, featuring a governance token (AXM), digital banking, real estate tokenization, DePIN infrastructure, smart city services, Wall Street integration, cross-chain interoperability, and sustainability initiatives within a decentralized, community-governed framework. The project envisions creating a model for future sovereign digital-physical economies.
+The Axiom Smart City project aims to establish America's first 1,000-acre on-chain sovereign smart city economy. This fintech smart city will function as a bank operating system and a complete sovereign economic engine. Key capabilities include a governance token (AXM), digital banking, real estate tokenization, DePIN infrastructure, smart city services, Wall Street integration, cross-chain interoperability, and sustainability initiatives within a decentralized, community-governed framework. The project's vision is to create a model for future sovereign digital-physical economies.
 
 ## User Preferences
 - **Communication style**: Simple, everyday language explaining technical concepts.
@@ -13,13 +13,7 @@ The Axiom Smart City project aims to establish America's first 1,000-acre on-cha
 The frontend features a modular design with a professional gold/black theme and yellow accents, ensuring responsiveness. Branding includes "AXIOM" with a golden circular token logo, golden gradient text, and the tagline "Build Wealth Together, On-Chain." Navigation, defined in `lib/navigation.js`, guides users through a Learn → Connect → Save Together journey, complemented by a `StepProgressBanner`.
 
 ### Technical Implementations
-The core Axiom Protocol Token (AXM) is an ERC20 governance and fee-routing token on Arbitrum One, slated for migration to Universe Blockchain (L3). The multi-phase Smart Contract Architecture, initially on Arbitrum One, covers identity, treasury, staking, emissions, land/asset registry, and future modules. The platform offers a Complete Banking Product Suite with over 30 product families, supported by 23 verified smart contracts on Arbitrum One across various domains.
-
-### Custody Model Architecture
-Axiom utilizes a HYBRID CUSTODY model, incorporating Self-Custody, Smart Contract Custody (e.g., Staking), and Pooled Custody (e.g., SUSU circles), with disclosures managed via `lib/custody/disclosure.ts` and `components/CustodyDisclosure.js`. No products are FDIC insured.
-
-### Production SSR Patterns
-Static/marketing pages use `<Layout showWallet={false}>`. Browser-only libraries are dynamically imported with `{ ssr: false }` or guarded by `typeof window !== 'undefined'` to prevent Server-Side Rendering issues.
+The core Axiom Protocol Token (AXM) is an ERC20 governance and fee-routing token on Arbitrum One, slated for migration to Universe Blockchain (L3). The multi-phase Smart Contract Architecture, initially on Arbitrum One, covers identity, treasury, staking, emissions, land/asset registry, and future modules. The platform offers a Complete Banking Product Suite with over 30 product families, supported by 23 verified smart contracts on Arbitrum One across various domains. Axiom utilizes a HYBRID CUSTODY model, incorporating Self-Custody, Smart Contract Custody, and Pooled Custody, with disclosures managed via `lib/custody/disclosure.ts` and `components/CustodyDisclosure.js`.
 
 ### System Design Choices
 The architecture employs a "Product Factory Approach" for scalability. Arbitrum One serves as the current blockchain network, with a planned migration to Universe Blockchain (L3). Data management is handled by PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend includes centralized contract configuration, a dedicated contract service, and chain validation middleware for Arbitrum One, with API responses consistently providing `axmBalance` and `axmUsdValue`.
@@ -28,42 +22,28 @@ Key features include:
 -   **Axiom Nodes Marketplace**: For DePIN node management.
 -   **DEX Exchange**: A comprehensive decentralized exchange.
 -   **Governance**: A full-featured governance system (API-based, transitioning to on-chain).
--   **Admin Authentication & RBAC**: JWT-based authentication for `/admin/*` routes with hierarchical roles (superadmin, admin, finance, moderator) and a two-step approval system for sensitive actions, including a $5000 threshold policy and audit logging.
--   **AI Agent & Upgrade Framework**: A security-first framework for AI agents with configurable modes (off/observe/propose), production safety defaults, dry-run capabilities, a read-only query endpoint, robust audit logging with secret redaction, idempotency, and release governance. Prompt templates are stored in `prompts/`.
+-   **Admin Authentication & RBAC**: JWT-based authentication for `/admin/*` routes with hierarchical roles and a two-step approval system for sensitive actions, including a $5000 threshold policy and audit logging.
+-   **AI Agent & Upgrade Framework**: A security-first framework with configurable modes (off/observe/propose), production safety defaults, dry-run capabilities, a read-only query endpoint, robust audit logging with secret redaction, idempotency, and release governance. Prompt templates are stored in `prompts/`.
 -   **API Security**: Input validation, sanitization, error handling, and EIP-4361 SIWE authentication.
 -   **KeyGrow Rent-to-Own Program**: Real estate program using ERC-1155 tokenized fractional property shares.
--   **Axiom SUSU (Rotating Savings Groups)**: On-chain ROSCA system ("The Wealth Practice") with Community Pool and Personal Vault custody modes and a Trust Bridge explainer.
--   **Learn Wealth Practice** (`/learn-wealth-practice`): Comprehensive educational page explaining how The Wealth Practice works, benefits, two custody modes, real-world examples, risks/disclosures, and getting started CTAs.
+-   **Axiom SUSU (Rotating Savings Groups)**: On-chain ROSCA system ("The Wealth Practice") with Community Pool and Personal Vault custody modes.
 -   **PMA Trust**: Operates as a Private Membership Association Trust with tokenized ERC-1155/1400 memberships.
 -   **AI Member Support**: Gemini-powered chat assistant.
--   **V2 Analytics Dashboard** (`/v2-analytics`): Unified dashboard for Sovereign Banking metrics (Protocol Overview, Credit & Scoring, Governance).
+-   **V2 Analytics Dashboard**: Unified dashboard for Sovereign Banking metrics.
 -   **veAXM Staking Mode**: Enhanced staking page with lock durations and voting power preview.
--   **On-Chain Credit Score Display**: CreditScoreCard component with FICO-like visualization.
--   **Referral System** (`/referrals`): Full referral tracking with unique codes and leaderboards.
--   **Member Badges** (`/badges`): Achievement system with 10 badge types across 4 rarity tiers.
--   **Governance Proposal Drafting** (`/governance/create`): UI for veAXM holders to create proposals.
--   **Yield Vault** (`/yield-vault`): Auto-compounding AXM staking.
--   **Push Notifications** (`/notifications`): PWA service worker for push notifications with preference settings.
--   **Transparency Dashboard** (`/transparency-dashboard`): Real-time protocol metrics including TVL, burned AXM, veAXM locked, insurance fund balance, SUSU pools, and DePIN nodes.
+-   **On-Chain Credit Score Display**: `CreditScoreCard` component with FICO-like visualization.
+-   **Referral System**: Full referral tracking with unique codes and leaderboards.
+-   **Member Badges**: Achievement system with 10 badge types across 4 rarity tiers.
+-   **Governance Proposal Drafting**: UI for veAXM holders to create proposals.
+-   **Yield Vault**: Auto-compounding AXM staking.
+-   **Push Notifications**: PWA service worker for push notifications with preference settings.
+-   **Transparency Dashboard**: Real-time protocol metrics including TVL, burned AXM, veAXM locked, insurance fund balance, SUSU pools, and DePIN nodes.
 
-### Wealth Engine V2 Contracts (Sovereign Banking System)
-These V2 contracts implement the AIP-001 Master Architectural Plan for the Sovereign Banking System:
+Wealth Engine V2 Contracts (Sovereign Banking System) implement AIP-001 Master Architectural Plan:
 -   **AxiomScoreSBT**: ERC-5192 Soulbound Token for on-chain credit scoring (300-850 range), integrated with SUSU repayment history.
 -   **SusuInsuranceFund**: Default Insurance Fund with 5% node rewards diversion to cover broken SUSU circles.
 -   **veAXM**: Vote-Escrowed AXM with Curve-style locking (1-4 years), time-weighted voting power, and epoch-based reward distribution.
 -   **AxiomFeeBurner**: 0.5% fee switch on banking products with automatic AXM buyback/burn and 50% distribution to veAXM holders.
-
-## Business Entity Information
--   **Legal Entity:** Axiom Nexus LLC
--   **Manager:** Clarence Fuqua (Sole Member)
--   **EIN:** 41-3277381
--   **Name Control:** AXIO
--   **State:** Mississippi
--   **Filing Number:** 1522557
--   **Date Established:** December 26, 2025
--   **NAICS Code:** 541611 - Administrative Management and General Management Consulting Services
--   **Registered Agent:** Northwest Registered Agent, Inc.
--   **Address:** 270 Trace Colony Park STE B, Ridgeland, MS 39157
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
@@ -81,78 +61,3 @@ These V2 contracts implement the AIP-001 Master Architectural Plan for the Sover
 -   **Location Scores:** Walk Score API
 -   **Auth Provider:** Supabase
 -   **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image) with a unified service module at `lib/server/gemini.ts`.
-
-## Engagement & Gamification Features
-
-### Revenue Strengthening Components
--   **VeAXMLockCalculator**: Interactive lock duration comparison tool showing projected rewards for 1-4 year locks, integrated into staking page.
--   **NodeROICalculator**: DePIN node ROI calculator with tier comparison, break-even analysis, and uptime adjustment.
--   **ProtocolHealthScore**: Aggregate protocol health score (0-100) based on TVL, burns, governance, insurance, and community activity.
--   **FeeContributionWidget**: Shows 0.5% fee contribution breakdown (50% burned, 50% to veAXM) during transactions.
--   **SUSUInsuranceProgress**: Visual insurance fund coverage indicator showing fund balance, claims history, and per-circle protection.
-
-### Engagement Features
--   **veAXM Leaderboard** (`/veaxm-leaderboard`): Public ranking of top veAXM holders with timeframe filters (all-time, month, week), voting power display, pagination support, and user rank tracking.
--   **LockChallengeBadges**: Gamified lock duration badges with 6 badge types (Committed, Dedicated, True Believer, Diamond Hands, Whale Locker, Early Adopter) and 4 rarity tiers (Common, Rare, Epic, Legendary).
--   **InsuranceClaimsHistory**: Public log of SUSU insurance claims with status tracking (pending, approved, rejected, paid), integrated into transparency dashboard.
--   **CreditScoreTracker**: Shows 10 actions to improve on-chain credit score across 4 categories (SUSU, staking, governance, community) with points tracking.
--   **WeeklyDigestCard**: Email subscription for weekly protocol activity summaries including burns, veAXM rewards, insurance fund growth, and new circles/operators.
--   **NodeReferralWidget**: 5% referral bonus system for node operator referrals, with referral code generation and earnings tracking.
--   **NodeUpgradePath**: Node tier upgrade system with 80% credit toward higher tiers, supporting 7 node tiers from Lite Starter ($99) to Pro Operator ($9,999).
-
-### Engagement APIs
--   **Badge Award** (`/api/veaxm/award-badge`): Automatically awards lock challenge badges when users lock veAXM for qualifying durations.
--   **Referral Code Generation** (`/api/nodes/generate-referral`): Generates unique referral codes for node operators with earnings tracking.
--   **Weekly Digest Cron** (`/api/cron/weekly-digest`): Scheduled job endpoint to send weekly protocol summaries to subscribers via SendGrid.
--   **Digest Subscription** (`/api/digest/subscribe`): Manages email subscriptions for weekly protocol digests.
--   **Insurance Claims** (`/api/insurance/claims`): Public API for SUSU insurance claims history with stats.
--   **Lock Badges** (`/api/lock-badges`): Tracks and awards gamified lock duration badges.
--   **Node Referrals** (`/api/nodes/referrals`): Tracks node operator referral bonuses and earnings.
--   **Leaderboard** (`/api/veaxm/leaderboard`): Paginated veAXM holder rankings with user position.
-
-### Engagement Database Tables
--   `lock_challenge_badges`: Gamified lock duration achievement badges
--   `node_referral_bonuses`: Node operator referral rewards tracking
--   `insurance_claims`: SUSU insurance claims history
--   `weekly_digest_subscriptions`: Email subscription preferences for protocol digests
--   `credit_score_actions`: Credit score improvement actions catalog
--   `node_upgrades`: Node tier upgrade transactions
-
-## Growth Acceleration Plan (70K Users in 30 Days)
-**Last Updated:** December 29, 2025
-**Status:** In Progress - Phase 1 Quick Wins
-
-### Implementation Principle
-Always integrate and upgrade existing pages/components first. Avoid building new pages unless absolutely necessary.
-
-### Phase 1: Quick Wins (Days 1-3)
-- [ ] **Referral Sprint** - Double-sided AXM rewards + time-limited streak badges on existing `/referrals` page
-- [ ] **AI Wealth Coach Widget** - Embed on landing, `/susu-start`, and dashboard pages (use existing `wealth-coach.ts` API)
-- [ ] **Fast-Track Group Matching** - Auto-suggest top 3 matches with capacity + countdown timers in `/purpose-group-onboarding`
-- [ ] **Email Capture** - Progressive capture in `GuidedOnboarding.js` component
-
-### Phase 2: Medium-Term Features (Days 4-14)
-- [ ] **Milestone Quest System** - On-chain achievements via AxiomScoreSBT + existing GamificationHub
-- [ ] **Fee Rebate Incentives** - Groups completing rotations get AxiomFeeBurner rebates
-- [ ] **Community Creator Portal** - Power users spin up Interest Hubs with marketing kits
-- [ ] **Streak Tracking** - Expose weekly practice streaks in dashboard
-
-### Phase 3: Viral Growth Mechanics (Days 15-30)
-- [ ] **Social Unlock Missions** - Complete onboarding + invite 5 friends = shared AXM rewards
-- [ ] **Shareable Progress Reels** - AI-generated (Gemini) progress cards with referral links
-- [ ] **Season-Based Leaderboards** - veAXM staking, streak length, group growth competitions
-- [ ] **Lifecycle Messaging** - AI-personalized nudges based on commitment level and activity
-
-### Critical Friction Points to Fix
-1. **Wallet step causes drop-off** → Offer "continue without wallet" / email-first mode
-2. **Unclear contribution expectations** → AI-calculated affordability guidance before wallet connect
-3. **Manual group discovery** → Auto-match with real-time capacity and countdown timers
-
-### Key Files to Enhance
-- `pages/susu-start.js` - Main entry point for Wealth Practice
-- `pages/purpose-group-onboarding.js` - Group selection and onboarding flow
-- `components/GuidedOnboarding.js` - Step-by-step onboarding wizard
-- `pages/referrals.js` - Referral system with leaderboards
-- `pages/api/ai/wealth-coach.ts` - Anthropic-powered AI coaching
-- `pages/api/ai/smart-matching.ts` - Gemini-powered group matching
-- `components/Layout.js` - Global layout for widget embedding

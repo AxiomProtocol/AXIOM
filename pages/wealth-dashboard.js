@@ -16,6 +16,10 @@ const MilestoneQuestSystem = dynamic(() => import('../components/MilestoneQuestS
 const FeeRebateTracker = dynamic(() => import('../components/FeeRebateTracker'), { ssr: false });
 const StreakTracker = dynamic(() => import('../components/StreakTracker'), { ssr: false });
 const CommunityCreatorPortal = dynamic(() => import('../components/CommunityCreatorPortal'), { ssr: false });
+const SocialUnlockMissions = dynamic(() => import('../components/SocialUnlockMissions'), { ssr: false });
+const ShareableProgressCard = dynamic(() => import('../components/ShareableProgressCard'), { ssr: false });
+const SeasonLeaderboard = dynamic(() => import('../components/SeasonLeaderboard'), { ssr: false });
+const LifecycleNudges = dynamic(() => import('../components/LifecycleNudges'), { ssr: false });
 
 export default function WealthDashboardPage() {
   const { walletState } = useWallet();
@@ -46,12 +50,12 @@ export default function WealthDashboardPage() {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: '🏛️' },
     { id: 'quests', label: 'Quests', icon: '🎮' },
+    { id: 'social', label: 'Social', icon: '🎁' },
+    { id: 'leaderboard', label: 'Leaderboard', icon: '🏆' },
     { id: 'streaks', label: 'Streaks', icon: '🔥' },
     { id: 'rebates', label: 'Rebates', icon: '💸' },
     { id: 'creator', label: 'Creator', icon: '🌟' },
-    { id: 'opportunities', label: 'Opportunities', icon: '📈' },
     { id: 'training', label: 'Training', icon: '🎓' },
-    { id: 'reports', label: 'Reports', icon: '📊' },
   ];
 
   return (
@@ -127,6 +131,7 @@ export default function WealthDashboardPage() {
 
               {activeTab === 'overview' && (
                 <div className="space-y-6">
+                  <LifecycleNudges walletAddress={address} maxNudges={2} />
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div className="md:col-span-2">
                       <div className="grid grid-cols-2 gap-4 mb-4">
@@ -154,8 +159,12 @@ export default function WealthDashboardPage() {
                     </div>
                     <div className="space-y-4">
                       <MilestoneQuestSystem walletAddress={address} compact={true} />
-                      <StreakTracker walletAddress={address} compact={true} />
+                      <SocialUnlockMissions walletAddress={address} compact={true} />
                     </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <StreakTracker walletAddress={address} compact={true} />
+                    <SeasonLeaderboard walletAddress={address} compact={true} />
                   </div>
                   <WealthAdvancement wallet={address} />
                 </div>
@@ -171,6 +180,17 @@ export default function WealthDashboardPage() {
 
               {activeTab === 'rebates' && (
                 <FeeRebateTracker walletAddress={address} />
+              )}
+
+              {activeTab === 'social' && (
+                <div className="space-y-6">
+                  <SocialUnlockMissions walletAddress={address} />
+                  <ShareableProgressCard walletAddress={address} />
+                </div>
+              )}
+
+              {activeTab === 'leaderboard' && (
+                <SeasonLeaderboard walletAddress={address} />
               )}
 
               {activeTab === 'creator' && (
