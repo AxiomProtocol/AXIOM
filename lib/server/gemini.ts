@@ -9,6 +9,7 @@ const ai = new GoogleGenAI({
 });
 
 export type GeminiModel = 
+  | "gemini-3-flash"
   | "gemini-3-pro-preview"
   | "gemini-2.5-pro"
   | "gemini-2.5-flash"
@@ -25,7 +26,7 @@ export async function generateText(
   prompt: string,
   options: GenerateContentOptions = {}
 ): Promise<string> {
-  const { model = "gemini-2.5-flash", systemPrompt } = options;
+  const { model = "gemini-3-flash", systemPrompt } = options;
 
   const contents = systemPrompt
     ? [
@@ -47,7 +48,7 @@ export async function* generateTextStream(
   prompt: string,
   options: GenerateContentOptions = {}
 ): AsyncGenerator<string> {
-  const { model = "gemini-2.5-flash", systemPrompt } = options;
+  const { model = "gemini-3-flash", systemPrompt } = options;
 
   const contents = systemPrompt
     ? [
@@ -105,7 +106,7 @@ export async function analyzeContent(
   };
 
   return generateText(prompts[analysisType], {
-    model: options.model || "gemini-2.5-flash",
+    model: options.model || "gemini-3-flash",
     ...options,
   });
 }
@@ -114,7 +115,7 @@ export async function chat(
   messages: Array<{ role: "user" | "model"; content: string }>,
   options: GenerateContentOptions = {}
 ): Promise<string> {
-  const { model = "gemini-2.5-flash", systemPrompt } = options;
+  const { model = "gemini-3-flash", systemPrompt } = options;
 
   const contents = messages.map((m) => ({
     role: m.role,
