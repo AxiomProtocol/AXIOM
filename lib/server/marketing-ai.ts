@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { generateText, generateImage } from './gemini';
+import { generateTextOpenAI, generateImageOpenAI } from './openai';
 
 const anthropic = new Anthropic({
   apiKey: process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY,
@@ -279,17 +280,101 @@ Return ONLY valid JSON, no markdown or explanations.`;
 }
 
 export async function generateMarketingImage(type: 'flyer' | 'social' | 'banner'): Promise<string | null> {
-  try {
-    const prompts: Record<string, string> = {
-      flyer: 'A professional minimalist flyer header image for Axiom Protocol, featuring abstract golden geometric shapes on a dark background, representing community wealth building and blockchain technology. Modern, clean, professional. Gold (#EAB308) and black (#111827) color scheme.',
-      social: 'A vibrant social media graphic for Axiom Protocol DeFi platform. Abstract golden coins and connecting lines representing community and blockchain. Modern, eye-catching, suitable for TikTok/Instagram. Gold and dark theme.',
-      banner: 'An elegant web banner for Axiom Protocol brand guidelines. Minimalist design with golden accent lines on dark background. Professional, corporate, clean. Suitable for document header.'
-    };
+  const prompts: Record<string, string> = {
+    flyer: 'A professional minimalist flyer header image for Axiom Protocol, featuring abstract golden geometric shapes on a dark background, representing community wealth building and blockchain technology. Modern, clean, professional. Gold (#EAB308) and black (#111827) color scheme.',
+    social: 'A vibrant social media graphic for Axiom Protocol DeFi platform. Abstract golden coins and connecting lines representing community and blockchain. Modern, eye-catching, suitable for TikTok/Instagram. Gold and dark theme.',
+    banner: 'An elegant web banner for Axiom Protocol brand guidelines. Minimalist design with golden accent lines on dark background. Professional, corporate, clean. Suitable for document header.'
+  };
 
+  try {
+    const imageData = await generateImageOpenAI(prompts[type]);
+    if (imageData) return imageData;
+  } catch (error) {
+    console.log('OpenAI image generation failed, trying Gemini:', error);
+  }
+
+  try {
     const imageData = await generateImage(prompts[type]);
     return imageData;
   } catch (error) {
-    console.log('Image generation failed:', error);
+    console.log('Gemini image generation also failed:', error);
     return null;
   }
+}
+
+export async function generateFlyerContentOpenAI(): Promise<MarketingContent> {
+  const prompt = `You are an expert marketing copywriter. Create compelling content for a welcome flyer for Axiom Protocol.
+
+${AXIOM_CONTEXT}
+
+Generate a JSON object with this structure:
+{
+  "title": "Main headline (5-8 words, powerful and engaging)",
+  "subtitle": "Supporting tagline (10-15 words)",
+  "sections": [
+    {"heading": "Section title", "content": "Compelling paragraph or bullet points"},
+    // Include 4 sections: What is Axiom, Key Benefits, How It Works, Get Started
+  ]
+}
+
+Make it:
+- Inspiring and action-oriented
+- Easy to understand for newcomers
+- Highlight community and empowerment
+- Include a clear call to action
+- Professional but warm tone
+
+Return ONLY valid JSON, no markdown or explanations.`;
+
+  const response = await generateTextOpenAI(prompt, {
+    model: 'gpt-4o',
+    systemPrompt: 'You are an expert marketing copywriter. Always return valid JSON only.',
+    maxTokens: 2000
+  });
+
+  const jsonMatch = response.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    return JSON.parse(jsonMatch[0]);
+  }
+  throw new Error('Could not parse OpenAI response');
+}
+
+export async function generateBrandGuideContentOpenAI(): Promise<MarketingContent> {
+  const prompt = `You are a brand strategist. Create a brand guidelines document for Axiom Protocol marketing materials.
+
+${AXIOM_CONTEXT}
+
+Generate a JSON object with this structure:
+{
+  "title": "Axiom Brand Guidelines",
+  "subtitle": "Creating consistent, professional marketing materials",
+  "sections": [
+    {"heading": "Brand Colors", "content": "Primary: #EAB308 (Gold), Secondary: #111827 (Dark), Accent: #3B82F6 (Blue), Success: #22C55E (Green)"},
+    {"heading": "Typography Guidelines", "content": "Font recommendations and usage"},
+    {"heading": "Voice & Tone", "content": "How to write for Axiom"},
+    {"heading": "Do's and Don'ts", "content": "Clear guidelines on messaging"},
+    {"heading": "Visual Guidelines", "content": "Image style, logo usage, spacing"},
+    {"heading": "Compliance Checklist", "content": "Required disclaimers and what to avoid"}
+  ]
+}
+
+Make guidelines:
+- Clear and actionable
+- Professional yet accessible
+- Include specific examples
+- Cover both written and visual content
+
+Return ONLY valid JSON, no markdown or explanations.`;
+
+  const response = await generateTextOpenAI(prompt, {
+    model: 'gpt-4o',
+    systemPrompt: 'You are a brand strategist. Always return valid JSON only.',
+    maxTokens: 2000
+  });
+
+  const jsonMatch = response.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    return JSON.parse(jsonMatch[0]);
+  }
+  throw new Error('Could not parse OpenAI response');
 }

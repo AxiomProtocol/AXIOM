@@ -7,6 +7,8 @@ import {
   generateBrandGuideContent,
   generateSocialMediaContentGemini,
   generateEmailContentGemini,
+  generateFlyerContentOpenAI,
+  generateBrandGuideContentOpenAI,
   generateMarketingImage,
   MarketingContent
 } from '../../../../lib/server/marketing-ai';
@@ -137,18 +139,32 @@ async function getContent(type: string): Promise<MarketingContent> {
   try {
     switch (type) {
       case 'flyer':
-        return await generateFlyerContent();
+        try {
+          console.log('Generating flyer with OpenAI...');
+          return await generateFlyerContentOpenAI();
+        } catch {
+          console.log('OpenAI failed for flyer, falling back to Anthropic');
+          return await generateFlyerContent();
+        }
       case 'social':
         try {
+          console.log('Generating social media content with Gemini...');
           return await generateSocialMediaContentGemini();
         } catch {
           console.log('Gemini failed for social, falling back to Anthropic');
           return await generateSocialMediaContent();
         }
       case 'banner':
-        return await generateBrandGuideContent();
+        try {
+          console.log('Generating brand guide with OpenAI...');
+          return await generateBrandGuideContentOpenAI();
+        } catch {
+          console.log('OpenAI failed for brand guide, falling back to Anthropic');
+          return await generateBrandGuideContent();
+        }
       case 'email':
         try {
+          console.log('Generating email templates with Gemini...');
           return await generateEmailContentGemini();
         } catch {
           console.log('Gemini failed for email, falling back to Anthropic');
