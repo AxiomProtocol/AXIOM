@@ -127,13 +127,23 @@ function FloatingOrb({ delay, duration, size, left, top, color }) {
 
 function NetworkGrid() {
   const shouldReduceMotion = useReducedMotion();
+  const colors = ['#f59e0b', '#a855f7', '#3b82f6', '#ec4899', '#06b6d4', '#10b981'];
+  
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <svg className="absolute w-full h-full opacity-[0.08]" xmlns="http://www.w3.org/2000/svg">
+      <svg className="absolute w-full h-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#f59e0b" strokeWidth="0.5"/>
+          <pattern id="hexGrid" width="50" height="86.6" patternUnits="userSpaceOnUse" patternTransform="scale(1.5)">
+            <polygon points="25,0 50,14.4 50,43.3 25,57.7 0,43.3 0,14.4" fill="none" stroke="url(#rainbowGrad)" strokeWidth="0.5"/>
+            <polygon points="25,28.9 50,43.3 50,72.2 25,86.6 0,72.2 0,43.3" fill="none" stroke="url(#rainbowGrad)" strokeWidth="0.5"/>
           </pattern>
+          <linearGradient id="rainbowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#f59e0b"/>
+            <stop offset="25%" stopColor="#ec4899"/>
+            <stop offset="50%" stopColor="#a855f7"/>
+            <stop offset="75%" stopColor="#3b82f6"/>
+            <stop offset="100%" stopColor="#06b6d4"/>
+          </linearGradient>
           <radialGradient id="gridFade" cx="50%" cy="50%" r="70%">
             <stop offset="0%" stopColor="white" stopOpacity="1"/>
             <stop offset="100%" stopColor="white" stopOpacity="0"/>
@@ -142,51 +152,55 @@ function NetworkGrid() {
             <rect width="100%" height="100%" fill="url(#gridFade)"/>
           </mask>
         </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" mask="url(#gridMask)" />
+        <rect width="100%" height="100%" fill="url(#hexGrid)" mask="url(#gridMask)" />
       </svg>
       
-      {[...Array(12)].map((_, i) => (
+      {[...Array(18)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute rounded-full"
+          className="absolute rounded-full flash-particle"
           style={{
-            left: `${10 + (i % 4) * 25}%`,
-            top: `${15 + Math.floor(i / 4) * 30}%`,
-            width: i % 3 === 0 ? '6px' : '4px',
-            height: i % 3 === 0 ? '6px' : '4px',
-            background: i % 2 === 0 ? '#f59e0b' : '#3b82f6',
-            boxShadow: i % 2 === 0 ? '0 0 15px #f59e0b' : '0 0 15px #3b82f6',
+            left: `${5 + (i % 6) * 16}%`,
+            top: `${10 + Math.floor(i / 6) * 35}%`,
+            width: i % 3 === 0 ? '8px' : '5px',
+            height: i % 3 === 0 ? '8px' : '5px',
+            background: colors[i % colors.length],
+            boxShadow: `0 0 20px ${colors[i % colors.length]}40`,
           }}
           animate={shouldReduceMotion ? { opacity: 0.6 } : {
-            scale: [1, 1.8, 1],
-            opacity: [0.4, 1, 0.4],
+            scale: [1, 1.5, 1],
+            opacity: [0.5, 1, 0.5],
+            y: [0, -10, 0],
           }}
           transition={shouldReduceMotion ? { duration: 0 } : {
-            duration: 2 + i * 0.2,
+            duration: 3 + i * 0.2,
             repeat: Infinity,
-            delay: i * 0.3,
+            delay: i * 0.2,
+            ease: "easeInOut",
           }}
         />
       ))}
       
-      {!shouldReduceMotion && [...Array(6)].map((_, i) => (
+      {!shouldReduceMotion && [...Array(8)].map((_, i) => (
         <motion.div
           key={`line-${i}`}
           className="absolute h-px"
           style={{
-            left: `${15 + i * 12}%`,
-            top: `${25 + (i % 3) * 20}%`,
-            width: `${80 + i * 20}px`,
-            background: 'linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.4), transparent)',
-            transform: `rotate(${-30 + i * 15}deg)`,
+            left: `${10 + i * 10}%`,
+            top: `${20 + (i % 4) * 18}%`,
+            width: `${100 + i * 25}px`,
+            background: `linear-gradient(90deg, transparent, ${colors[i % colors.length]}60, transparent)`,
+            transform: `rotate(${-20 + i * 10}deg)`,
           }}
           animate={{
-            opacity: [0.2, 0.6, 0.2],
+            opacity: [0.1, 0.5, 0.1],
+            scaleX: [1, 1.2, 1],
           }}
           transition={{
-            duration: 3 + i * 0.5,
+            duration: 4 + i * 0.5,
             repeat: Infinity,
-            delay: i * 0.4,
+            delay: i * 0.3,
+            ease: "easeInOut",
           }}
         />
       ))}
@@ -346,7 +360,7 @@ function PillarCard({ pillar, index }) {
         boxShadow: "0 20px 40px rgba(245, 158, 11, 0.2), 0 0 30px rgba(245, 158, 11, 0.1)",
         transition: { duration: 0.3 }
       }}
-      className="group relative bg-white border border-gray-200 rounded-2xl p-8 hover:border-amber-500/50 hover:shadow-lg transition-all"
+      className="group relative flash-pillar-card rounded-2xl p-8"
     >
       <motion.div
         className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"
@@ -365,7 +379,7 @@ function PillarCard({ pillar, index }) {
             {pillar.icon}
           </motion.div>
           <motion.div
-            className="px-3 py-1 bg-amber-100 border border-amber-300 rounded-full text-amber-700 text-sm font-medium"
+            className="px-3 py-1 flash-badge rounded-full text-amber-700 text-sm font-medium"
             whileHover={shouldReduceMotion ? {} : { scale: 1.05 }}
           >
             {pillar.stats}
@@ -416,7 +430,7 @@ function ContractCard({ cat, index }) {
         borderColor: '#f59e0b',
                 transition: { duration: 0.2 }
       }}
-      className="bg-white border border-gray-200 rounded-xl p-4 text-center cursor-default"
+      className="flash-stat-card rounded-xl p-4 text-center cursor-default"
     >
       <motion.div 
         className="text-3xl font-bold mb-1"
@@ -468,12 +482,12 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 overflow-x-hidden">
+    <div className="min-h-screen bg-white text-gray-900 overflow-x-hidden flash-mesh-gradient">
       <motion.header
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200"
+        className="sticky top-0 z-50 flash-glass-card border-b border-white/50"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Desktop Header Row */}
@@ -564,17 +578,22 @@ export default function Home() {
       </motion.header>
 
       <motion.section 
-        className="relative overflow-hidden bg-gradient-to-br from-amber-50 via-white to-amber-100 min-h-[90vh] flex items-center"
+        className="relative overflow-hidden flash-hero-bg min-h-[90vh] flex items-center"
         style={{ opacity: heroOpacity, scale: heroScale }}
       >
         <NetworkGrid />
         
         {/* Light theme - no hex pattern needed */}
         
-        {/* Light theme - subtle orbs */}
-        <FloatingOrb delay={0} duration={8} size={400} left="5%" top="10%" color="#fbbf24" />
-        <FloatingOrb delay={2} duration={10} size={300} left="75%" top="50%" color="#93c5fd" />
-        <FloatingOrb delay={4} duration={12} size={350} left="85%" top="5%" color="#c4b5fd" />
+        {/* Flash UI - colorful gradient orbs */}
+        <FloatingOrb delay={0} duration={8} size={500} left="0%" top="5%" color="#fbbf24" />
+        <FloatingOrb delay={1} duration={12} size={400} left="70%" top="10%" color="#a855f7" />
+        <FloatingOrb delay={2} duration={10} size={350} left="80%" top="60%" color="#3b82f6" />
+        <FloatingOrb delay={3} duration={14} size={300} left="10%" top="70%" color="#ec4899" />
+        <FloatingOrb delay={0.5} duration={9} size={250} left="50%" top="80%" color="#06b6d4" />
+        
+        {/* Aurora effect */}
+        <div className="flash-aurora" />
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 lg:py-32">
           <motion.div
@@ -585,7 +604,7 @@ export default function Home() {
           >
             <motion.div
               variants={itemVariants}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-amber-200 shadow-sm mb-8"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full flash-badge mb-8"
               whileHover={{ scale: 1.05 }}
             >
               <motion.span
@@ -601,7 +620,7 @@ export default function Home() {
 
             <motion.h1
               variants={itemVariants}
-              className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 bg-clip-text text-transparent"
+              className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 flash-gradient-text"
             >
               <motion.span
                 animate={{ 
@@ -643,7 +662,7 @@ export default function Home() {
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
                 <Link 
                   href="/susu"
-                  className="inline-block px-8 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-xl hover:from-amber-600 hover:to-amber-700 transition-all shadow-lg"
+                  className="inline-block px-8 py-4 flash-button-primary font-bold rounded-xl"
                 >
                   Start a Wealth Practice
                 </Link>
@@ -651,7 +670,7 @@ export default function Home() {
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
                 <Link 
                   href="/academy"
-                  className="inline-block px-8 py-4 bg-white border-2 border-amber-500 text-amber-600 font-bold rounded-xl hover:bg-amber-50 transition-all"
+                  className="inline-block px-8 py-4 flash-button-secondary font-bold rounded-xl"
                 >
                   Learn First
                 </Link>
@@ -969,7 +988,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <section id="token-contract" className="py-16 bg-gradient-to-br from-amber-50 to-amber-100">
+      <section id="token-contract" className="py-16 flash-token-section">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -987,7 +1006,7 @@ export default function Home() {
             </div>
           </div>
           
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm mb-6">
+          <div className="flash-token-card rounded-2xl p-6 mb-6">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
               <div className="flex-1 w-full">
                 <div className="text-gray-500 text-sm mb-2">Contract Address</div>
@@ -1020,19 +1039,19 @@ export default function Home() {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-xl p-4 text-center border border-gray-200 shadow-sm">
+            <div className="flash-stat-card rounded-xl p-4 text-center">
               <div className="text-gray-500 text-xs mb-1">Token</div>
               <div className="text-gray-900 font-bold">AXM</div>
             </div>
-            <div className="bg-white rounded-xl p-4 text-center border border-gray-200 shadow-sm">
+            <div className="flash-stat-card rounded-xl p-4 text-center">
               <div className="text-gray-500 text-xs mb-1">Standard</div>
               <div className="text-gray-900 font-bold">ERC-20</div>
             </div>
-            <div className="bg-white rounded-xl p-4 text-center border border-gray-200 shadow-sm">
+            <div className="flash-stat-card rounded-xl p-4 text-center">
               <div className="text-gray-500 text-xs mb-1">Total Supply</div>
               <div className="text-gray-900 font-bold">15B</div>
             </div>
-            <div className="bg-white rounded-xl p-4 text-center border border-gray-200 shadow-sm">
+            <div className="flash-stat-card rounded-xl p-4 text-center">
               <div className="text-gray-500 text-xs mb-1">Decimals</div>
               <div className="text-gray-900 font-bold">18</div>
             </div>
@@ -1052,7 +1071,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <footer className="border-t border-gray-200 py-12 bg-white">
+      <footer className="border-t border-amber-100 py-12 flash-glass-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
