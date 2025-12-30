@@ -14,8 +14,7 @@ interface MarketingKit {
   id: string;
   name: string;
   type: 'flyer' | 'social' | 'banner' | 'email';
-  previewUrl: string;
-  downloadUrl: string;
+  description: string;
 }
 
 interface Props {
@@ -23,10 +22,10 @@ interface Props {
 }
 
 const MARKETING_KITS: MarketingKit[] = [
-  { id: '1', name: 'Welcome Flyer', type: 'flyer', previewUrl: '/assets/marketing/flyer-preview.png', downloadUrl: '/api/marketing/download/flyer' },
-  { id: '2', name: 'Social Media Pack', type: 'social', previewUrl: '/assets/marketing/social-preview.png', downloadUrl: '/api/marketing/download/social' },
-  { id: '3', name: 'Web Banner', type: 'banner', previewUrl: '/assets/marketing/banner-preview.png', downloadUrl: '/api/marketing/download/banner' },
-  { id: '4', name: 'Email Template', type: 'email', previewUrl: '/assets/marketing/email-preview.png', downloadUrl: '/api/marketing/download/email' },
+  { id: '1', name: 'Welcome Flyer', type: 'flyer', description: 'Printable PDF to share with potential members' },
+  { id: '2', name: 'Social Media Pack', type: 'social', description: 'Ready-to-post captions and hashtags' },
+  { id: '3', name: 'Web Banner Guide', type: 'banner', description: 'Brand guidelines and banner specs' },
+  { id: '4', name: 'Email Template', type: 'email', description: 'Copy-paste email to invite friends' },
 ];
 
 export default function CommunityCreatorPortal({ walletAddress }: Props) {
@@ -39,6 +38,30 @@ export default function CommunityCreatorPortal({ walletAddress }: Props) {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  const handleDownloadKit = async (kit: MarketingKit) => {
+    setDownloading(kit.id);
+    try {
+      const response = await fetch(`/api/marketing/download/${kit.type}`);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Axiom_${kit.name.replace(/\s+/g, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download error:', err);
+      setError('Failed to download. Please try again.');
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   useEffect(() => {
     if (walletAddress) {
@@ -214,16 +237,26 @@ export default function CommunityCreatorPortal({ walletAddress }: Props) {
           {MARKETING_KITS.map(kit => (
             <div 
               key={kit.id}
+              onClick={() => handleDownloadKit(kit)}
               className="bg-gray-800/50 rounded-lg p-3 border border-gray-700 hover:border-yellow-500/30 transition-all cursor-pointer group"
             >
-              <div className="aspect-video bg-gray-700 rounded-lg mb-2 flex items-center justify-center text-2xl group-hover:bg-gray-600 transition-all">
-                {kit.type === 'flyer' && '📄'}
-                {kit.type === 'social' && '📱'}
-                {kit.type === 'banner' && '🖼️'}
-                {kit.type === 'email' && '✉️'}
+              <div className="aspect-video bg-gray-700 rounded-lg mb-2 flex items-center justify-center text-2xl group-hover:bg-yellow-500/20 transition-all relative">
+                {downloading === kit.id ? (
+                  <div className="animate-spin text-yellow-500">⏳</div>
+                ) : (
+                  <>
+                    {kit.type === 'flyer' && '📄'}
+                    {kit.type === 'social' && '📱'}
+                    {kit.type === 'banner' && '🖼️'}
+                    {kit.type === 'email' && '✉️'}
+                  </>
+                )}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all bg-black/50 rounded-lg">
+                  <span className="text-yellow-500 text-sm font-medium">Download</span>
+                </div>
               </div>
               <div className="text-sm font-medium text-white">{kit.name}</div>
-              <div className="text-xs text-gray-500 capitalize">{kit.type}</div>
+              <div className="text-xs text-gray-500">{kit.description}</div>
             </div>
           ))}
         </div>
