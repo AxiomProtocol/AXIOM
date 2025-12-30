@@ -147,6 +147,7 @@
     "react-is": "^19.2.0",
     "react-router-dom": "^7.9.1",
     "recharts": "^3.2.1",
+    "resend": "^6.6.0",
     "serve": "^14.2.4",
     "siwe": "^3.0.0",
     "solc": "^0.8.17",

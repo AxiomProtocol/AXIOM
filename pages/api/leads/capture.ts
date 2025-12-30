@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
+import { sendWelcomeEmail } from '../../../lib/server/resendEmail';
 
 export default async function handler(
   req: NextApiRequest,
@@ -69,6 +70,10 @@ export default async function handler(
        RETURNING id`,
       [normalizedEmail, firstName || null, lastName || null, leadSource, utmSource || null, utmMedium || null, utmCampaign || null, calculatorData ? JSON.stringify(calculatorData) : null, cleanIp]
     );
+
+    sendWelcomeEmail(normalizedEmail).catch(err => {
+      console.error('Failed to send welcome email:', err);
+    });
 
     return res.status(201).json({ 
       message: 'Lead captured successfully',
