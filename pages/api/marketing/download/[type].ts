@@ -5,6 +5,9 @@ import {
   generateSocialMediaContent,
   generateEmailContent,
   generateBrandGuideContent,
+  generateSocialMediaContentGemini,
+  generateEmailContentGemini,
+  generateMarketingImage,
   MarketingContent
 } from '../../../../lib/server/marketing-ai';
 
@@ -136,11 +139,21 @@ async function getContent(type: string): Promise<MarketingContent> {
       case 'flyer':
         return await generateFlyerContent();
       case 'social':
-        return await generateSocialMediaContent();
+        try {
+          return await generateSocialMediaContentGemini();
+        } catch {
+          console.log('Gemini failed for social, falling back to Anthropic');
+          return await generateSocialMediaContent();
+        }
       case 'banner':
         return await generateBrandGuideContent();
       case 'email':
-        return await generateEmailContent();
+        try {
+          return await generateEmailContentGemini();
+        } catch {
+          console.log('Gemini failed for email, falling back to Anthropic');
+          return await generateEmailContent();
+        }
       default:
         throw new Error('Unknown type');
     }
@@ -148,6 +161,13 @@ async function getContent(type: string): Promise<MarketingContent> {
     console.log(`AI generation failed for ${type}, using fallback:`, error);
     return FALLBACK_CONTENT[type] || FALLBACK_CONTENT.flyer;
   }
+}
+
+async function getHeaderImage(type: string): Promise<string | null> {
+  if (type === 'flyer' || type === 'social' || type === 'banner') {
+    return await generateMarketingImage(type as 'flyer' | 'social' | 'banner');
+  }
+  return null;
 }
 
 export default async function handler(

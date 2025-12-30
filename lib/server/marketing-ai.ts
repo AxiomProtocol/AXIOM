@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { generateText, generateImage } from './gemini';
 
 const anthropic = new Anthropic({
   apiKey: process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY,
@@ -12,6 +13,7 @@ export interface MarketingContent {
     heading: string;
     content: string;
   }>;
+  headerImage?: string;
 }
 
 const AXIOM_CONTEXT = `
@@ -196,4 +198,98 @@ Return ONLY valid JSON, no markdown or explanations.`
     return JSON.parse(content.text);
   }
   throw new Error('Unexpected response format');
+}
+
+export async function generateSocialMediaContentGemini(): Promise<MarketingContent> {
+  const prompt = `You are a viral social media copywriter specializing in Web3/DeFi content. Create a social media kit for Axiom Protocol.
+
+${AXIOM_CONTEXT}
+
+Generate a JSON object with this structure:
+{
+  "title": "Social Media Kit",
+  "subtitle": "Ready-to-post content for maximum engagement",
+  "sections": [
+    {"heading": "Post title", "content": "Full post text with emojis and hashtags"},
+    // Include 6 posts: Introduction, SUSU Feature, Wealth Engine, Community Focus, FOMO/Urgency, Educational
+  ]
+}
+
+Each post should:
+- Be optimized for TikTok/Twitter/Instagram
+- Use relevant emojis strategically
+- Include 5-8 hashtags per post
+- Have a hook in the first line
+- Include a call to action
+- Be under 280 characters for Twitter compatibility
+- Feel authentic and engaging, not salesy
+
+Return ONLY valid JSON, no markdown or explanations.`;
+
+  const response = await generateText(prompt, {
+    model: 'gemini-2.5-flash',
+    systemPrompt: 'You are an expert social media marketer for Web3 projects. Always return valid JSON only.'
+  });
+
+  const jsonMatch = response.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    return JSON.parse(jsonMatch[0]);
+  }
+  throw new Error('Could not parse Gemini response');
+}
+
+export async function generateEmailContentGemini(): Promise<MarketingContent> {
+  const prompt = `You are an expert email marketer. Create email templates for inviting friends to join Axiom Protocol.
+
+${AXIOM_CONTEXT}
+
+Generate a JSON object with this structure:
+{
+  "title": "Email Invitation Templates",
+  "subtitle": "Copy-paste emails to grow your community",
+  "sections": [
+    {"heading": "Subject Lines (5 options)", "content": "List of compelling subject lines"},
+    {"heading": "Casual Friend Email", "content": "Informal email to a close friend"},
+    {"heading": "Professional Network Email", "content": "More formal email for professional contacts"},
+    {"heading": "Follow-up Email", "content": "Email for people who showed initial interest"},
+    {"heading": "Email Signature", "content": "Professional signature block with Axiom branding"}
+  ]
+}
+
+Emails should:
+- Feel personal and authentic
+- Explain the value clearly
+- Include the website link
+- Have clear CTAs
+- Not be pushy or overly promotional
+- Include appropriate compliance disclaimers
+
+Return ONLY valid JSON, no markdown or explanations.`;
+
+  const response = await generateText(prompt, {
+    model: 'gemini-2.5-flash',
+    systemPrompt: 'You are an expert email copywriter. Always return valid JSON only.'
+  });
+
+  const jsonMatch = response.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    return JSON.parse(jsonMatch[0]);
+  }
+  throw new Error('Could not parse Gemini response');
+}
+
+export async function generateMarketingImage(type: 'flyer' | 'social' | 'banner'): Promise<string | null> {
+  try {
+    const prompts: Record<string, string> = {
+      flyer: 'A professional minimalist flyer header image for Axiom Protocol, featuring abstract golden geometric shapes on a dark background, representing community wealth building and blockchain technology. Modern, clean, professional. Gold (#EAB308) and black (#111827) color scheme.',
+      social: 'A vibrant social media graphic for Axiom Protocol DeFi platform. Abstract golden coins and connecting lines representing community and blockchain. Modern, eye-catching, suitable for TikTok/Instagram. Gold and dark theme.',
+      banner: 'An elegant web banner for Axiom Protocol brand guidelines. Minimalist design with golden accent lines on dark background. Professional, corporate, clean. Suitable for document header.'
+    };
+
+    const imageData = await generateImage(prompts[type]);
+    return imageData;
+  } catch (error) {
+    console.log('Image generation failed:', error);
+    return null;
+  }
 }
