@@ -316,3 +316,82 @@
   0% { filter: hue-rotate(0deg); }
   100% { filter: hue-rotate(360deg); }
 }
+
+.flash-3d-badge {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(254, 243, 199, 0.9));
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: 
+    0 10px 30px rgba(245, 158, 11, 0.2),
+    0 5px 15px rgba(0, 0, 0, 0.1),
+    inset 0 2px 0 rgba(255, 255, 255, 1),
+    inset 0 -2px 4px rgba(245, 158, 11, 0.1);
+  transform: perspective(500px) rotateX(5deg);
+  transform-style: preserve-3d;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.flash-3d-badge:hover {
+  transform: perspective(500px) rotateX(0deg) translateY(-4px);
+  box-shadow: 
+    0 20px 40px rgba(245, 158, 11, 0.3),
+    0 10px 20px rgba(168, 85, 247, 0.15),
+    inset 0 2px 0 rgba(255, 255, 255, 1);
+}
+
+.flash-3d-title {
+  text-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.8),
+    0 2px 0 rgba(245, 158, 11, 0.1),
+    0 4px 0 rgba(245, 158, 11, 0.08),
+    0 6px 0 rgba(245, 158, 11, 0.06),
+    0 8px 0 rgba(245, 158, 11, 0.04),
+    0 10px 20px rgba(245, 158, 11, 0.2),
+    0 20px 40px rgba(168, 85, 247, 0.15);
+  transform: perspective(1000px) rotateX(2deg);
+  transform-style: preserve-3d;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.flash-3d-title:hover {
+  transform: perspective(1000px) rotateX(0deg) translateY(-5px) scale(1.02);
+  text-shadow: 
+    0 2px 0 rgba(255, 255, 255, 0.9),
+    0 4px 0 rgba(245, 158, 11, 0.15),
+    0 8px 0 rgba(245, 158, 11, 0.1),
+    0 12px 0 rgba(245, 158, 11, 0.08),
+    0 16px 0 rgba(245, 158, 11, 0.05),
+    0 20px 40px rgba(245, 158, 11, 0.3),
+    0 40px 60px rgba(168, 85, 247, 0.2);
+}
+
+.flash-3d-tagline {
+  text-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 4px rgba(245, 158, 11, 0.15),
+    0 4px 8px rgba(168, 85, 247, 0.1);
+  transform: perspective(800px) rotateX(3deg);
+  transform-style: preserve-3d;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.flash-3d-tagline:hover {
+  transform: perspective(800px) rotateX(0deg) translateY(-3px);
+  text-shadow: 
+    0 2px 0 rgba(255, 255, 255, 1),
+    0 4px 8px rgba(245, 158, 11, 0.25),
+    0 8px 16px rgba(168, 85, 247, 0.15);
+}
+
+.flash-3d-float {
+  animation: flash-3d-float 4s ease-in-out infinite;
+}
+
+@keyframes flash-3d-float {
+  0%, 100% { 
+    transform: perspective(1000px) rotateX(2deg) translateY(0); 
+  }
+  50% { 
+    transform: perspective(1000px) rotateX(-2deg) translateY(-8px); 
+  }
+}

@@ -604,7 +604,7 @@ export default function Home() {
           >
             <motion.div
               variants={itemVariants}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full flash-badge mb-8"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full flash-3d-badge mb-8"
               whileHover={{ scale: 1.05 }}
             >
               <motion.span
@@ -620,7 +620,7 @@ export default function Home() {
 
             <motion.h1
               variants={itemVariants}
-              className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 flash-gradient-text"
+              className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 flash-gradient-text flash-3d-title flash-3d-float"
             >
               <motion.span
                 animate={{ 
@@ -641,7 +641,7 @@ export default function Home() {
             
             <motion.p
               variants={itemVariants}
-              className="text-2xl sm:text-3xl text-amber-600 font-semibold mb-4"
+              className="text-2xl sm:text-3xl text-amber-600 font-semibold mb-4 flash-3d-tagline"
             >
               Build wealth through discipline, structure, and community.
             </motion.p>
