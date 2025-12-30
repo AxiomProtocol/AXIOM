@@ -1,7 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../server/db';
-import { leads } from '../../../shared/schema';
-import { eq } from 'drizzle-orm';
+import { pool } from '../../../server/db';
 
 export default async function handler(
   req: NextApiRequest,
@@ -11,6 +9,8 @@ export default async function handler(
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
+  const client = await pool.connect();
+  
   try {
     const {
       email,
@@ -32,15 +32,27 @@ export default async function handler(
       return res.status(400).json({ message: 'Invalid email format' });
     }
 
-    const existingLead = await db.select().from(leads).where(eq(leads.email, email.toLowerCase())).limit(1);
+    const normalizedEmail = email.toLowerCase().trim();
+    const ipAddress = req.headers['x-forwarded-for'] as string || 
+                      req.headers['x-real-ip'] as string || 
+                      req.socket?.remoteAddress || 
+                      '';
+    const cleanIp = typeof ipAddress === 'string' ? ipAddress.split(',')[0].trim() : null;
+
+    const existingResult = await client.query(
+      'SELECT id, calculator_data FROM leads WHERE email = $1',
+      [normalizedEmail]
+    );
     
-    if (existingLead.length > 0) {
-      await db.update(leads)
-        .set({
-          calculatorData: calculatorData || existingLead[0].calculatorData,
-          updatedAt: new Date()
-        })
-        .where(eq(leads.email, email.toLowerCase()));
+    if (existingResult.rows.length > 0) {
+      const existing = existingResult.rows[0];
+      await client.query(
+        `UPDATE leads 
+         SET calculator_data = COALESCE($2, calculator_data),
+             updated_at = NOW()
+         WHERE id = $1`,
+        [existing.id, calculatorData ? JSON.stringify(calculatorData) : null]
+      );
       
       return res.status(200).json({ 
         message: 'Lead updated',
@@ -48,37 +60,33 @@ export default async function handler(
       });
     }
 
-    const ipAddress = req.headers['x-forwarded-for'] as string || 
-                      req.headers['x-real-ip'] as string || 
-                      req.socket?.remoteAddress || 
-                      '';
+    const validSources = ['equity_calculator', 'academy', 'keygrow', 'susu', 'whitepaper', 'newsletter', 'referral', 'tiktok', 'other'];
+    const leadSource = validSources.includes(source) ? source : 'other';
 
-    const [newLead] = await db.insert(leads).values({
-      email: email.toLowerCase(),
-      firstName: firstName || null,
-      lastName: lastName || null,
-      source: source || 'other',
-      utmSource: utmSource || null,
-      utmMedium: utmMedium || null,
-      utmCampaign: utmCampaign || null,
-      calculatorData: calculatorData || null,
-      ipAddress: typeof ipAddress === 'string' ? ipAddress.split(',')[0].trim() : null,
-      isSubscribed: true,
-      isConverted: false
-    }).returning();
+    const result = await client.query(
+      `INSERT INTO leads (email, first_name, last_name, source, utm_source, utm_medium, utm_campaign, calculator_data, ip_address, is_subscribed, is_converted, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, false, NOW(), NOW())
+       RETURNING id`,
+      [normalizedEmail, firstName || null, lastName || null, leadSource, utmSource || null, utmMedium || null, utmCampaign || null, calculatorData ? JSON.stringify(calculatorData) : null, cleanIp]
+    );
 
     return res.status(201).json({ 
       message: 'Lead captured successfully',
-      leadId: newLead.id 
+      leadId: result.rows[0].id 
     });
 
   } catch (error: any) {
     console.error('Lead capture error:', error);
     
     if (error.code === '23505') {
-      return res.status(409).json({ message: 'Email already registered' });
+      return res.status(200).json({ 
+        message: 'Already subscribed',
+        isExisting: true 
+      });
     }
     
     return res.status(500).json({ message: 'Failed to capture lead' });
+  } finally {
+    client.release();
   }
 }
