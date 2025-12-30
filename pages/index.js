@@ -129,31 +129,64 @@ function NetworkGrid() {
   const shouldReduceMotion = useReducedMotion();
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <svg className="absolute w-full h-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
+      <svg className="absolute w-full h-full opacity-[0.08]" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#f59e0b" strokeWidth="1"/>
+            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#f59e0b" strokeWidth="0.5"/>
           </pattern>
+          <radialGradient id="gridFade" cx="50%" cy="50%" r="70%">
+            <stop offset="0%" stopColor="white" stopOpacity="1"/>
+            <stop offset="100%" stopColor="white" stopOpacity="0"/>
+          </radialGradient>
+          <mask id="gridMask">
+            <rect width="100%" height="100%" fill="url(#gridFade)"/>
+          </mask>
         </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
+        <rect width="100%" height="100%" fill="url(#grid)" mask="url(#gridMask)" />
       </svg>
       
-      {[...Array(6)].map((_, i) => (
+      {[...Array(12)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute w-2 h-2 bg-amber-500 rounded-full"
+          className="absolute rounded-full"
           style={{
-            left: `${15 + i * 15}%`,
-            top: `${20 + (i % 3) * 25}%`,
+            left: `${10 + (i % 4) * 25}%`,
+            top: `${15 + Math.floor(i / 4) * 30}%`,
+            width: i % 3 === 0 ? '6px' : '4px',
+            height: i % 3 === 0 ? '6px' : '4px',
+            background: i % 2 === 0 ? '#f59e0b' : '#3b82f6',
+            boxShadow: i % 2 === 0 ? '0 0 15px #f59e0b' : '0 0 15px #3b82f6',
           }}
-          animate={shouldReduceMotion ? { opacity: 0.5 } : {
-            scale: [1, 1.5, 1],
-            opacity: [0.3, 0.8, 0.3],
+          animate={shouldReduceMotion ? { opacity: 0.6 } : {
+            scale: [1, 1.8, 1],
+            opacity: [0.4, 1, 0.4],
           }}
           transition={shouldReduceMotion ? { duration: 0 } : {
-            duration: 2 + i * 0.3,
+            duration: 2 + i * 0.2,
             repeat: Infinity,
-            delay: i * 0.5,
+            delay: i * 0.3,
+          }}
+        />
+      ))}
+      
+      {!shouldReduceMotion && [...Array(6)].map((_, i) => (
+        <motion.div
+          key={`line-${i}`}
+          className="absolute h-px"
+          style={{
+            left: `${15 + i * 12}%`,
+            top: `${25 + (i % 3) * 20}%`,
+            width: `${80 + i * 20}px`,
+            background: 'linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.4), transparent)',
+            transform: `rotate(${-30 + i * 15}deg)`,
+          }}
+          animate={{
+            opacity: [0.2, 0.6, 0.2],
+          }}
+          transition={{
+            duration: 3 + i * 0.5,
+            repeat: Infinity,
+            delay: i * 0.4,
           }}
         />
       ))}
@@ -310,15 +343,15 @@ function PillarCard({ pillar, index }) {
       }}
       whileHover={shouldReduceMotion ? {} : { 
         y: -8, 
-        boxShadow: "0 20px 40px rgba(245, 158, 11, 0.15)",
+        boxShadow: "0 20px 40px rgba(245, 158, 11, 0.2), 0 0 30px rgba(245, 158, 11, 0.1)",
         transition: { duration: 0.3 }
       }}
-      className="group relative bg-white border border-gray-200 rounded-2xl p-8 hover:border-amber-300 transition-colors"
+      className="group relative glass-card rounded-2xl p-8 hover:border-amber-500/50 transition-all"
     >
       <motion.div
-        className="absolute top-0 right-0 w-32 h-32 bg-amber-100 rounded-full blur-2xl"
+        className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"
         initial={{ opacity: 0 }}
-        whileHover={shouldReduceMotion ? {} : { opacity: 0.5 }}
+        whileHover={shouldReduceMotion ? {} : { opacity: 0.8 }}
         transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
       />
       
@@ -332,19 +365,19 @@ function PillarCard({ pillar, index }) {
             {pillar.icon}
           </motion.div>
           <motion.div
-            className="px-3 py-1 bg-amber-100 border border-amber-200 rounded-full text-amber-700 text-sm font-medium"
+            className="px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full text-amber-400 text-sm font-medium"
             whileHover={shouldReduceMotion ? {} : { scale: 1.05 }}
           >
             {pillar.stats}
           </motion.div>
         </div>
         
-        <h3 className="text-2xl font-bold text-gray-900 mb-3">{pillar.title}</h3>
-        <p className="text-gray-600 mb-6 leading-relaxed">{pillar.description}</p>
+        <h3 className="text-2xl font-bold text-white mb-3">{pillar.title}</h3>
+        <p className="text-gray-400 mb-6 leading-relaxed">{pillar.description}</p>
         
         <Link 
           href={pillar.link}
-          className="inline-flex items-center gap-2 text-amber-600 font-semibold hover:text-amber-700 transition-colors group/link"
+          className="inline-flex items-center gap-2 text-amber-400 font-semibold hover:text-amber-300 transition-colors group/link"
         >
           {pillar.cta}
           <motion.svg 
@@ -381,9 +414,10 @@ function ContractCard({ cat, index }) {
       whileHover={shouldReduceMotion ? {} : { 
         scale: 1.05,
         borderColor: '#f59e0b',
+        boxShadow: '0 0 20px rgba(245, 158, 11, 0.2)',
         transition: { duration: 0.2 }
       }}
-      className="bg-white border border-gray-200 rounded-xl p-4 text-center cursor-default"
+      className="stat-card-web3 p-4 text-center cursor-default"
     >
       <motion.div 
         className="text-3xl font-bold mb-1"
@@ -398,7 +432,7 @@ function ContractCard({ cat, index }) {
       >
         {cat.count}
       </motion.div>
-      <div className="text-xs text-gray-500 leading-tight">{cat.name}</div>
+      <div className="text-xs text-gray-400 leading-tight">{cat.name}</div>
     </motion.div>
   );
 }
@@ -435,12 +469,12 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 overflow-x-hidden">
+    <div className="min-h-screen web3-bg text-white overflow-x-hidden">
       <motion.header
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200"
+        className="sticky top-0 z-50 bg-[#0a0a0f]/90 backdrop-blur-md border-b border-amber-500/20"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Desktop Header Row */}
@@ -453,11 +487,11 @@ export default function Home() {
                 <motion.img
                   src="/images/axiom-token.png"
                   alt="Axiom Token"
-                  className="w-10 h-10 rounded-full object-cover shadow-lg"
+                  className="w-10 h-10 rounded-full object-cover shadow-lg neon-glow-gold"
                   whileHover={{ rotate: 360 }}
                   transition={{ duration: 0.6 }}
                 />
-                <span className="text-xl font-bold text-gray-900">AXIOM</span>
+                <span className="text-xl font-bold text-white neon-text-gold">AXIOM</span>
               </motion.div>
             </Link>
             
@@ -472,7 +506,7 @@ export default function Home() {
                 >
                   <Link 
                     href={item.href}
-                    className="text-gray-600 hover:text-amber-600 transition-colors text-sm font-medium relative group"
+                    className="text-gray-300 hover:text-amber-400 transition-colors text-sm font-medium relative group"
                   >
                     {item.name}
                     <motion.span
@@ -531,14 +565,17 @@ export default function Home() {
       </motion.header>
 
       <motion.section 
-        className="relative overflow-hidden bg-gradient-to-br from-amber-50 via-white to-white min-h-[90vh] flex items-center"
+        className="relative overflow-hidden web3-hero-bg min-h-[90vh] flex items-center"
         style={{ opacity: heroOpacity, scale: heroScale }}
       >
         <NetworkGrid />
         
-        <FloatingOrb delay={0} duration={8} size={300} left="10%" top="20%" color="#f59e0b" />
-        <FloatingOrb delay={2} duration={10} size={200} left="70%" top="60%" color="#fbbf24" />
-        <FloatingOrb delay={4} duration={12} size={250} left="80%" top="10%" color="#f59e0b" />
+        <div className="absolute inset-0 hex-pattern opacity-30" />
+        
+        <FloatingOrb delay={0} duration={8} size={400} left="5%" top="10%" color="#f59e0b" />
+        <FloatingOrb delay={2} duration={10} size={300} left="75%" top="50%" color="#3b82f6" />
+        <FloatingOrb delay={4} duration={12} size={350} left="85%" top="5%" color="#a855f7" />
+        <FloatingOrb delay={1} duration={9} size={200} left="50%" top="70%" color="#06b6d4" />
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 lg:py-32">
           <motion.div
@@ -549,22 +586,23 @@ export default function Home() {
           >
             <motion.div
               variants={itemVariants}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 border border-amber-200 mb-8"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card border border-amber-500/30 mb-8"
               whileHover={{ scale: 1.05 }}
             >
               <motion.span
-                className="w-2 h-2 rounded-full bg-green-500"
+                className="w-2 h-2 rounded-full bg-green-400"
+                style={{ boxShadow: '0 0 10px #4ade80' }}
                 animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
               />
-              <span className="text-sm text-amber-700 font-medium">Live on Arbitrum One</span>
-              <span className="text-gray-400">•</span>
-              <span className="text-sm text-gray-600">29 Contracts Deployed</span>
+              <span className="text-sm text-amber-400 font-medium">Live on Arbitrum One</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm text-gray-300">29 Contracts Deployed</span>
             </motion.div>
 
             <motion.h1
               variants={itemVariants}
-              className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-gray-900"
+              className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-white"
             >
               <motion.span
                 animate={{ 
@@ -585,14 +623,14 @@ export default function Home() {
             
             <motion.p
               variants={itemVariants}
-              className="text-2xl sm:text-3xl text-amber-600 font-semibold mb-4"
+              className="text-2xl sm:text-3xl text-amber-400 font-semibold mb-4 neon-text-gold"
             >
               Build wealth through discipline, structure, and community.
             </motion.p>
             
             <motion.p
               variants={itemVariants}
-              className="text-lg text-gray-600 max-w-2xl mx-auto mb-10"
+              className="text-lg text-gray-400 max-w-2xl mx-auto mb-10"
             >
               Learn. Connect. Save together — with clear rules and transparency.
               Start your journey with financial education, find your community, 
@@ -606,7 +644,7 @@ export default function Home() {
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
                 <Link 
                   href="/susu"
-                  className="inline-block px-8 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all shadow-lg shadow-amber-500/25"
+                  className="inline-block px-8 py-4 web3-button-primary text-white font-bold rounded-xl transition-all"
                 >
                   Start a Wealth Practice
                 </Link>
@@ -614,7 +652,7 @@ export default function Home() {
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
                 <Link 
                   href="/academy"
-                  className="inline-block px-8 py-4 bg-white border-2 border-amber-500 text-amber-600 font-bold rounded-lg hover:bg-amber-50 transition-all"
+                  className="inline-block px-8 py-4 web3-button-secondary text-amber-400 font-bold rounded-xl transition-all"
                 >
                   Learn First
                 </Link>
@@ -634,7 +672,7 @@ export default function Home() {
         </motion.div>
       </motion.section>
 
-      <section className="py-16 lg:py-24 bg-white">
+      <section className="py-16 lg:py-24 bg-[#0a0a0f]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -1015,7 +1053,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <footer className="border-t border-gray-200 py-12 bg-white">
+      <footer className="border-t border-amber-500/20 py-12 bg-[#0a0a0f]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
@@ -1027,68 +1065,69 @@ export default function Home() {
                   <img 
                     src="/images/axiom-token.png" 
                     alt="Axiom Token"
-                    className="w-8 h-8 rounded-full object-cover shadow-md"
+                    className="w-8 h-8 rounded-full object-cover shadow-md neon-glow-gold"
                   />
-                  <span className="font-bold text-gray-900">AXIOM</span>
+                  <span className="font-bold text-white neon-text-gold">AXIOM</span>
                 </motion.div>
               </Link>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-400">
                 Build wealth through discipline, structure, and community.
               </p>
             </div>
 
             <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Your Journey</h4>
+              <h4 className="font-semibold text-white mb-4">Your Journey</h4>
               <div className="space-y-2">
-                <Link href="/academy" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Learn (Academy)</Link>
-                <Link href="/susu" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Connect & Save Together (SUSU)</Link>
-                <Link href="/keygrow" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Grow (KeyGrow)</Link>
-                <Link href="/bank" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Treasury Tools</Link>
-                <Link href="/dex" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">DEX Exchange</Link>
-                <Link href="/launchpad" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Launchpad (TGE)</Link>
-                <Link href="/axiom-nodes" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">DePIN Network</Link>
-                <Link href="/nodes/marketplace" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Node Marketplace</Link>
-                <Link href="/pma" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">PMA Trust</Link>
-                <Link href="/governance" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Governance</Link>
-                <Link href="/governance/grants" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Treasury Grants</Link>
-                <Link href="/tokenomics" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Tokenomics</Link>
+                <Link href="/academy" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Learn (Academy)</Link>
+                <Link href="/susu" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Connect & Save Together (SUSU)</Link>
+                <Link href="/keygrow" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Grow (KeyGrow)</Link>
+                <Link href="/bank" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Treasury Tools</Link>
+                <Link href="/dex" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">DEX Exchange</Link>
+                <Link href="/launchpad" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Launchpad (TGE)</Link>
+                <Link href="/axiom-nodes" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">DePIN Network</Link>
+                <Link href="/nodes/marketplace" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Node Marketplace</Link>
+                <Link href="/pma" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">PMA Trust</Link>
+                <Link href="/governance" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Governance</Link>
+                <Link href="/governance/grants" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Treasury Grants</Link>
+                <Link href="/tokenomics" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Tokenomics</Link>
               </div>
             </div>
 
             <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Resources</h4>
+              <h4 className="font-semibold text-white mb-4">Resources</h4>
               <div className="space-y-2">
-                <Link href="/whitepaper" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Whitepaper</Link>
-                <Link href="/keygrow" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">KeyGrow Rent-to-Own</Link>
-                <Link href="/transparency" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Trust & Transparency</Link>
-                <Link href="/transparency-reports" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Financial Reports</Link>
-                <Link href="/security" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Security</Link>
-                <Link href="/faq" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">FAQ</Link>
-                <Link href="/roadmap" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Roadmap</Link>
+                <Link href="/whitepaper" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Whitepaper</Link>
+                <Link href="/keygrow" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">KeyGrow Rent-to-Own</Link>
+                <Link href="/transparency" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Trust & Transparency</Link>
+                <Link href="/transparency-reports" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Financial Reports</Link>
+                <Link href="/security" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Security</Link>
+                <Link href="/faq" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">FAQ</Link>
+                <Link href="/roadmap" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Roadmap</Link>
               </div>
             </div>
 
             <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Company</h4>
+              <h4 className="font-semibold text-white mb-4">Company</h4>
               <div className="space-y-2">
-                <Link href="/about-us" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">About Us</Link>
-                <Link href="/team" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Team</Link>
-                <Link href="/terms-and-conditions" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Terms of Service</Link>
-                <Link href="/privacy-policy" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Privacy Policy</Link>
-                <Link href="/compliance" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Compliance</Link>
-                <Link href="/admin/treasury" className="block text-sm text-gray-500 hover:text-amber-600 transition-colors">Admin Dashboard</Link>
+                <Link href="/about-us" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">About Us</Link>
+                <Link href="/team" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Team</Link>
+                <Link href="/terms-and-conditions" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Terms of Service</Link>
+                <Link href="/privacy-policy" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Privacy Policy</Link>
+                <Link href="/compliance" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Compliance</Link>
+                <Link href="/admin/treasury" className="block text-sm text-gray-400 hover:text-amber-400 transition-colors">Admin Dashboard</Link>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-gray-200 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-500">
+          <div className="border-t border-amber-500/20 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-gray-400">
               © 2025 Axiom Nexus LLC. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-500">Deployed on</span>
+              <span className="text-sm text-gray-400">Deployed on</span>
               <motion.span
-                className="px-3 py-1 bg-blue-50 border border-blue-200 rounded-full text-blue-600 text-sm font-medium"
+                className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full text-blue-400 text-sm font-medium"
+                style={{ boxShadow: '0 0 10px rgba(59, 130, 246, 0.3)' }}
                 whileHover={{ scale: 1.05 }}
               >
                 Arbitrum One
