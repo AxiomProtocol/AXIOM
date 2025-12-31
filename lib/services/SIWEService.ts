@@ -40,7 +40,7 @@ class SIWEService {
     const siweMessage = new SiweMessage({
       domain: window.location.host,
       address: checksumAddress,
-      statement: 'Sign in to Axiom Smart City to verify your wallet ownership. This request will not trigger a blockchain transaction or cost any gas fees.',
+      statement: 'Sign in to Axiom Protocol to verify your wallet ownership. This request will not trigger a blockchain transaction or cost any gas fees.',
       uri: window.location.origin,
       version: '1',
       chainId: chainId,

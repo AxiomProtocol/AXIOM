@@ -17,8 +17,9 @@ function buildAllowedOrigins(): string[] {
     origins.push(`https://${process.env.REPLIT_DEV_DOMAIN}`);
   }
   
+  origins.push('https://www.axiomprotocol.app');
+  origins.push('https://axiomprotocol.app');
   origins.push('https://axiom-nexus.replit.app');
-  origins.push('https://axiom-smart-city.replit.app');
   
   if (process.env.NODE_ENV === 'development') {
     origins.push('http://localhost:5000');

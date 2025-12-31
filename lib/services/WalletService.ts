@@ -1,5 +1,5 @@
 /**
- * Axiom Smart City - Unified Wallet Service
+ * Axiom Protocol - Unified Wallet Service
  * Supports MetaMask SDK + WalletConnect 2.0
  * Network: Arbitrum One (Chain ID: 42161)
  */
@@ -65,7 +65,7 @@ export class WalletService {
       const baseUrl = window.location.origin;
       this.metamaskSDK = new MetaMaskSDK({
         dappMetadata: {
-          name: 'Axiom Smart City',
+          name: 'Axiom Protocol',
           url: window.location.href,
           iconUrl: `${baseUrl}/logo.png`
         },
