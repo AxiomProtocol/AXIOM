@@ -234,13 +234,19 @@ const MEMBERSHIP_TIERS = [
     name: 'Free',
     price: 0,
     features: [
-      'Access to 9 foundational courses',
+      '9 complete courses (40+ lessons)',
+      'AI-powered learning assistant',
+      'Interactive quizzes & assessments',
+      'Progress tracking dashboard',
       'Community forum access',
-      'Monthly newsletter',
-      'Certificate of completion'
+      'Certificate of completion',
+      'Mobile-friendly learning',
+      'No credit card required'
     ],
-    buttonText: 'Get Started Free',
-    highlighted: false
+    buttonText: 'Start Learning Now',
+    highlighted: false,
+    badge: 'FOREVER FREE',
+    href: '/academy/free'
   },
   {
     name: 'Pro',
@@ -278,9 +284,9 @@ export default function Academy() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
-  const handleMembershipClick = async (tierName: string) => {
-    if (tierName === 'Free') {
-      (document.querySelector('input[type="email"]') as HTMLInputElement)?.focus();
+  const handleMembershipClick = async (tierName: string, href?: string) => {
+    if (tierName === 'Free' && href) {
+      window.location.href = href;
       return;
     }
     
@@ -378,7 +384,7 @@ export default function Academy() {
 
   return (
     <Layout>
-      <StepProgressBanner currentStep="learn" />
+      <StepProgressBanner currentStep={"learn" as any} />
       <Toaster position="top-right" />
       
       <div className="min-h-screen bg-gradient-to-b from-gray-100 via-white to-gray-100">
@@ -500,7 +506,7 @@ export default function Academy() {
           </div>
         </div>
 
-        <div className="py-20 px-4 bg-gray-50">
+        <div id="membership" className="py-20 px-4 bg-gray-50">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-4xl font-bold text-gray-900 mb-4">Membership Plans</h2>
@@ -510,15 +516,23 @@ export default function Academy() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
-              {MEMBERSHIP_TIERS.map((tier) => (
+              {MEMBERSHIP_TIERS.map((tier: any) => (
                 <div
                   key={tier.name}
-                  className={`rounded-2xl p-8 shadow-sm ${
-                    tier.highlighted
-                      ? 'bg-gradient-to-b from-yellow-50 to-yellow-100 border-2 border-yellow-500'
-                      : 'bg-white border border-gray-200'
+                  className={`rounded-2xl p-8 shadow-sm relative overflow-hidden cursor-pointer transition-all hover:shadow-lg ${
+                    tier.name === 'Free'
+                      ? 'bg-gradient-to-b from-green-50 to-emerald-100 border-2 border-green-500 hover:border-green-600'
+                      : tier.highlighted
+                        ? 'bg-gradient-to-b from-yellow-50 to-yellow-100 border-2 border-yellow-500'
+                        : 'bg-white border border-gray-200'
                   }`}
+                  onClick={() => handleMembershipClick(tier.name, tier.href)}
                 >
+                  {tier.badge && (
+                    <span className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-4 py-1 rounded-bl-lg">
+                      {tier.badge}
+                    </span>
+                  )}
                   {tier.highlighted && (
                     <span className="bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded-full mb-4 inline-block">
                       MOST POPULAR
@@ -530,24 +544,31 @@ export default function Academy() {
                     {tier.price > 0 && <span className="text-gray-500">/month</span>}
                   </div>
                   <ul className="space-y-3 mb-8">
-                    {tier.features.map((feature, i) => (
+                    {tier.features.map((feature: string, i: number) => (
                       <li key={i} className="flex items-start gap-2 text-gray-700">
-                        <span className="text-yellow-600 mt-1">✓</span>
+                        <span className={`mt-1 ${tier.name === 'Free' ? 'text-green-600' : 'text-yellow-600'}`}>✓</span>
                         <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
                   <button
-                    onClick={() => handleMembershipClick(tier.name)}
+                    onClick={(e) => { e.stopPropagation(); handleMembershipClick(tier.name, tier.href); }}
                     disabled={checkoutLoading === tier.name}
                     className={`w-full py-3 px-6 rounded-lg font-bold transition-all disabled:opacity-50 ${
-                      tier.highlighted
-                        ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
-                        : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                      tier.name === 'Free'
+                        ? 'bg-green-500 hover:bg-green-600 text-white'
+                        : tier.highlighted
+                          ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
+                          : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
                     }`}
                   >
                     {checkoutLoading === tier.name ? 'Loading...' : tier.buttonText}
                   </button>
+                  {tier.name === 'Free' && (
+                    <p className="text-center text-green-700 text-sm mt-3 font-medium">
+                      Start in 30 seconds - No signup required
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
