@@ -126,7 +126,7 @@ function getWelcomeEmailHtml(): string {
       </div>
       
       <div style="text-align: center; margin: 30px 0;">
-        <a href="https://axiom.money/academy" style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #1f2937; font-weight: bold; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px;">
+        <a href="https://AxiomProtocol.app/academy/free" style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #1f2937; font-weight: bold; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px;">
           Start Your First Course
         </a>
       </div>
@@ -154,7 +154,7 @@ function getWelcomeEmailHtml(): string {
     <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
       <p style="margin: 0 0 10px;">Axiom - Build Wealth Through Discipline, Structure, and Community</p>
       <p style="margin: 0;">
-        <a href="https://axiom.money" style="color: #f59e0b; text-decoration: none;">axiom.money</a>
+        <a href="https://AxiomProtocol.app" style="color: #f59e0b; text-decoration: none;">AxiomProtocol.app</a>
       </p>
     </div>
     
