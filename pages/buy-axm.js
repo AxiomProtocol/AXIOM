@@ -12,9 +12,18 @@ export default function BuyAXMPage() {
   const [fiatAmount, setFiatAmount] = useState('100');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   const isConnected = walletState.isConnected;
   const walletAddress = walletState.address;
+
+  const copyAddress = () => {
+    if (walletAddress) {
+      navigator.clipboard.writeText(walletAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const openCoinbaseOnramp = useCallback(async () => {
     if (!walletAddress) {
@@ -222,7 +231,16 @@ export default function BuyAXMPage() {
                   <div className="bg-gray-900 rounded-xl p-4">
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-gray-400">Your wallet</span>
-                      <span className="text-white font-mono">{walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-white font-mono">{walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}</span>
+                        <button
+                          onClick={copyAddress}
+                          className="text-xs text-yellow-500 hover:text-yellow-400"
+                          title="Copy full address"
+                        >
+                          {copied ? 'Copied!' : 'Copy'}
+                        </button>
+                      </div>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-400">Network</span>
@@ -314,7 +332,16 @@ export default function BuyAXMPage() {
                   <div className="bg-gray-900 rounded-xl p-4">
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-gray-400">Destination wallet</span>
-                      <span className="text-white font-mono">{walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-white font-mono">{walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}</span>
+                        <button
+                          onClick={copyAddress}
+                          className="text-xs text-yellow-500 hover:text-yellow-400"
+                          title="Copy full address"
+                        >
+                          {copied ? 'Copied!' : 'Copy'}
+                        </button>
+                      </div>
                     </div>
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-gray-400">You'll receive</span>
@@ -416,7 +443,16 @@ export default function BuyAXMPage() {
                   <div className="bg-gray-900 rounded-xl p-4">
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-gray-400">Destination wallet</span>
-                      <span className="text-white font-mono">{walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-white font-mono">{walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}</span>
+                        <button
+                          onClick={copyAddress}
+                          className="text-xs text-yellow-500 hover:text-yellow-400"
+                          title="Copy full address"
+                        >
+                          {copied ? 'Copied!' : 'Copy'}
+                        </button>
+                      </div>
                     </div>
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-gray-400">You'll receive</span>
