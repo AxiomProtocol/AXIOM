@@ -106,7 +106,20 @@ export class WalletService {
     try {
       // Use eth_accounts (doesn't prompt user, just checks if already connected)
       console.log('🔍 Checking for existing wallet connection...');
-      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      let accounts;
+      try {
+        accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      } catch (sdkError: any) {
+        // MetaMask SDK throws specific errors when no prior connection exists
+        // 4100: Unauthorized, 4900: Disconnected, 4901: Chain disconnected
+        const code = sdkError?.code;
+        if (code === 4100 || code === 4900 || code === 4901 || 
+            sdkError?.message?.includes('not connected')) {
+          console.log('ℹ️ No wallet connection available (SDK not authorized)');
+          return;
+        }
+        throw sdkError;
+      }
       
       if (accounts && accounts.length > 0) {
         console.log('🔄 Found existing wallet connection:', accounts[0]);

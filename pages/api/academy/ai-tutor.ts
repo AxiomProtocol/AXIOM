@@ -33,14 +33,18 @@ function checkRateLimit(key: string): { allowed: boolean; remaining: number; res
   return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - record.count, resetIn: record.resetTime - now };
 }
 
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, record] of rateLimitMap.entries()) {
-    if (now > record.resetTime) {
-      rateLimitMap.delete(key);
+const globalForCleanup = globalThis as typeof globalThis & { rateLimitCleanupStarted?: boolean };
+if (!globalForCleanup.rateLimitCleanupStarted) {
+  globalForCleanup.rateLimitCleanupStarted = true;
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, record] of rateLimitMap.entries()) {
+      if (now > record.resetTime) {
+        rateLimitMap.delete(key);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  }, 5 * 60 * 1000);
+}
 
 const SYSTEM_PROMPT = `You are an expert financial literacy and blockchain educator for Axiom Academy. Your role is to help students understand concepts related to:
 
