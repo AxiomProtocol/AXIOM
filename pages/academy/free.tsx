@@ -7,9 +7,9 @@ import toast, { Toaster } from 'react-hot-toast';
 const FREE_COURSES = [
   {
     id: 1,
-    slug: 'smart-city-101',
+    slug: 'financial-foundations-101',
     title: 'Financial Foundations 101',
-    description: 'Understand the fundamentals of building wealth through discipline, community, and structured savings.',
+    description: 'Master essential money skills: budgeting, saving, credit management, and building a solid financial foundation.',
     icon: '💰',
     category: 'Finance',
     difficulty: 'beginner',

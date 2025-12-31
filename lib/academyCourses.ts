@@ -22,10 +22,10 @@ export interface Course {
 export const COURSES_DATA: Course[] = [
   {
     id: 1,
-    slug: 'smart-city-101',
-    title: 'Smart City 101',
-    description: 'Understand the fundamentals of smart city technology, infrastructure, and how blockchain enables transparent governance.',
-    category: 'Smart City',
+    slug: 'financial-foundations-101',
+    title: 'Financial Foundations 101',
+    description: 'Master the essential money skills everyone needs. Learn budgeting, saving, and how to build a solid financial foundation.',
+    category: 'Finance',
     difficulty: 'beginner',
     durationMinutes: 45,
     requiredTier: 'free',
@@ -33,303 +33,433 @@ export const COURSES_DATA: Course[] = [
     lessons: [
       {
         id: 1,
-        title: 'What is a Smart City?',
+        title: 'Why Financial Literacy Matters',
         duration: 8,
-        content: `A smart city uses digital technology and data to improve the quality of life for its residents. Unlike traditional cities that rely on manual processes and outdated infrastructure, smart cities leverage sensors, connectivity, and intelligent systems to make everything work better.
+        content: `Financial literacy is the foundation of building wealth and achieving financial freedom. It's not about how much money you make—it's about understanding how money works.
 
-## The Core Components
+## The Cost of Financial Illiteracy
 
-Smart cities are built on several key pillars:
+Most people never learn about money in school:
 
-- **Connected Infrastructure**: Roads, utilities, and buildings that communicate with each other
-- **Data-Driven Decisions**: Using real-time information to optimize city services
-- **Citizen Engagement**: Digital platforms that give residents a voice in governance
-- **Sustainable Systems**: Technology that reduces waste and environmental impact
+- **67% of Americans** can't pass a basic financial literacy test
+- **78% of workers** live paycheck to paycheck
+- Average credit card debt is over **$6,000** per household
+- Nearly half of adults have no retirement savings
 
-## Real-World Examples
+These statistics aren't about intelligence—they're about education.
 
-Cities around the world are already implementing smart city technology:
+## What Financial Literacy Includes
 
-1. Singapore uses sensors to monitor everything from traffic to air quality
-2. Barcelona has smart street lights that dim when no one is around
-3. Seoul offers city services through a single mobile app
-4. Dubai aims to conduct all government transactions digitally
+Being financially literate means understanding:
 
-## Why Blockchain Matters
+1. How to create and stick to a budget
+2. The difference between good debt and bad debt
+3. How compound interest works (for and against you)
+4. Basic investing principles
+5. How to protect yourself from scams and bad decisions
 
-Traditional smart cities have a problem: who controls all that data? Blockchain technology provides a solution by creating transparent, tamper-proof records that no single entity controls. This means residents can trust that their city is operating fairly and efficiently.
+## The Wealth Gap
 
-> "A truly smart city isn't just about technology—it's about using technology to empower citizens."`,
+The difference between wealthy people and everyone else often comes down to financial knowledge:
+
+- Wealthy families teach their children about money
+- They understand how to make money work for them
+- They think long-term, not paycheck to paycheck
+- They use financial tools strategically
+
+## Your Learning Journey
+
+This course will give you the foundational knowledge to:
+
+- Take control of your money instead of letting it control you
+- Make informed decisions about saving and spending
+- Build habits that create long-term wealth
+- Understand the financial system and use it to your advantage
+
+> "An investment in knowledge pays the best interest." — Benjamin Franklin`,
         keyTakeaways: [
-          'Smart cities use technology to improve quality of life',
-          'Key components include connectivity, data, engagement, and sustainability',
-          'Blockchain adds transparency and trust to smart city systems',
-          'Citizens benefit from better services and more participation'
+          'Financial literacy is learned, not inherited',
+          'Most people struggle financially due to lack of education, not income',
+          'Understanding money basics is the first step to building wealth',
+          'This knowledge can change the trajectory of your entire life'
         ]
       },
       {
         id: 2,
-        title: 'The Technology Behind Smart Cities',
+        title: 'The Power of Compound Interest',
         duration: 10,
-        content: `Understanding smart city technology doesn't require an engineering degree. Let's break down the key technologies in simple terms.
+        content: `Albert Einstein reportedly called compound interest "the eighth wonder of the world." Whether he actually said it or not, the principle is incredibly powerful.
 
-## Internet of Things (IoT)
+## What Is Compound Interest?
 
-IoT refers to everyday objects connected to the internet. In a smart city, this includes:
+Simple interest: You earn interest only on your original amount.
+Compound interest: You earn interest on your interest.
 
-- Traffic lights that detect how many cars are waiting
-- Trash cans that signal when they need emptying
-- Parking meters that show available spots in an app
-- Water pipes that detect leaks before they become floods
+Here's a simple example:
 
-## Data Analytics
+- You invest $1,000 at 10% annual interest
+- Year 1: You earn $100, now have $1,100
+- Year 2: You earn $110 (10% of $1,100), now have $1,210
+- Year 3: You earn $121, now have $1,331
 
-All those connected devices generate enormous amounts of data. Smart cities use analytics to:
+The magic is that your earnings accelerate over time.
 
-1. Predict when roads need maintenance
-2. Optimize public transit schedules
-3. Identify crime patterns before they escalate
-4. Manage energy use across the grid
+## The Rule of 72
 
-## Artificial Intelligence
+Want to know how long it takes to double your money? Divide 72 by your interest rate:
 
-AI takes data analytics further by learning patterns and making decisions:
+- At 6% interest: 72 ÷ 6 = 12 years to double
+- At 8% interest: 72 ÷ 8 = 9 years to double
+- At 10% interest: 72 ÷ 10 = 7.2 years to double
 
-- Traffic systems that adapt in real-time to reduce congestion
-- Chatbots that answer citizen questions 24/7
-- Predictive models for emergency response
-- Automated systems for permit processing
+## Time Is Your Greatest Asset
 
-## Blockchain and Distributed Ledgers
+The earlier you start, the more compound interest works for you:
 
-Blockchain provides the trust layer that makes smart cities work:
+**Starting at age 25:**
+- Invest $200/month until age 65
+- At 8% return = $702,000
 
-- **Transparent voting**: Everyone can verify election results
-- **Immutable records**: Property deeds and permits can't be altered
-- **Smart contracts**: Agreements execute automatically
-- **Token economies**: Citizens earn rewards for participation`,
+**Starting at age 35:**
+- Invest $200/month until age 65
+- At 8% return = $298,000
+
+Same monthly amount, but starting 10 years earlier more than doubles your result.
+
+## Compound Interest Works Against You Too
+
+Credit cards and loans use compound interest against you:
+
+- 20% credit card interest compounds daily
+- A $5,000 balance paying minimums takes 25+ years to pay off
+- You'd pay over $12,000 in interest
+
+## The Bottom Line
+
+Make compound interest your friend:
+
+1. Start saving and investing as early as possible
+2. Be consistent—even small amounts matter
+3. Avoid high-interest debt at all costs
+4. Be patient—wealth building takes time`,
         keyTakeaways: [
-          'IoT connects everyday objects to create a sensing network',
-          'Data analytics turns raw information into actionable insights',
-          'AI enables systems to learn and adapt automatically',
-          'Blockchain provides transparency and eliminates the need for trusted intermediaries'
+          'Compound interest means earning interest on your interest',
+          'Time is more powerful than the amount you invest',
+          'The Rule of 72 helps you calculate how long to double your money',
+          'High-interest debt uses compound interest against you'
         ]
       },
       {
         id: 3,
-        title: 'Governance in the Digital Age',
+        title: 'Building an Emergency Fund',
         duration: 8,
-        content: `Traditional city governance is slow, opaque, and often frustrating. Smart city governance flips this model by making everything transparent and participatory.
+        content: `An emergency fund is your financial safety net. It's the foundation that makes everything else possible.
 
-## The Old Way vs. The New Way
+## Why You Need an Emergency Fund
 
-Traditional governance:
-- Decisions made behind closed doors
-- Months-long approval processes
-- Paper-based records that get lost
-- Limited citizen input (maybe a town hall meeting)
+Life is unpredictable:
 
-Smart city governance:
-- Every decision recorded on a public blockchain
-- Automated approval through smart contracts
-- Permanent, searchable digital records
-- Continuous citizen participation through digital platforms
+- Car repairs average $500-$600 per incident
+- Medical emergencies can cost thousands
+- Job loss happens—even to good employees
+- Home repairs are inevitable
 
-## Decentralized Autonomous Organizations (DAOs)
+Without savings, these become crises that lead to debt.
 
-A DAO is a new form of organization where:
+## How Much Do You Need?
 
-1. Rules are encoded in smart contracts
-2. Token holders vote on decisions
-3. Treasury is managed transparently
-4. No single person has ultimate control
+The standard recommendation is 3-6 months of expenses:
 
-## How Citizens Participate
+- **Starter fund**: $1,000 (your first goal)
+- **Basic fund**: 3 months of expenses
+- **Full fund**: 6 months of expenses
+- **Enhanced fund**: 12 months (if self-employed or single income)
 
-In a blockchain-based smart city, citizens can:
+Calculate your monthly essentials:
+- Rent/mortgage
+- Utilities
+- Food
+- Transportation
+- Insurance
+- Minimum debt payments
 
-- Vote on budget allocations with their governance tokens
-- Propose improvements and rally support
-- Track exactly how tax dollars are spent
-- Earn rewards for community contributions
+## Where to Keep Your Emergency Fund
 
-## Transparency Creates Trust
+Your emergency fund should be:
 
-When every transaction, vote, and decision is recorded on an immutable blockchain, corruption becomes nearly impossible. This transparency builds trust between citizens and their government.
+1. **Accessible**: You can get it within 1-2 days
+2. **Safe**: Not subject to market losses
+3. **Separate**: Not mixed with spending money
 
-> "The best government is one where citizens can verify everything themselves."`,
+Best options:
+- High-yield savings account (online banks often pay 4-5%)
+- Money market account
+- NOT in investments that can lose value
+
+## How to Build Your Fund
+
+Starting from zero? Here's a plan:
+
+1. Set a goal of $1,000 first
+2. Automate transfers—even $25/week adds up
+3. Put "found money" into savings (tax refunds, gifts, bonuses)
+4. Cut one expense and redirect that money
+5. Sell things you don't need
+
+## When to Use Your Emergency Fund
+
+Use it ONLY for true emergencies:
+
+- Job loss
+- Medical emergencies
+- Essential car repairs
+- Urgent home repairs
+
+NOT for:
+- Vacations
+- Sales or "deals"
+- Planned expenses (save separately for these)
+- Wants disguised as needs`,
         keyTakeaways: [
-          'Smart city governance is transparent and participatory',
-          'DAOs provide a new model for community decision-making',
-          'Citizens can actively participate through voting and proposals',
-          'Blockchain transparency builds trust and reduces corruption'
+          'An emergency fund prevents debt when life happens',
+          'Start with $1,000, then build to 3-6 months of expenses',
+          'Keep it in a high-yield savings account, separate from spending',
+          'Only use it for true emergencies, not wants'
         ]
       },
       {
         id: 4,
-        title: 'Sustainable Infrastructure',
-        duration: 7,
-        content: `Smart cities aren't just about convenience—they're about building a sustainable future. Technology enables cities to dramatically reduce their environmental impact.
+        title: 'Understanding Credit and Debt',
+        duration: 8,
+        content: `Credit is a tool. Like any tool, it can build or destroy depending on how you use it.
 
-## Energy Management
+## What Is Credit?
 
-Smart grids optimize electricity distribution:
+Credit is borrowed money that you promise to pay back:
 
-- Solar panels on buildings feed excess power back to the grid
-- AI predicts demand and adjusts supply
-- Electric vehicle charging happens during off-peak hours
-- Buildings automatically adjust heating and cooling
+- Credit cards
+- Car loans
+- Mortgages
+- Student loans
+- Personal loans
 
-## Water Conservation
+Your credit score (300-850) tells lenders how risky you are.
 
-Every drop counts in a smart city:
+## Good Debt vs. Bad Debt
 
-1. Sensors detect leaks in underground pipes
-2. Smart irrigation waters parks only when needed
-3. Recycled water is tracked and reused safely
-4. Real-time monitoring prevents contamination
+**Good debt** helps you build wealth:
+- Mortgage (builds equity, often appreciates)
+- Student loans for high-earning careers
+- Business loans that generate income
 
-## Waste Reduction
+**Bad debt** drains your wealth:
+- Credit cards for daily expenses
+- Car loans on depreciating assets
+- Payday loans (predatory rates)
+- Loans for vacations or lifestyle
 
-Smart waste management minimizes landfill use:
+## Understanding Your Credit Score
 
-- Smart bins signal when full, optimizing collection routes
-- Recycling is tracked and rewarded
-- Composting programs process organic waste locally
-- Circular economy principles reduce consumption
+Your score is based on:
 
-## Carbon Tracking
+1. **Payment history (35%)**: Pay on time, every time
+2. **Credit utilization (30%)**: Keep balances below 30% of limits
+3. **Length of history (15%)**: Older accounts help
+4. **Credit mix (10%)**: Different types of credit
+5. **New credit (10%)**: Don't apply for too many accounts
 
-Blockchain enables precise carbon accounting:
+## The True Cost of Debt
 
-- Every building's emissions are recorded
-- Carbon credits are tokenized and traded
-- Residents can offset their footprint
-- Sustainability achievements are verifiable
+A $30,000 car at 7% for 5 years:
+- Monthly payment: $594
+- Total paid: $35,640
+- Interest cost: $5,640
 
-## The Financial Benefits
+The same $30,000 on credit cards at 22%:
+- Paying $500/month takes 10+ years
+- Total paid: $60,000+
+- Interest cost: $30,000+
 
-Sustainability isn't just good for the planet—it saves money:
+## Getting Out of Debt
 
-- Reduced energy costs through efficiency
-- Lower maintenance through predictive systems
-- Healthier residents mean lower healthcare costs
-- Attractive to businesses and new residents`,
+Two proven methods:
+
+**Avalanche method**: Pay highest interest first
+- Saves the most money
+- Mathematically optimal
+
+**Snowball method**: Pay smallest balance first
+- Provides quick wins
+- Psychologically motivating
+
+Choose what works for your personality.`,
         keyTakeaways: [
-          'Smart grids optimize energy use and enable renewable integration',
-          'Water and waste systems become dramatically more efficient',
-          'Blockchain enables transparent carbon tracking and trading',
-          'Sustainability improvements create financial benefits'
+          'Credit is a tool—good debt builds wealth, bad debt destroys it',
+          'Your credit score affects interest rates on everything',
+          'Payment history and utilization are the biggest score factors',
+          'Have a strategy to eliminate high-interest debt'
         ]
       },
       {
         id: 5,
-        title: 'The Axiom Vision',
+        title: 'Creating Your First Budget',
         duration: 7,
-        content: `Axiom represents the next evolution of smart city development: a fully on-chain sovereign city economy built from the ground up.
+        content: `A budget isn't about restriction—it's about intention. It tells your money where to go instead of wondering where it went.
 
-## What Makes Axiom Different
+## Why Budgets Fail
 
-Unlike retrofitting technology onto existing cities, Axiom is designed digital-first:
+Most budgets fail because they're:
 
-- **Native blockchain integration**: Every transaction, from paying utilities to voting, happens on-chain
-- **Token-based economy**: The AXM token powers all city services
-- **Community ownership**: Residents are stakeholders, not just inhabitants
-- **DePIN infrastructure**: Physical infrastructure managed by decentralized networks
+- Too complicated to maintain
+- Too restrictive to follow
+- Based on ideals, not reality
+- Created once and never adjusted
 
-## The Axiom Ecosystem
+A good budget is simple, flexible, and based on your actual life.
 
-Axiom includes everything needed for a complete city economy:
+## The 50/30/20 Framework
 
-1. **National Bank of Axiom**: Full-service digital banking
-2. **KeyGrow**: Rent-to-own housing that builds real equity
-3. **SUSU**: Community savings circles powered by smart contracts
-4. **DePIN Nodes**: Decentralized infrastructure anyone can participate in
-5. **Governance**: Token-weighted voting on all major decisions
+A simple starting point:
 
-## From Concept to Reality
+- **50% Needs**: Rent, utilities, groceries, insurance, minimum payments
+- **30% Wants**: Entertainment, dining out, subscriptions, hobbies
+- **20% Savings/Debt**: Emergency fund, retirement, extra debt payments
 
-Axiom isn't just a whitepaper—it's a real project with:
+Adjust these percentages based on your situation and goals.
 
-- 24 deployed smart contracts on Arbitrum
-- Working applications you can use today
-- A growing community of participants
-- A clear roadmap to physical development
+## Creating Your Budget
 
-## Your Role in Axiom
+Step 1: Track your spending for 30 days
+- Use an app or simple spreadsheet
+- Categorize every expense
+- Don't change behavior yet—just observe
 
-Whether you become a token holder, node operator, or future resident, you have a stake in Axiom's success. The more the community grows, the more value everyone shares.
+Step 2: Calculate your income
+- After-tax, take-home pay
+- Include all sources
 
-> "Axiom is building the city of tomorrow, today."`,
+Step 3: Assign every dollar a job
+- Start with needs
+- Then savings goals
+- Then wants
+
+Step 4: Review weekly
+- Are you on track?
+- What needs adjustment?
+
+## Budgeting Tools
+
+Choose what works for you:
+
+- **Apps**: Mint, YNAB, Personal Capital
+- **Spreadsheets**: Google Sheets, Excel
+- **Envelope system**: Cash in physical envelopes
+- **Notebook**: Simple pen and paper
+
+## Common Budget Categories
+
+Needs:
+- Housing (aim for under 30% of income)
+- Utilities
+- Groceries
+- Transportation
+- Insurance
+- Minimum debt payments
+
+Wants:
+- Dining out
+- Entertainment
+- Subscriptions
+- Shopping
+- Hobbies
+
+Savings:
+- Emergency fund
+- Retirement
+- Goals (vacation, car, house)`,
         keyTakeaways: [
-          'Axiom is designed as a native blockchain city, not a retrofit',
-          'The ecosystem includes banking, housing, savings, and infrastructure',
-          'Real smart contracts are already deployed and functional',
-          'Community members are stakeholders in the city\'s success'
+          'A budget gives every dollar a purpose',
+          'The 50/30/20 rule is a simple starting framework',
+          'Track spending before creating a budget',
+          'Review and adjust your budget regularly'
         ]
       },
       {
         id: 6,
-        title: 'Getting Started with Axiom',
-        duration: 5,
-        content: `Ready to participate in the future of smart cities? Here's how to get started with Axiom today.
+        title: 'Setting Financial Goals',
+        duration: 7,
+        content: `Without clear goals, you're just saving for "someday." Goals transform vague wishes into achievable plans.
 
-## Step 1: Connect Your Wallet
+## Types of Financial Goals
 
-To interact with Axiom, you'll need a Web3 wallet:
+**Short-term (under 1 year)**:
+- Build $1,000 emergency fund
+- Pay off one credit card
+- Save for a vacation
 
-1. Install MetaMask or another compatible wallet
-2. Add the Arbitrum One network
-3. Connect to axiomprotocol.io
-4. Your wallet is now your identity
+**Medium-term (1-5 years)**:
+- Full 6-month emergency fund
+- Pay off all credit card debt
+- Save for a house down payment
+- Buy a car in cash
 
-## Step 2: Explore the Ecosystem
+**Long-term (5+ years)**:
+- Financial independence
+- Retirement
+- Children's education
+- Generational wealth
 
-Take time to understand what Axiom offers:
+## SMART Goals
 
-- Browse the KeyGrow properties
-- Learn about SUSU savings circles
-- Check out the DePIN node marketplace
-- Review governance proposals
+Make goals Specific, Measurable, Achievable, Relevant, Time-bound:
 
-## Step 3: Start Small
+Bad goal: "I want to save more money."
 
-You don't need to invest thousands to participate:
+SMART goal: "I will save $5,000 for an emergency fund by December 31st by automatically transferring $200 from each paycheck to my savings account."
 
-- Join a SUSU pool with a small contribution
-- Use the Equity Calculator to plan your path
-- Vote on governance proposals (even with small holdings)
-- Complete Academy courses to earn certificates
+## Prioritizing Your Goals
 
-## Step 4: Engage with the Community
+Not all goals are equal. Consider:
 
-Axiom is community-driven:
+1. **Emergency fund first**: This prevents future debt
+2. **High-interest debt second**: This is an immediate return
+3. **Retirement contributions**: Get any employer match (free money)
+4. **Other goals**: Based on your values and timeline
 
-- Join the Discord for discussions
-- Follow updates on social media
-- Attend virtual town halls
-- Share your ideas for improvement
+## Breaking Down Big Goals
 
-## Step 5: Grow Your Participation
+A $20,000 house down payment seems impossible.
+Break it down:
+- Timeline: 3 years
+- Monthly needed: $556
+- Weekly needed: $139
+- Daily needed: $20
 
-As you learn more, deepen your involvement:
+Suddenly it's one less restaurant meal per day.
 
-- Consider running a DePIN node
-- Explore KeyGrow for homeownership
-- Participate in governance more actively
-- Invite others to join
+## Staying Motivated
 
-## Resources
+- Write goals down and review monthly
+- Visualize what achieving the goal means
+- Celebrate milestones along the way
+- Find an accountability partner
+- Track progress visually (charts, apps)
 
-- Whitepaper: Full technical documentation
-- Academy: Continue your learning journey
-- Support: Get help when you need it
-- Community: Connect with other participants`,
+## Adjusting Goals
+
+Life changes. Your goals should too:
+
+- Review goals quarterly
+- Adjust timelines as needed
+- Add new goals as you achieve old ones
+- Don't abandon goals—adjust them
+
+> "A goal without a plan is just a wish."`,
         keyTakeaways: [
-          'Getting started requires only a Web3 wallet',
-          'Explore the ecosystem before committing resources',
-          'Start with small, low-risk participation',
-          'Community engagement is key to the Axiom experience'
+          'Goals turn vague wishes into actionable plans',
+          'Use the SMART framework for clear, achievable goals',
+          'Prioritize emergency fund, high-interest debt, then other goals',
+          'Break big goals into small, daily actions'
         ]
       }
     ]

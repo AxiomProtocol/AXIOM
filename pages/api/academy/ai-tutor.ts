@@ -6,13 +6,49 @@ const anthropic = new Anthropic({
   baseURL: process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL
 });
 
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const MAX_REQUESTS_PER_WINDOW = 10;
+
+function getRateLimitKey(req: NextApiRequest): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  const ip = typeof forwarded === 'string' ? forwarded.split(',')[0] : req.socket?.remoteAddress || 'unknown';
+  return ip;
+}
+
+function checkRateLimit(key: string): { allowed: boolean; remaining: number; resetIn: number } {
+  const now = Date.now();
+  const record = rateLimitMap.get(key);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(key, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - 1, resetIn: RATE_LIMIT_WINDOW_MS };
+  }
+  
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return { allowed: false, remaining: 0, resetIn: record.resetTime - now };
+  }
+  
+  record.count++;
+  return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - record.count, resetIn: record.resetTime - now };
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of rateLimitMap.entries()) {
+    if (now > record.resetTime) {
+      rateLimitMap.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+
 const SYSTEM_PROMPT = `You are an expert financial literacy and blockchain educator for Axiom Academy. Your role is to help students understand concepts related to:
 
 1. Personal Finance: Budgeting, saving, credit management, debt reduction, emergency funds
 2. Wealth Building: Compound interest, investing basics, asset allocation, long-term planning
 3. Blockchain & Crypto: How blockchain works, cryptocurrency basics, wallets, DeFi fundamentals
 4. Real Estate: Rent-to-own programs, homeownership paths, building equity
-5. Community Finance: SUSU/rotating savings circles, community-based wealth building
+5. Community Finance: Rotating savings circles (SUSU), community-based wealth building
 
 Guidelines:
 - Be encouraging and supportive - many learners are beginners
@@ -34,11 +70,29 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const rateLimitKey = getRateLimitKey(req);
+  const rateLimit = checkRateLimit(rateLimitKey);
+  
+  res.setHeader('X-RateLimit-Limit', MAX_REQUESTS_PER_WINDOW.toString());
+  res.setHeader('X-RateLimit-Remaining', rateLimit.remaining.toString());
+  res.setHeader('X-RateLimit-Reset', Math.ceil(rateLimit.resetIn / 1000).toString());
+  
+  if (!rateLimit.allowed) {
+    return res.status(429).json({ 
+      error: 'Too many requests. Please wait a moment before asking another question.',
+      retryAfter: Math.ceil(rateLimit.resetIn / 1000)
+    });
+  }
+
   try {
     const { message, context, history } = req.body;
 
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
+    }
+
+    if (message.length > 1000) {
+      return res.status(400).json({ error: 'Message too long. Please keep questions under 1000 characters.' });
     }
 
     let contextPrompt = '';
@@ -53,10 +107,11 @@ Help them understand concepts related to this course.`;
     const messages: { role: 'user' | 'assistant'; content: string }[] = [];
     
     if (history && Array.isArray(history)) {
-      history.forEach((msg: { role: 'user' | 'assistant'; content: string }) => {
+      const recentHistory = history.slice(-6);
+      recentHistory.forEach((msg: { role: 'user' | 'assistant'; content: string }) => {
         messages.push({
           role: msg.role,
-          content: msg.content
+          content: msg.content.slice(0, 1000)
         });
       });
     }
