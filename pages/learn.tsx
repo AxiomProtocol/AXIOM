@@ -20,6 +20,7 @@ import {
   Zap
 } from "lucide-react";
 
+
 const courseIcons: Record<string, React.ReactNode> = {
   "Financial Foundations 101": <TrendingUp className="w-6 h-6" />,
   "Cryptocurrency Basics": <Coins className="w-6 h-6" />,
@@ -165,6 +166,13 @@ export default function AxiomAcademyFreeLanding() {
         </div>
 
         <section className="relative mx-auto max-w-6xl px-4 py-16 md:py-24">
+          <div className="mb-12 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl shadow-amber-500/10">
+            <img
+              src="/images/web3_education_hero_image.png"
+              alt="Web3 Education - Blockchain learning with glowing nodes and digital books"
+              className="w-full h-48 md:h-64 object-cover"
+            />
+          </div>
           <div className="grid gap-10 md:grid-cols-2 md:items-center">
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 rounded-full bg-amber-500/20 border border-amber-500/30 px-4 py-2 text-sm text-amber-300">
@@ -301,7 +309,16 @@ export default function AxiomAcademyFreeLanding() {
         </section>
 
         <section className="relative mx-auto max-w-6xl px-4 py-12">
-          <div className="rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-8 md:p-12 text-center">
+          <div className="rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden">
+            <div className="relative h-32 md:h-48">
+              <img
+                src="/images/financial_growth_abstract_visual.png"
+                alt="Financial growth - ascending chart with golden light and blockchain elements"
+                className="w-full h-full object-cover opacity-60 absolute inset-0"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-900" />
+            </div>
+            <div className="p-8 md:p-12 text-center -mt-8 relative">
             <div className="inline-flex p-4 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 mb-6">
               <Sparkles className="w-8 h-8 text-white" />
             </div>
@@ -326,6 +343,7 @@ export default function AxiomAcademyFreeLanding() {
               </Link>
             </div>
             <p className="mt-6 text-sm text-slate-400">No credit card. No obligation. Forever free.</p>
+            </div>
           </div>
         </section>
 
