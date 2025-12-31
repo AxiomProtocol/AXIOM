@@ -2,15 +2,61 @@
  * Coinbase Onramp Session Token API
  * Generates a secure session token for Coinbase Pay initialization
  * 
+ * SECURITY: Requires SIWE authentication
+ * CORS: Restricted to allowed origins only
+ * 
  * POST /api/onramp/session-token
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import crypto from 'crypto';
+import { pool } from '../../../server/db';
+import { applyCors, validateOrigin } from '../../../lib/middleware/cors';
 
 interface SessionTokenResponse {
   token?: string;
   error?: string;
+}
+
+function parseCookies(cookieHeader: string | undefined): Record<string, string> {
+  if (!cookieHeader) return {};
+  return Object.fromEntries(
+    cookieHeader.split(';').map(cookie => {
+      const [key, ...val] = cookie.trim().split('=');
+      return [key, val.join('=')];
+    })
+  );
+}
+
+async function verifySiweSession(req: NextApiRequest): Promise<{ authenticated: boolean; address: string | null }> {
+  try {
+    const cookies = parseCookies(req.headers.cookie);
+    const sessionToken = cookies['siwe_session'];
+    
+    if (!sessionToken) {
+      return { authenticated: false, address: null };
+    }
+    
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT wallet_address FROM wallet_sessions 
+         WHERE session_token = $1 AND expires_at > NOW()`,
+        [sessionToken]
+      );
+      
+      if (result.rows.length === 0) {
+        return { authenticated: false, address: null };
+      }
+      
+      return { authenticated: true, address: result.rows[0].wallet_address };
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('SIWE session verification error:', error);
+    return { authenticated: false, address: null };
+  }
 }
 
 function isValidEthAddress(address: string): boolean {
@@ -131,9 +177,26 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<SessionTokenResponse>
 ) {
+  if (applyCors(req, res)) {
+    return;
+  }
+
+  if (!validateOrigin(req)) {
+    console.warn('CORS violation: Origin not allowed:', req.headers.origin);
+    return res.status(403).json({ error: 'Origin not allowed' });
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  const session = await verifySiweSession(req);
+  if (!session.authenticated) {
+    console.warn('Unauthenticated session token request');
+    return res.status(401).json({ error: 'Authentication required. Please connect and sign in with your wallet.' });
+  }
+
+  console.log('Authenticated session token request for:', session.address);
 
   const cdpKeyId = process.env.CDP_API_KEY_ID;
   const cdpPrivateKey = process.env.CDP_API_PRIVATE_KEY;
@@ -151,6 +214,11 @@ export default async function handler(
 
     if (!walletAddress || !isValidEthAddress(walletAddress)) {
       return res.status(400).json({ error: 'Invalid wallet address' });
+    }
+
+    if (session.address && walletAddress.toLowerCase() !== session.address.toLowerCase()) {
+      console.warn('Wallet address mismatch: session=', session.address, 'requested=', walletAddress);
+      return res.status(403).json({ error: 'Wallet address does not match authenticated session' });
     }
 
     const clientIP = getClientIP(req);

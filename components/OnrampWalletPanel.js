@@ -41,6 +41,7 @@ export default function OnrampWalletPanel({
   const { walletState, connectMetaMask } = useWallet();
   const [addressError, setAddressError] = useState('');
   const [manualMode, setManualMode] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (walletState.isConnected && walletState.address && !manualMode) {
@@ -76,13 +77,33 @@ export default function OnrampWalletPanel({
                   {walletState.address}
                 </span>
                 <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(walletState.address);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="text-xs text-yellow-500 hover:text-yellow-400 flex items-center gap-1"
+                  title="Copy wallet address"
+                >
+                  {copied ? '✓ Copied' : '📋 Copy'}
+                </button>
+                <button
                   onClick={() => setManualMode(true)}
                   className="text-xs text-gray-400 hover:text-white"
                 >
                   Change
                 </button>
               </div>
-              <p className="text-xs text-gray-500">Connected wallet will receive tokens</p>
+              <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
+                <p className="text-xs text-gray-400 mb-1">
+                  <span className="text-green-400 font-medium">Self-Custody Wallet</span>
+                </p>
+                <p className="text-xs text-gray-500">
+                  This is your personal wallet controlled by your private keys in MetaMask. 
+                  You can export your keys and seed phrase directly from your MetaMask wallet settings.
+                  Axiom never has access to your private keys.
+                </p>
+              </div>
             </div>
           ) : (
             <div className="space-y-2">
