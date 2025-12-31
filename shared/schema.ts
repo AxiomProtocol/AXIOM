@@ -3640,7 +3640,7 @@ export type InsertOrganizerCertification = typeof organizerCertifications.$infer
 
 // Onramp provider and status enums
 export const onrampProviderEnum = pgEnum('onramp_provider', [
-  'moonpay',
+  'coinbase',
   'ramp',
   'transak'
 ]);

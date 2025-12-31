@@ -81,20 +81,6 @@ export default function BuyAXMPage() {
     }
   }, [walletAddress, fiatAmount]);
 
-  const openMoonPay = () => {
-    const params = new URLSearchParams({
-      currencyCode: 'eth_arbitrum',
-      walletAddress: walletAddress || '',
-      baseCurrencyAmount: fiatAmount,
-      baseCurrencyCode: 'usd',
-      colorCode: '%23EAB308',
-      language: 'en'
-    });
-    
-    const moonpayUrl = `https://www.moonpay.com/buy/eth?${params.toString()}`;
-    window.open(moonpayUrl, '_blank', 'noopener,noreferrer');
-  };
-
   return (
     <Layout>
       <Head>
@@ -117,7 +103,7 @@ export default function BuyAXMPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
             <div 
               onClick={() => setSelectedMethod('dex')}
               className={`bg-gray-800 rounded-2xl p-6 border-2 cursor-pointer transition-all hover:border-yellow-500/50 ${
@@ -177,36 +163,6 @@ export default function BuyAXMPage() {
                 </li>
                 <li className="flex items-center gap-2 text-gray-300">
                   <span className="text-blue-400">✓</span> Instant delivery
-                </li>
-              </ul>
-            </div>
-
-            <div 
-              onClick={() => setSelectedMethod('moonpay')}
-              className={`bg-gray-800 rounded-2xl p-6 border-2 cursor-pointer transition-all hover:border-purple-500/50 ${
-                selectedMethod === 'moonpay' ? 'border-purple-500 ring-2 ring-purple-500/20' : 'border-gray-700'
-              }`}
-            >
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center">
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">MoonPay</h3>
-                  <p className="text-purple-400 text-sm font-medium">Alternative</p>
-                </div>
-              </div>
-              <p className="text-gray-400 mb-4 text-sm">
-                Another option to buy crypto with card or bank transfer.
-              </p>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-center gap-2 text-gray-300">
-                  <span className="text-purple-400">✓</span> Global coverage
-                </li>
-                <li className="flex items-center gap-2 text-gray-300">
-                  <span className="text-purple-400">✓</span> Multiple methods
                 </li>
               </ul>
             </div>
@@ -388,95 +344,6 @@ export default function BuyAXMPage() {
                     </svg>
                     <span>Self-custody - Funds go directly to your wallet</span>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {selectedMethod === 'moonpay' && (
-            <div className="bg-gray-800 rounded-2xl p-8 border border-purple-500/30">
-              <h3 className="text-xl font-bold text-white mb-2">Buy Crypto with MoonPay</h3>
-              <p className="text-gray-400 mb-6">Purchase ETH via MoonPay, then swap for AXM</p>
-
-              {!isConnected ? (
-                <div className="text-center py-6">
-                  <p className="text-gray-400 mb-4">Connect your wallet first</p>
-                  <button
-                    onClick={connectMetaMask}
-                    className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-6 py-3 rounded-xl"
-                  >
-                    Connect Wallet
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Amount (USD)</label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">$</span>
-                      <input
-                        type="number"
-                        value={fiatAmount}
-                        onChange={(e) => setFiatAmount(e.target.value)}
-                        className="w-full bg-gray-900 border border-gray-700 rounded-xl py-3 pl-8 pr-4 text-white text-lg focus:outline-none focus:border-purple-500"
-                        placeholder="100"
-                        min="30"
-                      />
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      {['50', '100', '250', '500'].map(amt => (
-                        <button
-                          key={amt}
-                          onClick={() => setFiatAmount(amt)}
-                          className={`px-3 py-1 rounded-lg text-sm ${
-                            fiatAmount === amt 
-                              ? 'bg-purple-500 text-white' 
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                          }`}
-                        >
-                          ${amt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-900 rounded-xl p-4">
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-400">Destination wallet</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-white font-mono">{walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}</span>
-                        <button
-                          onClick={copyAddress}
-                          className="text-xs text-yellow-500 hover:text-yellow-400"
-                          title="Copy full address"
-                        >
-                          {copied ? 'Copied!' : 'Copy'}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-400">You'll receive</span>
-                      <span className="text-white">ETH on Arbitrum</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Next step</span>
-                      <span className="text-yellow-400">Swap ETH → AXM</span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={openMoonPay}
-                    className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold py-4 rounded-xl hover:from-purple-400 hover:to-purple-500 transition-all flex items-center justify-center gap-2"
-                  >
-                    <span>Continue to MoonPay</span>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </button>
-
-                  <p className="text-center text-gray-500 text-sm">
-                    After buying ETH, return here to swap for AXM
-                  </p>
                 </div>
               )}
             </div>
