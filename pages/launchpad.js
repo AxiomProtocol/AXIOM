@@ -133,7 +133,14 @@ export default function LaunchpadPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
       <StepProgressBanner isAdvanced={true} />
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/30 via-purple-900/30 to-pink-900/30"></div>
+        <div className="absolute inset-0">
+          <img 
+            src="/images/defi_treasury_hero_image.png" 
+            alt="" 
+            className="w-full h-full object-cover opacity-30"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/70 via-purple-900/70 to-pink-900/70"></div>
+        </div>
         
         <div className="relative max-w-6xl mx-auto px-4 py-4">
           {/* Desktop Header */}
@@ -270,27 +277,36 @@ export default function LaunchpadPage() {
             </button>
           </div>
 
-          <div className="bg-gradient-to-br from-green-900/50 to-emerald-900/50 border-2 border-green-500 rounded-2xl max-w-4xl mx-auto p-8 mb-8">
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <span className="text-4xl">🚀</span>
-              <h3 className="text-3xl font-bold text-green-400">TGE IS NOW LIVE!</h3>
+          <div className="relative bg-gradient-to-br from-green-900/50 to-emerald-900/50 border-2 border-green-500 rounded-2xl max-w-4xl mx-auto p-8 mb-8 overflow-hidden">
+            <div className="absolute inset-0 opacity-20">
+              <img 
+                src="/images/tge_live_celebration_image.png" 
+                alt="" 
+                className="w-full h-full object-cover"
+              />
             </div>
-            <p className="text-center text-gray-300 text-lg mb-6">
-              The Axiom Token Generation Event has officially launched. Join thousands of early supporters building wealth through community.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/buy-axm"
-                className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold text-lg rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all shadow-lg text-center"
-              >
-                Buy AXM Now
-              </Link>
-              <Link
-                href="/tokenomics"
-                className="px-8 py-4 bg-transparent border-2 border-green-500 text-green-400 font-bold text-lg rounded-xl hover:bg-green-500/10 transition-all text-center"
-              >
-                View Tokenomics
-              </Link>
+            <div className="relative z-10">
+              <div className="flex items-center justify-center gap-2 mb-6">
+                <span className="text-4xl">🚀</span>
+                <h3 className="text-3xl font-bold text-green-400">TGE IS NOW LIVE!</h3>
+              </div>
+              <p className="text-center text-gray-300 text-lg mb-6">
+                The Axiom Token Generation Event has officially launched. Join thousands of early supporters building wealth through community.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href="/buy-axm"
+                  className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold text-lg rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all shadow-lg text-center"
+                >
+                  Buy AXM Now
+                </Link>
+                <Link
+                  href="/tokenomics"
+                  className="px-8 py-4 bg-transparent border-2 border-green-500 text-green-400 font-bold text-lg rounded-xl hover:bg-green-500/10 transition-all text-center"
+                >
+                  View Tokenomics
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -486,38 +502,56 @@ export default function LaunchpadPage() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-gradient-to-br from-blue-900/30 to-blue-800/30 border-2 border-blue-500 rounded-2xl p-8">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="text-5xl">💎</div>
-              <h3 className="text-3xl font-bold text-white">SUSU Savings Circles</h3>
+          <div className="relative bg-gradient-to-br from-blue-900/30 to-blue-800/30 border-2 border-blue-500 rounded-2xl overflow-hidden">
+            <div className="h-48 overflow-hidden">
+              <img 
+                src="/images/susu_savings_circles_visualization.png" 
+                alt="SUSU Savings Circles" 
+                className="w-full h-full object-cover"
+              />
             </div>
-            <p className="text-gray-300 text-lg leading-relaxed mb-4">
-              Community-powered rotating savings groups with smart contract enforcement.
-              Build wealth together with insurance-backed protection.
-            </p>
-            <ul className="space-y-2 text-sm text-gray-300">
-              <li className="flex items-center gap-2"><span className="text-blue-400">•</span> On-chain savings coordination</li>
-              <li className="flex items-center gap-2"><span className="text-blue-400">•</span> Insurance fund protection</li>
-              <li className="flex items-center gap-2"><span className="text-blue-400">•</span> AxiomScore credit building</li>
-              <li className="flex items-center gap-2"><span className="text-blue-400">•</span> Flexible contribution schedules</li>
-            </ul>
+            <div className="p-8">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="text-5xl">💎</div>
+                <h3 className="text-3xl font-bold text-white">SUSU Savings Circles</h3>
+              </div>
+              <p className="text-gray-300 text-lg leading-relaxed mb-4">
+                Community-powered rotating savings groups with smart contract enforcement.
+                Build wealth together with insurance-backed protection.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li className="flex items-center gap-2"><span className="text-blue-400">•</span> On-chain savings coordination</li>
+                <li className="flex items-center gap-2"><span className="text-blue-400">•</span> Insurance fund protection</li>
+                <li className="flex items-center gap-2"><span className="text-blue-400">•</span> AxiomScore credit building</li>
+                <li className="flex items-center gap-2"><span className="text-blue-400">•</span> Flexible contribution schedules</li>
+              </ul>
+            </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-900/30 to-purple-800/30 border-2 border-purple-500 rounded-2xl p-8">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="text-5xl">🔥</div>
-              <h3 className="text-3xl font-bold text-white">Wealth Engine (veAXM)</h3>
+          <div className="relative bg-gradient-to-br from-purple-900/30 to-purple-800/30 border-2 border-purple-500 rounded-2xl overflow-hidden">
+            <div className="h-48 overflow-hidden">
+              <img 
+                src="/images/veaxm_wealth_engine_visual.png" 
+                alt="Wealth Engine veAXM" 
+                className="w-full h-full object-cover"
+              />
             </div>
-            <p className="text-gray-300 text-lg leading-relaxed mb-4">
-              Lock AXM tokens to earn veAXM voting power and protocol rewards.
-              The longer you lock, the more you earn and influence.
-            </p>
-            <ul className="space-y-2 text-sm text-gray-300">
-              <li className="flex items-center gap-2"><span className="text-purple-400">•</span> 1-4 year lock periods</li>
-              <li className="flex items-center gap-2"><span className="text-purple-400">•</span> Time-weighted voting power</li>
-              <li className="flex items-center gap-2"><span className="text-purple-400">•</span> Fee distribution to lockers</li>
-              <li className="flex items-center gap-2"><span className="text-purple-400">•</span> Epoch-based reward claims</li>
-            </ul>
+            <div className="p-8">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="text-5xl">🔥</div>
+                <h3 className="text-3xl font-bold text-white">Wealth Engine (veAXM)</h3>
+              </div>
+              <p className="text-gray-300 text-lg leading-relaxed mb-4">
+                Lock AXM tokens to earn veAXM voting power and protocol rewards.
+                The longer you lock, the more you earn and influence.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li className="flex items-center gap-2"><span className="text-purple-400">•</span> 1-4 year lock periods</li>
+                <li className="flex items-center gap-2"><span className="text-purple-400">•</span> Time-weighted voting power</li>
+                <li className="flex items-center gap-2"><span className="text-purple-400">•</span> Fee distribution to lockers</li>
+                <li className="flex items-center gap-2"><span className="text-purple-400">•</span> Epoch-based reward claims</li>
+              </ul>
+            </div>
           </div>
         </div>
 
