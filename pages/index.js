@@ -581,6 +581,14 @@ export default function Home() {
         className="relative overflow-hidden flash-hero-bg min-h-[90vh] flex items-center"
         style={{ opacity: heroOpacity, scale: heroScale }}
       >
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/images/community_wealth_building_visual.png" 
+            alt="" 
+            className="w-full h-full object-cover opacity-15"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/60 to-white/90"></div>
+        </div>
         <NetworkGrid />
         
         {/* Light theme - no hex pattern needed */}
@@ -690,8 +698,16 @@ export default function Home() {
         </motion.div>
       </motion.section>
 
-      <section className="py-16 lg:py-24 bg-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+      <section className="py-16 lg:py-24 bg-white relative overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/images/financial_education_visual.png" 
+            alt="" 
+            className="w-full h-full object-cover opacity-8"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-white via-white/95 to-white"></div>
+        </div>
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -759,8 +775,16 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-20 lg:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <section className="py-20 lg:py-28 relative overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/images/financial_journey_steps_visual.png" 
+            alt="" 
+            className="w-full h-full object-cover opacity-10"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-white via-white/95 to-white"></div>
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -805,8 +829,16 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <section className="py-20 bg-gray-50 relative overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/images/blockchain_infrastructure_network.png" 
+            alt="" 
+            className="w-full h-full object-cover opacity-8"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-gray-50 via-gray-50/95 to-gray-50"></div>
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
