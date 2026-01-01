@@ -2,6 +2,11 @@ import { SiweMessage } from 'siwe';
 import { ethers } from 'ethers';
 
 const ARBITRUM_CHAIN_ID = 42161;
+const NONCE_RETRY_CONFIG = {
+  maxRetries: 3,
+  baseDelayMs: 500,
+  maxDelayMs: 5000
+};
 
 export interface SIWESession {
   authenticated: boolean;
@@ -21,21 +26,62 @@ class SIWEService {
   private cachedSession: SIWESession | null = null;
   private sessionCheckPromise: Promise<SIWESession> | null = null;
 
+  private async delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private calculateBackoff(attempt: number): number {
+    const delay = NONCE_RETRY_CONFIG.baseDelayMs * Math.pow(2, attempt);
+    return Math.min(delay, NONCE_RETRY_CONFIG.maxDelayMs);
+  }
+
   async getNonce(): Promise<string> {
-    try {
-      const response = await fetch('/api/auth/siwe/nonce');
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('[SIWEService] Nonce request failed:', response.status, errorData);
-        throw new Error(errorData.details || errorData.error || `Nonce request failed (${response.status})`);
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt <= NONCE_RETRY_CONFIG.maxRetries; attempt++) {
+      try {
+        if (attempt > 0) {
+          const backoffMs = this.calculateBackoff(attempt - 1);
+          console.log(`[SIWEService] Retry attempt ${attempt}/${NONCE_RETRY_CONFIG.maxRetries}, waiting ${backoffMs}ms...`);
+          await this.delay(backoffMs);
+        }
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const response = await fetch('/api/auth/siwe/nonce', {
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('[SIWEService] Nonce request failed:', response.status, errorData);
+          throw new Error(errorData.details || errorData.error || `Nonce request failed (${response.status})`);
+        }
+        
+        const data = await response.json();
+        console.log('[SIWEService] Nonce received successfully' + (attempt > 0 ? ` (after ${attempt} retries)` : ''));
+        return data.nonce;
+      } catch (error: any) {
+        lastError = error;
+        const isRetryable = error.name === 'AbortError' || 
+                           error.message?.includes('network') ||
+                           error.message?.includes('fetch') ||
+                           error.message?.includes('timeout') ||
+                           error.message?.includes('500');
+        
+        if (!isRetryable || attempt === NONCE_RETRY_CONFIG.maxRetries) {
+          console.error(`[SIWEService] getNonce failed after ${attempt + 1} attempts:`, error.message);
+          break;
+        }
+        
+        console.warn(`[SIWEService] Nonce request failed (attempt ${attempt + 1}), will retry:`, error.message);
       }
-      const data = await response.json();
-      console.log('[SIWEService] Nonce received successfully');
-      return data.nonce;
-    } catch (error: any) {
-      console.error('[SIWEService] getNonce error:', error.message);
-      throw new Error(`Failed to get nonce: ${error.message}`);
     }
+    
+    throw new Error(`Failed to get nonce after ${NONCE_RETRY_CONFIG.maxRetries + 1} attempts: ${lastError?.message || 'Unknown error'}`);
   }
 
   async createSiweMessage(address: string, chainId: number = ARBITRUM_CHAIN_ID): Promise<string> {
