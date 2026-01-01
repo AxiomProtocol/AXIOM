@@ -29,34 +29,54 @@ function parseCookies(cookieHeader: string | undefined): Record<string, string> 
 }
 
 async function verifySiweSession(req: NextApiRequest): Promise<{ authenticated: boolean; address: string | null }> {
-  try {
-    const cookies = parseCookies(req.headers.cookie);
-    const sessionToken = cookies['siwe_session'];
-    
-    if (!sessionToken) {
-      return { authenticated: false, address: null };
-    }
-    
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        `SELECT wallet_address FROM wallet_sessions 
-         WHERE session_token = $1 AND expires_at > NOW()`,
-        [sessionToken]
-      );
-      
-      if (result.rows.length === 0) {
-        return { authenticated: false, address: null };
-      }
-      
-      return { authenticated: true, address: result.rows[0].wallet_address };
-    } finally {
-      client.release();
-    }
-  } catch (error) {
-    console.error('SIWE session verification error:', error);
+  const cookies = parseCookies(req.headers.cookie);
+  const sessionToken = cookies['siwe_session'];
+  
+  if (!sessionToken) {
     return { authenticated: false, address: null };
   }
+  
+  const maxRetries = 3;
+  const baseDelayMs = 300;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = baseDelayMs * Math.pow(2, attempt - 1);
+        console.log(`[verifySiweSession] Retry ${attempt}/${maxRetries}, waiting ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+      
+      const client = await pool.connect();
+      try {
+        const result = await client.query(
+          `SELECT wallet_address FROM wallet_sessions 
+           WHERE session_token = $1 AND expires_at > NOW()`,
+          [sessionToken]
+        );
+        
+        if (result.rows.length === 0) {
+          return { authenticated: false, address: null };
+        }
+        
+        if (attempt > 0) {
+          console.log(`[verifySiweSession] Success after ${attempt} retries`);
+        }
+        return { authenticated: true, address: result.rows[0].wallet_address };
+      } finally {
+        client.release();
+      }
+    } catch (error: any) {
+      console.error(`[verifySiweSession] Attempt ${attempt + 1} failed:`, error.message);
+      
+      if (attempt === maxRetries) {
+        console.error('[verifySiweSession] All retries exhausted');
+        return { authenticated: false, address: null };
+      }
+    }
+  }
+  
+  return { authenticated: false, address: null };
 }
 
 function isValidEthAddress(address: string): boolean {
