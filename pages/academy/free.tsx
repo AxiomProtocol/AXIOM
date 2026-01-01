@@ -163,6 +163,101 @@ const FREE_COURSES = [
       'Contributing to Projects',
       'Building Your Reputation'
     ]
+  },
+  {
+    id: 17,
+    slug: 'money-mindset-foundations',
+    title: 'Your Relationship with Money',
+    description: 'Transform your money story. Uncover inherited beliefs, rewrite limiting narratives, and build a healthy relationship with wealth.',
+    icon: '💭',
+    category: 'Finance',
+    difficulty: 'beginner',
+    durationMinutes: 50,
+    lessonsCount: 6,
+    lessons: [
+      'Your Relationship with Money',
+      'The Power of Paying Yourself First',
+      'Budgeting Without the Struggle',
+      'Understanding Debt: Friend or Foe?',
+      'Building Credit That Works for You',
+      'The Compound Effect'
+    ]
+  },
+  {
+    id: 18,
+    slug: 'crypto-blockchain-essentials',
+    title: 'Crypto & Blockchain Demystified',
+    description: 'Understand digital money from the ground up. From Bitcoin to DeFi, master the new financial frontier.',
+    icon: '⛓️',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 55,
+    lessonsCount: 6,
+    lessons: [
+      'What is Money, Really?',
+      'Bitcoin: Digital Gold Explained',
+      'Blockchain: The Trust Machine',
+      'Your First Wallet: Owning Your Keys',
+      'Beyond Bitcoin: The Token Universe',
+      'DeFi: Banking Without Banks'
+    ]
+  },
+  {
+    id: 19,
+    slug: 'prosperity-consciousness',
+    title: 'Prosperity Consciousness',
+    description: 'Rev Ike-inspired teachings on abundance. Break poverty consciousness and embrace your divine right to wealth.',
+    icon: '✨',
+    category: 'Mindset',
+    difficulty: 'beginner',
+    durationMinutes: 60,
+    lessonsCount: 6,
+    lessons: [
+      'You Deserve to Be Rich',
+      'The Science of Mind Power',
+      'Money Loves Me: Prosperity Affirmations',
+      'Giving to Get: The Circulation Principle',
+      'Green Power: Money as a Tool for Good',
+      'Visualization & Acting As If'
+    ]
+  },
+  {
+    id: 20,
+    slug: 'manifestation-wealth-mindset',
+    title: 'Manifestation & Wealth Mindset',
+    description: 'Master the spiritual principles of abundance. Learn to attract wealth through intention, gratitude, and aligned action.',
+    icon: '🌟',
+    category: 'Mindset',
+    difficulty: 'beginner',
+    durationMinutes: 55,
+    lessonsCount: 6,
+    lessons: [
+      'The Law of Attraction Explained',
+      'Scripting Your Financial Future',
+      'Gratitude as a Wealth Multiplier',
+      'Releasing Blocks to Receiving',
+      'The Prosperity Prayer',
+      'Creating Your Daily Prosperity Ritual'
+    ]
+  },
+  {
+    id: 21,
+    slug: 'wealth-practice-mastery',
+    title: 'The Wealth Practice Integration',
+    description: 'Connect mindset to action through SUSU circles. Build discipline, community, and generational wealth together.',
+    icon: '🎯',
+    category: 'Community',
+    difficulty: 'beginner',
+    durationMinutes: 50,
+    lessonsCount: 6,
+    lessons: [
+      'Discipline: The Bridge Between Dreams and Reality',
+      'Community Wealth: Rising Together',
+      'Accountability as Love',
+      'Building Your AxiomScore',
+      'From Saver to Investor',
+      'Generational Wealth Thinking'
+    ]
   }
 ];
 
