@@ -22,12 +22,20 @@ class SIWEService {
   private sessionCheckPromise: Promise<SIWESession> | null = null;
 
   async getNonce(): Promise<string> {
-    const response = await fetch('/api/auth/siwe/nonce');
-    if (!response.ok) {
-      throw new Error('Failed to get nonce');
+    try {
+      const response = await fetch('/api/auth/siwe/nonce');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[SIWEService] Nonce request failed:', response.status, errorData);
+        throw new Error(errorData.details || errorData.error || `Nonce request failed (${response.status})`);
+      }
+      const data = await response.json();
+      console.log('[SIWEService] Nonce received successfully');
+      return data.nonce;
+    } catch (error: any) {
+      console.error('[SIWEService] getNonce error:', error.message);
+      throw new Error(`Failed to get nonce: ${error.message}`);
     }
-    const data = await response.json();
-    return data.nonce;
   }
 
   async createSiweMessage(address: string, chainId: number = ARBITRUM_CHAIN_ID): Promise<string> {
