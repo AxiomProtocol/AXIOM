@@ -226,71 +226,6 @@ const STARTER_COURSES: Course[] = [
     lessonsCount: 4,
     requiredTier: 'free',
     isFeatured: false
-  },
-  {
-    id: 17,
-    slug: 'money-mindset-foundations',
-    title: 'Your Relationship with Money',
-    description: 'Transform your money story. Uncover inherited beliefs, rewrite limiting narratives, and build a healthy relationship with wealth.',
-    thumbnailUrl: '/images/courses/money-mindset.jpg',
-    category: 'Finance',
-    difficulty: 'beginner',
-    durationMinutes: 50,
-    lessonsCount: 6,
-    requiredTier: 'free',
-    isFeatured: true
-  },
-  {
-    id: 18,
-    slug: 'crypto-blockchain-essentials',
-    title: 'Crypto & Blockchain Demystified',
-    description: 'Understand digital money from the ground up. From Bitcoin to DeFi, master the new financial frontier.',
-    thumbnailUrl: '/images/courses/crypto-essentials.jpg',
-    category: 'Blockchain',
-    difficulty: 'beginner',
-    durationMinutes: 55,
-    lessonsCount: 6,
-    requiredTier: 'free',
-    isFeatured: true
-  },
-  {
-    id: 19,
-    slug: 'prosperity-consciousness',
-    title: 'Prosperity Consciousness',
-    description: 'Rev Ike-inspired teachings on abundance. Break poverty consciousness and embrace your divine right to wealth.',
-    thumbnailUrl: '/images/courses/prosperity.jpg',
-    category: 'Mindset',
-    difficulty: 'beginner',
-    durationMinutes: 60,
-    lessonsCount: 6,
-    requiredTier: 'free',
-    isFeatured: true
-  },
-  {
-    id: 20,
-    slug: 'manifestation-wealth-mindset',
-    title: 'Manifestation & Wealth Mindset',
-    description: 'Master the spiritual principles of abundance. Learn to attract wealth through intention, gratitude, and aligned action.',
-    thumbnailUrl: '/images/courses/manifestation.jpg',
-    category: 'Mindset',
-    difficulty: 'beginner',
-    durationMinutes: 55,
-    lessonsCount: 6,
-    requiredTier: 'free',
-    isFeatured: false
-  },
-  {
-    id: 21,
-    slug: 'wealth-practice-mastery',
-    title: 'The Wealth Practice Integration',
-    description: 'Connect mindset to action through SUSU circles. Build discipline, community, and generational wealth together.',
-    thumbnailUrl: '/images/courses/wealth-practice.jpg',
-    category: 'Community',
-    difficulty: 'beginner',
-    durationMinutes: 50,
-    lessonsCount: 6,
-    requiredTier: 'free',
-    isFeatured: true
   }
 ];
 
@@ -385,7 +320,7 @@ export default function Academy() {
     }
   };
 
-  const categories = ['all', 'Real Estate', 'Finance', 'Blockchain', 'Community', 'Governance', 'Mindset'];
+  const categories = ['all', 'Real Estate', 'Finance', 'Blockchain', 'Community', 'Governance'];
 
   const filteredCourses = selectedCategory === 'all' 
     ? STARTER_COURSES 
@@ -644,11 +579,11 @@ export default function Academy() {
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-4 gap-8 text-center">
               <div>
-                <p className="text-4xl font-bold text-yellow-600 mb-2">21+</p>
+                <p className="text-4xl font-bold text-yellow-600 mb-2">16+</p>
                 <p className="text-gray-600">Courses Available</p>
               </div>
               <div>
-                <p className="text-4xl font-bold text-yellow-600 mb-2">100+</p>
+                <p className="text-4xl font-bold text-yellow-600 mb-2">70+</p>
                 <p className="text-gray-600">Video Lessons</p>
               </div>
               <div>
