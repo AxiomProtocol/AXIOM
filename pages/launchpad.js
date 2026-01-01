@@ -298,10 +298,10 @@ export default function LaunchpadPage() {
             <div className="text-center mb-6">
               <div className="flex items-center justify-center gap-2 mb-3">
                 <span className="text-3xl">📧</span>
-                <h3 className="text-2xl font-bold text-white">Get TGE Launch Notifications</h3>
+                <h3 className="text-2xl font-bold text-white">Stay Updated on TGE Milestones</h3>
               </div>
               <p className="text-gray-300 text-lg">
-                Be the first to know when the Token Generation Event goes live.
+                Get notified about TGE progress, new features, and exclusive opportunities.
               </p>
             </div>
 
@@ -351,14 +351,14 @@ export default function LaunchpadPage() {
                     type="submit"
                     className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-8 py-4 rounded-lg font-bold text-lg shadow-lg transition-all"
                   >
-                    Join Whitelist
+                    Get Updates
                   </button>
                 </div>
                 {emailError && (
                   <p className="text-red-400 text-sm mt-3 text-center">{emailError}</p>
                 )}
                 <p className="text-gray-400 text-sm mt-4 text-center">
-                  * Required fields. Wallet address is optional but recommended for whitelist eligibility.
+                  * Required fields. Wallet address is optional but recommended for early access to new features.
                 </p>
               </form>
             ) : (
@@ -366,7 +366,7 @@ export default function LaunchpadPage() {
                 <div className="text-5xl mb-4">✅</div>
                 <h4 className="text-2xl font-bold text-green-400 mb-2">You're All Set!</h4>
                 <p className="text-gray-300 text-lg">
-                  We'll send you TGE launch notifications and exclusive early access information.
+                  We'll send you TGE milestone updates and exclusive protocol news.
                 </p>
               </div>
             )}
