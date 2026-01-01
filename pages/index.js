@@ -583,11 +583,11 @@ export default function Home() {
       >
         <div className="absolute inset-0 z-0">
           <img 
-            src="/images/community_wealth_building_visual.png" 
+            src="/images/golden_blockchain_network_hero.png" 
             alt="" 
-            className="w-full h-full object-cover opacity-15"
+            className="w-full h-full object-cover opacity-40"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/60 to-white/90"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/40 to-white/70"></div>
         </div>
         <NetworkGrid />
         
@@ -701,11 +701,11 @@ export default function Home() {
       <section className="py-16 lg:py-24 bg-white relative overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src="/images/financial_education_visual.png" 
+            src="/images/susu_savings_circle_hands.png" 
             alt="" 
-            className="w-full h-full object-cover opacity-8"
+            className="w-full h-full object-cover opacity-30"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-white via-white/95 to-white"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/50 to-white/80"></div>
         </div>
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6">
           <motion.div
@@ -778,11 +778,11 @@ export default function Home() {
       <section className="py-20 lg:py-28 relative overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src="/images/financial_journey_steps_visual.png" 
+            src="/images/wealth_journey_ascending_stairs.png" 
             alt="" 
-            className="w-full h-full object-cover opacity-10"
+            className="w-full h-full object-cover opacity-35"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-white via-white/95 to-white"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/50 to-white/70"></div>
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
           <motion.div
@@ -832,11 +832,11 @@ export default function Home() {
       <section className="py-20 bg-gray-50 relative overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src="/images/blockchain_infrastructure_network.png" 
+            src="/images/smart_contracts_gold_grid.png" 
             alt="" 
-            className="w-full h-full object-cover opacity-8"
+            className="w-full h-full object-cover opacity-30"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-gray-50 via-gray-50/95 to-gray-50"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-gray-50/70 via-gray-50/60 to-gray-50/80"></div>
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
           <motion.div
