@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import DisclosureBanner from '../components/DisclosureBanner';
 import StepProgressBanner from '../components/StepProgressBanner';
 
 const USE_OF_PROCEEDS = [
-  { name: 'Community Infrastructure', percentage: 35, color: '#f59e0b', description: 'DePIN nodes, IoT networks, energy grids, and physical infrastructure development' },
-  { name: 'Technology Development', percentage: 25, color: '#3b82f6', description: 'Smart contract development, security audits, platform engineering, and L3 chain launch' },
+  { name: 'DeFi Protocol Development', percentage: 35, color: '#f59e0b', description: 'Smart contract development, security audits, veAXM tokenomics, and Wealth Engine infrastructure' },
+  { name: 'Technology & Security', percentage: 25, color: '#3b82f6', description: 'Platform engineering, on-chain credit scoring, SUSU insurance fund, and L3 chain launch' },
   { name: 'Liquidity & DEX', percentage: 15, color: '#8b5cf6', description: 'DEX liquidity pools, market making, and cross-chain bridge reserves' },
-  { name: 'Real Estate Acquisition', percentage: 10, color: '#10b981', description: 'Land purchases, property tokenization, and development permits' },
-  { name: 'Marketing & Growth', percentage: 10, color: '#ec4899', description: 'Community building, partnerships, PR, and user acquisition' },
+  { name: 'Treasury & Reserves', percentage: 10, color: '#10b981', description: 'Protocol reserves, insurance fund backing, and community grants' },
+  { name: 'Marketing & Growth', percentage: 10, color: '#ec4899', description: 'Community building, partnerships, Academy expansion, and user acquisition' },
   { name: 'Operations & Legal', percentage: 5, color: '#6b7280', description: 'Compliance, legal structure, regulatory filings, and operational costs' },
 ];
 
@@ -23,14 +23,14 @@ const TOKEN_ALLOCATION = [
 ];
 
 const TGE_BENEFITS = [
-  { icon: '💰', title: 'Early Access Pricing', description: 'Participate at 1:1 ratio before public listing. Early supporters get the best price.' },
-  { icon: '🗳️', title: 'Governance Rights (ERC20Votes)', description: 'Vote on protocol decisions, fee adjustments, vault allocations, and treasury spending.' },
-  { icon: '📈', title: 'Staking Rewards', description: 'Stake your AXM for variable protocol rewards. Earn from day one.' },
-  { icon: '🏠', title: 'Real Utility', description: 'Access KeyGrow rent-to-own, fractional real estate, DePIN rewards, and community services.' },
+  { icon: '💰', title: 'TGE Pricing', description: 'Participate at launch pricing. Early supporters get the best entry point.' },
+  { icon: '🗳️', title: 'Governance Rights (veAXM)', description: 'Lock AXM for veAXM voting power. Shape protocol decisions, fee adjustments, and treasury spending.' },
+  { icon: '📈', title: 'Wealth Engine Rewards', description: 'Stake and lock AXM in the Wealth Engine for variable protocol rewards.' },
+  { icon: '🛡️', title: 'On-Chain Credit Score', description: 'Build your AxiomScore (300-850) through SUSU participation and protocol activity.' },
   { icon: '⚡', title: 'Ultra-Low Fees', description: 'Built on Arbitrum One. Gas fees significantly lower than Ethereum mainnet.' },
   { icon: '🔐', title: 'Enterprise-Grade Security', description: 'Pausable in emergencies, role-based access control, and anti-whale protection.' },
-  { icon: '✍️', title: 'Gasless Approvals (ERC20Permit)', description: 'Save on gas with signature-based approvals. No separate approval transactions needed.' },
-  { icon: '🏆', title: 'Proven Team', description: '29 deployed smart contracts on Arbitrum One. Real revenue. Real utility. Real assets.' },
+  { icon: '💎', title: 'SUSU Savings Circles', description: 'Join community savings groups with smart contract enforcement and insurance protection.' },
+  { icon: '🏆', title: 'Proven Protocol', description: '29 verified smart contracts on Arbitrum One. Real utility. Transparent treasury.' },
 ];
 
 const COUNTRIES = [
@@ -53,40 +53,12 @@ const INVESTMENT_RANGES = [
 ];
 
 export default function LaunchpadPage() {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
   const [email, setEmail] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
   const [country, setCountry] = useState('');
   const [investmentInterest, setInvestmentInterest] = useState('');
   const [emailSubmitted, setEmailSubmitted] = useState(false);
   const [emailError, setEmailError] = useState('');
-
-  useEffect(() => {
-    const targetDate = new Date('2026-01-01T00:00:00Z').getTime();
-
-    const updateCountdown = () => {
-      const now = new Date().getTime();
-      const difference = targetDate - now;
-
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((difference % (1000 * 60)) / 1000)
-        });
-      }
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   const handleShare = (platform) => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -214,9 +186,9 @@ export default function LaunchpadPage() {
             />
           </div>
           <div className="inline-block mb-8">
-            <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-2 border-amber-500 rounded-full px-8 py-3">
-              <span className="text-amber-400 font-bold flex items-center gap-2">
-                🎯 LAUNCHING JANUARY 1, 2026
+            <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500 rounded-full px-8 py-3 animate-pulse">
+              <span className="text-green-400 font-bold flex items-center gap-2">
+                🚀 TGE IS NOW LIVE
               </span>
             </div>
           </div>
@@ -234,8 +206,8 @@ export default function LaunchpadPage() {
           </h2>
 
           <p className="text-xl text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed">
-            Join the community-first wealth-building platform. 15 billion hard-capped AXM tokens powering 
-            real estate, DePIN infrastructure, and transparent financial coordination on Arbitrum One.
+            Join the community-first DeFi Treasury platform. 15 billion hard-capped AXM tokens powering 
+            savings circles, on-chain credit scoring, and transparent wealth coordination on Arbitrum One.
           </p>
 
           {/* TGE Introduction Video */}
@@ -268,12 +240,12 @@ export default function LaunchpadPage() {
               <div className="text-sm text-gray-400">Total Supply</div>
             </div>
             <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-              <div className="text-3xl font-bold text-amber-400 mb-1">23</div>
+              <div className="text-3xl font-bold text-amber-400 mb-1">29</div>
               <div className="text-sm text-gray-400">Smart Contracts</div>
             </div>
             <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-              <div className="text-3xl font-bold text-amber-400 mb-1">1,000</div>
-              <div className="text-sm text-gray-400">Acres of Land</div>
+              <div className="text-3xl font-bold text-amber-400 mb-1">veAXM</div>
+              <div className="text-sm text-gray-400">Vote-Escrow System</div>
             </div>
           </div>
 
@@ -298,36 +270,27 @@ export default function LaunchpadPage() {
             </button>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 border-2 border-amber-500 rounded-2xl max-w-4xl mx-auto p-8 mb-8">
+          <div className="bg-gradient-to-br from-green-900/50 to-emerald-900/50 border-2 border-green-500 rounded-2xl max-w-4xl mx-auto p-8 mb-8">
             <div className="flex items-center justify-center gap-2 mb-6">
-              <span className="text-2xl">🎯</span>
-              <h3 className="text-2xl font-bold text-white">TGE Launches In:</h3>
+              <span className="text-4xl">🚀</span>
+              <h3 className="text-3xl font-bold text-green-400">TGE IS NOW LIVE!</h3>
             </div>
-            <div className="grid grid-cols-4 gap-4 md:gap-8">
-              <div>
-                <div className="text-5xl md:text-6xl font-bold text-amber-400 mb-2">
-                  {timeLeft.days}
-                </div>
-                <div className="text-sm text-gray-400 uppercase tracking-wider">Days</div>
-              </div>
-              <div>
-                <div className="text-5xl md:text-6xl font-bold text-blue-400 mb-2">
-                  {timeLeft.hours}
-                </div>
-                <div className="text-sm text-gray-400 uppercase tracking-wider">Hours</div>
-              </div>
-              <div>
-                <div className="text-5xl md:text-6xl font-bold text-purple-400 mb-2">
-                  {timeLeft.minutes}
-                </div>
-                <div className="text-sm text-gray-400 uppercase tracking-wider">Minutes</div>
-              </div>
-              <div>
-                <div className="text-5xl md:text-6xl font-bold text-pink-400 mb-2">
-                  {timeLeft.seconds}
-                </div>
-                <div className="text-sm text-gray-400 uppercase tracking-wider">Seconds</div>
-              </div>
+            <p className="text-center text-gray-300 text-lg mb-6">
+              The Axiom Token Generation Event has officially launched. Join thousands of early supporters building wealth through community.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/buy-axm"
+                className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold text-lg rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all shadow-lg text-center"
+              >
+                Buy AXM Now
+              </Link>
+              <Link
+                href="/tokenomics"
+                className="px-8 py-4 bg-transparent border-2 border-green-500 text-green-400 font-bold text-lg rounded-xl hover:bg-green-500/10 transition-all text-center"
+              >
+                View Tokenomics
+              </Link>
             </div>
           </div>
 
@@ -525,35 +488,35 @@ export default function LaunchpadPage() {
         <div className="grid md:grid-cols-2 gap-8">
           <div className="bg-gradient-to-br from-blue-900/30 to-blue-800/30 border-2 border-blue-500 rounded-2xl p-8">
             <div className="flex items-center gap-4 mb-4">
-              <div className="text-5xl">🏛️</div>
-              <h3 className="text-3xl font-bold text-white">Real Estate DeFi</h3>
+              <div className="text-5xl">💎</div>
+              <h3 className="text-3xl font-bold text-white">SUSU Savings Circles</h3>
             </div>
             <p className="text-gray-300 text-lg leading-relaxed mb-4">
-              Fractional ownership of real-world properties powered by smart contracts. 
-              Earn passive income from rental yields and appreciation across 1,000 acres.
+              Community-powered rotating savings groups with smart contract enforcement.
+              Build wealth together with insurance-backed protection.
             </p>
             <ul className="space-y-2 text-sm text-gray-300">
-              <li className="flex items-center gap-2"><span className="text-blue-400">•</span> Tokenized land parcels</li>
-              <li className="flex items-center gap-2"><span className="text-blue-400">•</span> On-chain property registry</li>
-              <li className="flex items-center gap-2"><span className="text-blue-400">•</span> Automated rent distribution</li>
-              <li className="flex items-center gap-2"><span className="text-blue-400">•</span> Smart lease management</li>
+              <li className="flex items-center gap-2"><span className="text-blue-400">•</span> On-chain savings coordination</li>
+              <li className="flex items-center gap-2"><span className="text-blue-400">•</span> Insurance fund protection</li>
+              <li className="flex items-center gap-2"><span className="text-blue-400">•</span> AxiomScore credit building</li>
+              <li className="flex items-center gap-2"><span className="text-blue-400">•</span> Flexible contribution schedules</li>
             </ul>
           </div>
 
           <div className="bg-gradient-to-br from-purple-900/30 to-purple-800/30 border-2 border-purple-500 rounded-2xl p-8">
             <div className="flex items-center gap-4 mb-4">
-              <div className="text-5xl">⚡</div>
-              <h3 className="text-3xl font-bold text-white">DePIN Infrastructure</h3>
+              <div className="text-5xl">🔥</div>
+              <h3 className="text-3xl font-bold text-white">Wealth Engine (veAXM)</h3>
             </div>
             <p className="text-gray-300 text-lg leading-relaxed mb-4">
-              Power the decentralized physical infrastructure network. Run nodes, earn rewards, 
-              and build the future of the community ecosystem.
+              Lock AXM tokens to earn veAXM voting power and protocol rewards.
+              The longer you lock, the more you earn and influence.
             </p>
             <ul className="space-y-2 text-sm text-gray-300">
-              <li className="flex items-center gap-2"><span className="text-purple-400">•</span> 5 node tiers available</li>
-              <li className="flex items-center gap-2"><span className="text-purple-400">•</span> Validator, storage, compute nodes</li>
-              <li className="flex items-center gap-2"><span className="text-purple-400">•</span> IoT sensor networks</li>
-              <li className="flex items-center gap-2"><span className="text-purple-400">•</span> Energy grid integration</li>
+              <li className="flex items-center gap-2"><span className="text-purple-400">•</span> 1-4 year lock periods</li>
+              <li className="flex items-center gap-2"><span className="text-purple-400">•</span> Time-weighted voting power</li>
+              <li className="flex items-center gap-2"><span className="text-purple-400">•</span> Fee distribution to lockers</li>
+              <li className="flex items-center gap-2"><span className="text-purple-400">•</span> Epoch-based reward claims</li>
             </ul>
           </div>
         </div>
@@ -658,21 +621,21 @@ export default function LaunchpadPage() {
           <div className="text-6xl mb-6">🚀</div>
           <h3 className="text-4xl font-bold text-white mb-4">Ready to Join?</h3>
           <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Be part of building the Axiom community economy. Join thousands of early 
-            supporters shaping the future of wealth-building through discipline and structure.
+            Be part of building the Axiom DeFi Treasury. Join thousands of early 
+            supporters shaping the future of community wealth coordination.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/axiom-nodes"
+              href="/buy-axm"
               className="px-10 py-5 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-lg rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg"
             >
-              Become a Node Operator
+              Buy AXM Now
             </Link>
             <Link
-              href="/tokenomics"
+              href="/susu"
               className="px-10 py-5 bg-transparent border-2 border-white text-white font-bold text-lg rounded-xl hover:bg-white/10 transition-all"
             >
-              View Full Tokenomics
+              Join a Savings Circle
             </Link>
           </div>
         </div>
@@ -693,7 +656,7 @@ export default function LaunchpadPage() {
             <Link href="/terms-and-conditions" className="hover:text-white transition-colors">Terms</Link>
             <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy</Link>
           </div>
-          <p className="text-xs mt-6">© 2025 Axiom Protocol. All rights reserved.</p>
+          <p className="text-xs mt-6">© 2026 Axiom Protocol. All rights reserved.</p>
         </div>
       </footer>
     </div>
