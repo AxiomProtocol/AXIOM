@@ -171,7 +171,7 @@ export default function AboutUs() {
             <div className="text-gray-600">Acres of Land</div>
           </div>
           <div className="bg-gradient-to-br from-amber-50 to-white border border-amber-200 rounded-2xl p-6 text-center">
-            <div className="text-4xl font-bold text-amber-600 mb-2">23</div>
+            <div className="text-4xl font-bold text-amber-600 mb-2">29</div>
             <div className="text-gray-600">Smart Contracts</div>
           </div>
           <div className="bg-gradient-to-br from-amber-50 to-white border border-amber-200 rounded-2xl p-6 text-center">
@@ -181,6 +181,80 @@ export default function AboutUs() {
           <div className="bg-gradient-to-br from-amber-50 to-white border border-amber-200 rounded-2xl p-6 text-center">
             <div className="text-4xl font-bold text-amber-600 mb-2">30+</div>
             <div className="text-gray-600">DeFi Products</div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 md:p-12 mb-16">
+          <h2 className="text-3xl font-bold text-white mb-6 text-center">Official AXM Token Contract</h2>
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-6">
+              <div className="grid md:grid-cols-2 gap-4 text-sm mb-6">
+                <div className="p-4 bg-gray-900/50 rounded-lg">
+                  <span className="block text-gray-400 text-xs mb-1">Token Name</span>
+                  <span className="font-bold text-white text-lg">Axiom Protocol Token</span>
+                </div>
+                <div className="p-4 bg-gray-900/50 rounded-lg">
+                  <span className="block text-gray-400 text-xs mb-1">Token Symbol</span>
+                  <span className="font-bold text-amber-400 text-lg">AXM</span>
+                </div>
+                <div className="p-4 bg-gray-900/50 rounded-lg">
+                  <span className="block text-gray-400 text-xs mb-1">Network</span>
+                  <span className="font-bold text-white">Arbitrum One</span>
+                </div>
+                <div className="p-4 bg-gray-900/50 rounded-lg">
+                  <span className="block text-gray-400 text-xs mb-1">Chain ID</span>
+                  <span className="font-bold text-white">42161</span>
+                </div>
+                <div className="p-4 bg-gray-900/50 rounded-lg">
+                  <span className="block text-gray-400 text-xs mb-1">Token Standard</span>
+                  <span className="font-bold text-white">ERC-20</span>
+                </div>
+                <div className="p-4 bg-gray-900/50 rounded-lg">
+                  <span className="block text-gray-400 text-xs mb-1">Decimals</span>
+                  <span className="font-bold text-white">18</span>
+                </div>
+                <div className="p-4 bg-gray-900/50 rounded-lg">
+                  <span className="block text-gray-400 text-xs mb-1">Total Supply</span>
+                  <span className="font-bold text-white">15,000,000,000 AXM</span>
+                </div>
+                <div className="p-4 bg-gray-900/50 rounded-lg">
+                  <span className="block text-gray-400 text-xs mb-1">Contract Status</span>
+                  <span className="font-bold text-green-400">Verified ✓</span>
+                </div>
+              </div>
+              <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <span className="block text-amber-400 text-xs mb-2 font-semibold">Contract Address</span>
+                <code className="text-amber-300 font-mono text-sm md:text-base break-all">
+                  0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D
+                </code>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                <a 
+                  href="https://arbitrum.blockscout.com/address/0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 px-4 py-3 bg-amber-500 text-white font-bold rounded-lg text-center hover:bg-amber-600 transition-colors"
+                >
+                  View on Blockscout
+                </a>
+                <a 
+                  href="https://arbitrum.blockscout.com/address/0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D?tab=contract"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 px-4 py-3 bg-gray-700 text-white font-bold rounded-lg text-center hover:bg-gray-600 transition-colors"
+                >
+                  Verified Source Code
+                </a>
+                <a 
+                  href="https://arbitrum.blockscout.com/token/0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 px-4 py-3 bg-gray-700 text-white font-bold rounded-lg text-center hover:bg-gray-600 transition-colors"
+                >
+                  Token Holders
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 
