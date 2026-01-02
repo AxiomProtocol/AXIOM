@@ -76,7 +76,9 @@ class SIWEService {
                            error.message?.includes('network') ||
                            error.message?.includes('fetch') ||
                            error.message?.includes('timeout') ||
-                           error.message?.includes('500');
+                           error.message?.includes('500') ||
+                           error.message?.includes('503') ||
+                           error.message?.includes('unavailable');
         
         if (!isRetryable || attempt === NONCE_RETRY_CONFIG.maxRetries) {
           console.error(`[SIWEService] getNonce failed after ${attempt + 1} attempts:`, error.message);

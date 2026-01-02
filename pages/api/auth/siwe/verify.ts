@@ -2,40 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { SiweMessage } from 'siwe';
 import { pool } from '../../../../server/db';
 import * as crypto from 'crypto';
-import { inMemoryNonces } from './nonce';
 
 const ARBITRUM_CHAIN_ID = 42161;
-
-async function validateNonce(nonce: string): Promise<boolean> {
-  if (inMemoryNonces.has(nonce)) {
-    const expiresAt = inMemoryNonces.get(nonce)!;
-    if (expiresAt > Date.now()) {
-      return true;
-    }
-    inMemoryNonces.delete(nonce);
-  }
-  
-  try {
-    const result = await pool.query(
-      `SELECT nonce FROM siwe_nonces WHERE nonce = $1 AND expires_at > NOW()`,
-      [nonce]
-    );
-    return result.rows.length > 0;
-  } catch (error) {
-    console.warn('[SIWE Verify] DB check failed, using memory only:', (error as Error).message);
-    return false;
-  }
-}
-
-async function consumeNonce(nonce: string): Promise<void> {
-  inMemoryNonces.delete(nonce);
-  
-  try {
-    await pool.query(`DELETE FROM siwe_nonces WHERE nonce = $1`, [nonce]);
-  } catch (error) {
-    console.warn('[SIWE Verify] DB delete failed:', (error as Error).message);
-  }
-}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -76,8 +44,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
     
-    const isValidNonce = await validateNonce(nonce);
-    if (!isValidNonce) {
+    const nonceResult = await pool.query(
+      `SELECT nonce FROM siwe_nonces WHERE nonce = $1 AND expires_at > NOW()`,
+      [nonce]
+    );
+    
+    if (nonceResult.rows.length === 0) {
       return res.status(400).json({ 
         error: 'Invalid or expired nonce. Please request a new one.',
         code: 'NONCE_INVALID'
@@ -97,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
     
-    await consumeNonce(nonce);
+    await pool.query(`DELETE FROM siwe_nonces WHERE nonce = $1`, [nonce]);
     
     const sessionToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);

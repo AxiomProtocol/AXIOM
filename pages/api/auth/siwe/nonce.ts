@@ -3,59 +3,65 @@ import { generateNonce } from 'siwe';
 import { pool } from '../../../../server/db';
 
 const MESSAGE_EXPIRY_MS = 5 * 60 * 1000;
-const CONNECTION_TIMEOUT_MS = 8000;
+const DB_TIMEOUT_MS = 12000;
 
-const inMemoryNonces = new Map<string, number>();
-const MAX_MEMORY_NONCES = 100;
+let poolWarmedUp = false;
 
-interface NeonError extends Error {
-  code?: string;
-  detail?: string;
-  hint?: string;
-}
-
-function cleanupMemoryNonces() {
-  const now = Date.now();
-  for (const [nonce, expiresAt] of inMemoryNonces.entries()) {
-    if (expiresAt < now) {
-      inMemoryNonces.delete(nonce);
-    }
-  }
-  if (inMemoryNonces.size > MAX_MEMORY_NONCES) {
-    const entries = Array.from(inMemoryNonces.entries());
-    entries.sort((a, b) => a[1] - b[1]);
-    for (let i = 0; i < entries.length - MAX_MEMORY_NONCES; i++) {
-      inMemoryNonces.delete(entries[i][0]);
-    }
-  }
-}
-
-async function storeNonceInDb(nonce: string, expiresAt: Date): Promise<boolean> {
-  const queryStart = Date.now();
+async function warmUpPool(): Promise<void> {
+  if (poolWarmedUp) return;
   
   try {
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('DB_TIMEOUT')), CONNECTION_TIMEOUT_MS);
-    });
-    
-    const queryPromise = pool.query(
-      `WITH cleanup AS (
-        DELETE FROM siwe_nonces WHERE expires_at < NOW()
-      )
-      INSERT INTO siwe_nonces (nonce, expires_at) 
-      VALUES ($1, $2)
-      RETURNING id`,
-      [nonce, expiresAt]
-    );
-    
-    await Promise.race([queryPromise, timeoutPromise]);
-    console.log(`[SIWE Nonce] DB stored nonce in ${Date.now() - queryStart}ms`);
-    return true;
-    
-  } catch (error: any) {
-    console.warn(`[SIWE Nonce] DB storage failed after ${Date.now() - queryStart}ms:`, error.message);
-    return false;
+    await pool.query('SELECT 1');
+    poolWarmedUp = true;
+    console.log('[SIWE Nonce] Connection pool warmed up');
+  } catch (error) {
+    console.warn('[SIWE Nonce] Pool warm-up failed:', (error as Error).message);
   }
+}
+
+async function storeNonceWithRetry(nonce: string, expiresAt: Date, maxRetries = 2): Promise<boolean> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const queryStart = Date.now();
+    
+    try {
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('DB_TIMEOUT')), DB_TIMEOUT_MS);
+      });
+      
+      const queryPromise = pool.query(
+        `WITH cleanup AS (
+          DELETE FROM siwe_nonces WHERE expires_at < NOW()
+        )
+        INSERT INTO siwe_nonces (nonce, expires_at) 
+        VALUES ($1, $2)
+        RETURNING id`,
+        [nonce, expiresAt]
+      );
+      
+      const result = await Promise.race([queryPromise, timeoutPromise]);
+      const duration = Date.now() - queryStart;
+      console.log(`[SIWE Nonce] DB stored nonce in ${duration}ms, id: ${(result as any).rows[0]?.id}`);
+      return true;
+      
+    } catch (error: any) {
+      const duration = Date.now() - queryStart;
+      const isTimeout = error.message === 'DB_TIMEOUT';
+      const isRetryable = isTimeout || error.code === 'ECONNREFUSED' || error.code === '57P01';
+      
+      console.warn(`[SIWE Nonce] DB attempt ${attempt + 1}/${maxRetries + 1} failed after ${duration}ms:`, {
+        message: error.message,
+        code: error.code,
+        isRetryable
+      });
+      
+      if (!isRetryable || attempt === maxRetries) {
+        return false;
+      }
+      
+      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+    }
+  }
+  return false;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -69,20 +75,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log(`[SIWE Nonce][${requestId}] Request started`);
 
   try {
+    await warmUpPool();
+    
     const nonce = generateNonce();
     const expiresAt = new Date(Date.now() + MESSAGE_EXPIRY_MS);
     
-    cleanupMemoryNonces();
-    inMemoryNonces.set(nonce, expiresAt.getTime());
+    const stored = await storeNonceWithRetry(nonce, expiresAt);
     
-    storeNonceInDb(nonce, expiresAt).then(success => {
-      if (!success) {
-        console.log(`[SIWE Nonce][${requestId}] Using in-memory fallback only`);
-      }
-    });
+    if (!stored) {
+      const totalDuration = Date.now() - requestStart;
+      console.error(`[SIWE Nonce][${requestId}] Failed to store nonce after ${totalDuration}ms`);
+      return res.status(503).json({ 
+        error: 'Service temporarily unavailable. Please try again.',
+        code: 'DB_UNAVAILABLE',
+        retryAfter: 2
+      });
+    }
     
     const totalDuration = Date.now() - requestStart;
-    console.log(`[SIWE Nonce][${requestId}] Nonce issued in ${totalDuration}ms: ${nonce.substring(0, 8)}...`);
+    console.log(`[SIWE Nonce][${requestId}] Request completed in ${totalDuration}ms`);
     
     res.json({ 
       nonce,
@@ -99,5 +110,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 }
-
-export { inMemoryNonces };
