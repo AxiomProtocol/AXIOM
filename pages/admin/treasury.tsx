@@ -225,6 +225,19 @@ export default function TreasuryDashboard() {
             <span style={{ color: '#fff', fontSize: '1.5rem' }}>Treasury Dashboard</span>
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
+            <Link href="/admin/token-management" style={{ textDecoration: 'none' }}>
+              <button style={{ 
+                padding: '0.75rem 1.5rem', 
+                background: 'rgba(251, 191, 36, 0.1)', 
+                border: '1px solid rgba(251, 191, 36, 0.3)', 
+                borderRadius: '8px', 
+                color: '#fbbf24', 
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}>
+                Token Management
+              </button>
+            </Link>
             <Link href="/admin/depin-monitor" style={{ textDecoration: 'none' }}>
               <button style={{ 
                 padding: '0.75rem 1.5rem', 
