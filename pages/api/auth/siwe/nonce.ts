@@ -3,26 +3,59 @@ import { generateNonce } from 'siwe';
 import { pool } from '../../../../server/db';
 
 const MESSAGE_EXPIRY_MS = 5 * 60 * 1000;
-const CONNECTION_TIMEOUT_MS = 15000;
+const CONNECTION_TIMEOUT_MS = 8000;
+
+const inMemoryNonces = new Map<string, number>();
+const MAX_MEMORY_NONCES = 100;
 
 interface NeonError extends Error {
   code?: string;
   detail?: string;
   hint?: string;
-  position?: string;
-  severity?: string;
 }
 
-function logDbError(phase: string, error: NeonError, startTime: number) {
-  const duration = Date.now() - startTime;
-  console.error(`[SIWE Nonce] ${phase} failed after ${duration}ms:`, {
-    message: error.message,
-    code: error.code || 'UNKNOWN',
-    detail: error.detail,
-    hint: error.hint,
-    severity: error.severity,
-    stack: error.stack?.split('\n').slice(0, 5).join('\n')
-  });
+function cleanupMemoryNonces() {
+  const now = Date.now();
+  for (const [nonce, expiresAt] of inMemoryNonces.entries()) {
+    if (expiresAt < now) {
+      inMemoryNonces.delete(nonce);
+    }
+  }
+  if (inMemoryNonces.size > MAX_MEMORY_NONCES) {
+    const entries = Array.from(inMemoryNonces.entries());
+    entries.sort((a, b) => a[1] - b[1]);
+    for (let i = 0; i < entries.length - MAX_MEMORY_NONCES; i++) {
+      inMemoryNonces.delete(entries[i][0]);
+    }
+  }
+}
+
+async function storeNonceInDb(nonce: string, expiresAt: Date): Promise<boolean> {
+  const queryStart = Date.now();
+  
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('DB_TIMEOUT')), CONNECTION_TIMEOUT_MS);
+    });
+    
+    const queryPromise = pool.query(
+      `WITH cleanup AS (
+        DELETE FROM siwe_nonces WHERE expires_at < NOW()
+      )
+      INSERT INTO siwe_nonces (nonce, expires_at) 
+      VALUES ($1, $2)
+      RETURNING id`,
+      [nonce, expiresAt]
+    );
+    
+    await Promise.race([queryPromise, timeoutPromise]);
+    console.log(`[SIWE Nonce] DB stored nonce in ${Date.now() - queryStart}ms`);
+    return true;
+    
+  } catch (error: any) {
+    console.warn(`[SIWE Nonce] DB storage failed after ${Date.now() - queryStart}ms:`, error.message);
+    return false;
+  }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -38,48 +71,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const nonce = generateNonce();
     const expiresAt = new Date(Date.now() + MESSAGE_EXPIRY_MS);
-    console.log(`[SIWE Nonce][${requestId}] Nonce generated: ${nonce.substring(0, 8)}...`);
     
-    const connectStart = Date.now();
-    let queryResult;
+    cleanupMemoryNonces();
+    inMemoryNonces.set(nonce, expiresAt.getTime());
     
-    try {
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error(`Connection timeout after ${CONNECTION_TIMEOUT_MS}ms`)), CONNECTION_TIMEOUT_MS);
-      });
-      
-      const queryPromise = pool.query(
-        `WITH cleanup AS (
-          DELETE FROM siwe_nonces WHERE expires_at < NOW()
-        )
-        INSERT INTO siwe_nonces (nonce, expires_at) 
-        VALUES ($1, $2)
-        RETURNING id`,
-        [nonce, expiresAt]
-      );
-      
-      queryResult = await Promise.race([queryPromise, timeoutPromise]);
-      
-      const queryDuration = Date.now() - connectStart;
-      console.log(`[SIWE Nonce][${requestId}] DB query completed in ${queryDuration}ms, inserted id: ${(queryResult as any)?.rows?.[0]?.id}`);
-      
-    } catch (dbError: any) {
-      logDbError('Database query', dbError, connectStart);
-      
-      const errorCode = dbError.code || 'UNKNOWN';
-      const isConnectionError = ['ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', '57P01', '08006', '08001'].includes(errorCode) ||
-                                dbError.message?.includes('timeout') ||
-                                dbError.message?.includes('connection');
-      
-      throw new Error(
-        isConnectionError 
-          ? `Database connection issue (${errorCode}): ${dbError.message}` 
-          : `Database error (${errorCode}): ${dbError.message}`
-      );
-    }
+    storeNonceInDb(nonce, expiresAt).then(success => {
+      if (!success) {
+        console.log(`[SIWE Nonce][${requestId}] Using in-memory fallback only`);
+      }
+    });
     
     const totalDuration = Date.now() - requestStart;
-    console.log(`[SIWE Nonce][${requestId}] Request completed successfully in ${totalDuration}ms`);
+    console.log(`[SIWE Nonce][${requestId}] Nonce issued in ${totalDuration}ms: ${nonce.substring(0, 8)}...`);
     
     res.json({ 
       nonce,
@@ -88,18 +91,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
   } catch (error: any) {
     const totalDuration = Date.now() - requestStart;
-    console.error(`[SIWE Nonce][${requestId}] Request failed after ${totalDuration}ms:`, {
-      message: error.message,
-      stack: error.stack?.split('\n').slice(0, 3).join('\n')
-    });
-    
-    const isProduction = process.env.NODE_ENV === 'production';
+    console.error(`[SIWE Nonce][${requestId}] Request failed after ${totalDuration}ms:`, error.message);
     
     res.status(500).json({ 
       error: 'Failed to generate nonce',
-      code: 'NONCE_GENERATION_FAILED',
-      details: isProduction ? undefined : error.message,
-      requestId: isProduction ? undefined : requestId
+      code: 'NONCE_GENERATION_FAILED'
     });
   }
 }
+
+export { inMemoryNonces };
