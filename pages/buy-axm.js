@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Layout from '../components/Layout';
@@ -9,9 +9,6 @@ const AXM_CONTRACT = '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D';
 export default function BuyAXMPage() {
   const { walletState, connectMetaMask } = useWallet();
   const [selectedMethod, setSelectedMethod] = useState(null);
-  const [fiatAmount, setFiatAmount] = useState('100');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
 
   const isConnected = walletState.isConnected;
@@ -25,61 +22,11 @@ export default function BuyAXMPage() {
     }
   };
 
-  const openCoinbaseOnramp = useCallback(async () => {
-    if (!walletAddress) {
-      setError('Please connect your wallet first');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/onramp/buy-quote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          walletAddress,
-          paymentAmount: fiatAmount,
-          paymentCurrency: 'USD',
-          purchaseCurrency: 'ETH',
-          purchaseNetwork: 'arbitrum',
-          country: 'US'
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.error) {
-        setError(data.error);
-        setLoading(false);
-        return;
-      }
-
-      if (data.onramp_url) {
-        window.open(data.onramp_url, '_blank', 'noopener,noreferrer');
-      } else {
-        const params = new URLSearchParams({
-          appId: process.env.NEXT_PUBLIC_COINBASE_PROJECT_ID || 'axiom-nexus',
-          destinationWallets: JSON.stringify([{
-            address: walletAddress,
-            blockchains: ['arbitrum'],
-            assets: ['ETH', 'USDC']
-          }]),
-          presetFiatAmount: fiatAmount,
-          fiatCurrency: 'USD',
-          defaultNetwork: 'arbitrum'
-        });
-        
-        window.open(`https://pay.coinbase.com/buy/select-asset?${params.toString()}`, '_blank', 'noopener,noreferrer');
-      }
-    } catch (err) {
-      console.error('Coinbase Onramp error:', err);
-      setError('Failed to initialize payment. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [walletAddress, fiatAmount]);
+  const copyContract = () => {
+    navigator.clipboard.writeText(AXM_CONTRACT);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <Layout>
@@ -126,7 +73,7 @@ export default function BuyAXMPage() {
               </p>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2 text-gray-300">
-                  <span className="text-green-400">✓</span> No signup
+                  <span className="text-green-400">✓</span> No signup required
                 </li>
                 <li className="flex items-center gap-2 text-gray-300">
                   <span className="text-green-400">✓</span> Instant swaps
@@ -135,34 +82,34 @@ export default function BuyAXMPage() {
             </div>
 
             <div 
-              onClick={() => setSelectedMethod('coinbase')}
-              className={`bg-gray-800 rounded-2xl p-6 border-2 cursor-pointer transition-all hover:border-blue-500/50 relative ${
-                selectedMethod === 'coinbase' ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-700'
+              onClick={() => setSelectedMethod('buy-crypto')}
+              className={`bg-gray-800 rounded-2xl p-6 border-2 cursor-pointer transition-all hover:border-orange-500/50 relative ${
+                selectedMethod === 'buy-crypto' ? 'border-orange-500 ring-2 ring-orange-500/20' : 'border-gray-700'
               }`}
             >
-              <div className="absolute -top-3 left-4 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                RECOMMENDED
+              <div className="absolute -top-3 left-4 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                NEW TO CRYPTO?
               </div>
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
-                  <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-700 rounded-xl flex items-center justify-center">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">Coinbase</h3>
-                  <p className="text-blue-400 text-sm font-medium">Buy with Card</p>
+                  <h3 className="text-xl font-bold text-white">Buy with Card</h3>
+                  <p className="text-orange-400 text-sm font-medium">Via MetaMask</p>
                 </div>
               </div>
               <p className="text-gray-400 mb-4 text-sm">
-                Buy ETH instantly with your card via Coinbase, then swap for AXM.
+                Buy ETH directly in MetaMask with your card, then swap for AXM.
               </p>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2 text-gray-300">
-                  <span className="text-blue-400">✓</span> Trusted platform
+                  <span className="text-orange-400">✓</span> Credit/Debit cards
                 </li>
                 <li className="flex items-center gap-2 text-gray-300">
-                  <span className="text-blue-400">✓</span> Instant delivery
+                  <span className="text-orange-400">✓</span> Apple Pay, PayPal
                 </li>
               </ul>
             </div>
@@ -235,117 +182,114 @@ export default function BuyAXMPage() {
             </div>
           )}
 
-          {selectedMethod === 'coinbase' && (
-            <div className="bg-gray-800 rounded-2xl p-8 border border-blue-500/30">
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className="text-xl font-bold text-white">Buy with Coinbase</h3>
-                <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded-full">Powered by Coinbase</span>
-              </div>
-              <p className="text-gray-400 mb-6">Purchase ETH via Coinbase, then swap for AXM on our DEX</p>
+          {selectedMethod === 'buy-crypto' && (
+            <div className="bg-gray-800 rounded-2xl p-8 border border-orange-500/30">
+              <h3 className="text-xl font-bold text-white mb-2">Buy Crypto in MetaMask</h3>
+              <p className="text-gray-400 mb-6">Follow these simple steps to get AXM tokens</p>
 
-              {!isConnected ? (
-                <div className="text-center py-6">
-                  <p className="text-gray-400 mb-4">Connect your wallet first</p>
-                  <button
-                    onClick={connectMetaMask}
-                    className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-6 py-3 rounded-xl"
-                  >
-                    Connect Wallet
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Amount (USD)</label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">$</span>
-                      <input
-                        type="number"
-                        value={fiatAmount}
-                        onChange={(e) => setFiatAmount(e.target.value)}
-                        className="w-full bg-gray-900 border border-gray-700 rounded-xl py-3 pl-8 pr-4 text-white text-lg focus:outline-none focus:border-blue-500"
-                        placeholder="100"
-                        min="30"
-                      />
+              <div className="space-y-4">
+                <div className="bg-gray-900 rounded-xl p-5 border border-gray-700">
+                  <div className="flex items-start gap-4">
+                    <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold shrink-0">
+                      1
                     </div>
-                    <div className="flex gap-2 mt-2">
-                      {['50', '100', '250', '500'].map(amt => (
-                        <button
-                          key={amt}
-                          onClick={() => setFiatAmount(amt)}
-                          className={`px-3 py-1 rounded-lg text-sm ${
-                            fiatAmount === amt 
-                              ? 'bg-blue-500 text-white' 
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                          }`}
-                        >
-                          ${amt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-900 rounded-xl p-4">
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-400">Destination wallet</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-white font-mono">{walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}</span>
-                        <button
-                          onClick={copyAddress}
-                          className="text-xs text-yellow-500 hover:text-yellow-400"
-                          title="Copy full address"
-                        >
-                          {copied ? 'Copied!' : 'Copy'}
-                        </button>
+                    <div>
+                      <h4 className="text-white font-semibold mb-2">Open MetaMask & Click "Buy"</h4>
+                      <p className="text-gray-400 text-sm mb-3">
+                        In your MetaMask wallet, tap the "Buy & Sell" or "Buy" button
+                      </p>
+                      <div className="bg-gray-800 rounded-lg p-3 text-sm">
+                        <p className="text-gray-300">
+                          <span className="text-orange-400">Tip:</span> MetaMask compares prices from multiple providers (Transak, MoonPay, Coinbase, etc.) to get you the best rate
+                        </p>
                       </div>
                     </div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-400">You'll receive</span>
-                      <span className="text-white">ETH on Arbitrum</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Next step</span>
-                      <span className="text-yellow-400">Swap ETH → AXM</span>
-                    </div>
-                  </div>
-
-                  {error && (
-                    <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">
-                      {error}
-                    </div>
-                  )}
-
-                  <button
-                    onClick={openCoinbaseOnramp}
-                    disabled={loading}
-                    className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold py-4 rounded-xl hover:from-blue-400 hover:to-blue-500 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    {loading ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                        </svg>
-                        <span>Loading...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Continue with Coinbase</span>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </>
-                    )}
-                  </button>
-
-                  <div className="flex items-center gap-2 justify-center text-gray-500 text-sm">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    <span>Self-custody - Funds go directly to your wallet</span>
                   </div>
                 </div>
-              )}
+
+                <div className="bg-gray-900 rounded-xl p-5 border border-gray-700">
+                  <div className="flex items-start gap-4">
+                    <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold shrink-0">
+                      2
+                    </div>
+                    <div>
+                      <h4 className="text-white font-semibold mb-2">Select Network & Token</h4>
+                      <p className="text-gray-400 text-sm mb-3">
+                        Choose <span className="text-white font-medium">Arbitrum One</span> as the network and <span className="text-white font-medium">ETH</span> as the token
+                      </p>
+                      <div className="flex gap-2">
+                        <span className="bg-blue-500/20 text-blue-400 text-xs px-3 py-1 rounded-full">Arbitrum One</span>
+                        <span className="bg-purple-500/20 text-purple-400 text-xs px-3 py-1 rounded-full">ETH</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-900 rounded-xl p-5 border border-gray-700">
+                  <div className="flex items-start gap-4">
+                    <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold shrink-0">
+                      3
+                    </div>
+                    <div>
+                      <h4 className="text-white font-semibold mb-2">Complete Purchase</h4>
+                      <p className="text-gray-400 text-sm mb-3">
+                        Enter amount, choose payment method (card, Apple Pay, bank), and complete the purchase
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="bg-gray-700 text-gray-300 text-xs px-3 py-1 rounded-full">💳 Credit/Debit</span>
+                        <span className="bg-gray-700 text-gray-300 text-xs px-3 py-1 rounded-full"> Apple Pay</span>
+                        <span className="bg-gray-700 text-gray-300 text-xs px-3 py-1 rounded-full">🏦 Bank Transfer</span>
+                        <span className="bg-gray-700 text-gray-300 text-xs px-3 py-1 rounded-full">PayPal</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-900 rounded-xl p-5 border border-yellow-500/30">
+                  <div className="flex items-start gap-4">
+                    <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-black font-bold shrink-0">
+                      4
+                    </div>
+                    <div>
+                      <h4 className="text-white font-semibold mb-2">Swap ETH for AXM</h4>
+                      <p className="text-gray-400 text-sm mb-3">
+                        Once you have ETH, come back here and swap it for AXM on our DEX
+                      </p>
+                      <Link
+                        href="/dex?to=AXM"
+                        className="inline-flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-4 py-2 rounded-lg text-sm"
+                      >
+                        Go to Axiom DEX
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 bg-orange-500/10 rounded-xl p-4 border border-orange-500/20">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-orange-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <p className="text-orange-200 font-medium mb-1">Don't have MetaMask?</p>
+                    <p className="text-gray-400 text-sm">
+                      Download it free at{' '}
+                      <a 
+                        href="https://metamask.io/download/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-orange-400 hover:underline"
+                      >
+                        metamask.io/download
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -360,7 +304,15 @@ export default function BuyAXMPage() {
             <div className="grid md:grid-cols-3 gap-4 text-sm">
               <div className="bg-gray-900 rounded-lg p-4">
                 <div className="text-gray-400 mb-1">Contract Address</div>
-                <div className="text-white font-mono text-xs break-all">{AXM_CONTRACT}</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-white font-mono text-xs truncate">{AXM_CONTRACT}</span>
+                  <button
+                    onClick={copyContract}
+                    className="text-yellow-500 hover:text-yellow-400 text-xs shrink-0"
+                  >
+                    Copy
+                  </button>
+                </div>
               </div>
               <div className="bg-gray-900 rounded-lg p-4">
                 <div className="text-gray-400 mb-1">Network</div>
