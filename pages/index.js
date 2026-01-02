@@ -730,16 +730,26 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="relative rounded-2xl overflow-hidden shadow-2xl shadow-amber-500/20 border border-amber-200"
           >
-            <div className="aspect-video relative">
-              <iframe
-                className="w-full h-full absolute inset-0"
-                src="https://www.youtube-nocookie.com/embed/GMGROgDvLUo?rel=0&modestbranding=1"
-                title="Discover The Wealth Practice - Axiom Introduction"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
-            </div>
+            <a 
+              href="https://youtu.be/GMGROgDvLUo" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="block aspect-video relative group cursor-pointer"
+            >
+              <img 
+                src="https://img.youtube.com/vi/GMGROgDvLUo/maxresdefault.jpg" 
+                alt="Discover The Wealth Practice"
+                className="w-full h-full object-cover"
+                onError={(e) => { e.target.src = 'https://img.youtube.com/vi/GMGROgDvLUo/hqdefault.jpg'; }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                  <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+              </div>
+            </a>
           </motion.div>
         </div>
       </section>
