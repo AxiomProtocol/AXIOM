@@ -3,9 +3,9 @@ import { ethers } from 'ethers';
 
 const ARBITRUM_CHAIN_ID = 42161;
 const NONCE_RETRY_CONFIG = {
-  maxRetries: 3,
-  baseDelayMs: 500,
-  maxDelayMs: 5000
+  maxRetries: 4,
+  baseDelayMs: 1000,
+  maxDelayMs: 8000
 };
 
 export interface SIWESession {
@@ -57,7 +57,13 @@ class SIWEService {
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          console.error('[SIWEService] Nonce request failed:', response.status, errorData);
+          console.error('[SIWEService] Nonce request failed:', {
+            status: response.status,
+            error: errorData.error,
+            code: errorData.code,
+            details: errorData.details,
+            requestId: errorData.requestId
+          });
           throw new Error(errorData.details || errorData.error || `Nonce request failed (${response.status})`);
         }
         
