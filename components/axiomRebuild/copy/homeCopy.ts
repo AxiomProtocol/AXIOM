@@ -18,8 +18,8 @@ export const homeCopy = {
         "Before Axiom existed as software, a real community came together, pooled funds, acquired six acres of farmland, and developed it into a working farm with USDA support. Real people. Real land. Real outcomes.\n\nThat experience proved shared ownership works. It also proved most groups fail because coordination breaks down.\n\nAxiom exists to turn what already worked into a repeatable system that can scale responsibly.",
       primaryCta: { label: "View the Farmland Proof", href: "/origin" },
       secondaryCta: { label: "Read the Origin Story", href: "/origin" },
-      image: "/generated/floating_farmland_island_3d.png",
-      imageAlt: "Floating farmland island representing shared land ownership"
+      image: "/keygrow-proof/proof-01.jpg",
+      imageAlt: "Community team working together on the farmland"
     },
     {
       id: "problem",
