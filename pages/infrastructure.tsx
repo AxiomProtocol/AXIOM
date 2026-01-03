@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { pagesCopy } from '../components/axiomRebuild/copy/pagesCopy';
-import { RebuildSection } from '../components/axiomRebuild/RebuildSection';
+import { Web3Hero } from '../components/axiomRebuild/Web3Hero';
+import { Web3Section } from '../components/axiomRebuild/Web3Section';
 import { useScrollToSection } from '../components/axiomRebuild/useScrollToSection';
 
 export default function InfrastructurePage() {
@@ -15,22 +16,31 @@ export default function InfrastructurePage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'white' }}>
-      <div style={{ padding: '56px 0 28px 0' }}>
-        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 20px' }}>
-          <h1 style={{ fontSize: 40, lineHeight: 1.12, margin: 0 }}>{copy.title}</h1>
-          <p style={{ margin: '14px 0 0 0', fontSize: 16, color: 'rgba(18,18,18,0.74)', maxWidth: 760 }}>
-            {copy.intro}
-          </p>
-        </div>
-      </div>
+      {copy.hero && (
+        <Web3Hero
+          kicker={copy.hero.kicker}
+          headline={copy.hero.headline}
+          secondary={copy.hero.secondary}
+          subheadline={copy.hero.subheadline}
+          primaryCta={copy.hero.primaryCta}
+          secondaryCta={copy.hero.secondaryCta}
+          microcopy={copy.hero.microcopy || ''}
+        />
+      )}
 
-      {copy.sections.map((s) => (
-        <RebuildSection
+      {copy.sections.map((s, i) => (
+        <Web3Section
           key={s.id}
           id={s.id}
           title={s.title}
           body={s.body}
           bullets={s.bullets}
+          primaryCta={s.primaryCta}
+          secondaryCta={s.secondaryCta}
+          image={s.image}
+          imageAlt={s.imageAlt}
+          index={i}
+          variant={s.id === "authority" ? "dark" : "default"}
         />
       ))}
     </div>
