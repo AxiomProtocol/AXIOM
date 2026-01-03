@@ -17,7 +17,9 @@ export const homeCopy = {
       body:
         "Before Axiom existed as software, a real community came together, pooled funds, acquired six acres of farmland, and developed it into a working farm with USDA support. Real people. Real land. Real outcomes.\n\nThat experience proved shared ownership works. It also proved most groups fail because coordination breaks down.\n\nAxiom exists to turn what already worked into a repeatable system that can scale responsibly.",
       primaryCta: { label: "View the Farmland Proof", href: "/origin" },
-      secondaryCta: { label: "Read the Origin Story", href: "/origin" }
+      secondaryCta: { label: "Read the Origin Story", href: "/origin" },
+      image: "/generated/floating_farmland_island_3d.png",
+      imageAlt: "Floating farmland island representing shared land ownership"
     },
     {
       id: "problem",
@@ -29,7 +31,9 @@ export const homeCopy = {
         "Participation accountability",
         "Transparent recordkeeping",
         "Repeatable systems for real assets"
-      ]
+      ],
+      image: "/generated/blockchain_network_3d_visualization.png",
+      imageAlt: "Blockchain network visualization representing transparent coordination"
     },
     {
       id: "keygrow",
@@ -43,7 +47,9 @@ export const homeCopy = {
         "Participation tracking and transparency",
         "Stewardship and development alignment",
         "Community coordination for land-based projects"
-      ]
+      ],
+      image: "/generated/smart_city_deep_perspective.png",
+      imageAlt: "Smart city landscape representing sustainable development vision"
     },
     {
       id: "infrastructure",
@@ -73,7 +79,9 @@ export const homeCopy = {
       body:
         "AXM is the internal participation and governance mechanism of the Axiom ecosystem.\n\nIt is used to support structured participation, system integrity, and decision-making across the platform. AXM is introduced after the mission is clear, the model is understood, and participation is aligned.",
       primaryCta: { label: "Learn About AXM", href: "/staking" },
-      secondaryCta: { label: "View Disclosures", href: "/transparency" }
+      secondaryCta: { label: "View Disclosures", href: "/transparency" },
+      image: "/generated/axm_token_3d_floating.png",
+      imageAlt: "AXM governance token floating in space"
     },
     {
       id: "start",
@@ -81,7 +89,9 @@ export const homeCopy = {
       body:
         "If you care about real assets, land, and building long-term outcomes with structure, start here.\n\nStep one: Read the Origin Story.\nStep two: Explore KeyGrow.\nStep three: Join the community.",
       primaryCta: { label: "Join the Community", href: "/contact" },
-      secondaryCta: { label: "See Our Origin Story", href: "/origin" }
+      secondaryCta: { label: "See Our Origin Story", href: "/origin" },
+      image: "/generated/community_overlooking_farmland.png",
+      imageAlt: "Community overlooking farmland valley at sunset"
     }
   ]
 };

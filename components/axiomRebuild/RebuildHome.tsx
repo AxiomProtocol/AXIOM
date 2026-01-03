@@ -5,6 +5,17 @@ import { homeCopy } from "./copy/homeCopy";
 import { Web3Hero } from "./Web3Hero";
 import { Web3Section } from "./Web3Section";
 
+interface SectionType {
+  id: string;
+  title: string;
+  body: string;
+  bullets?: string[];
+  primaryCta?: { label: string; href: string };
+  secondaryCta?: { label: string; href: string };
+  image?: string;
+  imageAlt?: string;
+}
+
 export function RebuildHome() {
   return (
     <div style={{ background: "#FFFFFF" }}>
@@ -18,7 +29,7 @@ export function RebuildHome() {
         microcopy={homeCopy.hero.microcopy}
       />
 
-      {homeCopy.sections.map((s, i) => (
+      {(homeCopy.sections as SectionType[]).map((s, i) => (
         <Web3Section
           key={s.id}
           id={s.id}
@@ -33,6 +44,8 @@ export function RebuildHome() {
             "default"
           }
           index={i}
+          image={s.image}
+          imageAlt={s.imageAlt}
         />
       ))}
     </div>
