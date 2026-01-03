@@ -4052,3 +4052,104 @@ export type CreditScoreUpdate = typeof creditScoreUpdates.$inferSelect;
 export type InsertCreditScoreUpdate = typeof creditScoreUpdates.$inferInsert;
 export type ProtocolMetricsSnapshot = typeof protocolMetricsSnapshots.$inferSelect;
 export type InsertProtocolMetricsSnapshot = typeof protocolMetricsSnapshots.$inferInsert;
+
+// ===== MODULE 2: HOLDER VALUE PARTICIPATION TABLES =====
+
+// Participation interest registrations (land cohorts)
+export const participationInterest = pgTable("participation_interest", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  interestType: varchar("interest_type", { length: 50 }).notNull().default('land-cohort'),
+  cohortId: varchar("cohort_id", { length: 100 }),
+  veAxmBalance: decimal("ve_axm_balance", { precision: 24, scale: 8 }),
+  tier: integer("tier").default(0),
+  status: varchar("status", { length: 20 }).default('pending'),
+  registeredAt: timestamp("registered_at").defaultNow(),
+  confirmedAt: timestamp("confirmed_at"),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  walletIdx: index("participation_interest_wallet_idx").on(table.walletAddress),
+  cohortIdx: index("participation_interest_cohort_idx").on(table.cohortId),
+}));
+
+// Produce box reservations
+export const produceReservations = pgTable("produce_reservations", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  cycleId: varchar("cycle_id", { length: 50 }).notNull(),
+  cycleSeason: varchar("cycle_season", { length: 20 }).notNull(),
+  cycleYear: integer("cycle_year").notNull(),
+  creditsUsed: integer("credits_used").default(1),
+  tier: integer("tier").default(0),
+  status: varchar("status", { length: 20 }).default('reserved'),
+  reservedAt: timestamp("reserved_at").defaultNow(),
+  confirmedAt: timestamp("confirmed_at"),
+  claimedAt: timestamp("claimed_at"),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  walletIdx: index("produce_reservations_wallet_idx").on(table.walletAddress),
+  cycleIdx: index("produce_reservations_cycle_idx").on(table.cycleId),
+}));
+
+// Steward cohort enrollments
+export const stewardCohorts = pgTable("steward_cohorts", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  cohortId: varchar("cohort_id", { length: 50 }).notNull(),
+  cohortName: varchar("cohort_name", { length: 100 }),
+  tier: integer("tier").default(0),
+  veAxmBalance: decimal("ve_axm_balance", { precision: 24, scale: 8 }),
+  status: varchar("status", { length: 20 }).default('enrolled'),
+  enrolledAt: timestamp("enrolled_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  certificateIssued: boolean("certificate_issued").default(false),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  walletIdx: index("steward_cohorts_wallet_idx").on(table.walletAddress),
+  cohortIdx: index("steward_cohorts_cohort_idx").on(table.cohortId),
+}));
+
+// Participation credits ledger (off-chain tracking with on-chain verification)
+export const participationCredits = pgTable("participation_credits", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull().unique(),
+  totalCredits: integer("total_credits").default(0),
+  holdingCredits: integer("holding_credits").default(0),
+  actionCredits: integer("action_credits").default(0),
+  bonusCredits: integer("bonus_credits").default(0),
+  veAxmBalance: decimal("ve_axm_balance", { precision: 24, scale: 8 }),
+  onChainScore: integer("on_chain_score"),
+  tier: integer("tier").default(0),
+  daysHeld: integer("days_held").default(0),
+  lastSyncedAt: timestamp("last_synced_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  walletIdx: index("participation_credits_wallet_idx").on(table.walletAddress),
+}));
+
+// Participation actions log (for credit calculation)
+export const participationActions = pgTable("participation_actions", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  actionType: varchar("action_type", { length: 50 }).notNull(),
+  actionValue: integer("action_value").default(1),
+  creditsEarned: integer("credits_earned").default(0),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  walletIdx: index("participation_actions_wallet_idx").on(table.walletAddress),
+  actionTypeIdx: index("participation_actions_type_idx").on(table.actionType),
+}));
+
+// Export types for Module 2
+export type ParticipationInterest = typeof participationInterest.$inferSelect;
+export type InsertParticipationInterest = typeof participationInterest.$inferInsert;
+export type ProduceReservation = typeof produceReservations.$inferSelect;
+export type InsertProduceReservation = typeof produceReservations.$inferInsert;
+export type StewardCohort = typeof stewardCohorts.$inferSelect;
+export type InsertStewardCohort = typeof stewardCohorts.$inferInsert;
+export type ParticipationCredit = typeof participationCredits.$inferSelect;
+export type InsertParticipationCredit = typeof participationCredits.$inferInsert;
+export type ParticipationAction = typeof participationActions.$inferSelect;
+export type InsertParticipationAction = typeof participationActions.$inferInsert;
