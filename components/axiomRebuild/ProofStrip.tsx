@@ -19,7 +19,8 @@ const proofTiles = [
   { type: 'image', src: '/keygrow-proof/proof-07.jpg', alt: 'Freshly tilled soil' },
   { type: 'image', src: '/keygrow-proof/proof-08.jpg', alt: 'Planting beds prepared' },
   { type: 'image', src: '/keygrow-proof/proof-09.jpg', alt: 'Covered growing rows' },
-  { type: 'video', src: '/keygrow-proof/proof-clip-01.mp4', poster: '/keygrow-proof/proof-01.jpg', alt: 'Development video clip' }
+  { type: 'video', src: '/keygrow-proof/proof-clip-01.mp4', poster: '/keygrow-proof/proof-01.jpg', alt: 'Development video clip 1' },
+  { type: 'video', src: '/keygrow-proof/proof-clip-02.mp4', poster: '/keygrow-proof/proof-04.jpg', alt: 'Development video clip 2' }
 ];
 
 export function ProofStrip({ page = 'home' }: ProofStripProps) {
