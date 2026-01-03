@@ -4,15 +4,11 @@ export const keygrowCopy = {
     headline: "KeyGrow: Shared Ownership for Land, Built With Structure",
     body: `KeyGrow is the primary entry point into Axiom's land-first ownership model.
 
-It exists because shared ownership can work, but informal coordination does not scale.
-Most groups fail due to unclear roles, undocumented decisions, and misaligned expectations.
+Shared ownership can work, but informal coordination does not scale. Most groups fail because roles are unclear, decisions are undocumented, and accountability breaks under pressure.
 
-KeyGrow replaces confusion with structure.
+KeyGrow replaces confusion with structure. It coordinates people, contributions, and stewardship into a repeatable system for acquiring, developing, and maintaining land together.
 
-It coordinates people, contributions, and stewardship into a repeatable system for acquiring, developing, and maintaining land together — starting with farmland, but expanding to broader land-based use cases over time.
-
-This is not speculation.
-This is coordination.`,
+This is not speculation. This is coordination.`,
     whatThisIs: [
       "A structured path into shared land ownership",
       "A coordination system for real projects",
@@ -116,7 +112,7 @@ export const landProjects = [
     purpose: "Agricultural land and community food production",
     targetSize: "6 acres",
     status: "Operational",
-    milestone: "Initial development completed",
+    milestone: "Ongoing stewardship and expansion planning",
     notes: "Proof-of-concept that informed KeyGrow",
     ctaLabel: "View Proof",
     ctaHref: "/origin"
@@ -127,18 +123,18 @@ export const landProjects = [
     purpose: "Mixed-use agriculture and training land",
     targetSize: "10–20 acres",
     status: "In Evaluation",
-    milestone: "Due diligence underway",
+    milestone: "Due diligence and shortlist",
     ctaLabel: "Join Updates",
-    ctaHref: "#"
+    ctaHref: "/keygrow?section=get-started"
   },
   {
     name: "Logistics Support Parcel",
     region: "Southern Corridor",
-    purpose: "Infrastructure and staging support land",
+    purpose: "Staging and infrastructure support land",
     targetSize: "5–8 acres",
     status: "Planned",
     milestone: "Site identification",
     ctaLabel: "Express Interest",
-    ctaHref: "#"
+    ctaHref: "/keygrow?section=get-started"
   }
 ];

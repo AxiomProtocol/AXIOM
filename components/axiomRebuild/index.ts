@@ -11,3 +11,8 @@ export { homeCopy } from "./copy/homeCopy";
 export { pagesCopy } from "./copy/pagesCopy";
 export { cx } from "./utils";
 export { web3Theme, sectionIcons, web3Icons } from "./styles/web3Theme";
+export { MetricsRow } from "./MetricsRow";
+export { ProofStrip } from "./ProofStrip";
+export { JourneyGraphic } from "./JourneyGraphic";
+export { RoleCards } from "./RoleCards";
+export { track, trackOnce, trackCta, trackProofInteraction, createSectionObserver } from "./analytics";
