@@ -72,8 +72,8 @@ export const homeCopy = {
       title: "AXM: Participation and Governance",
       body:
         "AXM is the internal participation and governance mechanism of the Axiom ecosystem.\n\nIt is used to support structured participation, system integrity, and decision-making across the platform. AXM is introduced after the mission is clear, the model is understood, and participation is aligned.",
-      primaryCta: { label: "Learn About AXM", href: "/axm" },
-      secondaryCta: { label: "View Disclosures", href: "/disclosures" }
+      primaryCta: { label: "Learn About AXM", href: "/staking" },
+      secondaryCta: { label: "View Disclosures", href: "/transparency" }
     },
     {
       id: "start",
