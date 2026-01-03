@@ -1,4 +1,8 @@
-const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+const isDev = typeof window !== 'undefined' && (
+  window.location.hostname === 'localhost' || 
+  window.location.hostname.includes('replit') ||
+  process.env.NODE_ENV === 'development'
+);
 
 function getSessionKey(uniqueKey: string): string {
   return `axiom_tracked_${uniqueKey}`;
