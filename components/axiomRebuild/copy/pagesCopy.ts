@@ -250,5 +250,243 @@ export const pagesCopy: Record<string, PageCopy> = {
         ]
       }
     ]
+  },
+  learn: {
+    title: "Learn",
+    intro:
+      "Build your knowledge foundation with courses designed for the journey from financial basics to Web3 mastery.",
+    hero: {
+      kicker: "Education",
+      headline: "Knowledge Is Power",
+      secondary: "From Basics to Blockchain",
+      subheadline: "Free courses covering financial literacy, cryptocurrency, blockchain fundamentals, and the path to homeownership through KeyGrow.",
+      primaryCta: { label: "Start Learning", href: "/learn#courses" },
+      secondaryCta: { label: "View Academy", href: "/academy" },
+      microcopy: "9 courses. Free forever. Learn at your own pace."
+    },
+    sections: [
+      {
+        id: "foundations",
+        title: "Financial Foundations",
+        body:
+          "Before diving into Web3, build a strong foundation in personal finance. Learn budgeting, saving, credit basics, and how to build stability for your future.",
+        image: "/generated/learning_and_knowledge_visualization.png",
+        imageAlt: "Open book with glowing knowledge visualization",
+        bullets: [
+          "Budgeting and saving fundamentals",
+          "Credit building and management",
+          "Building financial stability"
+        ]
+      },
+      {
+        id: "blockchain",
+        title: "Blockchain and Crypto",
+        body:
+          "Understand what cryptocurrency is, how blockchain works, and how to safely set up and manage your own digital wallet. No prior experience required.",
+        image: "/generated/blockchain_network_3d_visualization.png",
+        imageAlt: "Blockchain network visualization",
+        bullets: [
+          "Cryptocurrency basics explained simply",
+          "Wallet setup and security best practices",
+          "Understanding blockchain technology"
+        ]
+      },
+      {
+        id: "keygrow-path",
+        title: "The KeyGrow Path",
+        body:
+          "Our flagship course on the path to homeownership through shared ownership. Learn how KeyGrow works, what participation means, and how to build toward property ownership.",
+        image: "/generated/floating_farmland_3d_visualization.png",
+        imageAlt: "Farmland visualization representing property ownership",
+        primaryCta: { label: "Explore KeyGrow", href: "/keygrow" }
+      }
+    ]
+  },
+  "about-us": {
+    title: "About Us",
+    intro:
+      "Axiom was not created in a lab. It was born from real-world execution: a community land purchase, USDA-supported development, and a commitment to building shared ownership infrastructure.",
+    hero: {
+      kicker: "Who We Are",
+      headline: "Built Different",
+      secondary: "Proof Before Platform",
+      subheadline: "We built the model before we built the software. Real community. Real land. Real outcomes. Now we're scaling what works.",
+      primaryCta: { label: "Read Our Origin", href: "/origin" },
+      secondaryCta: { label: "See Our Impact", href: "/impact" },
+      microcopy: "The farmland proof came first. The platform came second."
+    },
+    sections: [
+      {
+        id: "story",
+        title: "The Farmland Proof",
+        body:
+          "Before Axiom existed as software, a real community came together, pooled funds, acquired six acres of farmland, and developed it into a working farm with USDA support. Real people. Real land. Real outcomes.\n\nThat experience proved shared ownership works. It also proved most groups fail because coordination breaks down.",
+        image: "/generated/about_us_office_building.png",
+        imageAlt: "Modern glass building representing Axiom headquarters"
+      },
+      {
+        id: "values",
+        title: "What Makes Us Different",
+        body:
+          "Transparency, community ownership, security, and sustainability are not marketing terms for us. They are operational requirements embedded in how we build and operate.",
+        image: "/generated/transparency_glass_architecture.png",
+        imageAlt: "Glass architecture representing transparency",
+        bullets: [
+          "Every transaction recorded on-chain",
+          "Community-governed through AXM token holders",
+          "Multi-signature wallets and audited contracts",
+          "Sustainability built into our infrastructure"
+        ]
+      },
+      {
+        id: "founder",
+        title: "Founder Commitment",
+        body:
+          "The founder obtained a commercial driver's license, operates as an over-the-road contractor, and is building toward his own authority. This is a commitment to internalizing the full stack of real asset development — from land acquisition to transportation infrastructure.",
+        image: "/generated/infrastructure_trucking_highway_scene.png",
+        imageAlt: "Commercial truck on highway representing founder commitment",
+        primaryCta: { label: "See Infrastructure", href: "/infrastructure" }
+      }
+    ]
+  },
+  community: {
+    title: "Community",
+    intro:
+      "Real stories from Axiom members building wealth together through community savings circles and shared ownership.",
+    hero: {
+      kicker: "Success Stories",
+      headline: "Wealth Built Together",
+      secondary: "Real Members. Real Results.",
+      subheadline: "Join thousands of members saving together, learning together, and building generational wealth through community coordination.",
+      primaryCta: { label: "Join the Community", href: "/register" },
+      secondaryCta: { label: "Learn About SUSU", href: "/susu" },
+      microcopy: "2,500+ active members across 45 cities."
+    },
+    sections: [
+      {
+        id: "stories",
+        title: "Member Success Stories",
+        body:
+          "From down payment savings to business expansion, our members are achieving real financial goals through the power of community coordination and mutual accountability.",
+        image: "/generated/community_collaboration_around_data.png",
+        imageAlt: "Community members collaborating together"
+      },
+      {
+        id: "circles",
+        title: "Savings Circles",
+        body:
+          "SUSU circles modernize the traditional rotating savings model with on-chain transparency and community insurance. Join or start a circle with people who share your goals.",
+        image: "/generated/hands_planting_together_unity.png",
+        imageAlt: "Hands coming together representing unity and collaboration",
+        bullets: [
+          "Automated contributions and distributions",
+          "Insurance fund for circle protection",
+          "Reputation building through participation"
+        ],
+        primaryCta: { label: "Start a Circle", href: "/susu" }
+      },
+      {
+        id: "impact",
+        title: "Community Impact",
+        body:
+          "Together, our community has saved over $1.2M, formed 150+ savings groups, and reached 45 cities across 8 countries. The movement is growing.",
+        image: "/generated/sustainable_impact_farmland_aerial.png",
+        imageAlt: "Aerial view of sustainable farmland representing impact",
+        primaryCta: { label: "See Full Impact", href: "/impact" }
+      }
+    ]
+  },
+  impact: {
+    title: "Impact",
+    intro:
+      "Real-time metrics showing the measurable impact of the Axiom community across savings, ownership, and sustainability.",
+    hero: {
+      kicker: "Our Progress",
+      headline: "Impact You Can Measure",
+      secondary: "Transparent. Verifiable. Growing.",
+      subheadline: "Every metric is real-time, on-chain verifiable, and represents actual community activity — not projections or promises.",
+      primaryCta: { label: "Join the Movement", href: "/register" },
+      secondaryCta: { label: "View Transparency", href: "/transparency" },
+      microcopy: "Updated in real-time. Verified on-chain."
+    },
+    sections: [
+      {
+        id: "metrics",
+        title: "Key Metrics",
+        body:
+          "Track the growth and impact of the Axiom ecosystem through verified metrics including total members, savings accumulated, properties in KeyGrow, and more.",
+        image: "/generated/transparency_dashboard_metrics.png",
+        imageAlt: "Dashboard showing real-time metrics and data"
+      },
+      {
+        id: "sustainability",
+        title: "Sustainability Impact",
+        body:
+          "From carbon credits to renewable energy infrastructure, Axiom tracks and reports on environmental sustainability as a core operational metric.",
+        image: "/generated/sustainable_impact_farmland_aerial.png",
+        imageAlt: "Sustainable farmland with solar panels",
+        bullets: [
+          "Carbon credits generated",
+          "Renewable energy integration",
+          "Sustainable development priorities"
+        ]
+      },
+      {
+        id: "growth",
+        title: "Community Growth",
+        body:
+          "The Axiom community continues to expand across cities and countries. Real growth driven by real outcomes and word-of-mouth from satisfied members.",
+        image: "/generated/community_collaboration_around_data.png",
+        imageAlt: "Community growth visualization",
+        primaryCta: { label: "Join Today", href: "/register" }
+      }
+    ]
+  },
+  transparency: {
+    title: "Transparency",
+    intro:
+      "Complete visibility into Axiom's smart contracts, security infrastructure, token allocation, and governance. Trust through verification, not promises.",
+    hero: {
+      kicker: "Trust Through Verification",
+      headline: "Everything On-Chain",
+      secondary: "29 Verified Smart Contracts",
+      subheadline: "Every contract is verified on Arbiscan. Every transaction is visible. Every decision is recorded. This is what real transparency looks like.",
+      primaryCta: { label: "View Contracts", href: "/transparency#contracts" },
+      secondaryCta: { label: "See Security", href: "/transparency#security" },
+      microcopy: "Verified on Arbitrum One. Audited security standards."
+    },
+    sections: [
+      {
+        id: "contracts",
+        title: "Smart Contracts",
+        body:
+          "29 verified smart contracts on Arbitrum One covering identity, treasury, staking, land registry, DePIN nodes, governance, and more. All built on OpenZeppelin security standards.",
+        image: "/generated/blockchain_network_3d_visualization.png",
+        imageAlt: "Blockchain network representing smart contracts"
+      },
+      {
+        id: "security",
+        title: "Security Infrastructure",
+        body:
+          "Multi-signature wallets, role-based access control, pausable contracts, reentrancy guards, and SafeERC20 transfers. Security is not a feature — it's the foundation.",
+        image: "/generated/transparency_glass_architecture.png",
+        imageAlt: "Glass architecture representing transparency and security",
+        bullets: [
+          "OpenZeppelin security standards",
+          "Multi-signature treasury wallets",
+          "Emergency pause capabilities",
+          "Anti-whale protection"
+        ]
+      },
+      {
+        id: "governance",
+        title: "Governance",
+        body:
+          "AXM token holders govern the protocol through proposals and voting. veAXM staking provides voting power proportional to lock duration. Community-driven decision making.",
+        image: "/generated/how_it_works_pathway_visualization.png",
+        imageAlt: "Governance pathway visualization",
+        primaryCta: { label: "View Governance", href: "/governance" }
+      }
+    ]
   }
 };
