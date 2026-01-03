@@ -31,7 +31,7 @@ function useSectionTracking(sectionId: string) {
       (entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
-            trackOnce('home_section_view', `section_${sectionId}`, { section: sectionId });
+            trackOnce('home_section_view', `sectionview_${sectionId}`, { section: sectionId });
           }
         });
       },

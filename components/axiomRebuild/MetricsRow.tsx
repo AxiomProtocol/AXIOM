@@ -43,62 +43,62 @@ export function MetricsRow({ page = 'home' }: MetricsRowProps) {
   }, [page]);
   
   return (
-    <div
-      ref={rowRef}
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(4, 1fr)",
-        gap: 24,
-        maxWidth: 1000,
-        margin: "0 auto",
-        padding: "40px 20px"
-      }}
-    >
-      {metrics.map((metric, idx) => (
-        <div
-          key={idx}
-          style={{
-            background: "rgba(255, 255, 255, 0.85)",
-            backdropFilter: "blur(20px)",
-            borderRadius: web3Theme.radii.lg,
-            padding: 24,
-            textAlign: "center",
-            boxShadow: web3Theme.shadows.card,
-            border: "1px solid rgba(0, 212, 170, 0.15)",
-            transition: "all 0.3s ease"
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-4px)";
-            e.currentTarget.style.boxShadow = web3Theme.shadows.cardHover;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = web3Theme.shadows.card;
-          }}
-        >
-          <div style={{ fontSize: 32, marginBottom: 8 }}>{metric.icon}</div>
-          <div
-            style={{
-              fontSize: 28,
-              fontWeight: 700,
-              background: "linear-gradient(135deg, #00D4AA 0%, #7B68EE 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              marginBottom: 4
-            }}
-          >
-            {metric.value}
-          </div>
-          <div style={{ fontSize: 14, color: "rgba(26, 26, 46, 0.7)" }}>{metric.label}</div>
-        </div>
-      ))}
+    <>
       <style jsx>{`
+        .metrics-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 24px;
+          max-width: 1000px;
+          margin: 0 auto;
+          padding: 40px 20px;
+        }
         @media (max-width: 768px) {
-          div:first-child {
-            grid-template-columns: repeat(2, 1fr) !important;
+          .metrics-grid {
+            grid-template-columns: repeat(2, 1fr);
           }
         }
       `}</style>
-    </div>
+      <div ref={rowRef} className="metrics-grid">
+        {metrics.map((metric, idx) => (
+          <div
+            key={idx}
+            style={{
+              background: "rgba(255, 255, 255, 0.85)",
+              backdropFilter: "blur(20px)",
+              borderRadius: web3Theme.radii.lg,
+              padding: 24,
+              textAlign: "center",
+              boxShadow: web3Theme.shadows.card,
+              border: "1px solid rgba(0, 212, 170, 0.15)",
+              transition: "all 0.3s ease"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow = web3Theme.shadows.cardHover;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = web3Theme.shadows.card;
+            }}
+          >
+            <div style={{ fontSize: 32, marginBottom: 8 }}>{metric.icon}</div>
+            <div
+              style={{
+                fontSize: 28,
+                fontWeight: 700,
+                background: "linear-gradient(135deg, #00D4AA 0%, #7B68EE 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                marginBottom: 4
+              }}
+            >
+              {metric.value}
+            </div>
+            <div style={{ fontSize: 14, color: "rgba(26, 26, 46, 0.7)" }}>{metric.label}</div>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
