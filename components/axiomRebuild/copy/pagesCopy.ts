@@ -296,7 +296,7 @@ export const pagesCopy: Record<string, PageCopy> = {
         title: "The KeyGrow Path",
         body:
           "Our flagship course on the path to homeownership through shared ownership. Learn how KeyGrow works, what participation means, and how to build toward property ownership.",
-        image: "/generated/floating_farmland_3d_visualization.png",
+        image: "/generated/floating_farmland_island_3d.png",
         imageAlt: "Farmland visualization representing property ownership",
         primaryCta: { label: "Explore KeyGrow", href: "/keygrow" }
       }

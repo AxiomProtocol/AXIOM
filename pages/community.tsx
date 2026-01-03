@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
-import Link from 'next/link';
-import Layout from '../components/Layout';
+import { pagesCopy } from '../components/axiomRebuild/copy/pagesCopy';
+import { Web3Hero } from '../components/axiomRebuild/Web3Hero';
+import { Web3Section } from '../components/axiomRebuild/Web3Section';
+import { useScrollToSection } from '../components/axiomRebuild/useScrollToSection';
 
 interface Testimonial {
   id: number;
@@ -11,8 +13,6 @@ interface Testimonial {
   story: string;
   achievement: string;
   joinedDate: string;
-  savedAmount?: number;
-  groupsJoined?: number;
 }
 
 const TESTIMONIALS: Testimonial[] = [
@@ -21,63 +21,36 @@ const TESTIMONIALS: Testimonial[] = [
     name: "Marcus J.",
     location: "Atlanta, GA",
     avatar: "MJ",
-    story: "Before Axiom, I never thought homeownership was possible. Through KeyGrow and my SUSU circle, I've saved my entire down payment in just 18 months. The community support made all the difference.",
+    story: "Before Axiom, I never thought homeownership was possible. Through KeyGrow and my SUSU circle, I've saved my entire down payment in just 18 months.",
     achievement: "Saved $15,000 for down payment",
-    joinedDate: "March 2024",
-    savedAmount: 15000,
-    groupsJoined: 3
+    joinedDate: "March 2024"
   },
   {
     id: 2,
     name: "Keisha T.",
     location: "Houston, TX",
     avatar: "KT",
-    story: "My savings group became my accountability partners. We check in weekly, celebrate wins together, and push each other toward our goals. This is more than an app - it's a movement.",
+    story: "My savings group became my accountability partners. We check in weekly, celebrate wins together, and push each other toward our goals.",
     achievement: "Started 2 savings groups",
-    joinedDate: "January 2024",
-    groupsJoined: 5
+    joinedDate: "January 2024"
   },
   {
     id: 3,
     name: "David R.",
     location: "Chicago, IL",
     avatar: "DR",
-    story: "The Academy courses taught me about wealth building in ways school never did. Combined with the SUSU model, I finally understand how our ancestors built community wealth.",
+    story: "The Academy courses taught me about wealth building in ways school never did. Combined with the SUSU model, I finally understand community wealth.",
     achievement: "Completed 8 courses",
-    joinedDate: "February 2024",
-    savedAmount: 8500
+    joinedDate: "February 2024"
   },
   {
     id: 4,
     name: "Angela M.",
     location: "Detroit, MI",
     avatar: "AM",
-    story: "I referred my entire family to Axiom. Now we have a family savings circle working toward generational wealth together. My grandmother says it reminds her of the old ways.",
+    story: "I referred my entire family to Axiom. Now we have a family savings circle working toward generational wealth together.",
     achievement: "Referred 12 family members",
-    joinedDate: "December 2023",
-    groupsJoined: 4,
-    savedAmount: 22000
-  },
-  {
-    id: 5,
-    name: "Jerome W.",
-    location: "Los Angeles, CA",
-    avatar: "JW",
-    story: "As a small business owner, cash flow was always tight. My SUSU circle helped me save for equipment I needed without going into debt. Smart money moves.",
-    achievement: "Funded business expansion",
-    joinedDate: "April 2024",
-    savedAmount: 12000
-  },
-  {
-    id: 6,
-    name: "Tamika L.",
-    location: "Philadelphia, PA",
-    avatar: "TL",
-    story: "Single mom of three here. This platform gave me hope and a real plan. My kids see me saving and learning - that's the real generational wealth right there.",
-    achievement: "Emergency fund complete",
-    joinedDate: "May 2024",
-    savedAmount: 5000,
-    groupsJoined: 2
+    joinedDate: "December 2023"
   }
 ];
 
@@ -88,210 +61,171 @@ const SUCCESS_STATS = [
   { value: "45", label: "Cities Represented", icon: "🌍" },
 ];
 
-export default function CommunitySuccessHub() {
+export default function CommunityPage() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  
+  const getSearch = useCallback(() => {
+    if (typeof window === 'undefined') return '';
+    return window.location.search;
+  }, []);
+  
+  useScrollToSection(getSearch);
 
   useEffect(() => {
-    if (!isAutoPlaying) return;
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % TESTIMONIALS.length);
     }, 6000);
     return () => clearInterval(interval);
-  }, [isAutoPlaying]);
+  }, []);
 
-  const goToSlide = (index: number) => {
-    setActiveIndex(index);
-    setIsAutoPlaying(false);
-  };
-
-  const nextSlide = () => {
-    setActiveIndex((prev) => (prev + 1) % TESTIMONIALS.length);
-    setIsAutoPlaying(false);
-  };
-
-  const prevSlide = () => {
-    setActiveIndex((prev) => (prev - 1 + TESTIMONIALS.length) % TESTIMONIALS.length);
-    setIsAutoPlaying(false);
-  };
+  const copy = pagesCopy.community;
 
   return (
     <>
       <Head>
         <title>Community Success Stories | Axiom</title>
-        <meta name="description" content="Real stories from Axiom members building wealth together through community savings" />
+        <meta name="description" content="Real stories from Axiom members building wealth together through community savings." />
       </Head>
+      <div style={{ minHeight: '100vh', background: 'white' }}>
+        {copy.hero && (
+          <Web3Hero
+            kicker={copy.hero.kicker}
+            headline={copy.hero.headline}
+            secondary={copy.hero.secondary}
+            subheadline={copy.hero.subheadline}
+            primaryCta={copy.hero.primaryCta}
+            secondaryCta={copy.hero.secondaryCta}
+            microcopy={copy.hero.microcopy || ''}
+          />
+        )}
 
-      <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
-          <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-20 px-4">
-            <div className="max-w-4xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">Community Success Hub</h1>
-              <p className="text-xl text-orange-100 mb-8">
-                Real stories from real people building real wealth together
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {SUCCESS_STATS.map((stat, idx) => (
-                  <div key={idx} className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                    <div className="text-3xl mb-2">{stat.icon}</div>
-                    <div className="text-2xl md:text-3xl font-bold">{stat.value}</div>
-                    <div className="text-sm text-orange-100">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="max-w-5xl mx-auto px-4 py-16">
-            <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">Member Stories</h2>
-            
-            <div className="relative">
-              <div className="overflow-hidden rounded-2xl bg-white shadow-xl">
+        <section style={{ padding: '60px 20px', background: 'linear-gradient(180deg, rgba(0,212,170,0.08) 0%, white 100%)' }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24 }}>
+              {SUCCESS_STATS.map((stat, i) => (
                 <div 
-                  className="flex transition-transform duration-500 ease-out"
-                  style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+                  key={i}
+                  style={{
+                    background: 'rgba(255,255,255,0.95)',
+                    backdropFilter: 'blur(20px)',
+                    borderRadius: 16,
+                    padding: 28,
+                    textAlign: 'center',
+                    border: '1px solid rgba(0,212,170,0.2)',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.06)'
+                  }}
                 >
-                  {TESTIMONIALS.map((testimonial) => (
-                    <div key={testimonial.id} className="w-full flex-shrink-0 p-8 md:p-12">
-                      <div className="flex flex-col md:flex-row gap-8 items-start">
-                        <div className="flex-shrink-0">
-                          <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                            {testimonial.avatar}
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <blockquote className="text-xl text-gray-700 italic mb-6 leading-relaxed">
-                            "{testimonial.story}"
-                          </blockquote>
-                          <div className="flex flex-wrap items-center gap-4 mb-4">
-                            <div>
-                              <p className="font-semibold text-gray-900">{testimonial.name}</p>
-                              <p className="text-sm text-gray-500">{testimonial.location}</p>
-                            </div>
-                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                              {testimonial.achievement}
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-                            <span>Member since {testimonial.joinedDate}</span>
-                            {testimonial.savedAmount && (
-                              <span className="text-green-600 font-medium">
-                                ${testimonial.savedAmount.toLocaleString()} saved
-                              </span>
-                            )}
-                            {testimonial.groupsJoined && (
-                              <span>{testimonial.groupsJoined} groups joined</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                  <div style={{ fontSize: 36, marginBottom: 8 }}>{stat.icon}</div>
+                  <div style={{ fontSize: 36, fontWeight: 700, color: '#00D4AA' }}>{stat.value}</div>
+                  <div style={{ fontSize: 14, color: 'rgba(26,26,46,0.6)', marginTop: 4 }}>{stat.label}</div>
                 </div>
-              </div>
-
-              <button
-                onClick={prevSlide}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-6 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition"
-              >
-                <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button
-                onClick={nextSlide}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-6 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition"
-              >
-                <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-
-              <div className="flex justify-center gap-2 mt-6">
-                {TESTIMONIALS.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => goToSlide(idx)}
-                    className={`w-3 h-3 rounded-full transition ${
-                      idx === activeIndex ? 'bg-amber-500' : 'bg-gray-300 hover:bg-gray-400'
-                    }`}
-                  />
-                ))}
-              </div>
+              ))}
             </div>
           </div>
+        </section>
 
-          <div className="bg-gray-100 py-16 px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">Share Your Story</h2>
-              <p className="text-gray-600 text-center mb-8">
-                Your journey could inspire thousands. Tell us how Axiom has helped you on your path to financial freedom.
-              </p>
-              <div className="bg-white rounded-2xl shadow-lg p-8 max-w-2xl mx-auto">
-                <form className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
-                      <input
-                        type="text"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                        placeholder="First name and last initial"
-                      />
+        {copy.sections.map((s, i) => (
+          <Web3Section
+            key={s.id}
+            id={s.id}
+            title={s.title}
+            body={s.body}
+            bullets={s.bullets}
+            primaryCta={s.primaryCta}
+            secondaryCta={s.secondaryCta}
+            image={s.image}
+            imageAlt={s.imageAlt}
+            index={i}
+            variant={s.id === "impact" ? "highlight" : "default"}
+          />
+        ))}
+
+        <section style={{ padding: '80px 20px', background: '#1a1a2e' }}>
+          <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
+            <span style={{ color: '#00D4AA', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, fontSize: 14 }}>Testimonials</span>
+            <h2 style={{ fontSize: 40, fontWeight: 700, margin: '8px 0 32px 0', color: 'white' }}>Hear From Our Members</h2>
+            
+            <div style={{ position: 'relative', minHeight: 280 }}>
+              {TESTIMONIALS.map((testimonial, i) => (
+                <div
+                  key={testimonial.id}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    opacity: i === activeIndex ? 1 : 0,
+                    transform: i === activeIndex ? 'translateY(0)' : 'translateY(20px)',
+                    transition: 'all 0.5s ease',
+                    pointerEvents: i === activeIndex ? 'auto' : 'none'
+                  }}
+                >
+                  <div style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    backdropFilter: 'blur(20px)',
+                    borderRadius: 20,
+                    padding: 40,
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}>
+                    <div style={{ 
+                      width: 64, 
+                      height: 64, 
+                      borderRadius: '50%', 
+                      background: 'linear-gradient(135deg, #00D4AA 0%, #7B68EE 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 20px',
+                      fontSize: 24,
+                      fontWeight: 700,
+                      color: 'white'
+                    }}>
+                      {testimonial.avatar}
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                      <input
-                        type="text"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                        placeholder="City, State"
-                      />
+                    <p style={{ fontSize: 20, color: 'rgba(255,255,255,0.9)', lineHeight: 1.6, margin: '0 0 24px 0', fontStyle: 'italic' }}>
+                      "{testimonial.story}"
+                    </p>
+                    <div style={{ marginBottom: 8 }}>
+                      <span style={{ fontWeight: 600, color: 'white' }}>{testimonial.name}</span>
+                      <span style={{ color: 'rgba(255,255,255,0.5)', margin: '0 8px' }}>•</span>
+                      <span style={{ color: 'rgba(255,255,255,0.6)' }}>{testimonial.location}</span>
+                    </div>
+                    <div style={{ 
+                      display: 'inline-block',
+                      padding: '6px 14px',
+                      background: 'rgba(0,212,170,0.2)',
+                      borderRadius: 20,
+                      color: '#00D4AA',
+                      fontSize: 14,
+                      fontWeight: 500
+                    }}>
+                      {testimonial.achievement}
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Your Story</label>
-                    <textarea
-                      rows={5}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      placeholder="Tell us about your journey with Axiom..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Your Biggest Achievement</label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      placeholder="e.g., Saved $10,000, Started my first business"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition"
-                  >
-                    Submit Your Story
-                  </button>
-                </form>
-              </div>
+                </div>
+              ))}
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 32 }}>
+              {TESTIMONIALS.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveIndex(i)}
+                  style={{
+                    width: i === activeIndex ? 32 : 10,
+                    height: 10,
+                    borderRadius: 5,
+                    border: 'none',
+                    background: i === activeIndex ? '#00D4AA' : 'rgba(255,255,255,0.3)',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                />
+              ))}
             </div>
           </div>
-
-          <div className="py-16 px-4">
-            <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">Ready to Write Your Success Story?</h2>
-              <p className="text-xl text-gray-600 mb-8">
-                Join thousands of members who are building wealth together through community savings.
-              </p>
-              <div className="flex flex-wrap justify-center gap-4">
-                <Link href="/susu" className="px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold hover:from-amber-600 hover:to-orange-600 transition shadow-lg">
-                  Join a Savings Group
-                </Link>
-                <Link href="/academy" className="px-8 py-4 bg-white text-gray-700 border-2 border-gray-200 rounded-xl font-semibold hover:border-amber-500 transition">
-                  Start Learning
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Layout>
+        </section>
+      </div>
     </>
   );
 }
