@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import toast, { Toaster } from 'react-hot-toast';
 import { ethers } from 'ethers';
@@ -158,9 +159,38 @@ const SAMPLE_ZIP_CODES = [
   { code: '48227', label: 'Detroit, MI' }
 ];
 
+const SECTION_TO_TAB: Record<string, TabType> = {
+  'paths': 'program-overview',
+  'projects': 'properties',
+  'stewardship': 'path-to-ownership',
+  'get-started': 'program-overview'
+};
+
 export default function KeyGrowPage() {
+  const router = useRouter();
   const { walletState, connectMetaMask, signInWithEthereum, siweState } = useWallet();
   const [activeTab, setActiveTab] = useState<TabType>('properties');
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  useEffect(() => {
+    const section = router.query.section as string | undefined;
+    if (section && SECTION_TO_TAB[section]) {
+      setActiveTab(SECTION_TO_TAB[section]);
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = setTimeout(() => {
+        const el = document.getElementById(section);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          const y = window.scrollY + rect.top - 84;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 100);
+    }
+    return () => {
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    };
+  }, [router.query.section]);
+  
   const [properties, setProperties] = useState<any[]>([]);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [equitySummary, setEquitySummary] = useState<EquitySummary | null>(null);
@@ -533,7 +563,7 @@ export default function KeyGrowPage() {
 
         {/* PROGRAM OVERVIEW TAB */}
         {activeTab === 'program-overview' && (
-          <div className="space-y-8">
+          <div id="paths" className="space-y-8">
             {/* Hero Section */}
             <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 rounded-2xl p-8 text-white">
               <div className="max-w-4xl">
@@ -783,7 +813,7 @@ export default function KeyGrowPage() {
             </div>
 
             {/* CTA */}
-            <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl p-8 text-center text-white">
+            <div id="get-started" className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl p-8 text-center text-white">
               <h3 className="text-2xl font-bold mb-4">Ready to Start Building Equity?</h3>
               <p className="text-amber-100 mb-6 max-w-2xl mx-auto">Browse affordable properties in your area and start your journey to homeownership with tokenized rent-to-own.</p>
               <button
@@ -798,7 +828,7 @@ export default function KeyGrowPage() {
 
         {/* PATH TO OWNERSHIP TAB */}
         {activeTab === 'path-to-ownership' && (
-          <div className="space-y-8">
+          <div id="stewardship" className="space-y-8">
             <div className="bg-white rounded-xl border border-amber-100 p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Path to Homeownership</h2>
               
@@ -1454,7 +1484,7 @@ export default function KeyGrowPage() {
         )}
 
         {activeTab === 'properties' && (
-          <div>
+          <div id="projects">
             <div className="bg-white rounded-xl border border-amber-100 p-6 mb-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Search Properties by Zip Code</h3>
               <div className="flex flex-wrap gap-4">
