@@ -9,8 +9,18 @@ import { RebuildNav, RebuildFooter } from '../components/axiomRebuild'
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID
 
+const REBUILD_NAV_PAGES = [
+  '/',
+  '/origin',
+  '/how-it-works',
+  '/infrastructure',
+  '/keygrow',
+  '/learn'
+]
+
 export default function App({ Component, pageProps }) {
   const router = useRouter()
+  const showRebuildNav = REBUILD_NAV_PAGES.includes(router.pathname)
 
   useEffect(() => {
     if (!GA_ID) return
@@ -30,9 +40,9 @@ export default function App({ Component, pageProps }) {
   return (
     <ErrorBoundary>
       <WalletProvider>
-        <RebuildNav />
+        {showRebuildNav && <RebuildNav />}
         <Component {...pageProps} />
-        <RebuildFooter />
+        {showRebuildNav && <RebuildFooter />}
       </WalletProvider>
     </ErrorBoundary>
   )
