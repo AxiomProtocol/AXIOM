@@ -3,7 +3,7 @@ import { useWallet } from './WalletConnect/WalletContext';
 import { ethers } from 'ethers';
 import { V2_SOVEREIGN_BANKING_CONTRACTS } from '../shared/contracts';
 
-const VE_AXM_ABI = [
+const SEED_ABI = [
   "function claimRewards(uint256 epochId)",
   "function getClaimableRewards(address user) view returns (uint256)",
   "function currentRewardEpoch() view returns (uint256)"
@@ -15,7 +15,7 @@ interface RewardsData {
   totalRewardsDistributed: string;
 }
 
-export default function VeAXMRewardsClaim() {
+export default function SeedRewardsClaim() {
   const { walletState } = useWallet();
   const address = walletState.address;
   const isConnected = walletState.isConnected;
@@ -36,7 +36,7 @@ export default function VeAXMRewardsClaim() {
   const fetchRewards = async () => {
     setError(null);
     try {
-      const res = await fetch(`/api/v2/veaxm-rewards?address=${address}`);
+      const res = await fetch(`/api/v2/seed-rewards?address=${address}`);
       if (!res.ok) throw new Error(`API error ${res.status}`);
       const result = await res.json();
       if (result.success) {
@@ -66,8 +66,8 @@ export default function VeAXMRewardsClaim() {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(
-        V2_SOVEREIGN_BANKING_CONTRACTS.VE_AXM,
-        VE_AXM_ABI,
+        V2_SOVEREIGN_BANKING_CONTRACTS.SEED,
+        SEED_ABI,
         signer
       );
 

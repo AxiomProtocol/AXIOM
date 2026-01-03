@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { NETWORK_CONFIG, V2_SOVEREIGN_BANKING_CONTRACTS } from '../../../shared/contracts';
 
-const VE_AXM_ABI = [
+const SEED_ABI = [
   "function balanceOf(address user) external view returns (uint256)",
   "function totalSupply() external view returns (uint256)",
   "function totalLocked() external view returns (uint256)",

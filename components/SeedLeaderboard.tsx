@@ -14,7 +14,7 @@ interface Props {
   limit?: number;
 }
 
-export default function VeAXMLeaderboard({ currentUserAddress, limit = 20 }: Props) {
+export default function SeedLeaderboard({ currentUserAddress, limit = 20 }: Props) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRank, setUserRank] = useState<LeaderboardEntry | null>(null);
@@ -27,7 +27,7 @@ export default function VeAXMLeaderboard({ currentUserAddress, limit = 20 }: Pro
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/veaxm/leaderboard?limit=${limit}&timeframe=${timeframe}`);
+      const res = await fetch(`/api/seed/leaderboard?limit=${limit}&timeframe=${timeframe}`);
       const data = await res.json();
       if (data.success) {
         setLeaderboard(data.leaderboard || []);
@@ -59,9 +59,9 @@ export default function VeAXMLeaderboard({ currentUserAddress, limit = 20 }: Pro
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <span>🏆</span> Wealth Engine Rankings
+              <span>🌱</span> SEED Rankings
             </h3>
-            <p className="text-sm text-gray-400 mt-1">Top wealth builders by lock power</p>
+            <p className="text-sm text-gray-400 mt-1">Top wealth builders by SEED power</p>
           </div>
           <div className="flex gap-2">
             {(['all', 'month', 'week'] as const).map((tf) => (
@@ -90,7 +90,7 @@ export default function VeAXMLeaderboard({ currentUserAddress, limit = 20 }: Pro
         <div className="divide-y divide-gray-800">
           {leaderboard.length === 0 ? (
             <div className="p-8 text-center text-gray-400">
-              No Wealth Engine lockers yet. Be the first to power up!
+              No SEED holders yet. Be the first to plant your seeds!
             </div>
           ) : (
             leaderboard.map((entry, idx) => {

@@ -142,9 +142,11 @@ export const V2_SOVEREIGN_BANKING_CONTRACTS = {
   // 5% of node rewards diverted to cover broken SUSU circles
   SUSU_INSURANCE_FUND: '0x7B69ce0d83f45C2dBa3e5B73076beA8b1Be1271F',
   
-  // Contract 28: veAXM (Vote-Escrowed AXM)
+  // Contract 28: SEED (Vote-Escrowed AXM)
   // Curve-style locking (1-4 years) for governance and real yield
-  VE_AXM: '0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046',
+  // Lock AXM → Earn SEED → Access produce cycles, land cohorts, governance
+  SEED: '0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046',
+  VE_AXM: '0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046', // Legacy alias
   
   // Contract 29: AxiomFeeBurner (Real Yield)
   // 0.5% fee switch with buyback/burn mechanism

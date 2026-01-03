@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
-import { getUserVeAXMPosition } from '../../../lib/server/v2ContractService';
+import { getUserSeedPosition } from '../../../lib/server/v2ContractService';
 import { ethers } from 'ethers';
 
 interface ReserveResponse {
@@ -67,30 +67,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
     
-    let veAxmData = { votingPower: '0', lockedAmount: '0', unlockTime: 0, lockStart: 0, claimableRewards: '0' };
+    let seedData = { votingPower: '0', lockedAmount: '0', unlockTime: 0, lockStart: 0, claimableRewards: '0' };
     let lockDays = 0;
     
     try {
-      veAxmData = await getUserVeAXMPosition(normalizedWallet);
-      if (veAxmData.unlockTime > 0 && veAxmData.lockStart > 0) {
-        lockDays = Math.floor((veAxmData.unlockTime - veAxmData.lockStart) / 86400);
+      seedData = await getUserSeedPosition(normalizedWallet);
+      if (seedData.unlockTime > 0 && seedData.lockStart > 0) {
+        lockDays = Math.floor((seedData.unlockTime - seedData.lockStart) / 86400);
       }
     } catch (err) {
-      console.warn('veAXM contract call failed:', err);
+      console.warn('SEED contract call failed:', err);
     }
     
-    const veAxmBalance = parseFloat(veAxmData.lockedAmount);
+    const seedBalance = parseFloat(seedData.lockedAmount);
     
     let tier = 0;
-    if (veAxmBalance >= 1000 && lockDays >= 180) tier = 4;
-    else if (veAxmBalance >= 100 && lockDays >= 90) tier = 3;
-    else if (veAxmBalance >= 10 && lockDays >= 30) tier = 2;
-    else if (veAxmBalance > 0) tier = 1;
+    if (seedBalance >= 1000 && lockDays >= 180) tier = 4;
+    else if (seedBalance >= 100 && lockDays >= 90) tier = 3;
+    else if (seedBalance >= 10 && lockDays >= 30) tier = 2;
+    else if (seedBalance > 0) tier = 1;
     
     if (tier < MINIMUM_TIER) {
       return res.status(403).json({
         success: false,
-        message: `Minimum Tier ${MINIMUM_TIER} required. Lock AXM to increase your tier.`,
+        message: `Minimum Tier ${MINIMUM_TIER} required. Lock AXM to earn SEED and increase your tier.`,
         tier
       });
     }
@@ -114,7 +114,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       INSERT INTO produce_reservations 
         (wallet_address, cycle_id, cycle_season, cycle_year, credits_used, tier, status, metadata)
       VALUES ($1, $2, $3, $4, $5, $6, 'reserved', $7)
-    `, [normalizedWallet, cycleId, currentCycle.season, currentCycle.year, CREDITS_PER_RESERVATION, tier, JSON.stringify({ veAxmBalance: veAxmData.lockedAmount, lockDays })]);
+    `, [normalizedWallet, cycleId, currentCycle.season, currentCycle.year, CREDITS_PER_RESERVATION, tier, JSON.stringify({ seedBalance: seedData.lockedAmount, lockDays })]);
     
     await pool.query(`
       UPDATE participation_credits SET total_credits = total_credits - $1, updated_at = NOW()

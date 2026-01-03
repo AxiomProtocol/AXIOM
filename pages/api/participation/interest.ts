@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
-import { getUserVeAXMPosition } from '../../../lib/server/v2ContractService';
+import { getUserSeedPosition } from '../../../lib/server/v2ContractService';
 import { ethers } from 'ethers';
 
 interface InterestResponse {
@@ -10,15 +10,15 @@ interface InterestResponse {
   position?: number;
   tier?: number;
   eligibility?: {
-    hasVeAXM: boolean;
-    veAxmBalance: string;
+    hasSeed: boolean;
+    seedBalance: string;
     lockDays: number;
     meetsMinimum: boolean;
   };
 }
 
 const MINIMUM_LOCK_DAYS = 30;
-const MINIMUM_VEAXM = '1';
+const MINIMUM_SEED = '1';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -53,33 +53,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } as InterestResponse);
     }
     
-    let veAxmData = { votingPower: '0', lockedAmount: '0', unlockTime: 0, lockStart: 0, claimableRewards: '0' };
+    let seedData = { votingPower: '0', lockedAmount: '0', unlockTime: 0, lockStart: 0, claimableRewards: '0' };
     let lockDays = 0;
     
     try {
-      veAxmData = await getUserVeAXMPosition(normalizedWallet);
-      if (veAxmData.unlockTime > 0 && veAxmData.lockStart > 0) {
-        lockDays = Math.floor((veAxmData.unlockTime - veAxmData.lockStart) / 86400);
+      seedData = await getUserSeedPosition(normalizedWallet);
+      if (seedData.unlockTime > 0 && seedData.lockStart > 0) {
+        lockDays = Math.floor((seedData.unlockTime - seedData.lockStart) / 86400);
       }
     } catch (err) {
-      console.warn('veAXM contract call failed:', err);
+      console.warn('SEED contract call failed:', err);
     }
     
-    const veAxmBalance = parseFloat(veAxmData.lockedAmount);
-    const hasVeAXM = veAxmBalance > 0;
-    const meetsMinimum = veAxmBalance >= parseFloat(MINIMUM_VEAXM) && lockDays >= MINIMUM_LOCK_DAYS;
+    const seedBalance = parseFloat(seedData.lockedAmount);
+    const hasSeed = seedBalance > 0;
+    const meetsMinimum = seedBalance >= parseFloat(MINIMUM_SEED) && lockDays >= MINIMUM_LOCK_DAYS;
     
     let tier = 0;
-    if (veAxmBalance >= 1000 && lockDays >= 180) tier = 4;
-    else if (veAxmBalance >= 100 && lockDays >= 90) tier = 3;
-    else if (veAxmBalance >= 10 && lockDays >= 30) tier = 2;
-    else if (veAxmBalance > 0) tier = 1;
+    if (seedBalance >= 1000 && lockDays >= 180) tier = 4;
+    else if (seedBalance >= 100 && lockDays >= 90) tier = 3;
+    else if (seedBalance >= 10 && lockDays >= 30) tier = 2;
+    else if (seedBalance > 0) tier = 1;
     
     await pool.query(`
       INSERT INTO participation_interest 
-        (wallet_address, interest_type, cohort_id, ve_axm_balance, tier, status, metadata)
+        (wallet_address, interest_type, cohort_id, seed_balance, tier, status, metadata)
       VALUES ($1, 'land-cohort', $2, $3, $4, $5, $6)
-    `, [normalizedWallet, cohortId, veAxmData.lockedAmount, tier, meetsMinimum ? 'pending' : 'ineligible', JSON.stringify({ lockDays, votingPower: veAxmData.votingPower })]);
+    `, [normalizedWallet, cohortId, seedData.lockedAmount, tier, meetsMinimum ? 'pending' : 'ineligible', JSON.stringify({ lockDays, votingPower: seedData.votingPower })]);
     
     await pool.query(`
       INSERT INTO participation_actions 
@@ -95,12 +95,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true,
       message: meetsMinimum 
         ? 'Interest recorded successfully' 
-        : 'Interest recorded. Increase veAXM lock to meet eligibility requirements.',
+        : 'Interest recorded. Increase SEED lock to meet eligibility requirements.',
       position: parseInt(totalRegistered.rows[0]?.count || '1'),
       tier,
       eligibility: {
-        hasVeAXM,
-        veAxmBalance: veAxmData.lockedAmount,
+        hasSeed,
+        seedBalance: seedData.lockedAmount,
         lockDays,
         meetsMinimum
       }

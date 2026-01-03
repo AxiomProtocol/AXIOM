@@ -14,7 +14,7 @@ const LOCK_OPTIONS: LockOption[] = [
 ];
 
 const BASE_APY = 18.5;
-const VEAXM_REWARD_SHARE = 0.5;
+const SEED_REWARD_SHARE = 0.5;
 
 interface Props {
   axmBalance?: string;
@@ -22,7 +22,7 @@ interface Props {
   onSelectDuration?: (years: number) => void;
 }
 
-export default function VeAXMLockCalculator({ axmBalance = '0', currentLockYears, onSelectDuration }: Props) {
+export default function SeedLockCalculator({ axmBalance = '0', currentLockYears, onSelectDuration }: Props) {
   const [amount, setAmount] = useState(axmBalance !== '0' ? axmBalance : '1000');
   const [selectedYears, setSelectedYears] = useState(4);
 
@@ -31,7 +31,7 @@ export default function VeAXMLockCalculator({ axmBalance = '0', currentLockYears
     
     return LOCK_OPTIONS.map(option => {
       const votingPower = lockAmount * option.multiplier;
-      const effectiveApy = BASE_APY * option.multiplier + (BASE_APY * VEAXM_REWARD_SHARE * option.multiplier);
+      const effectiveApy = BASE_APY * option.multiplier + (BASE_APY * SEED_REWARD_SHARE * option.multiplier);
       const yearlyRewards = (lockAmount * effectiveApy) / 100;
       const totalRewards = yearlyRewards * option.years;
       const finalValue = lockAmount + totalRewards;
@@ -54,8 +54,8 @@ export default function VeAXMLockCalculator({ axmBalance = '0', currentLockYears
   return (
     <div className="bg-gray-800/50 border border-yellow-500/20 rounded-xl p-6">
       <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-        <span className="text-2xl">🔒</span>
-        Wealth Engine Calculator
+        <span className="text-2xl">🌱</span>
+        SEED Calculator
       </h3>
       
       <div className="mb-6">
@@ -100,7 +100,7 @@ export default function VeAXMLockCalculator({ axmBalance = '0', currentLockYears
           <div className="text-center p-3 bg-gray-800/50 rounded-lg">
             <div className="text-sm text-gray-400">Voting Power</div>
             <div className="text-xl font-bold text-purple-400">{selected.votingPower.toLocaleString()}</div>
-            <div className="text-xs text-gray-500">veAXM</div>
+            <div className="text-xs text-gray-500">SEED</div>
           </div>
           
           <div className="text-center p-3 bg-gray-800/50 rounded-lg">

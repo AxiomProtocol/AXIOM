@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
-import { getUserVeAXMPosition, getCreditScore } from '../../../lib/server/v2ContractService';
+import { getUserSeedPosition, getCreditScore } from '../../../lib/server/v2ContractService';
 import { ethers } from 'ethers';
 
 interface CreditsResponse {
@@ -14,15 +14,15 @@ interface CreditsResponse {
   tier: number;
   daysHeld: number;
   onChain: {
-    veAxmBalance: string;
+    seedBalance: string;
     votingPower: string;
     creditScore: number;
     lockDuration: number;
   };
 }
 
-function calculateTierFromVeAXM(veAxmBalance: string, lockDays: number): number {
-  const balance = parseFloat(veAxmBalance);
+function calculateTierFromSeed(seedBalance: string, lockDays: number): number {
+  const balance = parseFloat(seedBalance);
   if (balance >= 1000 && lockDays >= 180) return 4;
   if (balance >= 100 && lockDays >= 90) return 3;
   if (balance >= 10 && lockDays >= 30) return 2;
@@ -31,12 +31,12 @@ function calculateTierFromVeAXM(veAxmBalance: string, lockDays: number): number 
 }
 
 function calculateCreditsFromOnChain(
-  veAxmBalance: string, 
+  seedBalance: string, 
   lockDays: number, 
   creditScore: number,
   actionCount: number
 ): { total: number; holding: number; action: number; bonus: number } {
-  const balance = parseFloat(veAxmBalance);
+  const balance = parseFloat(seedBalance);
   const holdingCredits = Math.floor(lockDays / 30) * 2 + Math.floor(balance / 10);
   const actionCredits = actionCount * 2;
   const bonusCredits = creditScore >= 700 ? 5 : creditScore >= 600 ? 3 : creditScore >= 500 ? 1 : 0;
@@ -63,17 +63,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const normalizedWallet = wallet.toLowerCase();
     
-    let veAxmData = { votingPower: '0', lockedAmount: '0', unlockTime: 0, lockStart: 0, claimableRewards: '0' };
+    let seedData = { votingPower: '0', lockedAmount: '0', unlockTime: 0, lockStart: 0, claimableRewards: '0' };
     let lockDurationDays = 0;
     let creditScore = 0;
     
     try {
-      veAxmData = await getUserVeAXMPosition(normalizedWallet);
-      if (veAxmData.unlockTime > 0 && veAxmData.lockStart > 0) {
-        lockDurationDays = Math.floor((veAxmData.unlockTime - veAxmData.lockStart) / 86400);
+      seedData = await getUserSeedPosition(normalizedWallet);
+      if (seedData.unlockTime > 0 && seedData.lockStart > 0) {
+        lockDurationDays = Math.floor((seedData.unlockTime - seedData.lockStart) / 86400);
       }
     } catch (err) {
-      console.warn('veAXM contract call failed, using defaults:', err);
+      console.warn('SEED contract call failed, using defaults:', err);
     }
     
     try {
@@ -90,30 +90,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const actionCount = parseInt(actionCountResult.rows[0]?.count || '0');
     
     const credits = calculateCreditsFromOnChain(
-      veAxmData.lockedAmount,
+      seedData.lockedAmount,
       lockDurationDays,
       creditScore,
       actionCount
     );
     
-    const tier = calculateTierFromVeAXM(veAxmData.lockedAmount, lockDurationDays);
+    const tier = calculateTierFromSeed(seedData.lockedAmount, lockDurationDays);
     
     await pool.query(`
       INSERT INTO participation_credits 
-        (wallet_address, total_credits, holding_credits, action_credits, bonus_credits, ve_axm_balance, on_chain_score, tier, days_held, last_synced_at)
+        (wallet_address, total_credits, holding_credits, action_credits, bonus_credits, seed_balance, on_chain_score, tier, days_held, last_synced_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
       ON CONFLICT (wallet_address) DO UPDATE SET
         total_credits = $2,
         holding_credits = $3,
         action_credits = $4,
         bonus_credits = $5,
-        ve_axm_balance = $6,
+        seed_balance = $6,
         on_chain_score = $7,
         tier = $8,
         days_held = $9,
         last_synced_at = NOW(),
         updated_at = NOW()
-    `, [normalizedWallet, credits.total, credits.holding, credits.action, credits.bonus, veAxmData.lockedAmount, creditScore, tier, lockDurationDays]);
+    `, [normalizedWallet, credits.total, credits.holding, credits.action, credits.bonus, seedData.lockedAmount, creditScore, tier, lockDurationDays]);
 
     const response: CreditsResponse = {
       wallet: normalizedWallet,
@@ -126,8 +126,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       tier,
       daysHeld: lockDurationDays,
       onChain: {
-        veAxmBalance: veAxmData.lockedAmount,
-        votingPower: veAxmData.votingPower,
+        seedBalance: seedData.lockedAmount,
+        votingPower: seedData.votingPower,
         creditScore,
         lockDuration: lockDurationDays
       }

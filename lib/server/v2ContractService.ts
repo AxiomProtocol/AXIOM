@@ -5,7 +5,7 @@
  * Contracts:
  * - AxiomScoreSBT: Credit scoring with Soulbound Tokens
  * - SusuInsuranceFund: Default insurance fund
- * - veAXM: Vote-escrowed AXM for governance
+ * - SEED (veAXM contract): Vote-escrowed AXM for governance
  * - AxiomFeeBurner: Fee collection and buyback/burn
  */
 
@@ -38,7 +38,7 @@ const SUSU_INSURANCE_FUND_ABI = [
   "event ClaimPaid(uint256 indexed claimId, address indexed recipient, uint256 amount)"
 ];
 
-const VE_AXM_ABI = [
+const SEED_ABI = [
   "function balanceOf(address user) view returns (uint256)",
   "function totalSupply() view returns (uint256)",
   "function totalLocked() view returns (uint256)",
@@ -86,10 +86,13 @@ export function getSusuInsuranceFund(signerOrProvider?: ethers.Signer | ethers.P
   return new ethers.Contract(V2_SOVEREIGN_BANKING_CONTRACTS.SUSU_INSURANCE_FUND, SUSU_INSURANCE_FUND_ABI, provider);
 }
 
-export function getVeAXM(signerOrProvider?: ethers.Signer | ethers.Provider) {
+export function getSeedContract(signerOrProvider?: ethers.Signer | ethers.Provider) {
   const provider = signerOrProvider || getProvider();
-  return new ethers.Contract(V2_SOVEREIGN_BANKING_CONTRACTS.VE_AXM, VE_AXM_ABI, provider);
+  return new ethers.Contract(V2_SOVEREIGN_BANKING_CONTRACTS.SEED, SEED_ABI, provider);
 }
+
+// Legacy alias for backwards compatibility
+export const getVeAXM = getSeedContract;
 
 export function getAxiomFeeBurner(signerOrProvider?: ethers.Signer | ethers.Provider) {
   const provider = signerOrProvider || getProvider();
@@ -152,9 +155,9 @@ export async function getUserInsuranceClaims(userAddress: string): Promise<numbe
   return claimIds.map((id: bigint) => Number(id));
 }
 
-// veAXM Functions
-export async function getVeAXMStats() {
-  const contract = getVeAXM();
+// SEED Functions (formerly veAXM)
+export async function getSeedStats() {
+  const contract = getSeedContract();
   const [totalSupply, totalLocked, totalLockers, currentEpoch, totalRewards] = await Promise.all([
     contract.totalSupply(),
     contract.totalLocked(),
@@ -172,8 +175,11 @@ export async function getVeAXMStats() {
   };
 }
 
-export async function getUserVeAXMPosition(userAddress: string) {
-  const contract = getVeAXM();
+// Legacy alias
+export const getVeAXMStats = getSeedStats;
+
+export async function getUserSeedPosition(userAddress: string) {
+  const contract = getSeedContract();
   const [balance, lock, claimable] = await Promise.all([
     contract.balanceOf(userAddress),
     contract.getLock(userAddress),
@@ -188,6 +194,9 @@ export async function getUserVeAXMPosition(userAddress: string) {
     claimableRewards: ethers.formatEther(claimable)
   };
 }
+
+// Legacy alias
+export const getUserVeAXMPosition = getUserSeedPosition;
 
 // Fee Burner Functions
 export async function getFeeBurnerStats() {
@@ -210,6 +219,7 @@ export async function getFeeBurnerStats() {
 export const V2_CONTRACT_ADDRESSES = {
   AXIOM_SCORE_SBT: V2_SOVEREIGN_BANKING_CONTRACTS.AXIOM_SCORE_SBT,
   SUSU_INSURANCE_FUND: V2_SOVEREIGN_BANKING_CONTRACTS.SUSU_INSURANCE_FUND,
-  VE_AXM: V2_SOVEREIGN_BANKING_CONTRACTS.VE_AXM,
+  SEED: V2_SOVEREIGN_BANKING_CONTRACTS.SEED,
+  VE_AXM: V2_SOVEREIGN_BANKING_CONTRACTS.SEED, // Legacy alias
   AXIOM_FEE_BURNER: V2_SOVEREIGN_BANKING_CONTRACTS.AXIOM_FEE_BURNER
 };

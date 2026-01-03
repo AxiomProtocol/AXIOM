@@ -63,20 +63,20 @@ Key features include:
 -   **PMA Trust**: Operates as a Private Membership Association Trust with tokenized ERC-1155/1400 memberships.
 -   **AI Member Support**: Gemini-powered chat assistant.
 -   **V2 Analytics Dashboard**: Unified dashboard for DeFi protocol metrics.
--   **Wealth Engine**: Enhanced AXM locking page (formerly veAXM Staking) with lock durations and voting power preview.
+-   **SEED (Wealth Engine)**: Lock AXM → Earn SEED → Access produce cycles, land cohorts, governance. Curve-style locking (1-4 years) with tier-based participation benefits.
 -   **On-Chain Credit Score Display**: `CreditScoreCard` component with FICO-like visualization.
 -   **Referral System**: Full referral tracking with unique codes and leaderboards.
 -   **Member Badges**: Achievement system with 10 badge types across 4 rarity tiers.
--   **Governance Proposal Drafting**: UI for veAXM holders to create proposals.
+-   **Governance Proposal Drafting**: UI for SEED holders to create proposals.
 -   **Yield Vault**: Auto-compounding AXM staking.
 -   **Push Notifications**: PWA service worker for push notifications with preference settings.
--   **Transparency Dashboard**: Real-time protocol metrics including TVL, burned AXM, veAXM locked, insurance fund balance, SUSU pools, and DePIN nodes.
+-   **Transparency Dashboard**: Real-time protocol metrics including TVL, burned AXM, SEED locked, insurance fund balance, SUSU pools, and DePIN nodes.
 
 Wealth Engine V2 Contracts (DeFi Treasury System) implement AIP-001 Master Architectural Plan:
 -   **AxiomScoreSBT**: ERC-5192 Soulbound Token for on-chain credit scoring (300-850 range), integrated with SUSU repayment history.
 -   **SusuInsuranceFund**: Default Insurance Fund with 5% node rewards diversion to cover broken SUSU circles.
--   **veAXM**: Vote-Escrowed AXM with Curve-style locking (1-4 years), time-weighted voting power, and epoch-based reward distribution.
--   **AxiomFeeBurner**: 0.5% fee switch on treasury products with automatic AXM buyback/burn and 50% distribution to veAXM holders.
+-   **SEED**: Lock AXM → Earn SEED (voting power). Curve-style locking (1-4 years), time-weighted voting power, epoch-based rewards. Tier system: Seedling → Sprout → Sapling → Grove.
+-   **AxiomFeeBurner**: 0.5% fee switch on treasury products with automatic AXM buyback/burn and 50% distribution to SEED holders.
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)

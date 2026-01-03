@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
-import { getCreditScore, getCreditProfile, getUserVeAXMPosition } from '../../../lib/server/v2ContractService';
+import { getCreditScore, getCreditProfile, getUserSeedPosition } from '../../../lib/server/v2ContractService';
 import { calculateReputationLevel } from '../../../lib/axiomHolderValue';
 import { ethers } from 'ethers';
 
@@ -26,7 +26,7 @@ interface ReputationResponse {
     totalLoans: number;
     successfulRepayments: number;
     defaults: number;
-    veAxmBalance: string;
+    seedBalance: string;
   };
 }
 
@@ -66,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     let creditScore = 0;
     let creditProfile = { score: 0, totalLoans: 0, successfulRepayments: 0, defaults: 0, lastUpdated: 0, isActive: false };
-    let veAxmData = { votingPower: '0', lockedAmount: '0', unlockTime: 0, lockStart: 0, claimableRewards: '0' };
+    let seedData = { votingPower: '0', lockedAmount: '0', unlockTime: 0, lockStart: 0, claimableRewards: '0' };
     let lockDurationDays = 0;
     
     try {
@@ -77,12 +77,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     
     try {
-      veAxmData = await getUserVeAXMPosition(normalizedWallet);
-      if (veAxmData.unlockTime > 0 && veAxmData.lockStart > 0) {
-        lockDurationDays = Math.floor((veAxmData.unlockTime - veAxmData.lockStart) / 86400);
+      seedData = await getUserSeedPosition(normalizedWallet);
+      if (seedData.unlockTime > 0 && seedData.lockStart > 0) {
+        lockDurationDays = Math.floor((seedData.unlockTime - seedData.lockStart) / 86400);
       }
     } catch (err) {
-      console.warn('veAXM contract call failed:', err);
+      console.warn('SEED contract call failed:', err);
     }
     
     const actionsResult = await pool.query(
@@ -124,7 +124,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         totalLoans: creditProfile.totalLoans,
         successfulRepayments: creditProfile.successfulRepayments,
         defaults: creditProfile.defaults,
-        veAxmBalance: veAxmData.lockedAmount
+        seedBalance: seedData.lockedAmount
       }
     };
 
