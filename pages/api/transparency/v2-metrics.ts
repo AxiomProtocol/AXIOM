@@ -100,7 +100,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           total: totalValueLocked,
           susu: susuTvl,
           staking: stakingTvl,
-          seed: seedStats.totalLocked
+          seed: seedStats.totalLocked,
+          veAxm: seedStats.totalLocked  // Legacy alias for backward compatibility
         },
         feeBurner: {
           totalFeesCollected: feeBurnerStats.totalFeesCollected,
@@ -110,6 +111,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           canExecuteBuyback: feeBurnerStats.canExecuteBuyback
         },
         seed: {
+          totalLocked: seedStats.totalLocked,
+          totalVotingPower: seedStats.totalVotingPower,
+          totalLockers: seedStats.totalLockers,
+          currentEpoch: seedStats.currentEpoch,
+          totalRewardsDistributed: seedStats.totalRewardsDistributed
+        },
+        // Legacy alias for backward compatibility
+        veAxm: {
           totalLocked: seedStats.totalLocked,
           totalVotingPower: seedStats.totalVotingPower,
           totalLockers: seedStats.totalLockers,
