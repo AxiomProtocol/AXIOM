@@ -10,7 +10,7 @@ interface Metrics {
     total: string;
     susu: string;
     staking: string;
-    veAxm: string;
+    seed: string;
   };
   feeBurner: {
     totalFeesCollected: string;
@@ -19,7 +19,7 @@ interface Metrics {
     pendingFees: string;
     canExecuteBuyback: boolean;
   };
-  veAxm: {
+  seed: {
     totalLocked: string;
     totalVotingPower: string;
     totalLockers: number;
@@ -156,10 +156,10 @@ export default function TransparencyDashboard() {
                   color="gold"
                 />
                 <MetricCard
-                  icon="🔒"
-                  title="veAXM Locked"
-                  value={`${formatNumber(metrics.veAxm.totalLocked)} AXM`}
-                  subtitle={`${metrics.veAxm.totalLockers} lockers`}
+                  icon="🌱"
+                  title="SEED Locked"
+                  value={`${formatNumber(metrics.seed.totalLocked)} AXM`}
+                  subtitle={`${metrics.seed.totalLockers} lockers`}
                   color="purple"
                 />
                 <MetricCard
@@ -207,10 +207,10 @@ export default function TransparencyDashboard() {
                   color="gold"
                 />
                 <MetricCard
-                  icon="🗳️"
-                  title="veAXM Rewards"
-                  value={`${formatNumber(metrics.veAxm.totalRewardsDistributed)} AXM`}
-                  subtitle={`Epoch ${metrics.veAxm.currentEpoch}`}
+                  icon="🌱"
+                  title="SEED Rewards"
+                  value={`${formatNumber(metrics.seed.totalRewardsDistributed)} AXM`}
+                  subtitle={`Epoch ${metrics.seed.currentEpoch}`}
                   color="purple"
                 />
               </div>
@@ -255,36 +255,36 @@ export default function TransparencyDashboard() {
 
             <section>
               <SectionHeader 
-                title="veAXM Governance" 
-                subtitle="Vote-escrowed AXM for governance power and real yield"
+                title="SEED Governance" 
+                subtitle="Lock AXM to earn SEED for governance power and real yield"
               />
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <MetricCard
                   icon="🗳️"
                   title="Total Voting Power"
-                  value={`${formatNumber(metrics.veAxm.totalVotingPower)}`}
+                  value={`${formatNumber(metrics.seed.totalVotingPower)}`}
                   subtitle="Active governance power"
                   color="purple"
                 />
                 <MetricCard
-                  icon="🔒"
+                  icon="🌱"
                   title="AXM Locked"
-                  value={`${formatNumber(metrics.veAxm.totalLocked)} AXM`}
-                  subtitle="In vote-escrow contracts"
+                  value={`${formatNumber(metrics.seed.totalLocked)} AXM`}
+                  subtitle="In SEED contracts"
                   color="gold"
                 />
                 <MetricCard
                   icon="👥"
                   title="Total Lockers"
-                  value={metrics.veAxm.totalLockers.toString()}
-                  subtitle="Unique veAXM holders"
+                  value={metrics.seed.totalLockers.toString()}
+                  subtitle="Unique SEED holders"
                   color="blue"
                 />
                 <MetricCard
                   icon="🎁"
                   title="Rewards Distributed"
-                  value={`${formatNumber(metrics.veAxm.totalRewardsDistributed)} AXM`}
-                  subtitle="To veAXM holders"
+                  value={`${formatNumber(metrics.seed.totalRewardsDistributed)} AXM`}
+                  subtitle="To SEED holders"
                   color="green"
                 />
               </div>
@@ -312,7 +312,7 @@ export default function TransparencyDashboard() {
               <h3 className="text-lg font-bold text-white mb-4">Contract Addresses</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="flex justify-between items-center py-2 border-b border-gray-700">
-                  <span className="text-gray-400">veAXM</span>
+                  <span className="text-gray-400">SEED</span>
                   <a href="https://arbitrum.blockscout.com/address/0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046" 
                      target="_blank" rel="noopener noreferrer"
                      className="text-yellow-500 hover:text-yellow-400 font-mono text-xs">

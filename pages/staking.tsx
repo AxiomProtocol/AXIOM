@@ -3,7 +3,7 @@ import Layout from '../components/Layout';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import { ethers } from 'ethers';
 import { CORE_CONTRACTS, NETWORK_CONFIG, V2_SOVEREIGN_BANKING_CONTRACTS } from '../shared/contracts';
-import VeAXMLockCalculator from '../components/VeAXMLockCalculator';
+import SeedLockCalculator from '../components/SeedLockCalculator';
 import LockChallengeBadges from '../components/LockChallengeBadges';
 import FeeContributionWidget from '../components/FeeContributionWidget';
 
@@ -602,9 +602,9 @@ export default function StakingPage() {
                   </div>
 
                   <div className="bg-gradient-to-br from-purple-900/30 to-gray-800 border border-purple-500/30 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-white mb-2">How veAXM Works</h3>
+                    <h3 className="text-lg font-semibold text-white mb-2">How SEED Works</h3>
                     <p className="text-sm text-gray-400 mb-4">
-                      Lock your AXM tokens for 1-4 years to receive veAXM (vote-escrowed AXM). Your voting power decays linearly until unlock.
+                      Lock your AXM tokens for 1-4 years to earn SEED voting power. Your voting power decays linearly until unlock.
                     </p>
                     <div className="text-xs text-gray-500">
                       Inspired by Curve's veCRV tokenomics
@@ -614,10 +614,10 @@ export default function StakingPage() {
               </div>
 
               <div className="mt-8">
-                <VeAXMLockCalculator 
+                <SeedLockCalculator 
                   axmBalance={stats?.userBalance || '0'}
                   currentLockYears={hasActiveLock && !isLockExpired ? Math.ceil((veStats?.unlockTime || 0) * 1000 - Date.now()) / (365 * 24 * 60 * 60 * 1000) : undefined}
-                  onSelectDuration={(years) => {
+                  onSelectDuration={(years: number) => {
                     const duration = LOCK_DURATIONS.find(d => Math.round(d.value / (365 * 24 * 60 * 60)) === years);
                     if (duration) setSelectedDuration(duration);
                   }}
@@ -788,8 +788,7 @@ export default function StakingPage() {
                   </div>
 
                   <FeeContributionWidget 
-                    amount={parseFloat(stakeAmount) || 0} 
-                    onInfoClick={() => {}}
+                    transactionAmount={parseFloat(stakeAmount) || 0}
                   />
 
                   <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">

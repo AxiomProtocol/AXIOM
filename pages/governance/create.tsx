@@ -45,7 +45,7 @@ export default function CreateProposalPage() {
     const fetchVotingPower = async () => {
       if (!walletState.address) return;
       try {
-        const res = await fetch(`/api/v2/veaxm-balance?address=${walletState.address}`);
+        const res = await fetch(`/api/v2/seed-balance?address=${walletState.address}`);
         const data = await res.json();
         if (data.success) {
           setVotingPower(data.votingPower || '0');

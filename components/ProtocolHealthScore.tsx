@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 interface Metrics {
   tvl: { total: string };
   feeBurner: { totalAxmBurned: string; totalFeesCollected: string };
-  veAxm: { totalLocked: string; totalLockers: number };
+  seed: { totalLocked: string; totalLockers: number };
   insurance: { balance: string; coverageRatio: number };
   susu: { totalPools: number; tvl: string };
   depin: { totalNodes: number };
@@ -42,8 +42,8 @@ export default function ProtocolHealthScore({ metrics }: Props) {
 
     const tvl = parseFloat(metrics.tvl.total) || 0;
     const burned = parseFloat(metrics.feeBurner.totalAxmBurned) || 0;
-    const veAxmLocked = parseFloat(metrics.veAxm.totalLocked) || 0;
-    const lockers = metrics.veAxm.totalLockers || 0;
+    const seedLocked = parseFloat(metrics.seed.totalLocked) || 0;
+    const lockers = metrics.seed.totalLockers || 0;
     const insuranceBalance = parseFloat(metrics.insurance.balance) || 0;
     const coverageRatio = metrics.insurance.coverageRatio || 0;
     const susuPools = metrics.susu.totalPools || 0;
@@ -54,7 +54,7 @@ export default function ProtocolHealthScore({ metrics }: Props) {
     const lockScore = Math.min(100, (lockers / 100) * 100);
     const insuranceScore = Math.min(100, coverageRatio);
     const communityScore = Math.min(100, ((susuPools + nodes) / 50) * 100);
-    const veAxmParticipation = Math.min(100, (veAxmLocked / 1000000) * 100);
+    const seedParticipation = Math.min(100, (seedLocked / 1000000) * 100);
 
     const overallScore = (
       tvlScore * 0.25 +
@@ -62,7 +62,7 @@ export default function ProtocolHealthScore({ metrics }: Props) {
       lockScore * 0.20 +
       insuranceScore * 0.15 +
       communityScore * 0.15 +
-      veAxmParticipation * 0.10
+      seedParticipation * 0.10
     );
 
     return {
@@ -73,7 +73,7 @@ export default function ProtocolHealthScore({ metrics }: Props) {
         { name: 'Governance Participation', score: Math.round(lockScore), weight: 20, icon: '🗳️' },
         { name: 'Insurance Coverage', score: Math.round(insuranceScore), weight: 15, icon: '🛡️' },
         { name: 'Community Activity', score: Math.round(communityScore), weight: 15, icon: '👥' },
-        { name: 'veAXM Locked', score: Math.round(veAxmParticipation), weight: 10, icon: '🔒' },
+        { name: 'SEED Locked', score: Math.round(seedParticipation), weight: 10, icon: '🌱' },
       ]
     };
   }, [metrics]);

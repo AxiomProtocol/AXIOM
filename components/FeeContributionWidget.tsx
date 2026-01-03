@@ -8,7 +8,7 @@ interface Props {
 
 const FEE_RATE_BPS = 50;
 const BURN_PERCENTAGE = 50;
-const VEAXM_PERCENTAGE = 50;
+const SEED_PERCENTAGE = 50;
 
 export default function FeeContributionWidget({ 
   transactionAmount, 
@@ -18,12 +18,12 @@ export default function FeeContributionWidget({
   const feeBreakdown = useMemo(() => {
     const feeAmount = transactionAmount * (FEE_RATE_BPS / 10000);
     const burnAmount = feeAmount * (BURN_PERCENTAGE / 100);
-    const veAxmAmount = feeAmount * (VEAXM_PERCENTAGE / 100);
+    const seedAmount = feeAmount * (SEED_PERCENTAGE / 100);
     
     return {
       total: feeAmount,
       burn: burnAmount,
-      veAxmRewards: veAxmAmount,
+      seedRewards: seedAmount,
       feePercent: FEE_RATE_BPS / 100
     };
   }, [transactionAmount]);
@@ -57,11 +57,11 @@ export default function FeeContributionWidget({
           
           <div className="bg-gray-900/50 rounded-lg p-3 text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
-              <span>🎁</span>
-              <span className="text-xs text-gray-400">veAXM Rewards</span>
+              <span>🌱</span>
+              <span className="text-xs text-gray-400">SEED Rewards</span>
             </div>
             <div className="text-purple-400 font-bold">
-              {feeBreakdown.veAxmRewards.toFixed(4)} {tokenSymbol}
+              {feeBreakdown.seedRewards.toFixed(4)} {tokenSymbol}
             </div>
             <div className="text-xs text-gray-500">To stakers</div>
           </div>
@@ -69,7 +69,7 @@ export default function FeeContributionWidget({
       )}
 
       <div className="mt-3 text-xs text-gray-500 text-center">
-        {feeBreakdown.feePercent}% fee • 50% burned • 50% to veAXM holders
+        {feeBreakdown.feePercent}% fee • 50% burned • 50% to SEED holders
       </div>
     </div>
   );
@@ -98,8 +98,8 @@ export function FeeContributionBanner({ totalVolume }: { totalVolume: number }) 
           <span className="text-orange-400 font-semibold">{stats.burned.toLocaleString()} AXM</span>
         </div>
         <div className="flex items-center gap-2">
-          <span>🎁</span>
-          <span className="text-gray-400">Distributed to veAXM:</span>
+          <span>🌱</span>
+          <span className="text-gray-400">Distributed to SEED:</span>
           <span className="text-purple-400 font-semibold">{stats.distributed.toLocaleString()} AXM</span>
         </div>
       </div>

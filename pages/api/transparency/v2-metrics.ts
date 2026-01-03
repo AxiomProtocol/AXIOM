@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getFeeBurnerStats, getInsuranceFundStats, getVeAXMStats } from '../../../lib/server/v2ContractService';
+import { getFeeBurnerStats, getInsuranceFundStats, getSeedStats } from '../../../lib/server/v2ContractService';
 import { ethers } from 'ethers';
 import { 
   CORE_CONTRACTS, 
@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const provider = new ethers.JsonRpcProvider(NETWORK_CONFIG.rpcUrl);
     
-    const [feeBurnerStats, insuranceStats, veAxmStats] = await Promise.all([
+    const [feeBurnerStats, insuranceStats, seedStats] = await Promise.all([
       getFeeBurnerStats().catch(() => ({
         totalFeesCollected: '0',
         totalAxmBurned: '0',
@@ -48,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         coverageRatioBps: 0,
         coverageRatioPercent: 0
       })),
-      getVeAXMStats().catch(() => ({
+      getSeedStats().catch(() => ({
         totalVotingPower: '0',
         totalLocked: '0',
         totalLockers: 0,
@@ -89,8 +89,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const stakingTvl = '2450000';
     const susuTvlNum = parseFloat(susuTvl) || 0;
     const stakingTvlNum = parseFloat(stakingTvl) || 0;
-    const veAxmLockedNum = parseFloat(veAxmStats.totalLocked) || 0;
-    const totalValueLocked = (susuTvlNum + stakingTvlNum + veAxmLockedNum).toFixed(2);
+    const seedLockedNum = parseFloat(seedStats.totalLocked) || 0;
+    const totalValueLocked = (susuTvlNum + stakingTvlNum + seedLockedNum).toFixed(2);
 
     return res.status(200).json({
       success: true,
@@ -100,7 +100,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           total: totalValueLocked,
           susu: susuTvl,
           staking: stakingTvl,
-          veAxm: veAxmStats.totalLocked
+          seed: seedStats.totalLocked
         },
         feeBurner: {
           totalFeesCollected: feeBurnerStats.totalFeesCollected,
@@ -109,12 +109,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           pendingFees: feeBurnerStats.pendingFees,
           canExecuteBuyback: feeBurnerStats.canExecuteBuyback
         },
-        veAxm: {
-          totalLocked: veAxmStats.totalLocked,
-          totalVotingPower: veAxmStats.totalVotingPower,
-          totalLockers: veAxmStats.totalLockers,
-          currentEpoch: veAxmStats.currentEpoch,
-          totalRewardsDistributed: veAxmStats.totalRewardsDistributed
+        seed: {
+          totalLocked: seedStats.totalLocked,
+          totalVotingPower: seedStats.totalVotingPower,
+          totalLockers: seedStats.totalLockers,
+          currentEpoch: seedStats.currentEpoch,
+          totalRewardsDistributed: seedStats.totalRewardsDistributed
         },
         insurance: {
           balance: insuranceStats.balance,
