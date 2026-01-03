@@ -65,7 +65,7 @@ export const homeCopy = {
         "An ecosystem design that prioritizes long-term stewardship"
       ],
       primaryCta: { label: "See How Axiom Works", href: "/bank" },
-      secondaryCta: { label: "Explore the Academy", href: "/academy" }
+      secondaryCta: { label: "Explore the Academy", href: "/learn" }
     },
     {
       id: "axm",
