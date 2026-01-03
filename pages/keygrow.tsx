@@ -499,40 +499,55 @@ export default function KeyGrowPage() {
           featureId="keygrow" 
           walletAddress={walletState.address || undefined}
         />
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-8 mb-8 text-white shadow-xl">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
+        <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-amber-600 rounded-2xl p-8 mb-8 text-white shadow-xl relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djZoNnYtNmgtNnptMCAwdi02aC02djZoNnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30"></div>
+          <div className="relative grid md:grid-cols-2 gap-8 items-center">
             <div>
-              <h2 className="text-3xl font-bold mb-4">Shared Ownership, Built on Structure</h2>
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur rounded-full px-4 py-1.5 text-sm mb-4">
+                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                Now Accepting Participants
+              </div>
+              <h2 className="text-4xl font-bold mb-4 leading-tight">Own Land. Build Wealth. Together.</h2>
               <p className="text-lg opacity-90 mb-6">
-                KeyGrow coordinates shared farmland acquisition and development through clear structure 
-                and long-term intent. Every payment builds your equity stake toward real asset ownership.
+                KeyGrow turns monthly payments into real ownership stakes. No banks, no 30-year mortgages. 
+                Just structured paths to owning productive land with your community.
               </p>
-              <div className="flex flex-wrap gap-4">
-                <div className="bg-white/20 backdrop-blur rounded-lg px-4 py-3">
-                  <p className="text-2xl font-bold">{properties.length}</p>
-                  <p className="text-sm opacity-80">Properties Available</p>
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                <div className="bg-white/15 backdrop-blur rounded-xl px-4 py-4 text-center border border-white/20">
+                  <p className="text-3xl font-bold">{properties.length}</p>
+                  <p className="text-xs opacity-80 mt-1">Active Properties</p>
                 </div>
-                <div className="bg-white/20 backdrop-blur rounded-lg px-4 py-3">
-                  <p className="text-2xl font-bold">{TOKENIZATION_CONFIG.equityBuildPercent}%</p>
-                  <p className="text-sm opacity-80">Rent to Equity</p>
+                <div className="bg-white/15 backdrop-blur rounded-xl px-4 py-4 text-center border border-white/20">
+                  <p className="text-3xl font-bold">{TOKENIZATION_CONFIG.equityBuildPercent}%</p>
+                  <p className="text-xs opacity-80 mt-1">Rent → Equity</p>
                 </div>
-                <div className="bg-white/20 backdrop-blur rounded-lg px-4 py-3">
-                  <p className="text-2xl font-bold">Pay in AXM</p>
-                  <p className="text-sm opacity-80">Crypto-Native</p>
+                <div className="bg-white/15 backdrop-blur rounded-xl px-4 py-4 text-center border border-white/20">
+                  <p className="text-3xl font-bold">AXM</p>
+                  <p className="text-xs opacity-80 mt-1">Token Payments</p>
                 </div>
               </div>
-              <div className="mt-6">
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => setActiveTab('land-program')}
+                  className="inline-flex items-center gap-2 bg-white text-emerald-700 px-6 py-3 rounded-lg font-semibold hover:bg-amber-50 transition shadow-lg"
+                >
+                  <span>🌱</span> Explore Land Program
+                </button>
                 <Link
                   href="/keygrow/sell"
-                  className="inline-flex items-center gap-2 bg-white text-amber-600 px-6 py-3 rounded-lg font-medium hover:bg-amber-50 transition"
+                  className="inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/30 text-white px-6 py-3 rounded-lg font-medium hover:bg-white/20 transition"
                 >
-                  <span>🏢</span> List Your Property
+                  <span>🏢</span> List Property
                 </Link>
               </div>
             </div>
             <div className="text-center hidden md:block">
-              <div className="text-8xl">🏡</div>
-              <p className="mt-4 text-xl font-medium">Your Path to Homeownership</p>
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-t from-emerald-600/50 to-transparent rounded-full blur-3xl"></div>
+                <div className="relative text-9xl">🌾</div>
+                <p className="mt-6 text-2xl font-semibold">From Renter to Landowner</p>
+                <p className="text-sm opacity-70 mt-2">The practical path to generational wealth</p>
+              </div>
             </div>
           </div>
         </div>
