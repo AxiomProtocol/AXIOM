@@ -10,12 +10,16 @@ interface ProofStripProps {
 }
 
 const proofTiles = [
-  { type: 'image', src: '/keygrow-proof/proof-01.jpg', alt: 'Farmland acquisition proof 1' },
-  { type: 'image', src: '/keygrow-proof/proof-02.jpg', alt: 'Farmland development proof 2' },
-  { type: 'image', src: '/keygrow-proof/proof-03.jpg', alt: 'Community coordination proof 3' },
-  { type: 'image', src: '/keygrow-proof/proof-04.jpg', alt: 'Land development progress 4' },
-  { type: 'image', src: '/keygrow-proof/proof-05.jpg', alt: 'Stewardship proof 5' },
-  { type: 'video', src: '/keygrow-proof/proof-clip-01.mp4', poster: '/keygrow-proof/proof-clip-01-poster.jpg', alt: 'Development video clip' }
+  { type: 'image', src: '/keygrow-proof/proof-01.jpg', alt: 'Community team on the land' },
+  { type: 'image', src: '/keygrow-proof/proof-02.jpg', alt: 'Natural land vegetation' },
+  { type: 'image', src: '/keygrow-proof/proof-03.jpg', alt: 'Property pathway development' },
+  { type: 'image', src: '/keygrow-proof/proof-04.jpg', alt: 'Tractors working the land' },
+  { type: 'image', src: '/keygrow-proof/proof-05.jpg', alt: 'Agricultural equipment in field' },
+  { type: 'image', src: '/keygrow-proof/proof-06.jpg', alt: 'Open farmland view' },
+  { type: 'image', src: '/keygrow-proof/proof-07.jpg', alt: 'Freshly tilled soil' },
+  { type: 'image', src: '/keygrow-proof/proof-08.jpg', alt: 'Planting beds prepared' },
+  { type: 'image', src: '/keygrow-proof/proof-09.jpg', alt: 'Covered growing rows' },
+  { type: 'video', src: '/keygrow-proof/proof-clip-01.mp4', poster: '/keygrow-proof/proof-01.jpg', alt: 'Development video clip' }
 ];
 
 export function ProofStrip({ page = 'home' }: ProofStripProps) {
