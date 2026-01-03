@@ -1,6 +1,7 @@
 import '../styles/globals.css'
 import '../styles/web3-theme.css'
 import '../styles/flash-web3.css'
+import '../styles/site.css'
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { WalletProvider } from '../components/WalletConnect/WalletContext'
