@@ -95,10 +95,12 @@ function DesktopNavItem(props: {
 
 function MobileNav() {
   const [open, setOpen] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     setOpen(false);
+    setExpandedSection(null);
   }, [router.asPath]);
 
   return (
@@ -112,7 +114,7 @@ function MobileNav() {
       </button>
 
       {open ? (
-        <div style={{ position: "absolute", top: 56, left: 0, right: 0, background: "white", borderTop: "1px solid rgba(0,0,0,0.06)", padding: "12px 20px 16px 20px", zIndex: 100 }}>
+        <div style={{ position: "absolute", top: 56, left: 0, right: 0, background: "white", borderTop: "1px solid rgba(0,0,0,0.06)", padding: "12px 20px 16px 20px", zIndex: 100, maxHeight: "80vh", overflowY: "auto" }}>
           {navItems.map((item) => (
             <div key={item.label} style={{ padding: "8px 0", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
               {!item.children || item.children.length === 0 ? (
@@ -121,14 +123,33 @@ function MobileNav() {
                 </Link>
               ) : (
                 <div>
-                  <p style={{ fontSize: 13, color: "rgba(18,18,18,0.72)", margin: "0 0 8px 0" }}>{item.label}</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {item.children.map((c) => (
-                      <Link key={c.label} href={c.href} style={{ padding: "10px 10px", borderRadius: 12, background: "rgba(0,0,0,0.02)" }}>
-                        {c.label}
-                      </Link>
-                    ))}
-                  </div>
+                  <button
+                    onClick={() => setExpandedSection(expandedSection === item.label ? null : item.label)}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "10px 10px",
+                      borderRadius: 12,
+                      background: "rgba(0,0,0,0.02)",
+                      border: 0,
+                      cursor: "pointer",
+                      fontSize: 14
+                    }}
+                  >
+                    <span>{item.label}</span>
+                    <span style={{ fontSize: 12, opacity: 0.6 }}>{expandedSection === item.label ? "−" : "+"}</span>
+                  </button>
+                  {expandedSection === item.label && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8, paddingLeft: 12 }}>
+                      {item.children.map((c) => (
+                        <Link key={c.label} href={c.href} style={{ padding: "8px 10px", borderRadius: 10, background: "rgba(0,0,0,0.03)", fontSize: 14 }}>
+                          {c.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
