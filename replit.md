@@ -14,6 +14,37 @@ The Axiom Smart City project aims to establish America's first 1,000-acre on-cha
 ### UI/UX Decisions
 The frontend features a modular design with a professional gold/black theme and yellow accents, ensuring responsiveness. Branding includes "AXIOM" with a golden circular token logo, golden gradient text, and the tagline "Build Wealth Together, On-Chain." Navigation, defined in `lib/navigation.js`, guides users through a Learn → Connect → Save Together journey, complemented by a `StepProgressBanner`.
 
+### Official Web3 Design Template (Jan 2026)
+The homepage and marketing pages use the official Web3 immersive design system located in `components/axiomRebuild/`:
+
+**Core Components:**
+- `Web3Hero.tsx` - Immersive hero with floating 3D orbs, glassmorphism, animated stats
+- `Web3Section.tsx` - Scroll-animated sections with image support, variants (default/highlight/dark)
+- `ImmersiveCard.tsx` - 3D hover-effect cards with perspective transforms
+- `styles/web3Theme.ts` - Design tokens (colors, shadows, animations, icons)
+
+**Design Principles:**
+- White background with subtle radial gradient overlays for depth
+- Primary color: Teal (#00D4AA) with purple (#7B68EE) and gold (#FFD700) accents
+- Glassmorphism: `rgba(255,255,255,0.85)` + `backdrop-filter: blur(20px)`
+- 3D depth via deep shadows, floating elements, perspective transforms
+- IntersectionObserver-based scroll animations
+- Deep immersive 3D images in `public/generated/`
+
+**Section Variants:**
+- `default` - White background, dark text
+- `highlight` - Teal gradient overlay (KeyGrow section)
+- `dark` - Dark gradient background (CTA sections)
+
+**Image Integration:**
+- Alternating left/right layouts
+- 3D shadow effects with gradient overlays
+- Scroll-triggered scale and fade animations
+
+**Copy Configuration:**
+- `copy/homeCopy.ts` - Homepage content with image paths
+- Each section supports: title, body, bullets, CTAs, image, imageAlt
+
 ### Technical Implementations
 The core Axiom Protocol Token (AXM) is an ERC20 governance and fee-routing token on Arbitrum One, slated for migration to Universe Blockchain (L3). The multi-phase Smart Contract Architecture, initially on Arbitrum One, covers identity, treasury, staking, emissions, land/asset registry, and future modules. The platform offers a Complete DeFi Treasury Suite with self-custody vaults, savings circles, staking, and investment pools, supported by 23 verified smart contracts on Arbitrum One across various domains. Axiom utilizes a HYBRID CUSTODY model, incorporating Self-Custody, Smart Contract Custody, and Pooled Custody, with disclosures managed via `lib/custody/disclosure.ts` and `components/CustodyDisclosure.js`.
 
