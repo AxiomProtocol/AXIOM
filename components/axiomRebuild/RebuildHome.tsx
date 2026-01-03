@@ -8,6 +8,8 @@ import { MetricsRow } from "./MetricsRow";
 import { ProofStrip } from "./ProofStrip";
 import { JourneyGraphic } from "./JourneyGraphic";
 import { RoleCards } from "./RoleCards";
+import { FutureLandPipeline } from "./FutureLandPipeline";
+import { TokenUtilityCallout } from "./TokenUtilityCallout";
 import { trackOnce } from "./analytics";
 
 interface SectionType {
@@ -130,6 +132,12 @@ export function RebuildHome() {
           <RoleCards page="home" />
         </SectionWrapper>
       )}
+      
+      <FutureLandPipeline page="home" />
+      
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "60px 20px" }}>
+        <TokenUtilityCallout page="home" />
+      </div>
       
       {otherSections.map((s, i) => (
         <SectionWrapper key={s.id} id={s.id}>
