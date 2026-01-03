@@ -205,6 +205,77 @@ export default function TokenomicsPage() {
 
           <div
             style={{
+              background: "linear-gradient(135deg, rgba(123,104,238,0.08) 0%, rgba(0,212,170,0.05) 100%)",
+              borderRadius: web3Theme.radii.xl,
+              padding: 40,
+              marginBottom: 40
+            }}
+          >
+            <h3 style={{ fontSize: 22, fontWeight: 700, color: "#1a1a2e", marginBottom: 16 }}>
+              Holder Benefits
+            </h3>
+            <p style={{ fontSize: 16, color: "rgba(26,26,46,0.7)", marginBottom: 24, lineHeight: 1.6 }}>
+              AXM tokens unlock access to participation queues, produce cycles, stewardship programs, and partner networks. Your holding duration and participation history determine your eligibility tier.
+            </p>
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
+              gap: 16,
+              marginBottom: 24
+            }}>
+              <div style={{ 
+                padding: 16, 
+                background: "rgba(255,255,255,0.8)", 
+                borderRadius: web3Theme.radii.md,
+                border: "1px solid rgba(0,0,0,0.06)"
+              }}>
+                <div style={{ fontSize: 24, marginBottom: 8 }}>🔑</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>Access Tiers</div>
+                <div style={{ fontSize: 13, color: "rgba(26,26,46,0.6)" }}>5 levels from Visitor to Founding Steward</div>
+              </div>
+              <div style={{ 
+                padding: 16, 
+                background: "rgba(255,255,255,0.8)", 
+                borderRadius: web3Theme.radii.md,
+                border: "1px solid rgba(0,0,0,0.06)"
+              }}>
+                <div style={{ fontSize: 24, marginBottom: 8 }}>📦</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>Produce Cycles</div>
+                <div style={{ fontSize: 13, color: "rgba(26,26,46,0.6)" }}>Reserve seasonal farm produce boxes</div>
+              </div>
+              <div style={{ 
+                padding: 16, 
+                background: "rgba(255,255,255,0.8)", 
+                borderRadius: web3Theme.radii.md,
+                border: "1px solid rgba(0,0,0,0.06)"
+              }}>
+                <div style={{ fontSize: 24, marginBottom: 8 }}>🛡️</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>Stewardship</div>
+                <div style={{ fontSize: 13, color: "rgba(26,26,46,0.6)" }}>Build reputation through participation</div>
+              </div>
+            </div>
+            <Link
+              href="/holders"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "14px 28px",
+                background: web3Theme.colors.secondary,
+                color: "#fff",
+                borderRadius: web3Theme.radii.lg,
+                fontWeight: 600,
+                fontSize: 15,
+                textDecoration: "none",
+                boxShadow: web3Theme.shadows.card
+              }}
+            >
+              View All Holder Benefits →
+            </Link>
+          </div>
+
+          <div
+            style={{
               background: "linear-gradient(135deg, rgba(0,212,170,0.05) 0%, rgba(123,104,238,0.05) 100%)",
               borderRadius: web3Theme.radii.xl,
               padding: 40,

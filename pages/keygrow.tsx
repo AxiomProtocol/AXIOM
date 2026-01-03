@@ -7,6 +7,8 @@ import Link from 'next/link';
 import DisclosureBanner from '../components/DisclosureBanner';
 import StepProgressBanner from '../components/StepProgressBanner';
 import { KeyGrowSections } from '../components/keygrow';
+import { EligibilityCallout } from '../components/holderValue';
+import { calculateTier } from '../lib/axiomHolderValue';
 
 interface Property {
   id: number;
@@ -218,6 +220,28 @@ export default function KeyGrowPage() {
   const [expandedSections, setExpandedSections] = useState<Record<string, Set<string>>>({});
   const [deposits, setDeposits] = useState<any[]>([]);
   const [depositSummary, setDepositSummary] = useState<any>(null);
+  const [userTier, setUserTier] = useState(0);
+
+  useEffect(() => {
+    if (walletState.isConnected && walletState.address) {
+      const firstSeen = localStorage.getItem(`axiom_first_seen_${walletState.address.toLowerCase()}`);
+      if (!firstSeen) {
+        localStorage.setItem(`axiom_first_seen_${walletState.address.toLowerCase()}`, Date.now().toString());
+      }
+      const firstSeenTime = parseInt(firstSeen || Date.now().toString());
+      const days = Math.floor((Date.now() - firstSeenTime) / (1000 * 60 * 60 * 24));
+      const actions = parseInt(localStorage.getItem(`axiom_actions_${walletState.address.toLowerCase()}`) || '0');
+      const tier = calculateTier({
+        isConnected: true,
+        hasAXM: true,
+        daysHeld: days,
+        actionsCompleted: actions
+      });
+      setUserTier(tier);
+    } else {
+      setUserTier(0);
+    }
+  }, [walletState.isConnected, walletState.address]);
 
   const toggleCardExpansion = (cardId: string) => {
     setExpandedCards(prev => {
@@ -499,6 +523,15 @@ export default function KeyGrowPage() {
           featureId="keygrow" 
           walletAddress={walletState.address || undefined}
         />
+        
+        <div className="mb-6">
+          <EligibilityCallout 
+            currentTier={userTier} 
+            isConnected={walletState.isConnected} 
+            page="keygrow"
+          />
+        </div>
+        
         <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-amber-600 rounded-2xl p-8 mb-8 text-white shadow-xl relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djZoNnYtNmgtNnptMCAwdi02aC02djZoNnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30"></div>
           <div className="relative grid md:grid-cols-2 gap-8 items-center">

@@ -56,6 +56,16 @@ export const navItems: NavItem[] = [
     ]
   },
   {
+    label: "Holders",
+    children: [
+      { label: "Holder Benefits", href: "/holders" },
+      { label: "Produce Box Program", href: "/produce" },
+      { label: "Stewardship Program", href: "/stewards" },
+      { label: "Partner Network", href: "/partners" },
+      { label: "Tokenomics", href: "/tokenomics" }
+    ]
+  },
+  {
     label: "Tools",
     children: [
       { label: "Treasury", href: "/bank" },
