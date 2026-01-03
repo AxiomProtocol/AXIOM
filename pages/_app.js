@@ -5,6 +5,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { WalletProvider } from '../components/WalletConnect/WalletContext'
 import ErrorBoundary from '../components/ErrorBoundary'
+import { RebuildNav, RebuildFooter } from '../components/axiomRebuild'
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID
 
@@ -29,7 +30,9 @@ export default function App({ Component, pageProps }) {
   return (
     <ErrorBoundary>
       <WalletProvider>
+        <RebuildNav />
         <Component {...pageProps} />
+        <RebuildFooter />
       </WalletProvider>
     </ErrorBoundary>
   )
