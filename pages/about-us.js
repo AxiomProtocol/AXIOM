@@ -36,9 +36,10 @@ export default function AboutUs() {
     <Layout>
       <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">About Axiom</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Origin Story</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Building a community-owned digital economy — where discipline, structure, and community create real wealth.
+            Axiom was not created in a lab. It was born from real-world execution: a community land purchase, 
+            USDA-supported development, and the founder's ongoing commitment to building infrastructure for shared ownership.
           </p>
         </div>
 
@@ -50,41 +51,37 @@ export default function AboutUs() {
               className="w-16 h-16 rounded-full shadow-lg"
             />
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Our Mission</h2>
-              <p className="text-amber-600 font-medium">Why We're Building Axiom</p>
+              <h2 className="text-2xl font-bold text-gray-900">The Farmland Proof</h2>
+              <p className="text-amber-600 font-medium">We Built the Model Before We Built the Platform</p>
             </div>
           </div>
           <p className="text-xl text-gray-700 leading-relaxed mb-6">
-            To create a transparent, community-owned economic engine that empowers individuals with 
-            true financial sovereignty — merging the efficiency of blockchain technology with the 
-            tangible value of real-world assets and infrastructure.
+            Before Axiom existed as software, a real community came together, pooled funds, acquired six acres of farmland, 
+            and developed it into a working farm with USDA support. Real people. Real land. Real outcomes.
           </p>
           <p className="text-lg text-gray-600 leading-relaxed">
-            We believe that the wealth of the future should be owned by community members, not controlled by 
-            centralized institutions. Axiom is pioneering a new model where every member is a 
-            stakeholder, every transaction is transparent, and governance is truly democratic.
+            That experience proved shared ownership works. It also proved most groups fail because coordination breaks down. 
+            Axiom exists to turn what already worked into a repeatable system that can scale responsibly.
           </p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 mb-16">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Vision</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">Lessons Learned</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Axiom represents a new approach to community wealth building — a 
-              member-owned digital economy that merges blockchain innovation with 
-              real-world financial tools. We're creating a complete ecosystem where members 
-              can learn, save, invest, govern, and build together on-chain.
+              Most shared ownership efforts rely on personal trust, informal agreements, scattered records, 
+              and manual coordination. That works at small scale until it does not.
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Unlike traditional financial systems governed by opaque institutions, Axiom operates as a 
-              Decentralized Autonomous Organization (DAO) where every major decision is voted 
-              on by the community. From treasury allocations to new features, members 
-              have direct control over the platform's future.
+              Axiom replaces fragile coordination with structure: clear participation paths, 
+              transparent records, and systems designed to reduce confusion, conflict, 
+              and dependency on personalities.
             </p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-6 mt-8">Founder Commitment</h2>
             <p className="text-gray-600 leading-relaxed">
-              Our goal is to prove that a community-owned financial platform isn't just possible — it's 
-              better. More efficient, more transparent, more equitable, and more responsive 
-              to the needs of its members.
+              The founder obtained a commercial driver's license, operates as an over-the-road contractor, 
+              and is building toward his own authority. This is a commitment to internalizing the full stack 
+              of real asset development — from land acquisition to transportation infrastructure.
             </p>
           </div>
           <div className="flex justify-center items-center">

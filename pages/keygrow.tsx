@@ -398,8 +398,8 @@ export default function KeyGrowPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
-              <span className="px-2 py-1 bg-green-500 text-white text-xs font-medium rounded">Step 4: Grow</span>
-              <span className="text-sm text-gray-600">Build real equity through rent-to-own home ownership</span>
+              <span className="px-2 py-1 bg-green-500 text-white text-xs font-medium rounded">KeyGrow</span>
+              <span className="text-sm text-gray-600">A practical path to shared farmland ownership</span>
             </div>
             <Link href="/susu" className="text-sm text-green-600 hover:text-green-700 font-medium">
               ← Back to Save Together
@@ -470,10 +470,10 @@ export default function KeyGrowPage() {
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-8 mb-8 text-white shadow-xl">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div>
-              <h2 className="text-3xl font-bold mb-4">Own Your Home Through Rent</h2>
+              <h2 className="text-3xl font-bold mb-4">Shared Ownership, Built on Structure</h2>
               <p className="text-lg opacity-90 mb-6">
-                Every monthly payment builds your equity stake. Start with 0% ownership 
-                and work your way to 100% ownership through consistent payments.
+                KeyGrow coordinates shared farmland acquisition and development through clear structure 
+                and long-term intent. Every payment builds your equity stake toward real asset ownership.
               </p>
               <div className="flex flex-wrap gap-4">
                 <div className="bg-white/20 backdrop-blur rounded-lg px-4 py-3">
@@ -2446,7 +2446,7 @@ export default function KeyGrowPage() {
             <span className="text-amber-400">by Axiom</span>
           </div>
           <p className="text-gray-400">
-            Building wealth through homeownership, one payment at a time.
+            Shared ownership pathways, participation tracking, and transparent stewardship.
           </p>
           <div className="flex justify-center gap-6 mt-6 text-sm">
             <Link href="/" className="text-gray-400 hover:text-white">Home</Link>

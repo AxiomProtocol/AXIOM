@@ -21,7 +21,7 @@ const JOURNEY_STEPS = [
     icon: '📚',
     step: 1,
     title: 'Learn',
-    description: 'Build your financial foundation. Money mindset, discipline, budgeting basics, and community wealth principles.',
+    description: 'Start with education. Understand the model, the principles, and the expectations before exploring participation paths.',
     stats: 'Step 1',
     link: '/academy',
     cta: 'Start Learning'
@@ -29,44 +29,44 @@ const JOURNEY_STEPS = [
   {
     icon: '🤝',
     step: 2,
-    title: 'Connect',
-    description: 'Find your community by location and goals. No money required — build trust first with people who share your vision.',
+    title: 'Participate',
+    description: 'Find your path through clear participation structures. Contribution mechanics and transparent records at every step.',
     stats: 'Step 2',
     link: '/susu',
-    cta: 'Find Groups'
+    cta: 'Find Your Path'
   },
   {
-    icon: '💰',
+    icon: '🌱',
     step: 3,
-    title: 'Save Together',
-    description: 'Join Wealth Practices with clear rules and transparency. Start small, build consistency, grow over time.',
+    title: 'Build Equity',
+    description: 'Coordinate shared ownership through KeyGrow. Long-term stewardship, not speculation.',
     stats: 'Step 3',
-    link: '/susu',
-    cta: 'Start Saving'
+    link: '/keygrow',
+    cta: 'Explore KeyGrow'
   }
 ];
 
 const ADVANCED_MODULES = [
   {
-    icon: '🌱',
-    title: 'Grow',
-    description: 'After you build consistency, explore rent-to-own opportunities and build equity toward home ownership.',
-    stats: 'After Step 3',
-    link: '/keygrow',
-    cta: 'Explore KeyGrow'
+    icon: '🚛',
+    title: 'Infrastructure',
+    description: 'Real assets require real operations. Logistics and transportation support for land development.',
+    stats: 'Advanced',
+    link: '/about-us',
+    cta: 'Learn More'
   },
   {
     icon: '🔧',
-    title: 'Treasury Tools',
-    description: 'DeFi coordination tools for advanced members. Payments, credit scoring, and protocol products.',
+    title: 'Platform Tools',
+    description: 'Coordination tools for transparent recordkeeping, governance mechanisms, and participation tracking.',
     stats: 'Advanced',
     link: '/bank',
     cta: 'View Tools'
   },
   {
     icon: '🏗️',
-    title: 'Node Network',
-    description: 'Operate infrastructure nodes and earn rewards. Part of Axiom\'s long-term decentralized buildout.',
+    title: 'DePIN Network',
+    description: 'Decentralized physical infrastructure for real-world asset coordination and operations.',
     stats: 'Advanced',
     link: '/axiom-nodes',
     cta: 'Learn More'
@@ -74,7 +74,7 @@ const ADVANCED_MODULES = [
   {
     icon: '🗳️',
     title: 'Governance',
-    description: 'Community-owned and member-governed. Stake AXM tokens, delegate voting power, and shape the future.',
+    description: 'Community-governed decisions. AXM supports participation, access, and governance input.',
     stats: 'Advanced',
     link: '/governance',
     cta: 'Participate'
@@ -651,16 +651,16 @@ export default function Home() {
               variants={itemVariants}
               className="text-2xl sm:text-3xl text-amber-600 font-semibold mb-4 flash-3d-tagline"
             >
-              Build wealth through discipline, structure, and community.
+              The Future of Ownership Starts With Land
             </motion.p>
             
             <motion.p
               variants={itemVariants}
               className="text-lg text-gray-600 max-w-2xl mx-auto mb-10"
             >
-              Learn. Connect. Save together — with clear rules and transparency.
-              Start your journey with financial education, find your community, 
-              and grow together through Wealth Practices.
+              Axiom creates structured paths for shared land ownership and real asset participation, 
+              starting with farmland. Built from real execution: a community farmland purchase, 
+              development work, and a founder-led infrastructure roadmap.
             </motion.p>
 
             <motion.div
@@ -669,18 +669,18 @@ export default function Home() {
             >
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
                 <Link 
-                  href="/susu"
+                  href="/keygrow"
                   className="inline-block px-8 py-4 flash-button-primary font-bold rounded-xl"
                 >
-                  Start a Wealth Practice
+                  Explore KeyGrow
                 </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
                 <Link 
-                  href="/academy"
+                  href="/about-us"
                   className="inline-block px-8 py-4 flash-button-secondary font-bold rounded-xl"
                 >
-                  Learn First
+                  See Our Origin Story
                 </Link>
               </motion.div>
             </motion.div>
