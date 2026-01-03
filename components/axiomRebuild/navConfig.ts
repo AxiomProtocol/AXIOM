@@ -38,7 +38,23 @@ export const navItems: NavItem[] = [
       { label: "Future Authority Plan", href: withSection("/infrastructure", "authority") }
     ]
   },
-  { label: "Academy", href: "/learn" },
+  { label: "Learn", href: "/learn" },
+  {
+    label: "Community",
+    children: [
+      { label: "Success Stories", href: "/community" },
+      { label: "Community Impact", href: "/impact" },
+      { label: "Transparency", href: "/transparency" }
+    ]
+  },
+  {
+    label: "About",
+    children: [
+      { label: "About Us", href: "/about-us" },
+      { label: "Our Origin", href: "/origin" },
+      { label: "Team", href: "/team" }
+    ]
+  },
   {
     label: "Tools",
     children: [

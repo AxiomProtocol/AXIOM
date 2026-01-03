@@ -15,7 +15,11 @@ const REBUILD_NAV_PAGES = [
   '/how-it-works',
   '/infrastructure',
   '/keygrow',
-  '/learn'
+  '/learn',
+  '/about-us',
+  '/community',
+  '/impact',
+  '/transparency'
 ]
 
 export default function App({ Component, pageProps }) {

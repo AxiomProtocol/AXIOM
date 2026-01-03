@@ -19,11 +19,11 @@ export function RebuildFooter() {
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ fontWeight: 700 }}>Axiom</div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", color: "rgba(18,18,18,0.74)", fontSize: 14 }}>
-            <Link href="/privacy">Privacy</Link>
-            <Link href="/terms">Terms</Link>
-            <Link href="/disclosures">Disclosures</Link>
+            <Link href="/privacy-policy">Privacy</Link>
+            <Link href="/terms-and-conditions">Terms</Link>
+            <Link href="/transparency">Transparency</Link>
             <Link href="/contact">Contact</Link>
-            <Link href="/docs">Docs</Link>
+            <Link href="/about-us">About</Link>
           </div>
         </div>
 
