@@ -6,6 +6,7 @@ import { ethers } from 'ethers';
 import Link from 'next/link';
 import DisclosureBanner from '../components/DisclosureBanner';
 import StepProgressBanner from '../components/StepProgressBanner';
+import { KeyGrowSections } from '../components/keygrow';
 
 interface Property {
   id: number;
@@ -77,7 +78,7 @@ interface PortfolioItem {
   targetOwnershipDate: string;
 }
 
-type TabType = 'properties' | 'program-overview' | 'path-to-ownership' | 'owner-agent-benefits' | 'dpa-fund' | 'token-portfolio' | 'my-enrollments' | 'equity-tracker';
+type TabType = 'land-program' | 'properties' | 'program-overview' | 'path-to-ownership' | 'owner-agent-benefits' | 'dpa-fund' | 'token-portfolio' | 'my-enrollments' | 'equity-tracker';
 
 const AXM_PRICE = 0.00033;
 
@@ -160,16 +161,17 @@ const SAMPLE_ZIP_CODES = [
 ];
 
 const SECTION_TO_TAB: Record<string, TabType> = {
-  'paths': 'program-overview',
-  'projects': 'properties',
-  'stewardship': 'path-to-ownership',
-  'get-started': 'program-overview'
+  'overview': 'land-program',
+  'paths': 'land-program',
+  'projects': 'land-program',
+  'stewardship': 'land-program',
+  'get-started': 'land-program'
 };
 
 export default function KeyGrowPage() {
   const router = useRouter();
   const { walletState, connectMetaMask, signInWithEthereum, siweState } = useWallet();
-  const [activeTab, setActiveTab] = useState<TabType>('properties');
+  const [activeTab, setActiveTab] = useState<TabType>('land-program');
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   useEffect(() => {
@@ -537,6 +539,7 @@ export default function KeyGrowPage() {
 
         <div className="flex gap-1 mb-6 border-b border-amber-200 overflow-x-auto pb-1">
           {[
+            { key: 'land-program', label: 'Land Program', icon: '🌱' },
             { key: 'program-overview', label: 'Program', icon: '🏛️' },
             { key: 'properties', label: 'Properties', icon: '🏘️' },
             { key: 'path-to-ownership', label: 'Path to Ownership', icon: '🛤️' },
@@ -560,6 +563,13 @@ export default function KeyGrowPage() {
             </button>
           ))}
         </div>
+
+        {/* LAND PROGRAM TAB - New structured sections */}
+        {activeTab === 'land-program' && (
+          <div className="bg-white rounded-xl p-6">
+            <KeyGrowSections />
+          </div>
+        )}
 
         {/* PROGRAM OVERVIEW TAB */}
         {activeTab === 'program-overview' && (
