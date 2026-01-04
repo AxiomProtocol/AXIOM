@@ -9,6 +9,7 @@ import StepProgressBanner from '../components/StepProgressBanner';
 import { KeyGrowSections } from '../components/keygrow';
 import { EligibilityCallout } from '../components/holderValue';
 import { calculateTier } from '../lib/axiomHolderValue';
+import { SiteLayout } from '../components/navigation';
 
 interface Property {
   id: number;
@@ -449,74 +450,9 @@ export default function KeyGrowPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
-      <div className="bg-green-50 border-b border-green-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-1 bg-green-500 text-white text-xs font-medium rounded">KeyGrow</span>
-              <span className="text-sm text-gray-600">A practical path to shared farmland ownership</span>
-            </div>
-            <Link href="/susu" className="text-sm text-green-600 hover:text-green-700 font-medium">
-              ← Back to Save Together
-            </Link>
-          </div>
-        </div>
-      </div>
+    <SiteLayout showWallet={true}>
+      <div className="bg-gradient-to-br from-amber-50 via-white to-orange-50">
       <Toaster position="top-right" />
-      
-      <header className="bg-white border-b border-amber-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-amber-600 hover:text-amber-700 flex items-center gap-2">
-              <span className="text-2xl">←</span>
-              <span className="font-medium">Back to Axiom</span>
-            </Link>
-            <div className="h-8 w-px bg-amber-200" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                🏠 KeyGrow
-                <span className="text-sm font-normal bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
-                  Rent-to-Own
-                </span>
-              </h1>
-              <p className="text-sm text-gray-600">Build equity with every payment</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            {walletState.isConnected ? (
-              <div className="flex items-center gap-3">
-                {!siweState?.isAuthenticated && (
-                  <button
-                    onClick={() => signInWithEthereum()}
-                    className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition"
-                  >
-                    Sign In
-                  </button>
-                )}
-                <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-2">
-                  <span className="text-xs text-gray-500">Connected</span>
-                  <p className="font-mono text-sm text-gray-900">
-                    {walletState.address?.slice(0, 6)}...{walletState.address?.slice(-4)}
-                  </p>
-                </div>
-                {siweState?.isAuthenticated && (
-                  <span className="text-green-600 text-sm flex items-center gap-1">
-                    ✓ Verified
-                  </span>
-                )}
-              </div>
-            ) : (
-              <button
-                onClick={() => connectMetaMask()}
-                className="bg-amber-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-amber-600 transition flex items-center gap-2"
-              >
-                <span>🦊</span> Connect Wallet
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         <DisclosureBanner 
@@ -2526,25 +2462,7 @@ export default function KeyGrowPage() {
         </div>
       )}
 
-      <footer className="bg-gray-900 text-white py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <span className="text-2xl">🏠</span>
-            <span className="text-xl font-bold">KeyGrow</span>
-            <span className="text-amber-400">by Axiom</span>
-          </div>
-          <p className="text-gray-400">
-            Shared ownership pathways, participation tracking, and transparent stewardship.
-          </p>
-          <div className="flex justify-center gap-6 mt-6 text-sm">
-            <Link href="/" className="text-gray-400 hover:text-white">Home</Link>
-            <Link href="/keygrow/sell" className="text-gray-400 hover:text-white">List Property</Link>
-            <Link href="/governance" className="text-gray-400 hover:text-white">Governance</Link>
-            <Link href="/axiom-nodes" className="text-gray-400 hover:text-white">DePIN Nodes</Link>
-            <Link href="/dex" className="text-gray-400 hover:text-white">DEX</Link>
-          </div>
-        </div>
-      </footer>
-    </div>
+      </div>
+    </SiteLayout>
   );
 }

@@ -14,7 +14,6 @@ const REBUILD_NAV_PAGES = [
   '/origin',
   '/how-it-works',
   '/infrastructure',
-  '/keygrow',
   '/learn',
   '/about-us',
   '/community',

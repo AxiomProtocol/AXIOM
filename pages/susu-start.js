@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Head from 'next/head';
 import { useState } from 'react';
-import Layout from '../components/Layout';
+import { SiteLayout } from '../components/navigation';
 import { SUSU_ROUTES } from '../lib/susuRoutes';
 
 function AIWealthCoachWidget() {
@@ -147,7 +147,7 @@ function AIWealthCoachWidget() {
 
 export default function SusuStartPage() {
   return (
-    <Layout showWallet={false}>
+    <SiteLayout showWallet={false}>
       <Head>
         <title>The Wealth Practice | Save Money with People You Trust</title>
         <meta name="description" content="The Wealth Practice is a structured savings practice built with others. Connect with a group, agree on the amount and schedule, and take turns receiving the pooled money." />
@@ -480,6 +480,6 @@ export default function SusuStartPage() {
       </div>
 
       <AIWealthCoachWidget />
-    </Layout>
+    </SiteLayout>
   );
 }

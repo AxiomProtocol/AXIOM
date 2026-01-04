@@ -15,44 +15,9 @@ export const navItems: NavItem[] = [
     children: [
       { label: "Overview", href: "/keygrow" },
       { label: "Participation Paths", href: withSection("/keygrow", "paths") },
-      { label: "Farmland Projects", href: withSection("/keygrow", "projects") },
+      { label: "Land Projects", href: withSection("/keygrow", "projects") },
       { label: "Stewardship Model", href: withSection("/keygrow", "stewardship") },
       { label: "Get Started", href: withSection("/keygrow", "get-started") }
-    ]
-  },
-  { label: "Origin", href: "/origin" },
-  {
-    label: "How It Works",
-    children: [
-      { label: "The Model", href: withSection("/how-it-works", "model") },
-      { label: "Participation Structure", href: withSection("/how-it-works", "participation") },
-      { label: "Transparency and Records", href: withSection("/how-it-works", "transparency") },
-      { label: "FAQ", href: withSection("/how-it-works", "faq") }
-    ]
-  },
-  {
-    label: "Infrastructure",
-    children: [
-      { label: "Why Logistics", href: withSection("/infrastructure", "why") },
-      { label: "Roadmap", href: withSection("/infrastructure", "roadmap") },
-      { label: "Future Authority Plan", href: withSection("/infrastructure", "authority") }
-    ]
-  },
-  { label: "Learn", href: "/learn" },
-  {
-    label: "Community",
-    children: [
-      { label: "Success Stories", href: "/community" },
-      { label: "Community Impact", href: "/impact" },
-      { label: "Transparency", href: "/transparency" }
-    ]
-  },
-  {
-    label: "About",
-    children: [
-      { label: "About Us", href: "/about-us" },
-      { label: "Our Origin", href: "/origin" },
-      { label: "Team", href: "/team" }
     ]
   },
   {
@@ -65,23 +30,53 @@ export const navItems: NavItem[] = [
     ]
   },
   {
-    label: "Holders",
+    label: "Steward Corps",
     children: [
-      { label: "Holder Benefits", href: "/holders" },
-      { label: "Steward Corps", href: "/stewards" },
-      { label: "Steward Dashboard", href: "/stewards/dashboard" },
+      { label: "Overview", href: "/stewards" },
+      { label: "Apply to Join", href: "/stewards/apply" },
       { label: "Activated Land", href: "/stewards/activated-land" },
-      { label: "Produce Program", href: "/produce" }
+      { label: "Steward Dashboard", href: "/stewards/dashboard" },
+      { label: "Holder Benefits", href: "/holders" }
+    ]
+  },
+  {
+    label: "Infrastructure",
+    children: [
+      { label: "Why Logistics", href: withSection("/infrastructure", "why") },
+      { label: "Roadmap", href: withSection("/infrastructure", "roadmap") },
+      { label: "Future Authority Plan", href: withSection("/infrastructure", "authority") }
+    ]
+  },
+  {
+    label: "Community",
+    children: [
+      { label: "Success Stories", href: "/community" },
+      { label: "Community Impact", href: "/impact" },
+      { label: "Transparency", href: "/transparency" }
+    ]
+  },
+  {
+    label: "About",
+    children: [
+      { label: "About Us", href: "/about-us" },
+      { label: "Origin Story", href: "/origin" },
+      { label: "How It Works", href: "/how-it-works" },
+      { label: "Team", href: "/team" },
+      { label: "Contact", href: "/contact" }
     ]
   },
   {
     label: "Tools",
     children: [
       { label: "Treasury", href: "/bank" },
+      { label: "SUSU Savings", href: "/susu-start" },
       { label: "Staking", href: "/staking" },
       { label: "DEX Exchange", href: "/dex" },
       { label: "Governance", href: "/governance" },
+      { label: "Tokenomics", href: "/tokenomics" },
+      { label: "Launchpad", href: "/launchpad" },
       { label: "Axiom Nodes", href: "/axiom-nodes" },
+      { label: "Analytics", href: "/v2-analytics" },
       { label: "PMA Trust", href: "/pma" }
     ]
   }

@@ -19,7 +19,7 @@ import {
   StewardStatusIndicator 
 } from '../components/stewardCorps';
 import { trackOnce, track } from '../components/axiomRebuild/analytics';
-import { RebuildNav } from '../components/axiomRebuild/RebuildNav';
+import { SiteLayout } from '../components/navigation';
 
 export default function StewardCorpsPage() {
   const { walletState } = useWallet();
@@ -73,17 +73,15 @@ export default function StewardCorpsPage() {
   };
 
   return (
-    <>
+    <SiteLayout>
       <Head>
         <title>{publicCopy.pageTitle} | Axiom Protocol</title>
         <meta name="description" content={publicCopy.subtitle} />
       </Head>
-      <RebuildNav />
       
       <main style={{ 
         minHeight: '100vh', 
-        background: '#FAFBFC',
-        paddingTop: '80px'
+        background: '#FAFBFC'
       }}>
         <section style={{
           padding: '80px 24px 60px',
@@ -563,6 +561,6 @@ export default function StewardCorpsPage() {
           </div>
         </section>
       </main>
-    </>
+    </SiteLayout>
   );
 }

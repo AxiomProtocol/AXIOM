@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
-import Layout from '../components/Layout';
+import { SiteLayout } from '../components/navigation';
 import StepProgressBanner from '../components/StepProgressBanner';
 
 const TREASURY_PRODUCTS = [
@@ -93,7 +93,7 @@ export default function BankPage() {
   };
 
   return (
-    <Layout>
+    <SiteLayout>
       <StepProgressBanner isAdvanced={true} />
       <div className="bg-gradient-to-br from-amber-50 via-white to-orange-50 py-16 px-4">
         <div className="max-w-6xl mx-auto text-center">
@@ -389,7 +389,7 @@ export default function BankPage() {
           </div>
         </div>
       </div>
-    </Layout>
+    </SiteLayout>
   );
 }
 

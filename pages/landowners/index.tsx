@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { RebuildNav } from '../../components/axiomRebuild/RebuildNav';
+import { SiteLayout } from '../../components/navigation';
 import { trackActivatedLand, ActivatedLandEvents } from '../../lib/stewards/activatedLandAnalytics';
 
 export default function LandownersPage() {
@@ -10,14 +10,13 @@ export default function LandownersPage() {
   }, []);
 
   return (
-    <>
+    <SiteLayout>
       <Head>
         <title>Landowners | Steward-Activated Land Program | Axiom Protocol</title>
         <meta name="description" content="Activate your underutilized land through community stewardship. Retain full ownership while putting your property to productive use." />
       </Head>
-      <RebuildNav />
       
-      <main className="min-h-screen bg-white pt-20">
+      <main className="min-h-screen bg-white">
         {/* Hero Section */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-24">
           <div className="text-center max-w-3xl mx-auto">
@@ -194,6 +193,6 @@ export default function LandownersPage() {
           </div>
         </section>
       </main>
-    </>
+    </SiteLayout>
   );
 }
