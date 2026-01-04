@@ -4688,3 +4688,35 @@ export type ActivatedLandOwnerChecklist = typeof activatedLandOwnerChecklists.$i
 export type InsertActivatedLandOwnerChecklist = typeof activatedLandOwnerChecklists.$inferInsert;
 export type ActivatedLandConversionOption = typeof activatedLandConversionOptions.$inferSelect;
 export type InsertActivatedLandConversionOption = typeof activatedLandConversionOptions.$inferInsert;
+
+// ============================================
+// STEWARD RECRUITMENT SYSTEM
+// ============================================
+
+// Steward Interest Signups (quick form for recruitment)
+export const stewardInterestSignups = pgTable("steward_interest_signups", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  email: varchar("email", { length: 200 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  region: varchar("region", { length: 100 }).notNull(),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  motivation: text("motivation"),
+  source: varchar("source", { length: 100 }),
+  referredBy: varchar("referred_by", { length: 200 }),
+  status: varchar("status", { length: 20 }).default('new'),
+  contactedAt: timestamp("contacted_at"),
+  convertedToApplicant: boolean("converted_to_applicant").default(false),
+  notes: text("notes"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  emailIdx: index("steward_interest_email_idx").on(table.email),
+  regionIdx: index("steward_interest_region_idx").on(table.region),
+  statusIdx: index("steward_interest_status_idx").on(table.status),
+}));
+
+export type StewardInterestSignup = typeof stewardInterestSignups.$inferSelect;
+export type InsertStewardInterestSignup = typeof stewardInterestSignups.$inferInsert;

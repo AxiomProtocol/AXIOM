@@ -518,24 +518,43 @@ export default function StewardCorpsPage() {
               ))}
             </div>
 
-            <Link 
-              href="/stewards/apply"
-              onClick={handleApplyClick}
-              style={{
-                display: 'inline-block',
-                padding: '16px 40px',
-                background: '#FFFFFF',
-                color: web3Theme.colors.primary,
-                borderRadius: web3Theme.radii.md,
-                fontSize: '16px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-              }}
-            >
-              {publicCopy.howToApply.cta}
-            </Link>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center' }}>
+              <Link 
+                href="/stewards/recruit"
+                style={{
+                  display: 'inline-block',
+                  padding: '16px 40px',
+                  background: '#FFFFFF',
+                  color: web3Theme.colors.primary,
+                  borderRadius: web3Theme.radii.md,
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                }}
+              >
+                Express Interest (Quick Form)
+              </Link>
+              <Link 
+                href="/stewards/apply"
+                onClick={handleApplyClick}
+                style={{
+                  display: 'inline-block',
+                  padding: '16px 40px',
+                  background: 'rgba(255,255,255,0.15)',
+                  color: '#FFFFFF',
+                  borderRadius: web3Theme.radii.md,
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                }}
+              >
+                {publicCopy.howToApply.cta}
+              </Link>
+            </div>
           </div>
         </section>
 
