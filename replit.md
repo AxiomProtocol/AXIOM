@@ -12,7 +12,30 @@ The Axiom Smart City project aims to establish America's first 1,000-acre on-cha
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend features a modular design with a professional gold/black theme and yellow accents, ensuring responsiveness. Branding includes "AXIOM" with a golden circular token logo, golden gradient text, and the tagline "Build Wealth Together, On-Chain." Navigation, defined in `lib/navigation.js`, guides users through a Learn → Connect → Save Together journey, complemented by a `StepProgressBanner`.
+The frontend features a modular design with a professional gold/black theme and yellow accents, ensuring responsiveness. Branding includes "AXIOM" with a golden circular token logo, golden gradient text, and the tagline "Build Wealth Together, On-Chain."
+
+### Unified Navigation System (Jan 2026)
+Land-first positioning with consistent header/footer across all marketing pages. Components in `components/navigation/`:
+
+**Core Components:**
+- `SiteNavModel.ts` - Single source of truth for navigation structure with visibility filtering (public/app/admin)
+- `SiteHeader.tsx` - Unified header with dropdown menus, wallet connection, analytics tracking
+- `SiteFooter.tsx` - Consistent footer with 4-column link sections
+- `SiteLayout.tsx` - Wrapper component combining header/footer for marketing pages
+
+**Navigation Hierarchy (Land-First):**
+- **Primary:** Home → KeyGrow (dropdown) → Landowners (dropdown) → Steward Corps (dropdown) → Infrastructure → Community (dropdown) → About (dropdown) → Tools (dropdown)
+- **Tools Dropdown:** Houses SUSU/Wealth Practice and Launchpad (not peer-level)
+- **Legacy "Back to Save Together" links removed** from KeyGrow and other pages
+
+**Analytics:**
+- `trackNavClick` function fires gtag events (`nav_click_*`) for navigation interactions
+- Event tracking for main nav, dropdowns, and footer links
+
+**Dual System Alignment:**
+- `components/axiomRebuild/navConfig.ts` (RebuildNav for homepage) - aligned with land-first hierarchy
+- `lib/navigation.js` (legacy Layout.js) - aligned with land-first hierarchy
+- `pages/_app.js` excludes SiteLayout pages from RebuildNav injection to prevent duplicate navigation
 
 ### Official Web3 Design Template (Jan 2026)
 The homepage and marketing pages use the official Web3 immersive design system located in `components/axiomRebuild/`:
