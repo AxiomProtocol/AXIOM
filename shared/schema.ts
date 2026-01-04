@@ -2504,6 +2504,26 @@ export type EarlyAccessSignup = typeof earlyAccessSignups.$inferSelect;
 export type InsertEarlyAccessSignup = typeof earlyAccessSignups.$inferInsert;
 
 // ============================================
+// CONTACT FORM SUBMISSIONS
+// ============================================
+
+export const contactSubmissions = pgTable("contact_submissions", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  subject: varchar("subject", { length: 100 }).notNull(),
+  message: text("message").notNull(),
+  ipAddress: varchar("ip_address", { length: 50 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  emailIdx: index("contact_submissions_email_idx").on(table.email),
+  createdAtIdx: index("contact_submissions_created_at_idx").on(table.createdAt),
+}));
+
+export type ContactSubmission = typeof contactSubmissions.$inferSelect;
+export type InsertContactSubmission = typeof contactSubmissions.$inferInsert;
+
+// ============================================
 // PMA (PRIVATE MEMBERSHIP ASSOCIATION) APPLICATIONS
 // ============================================
 
