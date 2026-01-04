@@ -87,6 +87,19 @@ Key features include:
     - **Analytics**: Custom event tracking via `lib/stewardsAnalytics.ts` with 18 tracked events and sessionStorage deduplication
     - **API Routes**: `/api/stewards/dashboard/*` (auth, overview), `/api/stewards/drops/*` (reserve), `/api/stewards/land/*` (interest), `/api/stewards/cohorts/*` (join)
     - **Database**: 29 tables in `shared/schema.ts` for steward operations (regions, drops, reservations, participants, land leads, tasks, messages, reports, reputation metrics)
+-   **Steward-Activated Land Program (Jan 2026)**: Flagship acquisition track for activating underutilized land through community stewardship. Landowners retain full ownership while stewards coordinate productive activities. Components in `pages/landowners/`, `pages/stewards/activated-land/`, scripts in `lib/stewards/outreachScripts.ts`. Features include:
+    - **Landowner Onboarding**: Public pages (`/landowners`, `/landowners/how-it-works`, `/landowners/faq`, `/landowners/apply`) with compliant messaging emphasizing ownership retention
+    - **Steward Playbook**: Internal pages (`/stewards/activated-land/playbook`, `/stewards/activated-land/scripts`) with DO/DON'T guidelines and conversation templates
+    - **Outreach Scripts**: 7 conversation templates (cold intro, warm referral, follow-up, objection handling, decline-pause, closing, nurture) with compliant language
+    - **Application System**: Landowner intake form with photo upload via `/api/landowners/apply`
+    - **Lead Management**: Activated land leads tracked in Land Pipeline with metadata for owner info, access terms, activation stage
+    - **Stewardship Plans**: Activity planning with owner approval workflow via `/api/stewards/activated-land/plan`
+    - **Activation Cycles**: Open/close cycles with weekly activity logging via `/api/stewards/activated-land/cycle/*`
+    - **Owner Checklists**: Agreement tracking and readiness verification via `/api/stewards/activated-land/checklist/*`
+    - **Conversion Options**: Optional future acquisition discussions (owner-initiated only)
+    - **Analytics**: Custom event tracking via `lib/stewards/activatedLandAnalytics.ts` for landowner and steward funnels
+    - **Documentation**: Program overview and SOP with weekly checklists in `docs/stewards/`
+    - **Compliance**: Activation is NOT sale/lease/investment; no yield/ROI language; owner retains 100% ownership; future acquisition optional and separate
 
 Wealth Engine V2 Contracts (DeFi Treasury System) implement AIP-001 Master Architectural Plan:
 -   **AxiomScoreSBT**: ERC-5192 Soulbound Token for on-chain credit scoring (300-850 range), integrated with SUSU repayment history.

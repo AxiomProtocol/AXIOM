@@ -20,7 +20,7 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
       .where(eq(stewardAssignments.wallet, wallet))
       .limit(1);
 
-    if (!steward || !['active', 'admin'].includes(steward.status || '')) {
+    if (!steward || steward.role !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
     }
 

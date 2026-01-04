@@ -56,8 +56,8 @@ export default function LandownersApplyPage() {
       Object.entries(form).forEach(([key, value]) => {
         formData.append(key, value);
       });
-      photos.forEach((photo, idx) => {
-        formData.append(`photo_${idx}`, photo);
+      photos.forEach((photo) => {
+        formData.append('photos', photo);
       });
 
       const res = await fetch('/api/landowners/apply', {
