@@ -2,79 +2,81 @@ import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useWallet } from '../components/WalletConnect/WalletContext';
-import { stewardReputationCopy, disclaimers } from '../lib/axiomHolderValue';
-import { ReputationCard, ParticipationQueueCard } from '../components/holderValue';
+import { 
+  publicCopy, 
+  stewardCharter, 
+  selectionStages, 
+  privileges,
+  roleStructure,
+  calculateStewardEligibility,
+  StewardStatus
+} from '../lib/stewardCorps';
 import { web3Theme } from '../components/axiomRebuild/styles/web3Theme';
 import { ImmersiveCard } from '../components/axiomRebuild/ImmersiveCard';
+import { 
+  StewardRoleCard, 
+  StewardEligibilityBadge,
+  StewardStatusIndicator 
+} from '../components/stewardCorps';
 import { trackOnce, track } from '../components/axiomRebuild/analytics';
 import { RebuildNav } from '../components/axiomRebuild/RebuildNav';
 
-export default function StewardsPage() {
+export default function StewardCorpsPage() {
   const { walletState } = useWallet();
   const address = walletState?.address;
   const isConnected = walletState?.isConnected || false;
-  const [reputation, setReputation] = useState<{
-    points: number;
-    breakdown: {
-      holdingPeriods: number;
-      actionsCompleted: number;
-      onboardingComplete: boolean;
-      susuCycles: number;
-      votes: number;
-    };
-  } | null>(null);
+  
+  const [eligibility, setEligibility] = useState<{ eligible: boolean; checks: { ruleId: string; passed: boolean }[] } | null>(null);
+  const [stewardStatus, setStewardStatus] = useState<StewardStatus>('none');
   const [loading, setLoading] = useState(false);
-  const [userTier, setUserTier] = useState(0);
 
   useEffect(() => {
-    trackOnce('steward_reputation_view', 'stewards_page_view', { page: 'stewards' });
+    trackOnce('steward_page_view', 'steward_corps_page_view', { page: 'steward-corps' });
   }, []);
 
   useEffect(() => {
-    async function fetchReputation() {
+    async function checkEligibility() {
       if (!isConnected || !address) {
-        setReputation(null);
+        setEligibility(null);
+        setStewardStatus('none');
         return;
       }
 
       setLoading(true);
       try {
-        const res = await fetch(`/api/participation/reputation?wallet=${address}`);
+        const res = await fetch(`/api/stewards/eligibility?wallet=${address}`);
         if (res.ok) {
           const data = await res.json();
-          setReputation({
-            points: data.points,
-            breakdown: data.breakdown
+          setEligibility(data.eligibility);
+          setStewardStatus(data.status || 'none');
+        } else {
+          const mockEligibility = calculateStewardEligibility({
+            isConnected: true,
+            axmBalance: 0,
+            holdingDays: 0,
+            participationCount: 0
           });
-          setUserTier(data.level >= 3 ? 3 : data.level >= 2 ? 2 : 1);
+          setEligibility(mockEligibility);
         }
       } catch (err) {
-        console.error('Failed to fetch reputation:', err);
+        console.error('Failed to check eligibility:', err);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchReputation();
+    checkEligibility();
   }, [isConnected, address]);
 
-  const handleJoinStewards = async () => {
-    if (!address) return;
-    
-    const res = await fetch('/api/participation/join-stewards', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ wallet: address, tier: userTier })
-    });
-
-    if (!res.ok) throw new Error('Join failed');
+  const handleApplyClick = () => {
+    track('steward_apply_click', { page: 'steward-corps' });
   };
 
   return (
     <>
       <Head>
-        <title>Stewardship Program | Axiom Protocol</title>
-        <meta name="description" content={stewardReputationCopy.pageSubtitle} />
+        <title>{publicCopy.pageTitle} | Axiom Protocol</title>
+        <meta name="description" content={publicCopy.subtitle} />
       </Head>
       <RebuildNav />
       
@@ -84,175 +86,479 @@ export default function StewardsPage() {
         paddingTop: '80px'
       }}>
         <section style={{
-          padding: '60px 24px 40px',
+          padding: '80px 24px 60px',
           background: 'linear-gradient(180deg, rgba(123, 104, 238, 0.08) 0%, transparent 100%)'
         }}>
-          <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
-            <Link href="/holders" style={{ 
-              color: web3Theme.colors.primary, 
-              fontSize: '14px', 
-              textDecoration: 'none',
+          <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
+            <div style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '8px',
+              padding: '6px 16px',
+              background: 'rgba(123, 104, 238, 0.1)',
+              borderRadius: web3Theme.radii.full,
               marginBottom: '24px'
             }}>
-              ← Back to Holder Benefits
-            </Link>
+              <span style={{ fontSize: '20px' }}>🛡️</span>
+              <span style={{ 
+                fontSize: '13px', 
+                fontWeight: 600, 
+                color: web3Theme.colors.secondary,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                Elite Coordination Corps
+              </span>
+            </div>
             
             <h1 style={{ 
-              fontSize: '42px', 
+              fontSize: '48px', 
               fontWeight: 700, 
               color: '#1F2937',
-              marginBottom: '16px'
+              marginBottom: '16px',
+              lineHeight: 1.1
             }}>
-              {stewardReputationCopy.pageTitle}
+              {publicCopy.pageTitle}
             </h1>
             
             <p style={{ 
-              fontSize: '18px', 
-              color: '#6B7280', 
-              maxWidth: '650px', 
-              margin: '0 auto',
-              lineHeight: 1.6
+              fontSize: '24px', 
+              color: web3Theme.colors.primary, 
+              fontWeight: 500,
+              marginBottom: '24px'
             }}>
-              {stewardReputationCopy.description}
+              {publicCopy.subtitle}
+            </p>
+
+            {isConnected && stewardStatus !== 'none' && (
+              <div style={{ marginBottom: '20px' }}>
+                <StewardStatusIndicator status={stewardStatus} size="lg" />
+              </div>
+            )}
+            
+            <p style={{ 
+              fontSize: '17px', 
+              color: '#6B7280', 
+              maxWidth: '700px', 
+              margin: '0 auto',
+              lineHeight: 1.7
+            }}>
+              {publicCopy.whatIs.body}
             </p>
           </div>
         </section>
 
-        <section style={{ padding: '40px 24px' }}>
-          <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: isConnected ? '1fr 1fr' : '1fr', 
-              gap: '32px',
-              alignItems: 'start'
+        <section style={{ padding: '60px 24px' }}>
+          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <h2 style={{ 
+              fontSize: '28px', 
+              fontWeight: 600, 
+              color: '#1F2937', 
+              marginBottom: '12px',
+              textAlign: 'center'
             }}>
-              {isConnected && reputation && (
-                <div>
-                  <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#1F2937', marginBottom: '20px' }}>
-                    Your Reputation
-                  </h2>
-                  <ReputationCard 
-                    points={reputation.points} 
-                    breakdown={reputation.breakdown}
-                  />
-                </div>
-              )}
-
-              <div>
-                <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#1F2937', marginBottom: '20px' }}>
-                  {isConnected ? 'Join Steward Cohort' : 'Steward Cohort'}
-                </h2>
-                <ParticipationQueueCard
-                  title="Steward Training Cohort"
-                  description="Become a certified Axiom Steward. Learn land operations, community governance, and earn enhanced reputation multipliers."
-                  icon="🛡️"
-                  queueType="steward-cohort"
-                  totalSlots={25}
-                  filledSlots={8}
-                  minTierRequired={3}
-                  currentTier={userTier}
-                  isConnected={isConnected}
-                  onAction={handleJoinStewards}
-                  page="stewards"
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section style={{ padding: '40px 24px', background: 'rgba(0,0,0,0.02)' }}>
-          <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#1F2937', marginBottom: '24px' }}>
-              How Points Are Earned
+              {publicCopy.whatStewardsDo.title}
             </h2>
+            <p style={{
+              fontSize: '15px',
+              color: '#6B7280',
+              textAlign: 'center',
+              marginBottom: '32px'
+            }}>
+              {publicCopy.whatStewardsDo.emphasis}
+            </p>
             
             <div style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', 
               gap: '16px',
               marginBottom: '48px'
             }}>
-              {stewardReputationCopy.pointsSystem.map((item, i) => (
-                <ImmersiveCard key={i} variant="glass" hover3D={false}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontSize: '15px', fontWeight: 500, color: '#1F2937' }}>
-                        {item.action}
-                      </div>
-                      <div style={{ fontSize: '13px', color: '#9CA3AF' }}>
-                        {item.frequency}
-                      </div>
-                    </div>
-                    <div style={{ 
-                      padding: '6px 14px',
-                      background: `${web3Theme.colors.accent}15`,
-                      borderRadius: web3Theme.radii.full,
-                      fontSize: '16px',
-                      fontWeight: 700,
-                      color: web3Theme.colors.accent
+              {publicCopy.whatStewardsDo.items.map((item, i) => (
+                <ImmersiveCard key={i} variant="glass" hover3D={true}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: `${web3Theme.colors.primary}15`,
+                      borderRadius: web3Theme.radii.md,
+                      fontSize: '18px'
                     }}>
-                      +{item.points}
+                      {['🌾', '👥', '🔄', '🗺️', '📢'][i] || '✓'}
                     </div>
+                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#1F2937' }}>
+                      {item}
+                    </span>
                   </div>
                 </ImmersiveCard>
               ))}
             </div>
 
-            <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#1F2937', marginBottom: '24px' }}>
-              Reputation Levels
-            </h2>
-            
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ 
-                width: '100%', 
-                borderCollapse: 'collapse',
-                background: '#FFF',
-                borderRadius: web3Theme.radii.lg,
-                overflow: 'hidden',
-                boxShadow: web3Theme.shadows.card
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(0, 212, 170, 0.05) 0%, rgba(123, 104, 238, 0.05) 100%)',
+              border: '1px solid rgba(0, 212, 170, 0.15)',
+              borderRadius: web3Theme.radii.xl,
+              padding: '32px',
+              textAlign: 'center'
+            }}>
+              <h3 style={{ 
+                fontSize: '20px', 
+                fontWeight: 600, 
+                color: '#1F2937',
+                marginBottom: '12px'
               }}>
-                <thead>
-                  <tr style={{ background: 'rgba(0,0,0,0.03)' }}>
-                    <th style={{ padding: '14px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#4B5563' }}>Level</th>
-                    <th style={{ padding: '14px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#4B5563' }}>Name</th>
-                    <th style={{ padding: '14px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#4B5563' }}>Points Required</th>
-                    <th style={{ padding: '14px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#4B5563' }}>Unlocks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stewardReputationCopy.levels.map((level) => (
-                    <tr key={level.level} style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                      <td style={{ padding: '14px 16px', fontSize: '14px', color: '#1F2937' }}>
-                        {level.level}
-                      </td>
-                      <td style={{ padding: '14px 16px', fontSize: '14px', fontWeight: 500, color: web3Theme.colors.accent }}>
-                        {level.name}
-                      </td>
-                      <td style={{ padding: '14px 16px', fontSize: '14px', color: '#6B7280' }}>
-                        {level.pointsRequired}+
-                      </td>
-                      <td style={{ padding: '14px 16px', fontSize: '13px', color: '#4B5563' }}>
-                        {level.unlocks.join(', ')}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                {publicCopy.whyMatters.title}
+              </h3>
+              <p style={{ 
+                fontSize: '15px', 
+                color: '#6B7280',
+                marginBottom: '16px',
+                lineHeight: 1.6
+              }}>
+                {publicCopy.whyMatters.body}
+              </p>
+              <p style={{ 
+                fontSize: '16px', 
+                fontWeight: 600, 
+                color: web3Theme.colors.primary,
+                margin: 0
+              }}>
+                {publicCopy.whyMatters.emphasis}
+              </p>
             </div>
           </div>
         </section>
 
-        <section style={{ padding: '40px 24px 60px' }}>
+        <section style={{ padding: '60px 24px', background: 'rgba(0,0,0,0.02)' }}>
+          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <h2 style={{ 
+              fontSize: '28px', 
+              fontWeight: 600, 
+              color: '#1F2937', 
+              marginBottom: '12px',
+              textAlign: 'center'
+            }}>
+              Corps Principles
+            </h2>
+            <p style={{
+              fontSize: '15px',
+              color: '#6B7280',
+              textAlign: 'center',
+              marginBottom: '32px'
+            }}>
+              The foundation of steward conduct
+            </p>
+
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+              gap: '16px',
+              marginBottom: '48px'
+            }}>
+              {stewardCharter.principles.map((principle, i) => (
+                <ImmersiveCard key={i} variant="gradient" hover3D={true}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: web3Theme.colors.primary,
+                      color: '#FFFFFF',
+                      borderRadius: '50%',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      margin: '0 auto 12px'
+                    }}>
+                      {i + 1}
+                    </div>
+                    <p style={{ 
+                      fontSize: '14px', 
+                      fontWeight: 500, 
+                      color: '#1F2937',
+                      margin: 0,
+                      lineHeight: 1.5
+                    }}>
+                      {principle}
+                    </p>
+                  </div>
+                </ImmersiveCard>
+              ))}
+            </div>
+
+            <h2 style={{ 
+              fontSize: '28px', 
+              fontWeight: 600, 
+              color: '#1F2937', 
+              marginBottom: '12px',
+              textAlign: 'center'
+            }}>
+              Role Structure
+            </h2>
+            <p style={{
+              fontSize: '15px',
+              color: '#6B7280',
+              textAlign: 'center',
+              marginBottom: '32px'
+            }}>
+              Roles are intentionally limited to preserve accountability
+            </p>
+
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+              gap: '16px'
+            }}>
+              {roleStructure.map(role => (
+                <StewardRoleCard key={role.type} role={role} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section style={{ padding: '60px 24px' }}>
+          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <h2 style={{ 
+              fontSize: '28px', 
+              fontWeight: 600, 
+              color: '#1F2937', 
+              marginBottom: '12px',
+              textAlign: 'center'
+            }}>
+              {publicCopy.privilegesSection.title}
+            </h2>
+            <p style={{
+              fontSize: '15px',
+              color: '#6B7280',
+              textAlign: 'center',
+              marginBottom: '32px'
+            }}>
+              {publicCopy.privilegesSection.note}
+            </p>
+
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
+              gap: '16px'
+            }}>
+              {privileges.map(priv => (
+                <ImmersiveCard key={priv.id} variant="glass" hover3D={true}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+                    <div style={{
+                      width: '44px',
+                      height: '44px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: `${web3Theme.colors.accent}15`,
+                      borderRadius: web3Theme.radii.md,
+                      fontSize: '22px'
+                    }}>
+                      {priv.icon}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <h4 style={{ 
+                        fontSize: '15px', 
+                        fontWeight: 600, 
+                        color: '#1F2937',
+                        margin: '0 0 4px 0'
+                      }}>
+                        {priv.title}
+                      </h4>
+                      <p style={{ 
+                        fontSize: '13px', 
+                        color: '#6B7280',
+                        margin: 0,
+                        lineHeight: 1.5
+                      }}>
+                        {priv.description}
+                      </p>
+                    </div>
+                  </div>
+                </ImmersiveCard>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section style={{ padding: '60px 24px', background: 'rgba(0,0,0,0.02)' }}>
+          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <h2 style={{ 
+              fontSize: '28px', 
+              fontWeight: 600, 
+              color: '#1F2937', 
+              marginBottom: '12px',
+              textAlign: 'center'
+            }}>
+              Selection Process
+            </h2>
+            <p style={{
+              fontSize: '15px',
+              color: '#6B7280',
+              textAlign: 'center',
+              marginBottom: '32px'
+            }}>
+              Meeting eligibility does not guarantee acceptance
+            </p>
+
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '16px'
+            }}>
+              {selectionStages.map((stage, i) => (
+                <ImmersiveCard key={stage.stage} variant="glass" hover3D={false}>
+                  <div style={{ display: 'flex', gap: '20px' }}>
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: `linear-gradient(135deg, ${web3Theme.colors.primary} 0%, ${web3Theme.colors.accent} 100%)`,
+                      color: '#FFFFFF',
+                      borderRadius: '50%',
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      flexShrink: 0
+                    }}>
+                      {stage.stage}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ marginBottom: '8px' }}>
+                        <h4 style={{ 
+                          fontSize: '16px', 
+                          fontWeight: 600, 
+                          color: '#1F2937',
+                          margin: 0
+                        }}>
+                          {stage.name}
+                        </h4>
+                        <span style={{ 
+                          fontSize: '13px', 
+                          color: web3Theme.colors.primary
+                        }}>
+                          {stage.description}
+                        </span>
+                      </div>
+                      <div style={{ 
+                        display: 'flex', 
+                        flexWrap: 'wrap', 
+                        gap: '8px'
+                      }}>
+                        {stage.details.map((detail, j) => (
+                          <span key={j} style={{
+                            padding: '4px 10px',
+                            background: 'rgba(0,0,0,0.04)',
+                            borderRadius: web3Theme.radii.full,
+                            fontSize: '12px',
+                            color: '#4B5563'
+                          }}>
+                            {detail}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </ImmersiveCard>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section style={{ 
+          padding: '80px 24px',
+          background: `linear-gradient(135deg, ${web3Theme.colors.primary} 0%, ${web3Theme.colors.secondary} 100%)`
+        }}>
+          <div style={{ maxWidth: '700px', margin: '0 auto', textAlign: 'center' }}>
+            <h2 style={{ 
+              fontSize: '32px', 
+              fontWeight: 700, 
+              color: '#FFFFFF', 
+              marginBottom: '16px'
+            }}>
+              {publicCopy.howToApply.title}
+            </h2>
+            <p style={{
+              fontSize: '17px',
+              color: 'rgba(255,255,255,0.8)',
+              marginBottom: '24px'
+            }}>
+              {publicCopy.howToApply.body}
+            </p>
+
+            {isConnected && eligibility && (
+              <div style={{ 
+                display: 'inline-block',
+                marginBottom: '24px'
+              }}>
+                <StewardEligibilityBadge checks={eligibility.checks} compact />
+              </div>
+            )}
+
+            <div style={{ 
+              display: 'flex', 
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: '12px',
+              marginBottom: '32px'
+            }}>
+              {publicCopy.howToApply.steps.map((step, i) => (
+                <span key={i} style={{
+                  padding: '6px 14px',
+                  background: 'rgba(255,255,255,0.15)',
+                  borderRadius: web3Theme.radii.full,
+                  fontSize: '13px',
+                  color: '#FFFFFF'
+                }}>
+                  {i + 1}. {step}
+                </span>
+              ))}
+            </div>
+
+            <Link 
+              href="/stewards/apply"
+              onClick={handleApplyClick}
+              style={{
+                display: 'inline-block',
+                padding: '16px 40px',
+                background: '#FFFFFF',
+                color: web3Theme.colors.primary,
+                borderRadius: web3Theme.radii.md,
+                fontSize: '16px',
+                fontWeight: 600,
+                textDecoration: 'none',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+              }}
+            >
+              {publicCopy.howToApply.cta}
+            </Link>
+          </div>
+        </section>
+
+        <section style={{ padding: '60px 24px' }}>
           <div style={{ maxWidth: '700px', margin: '0 auto', textAlign: 'center' }}>
             <p style={{ 
-              fontSize: '13px', 
-              color: '#9CA3AF', 
-              fontStyle: 'italic'
+              fontSize: '24px', 
+              fontWeight: 600, 
+              color: '#1F2937',
+              fontStyle: 'italic',
+              marginBottom: '24px'
             }}>
-              {disclaimers.reputation}
+              {publicCopy.closing}
+            </p>
+            
+            <p style={{ 
+              fontSize: '13px', 
+              color: '#9CA3AF',
+              lineHeight: 1.6
+            }}>
+              {publicCopy.disclaimer}
             </p>
           </div>
         </section>

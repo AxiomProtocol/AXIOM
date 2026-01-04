@@ -71,6 +71,7 @@ Key features include:
 -   **Yield Vault**: Auto-compounding AXM staking.
 -   **Push Notifications**: PWA service worker for push notifications with preference settings.
 -   **Transparency Dashboard**: Real-time protocol metrics including TVL, burned AXM, SEED locked, insurance fund balance, SUSU pools, and DePIN nodes.
+-   **Axiom Steward Corps**: Elite coordination corps for managing regional participation, food distribution, and land readiness. Features include: eligibility verification (AXM balance, holding duration, participation), 5-stage selection process (screening → application → pledge → probation → confirmation), role hierarchy (Coordinator/Lead/Council), and probation metrics tracking. Data in `lib/stewardCorps.ts`, components in `components/stewardCorps/`, pages at `/stewards`, `/stewards/apply`, `/stewards/dashboard`.
 
 Wealth Engine V2 Contracts (DeFi Treasury System) implement AIP-001 Master Architectural Plan:
 -   **AxiomScoreSBT**: ERC-5192 Soulbound Token for on-chain credit scoring (300-850 range), integrated with SUSU repayment history.
