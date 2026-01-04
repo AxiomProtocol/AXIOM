@@ -4153,3 +4153,346 @@ export type ParticipationCredit = typeof participationCredits.$inferSelect;
 export type InsertParticipationCredit = typeof participationCredits.$inferInsert;
 export type ParticipationAction = typeof participationActions.$inferSelect;
 export type InsertParticipationAction = typeof participationActions.$inferInsert;
+
+// ============================================
+// STEWARD DASHBOARD SCHEMA
+// ============================================
+
+// Steward role enum
+export const stewardRoleEnum = pgEnum('steward_role', [
+  'coordinator',
+  'lead',
+  'council',
+  'admin'
+]);
+
+// Steward status enum
+export const stewardStatusEnum = pgEnum('steward_status', [
+  'applicant',
+  'probationary',
+  'active',
+  'atRisk',
+  'reassignmentPending'
+]);
+
+// Drop status enum
+export const dropStatusEnum = pgEnum('drop_status', [
+  'draft',
+  'published',
+  'completed',
+  'cancelled'
+]);
+
+// Reservation status enum
+export const reservationStatusEnum = pgEnum('reservation_status', [
+  'reserved',
+  'confirmed',
+  'cancelled',
+  'noShow',
+  'pickedUp'
+]);
+
+// Land lead stage enum
+export const landLeadStageEnum = pgEnum('land_lead_stage', [
+  'new',
+  'needsData',
+  'qualified',
+  'underReview',
+  'escalated',
+  'declined',
+  'pursuing',
+  'acquired',
+  'archived'
+]);
+
+// Incident severity enum
+export const incidentSeverityEnum = pgEnum('incident_severity', [
+  'low',
+  'medium',
+  'high',
+  'critical'
+]);
+
+// Steward Regions
+export const stewardRegions = pgTable("steward_regions", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  coverage: text("coverage"),
+  defaultPickupPoints: jsonb("default_pickup_points"),
+  capacityTargets: jsonb("capacity_targets"),
+  status: varchar("status", { length: 20 }).default('active'),
+  parentRegionId: integer("parent_region_id"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Steward Assignments
+export const stewardAssignments = pgTable("steward_assignments", {
+  id: serial("id").primaryKey(),
+  wallet: varchar("wallet", { length: 42 }).notNull(),
+  role: stewardRoleEnum("role").default('coordinator'),
+  regionId: integer("region_id").references(() => stewardRegions.id),
+  status: stewardStatusEnum("status").default('applicant'),
+  probationStartDate: timestamp("probation_start_date"),
+  probationEndDate: timestamp("probation_end_date"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  walletIdx: index("steward_assignments_wallet_idx").on(table.wallet),
+  regionIdx: index("steward_assignments_region_idx").on(table.regionId),
+}));
+
+// Steward Drops (Produce Distribution Events)
+export const stewardDrops = pgTable("steward_drops", {
+  id: serial("id").primaryKey(),
+  regionId: integer("region_id").references(() => stewardRegions.id).notNull(),
+  date: timestamp("date").notNull(),
+  location: text("location").notNull(),
+  timeWindows: jsonb("time_windows"),
+  capacity: integer("capacity").default(50),
+  cutoffAt: timestamp("cutoff_at"),
+  status: dropStatusEnum("status").default('draft'),
+  createdBy: varchar("created_by", { length: 42 }),
+  reconciliationData: jsonb("reconciliation_data"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  regionIdx: index("steward_drops_region_idx").on(table.regionId),
+  dateIdx: index("steward_drops_date_idx").on(table.date),
+}));
+
+// Drop Reservations
+export const stewardReservations = pgTable("steward_reservations", {
+  id: serial("id").primaryKey(),
+  dropId: integer("drop_id").references(() => stewardDrops.id).notNull(),
+  wallet: varchar("wallet", { length: 42 }).notNull(),
+  status: reservationStatusEnum("status").default('reserved'),
+  notes: text("notes"),
+  checkInTime: timestamp("check_in_time"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  dropIdx: index("steward_reservations_drop_idx").on(table.dropId),
+  walletIdx: index("steward_reservations_wallet_idx").on(table.wallet),
+}));
+
+// Participant Profiles
+export const stewardParticipants = pgTable("steward_participants", {
+  wallet: varchar("wallet", { length: 42 }).primaryKey(),
+  displayName: varchar("display_name", { length: 100 }),
+  joinDate: timestamp("join_date").defaultNow(),
+  participationPath: varchar("participation_path", { length: 50 }),
+  activityScore: integer("activity_score").default(0),
+  flags: jsonb("flags"),
+  notes: text("notes"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Land Leads
+export const stewardLandLeads = pgTable("steward_land_leads", {
+  id: serial("id").primaryKey(),
+  regionId: integer("region_id").references(() => stewardRegions.id),
+  parcelAddress: text("parcel_address").notNull(),
+  county: varchar("county", { length: 100 }),
+  link: text("link"),
+  askingPrice: decimal("asking_price", { precision: 14, scale: 2 }),
+  acreage: decimal("acreage", { precision: 10, scale: 2 }),
+  zoning: varchar("zoning", { length: 50 }),
+  utilities: jsonb("utilities"),
+  water: varchar("water", { length: 100 }),
+  topography: varchar("topography", { length: 100 }),
+  riskFlags: jsonb("risk_flags"),
+  photos: jsonb("photos"),
+  proposedUse: text("proposed_use"),
+  confidenceScore: integer("confidence_score"),
+  stage: landLeadStageEnum("stage").default('new'),
+  qualificationChecklist: jsonb("qualification_checklist"),
+  interestSignals: jsonb("interest_signals"),
+  decisionLog: jsonb("decision_log"),
+  createdBy: varchar("created_by", { length: 42 }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  regionIdx: index("steward_land_leads_region_idx").on(table.regionId),
+  stageIdx: index("steward_land_leads_stage_idx").on(table.stage),
+}));
+
+// Steward Groups
+export const stewardGroups = pgTable("steward_groups", {
+  id: serial("id").primaryKey(),
+  regionId: integer("region_id").references(() => stewardRegions.id),
+  name: varchar("name", { length: 100 }).notNull(),
+  purpose: text("purpose"),
+  targetSize: integer("target_size"),
+  intakeWindow: jsonb("intake_window"),
+  cadence: varchar("cadence", { length: 50 }),
+  status: varchar("status", { length: 20 }).default('forming'),
+  playbook: jsonb("playbook"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  regionIdx: index("steward_groups_region_idx").on(table.regionId),
+}));
+
+// Group Members
+export const stewardGroupMembers = pgTable("steward_group_members", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").references(() => stewardGroups.id).notNull(),
+  wallet: varchar("wallet", { length: 42 }).notNull(),
+  role: varchar("role", { length: 50 }).default('member'),
+  joinedAt: timestamp("joined_at").defaultNow(),
+  attendanceLogs: jsonb("attendance_logs"),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  groupIdx: index("steward_group_members_group_idx").on(table.groupId),
+  walletIdx: index("steward_group_members_wallet_idx").on(table.wallet),
+}));
+
+// Steward Tasks
+export const stewardTasks = pgTable("steward_tasks", {
+  id: serial("id").primaryKey(),
+  regionId: integer("region_id").references(() => stewardRegions.id),
+  assignedToWallet: varchar("assigned_to_wallet", { length: 42 }),
+  type: varchar("type", { length: 50 }),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  dueAt: timestamp("due_at"),
+  priority: varchar("priority", { length: 20 }).default('medium'),
+  status: varchar("status", { length: 20 }).default('pending'),
+  blockers: jsonb("blockers"),
+  evidenceLinks: jsonb("evidence_links"),
+  notes: text("notes"),
+  completedAt: timestamp("completed_at"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  regionIdx: index("steward_tasks_region_idx").on(table.regionId),
+  assignedIdx: index("steward_tasks_assigned_idx").on(table.assignedToWallet),
+  statusIdx: index("steward_tasks_status_idx").on(table.status),
+}));
+
+// Steward Messages
+export const stewardMessages = pgTable("steward_messages", {
+  id: serial("id").primaryKey(),
+  regionId: integer("region_id").references(() => stewardRegions.id),
+  channel: varchar("channel", { length: 50 }).notNull(),
+  subject: varchar("subject", { length: 200 }),
+  body: text("body").notNull(),
+  sentBy: varchar("sent_by", { length: 42 }),
+  sentAt: timestamp("sent_at").defaultNow(),
+  audienceSegment: varchar("audience_segment", { length: 50 }),
+  templateUsed: varchar("template_used", { length: 50 }),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  regionIdx: index("steward_messages_region_idx").on(table.regionId),
+  channelIdx: index("steward_messages_channel_idx").on(table.channel),
+}));
+
+// Steward Incidents
+export const stewardIncidents = pgTable("steward_incidents", {
+  id: serial("id").primaryKey(),
+  regionId: integer("region_id").references(() => stewardRegions.id),
+  category: varchar("category", { length: 50 }),
+  severity: incidentSeverityEnum("severity").default('low'),
+  description: text("description").notNull(),
+  relatedDropId: integer("related_drop_id").references(() => stewardDrops.id),
+  createdBy: varchar("created_by", { length: 42 }),
+  status: varchar("status", { length: 20 }).default('open'),
+  resolution: text("resolution"),
+  resolvedAt: timestamp("resolved_at"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  regionIdx: index("steward_incidents_region_idx").on(table.regionId),
+  statusIdx: index("steward_incidents_status_idx").on(table.status),
+}));
+
+// Weekly Reports
+export const stewardWeeklyReports = pgTable("steward_weekly_reports", {
+  id: serial("id").primaryKey(),
+  regionId: integer("region_id").references(() => stewardRegions.id).notNull(),
+  weekStart: timestamp("week_start").notNull(),
+  summary: text("summary"),
+  dropMetrics: jsonb("drop_metrics"),
+  participantMetrics: jsonb("participant_metrics"),
+  landMetrics: jsonb("land_metrics"),
+  issues: jsonb("issues"),
+  nextWeekPlan: text("next_week_plan"),
+  submittedBy: varchar("submitted_by", { length: 42 }),
+  submittedAt: timestamp("submitted_at").defaultNow(),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  regionIdx: index("steward_weekly_reports_region_idx").on(table.regionId),
+  weekIdx: index("steward_weekly_reports_week_idx").on(table.weekStart),
+}));
+
+// Reputation Metrics
+export const stewardReputationMetrics = pgTable("steward_reputation_metrics", {
+  id: serial("id").primaryKey(),
+  wallet: varchar("wallet", { length: 42 }).notNull(),
+  regionId: integer("region_id").references(() => stewardRegions.id),
+  reliabilityScore: integer("reliability_score").default(0),
+  responsivenessScore: integer("responsiveness_score").default(0),
+  landQualityScore: integer("land_quality_score").default(0),
+  reportingScore: integer("reporting_score").default(0),
+  compositeScore: integer("composite_score").default(0),
+  unlocks: jsonb("unlocks"),
+  metadata: jsonb("metadata"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  walletIdx: index("steward_reputation_wallet_idx").on(table.wallet),
+  regionIdx: index("steward_reputation_region_idx").on(table.regionId),
+}));
+
+// Land Interest Signals
+export const stewardLandInterests = pgTable("steward_land_interests", {
+  id: serial("id").primaryKey(),
+  leadId: integer("lead_id").references(() => stewardLandLeads.id).notNull(),
+  wallet: varchar("wallet", { length: 42 }).notNull(),
+  interestLevel: varchar("interest_level", { length: 20 }).default('interested'),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  leadIdx: index("steward_land_interests_lead_idx").on(table.leadId),
+  walletIdx: index("steward_land_interests_wallet_idx").on(table.wallet),
+}));
+
+// Export types for Steward Dashboard
+export type StewardRegion = typeof stewardRegions.$inferSelect;
+export type InsertStewardRegion = typeof stewardRegions.$inferInsert;
+export type StewardAssignment = typeof stewardAssignments.$inferSelect;
+export type InsertStewardAssignment = typeof stewardAssignments.$inferInsert;
+export type StewardDrop = typeof stewardDrops.$inferSelect;
+export type InsertStewardDrop = typeof stewardDrops.$inferInsert;
+export type StewardReservation = typeof stewardReservations.$inferSelect;
+export type InsertStewardReservation = typeof stewardReservations.$inferInsert;
+export type StewardParticipant = typeof stewardParticipants.$inferSelect;
+export type InsertStewardParticipant = typeof stewardParticipants.$inferInsert;
+export type StewardLandLead = typeof stewardLandLeads.$inferSelect;
+export type InsertStewardLandLead = typeof stewardLandLeads.$inferInsert;
+export type StewardGroup = typeof stewardGroups.$inferSelect;
+export type InsertStewardGroup = typeof stewardGroups.$inferInsert;
+export type StewardGroupMember = typeof stewardGroupMembers.$inferSelect;
+export type InsertStewardGroupMember = typeof stewardGroupMembers.$inferInsert;
+export type StewardTask = typeof stewardTasks.$inferSelect;
+export type InsertStewardTask = typeof stewardTasks.$inferInsert;
+export type StewardMessage = typeof stewardMessages.$inferSelect;
+export type InsertStewardMessage = typeof stewardMessages.$inferInsert;
+export type StewardIncident = typeof stewardIncidents.$inferSelect;
+export type InsertStewardIncident = typeof stewardIncidents.$inferInsert;
+export type StewardWeeklyReport = typeof stewardWeeklyReports.$inferSelect;
+export type InsertStewardWeeklyReport = typeof stewardWeeklyReports.$inferInsert;
+export type StewardReputationMetric = typeof stewardReputationMetrics.$inferSelect;
+export type InsertStewardReputationMetric = typeof stewardReputationMetrics.$inferInsert;
+export type StewardLandInterest = typeof stewardLandInterests.$inferSelect;
+export type InsertStewardLandInterest = typeof stewardLandInterests.$inferInsert;

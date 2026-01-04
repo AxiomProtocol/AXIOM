@@ -72,6 +72,21 @@ Key features include:
 -   **Push Notifications**: PWA service worker for push notifications with preference settings.
 -   **Transparency Dashboard**: Real-time protocol metrics including TVL, burned AXM, SEED locked, insurance fund balance, SUSU pools, and DePIN nodes.
 -   **Axiom Steward Corps**: Elite coordination corps for managing regional participation, food distribution, and land readiness. Features include: eligibility verification (AXM balance, holding duration, participation), 5-stage selection process (screening → application → pledge → probation → confirmation), role hierarchy (Coordinator/Lead/Council), and probation metrics tracking. Data in `lib/stewardCorps.ts`, components in `components/stewardCorps/`, pages at `/stewards`, `/stewards/apply`, `/stewards/dashboard`.
+-   **Steward Dashboard (Jan 2026)**: Full-featured operational dashboard for active stewards with 13 components, 10 pages, and collapsible sidebar navigation. Components in `components/stewardsDashboard/`, pages at `/stewards/dashboard/*`. Features include:
+    - **Overview Dashboard**: Real-time metrics cards (next drop, open tasks, participants, land leads), quick actions, region health score, operational alerts
+    - **Produce Drops**: Create/edit drop events, manage reservations, track pickup status (reserved → confirmed → pickedUp/noShow)
+    - **Participant Directory**: Searchable participant list with activity scores, engagement flags, and profile details
+    - **Land Pipeline**: Drag-and-drop kanban for land leads (new → needsData → qualified → underReview → escalated → pursuing → acquired)
+    - **Tasks Board**: Kanban-style task management with priorities and due dates
+    - **Communications**: Message composer with templates (drop announcement, reservation open, pickup instructions, etc.) and channel selection
+    - **Region Management**: View assigned region, pickup points, and fellow stewards
+    - **Group Formation**: Create and manage participant groups for onboarding and cohorts
+    - **Reputation Panel**: View reliability/responsiveness/land quality/reporting scores with unlock progression
+    - **Weekly Reports**: Auto-populated metrics with summary/issues/plan submission
+    - **Settings**: Notification preferences, region profile configuration, admin role assignment
+    - **Analytics**: Custom event tracking via `lib/stewardsAnalytics.ts` with 18 tracked events and sessionStorage deduplication
+    - **API Routes**: `/api/stewards/dashboard/*` (auth, overview), `/api/stewards/drops/*` (reserve), `/api/stewards/land/*` (interest), `/api/stewards/cohorts/*` (join)
+    - **Database**: 29 tables in `shared/schema.ts` for steward operations (regions, drops, reservations, participants, land leads, tasks, messages, reports, reputation metrics)
 
 Wealth Engine V2 Contracts (DeFi Treasury System) implement AIP-001 Master Architectural Plan:
 -   **AxiomScoreSBT**: ERC-5192 Soulbound Token for on-chain credit scoring (300-850 range), integrated with SUSU repayment history.
