@@ -56,24 +56,33 @@ export const navItems: NavItem[] = [
     ]
   },
   {
+    label: "Landowners",
+    children: [
+      { label: "Overview", href: "/landowners" },
+      { label: "How It Works", href: "/landowners#how-it-works" },
+      { label: "FAQ", href: "/landowners/faq" },
+      { label: "Apply", href: "/landowners/apply" }
+    ]
+  },
+  {
     label: "Holders",
     children: [
       { label: "Holder Benefits", href: "/holders" },
-      { label: "Produce Box Program", href: "/produce" },
-      { label: "Stewardship Program", href: "/stewards" },
-      { label: "Partner Network", href: "/partners" },
-      { label: "Tokenomics", href: "/tokenomics" }
+      { label: "Steward Corps", href: "/stewards" },
+      { label: "Steward Dashboard", href: "/stewards/dashboard" },
+      { label: "Activated Land", href: "/stewards/activated-land" },
+      { label: "Produce Program", href: "/produce" }
     ]
   },
   {
     label: "Tools",
     children: [
       { label: "Treasury", href: "/bank" },
-      { label: "SUSU Savings", href: "/susu" },
       { label: "Staking", href: "/staking" },
       { label: "DEX Exchange", href: "/dex" },
       { label: "Governance", href: "/governance" },
-      { label: "Axiom Nodes", href: "/axiom-nodes" }
+      { label: "Axiom Nodes", href: "/axiom-nodes" },
+      { label: "PMA Trust", href: "/pma" }
     ]
   }
 ];
