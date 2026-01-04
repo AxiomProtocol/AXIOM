@@ -4496,3 +4496,175 @@ export type StewardReputationMetric = typeof stewardReputationMetrics.$inferSele
 export type InsertStewardReputationMetric = typeof stewardReputationMetrics.$inferInsert;
 export type StewardLandInterest = typeof stewardLandInterests.$inferSelect;
 export type InsertStewardLandInterest = typeof stewardLandInterests.$inferInsert;
+
+// ============================================
+// STEWARD-ACTIVATED LAND PROGRAM TABLES
+// ============================================
+
+// Enums for Activated Land
+export const ownerOpennessLevelEnum = pgEnum("owner_openness_level", [
+  'curious', 'open', 'ready'
+]);
+
+export const conversionPotentialEnum = pgEnum("conversion_potential", [
+  'lease', 'seller_finance', 'partnership', 'purchase', 'unknown'
+]);
+
+export const activationStageEnum = pgEnum("activation_stage", [
+  'intake', 'site_readiness', 'plan_drafted', 'active_cycle', 'paused', 'completed'
+]);
+
+export const landLeadTypeEnum = pgEnum("land_lead_type", [
+  'traditional', 'activated_land'
+]);
+
+// Landowner Applications
+export const landownerApplications = pgTable("landowner_applications", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  email: varchar("email", { length: 200 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  county: varchar("county", { length: 100 }).notNull(),
+  state: varchar("state", { length: 50 }).notNull(),
+  parcelAddress: text("parcel_address").notNull(),
+  acreage: varchar("acreage", { length: 50 }),
+  currentUse: varchar("current_use", { length: 50 }),
+  desiredUse: text("desired_use"),
+  willingnessForProduce: varchar("willingness_for_produce", { length: 50 }),
+  utilitiesNotes: text("utilities_notes"),
+  accessNotes: text("access_notes"),
+  additionalNotes: text("additional_notes"),
+  photos: jsonb("photos"),
+  status: varchar("status", { length: 20 }).default('pending'),
+  assignedSteward: varchar("assigned_steward", { length: 42 }),
+  regionId: integer("region_id").references(() => stewardRegions.id),
+  convertedToLeadId: integer("converted_to_lead_id"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  statusIdx: index("landowner_applications_status_idx").on(table.status),
+  countyIdx: index("landowner_applications_county_idx").on(table.county),
+}));
+
+// Activated Land Stewardship Plans
+export const activatedLandStewardshipPlans = pgTable("activated_land_stewardship_plans", {
+  id: serial("id").primaryKey(),
+  leadId: integer("lead_id").references(() => stewardLandLeads.id).notNull(),
+  proposedActivities: text("proposed_activities"),
+  seasonalCalendar: jsonb("seasonal_calendar"),
+  participantGuidelines: text("participant_guidelines"),
+  maxParticipants: integer("max_participants"),
+  communicationFrequency: varchar("communication_frequency", { length: 50 }),
+  accessHours: varchar("access_hours", { length: 100 }),
+  toolStorage: text("tool_storage"),
+  emergencyPlan: text("emergency_plan"),
+  stopPauseProcedures: text("stop_pause_procedures"),
+  ownerApprovalDate: timestamp("owner_approval_date"),
+  ownerApprovalSignature: varchar("owner_approval_signature", { length: 200 }),
+  status: varchar("status", { length: 20 }).default('draft'),
+  createdBy: varchar("created_by", { length: 42 }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  leadIdx: index("al_stewardship_plans_lead_idx").on(table.leadId),
+  statusIdx: index("al_stewardship_plans_status_idx").on(table.status),
+}));
+
+// Activated Land Activation Cycles
+export const activatedLandCycles = pgTable("activated_land_cycles", {
+  id: serial("id").primaryKey(),
+  leadId: integer("lead_id").references(() => stewardLandLeads.id).notNull(),
+  planId: integer("plan_id").references(() => activatedLandStewardshipPlans.id),
+  cycleNumber: integer("cycle_number").default(1),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  status: varchar("status", { length: 20 }).default('active'),
+  participantCount: integer("participant_count").default(0),
+  outputSummary: text("output_summary"),
+  ownerFeedback: text("owner_feedback"),
+  ownerSatisfactionRating: integer("owner_satisfaction_rating"),
+  lessonsLearned: text("lessons_learned"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  leadIdx: index("al_cycles_lead_idx").on(table.leadId),
+  statusIdx: index("al_cycles_status_idx").on(table.status),
+}));
+
+// Activated Land Weekly Logs
+export const activatedLandWeeklyLogs = pgTable("activated_land_weekly_logs", {
+  id: serial("id").primaryKey(),
+  cycleId: integer("cycle_id").references(() => activatedLandCycles.id).notNull(),
+  weekStart: timestamp("week_start").notNull(),
+  activitiesCompleted: text("activities_completed"),
+  participantAttendance: jsonb("participant_attendance"),
+  photos: jsonb("photos"),
+  issuesEncountered: text("issues_encountered"),
+  ownerCommunication: text("owner_communication"),
+  nextWeekPlanned: text("next_week_planned"),
+  submittedBy: varchar("submitted_by", { length: 42 }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  cycleIdx: index("al_weekly_logs_cycle_idx").on(table.cycleId),
+  weekIdx: index("al_weekly_logs_week_idx").on(table.weekStart),
+}));
+
+// Owner Agreement Checklist
+export const activatedLandOwnerChecklists = pgTable("activated_land_owner_checklists", {
+  id: serial("id").primaryKey(),
+  leadId: integer("lead_id").references(() => stewardLandLeads.id).notNull(),
+  ownershipConfirmed: boolean("ownership_confirmed").default(false),
+  accessTermsAgreed: boolean("access_terms_agreed").default(false),
+  activitiesApproved: boolean("activities_approved").default(false),
+  communicationFrequencyAgreed: boolean("communication_frequency_agreed").default(false),
+  stopConditionsUnderstood: boolean("stop_conditions_understood").default(false),
+  insuranceAcknowledged: boolean("insurance_acknowledged").default(false),
+  noFinancialPromisesUnderstood: boolean("no_financial_promises_understood").default(false),
+  voluntaryParticipationConfirmed: boolean("voluntary_participation_confirmed").default(false),
+  completedAt: timestamp("completed_at"),
+  completedBy: varchar("completed_by", { length: 42 }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  leadIdx: index("al_owner_checklists_lead_idx").on(table.leadId),
+}));
+
+// Conversion Options (optional future acquisition discussions)
+export const activatedLandConversionOptions = pgTable("activated_land_conversion_options", {
+  id: serial("id").primaryKey(),
+  leadId: integer("lead_id").references(() => stewardLandLeads.id).notNull(),
+  ownerInitiated: boolean("owner_initiated").default(true),
+  conversionType: conversionPotentialEnum("conversion_type"),
+  discussionDate: timestamp("discussion_date"),
+  discussionNotes: text("discussion_notes"),
+  ownerInterestLevel: varchar("owner_interest_level", { length: 20 }),
+  estimatedTimeline: varchar("estimated_timeline", { length: 50 }),
+  referredToTeam: boolean("referred_to_team").default(false),
+  referralDate: timestamp("referral_date"),
+  status: varchar("status", { length: 20 }).default('noted'),
+  createdBy: varchar("created_by", { length: 42 }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  leadIdx: index("al_conversion_options_lead_idx").on(table.leadId),
+}));
+
+// Export types for Activated Land tables
+export type LandownerApplication = typeof landownerApplications.$inferSelect;
+export type InsertLandownerApplication = typeof landownerApplications.$inferInsert;
+export type ActivatedLandStewardshipPlan = typeof activatedLandStewardshipPlans.$inferSelect;
+export type InsertActivatedLandStewardshipPlan = typeof activatedLandStewardshipPlans.$inferInsert;
+export type ActivatedLandCycle = typeof activatedLandCycles.$inferSelect;
+export type InsertActivatedLandCycle = typeof activatedLandCycles.$inferInsert;
+export type ActivatedLandWeeklyLog = typeof activatedLandWeeklyLogs.$inferSelect;
+export type InsertActivatedLandWeeklyLog = typeof activatedLandWeeklyLogs.$inferInsert;
+export type ActivatedLandOwnerChecklist = typeof activatedLandOwnerChecklists.$inferSelect;
+export type InsertActivatedLandOwnerChecklist = typeof activatedLandOwnerChecklists.$inferInsert;
+export type ActivatedLandConversionOption = typeof activatedLandConversionOptions.$inferSelect;
+export type InsertActivatedLandConversionOption = typeof activatedLandConversionOptions.$inferInsert;
