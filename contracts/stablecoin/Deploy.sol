@@ -9,3 +9,5 @@ import "./core/Liquidator.sol";
 import "./core/BackstopVault.sol";
 import "./core/PSM.sol";
 import "./core/MarketOperations.sol";
+import "./core/TBillVault.sol";
+import "./core/ReserveManager.sol";
