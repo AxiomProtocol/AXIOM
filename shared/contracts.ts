@@ -196,6 +196,31 @@ export const AXUSD_STABLECOIN_CONTRACTS = {
   PSM: '0x4584888cB411E9cc88e3800BAB73A430D90d3793'
 } as const;
 
+// AXUSD Ecosystem Integration Contracts (36-40)
+// Deployed: January 5, 2026 | Arbitrum One
+// Features: SUSU adapter, KeyGrow payments, SEED yield, liquidity bootstrapping
+export const AXUSD_INTEGRATION_CONTRACTS = {
+  // Contract 36: SEEDYieldDistributor
+  // Distributes AXUSD yield to SEED lockers weekly
+  SEED_YIELD_DISTRIBUTOR: '0x5867e1a8c77530648edF61975CBB57a8913d159F',
+  
+  // Contract 37: AXUSDRevenueRouter
+  // Routes protocol revenue to SEED holders, treasury, and backstop
+  REVENUE_ROUTER: '0x39A9Ca593d350450d93aF7F24dC1A682df47F30a',
+  
+  // Contract 38: SusuAXUSDAdapter
+  // AXUSD-denominated SUSU circles with PSM auto-conversion
+  SUSU_AXUSD_ADAPTER: '0x4c17360651c2c46F1739E92f512D8ce6318106b4',
+  
+  // Contract 39: KeyGrowPaymentModule
+  // Rent-to-own housing payments in AXUSD with escrow and buy-down credits
+  KEYGROW_PAYMENT: '0x0FA690B590F37c369Ff7cFbF155d2E4A474d955c',
+  
+  // Contract 40: LiquidityBootstrapper
+  // Protocol-owned liquidity seeding for DEX pools
+  LIQUIDITY_BOOTSTRAPPER: '0xd690F8A987542772FDd65a9813c0Ae55Cfb1AD19'
+} as const;
+
 // All contracts in a single object for easy access
 export const ALL_CONTRACTS = {
   ...CORE_CONTRACTS,
@@ -207,7 +232,8 @@ export const ALL_CONTRACTS = {
   ...SUSTAINABILITY_CONTRACTS,
   ...V2_SOVEREIGN_BANKING_CONTRACTS,
   ...COMMUNITY_SAVINGS_CONTRACTS,
-  ...AXUSD_STABLECOIN_CONTRACTS
+  ...AXUSD_STABLECOIN_CONTRACTS,
+  ...AXUSD_INTEGRATION_CONTRACTS
 } as const;
 
 // Deployer Address
