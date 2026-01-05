@@ -61,6 +61,13 @@ Key features include:
     - Referral code generation (AX + 6 alphanumeric) with click/conversion tracking
     - Referral attribution for investments with campaign analytics
     - Database tables: campaign_short_links, referral_attributions, steward_reviews, community_votes)
+-   **SEC Reg CF Compliance System** (Investor protection and regulatory compliance:
+    - Investment limit calculator per SEC rules (non-accredited: $2,500 minimum or 5%/10% based on income/net worth; accredited: uncapped up to $5M offering limit)
+    - KYC verification flow with investor_kyc table (stores only last 4 SSN digits for identity confirmation)
+    - 6 required risk disclosures (risk_of_loss, illiquidity, no_guarantee, cancellation, reg_cf_limits, development_risk)
+    - Full audit trail with IP address and user agent for disclosure acknowledgments
+    - InvestmentCompliance component orchestrates verification flow before investment
+    - Database tables: investor_kyc, investment_acknowledgments)
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
