@@ -19,7 +19,9 @@ const REBUILD_NAV_PAGES = [
   '/community',
   '/impact',
   '/transparency',
-  '/team'
+  '/team',
+  '/land-acquisition',
+  '/axusd'
 ]
 
 export default function App({ Component, pageProps }) {

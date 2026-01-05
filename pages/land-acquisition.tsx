@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
-import { SiteLayout } from "../components/navigation";
 
 interface Stats {
   landOptions: { total: number; active: number; totalValue: string };
@@ -102,7 +101,7 @@ export default function LandAcquisitionPage() {
   };
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>Land Acquisition | Axiom Protocol</title>
         <meta name="description" content="Community-powered land acquisition through Reg CF crowdfunding and SUSU-style pooling. Invest in tokenized land options with as little as $100." />
@@ -860,6 +859,6 @@ export default function LandAcquisitionPage() {
           </div>
         </section>
       </main>
-    </SiteLayout>
+    </>
   );
 }
