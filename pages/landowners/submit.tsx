@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { ListingImportModal } from "../../components/ListingImportModal";
 
 const theme = {
   primary: "#00D4AA",
@@ -28,6 +29,22 @@ export default function LandownerSubmitPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [showImportModal, setShowImportModal] = useState(false);
+
+  const handleImportData = (data: any) => {
+    setFormData(prev => ({
+      ...prev,
+      propertyAddress: data.address || prev.propertyAddress,
+      city: data.city || prev.city,
+      state: data.state || prev.state,
+      zipCode: data.zipCode || prev.zipCode,
+      acreage: data.acreage?.toString() || prev.acreage,
+      askingPrice: data.askingPrice?.toString() || prev.askingPrice,
+      propertyType: data.propertyType || prev.propertyType,
+      zoning: data.zoning || prev.zoning
+    }));
+    setStep(2);
+  };
 
   const [formData, setFormData] = useState({
     ownerName: "",
@@ -206,9 +223,33 @@ export default function LandownerSubmitPage() {
               <h1 style={{ fontSize: "28px", fontWeight: 700, color: theme.dark, marginBottom: "8px" }}>
                 Submit Your Property
               </h1>
-              <p style={{ fontSize: "15px", color: theme.muted }}>
+              <p style={{ fontSize: "15px", color: theme.muted, marginBottom: "16px" }}>
                 Tell us about your land and we'll evaluate it for our community acquisition program.
               </p>
+              
+              <button
+                onClick={() => setShowImportModal(true)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "12px 20px",
+                  background: "linear-gradient(135deg, #7B68EE 0%, #00D4AA 100%)",
+                  color: theme.white,
+                  border: "none",
+                  borderRadius: "10px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  boxShadow: "0 2px 8px rgba(123, 104, 238, 0.3)"
+                }}
+              >
+                <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+                Import from Zillow, Realtor, or Redfin
+              </button>
             </div>
 
             <div style={{ display: "flex", gap: "8px", marginBottom: "32px" }}>
@@ -652,6 +693,12 @@ export default function LandownerSubmitPage() {
           </p>
         </div>
       </main>
+
+      <ListingImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleImportData}
+      />
     </>
   );
 }
