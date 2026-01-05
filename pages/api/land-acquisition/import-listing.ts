@@ -20,6 +20,36 @@ interface PropertyData {
   sourceUrl?: string;
 }
 
+const ALLOWED_DOMAINS = [
+  'zillow.com',
+  'www.zillow.com',
+  'realtor.com',
+  'www.realtor.com',
+  'redfin.com',
+  'www.redfin.com',
+  'loopnet.com',
+  'www.loopnet.com',
+  'landwatch.com',
+  'www.landwatch.com',
+  'lands.com',
+  'www.lands.com',
+  'landandfarm.com',
+  'www.landandfarm.com'
+];
+
+function isAllowedUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      return false;
+    }
+    const hostname = parsed.hostname.toLowerCase();
+    return ALLOWED_DOMAINS.some(domain => hostname === domain || hostname.endsWith('.' + domain));
+  } catch {
+    return false;
+  }
+}
+
 function detectSource(url: string): string {
   const lowerUrl = url.toLowerCase();
   if (lowerUrl.includes('zillow.com')) return 'zillow';
@@ -33,6 +63,10 @@ function detectSource(url: string): string {
 }
 
 async function parsePropertyUrl(url: string): Promise<PropertyData> {
+  if (!isAllowedUrl(url)) {
+    throw new Error('URL must be from an approved property listing site (Zillow, Realtor, Redfin, LoopNet, or LandWatch)');
+  }
+
   const sourceType = detectSource(url);
   
   try {

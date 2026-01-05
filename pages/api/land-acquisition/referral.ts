@@ -70,10 +70,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               invested_amount = ${investedAmount},
               conversion_status = 'converted',
               converted_at = NOW()
-          WHERE campaign_id = ${campaignId}
-            AND referral_code = ${referralCode}
-            AND investor_id IS NULL
-          LIMIT 1
+          WHERE id = (
+            SELECT id FROM referral_attributions
+            WHERE campaign_id = ${campaignId}
+              AND referral_code = ${referralCode}
+              AND investor_id IS NULL
+            ORDER BY clicked_at ASC
+            LIMIT 1
+          )
         `);
 
         return res.status(200).json({
