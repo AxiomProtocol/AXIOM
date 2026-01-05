@@ -102,6 +102,7 @@ export const FOOTER_SECTIONS: FooterSection[] = [
     links: [
       { label: "KeyGrow Program", href: "/keygrow" },
       { label: "For Landowners", href: "/landowners" },
+      { label: "Submit Property", href: "/landowners/submit" },
       { label: "Steward Corps", href: "/stewards" },
       { label: "Activated Land", href: "/stewards/activated-land" },
       { label: "Infrastructure", href: "/infrastructure" },
@@ -115,6 +116,7 @@ export const FOOTER_SECTIONS: FooterSection[] = [
       { label: "SUSU Savings", href: "/susu-start" },
       { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "Land Acquisition", href: "/land-acquisition" },
+      { label: "Land Pipeline", href: "/admin/land-pipeline" },
       { label: "Governance", href: "/governance" },
       { label: "Staking", href: "/staking" }
     ]
