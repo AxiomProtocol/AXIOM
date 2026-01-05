@@ -65,7 +65,6 @@ import SecurityCompliancePage from './pages/SecurityCompliancePage';
 import LaunchpadPage from './pages/LaunchpadPage';
 import ComparisonPage from './pages/ComparisonPage';
 import DePINPage from './pages/DePIN/DePINPage';
-import AXUSDStablecoinPage from './pages/AXUSDStablecoinPage';
 
 // Legacy component for KeyGrow integration
 function KeyGrowPage() {
@@ -452,7 +451,6 @@ function App() {
                               <Route path="/axiom-defi" element={<AxiomDeFiPage />} />
                               <Route path="/axiom-banking" element={<AxiomBankingPage />} />
                               <Route path="/axiom-depin-nodes" element={<DePINPage />} />
-                              <Route path="/axusd" element={<AXUSDStablecoinPage />} />
                               
                               {/* Banking Sub-Pages */}
                               <Route path="/banking/personal" element={<PersonalBankingPage />} />

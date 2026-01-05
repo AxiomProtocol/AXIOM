@@ -70,6 +70,7 @@ export const SITE_NAV: NavItem[] = [
     children: [
       { label: "Treasury", href: "/bank" },
       { label: "SUSU Savings", href: "/susu-start" },
+      { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "Governance", href: "/governance" },
       { label: "Tokenomics", href: "/tokenomics" },
       { label: "Staking", href: "/staking" },
