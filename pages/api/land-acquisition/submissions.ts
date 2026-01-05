@@ -1,6 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../server/db';
 import { sql } from 'drizzle-orm';
+import { 
+  sendLandSubmissionNotification, 
+  sendLandStatusUpdateEmail,
+  sendAdminNewSubmissionAlert 
+} from '../../../lib/server/resendEmail';
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@axiom.city';
 
 function calculateLeadScore(data: any): number {
   let score = 0;
@@ -180,10 +187,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         RETURNING *
       `);
 
+      const submission = result.rows[0] as any;
+
+      sendLandSubmissionNotification({
+        ownerEmail,
+        ownerName,
+        propertyAddress,
+        acreage: parsedAcreage,
+        leadScore
+      }).catch(err => console.error('Failed to send owner notification:', err));
+
+      sendAdminNewSubmissionAlert({
+        adminEmail: ADMIN_EMAIL,
+        ownerName,
+        propertyAddress,
+        acreage: parsedAcreage,
+        leadScore,
+        submissionId: submission.id
+      }).catch(err => console.error('Failed to send admin alert:', err));
+
       return res.status(201).json({
         success: true,
         data: {
-          submission: result.rows[0],
+          submission,
           leadScore,
           message: 'Property submission received! Our team will review it within 48 hours.'
         }
@@ -227,10 +253,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(404).json({ success: false, error: 'Submission not found' });
       }
 
+      const updatedSubmission = result.rows[0] as any;
+
+      if (status && ['reviewing', 'qualified', 'approved', 'rejected'].includes(status)) {
+        sendLandStatusUpdateEmail({
+          ownerEmail: updatedSubmission.owner_email,
+          ownerName: updatedSubmission.owner_name,
+          propertyAddress: updatedSubmission.property_address,
+          newStatus: status
+        }).catch(err => console.error('Failed to send status update email:', err));
+      }
+
       return res.status(200).json({
         success: true,
         data: {
-          submission: result.rows[0],
+          submission: updatedSubmission,
           message: `Submission updated to status: ${status || 'unchanged'}`
         }
       });

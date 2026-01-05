@@ -163,3 +163,237 @@ function getWelcomeEmailHtml(): string {
 </html>
   `.trim();
 }
+
+export async function sendLandSubmissionNotification(params: {
+  ownerEmail: string;
+  ownerName: string;
+  propertyAddress: string;
+  acreage: number;
+  leadScore: number;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    
+    const { data, error } = await client.emails.send({
+      from: fromEmail || 'Axiom Land Team <land@axiom.city>',
+      to: [params.ownerEmail],
+      subject: 'Property Submission Received - Axiom Land Acquisition',
+      html: getLandSubmissionEmailHtml(params)
+    });
+
+    if (error) {
+      console.error('Resend error:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('Land submission email sent:', data?.id);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Failed to send land submission email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function sendLandStatusUpdateEmail(params: {
+  ownerEmail: string;
+  ownerName: string;
+  propertyAddress: string;
+  newStatus: string;
+  message?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    
+    const statusMessages: Record<string, { subject: string; heading: string; body: string }> = {
+      reviewing: {
+        subject: 'Your Property is Under Review',
+        heading: 'We\'re Reviewing Your Property',
+        body: 'Our team is currently evaluating your property submission. We\'ll be in touch soon with next steps.'
+      },
+      qualified: {
+        subject: 'Great News! Your Property Qualifies',
+        heading: 'Your Property Has Qualified!',
+        body: 'Congratulations! Your property meets our acquisition criteria. A steward will contact you shortly to discuss the option agreement terms.'
+      },
+      approved: {
+        subject: 'Property Approved for Acquisition',
+        heading: 'Property Approved!',
+        body: 'Your property has been approved for our community acquisition program. Our team will reach out to finalize the agreement.'
+      },
+      rejected: {
+        subject: 'Property Submission Update',
+        heading: 'Thank You for Your Submission',
+        body: 'After careful review, your property doesn\'t meet our current acquisition criteria. We appreciate your interest and encourage you to stay connected with Axiom.'
+      }
+    };
+    
+    const statusInfo = statusMessages[params.newStatus] || {
+      subject: 'Property Status Update',
+      heading: 'Status Update',
+      body: params.message || 'Your property submission status has been updated.'
+    };
+    
+    const { data, error } = await client.emails.send({
+      from: fromEmail || 'Axiom Land Team <land@axiom.city>',
+      to: [params.ownerEmail],
+      subject: statusInfo.subject,
+      html: getLandStatusEmailHtml({ ...params, ...statusInfo })
+    });
+
+    if (error) {
+      console.error('Resend error:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('Land status email sent:', data?.id);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Failed to send land status email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function sendAdminNewSubmissionAlert(params: {
+  adminEmail: string;
+  ownerName: string;
+  propertyAddress: string;
+  acreage: number;
+  leadScore: number;
+  submissionId: number;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    
+    const scoreColor = params.leadScore >= 70 ? '#10b981' : params.leadScore >= 50 ? '#f59e0b' : '#ef4444';
+    
+    const { data, error } = await client.emails.send({
+      from: fromEmail || 'Axiom System <system@axiom.city>',
+      to: [params.adminEmail],
+      subject: `New Land Submission - Score: ${params.leadScore}/100`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: #1a1a2e; padding: 20px; border-radius: 10px;">
+            <h2 style="color: #00D4AA; margin: 0 0 20px;">New Property Submission</h2>
+            <div style="background: #2d2d44; padding: 20px; border-radius: 8px;">
+              <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                <div style="width: 50px; height: 50px; border-radius: 50%; background: ${scoreColor}; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px;">${params.leadScore}</div>
+                <div style="margin-left: 16px;">
+                  <div style="color: white; font-weight: bold;">${params.ownerName}</div>
+                  <div style="color: #94a3b8; font-size: 14px;">${params.propertyAddress}</div>
+                </div>
+              </div>
+              <div style="color: #e2e8f0; font-size: 14px;">
+                <p><strong>Acreage:</strong> ${params.acreage} acres</p>
+                <p><strong>Lead Score:</strong> ${params.leadScore}/100</p>
+              </div>
+              <a href="https://axiom.city/admin/land-deals" style="display: inline-block; background: #00D4AA; color: #1a1a2e; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 16px;">
+                Review Submission
+              </a>
+            </div>
+          </div>
+        </div>
+      `
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+function getLandSubmissionEmailHtml(params: {
+  ownerName: string;
+  propertyAddress: string;
+  acreage: number;
+  leadScore: number;
+}): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Property Submission Received</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9fafb;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #00D4AA 0%, #7B68EE 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+      <h1 style="color: white; margin: 0; font-size: 28px;">Property Submission Received</h1>
+    </div>
+    <div style="background: white; padding: 40px 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+      <p style="color: #1f2937; font-size: 16px; line-height: 1.6;">
+        Hi ${params.ownerName},
+      </p>
+      <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+        Thank you for submitting your property for consideration in Axiom's community land acquisition program!
+      </p>
+      <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin: 24px 0;">
+        <h3 style="color: #1f2937; margin: 0 0 12px;">Submission Details</h3>
+        <p style="color: #4b5563; margin: 8px 0;"><strong>Property:</strong> ${params.propertyAddress}</p>
+        <p style="color: #4b5563; margin: 8px 0;"><strong>Acreage:</strong> ${params.acreage} acres</p>
+      </div>
+      <h3 style="color: #1f2937; margin: 24px 0 12px;">What Happens Next?</h3>
+      <ol style="color: #4b5563; font-size: 15px; line-height: 1.8; padding-left: 20px;">
+        <li>Our team will review your property details within 48 hours</li>
+        <li>If qualified, a Steward will be assigned to evaluate the land</li>
+        <li>We'll contact you to discuss option agreement terms</li>
+        <li>Community voting determines final acquisition approval</li>
+      </ol>
+      <p style="color: #4b5563; font-size: 14px; margin-top: 24px;">
+        Questions? Reply to this email or visit <a href="https://axiom.city/land-acquisition" style="color: #00D4AA;">our land program page</a>.
+      </p>
+      <p style="color: #1f2937; margin-top: 24px;">
+        Best regards,<br>
+        <strong>The Axiom Land Team</strong>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+
+function getLandStatusEmailHtml(params: {
+  ownerName: string;
+  propertyAddress: string;
+  heading: string;
+  body: string;
+}): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Property Status Update</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9fafb;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #00D4AA 0%, #7B68EE 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+      <h1 style="color: white; margin: 0; font-size: 28px;">${params.heading}</h1>
+    </div>
+    <div style="background: white; padding: 40px 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+      <p style="color: #1f2937; font-size: 16px; line-height: 1.6;">
+        Hi ${params.ownerName},
+      </p>
+      <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin: 24px 0;">
+        <p style="color: #4b5563; margin: 8px 0;"><strong>Property:</strong> ${params.propertyAddress}</p>
+      </div>
+      <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+        ${params.body}
+      </p>
+      <p style="color: #4b5563; font-size: 14px; margin-top: 24px;">
+        Questions? Reply to this email or visit <a href="https://axiom.city/land-acquisition" style="color: #00D4AA;">our land program page</a>.
+      </p>
+      <p style="color: #1f2937; margin-top: 24px;">
+        Best regards,<br>
+        <strong>The Axiom Land Team</strong>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
