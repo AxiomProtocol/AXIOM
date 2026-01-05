@@ -1,564 +1,831 @@
-import { useState } from 'react';
-import Layout from '../components/Layout';
-import Link from 'next/link';
-import Logo3D from '../components/Logo3D';
+import React, { useState } from "react";
+import Head from "next/head";
+import Link from "next/link";
 
-const VERSION = "2.0";
-const LAST_UPDATED = "December 2025";
+const theme = {
+  primary: '#00D4AA',
+  secondary: '#FFD700',
+  accent: '#7B68EE',
+  dark: '#121212',
+  muted: 'rgba(18, 18, 18, 0.7)',
+  border: 'rgba(0, 0, 0, 0.08)',
+};
 
 interface Section {
   id: string;
   title: string;
+  content: React.ReactNode;
 }
 
-const TABLE_OF_CONTENTS: Section[] = [
-  { id: 'executive-summary', title: '1. Executive Summary' },
-  { id: 'the-problem', title: '2. The Problem' },
-  { id: 'philosophy', title: '3. Axiom\'s Philosophy' },
-  { id: 'the-journey', title: '4. The Axiom Journey' },
-  { id: 'susu-overview', title: '5. Axiom SUSU Overview' },
-  { id: 'reputation', title: '6. Reputation and Trust' },
-  { id: 'advanced-modules', title: '7. Advanced Modules' },
-  { id: 'long-term-vision', title: '8. Long-Term Vision' },
-  { id: 'what-axiom-is-not', title: '9. What Axiom Is Not' },
-  { id: 'conclusion', title: '10. Conclusion' },
-];
-
-export default function WhitePaper() {
+export default function WhitepaperPage() {
   const [activeSection, setActiveSection] = useState('executive-summary');
 
-  const scrollToSection = (id: string) => {
-    setActiveSection(id);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const sections: Section[] = [
+    {
+      id: 'executive-summary',
+      title: '1. Executive Summary',
+      content: (
+        <>
+          <p>
+            Axiom Protocol introduces a land-first economic model that transforms how communities acquire, 
+            develop, and own real estate. Instead of treating land as one feature among many, we place 
+            land acquisition at the center of everything we build.
+          </p>
+          <p>
+            Our thesis is simple: <strong>Communities that control land control their future.</strong>
+          </p>
+          <p>
+            The KeyGrow Program enables everyday people to participate in land ownership through three 
+            integrated pathways: SEC-compliant crowdfunding (Reg CF), SUSU-style community pooling, 
+            and tokenized land options. Each pathway removes traditional barriers to land investment 
+            while maintaining full regulatory compliance.
+          </p>
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(0, 212, 170, 0.1), rgba(123, 104, 238, 0.1))',
+            borderRadius: 16,
+            padding: 24,
+            margin: '24px 0'
+          }}>
+            <h4 style={{ margin: '0 0 16px', color: theme.primary }}>Core Principles</h4>
+            <ul style={{ margin: 0, paddingLeft: 20 }}>
+              <li><strong>Land First:</strong> Every protocol feature serves the mission of community land acquisition</li>
+              <li><strong>Zero Barrier Entry:</strong> Invest with as little as $100 through compliant pathways</li>
+              <li><strong>Community Stewardship:</strong> Local stewards evaluate, activate, and manage land projects</li>
+              <li><strong>On-Chain Transparency:</strong> All ownership, votes, and transactions are verifiable</li>
+              <li><strong>Regulatory Compliance:</strong> SEC Reg CF, proper disclosures, investor protections</li>
+            </ul>
+          </div>
+        </>
+      )
+    },
+    {
+      id: 'problem',
+      title: '2. The Problem',
+      content: (
+        <>
+          <h3>Land Ownership is Broken</h3>
+          <p>
+            For generations, land ownership has been the foundation of wealth creation. Yet today, 
+            the path to land ownership is blocked for most Americans:
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, margin: '24px 0' }}>
+            {[
+              { title: 'High Capital Requirements', desc: 'Down payments of 20-30% plus closing costs exclude most first-time buyers' },
+              { title: 'Fragmented Information', desc: 'Land deals happen in private networks inaccessible to everyday people' },
+              { title: 'Complex Due Diligence', desc: 'Zoning, surveys, environmental studies require expertise most lack' },
+              { title: 'Illiquid Investments', desc: 'Once purchased, land is difficult to sell or fractionalize' },
+              { title: 'No Community Pooling', desc: 'No legal structures for groups to pool capital for land acquisition' },
+              { title: 'Regulatory Barriers', desc: 'Securities laws make fractional real estate investment complex' }
+            ].map((item, i) => (
+              <div key={i} style={{
+                background: '#fff',
+                border: `1px solid ${theme.border}`,
+                borderRadius: 12,
+                padding: 20
+              }}>
+                <h4 style={{ margin: '0 0 8px', fontSize: 16, color: theme.dark }}>{item.title}</h4>
+                <p style={{ margin: 0, fontSize: 14, color: theme.muted }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+          <h3>The Result</h3>
+          <p>
+            Wealth inequality grows as land concentrates in fewer hands. Communities lose control of 
+            their neighborhoods. Generational wealth-building through land ownership becomes a privilege 
+            rather than an opportunity.
+          </p>
+        </>
+      )
+    },
+    {
+      id: 'solution',
+      title: '3. The Solution: KeyGrow Program',
+      content: (
+        <>
+          <p>
+            The KeyGrow Program is Axiom's land-first solution. It creates a complete pipeline from 
+            land sourcing to community ownership, with each stage designed for accessibility and compliance.
+          </p>
+          
+          <h3>The Land Acquisition Flywheel</h3>
+          <div style={{
+            background: '#f8fafc',
+            borderRadius: 16,
+            padding: 24,
+            margin: '24px 0'
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {[
+                { step: 1, title: 'Property Sourcing', desc: 'Landowners submit properties or stewards import listings from Zillow, Realtor, Redfin, LoopNet, LandWatch' },
+                { step: 2, title: 'Admin Review', desc: 'Protocol admins verify property data, assess opportunity quality, and score leads' },
+                { step: 3, title: 'Steward Assignment', desc: 'Local stewards are assigned to conduct on-ground due diligence' },
+                { step: 4, title: 'Steward Evaluation', desc: 'Stewards submit detailed reports: site visits, risk assessments, development potential' },
+                { step: 5, title: 'Community Vote', desc: 'Token holders vote on whether to proceed with acquisition' },
+                { step: 6, title: 'Final Approval', desc: 'Approved properties become tokenized land options available for investment' }
+              ].map(item => (
+                <div key={item.step} style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                  <div style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: theme.primary,
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    flexShrink: 0
+                  }}>{item.step}</div>
+                  <div>
+                    <h4 style={{ margin: '0 0 4px', fontSize: 16 }}>{item.title}</h4>
+                    <p style={{ margin: 0, fontSize: 14, color: theme.muted }}>{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <h3>Three Paths to Participation</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, margin: '24px 0' }}>
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(0, 212, 170, 0.1), rgba(0, 212, 170, 0.05))',
+              borderRadius: 16,
+              padding: 24,
+              border: `2px solid ${theme.primary}`
+            }}>
+              <h4 style={{ margin: '0 0 12px', color: theme.primary }}>Reg CF Crowdfunding</h4>
+              <p style={{ margin: '0 0 12px', fontSize: 14, color: theme.muted }}>
+                SEC-compliant crowdfunding campaigns for individual land projects. Invest $100-$124,000 
+                based on your income and net worth.
+              </p>
+              <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, color: theme.dark }}>
+                <li>Full SEC compliance</li>
+                <li>KYC verification</li>
+                <li>Risk disclosures</li>
+                <li>48-hour cancellation right</li>
+              </ul>
+            </div>
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05))',
+              borderRadius: 16,
+              padding: 24,
+              border: `2px solid ${theme.secondary}`
+            }}>
+              <h4 style={{ margin: '0 0 12px', color: '#B8860B' }}>SUSU Pooling</h4>
+              <p style={{ margin: '0 0 12px', fontSize: 14, color: theme.muted }}>
+                Community savings circles inspired by traditional rotating savings groups. Pool monthly 
+                contributions toward specific land acquisitions.
+              </p>
+              <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, color: theme.dark }}>
+                <li>Monthly contributions</li>
+                <li>Community governance</li>
+                <li>Insurance fund protection</li>
+                <li>Shared ownership</li>
+              </ul>
+            </div>
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(123, 104, 238, 0.1), rgba(123, 104, 238, 0.05))',
+              borderRadius: 16,
+              padding: 24,
+              border: `2px solid ${theme.accent}`
+            }}>
+              <h4 style={{ margin: '0 0 12px', color: theme.accent }}>Land Option Tokens</h4>
+              <p style={{ margin: '0 0 12px', fontSize: 14, color: theme.muted }}>
+                ERC-1155 tokens representing fractional ownership rights in land acquisition options. 
+                Trade, hold, or use as collateral.
+              </p>
+              <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, color: theme.dark }}>
+                <li>Fractional ownership</li>
+                <li>On-chain verification</li>
+                <li>Transferable rights</li>
+                <li>DeFi composability</li>
+              </ul>
+            </div>
+          </div>
+        </>
+      )
+    },
+    {
+      id: 'steward-corps',
+      title: '4. Steward Corps',
+      content: (
+        <>
+          <p>
+            The Steward Corps is Axiom's distributed network of local leaders who bridge digital 
+            protocol operations with on-ground land activation. Stewards are the human layer that 
+            makes community land acquisition possible.
+          </p>
+
+          <h3>Steward Responsibilities</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16, margin: '24px 0' }}>
+            {[
+              { icon: '🔍', title: 'Due Diligence', desc: 'Site visits, neighbor interviews, infrastructure assessment' },
+              { icon: '📋', title: 'Evaluation Reports', desc: 'Detailed risk scores, development potential, market analysis' },
+              { icon: '🤝', title: 'Landowner Relations', desc: 'Negotiate terms, manage communications, build trust' },
+              { icon: '🌱', title: 'Land Activation', desc: 'Oversee initial development, community engagement, progress updates' },
+              { icon: '📊', title: 'Progress Reporting', desc: 'Weekly updates, milestone tracking, issue escalation' },
+              { icon: '🗳️', title: 'Governance Participation', desc: 'Vote on proposals, represent regional interests' }
+            ].map((item, i) => (
+              <div key={i} style={{
+                display: 'flex',
+                gap: 12,
+                padding: 16,
+                background: '#f8fafc',
+                borderRadius: 12
+              }}>
+                <span style={{ fontSize: 24 }}>{item.icon}</span>
+                <div>
+                  <h4 style={{ margin: '0 0 4px', fontSize: 15 }}>{item.title}</h4>
+                  <p style={{ margin: 0, fontSize: 13, color: theme.muted }}>{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <h3>5-Stage Selection Process</h3>
+          <p>
+            Stewards undergo a rigorous selection process to ensure quality and commitment:
+          </p>
+          <ol style={{ paddingLeft: 20 }}>
+            <li><strong>Application:</strong> Submit background, experience, and regional expertise</li>
+            <li><strong>Interview:</strong> Video call assessment of communication and judgment</li>
+            <li><strong>Training:</strong> Complete Axiom stewardship curriculum</li>
+            <li><strong>Probation:</strong> 90-day trial period with mentor oversight</li>
+            <li><strong>Activation:</strong> Full steward status with regional assignment</li>
+          </ol>
+
+          <h3>Steward Compensation</h3>
+          <p>
+            Stewards earn through multiple channels: per-evaluation fees, successful acquisition bonuses, 
+            ongoing management fees for activated land, and AXM token incentives for exceptional performance.
+          </p>
+        </>
+      )
+    },
+    {
+      id: 'tokenization',
+      title: '5. Tokenization & Settlement',
+      content: (
+        <>
+          <h3>LandOptionRegistry (ERC-1155)</h3>
+          <p>
+            The LandOptionRegistry smart contract tokenizes approved land acquisition opportunities 
+            as ERC-1155 tokens. Each token represents a fractional ownership right in a specific 
+            land option.
+          </p>
+          <div style={{
+            background: '#1a1a2e',
+            borderRadius: 12,
+            padding: 20,
+            margin: '24px 0',
+            fontFamily: 'monospace',
+            fontSize: 13,
+            color: '#e2e8f0',
+            overflow: 'auto'
+          }}>
+            <pre style={{ margin: 0 }}>{`contract LandOptionRegistry is ERC1155, Ownable {
+    struct LandOption {
+        string propertyId;
+        string location;
+        uint256 totalShares;
+        uint256 pricePerShare;
+        uint256 optionExpiry;
+        bool active;
     }
-  };
+    
+    mapping(uint256 => LandOption) public landOptions;
+    
+    function createLandOption(...) external onlyOwner;
+    function purchaseShares(uint256 tokenId, uint256 amount) external;
+    function exerciseOption(uint256 tokenId) external;
+}`}</pre>
+          </div>
+
+          <h3>AXUSD Settlement Layer</h3>
+          <p>
+            All land transactions settle in AXUSD, Axiom's hybrid stablecoin. AXUSD provides:
+          </p>
+          <ul>
+            <li><strong>Price Stability:</strong> Pegged to USD through CDP + PSM mechanism</li>
+            <li><strong>On-Chain Settlement:</strong> Instant, verifiable transactions</li>
+            <li><strong>DeFi Integration:</strong> Composable with other protocol features</li>
+            <li><strong>Yield Generation:</strong> T-Bill backing provides organic yield</li>
+          </ul>
+
+          <h3>Token Flow</h3>
+          <div style={{
+            background: '#f8fafc',
+            borderRadius: 16,
+            padding: 24,
+            margin: '24px 0',
+            textAlign: 'center'
+          }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
+              <span style={{ padding: '8px 16px', background: theme.primary, color: '#fff', borderRadius: 8 }}>Investor AXUSD</span>
+              <span style={{ color: theme.muted }}>→</span>
+              <span style={{ padding: '8px 16px', background: theme.secondary, color: '#000', borderRadius: 8 }}>Land Option Purchase</span>
+              <span style={{ color: theme.muted }}>→</span>
+              <span style={{ padding: '8px 16px', background: theme.accent, color: '#fff', borderRadius: 8 }}>ERC-1155 Token</span>
+              <span style={{ color: theme.muted }}>→</span>
+              <span style={{ padding: '8px 16px', background: theme.dark, color: '#fff', borderRadius: 8 }}>Land Ownership</span>
+            </div>
+          </div>
+        </>
+      )
+    },
+    {
+      id: 'compliance',
+      title: '6. SEC Reg CF Compliance',
+      content: (
+        <>
+          <p>
+            Axiom operates under SEC Regulation Crowdfunding (Reg CF), enabling compliant securities 
+            offerings for land acquisition. This provides investor protection while democratizing 
+            access to real estate investment.
+          </p>
+
+          <h3>Investment Limits</h3>
+          <div style={{
+            background: '#f8fafc',
+            borderRadius: 16,
+            padding: 24,
+            margin: '24px 0'
+          }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: 'left', padding: 12, borderBottom: `2px solid ${theme.border}` }}>Investor Type</th>
+                  <th style={{ textAlign: 'left', padding: 12, borderBottom: `2px solid ${theme.border}` }}>Annual Limit</th>
+                  <th style={{ textAlign: 'left', padding: 12, borderBottom: `2px solid ${theme.border}` }}>Calculation</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={{ padding: 12, borderBottom: `1px solid ${theme.border}` }}>Non-Accredited (income & net worth &lt; $124K)</td>
+                  <td style={{ padding: 12, borderBottom: `1px solid ${theme.border}` }}>Up to $6,200</td>
+                  <td style={{ padding: 12, borderBottom: `1px solid ${theme.border}` }}>Greater of $2,500 or 5% of greater of income/net worth</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: 12, borderBottom: `1px solid ${theme.border}` }}>Non-Accredited (income or net worth ≥ $124K)</td>
+                  <td style={{ padding: 12, borderBottom: `1px solid ${theme.border}` }}>Up to $124,000</td>
+                  <td style={{ padding: 12, borderBottom: `1px solid ${theme.border}` }}>10% of lesser of income or net worth</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: 12 }}>Accredited Investor</td>
+                  <td style={{ padding: 12 }}>No individual limit</td>
+                  <td style={{ padding: 12 }}>Subject only to offering's $5M cap</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Required Disclosures</h3>
+          <p>
+            Before investing, all participants must acknowledge six mandatory risk disclosures:
+          </p>
+          <ol>
+            <li><strong>Risk of Loss:</strong> Investment may result in complete loss of principal</li>
+            <li><strong>Illiquidity:</strong> Securities have no public market and may be difficult to sell</li>
+            <li><strong>No Guarantee:</strong> Projected returns are estimates only, not promises</li>
+            <li><strong>Cancellation Right:</strong> 48-hour cancellation window before offering closes</li>
+            <li><strong>Reg CF Limits:</strong> Annual limits apply across all Reg CF investments</li>
+            <li><strong>Development Risk:</strong> Land projects face zoning, permitting, and market risks</li>
+          </ol>
+
+          <h3>KYC Verification</h3>
+          <p>
+            All investors complete identity verification including:
+          </p>
+          <ul>
+            <li>Full legal name and date of birth</li>
+            <li>Annual income and net worth for limit calculation</li>
+            <li>Last 4 digits of SSN for identity confirmation</li>
+            <li>Employment status and investment experience</li>
+          </ul>
+          <p>
+            All acknowledgments are logged with IP address and timestamp for audit purposes.
+          </p>
+        </>
+      )
+    },
+    {
+      id: 'governance',
+      title: '7. Governance Model',
+      content: (
+        <>
+          <p>
+            Axiom governance ensures community control over land acquisition decisions while 
+            maintaining operational efficiency. The model combines token-weighted voting with 
+            steward expertise.
+          </p>
+
+          <h3>Governance Layers</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, margin: '24px 0' }}>
+            <div style={{
+              background: '#fff',
+              border: `1px solid ${theme.border}`,
+              borderRadius: 12,
+              padding: 20
+            }}>
+              <h4 style={{ margin: '0 0 12px', color: theme.primary }}>Community Voting</h4>
+              <p style={{ margin: 0, fontSize: 14, color: theme.muted }}>
+                AXM token holders vote on land acquisition proposals. Voting power is proportional 
+                to token holdings, with SEED stakers receiving additional weight.
+              </p>
+            </div>
+            <div style={{
+              background: '#fff',
+              border: `1px solid ${theme.border}`,
+              borderRadius: 12,
+              padding: 20
+            }}>
+              <h4 style={{ margin: '0 0 12px', color: theme.secondary }}>Steward Council</h4>
+              <p style={{ margin: 0, fontSize: 14, color: theme.muted }}>
+                Senior stewards form a council that reviews proposals, provides expert recommendations, 
+                and can veto clearly problematic acquisitions.
+              </p>
+            </div>
+            <div style={{
+              background: '#fff',
+              border: `1px solid ${theme.border}`,
+              borderRadius: 12,
+              padding: 20
+            }}>
+              <h4 style={{ margin: '0 0 12px', color: theme.accent }}>Protocol Multisig</h4>
+              <p style={{ margin: 0, fontSize: 14, color: theme.muted }}>
+                A 4-of-7 multisig executes approved proposals, manages treasury, and handles 
+                emergency situations requiring rapid response.
+              </p>
+            </div>
+          </div>
+
+          <h3>Proposal Process</h3>
+          <ol>
+            <li>Steward submits land evaluation report with recommendation</li>
+            <li>7-day community discussion period</li>
+            <li>5-day voting period (simple majority required)</li>
+            <li>48-hour timelock before execution</li>
+            <li>Multisig executes approved acquisition</li>
+          </ol>
+        </>
+      )
+    },
+    {
+      id: 'tokenomics',
+      title: '8. Tokenomics',
+      content: (
+        <>
+          <h3>AXM Token</h3>
+          <p>
+            AXM is the governance and utility token of Axiom Protocol. It aligns incentives across 
+            all participants in the land acquisition ecosystem.
+          </p>
+
+          <div style={{
+            background: '#f8fafc',
+            borderRadius: 16,
+            padding: 24,
+            margin: '24px 0'
+          }}>
+            <h4 style={{ margin: '0 0 16px' }}>Token Utility</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+              {[
+                { title: 'Governance', desc: 'Vote on land acquisitions and protocol upgrades' },
+                { title: 'Staking (SEED)', desc: 'Lock AXM for enhanced voting power and yield' },
+                { title: 'Fee Discounts', desc: 'Reduced platform fees for AXM holders' },
+                { title: 'Steward Rewards', desc: 'Stewards earn AXM for successful evaluations' }
+              ].map((item, i) => (
+                <div key={i} style={{ padding: 16, background: '#fff', borderRadius: 8 }}>
+                  <h5 style={{ margin: '0 0 4px', fontSize: 14 }}>{item.title}</h5>
+                  <p style={{ margin: 0, fontSize: 13, color: theme.muted }}>{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <h3>AXUSD Stablecoin</h3>
+          <p>
+            AXUSD is the settlement currency for all land transactions. Its hybrid design combines:
+          </p>
+          <ul>
+            <li><strong>Collateralized Debt Positions (CDP):</strong> Mint AXUSD by depositing collateral</li>
+            <li><strong>Peg Stability Module (PSM):</strong> 1:1 swaps with approved stablecoins</li>
+            <li><strong>T-Bill Vault:</strong> Protocol reserves backed by US Treasury Bills</li>
+          </ul>
+
+          <h3>Value Accrual</h3>
+          <p>
+            Protocol fees from land transactions flow to:
+          </p>
+          <ul>
+            <li>40% - SEED stakers (proportional to locked AXM)</li>
+            <li>30% - Treasury for operations and development</li>
+            <li>20% - Steward rewards pool</li>
+            <li>10% - AXM buyback and burn</li>
+          </ul>
+        </>
+      )
+    },
+    {
+      id: 'roadmap',
+      title: '9. Roadmap',
+      content: (
+        <>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24, margin: '24px 0' }}>
+            {[
+              {
+                phase: 'Phase 1: Foundation',
+                status: 'Complete',
+                items: [
+                  'Core smart contracts deployed on Arbitrum One',
+                  'Property submission and import system',
+                  '6-stage approval workflow',
+                  'SEC Reg CF compliance framework',
+                  'Steward application and onboarding'
+                ]
+              },
+              {
+                phase: 'Phase 2: Growth',
+                status: 'In Progress',
+                items: [
+                  'First 10 land acquisitions',
+                  'SUSU pooling launch',
+                  'Social campaign and referral system',
+                  'Regional steward expansion',
+                  'Mobile app beta'
+                ]
+              },
+              {
+                phase: 'Phase 3: Scale',
+                status: 'Planned',
+                items: [
+                  '100+ land options tokenized',
+                  'Cross-chain deployment (Universe L3)',
+                  'Institutional investor partnerships',
+                  'Secondary market for land tokens',
+                  'International expansion'
+                ]
+              },
+              {
+                phase: 'Phase 4: Ecosystem',
+                status: 'Vision',
+                items: [
+                  'First Axiom community development breaks ground',
+                  'DePIN infrastructure on acquired land',
+                  'Inter-community economic network',
+                  'Full protocol decentralization',
+                  'Model replication by other communities'
+                ]
+              }
+            ].map((phase, i) => (
+              <div key={i} style={{
+                background: '#fff',
+                border: `1px solid ${theme.border}`,
+                borderRadius: 16,
+                padding: 24,
+                borderLeft: `4px solid ${
+                  phase.status === 'Complete' ? theme.primary :
+                  phase.status === 'In Progress' ? theme.secondary :
+                  phase.status === 'Planned' ? theme.accent : theme.muted
+                }`
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <h4 style={{ margin: 0 }}>{phase.phase}</h4>
+                  <span style={{
+                    padding: '4px 12px',
+                    borderRadius: 20,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    background: phase.status === 'Complete' ? 'rgba(0, 212, 170, 0.1)' :
+                               phase.status === 'In Progress' ? 'rgba(255, 215, 0, 0.2)' :
+                               'rgba(0, 0, 0, 0.05)',
+                    color: phase.status === 'Complete' ? theme.primary :
+                           phase.status === 'In Progress' ? '#B8860B' : theme.muted
+                  }}>{phase.status}</span>
+                </div>
+                <ul style={{ margin: 0, paddingLeft: 20 }}>
+                  {phase.items.map((item, j) => (
+                    <li key={j} style={{ marginBottom: 4, fontSize: 14, color: theme.muted }}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </>
+      )
+    },
+    {
+      id: 'get-started',
+      title: '10. Get Started',
+      content: (
+        <>
+          <p>
+            Join the land-first movement today. Whether you're a landowner, investor, or aspiring 
+            steward, there's a path for you.
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, margin: '24px 0' }}>
+            <Link href="/landowners/submit" style={{ textDecoration: 'none' }}>
+              <div style={{
+                background: 'linear-gradient(135deg, #00D4AA, #00B894)',
+                borderRadius: 16,
+                padding: 24,
+                color: '#fff',
+                cursor: 'pointer',
+                transition: 'transform 0.2s'
+              }}>
+                <h4 style={{ margin: '0 0 8px' }}>Submit Property</h4>
+                <p style={{ margin: 0, fontSize: 14, opacity: 0.9 }}>
+                  Own land? Submit it for community acquisition consideration.
+                </p>
+              </div>
+            </Link>
+            <Link href="/land-acquisition" style={{ textDecoration: 'none' }}>
+              <div style={{
+                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                borderRadius: 16,
+                padding: 24,
+                color: '#000',
+                cursor: 'pointer',
+                transition: 'transform 0.2s'
+              }}>
+                <h4 style={{ margin: '0 0 8px' }}>Invest in Land</h4>
+                <p style={{ margin: 0, fontSize: 14, opacity: 0.8 }}>
+                  Browse active campaigns and pool with your community.
+                </p>
+              </div>
+            </Link>
+            <Link href="/stewards/apply" style={{ textDecoration: 'none' }}>
+              <div style={{
+                background: 'linear-gradient(135deg, #7B68EE, #6C5CE7)',
+                borderRadius: 16,
+                padding: 24,
+                color: '#fff',
+                cursor: 'pointer',
+                transition: 'transform 0.2s'
+              }}>
+                <h4 style={{ margin: '0 0 8px' }}>Become a Steward</h4>
+                <p style={{ margin: 0, fontSize: 14, opacity: 0.9 }}>
+                  Lead your region's land acquisition efforts.
+                </p>
+              </div>
+            </Link>
+          </div>
+
+          <div style={{
+            background: '#f8fafc',
+            borderRadius: 16,
+            padding: 24,
+            marginTop: 32,
+            textAlign: 'center'
+          }}>
+            <h3 style={{ margin: '0 0 8px' }}>Communities that control land control their future.</h3>
+            <p style={{ margin: 0, color: theme.muted }}>
+              Join Axiom and build wealth together, on-chain.
+            </p>
+          </div>
+        </>
+      )
+    }
+  ];
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-white">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-amber-600 to-amber-800 text-white py-16">
-          <div className="max-w-6xl mx-auto px-4">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <p className="text-amber-200 text-sm font-medium tracking-wider uppercase">Whitepaper</p>
-                <h1 className="text-4xl md:text-5xl font-bold mt-2">AXIOM PROTOCOL</h1>
-                <p className="text-xl text-amber-100 mt-2">A Community-First System for Financial Education, Discipline, and Collective Savings</p>
-              </div>
-              <div className="hidden md:block text-right">
-                <Logo3D size={120} />
-              </div>
+    <>
+      <Head>
+        <title>Whitepaper | Axiom Protocol - Land First</title>
+        <meta name="description" content="Axiom Protocol Whitepaper: A land-first economic model for community land acquisition through SEC-compliant crowdfunding, SUSU pooling, and tokenized ownership." />
+      </Head>
+
+      <main style={{ background: '#fff', minHeight: '100vh' }}>
+        <section style={{
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+          padding: '80px 24px 60px',
+          color: '#fff',
+          textAlign: 'center'
+        }}>
+          <div style={{ maxWidth: 800, margin: '0 auto' }}>
+            <div style={{
+              display: 'inline-block',
+              padding: '6px 16px',
+              background: 'rgba(0, 212, 170, 0.2)',
+              borderRadius: 20,
+              fontSize: 14,
+              fontWeight: 500,
+              color: theme.primary,
+              marginBottom: 16
+            }}>
+              Version 2.0 - Land First
             </div>
-            <div className="flex flex-wrap gap-6 text-sm">
-              <div>
-                <span className="text-amber-200">Version:</span>
-                <span className="ml-2 font-semibold">{VERSION} — Updated Vision Edition</span>
-              </div>
-              <div>
-                <span className="text-amber-200">Last Updated:</span>
-                <span className="ml-2 font-semibold">{LAST_UPDATED}</span>
-              </div>
-            </div>
+            <h1 style={{ 
+              margin: '0 0 16px',
+              fontSize: 'clamp(32px, 5vw, 48px)',
+              fontWeight: 700
+            }}>
+              Axiom Protocol Whitepaper
+            </h1>
+            <p style={{ 
+              margin: 0,
+              fontSize: 'clamp(16px, 2.5vw, 20px)',
+              opacity: 0.8,
+              lineHeight: 1.6
+            }}>
+              Community-powered land acquisition through tokenization, stewardship, 
+              and SEC-compliant crowdfunding.
+            </p>
           </div>
+        </section>
+
+        <div style={{
+          maxWidth: 1200,
+          margin: '0 auto',
+          padding: '40px 24px',
+          display: 'grid',
+          gridTemplateColumns: '280px 1fr',
+          gap: 40
+        }}>
+          <nav style={{
+            position: 'sticky',
+            top: 100,
+            alignSelf: 'start',
+            background: '#f8fafc',
+            borderRadius: 16,
+            padding: 16,
+            maxHeight: 'calc(100vh - 140px)',
+            overflow: 'auto'
+          }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 14, color: theme.muted, textTransform: 'uppercase' }}>
+              Contents
+            </h3>
+            {sections.map(section => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveSection(section.id);
+                  document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                style={{
+                  display: 'block',
+                  padding: '10px 12px',
+                  borderRadius: 8,
+                  fontSize: 14,
+                  textDecoration: 'none',
+                  color: activeSection === section.id ? theme.primary : theme.dark,
+                  background: activeSection === section.id ? 'rgba(0, 212, 170, 0.1)' : 'transparent',
+                  fontWeight: activeSection === section.id ? 600 : 400,
+                  marginBottom: 4,
+                  transition: 'all 0.2s'
+                }}
+              >
+                {section.title}
+              </a>
+            ))}
+          </nav>
+
+          <article>
+            {sections.map(section => (
+              <section
+                key={section.id}
+                id={section.id}
+                style={{
+                  marginBottom: 48,
+                  paddingBottom: 48,
+                  borderBottom: `1px solid ${theme.border}`
+                }}
+              >
+                <h2 style={{ 
+                  margin: '0 0 24px',
+                  fontSize: 28,
+                  fontWeight: 700,
+                  color: theme.dark
+                }}>
+                  {section.title}
+                </h2>
+                <div style={{ 
+                  fontSize: 16,
+                  lineHeight: 1.7,
+                  color: theme.dark
+                }}>
+                  {section.content}
+                </div>
+              </section>
+            ))}
+          </article>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 py-12">
-          <div className="flex flex-col lg:flex-row gap-12">
-            {/* Sidebar Navigation */}
-            <div className="lg:w-72 flex-shrink-0">
-              <div className="sticky top-24 bg-gray-50 rounded-xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider">Table of Contents</h3>
-                <nav className="space-y-1">
-                  {TABLE_OF_CONTENTS.map((section) => (
-                    <button
-                      key={section.id}
-                      onClick={() => scrollToSection(section.id)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                        activeSection === section.id
-                          ? 'bg-amber-100 text-amber-800 font-medium'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      {section.title}
-                    </button>
-                  ))}
-                </nav>
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <a
-                    href="#"
-                    className="flex items-center gap-2 text-amber-600 hover:text-amber-700 text-sm font-medium"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.print();
-                    }}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Download PDF
-                  </a>
-                </div>
-
-                {/* CTA Section */}
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <h4 className="font-semibold text-gray-900 mb-3 text-sm">Ready to begin?</h4>
-                  <div className="space-y-2">
-                    <Link href="/academy" className="block w-full text-center px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
-                      Start Learning
-                    </Link>
-                    <Link href="/susu" className="block w-full text-center px-4 py-2 border border-amber-600 text-amber-600 rounded-lg text-sm font-medium hover:bg-amber-50 transition-colors">
-                      Join a Savings Circle
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Main Content */}
-            <div className="flex-1 prose prose-lg max-w-none">
-              
-              {/* Executive Summary */}
-              <section id="executive-summary" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">1. Executive Summary</h2>
-                
-                <div className="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-lg mb-8">
-                  <p className="text-gray-800 leading-relaxed m-0">
-                    <strong>Axiom Protocol</strong> is a community-powered platform designed to help individuals build wealth through education, structure, and cooperative action.
-                  </p>
-                </div>
-
-                <p className="text-gray-700 leading-relaxed">
-                  Rather than relying on speculation, centralized institutions, or opaque systems, Axiom focuses on a simple progression:
-                </p>
-
-                <div className="grid md:grid-cols-3 gap-6 my-8 not-prose">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 text-center border border-blue-200">
-                    <div className="text-4xl mb-3">📚</div>
-                    <h4 className="font-bold text-blue-900 text-lg">Learn</h4>
-                    <p className="text-blue-700 text-sm mt-2">Build financial knowledge and understanding</p>
-                  </div>
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 text-center border border-green-200">
-                    <div className="text-4xl mb-3">🤝</div>
-                    <h4 className="font-bold text-green-900 text-lg">Connect</h4>
-                    <p className="text-green-700 text-sm mt-2">Find your community and build trust</p>
-                  </div>
-                  <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 text-center border border-amber-200">
-                    <div className="text-4xl mb-3">💰</div>
-                    <h4 className="font-bold text-amber-900 text-lg">Save Together</h4>
-                    <p className="text-amber-700 text-sm mt-2">Grow wealth through structured cooperation</p>
-                  </div>
-                </div>
-
-                <p className="text-gray-700 leading-relaxed">
-                  This approach reflects how real financial stability is built: through knowledge, consistency, trust, and community.
-                </p>
-
-                <p className="text-gray-700 leading-relaxed">
-                  Axiom modernizes time-tested financial practices such as group savings (SUSU / ROSCA) using transparent digital infrastructure, while keeping people—not algorithms or institutions—at the center.
-                </p>
-              </section>
-
-              {/* The Problem */}
-              <section id="the-problem" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">2. The Problem</h2>
-                
-                <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">2.1 Financial Confusion, Not Lack of Opportunity</h3>
-                
-                <p className="text-gray-700 leading-relaxed">
-                  Most people do not struggle because they lack income opportunities. They struggle because:
-                </p>
-
-                <div className="grid md:grid-cols-2 gap-4 my-6 not-prose">
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-5">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">📖</span>
-                      <h4 className="font-bold text-red-900">Fragmented Education</h4>
-                    </div>
-                    <p className="text-red-700 text-sm">Financial education is fragmented or absent from most people's lives</p>
-                  </div>
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-5">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">🛒</span>
-                      <h4 className="font-bold text-red-900">Consumption Over Discipline</h4>
-                    </div>
-                    <p className="text-red-700 text-sm">Systems reward consumption, not discipline</p>
-                  </div>
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-5">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">💔</span>
-                      <h4 className="font-bold text-red-900">Broken Trust</h4>
-                    </div>
-                    <p className="text-red-700 text-sm">Trust is broken between individuals and institutions</p>
-                  </div>
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-5">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">👤</span>
-                      <h4 className="font-bold text-red-900">Isolated Saving</h4>
-                    </div>
-                    <p className="text-red-700 text-sm">Saving alone is difficult without accountability</p>
-                  </div>
-                </div>
-
-                <p className="text-gray-700 leading-relaxed">
-                  Modern financial tools emphasize speed, leverage, and risk, while neglecting behavior, structure, and consistency.
-                </p>
-              </section>
-
-              {/* Axiom's Philosophy */}
-              <section id="philosophy" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">3. Axiom's Philosophy</h2>
-                
-                <p className="text-gray-700 leading-relaxed mb-6">
-                  Axiom is built on three core beliefs:
-                </p>
-
-                <div className="space-y-6 not-prose">
-                  <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-purple-500 text-white rounded-full flex items-center justify-center font-bold text-xl">1</div>
-                      <div>
-                        <h4 className="font-bold text-purple-900 text-lg">Wealth is behavioral before it is financial</h4>
-                        <p className="text-purple-700 text-sm mt-1">Your habits and mindset determine your financial outcomes</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-xl">2</div>
-                      <div>
-                        <h4 className="font-bold text-blue-900 text-lg">Community multiplies discipline</h4>
-                        <p className="text-blue-700 text-sm mt-1">Accountability and shared goals strengthen individual commitment</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-amber-500 text-white rounded-full flex items-center justify-center font-bold text-xl">3</div>
-                      <div>
-                        <h4 className="font-bold text-amber-900 text-lg">Structure makes manifestation practical</h4>
-                        <p className="text-amber-700 text-sm mt-1">Clear rules and processes turn intentions into results</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-100 rounded-xl p-6 mt-8 border border-gray-200">
-                  <p className="text-gray-800 font-medium text-center m-0">
-                    Axiom does not promise profits. Axiom provides structure.
-                  </p>
-                </div>
-              </section>
-
-              {/* The Axiom Journey */}
-              <section id="the-journey" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">4. The Axiom Journey</h2>
-                
-                <div className="space-y-8 my-8">
-                  {/* Step 1 - Learn */}
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0 w-24 text-right">
-                      <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded">Step 1</span>
-                    </div>
-                    <div className="flex-1 border-l-2 border-blue-500 pl-6 pb-6">
-                      <h4 className="font-bold text-gray-900 text-xl">Learn</h4>
-                      <p className="text-gray-600 mt-2">Members begin by learning:</p>
-                      <ul className="list-disc pl-6 text-gray-700 mt-3 space-y-1">
-                        <li>Money fundamentals</li>
-                        <li>Budgeting and consistency</li>
-                        <li>Community wealth principles</li>
-                        <li>Long-term thinking over short-term gain</li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Step 2 - Connect */}
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0 w-24 text-right">
-                      <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">Step 2</span>
-                    </div>
-                    <div className="flex-1 border-l-2 border-green-500 pl-6 pb-6">
-                      <h4 className="font-bold text-gray-900 text-xl">Connect</h4>
-                      <p className="text-gray-600 mt-2">
-                        Members connect through Interest Groups organized by location, goals, and shared financial intentions.
-                      </p>
-                      <div className="bg-green-50 rounded-lg p-4 mt-3 border border-green-200">
-                        <p className="text-green-800 text-sm m-0">
-                          <strong>No money is required to join.</strong> Trust is built first.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Step 3 - Save Together */}
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0 w-24 text-right">
-                      <span className="inline-block px-3 py-1 bg-amber-100 text-amber-800 text-sm font-medium rounded">Step 3</span>
-                    </div>
-                    <div className="flex-1 border-l-2 border-amber-500 pl-6 pb-6">
-                      <h4 className="font-bold text-gray-900 text-xl">Save Together</h4>
-                      <p className="text-gray-600 mt-2">
-                        Members may participate in <strong>Axiom SUSU</strong>—modern rotating savings circles built on:
-                      </p>
-                      <ul className="list-disc pl-6 text-gray-700 mt-3 space-y-1">
-                        <li>Equal contribution</li>
-                        <li>Transparent rules</li>
-                        <li>Clear rotation</li>
-                        <li>Accountability through structure</li>
-                      </ul>
-                      <div className="bg-amber-50 rounded-lg p-4 mt-4 border border-amber-200">
-                        <p className="text-amber-800 text-sm m-0">
-                          <strong>Axiom SUSU is not an investment product.</strong> It is a discipline and coordination tool.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* Axiom SUSU Overview */}
-              <section id="susu-overview" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">5. Axiom SUSU Overview</h2>
-                
-                <p className="text-gray-700 leading-relaxed">
-                  Axiom SUSU uses a graduated approach where trust and commitment build over time. Members progress through three distinct stages:
-                </p>
-
-                <div className="space-y-6 my-8 not-prose">
-                  {/* Stage 1 */}
-                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-xl">1</div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-blue-900 text-lg">Purpose Groups</h4>
-                        <p className="text-blue-700 text-sm mt-1">Goal-aligned pre-commitment groups where members discuss savings objectives and build trust through vouches, profile completion, and group engagement. Members join through regional Interest Hubs. No financial commitment occurs at this level.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Stage 2 */}
-                  <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xl">2</div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-green-900 text-lg">SUSU Circles</h4>
-                        <p className="text-green-700 text-sm mt-1">On-chain rotating savings groups activated after trust thresholds are met. Members choose between two custody modes:</p>
-                        <div className="grid md:grid-cols-2 gap-3 mt-3">
-                          <div className="bg-white/50 rounded-lg p-3 border border-green-200">
-                            <p className="font-medium text-green-900 text-sm">Personal Vault (Self-Custody)</p>
-                            <p className="text-green-700 text-xs mt-1">Upfront commitment with segregated funds</p>
-                          </div>
-                          <div className="bg-white/50 rounded-lg p-3 border border-green-200">
-                            <p className="font-medium text-green-900 text-sm">Community Pool (Pooled Custody)</p>
-                            <p className="text-green-700 text-xs mt-1">Pay-as-you-go with traditional pooled structure</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Stage 3 */}
-                  <div className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-amber-500 text-white rounded-full flex items-center justify-center font-bold text-xl">3</div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-amber-900 text-lg">The Wealth Practice</h4>
-                        <p className="text-amber-700 text-sm mt-1">After completing 3+ successful SUSU rounds OR 6+ months with all members in good standing, groups graduate into The Wealth Practice. This unlocks access to larger financial opportunities including real estate pools, DePIN infrastructure, and enhanced governance participation.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-6 my-8 border border-gray-200">
-                  <h4 className="font-bold text-gray-900 mb-3">How SUSU Circles Work</h4>
-                  <p className="text-gray-700 leading-relaxed">
-                    Members contribute a fixed amount over a defined period. Each member receives the pooled amount once per cycle. Smart contracts enforce contribution schedules and automate payouts transparently.
-                  </p>
-                </div>
-
-                <div className="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-lg">
-                  <p className="text-gray-800 leading-relaxed m-0">
-                    <strong>There is no yield promise. There is no speculation.</strong><br/>
-                    Only structure, consistency, and trust. Wealth together.
-                  </p>
-                </div>
-              </section>
-
-              {/* Reputation and Trust */}
-              <section id="reputation" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">6. Reputation and Trust</h2>
-                
-                <p className="text-gray-700 leading-relaxed">
-                  Participation builds reputation through:
-                </p>
-
-                <div className="grid md:grid-cols-3 gap-6 my-8 not-prose">
-                  <div className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
-                    <div className="text-4xl mb-3">✓</div>
-                    <h4 className="font-bold text-green-900">Consistency</h4>
-                    <p className="text-green-700 text-sm mt-2">Regular, on-time contributions</p>
-                  </div>
-                  <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                    <div className="text-4xl mb-3">🏆</div>
-                    <h4 className="font-bold text-blue-900">Completion</h4>
-                    <p className="text-blue-700 text-sm mt-2">Finishing savings cycles successfully</p>
-                  </div>
-                  <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
-                    <div className="text-4xl mb-3">👥</div>
-                    <h4 className="font-bold text-purple-900">Engagement</h4>
-                    <p className="text-purple-700 text-sm mt-2">Active community participation</p>
-                  </div>
-                </div>
-
-                <div className="bg-gray-100 rounded-xl p-6 border border-gray-200">
-                  <p className="text-gray-800 leading-relaxed m-0">
-                    This reputation is <strong>earned, visible, and cumulative</strong>—forming the foundation for deeper collaboration within the ecosystem.
-                  </p>
-                </div>
-              </section>
-
-              {/* Advanced Modules */}
-              <section id="advanced-modules" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">7. Advanced Modules (Later Stages)</h2>
-                
-                <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg mb-8">
-                  <p className="text-gray-800 leading-relaxed m-0">
-                    After members demonstrate consistency and understanding, Axiom offers optional advanced tools.
-                  </p>
-                </div>
-
-                <p className="text-gray-700 leading-relaxed">
-                  Advanced modules include:
-                </p>
-
-                <div className="grid md:grid-cols-2 gap-4 my-6 not-prose">
-                  <div className="bg-white border border-gray-200 rounded-xl p-5">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">🏠</span>
-                      <h4 className="font-bold text-gray-900">KeyGrow</h4>
-                    </div>
-                    <p className="text-gray-600 text-sm">Rent-to-own pathway to property ownership</p>
-                  </div>
-                  <div className="bg-white border border-gray-200 rounded-xl p-5">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">🗳️</span>
-                      <h4 className="font-bold text-gray-900">Governance Participation</h4>
-                    </div>
-                    <p className="text-gray-600 text-sm">Contribute to community decision-making</p>
-                  </div>
-                  <div className="bg-white border border-gray-200 rounded-xl p-5">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">🔧</span>
-                      <h4 className="font-bold text-gray-900">Infrastructure Participation</h4>
-                    </div>
-                    <p className="text-gray-600 text-sm">Support and benefit from ecosystem infrastructure</p>
-                  </div>
-                  <div className="bg-white border border-gray-200 rounded-xl p-5">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">🏦</span>
-                      <h4 className="font-bold text-gray-900">Financial Coordination Tools</h4>
-                    </div>
-                    <p className="text-gray-600 text-sm">DeFi treasury tools for advanced needs</p>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                  <p className="text-gray-700 leading-relaxed m-0">
-                    <strong>These modules are progressive and not required</strong> to benefit from the core platform.
-                  </p>
-                </div>
-              </section>
-
-              {/* Long-Term Vision */}
-              <section id="long-term-vision" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">8. Long-Term Vision</h2>
-                
-                <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6 mb-8 border border-purple-200">
-                  <p className="text-gray-800 leading-relaxed m-0">
-                    Axiom's long-term vision explores how communities can coordinate resources, govern shared systems, and build transparent infrastructure.
-                  </p>
-                </div>
-
-                <p className="text-gray-700 leading-relaxed">
-                  These ambitions are part of a <strong>future roadmap</strong>, not prerequisites for participation.
-                </p>
-
-                <div className="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-lg mt-6">
-                  <p className="text-amber-900 leading-relaxed m-0 font-medium">
-                    The present focus remains simple: help people learn, connect, and save together.
-                  </p>
-                </div>
-              </section>
-
-              {/* What Axiom Is Not */}
-              <section id="what-axiom-is-not" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">9. What Axiom Is Not</h2>
-                
-                <div className="grid md:grid-cols-2 gap-4 my-6 not-prose">
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-5">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">❌</span>
-                      <p className="text-red-800 font-medium m-0">Not a get-rich-quick platform</p>
-                    </div>
-                  </div>
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-5">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">❌</span>
-                      <p className="text-red-800 font-medium m-0">Not a speculative investment scheme</p>
-                    </div>
-                  </div>
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-5">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">❌</span>
-                      <p className="text-red-800 font-medium m-0">Not a traditional bank</p>
-                    </div>
-                  </div>
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-5">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">❌</span>
-                      <p className="text-red-800 font-medium m-0">Not a replacement for personal responsibility</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-100 rounded-xl p-6 border border-gray-200">
-                  <p className="text-gray-800 font-medium text-center text-lg m-0">
-                    Axiom is a framework, not a promise.
-                  </p>
-                </div>
-              </section>
-
-              {/* Conclusion */}
-              <section id="conclusion" className="mb-16">
-                <h2 className="text-3xl font-bold text-gray-900 border-b-2 border-amber-500 pb-4 mb-6">10. Conclusion</h2>
-                
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-8 border border-amber-200">
-                  <p className="text-gray-800 leading-relaxed text-lg">
-                    Axiom Protocol exists to restore something modern finance removed: <strong>community, discipline, and trust</strong>.
-                  </p>
-                  <p className="text-gray-700 leading-relaxed mt-4">
-                    By combining education, connection, and structured savings, Axiom provides a practical path toward financial stability—one step at a time.
-                  </p>
-                </div>
-
-                <div className="mt-12 text-center not-prose">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6">Begin Your Journey</h3>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Link href="/academy" className="inline-block px-8 py-3 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition-colors">
-                      Start Learning
-                    </Link>
-                    <Link href="/susu" className="inline-block px-8 py-3 border-2 border-amber-600 text-amber-600 rounded-lg font-medium hover:bg-amber-50 transition-colors">
-                      Join a Savings Circle
-                    </Link>
-                  </div>
-                </div>
-              </section>
-
-            </div>
-          </div>
-        </div>
-      </div>
-    </Layout>
+        <style jsx global>{`
+          @media (max-width: 900px) {
+            main > div {
+              grid-template-columns: 1fr !important;
+            }
+            nav {
+              position: relative !important;
+              top: 0 !important;
+            }
+          }
+        `}</style>
+      </main>
+    </>
   );
 }
