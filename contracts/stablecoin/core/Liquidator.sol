@@ -68,10 +68,14 @@ contract Liquidator is AccessControl, ReentrancyGuard {
         IERC20(address(axusd)).safeTransferFrom(msg.sender, address(this), debtToCover);
         IERC20(address(axusd)).approve(address(vaultEngine), debtToCover);
 
+        uint256 collateralBefore = IERC20(collateral).balanceOf(address(this));
+        
         IVaultEngine(address(vaultEngine)).liquidate(owner, collateral, debtToCover);
 
         uint256 collateralAfter = IERC20(collateral).balanceOf(address(this));
-        uint256 collateralReceived = collateralAfter;
+        uint256 collateralReceived = collateralAfter - collateralBefore;
+        
+        require(collateralReceived > 0, "Liquidator: no collateral received");
 
         IERC20(collateral).safeTransfer(msg.sender, collateralReceived);
 

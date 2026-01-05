@@ -73,11 +73,14 @@ contract BackstopVault is AccessControl, ReentrancyGuard, Pausable, IBackstopVau
         bytes32 withdrawalId,
         address recipient,
         uint256 amount,
-        string calldata reason
+        string calldata reason,
+        uint256 queuedTimestamp
     ) external nonReentrant onlyRole(ADMIN_ROLE) {
         require(emergencyMode, "BackstopVault: not emergency mode");
         
-        bytes32 expectedId = keccak256(abi.encodePacked(recipient, amount, reason, block.timestamp));
+        bytes32 expectedId = keccak256(abi.encodePacked(recipient, amount, reason, queuedTimestamp));
+        require(withdrawalId == expectedId, "BackstopVault: invalid withdrawal params");
+        
         uint256 executeAfter = pendingEmergencyWithdrawals[withdrawalId];
         
         require(executeAfter > 0, "BackstopVault: not queued");
