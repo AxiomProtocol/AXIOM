@@ -133,4 +133,29 @@ describe("VaultEngine", function () {
       ).to.be.reverted;
     });
   });
+
+  describe("Fee Accounting", function () {
+    it("Should start with zero accrued fees", async function () {
+      expect(await vaultEngine.getAccruedFees()).to.equal(0);
+    });
+
+    it("Should revert clearFeeAccounting when no fees", async function () {
+      await expect(vaultEngine.clearFeeAccounting())
+        .to.be.revertedWith("VaultEngine: no fees");
+    });
+
+    it("Should have fee burner setter", async function () {
+      await vaultEngine.setFeeBurner(user.address);
+      expect(await vaultEngine.feeBurner()).to.equal(user.address);
+    });
+  });
+
+  describe("Vault Struct", function () {
+    it("Should include accruedInterest field in vault", async function () {
+      const vault = await vaultEngine.getVault(user.address, await mockCollateral.getAddress());
+      expect(vault.accruedInterest).to.equal(0);
+      expect(vault.collateralAmount).to.equal(0);
+      expect(vault.debtAmount).to.equal(0);
+    });
+  });
 });
