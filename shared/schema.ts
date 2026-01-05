@@ -4720,3 +4720,265 @@ export const stewardInterestSignups = pgTable("steward_interest_signups", {
 
 export type StewardInterestSignup = typeof stewardInterestSignups.$inferSelect;
 export type InsertStewardInterestSignup = typeof stewardInterestSignups.$inferInsert;
+// ============================================
+// LAND ACQUISITION & REG CF CROWDFUNDING
+// ============================================
+
+// Land Option Status Enum
+export const landOptionStatusEnum = pgEnum('land_option_status', [
+  'draft',
+  'active',
+  'option_fee_paid',
+  'exercise_ready',
+  'exercised',
+  'expired',
+  'cancelled'
+]);
+
+// Crowdfunding Campaign Status Enum
+export const crowdfundingStatusEnum = pgEnum('crowdfunding_status', [
+  'draft',
+  'live',
+  'funded',
+  'closed',
+  'cancelled'
+]);
+
+// Acquisition Pool Status Enum
+export const acquisitionPoolStatusEnum = pgEnum('acquisition_pool_status', [
+  'forming',
+  'active',
+  'funded',
+  'distributed',
+  'cancelled'
+]);
+
+// Land Options (tokenized land purchase options)
+export const landOptions = pgTable("land_options", {
+  id: serial("id").primaryKey(),
+  parcelId: varchar("parcel_id", { length: 100 }).notNull(),
+  location: text("location").notNull(),
+  acreage: decimal("acreage", { precision: 10, scale: 2 }).notNull(),
+  purchasePrice: decimal("purchase_price", { precision: 18, scale: 2 }).notNull(),
+  optionFee: decimal("option_fee", { precision: 18, scale: 2 }).notNull(),
+  optionPeriodDays: integer("option_period_days").notNull(),
+  expiresAt: timestamp("expires_at"),
+  landownerAddress: varchar("landowner_address", { length: 42 }).notNull(),
+  landownerName: varchar("landowner_name", { length: 200 }),
+  landownerEmail: varchar("landowner_email", { length: 200 }),
+  stewardId: integer("steward_id").references(() => users.id),
+  status: landOptionStatusEnum("status").default('draft'),
+  totalShares: integer("total_shares").notNull(),
+  sharesSold: integer("shares_sold").default(0),
+  minInvestment: decimal("min_investment", { precision: 18, scale: 2 }).notNull(),
+  maxInvestment: decimal("max_investment", { precision: 18, scale: 2 }).notNull(),
+  regCFCompliant: boolean("reg_cf_compliant").default(true),
+  contractAddress: varchar("contract_address", { length: 42 }),
+  onChainOptionId: integer("on_chain_option_id"),
+  ipfsMetadata: text("ipfs_metadata"),
+  description: text("description"),
+  featuredImage: text("featured_image"),
+  propertyType: varchar("property_type", { length: 50 }),
+  zoning: varchar("zoning", { length: 100 }),
+  developmentPlan: text("development_plan"),
+  projectedReturns: decimal("projected_returns", { precision: 5, scale: 2 }),
+  riskLevel: varchar("risk_level", { length: 20 }),
+  documents: jsonb("documents"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  parcelIdx: index("land_options_parcel_idx").on(table.parcelId),
+  statusIdx: index("land_options_status_idx").on(table.status),
+  stewardIdx: index("land_options_steward_idx").on(table.stewardId),
+}));
+
+// Reg CF Crowdfunding Campaigns
+export const crowdfundingCampaigns = pgTable("crowdfunding_campaigns", {
+  id: serial("id").primaryKey(),
+  landOptionId: integer("land_option_id").references(() => landOptions.id).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  subtitle: varchar("subtitle", { length: 300 }),
+  description: text("description").notNull(),
+  targetAmount: decimal("target_amount", { precision: 18, scale: 2 }).notNull(),
+  minInvestment: decimal("min_investment", { precision: 18, scale: 2 }).notNull(),
+  maxInvestment: decimal("max_investment", { precision: 18, scale: 2 }).notNull(),
+  raisedAmount: decimal("raised_amount", { precision: 18, scale: 2 }).default('0'),
+  investorCount: integer("investor_count").default(0),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  status: crowdfundingStatusEnum("status").default('draft'),
+  issuerId: integer("issuer_id").references(() => users.id).notNull(),
+  offeringDocumentCID: text("offering_document_cid"),
+  requiresAccreditation: boolean("requires_accreditation").default(false),
+  regCFFormC: text("reg_cf_form_c"),
+  termsAndConditions: text("terms_and_conditions"),
+  riskFactors: text("risk_factors"),
+  useOfFunds: text("use_of_funds"),
+  financialStatements: jsonb("financial_statements"),
+  contractAddress: varchar("contract_address", { length: 42 }),
+  onChainCampaignId: integer("on_chain_campaign_id"),
+  featuredImage: text("featured_image"),
+  galleryImages: jsonb("gallery_images"),
+  videoUrl: text("video_url"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  landOptionIdx: index("crowdfunding_land_option_idx").on(table.landOptionId),
+  statusIdx: index("crowdfunding_status_idx").on(table.status),
+  issuerIdx: index("crowdfunding_issuer_idx").on(table.issuerId),
+}));
+
+// Crowdfunding Investments
+export const crowdfundingInvestments = pgTable("crowdfunding_investments", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").references(() => crowdfundingCampaigns.id).notNull(),
+  investorId: integer("investor_id").references(() => users.id).notNull(),
+  walletAddress: varchar("wallet_address", { length: 42 }),
+  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
+  sharesReceived: integer("shares_received"),
+  transactionHash: varchar("transaction_hash", { length: 66 }),
+  status: varchar("status", { length: 20 }).default('pending'),
+  kycVerified: boolean("kyc_verified").default(false),
+  accredited: boolean("accredited").default(false),
+  investorAnnualIncome: decimal("investor_annual_income", { precision: 18, scale: 2 }),
+  investorNetWorth: decimal("investor_net_worth", { precision: 18, scale: 2 }),
+  signedAgreement: boolean("signed_agreement").default(false),
+  agreementCID: text("agreement_cid"),
+  refunded: boolean("refunded").default(false),
+  refundDate: timestamp("refund_date"),
+  refundTxHash: varchar("refund_tx_hash", { length: 66 }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  campaignIdx: index("investments_campaign_idx").on(table.campaignId),
+  investorIdx: index("investments_investor_idx").on(table.investorId),
+  statusIdx: index("investments_status_idx").on(table.status),
+}));
+
+// Land Acquisition Pools (SUSU-style community pooling)
+export const landAcquisitionPools = pgTable("land_acquisition_pools", {
+  id: serial("id").primaryKey(),
+  landOptionId: integer("land_option_id").references(() => landOptions.id),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  targetAmount: decimal("target_amount", { precision: 18, scale: 2 }).notNull(),
+  monthlyContribution: decimal("monthly_contribution", { precision: 18, scale: 2 }).notNull(),
+  memberLimit: integer("member_limit").notNull(),
+  memberCount: integer("member_count").default(0),
+  totalContributed: decimal("total_contributed", { precision: 18, scale: 2 }).default('0'),
+  cycleCount: integer("cycle_count").notNull(),
+  currentCycle: integer("current_cycle").default(0),
+  cycleStartDate: timestamp("cycle_start_date"),
+  cycleDurationDays: integer("cycle_duration_days").default(30),
+  status: acquisitionPoolStatusEnum("status").default('forming'),
+  stewardId: integer("steward_id").references(() => users.id).notNull(),
+  contractAddress: varchar("contract_address", { length: 42 }),
+  onChainPoolId: integer("on_chain_pool_id"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  landOptionIdx: index("pools_land_option_idx").on(table.landOptionId),
+  statusIdx: index("pools_status_idx").on(table.status),
+  stewardIdx: index("pools_steward_idx").on(table.stewardId),
+}));
+
+// Pool Members
+export const poolMembers = pgTable("pool_members", {
+  id: serial("id").primaryKey(),
+  poolId: integer("pool_id").references(() => landAcquisitionPools.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  walletAddress: varchar("wallet_address", { length: 42 }),
+  totalContributed: decimal("total_contributed", { precision: 18, scale: 2 }).default('0'),
+  cyclesCompleted: integer("cycles_completed").default(0),
+  missedPayments: integer("missed_payments").default(0),
+  active: boolean("active").default(true),
+  joinedAt: timestamp("joined_at").defaultNow(),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  poolIdx: index("pool_members_pool_idx").on(table.poolId),
+  userIdx: index("pool_members_user_idx").on(table.userId),
+}));
+
+// Pool Contributions
+export const poolContributions = pgTable("pool_contributions", {
+  id: serial("id").primaryKey(),
+  poolId: integer("pool_id").references(() => landAcquisitionPools.id).notNull(),
+  memberId: integer("member_id").references(() => poolMembers.id).notNull(),
+  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
+  cycle: integer("cycle").notNull(),
+  transactionHash: varchar("transaction_hash", { length: 66 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  poolIdx: index("contributions_pool_idx").on(table.poolId),
+  memberIdx: index("contributions_member_idx").on(table.memberId),
+}));
+
+// Investor KYC/Accreditation Records
+export const investorVerifications = pgTable("investor_verifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  walletAddress: varchar("wallet_address", { length: 42 }),
+  kycComplete: boolean("kyc_complete").default(false),
+  kycProvider: varchar("kyc_provider", { length: 50 }),
+  kycVerifiedAt: timestamp("kyc_verified_at"),
+  accredited: boolean("accredited").default(false),
+  accreditationMethod: varchar("accreditation_method", { length: 50 }),
+  accreditationVerifiedAt: timestamp("accreditation_verified_at"),
+  annualIncome: decimal("annual_income", { precision: 18, scale: 2 }),
+  netWorth: decimal("net_worth", { precision: 18, scale: 2 }),
+  yearlyInvestmentTotal: decimal("yearly_investment_total", { precision: 18, scale: 2 }).default('0'),
+  investmentYear: integer("investment_year"),
+  documentsCID: text("documents_cid"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("verifications_user_idx").on(table.userId),
+  walletIdx: index("verifications_wallet_idx").on(table.walletAddress),
+}));
+
+// Land Governance Proposals
+export const landGovernanceProposals = pgTable("land_governance_proposals", {
+  id: serial("id").primaryKey(),
+  landOptionId: integer("land_option_id").references(() => landOptions.id).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description").notNull(),
+  proposalType: varchar("proposal_type", { length: 50 }).notNull(),
+  proposerId: integer("proposer_id").references(() => users.id).notNull(),
+  status: varchar("status", { length: 20 }).default('pending'),
+  votesFor: integer("votes_for").default(0),
+  votesAgainst: integer("votes_against").default(0),
+  quorumRequired: integer("quorum_required").default(10),
+  votingStartsAt: timestamp("voting_starts_at"),
+  votingEndsAt: timestamp("voting_ends_at"),
+  executedAt: timestamp("executed_at"),
+  onChainProposalId: varchar("on_chain_proposal_id", { length: 66 }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  landOptionIdx: index("proposals_land_option_idx").on(table.landOptionId),
+  statusIdx: index("proposals_status_idx").on(table.status),
+}));
+
+// Export types for Land Acquisition tables
+export type LandOption = typeof landOptions.$inferSelect;
+export type InsertLandOption = typeof landOptions.$inferInsert;
+export type CrowdfundingCampaign = typeof crowdfundingCampaigns.$inferSelect;
+export type InsertCrowdfundingCampaign = typeof crowdfundingCampaigns.$inferInsert;
+export type CrowdfundingInvestment = typeof crowdfundingInvestments.$inferSelect;
+export type InsertCrowdfundingInvestment = typeof crowdfundingInvestments.$inferInsert;
+export type LandAcquisitionPool = typeof landAcquisitionPools.$inferSelect;
+export type InsertLandAcquisitionPool = typeof landAcquisitionPools.$inferInsert;
+export type PoolMember = typeof poolMembers.$inferSelect;
+export type InsertPoolMember = typeof poolMembers.$inferInsert;
+export type PoolContribution = typeof poolContributions.$inferSelect;
+export type InsertPoolContribution = typeof poolContributions.$inferInsert;
+export type InvestorVerification = typeof investorVerifications.$inferSelect;
+export type InsertInvestorVerification = typeof investorVerifications.$inferInsert;
+export type LandGovernanceProposal = typeof landGovernanceProposals.$inferSelect;
+export type InsertLandGovernanceProposal = typeof landGovernanceProposals.$inferInsert;

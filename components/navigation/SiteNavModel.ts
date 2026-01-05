@@ -71,6 +71,7 @@ export const SITE_NAV: NavItem[] = [
       { label: "Treasury", href: "/bank" },
       { label: "SUSU Savings", href: "/susu-start" },
       { label: "AXUSD Stablecoin", href: "/axusd" },
+      { label: "Land Acquisition", href: "/land-acquisition" },
       { label: "Governance", href: "/governance" },
       { label: "Tokenomics", href: "/tokenomics" },
       { label: "Staking", href: "/staking" },
@@ -112,10 +113,10 @@ export const FOOTER_SECTIONS: FooterSection[] = [
     links: [
       { label: "Treasury", href: "/bank" },
       { label: "SUSU Savings", href: "/susu-start" },
+      { label: "AXUSD Stablecoin", href: "/axusd" },
+      { label: "Land Acquisition", href: "/land-acquisition" },
       { label: "Governance", href: "/governance" },
-      { label: "Tokenomics", href: "/tokenomics" },
-      { label: "Staking", href: "/staking" },
-      { label: "Launchpad", href: "/launchpad" }
+      { label: "Staking", href: "/staking" }
     ]
   },
   {
