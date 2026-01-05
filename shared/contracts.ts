@@ -167,6 +167,35 @@ export const COMMUNITY_SAVINGS_CONTRACTS = {
   SUSU_PERSONAL_VAULT: '0x7F474D9D5aF702D587A126c49aDa43318c1420E5'
 } as const;
 
+// AXUSD Stablecoin System Contracts (30-35)
+// Deployed: January 5, 2026 | Arbitrum One
+// Features: CDP-style minting, PSM for USDC swaps, T-bill backing ready
+export const AXUSD_STABLECOIN_CONTRACTS = {
+  // Contract 30: AxiomStable (AXUSD Token)
+  // ERC20 stablecoin with 1B max supply, role-based minting/burning
+  AXUSD: '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c',
+  
+  // Contract 31: OracleAdapter (Price Feeds)
+  // Multi-source oracle for collateral price feeds
+  ORACLE_ADAPTER: '0x6dEC19DD5472F5a82e37972008De3eBB46b754B0',
+  
+  // Contract 32: RateLimiter (Minting Controls)
+  // Daily limit: 100K AXUSD, Per-address limit: 10K AXUSD
+  RATE_LIMITER: '0xeCaBaA0dBbbA47E22C1f5A0F0495D1Ce9F40CF20',
+  
+  // Contract 33: VaultEngine (CDP System)
+  // Collateralized debt positions for AXUSD minting
+  VAULT_ENGINE: '0x72aaBb0d84077859276513106Ea225E4edE80db0',
+  
+  // Contract 34: BackstopVault (Emergency Reserve)
+  // Protocol reserve with 24h timelock for emergency withdrawals
+  BACKSTOP_VAULT: '0x9D59e65aF3F5251578DC5F7576793de28A95c00a',
+  
+  // Contract 35: PSM (Peg Stability Module)
+  // 1:1 USDC swaps with 0.1% fee, 500K debt ceiling
+  PSM: '0x4584888cB411E9cc88e3800BAB73A430D90d3793'
+} as const;
+
 // All contracts in a single object for easy access
 export const ALL_CONTRACTS = {
   ...CORE_CONTRACTS,
@@ -177,7 +206,8 @@ export const ALL_CONTRACTS = {
   ...COMMUNITY_CONTRACTS,
   ...SUSTAINABILITY_CONTRACTS,
   ...V2_SOVEREIGN_BANKING_CONTRACTS,
-  ...COMMUNITY_SAVINGS_CONTRACTS
+  ...COMMUNITY_SAVINGS_CONTRACTS,
+  ...AXUSD_STABLECOIN_CONTRACTS
 } as const;
 
 // Deployer Address
