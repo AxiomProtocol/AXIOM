@@ -6,3 +6,6 @@ import "./core/OracleAdapter.sol";
 import "./core/RateLimiter.sol";
 import "./core/VaultEngine.sol";
 import "./core/Liquidator.sol";
+import "./core/BackstopVault.sol";
+import "./core/PSM.sol";
+import "./core/MarketOperations.sol";
