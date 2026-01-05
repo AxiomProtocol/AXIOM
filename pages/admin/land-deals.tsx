@@ -153,8 +153,8 @@ export default function AdminLandDealsPage() {
               { label: "Dashboard", href: "/admin" },
               { label: "Land Deals", href: "/admin/land-deals", active: true },
               { label: "Crowdfunding", href: "/admin/crowdfunding" },
-              { label: "Members", href: "/admin/members" },
-              { label: "Stewards", href: "/admin/stewards" }
+              { label: "Land Pipeline", href: "/admin/land-pipeline" },
+              { label: "Stewards", href: "/admin/steward-recruitment" }
             ].map(item => (
               <Link
                 key={item.href}

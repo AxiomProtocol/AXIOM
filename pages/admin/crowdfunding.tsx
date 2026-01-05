@@ -120,7 +120,7 @@ export default function AdminCrowdfundingPage() {
           </Link>
           <nav>
             {[
-              { label: "Dashboard", href: "/admin" },
+              { label: "Dashboard", href: "/admin/treasury" },
               { label: "Land Deals", href: "/admin/land-deals" },
               { label: "Crowdfunding", href: "/admin/crowdfunding", active: true },
               { label: "Land Pipeline", href: "/admin/land-pipeline" },
