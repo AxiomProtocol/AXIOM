@@ -48,12 +48,19 @@ Key features include:
 -   **Land Acquisition System** (SEC Reg CF compliant crowdfunding with tokenized land options via LandOptionRegistry ERC-1155, RegCFCrowdfunding for SEC-compliant $5M raises, and LandAcquisitionPool for SUSU-style community pooling - page at `/land-acquisition` with generated images).
 -   **Land Acquisition Admin Tools** (Enhanced admin workflow at `/admin/land-deals` and `/admin/land-pipeline` with:
     - 3-step landowner property submission form at `/landowners/submit` with automatic lead scoring (0-100)
+    - **Property Listing Import** - Paste URLs from Zillow, Realtor, Redfin, LoopNet, LandWatch to auto-extract property data
     - Email notifications via Resend for new submissions, status changes, and admin alerts
     - Document uploads via Replit Object Storage for property deeds, surveys, photos
     - Automatic and manual steward assignment API
     - 6-stage multi-stage approval workflow (Submission → Admin Review → Steward Assignment → Steward Evaluation → Community Vote → Final Approval)
     - CRM Kanban pipeline view with drag-and-drop status updates
     - Database tables: land_submissions, land_documents, land_options, crowdfunding_campaigns, governance_proposals)
+-   **Social Campaign & Referral System** (Marketing tools for crowdfunding campaigns:
+    - Short links with `/c/[slug]` redirect pages and OG meta tags for social previews
+    - Social share buttons (Twitter/X, Facebook, LinkedIn, WhatsApp, Email)
+    - Referral code generation (AX + 6 alphanumeric) with click/conversion tracking
+    - Referral attribution for investments with campaign analytics
+    - Database tables: campaign_short_links, referral_attributions, steward_reviews, community_votes)
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
