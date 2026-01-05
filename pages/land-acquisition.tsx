@@ -81,8 +81,8 @@ export default function LandAcquisitionPage() {
         const poolsJson = await poolsRes.json();
 
         if (statsJson.success) setStats(statsJson.data);
-        if (campaignsJson.success) setCampaigns(campaignsJson.data);
-        if (poolsJson.success) setPools(poolsJson.data);
+        if (campaignsJson.success) setCampaigns(campaignsJson.data?.campaigns || []);
+        if (poolsJson.success) setPools(poolsJson.data?.pools || poolsJson.data || []);
       } catch (error) {
         console.error('Failed to fetch land acquisition data:', error);
       } finally {

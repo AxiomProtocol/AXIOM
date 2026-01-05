@@ -14,24 +14,25 @@ const theme = {
 
 interface Campaign {
   id: number;
-  land_option_id: number;
+  landOptionId: number;
   title: string;
   subtitle: string | null;
   description: string | null;
-  target_amount: string;
-  raised_amount: string;
-  investor_count: number;
+  targetAmount: string;
+  raisedAmount: string;
+  investorCount: number;
   status: string;
-  start_date: string | null;
-  end_date: string | null;
-  min_investment: string;
-  max_investment: string | null;
-  requires_accreditation: boolean;
-  created_at: string;
-  land_option?: {
+  startDate: string | null;
+  endDate: string | null;
+  minInvestment: string;
+  maxInvestment: string | null;
+  requiresAccreditation: boolean;
+  percentFunded: string;
+  daysRemaining: number;
+  landOption?: {
     location: string;
     acreage: string;
-    purchase_price: string;
+    purchasePrice: string;
   };
 }
 
@@ -47,6 +48,7 @@ interface Stats {
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   draft: { label: "Draft", color: "#6b7280", bg: "#f3f4f6" },
+  live: { label: "Live", color: "#10b981", bg: "#ecfdf5" },
   active: { label: "Active", color: "#10b981", bg: "#ecfdf5" },
   funded: { label: "Funded", color: "#3b82f6", bg: "#eff6ff" },
   closed: { label: "Closed", color: "#f59e0b", bg: "#fffbeb" },
@@ -267,8 +269,8 @@ export default function AdminCrowdfundingPage() {
             ) : (
               <div style={{ display: "grid", gap: "16px" }}>
                 {campaigns.map(campaign => {
-                  const progress = getProgress(campaign.raised_amount, campaign.target_amount);
-                  const statusConfig = STATUS_CONFIG[campaign.status] || STATUS_CONFIG.draft;
+                  const progress = getProgress(campaign.raisedAmount, campaign.targetAmount);
+                  const statusConfig = STATUS_CONFIG[campaign.status] || STATUS_CONFIG.live;
 
                   return (
                     <div
@@ -304,7 +306,7 @@ export default function AdminCrowdfundingPage() {
                       <div style={{ marginBottom: "16px" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
                           <span style={{ fontSize: "14px", color: theme.muted }}>
-                            {formatCurrency(campaign.raised_amount)} raised
+                            {formatCurrency(campaign.raisedAmount)} raised
                           </span>
                           <span style={{ fontSize: "14px", fontWeight: 600, color: theme.dark }}>
                             {progress.toFixed(1)}%
@@ -321,7 +323,7 @@ export default function AdminCrowdfundingPage() {
                         </div>
                         <div style={{ textAlign: "right", marginTop: "4px" }}>
                           <span style={{ fontSize: "12px", color: theme.muted }}>
-                            Goal: {formatCurrency(campaign.target_amount)}
+                            Goal: {formatCurrency(campaign.targetAmount)}
                           </span>
                         </div>
                       </div>
@@ -329,23 +331,23 @@ export default function AdminCrowdfundingPage() {
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", fontSize: "13px" }}>
                         <div>
                           <div style={{ color: theme.muted, marginBottom: "2px" }}>Investors</div>
-                          <div style={{ fontWeight: 600, color: theme.dark }}>{campaign.investor_count}</div>
+                          <div style={{ fontWeight: 600, color: theme.dark }}>{campaign.investorCount}</div>
                         </div>
                         <div>
                           <div style={{ color: theme.muted, marginBottom: "2px" }}>Min Investment</div>
-                          <div style={{ fontWeight: 600, color: theme.dark }}>{formatCurrency(campaign.min_investment)}</div>
+                          <div style={{ fontWeight: 600, color: theme.dark }}>{formatCurrency(campaign.minInvestment)}</div>
                         </div>
                         <div>
                           <div style={{ color: theme.muted, marginBottom: "2px" }}>Start Date</div>
-                          <div style={{ fontWeight: 600, color: theme.dark }}>{formatDate(campaign.start_date)}</div>
+                          <div style={{ fontWeight: 600, color: theme.dark }}>{formatDate(campaign.startDate)}</div>
                         </div>
                         <div>
                           <div style={{ color: theme.muted, marginBottom: "2px" }}>End Date</div>
-                          <div style={{ fontWeight: 600, color: theme.dark }}>{formatDate(campaign.end_date)}</div>
+                          <div style={{ fontWeight: 600, color: theme.dark }}>{formatDate(campaign.endDate)}</div>
                         </div>
                       </div>
 
-                      {campaign.requires_accreditation && (
+                      {campaign.requiresAccreditation && (
                         <div style={{
                           marginTop: "16px",
                           padding: "8px 12px",
