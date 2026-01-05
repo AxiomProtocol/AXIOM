@@ -1,7 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { SiteLayout } from "../components/navigation";
+
+interface SupplyData {
+  totalSupply: string;
+  circulatingSupply: string;
+  lockedSupply: string;
+  breakdown: {
+    backstopReserve: string;
+    psmReserve: string;
+    treasuryReserve: string;
+  };
+  maxSupply: string;
+}
+
+interface PSMData {
+  usdcReserve: string;
+  feePercent: string;
+}
 
 const AXUSD_CONTRACTS: Record<string, string> = {
   'AXUSD Token': '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c',
@@ -23,6 +40,42 @@ export default function AXUSDStablecoinPage() {
   const [collateralType, setCollateralType] = useState('WETH');
   const [psmAmount, setPsmAmount] = useState('');
   const [psmDirection, setPsmDirection] = useState<'usdcToAxusd' | 'axusdToUsdc'>('usdcToAxusd');
+  
+  const [supplyData, setSupplyData] = useState<SupplyData | null>(null);
+  const [psmData, setPsmData] = useState<PSMData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [supplyRes, psmRes] = await Promise.all([
+          fetch('/api/axusd/supply'),
+          fetch('/api/axusd/psm')
+        ]);
+        
+        const supplyJson = await supplyRes.json();
+        const psmJson = await psmRes.json();
+        
+        if (supplyJson.success) setSupplyData(supplyJson.data);
+        if (psmJson.success) setPsmData(psmJson.data);
+      } catch (error) {
+        console.error('Failed to fetch AXUSD data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatNumber = (value: string | number) => {
+    const num = parseFloat(String(value));
+    if (num >= 1000000) return `${(num / 1000000).toFixed(2)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(2)}K`;
+    return num.toFixed(2);
+  };
 
   const truncateAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
@@ -98,20 +151,40 @@ export default function AXUSDStablecoinPage() {
 
             {activeTab === 'overview' && (
               <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-green-500/30 rounded-xl p-6">
                     <h3 className="text-green-400 flex items-center gap-2 font-bold mb-4">
                       <span className="text-2xl">$</span> Total Supply
                     </h3>
-                    <div className="text-4xl font-bold text-white">0 AXUSD</div>
-                    <p className="text-gray-400 mt-2">Max: 1,000,000,000</p>
+                    <div className="text-3xl font-bold text-white">
+                      {loading ? (
+                        <span className="animate-pulse">Loading...</span>
+                      ) : (
+                        `${formatNumber(supplyData?.totalSupply || '0')} AXUSD`
+                      )}
+                    </div>
+                    <p className="text-gray-400 mt-2">Max: 1B AXUSD</p>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-emerald-500/30 rounded-xl p-6">
+                    <h3 className="text-emerald-400 flex items-center gap-2 font-bold mb-4">
+                      <span className="text-2xl">$</span> Circulating Supply
+                    </h3>
+                    <div className="text-3xl font-bold text-white">
+                      {loading ? (
+                        <span className="animate-pulse">Loading...</span>
+                      ) : (
+                        `${formatNumber(supplyData?.circulatingSupply || '0')} AXUSD`
+                      )}
+                    </div>
+                    <p className="text-gray-400 mt-2">In user wallets</p>
                   </div>
 
                   <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-blue-500/30 rounded-xl p-6">
                     <h3 className="text-blue-400 flex items-center gap-2 font-bold mb-4">
                       <span className="text-2xl">%</span> Collateral Ratio
                     </h3>
-                    <div className="text-4xl font-bold text-white">150%</div>
+                    <div className="text-3xl font-bold text-white">150%</div>
                     <p className="text-gray-400 mt-2">Minimum requirement</p>
                   </div>
 
@@ -119,10 +192,36 @@ export default function AXUSDStablecoinPage() {
                     <h3 className="text-purple-400 flex items-center gap-2 font-bold mb-4">
                       <span className="text-2xl">$</span> PSM Reserve
                     </h3>
-                    <div className="text-4xl font-bold text-white">0 USDC</div>
+                    <div className="text-3xl font-bold text-white">
+                      {loading ? (
+                        <span className="animate-pulse">Loading...</span>
+                      ) : (
+                        `${formatNumber(psmData?.usdcReserve || '0')} USDC`
+                      )}
+                    </div>
                     <p className="text-gray-400 mt-2">1:1 swap available</p>
                   </div>
                 </div>
+                
+                {supplyData && parseFloat(supplyData.lockedSupply) > 0 && (
+                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700 rounded-xl p-6">
+                    <h3 className="text-gray-300 font-bold mb-4">Supply Breakdown</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="text-center p-4 bg-gray-800/50 rounded-lg">
+                        <div className="text-lg font-semibold text-yellow-400">{formatNumber(supplyData.breakdown.backstopReserve)} AXUSD</div>
+                        <div className="text-gray-400 text-sm">Backstop Reserve</div>
+                      </div>
+                      <div className="text-center p-4 bg-gray-800/50 rounded-lg">
+                        <div className="text-lg font-semibold text-blue-400">{formatNumber(supplyData.breakdown.psmReserve)} AXUSD</div>
+                        <div className="text-gray-400 text-sm">PSM Reserve</div>
+                      </div>
+                      <div className="text-center p-4 bg-gray-800/50 rounded-lg">
+                        <div className="text-lg font-semibold text-green-400">{formatNumber(supplyData.breakdown.treasuryReserve)} AXUSD</div>
+                        <div className="text-gray-400 text-sm">Treasury Reserve</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-yellow-500/30 rounded-xl p-6">
                   <h3 className="text-yellow-400 font-bold mb-6 text-xl">How AXUSD Works</h3>
