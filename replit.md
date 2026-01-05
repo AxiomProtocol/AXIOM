@@ -46,6 +46,14 @@ Key features include:
 -   **AXUSD Stablecoin System** (CDP-style hybrid stablecoin with PSM, VaultEngine, Liquidator, BackstopVault, TBillVault, and MarketOperations - security audited with multi-AI review).
 -   **AXUSD Ecosystem Integrations** (SusuAXUSDAdapter for stablecoin savings circles, KeyGrowPaymentModule for rent-to-own housing, SEEDYieldDistributor for SEED holder rewards, AXUSDRevenueRouter for protocol fee distribution, LiquidityBootstrapper for DEX pool seeding - all on Arbitrum One mainnet).
 -   **Land Acquisition System** (SEC Reg CF compliant crowdfunding with tokenized land options via LandOptionRegistry ERC-1155, RegCFCrowdfunding for SEC-compliant $5M raises, and LandAcquisitionPool for SUSU-style community pooling - page at `/land-acquisition` with generated images).
+-   **Land Acquisition Admin Tools** (Enhanced admin workflow at `/admin/land-deals` and `/admin/land-pipeline` with:
+    - 3-step landowner property submission form at `/landowners/submit` with automatic lead scoring (0-100)
+    - Email notifications via Resend for new submissions, status changes, and admin alerts
+    - Document uploads via Replit Object Storage for property deeds, surveys, photos
+    - Automatic and manual steward assignment API
+    - 6-stage multi-stage approval workflow (Submission → Admin Review → Steward Assignment → Steward Evaluation → Community Vote → Final Approval)
+    - CRM Kanban pipeline view with drag-and-drop status updates
+    - Database tables: land_submissions, land_documents, land_options, crowdfunding_campaigns, governance_proposals)
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
@@ -55,7 +63,7 @@ Key features include:
 -   **Libraries:** Ethers.js, viem + TypeScript
 -   **Databases:** PostgreSQL, Neon Database, MongoDB
 -   **Database Tools:** Drizzle Kit
--   **Email Service:** SendGrid
+-   **Email Service:** Resend (via Replit Integration)
 -   **Payment Processing:** Stripe
 -   **Cloud Storage:** Google Cloud Storage, Storacha (Web3 Storage/IPFS)
 -   **Property Data:** ATTOM Data

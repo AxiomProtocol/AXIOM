@@ -1,8 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { Storage } from '@google-cloud/storage';
 import { randomUUID } from 'crypto';
 
 const REPLIT_SIDECAR_ENDPOINT = 'http://127.0.0.1:1106';
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+];
 
 async function signObjectURL({
   bucketName,
@@ -65,6 +74,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Missing required field: name' });
     }
 
+    if (size && size > MAX_FILE_SIZE) {
+      return res.status(400).json({ error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB` });
+    }
+
+    if (contentType && !ALLOWED_TYPES.includes(contentType)) {
+      return res.status(400).json({ 
+        error: 'Invalid file type. Allowed: PDF, JPEG, PNG, WebP, DOC, DOCX' 
+      });
+    }
+
     const privateDir = process.env.PRIVATE_OBJECT_DIR;
     if (!privateDir) {
       return res.status(500).json({ error: 'Object storage not configured' });
@@ -86,7 +105,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     res.json({
       uploadURL,
-      objectPath: `/objects/${category}/${safeFilename}`,
+      objectPath: `${category}/${safeFilename}`,
+      fullStoragePath: fullPath,
       metadata: { name, size, contentType },
     });
   } catch (error: any) {

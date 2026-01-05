@@ -54,6 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader('Content-Type', metadata.contentType || 'application/octet-stream');
     res.setHeader('Content-Length', metadata.size || 0);
     res.setHeader('Cache-Control', 'private, max-age=3600');
+    res.setHeader('Content-Disposition', 'inline');
 
     const stream = file.createReadStream();
     stream.pipe(res);
