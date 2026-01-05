@@ -65,7 +65,7 @@ export default function HomePage() {
           <div className="flex flex-wrap justify-center gap-6 mb-10 text-sm text-gray-400">
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-              <span>29 Smart Contracts Deployed</span>
+              <span>40 Smart Contracts Deployed</span>
             </div>
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
@@ -216,13 +216,42 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* AXUSD Stablecoin Banner - NEW */}
+      <section className="py-12 px-4 bg-gradient-to-r from-green-900/30 via-emerald-900/30 to-teal-900/30 border-y-2 border-green-500/50">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex-1 text-center md:text-left">
+              <div className="inline-block bg-green-500/20 border border-green-400 rounded-full px-4 py-1 mb-3">
+                <span className="text-green-400 text-sm font-semibold">$ AXUSD STABLECOIN</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
+                The Settlement Layer of Axiom
+              </h2>
+              <p className="text-lg text-gray-300 max-w-2xl">
+                Mint <span className="text-green-400 font-semibold">AXUSD</span> against crypto collateral, 
+                swap 1:1 via PSM, and earn <span className="text-green-400 font-semibold">50% protocol revenue</span> through SEED.
+                11 verified contracts on Arbitrum One.
+              </p>
+            </div>
+            <div className="flex-shrink-0">
+              <Button 
+                onClick={() => navigate('/axusd')}
+                className="text-xl px-8 py-6 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-black font-bold rounded-xl shadow-2xl hover:shadow-green-500/50 transition-all duration-300 hover:scale-105"
+              >
+                $ Explore AXUSD
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* DeFi Opportunities Banner */}
       <section className="py-12 px-4 bg-gradient-to-r from-blue-900/30 via-purple-900/30 to-blue-900/30 border-y-2 border-blue-500/50">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex-1 text-center md:text-left">
               <div className="inline-block bg-blue-500/20 border border-blue-400 rounded-full px-4 py-1 mb-3">
-                <span className="text-blue-400 text-sm font-semibold">⚡ ARBITRUM ONE NETWORK</span>
+                <span className="text-blue-400 text-sm font-semibold">ARBITRUM ONE NETWORK</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
                 Earn Real Yield with Arbitrum DeFi
@@ -237,7 +266,7 @@ export default function HomePage() {
                 onClick={() => navigate('/axiom-defi')}
                 className="text-xl px-8 py-6 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold rounded-xl shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105"
               >
-                💰 View DeFi Opportunities
+                View DeFi Opportunities
               </Button>
             </div>
           </div>

@@ -159,6 +159,10 @@ function generateBreadcrumbs(pathname: string): BreadcrumbItem[] {
     'learn-how-it-works': { 
       label: 'Learn How It Works',
       icon: <span>🎓</span>
+    },
+    'axusd': { 
+      label: 'AXUSD Stablecoin',
+      icon: <span>$</span>
     }
   };
 
