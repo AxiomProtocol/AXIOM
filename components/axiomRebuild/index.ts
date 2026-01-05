@@ -16,3 +16,5 @@ export { ProofStrip } from "./ProofStrip";
 export { JourneyGraphic } from "./JourneyGraphic";
 export { RoleCards } from "./RoleCards";
 export { track, trackOnce, trackCta, trackProofInteraction, createSectionObserver } from "./analytics";
+export { LiveCrowdfundingSection } from "./LiveCrowdfundingSection";
+export { LandownerCallout } from "./LandownerCallout";

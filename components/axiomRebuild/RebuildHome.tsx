@@ -10,6 +10,8 @@ import { JourneyGraphic } from "./JourneyGraphic";
 import { RoleCards } from "./RoleCards";
 import { FutureLandPipeline } from "./FutureLandPipeline";
 import { TokenUtilityCallout } from "./TokenUtilityCallout";
+import { LiveCrowdfundingSection } from "./LiveCrowdfundingSection";
+import { LandownerCallout } from "./LandownerCallout";
 import { trackOnce } from "./analytics";
 
 interface SectionType {
@@ -78,6 +80,8 @@ export function RebuildHome() {
       
       <MetricsRow page="home" />
       
+      <LiveCrowdfundingSection page="home" />
+      
       {proofSection && (
         <SectionWrapper id="proof">
           <Web3Section
@@ -134,6 +138,8 @@ export function RebuildHome() {
       )}
       
       <FutureLandPipeline page="home" />
+      
+      <LandownerCallout page="home" />
       
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "60px 20px" }}>
         <TokenUtilityCallout page="home" />

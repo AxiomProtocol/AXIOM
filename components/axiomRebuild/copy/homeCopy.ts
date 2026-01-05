@@ -5,8 +5,9 @@ export const homeCopy = {
     secondary: "Shared Ownership Built on Structure, Not Trust",
     subheadline:
       "Axiom creates structured paths for shared land ownership and real asset participation, starting with farmland.",
-    primaryCta: { label: "Explore KeyGrow", href: "/keygrow" },
-    secondaryCta: { label: "See Our Origin Story", href: "/origin" },
+    primaryCta: { label: "View Live Projects", href: "/land-acquisition" },
+    secondaryCta: { label: "Explore KeyGrow", href: "/keygrow" },
+    tertiaryCta: { label: "See Our Origin Story", href: "/origin" },
     microcopy:
       "Built from real execution: a community farmland purchase, development work, and a founder-led infrastructure roadmap."
   },
