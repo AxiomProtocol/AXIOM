@@ -34,6 +34,11 @@ const config: HardhatUserConfig = {
       chainId: 42161,
       accounts: process.env.DEPLOYER_PK ? [process.env.DEPLOYER_PK] : [],
     },
+    arbitrumSepolia: {
+      url: "https://sepolia-rollup.arbitrum.io/rpc",
+      chainId: 421614,
+      accounts: process.env.DEPLOYER_PK ? [process.env.DEPLOYER_PK] : [],
+    },
     peaq: {
       url: process.env.PEAQ_RPC_URL || "",
       chainId: 3338,
