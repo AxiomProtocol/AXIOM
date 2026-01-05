@@ -25,6 +25,7 @@ export const navItems: NavItem[] = [
     children: [
       { label: "Overview", href: "/landowners" },
       { label: "How It Works", href: "/landowners#how-it-works" },
+      { label: "Submit Property", href: "/landowners/submit" },
       { label: "FAQ", href: "/landowners/faq" },
       { label: "Apply", href: "/landowners/apply" }
     ]
@@ -72,6 +73,7 @@ export const navItems: NavItem[] = [
       { label: "SUSU Savings", href: "/susu-start" },
       { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "Land Acquisition", href: "/land-acquisition" },
+      { label: "Land Pipeline", href: "/admin/land-pipeline" },
       { label: "Staking", href: "/staking" },
       { label: "DEX Exchange", href: "/dex" },
       { label: "Governance", href: "/governance" },
