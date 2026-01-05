@@ -20,6 +20,9 @@ contract Liquidator is AccessControl, ReentrancyGuard {
 
     bool public permissionless;
     uint256 public keeperBonus;
+    uint256 public maxBatchSize;
+    
+    mapping(address => uint256) private _lastLiquidationBlock;
 
     event LiquidationExecuted(
         address indexed owner,
@@ -40,6 +43,7 @@ contract Liquidator is AccessControl, ReentrancyGuard {
         axusd = IAxiomStable(_axusd);
         permissionless = true;
         keeperBonus = 50;
+        maxBatchSize = 10;
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);
@@ -91,6 +95,7 @@ contract Liquidator is AccessControl, ReentrancyGuard {
     ) external nonReentrant {
         require(owners.length == collaterals.length, "Liquidator: length mismatch");
         require(owners.length == maxDebts.length, "Liquidator: length mismatch");
+        require(owners.length <= maxBatchSize, "Liquidator: batch too large");
 
         for (uint256 i = 0; i < owners.length; i++) {
             if (vaultEngine.isLiquidatable(owners[i], collaterals[i])) {
@@ -99,6 +104,11 @@ contract Liquidator is AccessControl, ReentrancyGuard {
                 }
             }
         }
+    }
+
+    function setMaxBatchSize(uint256 newSize) external onlyRole(ADMIN_ROLE) {
+        require(newSize > 0 && newSize <= 50, "Liquidator: invalid batch size");
+        maxBatchSize = newSize;
     }
 
     function liquidateSingle(

@@ -30,8 +30,21 @@ contract PSM is AccessControl, ReentrancyGuard, Pausable, IPSM {
     address public feeRecipient;
     uint256 public collectedFees;
 
+    uint256 public blockMintLimit;
+    uint256 public blockRedeemLimit;
+    uint256 private _blockMintUsed;
+    uint256 private _blockRedeemUsed;
+    uint256 private _lastMintBlock;
+    uint256 private _lastRedeemBlock;
+
+    mapping(address => uint256) private _lastSwapBlock;
+
     event FeeRecipientUpdated(address indexed newRecipient);
     event FeesWithdrawn(address indexed recipient, uint256 amount);
+    event BlockLimitsUpdated(uint256 mintLimit, uint256 redeemLimit);
+
+    error FlashLoanDetected();
+    error BlockLimitExceeded();
 
     constructor(
         address _axusd,
@@ -59,13 +72,30 @@ contract PSM is AccessControl, ReentrancyGuard, Pausable, IPSM {
     }
 
     function swapCollateralForAXUSD(uint256 collateralAmount) external override nonReentrant whenNotPaused returns (uint256 axusdAmount) {
+        return swapCollateralForAXUSDWithMin(collateralAmount, 0);
+    }
+
+    function swapCollateralForAXUSDWithMin(uint256 collateralAmount, uint256 minAxusdOut) public nonReentrant whenNotPaused returns (uint256 axusdAmount) {
         require(collateralAmount > 0, "PSM: zero amount");
+        
+        if (_lastSwapBlock[msg.sender] == block.number) revert FlashLoanDetected();
+        _lastSwapBlock[msg.sender] = block.number;
 
         uint256 axusdEquivalent = _toAxusdDecimals(collateralAmount);
         uint256 fee = (axusdEquivalent * mintFee) / BASIS_POINTS;
         axusdAmount = axusdEquivalent - fee;
 
+        require(axusdAmount >= minAxusdOut, "PSM: slippage exceeded");
         require(debtOutstanding + axusdAmount <= debtCeiling, "PSM: debt ceiling exceeded");
+
+        if (blockMintLimit > 0) {
+            if (block.number > _lastMintBlock) {
+                _blockMintUsed = 0;
+                _lastMintBlock = block.number;
+            }
+            if (_blockMintUsed + axusdAmount > blockMintLimit) revert BlockLimitExceeded();
+            _blockMintUsed += axusdAmount;
+        }
 
         collateral.safeTransferFrom(msg.sender, address(this), collateralAmount);
 
@@ -78,13 +108,30 @@ contract PSM is AccessControl, ReentrancyGuard, Pausable, IPSM {
     }
 
     function swapAXUSDForCollateral(uint256 axusdAmount) external override nonReentrant whenNotPaused returns (uint256 collateralAmount) {
+        return swapAXUSDForCollateralWithMin(axusdAmount, 0);
+    }
+
+    function swapAXUSDForCollateralWithMin(uint256 axusdAmount, uint256 minCollateralOut) public nonReentrant whenNotPaused returns (uint256 collateralAmount) {
         require(axusdAmount > 0, "PSM: zero amount");
+
+        if (_lastSwapBlock[msg.sender] == block.number) revert FlashLoanDetected();
+        _lastSwapBlock[msg.sender] = block.number;
 
         uint256 fee = (axusdAmount * redeemFee) / BASIS_POINTS;
         uint256 axusdAfterFee = axusdAmount - fee;
         collateralAmount = _toCollateralDecimals(axusdAfterFee);
 
+        require(collateralAmount >= minCollateralOut, "PSM: slippage exceeded");
         require(collateralAmount <= collateral.balanceOf(address(this)), "PSM: insufficient collateral");
+
+        if (blockRedeemLimit > 0) {
+            if (block.number > _lastRedeemBlock) {
+                _blockRedeemUsed = 0;
+                _lastRedeemBlock = block.number;
+            }
+            if (_blockRedeemUsed + axusdAmount > blockRedeemLimit) revert BlockLimitExceeded();
+            _blockRedeemUsed += axusdAmount;
+        }
 
         axusd.burn(msg.sender, axusdAmount);
 
@@ -177,6 +224,12 @@ contract PSM is AccessControl, ReentrancyGuard, Pausable, IPSM {
 
     function getDebtOutstanding() external view override returns (uint256) {
         return debtOutstanding;
+    }
+
+    function setBlockLimits(uint256 _mintLimit, uint256 _redeemLimit) external onlyRole(ADMIN_ROLE) {
+        blockMintLimit = _mintLimit;
+        blockRedeemLimit = _redeemLimit;
+        emit BlockLimitsUpdated(_mintLimit, _redeemLimit);
     }
 
     function pause() external onlyRole(GUARDIAN_ROLE) {
