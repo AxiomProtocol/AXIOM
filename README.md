@@ -1,138 +1,168 @@
 # AXIOM PROTOCOL
 
-## ⚠️ PROPRIETARY SOFTWARE - ALL RIGHTS RESERVED
+## Land-First Community Ownership Platform
 
-**Copyright (c) 2024 Axiom Protocol. All Rights Reserved.**
+**Communities that control land control their future.**
 
-This repository contains proprietary and confidential information. Unauthorized use, copying, modification, or distribution is strictly prohibited. See [LICENSE](LICENSE) for full terms.
+Axiom Protocol is a land-first economic model that transforms how communities acquire, develop, and own real estate through SEC-compliant crowdfunding, SUSU-style pooling, and tokenized land options.
 
 ---
 
-## Overview
+## Core Programs
 
-Axiom Protocol is America's first on-chain sovereign smart city economy - a comprehensive digital-physical infrastructure platform featuring:
+### KeyGrow Program
+The organizing principle of Axiom - a complete pipeline from land sourcing to community ownership:
 
-- **KeyGrow™** - Tokenized rent-to-own real estate platform
-- **National Bank of Axiom™** - 30+ digital banking products
-- **MarketsAndListingsHub™** - Tokenized securities trading
-- **DePIN Infrastructure** - Decentralized physical infrastructure network
-- **AXM Token** - Governance and utility token
+1. **Property Sourcing** - Landowners submit properties or import from Zillow, Realtor, Redfin, LoopNet, LandWatch
+2. **Admin Review** - Protocol admins verify property data and score leads
+3. **Steward Assignment** - Local stewards conduct on-ground due diligence
+4. **Steward Evaluation** - Detailed reports with site visits and risk assessments
+5. **Community Vote** - Token holders vote on acquisition proposals
+6. **Final Approval** - Approved properties become tokenized land options
+
+### Three Participation Paths
+
+| Path | Description | Min Investment |
+|------|-------------|----------------|
+| **Reg CF Crowdfunding** | SEC-compliant crowdfunding campaigns | $100 |
+| **SUSU Pooling** | Community savings circles for land acquisition | Monthly contributions |
+| **Land Option Tokens** | ERC-1155 fractional ownership tokens | Varies by property |
+
+### Steward Corps
+A distributed network of local leaders who bridge digital protocol operations with on-ground land activation:
+- Due diligence and site evaluation
+- Landowner relations and negotiations
+- Land activation and community engagement
+- Progress reporting and governance participation
+
+---
 
 ## Technology Stack
 
-- Blockchain: Arbitrum One (Chain ID: 42161)
-- Smart Contracts: 23 verified production contracts (Solidity 0.8.20+)
-- Token Standards: ERC-20 (AXM), ERC-1155 (KeyGrow properties)
-- Compliance: ISO 20022, GENIUS Act ready
-- Frontend: React, Next.js, TypeScript
-- Backend: Node.js, Express, PostgreSQL
+| Layer | Technology |
+|-------|------------|
+| **Blockchain** | Arbitrum One (Chain ID: 42161) |
+| **Smart Contracts** | Solidity 0.8.20+ with OpenZeppelin |
+| **Token Standards** | ERC-20 (AXM), ERC-1155 (Land Options) |
+| **Stablecoin** | AXUSD (CDP + PSM hybrid design) |
+| **Frontend** | Next.js 14, React, TypeScript, TailwindCSS |
+| **Backend** | Node.js, Express, PostgreSQL |
+| **Compliance** | SEC Reg CF, KYC verification, 6 risk disclosures |
+
+---
 
 ## Deployed Contracts
 
-See [docs/contract_registry.md](docs/contract_registry.md) for the complete list of 23 deployed and verified contracts on Arbitrum One.
+**Network:** Arbitrum One Mainnet
 
-**AXM Token:** `0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D`
+| Contract | Address |
+|----------|---------|
+| AXM Token | `0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D` |
+| LandOptionRegistry | See [contract registry](docs/contract_registry.md) |
+| AXUSD Stablecoin | See [contract registry](docs/contract_registry.md) |
 
-## Intellectual Property
-
-### Patent Pending Technologies
-
-The following are protected by pending patent applications:
-
-1. **KeyGrow Tokenization System** - Fractional property ownership via ERC-1155 tokens (100,000 shares per property)
-2. **Option Consideration Staking** - 8% APR staking mechanism for rent-to-own deposits
-3. **Smart City Economy Framework** - Integrated digital-physical governance system
-4. **Digital Banking Architecture** - Blockchain-based full-service banking
-
-### Trademarks
-
-- AXIOM™
-- AXIOM PROTOCOL™
-- KEYGROW™
-- NATIONAL BANK OF AXIOM™
-- UNIVERSE BLOCKCHAIN™
-- AXM™
-
-## Commercial Licensing
-
-**All commercial use requires a paid license.**
-
-Available license types:
-- Full Platform Deployment
-- Smart Contract Integration
-- Component Licensing
-- White-Label Solutions
-- API Access
-
-### Contact
-
-**Licensing Inquiries:** licensing@axiomprotocol.io
-
-**Website:** https://axiomprotocol.io
-
-**Security Issues:** security@axiomprotocol.io
+Full list of 23+ verified contracts available in [docs/contract_registry.md](docs/contract_registry.md).
 
 ---
 
-## Restrictions
+## Key Features
 
-You may **NOT** without prior written authorization:
-
-- ❌ Use any code for commercial purposes
-- ❌ Deploy any smart contracts
-- ❌ Copy, modify, or create derivative works
-- ❌ Integrate components into other products
-- ❌ Offer as a service (SaaS/PaaS)
-- ❌ Use for competing products or services
-
-## Evaluation Access
-
-Limited evaluation access may be granted for:
-- Academic research (non-commercial)
-- Security auditing (with NDA)
-- Investment due diligence (with NDA)
-
-Contact licensing@axiomprotocol.io for evaluation requests.
+- **Land Acquisition System** - End-to-end property sourcing, evaluation, and tokenization
+- **SEC Reg CF Compliance** - Investment limit calculator, KYC, 6 required disclosures
+- **SUSU Savings Circles** - On-chain ROSCA with insurance fund protection
+- **Governance** - Token-weighted voting with steward council oversight
+- **Transparency Dashboard** - Real-time protocol metrics and treasury visibility
+- **Social Campaigns** - Referral tracking, short links, social share tools
 
 ---
 
-## Legal Notice
+## Getting Started
 
-This software is protected by:
-- United States Copyright Law (17 U.S.C.)
-- International Copyright Treaties
-- Patent Laws (pending applications)
-- Trade Secret Laws
+### For Landowners
+Submit your property for community acquisition consideration:
+```
+https://axiomprotocol.io/landowners/submit
+```
 
-Violations will be pursued to the fullest extent of the law.
+### For Investors
+Browse active crowdfunding campaigns and SUSU pools:
+```
+https://axiomprotocol.io/land-acquisition
+```
+
+### For Stewards
+Join the Steward Corps and lead land acquisition in your region:
+```
+https://axiomprotocol.io/stewards/apply
+```
 
 ---
 
-## Licensing and Use
+## Development
 
-This code is provided for:
-- Review and evaluation purposes
-- Security auditing (with NDA)
-- Integration planning discussions
+### Prerequisites
+- Node.js 20+
+- PostgreSQL database
+- Arbitrum One RPC access
 
-**Any commercial, revenue-generating, or production deployment requires a separate commercial license agreement with Axiom Protocol.**
+### Local Development
+```bash
+npm install
+npm run dev
+```
 
-See the [LICENSE](LICENSE) file for complete terms. Contact licensing@axiomprotocol.io for commercial license options.
+### Production Build
+```bash
+npm run prebuild
+npm start
+```
+
+### Deployment
+The project uses Next.js standalone output. Run `prebuild.sh` before deploying to avoid build timeouts.
 
 ---
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
-| [Tokenomics](docs/tokenomics.md) | Canonical AXM token specification |
-| [Contract Registry](docs/contract_registry.md) | All 23 deployed contracts |
-| [Security](docs/security.md) | Audit status and admin controls |
-| [KeyGrow](docs/keygrow.md) | Rent-to-own technical specification |
-| [Verify AXM](docs/verify_axiom.md) | How to verify the token |
+- [Whitepaper](https://axiomprotocol.io/whitepaper) - Land-first economic model
+- [Contract Registry](docs/contract_registry.md) - All deployed contracts
+- [API Documentation](docs/api.md) - Backend API reference
+- [Steward Playbook](docs/steward-playbook.md) - Steward operations guide
 
 ---
 
-**Copyright (c) 2024 Axiom Protocol. All Rights Reserved.**
+## Security
 
-See [LICENSE](LICENSE) | [NOTICE](NOTICE) | [SECURITY](SECURITY.md)
+Security vulnerabilities should be reported to: **security@axiomprotocol.io**
+
+All smart contracts have undergone multi-AI security review. See [SECURITY.md](SECURITY.md) for details.
+
+---
+
+## License
+
+**PROPRIETARY SOFTWARE - ALL RIGHTS RESERVED**
+
+Copyright (c) 2024-2025 Axiom Protocol. Unauthorized use, copying, modification, or distribution is strictly prohibited. See [LICENSE](LICENSE) for full terms.
+
+### Commercial Licensing
+All commercial use requires a paid license. Contact: **licensing@axiomprotocol.io**
+
+---
+
+## Trademarks
+
+- AXIOM™
+- AXIOM PROTOCOL™
+- KEYGROW™
+- AXM™
+- AXUSD™
+- STEWARD CORPS™
+
+---
+
+## Contact
+
+- **Website:** https://axiomprotocol.io
+- **Licensing:** licensing@axiomprotocol.io
+- **Security:** security@axiomprotocol.io
