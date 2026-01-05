@@ -45,6 +45,7 @@ Key features include:
 -   **Wealth Engine V2 Contracts** (DeFi Treasury System including AxiomScoreSBT for on-chain credit scoring, SusuInsuranceFund, SEED for AXM locking and voting power, and AxiomFeeBurner for AXM buyback/burn and SEED holder distribution).
 -   **AXUSD Stablecoin System** (CDP-style hybrid stablecoin with PSM, VaultEngine, Liquidator, BackstopVault, TBillVault, and MarketOperations - security audited with multi-AI review).
 -   **AXUSD Ecosystem Integrations** (SusuAXUSDAdapter for stablecoin savings circles, KeyGrowPaymentModule for rent-to-own housing, SEEDYieldDistributor for SEED holder rewards, AXUSDRevenueRouter for protocol fee distribution, LiquidityBootstrapper for DEX pool seeding - all on Arbitrum One mainnet).
+-   **Land Acquisition System** (SEC Reg CF compliant crowdfunding with tokenized land options via LandOptionRegistry ERC-1155, RegCFCrowdfunding for SEC-compliant $5M raises, and LandAcquisitionPool for SUSU-style community pooling - page at `/land-acquisition` with generated images).
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)

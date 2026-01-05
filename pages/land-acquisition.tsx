@@ -3,34 +3,17 @@ import Head from "next/head";
 import Link from "next/link";
 import { SiteLayout } from "../components/navigation";
 
-interface LandOption {
-  id: number;
-  parcelId: string;
-  location: string;
-  acreage: string;
-  purchasePrice: string;
-  optionFee: string;
-  status: string;
-  totalShares: number;
-  sharesSold: number;
-  minInvestment: string;
-  maxInvestment: string;
-  regCFCompliant: boolean;
-  description: string;
-  featuredImage: string;
-  propertyType: string;
-  projectedReturns: string;
-  riskLevel: string;
-  percentFunded: string;
-  raisedAmount: string;
+interface Stats {
+  landOptions: { total: number; active: number; totalValue: string };
+  crowdfunding: { total: number; live: number; totalRaised: string; investors: number };
+  pools: { total: number; active: number; totalPooled: string; members: number };
+  regCF: { maxRaise: number; maxNonAccredited: number; complianceStatus: string };
 }
 
 interface Campaign {
   id: number;
-  landOptionId: number;
   title: string;
   subtitle: string;
-  description: string;
   targetAmount: string;
   raisedAmount: string;
   investorCount: number;
@@ -66,12 +49,15 @@ interface Pool {
   } | null;
 }
 
-interface Stats {
-  landOptions: { total: number; active: number; totalValue: string };
-  crowdfunding: { total: number; live: number; totalRaised: string; investors: number };
-  pools: { total: number; active: number; totalPooled: string; members: number };
-  regCF: { maxRaise: number; maxNonAccredited: number; complianceStatus: string };
-}
+const theme = {
+  primary: '#00D4AA',
+  secondary: '#FFD700',
+  accent: '#7B68EE',
+  dark: '#121212',
+  muted: 'rgba(18, 18, 18, 0.74)',
+  border: 'rgba(0, 0, 0, 0.06)',
+  cardBg: 'rgba(255, 255, 255, 0.85)',
+};
 
 export default function LandAcquisitionPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'crowdfunding' | 'pools' | 'how-it-works'>('overview');
@@ -79,8 +65,10 @@ export default function LandAcquisitionPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [pools, setPools] = useState<Pool[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     async function fetchData() {
       try {
         const [statsRes, campaignsRes, poolsRes] = await Promise.all([
@@ -120,300 +108,521 @@ export default function LandAcquisitionPage() {
         <meta name="description" content="Community-powered land acquisition through Reg CF crowdfunding and SUSU-style pooling. Invest in tokenized land options with as little as $100." />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
-        <section className="relative py-16 px-4 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-green-500/5"></div>
-          <div className="absolute top-0 left-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-green-500/10 rounded-full blur-3xl animate-pulse"></div>
+      <main style={{ background: '#FFFFFF', minHeight: '100vh' }}>
+        <style jsx global>{`
+          @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+          }
+        `}</style>
+        
+        <section style={{ 
+          padding: "80px 0 60px 0",
+          background: "#FFFFFF",
+          position: "relative",
+          overflow: "hidden"
+        }}>
+          <div style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: `
+              radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 212, 170, 0.08) 0%, transparent 50%),
+              radial-gradient(ellipse 60% 40% at 80% 60%, rgba(123, 104, 238, 0.05) 0%, transparent 50%),
+              radial-gradient(ellipse 50% 30% at 20% 80%, rgba(255, 215, 0, 0.04) 0%, transparent 50%)
+            `,
+            pointerEvents: "none"
+          }} />
 
-          <div className="relative z-10 max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <div className="inline-block bg-amber-500/20 border border-amber-400 rounded-full px-6 py-2 mb-6 backdrop-blur-sm">
-                <span className="text-amber-400 font-semibold">REG CF COMPLIANT</span>
+          <div style={{
+            position: "absolute",
+            top: "50%",
+            right: "-5%",
+            width: "400px",
+            height: "400px",
+            opacity: mounted ? 0.6 : 0,
+            transition: "opacity 1s ease",
+            pointerEvents: "none"
+          }}>
+            <div style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(0, 212, 170, 0.1) 100%)",
+              borderRadius: "50%",
+              filter: "blur(60px)",
+              animation: "float 6s ease-in-out infinite"
+            }} />
+          </div>
+
+          <div style={{
+            position: "absolute",
+            top: "20%",
+            left: "-10%",
+            width: "300px",
+            height: "300px",
+            opacity: mounted ? 0.4 : 0,
+            transition: "opacity 1.2s ease 0.3s",
+            pointerEvents: "none"
+          }}>
+            <div style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(135deg, rgba(123, 104, 238, 0.12) 0%, rgba(0, 212, 170, 0.08) 100%)",
+              borderRadius: "50%",
+              filter: "blur(50px)",
+              animation: "float 8s ease-in-out infinite"
+            }} />
+          </div>
+
+          <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", position: "relative" }}>
+            <div style={{
+              background: "rgba(255, 255, 255, 0.85)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(0, 0, 0, 0.06)",
+              borderRadius: "24px",
+              padding: "40px",
+              boxShadow: "0 12px 40px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04)",
+              transform: mounted ? "translateY(0)" : "translateY(20px)",
+              opacity: mounted ? 1 : 0,
+              transition: "all 0.8s ease"
+            }}>
+              <div style={{ 
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                background: "linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(0, 212, 170, 0.1) 100%)",
+                padding: "8px 16px",
+                borderRadius: "100px",
+                marginBottom: "20px"
+              }}>
+                <span style={{ fontSize: "14px" }}>🏛️</span>
+                <span style={{ 
+                  fontSize: "14px", 
+                  fontWeight: 600, 
+                  color: theme.dark,
+                  letterSpacing: "0.02em"
+                }}>
+                  SEC REG CF COMPLIANT
+                </span>
               </div>
 
-              <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-green-500">
-                  Land Acquisition
-                </span>
-                <br />
-                <span className="text-white text-3xl md:text-4xl">
-                  Community-Powered Real Estate
-                </span>
+              <h1 style={{ 
+                margin: "0 0 16px 0", 
+                fontSize: "clamp(32px, 5vw, 52px)", 
+                fontWeight: 700, 
+                lineHeight: 1.1,
+                color: theme.dark
+              }}>
+                Community-Powered Land Acquisition
               </h1>
 
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
-                Invest in <span className="text-amber-400 font-semibold">tokenized land options</span> through 
-                SEC-compliant Reg CF crowdfunding. Pool resources with your community to acquire and develop 
-                real property - starting with as little as $100.
+              <h2 style={{ 
+                margin: "0 0 20px 0", 
+                fontSize: "clamp(18px, 2.5vw, 24px)", 
+                fontWeight: 500, 
+                color: theme.muted,
+                lineHeight: 1.4
+              }}>
+                Own Real Land Through Tokenized Investment
+              </h2>
+
+              <p style={{ 
+                margin: "0 0 24px 0", 
+                fontSize: "16px", 
+                color: theme.muted,
+                maxWidth: "700px",
+                lineHeight: 1.6
+              }}>
+                Invest in tokenized land options through SEC-compliant Reg CF crowdfunding. 
+                Pool resources with your community to acquire and develop real property - starting with as little as $100.
               </p>
 
-              <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-                  <span>Up to $5M Reg CF Raises</span>
+              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "24px" }}>
+                <button
+                  onClick={() => setActiveTab('crowdfunding')}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "14px 24px",
+                    background: theme.primary,
+                    color: "#FFFFFF",
+                    border: "none",
+                    borderRadius: "12px",
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    boxShadow: "0 4px 14px rgba(0, 212, 170, 0.3)"
+                  }}
+                >
+                  <span>🌱</span> Explore Campaigns
+                </button>
+                <button
+                  onClick={() => setActiveTab('pools')}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "14px 24px",
+                    background: "transparent",
+                    color: theme.dark,
+                    border: "1px solid rgba(0, 0, 0, 0.18)",
+                    borderRadius: "12px",
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    transition: "all 0.3s ease"
+                  }}
+                >
+                  <span>👥</span> Join Acquisition Pool
+                </button>
+              </div>
+
+              <p style={{ 
+                margin: 0, 
+                fontSize: "13px", 
+                color: "rgba(18, 18, 18, 0.5)",
+                fontStyle: "italic"
+              }}>
+                Zero out-of-pocket capital required. AXUSD payments accepted. Fractional ownership with governance rights.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section style={{ 
+          borderTop: `1px solid ${theme.border}`,
+          padding: "40px 0"
+        }}>
+          <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "20px" }}>
+              <div style={{
+                background: "linear-gradient(135deg, rgba(255, 215, 0, 0.08) 0%, rgba(0, 212, 170, 0.04) 100%)",
+                border: "1px solid rgba(255, 215, 0, 0.2)",
+                borderRadius: "16px",
+                padding: "24px",
+                textAlign: "center"
+              }}>
+                <div style={{ fontSize: "32px", marginBottom: "12px" }}>🏞️</div>
+                <div style={{ fontSize: "14px", color: theme.muted, marginBottom: "4px" }}>Land Options</div>
+                <div style={{ fontSize: "28px", fontWeight: 700, color: theme.dark }}>
+                  {loading ? '...' : stats?.landOptions.active || 0}
                 </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-                  <span>$100 Minimum Investment</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-                  <span>ERC-1155 Tokenized Shares</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-                  <span>SEED Governance Rights</span>
+                <div style={{ fontSize: "13px", color: theme.primary, fontWeight: 500 }}>
+                  {loading ? '...' : formatCurrency(stats?.landOptions.totalValue || '0')} Value
                 </div>
               </div>
-            </div>
 
-            <div className="flex flex-wrap justify-center gap-2 mb-8">
+              <div style={{
+                background: "linear-gradient(135deg, rgba(0, 212, 170, 0.08) 0%, rgba(123, 104, 238, 0.04) 100%)",
+                border: "1px solid rgba(0, 212, 170, 0.2)",
+                borderRadius: "16px",
+                padding: "24px",
+                textAlign: "center"
+              }}>
+                <div style={{ fontSize: "32px", marginBottom: "12px" }}>💰</div>
+                <div style={{ fontSize: "14px", color: theme.muted, marginBottom: "4px" }}>Total Raised</div>
+                <div style={{ fontSize: "28px", fontWeight: 700, color: theme.dark }}>
+                  {loading ? '...' : formatCurrency(stats?.crowdfunding.totalRaised || '0')}
+                </div>
+                <div style={{ fontSize: "13px", color: theme.primary, fontWeight: 500 }}>
+                  {loading ? '...' : stats?.crowdfunding.investors || 0} Investors
+                </div>
+              </div>
+
+              <div style={{
+                background: "linear-gradient(135deg, rgba(123, 104, 238, 0.08) 0%, rgba(0, 212, 170, 0.04) 100%)",
+                border: "1px solid rgba(123, 104, 238, 0.2)",
+                borderRadius: "16px",
+                padding: "24px",
+                textAlign: "center"
+              }}>
+                <div style={{ fontSize: "32px", marginBottom: "12px" }}>👥</div>
+                <div style={{ fontSize: "14px", color: theme.muted, marginBottom: "4px" }}>Active Pools</div>
+                <div style={{ fontSize: "28px", fontWeight: 700, color: theme.dark }}>
+                  {loading ? '...' : stats?.pools.active || 0}
+                </div>
+                <div style={{ fontSize: "13px", color: theme.accent, fontWeight: 500 }}>
+                  {loading ? '...' : stats?.pools.members || 0} Members
+                </div>
+              </div>
+
+              <div style={{
+                background: "linear-gradient(135deg, rgba(0, 212, 170, 0.08) 0%, rgba(255, 215, 0, 0.04) 100%)",
+                border: "1px solid rgba(0, 212, 170, 0.2)",
+                borderRadius: "16px",
+                padding: "24px",
+                textAlign: "center"
+              }}>
+                <div style={{ fontSize: "32px", marginBottom: "12px" }}>🏛️</div>
+                <div style={{ fontSize: "14px", color: theme.muted, marginBottom: "4px" }}>Reg CF Max</div>
+                <div style={{ fontSize: "28px", fontWeight: 700, color: theme.dark }}>$5M</div>
+                <div style={{ fontSize: "13px", color: theme.primary, fontWeight: 500 }}>Per Raise</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section style={{ borderTop: `1px solid ${theme.border}`, padding: "20px 0" }}>
+          <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}>
               {(['overview', 'crowdfunding', 'pools', 'how-it-works'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                    activeTab === tab
-                      ? 'bg-amber-500 text-black'
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                  }`}
+                  style={{
+                    padding: "12px 24px",
+                    background: activeTab === tab ? theme.primary : "transparent",
+                    color: activeTab === tab ? "#FFFFFF" : theme.dark,
+                    border: activeTab === tab ? "none" : "1px solid rgba(0, 0, 0, 0.12)",
+                    borderRadius: "12px",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.3s ease"
+                  }}
                 >
-                  {tab === 'overview' && 'Overview'}
-                  {tab === 'crowdfunding' && 'Crowdfunding'}
-                  {tab === 'pools' && 'Acquisition Pools'}
-                  {tab === 'how-it-works' && 'How It Works'}
+                  {tab === 'overview' && '📊 Overview'}
+                  {tab === 'crowdfunding' && '🎯 Crowdfunding'}
+                  {tab === 'pools' && '👥 Acquisition Pools'}
+                  {tab === 'how-it-works' && '📖 How It Works'}
                 </button>
               ))}
             </div>
+          </div>
+        </section>
 
+        <section style={{ padding: "40px 0 80px" }}>
+          <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+            
             {activeTab === 'overview' && (
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-amber-500/30 rounded-xl p-6">
-                    <h3 className="text-amber-400 font-bold mb-2">Land Options</h3>
-                    <div className="text-3xl font-bold text-white">
-                      {loading ? '...' : stats?.landOptions.active || 0}
-                    </div>
-                    <p className="text-gray-400 text-sm">Active Opportunities</p>
-                    <p className="text-amber-400 text-sm mt-2">
-                      {loading ? '...' : formatCurrency(stats?.landOptions.totalValue || '0')} Total Value
-                    </p>
-                  </div>
+              <div>
+                <div style={{
+                  background: "linear-gradient(135deg, rgba(255, 215, 0, 0.06) 0%, rgba(0, 212, 170, 0.04) 100%)",
+                  border: "1px solid rgba(255, 215, 0, 0.15)",
+                  borderRadius: "20px",
+                  padding: "40px",
+                  marginBottom: "40px"
+                }}>
+                  <h3 style={{ margin: "0 0 12px", fontSize: "24px", fontWeight: 700, color: theme.dark }}>
+                    The Land Acquisition Flywheel
+                  </h3>
+                  <p style={{ margin: "0 0 32px", color: theme.muted, maxWidth: 700 }}>
+                    A four-phase system that turns community contributions into real land ownership
+                  </p>
 
-                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-green-500/30 rounded-xl p-6">
-                    <h3 className="text-green-400 font-bold mb-2">Crowdfunding</h3>
-                    <div className="text-3xl font-bold text-white">
-                      {loading ? '...' : formatCurrency(stats?.crowdfunding.totalRaised || '0')}
-                    </div>
-                    <p className="text-gray-400 text-sm">Total Raised</p>
-                    <p className="text-green-400 text-sm mt-2">
-                      {loading ? '...' : stats?.crowdfunding.investors || 0} Investors
-                    </p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-blue-500/30 rounded-xl p-6">
-                    <h3 className="text-blue-400 font-bold mb-2">Acquisition Pools</h3>
-                    <div className="text-3xl font-bold text-white">
-                      {loading ? '...' : stats?.pools.active || 0}
-                    </div>
-                    <p className="text-gray-400 text-sm">Active Pools</p>
-                    <p className="text-blue-400 text-sm mt-2">
-                      {loading ? '...' : stats?.pools.members || 0} Pool Members
-                    </p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-purple-500/30 rounded-xl p-6">
-                    <h3 className="text-purple-400 font-bold mb-2">Reg CF Compliance</h3>
-                    <div className="text-3xl font-bold text-white">$5M</div>
-                    <p className="text-gray-400 text-sm">Max Per Raise</p>
-                    <p className="text-purple-400 text-sm mt-2">SEC Compliant</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px" }}>
+                    {[
+                      { icon: "🔍", title: "1. Scout & Option", desc: "Steward Corps identifies land and negotiates purchase options with landowners", color: "rgba(255, 215, 0, 0.15)" },
+                      { icon: "🪙", title: "2. Tokenize & Fund", desc: "Land shares tokenized as ERC-1155. Community invests via Reg CF crowdfunding", color: "rgba(0, 212, 170, 0.15)" },
+                      { icon: "🤝", title: "3. Pool & Contribute", desc: "SUSU-style monthly contributions build collective purchasing power", color: "rgba(123, 104, 238, 0.15)" },
+                      { icon: "🏡", title: "4. Acquire & Develop", desc: "Exercise option, transfer deed. Revenue flows to SEED holders (50%)", color: "rgba(0, 212, 170, 0.15)" }
+                    ].map((phase, i) => (
+                      <div key={i} style={{
+                        background: phase.color,
+                        border: "1px solid rgba(0, 0, 0, 0.06)",
+                        borderRadius: "16px",
+                        padding: "24px",
+                        textAlign: "center"
+                      }}>
+                        <div style={{ fontSize: "36px", marginBottom: "12px" }}>{phase.icon}</div>
+                        <div style={{ fontSize: "16px", fontWeight: 600, color: theme.dark, marginBottom: "8px" }}>{phase.title}</div>
+                        <div style={{ fontSize: "14px", color: theme.muted, lineHeight: 1.5 }}>{phase.desc}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-yellow-500/30 rounded-xl p-8">
-                  <h3 className="text-yellow-400 font-bold mb-6 text-xl">The Axiom Land Acquisition Flywheel</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl font-bold text-amber-400">1</span>
-                      </div>
-                      <h4 className="font-semibold text-white mb-2">Scout & Option</h4>
-                      <p className="text-gray-400 text-sm">Steward Corps identifies land and negotiates purchase options with landowners</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl font-bold text-green-400">2</span>
-                      </div>
-                      <h4 className="font-semibold text-white mb-2">Tokenize & Fund</h4>
-                      <p className="text-gray-400 text-sm">Land shares tokenized as ERC-1155. Community invests via Reg CF crowdfunding</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl font-bold text-blue-400">3</span>
-                      </div>
-                      <h4 className="font-semibold text-white mb-2">Pool & Contribute</h4>
-                      <p className="text-gray-400 text-sm">SUSU-style monthly contributions build collective purchasing power</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl font-bold text-purple-400">4</span>
-                      </div>
-                      <h4 className="font-semibold text-white mb-2">Acquire & Develop</h4>
-                      <p className="text-gray-400 text-sm">Exercise option, transfer deed. Revenue flows to SEED holders (50%)</p>
+                <h3 style={{ margin: "0 0 20px", fontSize: "20px", fontWeight: 600, color: theme.dark }}>Who Benefits?</h3>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
+                  <div style={{
+                    background: theme.cardBg,
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: "16px",
+                    overflow: "hidden"
+                  }}>
+                    <img 
+                      src="/images/land-acquisition/tokenized_land_shares_tokens.png" 
+                      alt="For Investors"
+                      style={{ width: "100%", height: "180px", objectFit: "cover" }}
+                    />
+                    <div style={{ padding: "20px" }}>
+                      <h4 style={{ margin: "0 0 12px", fontSize: "18px", fontWeight: 600, color: theme.dark }}>
+                        👤 For Investors
+                      </h4>
+                      <ul style={{ margin: 0, padding: "0 0 0 18px", color: theme.muted, fontSize: "14px" }}>
+                        <li>Fractional ownership in real property</li>
+                        <li>$100 minimum investment</li>
+                        <li>SEED governance voting rights</li>
+                        <li>Revenue share from development</li>
+                      </ul>
                     </div>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700 rounded-xl p-6">
-                    <h4 className="text-amber-400 font-bold mb-4">For Investors</h4>
-                    <ul className="space-y-2 text-gray-300 text-sm">
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-400 mt-1">+</span>
-                        <span>Fractional ownership in real property</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-400 mt-1">+</span>
-                        <span>$100 minimum investment</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-400 mt-1">+</span>
-                        <span>SEED governance voting rights</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-400 mt-1">+</span>
-                        <span>Revenue share from development</span>
-                      </li>
-                    </ul>
+                  <div style={{
+                    background: theme.cardBg,
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: "16px",
+                    overflow: "hidden"
+                  }}>
+                    <img 
+                      src="/images/land-acquisition/community_crowdfunding_visualization.png" 
+                      alt="For Landowners"
+                      style={{ width: "100%", height: "180px", objectFit: "cover" }}
+                    />
+                    <div style={{ padding: "20px" }}>
+                      <h4 style={{ margin: "0 0 12px", fontSize: "18px", fontWeight: 600, color: theme.dark }}>
+                        🌾 For Landowners
+                      </h4>
+                      <ul style={{ margin: 0, padding: "0 0 0 18px", color: theme.muted, fontSize: "14px" }}>
+                        <li>Immediate cash flow via option fees</li>
+                        <li>Guaranteed buyer at agreed price</li>
+                        <li>AXUSD payments (swap to USDC anytime)</li>
+                        <li>No carrying costs during option period</li>
+                      </ul>
+                    </div>
                   </div>
 
-                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700 rounded-xl p-6">
-                    <h4 className="text-green-400 font-bold mb-4">For Landowners</h4>
-                    <ul className="space-y-2 text-gray-300 text-sm">
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-400 mt-1">+</span>
-                        <span>Immediate cash flow via option fees</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-400 mt-1">+</span>
-                        <span>Guaranteed buyer at agreed price</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-400 mt-1">+</span>
-                        <span>AXUSD payments (swap to USDC anytime)</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-400 mt-1">+</span>
-                        <span>No carrying costs during option period</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700 rounded-xl p-6">
-                    <h4 className="text-blue-400 font-bold mb-4">For the Protocol</h4>
-                    <ul className="space-y-2 text-gray-300 text-sm">
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-400 mt-1">+</span>
-                        <span>2.5% platform fee on transactions</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-400 mt-1">+</span>
-                        <span>Land-backed AXUSD stability</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-400 mt-1">+</span>
-                        <span>30% revenue to treasury</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-green-400 mt-1">+</span>
-                        <span>Real asset backing for ecosystem</span>
-                      </li>
-                    </ul>
+                  <div style={{
+                    background: theme.cardBg,
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: "16px",
+                    overflow: "hidden"
+                  }}>
+                    <img 
+                      src="/images/land-acquisition/susu_pooling_community_hands.png" 
+                      alt="For the Protocol"
+                      style={{ width: "100%", height: "180px", objectFit: "cover" }}
+                    />
+                    <div style={{ padding: "20px" }}>
+                      <h4 style={{ margin: "0 0 12px", fontSize: "18px", fontWeight: 600, color: theme.dark }}>
+                        🏛️ For the Protocol
+                      </h4>
+                      <ul style={{ margin: 0, padding: "0 0 0 18px", color: theme.muted, fontSize: "14px" }}>
+                        <li>2.5% platform fee on transactions</li>
+                        <li>Land-backed AXUSD stability</li>
+                        <li>30% revenue to treasury</li>
+                        <li>Real asset backing for ecosystem</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
             {activeTab === 'crowdfunding' && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-white">Active Campaigns</h2>
-                  <div className="bg-amber-500/20 border border-amber-400 rounded-lg px-4 py-2">
-                    <span className="text-amber-400 text-sm font-semibold">Reg CF: Up to $5M per raise</span>
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: "24px", fontWeight: 700, color: theme.dark }}>Active Campaigns</h3>
+                    <p style={{ margin: "4px 0 0", color: theme.muted, fontSize: "14px" }}>SEC-compliant Reg CF crowdfunding opportunities</p>
+                  </div>
+                  <div style={{
+                    background: "linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(0, 212, 170, 0.06) 100%)",
+                    border: "1px solid rgba(255, 215, 0, 0.2)",
+                    borderRadius: "8px",
+                    padding: "8px 16px",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color: theme.dark
+                  }}>
+                    Reg CF: Up to $5M per raise
                   </div>
                 </div>
 
                 {loading ? (
-                  <div className="text-center py-12">
-                    <div className="animate-spin w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full mx-auto mb-4"></div>
-                    <p className="text-gray-400">Loading campaigns...</p>
+                  <div style={{ textAlign: "center", padding: "60px 0" }}>
+                    <div style={{ fontSize: "32px", marginBottom: "16px" }}>⏳</div>
+                    <p style={{ color: theme.muted }}>Loading campaigns...</p>
                   </div>
                 ) : campaigns.length === 0 ? (
-                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl p-12 text-center">
-                    <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <svg className="w-10 h-10 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
+                  <div style={{
+                    background: "linear-gradient(135deg, rgba(255, 215, 0, 0.06) 0%, rgba(0, 212, 170, 0.04) 100%)",
+                    border: "1px solid rgba(255, 215, 0, 0.15)",
+                    borderRadius: "20px",
+                    padding: "60px 40px",
+                    textAlign: "center"
+                  }}>
+                    <div style={{ fontSize: "48px", marginBottom: "20px" }}>🏗️</div>
+                    <h3 style={{ margin: "0 0 12px", fontSize: "24px", fontWeight: 600, color: theme.dark }}>Coming Soon</h3>
+                    <p style={{ margin: "0 0 20px", color: theme.muted, maxWidth: 500, marginLeft: "auto", marginRight: "auto" }}>
+                      Our Steward Corps is actively scouting land opportunities. Be the first to invest in community land acquisition campaigns.
+                    </p>
+                    <div style={{
+                      display: "inline-block",
+                      background: "rgba(0, 212, 170, 0.1)",
+                      border: "1px solid rgba(0, 212, 170, 0.2)",
+                      borderRadius: "8px",
+                      padding: "12px 20px",
+                      fontSize: "14px",
+                      color: theme.primary,
+                      fontWeight: 500
+                    }}>
+                      📧 Get notified when campaigns launch
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">No Active Campaigns Yet</h3>
-                    <p className="text-gray-400 mb-6">Be the first to invest in community land acquisition.</p>
-                    <p className="text-gray-500 text-sm">Steward Corps is actively scouting land opportunities.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "24px" }}>
                     {campaigns.map((campaign) => (
-                      <div key={campaign.id} className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl overflow-hidden hover:border-amber-500/50 transition-all">
-                        <div className="h-48 bg-gradient-to-br from-amber-500/20 to-green-500/20 flex items-center justify-center">
+                      <div key={campaign.id} style={{
+                        background: theme.cardBg,
+                        border: `1px solid ${theme.border}`,
+                        borderRadius: "16px",
+                        overflow: "hidden",
+                        transition: "all 0.3s ease"
+                      }}>
+                        <div style={{ height: "180px", background: "linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(0, 212, 170, 0.1) 100%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {campaign.featuredImage ? (
-                            <img src={campaign.featuredImage} alt={campaign.title} className="w-full h-full object-cover" />
+                            <img src={campaign.featuredImage} alt={campaign.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           ) : (
-                            <svg className="w-16 h-16 text-amber-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
+                            <span style={{ fontSize: "48px" }}>🏞️</span>
                           )}
                         </div>
-                        <div className="p-6">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                              campaign.status === 'live' ? 'bg-green-500/20 text-green-400' :
-                              campaign.status === 'funded' ? 'bg-blue-500/20 text-blue-400' :
-                              'bg-gray-500/20 text-gray-400'
-                            }`}>
+                        <div style={{ padding: "20px" }}>
+                          <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+                            <span style={{
+                              padding: "4px 10px",
+                              borderRadius: "6px",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              background: campaign.status === 'live' ? "rgba(0, 212, 170, 0.1)" : "rgba(123, 104, 238, 0.1)",
+                              color: campaign.status === 'live' ? theme.primary : theme.accent
+                            }}>
                               {campaign.status?.toUpperCase()}
                             </span>
-                            {campaign.requiresAccreditation && (
-                              <span className="px-2 py-1 rounded text-xs font-semibold bg-purple-500/20 text-purple-400">
-                                ACCREDITED
-                              </span>
-                            )}
                           </div>
-                          <h3 className="text-lg font-bold text-white mb-1">{campaign.title}</h3>
-                          <p className="text-gray-400 text-sm mb-4">{campaign.landOption?.location}</p>
+                          <h4 style={{ margin: "0 0 8px", fontSize: "18px", fontWeight: 600, color: theme.dark }}>{campaign.title}</h4>
+                          <p style={{ margin: "0 0 16px", fontSize: "14px", color: theme.muted }}>{campaign.landOption?.location}</p>
                           
-                          <div className="mb-4">
-                            <div className="flex justify-between text-sm mb-1">
-                              <span className="text-gray-400">Raised</span>
-                              <span className="text-white font-semibold">{campaign.percentFunded}%</span>
+                          <div style={{ marginBottom: "16px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "6px" }}>
+                              <span style={{ color: theme.muted }}>Progress</span>
+                              <span style={{ fontWeight: 600, color: theme.dark }}>{campaign.percentFunded}%</span>
                             </div>
-                            <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-gradient-to-r from-amber-500 to-green-500 rounded-full transition-all"
-                                style={{ width: `${Math.min(100, parseFloat(campaign.percentFunded || '0'))}%` }}
-                              ></div>
-                            </div>
-                            <div className="flex justify-between text-sm mt-1">
-                              <span className="text-amber-400">{formatCurrency(campaign.raisedAmount || '0')}</span>
-                              <span className="text-gray-400">of {formatCurrency(campaign.targetAmount)}</span>
+                            <div style={{ height: "8px", background: "rgba(0, 0, 0, 0.06)", borderRadius: "4px", overflow: "hidden" }}>
+                              <div style={{
+                                height: "100%",
+                                width: `${Math.min(100, parseFloat(campaign.percentFunded || '0'))}%`,
+                                background: `linear-gradient(90deg, ${theme.primary} 0%, ${theme.secondary} 100%)`,
+                                borderRadius: "4px"
+                              }} />
                             </div>
                           </div>
 
-                          <div className="flex justify-between text-sm text-gray-400 mb-4">
-                            <span>{campaign.investorCount} investors</span>
-                            <span>{campaign.daysRemaining ? `${campaign.daysRemaining} days left` : 'TBD'}</span>
-                          </div>
-
-                          <button className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-black font-semibold rounded-lg transition-all">
+                          <button style={{
+                            width: "100%",
+                            padding: "12px",
+                            background: theme.primary,
+                            color: "#FFFFFF",
+                            border: "none",
+                            borderRadius: "10px",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            cursor: "pointer"
+                          }}>
                             Invest Now - Min {formatCurrency(campaign.minInvestment || '100')}
                           </button>
                         </div>
@@ -425,82 +634,113 @@ export default function LandAcquisitionPage() {
             )}
 
             {activeTab === 'pools' && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-white">Acquisition Pools</h2>
-                  <div className="bg-blue-500/20 border border-blue-400 rounded-lg px-4 py-2">
-                    <span className="text-blue-400 text-sm font-semibold">SUSU-Style Community Pooling</span>
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: "24px", fontWeight: 700, color: theme.dark }}>Acquisition Pools</h3>
+                    <p style={{ margin: "4px 0 0", color: theme.muted, fontSize: "14px" }}>SUSU-style community pooling for land purchases</p>
+                  </div>
+                  <div style={{
+                    background: "linear-gradient(135deg, rgba(123, 104, 238, 0.1) 0%, rgba(0, 212, 170, 0.06) 100%)",
+                    border: "1px solid rgba(123, 104, 238, 0.2)",
+                    borderRadius: "8px",
+                    padding: "8px 16px",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color: theme.dark
+                  }}>
+                    Monthly Contributions Build Wealth
                   </div>
                 </div>
 
                 {loading ? (
-                  <div className="text-center py-12">
-                    <div className="animate-spin w-8 h-8 border-4 border-blue-400 border-t-transparent rounded-full mx-auto mb-4"></div>
-                    <p className="text-gray-400">Loading pools...</p>
+                  <div style={{ textAlign: "center", padding: "60px 0" }}>
+                    <div style={{ fontSize: "32px", marginBottom: "16px" }}>⏳</div>
+                    <p style={{ color: theme.muted }}>Loading pools...</p>
                   </div>
                 ) : pools.length === 0 ? (
-                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl p-12 text-center">
-                    <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <svg className="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
+                  <div style={{
+                    background: "linear-gradient(135deg, rgba(123, 104, 238, 0.06) 0%, rgba(0, 212, 170, 0.04) 100%)",
+                    border: "1px solid rgba(123, 104, 238, 0.15)",
+                    borderRadius: "20px",
+                    padding: "60px 40px",
+                    textAlign: "center"
+                  }}>
+                    <div style={{ fontSize: "48px", marginBottom: "20px" }}>🤝</div>
+                    <h3 style={{ margin: "0 0 12px", fontSize: "24px", fontWeight: 600, color: theme.dark }}>Pools Forming Soon</h3>
+                    <p style={{ margin: "0 0 20px", color: theme.muted, maxWidth: 500, marginLeft: "auto", marginRight: "auto" }}>
+                      Join a community pool to collectively acquire land through monthly contributions. Pools will be created once land options are secured.
+                    </p>
+                    <div style={{
+                      display: "inline-block",
+                      background: "rgba(123, 104, 238, 0.1)",
+                      border: "1px solid rgba(123, 104, 238, 0.2)",
+                      borderRadius: "8px",
+                      padding: "12px 20px",
+                      fontSize: "14px",
+                      color: theme.accent,
+                      fontWeight: 500
+                    }}>
+                      📧 Get notified when pools open
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">No Active Pools Yet</h3>
-                    <p className="text-gray-400 mb-6">Join a community pool to collectively acquire land.</p>
-                    <p className="text-gray-500 text-sm">Pools will be created once land options are secured.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: "24px" }}>
                     {pools.map((pool) => (
-                      <div key={pool.id} className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl p-6 hover:border-blue-500/50 transition-all">
-                        <div className="flex justify-between items-start mb-4">
+                      <div key={pool.id} style={{
+                        background: theme.cardBg,
+                        border: `1px solid ${theme.border}`,
+                        borderRadius: "16px",
+                        padding: "24px",
+                        transition: "all 0.3s ease"
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "16px" }}>
                           <div>
-                            <h3 className="text-lg font-bold text-white">{pool.name}</h3>
-                            <p className="text-gray-400 text-sm">{pool.landOption?.location || 'General Acquisition'}</p>
+                            <h4 style={{ margin: "0 0 4px", fontSize: "18px", fontWeight: 600, color: theme.dark }}>{pool.name}</h4>
+                            <p style={{ margin: 0, fontSize: "14px", color: theme.muted }}>{pool.landOption?.location || 'General Acquisition'}</p>
                           </div>
-                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                            pool.status === 'active' ? 'bg-green-500/20 text-green-400' :
-                            pool.status === 'forming' ? 'bg-yellow-500/20 text-yellow-400' :
-                            pool.status === 'funded' ? 'bg-blue-500/20 text-blue-400' :
-                            'bg-gray-500/20 text-gray-400'
-                          }`}>
+                          <span style={{
+                            padding: "4px 10px",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            background: pool.status === 'active' ? "rgba(0, 212, 170, 0.1)" : "rgba(255, 215, 0, 0.1)",
+                            color: pool.status === 'active' ? theme.primary : theme.secondary
+                          }}>
                             {pool.status?.toUpperCase()}
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <p className="text-gray-400 text-xs">Monthly</p>
-                            <p className="text-white font-semibold">{formatCurrency(pool.monthlyContribution)}</p>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+                          <div style={{ background: "rgba(0, 0, 0, 0.03)", borderRadius: "8px", padding: "12px" }}>
+                            <div style={{ fontSize: "12px", color: theme.muted }}>Monthly</div>
+                            <div style={{ fontSize: "18px", fontWeight: 600, color: theme.dark }}>{formatCurrency(pool.monthlyContribution)}</div>
                           </div>
-                          <div>
-                            <p className="text-gray-400 text-xs">Target</p>
-                            <p className="text-white font-semibold">{formatCurrency(pool.targetAmount)}</p>
+                          <div style={{ background: "rgba(0, 0, 0, 0.03)", borderRadius: "8px", padding: "12px" }}>
+                            <div style={{ fontSize: "12px", color: theme.muted }}>Target</div>
+                            <div style={{ fontSize: "18px", fontWeight: 600, color: theme.dark }}>{formatCurrency(pool.targetAmount)}</div>
                           </div>
-                          <div>
-                            <p className="text-gray-400 text-xs">Members</p>
-                            <p className="text-white font-semibold">{pool.memberCount}/{pool.memberLimit}</p>
+                          <div style={{ background: "rgba(0, 0, 0, 0.03)", borderRadius: "8px", padding: "12px" }}>
+                            <div style={{ fontSize: "12px", color: theme.muted }}>Members</div>
+                            <div style={{ fontSize: "18px", fontWeight: 600, color: theme.dark }}>{pool.memberCount}/{pool.memberLimit}</div>
                           </div>
-                          <div>
-                            <p className="text-gray-400 text-xs">Spots Left</p>
-                            <p className="text-blue-400 font-semibold">{pool.spotsRemaining}</p>
-                          </div>
-                        </div>
-
-                        <div className="mb-4">
-                          <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"
-                              style={{ width: `${Math.min(100, parseFloat(pool.percentFunded || '0'))}%` }}
-                            ></div>
-                          </div>
-                          <div className="flex justify-between text-sm mt-1">
-                            <span className="text-blue-400">{formatCurrency(pool.totalContributed || '0')} pooled</span>
-                            <span className="text-gray-400">{pool.percentFunded}% funded</span>
+                          <div style={{ background: "rgba(0, 0, 0, 0.03)", borderRadius: "8px", padding: "12px" }}>
+                            <div style={{ fontSize: "12px", color: theme.muted }}>Spots Left</div>
+                            <div style={{ fontSize: "18px", fontWeight: 600, color: theme.accent }}>{pool.spotsRemaining}</div>
                           </div>
                         </div>
 
-                        <button className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-all">
+                        <button style={{
+                          width: "100%",
+                          padding: "12px",
+                          background: theme.accent,
+                          color: "#FFFFFF",
+                          border: "none",
+                          borderRadius: "10px",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          cursor: "pointer"
+                        }}>
                           Join Pool - {formatCurrency(pool.monthlyContribution)}/month
                         </button>
                       </div>
@@ -511,105 +751,107 @@ export default function LandAcquisitionPage() {
             )}
 
             {activeTab === 'how-it-works' && (
-              <div className="space-y-8">
-                <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-amber-500/30 rounded-xl p-8">
-                  <h2 className="text-2xl font-bold text-amber-400 mb-6">Regulation Crowdfunding (Reg CF)</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-4">What is Reg CF?</h3>
-                      <p className="text-gray-300 mb-4">
-                        Regulation Crowdfunding (Reg CF) is an SEC exemption that allows companies to raise 
-                        up to $5 million from both accredited and non-accredited investors through 
-                        registered funding portals.
-                      </p>
-                      <ul className="space-y-2 text-gray-400 text-sm">
-                        <li className="flex items-start gap-2">
-                          <span className="text-green-400 mt-1">+</span>
-                          <span>Open to all U.S. investors (18+)</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-green-400 mt-1">+</span>
-                          <span>Investment limits based on income/net worth</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-green-400 mt-1">+</span>
-                          <span>Required disclosures for investor protection</span>
-                        </li>
-                      </ul>
+              <div>
+                <div style={{
+                  background: "linear-gradient(135deg, rgba(255, 215, 0, 0.06) 0%, rgba(0, 212, 170, 0.04) 100%)",
+                  border: "1px solid rgba(255, 215, 0, 0.15)",
+                  borderRadius: "20px",
+                  padding: "40px",
+                  marginBottom: "32px"
+                }}>
+                  <h3 style={{ margin: "0 0 8px", fontSize: "20px", fontWeight: 600, color: theme.dark }}>
+                    Regulation Crowdfunding (Reg CF)
+                  </h3>
+                  <p style={{ margin: "0 0 24px", color: theme.muted, fontSize: "14px" }}>
+                    SEC exemption allowing companies to raise up to $5M from both accredited and non-accredited investors
+                  </p>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+                    <div style={{ background: "rgba(255, 215, 0, 0.1)", borderRadius: "12px", padding: "20px", textAlign: "center" }}>
+                      <div style={{ fontSize: "14px", color: theme.muted, marginBottom: "4px" }}>Under $124K Income</div>
+                      <div style={{ fontSize: "28px", fontWeight: 700, color: theme.dark }}>$2,500</div>
+                      <div style={{ fontSize: "12px", color: theme.muted }}>Max annual investment</div>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-4">Investment Limits</h3>
-                      <div className="space-y-4">
-                        <div className="bg-gray-700/50 rounded-lg p-4">
-                          <p className="text-amber-400 font-semibold">Income/Net Worth under $124K</p>
-                          <p className="text-white text-2xl font-bold">$2,500</p>
-                          <p className="text-gray-400 text-sm">Maximum annual investment</p>
-                        </div>
-                        <div className="bg-gray-700/50 rounded-lg p-4">
-                          <p className="text-green-400 font-semibold">Income/Net Worth $124K+</p>
-                          <p className="text-white text-2xl font-bold">10%</p>
-                          <p className="text-gray-400 text-sm">Of annual income or net worth (greater of)</p>
-                        </div>
-                        <div className="bg-gray-700/50 rounded-lg p-4">
-                          <p className="text-purple-400 font-semibold">Accredited Investors</p>
-                          <p className="text-white text-2xl font-bold">Unlimited</p>
-                          <p className="text-gray-400 text-sm">No investment cap applies</p>
-                        </div>
-                      </div>
+                    <div style={{ background: "rgba(0, 212, 170, 0.1)", borderRadius: "12px", padding: "20px", textAlign: "center" }}>
+                      <div style={{ fontSize: "14px", color: theme.muted, marginBottom: "4px" }}>$124K+ Income</div>
+                      <div style={{ fontSize: "28px", fontWeight: 700, color: theme.dark }}>10%</div>
+                      <div style={{ fontSize: "12px", color: theme.muted }}>Of income or net worth</div>
+                    </div>
+                    <div style={{ background: "rgba(123, 104, 238, 0.1)", borderRadius: "12px", padding: "20px", textAlign: "center" }}>
+                      <div style={{ fontSize: "14px", color: theme.muted, marginBottom: "4px" }}>Accredited</div>
+                      <div style={{ fontSize: "28px", fontWeight: 700, color: theme.dark }}>Unlimited</div>
+                      <div style={{ fontSize: "12px", color: theme.muted }}>No cap applies</div>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-blue-500/30 rounded-xl p-8">
-                  <h2 className="text-2xl font-bold text-blue-400 mb-6">Acquisition Pool Mechanics</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl">1</span>
+                <div style={{
+                  background: "linear-gradient(135deg, rgba(123, 104, 238, 0.06) 0%, rgba(0, 212, 170, 0.04) 100%)",
+                  border: "1px solid rgba(123, 104, 238, 0.15)",
+                  borderRadius: "20px",
+                  padding: "40px",
+                  marginBottom: "32px"
+                }}>
+                  <h3 style={{ margin: "0 0 8px", fontSize: "20px", fontWeight: 600, color: theme.dark }}>
+                    Pool Mechanics (SUSU-Style)
+                  </h3>
+                  <p style={{ margin: "0 0 24px", color: theme.muted, fontSize: "14px" }}>
+                    Traditional community savings circles reimagined for land acquisition
+                  </p>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
+                    {[
+                      { step: "1", title: "Join a Pool", desc: "Choose a pool aligned with your goals. Initial contribution reserves your spot." },
+                      { step: "2", title: "Monthly Contributions", desc: "Contribute monthly in AXUSD. Funds accumulate toward the target price." },
+                      { step: "3", title: "Collective Purchase", desc: "When funded, the pool exercises the option. Members receive tokenized shares." }
+                    ].map((item, i) => (
+                      <div key={i} style={{ background: "rgba(123, 104, 238, 0.08)", borderRadius: "12px", padding: "20px" }}>
+                        <div style={{
+                          width: "32px",
+                          height: "32px",
+                          background: theme.accent,
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#FFFFFF",
+                          fontWeight: 700,
+                          fontSize: "14px",
+                          marginBottom: "12px"
+                        }}>
+                          {item.step}
+                        </div>
+                        <div style={{ fontSize: "16px", fontWeight: 600, color: theme.dark, marginBottom: "8px" }}>{item.title}</div>
+                        <div style={{ fontSize: "14px", color: theme.muted, lineHeight: 1.5 }}>{item.desc}</div>
                       </div>
-                      <h4 className="font-semibold text-white mb-2">Join a Pool</h4>
-                      <p className="text-gray-400 text-sm">
-                        Choose a land acquisition pool aligned with your goals. 
-                        Initial contribution reserves your spot.
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl">2</span>
-                      </div>
-                      <h4 className="font-semibold text-white mb-2">Monthly Contributions</h4>
-                      <p className="text-gray-400 text-sm">
-                        Like a SUSU circle, members contribute monthly in AXUSD. 
-                        Funds accumulate toward the target purchase price.
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl">3</span>
-                      </div>
-                      <h4 className="font-semibold text-white mb-2">Collective Purchase</h4>
-                      <p className="text-gray-400 text-sm">
-                        When fully funded, the pool exercises the land option. 
-                        Members receive tokenized shares proportional to contributions.
-                      </p>
-                    </div>
+                    ))}
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-green-500/30 rounded-xl p-8">
-                  <h2 className="text-2xl font-bold text-green-400 mb-6">Smart Contract Architecture</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-gray-700/30 rounded-lg p-4">
-                      <h4 className="text-amber-400 font-semibold mb-2">LandOptionRegistry</h4>
-                      <p className="text-gray-400 text-sm">ERC-1155 tokenized land options with KYC/accreditation gating</p>
+                <div style={{
+                  background: "rgba(0, 212, 170, 0.06)",
+                  border: "1px solid rgba(0, 212, 170, 0.15)",
+                  borderRadius: "20px",
+                  padding: "40px"
+                }}>
+                  <h3 style={{ margin: "0 0 20px", fontSize: "20px", fontWeight: 600, color: theme.dark }}>
+                    Smart Contract Architecture
+                  </h3>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px" }}>
+                    <div style={{ background: "rgba(0, 212, 170, 0.1)", borderRadius: "12px", padding: "16px" }}>
+                      <div style={{ fontSize: "24px", marginBottom: "8px" }}>📝</div>
+                      <div style={{ fontSize: "15px", fontWeight: 600, color: theme.dark, marginBottom: "4px" }}>LandOptionRegistry</div>
+                      <div style={{ fontSize: "13px", color: theme.muted }}>ERC-1155 tokenized land options with KYC/accreditation gating</div>
                     </div>
-                    <div className="bg-gray-700/30 rounded-lg p-4">
-                      <h4 className="text-green-400 font-semibold mb-2">RegCFCrowdfunding</h4>
-                      <p className="text-gray-400 text-sm">SEC-compliant investment tracking with annual limits</p>
+                    <div style={{ background: "rgba(255, 215, 0, 0.1)", borderRadius: "12px", padding: "16px" }}>
+                      <div style={{ fontSize: "24px", marginBottom: "8px" }}>💰</div>
+                      <div style={{ fontSize: "15px", fontWeight: 600, color: theme.dark, marginBottom: "4px" }}>RegCFCrowdfunding</div>
+                      <div style={{ fontSize: "13px", color: theme.muted }}>SEC-compliant investment tracking with annual limits</div>
                     </div>
-                    <div className="bg-gray-700/30 rounded-lg p-4">
-                      <h4 className="text-blue-400 font-semibold mb-2">LandAcquisitionPool</h4>
-                      <p className="text-gray-400 text-sm">SUSU-style monthly pooling with cycle management</p>
+                    <div style={{ background: "rgba(123, 104, 238, 0.1)", borderRadius: "12px", padding: "16px" }}>
+                      <div style={{ fontSize: "24px", marginBottom: "8px" }}>🤝</div>
+                      <div style={{ fontSize: "15px", fontWeight: 600, color: theme.dark, marginBottom: "4px" }}>LandAcquisitionPool</div>
+                      <div style={{ fontSize: "13px", color: theme.muted }}>SUSU-style monthly pooling with cycle management</div>
                     </div>
                   </div>
                 </div>
@@ -617,7 +859,7 @@ export default function LandAcquisitionPage() {
             )}
           </div>
         </section>
-      </div>
+      </main>
     </SiteLayout>
   );
 }
