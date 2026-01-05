@@ -15,6 +15,7 @@ async function main() {
   }
 
   const MARKET_OPS_DAILY_LIMIT = ethers.parseEther("100");
+  const EMERGENCY_DAILY_LIMIT = ethers.parseEther("100");
   const PSM_DEBT_CEILING = ethers.parseUnits("1000000", 6);
   const LOWER_PEG_BOUND = ethers.parseEther("0.995");
   const UPPER_PEG_BOUND = ethers.parseEther("1.005");
@@ -23,7 +24,7 @@ async function main() {
 
   console.log("\n1. Deploying BackstopVault...");
   const BackstopVault = await ethers.getContractFactory("BackstopVault");
-  const backstopVault = await BackstopVault.deploy(MARKET_OPS_DAILY_LIMIT);
+  const backstopVault = await BackstopVault.deploy(MARKET_OPS_DAILY_LIMIT, EMERGENCY_DAILY_LIMIT);
   await backstopVault.waitForDeployment();
   console.log("   BackstopVault deployed to:", await backstopVault.getAddress());
 

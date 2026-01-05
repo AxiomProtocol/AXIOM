@@ -5,6 +5,7 @@ interface IVaultEngine {
     struct Vault {
         uint256 collateralAmount;
         uint256 debtAmount;
+        uint256 accruedInterest;
         uint256 lastAccrualTimestamp;
     }
 
@@ -25,6 +26,7 @@ interface IVaultEngine {
     event AXUSDRepaid(address indexed user, address indexed collateral, uint256 amount);
     event VaultLiquidated(address indexed owner, address indexed collateral, address indexed liquidator, uint256 debtCovered, uint256 collateralSeized);
     event InterestAccrued(address indexed user, address indexed collateral, uint256 amount);
+    event InterestCollected(address indexed user, address indexed collateral, uint256 amount);
 
     function depositCollateral(address collateral, uint256 amount) external;
     function withdrawCollateral(address collateral, uint256 amount) external;

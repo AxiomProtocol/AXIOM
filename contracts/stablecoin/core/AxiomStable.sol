@@ -15,6 +15,9 @@ contract AxiomStable is ERC20, ERC20Permit, AccessControl, Pausable, IAxiomStabl
 
     event Mint(address indexed to, uint256 amount);
     event Burn(address indexed from, uint256 amount);
+    event ForceBurn(address indexed from, uint256 amount, address indexed burner);
+
+    uint256 public constant MAX_SUPPLY = 1_000_000_000 * 10**18;
 
     constructor() ERC20("Axiom Stable Dollar", "AXUSD") ERC20Permit("Axiom Stable Dollar") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -24,6 +27,7 @@ contract AxiomStable is ERC20, ERC20Permit, AccessControl, Pausable, IAxiomStabl
     function mint(address to, uint256 amount) external override onlyRole(MINTER_ROLE) whenNotPaused {
         require(to != address(0), "AxiomStable: mint to zero address");
         require(amount > 0, "AxiomStable: mint zero amount");
+        require(totalSupply() + amount <= MAX_SUPPLY, "AxiomStable: max supply exceeded");
         _mint(to, amount);
         emit Mint(to, amount);
     }
@@ -31,8 +35,21 @@ contract AxiomStable is ERC20, ERC20Permit, AccessControl, Pausable, IAxiomStabl
     function burn(address from, uint256 amount) external override onlyRole(BURNER_ROLE) whenNotPaused {
         require(from != address(0), "AxiomStable: burn from zero address");
         require(amount > 0, "AxiomStable: burn zero amount");
+        
+        if (from != msg.sender) {
+            uint256 currentAllowance = allowance(from, msg.sender);
+            require(currentAllowance >= amount, "AxiomStable: burn exceeds allowance");
+            _approve(from, msg.sender, currentAllowance - amount);
+        }
+        
         _burn(from, amount);
         emit Burn(from, amount);
+    }
+
+    function burnSelf(uint256 amount) external whenNotPaused {
+        require(amount > 0, "AxiomStable: burn zero amount");
+        _burn(msg.sender, amount);
+        emit Burn(msg.sender, amount);
     }
 
     function pause() external override onlyRole(PAUSER_ROLE) {

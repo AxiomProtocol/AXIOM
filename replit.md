@@ -43,6 +43,7 @@ Key features include:
 -   **Steward Dashboard** (operational dashboard for active stewards with overview, produce drops, participant directory, land pipeline, tasks board, communications, region management, group formation, reputation panel, weekly reports, and settings)
 -   **Steward-Activated Land Program** (landowner onboarding, steward playbook, outreach scripts, application system, lead management, stewardship plans, activation cycles, owner checklists, and optional future acquisition discussions)
 -   **Wealth Engine V2 Contracts** (DeFi Treasury System including AxiomScoreSBT for on-chain credit scoring, SusuInsuranceFund, SEED for AXM locking and voting power, and AxiomFeeBurner for AXM buyback/burn and SEED holder distribution).
+-   **AXUSD Stablecoin System** (CDP-style hybrid stablecoin with PSM, VaultEngine, Liquidator, BackstopVault, TBillVault, and MarketOperations - security audited with multi-AI review).
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)

@@ -216,6 +216,7 @@ contract VaultEngine is AccessControl, Pausable, ReentrancyGuard, IVaultEngine {
             collateralConfigs[collateral].totalDebt += interest;
             totalGlobalDebt += interest;
             accruedFees += interest;
+            vault.accruedInterest += interest;
             emit InterestAccrued(user, collateral, interest);
         }
 
@@ -262,15 +263,15 @@ contract VaultEngine is AccessControl, Pausable, ReentrancyGuard, IVaultEngine {
         emit VaultLiquidated(owner, collateral, msg.sender, actualDebtToCover, collateralToSeize);
     }
 
-    function routeFeesToBurner() external onlyRole(ADMIN_ROLE) {
-        require(feeBurner != address(0), "VaultEngine: no fee burner");
+    function getAccruedFees() external view returns (uint256) {
+        return accruedFees;
+    }
+
+    function clearFeeAccounting() external onlyRole(ADMIN_ROLE) {
         require(accruedFees > 0, "VaultEngine: no fees");
-
-        uint256 feesToRoute = accruedFees;
+        uint256 fees = accruedFees;
         accruedFees = 0;
-
-        axusd.mint(feeBurner, feesToRoute);
-        emit FeesRouted(feeBurner, feesToRoute);
+        emit FeesRouted(feeBurner, fees);
     }
 
     function getVault(address user, address collateral) external view override returns (Vault memory) {

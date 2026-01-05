@@ -70,14 +70,40 @@ describe("AxiomStable", function () {
       await axusd.connect(minter).mint(user.address, ethers.parseEther("1000"));
     });
 
-    it("Should allow burner to burn tokens", async function () {
+    it("Should allow burner to burn tokens with allowance", async function () {
       const burnAmount = ethers.parseEther("500");
+      await axusd.connect(user).approve(minter.address, burnAmount);
       await axusd.connect(minter).burn(user.address, burnAmount);
+      expect(await axusd.balanceOf(user.address)).to.equal(ethers.parseEther("500"));
+    });
+
+    it("Should revert burn without allowance", async function () {
+      const burnAmount = ethers.parseEther("500");
+      await expect(axusd.connect(minter).burn(user.address, burnAmount))
+        .to.be.revertedWith("AxiomStable: burn exceeds allowance");
+    });
+
+    it("Should allow user to burn own tokens via burnSelf", async function () {
+      const burnAmount = ethers.parseEther("500");
+      await axusd.connect(user).burnSelf(burnAmount);
       expect(await axusd.balanceOf(user.address)).to.equal(ethers.parseEther("500"));
     });
 
     it("Should revert if non-burner tries to burn", async function () {
       await expect(axusd.connect(user).burn(user.address, ethers.parseEther("100"))).to.be.reverted;
+    });
+  });
+
+  describe("Max Supply", function () {
+    it("Should have correct max supply", async function () {
+      const maxSupply = await axusd.MAX_SUPPLY();
+      expect(maxSupply).to.equal(ethers.parseEther("1000000000"));
+    });
+
+    it("Should revert if minting would exceed max supply", async function () {
+      const maxSupply = await axusd.MAX_SUPPLY();
+      await expect(axusd.connect(minter).mint(user.address, maxSupply + 1n))
+        .to.be.revertedWith("AxiomStable: max supply exceeded");
     });
   });
 

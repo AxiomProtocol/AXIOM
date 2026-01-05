@@ -19,16 +19,26 @@ contract BackstopVault is AccessControl, ReentrancyGuard, Pausable, IBackstopVau
     uint256 public constant EMERGENCY_TIMELOCK = 24 hours;
     mapping(bytes32 => uint256) public pendingEmergencyWithdrawals;
 
+    uint256 public emergencyDailyLimit;
+    uint256 public emergencyWithdrawnToday;
+    uint256 public lastEmergencyWithdrawReset;
+
     event EmergencyWithdrawalQueued(bytes32 indexed withdrawalId, address recipient, uint256 amount, uint256 executeAfter);
     event MarketOpsLimitUpdated(uint256 newLimit);
 
-    constructor(uint256 _marketOpsLimit) {
+    constructor(uint256 _marketOpsLimit, uint256 _emergencyDailyLimit) {
         marketOpsLimit = _marketOpsLimit;
+        emergencyDailyLimit = _emergencyDailyLimit > 0 ? _emergencyDailyLimit : 100 ether;
         lastMarketOpsReset = block.timestamp;
+        lastEmergencyWithdrawReset = block.timestamp;
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(GUARDIAN_ROLE, msg.sender);
+    }
+
+    function setEmergencyDailyLimit(uint256 newLimit) external onlyRole(ADMIN_ROLE) {
+        emergencyDailyLimit = newLimit;
     }
 
     receive() external payable {
@@ -96,18 +106,11 @@ contract BackstopVault is AccessControl, ReentrancyGuard, Pausable, IBackstopVau
     }
 
     function emergencyWithdraw(
-        address recipient,
-        uint256 amount,
-        string calldata reason
+        address,
+        uint256,
+        string calldata
     ) external override nonReentrant onlyRole(ADMIN_ROLE) {
-        require(emergencyMode, "BackstopVault: not emergency mode");
-        require(recipient != address(0), "BackstopVault: zero recipient");
-        require(amount > 0 && amount <= address(this).balance, "BackstopVault: invalid amount");
-
-        (bool success, ) = recipient.call{value: amount}("");
-        require(success, "BackstopVault: transfer failed");
-
-        emit EmergencyWithdrawal(recipient, amount, reason);
+        revert("BackstopVault: use executeEmergencyWithdraw with timelock");
     }
 
     function withdrawForMarketOps(uint256 amount) external override nonReentrant onlyRole(MARKET_OPS_ROLE) whenNotPaused {
