@@ -30,15 +30,28 @@ export function LandownerCallout({ page = 'home' }: LandownerCalloutProps) {
   }, [page]);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        padding: "60px 20px",
-        background: "linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(123,104,238,0.08) 100%)"
-      }}
-    >
+    <>
+      <style jsx>{`
+        .landowner-callout-grid {
+          grid-template-columns: 1fr auto;
+        }
+        @media (max-width: 768px) {
+          .landowner-callout-grid {
+            grid-template-columns: 1fr;
+            text-align: center;
+          }
+        }
+      `}</style>
       <div
+        ref={containerRef}
         style={{
+          padding: "60px 20px",
+          background: "linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(123,104,238,0.08) 100%)"
+        }}
+      >
+        <div
+          className="landowner-callout-grid"
+          style={{
           maxWidth: 1000,
           margin: "0 auto",
           background: "rgba(255,255,255,0.95)",
@@ -48,7 +61,6 @@ export function LandownerCallout({ page = 'home' }: LandownerCalloutProps) {
           border: web3Theme.borders.subtle,
           boxShadow: web3Theme.shadows.card,
           display: "grid",
-          gridTemplateColumns: "1fr auto",
           gap: 40,
           alignItems: "center"
         }}
@@ -166,15 +178,7 @@ export function LandownerCallout({ page = 'home' }: LandownerCalloutProps) {
           </p>
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 768px) {
-          div[style*="grid-template-columns: 1fr auto"] {
-            grid-template-columns: 1fr !important;
-            text-align: center;
-          }
-        }
-      `}</style>
-    </div>
+      </div>
+    </>
   );
 }
