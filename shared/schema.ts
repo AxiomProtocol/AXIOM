@@ -4720,9 +4720,223 @@ export const stewardInterestSignups = pgTable("steward_interest_signups", {
 
 export type StewardInterestSignup = typeof stewardInterestSignups.$inferSelect;
 export type InsertStewardInterestSignup = typeof stewardInterestSignups.$inferInsert;
+
 // ============================================
 // LAND ACQUISITION & REG CF CROWDFUNDING
 // ============================================
+
+// Land Submission Status Enum
+export const landSubmissionStatusEnum = pgEnum('land_submission_status', [
+  'new',
+  'reviewing',
+  'steward_assigned',
+  'steward_evaluation',
+  'community_vote',
+  'qualified',
+  'approved',
+  'rejected',
+  'archived'
+]);
+
+// Land Submission Source Type Enum
+export const landSubmissionSourceEnum = pgEnum('land_submission_source', [
+  'manual',
+  'zillow',
+  'realtor',
+  'redfin',
+  'loopnet',
+  'landwatch',
+  'other'
+]);
+
+// Land Submissions (property submissions from landowners or importers)
+export const landSubmissions = pgTable("land_submissions", {
+  id: serial("id").primaryKey(),
+  
+  // Owner Information
+  ownerName: varchar("owner_name", { length: 200 }).notNull(),
+  ownerEmail: varchar("owner_email", { length: 200 }).notNull(),
+  ownerPhone: varchar("owner_phone", { length: 50 }),
+  
+  // Property Location
+  propertyAddress: text("property_address").notNull(),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  zipCode: varchar("zip_code", { length: 20 }),
+  county: varchar("county", { length: 100 }),
+  parcelNumber: varchar("parcel_number", { length: 100 }),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  
+  // Property Details
+  acreage: decimal("acreage", { precision: 10, scale: 2 }).notNull(),
+  askingPrice: decimal("asking_price", { precision: 18, scale: 2 }),
+  zoning: varchar("zoning", { length: 100 }),
+  propertyType: varchar("property_type", { length: 100 }),
+  currentUse: varchar("current_use", { length: 200 }),
+  utilitiesAvailable: jsonb("utilities_available"),
+  roadAccess: varchar("road_access", { length: 100 }),
+  waterSource: varchar("water_source", { length: 100 }),
+  topography: varchar("topography", { length: 100 }),
+  structuresOnProperty: text("structures_on_property"),
+  environmentalIssues: text("environmental_issues"),
+  
+  // Legal Status
+  titleClear: boolean("title_clear").default(true),
+  liensEncumbrances: text("liens_encumbrances"),
+  
+  // Seller Motivation
+  ownerMotivation: text("owner_motivation"),
+  timelineToSell: varchar("timeline_to_sell", { length: 50 }),
+  openToOption: boolean("open_to_option").default(true),
+  optionPremiumAcceptable: decimal("option_premium_acceptable", { precision: 18, scale: 2 }),
+  
+  // Documents & Media
+  documents: jsonb("documents"),
+  images: jsonb("images"),
+  notes: text("notes"),
+  
+  // Lead Scoring
+  leadScore: integer("lead_score").default(0),
+  
+  // Import Source (for listing imports)
+  sourceUrl: text("source_url"),
+  sourceType: varchar("source_type", { length: 50 }).default('manual'),
+  importStatus: varchar("import_status", { length: 50 }),
+  importedData: jsonb("imported_data"),
+  importedAt: timestamp("imported_at"),
+  
+  // Multi-Stage Workflow
+  status: varchar("status", { length: 50 }).default('new'),
+  approvalStage: varchar("approval_stage", { length: 50 }).default('submission'),
+  
+  // Admin Review
+  assignedStewardId: integer("assigned_steward_id").references(() => users.id),
+  stewardAssignmentAt: timestamp("steward_assignment_at"),
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  
+  // Steward Evaluation
+  stewardEvaluationNotes: text("steward_evaluation_notes"),
+  stewardRecommendation: varchar("steward_recommendation", { length: 50 }),
+  stewardReportUrl: text("steward_report_url"),
+  stewardEvaluationAt: timestamp("steward_evaluation_at"),
+  
+  // Community Vote
+  communityVoteStatus: varchar("community_vote_status", { length: 50 }).default('not_started'),
+  communityVotesFor: integer("community_votes_for").default(0),
+  communityVotesAgainst: integer("community_votes_against").default(0),
+  communityVoteStartAt: timestamp("community_vote_start_at"),
+  communityVoteEndAt: timestamp("community_vote_end_at"),
+  
+  // Final Approval
+  finalApprovalAt: timestamp("final_approval_at"),
+  finalApprovalBy: integer("final_approval_by").references(() => users.id),
+  rejectionReason: text("rejection_reason"),
+  
+  // Social Sharing
+  shareSlug: varchar("share_slug", { length: 100 }).unique(),
+  shareCount: integer("share_count").default(0),
+  referralCode: varchar("referral_code", { length: 50 }),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  ownerEmailIdx: index("land_submissions_owner_email_idx").on(table.ownerEmail),
+  statusIdx: index("land_submissions_status_idx").on(table.status),
+  stageIdx: index("land_submissions_stage_idx").on(table.approvalStage),
+  stewardIdx: index("land_submissions_steward_idx").on(table.assignedStewardId),
+  leadScoreIdx: index("land_submissions_lead_score_idx").on(table.leadScore),
+  shareSlugIdx: index("land_submissions_share_slug_idx").on(table.shareSlug),
+}));
+
+export type LandSubmission = typeof landSubmissions.$inferSelect;
+export type InsertLandSubmission = typeof landSubmissions.$inferInsert;
+
+// Steward Reviews for Land Submissions
+export const stewardReviews = pgTable("steward_reviews", {
+  id: serial("id").primaryKey(),
+  submissionId: integer("submission_id").references(() => landSubmissions.id).notNull(),
+  stewardId: integer("steward_id").references(() => users.id).notNull(),
+  riskScore: integer("risk_score"),
+  recommendation: varchar("recommendation", { length: 50 }),
+  locationAnalysis: text("location_analysis"),
+  marketAnalysis: text("market_analysis"),
+  developmentPotential: text("development_potential"),
+  communityFit: text("community_fit"),
+  concerns: text("concerns"),
+  notes: text("notes"),
+  attachments: jsonb("attachments"),
+  submittedAt: timestamp("submitted_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  submissionIdx: index("steward_reviews_submission_idx").on(table.submissionId),
+  stewardIdx: index("steward_reviews_steward_idx").on(table.stewardId),
+}));
+
+export type StewardReview = typeof stewardReviews.$inferSelect;
+export type InsertStewardReview = typeof stewardReviews.$inferInsert;
+
+// Community Votes on Land Submissions
+export const communityVotes = pgTable("community_votes", {
+  id: serial("id").primaryKey(),
+  submissionId: integer("submission_id").references(() => landSubmissions.id).notNull(),
+  voterId: integer("voter_id").references(() => users.id).notNull(),
+  vote: varchar("vote", { length: 20 }).notNull(),
+  weight: integer("weight").default(1),
+  comment: text("comment"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  submissionIdx: index("community_votes_submission_idx").on(table.submissionId),
+  voterIdx: index("community_votes_voter_idx").on(table.voterId),
+  uniqueVote: index("community_votes_unique").on(table.submissionId, table.voterId),
+}));
+
+export type CommunityVote = typeof communityVotes.$inferSelect;
+export type InsertCommunityVote = typeof communityVotes.$inferInsert;
+
+// Campaign Short Links for Social Sharing
+export const campaignShortLinks = pgTable("campaign_short_links", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").references(() => crowdfundingCampaigns.id).notNull(),
+  slug: varchar("slug", { length: 50 }).unique().notNull(),
+  utmSource: varchar("utm_source", { length: 100 }),
+  utmMedium: varchar("utm_medium", { length: 100 }),
+  utmCampaign: varchar("utm_campaign", { length: 100 }),
+  referralCode: varchar("referral_code", { length: 50 }),
+  clickCount: integer("click_count").default(0),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  slugIdx: index("campaign_short_links_slug_idx").on(table.slug),
+  campaignIdx: index("campaign_short_links_campaign_idx").on(table.campaignId),
+  referralIdx: index("campaign_short_links_referral_idx").on(table.referralCode),
+}));
+
+export type CampaignShortLink = typeof campaignShortLinks.$inferSelect;
+export type InsertCampaignShortLink = typeof campaignShortLinks.$inferInsert;
+
+// Referral Attributions for Investment Tracking
+export const referralAttributions = pgTable("referral_attributions", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").references(() => crowdfundingCampaigns.id).notNull(),
+  referrerId: integer("referrer_id").references(() => users.id),
+  referralCode: varchar("referral_code", { length: 50 }).notNull(),
+  investorId: integer("investor_id").references(() => users.id),
+  investedAmount: decimal("invested_amount", { precision: 18, scale: 2 }),
+  conversionStatus: varchar("conversion_status", { length: 50 }).default('clicked'),
+  clickedAt: timestamp("clicked_at").defaultNow(),
+  convertedAt: timestamp("converted_at"),
+}, (table) => ({
+  campaignIdx: index("referral_attributions_campaign_idx").on(table.campaignId),
+  referrerIdx: index("referral_attributions_referrer_idx").on(table.referrerId),
+  referralCodeIdx: index("referral_attributions_code_idx").on(table.referralCode),
+}));
+
+export type ReferralAttribution = typeof referralAttributions.$inferSelect;
+export type InsertReferralAttribution = typeof referralAttributions.$inferInsert;
 
 // Land Option Status Enum
 export const landOptionStatusEnum = pgEnum('land_option_status', [
