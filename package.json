@@ -4,7 +4,6 @@
   "main": "unified-platform.js",
   "scripts": {
     "dev": "next dev -p 5000",
-    "prebuild": "bash prebuild.sh",
     "build": "NODE_ENV=production NODE_OPTIONS='--max-old-space-size=4096' next build && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public",
     "build:legacy": "NODE_OPTIONS='--max-old-space-size=512' next build",
     "build:minimal": "NODE_ENV=production next build",
