@@ -3,13 +3,14 @@ import { db } from '../../../../server/db';
 import { users } from '../../../../shared/schema';
 import { eq } from 'drizzle-orm';
 import { billingProvider } from '../../../../lib/workbook/billing';
+import { getUserFromSiweSession } from '../../../../lib/workbook/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const userId = (req as any).session?.userId;
+  const userId = await getUserFromSiweSession(req);
   if (!userId) {
     return res.status(401).json({ error: 'Authentication required' });
   }

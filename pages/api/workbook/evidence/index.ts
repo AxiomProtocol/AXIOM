@@ -3,9 +3,10 @@ import { db } from '../../../../server/db';
 import { evidenceItems, workbookCases } from '../../../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { checkEntitlement } from '../../../../lib/workbook/entitlements';
+import { getUserFromSiweSession } from '../../../../lib/workbook/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const userId = (req as any).session?.userId;
+  const userId = await getUserFromSiweSession(req);
   if (!userId) {
     return res.status(401).json({ error: 'Authentication required' });
   }

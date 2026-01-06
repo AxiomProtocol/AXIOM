@@ -4,9 +4,10 @@ import { workbookCases, workbookSectionStates, evidenceItems, factClaims, taskIt
 import { eq, and } from 'drizzle-orm';
 import { checkEntitlement } from '../../../../lib/workbook/entitlements';
 import { detectCollisions } from '../../../../lib/workbook/identity-collision';
+import { getUserFromSiweSession } from '../../../../lib/workbook/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const userId = (req as any).session?.userId;
+  const userId = await getUserFromSiweSession(req);
   if (!userId) {
     return res.status(401).json({ error: 'Authentication required' });
   }
