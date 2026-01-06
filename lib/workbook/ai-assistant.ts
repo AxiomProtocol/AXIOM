@@ -1,4 +1,4 @@
-import { chat, generateText } from '../server/gemini';
+import { chat } from '../server/gemini';
 import { db } from '../../server/db';
 import { evidenceItems, factClaims, workbookCases, workbookSectionStates, resourceDirectoryItems } from '../../shared/schema';
 import { eq, and } from 'drizzle-orm';

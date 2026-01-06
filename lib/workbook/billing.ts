@@ -1,10 +1,10 @@
 import Stripe from 'stripe';
 import { db } from '../../server/db';
-import { subscriptionEntitlements, users } from '../../shared/schema';
+import { subscriptionEntitlements } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 
 const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' })
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
   : null;
 
 const WORKBOOK_PRICE_ID = process.env.BILLING_PRICE_ID_WORKBOOK_MONTHLY || '';
@@ -69,13 +69,20 @@ export const billingProvider: BillingProvider = {
 
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.Checkout.Session;
+        const session = event.data.object;
         const userId = parseInt(session.metadata?.userId || '0');
         const customerId = session.customer as string;
         const subscriptionId = session.subscription as string;
 
         if (userId && subscriptionId) {
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          const periodStart = typeof subscription.current_period_start === 'number' 
+            ? new Date(subscription.current_period_start * 1000) 
+            : new Date();
+          const periodEnd = typeof subscription.current_period_end === 'number'
+            ? new Date(subscription.current_period_end * 1000)
+            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+            
           await db
             .insert(subscriptionEntitlements)
             .values({
@@ -84,8 +91,8 @@ export const billingProvider: BillingProvider = {
               status: 'active',
               providerCustomerId: customerId,
               providerSubscriptionId: subscriptionId,
-              currentPeriodStart: new Date(subscription.current_period_start * 1000),
-              currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+              currentPeriodStart: periodStart,
+              currentPeriodEnd: periodEnd,
             })
             .onConflictDoUpdate({
               target: subscriptionEntitlements.userId,
@@ -93,8 +100,8 @@ export const billingProvider: BillingProvider = {
                 status: 'active',
                 providerCustomerId: customerId,
                 providerSubscriptionId: subscriptionId,
-                currentPeriodStart: new Date(subscription.current_period_start * 1000),
-                currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                currentPeriodStart: periodStart,
+                currentPeriodEnd: periodEnd,
                 updatedAt: new Date(),
               },
             });
@@ -103,22 +110,29 @@ export const billingProvider: BillingProvider = {
       }
 
       case 'invoice.payment_succeeded': {
-        const invoice = event.data.object as Stripe.Invoice;
-        const subscriptionId = invoice.subscription as string;
+        const invoice = event.data.object;
+        const subscriptionId = (invoice as any).subscription as string;
 
         if (subscriptionId) {
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           const customerId = subscription.customer as string;
           const customer = await stripe.customers.retrieve(customerId);
-          const userId = parseInt((customer as Stripe.Customer).metadata?.userId || '0');
+          const userId = parseInt((customer as any).metadata?.userId || '0');
 
           if (userId) {
+            const periodStart = typeof subscription.current_period_start === 'number'
+              ? new Date(subscription.current_period_start * 1000)
+              : new Date();
+            const periodEnd = typeof subscription.current_period_end === 'number'
+              ? new Date(subscription.current_period_end * 1000)
+              : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
             await db
               .update(subscriptionEntitlements)
               .set({
                 status: 'active',
-                currentPeriodStart: new Date(subscription.current_period_start * 1000),
-                currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                currentPeriodStart: periodStart,
+                currentPeriodEnd: periodEnd,
                 updatedAt: new Date(),
               })
               .where(eq(subscriptionEntitlements.userId, userId));
@@ -128,14 +142,14 @@ export const billingProvider: BillingProvider = {
       }
 
       case 'invoice.payment_failed': {
-        const invoice = event.data.object as Stripe.Invoice;
-        const subscriptionId = invoice.subscription as string;
+        const invoice = event.data.object;
+        const subscriptionId = (invoice as any).subscription as string;
 
         if (subscriptionId) {
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           const customerId = subscription.customer as string;
           const customer = await stripe.customers.retrieve(customerId);
-          const userId = parseInt((customer as Stripe.Customer).metadata?.userId || '0');
+          const userId = parseInt((customer as any).metadata?.userId || '0');
 
           if (userId) {
             await db
@@ -151,10 +165,10 @@ export const billingProvider: BillingProvider = {
       }
 
       case 'customer.subscription.deleted': {
-        const subscription = event.data.object as Stripe.Subscription;
+        const subscription = event.data.object;
         const customerId = subscription.customer as string;
         const customer = await stripe.customers.retrieve(customerId);
-        const userId = parseInt((customer as Stripe.Customer).metadata?.userId || '0');
+        const userId = parseInt((customer as any).metadata?.userId || '0');
 
         if (userId) {
           await db

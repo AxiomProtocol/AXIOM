@@ -68,6 +68,21 @@ Key features include:
     - Full audit trail with IP address and user agent for disclosure acknowledgments
     - InvestmentCompliance component orchestrates verification flow before investment
     - Database tables: investor_kyc, investment_acknowledgments)
+-   **Land Reclamation Workbook** (Paid subscription tool at $20/month for genealogical land research - `/workbook`:
+    - Case management with ancestor tracking and name variants
+    - Evidence tracking with provenance (primary/secondary sources, confidence levels)
+    - Fact claims linked to evidence with confidence assessment
+    - Section-by-section checklists (Ancestor ID, Land Records, Census/Tax, Probate, Chain of Title)
+    - AI Research Assistant with 3 modes: Research Planner, Evidence Clerk, Dossier Drafter
+    - Identity collision detection (name variants, date ranges, location spread, generation gaps)
+    - Assumption tracking with acknowledgment requirements
+    - Professional PDF exports (dossier, evidence summary, checklist)
+    - Ethical use agreement with deliberate friction safeguards
+    - Research integrity enforcement - no legal advice, hypothesis labeling
+    - Stripe subscription with usage metering (100 AI calls, 50 extractions, 20 exports/month)
+    - Resource directory with curated genealogy links
+    - Database tables: workbook_cases, evidence_items, fact_claims, assumptions, task_items, workbook_section_states, resource_directory_items, subscription_entitlements, ai_usage_meters, audit_trail_workbook
+    - Key files: lib/workbook/*, pages/api/workbook/*, pages/workbook/*, components/workbook/*)
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)

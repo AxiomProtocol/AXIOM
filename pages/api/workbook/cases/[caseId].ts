@@ -26,6 +26,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).json({ error: 'Case not found' });
   }
 
+  const entitlement = await checkEntitlement(userId);
+  if (!entitlement.hasAccess) {
+    return res.status(403).json({ error: 'Subscription required', requiresSubscription: true });
+  }
+
   if (req.method === 'GET') {
     try {
       const sections = await db
