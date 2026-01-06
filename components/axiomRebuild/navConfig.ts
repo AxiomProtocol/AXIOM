@@ -73,6 +73,7 @@ export const navItems: NavItem[] = [
       { label: "SUSU Savings", href: "/susu-start" },
       { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "Land Acquisition", href: "/land-acquisition" },
+      { label: "Land Reclamation Workbook", href: "/workbook" },
       { label: "Land Pipeline", href: "/admin/land-pipeline" },
       { label: "Staking", href: "/staking" },
       { label: "DEX Exchange", href: "/dex" },
