@@ -5196,3 +5196,399 @@ export type InvestorVerification = typeof investorVerifications.$inferSelect;
 export type InsertInvestorVerification = typeof investorVerifications.$inferInsert;
 export type LandGovernanceProposal = typeof landGovernanceProposals.$inferSelect;
 export type InsertLandGovernanceProposal = typeof landGovernanceProposals.$inferInsert;
+
+// ============================================================================
+// LAND RECLAMATION WORKBOOK TABLES
+// ============================================================================
+
+// Workbook Case Status Enum
+export const workbookCaseStatusEnum = pgEnum('workbook_case_status', [
+  'active',
+  'archived'
+]);
+
+// Section Completion Status Enum
+export const sectionCompletionStatusEnum = pgEnum('section_completion_status', [
+  'not_started',
+  'in_progress',
+  'complete',
+  'blocked'
+]);
+
+// Record Type Enum
+export const recordTypeEnum = pgEnum('record_type', [
+  'census',
+  'deed',
+  'tax',
+  'probate',
+  'map',
+  'court',
+  'other'
+]);
+
+// Source Type Enum
+export const sourceTypeEnum = pgEnum('source_type', [
+  'primary',
+  'secondary'
+]);
+
+// Evidence Confidence Level Enum
+export const evidenceConfidenceEnum = pgEnum('evidence_confidence', [
+  'unsupported',
+  'partially_supported',
+  'primary_supported'
+]);
+
+// Claim Type Enum
+export const claimTypeEnum = pgEnum('claim_type', [
+  'birth',
+  'death',
+  'residency',
+  'ownership_indicator',
+  'acquisition',
+  'transfer',
+  'dispossession',
+  'current_owner',
+  'other'
+]);
+
+// Claim Confidence Enum
+export const claimConfidenceEnum = pgEnum('claim_confidence', [
+  'user_asserted',
+  'supported',
+  'verified'
+]);
+
+// Task Status Enum
+export const taskStatusEnum = pgEnum('task_status', [
+  'open',
+  'done'
+]);
+
+// Dispossession Mechanism Enum
+export const dispossessionMechanismEnum = pgEnum('dispossession_mechanism', [
+  'tax_sale',
+  'sheriff_sale',
+  'partition',
+  'fraud',
+  'probate_gap',
+  'unknown'
+]);
+
+// Dispossession Authority Enum
+export const dispossessionAuthorityEnum = pgEnum('dispossession_authority', [
+  'court',
+  'sheriff',
+  'private',
+  'unknown'
+]);
+
+// Subscription Status Enum
+export const subscriptionStatusEnum = pgEnum('subscription_status', [
+  'active',
+  'past_due',
+  'canceled'
+]);
+
+// Outcome Type Enum
+export const outcomeTypeEnum = pgEnum('outcome_type', [
+  'attorney_contacted',
+  'action_filed',
+  'negotiation_started',
+  'case_closed',
+  'other'
+]);
+
+// Assumption Category Enum
+export const assumptionCategoryEnum = pgEnum('assumption_category', [
+  'date_estimate',
+  'relationship_inference',
+  'residency_inference',
+  'other'
+]);
+
+// Workbook Cases Table
+export const workbookCases = pgTable("workbook_cases", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  caseTitle: varchar("case_title", { length: 255 }).notNull(),
+  ancestorPrimaryName: varchar("ancestor_primary_name", { length: 255 }).notNull(),
+  ancestorNameVariants: jsonb("ancestor_name_variants").default([]),
+  jurisdictionCode: varchar("jurisdiction_code", { length: 10 }),
+  status: workbookCaseStatusEnum("status").default('active'),
+  ethicalUseAcceptedAt: timestamp("ethical_use_accepted_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("workbook_cases_user_idx").on(table.userId),
+  statusIdx: index("workbook_cases_status_idx").on(table.status),
+}));
+
+// Workbook Section States Table
+export const workbookSectionStates = pgTable("workbook_section_states", {
+  id: serial("id").primaryKey(),
+  caseId: integer("case_id").references(() => workbookCases.id).notNull(),
+  sectionKey: varchar("section_key", { length: 50 }).notNull(),
+  completionStatus: sectionCompletionStatusEnum("completion_status").default('not_started'),
+  blockedReason: text("blocked_reason"),
+  sectionData: jsonb("section_data").default({}),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  caseIdx: index("section_states_case_idx").on(table.caseId),
+  sectionIdx: index("section_states_section_idx").on(table.sectionKey),
+}));
+
+// Evidence Items Table
+export const evidenceItems = pgTable("evidence_items", {
+  id: serial("id").primaryKey(),
+  caseId: integer("case_id").references(() => workbookCases.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  recordType: recordTypeEnum("record_type").notNull(),
+  primaryOrSecondary: sourceTypeEnum("primary_or_secondary").notNull(),
+  confidenceLevel: evidenceConfidenceEnum("confidence_level").default('unsupported'),
+  sourceName: varchar("source_name", { length: 255 }).notNull(),
+  sourceLocation: text("source_location"),
+  sourceCitation: text("source_citation"),
+  dateAccessed: timestamp("date_accessed").notNull(),
+  yearRangeStart: integer("year_range_start"),
+  yearRangeEnd: integer("year_range_end"),
+  county: varchar("county", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  legalDescription: text("legal_description"),
+  fileId: varchar("file_id", { length: 255 }),
+  extractedText: text("extracted_text"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  caseIdx: index("evidence_items_case_idx").on(table.caseId),
+  userIdx: index("evidence_items_user_idx").on(table.userId),
+  typeIdx: index("evidence_items_type_idx").on(table.recordType),
+}));
+
+// Fact Claims Table
+export const factClaims = pgTable("fact_claims", {
+  id: serial("id").primaryKey(),
+  caseId: integer("case_id").references(() => workbookCases.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  claimType: claimTypeEnum("claim_type").notNull(),
+  claimText: text("claim_text").notNull(),
+  confidenceLevel: claimConfidenceEnum("confidence_level").default('user_asserted'),
+  relatedEvidenceIds: jsonb("related_evidence_ids").default([]),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  caseIdx: index("fact_claims_case_idx").on(table.caseId),
+  userIdx: index("fact_claims_user_idx").on(table.userId),
+}));
+
+// Task Items Table
+export const taskItems = pgTable("task_items", {
+  id: serial("id").primaryKey(),
+  caseId: integer("case_id").references(() => workbookCases.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  sectionKey: varchar("section_key", { length: 50 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  instructions: text("instructions"),
+  status: taskStatusEnum("status").default('open'),
+  dueAt: timestamp("due_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  caseIdx: index("task_items_case_idx").on(table.caseId),
+  userIdx: index("task_items_user_idx").on(table.userId),
+  statusIdx: index("task_items_status_idx").on(table.status),
+}));
+
+// Timeline Events Table
+export const timelineEvents = pgTable("timeline_events", {
+  id: serial("id").primaryKey(),
+  caseId: integer("case_id").references(() => workbookCases.id).notNull(),
+  eventDate: timestamp("event_date"),
+  eventYear: integer("event_year"),
+  location: varchar("location", { length: 255 }),
+  eventType: varchar("event_type", { length: 100 }).notNull(),
+  description: text("description").notNull(),
+  relatedEvidenceIds: jsonb("related_evidence_ids").default([]),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  caseIdx: index("timeline_events_case_idx").on(table.caseId),
+  yearIdx: index("timeline_events_year_idx").on(table.eventYear),
+}));
+
+// Dispossession Events Table
+export const dispossessionEvents = pgTable("dispossession_events", {
+  id: serial("id").primaryKey(),
+  caseId: integer("case_id").references(() => workbookCases.id).notNull(),
+  mechanism: dispossessionMechanismEnum("mechanism").default('unknown'),
+  estimatedDate: varchar("estimated_date", { length: 50 }),
+  authority: dispossessionAuthorityEnum("authority").default('unknown'),
+  description: text("description"),
+  relatedEvidenceIds: jsonb("related_evidence_ids").default([]),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  caseIdx: index("dispossession_events_case_idx").on(table.caseId),
+}));
+
+// Resource Directory Items Table
+export const resourceDirectoryItems = pgTable("resource_directory_items", {
+  id: serial("id").primaryKey(),
+  sectionKey: varchar("section_key", { length: 50 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  jurisdictions: jsonb("jurisdictions").default([]),
+  url: text("url"),
+  notes: text("notes"),
+  coverageYears: varchar("coverage_years", { length: 100 }),
+  pitfalls: text("pitfalls"),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  sectionIdx: index("resource_directory_section_idx").on(table.sectionKey),
+  activeIdx: index("resource_directory_active_idx").on(table.active),
+}));
+
+// Subscription Entitlements Table
+export const subscriptionEntitlements = pgTable("subscription_entitlements", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(),
+  planKey: varchar("plan_key", { length: 50 }).default('workbook_monthly_20'),
+  status: subscriptionStatusEnum("status").default('active'),
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  providerCustomerId: varchar("provider_customer_id", { length: 100 }),
+  providerSubscriptionId: varchar("provider_subscription_id", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("subscription_entitlements_user_idx").on(table.userId),
+  statusIdx: index("subscription_entitlements_status_idx").on(table.status),
+}));
+
+// Staff Interaction Logs Table
+export const staffInteractionLogs = pgTable("staff_interaction_logs", {
+  id: serial("id").primaryKey(),
+  caseId: integer("case_id").references(() => workbookCases.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  officeName: varchar("office_name", { length: 255 }).notNull(),
+  staffNameOrRole: varchar("staff_name_or_role", { length: 255 }),
+  dateVisited: timestamp("date_visited").notNull(),
+  summary: text("summary"),
+  outcome: text("outcome"),
+  nextSteps: text("next_steps"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  caseIdx: index("staff_interaction_logs_case_idx").on(table.caseId),
+  userIdx: index("staff_interaction_logs_user_idx").on(table.userId),
+}));
+
+// Record Destruction Entries Table
+export const recordDestructionEntries = pgTable("record_destruction_entries", {
+  id: serial("id").primaryKey(),
+  caseId: integer("case_id").references(() => workbookCases.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  recordSeries: varchar("record_series", { length: 255 }).notNull(),
+  reportedBy: varchar("reported_by", { length: 255 }),
+  reportDate: timestamp("report_date"),
+  describedReason: text("described_reason"),
+  allegedTransferLocation: text("alleged_transfer_location"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  caseIdx: index("record_destruction_entries_case_idx").on(table.caseId),
+  userIdx: index("record_destruction_entries_user_idx").on(table.userId),
+}));
+
+// Assumption Entries Table
+export const assumptionEntries = pgTable("assumption_entries", {
+  id: serial("id").primaryKey(),
+  caseId: integer("case_id").references(() => workbookCases.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  category: assumptionCategoryEnum("category").notNull(),
+  statement: text("statement").notNull(),
+  rationale: text("rationale"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  caseIdx: index("assumption_entries_case_idx").on(table.caseId),
+  userIdx: index("assumption_entries_user_idx").on(table.userId),
+}));
+
+// Dossier Snapshots Table
+export const dossierSnapshots = pgTable("dossier_snapshots", {
+  id: serial("id").primaryKey(),
+  caseId: integer("case_id").references(() => workbookCases.id).notNull(),
+  snapshotLabel: varchar("snapshot_label", { length: 255 }).notNull(),
+  evidenceIds: jsonb("evidence_ids").default([]),
+  factClaimIds: jsonb("fact_claim_ids").default([]),
+  sectionStates: jsonb("section_states").default({}),
+  exportBundleFileId: varchar("export_bundle_file_id", { length: 255 }),
+  contentHash: varchar("content_hash", { length: 66 }),
+  onChainTxHash: varchar("on_chain_tx_hash", { length: 66 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  caseIdx: index("dossier_snapshots_case_idx").on(table.caseId),
+}));
+
+// Outcome Logs Table
+export const outcomeLogs = pgTable("outcome_logs", {
+  id: serial("id").primaryKey(),
+  caseId: integer("case_id").references(() => workbookCases.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  outcomeType: outcomeTypeEnum("outcome_type").notNull(),
+  dateLogged: timestamp("date_logged").defaultNow(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  caseIdx: index("outcome_logs_case_idx").on(table.caseId),
+  userIdx: index("outcome_logs_user_idx").on(table.userId),
+}));
+
+// AI Usage Meters Table
+export const aiUsageMeters = pgTable("ai_usage_meters", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  assistantCalls: integer("assistant_calls").default(0),
+  docExtractions: integer("doc_extractions").default(0),
+  exportsGenerated: integer("exports_generated").default(0),
+  limits: jsonb("limits").default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("ai_usage_meters_user_idx").on(table.userId),
+  periodIdx: index("ai_usage_meters_period_idx").on(table.periodStart, table.periodEnd),
+}));
+
+// Export types for Workbook tables
+export type WorkbookCase = typeof workbookCases.$inferSelect;
+export type InsertWorkbookCase = typeof workbookCases.$inferInsert;
+export type WorkbookSectionState = typeof workbookSectionStates.$inferSelect;
+export type InsertWorkbookSectionState = typeof workbookSectionStates.$inferInsert;
+export type EvidenceItem = typeof evidenceItems.$inferSelect;
+export type InsertEvidenceItem = typeof evidenceItems.$inferInsert;
+export type FactClaim = typeof factClaims.$inferSelect;
+export type InsertFactClaim = typeof factClaims.$inferInsert;
+export type TaskItem = typeof taskItems.$inferSelect;
+export type InsertTaskItem = typeof taskItems.$inferInsert;
+export type TimelineEvent = typeof timelineEvents.$inferSelect;
+export type InsertTimelineEvent = typeof timelineEvents.$inferInsert;
+export type DispossessionEvent = typeof dispossessionEvents.$inferSelect;
+export type InsertDispossessionEvent = typeof dispossessionEvents.$inferInsert;
+export type ResourceDirectoryItem = typeof resourceDirectoryItems.$inferSelect;
+export type InsertResourceDirectoryItem = typeof resourceDirectoryItems.$inferInsert;
+export type SubscriptionEntitlement = typeof subscriptionEntitlements.$inferSelect;
+export type InsertSubscriptionEntitlement = typeof subscriptionEntitlements.$inferInsert;
+export type StaffInteractionLog = typeof staffInteractionLogs.$inferSelect;
+export type InsertStaffInteractionLog = typeof staffInteractionLogs.$inferInsert;
+export type RecordDestructionEntry = typeof recordDestructionEntries.$inferSelect;
+export type InsertRecordDestructionEntry = typeof recordDestructionEntries.$inferInsert;
+export type AssumptionEntry = typeof assumptionEntries.$inferSelect;
+export type InsertAssumptionEntry = typeof assumptionEntries.$inferInsert;
+export type DossierSnapshot = typeof dossierSnapshots.$inferSelect;
+export type InsertDossierSnapshot = typeof dossierSnapshots.$inferInsert;
+export type OutcomeLog = typeof outcomeLogs.$inferSelect;
+export type InsertOutcomeLog = typeof outcomeLogs.$inferInsert;
+export type AiUsageMeter = typeof aiUsageMeters.$inferSelect;
+export type InsertAiUsageMeter = typeof aiUsageMeters.$inferInsert;
