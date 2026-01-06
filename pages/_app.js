@@ -21,12 +21,19 @@ const REBUILD_NAV_PAGES = [
   '/transparency',
   '/team',
   '/land-acquisition',
-  '/axusd'
+  '/axusd',
+  '/workbook'
 ]
+
+function matchesRebuildNavPages(pathname) {
+  if (REBUILD_NAV_PAGES.includes(pathname)) return true;
+  if (pathname.startsWith('/workbook/')) return true;
+  return false;
+}
 
 export default function App({ Component, pageProps }) {
   const router = useRouter()
-  const showRebuildNav = REBUILD_NAV_PAGES.includes(router.pathname)
+  const showRebuildNav = matchesRebuildNavPages(router.pathname)
 
   useEffect(() => {
     if (!GA_ID) return

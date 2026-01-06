@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { navItems, NavItem } from "./navConfig";
+import { WalletConnectButton } from "../WalletConnect/WalletConnectButton";
 
 function useOutsideClick(ref: React.RefObject<HTMLElement>, onClose: () => void) {
   useEffect(() => {
@@ -176,7 +177,10 @@ export function RebuildNav() {
           <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 10, fontWeight: 700 }}>
             {brand}
           </Link>
-          <DesktopNav />
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <DesktopNav />
+            <WalletConnectButton />
+          </div>
           <MobileNav />
         </div>
       </div>
