@@ -82,11 +82,27 @@ export default function WorkbookDashboard() {
         method: 'POST',
       });
       const data = await res.json();
+      
+      if (res.status === 401) {
+        alert('Please connect your wallet and sign in first to subscribe.');
+        setCheckoutLoading(false);
+        return;
+      }
+      
+      if (!res.ok) {
+        alert(data.error || 'Failed to start checkout. Please try again.');
+        setCheckoutLoading(false);
+        return;
+      }
+      
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
+      } else {
+        alert('Checkout is not configured. Please contact support.');
       }
     } catch (error) {
       console.error('Checkout failed:', error);
+      alert('Failed to connect to payment service. Please try again.');
     } finally {
       setCheckoutLoading(false);
     }
