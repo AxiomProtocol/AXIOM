@@ -1,6 +1,6 @@
 import PDFDocument from 'pdfkit';
 import { db } from '../../server/db';
-import { workbookCases, evidenceItems, factClaims, workbookSectionStates, assumptions } from '../../shared/schema';
+import { workbookCases, evidenceItems, factClaims, workbookSectionStates } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 import { incrementExportsGenerated } from './usage-meter';
 
@@ -41,10 +41,6 @@ export async function generateDossierPDF(
 
   const sections = options.includeSections !== false
     ? await db.select().from(workbookSectionStates).where(eq(workbookSectionStates.caseId, caseId))
-    : [];
-
-  const caseAssumptions = options.includeAssumptions !== false
-    ? await db.select().from(assumptions).where(eq(assumptions.caseId, caseId))
     : [];
 
   return new Promise((resolve, reject) => {
@@ -157,23 +153,6 @@ export async function generateDossierPDF(
         if (refs.length > 0) {
           doc.text(`Supported by: E${refs.join(', E')}`);
         }
-        doc.moveDown();
-      });
-    }
-
-    if (caseAssumptions.length > 0) {
-      doc.addPage();
-      doc.fontSize(14).text('Documented Assumptions');
-      doc.moveDown();
-      doc.fontSize(10).fillColor('#666')
-        .text('The following assumptions have been documented and acknowledged by the researcher:');
-      doc.fillColor('#000').moveDown();
-
-      caseAssumptions.forEach((a, i) => {
-        doc.fontSize(11).font('Helvetica-Bold').text(`Assumption ${i + 1}`);
-        doc.font('Helvetica').fontSize(10);
-        doc.text(a.assumptionText);
-        doc.text(`Acknowledged: ${a.acknowledgedAt?.toLocaleDateString() || 'Not acknowledged'}`);
         doc.moveDown();
       });
     }

@@ -75,7 +75,7 @@ export const billingProvider: BillingProvider = {
         const subscriptionId = session.subscription as string;
 
         if (userId && subscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any;
           const periodStart = typeof subscription.current_period_start === 'number' 
             ? new Date(subscription.current_period_start * 1000) 
             : new Date();
@@ -114,7 +114,7 @@ export const billingProvider: BillingProvider = {
         const subscriptionId = (invoice as any).subscription as string;
 
         if (subscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any;
           const customerId = subscription.customer as string;
           const customer = await stripe.customers.retrieve(customerId);
           const userId = parseInt((customer as any).metadata?.userId || '0');
@@ -146,7 +146,7 @@ export const billingProvider: BillingProvider = {
         const subscriptionId = (invoice as any).subscription as string;
 
         if (subscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any;
           const customerId = subscription.customer as string;
           const customer = await stripe.customers.retrieve(customerId);
           const userId = parseInt((customer as any).metadata?.userId || '0');
