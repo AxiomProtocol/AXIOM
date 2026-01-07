@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Case ID, mode, and message are required' });
   }
 
-  const validModes: AssistantMode[] = ['research_planner', 'evidence_clerk', 'dossier_drafter'];
+  const validModes: AssistantMode[] = ['getting_started', 'resource_finder', 'research_planner', 'evidence_clerk', 'dossier_drafter'];
   if (!validModes.includes(mode)) {
     return res.status(400).json({ error: 'Invalid assistant mode' });
   }
