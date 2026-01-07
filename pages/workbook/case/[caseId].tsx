@@ -379,6 +379,7 @@ export default function CaseDetail() {
             onSend={handleAIAssistant}
             disabled={!caseData.ethicalUseAcceptedAt}
             usageRemaining={usageRemaining}
+            evidenceCount={stats.evidenceCount}
           />
         )}
       </main>

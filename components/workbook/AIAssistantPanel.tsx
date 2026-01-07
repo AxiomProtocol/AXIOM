@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-type AssistantMode = 'research_planner' | 'evidence_clerk' | 'dossier_drafter';
+type AssistantMode = 'getting_started' | 'research_planner' | 'evidence_clerk' | 'dossier_drafter';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -13,9 +13,15 @@ interface AIAssistantPanelProps {
   onSend: (mode: AssistantMode, message: string, history: { role: string; content: string }[]) => Promise<{ response: string; hypothesisMode?: boolean }>;
   disabled?: boolean;
   usageRemaining?: number;
+  evidenceCount?: number;
 }
 
 const MODE_INFO: Record<AssistantMode, { label: string; description: string; icon: string }> = {
+  getting_started: {
+    label: 'Getting Started',
+    description: 'Help for beginners with only basic info like grandparent names',
+    icon: '🚀',
+  },
   research_planner: {
     label: 'Research Planner',
     description: 'Get task lists, record suggestions, and courthouse visit sequences',
@@ -33,8 +39,9 @@ const MODE_INFO: Record<AssistantMode, { label: string; description: string; ico
   },
 };
 
-export default function AIAssistantPanel({ caseId, onSend, disabled, usageRemaining }: AIAssistantPanelProps) {
-  const [mode, setMode] = useState<AssistantMode>('research_planner');
+export default function AIAssistantPanel({ caseId, onSend, disabled, usageRemaining, evidenceCount = 0 }: AIAssistantPanelProps) {
+  const isNewResearcher = evidenceCount <= 3;
+  const [mode, setMode] = useState<AssistantMode>(isNewResearcher ? 'getting_started' : 'research_planner');
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -108,9 +115,24 @@ export default function AIAssistantPanel({ caseId, onSend, disabled, usageRemain
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
-          <div className="text-center text-gray-400 py-8">
-            <p className="text-sm">Start a conversation with your research assistant</p>
-            <p className="text-xs mt-2">The assistant will never provide legal advice</p>
+          <div className="text-center text-gray-500 py-6">
+            {isNewResearcher ? (
+              <>
+                <p className="text-sm font-medium text-amber-700 mb-2">Welcome to your research journey!</p>
+                <p className="text-sm mb-3">It looks like you're just getting started. That's okay - most researchers begin with only a name or two.</p>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-left text-xs space-y-1">
+                  <p className="font-medium text-amber-800">Try asking:</p>
+                  <p className="text-gray-700">"I only know my grandmother's name was Mary Johnson. Where do I start?"</p>
+                  <p className="text-gray-700">"My grandfather was born in Alabama around 1920. What records should I look for?"</p>
+                  <p className="text-gray-700">"How do I find census records for my family?"</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm">Start a conversation with your research assistant</p>
+                <p className="text-xs mt-2">The assistant will never provide legal advice</p>
+              </>
+            )}
           </div>
         )}
 
