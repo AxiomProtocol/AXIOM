@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../server/db';
 import { sql } from 'drizzle-orm';
+import puppeteer from 'puppeteer';
 
 interface PropertyData {
   address?: string;
@@ -69,20 +70,37 @@ async function parsePropertyUrl(url: string): Promise<PropertyData> {
 
   const sourceType = detectSource(url);
   
+  let browser;
   try {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      },
-      signal: AbortSignal.timeout(10000),
+    browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--window-size=1920,1080',
+      ],
+    });
+    
+    const page = await browser.newPage();
+    
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    await page.setViewport({ width: 1920, height: 1080 });
+    
+    await page.setExtraHTTPHeaders({
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch URL: ${response.status}`);
-    }
-
-    const html = await response.text();
+    await page.goto(url, { 
+      waitUntil: 'networkidle2',
+      timeout: 30000 
+    });
+    
+    await page.waitForSelector('body', { timeout: 10000 });
+    
+    const html = await page.content();
     
     const extractedData: PropertyData = {
       sourceType,
@@ -171,6 +189,10 @@ async function parsePropertyUrl(url: string): Promise<PropertyData> {
       sourceType,
       sourceUrl: url,
     };
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 }
 
