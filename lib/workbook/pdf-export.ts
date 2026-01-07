@@ -1,7 +1,5 @@
 import PDFDocument from 'pdfkit';
-import { db } from '../../server/db';
-import { workbookCases, evidenceItems, factClaims, workbookSectionStates } from '../../shared/schema';
-import { eq } from 'drizzle-orm';
+import { pool } from '../../server/db';
 import { incrementExportsGenerated } from './usage-meter';
 
 interface ExportOptions {
@@ -21,27 +19,42 @@ export async function generateDossierPDF(
     throw new Error('Monthly export limit reached');
   }
 
-  const [caseData] = await db
-    .select()
-    .from(workbookCases)
-    .where(eq(workbookCases.id, caseId))
-    .limit(1);
+  const caseResult = await pool.query(
+    `SELECT * FROM workbook_cases WHERE id = $1 LIMIT 1`,
+    [caseId]
+  );
+  const caseData = caseResult.rows[0];
 
-  if (!caseData || caseData.userId !== userId) {
+  if (!caseData || caseData.user_id !== userId) {
     throw new Error('Case not found');
   }
 
-  const evidence = options.includeEvidence !== false
-    ? await db.select().from(evidenceItems).where(eq(evidenceItems.caseId, caseId))
-    : [];
+  let evidence: any[] = [];
+  if (options.includeEvidence !== false) {
+    const evidenceResult = await pool.query(
+      `SELECT * FROM evidence_items WHERE case_id = $1`,
+      [caseId]
+    );
+    evidence = evidenceResult.rows;
+  }
 
-  const claims = options.includeClaims !== false
-    ? await db.select().from(factClaims).where(eq(factClaims.caseId, caseId))
-    : [];
+  let claims: any[] = [];
+  if (options.includeClaims !== false) {
+    const claimsResult = await pool.query(
+      `SELECT * FROM fact_claims WHERE case_id = $1`,
+      [caseId]
+    );
+    claims = claimsResult.rows;
+  }
 
-  const sections = options.includeSections !== false
-    ? await db.select().from(workbookSectionStates).where(eq(workbookSectionStates.caseId, caseId))
-    : [];
+  let sections: any[] = [];
+  if (options.includeSections !== false) {
+    const sectionsResult = await pool.query(
+      `SELECT * FROM workbook_section_states WHERE case_id = $1`,
+      [caseId]
+    );
+    sections = sectionsResult.rows;
+  }
 
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -61,14 +74,14 @@ export async function generateDossierPDF(
     doc.fontSize(14).fillColor('#000').text('Case Information');
     doc.moveDown(0.5);
     doc.fontSize(11)
-      .text(`Case Title: ${caseData.caseTitle}`)
-      .text(`Primary Ancestor: ${caseData.ancestorPrimaryName}`)
-      .text(`Jurisdiction: ${caseData.jurisdictionCode || 'Not specified'}`)
+      .text(`Case Title: ${caseData.case_title}`)
+      .text(`Primary Ancestor: ${caseData.ancestor_primary_name}`)
+      .text(`Jurisdiction: ${caseData.jurisdiction_code || 'Not specified'}`)
       .text(`Status: ${caseData.status}`)
-      .text(`Created: ${caseData.createdAt.toLocaleDateString()}`);
+      .text(`Created: ${new Date(caseData.created_at).toLocaleDateString()}`);
 
-    if (caseData.ancestorNameVariants && (caseData.ancestorNameVariants as string[]).length > 0) {
-      doc.text(`Name Variants: ${(caseData.ancestorNameVariants as string[]).join(', ')}`);
+    if (caseData.ancestor_name_variants && (caseData.ancestor_name_variants as string[]).length > 0) {
+      doc.text(`Name Variants: ${(caseData.ancestor_name_variants as string[]).join(', ')}`);
     }
     doc.moveDown(2);
 
@@ -97,13 +110,13 @@ export async function generateDossierPDF(
       };
 
       sections.forEach(s => {
-        const label = sectionLabels[s.sectionKey] || s.sectionKey;
-        const statusSymbol = s.completionStatus === 'complete' ? '[X]' : 
-                            s.completionStatus === 'in_progress' ? '[~]' : 
-                            s.completionStatus === 'blocked' ? '[!]' : '[ ]';
-        doc.fontSize(11).text(`${statusSymbol} ${label}: ${s.completionStatus.replace('_', ' ')}`);
-        if (s.blockedReason) {
-          doc.fontSize(10).fillColor('#666').text(`    Blocked: ${s.blockedReason}`);
+        const label = sectionLabels[s.section_key] || s.section_key;
+        const statusSymbol = s.completion_status === 'complete' ? '[X]' : 
+                            s.completion_status === 'in_progress' ? '[~]' : 
+                            s.completion_status === 'blocked' ? '[!]' : '[ ]';
+        doc.fontSize(11).text(`${statusSymbol} ${label}: ${s.completion_status.replace('_', ' ')}`);
+        if (s.blocked_reason) {
+          doc.fontSize(10).fillColor('#666').text(`    Blocked: ${s.blocked_reason}`);
           doc.fillColor('#000');
         }
       });
@@ -117,21 +130,21 @@ export async function generateDossierPDF(
       evidence.forEach((e, i) => {
         doc.fontSize(11).font('Helvetica-Bold').text(`E${e.id}: ${e.title}`);
         doc.font('Helvetica').fontSize(10);
-        doc.text(`Type: ${e.recordType} | Source: ${e.primaryOrSecondary} | Confidence: ${e.confidenceLevel}`);
-        doc.text(`Source: ${e.sourceName}`);
-        if (e.sourceCitation) {
-          doc.text(`Citation: ${e.sourceCitation}`);
+        doc.text(`Type: ${e.record_type} | Source: ${e.primary_or_secondary} | Confidence: ${e.confidence_level}`);
+        doc.text(`Source: ${e.source_name}`);
+        if (e.source_citation) {
+          doc.text(`Citation: ${e.source_citation}`);
         }
         if (e.county && e.state) {
           doc.text(`Location: ${e.county}, ${e.state}`);
         }
-        if (e.yearRangeStart || e.yearRangeEnd) {
-          const range = e.yearRangeStart === e.yearRangeEnd || !e.yearRangeEnd
-            ? `${e.yearRangeStart}`
-            : `${e.yearRangeStart}-${e.yearRangeEnd}`;
+        if (e.year_range_start || e.year_range_end) {
+          const range = e.year_range_start === e.year_range_end || !e.year_range_end
+            ? `${e.year_range_start}`
+            : `${e.year_range_start}-${e.year_range_end}`;
           doc.text(`Year Range: ${range}`);
         }
-        doc.text(`Accessed: ${e.dateAccessed?.toLocaleDateString() || 'Unknown'}`);
+        doc.text(`Accessed: ${e.date_accessed ? new Date(e.date_accessed).toLocaleDateString() : 'Unknown'}`);
         if (e.notes) {
           doc.text(`Notes: ${e.notes}`);
         }
@@ -145,11 +158,11 @@ export async function generateDossierPDF(
       doc.moveDown();
 
       claims.forEach((c, i) => {
-        doc.fontSize(11).font('Helvetica-Bold').text(`C${c.id}: ${c.claimType}`);
+        doc.fontSize(11).font('Helvetica-Bold').text(`C${c.id}: ${c.claim_type}`);
         doc.font('Helvetica').fontSize(10);
-        doc.text(c.claimText);
-        doc.text(`Confidence: ${c.confidenceLevel}`);
-        const refs = (c.relatedEvidenceIds as number[]) || [];
+        doc.text(c.claim_text);
+        doc.text(`Confidence: ${c.confidence_level}`);
+        const refs = (c.related_evidence_ids as number[]) || [];
         if (refs.length > 0) {
           doc.text(`Supported by: E${refs.join(', E')}`);
         }

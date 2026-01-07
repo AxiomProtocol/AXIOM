@@ -1,7 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../../server/db';
-import { workbookCases } from '../../../../shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { pool } from '../../../../server/db';
 import { runAssistant, AssistantMode } from '../../../../lib/workbook/ai-assistant';
 import { getUserFromSiweSession } from '../../../../lib/workbook/auth';
 
@@ -26,17 +24,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Invalid assistant mode' });
   }
 
-  const [caseData] = await db
-    .select()
-    .from(workbookCases)
-    .where(and(eq(workbookCases.id, caseId), eq(workbookCases.userId, userId)))
-    .limit(1);
+  const caseResult = await pool.query(
+    `SELECT * FROM workbook_cases WHERE id = $1 AND user_id = $2 LIMIT 1`,
+    [caseId, userId]
+  );
 
+  const caseData = caseResult.rows[0];
   if (!caseData) {
     return res.status(404).json({ error: 'Case not found' });
   }
 
-  if (!caseData.ethicalUseAcceptedAt) {
+  if (!caseData.ethical_use_accepted_at) {
     return res.status(403).json({ 
       error: 'Ethical use agreement required', 
       requiresEthicalUseAcceptance: true 

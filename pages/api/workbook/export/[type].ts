@@ -1,7 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../../server/db';
-import { workbookCases } from '../../../../shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { pool } from '../../../../server/db';
 import { checkEntitlement } from '../../../../lib/workbook/entitlements';
 import { generateDossierPDF, generateEvidenceSummaryPDF, generateChecklistPDF } from '../../../../lib/workbook/pdf-export';
 import { getUserFromSiweSession } from '../../../../lib/workbook/auth';
@@ -28,12 +26,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(403).json({ error: 'Subscription required for exports' });
   }
 
-  const [caseData] = await db
-    .select()
-    .from(workbookCases)
-    .where(and(eq(workbookCases.id, parsedCaseId), eq(workbookCases.userId, userId)))
-    .limit(1);
+  const caseResult = await pool.query(
+    `SELECT * FROM workbook_cases WHERE id = $1 AND user_id = $2 LIMIT 1`,
+    [parsedCaseId, userId]
+  );
 
+  const caseData = caseResult.rows[0];
   if (!caseData) {
     return res.status(404).json({ error: 'Case not found' });
   }
@@ -45,15 +43,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     switch (type) {
       case 'dossier':
         pdfBuffer = await generateDossierPDF(parsedCaseId, userId);
-        filename = `${caseData.caseTitle.replace(/[^a-z0-9]/gi, '_')}_Dossier.pdf`;
+        filename = `${caseData.case_title.replace(/[^a-z0-9]/gi, '_')}_Dossier.pdf`;
         break;
       case 'evidence':
         pdfBuffer = await generateEvidenceSummaryPDF(parsedCaseId, userId);
-        filename = `${caseData.caseTitle.replace(/[^a-z0-9]/gi, '_')}_Evidence.pdf`;
+        filename = `${caseData.case_title.replace(/[^a-z0-9]/gi, '_')}_Evidence.pdf`;
         break;
       case 'checklist':
         pdfBuffer = await generateChecklistPDF(parsedCaseId, userId);
-        filename = `${caseData.caseTitle.replace(/[^a-z0-9]/gi, '_')}_Checklist.pdf`;
+        filename = `${caseData.case_title.replace(/[^a-z0-9]/gi, '_')}_Checklist.pdf`;
         break;
       default:
         return res.status(400).json({ error: 'Invalid export type' });

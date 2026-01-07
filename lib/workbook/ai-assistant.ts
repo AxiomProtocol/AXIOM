@@ -1,7 +1,5 @@
 import { chat } from '../server/gemini';
-import { db } from '../../server/db';
-import { evidenceItems, factClaims, workbookCases, workbookSectionStates, resourceDirectoryItems } from '../../shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { pool } from '../../server/db';
 import { incrementAssistantCalls } from './usage-meter';
 import { checkEntitlement } from './entitlements';
 
@@ -60,25 +58,26 @@ const MODE_PROMPTS: Record<AssistantMode, string> = {
 };
 
 async function checkIdentityCollisions(caseId: number): Promise<string[]> {
-  const [caseData] = await db
-    .select()
-    .from(workbookCases)
-    .where(eq(workbookCases.id, caseId))
-    .limit(1);
+  const caseResult = await pool.query(
+    `SELECT * FROM workbook_cases WHERE id = $1 LIMIT 1`,
+    [caseId]
+  );
+  const caseData = caseResult.rows[0];
 
   if (!caseData) return [];
 
-  const evidence = await db
-    .select()
-    .from(evidenceItems)
-    .where(eq(evidenceItems.caseId, caseId));
+  const evidenceResult = await pool.query(
+    `SELECT * FROM evidence_items WHERE case_id = $1`,
+    [caseId]
+  );
+  const evidence = evidenceResult.rows;
 
   const warnings: string[] = [];
 
   const counties = new Set(evidence.map(e => e.county).filter(Boolean));
   const years = evidence.flatMap(e => {
-    const start = e.yearRangeStart || 0;
-    const end = e.yearRangeEnd || e.yearRangeStart || 0;
+    const start = e.year_range_start || 0;
+    const end = e.year_range_end || e.year_range_start || 0;
     return [start, end].filter(y => y > 0);
   });
 
@@ -98,13 +97,11 @@ async function checkIdentityCollisions(caseId: number): Promise<string[]> {
 }
 
 async function getRelevantResources(sectionKey: string): Promise<string> {
-  const resources = await db
-    .select()
-    .from(resourceDirectoryItems)
-    .where(and(
-      eq(resourceDirectoryItems.sectionKey, sectionKey),
-      eq(resourceDirectoryItems.active, true)
-    ));
+  const result = await pool.query(
+    `SELECT * FROM resource_directory_items WHERE section_key = $1 AND active = true`,
+    [sectionKey]
+  );
+  const resources = result.rows;
 
   if (resources.length === 0) return '';
 
@@ -114,47 +111,50 @@ async function getRelevantResources(sectionKey: string): Promise<string> {
 }
 
 async function buildContext(caseId: number, mode: AssistantMode): Promise<string> {
-  const [caseData] = await db
-    .select()
-    .from(workbookCases)
-    .where(eq(workbookCases.id, caseId))
-    .limit(1);
+  const caseResult = await pool.query(
+    `SELECT * FROM workbook_cases WHERE id = $1 LIMIT 1`,
+    [caseId]
+  );
+  const caseData = caseResult.rows[0];
 
   if (!caseData) {
     throw new Error('Case not found');
   }
 
-  const evidence = await db
-    .select()
-    .from(evidenceItems)
-    .where(eq(evidenceItems.caseId, caseId));
+  const evidenceResult = await pool.query(
+    `SELECT * FROM evidence_items WHERE case_id = $1`,
+    [caseId]
+  );
+  const evidence = evidenceResult.rows;
 
-  const claims = await db
-    .select()
-    .from(factClaims)
-    .where(eq(factClaims.caseId, caseId));
+  const claimsResult = await pool.query(
+    `SELECT * FROM fact_claims WHERE case_id = $1`,
+    [caseId]
+  );
+  const claims = claimsResult.rows;
 
-  const sections = await db
-    .select()
-    .from(workbookSectionStates)
-    .where(eq(workbookSectionStates.caseId, caseId));
+  const sectionsResult = await pool.query(
+    `SELECT * FROM workbook_section_states WHERE case_id = $1`,
+    [caseId]
+  );
+  const sections = sectionsResult.rows;
 
-  let context = `Case: ${caseData.caseTitle}\n`;
-  context += `Primary Ancestor: ${caseData.ancestorPrimaryName}\n`;
-  if (caseData.jurisdictionCode) {
-    context += `Jurisdiction: ${caseData.jurisdictionCode}\n`;
+  let context = `Case: ${caseData.case_title}\n`;
+  context += `Primary Ancestor: ${caseData.ancestor_primary_name}\n`;
+  if (caseData.jurisdiction_code) {
+    context += `Jurisdiction: ${caseData.jurisdiction_code}\n`;
   }
 
   context += `\nEvidence Items (${evidence.length}):\n`;
   evidence.forEach(e => {
-    context += `[E${e.id}] ${e.title} (${e.recordType}, ${e.confidenceLevel})\n`;
-    context += `  Source: ${e.sourceName}, Accessed: ${e.dateAccessed?.toISOString().split('T')[0] || 'Unknown'}\n`;
+    context += `[E${e.id}] ${e.title} (${e.record_type}, ${e.confidence_level})\n`;
+    context += `  Source: ${e.source_name}, Accessed: ${e.date_accessed?.toISOString().split('T')[0] || 'Unknown'}\n`;
   });
 
   context += `\nFact Claims (${claims.length}):\n`;
   claims.forEach(c => {
-    context += `[C${c.id}] ${c.claimType}: ${c.claimText} (${c.confidenceLevel})\n`;
-    const evidenceRefs = (c.relatedEvidenceIds as number[]) || [];
+    context += `[C${c.id}] ${c.claim_type}: ${c.claim_text} (${c.confidence_level})\n`;
+    const evidenceRefs = (c.related_evidence_ids as number[]) || [];
     if (evidenceRefs.length > 0) {
       context += `  Supported by: E${evidenceRefs.join(', E')}\n`;
     }
@@ -162,7 +162,7 @@ async function buildContext(caseId: number, mode: AssistantMode): Promise<string
 
   context += `\nSection States:\n`;
   sections.forEach(s => {
-    context += `${s.sectionKey}: ${s.completionStatus}${s.blockedReason ? ` (Blocked: ${s.blockedReason})` : ''}\n`;
+    context += `${s.section_key}: ${s.completion_status}${s.blocked_reason ? ` (Blocked: ${s.blocked_reason})` : ''}\n`;
   });
 
   return context;

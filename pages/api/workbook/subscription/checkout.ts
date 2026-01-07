@@ -1,7 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../../server/db';
-import { users } from '../../../../shared/schema';
-import { eq } from 'drizzle-orm';
+import { pool } from '../../../../server/db';
 import { billingProvider } from '../../../../lib/workbook/billing';
 import { getUserFromSiweSession } from '../../../../lib/workbook/auth';
 
@@ -16,15 +14,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const result = await pool.query(
+      `SELECT id, wallet_address, email FROM users WHERE id = $1 LIMIT 1`,
+      [userId]
+    );
 
-    if (!user || !user.email) {
-      return res.status(400).json({ error: 'User email required for subscription' });
+    const user = result.rows[0];
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
+
+    const email = user.email || `${user.wallet_address}@axiom.wallet`;
 
     const host = req.headers.host || 'localhost:5000';
     const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const checkoutUrl = await billingProvider.createCheckoutSession(
       userId,
-      user.email,
+      email,
       `${baseUrl}/workbook?subscription=success`,
       `${baseUrl}/workbook?subscription=canceled`
     );

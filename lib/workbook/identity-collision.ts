@@ -1,6 +1,4 @@
-import { db } from '../../server/db';
-import { evidenceItems, factClaims, workbookCases } from '../../shared/schema';
-import { eq } from 'drizzle-orm';
+import { pool } from '../../server/db';
 
 export interface CollisionWarning {
   type: 'name_variant' | 'date_range' | 'location_spread' | 'generation_gap';
@@ -12,23 +10,25 @@ export interface CollisionWarning {
 export async function detectCollisions(caseId: number): Promise<CollisionWarning[]> {
   const warnings: CollisionWarning[] = [];
 
-  const [caseData] = await db
-    .select()
-    .from(workbookCases)
-    .where(eq(workbookCases.id, caseId))
-    .limit(1);
+  const caseResult = await pool.query(
+    `SELECT * FROM workbook_cases WHERE id = $1 LIMIT 1`,
+    [caseId]
+  );
+  const caseData = caseResult.rows[0];
 
   if (!caseData) return warnings;
 
-  const evidence = await db
-    .select()
-    .from(evidenceItems)
-    .where(eq(evidenceItems.caseId, caseId));
+  const evidenceResult = await pool.query(
+    `SELECT * FROM evidence_items WHERE case_id = $1`,
+    [caseId]
+  );
+  const evidence = evidenceResult.rows;
 
-  const claims = await db
-    .select()
-    .from(factClaims)
-    .where(eq(factClaims.caseId, caseId));
+  const claimsResult = await pool.query(
+    `SELECT * FROM fact_claims WHERE case_id = $1`,
+    [caseId]
+  );
+  const claims = claimsResult.rows;
 
   const counties = new Map<string, number[]>();
   const states = new Map<string, number[]>();
@@ -45,11 +45,11 @@ export async function detectCollisions(caseId: number): Promise<CollisionWarning
       existing.push(e.id);
       states.set(e.state.toLowerCase(), existing);
     }
-    if (e.yearRangeStart || e.yearRangeEnd) {
+    if (e.year_range_start || e.year_range_end) {
       years.push({
         id: e.id,
-        start: e.yearRangeStart || e.yearRangeEnd || 0,
-        end: e.yearRangeEnd || e.yearRangeStart || 0,
+        start: e.year_range_start || e.year_range_end || 0,
+        end: e.year_range_end || e.year_range_start || 0,
       });
     }
   }
@@ -90,8 +90,8 @@ export async function detectCollisions(caseId: number): Promise<CollisionWarning
     }
   }
 
-  const birthClaims = claims.filter(c => c.claimType === 'birth');
-  const deathClaims = claims.filter(c => c.claimType === 'death');
+  const birthClaims = claims.filter(c => c.claim_type === 'birth');
+  const deathClaims = claims.filter(c => c.claim_type === 'death');
 
   if (birthClaims.length > 1) {
     warnings.push({
@@ -109,7 +109,7 @@ export async function detectCollisions(caseId: number): Promise<CollisionWarning
     });
   }
 
-  const nameVariants = (caseData.ancestorNameVariants as string[]) || [];
+  const nameVariants = (caseData.ancestor_name_variants as string[]) || [];
   if (nameVariants.length > 5) {
     warnings.push({
       type: 'name_variant',

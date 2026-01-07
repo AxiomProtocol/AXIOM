@@ -1,7 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../../server/db';
-import { workbookCases, workbookSectionStates, evidenceItems, factClaims, taskItems } from '../../../../shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { pool } from '../../../../server/db';
 import { checkEntitlement } from '../../../../lib/workbook/entitlements';
 import { detectCollisions } from '../../../../lib/workbook/identity-collision';
 import { getUserFromSiweSession } from '../../../../lib/workbook/auth';
@@ -17,15 +15,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Invalid case ID' });
   }
 
-  const [caseData] = await db
-    .select()
-    .from(workbookCases)
-    .where(and(eq(workbookCases.id, caseId), eq(workbookCases.userId, userId)))
-    .limit(1);
-
-  if (!caseData) {
+  const caseResult = await pool.query(
+    `SELECT * FROM workbook_cases WHERE id = $1 AND user_id = $2 LIMIT 1`,
+    [caseId, userId]
+  );
+  
+  const caseRow = caseResult.rows[0];
+  if (!caseRow) {
     return res.status(404).json({ error: 'Case not found' });
   }
+
+  const caseData = {
+    id: caseRow.id,
+    userId: caseRow.user_id,
+    caseTitle: caseRow.case_title,
+    ancestorPrimaryName: caseRow.ancestor_primary_name,
+    ancestorNameVariants: caseRow.ancestor_name_variants,
+    jurisdictionCode: caseRow.jurisdiction_code,
+    status: caseRow.status,
+    ethicalUseAcceptedAt: caseRow.ethical_use_accepted_at,
+    createdAt: caseRow.created_at,
+    updatedAt: caseRow.updated_at,
+  };
 
   const entitlement = await checkEntitlement(userId);
   if (!entitlement.hasAccess) {
@@ -34,32 +45,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'GET') {
     try {
-      const sections = await db
-        .select()
-        .from(workbookSectionStates)
-        .where(eq(workbookSectionStates.caseId, caseId));
+      const sectionsResult = await pool.query(
+        `SELECT * FROM workbook_section_states WHERE case_id = $1`,
+        [caseId]
+      );
+      const sections = sectionsResult.rows.map(row => ({
+        id: row.id,
+        caseId: row.case_id,
+        sectionKey: row.section_key,
+        completionStatus: row.completion_status,
+        notes: row.notes,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      }));
 
-      const evidence = await db
-        .select()
-        .from(evidenceItems)
-        .where(eq(evidenceItems.caseId, caseId));
+      const evidenceResult = await pool.query(
+        `SELECT * FROM evidence_items WHERE case_id = $1`,
+        [caseId]
+      );
+      const evidence = evidenceResult.rows;
 
-      const claims = await db
-        .select()
-        .from(factClaims)
-        .where(eq(factClaims.caseId, caseId));
+      const claimsResult = await pool.query(
+        `SELECT * FROM fact_claims WHERE case_id = $1`,
+        [caseId]
+      );
+      const claims = claimsResult.rows;
 
-      const tasks = await db
-        .select()
-        .from(taskItems)
-        .where(eq(taskItems.caseId, caseId));
+      const tasksResult = await pool.query(
+        `SELECT * FROM task_items WHERE case_id = $1`,
+        [caseId]
+      );
+      const tasks = tasksResult.rows;
 
       const collisions = await detectCollisions(caseId);
 
       const completedSections = sections.filter(s => s.completionStatus === 'complete').length;
       const totalSections = sections.length;
-      const primarySources = evidence.filter(e => e.primaryOrSecondary === 'primary').length;
-      const verifiedClaims = claims.filter(c => c.confidenceLevel === 'verified').length;
+      const primarySources = evidence.filter(e => e.primary_or_secondary === 'primary').length;
+      const verifiedClaims = claims.filter(c => c.confidence_level === 'verified').length;
       const openTasks = tasks.filter(t => t.status === 'open').length;
 
       return res.status(200).json({
@@ -86,7 +109,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'PATCH') {
-    const entitlement = await checkEntitlement(userId);
     if (!entitlement.isActive) {
       return res.status(403).json({ error: 'Active subscription required to update cases' });
     }
@@ -94,22 +116,54 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const { caseTitle, ancestorPrimaryName, ancestorNameVariants, jurisdictionCode, status, ethicalUseAccepted } = req.body;
 
-      const updates: Record<string, any> = { updatedAt: new Date() };
+      const updates: string[] = ['updated_at = NOW()'];
+      const values: any[] = [];
+      let paramIndex = 1;
 
-      if (caseTitle !== undefined) updates.caseTitle = caseTitle;
-      if (ancestorPrimaryName !== undefined) updates.ancestorPrimaryName = ancestorPrimaryName;
-      if (ancestorNameVariants !== undefined) updates.ancestorNameVariants = ancestorNameVariants;
-      if (jurisdictionCode !== undefined) updates.jurisdictionCode = jurisdictionCode;
-      if (status !== undefined) updates.status = status;
+      if (caseTitle !== undefined) {
+        updates.push(`case_title = $${paramIndex++}`);
+        values.push(caseTitle);
+      }
+      if (ancestorPrimaryName !== undefined) {
+        updates.push(`ancestor_primary_name = $${paramIndex++}`);
+        values.push(ancestorPrimaryName);
+      }
+      if (ancestorNameVariants !== undefined) {
+        updates.push(`ancestor_name_variants = $${paramIndex++}`);
+        values.push(JSON.stringify(ancestorNameVariants));
+      }
+      if (jurisdictionCode !== undefined) {
+        updates.push(`jurisdiction_code = $${paramIndex++}`);
+        values.push(jurisdictionCode);
+      }
+      if (status !== undefined) {
+        updates.push(`status = $${paramIndex++}`);
+        values.push(status);
+      }
       if (ethicalUseAccepted === true && !caseData.ethicalUseAcceptedAt) {
-        updates.ethicalUseAcceptedAt = new Date();
+        updates.push(`ethical_use_accepted_at = NOW()`);
       }
 
-      const [updated] = await db
-        .update(workbookCases)
-        .set(updates)
-        .where(eq(workbookCases.id, caseId))
-        .returning();
+      values.push(caseId);
+
+      const result = await pool.query(
+        `UPDATE workbook_cases SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+        values
+      );
+
+      const row = result.rows[0];
+      const updated = {
+        id: row.id,
+        userId: row.user_id,
+        caseTitle: row.case_title,
+        ancestorPrimaryName: row.ancestor_primary_name,
+        ancestorNameVariants: row.ancestor_name_variants,
+        jurisdictionCode: row.jurisdiction_code,
+        status: row.status,
+        ethicalUseAcceptedAt: row.ethical_use_accepted_at,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
 
       return res.status(200).json({ success: true, data: updated });
     } catch (error) {
@@ -119,15 +173,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'DELETE') {
-    const entitlement = await checkEntitlement(userId);
     if (!entitlement.isActive) {
       return res.status(403).json({ error: 'Active subscription required to delete cases' });
     }
 
     try {
-      await db.update(workbookCases)
-        .set({ status: 'archived', updatedAt: new Date() })
-        .where(eq(workbookCases.id, caseId));
+      await pool.query(
+        `UPDATE workbook_cases SET status = 'archived', updated_at = NOW() WHERE id = $1`,
+        [caseId]
+      );
 
       return res.status(200).json({ success: true, message: 'Case archived' });
     } catch (error) {
