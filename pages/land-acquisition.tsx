@@ -240,7 +240,12 @@ export default function LandAcquisitionPage() {
 
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "24px" }}>
                 <button
-                  onClick={() => setActiveTab('crowdfunding')}
+                  onClick={() => {
+                    setActiveTab('crowdfunding');
+                    setTimeout(() => {
+                      document.getElementById('tab-content')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -260,7 +265,12 @@ export default function LandAcquisitionPage() {
                   <span>🌱</span> Explore Campaigns
                 </button>
                 <button
-                  onClick={() => setActiveTab('pools')}
+                  onClick={() => {
+                    setActiveTab('pools');
+                    setTimeout(() => {
+                      document.getElementById('tab-content')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
