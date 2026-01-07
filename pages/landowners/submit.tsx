@@ -109,7 +109,6 @@ export default function LandownerSubmitPage() {
       propertyType: data.propertyType || prev.propertyType,
       zoning: data.zoning || prev.zoning
     }));
-    setStep(2);
   };
 
   const handleSubmit = async () => {
