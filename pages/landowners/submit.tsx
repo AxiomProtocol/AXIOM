@@ -44,6 +44,7 @@ export default function LandownerSubmitPage() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [showImportModal, setShowImportModal] = useState(false);
+  const [isImportedListing, setIsImportedListing] = useState(false);
 
   const [formData, setFormData] = useState({
     ownerName: "",
@@ -98,12 +99,14 @@ export default function LandownerSubmitPage() {
       stateName = STATE_ABBREV_TO_NAME[stateName.toUpperCase()] || stateName;
     }
     
+    setIsImportedListing(true);
     setFormData(prev => ({
       ...prev,
       propertyAddress: data.address || prev.propertyAddress,
       city: data.city || prev.city,
       state: stateName || prev.state,
       zipCode: data.zipCode || prev.zipCode,
+      county: data.county || prev.county,
       acreage: data.acreage?.toString() || prev.acreage,
       askingPrice: data.askingPrice?.toString() || prev.askingPrice,
       propertyType: data.propertyType || prev.propertyType,
@@ -283,38 +286,52 @@ export default function LandownerSubmitPage() {
 
             {step === 1 && (
               <div>
+                {isImportedListing ? (
+                  <div style={{ 
+                    padding: "12px 16px", 
+                    background: "#e0f2f1", 
+                    borderRadius: "8px", 
+                    marginBottom: "24px",
+                    border: "1px solid #00D4AA"
+                  }}>
+                    <p style={{ margin: 0, fontSize: "14px", color: theme.dark }}>
+                      <strong>Imported Listing</strong> - Seller contact info is optional. You can add it later if known.
+                    </p>
+                  </div>
+                ) : null}
+                
                 <h2 style={{ fontSize: "18px", fontWeight: 600, marginBottom: "24px", color: theme.dark }}>
-                  Owner Information
+                  {isImportedListing ? "Seller Contact (Optional)" : "Owner Information"}
                 </h2>
                 <div style={fieldGroup}>
-                  <label style={labelStyle}>Full Name *</label>
+                  <label style={labelStyle}>{isImportedListing ? "Seller Name" : "Full Name *"}</label>
                   <input
                     type="text"
                     value={formData.ownerName}
                     onChange={e => updateForm("ownerName", e.target.value)}
                     style={inputStyle}
-                    placeholder="John Smith"
+                    placeholder={isImportedListing ? "If known" : "John Smith"}
                   />
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                   <div style={fieldGroup}>
-                    <label style={labelStyle}>Email *</label>
+                    <label style={labelStyle}>{isImportedListing ? "Seller Email" : "Email *"}</label>
                     <input
                       type="email"
                       value={formData.ownerEmail}
                       onChange={e => updateForm("ownerEmail", e.target.value)}
                       style={inputStyle}
-                      placeholder="john@example.com"
+                      placeholder={isImportedListing ? "If known" : "john@example.com"}
                     />
                   </div>
                   <div style={fieldGroup}>
-                    <label style={labelStyle}>Phone</label>
+                    <label style={labelStyle}>{isImportedListing ? "Seller Phone" : "Phone"}</label>
                     <input
                       type="tel"
                       value={formData.ownerPhone}
                       onChange={e => updateForm("ownerPhone", e.target.value)}
                       style={inputStyle}
-                      placeholder="(555) 123-4567"
+                      placeholder={isImportedListing ? "If known" : "(555) 123-4567"}
                     />
                   </div>
                 </div>
@@ -669,7 +686,8 @@ export default function LandownerSubmitPage() {
                 <button
                   onClick={() => setStep(step + 1)}
                   disabled={
-                    (step === 1 && (!formData.ownerName || !formData.ownerEmail || !formData.propertyAddress)) ||
+                    (step === 1 && !isImportedListing && (!formData.ownerName || !formData.ownerEmail || !formData.propertyAddress)) ||
+                    (step === 1 && isImportedListing && !formData.propertyAddress) ||
                     (step === 2 && !formData.acreage)
                   }
                   style={{
@@ -680,7 +698,8 @@ export default function LandownerSubmitPage() {
                     borderRadius: "8px",
                     cursor: "pointer",
                     fontWeight: 600,
-                    opacity: (step === 1 && (!formData.ownerName || !formData.ownerEmail || !formData.propertyAddress)) ||
+                    opacity: (step === 1 && !isImportedListing && (!formData.ownerName || !formData.ownerEmail || !formData.propertyAddress)) ||
+                             (step === 1 && isImportedListing && !formData.propertyAddress) ||
                              (step === 2 && !formData.acreage) ? 0.5 : 1
                   }}
                 >
