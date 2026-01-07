@@ -1,13 +1,13 @@
 export const homeCopy = {
   hero: {
-    kicker: "Axiom",
-    headline: "The Future of Ownership Starts With Land",
-    secondary: "Shared Ownership Built on Structure, Not Trust",
+    kicker: "Axiom Protocol",
+    headline: "Coordination-First Economic Infrastructure",
+    secondary: "Structure, Transparency, and Community-Led Participation",
     subheadline:
-      "Axiom creates structured paths for shared land ownership and real asset participation, starting with farmland.",
+      "Axiom Protocol is inspired by long-term group economics and disciplined resource stewardship. We prioritize structure, transparency, and community-led participation over speculation and hype.",
     primaryCta: { label: "View Live Projects", href: "/land-acquisition" },
     secondaryCta: { label: "Explore KeyGrow", href: "/keygrow" },
-    tertiaryCta: { label: "See Our Origin Story", href: "/origin" },
+    tertiaryCta: { label: "Read Our Philosophy", href: "/philosophy" },
     microcopy:
       "Built from real execution: a community farmland purchase, development work, and a founder-led infrastructure roadmap."
   },

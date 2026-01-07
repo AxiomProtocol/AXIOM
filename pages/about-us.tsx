@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { pagesCopy } from '../components/axiomRebuild/copy/pagesCopy';
 import { Web3Hero } from '../components/axiomRebuild/Web3Hero';
 import { Web3Section } from '../components/axiomRebuild/Web3Section';
@@ -9,22 +10,22 @@ const VALUES = [
   {
     icon: "🔓",
     title: "Transparency",
-    description: "Every transaction, every decision, every dollar is recorded on-chain."
+    description: "Every transaction and decision is recorded with clear audit trails."
   },
   {
     icon: "🤝",
-    title: "Community",
-    description: "Governed by members. AXM holders vote on proposals and shape the future."
+    title: "Coordination",
+    description: "Structure and shared rules create reliable collaboration over informal trust."
   },
   {
     icon: "🔒",
     title: "Security",
-    description: "Multi-sig wallets, audited contracts, and enterprise-grade infrastructure."
+    description: "Multi-signature controls, audited systems, and privacy by default."
   },
   {
-    icon: "🌱",
-    title: "Sustainability",
-    description: "Carbon credits, renewable energy, and environmentally responsible operations."
+    icon: "📋",
+    title: "Discipline",
+    description: "Measured onboarding, accountability loops, and evidence-based processes."
   },
 ];
 
@@ -49,8 +50,8 @@ export default function AboutUsPage() {
   return (
     <>
       <Head>
-        <title>About Us | Axiom</title>
-        <meta name="description" content="Axiom was born from real-world execution: a community land purchase and commitment to building shared ownership infrastructure." />
+        <title>About Axiom Protocol | Coordination-First Economic Infrastructure</title>
+        <meta name="description" content="Axiom Protocol is a coordination-first economic infrastructure inspired by principles of group economics, resource stewardship, and long-term structural durability." />
       </Head>
       <div style={{ minHeight: '100vh', background: 'white' }}>
         {copy.hero && (
@@ -84,8 +85,14 @@ export default function AboutUsPage() {
         <section style={{ padding: '80px 20px', background: 'linear-gradient(180deg, rgba(123,104,238,0.05) 0%, rgba(255,255,255,1) 100%)' }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
-              <span style={{ color: '#7B68EE', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, fontSize: 14 }}>Our Values</span>
-              <h2 style={{ fontSize: 40, fontWeight: 700, margin: '8px 0 0 0', color: '#1a1a2e' }}>What Drives Us</h2>
+              <span style={{ color: '#7B68EE', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, fontSize: 14 }}>Our Principles</span>
+              <h2 style={{ fontSize: 40, fontWeight: 700, margin: '8px 0 16px 0', color: '#1a1a2e' }}>What Guides Us</h2>
+              <p style={{ fontSize: 16, color: '#64748b', maxWidth: 600, margin: '0 auto 24px' }}>
+                These principles shape how we build and operate. For a deeper understanding, explore our complete philosophy.
+              </p>
+              <Link href="/philosophy" style={{ color: '#7B68EE', fontWeight: 600, textDecoration: 'none' }}>
+                Read the Philosophy Primer →
+              </Link>
             </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 }}>

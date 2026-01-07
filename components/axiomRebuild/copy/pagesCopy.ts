@@ -303,49 +303,66 @@ export const pagesCopy: Record<string, PageCopy> = {
     ]
   },
   "about-us": {
-    title: "About Us",
+    title: "About Axiom Protocol",
     intro:
-      "Axiom was not created in a lab. It was born from real-world execution: a community land purchase, USDA-supported development, and a commitment to building shared ownership infrastructure.",
+      "Axiom Protocol is a coordination-first economic infrastructure designed to enable disciplined, community-led wealth formation grounded in real-world resources and structured participation.",
     hero: {
-      kicker: "Who We Are",
-      headline: "Built Different",
-      secondary: "Proof Before Platform",
-      subheadline: "We built the model before we built the software. Real community. Real land. Real outcomes. Now we're scaling what works.",
-      primaryCta: { label: "Read Our Origin", href: "/origin" },
-      secondaryCta: { label: "See Our Impact", href: "/impact" },
-      microcopy: "The farmland proof came first. The platform came second."
+      kicker: "About Axiom Protocol",
+      headline: "Coordination-First Economic Infrastructure",
+      secondary: "Structure Over Speculation",
+      subheadline: "Axiom is inspired by principles of group economics, resource stewardship, and long-term structural durability. We prioritize discipline over impulse and coordination over hype.",
+      primaryCta: { label: "Read Our Philosophy", href: "/philosophy" },
+      secondaryCta: { label: "See Our Origin", href: "/origin" },
+      microcopy: "Built on structure, transparency, and community-led participation."
     },
     sections: [
       {
-        id: "story",
-        title: "The Farmland Proof",
+        id: "mission",
+        title: "Our Mission",
         body:
-          "Before Axiom existed as software, a real community came together, pooled funds, acquired six acres of farmland, and developed it into a working farm with USDA support. Real people. Real land. Real outcomes.\n\nThat experience proved shared ownership works. It also proved most groups fail because coordination breaks down.",
+          "Axiom Protocol is a coordination-first economic infrastructure designed to enable disciplined, community-led wealth formation grounded in real-world resources and structured participation.\n\nAxiom is inspired by principles of group economics, resource stewardship, and long-term structural durability. We emphasize structure over speculation and discipline over impulse.",
         image: "/generated/about_us_office_building.png",
-        imageAlt: "Modern glass building representing Axiom headquarters"
-      },
-      {
-        id: "values",
-        title: "What Makes Us Different",
-        body:
-          "Transparency, community ownership, security, and sustainability are not marketing terms for us. They are operational requirements embedded in how we build and operate.",
-        image: "/generated/transparency_glass_architecture.png",
-        imageAlt: "Glass architecture representing transparency",
+        imageAlt: "Modern building representing structured coordination",
         bullets: [
-          "Every transaction recorded on-chain",
-          "Community-governed through AXM token holders",
-          "Multi-signature wallets and audited contracts",
-          "Sustainability built into our infrastructure"
+          "Coordination before capitalization",
+          "Structure as care made repeatable",
+          "Long-term stewardship over short-term gains",
+          "Discipline and accountability in all operations"
         ]
       },
       {
-        id: "founder",
-        title: "Founder Commitment",
+        id: "design",
+        title: "Design Priorities",
         body:
-          "The founder obtained a commercial driver's license, operates as an over-the-road contractor, and is building toward his own authority. This is a commitment to internalizing the full stack of real asset development — from land acquisition to transportation infrastructure.",
+          "Axiom is designed around clear priorities that guide every decision and feature we build. These are not marketing terms. They are operational requirements.",
+        image: "/generated/transparency_glass_architecture.png",
+        imageAlt: "Glass architecture representing transparency",
+        bullets: [
+          "Transparent recordkeeping for all activities",
+          "Structured participation paths with clear expectations",
+          "Community governance with defined rules and processes",
+          "Educational resources before participation",
+          "Evidence-based decision making",
+          "Privacy by default for sensitive information"
+        ]
+      },
+      {
+        id: "participation",
+        title: "How Participation Works",
+        body:
+          "Participation in Axiom is facilitated through education, structured systems, governance, and transparency. We do not promise outcomes. We provide the coordination tools and structure for communities to work together intentionally.\n\nEvery participant is expected to understand the model, engage with the educational materials, and participate with intention rather than impulse.",
+        image: "/generated/community_collaboration_around_data.png",
+        imageAlt: "Community collaboration representing structured participation",
+        primaryCta: { label: "Explore Philosophy", href: "/philosophy" },
+        secondaryCta: { label: "View How It Works", href: "/how-it-works" }
+      },
+      {
+        id: "disclaimer",
+        title: "Important Notice",
+        body:
+          "Axiom Protocol provides educational resources and coordination infrastructure. Nothing on this platform constitutes legal, financial, or investment advice. No outcomes are guaranteed. Users are responsible for their own decisions and should consult qualified professionals for specific guidance.\n\nAxiom is inspired by established principles of group economics and cooperative coordination. We do not claim endorsement by or affiliation with any authors, institutions, or organizations.",
         image: "/generated/infrastructure_trucking_highway_scene.png",
-        imageAlt: "Commercial truck on highway representing founder commitment",
-        primaryCta: { label: "See Infrastructure", href: "/infrastructure" }
+        imageAlt: "Infrastructure representing long-term commitment"
       }
     ]
   },

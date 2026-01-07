@@ -60,6 +60,7 @@ export const navItems: NavItem[] = [
     label: "About",
     children: [
       { label: "About Us", href: "/about-us" },
+      { label: "Philosophy Primer", href: "/philosophy" },
       { label: "Origin Story", href: "/origin" },
       { label: "How It Works", href: "/how-it-works" },
       { label: "Team", href: "/team" },
