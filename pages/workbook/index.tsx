@@ -54,14 +54,26 @@ export default function WorkbookDashboard() {
 
   const loadData = async () => {
     try {
-      const statusRes = await fetch('/api/workbook/subscription/status');
+      const statusRes = await fetch('/api/workbook/subscription/status', {
+        credentials: 'include',
+      });
+      
+      if (statusRes.status === 401) {
+        console.log('Workbook: Not authenticated, showing subscription gate');
+        setSubscription(null);
+        setLoading(false);
+        return;
+      }
+      
       if (statusRes.ok) {
         const statusData = await statusRes.json();
         setSubscription(statusData.data.subscription);
         setUsage(statusData.data.usage);
 
         if (statusData.data.subscription.hasAccess) {
-          const casesRes = await fetch('/api/workbook/cases');
+          const casesRes = await fetch('/api/workbook/cases', {
+            credentials: 'include',
+          });
           if (casesRes.ok) {
             const casesData = await casesRes.json();
             setCases(casesData.data || []);
@@ -80,6 +92,7 @@ export default function WorkbookDashboard() {
     try {
       const res = await fetch('/api/workbook/subscription/checkout', {
         method: 'POST',
+        credentials: 'include',
       });
       const data = await res.json();
       

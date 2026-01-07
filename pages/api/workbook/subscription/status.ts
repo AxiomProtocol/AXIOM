@@ -8,9 +8,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const cookies = req.headers.cookie || '';
+  const hasSiweCookie = cookies.includes('siwe_session=');
+  console.log('[Workbook Status] Cookie header present:', !!cookies, 'Has siwe_session:', hasSiweCookie);
+  
   const userId = await getUserFromSiweSession(req);
+  console.log('[Workbook Status] User ID from session:', userId);
+  
   if (!userId) {
-    return res.status(401).json({ error: 'Authentication required' });
+    return res.status(401).json({ error: 'Authentication required', debug: { hasCookie: hasSiweCookie } });
   }
 
   try {

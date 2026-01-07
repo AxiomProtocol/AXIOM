@@ -88,6 +88,13 @@ export default function SubscriptionGate({ onSubscribe, isLoading }: Subscriptio
             <p className="text-xs text-gray-500 mt-4">
               Cancel anytime. No legal advice provided. Research tool only.
             </p>
+            
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-600">
+                Already subscribed? Make sure you're signed in with your wallet 
+                (look for the green checkmark next to your address).
+              </p>
+            </div>
           </div>
         </div>
       </div>
