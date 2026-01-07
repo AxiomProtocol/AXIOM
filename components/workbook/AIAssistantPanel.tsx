@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-type AssistantMode = 'getting_started' | 'research_planner' | 'evidence_clerk' | 'dossier_drafter';
+type AssistantMode = 'getting_started' | 'research_planner' | 'evidence_clerk' | 'dossier_drafter' | 'resource_finder';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -21,6 +21,11 @@ const MODE_INFO: Record<AssistantMode, { label: string; description: string; ico
     label: 'Getting Started',
     description: 'Help for beginners with only basic info like grandparent names',
     icon: '🚀',
+  },
+  resource_finder: {
+    label: 'Resource Finder',
+    description: 'Search census, FamilySearch, court records, and more databases',
+    icon: '🔍',
   },
   research_planner: {
     label: 'Research Planner',
