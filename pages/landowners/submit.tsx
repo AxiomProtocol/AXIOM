@@ -46,22 +46,35 @@ export default function LandownerSubmitPage() {
   const [showImportModal, setShowImportModal] = useState(false);
 
   const handleImportData = (data: any) => {
+    console.log('handleImportData received:', data);
+    
     let stateName = data.state || '';
     if (stateName && stateName.length === 2) {
       stateName = STATE_ABBREV_TO_NAME[stateName.toUpperCase()] || stateName;
     }
     
-    setFormData(prev => ({
-      ...prev,
-      propertyAddress: data.address || prev.propertyAddress,
-      city: data.city || prev.city,
-      state: stateName || prev.state,
-      zipCode: data.zipCode || prev.zipCode,
-      acreage: data.acreage?.toString() || prev.acreage,
-      askingPrice: data.askingPrice?.toString() || prev.askingPrice,
-      propertyType: data.propertyType || prev.propertyType,
-      zoning: data.zoning || prev.zoning
-    }));
+    console.log('Setting form data with:', {
+      propertyAddress: data.address,
+      city: data.city,
+      state: stateName,
+      zipCode: data.zipCode
+    });
+    
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        propertyAddress: data.address || prev.propertyAddress,
+        city: data.city || prev.city,
+        state: stateName || prev.state,
+        zipCode: data.zipCode || prev.zipCode,
+        acreage: data.acreage?.toString() || prev.acreage,
+        askingPrice: data.askingPrice?.toString() || prev.askingPrice,
+        propertyType: data.propertyType || prev.propertyType,
+        zoning: data.zoning || prev.zoning
+      };
+      console.log('New form data:', newData);
+      return newData;
+    });
     setStep(2);
   };
 
