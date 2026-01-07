@@ -3,6 +3,8 @@ import { db } from '../../../server/db';
 import { sql } from 'drizzle-orm';
 import puppeteer from 'puppeteer';
 
+const ATTOM_API_KEY = process.env.ATTOM_API_KEY;
+
 interface PropertyData {
   address?: string;
   city?: string;
@@ -61,6 +63,80 @@ function detectSource(url: string): string {
   if (lowerUrl.includes('lands.com')) return 'landwatch';
   if (lowerUrl.includes('landandfarm.com')) return 'landwatch';
   return 'other';
+}
+
+async function fetchAttomPropertyData(address: string, city: string, state: string): Promise<PropertyData | null> {
+  if (!ATTOM_API_KEY || !address || !city) {
+    return null;
+  }
+
+  try {
+    const address1 = encodeURIComponent(address);
+    const address2 = encodeURIComponent(`${city}, ${state}`);
+    
+    const response = await fetch(
+      `https://api.gateway.attomdata.com/propertyapi/v1.0.0/property/detail?address1=${address1}&address2=${address2}`,
+      {
+        headers: {
+          'accept': 'application/json',
+          'apikey': ATTOM_API_KEY
+        }
+      }
+    );
+
+    if (!response.ok) {
+      console.log('ATTOM API returned status:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    const property = data?.property?.[0];
+    
+    if (!property) {
+      return null;
+    }
+
+    const lot = property.lot || {};
+    const building = property.building || {};
+    const summary = building.summary || {};
+    const assessment = property.assessment || {};
+    const market = assessment.market || {};
+    const location = property.location || {};
+    const address_info = property.address || {};
+
+    const attomData: PropertyData = {};
+
+    if (lot.lotSize2) {
+      attomData.acreage = parseFloat(lot.lotSize2);
+    } else if (lot.lotSize1) {
+      attomData.acreage = parseFloat(lot.lotSize1) / 43560;
+    }
+
+    if (market.mktTtlValue) {
+      attomData.askingPrice = parseFloat(market.mktTtlValue);
+    } else if (assessment.assessed?.assdTtlValue) {
+      attomData.askingPrice = parseFloat(assessment.assessed.assdTtlValue);
+    }
+
+    if (summary.propType) {
+      attomData.propertyType = summary.propType;
+    }
+
+    if (location.county) {
+      attomData.county = location.county;
+    }
+
+    if (address_info.country) {
+      attomData.latitude = property.location?.latitude;
+      attomData.longitude = property.location?.longitude;
+    }
+
+    console.log('ATTOM data fetched:', attomData);
+    return attomData;
+  } catch (error: any) {
+    console.error('ATTOM API error:', error.message);
+    return null;
+  }
 }
 
 function extractFromUrlPattern(url: string, sourceType: string): PropertyData {
@@ -198,9 +274,46 @@ async function parsePropertyUrl(url: string): Promise<PropertyData> {
       if (pageData.image) extractedData.images = [pageData.image];
     }
 
+    if (extractedData.address && extractedData.city && extractedData.state) {
+      const attomData = await fetchAttomPropertyData(
+        extractedData.address,
+        extractedData.city,
+        extractedData.state
+      );
+      if (attomData) {
+        if (attomData.acreage && !extractedData.acreage) extractedData.acreage = attomData.acreage;
+        if (attomData.askingPrice && !extractedData.askingPrice) extractedData.askingPrice = attomData.askingPrice;
+        if (attomData.propertyType && !extractedData.propertyType) extractedData.propertyType = attomData.propertyType;
+        if (attomData.county && !extractedData.county) extractedData.county = attomData.county;
+        if (attomData.latitude) extractedData.latitude = attomData.latitude;
+        if (attomData.longitude) extractedData.longitude = attomData.longitude;
+      }
+    }
+
     return extractedData;
   } catch (error: any) {
     console.error('Browser fetch failed, using URL extraction only:', error.message);
+    
+    if (extractedData.address && extractedData.city && extractedData.state) {
+      try {
+        const attomData = await fetchAttomPropertyData(
+          extractedData.address,
+          extractedData.city,
+          extractedData.state
+        );
+        if (attomData) {
+          if (attomData.acreage) extractedData.acreage = attomData.acreage;
+          if (attomData.askingPrice) extractedData.askingPrice = attomData.askingPrice;
+          if (attomData.propertyType) extractedData.propertyType = attomData.propertyType;
+          if (attomData.county) extractedData.county = attomData.county;
+          if (attomData.latitude) extractedData.latitude = attomData.latitude;
+          if (attomData.longitude) extractedData.longitude = attomData.longitude;
+        }
+      } catch (attomError) {
+        console.error('ATTOM fallback also failed:', attomError);
+      }
+    }
+    
     return extractedData;
   } finally {
     if (browser) {
