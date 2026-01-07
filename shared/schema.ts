@@ -5561,6 +5561,316 @@ export const aiUsageMeters = pgTable("ai_usage_meters", {
   periodIdx: index("ai_usage_meters_period_idx").on(table.periodStart, table.periodEnd),
 }));
 
+// ============================================
+// LAND ACQUISITION IMPROVEMENTS - 6 NEW FEATURES
+// ============================================
+
+// Milestone Status Enum
+export const milestoneStatusEnum = pgEnum('milestone_status', [
+  'pending',
+  'in_progress',
+  'completed',
+  'verified',
+  'failed'
+]);
+
+// Secondary Market Listing Status Enum
+export const marketListingStatusEnum = pgEnum('market_listing_status', [
+  'active',
+  'pending',
+  'sold',
+  'cancelled',
+  'expired'
+]);
+
+// Token Holder Proposal Status Enum
+export const proposalStatusEnum = pgEnum('proposal_status', [
+  'draft',
+  'active',
+  'passed',
+  'rejected',
+  'executed',
+  'cancelled'
+]);
+
+// Notification Type Enum
+export const notificationTypeEnum = pgEnum('notification_type', [
+  'campaign_update',
+  'milestone_completed',
+  'investment_confirmed',
+  'refund_processed',
+  'vote_required',
+  'market_activity',
+  'due_diligence_ready',
+  'general'
+]);
+
+// 1. Campaign Milestones (Milestone-Based Fund Release)
+export const campaignMilestones = pgTable("campaign_milestones", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").references(() => crowdfundingCampaigns.id).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  releasePercentage: decimal("release_percentage", { precision: 5, scale: 2 }).notNull(),
+  releaseAmount: decimal("release_amount", { precision: 18, scale: 2 }),
+  sequenceOrder: integer("sequence_order").notNull(),
+  status: milestoneStatusEnum("status").default('pending'),
+  requiredDocuments: jsonb("required_documents").default([]),
+  submittedDocuments: jsonb("submitted_documents").default([]),
+  verifiedBy: integer("verified_by").references(() => users.id),
+  verifiedAt: timestamp("verified_at"),
+  completedAt: timestamp("completed_at"),
+  fundsReleasedAt: timestamp("funds_released_at"),
+  releaseTxHash: varchar("release_tx_hash", { length: 66 }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  campaignIdx: index("milestones_campaign_idx").on(table.campaignId),
+  statusIdx: index("milestones_status_idx").on(table.status),
+  sequenceIdx: index("milestones_sequence_idx").on(table.campaignId, table.sequenceOrder),
+}));
+
+// 2. Secondary Market Listings (Peer-to-Peer Token Trading)
+export const secondaryMarketListings = pgTable("secondary_market_listings", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").references(() => users.id).notNull(),
+  sellerWallet: varchar("seller_wallet", { length: 42 }).notNull(),
+  campaignId: integer("campaign_id").references(() => crowdfundingCampaigns.id),
+  poolId: integer("pool_id").references(() => landAcquisitionPools.id),
+  tokenType: varchar("token_type", { length: 20 }).notNull(),
+  tokenId: integer("token_id"),
+  sharesForSale: integer("shares_for_sale").notNull(),
+  pricePerShare: decimal("price_per_share", { precision: 18, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 18, scale: 2 }).notNull(),
+  minPurchase: integer("min_purchase").default(1),
+  status: marketListingStatusEnum("status").default('active'),
+  buyerId: integer("buyer_id").references(() => users.id),
+  buyerWallet: varchar("buyer_wallet", { length: 42 }),
+  soldAt: timestamp("sold_at"),
+  saleTxHash: varchar("sale_tx_hash", { length: 66 }),
+  expiresAt: timestamp("expires_at"),
+  platformFee: decimal("platform_fee", { precision: 18, scale: 2 }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  sellerIdx: index("market_seller_idx").on(table.sellerId),
+  campaignIdx: index("market_campaign_idx").on(table.campaignId),
+  statusIdx: index("market_status_idx").on(table.status),
+}));
+
+// 3. Due Diligence Reports
+export const dueDiligenceReports = pgTable("due_diligence_reports", {
+  id: serial("id").primaryKey(),
+  landOptionId: integer("land_option_id").references(() => landOptions.id).notNull(),
+  reportType: varchar("report_type", { length: 50 }).notNull(),
+  titleSearchCompleted: boolean("title_search_completed").default(false),
+  titleSearchDate: timestamp("title_search_date"),
+  titleSearchFindings: text("title_search_findings"),
+  titleCompany: varchar("title_company", { length: 200 }),
+  environmentalAssessmentCompleted: boolean("environmental_assessment_completed").default(false),
+  environmentalDate: timestamp("environmental_date"),
+  environmentalFindings: text("environmental_findings"),
+  environmentalRating: varchar("environmental_rating", { length: 20 }),
+  surveyCompleted: boolean("survey_completed").default(false),
+  surveyDate: timestamp("survey_date"),
+  surveyFindings: text("survey_findings"),
+  surveyorName: varchar("surveyor_name", { length: 200 }),
+  comparableSales: jsonb("comparable_sales").default([]),
+  marketAnalysis: text("market_analysis"),
+  estimatedValue: decimal("estimated_value", { precision: 18, scale: 2 }),
+  attomPropertyId: varchar("attom_property_id", { length: 100 }),
+  attomData: jsonb("attom_data"),
+  walkScore: integer("walk_score"),
+  transitScore: integer("transit_score"),
+  bikeScore: integer("bike_score"),
+  zoning: varchar("zoning", { length: 100 }),
+  zoningRestrictions: text("zoning_restrictions"),
+  utilities: jsonb("utilities").default({}),
+  legalIssues: text("legal_issues"),
+  riskAssessment: text("risk_assessment"),
+  riskScore: integer("risk_score"),
+  recommendations: text("recommendations"),
+  preparedBy: integer("prepared_by").references(() => users.id),
+  approvedBy: integer("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  documentsCID: text("documents_cid"),
+  status: varchar("status", { length: 20 }).default('draft'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  landOptionIdx: index("due_diligence_land_idx").on(table.landOptionId),
+  statusIdx: index("due_diligence_status_idx").on(table.status),
+}));
+
+// 4. Token Holder Proposals (Voting Rights)
+export const tokenHolderProposals = pgTable("token_holder_proposals", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").references(() => crowdfundingCampaigns.id),
+  poolId: integer("pool_id").references(() => landAcquisitionPools.id),
+  landOptionId: integer("land_option_id").references(() => landOptions.id),
+  proposerId: integer("proposer_id").references(() => users.id).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description").notNull(),
+  proposalType: varchar("proposal_type", { length: 50 }).notNull(),
+  options: jsonb("options").default([]),
+  votingStartDate: timestamp("voting_start_date"),
+  votingEndDate: timestamp("voting_end_date"),
+  quorumPercentage: decimal("quorum_percentage", { precision: 5, scale: 2 }).default('51'),
+  passingThreshold: decimal("passing_threshold", { precision: 5, scale: 2 }).default('50'),
+  status: proposalStatusEnum("status").default('draft'),
+  totalVotes: integer("total_votes").default(0),
+  totalVotingPower: decimal("total_voting_power", { precision: 18, scale: 2 }).default('0'),
+  yesVotes: decimal("yes_votes", { precision: 18, scale: 2 }).default('0'),
+  noVotes: decimal("no_votes", { precision: 18, scale: 2 }).default('0'),
+  abstainVotes: decimal("abstain_votes", { precision: 18, scale: 2 }).default('0'),
+  winningOption: integer("winning_option"),
+  executedAt: timestamp("executed_at"),
+  executionTxHash: varchar("execution_tx_hash", { length: 66 }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  campaignIdx: index("proposals_campaign_idx").on(table.campaignId),
+  poolIdx: index("proposals_pool_idx").on(table.poolId),
+  statusIdx: index("proposals_status_idx").on(table.status),
+}));
+
+// Token Holder Votes
+export const tokenHolderVotes = pgTable("token_holder_votes", {
+  id: serial("id").primaryKey(),
+  proposalId: integer("proposal_id").references(() => tokenHolderProposals.id).notNull(),
+  voterId: integer("voter_id").references(() => users.id).notNull(),
+  voterWallet: varchar("voter_wallet", { length: 42 }),
+  voteChoice: varchar("vote_choice", { length: 20 }).notNull(),
+  votingPower: decimal("voting_power", { precision: 18, scale: 2 }).notNull(),
+  sharesHeld: integer("shares_held").notNull(),
+  reason: text("reason"),
+  signature: text("signature"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  proposalIdx: index("votes_proposal_idx").on(table.proposalId),
+  voterIdx: index("votes_voter_idx").on(table.voterId),
+  uniqueVote: index("votes_unique_idx").on(table.proposalId, table.voterId),
+}));
+
+// 5. Investor Notifications
+export const investorNotifications = pgTable("investor_notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  campaignId: integer("campaign_id").references(() => crowdfundingCampaigns.id),
+  poolId: integer("pool_id").references(() => landAcquisitionPools.id),
+  type: notificationTypeEnum("type").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  message: text("message").notNull(),
+  actionUrl: text("action_url"),
+  read: boolean("read").default(false),
+  readAt: timestamp("read_at"),
+  emailSent: boolean("email_sent").default(false),
+  emailSentAt: timestamp("email_sent_at"),
+  pushSent: boolean("push_sent").default(false),
+  pushSentAt: timestamp("push_sent_at"),
+  priority: varchar("priority", { length: 20 }).default('normal'),
+  expiresAt: timestamp("expires_at"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("notifications_user_idx").on(table.userId),
+  campaignIdx: index("notifications_campaign_idx").on(table.campaignId),
+  readIdx: index("notifications_read_idx").on(table.userId, table.read),
+  typeIdx: index("notifications_type_idx").on(table.type),
+}));
+
+// Campaign Updates (Progress Reports)
+export const campaignUpdates = pgTable("campaign_updates", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").references(() => crowdfundingCampaigns.id),
+  poolId: integer("pool_id").references(() => landAcquisitionPools.id),
+  authorId: integer("author_id").references(() => users.id).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  content: text("content").notNull(),
+  updateType: varchar("update_type", { length: 50 }).default('general'),
+  images: jsonb("images").default([]),
+  videoCID: text("video_cid"),
+  attachments: jsonb("attachments").default([]),
+  visibility: varchar("visibility", { length: 20 }).default('investors_only'),
+  notifyInvestors: boolean("notify_investors").default(true),
+  notificationsSent: integer("notifications_sent").default(0),
+  viewCount: integer("view_count").default(0),
+  pinned: boolean("pinned").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  campaignIdx: index("updates_campaign_idx").on(table.campaignId),
+  poolIdx: index("updates_pool_idx").on(table.poolId),
+  authorIdx: index("updates_author_idx").on(table.authorId),
+}));
+
+// 6. Investor Portfolio Summary (for Dashboard)
+export const investorPortfolios = pgTable("investor_portfolios", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(),
+  totalInvested: decimal("total_invested", { precision: 18, scale: 2 }).default('0'),
+  totalCurrentValue: decimal("total_current_value", { precision: 18, scale: 2 }).default('0'),
+  totalReturns: decimal("total_returns", { precision: 18, scale: 2 }).default('0'),
+  activeCampaigns: integer("active_campaigns").default(0),
+  activePools: integer("active_pools").default(0),
+  totalSharesOwned: integer("total_shares_owned").default(0),
+  pendingVotes: integer("pending_votes").default(0),
+  unreadNotifications: integer("unread_notifications").default(0),
+  lastActivityAt: timestamp("last_activity_at"),
+  riskProfile: varchar("risk_profile", { length: 20 }),
+  preferences: jsonb("preferences").default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("portfolio_user_idx").on(table.userId),
+}));
+
+// Investor Documents Vault
+export const investorDocuments = pgTable("investor_documents", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  campaignId: integer("campaign_id").references(() => crowdfundingCampaigns.id),
+  poolId: integer("pool_id").references(() => landAcquisitionPools.id),
+  documentType: varchar("document_type", { length: 50 }).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  fileCID: text("file_cid"),
+  fileUrl: text("file_url"),
+  fileSize: integer("file_size"),
+  mimeType: varchar("mime_type", { length: 100 }),
+  generatedAt: timestamp("generated_at"),
+  expiresAt: timestamp("expires_at"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("investor_docs_user_idx").on(table.userId),
+  campaignIdx: index("investor_docs_campaign_idx").on(table.campaignId),
+  typeIdx: index("investor_docs_type_idx").on(table.documentType),
+}));
+
+// Export types for Land Acquisition Improvements
+export type CampaignMilestone = typeof campaignMilestones.$inferSelect;
+export type InsertCampaignMilestone = typeof campaignMilestones.$inferInsert;
+export type SecondaryMarketListing = typeof secondaryMarketListings.$inferSelect;
+export type InsertSecondaryMarketListing = typeof secondaryMarketListings.$inferInsert;
+export type DueDiligenceReport = typeof dueDiligenceReports.$inferSelect;
+export type InsertDueDiligenceReport = typeof dueDiligenceReports.$inferInsert;
+export type TokenHolderProposal = typeof tokenHolderProposals.$inferSelect;
+export type InsertTokenHolderProposal = typeof tokenHolderProposals.$inferInsert;
+export type TokenHolderVote = typeof tokenHolderVotes.$inferSelect;
+export type InsertTokenHolderVote = typeof tokenHolderVotes.$inferInsert;
+export type InvestorNotification = typeof investorNotifications.$inferSelect;
+export type InsertInvestorNotification = typeof investorNotifications.$inferInsert;
+export type CampaignUpdate = typeof campaignUpdates.$inferSelect;
+export type InsertCampaignUpdate = typeof campaignUpdates.$inferInsert;
+export type InvestorPortfolio = typeof investorPortfolios.$inferSelect;
+export type InsertInvestorPortfolio = typeof investorPortfolios.$inferInsert;
+export type InvestorDocument = typeof investorDocuments.$inferSelect;
+export type InsertInvestorDocument = typeof investorDocuments.$inferInsert;
+
 // Export types for Workbook tables
 export type WorkbookCase = typeof workbookCases.$inferSelect;
 export type InsertWorkbookCase = typeof workbookCases.$inferInsert;
