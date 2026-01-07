@@ -362,6 +362,59 @@ export default function LandAcquisitionPage() {
                 <div style={{ fontSize: "13px", color: theme.primary, fontWeight: 500 }}>Per Raise</div>
               </div>
             </div>
+
+            <div style={{ 
+              marginTop: "24px", 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
+              gap: "12px" 
+            }}>
+              <Link href="/land-acquisition/portfolio" style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "14px 20px",
+                background: "#fff",
+                border: "1px solid rgba(0,0,0,0.1)",
+                borderRadius: "12px",
+                textDecoration: "none",
+                color: theme.dark,
+                fontWeight: 500,
+                transition: "all 0.2s"
+              }}>
+                <span>📊</span> My Portfolio
+              </Link>
+              <Link href="/land-acquisition/market" style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "14px 20px",
+                background: "#fff",
+                border: "1px solid rgba(0,0,0,0.1)",
+                borderRadius: "12px",
+                textDecoration: "none",
+                color: theme.dark,
+                fontWeight: 500,
+                transition: "all 0.2s"
+              }}>
+                <span>🔄</span> Secondary Market
+              </Link>
+              <Link href="/land-acquisition/voting" style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "14px 20px",
+                background: "#fff",
+                border: "1px solid rgba(0,0,0,0.1)",
+                borderRadius: "12px",
+                textDecoration: "none",
+                color: theme.dark,
+                fontWeight: 500,
+                transition: "all 0.2s"
+              }}>
+                <span>🗳️</span> Token Holder Voting
+              </Link>
+            </div>
           </div>
         </section>
 
