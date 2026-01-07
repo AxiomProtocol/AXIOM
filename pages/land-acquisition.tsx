@@ -457,7 +457,7 @@ export default function LandAcquisitionPage() {
           </div>
         </section>
 
-        <section style={{ padding: "40px 0 80px" }}>
+        <section id="tab-content" style={{ padding: "40px 0 80px" }}>
           <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
             
             {activeTab === 'overview' && (
