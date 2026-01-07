@@ -1,6 +1,4 @@
-import { db } from '../../server/db';
-import { aiUsageMeters } from '../../shared/schema';
-import { eq, and, gte, lte } from 'drizzle-orm';
+import { pool } from '../../server/db';
 
 const DEFAULT_LIMITS = {
   assistantCalls: 100,
@@ -44,41 +42,31 @@ export async function getOrCreateMeter(userId: number): Promise<UsageStats> {
   const { start, end } = getCurrentPeriod();
   const limits = parseLimits();
 
-  const [existing] = await db
-    .select()
-    .from(aiUsageMeters)
-    .where(
-      and(
-        eq(aiUsageMeters.userId, userId),
-        gte(aiUsageMeters.periodStart, start),
-        lte(aiUsageMeters.periodEnd, end)
-      )
-    )
-    .limit(1);
+  const result = await pool.query(
+    `SELECT * FROM ai_usage_meters 
+     WHERE user_id = $1 AND period_start >= $2 AND period_end <= $3 
+     LIMIT 1`,
+    [userId, start, end]
+  );
+  const existing = result.rows[0];
 
   if (existing) {
     return {
-      assistantCalls: existing.assistantCalls || 0,
-      docExtractions: existing.docExtractions || 0,
-      exportsGenerated: existing.exportsGenerated || 0,
+      assistantCalls: existing.assistant_calls || 0,
+      docExtractions: existing.doc_extractions || 0,
+      exportsGenerated: existing.exports_generated || 0,
       limits,
-      periodStart: existing.periodStart,
-      periodEnd: existing.periodEnd,
+      periodStart: existing.period_start,
+      periodEnd: existing.period_end,
     };
   }
 
-  const [newMeter] = await db
-    .insert(aiUsageMeters)
-    .values({
-      userId,
-      periodStart: start,
-      periodEnd: end,
-      assistantCalls: 0,
-      docExtractions: 0,
-      exportsGenerated: 0,
-      limits,
-    })
-    .returning();
+  const insertResult = await pool.query(
+    `INSERT INTO ai_usage_meters (user_id, period_start, period_end, assistant_calls, doc_extractions, exports_generated, limits)
+     VALUES ($1, $2, $3, 0, 0, 0, $4)
+     RETURNING *`,
+    [userId, start, end, JSON.stringify(limits)]
+  );
 
   return {
     assistantCalls: 0,
@@ -97,19 +85,12 @@ export async function incrementAssistantCalls(userId: number): Promise<boolean> 
   }
 
   const { start, end } = getCurrentPeriod();
-  await db
-    .update(aiUsageMeters)
-    .set({
-      assistantCalls: meter.assistantCalls + 1,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(aiUsageMeters.userId, userId),
-        gte(aiUsageMeters.periodStart, start),
-        lte(aiUsageMeters.periodEnd, end)
-      )
-    );
+  await pool.query(
+    `UPDATE ai_usage_meters 
+     SET assistant_calls = assistant_calls + 1, updated_at = NOW()
+     WHERE user_id = $1 AND period_start >= $2 AND period_end <= $3`,
+    [userId, start, end]
+  );
 
   return true;
 }
@@ -121,19 +102,12 @@ export async function incrementDocExtractions(userId: number): Promise<boolean> 
   }
 
   const { start, end } = getCurrentPeriod();
-  await db
-    .update(aiUsageMeters)
-    .set({
-      docExtractions: meter.docExtractions + 1,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(aiUsageMeters.userId, userId),
-        gte(aiUsageMeters.periodStart, start),
-        lte(aiUsageMeters.periodEnd, end)
-      )
-    );
+  await pool.query(
+    `UPDATE ai_usage_meters 
+     SET doc_extractions = doc_extractions + 1, updated_at = NOW()
+     WHERE user_id = $1 AND period_start >= $2 AND period_end <= $3`,
+    [userId, start, end]
+  );
 
   return true;
 }
@@ -145,19 +119,12 @@ export async function incrementExportsGenerated(userId: number): Promise<boolean
   }
 
   const { start, end } = getCurrentPeriod();
-  await db
-    .update(aiUsageMeters)
-    .set({
-      exportsGenerated: meter.exportsGenerated + 1,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(aiUsageMeters.userId, userId),
-        gte(aiUsageMeters.periodStart, start),
-        lte(aiUsageMeters.periodEnd, end)
-      )
-    );
+  await pool.query(
+    `UPDATE ai_usage_meters 
+     SET exports_generated = exports_generated + 1, updated_at = NOW()
+     WHERE user_id = $1 AND period_start >= $2 AND period_end <= $3`,
+    [userId, start, end]
+  );
 
   return true;
 }

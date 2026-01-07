@@ -1,6 +1,4 @@
-import { db } from '../../server/db';
-import { subscriptionEntitlements } from '../../shared/schema';
-import { eq } from 'drizzle-orm';
+import { pool } from '../../server/db';
 
 export interface EntitlementStatus {
   hasAccess: boolean;
@@ -15,11 +13,11 @@ export interface EntitlementStatus {
 
 export async function checkEntitlement(userId: number): Promise<EntitlementStatus> {
   try {
-    const [entitlement] = await db
-      .select()
-      .from(subscriptionEntitlements)
-      .where(eq(subscriptionEntitlements.userId, userId))
-      .limit(1);
+    const result = await pool.query(
+      `SELECT status, current_period_end FROM subscription_entitlements WHERE user_id = $1 LIMIT 1`,
+      [userId]
+    );
+    const entitlement = result.rows[0];
 
     if (!entitlement) {
       return {
@@ -35,7 +33,6 @@ export async function checkEntitlement(userId: number): Promise<EntitlementStatu
 
     const isActive = entitlement.status === 'active';
     const isPastDue = entitlement.status === 'past_due';
-    const isCanceled = entitlement.status === 'canceled';
 
     return {
       hasAccess: isActive || isPastDue,
@@ -45,7 +42,7 @@ export async function checkEntitlement(userId: number): Promise<EntitlementStatu
       canUpload: isActive,
       canExport: isActive || isPastDue,
       canUseAI: isActive,
-      periodEnd: entitlement.currentPeriodEnd || undefined,
+      periodEnd: entitlement.current_period_end || undefined,
     };
   } catch (error) {
     console.error('Entitlement check failed:', error);
