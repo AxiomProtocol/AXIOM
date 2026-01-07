@@ -1,7 +1,5 @@
 import Stripe from 'stripe';
-import { db } from '../../server/db';
-import { subscriptionEntitlements } from '../../shared/schema';
-import { eq } from 'drizzle-orm';
+import { pool } from '../../server/db';
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -22,13 +20,12 @@ export const billingProvider: BillingProvider = {
       throw new Error('Payment provider not configured');
     }
 
-    const [existingEntitlement] = await db
-      .select()
-      .from(subscriptionEntitlements)
-      .where(eq(subscriptionEntitlements.userId, userId))
-      .limit(1);
+    const result = await pool.query(
+      `SELECT provider_customer_id FROM subscription_entitlements WHERE user_id = $1 LIMIT 1`,
+      [userId]
+    );
 
-    let customerId = existingEntitlement?.providerCustomerId;
+    let customerId = result.rows[0]?.provider_customer_id;
 
     if (!customerId) {
       const customer = await stripe.customers.create({
@@ -83,28 +80,12 @@ export const billingProvider: BillingProvider = {
             ? new Date(subscription.current_period_end * 1000)
             : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
             
-          await db
-            .insert(subscriptionEntitlements)
-            .values({
-              userId,
-              planKey: 'workbook_monthly_20',
-              status: 'active',
-              providerCustomerId: customerId,
-              providerSubscriptionId: subscriptionId,
-              currentPeriodStart: periodStart,
-              currentPeriodEnd: periodEnd,
-            })
-            .onConflictDoUpdate({
-              target: subscriptionEntitlements.userId,
-              set: {
-                status: 'active',
-                providerCustomerId: customerId,
-                providerSubscriptionId: subscriptionId,
-                currentPeriodStart: periodStart,
-                currentPeriodEnd: periodEnd,
-                updatedAt: new Date(),
-              },
-            });
+          await pool.query(`
+            INSERT INTO subscription_entitlements (user_id, plan_key, status, provider_customer_id, provider_subscription_id, current_period_start, current_period_end)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            ON CONFLICT (user_id) 
+            DO UPDATE SET status = $3, provider_customer_id = $4, provider_subscription_id = $5, current_period_start = $6, current_period_end = $7, updated_at = NOW()
+          `, [userId, 'workbook_monthly_20', 'active', customerId, subscriptionId, periodStart, periodEnd]);
         }
         break;
       }
@@ -127,15 +108,11 @@ export const billingProvider: BillingProvider = {
               ? new Date(subscription.current_period_end * 1000)
               : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-            await db
-              .update(subscriptionEntitlements)
-              .set({
-                status: 'active',
-                currentPeriodStart: periodStart,
-                currentPeriodEnd: periodEnd,
-                updatedAt: new Date(),
-              })
-              .where(eq(subscriptionEntitlements.userId, userId));
+            await pool.query(`
+              UPDATE subscription_entitlements 
+              SET status = 'active', current_period_start = $2, current_period_end = $3, updated_at = NOW()
+              WHERE user_id = $1
+            `, [userId, periodStart, periodEnd]);
           }
         }
         break;
@@ -152,13 +129,9 @@ export const billingProvider: BillingProvider = {
           const userId = parseInt((customer as any).metadata?.userId || '0');
 
           if (userId) {
-            await db
-              .update(subscriptionEntitlements)
-              .set({
-                status: 'past_due',
-                updatedAt: new Date(),
-              })
-              .where(eq(subscriptionEntitlements.userId, userId));
+            await pool.query(`
+              UPDATE subscription_entitlements SET status = 'past_due', updated_at = NOW() WHERE user_id = $1
+            `, [userId]);
           }
         }
         break;
@@ -171,13 +144,9 @@ export const billingProvider: BillingProvider = {
         const userId = parseInt((customer as any).metadata?.userId || '0');
 
         if (userId) {
-          await db
-            .update(subscriptionEntitlements)
-            .set({
-              status: 'canceled',
-              updatedAt: new Date(),
-            })
-            .where(eq(subscriptionEntitlements.userId, userId));
+          await pool.query(`
+            UPDATE subscription_entitlements SET status = 'canceled', updated_at = NOW() WHERE user_id = $1
+          `, [userId]);
         }
         break;
       }
@@ -185,13 +154,12 @@ export const billingProvider: BillingProvider = {
   },
 
   async getSubscriptionStatus(userId: number): Promise<'active' | 'past_due' | 'canceled' | 'none'> {
-    const [entitlement] = await db
-      .select()
-      .from(subscriptionEntitlements)
-      .where(eq(subscriptionEntitlements.userId, userId))
-      .limit(1);
+    const result = await pool.query(
+      `SELECT status FROM subscription_entitlements WHERE user_id = $1 LIMIT 1`,
+      [userId]
+    );
 
-    return entitlement?.status || 'none';
+    return result.rows[0]?.status || 'none';
   },
 
   async cancelSubscription(userId: number): Promise<boolean> {
@@ -199,17 +167,28 @@ export const billingProvider: BillingProvider = {
       return false;
     }
 
-    const [entitlement] = await db
-      .select()
-      .from(subscriptionEntitlements)
-      .where(eq(subscriptionEntitlements.userId, userId))
-      .limit(1);
+    const result = await pool.query(
+      `SELECT provider_subscription_id FROM subscription_entitlements WHERE user_id = $1 LIMIT 1`,
+      [userId]
+    );
 
-    if (!entitlement?.providerSubscriptionId) {
+    const subscriptionId = result.rows[0]?.provider_subscription_id;
+
+    if (!subscriptionId) {
       return false;
     }
 
-    await stripe.subscriptions.cancel(entitlement.providerSubscriptionId);
-    return true;
+    try {
+      await stripe.subscriptions.cancel(subscriptionId);
+      
+      await pool.query(`
+        UPDATE subscription_entitlements SET status = 'canceled', updated_at = NOW() WHERE user_id = $1
+      `, [userId]);
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to cancel subscription:', error);
+      return false;
+    }
   },
 };
