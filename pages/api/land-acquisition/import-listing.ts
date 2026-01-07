@@ -63,6 +63,47 @@ function detectSource(url: string): string {
   return 'other';
 }
 
+function extractFromUrlPattern(url: string, sourceType: string): PropertyData {
+  const data: PropertyData = {
+    sourceType,
+    sourceUrl: url,
+  };
+
+  try {
+    if (sourceType === 'zillow') {
+      const match = url.match(/homedetails\/([^/]+)\//);
+      if (match) {
+        const addressSlug = match[1];
+        const parts = addressSlug.split('-');
+        const stateIndex = parts.findIndex(p => p.length === 2 && /^[A-Z]{2}$/i.test(p));
+        
+        if (stateIndex > 0) {
+          data.state = parts[stateIndex].toUpperCase();
+          data.zipCode = parts[stateIndex + 1];
+          data.city = parts[stateIndex - 1]?.replace(/-/g, ' ');
+          data.address = parts.slice(0, stateIndex - 1).join(' ').replace(/-/g, ' ');
+        } else {
+          data.address = addressSlug.replace(/-/g, ' ');
+        }
+      }
+    } else if (sourceType === 'realtor') {
+      const match = url.match(/realestateandhomes-detail\/([^/]+)/);
+      if (match) {
+        data.address = match[1].replace(/_/g, ' ');
+      }
+    } else if (sourceType === 'landwatch' || url.includes('land')) {
+      const match = url.match(/(\d+)-acres?/i);
+      if (match) {
+        data.acreage = parseFloat(match[1]);
+      }
+    }
+  } catch (e) {
+    console.error('Error extracting from URL pattern:', e);
+  }
+
+  return data;
+}
+
 async function parsePropertyUrl(url: string): Promise<PropertyData> {
   if (!isAllowedUrl(url)) {
     throw new Error('URL must be from an approved property listing site (Zillow, Realtor, Redfin, LoopNet, or LandWatch)');
@@ -70,16 +111,22 @@ async function parsePropertyUrl(url: string): Promise<PropertyData> {
 
   const sourceType = detectSource(url);
   
+  const extractedData = extractFromUrlPattern(url, sourceType);
+
   let browser;
   try {
     browser = await puppeteer.launch({
       headless: true,
+      executablePath: '/nix/store/x205pbkd5xh5g4iv0g58xjla55has3cx-chromium-108.0.5359.94/bin/chromium',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
+        '--disable-web-security',
+        '--disable-features=IsolateOrigins,site-per-process',
         '--window-size=1920,1080',
+        '--disable-blink-features=AutomationControlled',
       ],
     });
     
@@ -88,110 +135,76 @@ async function parsePropertyUrl(url: string): Promise<PropertyData> {
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
     await page.setViewport({ width: 1920, height: 1080 });
     
-    await page.setExtraHTTPHeaders({
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    await page.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => false });
     });
 
-    await page.goto(url, { 
-      waitUntil: 'networkidle2',
-      timeout: 30000 
+    const response = await page.goto(url, { 
+      waitUntil: 'domcontentloaded',
+      timeout: 15000 
     });
     
-    await page.waitForSelector('body', { timeout: 10000 });
-    
-    const html = await page.content();
-    
-    const extractedData: PropertyData = {
-      sourceType,
-      sourceUrl: url,
-    };
+    if (response && response.ok()) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const pageData = await page.evaluate(() => {
+        const data: any = {};
+        
+        const ogTitle = document.querySelector('meta[property="og:title"]')?.getAttribute('content') || '';
+        const title = document.querySelector('title')?.textContent || '';
+        const addressText = ogTitle || title;
+        
+        if (addressText && !addressText.includes('Access Denied') && !addressText.includes('Robot')) {
+          const parts = addressText.split(/[,|]/);
+          if (parts.length >= 2) {
+            data.address = parts[0]?.trim();
+            data.city = parts[1]?.trim();
+            if (parts.length > 2) {
+              const stateZip = parts[2]?.trim().split(' ');
+              data.state = stateZip[0];
+              data.zipCode = stateZip[1];
+            }
+          }
+        }
 
-    const addressMatch = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i) ||
-                         html.match(/<title>([^<]+)<\/title>/i);
-    if (addressMatch) {
-      const titleText = addressMatch[1];
-      const addressParts = titleText.split(/[,|]/);
-      if (addressParts.length > 0) {
-        extractedData.address = addressParts[0].trim();
-      }
-      if (addressParts.length > 1) {
-        extractedData.city = addressParts[1]?.trim();
-      }
-    }
+        const bodyText = document.body?.innerText || '';
+        
+        const pricePatterns = [/\$([0-9,]+)/, /Price:\s*\$?([0-9,]+)/i];
+        for (const pattern of pricePatterns) {
+          const match = bodyText.match(pattern);
+          if (match && !data.price) {
+            const price = parseFloat(match[1].replace(/,/g, ''));
+            if (price > 1000) data.price = price;
+          }
+        }
 
-    const pricePatterns = [
-      /\$([0-9,]+(?:\.[0-9]{2})?)/,
-      /"price":\s*"?\$?([0-9,]+)"?/i,
-      /data-price="([0-9,]+)"/i,
-    ];
-    
-    for (const pattern of pricePatterns) {
-      const match = html.match(pattern);
-      if (match) {
-        const priceStr = match[1].replace(/,/g, '');
-        extractedData.askingPrice = parseFloat(priceStr);
-        break;
-      }
-    }
+        const acreMatch = bodyText.match(/([0-9,.]+)\s*(?:acres?|ac\b)/i);
+        if (acreMatch) {
+          data.acreage = parseFloat(acreMatch[1].replace(/,/g, ''));
+        }
 
-    const acreagePatterns = [
-      /([0-9,.]+)\s*(?:acres?|ac)/i,
-      /"lotSize":\s*"?([0-9,.]+)/i,
-      /lot[^:]*:\s*([0-9,.]+)\s*ac/i,
-    ];
-    
-    for (const pattern of acreagePatterns) {
-      const match = html.match(pattern);
-      if (match) {
-        extractedData.acreage = parseFloat(match[1].replace(/,/g, ''));
-        break;
-      }
-    }
+        const ogImage = document.querySelector('meta[property="og:image"]')?.getAttribute('content');
+        if (ogImage) data.image = ogImage;
 
-    const latMatch = html.match(/"latitude":\s*(-?[0-9.]+)/);
-    const lngMatch = html.match(/"longitude":\s*(-?[0-9.]+)/);
-    if (latMatch) extractedData.latitude = parseFloat(latMatch[1]);
-    if (lngMatch) extractedData.longitude = parseFloat(lngMatch[1]);
+        return data;
+      });
 
-    const propertyTypePatterns = [
-      /property\s*type[^:]*:\s*([^<,\n]+)/i,
-      /"propertyType":\s*"([^"]+)"/i,
-    ];
-    
-    for (const pattern of propertyTypePatterns) {
-      const match = html.match(pattern);
-      if (match) {
-        extractedData.propertyType = match[1].trim();
-        break;
-      }
-    }
-
-    const imagePatterns = [
-      /<meta[^>]*property="og:image"[^>]*content="([^"]+)"/gi,
-    ];
-    
-    const images: string[] = [];
-    for (const pattern of imagePatterns) {
-      let match;
-      while ((match = pattern.exec(html)) !== null && images.length < 5) {
-        images.push(match[1]);
-      }
-    }
-    if (images.length > 0) {
-      extractedData.images = images;
+      if (pageData.address) extractedData.address = pageData.address;
+      if (pageData.city) extractedData.city = pageData.city;
+      if (pageData.state) extractedData.state = pageData.state;
+      if (pageData.zipCode) extractedData.zipCode = pageData.zipCode;
+      if (pageData.price) extractedData.askingPrice = pageData.price;
+      if (pageData.acreage) extractedData.acreage = pageData.acreage;
+      if (pageData.image) extractedData.images = [pageData.image];
     }
 
     return extractedData;
   } catch (error: any) {
-    console.error('Error parsing property URL:', error);
-    return {
-      sourceType,
-      sourceUrl: url,
-    };
+    console.error('Browser fetch failed, using URL extraction only:', error.message);
+    return extractedData;
   } finally {
     if (browser) {
-      await browser.close();
+      try { await browser.close(); } catch (e) {}
     }
   }
 }
