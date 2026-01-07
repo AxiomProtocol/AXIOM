@@ -134,14 +134,15 @@ export default function FamilySearchPanel({
           <div className="text-4xl mb-4">🌳</div>
           <h3 className="font-semibold text-gray-900 mb-2">FamilySearch Integration</h3>
           <p className="text-gray-600 mb-4">
-            FamilySearch API credentials are not yet configured. Contact support to enable this feature.
+            Direct FamilySearch integration is coming soon! In the meantime, use the AI Assistant's Resource Finder to get search links.
           </p>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left text-sm">
-            <p className="font-medium text-blue-800 mb-2">How to get started:</p>
+            <p className="font-medium text-blue-800 mb-2">You can still search FamilySearch:</p>
             <ol className="list-decimal list-inside text-blue-700 space-y-1">
-              <li>Apply for a FamilySearch developer account at developers.familysearch.org</li>
-              <li>Create an application and get your Client ID</li>
-              <li>Add FAMILYSEARCH_CLIENT_ID to your environment</li>
+              <li>Go to the AI Assistant tab</li>
+              <li>Select "Resource Finder" mode</li>
+              <li>Ask for search links for your ancestor</li>
+              <li>Or visit FamilySearch.org directly (free account)</li>
             </ol>
           </div>
         </div>

@@ -4,6 +4,7 @@ import EthicalUseModal from '../../../components/workbook/EthicalUseModal';
 import AIAssistantPanel from '../../../components/workbook/AIAssistantPanel';
 import EvidenceList from '../../../components/workbook/EvidenceList';
 import CollisionWarnings from '../../../components/workbook/CollisionWarnings';
+import FamilySearchPanel from '../../../components/workbook/FamilySearchPanel';
 
 interface CaseData {
   id: number;
@@ -55,7 +56,7 @@ interface Collision {
   affectedEvidenceIds?: number[];
 }
 
-type TabKey = 'overview' | 'evidence' | 'claims' | 'tasks' | 'exports' | 'assistant';
+type TabKey = 'overview' | 'evidence' | 'familysearch' | 'claims' | 'tasks' | 'exports' | 'assistant';
 
 const SECTION_LABELS: Record<string, string> = {
   A: 'Section A: Ancestor Identification',
@@ -184,6 +185,7 @@ export default function CaseDetail() {
   const tabs: { key: TabKey; label: string }[] = [
     { key: 'overview', label: 'Overview' },
     { key: 'evidence', label: `Evidence (${evidence.length})` },
+    { key: 'familysearch', label: 'FamilySearch' },
     { key: 'claims', label: 'Claims' },
     { key: 'tasks', label: 'Tasks' },
     { key: 'exports', label: 'Exports' },
@@ -337,6 +339,14 @@ export default function CaseDetail() {
             </div>
             <EvidenceList items={evidence} />
           </div>
+        )}
+
+        {activeTab === 'familysearch' && (
+          <FamilySearchPanel
+            caseId={Number(caseId)}
+            ancestorName={caseData.ancestorPrimaryName}
+            jurisdiction={caseData.jurisdictionCode || undefined}
+          />
         )}
 
         {activeTab === 'claims' && (
