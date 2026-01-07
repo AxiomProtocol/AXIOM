@@ -62,11 +62,11 @@ export function ListingImportModal({ isOpen, onClose, onImport }: ListingImportM
 
   const handleConfirmImport = () => {
     if (preview) {
-      console.log('Importing data:', preview);
-      onImport(preview);
-      onClose();
+      const dataToImport = { ...preview };
       setUrl('');
       setPreview(null);
+      onImport(dataToImport);
+      setTimeout(() => onClose(), 50);
     }
   };
 
