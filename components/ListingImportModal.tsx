@@ -254,10 +254,7 @@ export function ListingImportModal({ isOpen, onClose, onImport }: ListingImportM
               <div style={{ marginTop: 20 }}>
                 <button
                   type="button"
-                  onClick={() => {
-                    alert('Button clicked! Preview: ' + JSON.stringify(preview));
-                    handleConfirmImport();
-                  }}
+                  onClick={handleConfirmImport}
                   style={{
                     width: '100%',
                     padding: '16px 24px',
