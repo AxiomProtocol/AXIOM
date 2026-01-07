@@ -77,13 +77,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       );
       const tasks = tasksResult.rows;
 
-      const collisions = await detectCollisions(caseId);
+      const collisions = await detectCollisions(caseId, userId);
 
       const completedSections = sections.filter(s => s.completionStatus === 'complete').length;
       const totalSections = sections.length;
-      const primarySources = evidence.filter(e => e.primary_or_secondary === 'primary').length;
-      const verifiedClaims = claims.filter(c => c.confidence_level === 'verified').length;
-      const openTasks = tasks.filter(t => t.status === 'open').length;
+      const primarySources = evidence.filter((e: any) => e.primary_or_secondary === 'primary').length;
+      const verifiedClaims = claims.filter((c: any) => c.confidence_level === 'verified').length;
+      const openTasks = tasks.filter((t: any) => t.status === 'open').length;
 
       return res.status(200).json({
         success: true,

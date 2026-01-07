@@ -7,13 +7,21 @@ export interface CollisionWarning {
   affectedEvidenceIds?: number[];
 }
 
-export async function detectCollisions(caseId: number): Promise<CollisionWarning[]> {
+export async function detectCollisions(caseId: number, userId?: number): Promise<CollisionWarning[]> {
   const warnings: CollisionWarning[] = [];
 
-  const caseResult = await pool.query(
-    `SELECT * FROM workbook_cases WHERE id = $1 LIMIT 1`,
-    [caseId]
-  );
+  let caseResult;
+  if (userId) {
+    caseResult = await pool.query(
+      `SELECT * FROM workbook_cases WHERE id = $1 AND user_id = $2 LIMIT 1`,
+      [caseId, userId]
+    );
+  } else {
+    caseResult = await pool.query(
+      `SELECT * FROM workbook_cases WHERE id = $1 LIMIT 1`,
+      [caseId]
+    );
+  }
   const caseData = caseResult.rows[0];
 
   if (!caseData) return warnings;
