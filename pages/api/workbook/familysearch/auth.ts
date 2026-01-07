@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getAuthorizationUrl, isConfigured } from '../../../../lib/workbook/familysearch';
+import { getAuthorizationUrl, isConfigured, saveOAuthState } from '../../../../lib/workbook/familysearch';
 import { getUserFromSiweSession } from '../../../../lib/workbook/auth';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -16,12 +16,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!isConfigured()) {
     return res.status(503).json({ 
       error: 'FamilySearch integration not configured',
-      message: 'Please add FAMILYSEARCH_CLIENT_ID to enable this feature'
+      message: 'FamilySearch integration is coming soon'
     });
   }
 
-  const state = `${userId}:${uuidv4()}`;
-  const authUrl = getAuthorizationUrl(state);
+  const stateToken = uuidv4();
+  await saveOAuthState(userId, stateToken);
+  
+  const authUrl = getAuthorizationUrl(stateToken);
   
   res.redirect(authUrl);
 }

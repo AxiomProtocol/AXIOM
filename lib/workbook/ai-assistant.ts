@@ -2,6 +2,11 @@ import { chat } from '../server/gemini';
 import { pool } from '../../server/db';
 import { incrementAssistantCalls } from './usage-meter';
 import { checkEntitlement } from './entitlements';
+import { 
+  getFamilySearchToken, 
+  searchRecordCollections, 
+  isConfigured as isFamilySearchConfigured 
+} from './familysearch';
 
 export type AssistantMode = 'research_planner' | 'evidence_clerk' | 'dossier_drafter' | 'getting_started' | 'resource_finder';
 
@@ -391,6 +396,55 @@ async function buildContext(caseId: number, mode: AssistantMode): Promise<string
   return context;
 }
 
+async function performFamilySearchLookup(userId: number, ancestorName: string | null, jurisdiction?: string): Promise<string> {
+  if (!ancestorName || ancestorName.trim() === '') {
+    return '\n[No ancestor name provided - please add ancestor name to case]\n';
+  }
+
+  if (!isFamilySearchConfigured()) {
+    return '\n[FamilySearch API not configured - using manual search links]\n';
+  }
+
+  const token = await getFamilySearchToken(userId);
+  if (!token) {
+    return '\n[FamilySearch not connected - user can connect in FamilySearch tab]\n';
+  }
+
+  try {
+    const nameParts = ancestorName.trim().split(' ');
+    const givenName = nameParts[0];
+    const surname = nameParts.slice(1).join(' ');
+
+    const results = await searchRecordCollections(token, {
+      givenName,
+      surname,
+      birthPlace: jurisdiction || undefined,
+      count: 10,
+    });
+
+    if (results.length === 0) {
+      return '\n[FamilySearch: No matching records found with current search criteria]\n';
+    }
+
+    let summary = `\n--- LIVE FAMILYSEARCH RESULTS (${results.length} found) ---\n`;
+    results.slice(0, 5).forEach((r, i) => {
+      summary += `${i + 1}. ${r.person.name}`;
+      if (r.person.birthDate) summary += ` (b. ${r.person.birthDate})`;
+      if (r.person.birthPlace) summary += ` - ${r.person.birthPlace}`;
+      summary += `\n   FamilySearch ID: ${r.person.id}\n`;
+      if (r.sources.length > 0) {
+        summary += `   Source: ${r.sources[0].title}\n`;
+      }
+    });
+    summary += `\nView full results: https://www.familysearch.org/search/record/results?q.givenName=${encodeURIComponent(givenName)}&q.surname=${encodeURIComponent(surname)}\n`;
+
+    return summary;
+  } catch (error) {
+    console.error('FamilySearch lookup error:', error);
+    return '\n[FamilySearch search temporarily unavailable]\n';
+  }
+}
+
 export async function runAssistant(ctx: AssistantContext): Promise<AssistantResponse> {
   const entitlement = await checkEntitlement(ctx.userId);
   if (!entitlement.canUseAI) {
@@ -418,8 +472,20 @@ export async function runAssistant(ctx: AssistantContext): Promise<AssistantResp
       };
     }
 
-    const context = await buildContext(ctx.caseId, ctx.mode);
+    let context = await buildContext(ctx.caseId, ctx.mode);
     const systemPrompt = MODE_PROMPTS[ctx.mode];
+
+    if (ctx.mode === 'resource_finder' || ctx.mode === 'getting_started') {
+      const caseResult = await pool.query(
+        `SELECT ancestor_primary_name, jurisdiction_code FROM workbook_cases WHERE id = $1`,
+        [ctx.caseId]
+      );
+      if (caseResult.rows[0]) {
+        const { ancestor_primary_name, jurisdiction_code } = caseResult.rows[0];
+        const fsResults = await performFamilySearchLookup(ctx.userId, ancestor_primary_name, jurisdiction_code);
+        context += fsResults;
+      }
+    }
 
     const fullPrompt = `${context}\n\n---\n\nUser Request: ${ctx.message}`;
 

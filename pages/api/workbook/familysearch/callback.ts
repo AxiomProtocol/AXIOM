@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { exchangeCodeForToken, saveFamilySearchToken } from '../../../../lib/workbook/familysearch';
+import { exchangeCodeForToken, saveFamilySearchToken, validateAndConsumeOAuthState } from '../../../../lib/workbook/familysearch';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -18,10 +18,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const stateStr = Array.isArray(state) ? state[0] : state;
-    const [userIdStr] = stateStr.split(':');
-    const userId = parseInt(userIdStr);
-
-    if (isNaN(userId)) {
+    
+    const userId = await validateAndConsumeOAuthState(stateStr);
+    if (!userId) {
+      console.error('Invalid or expired OAuth state token');
       return res.redirect('/workbook?fs_error=invalid_state');
     }
 

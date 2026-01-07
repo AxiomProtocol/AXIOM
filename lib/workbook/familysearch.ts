@@ -94,6 +94,33 @@ export async function exchangeCodeForToken(code: string): Promise<{ accessToken:
   };
 }
 
+export async function saveOAuthState(userId: number, stateToken: string): Promise<void> {
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+  
+  await pool.query(`
+    DELETE FROM oauth_states WHERE user_id = $1 OR expires_at < NOW()
+  `, [userId]);
+  
+  await pool.query(`
+    INSERT INTO oauth_states (user_id, state_token, expires_at)
+    VALUES ($1, $2, $3)
+  `, [userId, stateToken, expiresAt]);
+}
+
+export async function validateAndConsumeOAuthState(stateToken: string): Promise<number | null> {
+  const result = await pool.query(`
+    DELETE FROM oauth_states 
+    WHERE state_token = $1 AND expires_at > NOW()
+    RETURNING user_id
+  `, [stateToken]);
+  
+  if (result.rows.length === 0) {
+    return null;
+  }
+  
+  return result.rows[0].user_id;
+}
+
 export async function saveFamilySearchToken(userId: number, accessToken: string, expiresIn: number): Promise<void> {
   const expiresAt = new Date(Date.now() + expiresIn * 1000);
   
@@ -186,9 +213,12 @@ export async function searchRecordCollections(accessToken: string, params: Searc
     if (response.status === 401) {
       throw new Error('FamilySearch session expired. Please reconnect.');
     }
+    if (response.status === 429) {
+      throw new Error('FamilySearch rate limit reached. Please try again in a few minutes.');
+    }
     const errorText = await response.text();
     console.error('FamilySearch records search error:', errorText);
-    return [];
+    throw new Error(`FamilySearch search error (${response.status}): ${response.statusText}`);
   }
 
   const data = await response.json();
