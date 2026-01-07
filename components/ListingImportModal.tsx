@@ -190,105 +190,98 @@ export function ListingImportModal({ isOpen, onClose, onImport }: ListingImportM
           {preview && (
             <div
               style={{
-                background: '#f8fafc',
+                background: '#f0fdf4',
                 borderRadius: 12,
                 padding: 20,
-                border: '1px solid #e2e8f0'
+                border: '2px solid ' + theme.primary
               }}
             >
-              <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: theme.primary }}>
-                Extracted Data
+              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: theme.primary }}>
+                Data Extracted Successfully!
               </h3>
 
               <div style={{ display: 'grid', gap: 12 }}>
-                {preview.address && (
-                  <div>
-                    <span style={{ fontSize: 12, color: theme.muted }}>Address</span>
-                    <p style={{ margin: 0, fontWeight: 500 }}>{preview.address}</p>
-                  </div>
-                )}
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  {preview.city && (
-                    <div>
-                      <span style={{ fontSize: 12, color: theme.muted }}>City</span>
-                      <p style={{ margin: 0 }}>{preview.city}</p>
-                    </div>
-                  )}
-                  {preview.state && (
-                    <div>
-                      <span style={{ fontSize: 12, color: theme.muted }}>State</span>
-                      <p style={{ margin: 0 }}>{preview.state}</p>
-                    </div>
-                  )}
+                <div style={{ 
+                  padding: 16, 
+                  background: '#fff', 
+                  borderRadius: 8,
+                  border: '1px solid #e2e8f0'
+                }}>
+                  <span style={{ fontSize: 12, color: theme.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Address</span>
+                  <p style={{ margin: '4px 0 0', fontWeight: 600, fontSize: 16 }}>
+                    {preview.address || 'Not found - you can enter manually'}
+                  </p>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  {preview.acreage && (
-                    <div>
-                      <span style={{ fontSize: 12, color: theme.muted }}>Acreage</span>
-                      <p style={{ margin: 0, fontWeight: 600, color: theme.primary }}>
-                        {preview.acreage} acres
-                      </p>
-                    </div>
-                  )}
-                  {preview.askingPrice && (
-                    <div>
-                      <span style={{ fontSize: 12, color: theme.muted }}>Price</span>
-                      <p style={{ margin: 0, fontWeight: 600, color: theme.secondary }}>
-                        ${preview.askingPrice.toLocaleString()}
-                      </p>
-                    </div>
-                  )}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                  <div style={{ padding: 12, background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: 11, color: theme.muted, textTransform: 'uppercase' }}>City</span>
+                    <p style={{ margin: '4px 0 0', fontWeight: 500 }}>{preview.city || '-'}</p>
+                  </div>
+                  <div style={{ padding: 12, background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: 11, color: theme.muted, textTransform: 'uppercase' }}>State</span>
+                    <p style={{ margin: '4px 0 0', fontWeight: 500 }}>{preview.state || '-'}</p>
+                  </div>
+                  <div style={{ padding: 12, background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: 11, color: theme.muted, textTransform: 'uppercase' }}>Zip</span>
+                    <p style={{ margin: '4px 0 0', fontWeight: 500 }}>{preview.zipCode || '-'}</p>
+                  </div>
                 </div>
 
-                {preview.propertyType && (
-                  <div>
-                    <span style={{ fontSize: 12, color: theme.muted }}>Property Type</span>
-                    <p style={{ margin: 0 }}>{preview.propertyType}</p>
+                {(preview.acreage || preview.askingPrice) && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div style={{ padding: 12, background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                      <span style={{ fontSize: 11, color: theme.muted, textTransform: 'uppercase' }}>Acreage</span>
+                      <p style={{ margin: '4px 0 0', fontWeight: 600, color: theme.primary, fontSize: 18 }}>
+                        {preview.acreage ? `${preview.acreage} acres` : 'Not found'}
+                      </p>
+                    </div>
+                    <div style={{ padding: 12, background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                      <span style={{ fontSize: 11, color: theme.muted, textTransform: 'uppercase' }}>Price</span>
+                      <p style={{ margin: '4px 0 0', fontWeight: 600, color: theme.secondary, fontSize: 18 }}>
+                        {preview.askingPrice ? `$${preview.askingPrice.toLocaleString()}` : 'Not found'}
+                      </p>
+                    </div>
                   </div>
                 )}
 
-                {preview.images && preview.images.length > 0 && (
-                  <div>
-                    <span style={{ fontSize: 12, color: theme.muted }}>Images Found</span>
-                    <p style={{ margin: 0 }}>{preview.images.length} images</p>
-                  </div>
-                )}
-
-                <div>
-                  <span style={{ fontSize: 12, color: theme.muted }}>Source</span>
-                  <p style={{ margin: 0, textTransform: 'capitalize' }}>{preview.sourceType}</p>
+                <div style={{ padding: 8, background: '#fff3cd', borderRadius: 6, fontSize: 13, color: '#856404' }}>
+                  Note: Some details may not be available. You can edit the form after import.
                 </div>
               </div>
 
-              <div style={{ marginTop: 20, display: 'flex', gap: 12 }}>
+              <div style={{ marginTop: 20 }}>
                 <button
                   onClick={handleConfirmImport}
                   style={{
-                    flex: 1,
-                    padding: '14px 24px',
+                    width: '100%',
+                    padding: '16px 24px',
                     background: theme.primary,
                     color: '#fff',
                     border: 'none',
                     borderRadius: 8,
-                    fontWeight: 600,
-                    cursor: 'pointer'
+                    fontWeight: 700,
+                    fontSize: 16,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(0, 212, 170, 0.3)'
                   }}
                 >
-                  Use This Data
+                  Import This Data to Form
                 </button>
                 <button
                   onClick={() => setPreview(null)}
                   style={{
-                    padding: '14px 24px',
+                    width: '100%',
+                    marginTop: 8,
+                    padding: '12px 24px',
                     background: 'none',
-                    border: '1px solid #e2e8f0',
+                    border: 'none',
                     borderRadius: 8,
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    color: theme.muted
                   }}
                 >
-                  Cancel
+                  Try a Different URL
                 </button>
               </div>
             </div>
