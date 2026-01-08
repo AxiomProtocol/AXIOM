@@ -104,7 +104,7 @@ export default function LandAcquisitionPage() {
     <>
       <Head>
         <title>Land Acquisition | Axiom Protocol</title>
-        <meta name="description" content="Community-powered land acquisition through Reg CF crowdfunding and SUSU-style pooling. Invest in tokenized land options with as little as $100." />
+        <meta name="description" content="Community-powered land stewardship through coordinated resource pooling. Participate in land acquisition through governance-approved allocations." />
       </Head>
 
       <main style={{ background: '#FFFFFF', minHeight: '100vh' }}>
@@ -224,7 +224,7 @@ export default function LandAcquisitionPage() {
                 color: theme.muted,
                 lineHeight: 1.4
               }}>
-                Own Real Land Through Tokenized Investment
+                Coordinate Land Stewardship Together
               </h2>
 
               <p style={{ 
@@ -234,8 +234,8 @@ export default function LandAcquisitionPage() {
                 maxWidth: "700px",
                 lineHeight: 1.6
               }}>
-                Invest in tokenized land options through SEC-compliant Reg CF crowdfunding. 
-                Pool resources with your community to acquire and develop real property - starting with as little as $100.
+                Pool resources with your community for coordinated land acquisition. 
+                Participate through governance-approved allocations and complete due diligence together.
               </p>
 
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "24px" }}>
@@ -338,7 +338,7 @@ export default function LandAcquisitionPage() {
                   {loading ? '...' : formatCurrency(stats?.crowdfunding.totalRaised || '0')}
                 </div>
                 <div style={{ fontSize: "13px", color: theme.primary, fontWeight: 500 }}>
-                  {loading ? '...' : stats?.crowdfunding.investors || 0} Investors
+                  {loading ? '...' : stats?.crowdfunding.investors || 0} Participants
                 </div>
               </div>
 

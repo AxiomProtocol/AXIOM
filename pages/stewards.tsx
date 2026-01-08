@@ -21,6 +21,8 @@ import {
 import { trackOnce, track } from '../components/axiomRebuild/analytics';
 import { SiteLayout } from '../components/navigation';
 
+const stewardsImage = "/images/steward_corps_unity_illustration.png";
+
 export default function StewardCorpsPage() {
   const { walletState } = useWallet();
   const address = walletState?.address;
@@ -81,68 +83,77 @@ export default function StewardCorpsPage() {
       
       <main style={{ 
         minHeight: '100vh', 
-        background: '#FAFBFC'
+        background: '#FFFFFF'
       }}>
         <section style={{
           padding: '80px 24px 60px',
-          background: 'linear-gradient(180deg, rgba(123, 104, 238, 0.08) 0%, transparent 100%)'
+          background: 'linear-gradient(135deg, rgba(123, 104, 238, 0.03) 0%, rgba(0, 163, 137, 0.03) 100%)',
+          position: 'relative'
         }}>
-          <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px 16px',
-              background: 'rgba(123, 104, 238, 0.1)',
-              borderRadius: web3Theme.radii.full,
-              marginBottom: '24px'
-            }}>
-              <span style={{ fontSize: '20px' }}>🛡️</span>
-              <span style={{ 
-                fontSize: '13px', 
-                fontWeight: 600, 
-                color: web3Theme.colors.secondary,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Elite Coordination Corps
-              </span>
-            </div>
-            
-            <h1 style={{ 
-              fontSize: '48px', 
-              fontWeight: 700, 
-              color: '#1F2937',
-              marginBottom: '16px',
-              lineHeight: 1.1
-            }}>
-              {publicCopy.pageTitle}
-            </h1>
-            
-            <p style={{ 
-              fontSize: '24px', 
-              color: web3Theme.colors.primary, 
-              fontWeight: 500,
-              marginBottom: '24px'
-            }}>
-              {publicCopy.subtitle}
-            </p>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px', alignItems: 'center' }}>
+              <div>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 16px',
+                  background: 'rgba(123, 104, 238, 0.1)',
+                  borderRadius: '9999px',
+                  marginBottom: '24px'
+                }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#7B68EE' }} />
+                  <span style={{ 
+                    fontSize: '13px', 
+                    fontWeight: 600, 
+                    color: '#7B68EE',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}>
+                    STEWARD CORPS
+                  </span>
+                </div>
+                
+                <h1 style={{ 
+                  fontSize: '48px', 
+                  fontWeight: 700, 
+                  color: '#1F2937',
+                  marginBottom: '16px',
+                  lineHeight: 1.1
+                }}>
+                  {publicCopy.pageTitle}
+                </h1>
+                
+                <p style={{ 
+                  fontSize: '18px', 
+                  color: '#6B7280', 
+                  lineHeight: 1.7,
+                  marginBottom: '24px'
+                }}>
+                  {publicCopy.whatIs.body}
+                </p>
 
-            {isConnected && stewardStatus !== 'none' && (
-              <div style={{ marginBottom: '20px' }}>
-                <StewardStatusIndicator status={stewardStatus} size="lg" />
+                {isConnected && stewardStatus !== 'none' && (
+                  <div style={{ marginBottom: '20px' }}>
+                    <StewardStatusIndicator status={stewardStatus} size="lg" />
+                  </div>
+                )}
               </div>
-            )}
-            
-            <p style={{ 
-              fontSize: '17px', 
-              color: '#6B7280', 
-              maxWidth: '700px', 
-              margin: '0 auto',
-              lineHeight: 1.7
-            }}>
-              {publicCopy.whatIs.body}
-            </p>
+
+              <div style={{
+                position: 'relative',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.1)',
+                background: 'linear-gradient(135deg, rgba(123, 104, 238, 0.1) 0%, rgba(0, 163, 137, 0.1) 100%)'
+              }}>
+                <img 
+                  src={stewardsImage} 
+                  alt="Steward Corps illustration" 
+                  style={{ width: '100%', height: 'auto', display: 'block' }}
+                />
+              </div>
+            </div>
           </div>
         </section>
 
@@ -230,7 +241,7 @@ export default function StewardCorpsPage() {
           </div>
         </section>
 
-        <section style={{ padding: '60px 24px', background: 'rgba(0,0,0,0.02)' }}>
+        <section style={{ padding: '60px 24px', background: '#F9FAFB' }}>
           <div style={{ maxWidth: '900px', margin: '0 auto' }}>
             <h2 style={{ 
               fontSize: '28px', 
@@ -383,7 +394,7 @@ export default function StewardCorpsPage() {
           </div>
         </section>
 
-        <section style={{ padding: '60px 24px', background: 'rgba(0,0,0,0.02)' }}>
+        <section style={{ padding: '60px 24px', background: '#F9FAFB' }}>
           <div style={{ maxWidth: '900px', margin: '0 auto' }}>
             <h2 style={{ 
               fontSize: '28px', 
@@ -470,7 +481,7 @@ export default function StewardCorpsPage() {
 
         <section style={{ 
           padding: '80px 24px',
-          background: `linear-gradient(135deg, ${web3Theme.colors.primary} 0%, ${web3Theme.colors.secondary} 100%)`
+          background: 'linear-gradient(135deg, #00A389 0%, #7B68EE 100%)'
         }}>
           <div style={{ maxWidth: '700px', margin: '0 auto', textAlign: 'center' }}>
             <h2 style={{ 
