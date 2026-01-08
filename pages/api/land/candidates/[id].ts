@@ -246,6 +246,58 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       if (oldStage && stage && oldStage !== stage) {
         await sendStageChangeNotification(candidateId, oldStage, stage, candidateName || c.name);
+        
+        await pool.query(
+          `INSERT INTO land_history (land_candidate_id, event_type, event_title, event_description, old_value, new_value)
+           VALUES ($1, 'stage_change', 'Stage Changed', $2, $3, $4)`,
+          [
+            candidateId,
+            `Property moved from ${stageLabels[oldStage] || oldStage} to ${stageLabels[stage] || stage}`,
+            oldStage,
+            stage
+          ]
+        );
+
+        if (stage === 'due_diligence' && oldStage !== 'due_diligence') {
+          const existingChecklist = await pool.query(
+            'SELECT COUNT(*) as count FROM land_checklist_items WHERE land_candidate_id = $1',
+            [candidateId]
+          );
+          
+          if (parseInt(existingChecklist.rows[0].count) === 0) {
+            const checklistItems = [
+              { category: 'title', task_name: 'Title Search', description: 'Complete title search to verify ownership history', sort_order: 1 },
+              { category: 'title', task_name: 'Lien Check', description: 'Verify no outstanding liens or encumbrances', sort_order: 2 },
+              { category: 'title', task_name: 'Deed Review', description: 'Review current deed and legal description', sort_order: 3 },
+              { category: 'environmental', task_name: 'Phase I ESA', description: 'Environmental Site Assessment screening', sort_order: 4 },
+              { category: 'environmental', task_name: 'Wetlands Check', description: 'Verify wetlands status and any restrictions', sort_order: 5 },
+              { category: 'environmental', task_name: 'Flood Zone Review', description: 'Check FEMA flood zone designation', sort_order: 6 },
+              { category: 'survey', task_name: 'Boundary Survey', description: 'Confirm property boundaries and corners', sort_order: 7 },
+              { category: 'survey', task_name: 'Easement Identification', description: 'Identify all easements and rights-of-way', sort_order: 8 },
+              { category: 'survey', task_name: 'Topographic Survey', description: 'Review elevation and terrain features', sort_order: 9 },
+              { category: 'access', task_name: 'Road Access Verification', description: 'Confirm legal road access to property', sort_order: 10 },
+              { category: 'access', task_name: 'Utility Access', description: 'Verify water, electric, and other utility availability', sort_order: 11 },
+              { category: 'zoning', task_name: 'Zoning Verification', description: 'Confirm current zoning and permitted uses', sort_order: 12 },
+              { category: 'zoning', task_name: 'Building Restrictions', description: 'Review any covenants or building restrictions', sort_order: 13 },
+              { category: 'financial', task_name: 'Tax Assessment Review', description: 'Review property tax history and current assessment', sort_order: 14 },
+              { category: 'financial', task_name: 'Appraisal', description: 'Obtain independent property appraisal', sort_order: 15 },
+            ];
+            
+            for (const item of checklistItems) {
+              await pool.query(
+                `INSERT INTO land_checklist_items (land_candidate_id, category, task_name, description, sort_order)
+                 VALUES ($1, $2, $3, $4, $5)`,
+                [candidateId, item.category, item.task_name, item.description, item.sort_order]
+              );
+            }
+            
+            await pool.query(
+              `INSERT INTO land_history (land_candidate_id, event_type, event_title, event_description)
+               VALUES ($1, 'checklist_generated', 'Due Diligence Checklist Created', 'Automated checklist with 15 items generated')`,
+              [candidateId]
+            );
+          }
+        }
       }
       
       return res.status(200).json({
