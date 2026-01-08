@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 interface Stats {
   landOptions: { total: number; active: number; totalValue: string };
@@ -59,12 +60,14 @@ const theme = {
 };
 
 export default function LandAcquisitionPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'overview' | 'crowdfunding' | 'pools' | 'how-it-works'>('overview');
   const [stats, setStats] = useState<Stats | null>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [pools, setPools] = useState<Pool[]>([]);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [showRedirectBanner, setShowRedirectBanner] = useState(true);
 
   useEffect(() => {
     setMounted(true);
@@ -114,6 +117,49 @@ export default function LandAcquisitionPage() {
             50% { transform: translateY(-10px); }
           }
         `}</style>
+
+        {showRedirectBanner && (
+          <div style={{
+            background: 'linear-gradient(135deg, #00A389 0%, #7B68EE 100%)',
+            color: '#FFFFFF',
+            padding: '16px 24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px',
+            flexWrap: 'wrap'
+          }}>
+            <span style={{ fontWeight: 500 }}>
+              This page is being updated. Visit our new Land Stewardship Pipeline for the latest.
+            </span>
+            <Link 
+              href="/land"
+              style={{
+                padding: '8px 20px',
+                background: '#FFFFFF',
+                color: '#00A389',
+                borderRadius: '8px',
+                fontWeight: 600,
+                textDecoration: 'none'
+              }}
+            >
+              View Land Candidates
+            </Link>
+            <button
+              onClick={() => setShowRedirectBanner(false)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#FFFFFF',
+                cursor: 'pointer',
+                fontSize: '20px',
+                padding: '4px'
+              }}
+            >
+              x
+            </button>
+          </div>
+        )}
         
         <section style={{ 
           padding: "80px 0 60px 0",

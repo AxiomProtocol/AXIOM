@@ -79,7 +79,10 @@ Key features include:
     - **New Database Tables**: membership_records, treasuries, treasury_transactions, member_balances, purpose_pools, pool_rules, pool_disclosures, pool_commitments, governance_proposals, governance_votes, land_candidates, system_audit_logs, disclosure_acknowledgments.
     - **Key Components**: MembershipGate.tsx, ParticipationDisclosurePanel.tsx, PoolCard.tsx, LandCandidateCard.tsx
     - **API Routes**: /api/membership/status, /api/membership/apply, /api/pools, /api/proposals, /api/treasury/*, /api/land/candidates, /api/land/stats
-    - **Design Philosophy**: No investment language. All "invest/investor/ROI/crowdfunding" terminology replaced with coordination and participation language. AXUSD framed as settlement and accounting only.)
+    - **Design Philosophy**: No investment language. All "invest/investor/ROI/crowdfunding" terminology replaced with coordination and participation language. AXUSD framed as settlement and accounting only.
+    - **Page Design**: Clean white backgrounds with AI-generated hero images. Consistent design across all coordination pages (join, participate, land, treasury, system, stewards). Color scheme: teal (#00A389), purple (#7B68EE), gold accents.
+    - **Arkansas Properties**: 5 initial land candidates added (Pine Bluff Agricultural Tract, Ozark Mountain Homestead, Delta Community Land Trust, Little Rock Urban Farm Collective, Hot Springs Wellness Retreat) with stewardship intent summaries.
+    - **Legacy Page Handling**: /land-acquisition page shows redirect banner to /land for coordination-focused experience.)
 -   **Land Reclamation Workbook** (Paid subscription tool at $20/month for genealogical land research - `/workbook`:
     - Case management with ancestor tracking and name variants
     - Evidence tracking with provenance (primary/secondary sources, confidence levels)
