@@ -61,11 +61,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         description: row.description,
         targetAmount: row.target_amount,
         raisedAmount: row.raised_amount || '0',
+        participantCount: row.investor_count || 0,
         investorCount: row.investor_count || 0,
         status: row.status,
         startDate: row.start_date,
         endDate: row.end_date,
+        minCommitment: row.min_investment,
         minInvestment: row.min_investment,
+        maxCommitment: row.max_investment,
         maxInvestment: row.max_investment,
         percentFunded: row.percent_funded,
         daysRemaining: row.days_remaining,
@@ -104,6 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             funded: stats.funded,
             closed: stats.closed,
             total_raised: stats.total_raised,
+            total_participants: stats.total_investors,
             total_investors: stats.total_investors
           }
         }

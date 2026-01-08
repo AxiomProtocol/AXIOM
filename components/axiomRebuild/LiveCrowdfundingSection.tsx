@@ -10,11 +10,11 @@ interface Campaign {
   subtitle: string;
   targetAmount: string;
   raisedAmount: string;
-  investorCount: number;
+  participantCount: number;
   status: string;
   percentFunded: string;
   daysRemaining: number;
-  minInvestment: string;
+  minCommitment: string;
   landOption: {
     location: string;
     acreage: string;
@@ -26,7 +26,7 @@ interface CrowdfundingStats {
   total: number;
   active: number;
   total_raised: string;
-  total_investors: number;
+  total_participants: number;
 }
 
 interface LiveCrowdfundingSectionProps {
@@ -179,7 +179,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
             </div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 32, fontWeight: 700, color: "#d4af37" }}>
-                {stats.total_investors}
+                {stats.total_participants}
               </div>
               <div style={{ fontSize: 14, color: "rgba(26,26,46,0.6)" }}>
                 Community Participants
@@ -330,7 +330,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
                 >
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontSize: 16, fontWeight: 600, color: "#1a1a2e" }}>
-                      {campaign.investorCount}
+                      {campaign.participantCount}
                     </div>
                     <div style={{ fontSize: 11, color: "rgba(26,26,46,0.5)" }}>
                       Participants
@@ -338,7 +338,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
                   </div>
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontSize: 16, fontWeight: 600, color: "#1a1a2e" }}>
-                      ${campaign.minInvestment}
+                      ${campaign.minCommitment}
                     </div>
                     <div style={{ fontSize: 11, color: "rgba(26,26,46,0.5)" }}>
                       Min. Commit
