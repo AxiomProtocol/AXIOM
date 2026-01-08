@@ -159,6 +159,16 @@ export default function LandPipelinePage() {
               }}>
                 List View
               </Link>
+              <Link href="/admin/land-candidates" style={{
+                padding: "10px 20px",
+                background: "rgba(255,255,255,0.1)",
+                color: theme.white,
+                borderRadius: "8px",
+                textDecoration: "none",
+                fontSize: "14px"
+              }}>
+                Manage Candidates
+              </Link>
               <Link href="/landowners/submit" style={{
                 padding: "10px 20px",
                 background: theme.primary,

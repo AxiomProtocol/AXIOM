@@ -53,7 +53,7 @@ export default function LandCandidateCard({ candidate }: LandCandidateCardProps)
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+    <Link href={`/land/${candidate.id}`} className="block bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
       <div className="aspect-video bg-gray-100 relative">
         {candidate.featuredImageUrl ? (
           <img
@@ -145,13 +145,12 @@ export default function LandCandidateCard({ candidate }: LandCandidateCardProps)
           ))}
         </div>
 
-        <Link
-          href={`/land/${candidate.id}`}
+        <div
           className="block w-full text-center py-2 px-4 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 transition-colors"
         >
-          View Candidate
-        </Link>
+          View Details
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }

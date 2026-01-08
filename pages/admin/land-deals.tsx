@@ -152,6 +152,7 @@ export default function AdminLandDealsPage() {
             {[
               { label: "Dashboard", href: "/admin" },
               { label: "Land Deals", href: "/admin/land-deals", active: true },
+              { label: "Land Candidates", href: "/admin/land-candidates" },
               { label: "Crowdfunding", href: "/admin/crowdfunding" },
               { label: "Land Pipeline", href: "/admin/land-pipeline" },
               { label: "Stewards", href: "/admin/steward-recruitment" }
