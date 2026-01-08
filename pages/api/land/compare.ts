@@ -85,8 +85,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       { key: 'stage', label: 'Stage', format: (v) => stageLabels[v] || v },
       { key: 'county', label: 'County', format: (v) => v || 'N/A' },
       { key: 'zoning', label: 'Zoning', format: (v) => v || 'N/A' },
-      { key: 'waterAccess', label: 'Water Access', format: (v) => v ? 'Yes' : 'No' },
-      { key: 'roadFrontage', label: 'Road Frontage', format: (v) => v ? 'Yes' : 'No' },
+      { key: 'waterAccess', label: 'Water Access', format: (v) => typeof v === 'string' ? v : (v ? 'Yes' : 'Unknown') },
+      { key: 'roadFrontage', label: 'Road Frontage', format: (v) => typeof v === 'string' ? v : (v ? 'Yes' : 'Unknown') },
     ];
 
     const comparison = comparisonFields.map(field => ({

@@ -93,6 +93,8 @@ export default function CompareProperties() {
         })
         .catch(console.error)
         .finally(() => setLoading(false));
+      
+      router.replace(`/land/compare?ids=${selectedIds.join(',')}`, undefined, { shallow: true });
     } else {
       setData(null);
       setLoading(false);
@@ -108,12 +110,6 @@ export default function CompareProperties() {
       }
       return prev;
     });
-  };
-
-  const updateUrl = () => {
-    if (selectedIds.length >= 2) {
-      router.push(`/land/compare?ids=${selectedIds.join(',')}`, undefined, { shallow: true });
-    }
   };
 
   return (
