@@ -146,7 +146,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
               lineHeight: 1.6
             }}
           >
-            Join our community in acquiring real land through SEC Reg CF compliant crowdfunding
+            Coordinate with our community in stewarding real land through structured participation
           </p>
         </div>
 
@@ -182,7 +182,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
                 {stats.total_investors}
               </div>
               <div style={{ fontSize: 14, color: "rgba(26,26,46,0.6)" }}>
-                Community Investors
+                Community Participants
               </div>
             </div>
           </div>
@@ -333,7 +333,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
                       {campaign.investorCount}
                     </div>
                     <div style={{ fontSize: 11, color: "rgba(26,26,46,0.5)" }}>
-                      Investors
+                      Participants
                     </div>
                   </div>
                   <div style={{ textAlign: "center" }}>
@@ -341,7 +341,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
                       ${campaign.minInvestment}
                     </div>
                     <div style={{ fontSize: 11, color: "rgba(26,26,46,0.5)" }}>
-                      Min. Invest
+                      Min. Commit
                     </div>
                   </div>
                   <div style={{ textAlign: "center" }}>

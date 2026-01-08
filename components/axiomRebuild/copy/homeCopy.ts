@@ -5,7 +5,7 @@ export const homeCopy = {
     secondary: "Structure, Transparency, and Community-Led Participation",
     subheadline:
       "Axiom Protocol is inspired by long-term group economics and disciplined resource stewardship. We prioritize structure, transparency, and community-led participation over speculation and hype.",
-    primaryCta: { label: "View Live Projects", href: "/land-acquisition" },
+    primaryCta: { label: "View Land Pipeline", href: "/land" },
     secondaryCta: { label: "Explore KeyGrow", href: "/keygrow" },
     tertiaryCta: { label: "Read Our Philosophy", href: "/philosophy" },
     microcopy:
