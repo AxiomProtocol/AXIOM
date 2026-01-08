@@ -5,6 +5,59 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+const stageLabels: Record<string, string> = {
+  candidate: 'Candidate',
+  under_review: 'Under Review',
+  due_diligence: 'Due Diligence',
+  ready_for_vote: 'Ready for Vote',
+  approved_for_execution: 'Approved for Execution',
+  acquired: 'Acquired',
+  archived: 'Archived'
+};
+
+async function sendStageChangeNotification(candidateId: number, oldStage: string, newStage: string, candidateName: string) {
+  if (oldStage === newStage) return;
+  
+  try {
+    console.log(`Land candidate ${candidateId} (${candidateName}) stage changed: ${stageLabels[oldStage] || oldStage} → ${stageLabels[newStage] || newStage}`);
+    
+    await pool.query(
+      `INSERT INTO system_audit_logs (action, entity_type, entity_id, details, created_at)
+       VALUES ($1, $2, $3, $4, NOW())`,
+      [
+        'stage_change',
+        'land_candidate',
+        candidateId,
+        JSON.stringify({ oldStage, newStage, candidateName, timestamp: new Date().toISOString() })
+      ]
+    );
+
+    const adminResult = await pool.query(
+      `SELECT email FROM admin_users WHERE role IN ('super_admin', 'admin') AND is_active = true LIMIT 5`
+    );
+    
+    if (adminResult.rows.length > 0) {
+      try {
+        const { sendAdminNewSubmissionAlert } = await import('../../../../lib/server/resendEmail');
+        for (const admin of adminResult.rows) {
+          await sendAdminNewSubmissionAlert({
+            adminEmail: admin.email,
+            ownerName: 'System',
+            propertyAddress: candidateName,
+            acreage: 0,
+            leadScore: 0,
+            submissionId: candidateId
+          });
+        }
+      } catch (emailError) {
+        console.log('Email notification skipped (Resend not configured):', emailError);
+      }
+    }
+  } catch (error) {
+    console.error('Failed to log stage change:', error);
+  }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
   
@@ -81,6 +134,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         isSurveyVerified,
         isEnvironmentalScreened
       } = req.body;
+
+      let oldStage: string | null = null;
+      let candidateName: string | null = null;
+      
+      if (stage !== undefined) {
+        const existingResult = await pool.query(
+          'SELECT stage, name FROM land_candidates WHERE id = $1',
+          [candidateId]
+        );
+        if (existingResult.rows.length > 0) {
+          oldStage = existingResult.rows[0].stage;
+          candidateName = existingResult.rows[0].name;
+        }
+      }
 
       const updates: string[] = [];
       const values: any[] = [];
@@ -176,6 +243,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const c = result.rows[0];
+      
+      if (oldStage && stage && oldStage !== stage) {
+        await sendStageChangeNotification(candidateId, oldStage, stage, candidateName || c.name);
+      }
+      
       return res.status(200).json({
         success: true,
         data: {

@@ -57,6 +57,7 @@ export default function AdminLandCandidates() {
   const [loading, setLoading] = useState(true);
   const [selectedCandidate, setSelectedCandidate] = useState<LandCandidate | null>(null);
   const [editing, setEditing] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -91,7 +92,55 @@ export default function AdminLandCandidates() {
     setSelectedCandidate(null);
     setFormData({});
     setEditing(false);
+    setCreating(false);
     setMessage(null);
+  };
+
+  const openCreateModal = () => {
+    setFormData({
+      stage: 'candidate',
+      propertyType: 'agricultural',
+      dueDiligenceProgress: 0,
+      isAccessVerified: false,
+      isTitleReviewed: false,
+      isSurveyVerified: false,
+      isEnvironmentalScreened: false
+    });
+    setCreating(true);
+    setMessage(null);
+  };
+
+  const createCandidate = async () => {
+    if (!formData.name) {
+      setMessage({ type: 'error', text: 'Name is required' });
+      return;
+    }
+
+    setSaving(true);
+    setMessage(null);
+
+    try {
+      const res = await fetch('/api/land/candidates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setMessage({ type: 'success', text: 'Land candidate created successfully' });
+        await fetchCandidates();
+        setTimeout(closeModal, 1500);
+      } else {
+        throw new Error(data.error || 'Failed to create');
+      }
+    } catch (error: any) {
+      console.error('Create error:', error);
+      setMessage({ type: 'error', text: error.message || 'Failed to create land candidate' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string | number | boolean) => {
@@ -238,6 +287,21 @@ export default function AdminLandCandidates() {
               }}>
                 View Public Page
               </Link>
+              <button
+                onClick={openCreateModal}
+                style={{
+                  padding: "10px 20px",
+                  background: theme.gold,
+                  color: theme.dark,
+                  borderRadius: "8px",
+                  border: "none",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                  cursor: "pointer"
+                }}
+              >
+                + Add New Candidate
+              </button>
             </div>
           </div>
 
@@ -356,7 +420,7 @@ export default function AdminLandCandidates() {
         </div>
       </div>
 
-      {editing && selectedCandidate && (
+      {(editing && selectedCandidate) || creating ? (
         <div style={{
           position: "fixed",
           inset: 0,
@@ -384,7 +448,7 @@ export default function AdminLandCandidates() {
               alignItems: "center"
             }}>
               <h2 style={{ fontSize: "20px", fontWeight: 600, color: theme.white }}>
-                Edit: {selectedCandidate.name}
+                {creating ? "Add New Land Candidate" : `Edit: ${selectedCandidate?.name}`}
               </h2>
               <button
                 onClick={closeModal}
@@ -781,11 +845,11 @@ export default function AdminLandCandidates() {
                   Cancel
                 </button>
                 <button
-                  onClick={saveChanges}
+                  onClick={creating ? createCandidate : saveChanges}
                   disabled={saving}
                   style={{
                     padding: "12px 24px",
-                    background: theme.primary,
+                    background: creating ? theme.gold : theme.primary,
                     color: theme.dark,
                     border: "none",
                     borderRadius: "8px",
@@ -795,13 +859,13 @@ export default function AdminLandCandidates() {
                     opacity: saving ? 0.7 : 1
                   }}
                 >
-                  {saving ? "Saving..." : "Save Changes"}
+                  {saving ? "Saving..." : (creating ? "Create Candidate" : "Save Changes")}
                 </button>
               </div>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </>
   );
 }

@@ -39,6 +39,7 @@ export default function LandPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
     async function fetchData() {
@@ -64,8 +65,15 @@ export default function LandPage() {
   }, []);
 
   const filteredCandidates = candidates.filter(c => {
-    if (filter === 'all') return true;
-    return c.stage === filter;
+    const matchesStage = filter === 'all' || c.stage === filter;
+    const matchesSearch = !searchQuery || 
+      c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.county?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.state?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.propertyType?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.stewardshipIntent?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStage && matchesSearch;
   });
 
   const visibleStages = ['candidate', 'under_review', 'due_diligence', 'ready_for_vote', 'approved_for_execution', 'acquired'];
@@ -208,6 +216,44 @@ export default function LandPage() {
             </div>
           </div>
 
+          <div className="mb-6">
+            <div className="relative mb-4">
+              <input
+                type="text"
+                placeholder="Search by name, location, type..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "14px 16px 14px 48px",
+                  borderRadius: "12px",
+                  border: "1px solid #E5E7EB",
+                  fontSize: "15px",
+                  background: "#FFFFFF",
+                  outline: "none"
+                }}
+              />
+              <svg
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+          
           <div className="flex flex-wrap gap-2 mb-6">
             <button
               onClick={() => setFilter('all')}

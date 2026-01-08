@@ -64,6 +64,16 @@ export default function LandCandidateDetail() {
 
         if (data.success) {
           setCandidate(data.data);
+          
+          fetch('/api/land/analytics', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              candidateId: id, 
+              action: 'view',
+              userAgent: navigator.userAgent
+            })
+          }).catch(() => {});
         } else {
           setError(data.error || 'Land candidate not found');
         }
@@ -137,7 +147,7 @@ export default function LandCandidateDetail() {
             </div>
           ) : candidate ? (
             <div>
-              <div style={{
+              <div className="land-detail-grid" style={{
                 display: "grid",
                 gridTemplateColumns: "1fr 400px",
                 gap: "40px"
@@ -231,7 +241,7 @@ export default function LandCandidateDetail() {
                       </div>
                     </div>
 
-                    <div style={{
+                    <div className="due-diligence-grid" style={{
                       display: "grid",
                       gridTemplateColumns: "repeat(2, 1fr)",
                       gap: "12px"
@@ -280,7 +290,7 @@ export default function LandCandidateDetail() {
                 </div>
 
                 <div>
-                  <div style={{
+                  <div className="land-detail-sidebar" style={{
                     background: "#f9fafb",
                     borderRadius: "16px",
                     padding: "24px",
@@ -332,7 +342,7 @@ export default function LandCandidateDetail() {
                       {candidate.county && ` • ${candidate.county} County`}
                     </p>
 
-                    <div style={{
+                    <div className="land-stats-grid" style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
                       gap: "16px",
@@ -407,9 +417,20 @@ export default function LandCandidateDetail() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style jsx global>{`
         @media (max-width: 900px) {
-          div[style*="gridTemplateColumns: 1fr 400px"] {
+          .land-detail-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .land-detail-sidebar {
+            position: static !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .due-diligence-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .land-stats-grid {
             grid-template-columns: 1fr !important;
           }
         }
