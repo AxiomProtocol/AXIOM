@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { SiteLayout } from '../components/navigation';
-import LandCandidateCard from '../components/land/LandCandidateCard';
+import { SiteLayout } from '../../components/navigation/SiteLayout';
+import LandCandidateCard from '../../components/land/LandCandidateCard';
 
 const landImage = "/images/land_stewardship_pipeline_illustration.png";
 
