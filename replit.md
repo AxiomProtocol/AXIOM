@@ -68,6 +68,18 @@ Key features include:
     - Full audit trail with IP address and user agent for disclosure acknowledgments
     - InvestmentCompliance component orchestrates verification flow before investment
     - Database tables: investor_kyc, investment_acknowledgments)
+-   **Closed-Loop Coordination System** (January 2026 - Complete infrastructure overhaul for membership-based coordination:
+    - **PMA Membership Gate**: Membership onboarding flow at `/join` with 4-step process (PMA Overview, Rules, Disclosures, Confirm). All participation gated by membership status (applicant, member, suspended, removed).
+    - **Purpose Pools**: Resource coordination mechanism at `/participate`. Members commit AXUSD to pools with defined purposes, targets, and governance rules.
+    - **Governance System**: Proposal creation and voting for resource allocation. Categories include due_diligence, legal, survey, steward_ops, option_deposit, close_costs.
+    - **Land Candidates Pipeline**: Property stewardship candidates at `/land` with 7-stage pipeline (candidate, under_review, due_diligence, ready_for_vote, approved_for_execution, acquired, archived).
+    - **Treasury Transparency**: Community treasury dashboard at `/treasury` with transaction history and governance oversight.
+    - **System Explainer**: "How It Works" page at `/system` explaining coordination system, PMA membership, AXUSD settlement, purpose pools, governance, and stewardship.
+    - **Participation Disclosures**: ParticipationDisclosurePanel component with 6 required disclosures (Participation Purpose, No Guaranteed Outcomes, Token and Credit Nature, Allocation Dependencies, Educational Information, Membership Obligations).
+    - **New Database Tables**: membership_records, treasuries, treasury_transactions, member_balances, purpose_pools, pool_rules, pool_disclosures, pool_commitments, governance_proposals, governance_votes, land_candidates, system_audit_logs, disclosure_acknowledgments.
+    - **Key Components**: MembershipGate.tsx, ParticipationDisclosurePanel.tsx, PoolCard.tsx, LandCandidateCard.tsx
+    - **API Routes**: /api/membership/status, /api/membership/apply, /api/pools, /api/proposals, /api/treasury/*, /api/land/candidates, /api/land/stats
+    - **Design Philosophy**: No investment language. All "invest/investor/ROI/crowdfunding" terminology replaced with coordination and participation language. AXUSD framed as settlement and accounting only.)
 -   **Land Reclamation Workbook** (Paid subscription tool at $20/month for genealogical land research - `/workbook`:
     - Case management with ancestor tracking and name variants
     - Evidence tracking with provenance (primary/secondary sources, confidence levels)

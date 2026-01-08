@@ -5902,3 +5902,375 @@ export type OutcomeLog = typeof outcomeLogs.$inferSelect;
 export type InsertOutcomeLog = typeof outcomeLogs.$inferInsert;
 export type AiUsageMeter = typeof aiUsageMeters.$inferSelect;
 export type InsertAiUsageMeter = typeof aiUsageMeters.$inferInsert;
+
+// ============================================
+// CLOSED-LOOP COORDINATION SYSTEM TABLES
+// PMA Membership, Purpose Pools, Treasury, Audit
+// ============================================
+
+// Membership status for PMA gating
+export const membershipStatusEnum = pgEnum('membership_status', [
+  'applicant',
+  'member',
+  'suspended',
+  'removed'
+]);
+
+// Purpose pool lifecycle
+export const purposePoolStatusEnum = pgEnum('purpose_pool_status', [
+  'draft',
+  'open',
+  'paused',
+  'closed',
+  'executing'
+]);
+
+// Pool commitment lifecycle
+export const poolCommitmentStatusEnum = pgEnum('pool_commitment_status', [
+  'committed',
+  'withdrawn',
+  'locked',
+  'released'
+]);
+
+// Governance proposal lifecycle
+export const governanceProposalStatusEnum = pgEnum('governance_proposal_status', [
+  'draft',
+  'voting',
+  'approved',
+  'rejected',
+  'executed'
+]);
+
+// Vote options
+export const voteOptionEnum = pgEnum('vote_option', [
+  'yes',
+  'no',
+  'abstain'
+]);
+
+// Proposal categories
+export const proposalCategoryEnum = pgEnum('proposal_category', [
+  'due_diligence',
+  'legal',
+  'survey',
+  'steward_ops',
+  'option_deposit',
+  'close_costs',
+  'other'
+]);
+
+// Land candidate stages
+export const landCandidateStageEnum = pgEnum('land_candidate_stage', [
+  'candidate',
+  'under_review',
+  'due_diligence',
+  'ready_for_vote',
+  'approved_for_execution',
+  'acquired',
+  'archived'
+]);
+
+// Treasury transaction types
+export const treasuryTransactionTypeEnum = pgEnum('treasury_transaction_type', [
+  'deposit',
+  'withdrawal',
+  'commitment',
+  'release',
+  'disbursement',
+  'fee',
+  'adjustment'
+]);
+
+// PMA Membership tracking on users (extended via separate table for flexibility)
+export const membershipRecords = pgTable("membership_records", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(),
+  membershipStatus: membershipStatusEnum("membership_status").default('applicant'),
+  membershipAcceptedAt: timestamp("membership_accepted_at"),
+  membershipAgreementVersion: varchar("membership_agreement_version", { length: 20 }),
+  disclosureAcceptedAt: timestamp("disclosure_accepted_at"),
+  disclosureVersion: varchar("disclosure_version", { length: 20 }),
+  rulesAcceptedAt: timestamp("rules_accepted_at"),
+  rulesVersion: varchar("rules_version", { length: 20 }),
+  suspendedAt: timestamp("suspended_at"),
+  suspendedReason: text("suspended_reason"),
+  removedAt: timestamp("removed_at"),
+  removedReason: text("removed_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("membership_user_idx").on(table.userId),
+  statusIdx: index("membership_status_idx").on(table.membershipStatus),
+}));
+
+// Community treasuries
+export const treasuries = pgTable("treasuries", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  purpose: text("purpose"),
+  policyJson: jsonb("policy_json").default({}),
+  totalBalanceAxusd: decimal("total_balance_axusd", { precision: 28, scale: 8 }).default('0'),
+  createdBy: integer("created_by").references(() => users.id),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Treasury transactions ledger
+export const treasuryTransactions = pgTable("treasury_transactions", {
+  id: serial("id").primaryKey(),
+  treasuryId: integer("treasury_id").references(() => treasuries.id).notNull(),
+  transactionType: treasuryTransactionTypeEnum("transaction_type").notNull(),
+  amountAxusd: decimal("amount_axusd", { precision: 28, scale: 8 }).notNull(),
+  fromAddress: varchar("from_address", { length: 42 }),
+  toAddress: varchar("to_address", { length: 42 }),
+  txHash: varchar("tx_hash", { length: 66 }),
+  memo: text("memo"),
+  proposalId: integer("proposal_id"),
+  poolId: integer("pool_id"),
+  executedBy: integer("executed_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  treasuryIdx: index("treasury_tx_treasury_idx").on(table.treasuryId),
+  typeIdx: index("treasury_tx_type_idx").on(table.transactionType),
+  createdIdx: index("treasury_tx_created_idx").on(table.createdAt),
+}));
+
+// Member AXUSD balances (cached from chain or off-chain tracking)
+export const memberBalances = pgTable("member_balances", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(),
+  axusdBalance: decimal("axusd_balance", { precision: 28, scale: 8 }).default('0'),
+  axusdCommitted: decimal("axusd_committed", { precision: 28, scale: 8 }).default('0'),
+  axusdAvailable: decimal("axusd_available", { precision: 28, scale: 8 }).default('0'),
+  lastSyncedAt: timestamp("last_synced_at"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("member_balance_user_idx").on(table.userId),
+}));
+
+// Purpose pools for coordinated resource allocation
+export const purposePools = pgTable("purpose_pools", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  purpose: text("purpose").notNull(),
+  description: text("description"),
+  status: purposePoolStatusEnum("status").default('draft'),
+  treasuryId: integer("treasury_id").references(() => treasuries.id),
+  targetAmountAxusd: decimal("target_amount_axusd", { precision: 28, scale: 8 }),
+  currentAmountAxusd: decimal("current_amount_axusd", { precision: 28, scale: 8 }).default('0'),
+  minCommitAxusd: decimal("min_commit_axusd", { precision: 28, scale: 8 }).default('50'),
+  maxCommitAxusd: decimal("max_commit_axusd", { precision: 28, scale: 8 }),
+  memberLimit: integer("member_limit"),
+  currentMemberCount: integer("current_member_count").default(0),
+  landCandidateId: integer("land_candidate_id"),
+  startAt: timestamp("start_at"),
+  endAt: timestamp("end_at"),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  statusIdx: index("purpose_pool_status_idx").on(table.status),
+  treasuryIdx: index("purpose_pool_treasury_idx").on(table.treasuryId),
+}));
+
+// Pool governance rules
+export const poolRules = pgTable("pool_rules", {
+  id: serial("id").primaryKey(),
+  poolId: integer("pool_id").references(() => purposePools.id).notNull().unique(),
+  rulesJson: jsonb("rules_json").default({}),
+  withdrawWindowDays: integer("withdraw_window_days").default(7),
+  quorumPercentage: decimal("quorum_percentage", { precision: 5, scale: 2 }).default('51'),
+  approvalThreshold: decimal("approval_threshold", { precision: 5, scale: 2 }).default('66'),
+  votingDurationDays: integer("voting_duration_days").default(7),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Pool-specific disclosures
+export const poolDisclosures = pgTable("pool_disclosures", {
+  id: serial("id").primaryKey(),
+  poolId: integer("pool_id").references(() => purposePools.id).notNull(),
+  disclosureText: text("disclosure_text").notNull(),
+  version: varchar("version", { length: 20 }).notNull(),
+  requiresAcknowledgment: boolean("requires_acknowledgment").default(true),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  poolIdx: index("pool_disclosure_pool_idx").on(table.poolId),
+}));
+
+// Member commitments to pools
+export const poolCommitments = pgTable("pool_commitments", {
+  id: serial("id").primaryKey(),
+  poolId: integer("pool_id").references(() => purposePools.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  amountAxusd: decimal("amount_axusd", { precision: 28, scale: 8 }).notNull(),
+  status: poolCommitmentStatusEnum("status").default('committed'),
+  committedAt: timestamp("committed_at").defaultNow(),
+  lockedAt: timestamp("locked_at"),
+  releasedAt: timestamp("released_at"),
+  withdrawnAt: timestamp("withdrawn_at"),
+  disclosureVersion: varchar("disclosure_version", { length: 20 }),
+  disclosureAcceptedAt: timestamp("disclosure_accepted_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  poolIdx: index("pool_commitment_pool_idx").on(table.poolId),
+  userIdx: index("pool_commitment_user_idx").on(table.userId),
+  statusIdx: index("pool_commitment_status_idx").on(table.status),
+}));
+
+// Governance proposals for pool spending
+export const governanceProposals = pgTable("governance_proposals", {
+  id: serial("id").primaryKey(),
+  poolId: integer("pool_id").references(() => purposePools.id),
+  treasuryId: integer("treasury_id").references(() => treasuries.id),
+  title: varchar("title", { length: 300 }).notNull(),
+  description: text("description").notNull(),
+  amountAxusd: decimal("amount_axusd", { precision: 28, scale: 8 }),
+  recipientAddress: varchar("recipient_address", { length: 42 }),
+  recipientName: varchar("recipient_name", { length: 200 }),
+  category: proposalCategoryEnum("category").default('other'),
+  status: governanceProposalStatusEnum("status").default('draft'),
+  quorumRequired: decimal("quorum_required", { precision: 5, scale: 2 }).default('51'),
+  approvalThreshold: decimal("approval_threshold", { precision: 5, scale: 2 }).default('66'),
+  votingStartsAt: timestamp("voting_starts_at"),
+  votingEndsAt: timestamp("voting_ends_at"),
+  totalVotes: integer("total_votes").default(0),
+  yesVotes: decimal("yes_votes", { precision: 28, scale: 8 }).default('0'),
+  noVotes: decimal("no_votes", { precision: 28, scale: 8 }).default('0'),
+  abstainVotes: decimal("abstain_votes", { precision: 28, scale: 8 }).default('0'),
+  executedAt: timestamp("executed_at"),
+  executedBy: integer("executed_by").references(() => users.id),
+  executionTxHash: varchar("execution_tx_hash", { length: 66 }),
+  landCandidateId: integer("land_candidate_id"),
+  attachments: jsonb("attachments").default([]),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  poolIdx: index("gov_proposal_pool_idx").on(table.poolId),
+  statusIdx: index("gov_proposal_status_idx").on(table.status),
+  categoryIdx: index("gov_proposal_category_idx").on(table.category),
+}));
+
+// Member votes on proposals
+export const governanceVotes = pgTable("governance_votes", {
+  id: serial("id").primaryKey(),
+  proposalId: integer("proposal_id").references(() => governanceProposals.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  vote: voteOptionEnum("vote").notNull(),
+  weight: decimal("weight", { precision: 28, scale: 8 }).default('1'),
+  reason: text("reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  proposalIdx: index("gov_vote_proposal_idx").on(table.proposalId),
+  userIdx: index("gov_vote_user_idx").on(table.userId),
+  uniqueVoteIdx: index("gov_vote_unique_idx").on(table.proposalId, table.userId),
+}));
+
+// Land candidates (enhanced land submissions)
+export const landCandidates = pgTable("land_candidates", {
+  id: serial("id").primaryKey(),
+  landSubmissionId: integer("land_submission_id"),
+  name: varchar("name", { length: 300 }).notNull(),
+  location: varchar("location", { length: 300 }),
+  county: varchar("county", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  acreage: decimal("acreage", { precision: 10, scale: 2 }),
+  askingPrice: decimal("asking_price", { precision: 18, scale: 2 }),
+  propertyType: varchar("property_type", { length: 100 }),
+  stage: landCandidateStageEnum("stage").default('candidate'),
+  stewardshipIntent: text("stewardship_intent"),
+  publicSummary: text("public_summary"),
+  featuredImageUrl: varchar("featured_image_url", { length: 500 }),
+  listingUrl: varchar("listing_url", { length: 500 }),
+  isAccessVerified: boolean("is_access_verified").default(false),
+  isTitleReviewed: boolean("is_title_reviewed").default(false),
+  isMineralRightsReviewed: boolean("is_mineral_rights_reviewed").default(false),
+  isSurveyVerified: boolean("is_survey_verified").default(false),
+  isEnvironmentalScreened: boolean("is_environmental_screened").default(false),
+  isOptionDocsUploaded: boolean("is_option_docs_uploaded").default(false),
+  isPurchaseApprovedByVote: boolean("is_purchase_approved_by_vote").default(false),
+  dueDiligenceProgress: integer("due_diligence_progress").default(0),
+  assignedStewardId: integer("assigned_steward_id").references(() => users.id),
+  poolId: integer("pool_id").references(() => purposePools.id),
+  approvalProposalId: integer("approval_proposal_id"),
+  acquiredAt: timestamp("acquired_at"),
+  archivedAt: timestamp("archived_at"),
+  archivedReason: text("archived_reason"),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  stageIdx: index("land_candidate_stage_idx").on(table.stage),
+  stewardIdx: index("land_candidate_steward_idx").on(table.assignedStewardId),
+  poolIdx: index("land_candidate_pool_idx").on(table.poolId),
+}));
+
+// System audit logs
+export const systemAuditLogs = pgTable("system_audit_logs", {
+  id: serial("id").primaryKey(),
+  actorUserId: integer("actor_user_id").references(() => users.id),
+  action: varchar("action", { length: 100 }).notNull(),
+  entityType: varchar("entity_type", { length: 50 }).notNull(),
+  entityId: varchar("entity_id", { length: 100 }),
+  beforeJson: jsonb("before_json"),
+  afterJson: jsonb("after_json"),
+  metadata: jsonb("metadata"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  actorIdx: index("audit_log_actor_idx").on(table.actorUserId),
+  actionIdx: index("audit_log_action_idx").on(table.action),
+  entityIdx: index("audit_log_entity_idx").on(table.entityType, table.entityId),
+  createdIdx: index("audit_log_created_idx").on(table.createdAt),
+}));
+
+// Disclosure acknowledgments (universal tracking)
+export const disclosureAcknowledgments = pgTable("disclosure_acknowledgments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  disclosureType: varchar("disclosure_type", { length: 50 }).notNull(),
+  disclosureVersion: varchar("disclosure_version", { length: 20 }).notNull(),
+  entityType: varchar("entity_type", { length: 50 }),
+  entityId: integer("entity_id"),
+  acknowledgedAt: timestamp("acknowledged_at").defaultNow(),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+}, (table) => ({
+  userIdx: index("disclosure_ack_user_idx").on(table.userId),
+  typeIdx: index("disclosure_ack_type_idx").on(table.disclosureType),
+  entityIdx: index("disclosure_ack_entity_idx").on(table.entityType, table.entityId),
+}));
+
+// Export types for Closed-Loop System
+export type MembershipRecord = typeof membershipRecords.$inferSelect;
+export type InsertMembershipRecord = typeof membershipRecords.$inferInsert;
+export type Treasury = typeof treasuries.$inferSelect;
+export type InsertTreasury = typeof treasuries.$inferInsert;
+export type TreasuryTransaction = typeof treasuryTransactions.$inferSelect;
+export type InsertTreasuryTransaction = typeof treasuryTransactions.$inferInsert;
+export type MemberBalance = typeof memberBalances.$inferSelect;
+export type InsertMemberBalance = typeof memberBalances.$inferInsert;
+export type PurposePool = typeof purposePools.$inferSelect;
+export type InsertPurposePool = typeof purposePools.$inferInsert;
+export type PoolRule = typeof poolRules.$inferSelect;
+export type InsertPoolRule = typeof poolRules.$inferInsert;
+export type PoolDisclosure = typeof poolDisclosures.$inferSelect;
+export type InsertPoolDisclosure = typeof poolDisclosures.$inferInsert;
+export type PoolCommitment = typeof poolCommitments.$inferSelect;
+export type InsertPoolCommitment = typeof poolCommitments.$inferInsert;
+export type GovernanceProposal = typeof governanceProposals.$inferSelect;
+export type InsertGovernanceProposal = typeof governanceProposals.$inferInsert;
+export type GovernanceVote = typeof governanceVotes.$inferSelect;
+export type InsertGovernanceVote = typeof governanceVotes.$inferInsert;
+export type LandCandidate = typeof landCandidates.$inferSelect;
+export type InsertLandCandidate = typeof landCandidates.$inferInsert;
+export type SystemAuditLog = typeof systemAuditLogs.$inferSelect;
+export type InsertSystemAuditLog = typeof systemAuditLogs.$inferInsert;
+export type DisclosureAcknowledgment = typeof disclosureAcknowledgments.$inferSelect;
+export type InsertDisclosureAcknowledgment = typeof disclosureAcknowledgments.$inferInsert;
