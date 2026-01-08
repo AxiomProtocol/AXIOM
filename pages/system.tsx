@@ -3,6 +3,8 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { SiteLayout } from '../components/navigation';
 
+const systemImage = "/images/coordination_system_diagram_illustration.png";
+
 const sections = [
   {
     id: 'coordination',
@@ -78,24 +80,98 @@ export default function SystemPage() {
         <meta name="description" content="Understand how Axiom Protocol works as a coordination system. Learn about PMA membership, AXUSD settlement, purpose pools, and governance." />
       </Head>
 
-      <div className="min-h-screen bg-white">
-        <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-20">
-          <div className="max-w-4xl mx-auto px-4 text-center">
-            <span className="inline-block bg-amber-500/20 text-amber-300 px-4 py-1 rounded-full text-sm font-medium mb-6">
-              Understanding the System
-            </span>
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              How Axiom Works
-            </h1>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Axiom is a coordination system for community resource allocation and land stewardship. 
-              This page explains the core concepts and how they work together.
-            </p>
+      <div style={{ background: "#FFFFFF", minHeight: "100vh" }}>
+        <div style={{
+          position: "relative",
+          padding: "80px 0 60px 0",
+          overflow: "hidden"
+        }}>
+          <div style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: `
+              radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 212, 170, 0.08) 0%, transparent 50%),
+              radial-gradient(ellipse 60% 40% at 80% 60%, rgba(123, 104, 238, 0.05) 0%, transparent 50%),
+              radial-gradient(ellipse 50% 30% at 20% 80%, rgba(255, 215, 0, 0.04) 0%, transparent 50%)
+            `,
+            pointerEvents: "none"
+          }} />
+
+          <div className="max-w-6xl mx-auto px-4" style={{ position: "relative" }}>
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <div style={{ 
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  background: "linear-gradient(135deg, rgba(0, 212, 170, 0.1) 0%, rgba(123, 104, 238, 0.08) 100%)",
+                  padding: "8px 16px",
+                  borderRadius: "100px",
+                  marginBottom: "20px",
+                  border: "1px solid rgba(0, 212, 170, 0.2)"
+                }}>
+                  <span style={{ 
+                    width: "8px", 
+                    height: "8px", 
+                    background: "linear-gradient(135deg, #00D4AA 0%, #00A389 100%)",
+                    borderRadius: "50%"
+                  }} />
+                  <span style={{ 
+                    fontSize: "13px", 
+                    fontWeight: 600,
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                    color: "#00A389"
+                  }}>Understanding the System</span>
+                </div>
+                
+                <h1 style={{ 
+                  fontSize: "clamp(32px, 5vw, 48px)", 
+                  lineHeight: 1.1, 
+                  margin: "0 0 16px 0",
+                  fontWeight: 700,
+                  color: "#0A0F1C"
+                }}>How Axiom Works</h1>
+                
+                <p style={{ 
+                  fontSize: "18px", 
+                  lineHeight: 1.6,
+                  color: "rgba(10, 15, 28, 0.65)", 
+                  maxWidth: "500px",
+                  margin: 0
+                }}>
+                  Axiom is a coordination system for community resource allocation and land stewardship. 
+                  This page explains the core concepts and how they work together.
+                </p>
+              </div>
+              
+              <div className="hidden lg:block">
+                <img 
+                  src={systemImage} 
+                  alt="Coordination system diagram illustration"
+                  style={{
+                    width: "100%",
+                    maxWidth: "500px",
+                    borderRadius: "24px",
+                    boxShadow: "0 20px 60px rgba(0, 0, 0, 0.1)"
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="max-w-4xl mx-auto px-4 py-12">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-12">
+          <div style={{
+            background: "rgba(255, 215, 0, 0.08)",
+            border: "1px solid rgba(255, 215, 0, 0.3)",
+            borderRadius: "16px",
+            padding: "24px",
+            marginBottom: "48px"
+          }}>
             <h2 className="text-lg font-bold text-amber-900 mb-2">Important Context</h2>
             <p className="text-amber-800">
               Axiom Protocol is not an investment platform. Participation is for coordination and stewardship practice. 
@@ -107,7 +183,17 @@ export default function SystemPage() {
             {sections.map((section, index) => (
               <div key={section.id} id={section.id} className="scroll-mt-24">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
+                  <div style={{
+                    width: "48px",
+                    height: "48px",
+                    background: "linear-gradient(135deg, rgba(0, 212, 170, 0.08) 0%, rgba(123, 104, 238, 0.06) 100%)",
+                    borderRadius: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "24px",
+                    flexShrink: 0
+                  }}>
                     {section.icon}
                   </div>
                   <div className="flex-1">
@@ -122,66 +208,100 @@ export default function SystemPage() {
                   </div>
                 </div>
                 {index < sections.length - 1 && (
-                  <div className="border-b border-gray-100 mt-12" />
+                  <div style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.06)", marginTop: "48px" }} />
                 )}
               </div>
             ))}
           </div>
 
-          <div className="mt-16 bg-gray-50 rounded-xl p-8">
+          <div style={{
+            marginTop: "64px",
+            background: "rgba(255, 255, 255, 0.9)",
+            backdropFilter: "blur(20px)",
+            border: "1px solid rgba(0, 0, 0, 0.06)",
+            borderRadius: "24px",
+            padding: "40px",
+            boxShadow: "0 12px 40px rgba(0, 0, 0, 0.06)"
+          }}>
             <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">System Flow</h2>
             <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-center">
-              <div className="bg-white rounded-lg p-4 border border-gray-200 w-full md:w-auto">
-                <p className="font-semibold text-gray-900">Join PMA</p>
-                <p className="text-sm text-gray-500">Become a member</p>
-              </div>
-              <svg className="w-6 h-6 text-gray-400 rotate-90 md:rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-              <div className="bg-white rounded-lg p-4 border border-gray-200 w-full md:w-auto">
-                <p className="font-semibold text-gray-900">Hold AXUSD</p>
-                <p className="text-sm text-gray-500">Settlement layer</p>
-              </div>
-              <svg className="w-6 h-6 text-gray-400 rotate-90 md:rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-              <div className="bg-white rounded-lg p-4 border border-gray-200 w-full md:w-auto">
-                <p className="font-semibold text-gray-900">Commit to Pools</p>
-                <p className="text-sm text-gray-500">Allocate resources</p>
-              </div>
-              <svg className="w-6 h-6 text-gray-400 rotate-90 md:rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-              <div className="bg-white rounded-lg p-4 border border-gray-200 w-full md:w-auto">
-                <p className="font-semibold text-gray-900">Vote on Proposals</p>
-                <p className="text-sm text-gray-500">Governance</p>
-              </div>
-              <svg className="w-6 h-6 text-gray-400 rotate-90 md:rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-              <div className="bg-white rounded-lg p-4 border border-gray-200 w-full md:w-auto">
-                <p className="font-semibold text-gray-900">Execute</p>
-                <p className="text-sm text-gray-500">After approval</p>
-              </div>
+              {[
+                { title: "Join PMA", subtitle: "Become a member" },
+                { title: "Hold AXUSD", subtitle: "Settlement layer" },
+                { title: "Commit to Pools", subtitle: "Allocate resources" },
+                { title: "Vote on Proposals", subtitle: "Governance" },
+                { title: "Execute", subtitle: "After approval" }
+              ].map((step, i) => (
+                <React.Fragment key={i}>
+                  <div style={{
+                    background: "rgba(255, 255, 255, 0.95)",
+                    borderRadius: "12px",
+                    padding: "16px",
+                    border: "1px solid rgba(0, 0, 0, 0.06)",
+                    minWidth: "120px"
+                  }}>
+                    <p className="font-semibold text-gray-900">{step.title}</p>
+                    <p className="text-sm text-gray-500">{step.subtitle}</p>
+                  </div>
+                  {i < 4 && (
+                    <svg className="w-6 h-6 text-gray-400 rotate-90 md:rotate-0 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  )}
+                </React.Fragment>
+              ))}
             </div>
           </div>
 
           <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/join"
-              className="inline-flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                background: "linear-gradient(135deg, #00A389 0%, #00D4AA 100%)",
+                color: "white",
+                fontWeight: 600,
+                padding: "14px 28px",
+                borderRadius: "12px",
+                textDecoration: "none"
+              }}
             >
               Become a Member
             </Link>
             <Link
               href="/philosophy"
-              className="inline-flex items-center justify-center gap-2 border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-3 px-6 rounded-lg transition-colors"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                border: "1px solid #D1D5DB",
+                color: "#374151",
+                fontWeight: 600,
+                padding: "14px 28px",
+                borderRadius: "12px",
+                textDecoration: "none"
+              }}
             >
               Read Our Philosophy
             </Link>
             <Link
               href="/participate"
-              className="inline-flex items-center justify-center gap-2 border border-amber-600 text-amber-600 hover:bg-amber-50 font-semibold py-3 px-6 rounded-lg transition-colors"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                border: "1px solid rgba(0, 163, 137, 0.5)",
+                color: "#00A389",
+                fontWeight: 600,
+                padding: "14px 28px",
+                borderRadius: "12px",
+                textDecoration: "none"
+              }}
             >
               View Participation Dashboard
             </Link>

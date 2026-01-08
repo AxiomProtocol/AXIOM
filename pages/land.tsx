@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { SiteLayout } from '../components/navigation';
 import LandCandidateCard from '../components/land/LandCandidateCard';
 
+const landImage = "/images/land_stewardship_pipeline_illustration.png";
+
 interface LandCandidate {
   id: number;
   name: string;
@@ -75,55 +77,122 @@ export default function LandPage() {
         <meta name="description" content="Explore land stewardship candidates under review by the Axiom Protocol community. Transparent due diligence and governance-driven acquisition." />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-gradient-to-r from-emerald-700 to-emerald-900 text-white py-16 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10">
-            <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5"/>
-              </pattern>
-              <rect width="100" height="100" fill="url(#grid)" />
-            </svg>
-          </div>
-          
-          <div className="max-w-6xl mx-auto px-4 relative">
-            <span className="inline-block bg-emerald-600/50 text-emerald-100 px-3 py-1 rounded-full text-sm font-medium mb-4">
-              Stewardship Pipeline
-            </span>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Land Candidates</h1>
-            <p className="text-xl text-emerald-100 max-w-2xl">
-              Properties under review for potential community stewardship. Acquisition occurs only after governance approval and due diligence completion.
-            </p>
+      <div style={{ background: "#FFFFFF", minHeight: "100vh" }}>
+        <div style={{
+          position: "relative",
+          padding: "80px 0 60px 0",
+          overflow: "hidden"
+        }}>
+          <div style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: `
+              radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 212, 170, 0.08) 0%, transparent 50%),
+              radial-gradient(ellipse 60% 40% at 80% 60%, rgba(123, 104, 238, 0.05) 0%, transparent 50%),
+              radial-gradient(ellipse 50% 30% at 20% 80%, rgba(34, 197, 94, 0.06) 0%, transparent 50%)
+            `,
+            pointerEvents: "none"
+          }} />
+
+          <div className="max-w-6xl mx-auto px-4" style={{ position: "relative" }}>
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <div style={{ 
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  background: "linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(0, 212, 170, 0.08) 100%)",
+                  padding: "8px 16px",
+                  borderRadius: "100px",
+                  marginBottom: "20px",
+                  border: "1px solid rgba(34, 197, 94, 0.2)"
+                }}>
+                  <span style={{ 
+                    width: "8px", 
+                    height: "8px", 
+                    background: "linear-gradient(135deg, #22C55E 0%, #00A389 100%)",
+                    borderRadius: "50%"
+                  }} />
+                  <span style={{ 
+                    fontSize: "13px", 
+                    fontWeight: 600,
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                    color: "#16A34A"
+                  }}>Stewardship Pipeline</span>
+                </div>
+                
+                <h1 style={{ 
+                  fontSize: "clamp(32px, 5vw, 48px)", 
+                  lineHeight: 1.1, 
+                  margin: "0 0 16px 0",
+                  fontWeight: 700,
+                  color: "#0A0F1C"
+                }}>Land Candidates</h1>
+                
+                <p style={{ 
+                  fontSize: "18px", 
+                  lineHeight: 1.6,
+                  color: "rgba(10, 15, 28, 0.65)", 
+                  maxWidth: "500px",
+                  margin: 0
+                }}>
+                  Properties under review for potential community stewardship. Acquisition occurs only after governance approval and due diligence completion.
+                </p>
+              </div>
+              
+              <div className="hidden lg:block">
+                <img 
+                  src={landImage} 
+                  alt="Land stewardship pipeline illustration"
+                  style={{
+                    width: "100%",
+                    maxWidth: "500px",
+                    borderRadius: "24px",
+                    boxShadow: "0 20px 60px rgba(0, 0, 0, 0.1)"
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="max-w-6xl mx-auto px-4 py-8">
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-              <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-                <p className="text-2xl font-bold text-gray-900">{stats.totalCandidates}</p>
-                <p className="text-sm text-gray-500">Candidates</p>
-              </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-                <p className="text-2xl font-bold text-amber-600">{stats.underReview}</p>
-                <p className="text-sm text-gray-500">Under Review</p>
-              </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-                <p className="text-2xl font-bold text-purple-600">{stats.readyForVote}</p>
-                <p className="text-sm text-gray-500">Ready for Vote</p>
-              </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-                <p className="text-2xl font-bold text-green-600">{stats.acquired}</p>
-                <p className="text-sm text-gray-500">Acquired</p>
-              </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-                <p className="text-2xl font-bold text-gray-900">{stats.totalAcreage?.toLocaleString()}</p>
-                <p className="text-sm text-gray-500">Total Acres</p>
-              </div>
+              {[
+                { label: "Candidates", value: stats.totalCandidates, color: "#0A0F1C" },
+                { label: "Under Review", value: stats.underReview, color: "#D97706" },
+                { label: "Ready for Vote", value: stats.readyForVote, color: "#7C3AED" },
+                { label: "Acquired", value: stats.acquired, color: "#16A34A" },
+                { label: "Total Acres", value: stats.totalAcreage?.toLocaleString(), color: "#0A0F1C" }
+              ].map((stat, i) => (
+                <div key={i} style={{
+                  background: "rgba(255, 255, 255, 0.9)",
+                  backdropFilter: "blur(20px)",
+                  border: "1px solid rgba(0, 0, 0, 0.06)",
+                  borderRadius: "16px",
+                  padding: "20px",
+                  textAlign: "center",
+                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)"
+                }}>
+                  <p className="text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
+                  <p className="text-sm text-gray-500">{stat.label}</p>
+                </div>
+              ))}
             </div>
           )}
 
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8">
+          <div style={{
+            background: "rgba(255, 215, 0, 0.08)",
+            border: "1px solid rgba(255, 215, 0, 0.3)",
+            borderRadius: "16px",
+            padding: "20px",
+            marginBottom: "32px"
+          }}>
             <div className="flex items-start gap-3">
               <svg className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -142,11 +211,18 @@ export default function LandPage() {
           <div className="flex flex-wrap gap-2 mb-6">
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === 'all' 
-                  ? 'bg-emerald-600 text-white' 
-                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-              }`}
+              style={{
+                padding: "10px 20px",
+                borderRadius: "12px",
+                fontSize: "14px",
+                fontWeight: 500,
+                transition: "all 0.2s",
+                background: filter === 'all' 
+                  ? "linear-gradient(135deg, #16A34A 0%, #22C55E 100%)" 
+                  : "white",
+                color: filter === 'all' ? "white" : "#4B5563",
+                border: filter === 'all' ? "none" : "1px solid #E5E7EB"
+              }}
             >
               All
             </button>
@@ -154,24 +230,39 @@ export default function LandPage() {
               <button
                 key={stage}
                 onClick={() => setFilter(stage)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
-                  filter === stage 
-                    ? 'bg-emerald-600 text-white' 
-                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                }`}
+                style={{
+                  padding: "10px 20px",
+                  borderRadius: "12px",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  transition: "all 0.2s",
+                  textTransform: "capitalize",
+                  background: filter === stage 
+                    ? "linear-gradient(135deg, #16A34A 0%, #22C55E 100%)" 
+                    : "white",
+                  color: filter === stage ? "white" : "#4B5563",
+                  border: filter === stage ? "none" : "1px solid #E5E7EB"
+                }}
               >
-                {stage.replace('_', ' ')}
+                {stage.replace(/_/g, ' ')}
               </button>
             ))}
           </div>
 
           {loading ? (
             <div className="text-center py-12">
-              <div className="animate-spin w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <div className="animate-spin w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full mx-auto mb-4"></div>
               <p className="text-gray-600">Loading candidates...</p>
             </div>
           ) : filteredCandidates.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+            <div style={{
+              background: "rgba(255, 255, 255, 0.9)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(0, 0, 0, 0.06)",
+              borderRadius: "24px",
+              padding: "64px",
+              textAlign: "center"
+            }}>
               <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
@@ -179,7 +270,7 @@ export default function LandPage() {
               <p className="text-gray-600">
                 {filter === 'all' 
                   ? 'There are currently no land candidates in the pipeline.' 
-                  : `No candidates in the "${filter.replace('_', ' ')}" stage.`}
+                  : `No candidates in the "${filter.replace(/_/g, ' ')}" stage.`}
               </p>
             </div>
           ) : (
@@ -190,11 +281,28 @@ export default function LandPage() {
             </div>
           )}
 
-          <div className="mt-12 bg-white rounded-xl border border-gray-200 p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Stewardship Pipeline Process</h2>
+          <div style={{
+            marginTop: "48px",
+            background: "rgba(255, 255, 255, 0.9)",
+            backdropFilter: "blur(20px)",
+            border: "1px solid rgba(0, 0, 0, 0.06)",
+            borderRadius: "24px",
+            padding: "40px",
+            boxShadow: "0 12px 40px rgba(0, 0, 0, 0.06)"
+          }}>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Stewardship Pipeline Process</h2>
             <div className="grid md:grid-cols-3 gap-6">
               <div>
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                <div style={{
+                  width: "40px",
+                  height: "40px",
+                  background: "linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.2) 100%)",
+                  borderRadius: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: "12px"
+                }}>
                   <span className="text-blue-700 font-bold">1</span>
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Identification</h3>
@@ -203,7 +311,16 @@ export default function LandPage() {
                 </p>
               </div>
               <div>
-                <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mb-3">
+                <div style={{
+                  width: "40px",
+                  height: "40px",
+                  background: "linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.2) 100%)",
+                  borderRadius: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: "12px"
+                }}>
                   <span className="text-amber-700 font-bold">2</span>
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Due Diligence</h3>
@@ -212,7 +329,16 @@ export default function LandPage() {
                 </p>
               </div>
               <div>
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-3">
+                <div style={{
+                  width: "40px",
+                  height: "40px",
+                  background: "linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.2) 100%)",
+                  borderRadius: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: "12px"
+                }}>
                   <span className="text-green-700 font-bold">3</span>
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Governance Vote</h3>
@@ -223,21 +349,40 @@ export default function LandPage() {
             </div>
           </div>
 
-          <div className="mt-8 flex justify-center gap-4">
+          <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/participate"
-              className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                background: "linear-gradient(135deg, #00A389 0%, #00D4AA 100%)",
+                color: "white",
+                fontWeight: 600,
+                padding: "14px 28px",
+                borderRadius: "12px",
+                textDecoration: "none"
+              }}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
               View Purpose Pools
             </Link>
             <Link
-              href="/landowners/submit"
-              className="inline-flex items-center gap-2 border border-emerald-600 text-emerald-600 hover:bg-emerald-50 font-semibold py-3 px-6 rounded-lg transition-colors"
+              href="/system"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                border: "1px solid #D1D5DB",
+                color: "#374151",
+                fontWeight: 600,
+                padding: "14px 28px",
+                borderRadius: "12px",
+                textDecoration: "none"
+              }}
             >
-              Submit a Property
+              How the System Works
             </Link>
           </div>
         </div>

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { SiteLayout } from '../components/navigation';
 
+const treasuryImage = "/images/treasury_transparency_illustration.png";
+
 interface Treasury {
   id: number;
   name: string;
@@ -74,13 +76,13 @@ export default function TreasuryPage() {
   };
 
   const transactionTypeColors: Record<string, { bg: string; text: string }> = {
-    deposit: { bg: 'bg-green-100', text: 'text-green-700' },
-    withdrawal: { bg: 'bg-red-100', text: 'text-red-700' },
-    commitment: { bg: 'bg-blue-100', text: 'text-blue-700' },
-    release: { bg: 'bg-purple-100', text: 'text-purple-700' },
-    disbursement: { bg: 'bg-orange-100', text: 'text-orange-700' },
-    fee: { bg: 'bg-gray-100', text: 'text-gray-700' },
-    adjustment: { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+    deposit: { bg: 'rgba(34, 197, 94, 0.1)', text: '#16A34A' },
+    withdrawal: { bg: 'rgba(239, 68, 68, 0.1)', text: '#DC2626' },
+    commitment: { bg: 'rgba(59, 130, 246, 0.1)', text: '#2563EB' },
+    release: { bg: 'rgba(147, 51, 234, 0.1)', text: '#9333EA' },
+    disbursement: { bg: 'rgba(249, 115, 22, 0.1)', text: '#EA580C' },
+    fee: { bg: 'rgba(107, 114, 128, 0.1)', text: '#4B5563' },
+    adjustment: { bg: 'rgba(234, 179, 8, 0.1)', text: '#CA8A04' },
   };
 
   const filteredTransactions = selectedTreasury
@@ -94,42 +96,110 @@ export default function TreasuryPage() {
         <meta name="description" content="Axiom Protocol treasury transparency. View community treasury balances, transactions, and governance spending." />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-gradient-to-r from-blue-700 to-blue-900 text-white py-16">
-          <div className="max-w-6xl mx-auto px-4">
-            <span className="inline-block bg-blue-600/50 text-blue-100 px-3 py-1 rounded-full text-sm font-medium mb-4">
-              Transparency
-            </span>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Community Treasury</h1>
-            <p className="text-xl text-blue-100 max-w-2xl">
-              Full transparency into community resources. All allocations are governed by member proposals and voting.
-            </p>
+      <div style={{ background: "#FFFFFF", minHeight: "100vh" }}>
+        <div style={{
+          position: "relative",
+          padding: "80px 0 60px 0",
+          overflow: "hidden"
+        }}>
+          <div style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: `
+              radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+              radial-gradient(ellipse 60% 40% at 80% 60%, rgba(123, 104, 238, 0.05) 0%, transparent 50%)
+            `,
+            pointerEvents: "none"
+          }} />
+
+          <div className="max-w-6xl mx-auto px-4" style={{ position: "relative" }}>
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <div style={{ 
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  background: "linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(123, 104, 238, 0.08) 100%)",
+                  padding: "8px 16px",
+                  borderRadius: "100px",
+                  marginBottom: "20px",
+                  border: "1px solid rgba(59, 130, 246, 0.2)"
+                }}>
+                  <span style={{ 
+                    width: "8px", 
+                    height: "8px", 
+                    background: "linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)",
+                    borderRadius: "50%"
+                  }} />
+                  <span style={{ 
+                    fontSize: "13px", 
+                    fontWeight: 600,
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                    color: "#2563EB"
+                  }}>Transparency</span>
+                </div>
+                
+                <h1 style={{ 
+                  fontSize: "clamp(32px, 5vw, 48px)", 
+                  lineHeight: 1.1, 
+                  margin: "0 0 16px 0",
+                  fontWeight: 700,
+                  color: "#0A0F1C"
+                }}>Community Treasury</h1>
+                
+                <p style={{ 
+                  fontSize: "18px", 
+                  lineHeight: 1.6,
+                  color: "rgba(10, 15, 28, 0.65)", 
+                  maxWidth: "500px",
+                  margin: 0
+                }}>
+                  Full transparency into community resources. All allocations are governed by member proposals and voting.
+                </p>
+              </div>
+              
+              <div className="hidden lg:block">
+                <img 
+                  src={treasuryImage} 
+                  alt="Treasury transparency illustration"
+                  style={{
+                    width: "100%",
+                    maxWidth: "500px",
+                    borderRadius: "24px",
+                    boxShadow: "0 20px 60px rgba(0, 0, 0, 0.1)"
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="max-w-6xl mx-auto px-4 py-8">
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <p className="text-sm text-gray-500 mb-1">Total Balance</p>
-                <p className="text-2xl font-bold text-gray-900">{formatAmount(stats.totalBalance)}</p>
-              </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <p className="text-sm text-gray-500 mb-1">Total Deposits</p>
-                <p className="text-2xl font-bold text-green-600">{formatAmount(stats.totalDeposits)}</p>
-              </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <p className="text-sm text-gray-500 mb-1">Disbursements</p>
-                <p className="text-2xl font-bold text-orange-600">{formatAmount(stats.totalDisbursements)}</p>
-              </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <p className="text-sm text-gray-500 mb-1">Active Proposals</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.activeProposals}</p>
-              </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <p className="text-sm text-gray-500 mb-1">Executed</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.executedProposals}</p>
-              </div>
+              {[
+                { label: "Total Balance", value: formatAmount(stats.totalBalance), color: "#0A0F1C" },
+                { label: "Total Deposits", value: formatAmount(stats.totalDeposits), color: "#16A34A" },
+                { label: "Disbursements", value: formatAmount(stats.totalDisbursements), color: "#EA580C" },
+                { label: "Active Proposals", value: stats.activeProposals, color: "#9333EA" },
+                { label: "Executed", value: stats.executedProposals, color: "#2563EB" }
+              ].map((stat, i) => (
+                <div key={i} style={{
+                  background: "rgba(255, 255, 255, 0.9)",
+                  backdropFilter: "blur(20px)",
+                  border: "1px solid rgba(0, 0, 0, 0.06)",
+                  borderRadius: "16px",
+                  padding: "24px",
+                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)"
+                }}>
+                  <p className="text-sm text-gray-500 mb-1">{stat.label}</p>
+                  <p className="text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
+                </div>
+              ))}
             </div>
           )}
 
@@ -139,11 +209,15 @@ export default function TreasuryPage() {
               <div className="space-y-3">
                 <button
                   onClick={() => setSelectedTreasury(null)}
-                  className={`w-full text-left p-4 rounded-xl border transition-colors ${
-                    selectedTreasury === null 
-                      ? 'bg-blue-50 border-blue-300' 
-                      : 'bg-white border-gray-200 hover:border-blue-200'
-                  }`}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "16px",
+                    borderRadius: "16px",
+                    transition: "all 0.2s",
+                    background: selectedTreasury === null ? "rgba(59, 130, 246, 0.08)" : "white",
+                    border: selectedTreasury === null ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid rgba(0, 0, 0, 0.06)"
+                  }}
                 >
                   <p className="font-semibold text-gray-900">All Treasuries</p>
                   <p className="text-sm text-gray-500">View all transactions</p>
@@ -153,11 +227,15 @@ export default function TreasuryPage() {
                   <button
                     key={treasury.id}
                     onClick={() => setSelectedTreasury(treasury.id)}
-                    className={`w-full text-left p-4 rounded-xl border transition-colors ${
-                      selectedTreasury === treasury.id 
-                        ? 'bg-blue-50 border-blue-300' 
-                        : 'bg-white border-gray-200 hover:border-blue-200'
-                    }`}
+                    style={{
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "16px",
+                      borderRadius: "16px",
+                      transition: "all 0.2s",
+                      background: selectedTreasury === treasury.id ? "rgba(59, 130, 246, 0.08)" : "white",
+                      border: selectedTreasury === treasury.id ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid rgba(0, 0, 0, 0.06)"
+                    }}
                   >
                     <div className="flex justify-between items-start">
                       <div>
@@ -170,7 +248,13 @@ export default function TreasuryPage() {
                 ))}
 
                 {treasuries.length === 0 && !loading && (
-                  <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
+                  <div style={{
+                    background: "rgba(255, 255, 255, 0.9)",
+                    border: "1px solid rgba(0, 0, 0, 0.06)",
+                    borderRadius: "16px",
+                    padding: "24px",
+                    textAlign: "center"
+                  }}>
                     <p className="text-gray-500">No treasuries created yet.</p>
                   </div>
                 )}
@@ -181,22 +265,39 @@ export default function TreasuryPage() {
               <h2 className="text-xl font-bold text-gray-900 mb-4">Transaction History</h2>
               
               {loading ? (
-                <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+                <div style={{
+                  background: "rgba(255, 255, 255, 0.9)",
+                  border: "1px solid rgba(0, 0, 0, 0.06)",
+                  borderRadius: "16px",
+                  padding: "64px",
+                  textAlign: "center"
+                }}>
                   <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
                   <p className="text-gray-600">Loading transactions...</p>
                 </div>
               ) : filteredTransactions.length === 0 ? (
-                <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+                <div style={{
+                  background: "rgba(255, 255, 255, 0.9)",
+                  border: "1px solid rgba(0, 0, 0, 0.06)",
+                  borderRadius: "16px",
+                  padding: "64px",
+                  textAlign: "center"
+                }}>
                   <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                   <p className="text-gray-600">No transactions recorded yet.</p>
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div style={{
+                  background: "rgba(255, 255, 255, 0.9)",
+                  border: "1px solid rgba(0, 0, 0, 0.06)",
+                  borderRadius: "16px",
+                  overflow: "hidden"
+                }}>
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-gray-50">
+                      <thead style={{ background: "rgba(249, 250, 251, 0.8)" }}>
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
@@ -205,7 +306,7 @@ export default function TreasuryPage() {
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tx</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200">
+                      <tbody className="divide-y divide-gray-100">
                         {filteredTransactions.slice(0, 20).map(tx => {
                           const typeStyle = transactionTypeColors[tx.transactionType] || transactionTypeColors.adjustment;
                           return (
@@ -214,7 +315,16 @@ export default function TreasuryPage() {
                                 {new Date(tx.createdAt).toLocaleDateString()}
                               </td>
                               <td className="px-4 py-3">
-                                <span className={`inline-block px-2 py-1 rounded text-xs font-medium capitalize ${typeStyle.bg} ${typeStyle.text}`}>
+                                <span style={{
+                                  display: "inline-block",
+                                  padding: "4px 10px",
+                                  borderRadius: "8px",
+                                  fontSize: "12px",
+                                  fontWeight: 500,
+                                  textTransform: "capitalize",
+                                  background: typeStyle.bg,
+                                  color: typeStyle.text
+                                }}>
                                   {tx.transactionType}
                                 </span>
                               </td>
@@ -230,7 +340,7 @@ export default function TreasuryPage() {
                                     href={`https://arbiscan.io/tx/${tx.txHash}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-blue-600 hover:underline"
+                                    className="text-blue-600 hover:underline font-mono"
                                   >
                                     {truncateHash(tx.txHash)}
                                   </a>
@@ -244,54 +354,13 @@ export default function TreasuryPage() {
                       </tbody>
                     </table>
                   </div>
-                  
                   {filteredTransactions.length > 20 && (
-                    <div className="p-4 bg-gray-50 text-center">
-                      <p className="text-sm text-gray-500">
-                        Showing 20 of {filteredTransactions.length} transactions
-                      </p>
+                    <div className="px-4 py-3 bg-gray-50 text-center text-sm text-gray-500">
+                      Showing 20 of {filteredTransactions.length} transactions
                     </div>
                   )}
                 </div>
               )}
-            </div>
-          </div>
-
-          <div className="mt-12 bg-white rounded-xl border border-gray-200 p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Treasury Governance</h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">How Funds Are Allocated</h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  All treasury allocations are governed by member proposals and voting. No funds are disbursed without community approval through the governance process.
-                </p>
-                <ul className="text-sm text-gray-600 space-y-2">
-                  <li className="flex items-start gap-2">
-                    <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <span>Proposals must specify amount, recipient, and purpose</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <span>Voting period allows member review and discussion</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <span>Approved proposals are executed with full audit trail</span>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Transparency Commitment</h3>
-                <p className="text-gray-600 text-sm">
-                  Every treasury transaction is logged and visible to all members. On-chain transactions include verifiable transaction hashes for independent verification on the blockchain.
-                </p>
-              </div>
             </div>
           </div>
         </div>
