@@ -70,7 +70,7 @@ export function EnhancedOnboarding({ onComplete, onDismiss }: EnhancedOnboarding
     return interests.filter(i => formData.selectedInterests.includes(i.id));
   };
 
-  const handleComplete = async () => {
+  const handleComplete = async (navigateToRecommendation = true) => {
     setLoading(true);
     try {
       await fetch('/api/onboarding/complete', {
@@ -85,6 +85,12 @@ export function EnhancedOnboarding({ onComplete, onDismiss }: EnhancedOnboarding
       localStorage.setItem('axiom_user_interests', JSON.stringify(formData.selectedInterests));
       localStorage.setItem('axiom_user_name', formData.name);
       onComplete();
+      
+      if (navigateToRecommendation) {
+        const recommended = getRecommendedPaths();
+        const firstPath = recommended.length > 0 ? recommended[0].path : '/land';
+        router.push(firstPath);
+      }
     } catch (err) {
       console.error('Failed to save onboarding:', err);
       onComplete();
@@ -92,7 +98,7 @@ export function EnhancedOnboarding({ onComplete, onDismiss }: EnhancedOnboarding
   };
 
   const navigateToPath = (path: string) => {
-    handleComplete();
+    handleComplete(false);
     router.push(path);
   };
 
@@ -512,7 +518,7 @@ export function EnhancedOnboarding({ onComplete, onDismiss }: EnhancedOnboarding
             </div>
 
             <button
-              onClick={handleComplete}
+              onClick={() => handleComplete(true)}
               disabled={loading}
               style={{
                 width: '100%',
