@@ -75,8 +75,8 @@ export const trainingTiers: TrainingTier[] = [
     name: 'Scholarship Steward',
     price: 750,
     displayPrice: '$750 (Subsidized)',
-    monthlyPrice: 65,
-    quarterlyPrice: 190,
+    monthlyPrice: 63,
+    quarterlyPrice: 188,
     description: 'For qualifying applicants who demonstrate genuine need and exceptional commitment to land stewardship. Full 12-month program with community support.',
     benefits: [
       'Waitlist land stewardship assignment',
