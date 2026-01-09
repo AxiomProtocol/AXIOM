@@ -42,6 +42,7 @@ export const SITE_NAV: NavItem[] = [
     label: "Steward Corps",
     children: [
       { label: "Overview", href: "/stewards" },
+      { label: "Training Program", href: "/stewards/training" },
       { label: "Apply to Join", href: "/stewards/apply" },
       { label: "Activated Land", href: "/stewards/activated-land" },
       { label: "Steward Dashboard", href: "/stewards/dashboard", visibility: 'app' }

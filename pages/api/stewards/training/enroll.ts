@@ -3,9 +3,7 @@ import { pool } from '../../../../lib/db';
 import Stripe from 'stripe';
 import { getTierById } from '../../../../lib/stewardTraining';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-08-27.basil' as any,
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

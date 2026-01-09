@@ -1,7 +1,7 @@
 # Axiom Smart City - Sovereign Digital-Physical Economy
 
 ## Overview
-The Axiom Smart City project aims to establish America's first 1,000-acre on-chain sovereign smart city economy. This DeFi protocol operates as a community-governed treasury system and economic engine. Key capabilities include a governance token (AXM), DeFi treasury tools, real estate tokenization, DePIN infrastructure, smart city services, cross-chain interoperability, and sustainability initiatives within a decentralized, community-governed framework. The project's vision is to create a model for future sovereign digital-physical economies. All "banking" terminology has been rebranded to DeFi-compliant language for Coinbase Onramp integration, emphasizing a self-custody model and non-custodial DeFi operations.
+The Axiom Smart City project aims to establish America's first 1,000-acre on-chain sovereign smart city economy. It operates as a community-governed DeFi protocol with a treasury system and economic engine. Key capabilities include a governance token (AXM), DeFi treasury tools, real estate tokenization, DePIN infrastructure, smart city services, cross-chain interoperability, and sustainability initiatives within a decentralized, community-governed framework. The project's vision is to create a model for future sovereign digital-physical economies, emphasizing a self-custody and non-custodial DeFi approach.
 
 ## User Preferences
 - **Communication style**: Simple, everyday language explaining technical concepts.
@@ -10,94 +10,34 @@ The Axiom Smart City project aims to establish America's first 1,000-acre on-cha
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend features a modular design with a professional gold/black theme and yellow accents, ensuring responsiveness. Branding includes "AXIOM" with a golden circular token logo, golden gradient text, and the tagline "Build Wealth Together, On-Chain." A unified navigation system employs a land-first approach with consistent headers and footers across marketing pages, managed via `SiteNavModel.ts`, `SiteHeader.tsx`, `SiteFooter.tsx`, and `SiteLayout.tsx`. The official Web3 design template, located in `components/axiomRebuild/`, provides an immersive experience with `Web3Hero.tsx`, `Web3Section.tsx`, `ImmersiveCard.tsx`, and `styles/web3Theme.ts`, utilizing white backgrounds, teal, purple, and gold accents, glassmorphism, 3D depth, and scroll animations.
+The frontend features a modular, responsive design with a professional gold/black theme and yellow accents. Branding includes "AXIOM" with a golden circular token logo and the tagline "Build Wealth Together, On-Chain." A unified navigation system uses a land-first approach with consistent headers and footers. The official Web3 design template provides an immersive experience with glassmorphism, 3D depth, and scroll animations, utilizing white backgrounds, teal, purple, and gold accents.
 
 ### Technical Implementations
-The core Axiom Protocol Token (AXM) is an ERC20 governance and fee-routing token on Arbitrum One, with planned migration to Universe Blockchain (L3). The multi-phase Smart Contract Architecture on Arbitrum One covers identity, treasury, staking, emissions, and asset registries. The platform offers a Complete DeFi Treasury Suite with self-custody vaults, savings circles, staking, and investment pools, supported by 23 verified smart contracts. Axiom utilizes a HYBRID CUSTODY model (Self-Custody, Smart Contract Custody, Pooled Custody) with disclosures managed via `lib/custody/disclosure.ts` and `components/CustodyDisclosure.js`.
+The core Axiom Protocol Token (AXM) is an ERC20 governance and fee-routing token on Arbitrum One, with a planned migration to Universe Blockchain (L3). The multi-phase Smart Contract Architecture on Arbitrum One covers identity, treasury, staking, emissions, and asset registries, supported by 23 verified smart contracts. The platform offers a Complete DeFi Treasury Suite with self-custody vaults, savings circles, staking, and investment pools, utilizing a HYBRID CUSTODY model.
 
 ### System Design Choices
-The architecture employs a "Product Factory Approach" for scalability. Arbitrum One serves as the current blockchain network, with a planned migration to Universe Blockchain (L3). Data management uses PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend includes centralized contract configuration, a dedicated contract service, and chain validation middleware for Arbitrum One, with API responses providing `axmBalance` and `axmUsdValue`.
+The architecture employs a "Product Factory Approach" for scalability. Arbitrum One is the current blockchain network, with a planned migration to Universe Blockchain (L3). Data management uses PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend includes centralized contract configuration, a dedicated contract service, and chain validation middleware.
 
 Key features include:
--   **Axiom Nodes Marketplace**
--   **DEX Exchange**
+-   **Axiom Nodes Marketplace & DEX Exchange**
 -   **Governance** (API-based, transitioning to on-chain)
 -   **Admin Authentication & RBAC** (JWT-based with two-step approval and audit logging)
 -   **AI Agent & Upgrade Framework** (security-first, configurable modes, audit logging, idempotency)
--   **API Security** (input validation, EIP-4361 SIWE authentication)
 -   **KeyGrow Rent-to-Own Program** (ERC-1155 tokenized fractional property shares)
 -   **Axiom SUSU (Rotating Savings Groups)** (on-chain ROSCA with Community Pool and Personal Vault custody)
 -   **PMA Trust** (Private Membership Association Trust with tokenized ERC-1155/1400 memberships)
 -   **AI Member Support** (Gemini-powered chat assistant)
--   **V2 Analytics Dashboard**
 -   **SEED (Wealth Engine)** (AXM locking for voting power and participation benefits)
 -   **On-Chain Credit Score Display** (`CreditScoreCard` with FICO-like visualization)
--   **Referral System**
--   **Member Badges**
--   **Governance Proposal Drafting**
--   **Yield Vault** (auto-compounding AXM staking)
--   **Push Notifications**
--   **Transparency Dashboard** (real-time protocol metrics)
--   **Axiom Steward Corps** (elite coordination corps for regional management, food distribution, and land readiness, including a 5-stage selection process, role hierarchy, and probation metrics tracking)
--   **Steward Recruitment System** (full-funnel tools with landing page, interest capture, admin dashboard, and social content templates)
--   **Steward Dashboard** (operational dashboard for active stewards with overview, produce drops, participant directory, land pipeline, tasks board, communications, region management, group formation, reputation panel, weekly reports, and settings)
--   **Steward-Activated Land Program** (landowner onboarding, steward playbook, outreach scripts, application system, lead management, stewardship plans, activation cycles, owner checklists, and optional future acquisition discussions)
--   **Wealth Engine V2 Contracts** (DeFi Treasury System including AxiomScoreSBT for on-chain credit scoring, SusuInsuranceFund, SEED for AXM locking and voting power, and AxiomFeeBurner for AXM buyback/burn and SEED holder distribution).
--   **AXUSD Stablecoin System** (CDP-style hybrid stablecoin with PSM, VaultEngine, Liquidator, BackstopVault, TBillVault, and MarketOperations - security audited with multi-AI review).
--   **AXUSD Ecosystem Integrations** (SusuAXUSDAdapter for stablecoin savings circles, KeyGrowPaymentModule for rent-to-own housing, SEEDYieldDistributor for SEED holder rewards, AXUSDRevenueRouter for protocol fee distribution, LiquidityBootstrapper for DEX pool seeding - all on Arbitrum One mainnet).
--   **Land Acquisition System** (SEC Reg CF compliant crowdfunding with tokenized land options via LandOptionRegistry ERC-1155, RegCFCrowdfunding for SEC-compliant $5M raises, and LandAcquisitionPool for SUSU-style community pooling - page at `/land-acquisition` with generated images).
--   **Land Acquisition Admin Tools** (Enhanced admin workflow at `/admin/land-deals` and `/admin/land-pipeline` with:
-    - 3-step landowner property submission form at `/landowners/submit` with automatic lead scoring (0-100)
-    - **Property Listing Import** - Paste URLs from Zillow, Realtor, Redfin, LoopNet, LandWatch to auto-extract property data
-    - Email notifications via Resend for new submissions, status changes, and admin alerts
-    - Document uploads via Replit Object Storage for property deeds, surveys, photos
-    - Automatic and manual steward assignment API
-    - 6-stage multi-stage approval workflow (Submission → Admin Review → Steward Assignment → Steward Evaluation → Community Vote → Final Approval)
-    - CRM Kanban pipeline view with drag-and-drop status updates
-    - Database tables: land_submissions, land_documents, land_options, crowdfunding_campaigns, governance_proposals)
--   **Social Campaign & Referral System** (Marketing tools for crowdfunding campaigns:
-    - Short links with `/c/[slug]` redirect pages and OG meta tags for social previews
-    - Social share buttons (Twitter/X, Facebook, LinkedIn, WhatsApp, Email)
-    - Referral code generation (AX + 6 alphanumeric) with click/conversion tracking
-    - Referral attribution for investments with campaign analytics
-    - Database tables: campaign_short_links, referral_attributions, steward_reviews, community_votes)
--   **SEC Reg CF Compliance System** (Investor protection and regulatory compliance:
-    - Investment limit calculator per SEC rules (non-accredited: $2,500 minimum or 5%/10% based on income/net worth; accredited: uncapped up to $5M offering limit)
-    - KYC verification flow with investor_kyc table (stores only last 4 SSN digits for identity confirmation)
-    - 6 required risk disclosures (risk_of_loss, illiquidity, no_guarantee, cancellation, reg_cf_limits, development_risk)
-    - Full audit trail with IP address and user agent for disclosure acknowledgments
-    - InvestmentCompliance component orchestrates verification flow before investment
-    - Database tables: investor_kyc, investment_acknowledgments)
--   **Closed-Loop Coordination System** (January 2026 - Complete infrastructure overhaul for membership-based coordination:
-    - **PMA Membership Gate**: Membership onboarding flow at `/join` with 4-step process (PMA Overview, Rules, Disclosures, Confirm). All participation gated by membership status (applicant, member, suspended, removed).
-    - **Purpose Pools**: Resource coordination mechanism at `/participate`. Members commit AXUSD to pools with defined purposes, targets, and governance rules.
-    - **Governance System**: Proposal creation and voting for resource allocation. Categories include due_diligence, legal, survey, steward_ops, option_deposit, close_costs.
-    - **Land Candidates Pipeline**: Property stewardship candidates at `/land` with 7-stage pipeline (candidate, under_review, due_diligence, ready_for_vote, approved_for_execution, acquired, archived).
-    - **Treasury Transparency**: Community treasury dashboard at `/treasury` with transaction history and governance oversight.
-    - **System Explainer**: "How It Works" page at `/system` explaining coordination system, PMA membership, AXUSD settlement, purpose pools, governance, and stewardship.
-    - **Participation Disclosures**: ParticipationDisclosurePanel component with 6 required disclosures (Participation Purpose, No Guaranteed Outcomes, Token and Credit Nature, Allocation Dependencies, Educational Information, Membership Obligations).
-    - **New Database Tables**: membership_records, treasuries, treasury_transactions, member_balances, purpose_pools, pool_rules, pool_disclosures, pool_commitments, governance_proposals, governance_votes, land_candidates, system_audit_logs, disclosure_acknowledgments.
-    - **Key Components**: MembershipGate.tsx, ParticipationDisclosurePanel.tsx, PoolCard.tsx, LandCandidateCard.tsx
-    - **API Routes**: /api/membership/status, /api/membership/apply, /api/pools, /api/proposals, /api/treasury/*, /api/land/candidates, /api/land/stats
-    - **Design Philosophy**: No investment language. All "invest/investor/ROI/crowdfunding" terminology replaced with coordination and participation language. AXUSD framed as settlement and accounting only.
-    - **Page Design**: Clean white backgrounds with AI-generated hero images. Consistent design across all coordination pages (join, participate, land, treasury, system, stewards). Color scheme: teal (#00A389), purple (#7B68EE), gold accents.
-    - **Arkansas Properties**: 5 initial land candidates added (Pine Bluff Agricultural Tract, Ozark Mountain Homestead, Delta Community Land Trust, Little Rock Urban Farm Collective, Hot Springs Wellness Retreat) with stewardship intent summaries.
-    - **Legacy Page Handling**: /land-acquisition page shows redirect banner to /land for coordination-focused experience.)
--   **Land Reclamation Workbook** (Paid subscription tool at $20/month for genealogical land research - `/workbook`:
-    - Case management with ancestor tracking and name variants
-    - Evidence tracking with provenance (primary/secondary sources, confidence levels)
-    - Fact claims linked to evidence with confidence assessment
-    - Section-by-section checklists (Ancestor ID, Land Records, Census/Tax, Probate, Chain of Title)
-    - AI Research Assistant with 3 modes: Research Planner, Evidence Clerk, Dossier Drafter
-    - Identity collision detection (name variants, date ranges, location spread, generation gaps)
-    - Assumption tracking with acknowledgment requirements
-    - Professional PDF exports (dossier, evidence summary, checklist)
-    - Ethical use agreement with deliberate friction safeguards
-    - Research integrity enforcement - no legal advice, hypothesis labeling
-    - Stripe subscription with usage metering (100 AI calls, 50 extractions, 20 exports/month)
-    - Resource directory with curated genealogy links
-    - Database tables: workbook_cases, evidence_items, fact_claims, assumptions, task_items, workbook_section_states, resource_directory_items, subscription_entitlements, ai_usage_meters, audit_trail_workbook
-    - Key files: lib/workbook/*, pages/api/workbook/*, pages/workbook/*, components/workbook/*)
+-   **Steward Corps & Recruitment System** (elite coordination corps with training program, operational dashboard, and land program)
+-   **Wealth Engine V2 Contracts** (DeFi Treasury System including AxiomScoreSBT, SusuInsuranceFund, SEED, and AxiomFeeBurner)
+-   **AXUSD Stablecoin System** (CDP-style hybrid stablecoin with PSM, VaultEngine, Liquidator, BackstopVault, TBillVault, and MarketOperations)
+-   **AXUSD Ecosystem Integrations** (SusuAXUSDAdapter, KeyGrowPaymentModule, SEEDYieldDistributor, AXUSDRevenueRouter, LiquidityBootstrapper on Arbitrum One mainnet)
+-   **Land Acquisition System** (SEC Reg CF compliant crowdfunding with tokenized land options, community pooling, and enhanced admin tools for property submission, listing import, and multi-stage approval workflow)
+-   **Social Campaign & Referral System** (Marketing tools with short links, social sharing, and referral tracking for crowdfunding campaigns)
+-   **SEC Reg CF Compliance System** (Investor protection and regulatory compliance with investment limit calculator, KYC verification, required risk disclosures, and full audit trail)
+-   **Closed-Loop Coordination System** (Membership-based coordination with PMA Membership Gate, Purpose Pools for resource coordination, a robust Governance System, Land Candidates Pipeline, and Treasury Transparency. All terminology focuses on coordination and participation, with AXUSD for settlement and accounting only.)
+-   **Land Reclamation Workbook** (Paid subscription tool for genealogical land research with case management, evidence tracking, AI Research Assistant, and ethical use safeguards.)
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
@@ -107,11 +47,9 @@ Key features include:
 -   **Libraries:** Ethers.js, viem + TypeScript
 -   **Databases:** PostgreSQL, Neon Database, MongoDB
 -   **Database Tools:** Drizzle Kit
--   **Email Service:** Resend (via Replit Integration)
+-   **Email Service:** Resend
 -   **Payment Processing:** Stripe
 -   **Cloud Storage:** Google Cloud Storage, Storacha (Web3 Storage/IPFS)
--   **Property Data:** ATTOM Data
--   **Rental Estimates:** RentCast API
--   **Location Scores:** Walk Score API
+-   **Property Data:** ATTOM Data, RentCast API, Walk Score API
 -   **Auth Provider:** Supabase
 -   **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image)
