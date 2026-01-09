@@ -29,7 +29,7 @@ Key features include:
 -   **AI Member Support** (Gemini-powered chat assistant)
 -   **SEED (Wealth Engine)** (AXM locking for voting power and participation benefits)
 -   **On-Chain Credit Score Display** (`CreditScoreCard` with FICO-like visualization)
--   **Steward Corps & Recruitment System** (elite coordination corps with training program, operational dashboard, and land program)
+-   **Steward Corps & Recruitment System** (elite coordination corps with 12-month seasonal training program covering Foundations + Spring/Summer/Fall/Winter quarters, operational dashboard, and land program. Three tiers: Premium $6,000, Standard $3,000, Scholarship $750 with AXUSD graduation rewards.)
 -   **Wealth Engine V2 Contracts** (DeFi Treasury System including AxiomScoreSBT, SusuInsuranceFund, SEED, and AxiomFeeBurner)
 -   **AXUSD Stablecoin System** (CDP-style hybrid stablecoin with PSM, VaultEngine, Liquidator, BackstopVault, TBillVault, and MarketOperations)
 -   **AXUSD Ecosystem Integrations** (SusuAXUSDAdapter, KeyGrowPaymentModule, SEEDYieldDistributor, AXUSDRevenueRouter, LiquidityBootstrapper on Arbitrum One mainnet)

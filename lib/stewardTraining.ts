@@ -28,8 +28,8 @@ export const trainingTiers: TrainingTier[] = [
     name: 'Premium Steward',
     price: 6000,
     displayPrice: '$6,000',
-    monthlyPrice: 550,
-    quarterlyPrice: 1600,
+    monthlyPrice: 500,
+    quarterlyPrice: 1500,
     description: 'Full 12-month certification with maximum benefits, direct mentorship, and first priority for land stewardship assignments.',
     benefits: [
       'Priority land stewardship assignment',
@@ -52,8 +52,8 @@ export const trainingTiers: TrainingTier[] = [
     name: 'Standard Steward',
     price: 3000,
     displayPrice: '$3,000',
-    monthlyPrice: 275,
-    quarterlyPrice: 800,
+    monthlyPrice: 250,
+    quarterlyPrice: 750,
     description: 'Complete 12-month certification with full training access, cohort mentorship, and standard stewardship benefits.',
     benefits: [
       'Standard land stewardship assignment',
@@ -75,8 +75,8 @@ export const trainingTiers: TrainingTier[] = [
     name: 'Scholarship Steward',
     price: 750,
     displayPrice: '$750 (Subsidized)',
-    monthlyPrice: 75,
-    quarterlyPrice: 200,
+    monthlyPrice: 65,
+    quarterlyPrice: 190,
     description: 'For qualifying applicants who demonstrate genuine need and exceptional commitment to land stewardship. Full 12-month program with community support.',
     benefits: [
       'Waitlist land stewardship assignment',
