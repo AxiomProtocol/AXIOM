@@ -90,6 +90,8 @@ export interface TrainingPhase {
   description: string;
   icon: string;
   requirements: string[];
+  color: string;
+  totalHours: number;
 }
 
 export const trainingPhases: TrainingPhase[] = [
@@ -104,7 +106,9 @@ export const trainingPhases: TrainingPhase[] = [
       'Pass module assessments (80% minimum)',
       'Submit reflection assignments',
       'Participate in community discussions'
-    ]
+    ],
+    color: '#7B68EE',
+    totalHours: 12
   },
   {
     id: 'classroom',
@@ -117,7 +121,9 @@ export const trainingPhases: TrainingPhase[] = [
       'Complete group project with cohort',
       'Present stewardship plan',
       'Receive mentor approval'
-    ]
+    ],
+    color: '#00A389',
+    totalHours: 18
   },
   {
     id: 'field',
@@ -130,7 +136,9 @@ export const trainingPhases: TrainingPhase[] = [
       'Master all field competencies',
       'Supervisor sign-off on all tasks',
       'Pass final field assessment'
-    ]
+    ],
+    color: '#D4AF37',
+    totalHours: 80
   }
 ];
 
@@ -570,8 +578,24 @@ export function getTierById(tierId: string): TrainingTier | undefined {
   return trainingTiers.find(t => t.id === tierId);
 }
 
-export function getModulesByPhase(phase: 'online' | 'classroom' | 'field'): TrainingModuleContent[] {
+export interface TrainingModule extends TrainingModuleContent {
+  id: string;
+  duration: number;
+  type: 'lesson' | 'quiz' | 'practical';
+}
+
+function generateModuleId(m: TrainingModuleContent): string {
+  return `${m.phase}-${m.order}`;
+}
+
+export function getModulesByPhase(phase: 'online' | 'classroom' | 'field'): TrainingModule[] {
   return trainingCurriculum
     .filter(m => m.phase === phase)
-    .sort((a, b) => a.order - b.order);
+    .sort((a, b) => a.order - b.order)
+    .map(m => ({
+      ...m,
+      id: generateModuleId(m),
+      duration: m.estimatedMinutes,
+      type: m.order % 3 === 0 ? 'quiz' : (m.phase === 'field' ? 'practical' : 'lesson')
+    })) as TrainingModule[];
 }
