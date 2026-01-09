@@ -17,12 +17,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setMounted(true);
     const savedTheme = localStorage.getItem('axiom-theme') as Theme;
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
     if (savedTheme) {
       setThemeState(savedTheme);
-    } else if (prefersDark) {
-      setThemeState('dark');
     }
   }, []);
 
@@ -33,12 +30,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
-      document.body.style.backgroundColor = '#0F172A';
-      document.body.style.color = '#F1F5F9';
     } else {
       document.documentElement.classList.remove('dark');
-      document.body.style.backgroundColor = '#FFFFFF';
-      document.body.style.color = '#1F2937';
     }
   }, [theme, mounted]);
 
