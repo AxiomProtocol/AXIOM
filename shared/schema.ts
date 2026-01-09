@@ -11,6 +11,7 @@ import {
   integer,
   pgEnum,
   serial,
+  unique,
 } from "drizzle-orm/pg-core";
 
 // User roles enum
@@ -6246,6 +6247,247 @@ export const disclosureAcknowledgments = pgTable("disclosure_acknowledgments", {
   typeIdx: index("disclosure_ack_type_idx").on(table.disclosureType),
   entityIdx: index("disclosure_ack_entity_idx").on(table.entityType, table.entityId),
 }));
+
+// ============================================
+// STEWARD CORPS TRAINING PROGRAM
+// ============================================
+
+// Training tier enum
+export const trainingTierEnum = pgEnum("training_tier", [
+  'premium',      // $2,500 - Full certification + land priority + max AXUSD
+  'standard',     // $1,000 - Full certification + standard benefits
+  'scholarship'   // Subsidized - For qualifying applicants
+]);
+
+// Training phase enum
+export const trainingPhaseEnum = pgEnum("training_phase", [
+  'enrolled',     // Just enrolled, not started
+  'online',       // Online self-paced modules
+  'classroom',    // Live cohort sessions
+  'field',        // On-site practical training
+  'graduated',    // Completed all phases
+  'covenant'      // Signed lifetime covenant
+]);
+
+// Module status enum
+export const moduleStatusEnum = pgEnum("module_status", [
+  'locked',
+  'available',
+  'in_progress',
+  'completed'
+]);
+
+// Training Programs (cohorts)
+export const trainingPrograms = pgTable("training_programs", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  maxEnrollment: integer("max_enrollment").default(50),
+  currentEnrollment: integer("current_enrollment").default(0),
+  isActive: boolean("is_active").default(true),
+  isAcceptingEnrollment: boolean("is_accepting_enrollment").default(true),
+  fieldSiteLocation: varchar("field_site_location", { length: 300 }),
+  fieldSiteState: varchar("field_site_state", { length: 50 }),
+  classroomSchedule: jsonb("classroom_schedule"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Training Enrollments
+export const trainingEnrollments = pgTable("training_enrollments", {
+  id: serial("id").primaryKey(),
+  programId: integer("program_id").references(() => trainingPrograms.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  walletAddress: varchar("wallet_address", { length: 42 }),
+  tier: trainingTierEnum("tier").notNull(),
+  currentPhase: trainingPhaseEnum("current_phase").default('enrolled'),
+  
+  // Payment info
+  amountPaid: decimal("amount_paid", { precision: 10, scale: 2 }),
+  paymentMethod: varchar("payment_method", { length: 50 }),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 100 }),
+  paymentStatus: varchar("payment_status", { length: 20 }).default('pending'),
+  
+  // Scholarship info
+  scholarshipApproved: boolean("scholarship_approved").default(false),
+  scholarshipReason: text("scholarship_reason"),
+  
+  // Progress tracking
+  onlineProgress: integer("online_progress").default(0),
+  classroomAttendance: integer("classroom_attendance").default(0),
+  classroomSessionsTotal: integer("classroom_sessions_total").default(6),
+  fieldDaysCompleted: integer("field_days_completed").default(0),
+  fieldDaysRequired: integer("field_days_required").default(30),
+  
+  // Completion dates
+  onlineCompletedAt: timestamp("online_completed_at"),
+  classroomCompletedAt: timestamp("classroom_completed_at"),
+  fieldCompletedAt: timestamp("field_completed_at"),
+  graduatedAt: timestamp("graduated_at"),
+  covenantSignedAt: timestamp("covenant_signed_at"),
+  
+  // Rewards
+  axusdRewardAmount: decimal("axusd_reward_amount", { precision: 18, scale: 2 }),
+  axusdRewardDistributedAt: timestamp("axusd_reward_distributed_at"),
+  landAccessGrantedAt: timestamp("land_access_granted_at"),
+  assignedLandCandidateId: integer("assigned_land_candidate_id").references(() => landCandidates.id, { onDelete: 'set null' }),
+  
+  enrolledAt: timestamp("enrolled_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  programIdx: index("training_enrollment_program_idx").on(table.programId),
+  userIdx: index("training_enrollment_user_idx").on(table.userId),
+  walletIdx: index("training_enrollment_wallet_idx").on(table.walletAddress),
+  phaseIdx: index("training_enrollment_phase_idx").on(table.currentPhase),
+  uniqueEnrollment: unique("unique_program_user_enrollment").on(table.programId, table.userId),
+}));
+
+// Training Modules (curriculum content)
+export const trainingModules = pgTable("training_modules", {
+  id: serial("id").primaryKey(),
+  phase: trainingPhaseEnum("phase").notNull(),
+  moduleOrder: integer("module_order").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  subtitle: varchar("subtitle", { length: 300 }),
+  description: text("description"),
+  content: text("content"),
+  videoUrl: varchar("video_url", { length: 500 }),
+  estimatedMinutes: integer("estimated_minutes").default(30),
+  
+  // Quiz/assessment
+  hasQuiz: boolean("has_quiz").default(false),
+  quizQuestions: jsonb("quiz_questions"),
+  passingScore: integer("passing_score").default(80),
+  
+  // Requirements
+  prerequisiteModuleId: integer("prerequisite_module_id"),
+  isRequired: boolean("is_required").default(true),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  phaseIdx: index("training_module_phase_idx").on(table.phase),
+  orderIdx: index("training_module_order_idx").on(table.moduleOrder),
+}));
+
+// Module Progress (per user)
+export const trainingModuleProgress = pgTable("training_module_progress", {
+  id: serial("id").primaryKey(),
+  enrollmentId: integer("enrollment_id").references(() => trainingEnrollments.id).notNull(),
+  moduleId: integer("module_id").references(() => trainingModules.id).notNull(),
+  status: moduleStatusEnum("status").default('locked'),
+  progress: integer("progress").default(0),
+  
+  // Quiz results
+  quizAttempts: integer("quiz_attempts").default(0),
+  quizScore: integer("quiz_score"),
+  quizPassedAt: timestamp("quiz_passed_at"),
+  
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  enrollmentIdx: index("module_progress_enrollment_idx").on(table.enrollmentId),
+  moduleIdx: index("module_progress_module_idx").on(table.moduleId),
+  uniqueProgress: unique("unique_enrollment_module_progress").on(table.enrollmentId, table.moduleId),
+}));
+
+// Field Training Checklists
+export const fieldTrainingChecklists = pgTable("field_training_checklists", {
+  id: serial("id").primaryKey(),
+  enrollmentId: integer("enrollment_id").references(() => trainingEnrollments.id).notNull(),
+  category: varchar("category", { length: 100 }).notNull(),
+  taskName: varchar("task_name", { length: 300 }).notNull(),
+  taskDescription: text("task_description"),
+  isCompleted: boolean("is_completed").default(false),
+  completedAt: timestamp("completed_at"),
+  supervisorApproved: boolean("supervisor_approved").default(false),
+  supervisorId: integer("supervisor_id").references(() => users.id),
+  supervisorNotes: text("supervisor_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  enrollmentIdx: index("field_checklist_enrollment_idx").on(table.enrollmentId),
+  categoryIdx: index("field_checklist_category_idx").on(table.category),
+}));
+
+// Steward Covenant Records
+export const stewardCovenants = pgTable("steward_covenants", {
+  id: serial("id").primaryKey(),
+  enrollmentId: integer("enrollment_id").references(() => trainingEnrollments.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  walletAddress: varchar("wallet_address", { length: 42 }),
+  
+  // Covenant details
+  covenantVersion: varchar("covenant_version", { length: 20 }).default('1.0'),
+  covenantText: text("covenant_text").notNull(),
+  
+  // Signature
+  signedAt: timestamp("signed_at").notNull(),
+  signatureHash: varchar("signature_hash", { length: 66 }),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  
+  // Status
+  isActive: boolean("is_active").default(true),
+  revokedAt: timestamp("revoked_at"),
+  revocationReason: text("revocation_reason"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  enrollmentIdx: index("covenant_enrollment_idx").on(table.enrollmentId),
+  userIdx: index("covenant_user_idx").on(table.userId),
+  walletIdx: index("covenant_wallet_idx").on(table.walletAddress),
+}));
+
+// Training Certificates (proof of graduation)
+export const trainingCertificates = pgTable("training_certificates", {
+  id: serial("id").primaryKey(),
+  enrollmentId: integer("enrollment_id").references(() => trainingEnrollments.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  certificateNumber: varchar("certificate_number", { length: 50 }).notNull(),
+  tier: trainingTierEnum("tier").notNull(),
+  
+  // Certificate details
+  issuedAt: timestamp("issued_at").notNull(),
+  validFrom: timestamp("valid_from").notNull(),
+  
+  // On-chain verification (optional NFT)
+  tokenId: varchar("token_id", { length: 100 }),
+  contractAddress: varchar("contract_address", { length: 42 }),
+  txHash: varchar("tx_hash", { length: 66 }),
+  
+  // PDF certificate
+  pdfUrl: varchar("pdf_url", { length: 500 }),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  enrollmentIdx: index("certificate_enrollment_idx").on(table.enrollmentId),
+  userIdx: index("certificate_user_idx").on(table.userId),
+  certNumIdx: index("certificate_number_idx").on(table.certificateNumber),
+}));
+
+// Export types for Training Program
+export type TrainingProgram = typeof trainingPrograms.$inferSelect;
+export type InsertTrainingProgram = typeof trainingPrograms.$inferInsert;
+export type TrainingEnrollment = typeof trainingEnrollments.$inferSelect;
+export type InsertTrainingEnrollment = typeof trainingEnrollments.$inferInsert;
+export type TrainingModule = typeof trainingModules.$inferSelect;
+export type InsertTrainingModule = typeof trainingModules.$inferInsert;
+export type TrainingModuleProgress = typeof trainingModuleProgress.$inferSelect;
+export type InsertTrainingModuleProgress = typeof trainingModuleProgress.$inferInsert;
+export type FieldTrainingChecklist = typeof fieldTrainingChecklists.$inferSelect;
+export type InsertFieldTrainingChecklist = typeof fieldTrainingChecklists.$inferInsert;
+export type StewardCovenant = typeof stewardCovenants.$inferSelect;
+export type InsertStewardCovenant = typeof stewardCovenants.$inferInsert;
+export type TrainingCertificate = typeof trainingCertificates.$inferSelect;
+export type InsertTrainingCertificate = typeof trainingCertificates.$inferInsert;
 
 // Export types for Closed-Loop System
 export type MembershipRecord = typeof membershipRecords.$inferSelect;
