@@ -15,7 +15,7 @@ const experienceLevels = [
 ];
 
 const interests = [
-  { id: 'land', label: 'Land Stewardship', description: 'Acquire and develop land as a community', icon: '🌍', path: '/land-acquisition' },
+  { id: 'land', label: 'Land Stewardship', description: 'Acquire and develop land as a community', icon: '🌍', path: '/land' },
   { id: 'keygrow', label: 'KeyGrow (Rent-to-Own)', description: 'Build ownership through monthly contributions', icon: '🏠', path: '/keygrow' },
   { id: 'susu', label: 'Savings Circles (SUSU)', description: 'Join community savings groups', icon: '💰', path: '/susu' },
   { id: 'governance', label: 'Community Governance', description: 'Vote on proposals and shape the future', icon: '🗳️', path: '/governance' },
@@ -468,7 +468,7 @@ export function EnhancedOnboarding({ onComplete, onDismiss }: EnhancedOnboarding
                   </button>
                 )) : (
                   <button
-                    onClick={() => navigateToPath('/land-acquisition')}
+                    onClick={() => navigateToPath('/land')}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
