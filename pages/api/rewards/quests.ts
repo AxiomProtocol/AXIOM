@@ -1,6 +1,34 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { questService, userQuestService, userXpService } from '../../../lib/db-services';
 import { securityMiddleware, logAuditEvent, getClientIdentifier } from '../../../lib/security';
+import { pool } from '../../../lib/db';
+
+function toCamelCase(obj: any): any {
+  if (Array.isArray(obj)) {
+    return obj.map(toCamelCase);
+  }
+  if (obj !== null && typeof obj === 'object') {
+    return Object.keys(obj).reduce((acc: any, key) => {
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+      acc[camelKey] = toCamelCase(obj[key]);
+      return acc;
+    }, {});
+  }
+  return obj;
+}
+
+async function resolveUserIdFromWallet(walletAddress: string): Promise<number | null> {
+  try {
+    const result = await pool.query(
+      'SELECT id FROM users WHERE wallet_address = $1 LIMIT 1',
+      [walletAddress]
+    );
+    return result.rows[0]?.id || null;
+  } catch (error) {
+    console.error('Error resolving user ID:', error);
+    return null;
+  }
+}
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const clientId = getClientIdentifier(req);
@@ -13,15 +41,46 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       let userQuests: any[] = [];
       
       if (userId) {
-        const numericUserId = parseInt(userId as string, 10);
-        if (!isNaN(numericUserId)) {
-          userQuests = await userQuestService.getByUserId(numericUserId);
+        const userIdStr = userId as string;
+        let numericUserId: number | null = null;
+        
+        if (userIdStr.startsWith('0x')) {
+          numericUserId = await resolveUserIdFromWallet(userIdStr);
+        } else {
+          numericUserId = parseInt(userIdStr, 10);
+          if (isNaN(numericUserId)) numericUserId = null;
+        }
+        
+        if (numericUserId) {
+          const dbUserQuests = await userQuestService.getByUserId(numericUserId);
+          userQuests = dbUserQuests.map(uq => ({
+            questId: uq.questId.toString(),
+            status: uq.status,
+            progress: uq.progress,
+            startedAt: uq.startedAt?.toISOString() || new Date().toISOString(),
+            completedAt: uq.completedAt?.toISOString(),
+            requirementProgress: uq.requirementProgress
+          }));
         }
       }
 
+      const formattedQuests = quests.map(q => ({
+        id: q.id.toString(),
+        title: q.title,
+        description: q.description,
+        category: q.category,
+        requirements: Array.isArray(q.requirements) ? q.requirements : [],
+        rewards: Array.isArray(q.rewards) ? q.rewards : [],
+        startDate: q.startDate,
+        endDate: q.endDate,
+        maxCompletions: q.maxCompletions,
+        currentCompletions: q.currentCompletions,
+        repeatable: q.repeatable
+      }));
+
       return res.status(200).json({
         success: true,
-        quests,
+        quests: formattedQuests,
         userQuests,
         timestamp: new Date().toISOString()
       });
@@ -38,11 +97,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ success: false, error: 'User ID and Quest ID required' });
     }
 
-    const numericUserId = parseInt(userId, 10);
-    const numericQuestId = parseInt(questId, 10);
+    let numericUserId: number | null = null;
+    if (userId.startsWith('0x')) {
+      numericUserId = await resolveUserIdFromWallet(userId);
+    } else {
+      numericUserId = parseInt(userId, 10);
+      if (isNaN(numericUserId)) numericUserId = null;
+    }
 
-    if (isNaN(numericUserId) || isNaN(numericQuestId)) {
-      return res.status(400).json({ success: false, error: 'Invalid User ID or Quest ID' });
+    if (!numericUserId) {
+      return res.status(400).json({ success: false, error: 'User not found. Please ensure your wallet is registered.' });
+    }
+
+    const numericQuestId = parseInt(questId.toString(), 10);
+    if (isNaN(numericQuestId)) {
+      return res.status(400).json({ success: false, error: 'Invalid Quest ID' });
     }
 
     if (action === 'start') {
@@ -75,7 +144,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           success: true
         });
 
-        return res.status(200).json({ success: true, userQuest });
+        return res.status(200).json({
+          success: true,
+          userQuest: {
+            questId: userQuest.questId.toString(),
+            status: userQuest.status,
+            progress: userQuest.progress,
+            startedAt: userQuest.startedAt?.toISOString() || new Date().toISOString(),
+            requirementProgress: userQuest.requirementProgress
+          }
+        });
       } catch (error) {
         console.error('Error starting quest:', error);
         return res.status(500).json({ success: false, error: 'Failed to start quest' });
@@ -97,7 +175,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         await userQuestService.complete(userQuest.id);
         await questService.incrementCompletions(numericQuestId);
 
-        const xpReward = quest.rewards?.find((r: any) => r.type === 'xp');
+        const rewards = Array.isArray(quest.rewards) ? quest.rewards : [];
+        const xpReward = rewards.find((r: any) => r.type === 'xp');
         if (xpReward) {
           await userXpService.createOrUpdate(numericUserId, xpReward.amount);
         }
@@ -106,12 +185,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           action: 'quest_completed',
           ipAddress: clientId,
           userId: userId.toString(),
-          details: { questId, rewards: quest.rewards },
+          details: { questId, rewards },
           severity: 'info',
           success: true
         });
 
-        return res.status(200).json({ success: true, rewards: quest.rewards });
+        return res.status(200).json({ success: true, rewards });
       } catch (error) {
         console.error('Error completing quest:', error);
         return res.status(500).json({ success: false, error: 'Failed to complete quest' });
@@ -135,8 +214,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           return res.status(404).json({ success: false, error: 'Quest not found' });
         }
 
+        const requirements = Array.isArray(quest.requirements) ? quest.requirements : [];
         const currentProgress = userQuest.requirementProgress || {};
-        const requirement = quest.requirements?.find((r: any) => r.id === requirementId);
+        const requirement = requirements.find((r: any) => r.id === requirementId);
         if (!requirement) {
           return res.status(400).json({ success: false, error: 'Requirement not found' });
         }
@@ -147,16 +227,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
         let totalProgress = 0;
         let completedReqs = 0;
-        for (const req of quest.requirements || []) {
+        for (const req of requirements) {
           const reqProgress = currentProgress[req.id] || 0;
           totalProgress += (reqProgress / req.target) * 100;
           if (reqProgress >= req.target) completedReqs++;
         }
-        const overallProgress = Math.round(totalProgress / (quest.requirements?.length || 1));
+        const overallProgress = Math.round(totalProgress / (requirements.length || 1));
 
         await userQuestService.updateProgress(userQuest.id, overallProgress, currentProgress);
 
-        const completed = completedReqs === quest.requirements?.length;
+        const completed = completedReqs === requirements.length;
 
         logAuditEvent({
           action: 'quest_progress_updated',
