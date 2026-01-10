@@ -5,7 +5,7 @@ import StepProgressBanner from '../components/StepProgressBanner';
 
 const USE_OF_PROCEEDS = [
   { name: 'DeFi Protocol Development', percentage: 35, color: '#f59e0b', description: 'Smart contract development, security audits, veAXM tokenomics, and Wealth Engine infrastructure' },
-  { name: 'Technology & Security', percentage: 25, color: '#3b82f6', description: 'Platform engineering, on-chain credit scoring, SUSU insurance fund, and L3 chain launch' },
+  { name: 'Technology & Security', percentage: 25, color: '#3b82f6', description: 'Platform engineering, on-chain credit scoring, Wealth Practice insurance fund, and L3 chain launch' },
   { name: 'Liquidity & DEX', percentage: 15, color: '#8b5cf6', description: 'DEX liquidity pools, market making, and cross-chain bridge reserves' },
   { name: 'Treasury & Reserves', percentage: 10, color: '#10b981', description: 'Protocol reserves, insurance fund backing, and community grants' },
   { name: 'Marketing & Growth', percentage: 10, color: '#ec4899', description: 'Community building, partnerships, Academy expansion, and user acquisition' },
@@ -26,7 +26,7 @@ const TGE_BENEFITS = [
   { icon: '💰', title: 'TGE Pricing', description: 'Participate at launch pricing. Early supporters get the best entry point.' },
   { icon: '🗳️', title: 'Governance Rights (veAXM)', description: 'Lock AXM for veAXM voting power. Shape protocol decisions, fee adjustments, and treasury spending.' },
   { icon: '📈', title: 'Wealth Engine Rewards', description: 'Stake and lock AXM in the Wealth Engine for variable protocol rewards.' },
-  { icon: '🛡️', title: 'On-Chain Credit Score', description: 'Build your AxiomScore (300-850) through SUSU participation and protocol activity.' },
+  { icon: '🛡️', title: 'On-Chain Credit Score', description: 'Build your AxiomScore (300-850) through Wealth Practice participation and protocol activity.' },
   { icon: '⚡', title: 'Ultra-Low Fees', description: 'Built on Arbitrum One. Gas fees significantly lower than Ethereum mainnet.' },
   { icon: '🔐', title: 'Enterprise-Grade Security', description: 'Pausable in emergencies, role-based access control, and anti-whale protection.' },
   { icon: '💎', title: 'The Wealth Practice', description: 'Join community savings groups with smart contract enforcement and insurance protection.' },

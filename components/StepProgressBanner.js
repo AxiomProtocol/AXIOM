@@ -3,7 +3,7 @@ import Link from 'next/link';
 const STEPS = [
   { id: 'learn', label: 'Learn', href: '/academy', description: 'Financial education & discipline' },
   { id: 'connect', label: 'Connect', href: '/susu', description: 'Join interest groups by location/goal' },
-  { id: 'save', label: 'Save Together', href: '/susu', description: 'The Wealth Practice with clear rules' },
+  { id: 'save', label: 'Save Together', href: '/wealth-practice', description: 'The Wealth Practice with clear rules' },
 ];
 
 export default function StepProgressBanner({ currentStep = null, isAdvanced = false }) {
@@ -16,7 +16,7 @@ export default function StepProgressBanner({ currentStep = null, isAdvanced = fa
               <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs font-medium rounded">Advanced Module</span>
               <span className="text-sm text-gray-600">Part of Axiom's long-term buildout</span>
             </div>
-            <Link href="/susu" className="text-sm text-amber-600 hover:text-amber-700 font-medium">
+            <Link href="/wealth-practice" className="text-sm text-amber-600 hover:text-amber-700 font-medium">
               Start with Learn → Connect → Save Together →
             </Link>
           </div>
