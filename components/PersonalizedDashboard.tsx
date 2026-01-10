@@ -146,45 +146,147 @@ export function PersonalizedDashboard() {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ 
-          fontSize: '28px', 
+    <div className="personalized-dashboard" style={{ padding: '16px', maxWidth: '1200px', margin: '0 auto' }}>
+      <style>{`
+        .personalized-dashboard {
+          padding: 16px;
+        }
+        @media (min-width: 768px) {
+          .personalized-dashboard {
+            padding: 24px;
+          }
+        }
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+        @media (min-width: 768px) {
+          .stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+          }
+        }
+        .tip-card {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        @media (min-width: 768px) {
+          .tip-card {
+            flex-direction: row;
+            align-items: center;
+            gap: 16px;
+          }
+        }
+        .tip-button {
+          width: 100%;
+        }
+        @media (min-width: 768px) {
+          .tip-button {
+            width: auto;
+          }
+        }
+        .greeting-title {
+          font-size: 22px;
+        }
+        @media (min-width: 768px) {
+          .greeting-title {
+            font-size: 28px;
+          }
+        }
+        .stat-value {
+          font-size: 20px;
+        }
+        @media (min-width: 768px) {
+          .stat-value {
+            font-size: 24px;
+          }
+        }
+        .stat-label {
+          font-size: 12px;
+        }
+        @media (min-width: 768px) {
+          .stat-label {
+            font-size: 14px;
+          }
+        }
+        .quick-actions-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        @media (min-width: 768px) {
+          .quick-actions-grid {
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+          .quick-actions-grid .quick-action-btn {
+            width: auto;
+          }
+        }
+        .interests-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        @media (min-width: 768px) {
+          .interests-grid {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+          }
+        }
+        .suggestions-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        @media (min-width: 768px) {
+          .suggestions-grid {
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 16px;
+          }
+        }
+      `}</style>
+      <div style={{ marginBottom: '24px' }}>
+        <h1 className="greeting-title" style={{ 
           fontWeight: 700, 
           color: '#1F2937',
           marginBottom: '8px'
         }}>
           {greeting}
         </h1>
-        <p style={{ fontSize: '16px', color: '#6B7280' }}>
+        <p style={{ fontSize: '14px', color: '#6B7280' }}>
           Here's what's happening in your Axiom community today.
         </p>
       </div>
 
       {shouldShowTutorials() && (
-        <div style={{
+        <div className="tip-card" style={{
           background: 'linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%)',
           borderRadius: '16px',
-          padding: '20px',
-          marginBottom: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px'
+          padding: '16px',
+          marginBottom: '24px'
         }}>
-          <span style={{ fontSize: '32px' }}>💡</span>
-          <div style={{ flex: 1 }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#3730A3', marginBottom: '4px' }}>
-              Getting Started Tip
-            </h3>
-            <p style={{ fontSize: '14px', color: '#4338CA', margin: 0 }}>
-              {preferences.interests.includes('land') 
-                ? 'Check out the Land Stewardship page to see active community campaigns and contribute to land acquisition.'
-                : preferences.interests.includes('susu')
-                ? 'Join a SUSU savings circle to start building wealth together with your community.'
-                : 'Explore the features you selected during onboarding to get started with your journey.'}
-            </p>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1 }}>
+            <span style={{ fontSize: '28px' }}>💡</span>
+            <div>
+              <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#3730A3', marginBottom: '4px' }}>
+                Getting Started Tip
+              </h3>
+              <p style={{ fontSize: '13px', color: '#4338CA', margin: 0, lineHeight: 1.5 }}>
+                {preferences.interests.includes('land') 
+                  ? 'Check out the Land Stewardship page to see active community campaigns and contribute to land acquisition.'
+                  : preferences.interests.includes('susu')
+                  ? 'Join a SUSU savings circle to start building wealth together with your community.'
+                  : 'Explore the features you selected during onboarding to get started with your journey.'}
+              </p>
+            </div>
           </div>
           <button
+            className="tip-button"
             onClick={() => router.push('/learn')}
             style={{
               padding: '10px 20px',
@@ -194,7 +296,8 @@ export function PersonalizedDashboard() {
               borderRadius: '8px',
               fontSize: '14px',
               fontWeight: 500,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
             Learn More
@@ -202,32 +305,27 @@ export function PersonalizedDashboard() {
         </div>
       )}
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '16px',
-        marginBottom: '32px'
-      }}>
+      <div className="stats-grid" style={{ marginBottom: '24px' }}>
         {overallStats.map((stat, index) => (
           <div
             key={index}
             style={{
               background: 'white',
               borderRadius: '12px',
-              padding: '20px',
+              padding: '14px',
               border: '1px solid #E5E7EB'
             }}
           >
-            <div style={{ fontSize: '14px', color: '#6B7280', marginBottom: '8px' }}>
+            <div className="stat-label" style={{ color: '#6B7280', marginBottom: '6px' }}>
               {stat.label}
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-              <span style={{ fontSize: '24px', fontWeight: 700, color: '#1F2937' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+              <span className="stat-value" style={{ fontWeight: 700, color: '#1F2937' }}>
                 {stat.value}
               </span>
               {stat.change && (
                 <span style={{ 
-                  fontSize: '12px', 
+                  fontSize: '11px', 
                   color: stat.positive ? '#059669' : '#DC2626',
                   fontWeight: 500
                 }}>
@@ -239,25 +337,26 @@ export function PersonalizedDashboard() {
         ))}
       </div>
 
-      <div style={{ marginBottom: '32px' }}>
+      <div style={{ marginBottom: '24px' }}>
         <h2 style={{ 
-          fontSize: '18px', 
+          fontSize: '16px', 
           fontWeight: 600, 
           color: '#1F2937',
-          marginBottom: '16px'
+          marginBottom: '12px'
         }}>
           Quick Actions
         </h2>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div className="quick-actions-grid">
           {quickActions.map((action, index) => (
             <button
               key={index}
               onClick={() => router.push(action.path)}
+              className="quick-action-btn"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                padding: '12px 20px',
+                padding: '12px 16px',
                 background: 'white',
                 border: '2px solid #E5E7EB',
                 borderRadius: '10px',
@@ -265,7 +364,9 @@ export function PersonalizedDashboard() {
                 transition: 'all 0.2s',
                 fontSize: '14px',
                 fontWeight: 500,
-                color: '#374151'
+                color: '#374151',
+                width: '100%',
+                textAlign: 'left'
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.borderColor = '#00A389';
@@ -283,27 +384,23 @@ export function PersonalizedDashboard() {
         </div>
       </div>
 
-      <div style={{ marginBottom: '32px' }}>
+      <div style={{ marginBottom: '24px' }}>
         <h2 style={{ 
-          fontSize: '18px', 
+          fontSize: '16px', 
           fontWeight: 600, 
           color: '#1F2937',
-          marginBottom: '16px'
+          marginBottom: '12px'
         }}>
           Your Interests
         </h2>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '20px'
-        }}>
+        <div className="interests-grid">
           {widgets.map((widget) => (
             <div
               key={widget.id}
               style={{
                 background: 'white',
                 borderRadius: '16px',
-                padding: '24px',
+                padding: '16px',
                 border: '1px solid #E5E7EB',
                 transition: 'all 0.2s',
                 cursor: 'pointer'
@@ -318,24 +415,25 @@ export function PersonalizedDashboard() {
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
                 <div style={{
-                  width: '48px',
-                  height: '48px',
+                  width: '44px',
+                  height: '44px',
                   borderRadius: '12px',
                   background: `${widget.interest.color}15`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '24px'
+                  fontSize: '22px',
+                  flexShrink: 0
                 }}>
                   {widget.interest.icon}
                 </div>
-                <div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937', margin: 0 }}>
+                <div style={{ minWidth: 0 }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1F2937', margin: 0 }}>
                     {widget.interest.label}
                   </h3>
-                  <p style={{ fontSize: '13px', color: '#6B7280', margin: 0 }}>
+                  <p style={{ fontSize: '12px', color: '#6B7280', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {widget.interest.description}
                   </p>
                 </div>
@@ -344,14 +442,14 @@ export function PersonalizedDashboard() {
               <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: 'repeat(2, 1fr)', 
-                gap: '12px',
-                marginBottom: '16px'
+                gap: '10px',
+                marginBottom: '14px'
               }}>
                 {widget.stats.map((stat, idx) => (
                   <div key={idx} style={{
                     background: '#F9FAFB',
                     borderRadius: '8px',
-                    padding: '12px'
+                    padding: '10px'
                   }}>
                     <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '4px' }}>
                       {stat.label}
@@ -411,20 +509,20 @@ function SuggestedFeatures({
       background: '#FFFBEB',
       border: '1px solid #FDE68A',
       borderRadius: '16px',
-      padding: '24px'
+      padding: '16px'
     }}>
       <h3 style={{ 
-        fontSize: '16px', 
+        fontSize: '15px', 
         fontWeight: 600, 
         color: '#92400E',
-        marginBottom: '16px',
+        marginBottom: '12px',
         display: 'flex',
         alignItems: 'center',
         gap: '8px'
       }}>
         <span>✨</span> You might also like
       </h3>
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+      <div className="suggestions-grid">
         {suggestions.map(suggestion => (
           <button
             key={suggestion.id}
@@ -433,22 +531,21 @@ function SuggestedFeatures({
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              padding: '16px',
+              padding: '14px',
               background: 'white',
               border: '1px solid #E5E7EB',
               borderRadius: '12px',
               cursor: 'pointer',
-              flex: '1',
-              minWidth: '250px',
+              width: '100%',
               textAlign: 'left'
             }}
           >
-            <span style={{ fontSize: '28px' }}>{suggestion.icon}</span>
-            <div>
+            <span style={{ fontSize: '24px' }}>{suggestion.icon}</span>
+            <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: '14px', fontWeight: 600, color: '#1F2937' }}>
                 {suggestion.label}
               </div>
-              <div style={{ fontSize: '12px', color: '#6B7280' }}>
+              <div style={{ fontSize: '12px', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {suggestion.description}
               </div>
             </div>
