@@ -6516,3 +6516,302 @@ export type SystemAuditLog = typeof systemAuditLogs.$inferSelect;
 export type InsertSystemAuditLog = typeof systemAuditLogs.$inferInsert;
 export type DisclosureAcknowledgment = typeof disclosureAcknowledgments.$inferSelect;
 export type InsertDisclosureAcknowledgment = typeof disclosureAcknowledgments.$inferInsert;
+
+// ============================================
+// Phase 9-14 Extended Upgrade Tables
+// ============================================
+
+// Analytics Alerts System
+export const analyticsAlertStatusEnum = pgEnum('analytics_alert_status', ['pending', 'triggered', 'acknowledged', 'resolved']);
+export const analyticsAlertSeverityEnum = pgEnum('analytics_alert_severity', ['info', 'warning', 'critical']);
+
+export const analyticsAlerts = pgTable("analytics_alerts", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  metric: varchar("metric", { length: 100 }).notNull(),
+  condition: varchar("condition", { length: 50 }).notNull(),
+  threshold: decimal("threshold", { precision: 18, scale: 8 }).notNull(),
+  currentValue: decimal("current_value", { precision: 18, scale: 8 }),
+  status: analyticsAlertStatusEnum("status").default('pending'),
+  severity: analyticsAlertSeverityEnum("severity").default('info'),
+  triggeredAt: timestamp("triggered_at"),
+  acknowledgedAt: timestamp("acknowledged_at"),
+  acknowledgedBy: varchar("acknowledged_by", { length: 42 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  statusIdx: index("alert_status_idx").on(table.status),
+  metricIdx: index("alert_metric_idx").on(table.metric),
+}));
+
+// Quest System
+export const questCategoryEnum = pgEnum('quest_category', ['onboarding', 'participation', 'governance', 'social', 'loyalty', 'special']);
+export const questStatusEnum = pgEnum('quest_status', ['available', 'in_progress', 'completed', 'expired']);
+
+export const quests = pgTable("quests", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  category: questCategoryEnum("category").notNull(),
+  requirements: jsonb("requirements").notNull(),
+  rewards: jsonb("rewards").notNull(),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  maxCompletions: integer("max_completions"),
+  currentCompletions: integer("current_completions").default(0),
+  repeatable: boolean("repeatable").default(false),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  categoryIdx: index("quest_category_idx").on(table.category),
+  activeIdx: index("quest_active_idx").on(table.isActive),
+}));
+
+export const userQuests = pgTable("user_quests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  questId: integer("quest_id").references(() => quests.id).notNull(),
+  status: questStatusEnum("status").default('available'),
+  progress: integer("progress").default(0),
+  requirementProgress: jsonb("requirement_progress"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  rewardsClaimedAt: timestamp("rewards_claimed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("user_quest_user_idx").on(table.userId),
+  questIdx: index("user_quest_quest_idx").on(table.questId),
+  statusIdx: index("user_quest_status_idx").on(table.status),
+}));
+
+export const userXpLevels = pgTable("user_xp_levels", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(),
+  totalXp: integer("total_xp").default(0),
+  level: integer("level").default(1),
+  badges: jsonb("badges"),
+  loginStreak: integer("login_streak").default(0),
+  longestStreak: integer("longest_streak").default(0),
+  lastLoginDate: timestamp("last_login_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("user_xp_user_idx").on(table.userId),
+  levelIdx: index("user_xp_level_idx").on(table.level),
+}));
+
+// Membership Subscriptions
+export const membershipTierEnum = pgEnum('membership_tier', ['free', 'basic', 'premium', 'enterprise']);
+export const subscriptionStatusEnum = pgEnum('subscription_status', ['active', 'canceled', 'past_due', 'trialing', 'expired']);
+
+export const membershipSubscriptions = pgTable("membership_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  tier: membershipTierEnum("tier").notNull(),
+  status: subscriptionStatusEnum("status").default('active'),
+  monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }),
+  currentPeriodStart: timestamp("current_period_start").notNull(),
+  currentPeriodEnd: timestamp("current_period_end").notNull(),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 100 }),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("subscription_user_idx").on(table.userId),
+  statusIdx: index("subscription_status_idx").on(table.status),
+  tierIdx: index("subscription_tier_idx").on(table.tier),
+}));
+
+export const referralCodes = pgTable("referral_codes", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 50 }).notNull().unique(),
+  creatorId: integer("creator_id").references(() => users.id).notNull(),
+  discount: decimal("discount", { precision: 5, scale: 2 }).default('10'),
+  commission: decimal("commission", { precision: 5, scale: 2 }).default('15'),
+  uses: integer("uses").default(0),
+  maxUses: integer("max_uses"),
+  expiresAt: timestamp("expires_at"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  codeIdx: index("referral_code_idx").on(table.code),
+  creatorIdx: index("referral_creator_idx").on(table.creatorId),
+}));
+
+export const referralEarnings = pgTable("referral_earnings", {
+  id: serial("id").primaryKey(),
+  referrerId: integer("referrer_id").references(() => users.id).notNull(),
+  referredId: integer("referred_id").references(() => users.id).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  status: varchar("status", { length: 20 }).default('pending'),
+  paidAt: timestamp("paid_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  referrerIdx: index("earning_referrer_idx").on(table.referrerId),
+  statusIdx: index("earning_status_idx").on(table.status),
+}));
+
+// KYC/Compliance System
+export const kycStatusEnum = pgEnum('kyc_status', ['not_started', 'pending', 'verified', 'rejected', 'expired']);
+export const amlRiskLevelEnum = pgEnum('aml_risk_level', ['low', 'medium', 'high', 'blocked']);
+
+export const kycVerifications = pgTable("kyc_verifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  walletAddress: varchar("wallet_address", { length: 42 }),
+  status: kycStatusEnum("status").default('not_started'),
+  level: integer("level").default(1),
+  documents: jsonb("documents"),
+  amlScore: integer("aml_score").default(0),
+  riskLevel: amlRiskLevelEnum("risk_level").default('low'),
+  notes: text("notes"),
+  submittedAt: timestamp("submitted_at"),
+  verifiedAt: timestamp("verified_at"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("kyc_user_idx").on(table.userId),
+  walletIdx: index("kyc_wallet_idx").on(table.walletAddress),
+  statusIdx: index("kyc_status_idx").on(table.status),
+}));
+
+export const complianceAuditLogs = pgTable("compliance_audit_logs", {
+  id: serial("id").primaryKey(),
+  action: varchar("action", { length: 200 }).notNull(),
+  actor: varchar("actor", { length: 200 }).notNull(),
+  actorType: varchar("actor_type", { length: 50 }).default('user'),
+  resource: varchar("resource", { length: 100 }).notNull(),
+  resourceId: varchar("resource_id", { length: 100 }),
+  details: jsonb("details"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  txHash: varchar("tx_hash", { length: 66 }),
+  severity: varchar("severity", { length: 20 }).default('info'),
+  immutable: boolean("immutable").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  actionIdx: index("audit_action_idx").on(table.action),
+  actorIdx: index("audit_actor_idx").on(table.actor),
+  resourceIdx: index("audit_resource_idx").on(table.resource),
+  timestampIdx: index("audit_timestamp_idx").on(table.createdAt),
+}));
+
+// DePIN & IoT System
+export const iotDeviceTypeEnum = pgEnum('iot_device_type', ['sensor', 'meter', 'camera', 'controller', 'gateway']);
+export const iotDeviceStatusEnum = pgEnum('iot_device_status', ['online', 'offline', 'maintenance']);
+
+export const iotDevices = pgTable("iot_devices", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  deviceType: iotDeviceTypeEnum("device_type").notNull(),
+  landAssetId: varchar("land_asset_id", { length: 100 }),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  address: varchar("address", { length: 300 }),
+  status: iotDeviceStatusEnum("status").default('offline'),
+  lastSeen: timestamp("last_seen"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  statusIdx: index("device_status_idx").on(table.status),
+  landIdx: index("device_land_idx").on(table.landAssetId),
+}));
+
+export const sensorReadings = pgTable("sensor_readings", {
+  id: serial("id").primaryKey(),
+  deviceId: integer("device_id").references(() => iotDevices.id).notNull(),
+  readingType: varchar("reading_type", { length: 100 }).notNull(),
+  value: decimal("value", { precision: 18, scale: 8 }).notNull(),
+  unit: varchar("unit", { length: 50 }),
+  verified: boolean("verified").default(false),
+  txHash: varchar("tx_hash", { length: 66 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  deviceIdx: index("reading_device_idx").on(table.deviceId),
+  typeIdx: index("reading_type_idx").on(table.readingType),
+  timestampIdx: index("reading_timestamp_idx").on(table.createdAt),
+}));
+
+export const assetOracles = pgTable("asset_oracles", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  oracleType: varchar("oracle_type", { length: 50 }).notNull(),
+  source: varchar("source", { length: 200 }).notNull(),
+  value: decimal("value", { precision: 18, scale: 8 }).notNull(),
+  unit: varchar("unit", { length: 50 }),
+  confidence: decimal("confidence", { precision: 5, scale: 2 }),
+  chainlinkAddress: varchar("chainlink_address", { length: 42 }),
+  lastUpdate: timestamp("last_update").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  typeIdx: index("oracle_type_idx").on(table.oracleType),
+  sourceIdx: index("oracle_source_idx").on(table.source),
+}));
+
+export const crossChainSettlements = pgTable("cross_chain_settlements", {
+  id: serial("id").primaryKey(),
+  sourceChain: varchar("source_chain", { length: 100 }).notNull(),
+  destinationChain: varchar("destination_chain", { length: 100 }).notNull(),
+  asset: varchar("asset", { length: 50 }).notNull(),
+  amount: decimal("amount", { precision: 18, scale: 8 }).notNull(),
+  status: varchar("status", { length: 50 }).default('pending'),
+  sourceTxHash: varchar("source_tx_hash", { length: 66 }),
+  destTxHash: varchar("dest_tx_hash", { length: 66 }),
+  fee: decimal("fee", { precision: 18, scale: 8 }),
+  initiatedAt: timestamp("initiated_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+}, (table) => ({
+  statusIdx: index("settlement_status_idx").on(table.status),
+  sourceIdx: index("settlement_source_idx").on(table.sourceChain),
+}));
+
+export const energyCredits = pgTable("energy_credits", {
+  id: serial("id").primaryKey(),
+  landAssetId: varchar("land_asset_id", { length: 100 }).notNull(),
+  creditType: varchar("credit_type", { length: 50 }).notNull(),
+  amount: decimal("amount", { precision: 18, scale: 8 }).notNull(),
+  unit: varchar("unit", { length: 50 }),
+  verified: boolean("verified").default(false),
+  tokenized: boolean("tokenized").default(false),
+  tokenId: varchar("token_id", { length: 100 }),
+  generatedAt: timestamp("generated_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  landIdx: index("credit_land_idx").on(table.landAssetId),
+  typeIdx: index("credit_type_idx").on(table.creditType),
+}));
+
+// Export types for Phase 9-14
+export type AnalyticsAlert = typeof analyticsAlerts.$inferSelect;
+export type InsertAnalyticsAlert = typeof analyticsAlerts.$inferInsert;
+export type Quest = typeof quests.$inferSelect;
+export type InsertQuest = typeof quests.$inferInsert;
+export type UserQuestRecord = typeof userQuests.$inferSelect;
+export type InsertUserQuest = typeof userQuests.$inferInsert;
+export type UserXpLevel = typeof userXpLevels.$inferSelect;
+export type InsertUserXpLevel = typeof userXpLevels.$inferInsert;
+export type MembershipSubscription = typeof membershipSubscriptions.$inferSelect;
+export type InsertMembershipSubscription = typeof membershipSubscriptions.$inferInsert;
+export type ReferralCode = typeof referralCodes.$inferSelect;
+export type InsertReferralCode = typeof referralCodes.$inferInsert;
+export type ReferralEarning = typeof referralEarnings.$inferSelect;
+export type InsertReferralEarning = typeof referralEarnings.$inferInsert;
+export type KycVerification = typeof kycVerifications.$inferSelect;
+export type InsertKycVerification = typeof kycVerifications.$inferInsert;
+export type ComplianceAuditLog = typeof complianceAuditLogs.$inferSelect;
+export type InsertComplianceAuditLog = typeof complianceAuditLogs.$inferInsert;
+export type IotDevice = typeof iotDevices.$inferSelect;
+export type InsertIotDevice = typeof iotDevices.$inferInsert;
+export type SensorReading = typeof sensorReadings.$inferSelect;
+export type InsertSensorReading = typeof sensorReadings.$inferInsert;
+export type AssetOracle = typeof assetOracles.$inferSelect;
+export type InsertAssetOracle = typeof assetOracles.$inferInsert;
+export type CrossChainSettlement = typeof crossChainSettlements.$inferSelect;
+export type InsertCrossChainSettlement = typeof crossChainSettlements.$inferInsert;
+export type EnergyCredit = typeof energyCredits.$inferSelect;
+export type InsertEnergyCredit = typeof energyCredits.$inferInsert;
