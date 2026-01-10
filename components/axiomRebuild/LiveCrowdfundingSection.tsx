@@ -68,7 +68,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
         const statsData = await statsRes.json();
         
         if (candidatesData.success && candidatesData.data) {
-          setCandidates(candidatesData.data.slice(0, 3) || []);
+          setCandidates(candidatesData.data || []);
         }
         if (statsData.success && statsData.data) {
           setStats(statsData.data);
@@ -420,7 +420,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
                 </div>
 
                 <a
-                  href={`/land/${candidate.id}`}
+                  href={`/land?candidate=${candidate.id}`}
                   style={{
                     display: "block",
                     textAlign: "center",
