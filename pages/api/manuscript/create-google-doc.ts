@@ -1,10 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { google } from 'googleapis';
-import { frontMatter, chapter1, chapter2, chapter3 } from '../../../server/content/manuscript-part1';
-import { chapter4, chapter6to8, chapter9to12, chapter13to16, chapter17to20 } from '../../../server/content/manuscript-part2';
-import { backMatter, communityStories, worksheets } from '../../../server/content/manuscript-part3';
-import { chapter10, chapter14, chapter15and16, chapter18to20 } from '../../../server/content/manuscript-expanded';
-import { chapter5Detailed, additionalStories, additionalWorksheets } from '../../../server/content/manuscript-extra';
+import { compileGoldStandardManuscript, getManuscriptStats } from '../../../server/content/manuscript-rewrite/index';
 
 let connectionSettings: any;
 
@@ -42,30 +38,6 @@ async function getAccessToken() {
   return accessToken;
 }
 
-function compileManuscript(): string {
-  return [
-    frontMatter,
-    chapter1,
-    chapter2,
-    chapter3,
-    chapter4,
-    chapter5Detailed,
-    chapter6to8,
-    chapter9to12,
-    chapter10,
-    chapter13to16,
-    chapter14,
-    chapter15and16,
-    chapter17to20,
-    chapter18to20,
-    communityStories,
-    additionalStories,
-    worksheets,
-    additionalWorksheets,
-    backMatter
-  ].join('\n\n');
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -81,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const createResponse = await docs.documents.create({
       requestBody: {
-        title: 'The Axiom Wealth Generation Manual - Gold Standard Edition'
+        title: 'The Axiom Wealth Generation Manual - Gold Standard Edition (2026)'
       }
     });
 
@@ -91,7 +63,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error('Failed to create document');
     }
 
-    const manuscript = compileManuscript();
+    const manuscript = compileGoldStandardManuscript();
+    const stats = getManuscriptStats();
     
     await docs.documents.batchUpdate({
       documentId,
@@ -113,11 +86,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true,
       documentId,
       documentUrl,
-      message: 'Manuscript created successfully in Google Docs',
+      message: 'Gold Standard Manuscript created successfully in Google Docs',
       stats: {
-        wordCount: manuscript.split(/\s+/).length,
-        characterCount: manuscript.length,
-        estimatedPages: Math.ceil(manuscript.split(/\s+/).length / 250)
+        wordCount: stats.wordCount,
+        characterCount: stats.characterCount,
+        pageEstimate: stats.pageEstimate,
+        targetMet: stats.pageEstimate >= 280
+      },
+      content: {
+        parts: 7,
+        chapters: 22,
+        voiceStyle: 'Rev. Ike + Napoleon Hill + Powernomics',
+        features: [
+          'Workbook exercises per chapter',
+          'Step-by-step guides',
+          'QR codes to platform',
+          '21-Day Activation Program'
+        ]
       }
     });
   } catch (error: any) {
