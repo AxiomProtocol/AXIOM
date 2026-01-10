@@ -84,12 +84,12 @@ export function EnhancedOnboarding({ onComplete, onDismiss }: EnhancedOnboarding
       localStorage.setItem('axiom_onboarding_complete', 'true');
       localStorage.setItem('axiom_user_interests', JSON.stringify(formData.selectedInterests));
       localStorage.setItem('axiom_user_name', formData.name);
+      localStorage.setItem('axiom_experience_level', formData.experienceLevel);
+      localStorage.setItem('axiom_user_goals', JSON.stringify(formData.selectedGoals));
       onComplete();
       
       if (navigateToRecommendation) {
-        const recommended = getRecommendedPaths();
-        const firstPath = recommended.length > 0 ? recommended[0].path : '/land';
-        router.push(firstPath);
+        router.push('/dashboard');
       }
     } catch (err) {
       console.error('Failed to save onboarding:', err);

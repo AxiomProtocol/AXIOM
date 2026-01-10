@@ -1,6 +1,7 @@
 import '../styles/globals.css'
 import '../styles/web3-theme.css'
 import '../styles/flash-web3.css'
+import '../styles/mobile.css'
 import { useEffect, useState, createContext, useContext } from 'react'
 import { useRouter } from 'next/router'
 import { WalletProvider } from '../components/WalletConnect/WalletContext'
@@ -9,6 +10,8 @@ import { RebuildNav, RebuildFooter } from '../components/axiomRebuild'
 import { ThemeProvider } from '../lib/theme'
 import { EnhancedOnboarding } from '../components/EnhancedOnboarding'
 import { SettingsButton } from '../components/SettingsMenu'
+import { PersonalizedNavigation } from '../components/PersonalizedNavigation'
+import { MobileBottomNav } from '../components/MobileDashboard'
 
 const OnboardingContext = createContext({ triggerOnboarding: () => {} })
 export const useOnboarding = () => useContext(OnboardingContext)
@@ -89,6 +92,8 @@ export default function App({ Component, pageProps }) {
             <Component {...pageProps} />
             {showRebuildNav && <RebuildFooter />}
             <SettingsButton />
+            <PersonalizedNavigation />
+            <MobileBottomNav />
             {showOnboarding && (
               <EnhancedOnboarding
                 onComplete={handleOnboardingComplete}
