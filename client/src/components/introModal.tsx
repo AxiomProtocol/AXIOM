@@ -13,22 +13,22 @@ const IntroModal: React.FC<IntroModalProps> = ({ isOpen, onClose }) => {
   // Define the steps in the introduction flow
   const steps = [
     {
-      title: "Welcome to AXIOM Smart City",
-      description: "America's first on-chain sovereign smart city economy. We'll guide you through 5 simple steps to participate in the future of digital-physical infrastructure.",
+      title: "Welcome to AXIOM Sovereign Economy",
+      description: "America's first on-chain sovereign economy. We'll guide you through 5 simple steps to participate in the future of digital-physical infrastructure.",
       icon: <div className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
         <img src="/axiom-logo.png" alt="AXIOM" className="w-12 h-12 rounded-full" />
       </div>
     },
     {
       title: "Step 1: Connect Your Wallet",
-      description: "Connect your wallet to access AXIOM Smart City on Arbitrum One and manage your AXM tokens securely.",
+      description: "Connect your wallet to access AXIOM Protocol on Arbitrum One and manage your AXM tokens securely.",
       icon: <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
         <Wallet className="w-8 h-8 text-blue-600" />
       </div>
     },
     {
       title: "Step 2: Stake Your AXM Tokens",
-      description: "Stake your AXM tokens in the AxiomStakingAndEmissionsHub to earn rewards while supporting the smart city ecosystem.",
+      description: "Stake your AXM tokens in the AxiomStakingAndEmissionsHub to earn rewards while supporting the sovereign economy ecosystem.",
       icon: <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
         <Coins className="w-8 h-8 text-green-600" />
       </div>
@@ -49,7 +49,7 @@ const IntroModal: React.FC<IntroModalProps> = ({ isOpen, onClose }) => {
     },
     {
       title: "Step 5: Participate in Governance",
-      description: "Vote on proposals and help shape the future of America's first on-chain sovereign smart city.",
+      description: "Vote on proposals and help shape the future of America's first on-chain sovereign economy.",
       icon: <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
         <Vote className="w-8 h-8 text-indigo-600" />
       </div>
