@@ -53,13 +53,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         
         if (numericUserId) {
           const dbUserQuests = await userQuestService.getByUserId(numericUserId);
-          userQuests = dbUserQuests.map(uq => ({
-            questId: uq.questId.toString(),
+          userQuests = dbUserQuests.map((uq: any) => ({
+            questId: (uq.quest_id || uq.questId).toString(),
             status: uq.status,
             progress: uq.progress,
-            startedAt: uq.startedAt?.toISOString() || new Date().toISOString(),
-            completedAt: uq.completedAt?.toISOString(),
-            requirementProgress: uq.requirementProgress
+            startedAt: (uq.started_at || uq.startedAt)?.toISOString?.() || new Date().toISOString(),
+            completedAt: (uq.completed_at || uq.completedAt)?.toISOString?.(),
+            requirementProgress: uq.requirement_progress || uq.requirementProgress || {}
           }));
         }
       }
@@ -144,14 +144,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           success: true
         });
 
+        const uq: any = userQuest;
         return res.status(200).json({
           success: true,
           userQuest: {
-            questId: userQuest.questId.toString(),
-            status: userQuest.status,
-            progress: userQuest.progress,
-            startedAt: userQuest.startedAt?.toISOString() || new Date().toISOString(),
-            requirementProgress: userQuest.requirementProgress
+            questId: (uq.quest_id || uq.questId).toString(),
+            status: uq.status,
+            progress: uq.progress,
+            startedAt: (uq.started_at || uq.startedAt)?.toISOString?.() || new Date().toISOString(),
+            requirementProgress: uq.requirement_progress || uq.requirementProgress || {}
           }
         });
       } catch (error) {
