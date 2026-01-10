@@ -71,7 +71,7 @@ export const SITE_NAV: NavItem[] = [
     label: "Tools",
     children: [
       { label: "Treasury", href: "/bank" },
-      { label: "SUSU Savings", href: "/susu-start" },
+      { label: "The Wealth Practice", href: "/wealth-practice" },
       { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "Land Acquisition", href: "/land-acquisition" },
       { label: "Land Pipeline", href: "/admin/land-pipeline", visibility: 'admin' },
@@ -116,7 +116,7 @@ export const FOOTER_SECTIONS: FooterSection[] = [
     title: "Tools",
     links: [
       { label: "Treasury", href: "/bank" },
-      { label: "SUSU Savings", href: "/susu-start" },
+      { label: "The Wealth Practice", href: "/wealth-practice" },
       { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "Land Acquisition", href: "/land-acquisition" },
       { label: "Land Pipeline", href: "/admin/land-pipeline" },

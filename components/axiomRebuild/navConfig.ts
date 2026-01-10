@@ -71,7 +71,7 @@ export const navItems: NavItem[] = [
     label: "Tools",
     children: [
       { label: "Treasury", href: "/bank" },
-      { label: "SUSU Savings", href: "/susu-start" },
+      { label: "The Wealth Practice", href: "/wealth-practice" },
       { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "Land Acquisition", href: "/land-acquisition" },
       { label: "Land Reclamation Workbook", href: "/workbook" },
