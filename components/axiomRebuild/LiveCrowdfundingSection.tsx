@@ -355,7 +355,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
                 </div>
 
                 <a
-                  href={`/land-acquisition?campaign=${campaign.id}`}
+                  href={`/land?campaign=${campaign.id}`}
                   style={{
                     display: "block",
                     textAlign: "center",
@@ -386,7 +386,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
 
         <div style={{ textAlign: "center", marginTop: 48 }}>
           <a
-            href="/land-acquisition"
+            href="/land"
             style={{
               display: "inline-flex",
               alignItems: "center",
