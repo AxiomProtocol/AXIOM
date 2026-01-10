@@ -68,47 +68,88 @@ export function RoleCards({ page = 'home' }: RoleCardsProps) {
   };
   
   return (
-    <div ref={containerRef} style={{ padding: "60px 20px" }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <h3
-          style={{
-            textAlign: "center",
-            fontSize: 28,
-            fontWeight: 700,
-            color: "#1a1a2e",
-            marginBottom: 12
-          }}
-        >
-          How People Participate in KeyGrow
-        </h3>
-        <p
-          style={{
-            textAlign: "center",
-            fontSize: 16,
-            color: "rgba(26,26,46,0.7)",
-            maxWidth: 600,
-            margin: "0 auto 40px"
-          }}
-        >
-          KeyGrow is built on defined roles, not vague membership. Choose your participation path.
-        </p>
-        
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: 20,
-            marginBottom: 40
-          }}
-        >
+    <>
+      <style jsx>{`
+        .role-cards-section {
+          padding: 32px 16px;
+        }
+        @media (min-width: 768px) {
+          .role-cards-section {
+            padding: 60px 20px;
+          }
+        }
+        .role-cards-title {
+          font-size: 22px;
+        }
+        @media (min-width: 768px) {
+          .role-cards-title {
+            font-size: 28px;
+          }
+        }
+        .role-cards-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+        @media (min-width: 768px) {
+          .role-cards-grid {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+          }
+        }
+        .role-card {
+          padding: 16px;
+        }
+        @media (min-width: 768px) {
+          .role-card {
+            padding: 24px;
+          }
+        }
+        .role-cta-container {
+          flex-direction: column;
+          gap: 12px;
+        }
+        @media (min-width: 768px) {
+          .role-cta-container {
+            flex-direction: row;
+            gap: 16px;
+          }
+        }
+      `}</style>
+      <div ref={containerRef} className="role-cards-section">
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <h3
+            className="role-cards-title"
+            style={{
+              textAlign: "center",
+              fontWeight: 700,
+              color: "#1a1a2e",
+              marginBottom: 12
+            }}
+          >
+            How People Participate in KeyGrow
+          </h3>
+          <p
+            style={{
+              textAlign: "center",
+              fontSize: 14,
+              color: "rgba(26,26,46,0.7)",
+              maxWidth: 600,
+              margin: "0 auto 24px"
+            }}
+          >
+            KeyGrow is built on defined roles, not vague membership. Choose your participation path.
+          </p>
+          
+          <div className="role-cards-grid" style={{ marginBottom: 24 }}>
           {roles.map((role, idx) => (
             <div
               key={idx}
+              className="role-card"
               style={{
                 background: role.color,
                 backdropFilter: "blur(10px)",
                 borderRadius: web3Theme.radii.lg,
-                padding: 24,
                 border: "1px solid rgba(0,212,170,0.15)",
                 boxShadow: web3Theme.shadows.card,
                 transition: "all 0.3s ease",
@@ -123,61 +164,66 @@ export function RoleCards({ page = 'home' }: RoleCardsProps) {
                 e.currentTarget.style.boxShadow = web3Theme.shadows.card;
               }}
             >
-              <div style={{ fontSize: 40, marginBottom: 12 }}>{role.icon}</div>
-              <h4 style={{ fontSize: 18, fontWeight: 600, color: "#1a1a2e", marginBottom: 8 }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>{role.icon}</div>
+              <h4 style={{ fontSize: 15, fontWeight: 600, color: "#1a1a2e", marginBottom: 6 }}>
                 {role.name}
               </h4>
-              <p style={{ fontSize: 14, color: "rgba(26,26,46,0.7)", lineHeight: 1.5 }}>
+              <p style={{ fontSize: 12, color: "rgba(26,26,46,0.7)", lineHeight: 1.4 }}>
                 {role.description}
               </p>
             </div>
           ))}
         </div>
         
-        <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
-          <Link
-            href="/keygrow?section=paths"
-            onClick={() => handleCtaClick("Choose Your Participation Path", "/keygrow?section=paths")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "14px 28px",
-              background: web3Theme.colors.primary,
-              color: "#fff",
-              borderRadius: web3Theme.radii.lg,
-              fontWeight: 600,
-              fontSize: 15,
-              textDecoration: "none",
-              boxShadow: web3Theme.shadows.card,
-              transition: "all 0.2s ease"
-            }}
-          >
-            🛤️ Choose Your Participation Path
-          </Link>
-          <Link
-            href="/keygrow?section=projects"
-            onClick={() => handleCtaClick("See Land Projects", "/keygrow?section=projects")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "14px 28px",
-              background: "rgba(255,255,255,0.9)",
-              color: "#1a1a2e",
-              border: `1px solid ${web3Theme.colors.primary}`,
-              borderRadius: web3Theme.radii.lg,
-              fontWeight: 600,
-              fontSize: 15,
-              textDecoration: "none",
-              boxShadow: web3Theme.shadows.card,
-              transition: "all 0.2s ease"
-            }}
-          >
-            🌾 See Land Projects
-          </Link>
+          <div className="role-cta-container" style={{ display: "flex", justifyContent: "center", flexWrap: "wrap" }}>
+            <Link
+              href="/keygrow?section=paths"
+              onClick={() => handleCtaClick("Choose Your Participation Path", "/keygrow?section=paths")}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                padding: "12px 20px",
+                background: web3Theme.colors.primary,
+                color: "#fff",
+                borderRadius: web3Theme.radii.lg,
+                fontWeight: 600,
+                fontSize: 14,
+                textDecoration: "none",
+                boxShadow: web3Theme.shadows.card,
+                transition: "all 0.2s ease",
+                width: "100%"
+              }}
+            >
+              🛤️ Choose Your Path
+            </Link>
+            <Link
+              href="/keygrow?section=projects"
+              onClick={() => handleCtaClick("See Land Projects", "/keygrow?section=projects")}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                padding: "12px 20px",
+                background: "rgba(255,255,255,0.9)",
+                color: "#1a1a2e",
+                border: `1px solid ${web3Theme.colors.primary}`,
+                borderRadius: web3Theme.radii.lg,
+                fontWeight: 600,
+                fontSize: 14,
+                textDecoration: "none",
+                boxShadow: web3Theme.shadows.card,
+                transition: "all 0.2s ease",
+                width: "100%"
+              }}
+            >
+              🌾 See Land Projects
+            </Link>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -78,15 +78,49 @@ export function MetricsRow({ page = 'home' }: MetricsRowProps) {
       <style jsx>{`
         .metrics-grid {
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 24px;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
           max-width: 1000px;
           margin: 0 auto;
-          padding: 40px 20px;
+          padding: 24px 16px;
         }
-        @media (max-width: 768px) {
+        @media (min-width: 768px) {
           .metrics-grid {
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            padding: 40px 20px;
+          }
+        }
+        .metric-card {
+          padding: 16px;
+        }
+        @media (min-width: 768px) {
+          .metric-card {
+            padding: 24px;
+          }
+        }
+        .metric-icon {
+          font-size: 24px;
+        }
+        @media (min-width: 768px) {
+          .metric-icon {
+            font-size: 32px;
+          }
+        }
+        .metric-value {
+          font-size: 22px;
+        }
+        @media (min-width: 768px) {
+          .metric-value {
+            font-size: 28px;
+          }
+        }
+        .metric-label {
+          font-size: 12px;
+        }
+        @media (min-width: 768px) {
+          .metric-label {
+            font-size: 14px;
           }
         }
       `}</style>
@@ -94,13 +128,13 @@ export function MetricsRow({ page = 'home' }: MetricsRowProps) {
         {allMetrics.map((metric, idx) => (
           <div
             key={idx}
+            className="metric-card"
             style={{
               background: metric.highlight 
                 ? "linear-gradient(135deg, rgba(0,212,170,0.08) 0%, rgba(123,104,238,0.08) 100%)"
                 : "rgba(255, 255, 255, 0.85)",
               backdropFilter: "blur(20px)",
               borderRadius: web3Theme.radii.lg,
-              padding: 24,
               textAlign: "center",
               boxShadow: web3Theme.shadows.card,
               border: metric.highlight 
@@ -133,10 +167,10 @@ export function MetricsRow({ page = 'home' }: MetricsRowProps) {
                 }}
               />
             )}
-            <div style={{ fontSize: 32, marginBottom: 8 }}>{metric.icon}</div>
+            <div className="metric-icon" style={{ marginBottom: 6 }}>{metric.icon}</div>
             <div
+              className="metric-value"
               style={{
-                fontSize: 28,
                 fontWeight: 700,
                 background: metric.highlight 
                   ? "linear-gradient(135deg, #00D4AA 0%, #00b894 100%)"
@@ -148,7 +182,7 @@ export function MetricsRow({ page = 'home' }: MetricsRowProps) {
             >
               {metric.value}
             </div>
-            <div style={{ fontSize: 14, color: "rgba(26, 26, 46, 0.7)" }}>{metric.label}</div>
+            <div className="metric-label" style={{ color: "rgba(26, 26, 46, 0.7)" }}>{metric.label}</div>
           </div>
         ))}
       </div>

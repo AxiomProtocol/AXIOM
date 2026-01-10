@@ -101,51 +101,101 @@ export function ProofStrip({ page = 'home' }: ProofStripProps) {
   );
   
   return (
-    <div ref={containerRef} style={{ padding: "60px 20px", background: "rgba(0,212,170,0.03)" }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <h3
-            style={{
-              fontSize: 28,
-              fontWeight: 700,
-              color: "#1a1a2e",
-              marginBottom: 12
-            }}
-          >
-            Foundational Land Project Proof
-          </h3>
-          <p style={{ fontSize: 16, color: "rgba(26,26,46,0.7)", maxWidth: 600, margin: "0 auto 8px" }}>
-            Real community coordination, real land acquisition, real development progress. This proof informs the KeyGrow model.
-          </p>
-          <p style={{ fontSize: 13, color: "rgba(26,26,46,0.5)", fontStyle: "italic" }}>
-            Proof of execution, not a promise of results.
-          </p>
-        </div>
-        
-        <div style={{ position: "relative" }}>
-          <button
-            onClick={() => scroll('prev')}
-            disabled={currentIndex === 0}
-            style={{
-              position: "absolute",
-              left: -20,
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: 44,
-              height: 44,
-              borderRadius: "50%",
-              background: currentIndex === 0 ? "rgba(26,26,46,0.1)" : web3Theme.colors.primary,
-              border: "none",
-              color: currentIndex === 0 ? "rgba(26,26,46,0.3)" : "#fff",
-              fontSize: 20,
-              cursor: currentIndex === 0 ? "not-allowed" : "pointer",
-              zIndex: 10,
-              boxShadow: web3Theme.shadows.card,
-              transition: "all 0.2s ease"
-            }}
-          >
-            ←
-          </button>
+    <>
+      <style jsx>{`
+        .proof-section {
+          padding: 32px 16px;
+        }
+        @media (min-width: 768px) {
+          .proof-section {
+            padding: 60px 20px;
+          }
+        }
+        .proof-title {
+          font-size: 22px;
+        }
+        @media (min-width: 768px) {
+          .proof-title {
+            font-size: 28px;
+          }
+        }
+        .proof-nav-btn {
+          display: none;
+        }
+        @media (min-width: 768px) {
+          .proof-nav-btn {
+            display: flex;
+          }
+        }
+        .proof-cta-container {
+          flex-direction: column;
+          gap: 12px;
+        }
+        @media (min-width: 768px) {
+          .proof-cta-container {
+            flex-direction: row;
+            gap: 16px;
+          }
+        }
+        .proof-tile {
+          min-width: 200px;
+          height: 140px;
+        }
+        @media (min-width: 768px) {
+          .proof-tile {
+            min-width: 260px;
+            height: 180px;
+          }
+        }
+      `}</style>
+      <div ref={containerRef} className="proof-section" style={{ background: "rgba(0,212,170,0.03)" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <h3
+              className="proof-title"
+              style={{
+                fontWeight: 700,
+                color: "#1a1a2e",
+                marginBottom: 10
+              }}
+            >
+              Foundational Land Project Proof
+            </h3>
+            <p style={{ fontSize: 14, color: "rgba(26,26,46,0.7)", maxWidth: 600, margin: "0 auto 6px" }}>
+              Real community coordination, real land acquisition, real development progress.
+            </p>
+            <p style={{ fontSize: 12, color: "rgba(26,26,46,0.5)", fontStyle: "italic" }}>
+              Proof of execution, not a promise of results.
+            </p>
+          </div>
+          
+          <div style={{ position: "relative" }}>
+            <button
+              onClick={() => scroll('prev')}
+              disabled={currentIndex === 0}
+              className="proof-nav-btn"
+              style={{
+                position: "absolute",
+                left: -20,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                background: currentIndex === 0 ? "rgba(26,26,46,0.1)" : web3Theme.colors.primary,
+                border: "none",
+                color: currentIndex === 0 ? "rgba(26,26,46,0.3)" : "#fff",
+                fontSize: 20,
+                cursor: currentIndex === 0 ? "not-allowed" : "pointer",
+                zIndex: 10,
+                boxShadow: web3Theme.shadows.card,
+                transition: "all 0.2s ease",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              ←
+            </button>
           
           <div
             ref={scrollRef}
@@ -164,16 +214,16 @@ export function ProofStrip({ page = 'home' }: ProofStripProps) {
               <div
                 key={idx}
                 onClick={() => handleTileClick(idx)}
+                className="proof-tile"
                 style={{
-                  minWidth: 260,
-                  height: 180,
                   borderRadius: web3Theme.radii.lg,
                   overflow: "hidden",
                   boxShadow: web3Theme.shadows.card,
                   scrollSnapAlign: "start",
                   cursor: "pointer",
                   transition: "transform 0.2s ease",
-                  background: "#fff"
+                  background: "#fff",
+                  flexShrink: 0
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "scale(1.02)";
@@ -211,6 +261,7 @@ export function ProofStrip({ page = 'home' }: ProofStripProps) {
           <button
             onClick={() => scroll('next')}
             disabled={currentIndex >= proofTiles.length - 1}
+            className="proof-nav-btn"
             style={{
               position: "absolute",
               right: -20,
@@ -226,33 +277,37 @@ export function ProofStrip({ page = 'home' }: ProofStripProps) {
               cursor: currentIndex >= proofTiles.length - 1 ? "not-allowed" : "pointer",
               zIndex: 10,
               boxShadow: web3Theme.shadows.card,
-              transition: "all 0.2s ease"
+              transition: "all 0.2s ease",
+              alignItems: "center",
+              justifyContent: "center"
             }}
           >
             →
           </button>
         </div>
         
-        <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 32 }}>
+        <div className="proof-cta-container" style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
           <Link
             href="/origin"
             onClick={() => handleCtaClick("See Our Origin Story", "/origin")}
             style={{
               display: "inline-flex",
               alignItems: "center",
+              justifyContent: "center",
               gap: 8,
-              padding: "12px 24px",
+              padding: "12px 20px",
               background: web3Theme.colors.primary,
               color: "#fff",
               borderRadius: web3Theme.radii.lg,
               fontWeight: 600,
-              fontSize: 15,
+              fontSize: 14,
               textDecoration: "none",
               boxShadow: web3Theme.shadows.card,
-              transition: "all 0.2s ease"
+              transition: "all 0.2s ease",
+              width: "100%"
             }}
           >
-            🏛️ See Our Origin Story
+            🏛️ Origin Story
           </Link>
           <Link
             href="/keygrow"
@@ -260,17 +315,19 @@ export function ProofStrip({ page = 'home' }: ProofStripProps) {
             style={{
               display: "inline-flex",
               alignItems: "center",
+              justifyContent: "center",
               gap: 8,
-              padding: "12px 24px",
+              padding: "12px 20px",
               background: "rgba(255,255,255,0.9)",
               color: "#1a1a2e",
               border: `1px solid ${web3Theme.colors.primary}`,
               borderRadius: web3Theme.radii.lg,
               fontWeight: 600,
-              fontSize: 15,
+              fontSize: 14,
               textDecoration: "none",
               boxShadow: web3Theme.shadows.card,
-              transition: "all 0.2s ease"
+              transition: "all 0.2s ease",
+              width: "100%"
             }}
           >
             🌱 Explore KeyGrow
@@ -278,5 +335,6 @@ export function ProofStrip({ page = 'home' }: ProofStripProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }

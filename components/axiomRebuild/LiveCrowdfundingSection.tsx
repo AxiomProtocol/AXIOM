@@ -138,114 +138,151 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
   }
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        padding: "80px 20px",
-        background: "linear-gradient(180deg, #ffffff 0%, rgba(0,212,170,0.05) 100%)"
-      }}
-    >
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              background: "rgba(0,212,170,0.1)",
-              padding: "8px 16px",
-              borderRadius: 20,
-              marginBottom: 16
-            }}
-          >
-            <span style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: "#00d4aa",
-              animation: "pulse 2s infinite"
-            }} />
-            <span style={{ fontSize: 14, fontWeight: 600, color: "#00d4aa" }}>
-              STEWARDSHIP PIPELINE
-            </span>
+    <>
+      <style jsx>{`
+        .crowdfund-section {
+          padding: 40px 16px;
+        }
+        @media (min-width: 768px) {
+          .crowdfund-section {
+            padding: 80px 20px;
+          }
+        }
+        .crowdfund-title {
+          font-size: 26px;
+        }
+        @media (min-width: 768px) {
+          .crowdfund-title {
+            font-size: 36px;
+          }
+        }
+        .crowdfund-subtitle {
+          font-size: 15px;
+        }
+        @media (min-width: 768px) {
+          .crowdfund-subtitle {
+            font-size: 18px;
+          }
+        }
+        .crowdfund-stats {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 16px;
+          max-width: 700px;
+          margin: 0 auto 32px;
+        }
+        @media (min-width: 768px) {
+          .crowdfund-stats {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin: 0 auto 48px;
+          }
+        }
+        .crowdfund-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 24px;
+        }
+        @media (min-width: 768px) {
+          .crowdfund-grid {
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 32px;
+          }
+        }
+      `}</style>
+      <div
+        ref={containerRef}
+        className="crowdfund-section"
+        style={{
+          background: "linear-gradient(180deg, #ffffff 0%, rgba(0,212,170,0.05) 100%)"
+        }}
+      >
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(0,212,170,0.1)",
+                padding: "6px 14px",
+                borderRadius: 20,
+                marginBottom: 12
+              }}
+            >
+              <span style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "#00d4aa",
+                animation: "pulse 2s infinite"
+              }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#00d4aa" }}>
+                STEWARDSHIP PIPELINE
+              </span>
+            </div>
+            <h2
+              className="crowdfund-title"
+              style={{
+                fontWeight: 700,
+                color: "#1a1a2e",
+                marginBottom: 12,
+                lineHeight: 1.2
+              }}
+            >
+              Active Land Candidates
+            </h2>
+            <p
+              className="crowdfund-subtitle"
+              style={{
+                color: "rgba(26,26,46,0.7)",
+                maxWidth: 600,
+                margin: "0 auto",
+                lineHeight: 1.5
+              }}
+            >
+              Properties under review for potential community stewardship
+            </p>
           </div>
-          <h2
-            style={{
-              fontSize: 36,
-              fontWeight: 700,
-              color: "#1a1a2e",
-              marginBottom: 16,
-              lineHeight: 1.2
-            }}
-          >
-            Active Land Candidates
-          </h2>
-          <p
-            style={{
-              fontSize: 18,
-              color: "rgba(26,26,46,0.7)",
-              maxWidth: 600,
-              margin: "0 auto",
-              lineHeight: 1.6
-            }}
-          >
-            Properties under review for potential community stewardship through structured participation
-          </p>
-        </div>
 
-        {stats && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 24,
-              marginBottom: 48,
-              maxWidth: 700,
-              margin: "0 auto 48px"
-            }}
-          >
+          {stats && (
+          <div className="crowdfund-stats">
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 32, fontWeight: 700, color: "#00d4aa" }}>
+              <div style={{ fontSize: 26, fontWeight: 700, color: "#00d4aa" }}>
                 {stats.totalCandidates}
               </div>
-              <div style={{ fontSize: 14, color: "rgba(26,26,46,0.6)" }}>
+              <div style={{ fontSize: 12, color: "rgba(26,26,46,0.6)" }}>
                 Total Candidates
               </div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 32, fontWeight: 700, color: "#7b68ee" }}>
+              <div style={{ fontSize: 26, fontWeight: 700, color: "#7b68ee" }}>
                 {stats.totalAcreage}
               </div>
-              <div style={{ fontSize: 14, color: "rgba(26,26,46,0.6)" }}>
+              <div style={{ fontSize: 12, color: "rgba(26,26,46,0.6)" }}>
                 Total Acres
               </div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 32, fontWeight: 700, color: "#f59e0b" }}>
+              <div style={{ fontSize: 26, fontWeight: 700, color: "#f59e0b" }}>
                 {stats.underReview}
               </div>
-              <div style={{ fontSize: 14, color: "rgba(26,26,46,0.6)" }}>
+              <div style={{ fontSize: 12, color: "rgba(26,26,46,0.6)" }}>
                 Under Review
               </div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 32, fontWeight: 700, color: "#22c55e" }}>
+              <div style={{ fontSize: 26, fontWeight: 700, color: "#22c55e" }}>
                 {stats.acquired}
               </div>
-              <div style={{ fontSize: 14, color: "rgba(26,26,46,0.6)" }}>
+              <div style={{ fontSize: 12, color: "rgba(26,26,46,0.6)" }}>
                 Acquired
               </div>
             </div>
           </div>
         )}
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            gap: 32
-          }}
-        >
+        <div className="crowdfund-grid">
           {candidates.map((candidate) => (
             <div
               key={candidate.id}
@@ -488,5 +525,6 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
         }
       `}</style>
     </div>
+    </>
   );
 }
