@@ -15,7 +15,7 @@ const PERSONAL_PRODUCTS = [
   },
   {
     id: 'savings-circle',
-    name: 'SUSU Savings Circle',
+    name: 'The Wealth Practice Circle',
     description: 'Join a community rotating savings group. Pool funds with other members and take turns receiving payouts. Fully transparent on-chain.',
     minimumBalance: 'Varies by circle',
     fees: 'Protocol fee: 0.5%',

@@ -48,7 +48,7 @@ export default function WealthAdvancement({ wallet }) {
       name: 'Community Mode', 
       icon: '🤝', 
       color: 'green',
-      description: 'Traditional SUSU savings circles',
+      description: 'Community savings circles',
       threshold: 'Up to $1,000/contribution',
       features: ['Peer savings groups', 'Rotating payouts', 'Trust building']
     },
@@ -234,11 +234,11 @@ export default function WealthAdvancement({ wallet }) {
           <div className="text-4xl mb-4">🌱</div>
           <h3 className="text-xl font-bold text-white mb-2">Start Your Wealth Practice Journey</h3>
           <p className="text-gray-400 mb-6 max-w-md mx-auto">
-            Join or create a SUSU savings circle to begin building wealth with your community. 
+            Join or create a Wealth Practice circle to begin building wealth with your community. 
             Graduate to Capital Mode to access larger investment opportunities.
           </p>
-          <Link href="/susu" className="inline-block px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold rounded-lg hover:from-yellow-400 hover:to-amber-500 transition-all">
-            Explore SUSU Circles
+          <Link href="/wealth-practice" className="inline-block px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold rounded-lg hover:from-yellow-400 hover:to-amber-500 transition-all">
+            Explore The Wealth Practice
           </Link>
         </div>
       )}

@@ -4,7 +4,7 @@ import Layout from '../../components/Layout';
 
 const PROTOCOL_RATES = [
   { product: 'Self-Custody Wallet', rate: 'N/A', minimum: 'None', type: 'wallet', note: 'Full self-custody' },
-  { product: 'SUSU Savings Circle', rate: 'Variable', minimum: 'Varies by circle', type: 'savings', note: 'Community-based returns' },
+  { product: 'The Wealth Practice Circle', rate: 'Variable', minimum: 'Varies by circle', type: 'savings', note: 'Community-based returns' },
   { product: 'Yield Vault', rate: 'Variable', minimum: '100 AXM', type: 'vault', note: 'Based on protocol activity' },
   { product: 'Wealth Engine (1yr lock)', rate: 'Variable', minimum: '100 AXM', type: 'staking', note: '1x voting power' },
   { product: 'Wealth Engine (4yr lock)', rate: 'Variable', minimum: '100 AXM', type: 'staking', note: '4x voting power' },
@@ -20,7 +20,7 @@ const COLLATERAL_RATES = [
 
 const FEES = [
   { service: 'Self-Custody Transfer', standard: 'Gas only', premium: 'Gas only', business: 'Gas only' },
-  { service: 'SUSU Circle Fee', standard: '0.5%', premium: '0.5%', business: '0.5%' },
+  { service: 'Wealth Practice Fee', standard: '0.5%', premium: '0.5%', business: '0.5%' },
   { service: 'Vault Deposit', standard: 'Free', premium: 'Free', business: 'Free' },
   { service: 'Vault Withdrawal', standard: 'Free', premium: 'Free', business: 'Free' },
   { service: 'DEX Swap', standard: '0.3%', premium: '0.3%', business: '0.3%' },

@@ -223,7 +223,7 @@ export default function PMAInfo() {
                   </div>
                   <div className="bg-amber-50 rounded-xl p-6 text-center">
                     <div className="text-4xl mb-3">💰</div>
-                    <h4 className="font-bold text-gray-900 mb-2">SUSU Savings</h4>
+                    <h4 className="font-bold text-gray-900 mb-2">The Wealth Practice</h4>
                     <p className="text-gray-600 text-sm">Community-based rotating savings pools with on-chain transparency.</p>
                   </div>
                   <div className="bg-amber-50 rounded-xl p-6 text-center">

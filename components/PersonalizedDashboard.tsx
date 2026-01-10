@@ -280,7 +280,7 @@ export function PersonalizedDashboard() {
                 {preferences.interests.includes('land') 
                   ? 'Check out the Land Stewardship page to see active community campaigns and contribute to land acquisition.'
                   : preferences.interests.includes('susu')
-                  ? 'Join a SUSU savings circle to start building wealth together with your community.'
+                  ? 'Join The Wealth Practice to start building wealth together with your community.'
                   : 'Explore the features you selected during onboarding to get started with your journey.'}
               </p>
             </div>

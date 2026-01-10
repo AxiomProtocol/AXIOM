@@ -148,7 +148,7 @@ export const achievements: Achievement[] = [
   {
     id: 'first-susu',
     name: 'Circle Joined',
-    description: 'Join your first SUSU savings circle',
+    description: 'Join your first Wealth Practice circle',
     icon: '🔄',
     category: 'treasury',
     rarity: 'uncommon',

@@ -29,7 +29,7 @@ const SECTIONS: ExplainerSection[] = [
     content: [
       'Soulbound Token (SBT) that tracks your payment history',
       'Score range: 300-850 (like traditional FICO)',
-      'Builds from SUSU circle participation',
+      'Builds from Wealth Practice participation',
       'On-time payments increase your score',
       'Defaults lower your score and affect future opportunities',
       'Higher scores unlock better rates and larger credit lines'
@@ -42,7 +42,7 @@ const SECTIONS: ExplainerSection[] = [
     icon: '🛡️',
     content: [
       '5% of all DePIN node rewards are diverted to the fund',
-      'Covers defaults in SUSU savings circles',
+      'Covers defaults in The Wealth Practice circles',
       'Maximum payout: 80% of the default amount',
       'Claims are reviewed within 48 hours',
       'Protects circle members from individual defaults'

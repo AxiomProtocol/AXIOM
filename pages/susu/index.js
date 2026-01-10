@@ -871,7 +871,7 @@ export default function SusuPage() {
                 <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
                   <div className="text-5xl mb-4">🏦</div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">No Pools Found</h3>
-                  <p className="text-gray-500 mb-6">Be the first to create a SUSU savings pool!</p>
+                  <p className="text-gray-500 mb-6">Be the first to create a Wealth Practice pool!</p>
                   <button
                     onClick={() => setActiveTab('create')}
                     className="px-6 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors"

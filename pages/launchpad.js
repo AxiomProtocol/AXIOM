@@ -29,7 +29,7 @@ const TGE_BENEFITS = [
   { icon: '🛡️', title: 'On-Chain Credit Score', description: 'Build your AxiomScore (300-850) through SUSU participation and protocol activity.' },
   { icon: '⚡', title: 'Ultra-Low Fees', description: 'Built on Arbitrum One. Gas fees significantly lower than Ethereum mainnet.' },
   { icon: '🔐', title: 'Enterprise-Grade Security', description: 'Pausable in emergencies, role-based access control, and anti-whale protection.' },
-  { icon: '💎', title: 'SUSU Savings Circles', description: 'Join community savings groups with smart contract enforcement and insurance protection.' },
+  { icon: '💎', title: 'The Wealth Practice', description: 'Join community savings groups with smart contract enforcement and insurance protection.' },
   { icon: '🏆', title: 'Proven Protocol', description: '29 verified smart contracts on Arbitrum One. Real utility. Transparent treasury.' },
 ];
 
@@ -506,14 +506,14 @@ export default function LaunchpadPage() {
             <div className="h-48 overflow-hidden">
               <img 
                 src="/images/susu_savings_circles_visualization.png" 
-                alt="SUSU Savings Circles" 
+                alt="The Wealth Practice" 
                 className="w-full h-full object-cover"
               />
             </div>
             <div className="p-8">
               <div className="flex items-center gap-4 mb-4">
                 <div className="text-5xl">💎</div>
-                <h3 className="text-3xl font-bold text-white">SUSU Savings Circles</h3>
+                <h3 className="text-3xl font-bold text-white">The Wealth Practice</h3>
               </div>
               <p className="text-gray-300 text-lg leading-relaxed mb-4">
                 Community-powered rotating savings groups with smart contract enforcement.

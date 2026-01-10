@@ -140,7 +140,7 @@ export default function InsuranceFundMonitor() {
         <h4 className="text-sm font-semibold text-white mb-2">Protection Details</h4>
         <ul className="text-xs text-gray-400 space-y-1">
           <li>• 5% of all DePIN node rewards diverted</li>
-          <li>• Covers defaults in SUSU savings circles</li>
+          <li>• Covers defaults in The Wealth Practice circles</li>
           <li>• Claims reviewed within 48 hours</li>
           <li>• Maximum payout per claim: 80% of loss</li>
         </ul>

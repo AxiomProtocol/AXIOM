@@ -19,7 +19,7 @@ const USE_CASES = [
   { icon: '⛽', title: 'Gas Token', description: 'Native gas token on Universe Blockchain (L3)' },
   { icon: '💰', title: 'Staking Rewards', description: 'Earn yield by staking AXM in savings pools' },
   { icon: '🏠', title: 'KeyGrow Equity', description: 'Build home equity through rent-to-own contributions' },
-  { icon: '🤝', title: 'SUSU Savings', description: 'Participate in community savings circles' },
+  { icon: '🤝', title: 'The Wealth Practice', description: 'Participate in community savings circles' },
   { icon: '🔌', title: 'DePIN Rewards', description: 'Earn from infrastructure node operations' },
   { icon: '🎓', title: 'Academy Access', description: 'Unlock premium educational content' },
   { icon: '💳', title: 'Fee Discounts', description: 'Reduced fees across all platform services' },

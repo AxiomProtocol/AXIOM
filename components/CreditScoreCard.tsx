@@ -118,7 +118,7 @@ export default function CreditScoreCard({ walletAddress, compact = false, classN
           </div>
           <h3 className="text-lg font-semibold text-white mb-2">No Credit Score Yet</h3>
           <p className="text-gray-400 text-sm mb-4">
-            Build your on-chain credit history by participating in SUSU savings circles and making on-time payments.
+            Build your on-chain credit history by participating in The Wealth Practice circles and making on-time payments.
           </p>
           <div className="text-xs text-gray-500">
             Base score: 500 | Range: 300-850

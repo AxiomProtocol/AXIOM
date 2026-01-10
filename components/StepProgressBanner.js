@@ -3,7 +3,7 @@ import Link from 'next/link';
 const STEPS = [
   { id: 'learn', label: 'Learn', href: '/academy', description: 'Financial education & discipline' },
   { id: 'connect', label: 'Connect', href: '/susu', description: 'Join interest groups by location/goal' },
-  { id: 'save', label: 'Save Together', href: '/susu', description: 'SUSU savings circles with clear rules' },
+  { id: 'save', label: 'Save Together', href: '/susu', description: 'The Wealth Practice with clear rules' },
 ];
 
 export default function StepProgressBanner({ currentStep = null, isAdvanced = false }) {
