@@ -4,29 +4,28 @@ import React, { useEffect, useState, useRef } from "react";
 import { web3Theme } from "./styles/web3Theme";
 import { trackOnce } from "./analytics";
 
-interface Campaign {
+interface LandCandidate {
   id: number;
-  title: string;
-  subtitle: string;
-  targetAmount: string;
-  raisedAmount: string;
-  participantCount: number;
-  status: string;
-  percentFunded: string;
-  daysRemaining: number;
-  minCommitment: string;
-  landOption: {
-    location: string;
-    acreage: string;
-    propertyType: string;
-  };
+  name: string;
+  location?: string;
+  county?: string;
+  state?: string;
+  acreage?: string;
+  askingPrice?: string;
+  propertyType?: string;
+  stage: string;
+  stewardshipIntent?: string;
+  publicSummary?: string;
+  featuredImageUrl?: string;
+  dueDiligenceProgress?: number;
 }
 
-interface CrowdfundingStats {
-  total: number;
-  active: number;
-  total_raised: string;
-  total_participants: number;
+interface LandStats {
+  totalCandidates: number;
+  totalAcreage: number;
+  underReview: number;
+  readyForVote: number;
+  acquired: number;
 }
 
 interface LiveCrowdfundingSectionProps {
@@ -34,8 +33,8 @@ interface LiveCrowdfundingSectionProps {
 }
 
 export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSectionProps) {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [stats, setStats] = useState<CrowdfundingStats | null>(null);
+  const [candidates, setCandidates] = useState<LandCandidate[]>([]);
+  const [stats, setStats] = useState<LandStats | null>(null);
   const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -58,39 +57,83 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
   }, [page]);
 
   useEffect(() => {
-    async function fetchCampaigns() {
+    async function fetchLandData() {
       try {
-        const res = await fetch('/api/land-acquisition/campaigns?status=live');
-        const data = await res.json();
-        if (data.success && data.data) {
-          setCampaigns(data.data.campaigns?.slice(0, 2) || []);
-          setStats(data.data.stats || null);
+        const [candidatesRes, statsRes] = await Promise.all([
+          fetch('/api/land/candidates'),
+          fetch('/api/land/stats')
+        ]);
+        
+        const candidatesData = await candidatesRes.json();
+        const statsData = await statsRes.json();
+        
+        if (candidatesData.success && candidatesData.data) {
+          setCandidates(candidatesData.data.slice(0, 3) || []);
+        }
+        if (statsData.success && statsData.data) {
+          setStats(statsData.data);
         }
       } catch (err) {
-        console.error('Failed to fetch campaigns:', err);
+        console.error('Failed to fetch land candidates:', err);
       } finally {
         setLoading(false);
       }
     }
-    fetchCampaigns();
+    fetchLandData();
   }, []);
 
   const formatCurrency = (amount: string | number) => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+    if (isNaN(num)) return '$0';
     if (num >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `$${(num / 1000).toFixed(0)}K`;
     return `$${num.toFixed(0)}`;
   };
 
+  const getStageLabel = (stage: string) => {
+    const stages: Record<string, string> = {
+      'candidate': 'New Candidate',
+      'under_review': 'Under Review',
+      'due_diligence': 'Due Diligence',
+      'ready_for_vote': 'Ready for Vote',
+      'approved_for_execution': 'Approved',
+      'acquired': 'Acquired'
+    };
+    return stages[stage] || stage;
+  };
+
+  const getStageColor = (stage: string) => {
+    const colors: Record<string, string> = {
+      'candidate': '#7b68ee',
+      'under_review': '#00d4aa',
+      'due_diligence': '#f59e0b',
+      'ready_for_vote': '#3b82f6',
+      'approved_for_execution': '#22c55e',
+      'acquired': '#10b981'
+    };
+    return colors[stage] || '#00d4aa';
+  };
+
+  const getPropertyIcon = (propertyType?: string) => {
+    const icons: Record<string, string> = {
+      'agricultural': '🌾',
+      'mixed_use': '🏡',
+      'urban': '🏙️',
+      'recreational': '🏕️',
+      'residential': '🏠'
+    };
+    return icons[propertyType || ''] || '🏞️';
+  };
+
   if (loading) {
     return (
       <div style={{ padding: "60px 20px", textAlign: "center" }}>
-        <div style={{ color: "rgba(26,26,46,0.5)" }}>Loading live projects...</div>
+        <div style={{ color: "rgba(26,26,46,0.5)" }}>Loading land candidates...</div>
       </div>
     );
   }
 
-  if (campaigns.length === 0) {
+  if (candidates.length === 0) {
     return null;
   }
 
@@ -123,7 +166,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
               animation: "pulse 2s infinite"
             }} />
             <span style={{ fontSize: 14, fontWeight: 600, color: "#00d4aa" }}>
-              LIVE NOW
+              STEWARDSHIP PIPELINE
             </span>
           </div>
           <h2
@@ -135,7 +178,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
               lineHeight: 1.2
             }}
           >
-            Active Land Acquisition Projects
+            Active Land Candidates
           </h2>
           <p
             style={{
@@ -146,7 +189,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
               lineHeight: 1.6
             }}
           >
-            Coordinate with our community in stewarding real land through structured participation
+            Properties under review for potential community stewardship through structured participation
           </p>
         </div>
 
@@ -154,35 +197,43 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
+              gridTemplateColumns: "repeat(4, 1fr)",
               gap: 24,
               marginBottom: 48,
-              maxWidth: 600,
+              maxWidth: 700,
               margin: "0 auto 48px"
             }}
           >
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 32, fontWeight: 700, color: "#00d4aa" }}>
-                {stats.active}
+                {stats.totalCandidates}
               </div>
               <div style={{ fontSize: 14, color: "rgba(26,26,46,0.6)" }}>
-                Active Projects
+                Total Candidates
               </div>
             </div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 32, fontWeight: 700, color: "#7b68ee" }}>
-                {formatCurrency(stats.total_raised)}
+                {stats.totalAcreage}
               </div>
               <div style={{ fontSize: 14, color: "rgba(26,26,46,0.6)" }}>
-                Total Raised
+                Total Acres
               </div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 32, fontWeight: 700, color: "#d4af37" }}>
-                {stats.total_participants}
+              <div style={{ fontSize: 32, fontWeight: 700, color: "#f59e0b" }}>
+                {stats.underReview}
               </div>
               <div style={{ fontSize: 14, color: "rgba(26,26,46,0.6)" }}>
-                Community Participants
+                Under Review
+              </div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 32, fontWeight: 700, color: "#22c55e" }}>
+                {stats.acquired}
+              </div>
+              <div style={{ fontSize: 14, color: "rgba(26,26,46,0.6)" }}>
+                Acquired
               </div>
             </div>
           </div>
@@ -195,9 +246,9 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
             gap: 32
           }}
         >
-          {campaigns.map((campaign) => (
+          {candidates.map((candidate) => (
             <div
-              key={campaign.id}
+              key={candidate.id}
               style={{
                 background: "rgba(255,255,255,0.95)",
                 backdropFilter: "blur(20px)",
@@ -219,19 +270,23 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
               <div
                 style={{
                   height: 160,
-                  background: "linear-gradient(135deg, #00d4aa 0%, #7b68ee 100%)",
+                  background: candidate.featuredImageUrl 
+                    ? `url(${candidate.featuredImageUrl}) center/cover`
+                    : "linear-gradient(135deg, #00d4aa 0%, #7b68ee 100%)",
                   position: "relative",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center"
                 }}
               >
-                <div style={{ textAlign: "center", color: "#fff" }}>
-                  <div style={{ fontSize: 48, marginBottom: 8 }}>🏞️</div>
-                  <div style={{ fontSize: 14, opacity: 0.9 }}>
-                    {campaign.landOption.location}
+                {!candidate.featuredImageUrl && (
+                  <div style={{ textAlign: "center", color: "#fff" }}>
+                    <div style={{ fontSize: 48, marginBottom: 8 }}>{getPropertyIcon(candidate.propertyType)}</div>
+                    <div style={{ fontSize: 14, opacity: 0.9 }}>
+                      {candidate.location || `${candidate.county}, ${candidate.state}`}
+                    </div>
                   </div>
-                </div>
+                )}
                 <div
                   style={{
                     position: "absolute",
@@ -246,7 +301,23 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
                     color: "#fff"
                   }}
                 >
-                  {campaign.landOption.acreage} Acres
+                  {candidate.acreage} Acres
+                </div>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 12,
+                    left: 12,
+                    background: getStageColor(candidate.stage),
+                    padding: "6px 12px",
+                    borderRadius: 12,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "#fff",
+                    textTransform: "uppercase"
+                  }}
+                >
+                  {getStageLabel(candidate.stage)}
                 </div>
               </div>
 
@@ -259,17 +330,21 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
                     marginBottom: 8
                   }}
                 >
-                  {campaign.title}
+                  {candidate.name}
                 </h3>
                 <p
                   style={{
                     fontSize: 14,
                     color: "rgba(26,26,46,0.6)",
                     marginBottom: 20,
-                    lineHeight: 1.5
+                    lineHeight: 1.5,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden"
                   }}
                 >
-                  {campaign.subtitle}
+                  {candidate.publicSummary || candidate.stewardshipIntent}
                 </p>
 
                 <div style={{ marginBottom: 20 }}>
@@ -281,10 +356,10 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
                     }}
                   >
                     <span style={{ fontSize: 14, fontWeight: 600, color: "#00d4aa" }}>
-                      {formatCurrency(campaign.raisedAmount)} raised
+                      Due Diligence Progress
                     </span>
                     <span style={{ fontSize: 14, color: "rgba(26,26,46,0.5)" }}>
-                      {campaign.percentFunded}%
+                      {candidate.dueDiligenceProgress || 0}%
                     </span>
                   </div>
                   <div
@@ -298,22 +373,12 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
                     <div
                       style={{
                         height: "100%",
-                        width: `${Math.min(parseFloat(campaign.percentFunded), 100)}%`,
+                        width: `${candidate.dueDiligenceProgress || 0}%`,
                         background: "linear-gradient(90deg, #00d4aa, #7b68ee)",
                         borderRadius: 4,
                         transition: "width 0.5s ease"
                       }}
                     />
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: "rgba(26,26,46,0.5)",
-                      marginTop: 4,
-                      textAlign: "right"
-                    }}
-                  >
-                    Goal: {formatCurrency(campaign.targetAmount)}
                   </div>
                 </div>
 
@@ -330,32 +395,32 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
                 >
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontSize: 16, fontWeight: 600, color: "#1a1a2e" }}>
-                      {campaign.participantCount}
+                      {formatCurrency(candidate.askingPrice || '0')}
                     </div>
                     <div style={{ fontSize: 11, color: "rgba(26,26,46,0.5)" }}>
-                      Participants
+                      Asking Price
                     </div>
                   </div>
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontSize: 16, fontWeight: 600, color: "#1a1a2e" }}>
-                      ${campaign.minCommitment}
+                      {candidate.acreage}
                     </div>
                     <div style={{ fontSize: 11, color: "rgba(26,26,46,0.5)" }}>
-                      Min. Commit
+                      Acres
                     </div>
                   </div>
                   <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 16, fontWeight: 600, color: "#1a1a2e" }}>
-                      {campaign.daysRemaining}
+                    <div style={{ fontSize: 16, fontWeight: 600, color: "#1a1a2e", textTransform: "capitalize" }}>
+                      {candidate.propertyType?.replace('_', ' ') || 'Land'}
                     </div>
                     <div style={{ fontSize: 11, color: "rgba(26,26,46,0.5)" }}>
-                      Days Left
+                      Type
                     </div>
                   </div>
                 </div>
 
                 <a
-                  href={`/land?campaign=${campaign.id}`}
+                  href={`/land/${candidate.id}`}
                   style={{
                     display: "block",
                     textAlign: "center",
@@ -377,7 +442,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
                     e.currentTarget.style.boxShadow = "none";
                   }}
                 >
-                  View Project Details
+                  View Candidate Details
                 </a>
               </div>
             </div>
@@ -410,7 +475,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
               e.currentTarget.style.color = "#00d4aa";
             }}
           >
-            View All Land Projects
+            View All Land Candidates
             <span style={{ fontSize: 20 }}>→</span>
           </a>
         </div>
