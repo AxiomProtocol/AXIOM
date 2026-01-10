@@ -10,7 +10,7 @@ export * from './button';
 export * from './card';
 export * from './input';
 export * from './label';
-export { Progress as ProgressUI } from './progress';
+export { Progress, Progress as ProgressUI } from './progress';
 export * from './checkbox';
 export * from './select';
 export * from './slider';
