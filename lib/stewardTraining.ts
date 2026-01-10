@@ -1222,3 +1222,35 @@ export function getModulesByPhase(phase: 'online' | 'classroom' | 'field'): Trai
   };
   return trainingCurriculum.filter(m => typeMapping[phase]?.includes(m.type));
 }
+
+export interface TrainingPhase {
+  id: 'online' | 'classroom' | 'field';
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+}
+
+export const trainingPhases: TrainingPhase[] = [
+  {
+    id: 'online',
+    name: 'Online Learning',
+    description: 'Self-paced digital coursework covering foundational knowledge and theory.',
+    icon: '💻',
+    color: '#6366F1'
+  },
+  {
+    id: 'classroom',
+    name: 'Classroom Sessions',
+    description: 'Interactive workshops, assessments, and cohort-based learning experiences.',
+    icon: '📚',
+    color: '#00A389'
+  },
+  {
+    id: 'field',
+    name: 'Field Training',
+    description: 'Hands-on practical experience with land stewardship and community coordination.',
+    icon: '🌿',
+    color: '#D4AF37'
+  }
+];
