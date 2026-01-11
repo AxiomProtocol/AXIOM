@@ -73,3 +73,8 @@ replit.nix
 # Backup files
 *.backup
 *.json.backup
+
+# Large static asset directories (serve from object storage instead)
+public/keygrow-proof/
+public/generated/
+attached_assets/
