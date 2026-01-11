@@ -14,8 +14,6 @@ const nextConfig = {
   },
   generateBuildId: async () => 'build-' + Date.now(),
   experimental: {
-    workerThreads: false,
-    cpus: 1,
     serverComponentsExternalPackages: [
       'canvas',
       '@napi-rs/canvas',
