@@ -69,7 +69,6 @@ contract TBillVault is AccessControl, ReentrancyGuard, Pausable, ITBillVault {
     event SharesUpdated(uint256 feeBurnerShare, uint256 insuranceShare);
     event YieldSourceUpdated(address indexed newSource);
     event GeniusComplianceUpdated(address indexed compliance, bool enabled);
-    event MaturityEnforcementUpdated(bool enforced, uint256 maxDays);
 
     constructor(
         address _axusd,

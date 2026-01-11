@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IBackstopVault.sol";
 import "../interfaces/ITBillVault.sol";
 
-interface IPSM {
+interface IPSMReserve {
     function collateral() external view returns (address);
     function debtOutstanding() external view returns (uint256);
 }
@@ -79,7 +79,7 @@ contract ReserveManager is AccessControl, ReentrancyGuard, Pausable {
     function _getPSMReserves() internal view returns (uint256) {
         if (psm == address(0)) return 0;
         
-        address collateralToken = IPSM(psm).collateral();
+        address collateralToken = IPSMReserve(psm).collateral();
         uint256 balance = IERC20(collateralToken).balanceOf(psm);
         
         if (psmCollateralDecimals < 18) {

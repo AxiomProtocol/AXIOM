@@ -407,8 +407,4 @@ contract VaultEngine is AccessControl, Pausable, ReentrancyGuard, IVaultEngine {
     function getCollateralConfig(address collateral) external view returns (CollateralConfig memory) {
         return collateralConfigs[collateral];
     }
-
-    function getCollateralList() external view returns (address[] memory) {
-        return collateralList;
-    }
 }
