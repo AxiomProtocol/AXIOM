@@ -632,12 +632,29 @@ export default function PurposeGroupOnboarding() {
 
   if (showVideo) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4 py-8">
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-900 flex flex-col items-center justify-start px-4 py-8 pt-24">
         <div className="w-full max-w-4xl">
+          <div className="text-center mb-8">
+            <div className="inline-block mb-4">
+              <span className="text-5xl">✨</span>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
+              Welcome to <span className="text-yellow-500">The Wealth Practice</span>
+            </h1>
+            <p className="text-gray-300 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+              You're about to discover a proven system for building wealth together through Group Economics.
+            </p>
+            <div className="mt-4 flex items-center justify-center gap-2 text-gray-400 text-sm">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              Watch this short introduction
+            </div>
+          </div>
+
           <video 
-            className="w-full rounded-2xl shadow-2xl"
+            className="w-full rounded-2xl shadow-2xl border border-gray-700"
             controls
             autoPlay
+            muted={false}
             playsInline
             onEnded={handleVideoEnd}
           >
@@ -648,7 +665,7 @@ export default function PurposeGroupOnboarding() {
           <div className="mt-8 text-center">
             <button
               onClick={skipVideo}
-              className="px-8 py-4 bg-yellow-500 text-black rounded-xl font-bold text-lg hover:bg-yellow-400 transition-colors shadow-lg"
+              className="px-8 py-4 bg-yellow-500 text-black rounded-xl font-bold text-lg hover:bg-yellow-400 transition-colors shadow-lg hover:scale-105 transform duration-200"
             >
               Continue to Next Step
             </button>
