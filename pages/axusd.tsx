@@ -379,19 +379,32 @@ export default function AXUSDStablecoinPage() {
 
   const truncateAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
-  const GlassCard = ({ children, className = "", borderColor = "border-emerald-500/30", glow = false }: { children: React.ReactNode; className?: string; borderColor?: string; glow?: boolean }) => (
-    <div className={`relative backdrop-blur-xl bg-gradient-to-br from-gray-900/80 via-gray-800/60 to-gray-900/80 ${borderColor} border rounded-2xl overflow-hidden ${className} ${glow ? 'shadow-lg shadow-emerald-500/20' : ''}`}>
-      <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none" />
-      <div className="relative z-10">{children}</div>
+  const Card = ({ children, className = "", accent = "emerald" }: { children: React.ReactNode; className?: string; accent?: string }) => (
+    <div className={`bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow ${className}`}>
+      {children}
     </div>
   );
 
-  const Web3Icon = ({ icon, size = "md", color = "text-emerald-400" }: { icon: string; size?: "sm" | "md" | "lg"; color?: string }) => {
-    const sizeClasses = { sm: "w-8 h-8 text-lg", md: "w-12 h-12 text-2xl", lg: "w-16 h-16 text-3xl" };
+  const StatCard = ({ label, value, suffix, icon, color }: { label: string; value: string; suffix: string; icon: string; color: string }) => {
+    const colorClasses: Record<string, string> = {
+      emerald: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+      teal: 'bg-teal-50 text-teal-600 border-teal-200',
+      blue: 'bg-blue-50 text-blue-600 border-blue-200',
+      purple: 'bg-purple-50 text-purple-600 border-purple-200',
+      amber: 'bg-amber-50 text-amber-600 border-amber-200',
+    };
     return (
-      <div className={`${sizeClasses[size]} rounded-xl bg-gradient-to-br from-gray-700/50 to-gray-800/50 border border-gray-600/30 flex items-center justify-center ${color} backdrop-blur-sm shadow-inner`}>
-        {icon}
-      </div>
+      <Card className="p-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg border ${colorClasses[color] || colorClasses.emerald}`}>
+            {icon}
+          </div>
+          <span className="text-gray-600 font-medium">{label}</span>
+        </div>
+        <div className="text-2xl font-bold text-gray-900">
+          {loading ? <span className="animate-pulse text-gray-400">Loading...</span> : `${formatNumber(value)} ${suffix}`}
+        </div>
+      </Card>
     );
   };
 
@@ -402,70 +415,57 @@ export default function AXUSDStablecoinPage() {
         <meta name="description" content="AXUSD - The GENIUS Act compliant hybrid CDP stablecoin. 100% backed, segregated custody, cross-chain enabled. The settlement layer of Axiom Protocol." />
       </Head>
       
-      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white">
-        <section className="relative py-12 px-4 overflow-hidden">
-          <div className="absolute inset-0">
-            <div 
-              className="absolute inset-0 bg-cover bg-center opacity-30"
-              style={{ backgroundImage: `url(${axusdHeroImage})` }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/80 to-gray-950" />
-          </div>
-          
-          <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-teal-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-600/10 rounded-full blur-3xl" />
+      <div className="bg-white min-h-screen">
+        <section className="relative py-16 px-4">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-teal-50 opacity-50" />
           
           <div className="relative z-10 max-w-7xl mx-auto">
-            <div className="text-center mb-10">
-              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-emerald-500/20 border border-emerald-400/40 rounded-full px-6 py-2.5 mb-6 backdrop-blur-md">
-                <span className="text-emerald-400 text-xl">◈</span>
-                <span className="text-emerald-300 font-semibold tracking-wide">GENIUS ACT COMPLIANT STABLECOIN</span>
-                <span className="text-emerald-400 text-xl">◈</span>
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-5 py-2 mb-6">
+                <span className="text-emerald-600 text-lg">◈</span>
+                <span className="text-emerald-700 font-semibold text-sm tracking-wide">GENIUS ACT COMPLIANT STABLECOIN</span>
               </div>
               
-              <h1 className="text-5xl md:text-7xl font-bold mb-4 leading-tight">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-emerald-400 drop-shadow-lg">
-                  AXUSD
-                </span>
+              <h1 className="text-5xl md:text-6xl font-bold mb-4 text-gray-900">
+                AXUSD
               </h1>
               
-              <p className="text-2xl md:text-3xl text-gray-300 font-light mb-6">
-                The Settlement Layer of <span className="text-emerald-400 font-semibold">Axiom Protocol</span>
+              <p className="text-xl md:text-2xl text-gray-600 font-light mb-6">
+                The Settlement Layer of <span className="text-emerald-600 font-semibold">Axiom Protocol</span>
               </p>
               
-              <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8 leading-relaxed">
-                A <span className="text-emerald-400 font-medium">100% backed hybrid stablecoin</span> with segregated custody, 
-                cross-chain bridging, and full GENIUS Act compliance. Mint, swap, bridge, and earn yield in a single unified ecosystem.
+              <p className="text-lg text-gray-500 max-w-3xl mx-auto mb-8 leading-relaxed">
+                A <span className="text-emerald-600 font-medium">100% backed hybrid stablecoin</span> with segregated custody, 
+                cross-chain bridging, and full GENIUS Act compliance.
               </p>
 
-              <div className="flex flex-wrap justify-center gap-4 text-sm mb-8">
+              <div className="flex flex-wrap justify-center gap-3 text-sm mb-8">
                 {[
                   { icon: '✓', text: '100% Reserve Backed' },
                   { icon: '◆', text: 'GENIUS Act Compliant' },
                   { icon: '⟷', text: 'Cross-Chain Enabled' },
                   { icon: '◎', text: 'Segregated Custody' },
                 ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-full px-4 py-2">
-                    <span className="text-emerald-400">{item.icon}</span>
-                    <span className="text-gray-300">{item.text}</span>
+                  <div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2 shadow-sm">
+                    <span className="text-emerald-600">{item.icon}</span>
+                    <span className="text-gray-700">{item.text}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-2 mb-8 px-2">
+            <div className="flex flex-wrap justify-center gap-2 mb-10 px-2">
               {TAB_CONFIG.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`group relative px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center gap-2 ${
+                  className={`px-4 py-2.5 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
                     activeTab === tab.id
-                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-black shadow-lg shadow-emerald-500/30'
-                      : 'bg-gray-800/60 text-gray-300 hover:bg-gray-700/80 hover:text-white backdrop-blur-sm border border-gray-700/50'
+                      ? 'bg-emerald-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
                   }`}
                 >
-                  <span className={activeTab === tab.id ? 'text-black' : 'text-emerald-400'}>{tab.icon}</span>
+                  <span>{tab.icon}</span>
                   <span className="hidden sm:inline">{tab.label}</span>
                 </button>
               ))}
@@ -474,834 +474,713 @@ export default function AXUSDStablecoinPage() {
             {activeTab === 'overview' && (
               <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {[
-                    { label: 'Total Supply', value: supplyData?.totalSupply || '0', suffix: 'AXUSD', icon: '$', color: 'emerald' },
-                    { label: 'Circulating', value: supplyData?.circulatingSupply || '0', suffix: 'AXUSD', icon: '◎', color: 'teal' },
-                    { label: 'Reserve Ratio', value: treasuryHealth?.overview?.reserveRatio || '100', suffix: '%', icon: '◆', color: 'blue' },
-                    { label: 'PSM Reserve', value: psmData?.usdcReserve || '0', suffix: 'USDC', icon: '⬡', color: 'purple' },
-                  ].map((stat, i) => (
-                    <GlassCard key={i} borderColor={`border-${stat.color}-500/30`} glow>
-                      <div className="p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                          <Web3Icon icon={stat.icon} color={`text-${stat.color}-400`} />
-                          <h3 className={`text-${stat.color}-400 font-bold`}>{stat.label}</h3>
-                        </div>
-                        <div className="text-3xl font-bold text-white">
-                          {loading ? <span className="animate-pulse">Loading...</span> : `${formatNumber(stat.value)} ${stat.suffix}`}
-                        </div>
-                      </div>
-                    </GlassCard>
-                  ))}
+                  <StatCard label="Total Supply" value={supplyData?.totalSupply || '0'} suffix="AXUSD" icon="$" color="emerald" />
+                  <StatCard label="Circulating" value={supplyData?.circulatingSupply || '0'} suffix="AXUSD" icon="◎" color="teal" />
+                  <StatCard label="Reserve Ratio" value={treasuryHealth?.overview?.reserveRatio || '100'} suffix="%" icon="◆" color="blue" />
+                  <StatCard label="PSM Reserve" value={psmData?.usdcReserve || '0'} suffix="USDC" icon="⬡" color="purple" />
                 </div>
 
-                <GlassCard borderColor="border-amber-500/30">
-                  <div className="p-8">
-                    <h3 className="text-amber-400 font-bold mb-8 text-2xl flex items-center gap-3">
-                      <Web3Icon icon="⬡" color="text-amber-400" />
-                      How AXUSD Works
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                      {[
-                        { step: 1, title: 'Deposit Collateral', desc: 'Lock WETH or WBTC at 150% ratio', color: 'emerald' },
-                        { step: 2, title: 'Mint AXUSD', desc: 'Create stablecoin against your collateral', color: 'blue' },
-                        { step: 3, title: 'Use Anywhere', desc: 'SUSU circles, KeyGrow rent, DeFi', color: 'purple' },
-                        { step: 4, title: 'Earn Yield', desc: 'Lock SEED for protocol revenue share', color: 'amber' },
-                      ].map((item) => (
-                        <div key={item.step} className="text-center group">
-                          <div className={`w-20 h-20 mx-auto bg-gradient-to-br from-${item.color}-500/30 to-${item.color}-600/10 rounded-2xl flex items-center justify-center mb-4 border border-${item.color}-500/30 group-hover:scale-110 transition-transform shadow-lg shadow-${item.color}-500/20`}>
-                            <span className="text-4xl font-bold text-white">{item.step}</span>
-                          </div>
-                          <h4 className="font-bold text-white mb-2 text-lg">{item.title}</h4>
-                          <p className="text-gray-400">{item.desc}</p>
+                <Card className="p-8">
+                  <h3 className="text-gray-900 font-bold mb-8 text-2xl flex items-center gap-3">
+                    <span className="text-amber-600">⬡</span> How AXUSD Works
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    {[
+                      { step: 1, title: 'Deposit Collateral', desc: 'Lock WETH or WBTC at 150% ratio', color: 'emerald' },
+                      { step: 2, title: 'Mint AXUSD', desc: 'Create stablecoin against your collateral', color: 'blue' },
+                      { step: 3, title: 'Use Anywhere', desc: 'SUSU circles, KeyGrow rent, DeFi', color: 'purple' },
+                      { step: 4, title: 'Earn Yield', desc: 'Lock SEED for protocol revenue share', color: 'amber' },
+                    ].map((item) => (
+                      <div key={item.step} className="text-center group">
+                        <div className={`w-16 h-16 mx-auto bg-${item.color}-50 rounded-2xl flex items-center justify-center mb-4 border border-${item.color}-200 group-hover:scale-105 transition-transform`}>
+                          <span className={`text-3xl font-bold text-${item.color}-600`}>{item.step}</span>
                         </div>
-                      ))}
-                    </div>
+                        <h4 className="font-bold text-gray-900 mb-2">{item.title}</h4>
+                        <p className="text-gray-500 text-sm">{item.desc}</p>
+                      </div>
+                    ))}
                   </div>
-                </GlassCard>
+                </Card>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <GlassCard borderColor="border-emerald-500/30">
-                    <div className="p-6">
-                      <h3 className="text-emerald-400 font-bold mb-4 text-xl flex items-center gap-2">
-                        <span>◆</span> GENIUS Act Compliance
-                      </h3>
-                      <div className="space-y-3">
-                        {[
-                          '100% Reserve Backing Required',
-                          'Segregated Custody Accounts',
-                          '93-Day Maximum T-Bill Maturity',
-                          'Anti-Rehypothecation Controls',
-                          'Real-Time On-Chain Verification',
-                        ].map((item, i) => (
-                          <div key={i} className="flex items-center gap-3 p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
-                            <span className="text-emerald-400">✓</span>
-                            <span className="text-gray-300">{item}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </GlassCard>
-
-                  <GlassCard borderColor="border-blue-500/30">
-                    <div className="p-6">
-                      <h3 className="text-blue-400 font-bold mb-4 text-xl flex items-center gap-2">
-                        <span>$</span> Revenue Distribution
-                      </h3>
-                      <div className="space-y-4">
-                        {[
-                          { label: 'SEED Holders', value: '50%', color: 'emerald' },
-                          { label: 'Treasury', value: '30%', color: 'amber' },
-                          { label: 'Backstop Vault', value: '20%', color: 'blue' },
-                        ].map((item, i) => (
-                          <div key={i} className="flex items-center justify-between p-4 bg-gray-700/30 rounded-xl border border-gray-600/30">
-                            <span className="text-gray-300">{item.label}</span>
-                            <span className={`text-${item.color}-400 font-bold text-lg`}>{item.value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </GlassCard>
-                </div>
-
-                <GlassCard borderColor="border-gray-600/30">
-                  <div className="p-6">
-                    <h3 className="text-gray-300 font-bold mb-4 text-xl">Deployed Contracts</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {Object.entries(AXUSD_CONTRACTS).map(([name, addr]) => (
-                        <a
-                          key={name}
-                          href={`https://arbiscan.io/address/${addr}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg hover:bg-gray-700/50 transition-colors border border-gray-700/50 group"
-                        >
-                          <span className="text-gray-300 text-sm">{name}</span>
-                          <span className="text-emerald-400 text-xs font-mono group-hover:underline">{truncateAddress(addr)}</span>
-                        </a>
+                  <Card className="p-6">
+                    <h3 className="text-emerald-700 font-bold mb-4 text-xl flex items-center gap-2">
+                      <span>◆</span> GENIUS Act Compliance
+                    </h3>
+                    <div className="space-y-3">
+                      {[
+                        '100% Reserve Backing Required',
+                        'Segregated Custody Accounts',
+                        '93-Day Maximum T-Bill Maturity',
+                        'Anti-Rehypothecation Controls',
+                        'Real-Time On-Chain Verification',
+                      ].map((item, i) => (
+                        <div key={i} className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                          <span className="text-emerald-600">✓</span>
+                          <span className="text-gray-700">{item}</span>
+                        </div>
                       ))}
                     </div>
+                  </Card>
+
+                  <Card className="p-6">
+                    <h3 className="text-blue-700 font-bold mb-4 text-xl flex items-center gap-2">
+                      <span>$</span> Revenue Distribution
+                    </h3>
+                    <div className="space-y-4">
+                      {[
+                        { label: 'SEED Holders', value: '50%', color: 'emerald' },
+                        { label: 'Treasury', value: '30%', color: 'amber' },
+                        { label: 'Backstop Vault', value: '20%', color: 'blue' },
+                      ].map((item, i) => (
+                        <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                          <span className="text-gray-700">{item.label}</span>
+                          <span className={`text-${item.color}-600 font-bold text-lg`}>{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                </div>
+
+                <Card className="p-6">
+                  <h3 className="text-gray-900 font-bold mb-4 text-xl">Deployed Contracts</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {Object.entries(AXUSD_CONTRACTS).map(([name, addr]) => (
+                      <a
+                        key={name}
+                        href={`https://arbiscan.io/address/${addr}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200 group"
+                      >
+                        <span className="text-gray-700 text-sm">{name}</span>
+                        <span className="text-emerald-600 text-xs font-mono group-hover:underline">{truncateAddress(addr)}</span>
+                      </a>
+                    ))}
                   </div>
-                </GlassCard>
+                </Card>
               </div>
             )}
 
             {activeTab === 'pools' && (
               <div className="space-y-6">
-                <div 
-                  className="relative rounded-2xl overflow-hidden h-48 mb-8"
-                  style={{ backgroundImage: `url(${liquidityPoolImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-gray-900/90 to-transparent" />
-                  <div className="relative z-10 p-8 h-full flex flex-col justify-center">
-                    <h2 className="text-3xl font-bold text-white mb-2">AXUSD Trading Pools</h2>
-                    <p className="text-gray-300">Provide liquidity and earn trading fees across multiple DEXes</p>
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <GlassCard borderColor="border-emerald-500/30" glow>
-                    <div className="p-6 text-center">
-                      <div className="text-3xl font-bold text-emerald-400">{poolData?.summary?.totalPools || 0}</div>
-                      <div className="text-gray-400">Total Pools</div>
-                    </div>
-                  </GlassCard>
-                  <GlassCard borderColor="border-teal-500/30" glow>
-                    <div className="p-6 text-center">
-                      <div className="text-3xl font-bold text-teal-400">{poolData?.summary?.activePools || 0}</div>
-                      <div className="text-gray-400">Active Pools</div>
-                    </div>
-                  </GlassCard>
-                  <GlassCard borderColor="border-blue-500/30" glow>
-                    <div className="p-6 text-center">
-                      <div className="text-3xl font-bold text-blue-400">${poolData?.summary?.totalTvl || '0'}</div>
-                      <div className="text-gray-400">Total TVL</div>
-                    </div>
-                  </GlassCard>
+                  <Card className="p-6 text-center">
+                    <div className="text-3xl font-bold text-emerald-600">{poolData?.summary?.totalPools || 0}</div>
+                    <div className="text-gray-500">Total Pools</div>
+                  </Card>
+                  <Card className="p-6 text-center">
+                    <div className="text-3xl font-bold text-teal-600">{poolData?.summary?.activePools || 0}</div>
+                    <div className="text-gray-500">Active Pools</div>
+                  </Card>
+                  <Card className="p-6 text-center">
+                    <div className="text-3xl font-bold text-blue-600">${poolData?.summary?.totalTvl || '0'}</div>
+                    <div className="text-gray-500">Total TVL</div>
+                  </Card>
                 </div>
 
-                <GlassCard borderColor="border-gray-600/30">
-                  <div className="p-6">
-                    <h3 className="text-white font-bold mb-6 text-xl">Available Pools</h3>
-                    <div className="space-y-4">
-                      {poolData?.pools?.map((pool) => (
-                        <div key={pool.id} className="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-gray-700/50 hover:border-emerald-500/30 transition-colors">
-                          <div className="flex items-center gap-4">
-                            <div className="flex -space-x-2">
-                              <div className="w-10 h-10 rounded-full bg-emerald-500/20 border-2 border-gray-800 flex items-center justify-center text-emerald-400 font-bold">$</div>
-                              <div className="w-10 h-10 rounded-full bg-blue-500/20 border-2 border-gray-800 flex items-center justify-center text-blue-400 font-bold">{pool.token1Symbol?.charAt(0)}</div>
-                            </div>
-                            <div>
-                              <div className="font-bold text-white">{pool.name}</div>
-                              <div className="text-sm text-gray-400">{pool.dex}</div>
-                            </div>
+                <Card className="p-6">
+                  <h3 className="text-gray-900 font-bold mb-6 text-xl">Available Pools</h3>
+                  <div className="space-y-4">
+                    {poolData?.pools?.map((pool) => (
+                      <div key={pool.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-emerald-300 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className="flex -space-x-2">
+                            <div className="w-10 h-10 rounded-full bg-emerald-100 border-2 border-white flex items-center justify-center text-emerald-600 font-bold">$</div>
+                            <div className="w-10 h-10 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-blue-600 font-bold">{pool.token1Symbol?.charAt(0)}</div>
                           </div>
-                          <div className="text-right">
-                            <div className="font-bold text-white">${formatNumber(pool.tvl)}</div>
-                            <div className={`text-sm ${pool.status === 'active' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                              {pool.status === 'active' ? '● Live' : '○ Pending'}
-                            </div>
+                          <div>
+                            <div className="font-bold text-gray-900">{pool.name}</div>
+                            <div className="text-sm text-gray-500">{pool.dex}</div>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                        <div className="text-right">
+                          <div className="font-bold text-gray-900">${formatNumber(pool.tvl)}</div>
+                          <div className={`text-sm ${pool.status === 'active' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                            {pool.status === 'active' ? '● Live' : '○ Pending'}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </GlassCard>
+                </Card>
               </div>
             )}
 
             {activeTab === 'incentives' && (
               <div className="space-y-6">
-                <GlassCard borderColor="border-amber-500/30" glow>
-                  <div className="p-8">
-                    <h3 className="text-amber-400 font-bold mb-6 text-2xl flex items-center gap-3">
-                      <Web3Icon icon="★" color="text-amber-400" />
-                      LP Incentive Programs
-                    </h3>
-                    <p className="text-gray-300 mb-8">
-                      Early liquidity providers receive bonus AXM rewards based on their contribution timing and lock duration.
-                    </p>
+                <Card className="p-8">
+                  <h3 className="text-amber-700 font-bold mb-6 text-2xl flex items-center gap-3">
+                    <span className="text-amber-600">★</span> LP Incentive Programs
+                  </h3>
+                  <p className="text-gray-600 mb-8">
+                    Early liquidity providers receive bonus AXM rewards based on their contribution timing and lock duration.
+                  </p>
 
-                    {incentiveData?.activePrograms?.map((program) => (
-                      <div key={program.id} className="bg-gray-800/50 rounded-xl p-6 border border-amber-500/20 mb-6">
-                        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                          <div>
-                            <h4 className="text-xl font-bold text-white">{program.name}</h4>
-                            <p className="text-gray-400">Reward Token: {program.rewardToken}</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-2xl font-bold text-amber-400">{program.bonusMultiplier}x</div>
-                            <div className="text-gray-400">Multiplier</div>
-                          </div>
+                  {incentiveData?.activePrograms?.map((program) => (
+                    <div key={program.id} className="bg-amber-50 rounded-xl p-6 border border-amber-200 mb-6">
+                      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                        <div>
+                          <h4 className="text-xl font-bold text-gray-900">{program.name}</h4>
+                          <p className="text-gray-500">Reward Token: {program.rewardToken}</p>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="bg-gray-700/30 rounded-lg p-4 text-center">
-                            <div className="text-lg font-bold text-emerald-400">{formatNumber(program.rewards.total)}</div>
-                            <div className="text-gray-400 text-sm">Total Rewards</div>
-                          </div>
-                          <div className="bg-gray-700/30 rounded-lg p-4 text-center">
-                            <div className="text-lg font-bold text-teal-400">{formatNumber(program.rewards.remaining)}</div>
-                            <div className="text-gray-400 text-sm">Remaining</div>
-                          </div>
-                          <div className="bg-gray-700/30 rounded-lg p-4 text-center">
-                            <div className="text-lg font-bold text-blue-400">{program.rewards.daily}</div>
-                            <div className="text-gray-400 text-sm">Daily Rate</div>
-                          </div>
-                          <div className="bg-gray-700/30 rounded-lg p-4 text-center">
-                            <div className="text-lg font-bold text-purple-400">{program.duration.remainingDays}</div>
-                            <div className="text-gray-400 text-sm">Days Left</div>
-                          </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-amber-600">{program.bonusMultiplier}x</div>
+                          <div className="text-gray-500">Multiplier</div>
                         </div>
                       </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-white rounded-lg p-4 text-center border border-gray-200">
+                          <div className="text-lg font-bold text-emerald-600">{formatNumber(program.rewards.total)}</div>
+                          <div className="text-gray-500 text-sm">Total Rewards</div>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 text-center border border-gray-200">
+                          <div className="text-lg font-bold text-teal-600">{formatNumber(program.rewards.remaining)}</div>
+                          <div className="text-gray-500 text-sm">Remaining</div>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 text-center border border-gray-200">
+                          <div className="text-lg font-bold text-blue-600">{program.rewards.daily}</div>
+                          <div className="text-gray-500 text-sm">Daily Rate</div>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 text-center border border-gray-200">
+                          <div className="text-lg font-bold text-purple-600">{program.duration.remainingDays}</div>
+                          <div className="text-gray-500 text-sm">Days Left</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <h4 className="text-gray-900 font-bold mb-4 text-lg">Bonus Tiers</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {incentiveData?.bonusTiers?.map((tier) => (
+                      <div key={tier.tier} className={`rounded-xl p-4 text-center ${tier.tier === 1 ? 'bg-amber-100 border border-amber-300' : 'bg-gray-50 border border-gray-200'}`}>
+                        <div className={`text-2xl font-bold ${tier.tier === 1 ? 'text-amber-600' : 'text-gray-700'}`}>{tier.multiplier}x</div>
+                        <div className="text-gray-500 text-sm">{tier.description}</div>
+                      </div>
                     ))}
-
-                    <h4 className="text-white font-bold mb-4 text-lg">Bonus Tiers</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      {incentiveData?.bonusTiers?.map((tier) => (
-                        <div key={tier.tier} className={`rounded-xl p-4 text-center ${tier.tier === 1 ? 'bg-amber-500/20 border border-amber-500/40' : 'bg-gray-700/30 border border-gray-600/30'}`}>
-                          <div className={`text-2xl font-bold ${tier.tier === 1 ? 'text-amber-400' : 'text-gray-300'}`}>{tier.multiplier}x</div>
-                          <div className="text-gray-400 text-sm">{tier.description}</div>
-                        </div>
-                      ))}
-                    </div>
                   </div>
-                </GlassCard>
+                </Card>
 
-                <GlassCard borderColor="border-emerald-500/30">
-                  <div className="p-6">
-                    <h3 className="text-emerald-400 font-bold mb-4 text-xl">Lock Duration Benefits</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {[
-                        { days: '30 days', multiplier: '1.25x', color: 'emerald' },
-                        { days: '90 days', multiplier: '1.5x', color: 'teal' },
-                        { days: '180 days', multiplier: '2.0x', color: 'amber' },
-                      ].map((lock, i) => (
-                        <div key={i} className={`rounded-xl p-6 text-center bg-${lock.color}-500/10 border border-${lock.color}-500/30`}>
-                          <div className={`text-3xl font-bold text-${lock.color}-400 mb-2`}>{lock.multiplier}</div>
-                          <div className="text-gray-300">{lock.days} lock</div>
-                        </div>
-                      ))}
-                    </div>
+                <Card className="p-6">
+                  <h3 className="text-emerald-700 font-bold mb-4 text-xl">Lock Duration Benefits</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                      { days: '30 days', multiplier: '1.25x', color: 'emerald' },
+                      { days: '90 days', multiplier: '1.5x', color: 'teal' },
+                      { days: '180 days', multiplier: '2.0x', color: 'amber' },
+                    ].map((lock, i) => (
+                      <div key={i} className={`rounded-xl p-6 text-center bg-${lock.color}-50 border border-${lock.color}-200`}>
+                        <div className={`text-3xl font-bold text-${lock.color}-600 mb-2`}>{lock.multiplier}</div>
+                        <div className="text-gray-600">{lock.days} lock</div>
+                      </div>
+                    ))}
                   </div>
-                </GlassCard>
+                </Card>
               </div>
             )}
 
             {activeTab === 'bridge' && (
               <div className="space-y-6">
-                <div 
-                  className="relative rounded-2xl overflow-hidden h-48 mb-8"
-                  style={{ backgroundImage: `url(${bridgeImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-gray-900/90 to-transparent" />
-                  <div className="relative z-10 p-8 h-full flex flex-col justify-center">
-                    <h2 className="text-3xl font-bold text-white mb-2">Cross-Chain Bridge</h2>
-                    <p className="text-gray-300">Bridge AXUSD between Arbitrum and other networks</p>
-                  </div>
-                </div>
-
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-6">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
                   <div className="flex items-center gap-3">
-                    <span className="text-amber-400 text-xl">⚠</span>
-                    <p className="text-amber-300">Bridge transactions are irreversible. Please verify destination addresses carefully before proceeding.</p>
+                    <span className="text-amber-600 text-xl">⚠</span>
+                    <p className="text-amber-700">Bridge transactions are irreversible. Please verify destination addresses carefully before proceeding.</p>
                   </div>
                 </div>
 
-                <GlassCard borderColor="border-teal-500/30">
-                  <div className="p-6">
-                    <h3 className="text-teal-400 font-bold mb-6 text-xl">Available Bridge Routes</h3>
-                    <div className="space-y-4">
-                      {bridgeData?.routes?.map((route) => (
-                        <div key={route.id} className="flex flex-wrap items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-gray-700/50 hover:border-teal-500/30 transition-colors gap-4">
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold">A</div>
-                              <span className="text-gray-400">→</span>
-                              <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold">{route.destination.chain.charAt(0)}</div>
-                            </div>
-                            <div>
-                              <div className="font-bold text-white">{route.name}</div>
-                              <div className="text-sm text-gray-400">via {route.provider}</div>
-                            </div>
+                <Card className="p-6">
+                  <h3 className="text-teal-700 font-bold mb-6 text-xl">Available Bridge Routes</h3>
+                  <div className="space-y-4">
+                    {bridgeData?.routes?.map((route) => (
+                      <div key={route.id} className="flex flex-wrap items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-teal-300 transition-colors gap-4">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">A</div>
+                            <span className="text-gray-400">→</span>
+                            <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">{route.destination.chain.charAt(0)}</div>
                           </div>
-                          <div className="flex items-center gap-6">
-                            <div className="text-center">
-                              <div className="text-white font-bold">{route.fees.percent}% + ${route.fees.flat}</div>
-                              <div className="text-gray-400 text-sm">Fee</div>
-                            </div>
-                            <div className="text-center">
-                              <div className="text-white font-bold">~{route.estimatedTime} min</div>
-                              <div className="text-gray-400 text-sm">Est. Time</div>
-                            </div>
+                          <div>
+                            <div className="font-bold text-gray-900">{route.name}</div>
+                            <div className="text-sm text-gray-500">via {route.provider}</div>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                        <div className="flex items-center gap-6">
+                          <div className="text-center">
+                            <div className="text-gray-900 font-bold">{route.fees.percent}% + ${route.fees.flat}</div>
+                            <div className="text-gray-500 text-sm">Fee</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-gray-900 font-bold">~{route.estimatedTime} min</div>
+                            <div className="text-gray-500 text-sm">Est. Time</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </GlassCard>
+                </Card>
 
-                <GlassCard borderColor="border-gray-600/30">
-                  <div className="p-6">
-                    <h3 className="text-gray-300 font-bold mb-4 text-xl">Supported Networks</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                      {Object.entries(bridgeData?.supportedChains || {}).map(([id, chain]) => (
-                        <div key={id} className="text-center p-4 bg-gray-800/50 rounded-xl border border-gray-700/50">
-                          <div className="w-12 h-12 mx-auto rounded-full mb-2" style={{ backgroundColor: chain.color + '30' }}>
-                            <div className="w-full h-full flex items-center justify-center text-white font-bold">{chain.name.charAt(0)}</div>
-                          </div>
-                          <div className="text-gray-300 text-sm">{chain.name}</div>
+                <Card className="p-6">
+                  <h3 className="text-gray-900 font-bold mb-4 text-xl">Supported Networks</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {Object.entries(bridgeData?.supportedChains || {}).map(([id, chain]) => (
+                      <div key={id} className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <div className="w-12 h-12 mx-auto rounded-full mb-2 bg-gray-100 flex items-center justify-center">
+                          <span className="text-gray-700 font-bold">{chain.name.charAt(0)}</span>
                         </div>
-                      ))}
-                    </div>
+                        <div className="text-gray-700 text-sm">{chain.name}</div>
+                      </div>
+                    ))}
                   </div>
-                </GlassCard>
+                </Card>
               </div>
             )}
 
             {activeTab === 'history' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                  <GlassCard borderColor="border-emerald-500/30" glow>
-                    <div className="p-6 text-center">
-                      <div className="text-2xl font-bold text-emerald-400">{historyData?.growthMetrics?.supplyGrowthPercent || '0'}%</div>
-                      <div className="text-gray-400">Supply Growth ({historyData?.growthMetrics?.periodDays || 30}d)</div>
-                    </div>
-                  </GlassCard>
-                  <GlassCard borderColor="border-teal-500/30" glow>
-                    <div className="p-6 text-center">
-                      <div className="text-2xl font-bold text-teal-400">{historyData?.growthMetrics?.tvlGrowthPercent || '0'}%</div>
-                      <div className="text-gray-400">TVL Growth ({historyData?.growthMetrics?.periodDays || 30}d)</div>
-                    </div>
-                  </GlassCard>
-                  <GlassCard borderColor="border-blue-500/30" glow>
-                    <div className="p-6 text-center">
-                      <div className="text-2xl font-bold text-blue-400">${formatNumber(historyData?.latestSnapshot?.totalSupply || '0')}</div>
-                      <div className="text-gray-400">Current Supply</div>
-                    </div>
-                  </GlassCard>
-                  <GlassCard borderColor="border-purple-500/30" glow>
-                    <div className="p-6 text-center">
-                      <div className="text-2xl font-bold text-purple-400">${formatNumber(historyData?.latestSnapshot?.tvl || '0')}</div>
-                      <div className="text-gray-400">Current TVL</div>
-                    </div>
-                  </GlassCard>
+                  <Card className="p-6 text-center">
+                    <div className="text-2xl font-bold text-emerald-600">{historyData?.growthMetrics?.supplyGrowthPercent || '0'}%</div>
+                    <div className="text-gray-500">Supply Growth ({historyData?.growthMetrics?.periodDays || 30}d)</div>
+                  </Card>
+                  <Card className="p-6 text-center">
+                    <div className="text-2xl font-bold text-teal-600">{historyData?.growthMetrics?.tvlGrowthPercent || '0'}%</div>
+                    <div className="text-gray-500">TVL Growth ({historyData?.growthMetrics?.periodDays || 30}d)</div>
+                  </Card>
+                  <Card className="p-6 text-center">
+                    <div className="text-2xl font-bold text-blue-600">${formatNumber(historyData?.latestSnapshot?.totalSupply || '0')}</div>
+                    <div className="text-gray-500">Current Supply</div>
+                  </Card>
+                  <Card className="p-6 text-center">
+                    <div className="text-2xl font-bold text-purple-600">${formatNumber(historyData?.latestSnapshot?.tvl || '0')}</div>
+                    <div className="text-gray-500">Current TVL</div>
+                  </Card>
                 </div>
 
-                <GlassCard borderColor="border-gray-600/30">
-                  <div className="p-6">
-                    <h3 className="text-white font-bold mb-6 text-xl">Historical Snapshots</h3>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="text-gray-400 text-sm border-b border-gray-700">
-                            <th className="text-left py-3 px-4">Date</th>
-                            <th className="text-right py-3 px-4">Supply</th>
-                            <th className="text-right py-3 px-4">Reserves</th>
-                            <th className="text-right py-3 px-4">Ratio</th>
-                            <th className="text-right py-3 px-4">Peg</th>
-                            <th className="text-right py-3 px-4">TVL</th>
+                <Card className="p-6">
+                  <h3 className="text-gray-900 font-bold mb-6 text-xl">Historical Snapshots</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="text-gray-500 text-sm border-b border-gray-200">
+                          <th className="text-left py-3 px-4">Date</th>
+                          <th className="text-right py-3 px-4">Supply</th>
+                          <th className="text-right py-3 px-4">Reserves</th>
+                          <th className="text-right py-3 px-4">Ratio</th>
+                          <th className="text-right py-3 px-4">Peg</th>
+                          <th className="text-right py-3 px-4">TVL</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {historyData?.snapshots?.map((snapshot, i) => (
+                          <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-3 px-4 text-gray-700">{snapshot.date}</td>
+                            <td className="py-3 px-4 text-right text-gray-900">${formatNumber(snapshot.totalSupply)}</td>
+                            <td className="py-3 px-4 text-right text-emerald-600">${formatNumber(snapshot.reserves)}</td>
+                            <td className="py-3 px-4 text-right text-teal-600">{snapshot.reserveRatio.toFixed(1)}%</td>
+                            <td className="py-3 px-4 text-right text-blue-600">${snapshot.pegPrice.toFixed(4)}</td>
+                            <td className="py-3 px-4 text-right text-purple-600">${formatNumber(snapshot.tvl)}</td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {historyData?.snapshots?.map((snapshot, i) => (
-                            <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/30">
-                              <td className="py-3 px-4 text-gray-300">{snapshot.date}</td>
-                              <td className="py-3 px-4 text-right text-white">${formatNumber(snapshot.totalSupply)}</td>
-                              <td className="py-3 px-4 text-right text-emerald-400">${formatNumber(snapshot.reserves)}</td>
-                              <td className="py-3 px-4 text-right text-teal-400">{snapshot.reserveRatio.toFixed(1)}%</td>
-                              <td className="py-3 px-4 text-right text-blue-400">${snapshot.pegPrice.toFixed(4)}</td>
-                              <td className="py-3 px-4 text-right text-purple-400">${formatNumber(snapshot.tvl)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                </GlassCard>
+                </Card>
               </div>
             )}
 
             {activeTab === 'alerts' && (
               <div className="space-y-6">
-                <GlassCard borderColor="border-red-500/30">
-                  <div className="p-8">
-                    <h3 className="text-red-400 font-bold mb-6 text-2xl flex items-center gap-3">
-                      <Web3Icon icon="◐" color="text-red-400" />
-                      Alert Configuration
-                    </h3>
-                    <p className="text-gray-300 mb-8">
-                      Set up notifications to stay informed about important AXUSD protocol events and thresholds.
-                    </p>
+                <Card className="p-8">
+                  <h3 className="text-red-700 font-bold mb-6 text-2xl flex items-center gap-3">
+                    <span className="text-red-600">◐</span> Alert Configuration
+                  </h3>
+                  <p className="text-gray-600 mb-8">
+                    Set up notifications to stay informed about important AXUSD protocol events and thresholds.
+                  </p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {alertTypes.map((alert) => (
-                        <div key={alert.type} className="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50 hover:border-red-500/30 transition-colors">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center text-red-400">
-                              {alert.type === 'peg_deviation' && '◎'}
-                              {alert.type === 'reserve_low' && '◆'}
-                              {alert.type === 'high_utilization' && '%'}
-                              {alert.type === 'large_mint' && '+'}
-                              {alert.type === 'large_redeem' && '-'}
-                              {alert.type === 'liquidity_change' && '~'}
-                            </div>
-                            <h4 className="font-bold text-white capitalize">{alert.type.replace(/_/g, ' ')}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {alertTypes.map((alert) => (
+                      <div key={alert.type} className="bg-gray-50 rounded-xl p-5 border border-gray-200 hover:border-red-300 transition-colors">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center text-red-600">
+                            {alert.type === 'peg_deviation' && '◎'}
+                            {alert.type === 'reserve_low' && '◆'}
+                            {alert.type === 'high_utilization' && '%'}
+                            {alert.type === 'large_mint' && '+'}
+                            {alert.type === 'large_redeem' && '-'}
+                            {alert.type === 'liquidity_change' && '~'}
                           </div>
-                          <p className="text-gray-400 text-sm mb-4">{alert.description}</p>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-500">Default: {alert.defaultThreshold} {alert.unit}</span>
-                            <button className="text-emerald-400 hover:text-emerald-300 font-medium">Configure</button>
-                          </div>
+                          <h4 className="font-bold text-gray-900 capitalize">{alert.type.replace(/_/g, ' ')}</h4>
                         </div>
-                      ))}
-                    </div>
+                        <p className="text-gray-500 text-sm mb-4">{alert.description}</p>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-400">Default: {alert.defaultThreshold} {alert.unit}</span>
+                          <button className="text-emerald-600 hover:text-emerald-700 font-medium">Configure</button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </GlassCard>
+                </Card>
 
-                <GlassCard borderColor="border-gray-600/30">
-                  <div className="p-6">
-                    <h3 className="text-gray-300 font-bold mb-4 text-xl">How Alerts Work</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {[
-                        { step: 1, title: 'Choose Alert Type', desc: 'Select from peg deviation, reserve, utilization, or transaction alerts' },
-                        { step: 2, title: 'Set Threshold', desc: 'Define your personal threshold values for each alert type' },
-                        { step: 3, title: 'Get Notified', desc: 'Receive email or webhook notifications when thresholds are breached' },
-                      ].map((item) => (
-                        <div key={item.step} className="text-center p-4">
-                          <div className="w-12 h-12 mx-auto bg-gray-700/50 rounded-full flex items-center justify-center mb-3 text-emerald-400 font-bold text-lg">{item.step}</div>
-                          <h4 className="font-bold text-white mb-2">{item.title}</h4>
-                          <p className="text-gray-400 text-sm">{item.desc}</p>
-                        </div>
-                      ))}
-                    </div>
+                <Card className="p-6">
+                  <h3 className="text-gray-900 font-bold mb-4 text-xl">How Alerts Work</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[
+                      { step: 1, title: 'Choose Alert Type', desc: 'Select from peg deviation, reserve, utilization, or transaction alerts' },
+                      { step: 2, title: 'Set Threshold', desc: 'Define your personal threshold values for each alert type' },
+                      { step: 3, title: 'Get Notified', desc: 'Receive email or webhook notifications when thresholds are breached' },
+                    ].map((item) => (
+                      <div key={item.step} className="text-center p-4">
+                        <div className="w-12 h-12 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3 text-emerald-600 font-bold text-lg">{item.step}</div>
+                        <h4 className="font-bold text-gray-900 mb-2">{item.title}</h4>
+                        <p className="text-gray-500 text-sm">{item.desc}</p>
+                      </div>
+                    ))}
                   </div>
-                </GlassCard>
+                </Card>
               </div>
             )}
 
             {activeTab === 'faq' && (
               <div className="space-y-8">
                 <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-white mb-4">Frequently Asked Questions</h2>
-                  <p className="text-gray-400 max-w-2xl mx-auto">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+                  <p className="text-gray-500 max-w-2xl mx-auto">
                     Everything you need to know about AXUSD, from getting started to advanced features
                   </p>
                 </div>
 
                 {FAQ_DATA.map((category, catIndex) => (
-                  <GlassCard key={catIndex} borderColor="border-gray-600/30">
-                    <div className="p-6">
-                      <h3 className="text-emerald-400 font-bold mb-6 text-xl">{category.category}</h3>
-                      <div className="space-y-4">
-                        {category.questions.map((faq, faqIndex) => {
-                          const faqId = `${catIndex}-${faqIndex}`;
-                          const isExpanded = expandedFaq === faqId;
-                          return (
-                            <div key={faqIndex} className="border border-gray-700/50 rounded-xl overflow-hidden">
-                              <button
-                                onClick={() => setExpandedFaq(isExpanded ? null : faqId)}
-                                className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-800/30 transition-colors"
-                              >
-                                <span className="font-medium text-white">{faq.q}</span>
-                                <span className={`text-emerald-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
-                              </button>
-                              {isExpanded && (
-                                <div className="px-4 pb-4">
-                                  <p className="text-gray-400 leading-relaxed">{faq.a}</p>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
+                  <Card key={catIndex} className="p-6">
+                    <h3 className="text-emerald-700 font-bold mb-6 text-xl">{category.category}</h3>
+                    <div className="space-y-4">
+                      {category.questions.map((faq, faqIndex) => {
+                        const faqId = `${catIndex}-${faqIndex}`;
+                        const isExpanded = expandedFaq === faqId;
+                        return (
+                          <div key={faqIndex} className="border border-gray-200 rounded-xl overflow-hidden">
+                            <button
+                              onClick={() => setExpandedFaq(isExpanded ? null : faqId)}
+                              className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+                            >
+                              <span className="font-medium text-gray-900">{faq.q}</span>
+                              <span className={`text-emerald-600 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
+                            </button>
+                            {isExpanded && (
+                              <div className="px-4 pb-4">
+                                <p className="text-gray-600 leading-relaxed">{faq.a}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  </GlassCard>
+                  </Card>
                 ))}
               </div>
             )}
 
             {activeTab === 'mint' && (
-              <GlassCard borderColor="border-emerald-500/30">
-                <div className="p-8">
-                  <h3 className="text-emerald-400 font-bold mb-6 text-2xl">Mint AXUSD</h3>
-                  <div className="max-w-xl mx-auto space-y-6">
-                    <div>
-                      <label className="text-gray-300 block mb-2">Collateral Type</label>
-                      <select 
-                        value={collateralType}
-                        onChange={(e) => setCollateralType(e.target.value)}
-                        className="w-full bg-gray-800 border border-gray-600 rounded-xl p-4 text-white"
-                      >
-                        <option value="WETH">WETH - Wrapped Ether</option>
-                        <option value="WBTC">WBTC - Wrapped Bitcoin</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-gray-300 block mb-2">Collateral Amount</label>
-                      <input
-                        type="number"
-                        value={mintAmount}
-                        onChange={(e) => setMintAmount(e.target.value)}
-                        placeholder="0.00"
-                        className="w-full bg-gray-800 border border-gray-600 rounded-xl p-4 text-white"
-                      />
-                    </div>
-                    <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-                      <div className="flex justify-between text-gray-400 mb-2">
-                        <span>Collateral Ratio</span>
-                        <span className="text-emerald-400">150% (min)</span>
-                      </div>
-                      <div className="flex justify-between text-gray-400">
-                        <span>AXUSD to Receive</span>
-                        <span className="text-white font-bold">{mintAmount ? (parseFloat(mintAmount) * 2000 / 1.5).toFixed(2) : '0.00'} AXUSD</span>
-                      </div>
-                    </div>
-                    <button className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold py-4 rounded-xl hover:opacity-90 transition-opacity">
-                      Connect Wallet to Mint
-                    </button>
+              <Card className="p-8">
+                <h3 className="text-emerald-700 font-bold mb-6 text-2xl">Mint AXUSD</h3>
+                <div className="max-w-xl mx-auto space-y-6">
+                  <div>
+                    <label className="text-gray-700 block mb-2">Collateral Type</label>
+                    <select 
+                      value={collateralType}
+                      onChange={(e) => setCollateralType(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
+                    >
+                      <option value="WETH">WETH - Wrapped Ether</option>
+                      <option value="WBTC">WBTC - Wrapped Bitcoin</option>
+                    </select>
                   </div>
+                  <div>
+                    <label className="text-gray-700 block mb-2">Collateral Amount</label>
+                    <input
+                      type="number"
+                      value={mintAmount}
+                      onChange={(e) => setMintAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
+                    />
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <div className="flex justify-between text-gray-600 mb-2">
+                      <span>Collateral Ratio</span>
+                      <span className="text-emerald-600 font-medium">150% (min)</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>AXUSD to Receive</span>
+                      <span className="text-gray-900 font-bold">{mintAmount ? (parseFloat(mintAmount) * 2000 / 1.5).toFixed(2) : '0.00'} AXUSD</span>
+                    </div>
+                  </div>
+                  <button className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl hover:bg-emerald-700 transition-colors">
+                    Connect Wallet to Mint
+                  </button>
                 </div>
-              </GlassCard>
+              </Card>
             )}
 
             {activeTab === 'psm' && (
-              <GlassCard borderColor="border-blue-500/30">
-                <div className="p-8">
-                  <h3 className="text-blue-400 font-bold mb-6 text-2xl">Peg Stability Module</h3>
-                  <div className="max-w-xl mx-auto space-y-6">
-                    <div className="flex gap-4 justify-center mb-6">
-                      <button
-                        onClick={() => setPsmDirection('usdcToAxusd')}
-                        className={`px-6 py-3 rounded-xl font-medium transition-all ${psmDirection === 'usdcToAxusd' ? 'bg-blue-500 text-black' : 'bg-gray-800 text-gray-300'}`}
-                      >
-                        USDC → AXUSD
-                      </button>
-                      <button
-                        onClick={() => setPsmDirection('axusdToUsdc')}
-                        className={`px-6 py-3 rounded-xl font-medium transition-all ${psmDirection === 'axusdToUsdc' ? 'bg-blue-500 text-black' : 'bg-gray-800 text-gray-300'}`}
-                      >
-                        AXUSD → USDC
-                      </button>
-                    </div>
-                    <div>
-                      <label className="text-gray-300 block mb-2">{psmDirection === 'usdcToAxusd' ? 'USDC Amount' : 'AXUSD Amount'}</label>
-                      <input
-                        type="number"
-                        value={psmAmount}
-                        onChange={(e) => setPsmAmount(e.target.value)}
-                        placeholder="0.00"
-                        className="w-full bg-gray-800 border border-gray-600 rounded-xl p-4 text-white"
-                      />
-                    </div>
-                    <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-                      <div className="flex justify-between text-gray-400 mb-2">
-                        <span>Exchange Rate</span>
-                        <span className="text-white">1:1</span>
-                      </div>
-                      <div className="flex justify-between text-gray-400 mb-2">
-                        <span>Fee (0.1%)</span>
-                        <span className="text-amber-400">{psmAmount ? (parseFloat(psmAmount) * 0.001).toFixed(4) : '0.00'}</span>
-                      </div>
-                      <div className="flex justify-between text-gray-400">
-                        <span>You Receive</span>
-                        <span className="text-white font-bold">{psmAmount ? (parseFloat(psmAmount) * 0.999).toFixed(4) : '0.00'} {psmDirection === 'usdcToAxusd' ? 'AXUSD' : 'USDC'}</span>
-                      </div>
-                    </div>
-                    <button className="w-full bg-gradient-to-r from-blue-500 to-teal-500 text-black font-bold py-4 rounded-xl hover:opacity-90 transition-opacity">
-                      Connect Wallet to Swap
+              <Card className="p-8">
+                <h3 className="text-blue-700 font-bold mb-6 text-2xl">Peg Stability Module</h3>
+                <div className="max-w-xl mx-auto space-y-6">
+                  <div className="flex gap-4 justify-center mb-6">
+                    <button
+                      onClick={() => setPsmDirection('usdcToAxusd')}
+                      className={`px-6 py-3 rounded-xl font-medium transition-all ${psmDirection === 'usdcToAxusd' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                    >
+                      USDC → AXUSD
+                    </button>
+                    <button
+                      onClick={() => setPsmDirection('axusdToUsdc')}
+                      className={`px-6 py-3 rounded-xl font-medium transition-all ${psmDirection === 'axusdToUsdc' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                    >
+                      AXUSD → USDC
                     </button>
                   </div>
+                  <div>
+                    <label className="text-gray-700 block mb-2">{psmDirection === 'usdcToAxusd' ? 'USDC Amount' : 'AXUSD Amount'}</label>
+                    <input
+                      type="number"
+                      value={psmAmount}
+                      onChange={(e) => setPsmAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
+                    />
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <div className="flex justify-between text-gray-600 mb-2">
+                      <span>Exchange Rate</span>
+                      <span className="text-gray-900">1:1</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600 mb-2">
+                      <span>Fee (0.1%)</span>
+                      <span className="text-amber-600">{psmAmount ? (parseFloat(psmAmount) * 0.001).toFixed(4) : '0.00'}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>You Receive</span>
+                      <span className="text-gray-900 font-bold">{psmAmount ? (parseFloat(psmAmount) * 0.999).toFixed(4) : '0.00'} {psmDirection === 'usdcToAxusd' ? 'AXUSD' : 'USDC'}</span>
+                    </div>
+                  </div>
+                  <button className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors">
+                    Connect Wallet to Swap
+                  </button>
                 </div>
-              </GlassCard>
+              </Card>
             )}
 
             {activeTab === 'liquidity' && (
-              <GlassCard borderColor="border-purple-500/30">
-                <div 
-                  className="relative rounded-t-2xl overflow-hidden h-32"
-                  style={{ backgroundImage: `url(${liquidityPoolImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900" />
-                </div>
-                <div className="p-8">
-                  <h3 className="text-purple-400 font-bold mb-6 text-2xl">Add Liquidity</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="text-center p-4 bg-gray-800/50 rounded-xl">
-                      <div className="text-2xl font-bold text-purple-400">${formatNumber(lpData?.totalLiquidity || '0')}</div>
-                      <div className="text-gray-400">Total Liquidity</div>
-                    </div>
-                    <div className="text-center p-4 bg-gray-800/50 rounded-xl">
-                      <div className="text-2xl font-bold text-emerald-400">{lpAnalytics?.metrics?.apr || '0'}%</div>
-                      <div className="text-gray-400">Current APR</div>
-                    </div>
-                    <div className="text-center p-4 bg-gray-800/50 rounded-xl">
-                      <div className="text-2xl font-bold text-amber-400">${lpAnalytics?.metrics?.dailyFees || '0'}</div>
-                      <div className="text-gray-400">Daily Fees</div>
-                    </div>
+              <Card className="p-8">
+                <h3 className="text-purple-700 font-bold mb-6 text-2xl">Add Liquidity</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  <div className="text-center p-4 bg-purple-50 rounded-xl border border-purple-200">
+                    <div className="text-2xl font-bold text-purple-600">${formatNumber(lpData?.totalLiquidity || '0')}</div>
+                    <div className="text-gray-500">Total Liquidity</div>
                   </div>
-                  <div className="max-w-xl mx-auto space-y-4">
-                    <div>
-                      <label className="text-gray-300 block mb-2">AXUSD Amount</label>
-                      <input
-                        type="number"
-                        value={lpAxusdAmount}
-                        onChange={(e) => { setLpAxusdAmount(e.target.value); setLpUsdcAmount(e.target.value); }}
-                        placeholder="0.00"
-                        className="w-full bg-gray-800 border border-gray-600 rounded-xl p-4 text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-gray-300 block mb-2">USDC Amount</label>
-                      <input
-                        type="number"
-                        value={lpUsdcAmount}
-                        onChange={(e) => { setLpUsdcAmount(e.target.value); setLpAxusdAmount(e.target.value); }}
-                        placeholder="0.00"
-                        className="w-full bg-gray-800 border border-gray-600 rounded-xl p-4 text-white"
-                      />
-                    </div>
-                    <button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-4 rounded-xl hover:opacity-90 transition-opacity">
-                      Connect Wallet to Add Liquidity
-                    </button>
+                  <div className="text-center p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                    <div className="text-2xl font-bold text-emerald-600">{lpAnalytics?.metrics?.apr || '0'}%</div>
+                    <div className="text-gray-500">Current APR</div>
+                  </div>
+                  <div className="text-center p-4 bg-amber-50 rounded-xl border border-amber-200">
+                    <div className="text-2xl font-bold text-amber-600">${lpAnalytics?.metrics?.dailyFees || '0'}</div>
+                    <div className="text-gray-500">Daily Fees</div>
                   </div>
                 </div>
-              </GlassCard>
+                <div className="max-w-xl mx-auto space-y-4">
+                  <div>
+                    <label className="text-gray-700 block mb-2">AXUSD Amount</label>
+                    <input
+                      type="number"
+                      value={lpAxusdAmount}
+                      onChange={(e) => { setLpAxusdAmount(e.target.value); setLpUsdcAmount(e.target.value); }}
+                      placeholder="0.00"
+                      className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-gray-700 block mb-2">USDC Amount</label>
+                    <input
+                      type="number"
+                      value={lpUsdcAmount}
+                      onChange={(e) => { setLpUsdcAmount(e.target.value); setLpAxusdAmount(e.target.value); }}
+                      placeholder="0.00"
+                      className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
+                    />
+                  </div>
+                  <button className="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition-colors">
+                    Connect Wallet to Add Liquidity
+                  </button>
+                </div>
+              </Card>
             )}
 
             {activeTab === 'analytics' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <GlassCard borderColor="border-emerald-500/30">
-                    <div className="p-6 text-center">
-                      <div className="text-2xl font-bold text-emerald-400">${formatNumber(lpAnalytics?.pool?.tvl || '0')}</div>
-                      <div className="text-gray-400">Pool TVL</div>
-                    </div>
-                  </GlassCard>
-                  <GlassCard borderColor="border-teal-500/30">
-                    <div className="p-6 text-center">
-                      <div className="text-2xl font-bold text-teal-400">{lpAnalytics?.metrics?.apr || '0'}%</div>
-                      <div className="text-gray-400">APR</div>
-                    </div>
-                  </GlassCard>
-                  <GlassCard borderColor="border-blue-500/30">
-                    <div className="p-6 text-center">
-                      <div className="text-2xl font-bold text-blue-400">${lpAnalytics?.metrics?.dailyFees || '0'}</div>
-                      <div className="text-gray-400">Daily Fees</div>
-                    </div>
-                  </GlassCard>
-                  <GlassCard borderColor="border-purple-500/30">
-                    <div className="p-6 text-center">
-                      <div className="text-2xl font-bold text-purple-400">${formatNumber(lpAnalytics?.metrics?.annualFees || '0')}</div>
-                      <div className="text-gray-400">Annual Fees</div>
-                    </div>
-                  </GlassCard>
+                  <Card className="p-6 text-center">
+                    <div className="text-2xl font-bold text-emerald-600">${formatNumber(lpAnalytics?.pool?.tvl || '0')}</div>
+                    <div className="text-gray-500">Pool TVL</div>
+                  </Card>
+                  <Card className="p-6 text-center">
+                    <div className="text-2xl font-bold text-teal-600">{lpAnalytics?.metrics?.apr || '0'}%</div>
+                    <div className="text-gray-500">APR</div>
+                  </Card>
+                  <Card className="p-6 text-center">
+                    <div className="text-2xl font-bold text-blue-600">${lpAnalytics?.metrics?.dailyFees || '0'}</div>
+                    <div className="text-gray-500">Daily Fees</div>
+                  </Card>
+                  <Card className="p-6 text-center">
+                    <div className="text-2xl font-bold text-purple-600">${formatNumber(lpAnalytics?.metrics?.annualFees || '0')}</div>
+                    <div className="text-gray-500">Annual Fees</div>
+                  </Card>
                 </div>
-                <GlassCard borderColor="border-gray-600/30">
-                  <div className="p-6">
-                    <h3 className="text-white font-bold mb-4 text-xl">Pool Reserves</h3>
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="text-center p-6 bg-gray-800/50 rounded-xl">
-                        <div className="text-3xl font-bold text-emerald-400">{formatNumber(lpAnalytics?.pool?.axusdReserve || '0')}</div>
-                        <div className="text-gray-400">AXUSD Reserve</div>
-                      </div>
-                      <div className="text-center p-6 bg-gray-800/50 rounded-xl">
-                        <div className="text-3xl font-bold text-blue-400">{formatNumber(lpAnalytics?.pool?.usdcReserve || '0')}</div>
-                        <div className="text-gray-400">USDC Reserve</div>
-                      </div>
+                <Card className="p-6">
+                  <h3 className="text-gray-900 font-bold mb-4 text-xl">Pool Reserves</h3>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="text-center p-6 bg-emerald-50 rounded-xl border border-emerald-200">
+                      <div className="text-3xl font-bold text-emerald-600">{formatNumber(lpAnalytics?.pool?.axusdReserve || '0')}</div>
+                      <div className="text-gray-500">AXUSD Reserve</div>
+                    </div>
+                    <div className="text-center p-6 bg-blue-50 rounded-xl border border-blue-200">
+                      <div className="text-3xl font-bold text-blue-600">{formatNumber(lpAnalytics?.pool?.usdcReserve || '0')}</div>
+                      <div className="text-gray-500">USDC Reserve</div>
                     </div>
                   </div>
-                </GlassCard>
+                </Card>
               </div>
             )}
 
             {activeTab === 'treasury' && (
               <div className="space-y-6">
-                <div 
-                  className="relative rounded-2xl overflow-hidden h-48 mb-8"
-                  style={{ backgroundImage: `url(${treasuryVaultImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-gray-900/90 to-transparent" />
-                  <div className="relative z-10 p-8 h-full flex flex-col justify-center">
-                    <h2 className="text-3xl font-bold text-white mb-2">Treasury Health</h2>
-                    <p className="text-gray-300">Real-time reserve backing and protocol health metrics</p>
-                    <div className="mt-4">
-                      <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${treasuryHealth?.overview?.geniusCompliant ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
-                        <span>{treasuryHealth?.overview?.geniusCompliant ? '✓' : '✗'}</span>
-                        GENIUS Act {treasuryHealth?.overview?.geniusCompliant ? 'Compliant' : 'Non-Compliant'}
-                      </span>
+                <Card className="p-6">
+                  <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-1">Treasury Health</h2>
+                      <p className="text-gray-500">Real-time reserve backing and protocol health metrics</p>
                     </div>
+                    <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${treasuryHealth?.overview?.geniusCompliant ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                      <span>{treasuryHealth?.overview?.geniusCompliant ? '✓' : '✗'}</span>
+                      GENIUS Act {treasuryHealth?.overview?.geniusCompliant ? 'Compliant' : 'Non-Compliant'}
+                    </span>
                   </div>
-                </div>
+                </Card>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <GlassCard borderColor="border-emerald-500/30" glow>
-                    <div className="p-6 text-center">
-                      <div className="text-3xl font-bold text-emerald-400">{treasuryHealth?.overview?.reserveRatio || '100'}%</div>
-                      <div className="text-gray-400">Reserve Ratio</div>
-                    </div>
-                  </GlassCard>
-                  <GlassCard borderColor="border-teal-500/30">
-                    <div className="p-6 text-center">
-                      <div className="text-2xl font-bold text-teal-400">${formatNumber(treasuryHealth?.reserves?.psmUsdc || '0')}</div>
-                      <div className="text-gray-400">PSM USDC</div>
-                    </div>
-                  </GlassCard>
-                  <GlassCard borderColor="border-blue-500/30">
-                    <div className="p-6 text-center">
-                      <div className="text-2xl font-bold text-blue-400">${formatNumber(treasuryHealth?.reserves?.backstopUsdc || '0')}</div>
-                      <div className="text-gray-400">Backstop USDC</div>
-                    </div>
-                  </GlassCard>
-                  <GlassCard borderColor="border-amber-500/30">
-                    <div className="p-6 text-center">
-                      <div className="text-2xl font-bold text-amber-400">{treasuryHealth?.overview?.healthScore || 0}/100</div>
-                      <div className="text-gray-400">Health Score</div>
-                    </div>
-                  </GlassCard>
+                  <Card className="p-6 text-center">
+                    <div className="text-3xl font-bold text-emerald-600">{treasuryHealth?.overview?.reserveRatio || '100'}%</div>
+                    <div className="text-gray-500">Reserve Ratio</div>
+                  </Card>
+                  <Card className="p-6 text-center">
+                    <div className="text-2xl font-bold text-teal-600">${formatNumber(treasuryHealth?.reserves?.psmUsdc || '0')}</div>
+                    <div className="text-gray-500">PSM USDC</div>
+                  </Card>
+                  <Card className="p-6 text-center">
+                    <div className="text-2xl font-bold text-blue-600">${formatNumber(treasuryHealth?.reserves?.backstopUsdc || '0')}</div>
+                    <div className="text-gray-500">Backstop USDC</div>
+                  </Card>
+                  <Card className="p-6 text-center">
+                    <div className="text-2xl font-bold text-amber-600">{treasuryHealth?.overview?.healthScore || 0}/100</div>
+                    <div className="text-gray-500">Health Score</div>
+                  </Card>
                 </div>
 
-                <GlassCard borderColor="border-amber-500/30">
-                  <div className="p-6">
-                    <h3 className="text-amber-400 font-bold mb-4 text-xl">Stress Test Scenarios</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {treasuryHealth?.stressTests && Object.entries(treasuryHealth.stressTests).map(([key, test]) => (
-                        <div key={key} className={`rounded-xl p-4 ${test.canHandle ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-red-500/10 border border-red-500/30'}`}>
-                          <h4 className={`font-bold mb-2 ${test.canHandle ? 'text-emerald-400' : 'text-red-400'}`}>{test.name}</h4>
-                          <p className="text-gray-400 text-sm mb-2">Status: {test.canHandle ? 'Can Handle' : 'At Risk'}</p>
-                          <p className="text-white font-bold">New Ratio: {test.newReserveRatio.toFixed(1)}%</p>
-                        </div>
-                      ))}
-                    </div>
+                <Card className="p-6">
+                  <h3 className="text-amber-700 font-bold mb-4 text-xl">Stress Test Scenarios</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {treasuryHealth?.stressTests && Object.entries(treasuryHealth.stressTests).map(([key, test]) => (
+                      <div key={key} className={`rounded-xl p-4 ${test.canHandle ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}>
+                        <h4 className={`font-bold mb-2 ${test.canHandle ? 'text-emerald-700' : 'text-red-700'}`}>{test.name}</h4>
+                        <p className="text-gray-500 text-sm mb-2">Status: {test.canHandle ? 'Can Handle' : 'At Risk'}</p>
+                        <p className="text-gray-900 font-bold">New Ratio: {test.newReserveRatio.toFixed(1)}%</p>
+                      </div>
+                    ))}
                   </div>
-                </GlassCard>
+                </Card>
               </div>
             )}
 
             {activeTab === 'vaults' && (
-              <GlassCard borderColor="border-purple-500/30">
-                <div className="p-8 text-center">
-                  <Web3Icon icon="$" size="lg" color="text-purple-400" />
-                  <h3 className="text-2xl font-bold text-white mt-6 mb-2">My Vaults</h3>
-                  <p className="text-gray-400 mb-6">Connect your wallet to view and manage your AXUSD vaults</p>
-                  <button 
-                    onClick={() => setActiveTab('mint')}
-                    className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold px-8 py-4 rounded-xl hover:opacity-90 transition-opacity"
-                  >
-                    Create Your First Vault
-                  </button>
-                </div>
-              </GlassCard>
+              <Card className="p-8 text-center">
+                <div className="w-16 h-16 mx-auto bg-purple-100 rounded-2xl flex items-center justify-center text-3xl text-purple-600">$</div>
+                <h3 className="text-2xl font-bold text-gray-900 mt-6 mb-2">My Vaults</h3>
+                <p className="text-gray-500 mb-6">Connect your wallet to view and manage your AXUSD vaults</p>
+                <button 
+                  onClick={() => setActiveTab('mint')}
+                  className="bg-purple-600 text-white font-bold px-8 py-4 rounded-xl hover:bg-purple-700 transition-colors"
+                >
+                  Create Your First Vault
+                </button>
+              </Card>
             )}
 
             {activeTab === 'earn' && (
               <div className="space-y-6">
-                <GlassCard borderColor="border-amber-500/30">
-                  <div className="p-8">
-                    <h3 className="text-amber-400 font-bold mb-6 text-2xl">SEED Yield Distribution</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="bg-gray-800/50 rounded-xl p-6">
-                        <h4 className="font-bold text-white mb-4 text-lg">How to Earn</h4>
-                        <ol className="space-y-3 text-gray-300">
-                          <li className="flex items-start gap-3">
-                            <span className="text-emerald-400 font-bold">1.</span>
-                            Lock AXM tokens in SEED contract
-                          </li>
-                          <li className="flex items-start gap-3">
-                            <span className="text-emerald-400 font-bold">2.</span>
-                            Receive voting power proportional to lock duration
-                          </li>
-                          <li className="flex items-start gap-3">
-                            <span className="text-emerald-400 font-bold">3.</span>
-                            Claim AXUSD yield every week
-                          </li>
-                          <li className="flex items-start gap-3">
-                            <span className="text-emerald-400 font-bold">4.</span>
-                            50% of all protocol revenue goes to SEED holders
-                          </li>
-                        </ol>
-                      </div>
-                      <div className="bg-gray-800/50 rounded-xl p-6">
-                        <h4 className="font-bold text-white mb-4 text-lg">Current Epoch</h4>
-                        <div className="space-y-3">
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Epoch</span>
-                            <span className="text-white font-bold">1</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Total Revenue</span>
-                            <span className="text-emerald-400 font-bold">0 AXUSD</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Your SEED Balance</span>
-                            <span className="text-white">0 SEED</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Estimated Yield</span>
-                            <span className="text-amber-400 font-bold">0 AXUSD</span>
-                          </div>
+                <Card className="p-8">
+                  <h3 className="text-amber-700 font-bold mb-6 text-2xl">SEED Yield Distribution</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-amber-50 rounded-xl p-6 border border-amber-200">
+                      <h4 className="font-bold text-gray-900 mb-4 text-lg">How to Earn</h4>
+                      <ol className="space-y-3 text-gray-700">
+                        <li className="flex items-start gap-3">
+                          <span className="text-emerald-600 font-bold">1.</span>
+                          Lock AXM tokens in SEED contract
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-emerald-600 font-bold">2.</span>
+                          Receive voting power proportional to lock duration
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-emerald-600 font-bold">3.</span>
+                          Claim AXUSD yield every week
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-emerald-600 font-bold">4.</span>
+                          50% of all protocol revenue goes to SEED holders
+                        </li>
+                      </ol>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                      <h4 className="font-bold text-gray-900 mb-4 text-lg">Current Epoch</h4>
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Epoch</span>
+                          <span className="text-gray-900 font-bold">1</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Total Revenue</span>
+                          <span className="text-emerald-600 font-bold">0 AXUSD</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Your SEED Balance</span>
+                          <span className="text-gray-900">0 SEED</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Estimated Yield</span>
+                          <span className="text-amber-600 font-bold">0 AXUSD</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                </GlassCard>
+                </Card>
 
-                <GlassCard borderColor="border-emerald-500/30">
-                  <div className="p-6">
-                    <h3 className="text-emerald-400 font-bold mb-6 text-xl">AXUSD Use Cases</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {[
-                        { icon: 'O', title: 'SUSU Circles', desc: 'Join savings circles denominated in AXUSD for stable, predictable savings', color: 'blue' },
-                        { icon: 'K', title: 'KeyGrow Housing', desc: 'Pay rent in AXUSD and build equity toward home ownership', color: 'purple' },
-                        { icon: '$', title: 'DeFi Liquidity', desc: 'Provide liquidity in AXUSD pools on Camelot DEX', color: 'amber' },
-                      ].map((item, i) => (
-                        <div key={i} className="text-center p-6 bg-gray-800/50 rounded-xl">
-                          <Web3Icon icon={item.icon} size="lg" color={`text-${item.color}-400`} />
-                          <h4 className="font-bold text-white mt-4 mb-2">{item.title}</h4>
-                          <p className="text-gray-400 text-sm">{item.desc}</p>
-                        </div>
-                      ))}
-                    </div>
+                <Card className="p-6">
+                  <h3 className="text-emerald-700 font-bold mb-6 text-xl">AXUSD Use Cases</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[
+                      { icon: 'O', title: 'SUSU Circles', desc: 'Join savings circles denominated in AXUSD for stable, predictable savings', color: 'blue' },
+                      { icon: 'K', title: 'KeyGrow Housing', desc: 'Pay rent in AXUSD and build equity toward home ownership', color: 'purple' },
+                      { icon: '$', title: 'DeFi Liquidity', desc: 'Provide liquidity in AXUSD pools on Camelot DEX', color: 'amber' },
+                    ].map((item, i) => (
+                      <div key={i} className={`text-center p-6 bg-${item.color}-50 rounded-xl border border-${item.color}-200`}>
+                        <div className={`w-12 h-12 mx-auto bg-${item.color}-100 rounded-xl flex items-center justify-center text-2xl text-${item.color}-600`}>{item.icon}</div>
+                        <h4 className="font-bold text-gray-900 mt-4 mb-2">{item.title}</h4>
+                        <p className="text-gray-500 text-sm">{item.desc}</p>
+                      </div>
+                    ))}
                   </div>
-                </GlassCard>
+                </Card>
               </div>
             )}
           </div>
