@@ -217,6 +217,77 @@ export default async function handler(
           vaultEngine: process.env.VAULT_ENGINE_ADDRESS || 'Not deployed',
           tbillVault: process.env.TBILL_VAULT_ADDRESS || 'Not deployed',
           psm: process.env.PSM_ADDRESS || 'Not deployed'
+        },
+        
+        phasedComplianceApproach: {
+          description: "A cost-effective phased approach to GENIUS Act compliance for early-stage stablecoin issuers",
+          enforcementDeadline: "January 18, 2027",
+          phases: [
+            {
+              phase: 1,
+              name: "Technical Foundation",
+              timeline: "Immediate",
+              status: "complete",
+              items: [
+                "100% reserve backing smart contracts (ReserveManager)",
+                "93-day Treasury maturity enforcement (TBillVault)",
+                "Anti-rehypothecation safeguards (SegregatedCustody)",
+                "Yield blocking for stablecoin holders",
+                "On-chain proof of reserves",
+                "Real-time reserve transparency API"
+              ],
+              estimatedCost: "$0 (smart contract based)"
+            },
+            {
+              phase: 2,
+              name: "Community Operations",
+              timeline: "0-6 months",
+              status: "in_progress",
+              items: [
+                "PMA membership structure for initial users",
+                "Internal AXUSD circulation within community",
+                "Self-attestation with on-chain transparency",
+                "Build revenue through Steward Corps and Land Program",
+                "Limit total AXUSD supply (<$10M)"
+              ],
+              estimatedCost: "$0-5,000/year"
+            },
+            {
+              phase: 3,
+              name: "Basic Compliance",
+              timeline: "6-12 months",
+              status: "planned",
+              items: [
+                "Budget KYC provider (KYC-Chain or similar)",
+                "Basic transaction monitoring",
+                "Monthly self-certification",
+                "State money transmitter license (if needed)"
+              ],
+              estimatedCost: "$5,000-20,000/year"
+            },
+            {
+              phase: 4,
+              name: "Full GENIUS Act Compliance",
+              timeline: "Before January 2027",
+              status: "planned",
+              items: [
+                "Enterprise AML/KYC provider (Sumsub/Chainalysis)",
+                "Mid-tier accounting firm attestations",
+                "Full BSA compliance program",
+                "SAR filing capability",
+                "OFAC sanctions screening"
+              ],
+              estimatedCost: "$50,000-150,000/year"
+            }
+          ],
+          costSavingStrategies: [
+            "Use PMA structure to limit initial regulatory exposure",
+            "Build revenue before adding expensive compliance services",
+            "Start with budget providers, upgrade as circulation grows",
+            "Use mid-tier accounting firms instead of Big Four initially",
+            "Leverage on-chain transparency to reduce audit complexity"
+          ],
+          pmaAdvantage: "Private Membership Association structure allows internal circulation among members with reduced regulatory requirements during early growth phase"
         }
       },
       
