@@ -52,8 +52,57 @@ interface LPData {
   totalLiquidity: string;
 }
 
+interface LPAnalytics {
+  pool: {
+    tvl: string;
+    axusdReserve: string;
+    usdcReserve: string;
+  };
+  metrics: {
+    apr: string;
+    dailyFees: string;
+    annualFees: string;
+    feeRate: string;
+  };
+  growthScenarios: Array<{
+    weeklyContribution: number;
+    projections: Array<{
+      weeks: number;
+      totalTvl: string;
+      tradingCapacity: string;
+    }>;
+  }>;
+}
+
+interface TreasuryHealth {
+  overview: {
+    totalSupply: string;
+    totalReserves: string;
+    reserveRatio: string;
+    healthStatus: string;
+    healthScore: number;
+    geniusCompliant: boolean;
+  };
+  reserves: {
+    psmUsdc: string;
+    backstopUsdc: string;
+    tbillValue: string;
+  };
+  capacity: {
+    debtCeiling: string;
+    debtOutstanding: string;
+    debtUtilization: string;
+    availableCapacity: string;
+  };
+  stressTests: {
+    scenario1: { name: string; canHandle: boolean; newReserveRatio: number };
+    scenario2: { name: string; canHandle: boolean; newReserveRatio: number };
+    scenario3: { name: string; canHandle: boolean; newReserveRatio: number };
+  };
+}
+
 export default function AXUSDStablecoinPage() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'mint' | 'psm' | 'liquidity' | 'vaults' | 'earn'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'mint' | 'psm' | 'liquidity' | 'analytics' | 'treasury' | 'vaults' | 'earn'>('overview');
   const [mintAmount, setMintAmount] = useState('');
   const [collateralType, setCollateralType] = useState('WETH');
   const [psmAmount, setPsmAmount] = useState('');
@@ -63,29 +112,38 @@ export default function AXUSDStablecoinPage() {
   const [psmData, setPsmData] = useState<PSMData | null>(null);
   const [pegStatus, setPegStatus] = useState<PegStatus | null>(null);
   const [lpData, setLpData] = useState<LPData | null>(null);
+  const [lpAnalytics, setLpAnalytics] = useState<LPAnalytics | null>(null);
+  const [treasuryHealth, setTreasuryHealth] = useState<TreasuryHealth | null>(null);
   const [loading, setLoading] = useState(true);
   const [lpAxusdAmount, setLpAxusdAmount] = useState('');
   const [lpUsdcAmount, setLpUsdcAmount] = useState('');
+  const [selectedScenario, setSelectedScenario] = useState(0);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [supplyRes, psmRes, pegRes, lpRes] = await Promise.all([
+        const [supplyRes, psmRes, pegRes, lpRes, analyticsRes, treasuryRes] = await Promise.all([
           fetch('/api/axusd/supply'),
           fetch('/api/axusd/psm'),
           fetch('/api/axusd/peg-status'),
-          fetch('/api/axusd/liquidity')
+          fetch('/api/axusd/liquidity'),
+          fetch('/api/axusd/lp-analytics'),
+          fetch('/api/axusd/treasury-health')
         ]);
         
         const supplyJson = await supplyRes.json();
         const psmJson = await psmRes.json();
         const pegJson = await pegRes.json();
         const lpJson = await lpRes.json();
+        const analyticsJson = await analyticsRes.json();
+        const treasuryJson = await treasuryRes.json();
         
         if (supplyJson.success) setSupplyData(supplyJson.data);
         if (psmJson.success) setPsmData(psmJson.data);
         if (pegJson.success) setPegStatus(pegJson.data);
         if (lpJson.success) setLpData(lpJson.data);
+        if (analyticsJson.success) setLpAnalytics(analyticsJson.data);
+        if (treasuryJson.success) setTreasuryHealth(treasuryJson.data);
       } catch (error) {
         console.error('Failed to fetch AXUSD data:', error);
       } finally {
@@ -158,22 +216,24 @@ export default function AXUSDStablecoinPage() {
             </div>
 
             <div className="flex flex-wrap justify-center gap-2 mb-8">
-              {(['overview', 'mint', 'psm', 'liquidity', 'vaults', 'earn'] as const).map((tab) => (
+              {(['overview', 'mint', 'psm', 'liquidity', 'analytics', 'treasury', 'vaults', 'earn'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                  className={`px-4 py-3 rounded-xl font-semibold transition-all duration-300 ${
                     activeTab === tab
                       ? 'bg-green-500 text-black'
                       : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                   }`}
                 >
                   {tab === 'overview' && 'Overview'}
-                  {tab === 'mint' && 'Mint AXUSD'}
-                  {tab === 'psm' && 'PSM Swap'}
-                  {tab === 'liquidity' && 'Add Liquidity'}
-                  {tab === 'vaults' && 'My Vaults'}
-                  {tab === 'earn' && 'Earn Yield'}
+                  {tab === 'mint' && 'Mint'}
+                  {tab === 'psm' && 'PSM'}
+                  {tab === 'liquidity' && 'Liquidity'}
+                  {tab === 'analytics' && 'LP Analytics'}
+                  {tab === 'treasury' && 'Treasury'}
+                  {tab === 'vaults' && 'Vaults'}
+                  {tab === 'earn' && 'Earn'}
                 </button>
               ))}
             </div>
@@ -633,6 +693,233 @@ export default function AXUSDStablecoinPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
                     </a>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'analytics' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-cyan-500/30 rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-cyan-400 font-bold text-xl">LP Analytics Dashboard</h3>
+                    <span className="bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded-full text-sm">
+                      Live Data
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-gray-700/50 rounded-xl p-4 text-center">
+                      <p className="text-gray-400 text-sm mb-1">Total Value Locked</p>
+                      <p className="text-2xl font-bold text-white">
+                        ${loading ? '...' : lpAnalytics?.pool?.tvl || '0'}
+                      </p>
+                    </div>
+                    <div className="bg-gray-700/50 rounded-xl p-4 text-center">
+                      <p className="text-gray-400 text-sm mb-1">Estimated APR</p>
+                      <p className="text-2xl font-bold text-green-400">
+                        {loading ? '...' : lpAnalytics?.metrics?.apr || '0'}%
+                      </p>
+                    </div>
+                    <div className="bg-gray-700/50 rounded-xl p-4 text-center">
+                      <p className="text-gray-400 text-sm mb-1">Daily Fees</p>
+                      <p className="text-2xl font-bold text-yellow-400">
+                        ${loading ? '...' : lpAnalytics?.metrics?.dailyFees || '0'}
+                      </p>
+                    </div>
+                    <div className="bg-gray-700/50 rounded-xl p-4 text-center">
+                      <p className="text-gray-400 text-sm mb-1">Fee Rate</p>
+                      <p className="text-2xl font-bold text-white">
+                        {loading ? '...' : lpAnalytics?.metrics?.feeRate || '0.3%'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-cyan-500/30 rounded-xl p-6">
+                  <h3 className="text-cyan-400 font-bold mb-6 text-xl">Growth Projections</h3>
+                  <p className="text-gray-400 mb-4">See how weekly liquidity contributions compound over time:</p>
+                  
+                  {lpAnalytics?.growthScenarios && (
+                    <>
+                      <div className="flex flex-wrap gap-2 mb-6">
+                        {lpAnalytics.growthScenarios.map((scenario, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setSelectedScenario(idx)}
+                            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                              selectedScenario === idx
+                                ? 'bg-cyan-500 text-black'
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                          >
+                            ${scenario.weeklyContribution}/week
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-700">
+                              <th className="text-left py-3 px-4 text-gray-400">Timeframe</th>
+                              <th className="text-right py-3 px-4 text-gray-400">Projected TVL</th>
+                              <th className="text-right py-3 px-4 text-gray-400">Trading Capacity</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {lpAnalytics.growthScenarios[selectedScenario]?.projections.map((proj, idx) => (
+                              <tr key={idx} className="border-b border-gray-700/50">
+                                <td className="py-3 px-4 text-white">{proj.weeks} weeks</td>
+                                <td className="py-3 px-4 text-right text-green-400 font-bold">${formatNumber(proj.totalTvl)}</td>
+                                <td className="py-3 px-4 text-right text-cyan-400">{proj.tradingCapacity}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600 rounded-xl p-6">
+                  <h3 className="text-white font-bold mb-4">Why Provide Liquidity?</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-gray-700/50 rounded-lg p-4">
+                      <h4 className="text-green-400 font-bold mb-2">Earn Trading Fees</h4>
+                      <p className="text-gray-400 text-sm">Collect 0.3% on every swap in the pool, distributed proportionally to your share.</p>
+                    </div>
+                    <div className="bg-gray-700/50 rounded-lg p-4">
+                      <h4 className="text-blue-400 font-bold mb-2">Support the Peg</h4>
+                      <p className="text-gray-400 text-sm">Deeper liquidity means tighter spreads and a more stable AXUSD peg.</p>
+                    </div>
+                    <div className="bg-gray-700/50 rounded-lg p-4">
+                      <h4 className="text-purple-400 font-bold mb-2">Build the Economy</h4>
+                      <p className="text-gray-400 text-sm">Your liquidity enables SUSU, KeyGrow, and SEED to function smoothly.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'treasury' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-amber-500/30 rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-amber-400 font-bold text-xl">Treasury Health Dashboard</h3>
+                    {treasuryHealth && (
+                      <span className={`px-4 py-2 rounded-full text-sm font-bold ${
+                        treasuryHealth.overview.healthStatus === 'excellent' ? 'bg-green-500/20 text-green-400' :
+                        treasuryHealth.overview.healthStatus === 'good' ? 'bg-blue-500/20 text-blue-400' :
+                        treasuryHealth.overview.healthStatus === 'warning' ? 'bg-yellow-500/20 text-yellow-400' :
+                        'bg-red-500/20 text-red-400'
+                      }`}>
+                        {treasuryHealth.overview.healthStatus.toUpperCase()} - Score: {treasuryHealth.overview.healthScore}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-gray-700/50 rounded-xl p-4 text-center">
+                      <p className="text-gray-400 text-sm mb-1">Total Supply</p>
+                      <p className="text-2xl font-bold text-white">
+                        {loading ? '...' : formatNumber(treasuryHealth?.overview?.totalSupply || '0')} AXUSD
+                      </p>
+                    </div>
+                    <div className="bg-gray-700/50 rounded-xl p-4 text-center">
+                      <p className="text-gray-400 text-sm mb-1">Total Reserves</p>
+                      <p className="text-2xl font-bold text-green-400">
+                        ${loading ? '...' : formatNumber(treasuryHealth?.overview?.totalReserves || '0')}
+                      </p>
+                    </div>
+                    <div className="bg-gray-700/50 rounded-xl p-4 text-center">
+                      <p className="text-gray-400 text-sm mb-1">Reserve Ratio</p>
+                      <p className="text-2xl font-bold text-amber-400">
+                        {loading ? '...' : treasuryHealth?.overview?.reserveRatio || '0'}%
+                      </p>
+                    </div>
+                    <div className="bg-gray-700/50 rounded-xl p-4 text-center">
+                      <p className="text-gray-400 text-sm mb-1">GENIUS Compliant</p>
+                      <p className={`text-2xl font-bold ${treasuryHealth?.overview?.geniusCompliant ? 'text-green-400' : 'text-red-400'}`}>
+                        {treasuryHealth?.overview?.geniusCompliant ? 'YES' : 'NO'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-amber-500/30 rounded-xl p-6">
+                    <h3 className="text-amber-400 font-bold mb-4">Reserve Breakdown</h3>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">PSM USDC</span>
+                        <span className="text-white font-bold">${treasuryHealth?.reserves?.psmUsdc || '0'}</span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-3">
+                        <div 
+                          className="bg-blue-500 h-3 rounded-full" 
+                          style={{ width: `${Math.min(100, (parseFloat(treasuryHealth?.reserves?.psmUsdc || '0') / parseFloat(treasuryHealth?.overview?.totalReserves || '1')) * 100)}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Backstop USDC</span>
+                        <span className="text-white font-bold">${treasuryHealth?.reserves?.backstopUsdc || '0'}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">T-Bill Value</span>
+                        <span className="text-white font-bold">${treasuryHealth?.reserves?.tbillValue || '0'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-amber-500/30 rounded-xl p-6">
+                    <h3 className="text-amber-400 font-bold mb-4">Minting Capacity</h3>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Debt Ceiling</span>
+                        <span className="text-white font-bold">{formatNumber(treasuryHealth?.capacity?.debtCeiling || '0')} AXUSD</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Outstanding Debt</span>
+                        <span className="text-white font-bold">{formatNumber(treasuryHealth?.capacity?.debtOutstanding || '0')} AXUSD</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Utilization</span>
+                        <span className={`font-bold ${parseFloat(treasuryHealth?.capacity?.debtUtilization || '0') > 80 ? 'text-yellow-400' : 'text-green-400'}`}>
+                          {treasuryHealth?.capacity?.debtUtilization || '0'}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-3">
+                        <div 
+                          className={`h-3 rounded-full ${parseFloat(treasuryHealth?.capacity?.debtUtilization || '0') > 80 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                          style={{ width: `${Math.min(100, parseFloat(treasuryHealth?.capacity?.debtUtilization || '0'))}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Available to Mint</span>
+                        <span className="text-green-400 font-bold">{formatNumber(treasuryHealth?.capacity?.availableCapacity || '0')} AXUSD</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-amber-500/30 rounded-xl p-6">
+                  <h3 className="text-amber-400 font-bold mb-4">Stress Test Scenarios</h3>
+                  <p className="text-gray-400 mb-4">How the protocol handles sudden redemption waves:</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {treasuryHealth?.stressTests && Object.entries(treasuryHealth.stressTests).map(([key, test]) => (
+                      <div key={key} className={`rounded-xl p-4 ${test.canHandle ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'}`}>
+                        <h4 className={`font-bold mb-2 ${test.canHandle ? 'text-green-400' : 'text-red-400'}`}>
+                          {test.name}
+                        </h4>
+                        <p className="text-gray-400 text-sm mb-2">
+                          Status: {test.canHandle ? 'Can Handle' : 'At Risk'}
+                        </p>
+                        <p className="text-white font-bold">
+                          New Reserve Ratio: {test.newReserveRatio.toFixed(1)}%
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
