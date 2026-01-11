@@ -203,7 +203,27 @@ export default function PurposeGroupOnboarding() {
         throw new Error(data.error || 'Failed to join Purpose Group');
       }
       
+      // Save onboarding completion flags
       localStorage.setItem('axiom_onboarding_completed', 'true');
+      localStorage.setItem('axiom_onboarding_complete', 'true');
+      
+      // Save user preferences for personalized dashboard
+      localStorage.setItem('axiom_user_name', formData.name);
+      
+      // Map purpose to interests for personalized dashboard
+      const purposeToInterests = {
+        'emergency_fund': ['susu'],
+        'land_acquisition': ['land', 'susu'],
+        'business_capital': ['susu', 'staking'],
+        'education': ['training', 'susu'],
+        'family_wealth': ['susu', 'keygrow', 'land'],
+        'community_development': ['land', 'governance', 'susu']
+      };
+      const interests = purposeToInterests[formData.purpose] || ['susu'];
+      localStorage.setItem('axiom_user_interests', JSON.stringify(interests));
+      localStorage.setItem('axiom_experience_level', 'new');
+      localStorage.setItem('axiom_user_goals', JSON.stringify(['community', 'ownership']));
+      
       setCurrentStep(steps.length);
     } catch (error) {
       console.error('Submission error:', error);
@@ -596,16 +616,16 @@ export default function PurposeGroupOnboarding() {
             
             <div className="flex gap-4 justify-center">
               <Link 
-                href="/susu"
+                href="/dashboard"
                 className="px-6 py-3 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 transition-colors"
               >
-                Go to Dashboard
+                Go to Your Dashboard
               </Link>
               <Link 
-                href="/learn-wealth-practice"
+                href="/"
                 className="px-6 py-3 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors"
               >
-                Learn More
+                Explore Homepage
               </Link>
             </div>
           </div>
