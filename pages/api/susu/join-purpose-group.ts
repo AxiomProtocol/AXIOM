@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
+import { sendWelcomeEmail } from '../../../lib/server/emailService';
 
 interface JoinRequest {
   region: string;
@@ -126,6 +127,23 @@ export default async function handler(
       const registrationId = registrationResult.rows[0].id;
 
       await client.query('COMMIT');
+
+      // Send welcome email (non-blocking)
+      sendWelcomeEmail({
+        to: email,
+        memberName: name,
+        region,
+        purpose,
+        commitmentAmount
+      }).then(result => {
+        if (result.success) {
+          console.log(`Welcome email sent to ${email}`);
+        } else {
+          console.warn(`Failed to send welcome email: ${result.error}`);
+        }
+      }).catch(err => {
+        console.error('Welcome email error:', err);
+      });
 
       return res.status(200).json({
         success: true,
