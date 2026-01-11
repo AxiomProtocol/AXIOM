@@ -6786,6 +6786,176 @@ export const energyCredits = pgTable("energy_credits", {
   typeIdx: index("credit_type_idx").on(table.creditType),
 }));
 
+// ============================================
+// AXUSD STABLECOIN SYSTEM TABLES
+// ============================================
+
+// AXUSD Historical Snapshots - Daily metrics tracking
+export const axusdSnapshots = pgTable("axusd_snapshots", {
+  id: serial("id").primaryKey(),
+  snapshotDate: timestamp("snapshot_date").notNull(),
+  totalSupply: decimal("total_supply", { precision: 24, scale: 8 }).notNull(),
+  circulatingSupply: decimal("circulating_supply", { precision: 24, scale: 8 }).notNull(),
+  psmReserveUsdc: decimal("psm_reserve_usdc", { precision: 24, scale: 8 }).notNull(),
+  backstopReserveUsdc: decimal("backstop_reserve_usdc", { precision: 24, scale: 8 }),
+  tbillReserve: decimal("tbill_reserve", { precision: 24, scale: 8 }),
+  reserveRatio: decimal("reserve_ratio", { precision: 8, scale: 4 }),
+  pegPrice: decimal("peg_price", { precision: 12, scale: 8 }),
+  lpTvl: decimal("lp_tvl", { precision: 24, scale: 8 }),
+  lpApr: decimal("lp_apr", { precision: 8, scale: 4 }),
+  dailyVolume: decimal("daily_volume", { precision: 24, scale: 8 }),
+  dailyFees: decimal("daily_fees", { precision: 24, scale: 8 }),
+  uniqueHolders: integer("unique_holders"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  dateIdx: index("axusd_snapshot_date_idx").on(table.snapshotDate),
+}));
+
+// AXUSD Alert Configurations
+export const axusdAlertTypeEnum = pgEnum('axusd_alert_type', [
+  'peg_deviation',
+  'reserve_low',
+  'high_utilization',
+  'large_mint',
+  'large_redeem',
+  'liquidity_change'
+]);
+
+export const axusdAlerts = pgTable("axusd_alerts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  alertType: axusdAlertTypeEnum("alert_type").notNull(),
+  threshold: decimal("threshold", { precision: 18, scale: 8 }),
+  isActive: boolean("is_active").default(true),
+  emailNotify: boolean("email_notify").default(true),
+  webhookUrl: varchar("webhook_url"),
+  lastTriggered: timestamp("last_triggered"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("axusd_alert_user_idx").on(table.userId),
+  typeIdx: index("axusd_alert_type_idx").on(table.alertType),
+}));
+
+// AXUSD Alert History
+export const axusdAlertHistory = pgTable("axusd_alert_history", {
+  id: serial("id").primaryKey(),
+  alertId: integer("alert_id").references(() => axusdAlerts.id),
+  alertType: varchar("alert_type", { length: 50 }).notNull(),
+  message: text("message").notNull(),
+  currentValue: decimal("current_value", { precision: 18, scale: 8 }),
+  thresholdValue: decimal("threshold_value", { precision: 18, scale: 8 }),
+  acknowledged: boolean("acknowledged").default(false),
+  txHash: varchar("tx_hash", { length: 66 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  alertIdx: index("alert_history_alert_idx").on(table.alertId),
+  timestampIdx: index("alert_history_timestamp_idx").on(table.createdAt),
+}));
+
+// LP Incentive Programs
+export const lpIncentivePrograms = pgTable("lp_incentive_programs", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  poolAddress: varchar("pool_address", { length: 42 }).notNull(),
+  rewardToken: varchar("reward_token", { length: 42 }).notNull(),
+  rewardTokenSymbol: varchar("reward_token_symbol", { length: 20 }).notNull(),
+  totalRewards: decimal("total_rewards", { precision: 24, scale: 8 }).notNull(),
+  distributedRewards: decimal("distributed_rewards", { precision: 24, scale: 8 }).default('0'),
+  rewardsPerDay: decimal("rewards_per_day", { precision: 24, scale: 8 }),
+  bonusMultiplier: decimal("bonus_multiplier", { precision: 8, scale: 4 }).default('1'),
+  minLockDays: integer("min_lock_days").default(0),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  poolIdx: index("lp_incentive_pool_idx").on(table.poolAddress),
+  activeIdx: index("lp_incentive_active_idx").on(table.isActive),
+}));
+
+// LP Positions with incentive tracking
+export const lpPositions = pgTable("lp_positions", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  poolAddress: varchar("pool_address", { length: 42 }).notNull(),
+  lpTokenBalance: decimal("lp_token_balance", { precision: 24, scale: 8 }).notNull(),
+  entryValue: decimal("entry_value", { precision: 24, scale: 8 }),
+  currentValue: decimal("current_value", { precision: 24, scale: 8 }),
+  unclaimedRewards: decimal("unclaimed_rewards", { precision: 24, scale: 8 }).default('0'),
+  claimedRewards: decimal("claimed_rewards", { precision: 24, scale: 8 }).default('0'),
+  stakingMultiplier: decimal("staking_multiplier", { precision: 8, scale: 4 }).default('1'),
+  lockEndDate: timestamp("lock_end_date"),
+  firstDepositAt: timestamp("first_deposit_at"),
+  lastUpdateAt: timestamp("last_update_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  walletIdx: index("lp_position_wallet_idx").on(table.walletAddress),
+  poolIdx: index("lp_position_pool_idx").on(table.poolAddress),
+  walletPoolUnique: unique("lp_position_wallet_pool").on(table.walletAddress, table.poolAddress),
+}));
+
+// AXUSD Trading Pools (Multi-pool support)
+export const axusdTradingPools = pgTable("axusd_trading_pools", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  poolAddress: varchar("pool_address", { length: 42 }).notNull().unique(),
+  dex: varchar("dex", { length: 50 }).notNull(),
+  token0Address: varchar("token0_address", { length: 42 }).notNull(),
+  token0Symbol: varchar("token0_symbol", { length: 20 }).notNull(),
+  token0Decimals: integer("token0_decimals").notNull(),
+  token1Address: varchar("token1_address", { length: 42 }).notNull(),
+  token1Symbol: varchar("token1_symbol", { length: 20 }).notNull(),
+  token1Decimals: integer("token1_decimals").notNull(),
+  feeRate: decimal("fee_rate", { precision: 8, scale: 6 }),
+  chainId: integer("chain_id").notNull().default(42161),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  dexIdx: index("trading_pool_dex_idx").on(table.dex),
+  chainIdx: index("trading_pool_chain_idx").on(table.chainId),
+}));
+
+// Cross-chain Bridge Routes for AXUSD
+export const axusdBridgeRoutes = pgTable("axusd_bridge_routes", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  sourceChain: varchar("source_chain", { length: 50 }).notNull(),
+  sourceChainId: integer("source_chain_id").notNull(),
+  destChain: varchar("dest_chain", { length: 50 }).notNull(),
+  destChainId: integer("dest_chain_id").notNull(),
+  bridgeProvider: varchar("bridge_provider", { length: 50 }).notNull(),
+  bridgeContract: varchar("bridge_contract", { length: 42 }),
+  minAmount: decimal("min_amount", { precision: 24, scale: 8 }),
+  maxAmount: decimal("max_amount", { precision: 24, scale: 8 }),
+  estimatedTime: integer("estimated_time_minutes"),
+  feePercent: decimal("fee_percent", { precision: 8, scale: 4 }),
+  flatFee: decimal("flat_fee", { precision: 24, scale: 8 }),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  sourceIdx: index("bridge_source_idx").on(table.sourceChain),
+  destIdx: index("bridge_dest_idx").on(table.destChain),
+  providerIdx: index("bridge_provider_idx").on(table.bridgeProvider),
+}));
+
+// Bridge Transaction History
+export const axusdBridgeTransactions = pgTable("axusd_bridge_transactions", {
+  id: serial("id").primaryKey(),
+  routeId: integer("route_id").references(() => axusdBridgeRoutes.id),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  amount: decimal("amount", { precision: 24, scale: 8 }).notNull(),
+  fee: decimal("fee", { precision: 24, scale: 8 }),
+  status: varchar("status", { length: 20 }).default('pending'),
+  sourceTxHash: varchar("source_tx_hash", { length: 66 }),
+  destTxHash: varchar("dest_tx_hash", { length: 66 }),
+  initiatedAt: timestamp("initiated_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+}, (table) => ({
+  walletIdx: index("bridge_tx_wallet_idx").on(table.walletAddress),
+  statusIdx: index("bridge_tx_status_idx").on(table.status),
+}));
+
 // Export types for Phase 9-14
 export type AnalyticsAlert = typeof analyticsAlerts.$inferSelect;
 export type InsertAnalyticsAlert = typeof analyticsAlerts.$inferInsert;
@@ -6815,3 +6985,21 @@ export type CrossChainSettlement = typeof crossChainSettlements.$inferSelect;
 export type InsertCrossChainSettlement = typeof crossChainSettlements.$inferInsert;
 export type EnergyCredit = typeof energyCredits.$inferSelect;
 export type InsertEnergyCredit = typeof energyCredits.$inferInsert;
+
+// AXUSD System Types
+export type AxusdSnapshot = typeof axusdSnapshots.$inferSelect;
+export type InsertAxusdSnapshot = typeof axusdSnapshots.$inferInsert;
+export type AxusdAlert = typeof axusdAlerts.$inferSelect;
+export type InsertAxusdAlert = typeof axusdAlerts.$inferInsert;
+export type AxusdAlertHistory = typeof axusdAlertHistory.$inferSelect;
+export type InsertAxusdAlertHistory = typeof axusdAlertHistory.$inferInsert;
+export type LpIncentiveProgram = typeof lpIncentivePrograms.$inferSelect;
+export type InsertLpIncentiveProgram = typeof lpIncentivePrograms.$inferInsert;
+export type LpPosition = typeof lpPositions.$inferSelect;
+export type InsertLpPosition = typeof lpPositions.$inferInsert;
+export type AxusdTradingPool = typeof axusdTradingPools.$inferSelect;
+export type InsertAxusdTradingPool = typeof axusdTradingPools.$inferInsert;
+export type AxusdBridgeRoute = typeof axusdBridgeRoutes.$inferSelect;
+export type InsertAxusdBridgeRoute = typeof axusdBridgeRoutes.$inferInsert;
+export type AxusdBridgeTransaction = typeof axusdBridgeTransactions.$inferSelect;
+export type InsertAxusdBridgeTransaction = typeof axusdBridgeTransactions.$inferInsert;
