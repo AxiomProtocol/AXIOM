@@ -54,4 +54,13 @@ export function getSharedPool(): Pool {
 
 export const pool = getSharedPool();
 
+export const db = {
+  execute: async (text: string, params?: any[]) => {
+    return pool.query(text, params);
+  },
+  query: async (text: string, params?: any[]) => {
+    return pool.query(text, params);
+  }
+};
+
 export default Pool;

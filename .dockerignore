@@ -1,0 +1,78 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build artifacts (standalone output handles these)
+.next/cache
+.next/static
+.next/server
+
+# Development files
+*.log
+*.md
+!README.md
+.env.local
+.env.development
+.env.test
+
+# Version control
+.git
+.gitignore
+
+# IDE and editor files
+.idea
+.vscode
+*.swp
+*.swo
+
+# Test files
+test/
+tests/
+__tests__
+coverage/
+.nyc_output
+
+# Documentation and non-essential directories
+docs/
+AXIOM.wiki/
+wiki/
+prompts/
+crawled_data/
+tribevest_analysis/
+logs/
+temp-compile-*
+denet-storage/
+download/
+recruit-standalone/
+
+# Python files (not needed for Node.js deployment)
+*.py
+pyproject.toml
+uv.lock
+__pycache__
+
+# Large binary/data files
+*.zip
+*.tar.gz
+*.pdf
+slither-report.sarif
+*.json.backup
+
+# Scripts not needed in production
+*.sh
+!start.sh
+
+# Hardhat/Solidity artifacts (keep only essential)
+cache/
+artifacts/
+stablecoin-deploy/
+
+# Other large directories
+attached_assets/generated_images
+attached_assets/stock_images
+public/images/axusd/*.png
+
+# Replit specific
+replit_agent/
+.replit
+replit.nix
