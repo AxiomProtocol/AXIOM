@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import Image from "next/image";
 import { SiteLayout } from "../components/navigation";
+import { 
+  LayoutDashboard, Coins, ArrowLeftRight, Droplets, CircleDot, 
+  BarChart3, Vault, Gift, Waypoints, History, Bell, HelpCircle,
+  Shield, CheckCircle, Globe, Lock, DollarSign, Wallet, TrendingUp,
+  Zap, ExternalLink, AlertTriangle, Settings, ChevronDown, ChevronUp,
+  Layers, Building, PiggyBank, Award
+} from "lucide-react";
 
 const axusdHeroImage = "/images/axusd/3d_axusd_stablecoin_hero_image.png";
 const treasuryVaultImage = "/images/axusd/3d_treasury_vault_visualization.png";
@@ -189,19 +197,19 @@ const AXUSD_CONTRACTS: Record<string, string> = {
 
 type TabType = 'overview' | 'mint' | 'psm' | 'liquidity' | 'analytics' | 'treasury' | 'vaults' | 'earn' | 'history' | 'pools' | 'incentives' | 'bridge' | 'alerts' | 'faq';
 
-const TAB_CONFIG: { id: TabType; label: string; icon: string }[] = [
-  { id: 'overview', label: 'Overview', icon: '◈' },
-  { id: 'mint', label: 'Mint', icon: '⬡' },
-  { id: 'psm', label: 'PSM', icon: '⟷' },
-  { id: 'liquidity', label: 'Liquidity', icon: '◎' },
-  { id: 'pools', label: 'Pools', icon: '◉' },
-  { id: 'analytics', label: 'Analytics', icon: '◧' },
-  { id: 'treasury', label: 'Treasury', icon: '◆' },
-  { id: 'incentives', label: 'Rewards', icon: '★' },
-  { id: 'bridge', label: 'Bridge', icon: '⋈' },
-  { id: 'history', label: 'History', icon: '◷' },
-  { id: 'alerts', label: 'Alerts', icon: '◐' },
-  { id: 'faq', label: 'FAQ', icon: '?' },
+const TAB_CONFIG: { id: TabType; label: string; icon: React.ReactNode }[] = [
+  { id: 'overview', label: 'Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
+  { id: 'mint', label: 'Mint', icon: <Coins className="w-4 h-4" /> },
+  { id: 'psm', label: 'PSM', icon: <ArrowLeftRight className="w-4 h-4" /> },
+  { id: 'liquidity', label: 'Liquidity', icon: <Droplets className="w-4 h-4" /> },
+  { id: 'pools', label: 'Pools', icon: <CircleDot className="w-4 h-4" /> },
+  { id: 'analytics', label: 'Analytics', icon: <BarChart3 className="w-4 h-4" /> },
+  { id: 'treasury', label: 'Treasury', icon: <Vault className="w-4 h-4" /> },
+  { id: 'incentives', label: 'Rewards', icon: <Gift className="w-4 h-4" /> },
+  { id: 'bridge', label: 'Bridge', icon: <Waypoints className="w-4 h-4" /> },
+  { id: 'history', label: 'History', icon: <History className="w-4 h-4" /> },
+  { id: 'alerts', label: 'Alerts', icon: <Bell className="w-4 h-4" /> },
+  { id: 'faq', label: 'FAQ', icon: <HelpCircle className="w-4 h-4" /> },
 ];
 
 const FAQ_DATA = [
@@ -380,23 +388,29 @@ export default function AXUSDStablecoinPage() {
   const truncateAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
   const Card = ({ children, className = "", accent = "emerald" }: { children: React.ReactNode; className?: string; accent?: string }) => (
-    <div className={`bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow ${className}`}>
+    <div className={`bg-white rounded-2xl border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${className}`}>
       {children}
     </div>
   );
 
-  const StatCard = ({ label, value, suffix, icon, color }: { label: string; value: string; suffix: string; icon: string; color: string }) => {
+  const GlassCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+    <div className={`bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-xl hover:shadow-2xl transition-all duration-300 ${className}`}>
+      {children}
+    </div>
+  );
+
+  const StatCard = ({ label, value, suffix, icon, color }: { label: string; value: string; suffix: string; icon: React.ReactNode; color: string }) => {
     const colorClasses: Record<string, string> = {
-      emerald: 'bg-emerald-50 text-emerald-600 border-emerald-200',
-      teal: 'bg-teal-50 text-teal-600 border-teal-200',
-      blue: 'bg-blue-50 text-blue-600 border-blue-200',
-      purple: 'bg-purple-50 text-purple-600 border-purple-200',
-      amber: 'bg-amber-50 text-amber-600 border-amber-200',
+      emerald: 'bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-600 border-emerald-200 shadow-emerald-100',
+      teal: 'bg-gradient-to-br from-teal-50 to-teal-100 text-teal-600 border-teal-200 shadow-teal-100',
+      blue: 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600 border-blue-200 shadow-blue-100',
+      purple: 'bg-gradient-to-br from-purple-50 to-purple-100 text-purple-600 border-purple-200 shadow-purple-100',
+      amber: 'bg-gradient-to-br from-amber-50 to-amber-100 text-amber-600 border-amber-200 shadow-amber-100',
     };
     return (
-      <Card className="p-6">
+      <Card className="p-6 group">
         <div className="flex items-center gap-3 mb-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg border ${colorClasses[color] || colorClasses.emerald}`}>
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center border shadow-md group-hover:scale-110 transition-transform duration-300 ${colorClasses[color] || colorClasses.emerald}`}>
             {icon}
           </div>
           <span className="text-gray-600 font-medium">{label}</span>
@@ -416,41 +430,72 @@ export default function AXUSDStablecoinPage() {
       </Head>
       
       <div className="bg-white min-h-screen">
-        <section className="relative py-16 px-4">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-teal-50 opacity-50" />
+        <section className="relative py-16 px-4 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-teal-50" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-emerald-100/40 to-transparent rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-teal-100/40 to-transparent rounded-full blur-3xl" />
           
           <div className="relative z-10 max-w-7xl mx-auto">
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-5 py-2 mb-6">
-                <span className="text-emerald-600 text-lg">◈</span>
-                <span className="text-emerald-700 font-semibold text-sm tracking-wide">GENIUS ACT COMPLIANT STABLECOIN</span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-12">
+              <div className="text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-5 py-2 mb-6 shadow-sm">
+                  <Shield className="w-4 h-4 text-emerald-600" />
+                  <span className="text-emerald-700 font-semibold text-sm tracking-wide">GENIUS ACT COMPLIANT STABLECOIN</span>
+                </div>
+                
+                <h1 className="text-5xl md:text-6xl font-bold mb-4 text-gray-900">
+                  AXUSD
+                </h1>
+                
+                <p className="text-xl md:text-2xl text-gray-600 font-light mb-6">
+                  The Settlement Layer of <span className="text-emerald-600 font-semibold">Axiom Protocol</span>
+                </p>
+                
+                <p className="text-lg text-gray-500 max-w-xl mb-8 leading-relaxed">
+                  A <span className="text-emerald-600 font-medium">100% backed hybrid stablecoin</span> with segregated custody, 
+                  cross-chain bridging, and full GENIUS Act compliance.
+                </p>
+
+                <div className="flex flex-wrap justify-center lg:justify-start gap-3 text-sm mb-8">
+                  {[
+                    { icon: <CheckCircle className="w-4 h-4" />, text: '100% Reserve Backed' },
+                    { icon: <Shield className="w-4 h-4" />, text: 'GENIUS Act Compliant' },
+                    { icon: <Globe className="w-4 h-4" />, text: 'Cross-Chain Enabled' },
+                    { icon: <Lock className="w-4 h-4" />, text: 'Segregated Custody' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2 shadow-md hover:shadow-lg transition-shadow">
+                      <span className="text-emerald-600">{item.icon}</span>
+                      <span className="text-gray-700 font-medium">{item.text}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
               
-              <h1 className="text-5xl md:text-6xl font-bold mb-4 text-gray-900">
-                AXUSD
-              </h1>
-              
-              <p className="text-xl md:text-2xl text-gray-600 font-light mb-6">
-                The Settlement Layer of <span className="text-emerald-600 font-semibold">Axiom Protocol</span>
-              </p>
-              
-              <p className="text-lg text-gray-500 max-w-3xl mx-auto mb-8 leading-relaxed">
-                A <span className="text-emerald-600 font-medium">100% backed hybrid stablecoin</span> with segregated custody, 
-                cross-chain bridging, and full GENIUS Act compliance.
-              </p>
-
-              <div className="flex flex-wrap justify-center gap-3 text-sm mb-8">
-                {[
-                  { icon: '✓', text: '100% Reserve Backed' },
-                  { icon: '◆', text: 'GENIUS Act Compliant' },
-                  { icon: '⟷', text: 'Cross-Chain Enabled' },
-                  { icon: '◎', text: 'Segregated Custody' },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2 shadow-sm">
-                    <span className="text-emerald-600">{item.icon}</span>
-                    <span className="text-gray-700">{item.text}</span>
+              <div className="relative flex justify-center lg:justify-end">
+                <div className="relative group">
+                  <div className="absolute -inset-4 bg-gradient-to-r from-emerald-200 via-teal-200 to-emerald-200 rounded-3xl blur-2xl opacity-40 group-hover:opacity-60 transition-opacity duration-500" />
+                  <div className="relative transform group-hover:scale-105 transition-transform duration-500">
+                    <Image
+                      src={axusdHeroImage}
+                      alt="AXUSD Stablecoin"
+                      width={500}
+                      height={500}
+                      className="rounded-3xl shadow-2xl w-auto h-auto"
+                      priority
+                    />
                   </div>
-                ))}
+                  <div className="absolute -bottom-4 -right-4 bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center">
+                        <DollarSign className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Current Price</p>
+                        <p className="text-lg font-bold text-gray-900">${pegStatus?.currentPrice || '1.00'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -474,15 +519,15 @@ export default function AXUSDStablecoinPage() {
             {activeTab === 'overview' && (
               <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <StatCard label="Total Supply" value={supplyData?.totalSupply || '0'} suffix="AXUSD" icon="$" color="emerald" />
-                  <StatCard label="Circulating" value={supplyData?.circulatingSupply || '0'} suffix="AXUSD" icon="◎" color="teal" />
-                  <StatCard label="Reserve Ratio" value={treasuryHealth?.overview?.reserveRatio || '100'} suffix="%" icon="◆" color="blue" />
-                  <StatCard label="PSM Reserve" value={psmData?.usdcReserve || '0'} suffix="USDC" icon="⬡" color="purple" />
+                  <StatCard label="Total Supply" value={supplyData?.totalSupply || '0'} suffix="AXUSD" icon={<DollarSign className="w-5 h-5" />} color="emerald" />
+                  <StatCard label="Circulating" value={supplyData?.circulatingSupply || '0'} suffix="AXUSD" icon={<Coins className="w-5 h-5" />} color="teal" />
+                  <StatCard label="Reserve Ratio" value={treasuryHealth?.overview?.reserveRatio || '100'} suffix="%" icon={<Shield className="w-5 h-5" />} color="blue" />
+                  <StatCard label="PSM Reserve" value={psmData?.usdcReserve || '0'} suffix="USDC" icon={<Wallet className="w-5 h-5" />} color="purple" />
                 </div>
 
                 <Card className="p-8">
                   <h3 className="text-gray-900 font-bold mb-8 text-2xl flex items-center gap-3">
-                    <span className="text-amber-600">⬡</span> How AXUSD Works
+                    <Zap className="w-6 h-6 text-amber-600" /> How AXUSD Works
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     {[
@@ -505,19 +550,19 @@ export default function AXUSDStablecoinPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card className="p-6">
                     <h3 className="text-emerald-700 font-bold mb-4 text-xl flex items-center gap-2">
-                      <span>◆</span> GENIUS Act Compliance
+                      <Shield className="w-5 h-5" /> GENIUS Act Compliance
                     </h3>
                     <div className="space-y-3">
                       {[
-                        '100% Reserve Backing Required',
-                        'Segregated Custody Accounts',
-                        '93-Day Maximum T-Bill Maturity',
-                        'Anti-Rehypothecation Controls',
-                        'Real-Time On-Chain Verification',
+                        { text: '100% Reserve Backing Required', icon: <CheckCircle className="w-4 h-4" /> },
+                        { text: 'Segregated Custody Accounts', icon: <Lock className="w-4 h-4" /> },
+                        { text: '93-Day Maximum T-Bill Maturity', icon: <Building className="w-4 h-4" /> },
+                        { text: 'Anti-Rehypothecation Controls', icon: <Shield className="w-4 h-4" /> },
+                        { text: 'Real-Time On-Chain Verification', icon: <Zap className="w-4 h-4" /> },
                       ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
-                          <span className="text-emerald-600">✓</span>
-                          <span className="text-gray-700">{item}</span>
+                        <div key={i} className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100 hover:bg-emerald-100 transition-colors">
+                          <span className="text-emerald-600">{item.icon}</span>
+                          <span className="text-gray-700">{item.text}</span>
                         </div>
                       ))}
                     </div>
@@ -525,7 +570,7 @@ export default function AXUSDStablecoinPage() {
 
                   <Card className="p-6">
                     <h3 className="text-blue-700 font-bold mb-4 text-xl flex items-center gap-2">
-                      <span>$</span> Revenue Distribution
+                      <PiggyBank className="w-5 h-5" /> Revenue Distribution
                     </h3>
                     <div className="space-y-4">
                       {[
@@ -596,8 +641,8 @@ export default function AXUSDStablecoinPage() {
                         </div>
                         <div className="text-right">
                           <div className="font-bold text-gray-900">${formatNumber(pool.tvl)}</div>
-                          <div className={`text-sm ${pool.status === 'active' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                            {pool.status === 'active' ? '● Live' : '○ Pending'}
+                          <div className={`text-sm flex items-center justify-end gap-1 ${pool.status === 'active' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                            {pool.status === 'active' ? <><CheckCircle className="w-3 h-3" /> Live</> : <><CircleDot className="w-3 h-3" /> Pending</>}
                           </div>
                         </div>
                       </div>
@@ -611,7 +656,7 @@ export default function AXUSDStablecoinPage() {
               <div className="space-y-6">
                 <Card className="p-8">
                   <h3 className="text-amber-700 font-bold mb-6 text-2xl flex items-center gap-3">
-                    <span className="text-amber-600">★</span> LP Incentive Programs
+                    <Award className="w-7 h-7 text-amber-600" /> LP Incentive Programs
                   </h3>
                   <p className="text-gray-600 mb-8">
                     Early liquidity providers receive bonus AXM rewards based on their contribution timing and lock duration.
@@ -681,15 +726,34 @@ export default function AXUSDStablecoinPage() {
 
             {activeTab === 'bridge' && (
               <div className="space-y-6">
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <span className="text-amber-600 text-xl">⚠</span>
-                    <p className="text-amber-700">Bridge transactions are irreversible. Please verify destination addresses carefully before proceeding.</p>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                  <div className="lg:col-span-2">
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                      <div className="flex items-center gap-3">
+                        <AlertTriangle className="w-6 h-6 text-amber-600" />
+                        <p className="text-amber-700">Bridge transactions are irreversible. Please verify destination addresses carefully before proceeding.</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="relative group">
+                    <div className="absolute -inset-2 bg-gradient-to-r from-teal-200 to-blue-200 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
+                    <div className="relative overflow-hidden rounded-2xl shadow-xl">
+                      <Image
+                        src={bridgeImage}
+                        alt="Cross-Chain Bridge"
+                        width={400}
+                        height={200}
+                        className="w-full h-40 object-cover transform group-hover:scale-105 transition-transform duration-500"
+                        style={{ width: '100%', height: 'auto' }}
+                      />
+                    </div>
                   </div>
                 </div>
 
                 <Card className="p-6">
-                  <h3 className="text-teal-700 font-bold mb-6 text-xl">Available Bridge Routes</h3>
+                  <h3 className="text-teal-700 font-bold mb-6 text-xl flex items-center gap-2">
+                    <Waypoints className="w-5 h-5" /> Available Bridge Routes
+                  </h3>
                   <div className="space-y-4">
                     {bridgeData?.routes?.map((route) => (
                       <div key={route.id} className="flex flex-wrap items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-teal-300 transition-colors gap-4">
@@ -792,7 +856,7 @@ export default function AXUSDStablecoinPage() {
               <div className="space-y-6">
                 <Card className="p-8">
                   <h3 className="text-red-700 font-bold mb-6 text-2xl flex items-center gap-3">
-                    <span className="text-red-600">◐</span> Alert Configuration
+                    <Bell className="w-7 h-7 text-red-600" /> Alert Configuration
                   </h3>
                   <p className="text-gray-600 mb-8">
                     Set up notifications to stay informed about important AXUSD protocol events and thresholds.
@@ -803,12 +867,12 @@ export default function AXUSDStablecoinPage() {
                       <div key={alert.type} className="bg-gray-50 rounded-xl p-5 border border-gray-200 hover:border-red-300 transition-colors">
                         <div className="flex items-center gap-3 mb-3">
                           <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center text-red-600">
-                            {alert.type === 'peg_deviation' && '◎'}
-                            {alert.type === 'reserve_low' && '◆'}
-                            {alert.type === 'high_utilization' && '%'}
-                            {alert.type === 'large_mint' && '+'}
-                            {alert.type === 'large_redeem' && '-'}
-                            {alert.type === 'liquidity_change' && '~'}
+                            {alert.type === 'peg_deviation' && <TrendingUp className="w-5 h-5" />}
+                            {alert.type === 'reserve_low' && <Shield className="w-5 h-5" />}
+                            {alert.type === 'high_utilization' && <BarChart3 className="w-5 h-5" />}
+                            {alert.type === 'large_mint' && <Coins className="w-5 h-5" />}
+                            {alert.type === 'large_redeem' && <ArrowLeftRight className="w-5 h-5" />}
+                            {alert.type === 'liquidity_change' && <Droplets className="w-5 h-5" />}
                           </div>
                           <h4 className="font-bold text-gray-900 capitalize">{alert.type.replace(/_/g, ' ')}</h4>
                         </div>
@@ -972,48 +1036,80 @@ export default function AXUSDStablecoinPage() {
             )}
 
             {activeTab === 'liquidity' && (
-              <Card className="p-8">
-                <h3 className="text-purple-700 font-bold mb-6 text-2xl">Add Liquidity</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div className="text-center p-4 bg-purple-50 rounded-xl border border-purple-200">
-                    <div className="text-2xl font-bold text-purple-600">${formatNumber(lpData?.totalLiquidity || '0')}</div>
-                    <div className="text-gray-500">Total Liquidity</div>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 relative group">
+                    <div className="absolute -inset-2 bg-gradient-to-r from-purple-200 to-blue-200 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
+                    <div className="relative overflow-hidden rounded-2xl shadow-xl">
+                      <Image
+                        src={liquidityPoolImage}
+                        alt="Liquidity Pool"
+                        width={600}
+                        height={300}
+                        className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-500"
+                        style={{ width: '100%', height: 'auto' }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                      <div className="absolute bottom-4 left-4 text-white">
+                        <h3 className="text-2xl font-bold flex items-center gap-2">
+                          <Droplets className="w-6 h-6" /> AXUSD/USDC Pool
+                        </h3>
+                        <p className="text-white/80">Provide liquidity and earn rewards</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-center p-4 bg-emerald-50 rounded-xl border border-emerald-200">
-                    <div className="text-2xl font-bold text-emerald-600">{lpAnalytics?.metrics?.apr || '0'}%</div>
-                    <div className="text-gray-500">Current APR</div>
-                  </div>
-                  <div className="text-center p-4 bg-amber-50 rounded-xl border border-amber-200">
-                    <div className="text-2xl font-bold text-amber-600">${lpAnalytics?.metrics?.dailyFees || '0'}</div>
-                    <div className="text-gray-500">Daily Fees</div>
-                  </div>
+                  <Card className="p-6">
+                    <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-emerald-600" /> Pool Stats
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
+                        <div className="text-2xl font-bold text-purple-600">${formatNumber(lpData?.totalLiquidity || '0')}</div>
+                        <div className="text-gray-500 text-sm">Total Liquidity</div>
+                      </div>
+                      <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                        <div className="text-2xl font-bold text-emerald-600">{lpAnalytics?.metrics?.apr || '0'}%</div>
+                        <div className="text-gray-500 text-sm">Current APR</div>
+                      </div>
+                      <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                        <div className="text-2xl font-bold text-amber-600">${lpAnalytics?.metrics?.dailyFees || '0'}</div>
+                        <div className="text-gray-500 text-sm">Daily Fees</div>
+                      </div>
+                    </div>
+                  </Card>
                 </div>
-                <div className="max-w-xl mx-auto space-y-4">
-                  <div>
-                    <label className="text-gray-700 block mb-2">AXUSD Amount</label>
-                    <input
-                      type="number"
-                      value={lpAxusdAmount}
-                      onChange={(e) => { setLpAxusdAmount(e.target.value); setLpUsdcAmount(e.target.value); }}
-                      placeholder="0.00"
-                      className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
-                    />
+                
+                <Card className="p-8">
+                  <h3 className="text-purple-700 font-bold mb-6 text-2xl flex items-center gap-2">
+                    <Layers className="w-6 h-6" /> Add Liquidity
+                  </h3>
+                  <div className="max-w-xl mx-auto space-y-4">
+                    <div>
+                      <label className="text-gray-700 block mb-2">AXUSD Amount</label>
+                      <input
+                        type="number"
+                        value={lpAxusdAmount}
+                        onChange={(e) => { setLpAxusdAmount(e.target.value); setLpUsdcAmount(e.target.value); }}
+                        placeholder="0.00"
+                        className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-gray-700 block mb-2">USDC Amount</label>
+                      <input
+                        type="number"
+                        value={lpUsdcAmount}
+                        onChange={(e) => { setLpUsdcAmount(e.target.value); setLpAxusdAmount(e.target.value); }}
+                        placeholder="0.00"
+                        className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
+                      />
+                    </div>
+                    <button className="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition-colors">
+                      Connect Wallet to Add Liquidity
+                    </button>
                   </div>
-                  <div>
-                    <label className="text-gray-700 block mb-2">USDC Amount</label>
-                    <input
-                      type="number"
-                      value={lpUsdcAmount}
-                      onChange={(e) => { setLpUsdcAmount(e.target.value); setLpAxusdAmount(e.target.value); }}
-                      placeholder="0.00"
-                      className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
-                    />
-                  </div>
-                  <button className="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition-colors">
-                    Connect Wallet to Add Liquidity
-                  </button>
-                </div>
-              </Card>
+                </Card>
+              </div>
             )}
 
             {activeTab === 'analytics' && (
@@ -1054,18 +1150,37 @@ export default function AXUSDStablecoinPage() {
 
             {activeTab === 'treasury' && (
               <div className="space-y-6">
-                <Card className="p-6">
-                  <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-1">Treasury Health</h2>
-                      <p className="text-gray-500">Real-time reserve backing and protocol health metrics</p>
-                    </div>
-                    <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${treasuryHealth?.overview?.geniusCompliant ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                      <span>{treasuryHealth?.overview?.geniusCompliant ? '✓' : '✗'}</span>
-                      GENIUS Act {treasuryHealth?.overview?.geniusCompliant ? 'Compliant' : 'Non-Compliant'}
-                    </span>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                  <div className="lg:col-span-2">
+                    <Card className="p-6 h-full">
+                      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-900 mb-1 flex items-center gap-3">
+                            <Vault className="w-7 h-7 text-emerald-600" /> Treasury Health
+                          </h2>
+                          <p className="text-gray-500">Real-time reserve backing and protocol health metrics</p>
+                        </div>
+                        <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${treasuryHealth?.overview?.geniusCompliant ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                          {treasuryHealth?.overview?.geniusCompliant ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                          GENIUS Act {treasuryHealth?.overview?.geniusCompliant ? 'Compliant' : 'Non-Compliant'}
+                        </span>
+                      </div>
+                    </Card>
                   </div>
-                </Card>
+                  <div className="relative group">
+                    <div className="absolute -inset-2 bg-gradient-to-r from-emerald-200 to-teal-200 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
+                    <div className="relative overflow-hidden rounded-2xl shadow-xl">
+                      <Image
+                        src={treasuryVaultImage}
+                        alt="Treasury Vault"
+                        width={400}
+                        height={300}
+                        className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-500"
+                        style={{ width: '100%', height: 'auto' }}
+                      />
+                    </div>
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <Card className="p-6 text-center">
