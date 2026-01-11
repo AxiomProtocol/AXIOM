@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import { AXUSD_STABLECOIN_CONTRACTS, CORE_CONTRACTS } from '../../../shared/contracts';
+import { AXUSD_GENIUS_CONTRACTS, CORE_CONTRACTS } from '../../../shared/contracts';
 
 const ARBITRUM_RPC = process.env.ALCHEMY_API_KEY 
   ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
@@ -19,13 +19,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
-    const axusdContract = new ethers.Contract(AXUSD_STABLECOIN_CONTRACTS.AXUSD, ERC20_ABI, provider);
+    const axusdContract = new ethers.Contract(AXUSD_GENIUS_CONTRACTS.AXUSD, ERC20_ABI, provider);
 
     const [totalSupplyRaw, decimals, backstopBalanceRaw, psmBalanceRaw, treasuryBalanceRaw] = await Promise.all([
       axusdContract.totalSupply(),
       axusdContract.decimals(),
-      axusdContract.balanceOf(AXUSD_STABLECOIN_CONTRACTS.BACKSTOP_VAULT).catch(() => BigInt(0)),
-      axusdContract.balanceOf(AXUSD_STABLECOIN_CONTRACTS.PSM).catch(() => BigInt(0)),
+      axusdContract.balanceOf(AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_USDC).catch(() => BigInt(0)),
+      axusdContract.balanceOf(AXUSD_GENIUS_CONTRACTS.PSM).catch(() => BigInt(0)),
       axusdContract.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => BigInt(0))
     ]);
 
@@ -50,7 +50,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
         maxSupply: '1000000000',
         decimals: Number(decimals),
-        contractAddress: AXUSD_STABLECOIN_CONTRACTS.AXUSD,
+        contractAddress: AXUSD_GENIUS_CONTRACTS.AXUSD,
+        geniusCompliant: true,
         timestamp: new Date().toISOString()
       }
     });

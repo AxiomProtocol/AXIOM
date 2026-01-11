@@ -21,21 +21,39 @@ interface PSMData {
 }
 
 const AXUSD_CONTRACTS: Record<string, string> = {
-  'AXUSD Token': '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c',
-  'Vault Engine': '0x72aaBb0d84077859276513106Ea225E4edE80db0',
-  'PSM': '0x4584888cB411E9cc88e3800BAB73A430D90d3793',
-  'Backstop Vault': '0x9D59e65aF3F5251578DC5F7576793de28A95c00a',
-  'Oracle Adapter': '0x6dEC19DD5472F5a82e37972008De3eBB46b754B0',
-  'Rate Limiter': '0xeCaBaA0dBbbA47E22C1f5A0F0495D1Ce9F40CF20',
-  'SEED Yield': '0x5867e1a8c77530648edF61975CBB57a8913d159F',
-  'Revenue Router': '0x39A9Ca593d350450d93aF7F24dC1A682df47F30a',
-  'SUSU Adapter': '0x4c17360651c2c46F1739E92f512D8ce6318106b4',
-  'KeyGrow Payment': '0x0FA690B590F37c369Ff7cFbF155d2E4A474d955c',
-  'Liquidity Bootstrapper': '0xd690F8A987542772FDd65a9813c0Ae55Cfb1AD19'
+  'AXUSD Token': '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C',
+  'PSM': '0x5db58d9c21369d1532a48Bdd658E4Fe415404922',
+  'Vault Engine': '0x4675C09dDC1B3094cd86F6b59904CC3E06c98028',
+  'Oracle Adapter': '0xE3b1f38AaBAd138d0EF2e2C7429ee57c512fDF3D',
+  'Rate Limiter': '0xE19E4172786A193997f985edC27f7932a0B65327',
+  'Backstop USDC': '0x54438249457694eB5431811f3f19444Af0a01B29',
+  'Backstop ETH': '0xF2540BD6fa365Bf8F1b9dd4efa7534Ff6522393f',
+  'T-Bill Vault': '0x091c146EC7c348552319E8D17cF7D0C9A4b3BCd4',
+  'GENIUS Compliance': '0x8E8F769dA133cd3825549EE3E814fC936C8dE7be',
+  'Segregated Custody': '0x1Ba851cfB9B3e34D88BC0cbf5a0042F9eb1Af66b',
+  'Liquidator': '0xF6518B363aB4D461D59E1c9A54De3B7f66Da5384',
+  'Market Operations': '0x42E31Ac3A6aF2B2925a0B979A05156833b6660E4',
+  'LP Pool (Camelot)': '0x266F6Cf7eA36d3f676eb292B274EAb25172790a2'
 };
 
+const CAMELOT_ROUTER = '0xc873fEcbd354f5A56E00E710B90EF4201db2448d';
+const USDC_ADDRESS = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+
+interface PegStatus {
+  currentPrice: string;
+  lowerBound: string;
+  upperBound: string;
+  pegDefenseNeeded: boolean;
+}
+
+interface LPData {
+  axusdReserve: string;
+  usdcReserve: string;
+  totalLiquidity: string;
+}
+
 export default function AXUSDStablecoinPage() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'mint' | 'psm' | 'vaults' | 'earn'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'mint' | 'psm' | 'liquidity' | 'vaults' | 'earn'>('overview');
   const [mintAmount, setMintAmount] = useState('');
   const [collateralType, setCollateralType] = useState('WETH');
   const [psmAmount, setPsmAmount] = useState('');
@@ -43,21 +61,31 @@ export default function AXUSDStablecoinPage() {
   
   const [supplyData, setSupplyData] = useState<SupplyData | null>(null);
   const [psmData, setPsmData] = useState<PSMData | null>(null);
+  const [pegStatus, setPegStatus] = useState<PegStatus | null>(null);
+  const [lpData, setLpData] = useState<LPData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lpAxusdAmount, setLpAxusdAmount] = useState('');
+  const [lpUsdcAmount, setLpUsdcAmount] = useState('');
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [supplyRes, psmRes] = await Promise.all([
+        const [supplyRes, psmRes, pegRes, lpRes] = await Promise.all([
           fetch('/api/axusd/supply'),
-          fetch('/api/axusd/psm')
+          fetch('/api/axusd/psm'),
+          fetch('/api/axusd/peg-status'),
+          fetch('/api/axusd/liquidity')
         ]);
         
         const supplyJson = await supplyRes.json();
         const psmJson = await psmRes.json();
+        const pegJson = await pegRes.json();
+        const lpJson = await lpRes.json();
         
         if (supplyJson.success) setSupplyData(supplyJson.data);
         if (psmJson.success) setPsmData(psmJson.data);
+        if (pegJson.success) setPegStatus(pegJson.data);
+        if (lpJson.success) setLpData(lpJson.data);
       } catch (error) {
         console.error('Failed to fetch AXUSD data:', error);
       } finally {
@@ -130,7 +158,7 @@ export default function AXUSDStablecoinPage() {
             </div>
 
             <div className="flex flex-wrap justify-center gap-2 mb-8">
-              {(['overview', 'mint', 'psm', 'vaults', 'earn'] as const).map((tab) => (
+              {(['overview', 'mint', 'psm', 'liquidity', 'vaults', 'earn'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -143,6 +171,7 @@ export default function AXUSDStablecoinPage() {
                   {tab === 'overview' && 'Overview'}
                   {tab === 'mint' && 'Mint AXUSD'}
                   {tab === 'psm' && 'PSM Swap'}
+                  {tab === 'liquidity' && 'Add Liquidity'}
                   {tab === 'vaults' && 'My Vaults'}
                   {tab === 'earn' && 'Earn Yield'}
                 </button>
@@ -464,6 +493,147 @@ export default function AXUSDStablecoinPage() {
                   <p className="text-center text-sm text-gray-400">
                     PSM allows 1:1 swaps between USDC and AXUSD with a 0.1% fee.
                   </p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'liquidity' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-teal-500/30 rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-teal-400 font-bold text-xl">AXUSD/USDC Liquidity Pool</h3>
+                    <span className="bg-teal-500/20 text-teal-400 px-3 py-1 rounded-full text-sm">
+                      Camelot DEX
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-gray-700/50 rounded-xl p-4 text-center">
+                      <p className="text-gray-400 text-sm mb-1">AXUSD Reserve</p>
+                      <p className="text-2xl font-bold text-white">
+                        {loading ? '...' : formatNumber(lpData?.axusdReserve || '0')}
+                      </p>
+                    </div>
+                    <div className="bg-gray-700/50 rounded-xl p-4 text-center">
+                      <p className="text-gray-400 text-sm mb-1">USDC Reserve</p>
+                      <p className="text-2xl font-bold text-white">
+                        {loading ? '...' : formatNumber(lpData?.usdcReserve || '0')}
+                      </p>
+                    </div>
+                    <div className="bg-gray-700/50 rounded-xl p-4 text-center">
+                      <p className="text-gray-400 text-sm mb-1">Total Value</p>
+                      <p className="text-2xl font-bold text-teal-400">
+                        ${loading ? '...' : formatNumber(parseFloat(lpData?.usdcReserve || '0') * 2)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {pegStatus && (
+                    <div className="bg-gray-700/30 rounded-xl p-4 mb-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-gray-400 text-sm">Current Peg Price</p>
+                          <p className="text-3xl font-bold text-white">
+                            ${parseFloat(pegStatus.currentPrice).toFixed(4)}
+                          </p>
+                        </div>
+                        <div className={`px-4 py-2 rounded-full ${
+                          pegStatus.pegDefenseNeeded 
+                            ? 'bg-yellow-500/20 text-yellow-400' 
+                            : 'bg-green-500/20 text-green-400'
+                        }`}>
+                          {pegStatus.pegDefenseNeeded ? 'Peg Defense Active' : 'Peg Stable'}
+                        </div>
+                      </div>
+                      <div className="mt-2 text-sm text-gray-400">
+                        Target range: ${pegStatus.lowerBound} - ${pegStatus.upperBound}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-teal-500/30 rounded-xl p-6">
+                  <h3 className="text-teal-400 font-bold mb-6 text-xl">Add Liquidity</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-gray-400 mb-2">AXUSD Amount</label>
+                      <input
+                        type="number"
+                        value={lpAxusdAmount}
+                        onChange={(e) => {
+                          setLpAxusdAmount(e.target.value);
+                          setLpUsdcAmount(e.target.value);
+                        }}
+                        placeholder="0.0"
+                        className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white text-lg focus:border-teal-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-400 mb-2">USDC Amount</label>
+                      <input
+                        type="number"
+                        value={lpUsdcAmount}
+                        onChange={(e) => {
+                          setLpUsdcAmount(e.target.value);
+                          setLpAxusdAmount(e.target.value);
+                        }}
+                        placeholder="0.0"
+                        className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white text-lg focus:border-teal-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="bg-gray-700/50 rounded-xl p-4 space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Pool Share</span>
+                        <span className="text-white font-bold">
+                          {lpAxusdAmount && lpData 
+                            ? ((parseFloat(lpAxusdAmount) / (parseFloat(lpData.axusdReserve) + parseFloat(lpAxusdAmount))) * 100).toFixed(2)
+                            : '0'}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Exchange Rate</span>
+                        <span className="text-green-400">1 AXUSD = 1 USDC</span>
+                      </div>
+                    </div>
+
+                    <button className="w-full py-4 bg-teal-500 hover:bg-teal-600 text-black font-bold text-lg rounded-xl transition-colors">
+                      Connect Wallet to Add Liquidity
+                    </button>
+
+                    <p className="text-center text-sm text-gray-400">
+                      Provide liquidity to earn trading fees. LP tokens are automatically staked.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600 rounded-xl p-6">
+                  <h3 className="text-white font-bold mb-4">External Links</h3>
+                  <div className="flex flex-wrap gap-4">
+                    <a
+                      href={`https://app.camelot.exchange/liquidity/?token1=0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C&token2=0xaf88d065e77c8cC2239327C5EDb3A432268e5831`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors"
+                    >
+                      <span>Add on Camelot</span>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                    <a
+                      href="https://arbitrum.blockscout.com/address/0x266F6Cf7eA36d3f676eb292B274EAb25172790a2"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
+                    >
+                      <span>View Pool on Blockscout</span>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  </div>
                 </div>
               </div>
             )}
