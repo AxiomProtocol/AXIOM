@@ -983,9 +983,26 @@ export default function AXUSDStablecoinPage() {
                       <span className="text-gray-900 font-bold">{mintAmount ? (parseFloat(mintAmount) * 2000 / 1.5).toFixed(2) : '0.00'} AXUSD</span>
                     </div>
                   </div>
-                  <button className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl hover:bg-emerald-700 transition-colors">
-                    Connect Wallet to Mint
-                  </button>
+                  {isWalletConnected ? (
+                    <button 
+                      className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl hover:bg-emerald-700 transition-colors"
+                      onClick={() => {
+                        if (parseFloat(mintAmount) > 0) {
+                          alert(`Minting AXUSD with ${mintAmount} ${collateralType}`);
+                        }
+                      }}
+                      disabled={!mintAmount || parseFloat(mintAmount) <= 0}
+                    >
+                      Mint AXUSD
+                    </button>
+                  ) : (
+                    <button 
+                      className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl hover:bg-emerald-700 transition-colors"
+                      onClick={connectWallet}
+                    >
+                      Connect Wallet to Mint
+                    </button>
+                  )}
                 </div>
               </Card>
             )}
@@ -1032,9 +1049,26 @@ export default function AXUSDStablecoinPage() {
                       <span className="text-gray-900 font-bold">{psmAmount ? (parseFloat(psmAmount) * 0.999).toFixed(4) : '0.00'} {psmDirection === 'usdcToAxusd' ? 'AXUSD' : 'USDC'}</span>
                     </div>
                   </div>
-                  <button className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors">
-                    Connect Wallet to Swap
-                  </button>
+                  {isWalletConnected ? (
+                    <button 
+                      className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors"
+                      onClick={() => {
+                        if (parseFloat(psmAmount) > 0) {
+                          alert(`Swapping ${psmAmount} ${psmDirection === 'usdcToAxusd' ? 'USDC to AXUSD' : 'AXUSD to USDC'}`);
+                        }
+                      }}
+                      disabled={!psmAmount || parseFloat(psmAmount) <= 0}
+                    >
+                      Swap {psmDirection === 'usdcToAxusd' ? 'USDC → AXUSD' : 'AXUSD → USDC'}
+                    </button>
+                  ) : (
+                    <button 
+                      className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors"
+                      onClick={connectWallet}
+                    >
+                      Connect Wallet to Swap
+                    </button>
+                  )}
                 </div>
               </Card>
             )}
