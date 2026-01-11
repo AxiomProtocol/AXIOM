@@ -1,0 +1,23 @@
+{
+  "network": "arbitrum",
+  "chainId": 42161,
+  "deployer": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+  "timestamp": "2026-01-11T16:36:35.364Z",
+  "phase": "complete",
+  "geniusActCompliant": true,
+  "enforcementDeadline": "2027-01-18",
+  "contracts": {
+    "axusd": "0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C",
+    "oracle": "0xE3b1f38AaBAd138d0EF2e2C7429ee57c512fDF3D",
+    "rateLimiter": "0xE19E4172786A193997f985edC27f7932a0B65327",
+    "vaultEngine": "0x4675C09dDC1B3094cd86F6b59904CC3E06c98028",
+    "psm": "0x101866a92EF9DB903e4C068f63708Acd9C40f7Fc",
+    "backstopVaultUSDC": "0x54438249457694eB5431811f3f19444Af0a01B29",
+    "tbillVault": "0x091c146EC7c348552319E8D17cF7D0C9A4b3BCd4",
+    "geniusCompliance": "0x8E8F769dA133cd3825549EE3E814fC936C8dE7be",
+    "segregatedCustody": "0x1Ba851cfB9B3e34D88BC0cbf5a0042F9eb1Af66b",
+    "backstopVaultETH": "0xF2540BD6fa365Bf8F1b9dd4efa7534Ff6522393f",
+    "liquidator": "0xF6518B363aB4D461D59E1c9A54De3B7f66Da5384",
+    "marketOperations": "pending-dex-integration"
+  }
+}

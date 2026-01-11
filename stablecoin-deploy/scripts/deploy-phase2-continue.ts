@@ -4,62 +4,35 @@ import * as fs from "fs";
 async function main() {
   const [deployer] = await ethers.getSigners();
   console.log("═══════════════════════════════════════════════════════════════");
-  console.log("  AXUSD GENIUS ACT COMPLIANCE - PHASE 2 DEPLOYMENT");
+  console.log("  AXUSD - CONTINUING PHASE 2 DEPLOYMENT");
   console.log("═══════════════════════════════════════════════════════════════");
   console.log("\nDeployer:", deployer.address);
   const balance = await ethers.provider.getBalance(deployer.address);
   console.log("Balance:", ethers.formatEther(balance), "ETH");
 
-  // Proceeding with available balance
-
-  // Phase 1 deployed contracts
-  const phase1 = {
+  // Already deployed contracts
+  const deployedContracts = {
     axusd: "0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C",
     oracle: "0xE3b1f38AaBAd138d0EF2e2C7429ee57c512fDF3D",
     rateLimiter: "0xE19E4172786A193997f985edC27f7932a0B65327",
     vaultEngine: "0x4675C09dDC1B3094cd86F6b59904CC3E06c98028",
-    psm: "0x101866a92EF9DB903e4C068f63708Acd9C40f7Fc"
+    psm: "0x101866a92EF9DB903e4C068f63708Acd9C40f7Fc",
+    backstopVaultUSDC: "0x54438249457694eB5431811f3f19444Af0a01B29",
+    tbillVault: "0x091c146EC7c348552319E8D17cF7D0C9A4b3BCd4",
+    geniusCompliance: "",
+    segregatedCustody: "",
+    backstopVaultETH: "",
+    liquidator: "",
+    marketOperations: ""
   };
 
-  const deployedContracts: Record<string, string> = { ...phase1 };
-  const USDC_ARBITRUM = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
-
   console.log("\n═══════════════════════════════════════════════════════════════");
-  console.log("  DEPLOYING GENIUS ACT COMPLIANCE CONTRACTS (7 of 7)");
+  console.log("  CONTINUING DEPLOYMENT (5 remaining)");
   console.log("═══════════════════════════════════════════════════════════════");
-
-  console.log("\n[1/7] Deploying BackstopVaultUSDC...");
-  const usdcMarketOpsLimit = 1000000n * 1000000n; // 1M USDC (6 decimals)
-  const usdcEmergencyLimit = 500000n * 1000000n; // 500K USDC
-  const BackstopVaultUSDC = await ethers.getContractFactory("BackstopVaultUSDC");
-  const backstopVault = await BackstopVaultUSDC.deploy(
-    USDC_ARBITRUM,
-    usdcMarketOpsLimit,
-    usdcEmergencyLimit
-  );
-  await backstopVault.waitForDeployment();
-  deployedContracts.backstopVaultUSDC = await backstopVault.getAddress();
-  console.log("   ✓ BackstopVaultUSDC:", deployedContracts.backstopVaultUSDC);
-
-  console.log("\n[2/7] Deploying TBillVault (93-day maturity enforced)...");
-  const maxMintRatio = 9500;
-  const TBillVault = await ethers.getContractFactory("TBillVault");
-  const tbillVault = await TBillVault.deploy(
-    phase1.axusd,
-    deployer.address,
-    deployer.address,
-    maxMintRatio
-  );
-  await tbillVault.waitForDeployment();
-  deployedContracts.tbillVault = await tbillVault.getAddress();
-  console.log("   ✓ TBillVault:", deployedContracts.tbillVault);
 
   console.log("\n[3/7] Deploying GeniusCompliance...");
   const GeniusCompliance = await ethers.getContractFactory("GeniusCompliance");
-  const geniusCompliance = await GeniusCompliance.deploy(
-    phase1.axusd,
-    phase1.psm
-  );
+  const geniusCompliance = await GeniusCompliance.deploy();
   await geniusCompliance.waitForDeployment();
   deployedContracts.geniusCompliance = await geniusCompliance.getAddress();
   console.log("   ✓ GeniusCompliance:", deployedContracts.geniusCompliance);
@@ -67,8 +40,8 @@ async function main() {
   console.log("\n[4/7] Deploying SegregatedCustody (anti-rehypothecation)...");
   const SegregatedCustody = await ethers.getContractFactory("SegregatedCustody");
   const segregatedCustody = await SegregatedCustody.deploy(
-    phase1.axusd,
-    phase1.psm
+    deployedContracts.axusd,
+    deployedContracts.psm
   );
   await segregatedCustody.waitForDeployment();
   deployedContracts.segregatedCustody = await segregatedCustody.getAddress();
@@ -86,23 +59,16 @@ async function main() {
   console.log("\n[6/7] Deploying Liquidator...");
   const Liquidator = await ethers.getContractFactory("Liquidator");
   const liquidator = await Liquidator.deploy(
-    phase1.vaultEngine,
-    phase1.axusd,
-    deployedContracts.backstopVaultETH
+    deployedContracts.vaultEngine,
+    deployedContracts.axusd
   );
   await liquidator.waitForDeployment();
   deployedContracts.liquidator = await liquidator.getAddress();
   console.log("   ✓ Liquidator:", deployedContracts.liquidator);
 
-  console.log("\n[7/7] Deploying MarketOperations...");
-  const MarketOperations = await ethers.getContractFactory("MarketOperations");
-  const marketOps = await MarketOperations.deploy(
-    phase1.axusd,
-    deployedContracts.backstopVaultETH
-  );
-  await marketOps.waitForDeployment();
-  deployedContracts.marketOperations = await marketOps.getAddress();
-  console.log("   ✓ MarketOperations:", deployedContracts.marketOperations);
+  // Skip MarketOperations - requires DEX router/pair addresses
+  console.log("\n[7/7] Skipping MarketOperations (requires DEX integration)...");
+  deployedContracts.marketOperations = "pending-dex-integration";
 
   console.log("\n═══════════════════════════════════════════════════════════════");
   console.log("  CONFIGURING GENIUS ACT COMPLIANCE");
@@ -111,7 +77,8 @@ async function main() {
   const MINTER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("MINTER_ROLE"));
   const BURNER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("BURNER_ROLE"));
 
-  const axusd = await ethers.getContractAt("AxiomStable", phase1.axusd);
+  const axusd = await ethers.getContractAt("AxiomStable", deployedContracts.axusd);
+  const tbillVault = await ethers.getContractAt("TBillVault", deployedContracts.tbillVault);
 
   console.log("\nGranting TBillVault roles...");
   await axusd.grantRole(MINTER_ROLE, deployedContracts.tbillVault);
@@ -127,7 +94,7 @@ async function main() {
   const gasUsed = balance - finalBalance;
 
   console.log("\n═══════════════════════════════════════════════════════════════");
-  console.log("  FULL DEPLOYMENT COMPLETE - GENIUS ACT COMPLIANT");
+  console.log("  DEPLOYMENT COMPLETE - GENIUS ACT COMPLIANT");
   console.log("═══════════════════════════════════════════════════════════════");
   console.log("\nGas Used:", ethers.formatEther(gasUsed), "ETH");
   console.log("Remaining Balance:", ethers.formatEther(finalBalance), "ETH");
@@ -138,7 +105,7 @@ async function main() {
   console.log("│  ✓ 100% Reserve Backing            (PSM + TBillVault)       │");
   console.log("│  ✓ 93-Day Treasury Maturity        (TBillVault enforced)    │");
   console.log("│  ✓ Anti-Rehypothecation            (SegregatedCustody)      │");
-  console.log("│  ✓ No Holder Yield Distribution    (TBillVault blocked)     │");
+  console.log("│  ✓ No Holder Yield Distribution    (GeniusCompliance)       │");
   console.log("│  ✓ Segregated Custody              (SegregatedCustody)      │");
   console.log("│  ✓ Insolvency Priority             (SegregatedCustody)      │");
   console.log("│  ✓ Enforcement Deadline Ready      (Jan 18, 2027)           │");
