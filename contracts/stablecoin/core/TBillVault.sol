@@ -21,6 +21,10 @@ interface IYieldSource {
     function pendingYield(address token) external view returns (uint256);
 }
 
+interface IGeniusComplianceTBill {
+    function isYieldBlocked() external view returns (bool);
+}
+
 contract TBillVault is AccessControl, ReentrancyGuard, Pausable, ITBillVault {
     using SafeERC20 for IERC20;
 
@@ -49,12 +53,16 @@ contract TBillVault is AccessControl, ReentrancyGuard, Pausable, ITBillVault {
     uint256 public maxMintRatio;
 
     IYieldSource public yieldSource;
+    
+    IGeniusComplianceTBill public geniusCompliance;
+    bool public geniusComplianceEnabled;
 
     event MaxMintRatioUpdated(uint256 newRatio);
     event FeeBurnerUpdated(address indexed newFeeBurner);
     event InsuranceFundUpdated(address indexed newFund);
     event SharesUpdated(uint256 feeBurnerShare, uint256 insuranceShare);
     event YieldSourceUpdated(address indexed newSource);
+    event GeniusComplianceUpdated(address indexed compliance, bool enabled);
 
     constructor(
         address _axusd,
@@ -202,7 +210,17 @@ contract TBillVault is AccessControl, ReentrancyGuard, Pausable, ITBillVault {
         return totalYield;
     }
 
+    function setGeniusCompliance(address _compliance, bool _enabled) external onlyRole(ADMIN_ROLE) {
+        geniusCompliance = IGeniusComplianceTBill(_compliance);
+        geniusComplianceEnabled = _enabled;
+        emit GeniusComplianceUpdated(_compliance, _enabled);
+    }
+
     function distributeYield() external nonReentrant onlyRole(YIELD_MANAGER_ROLE) {
+        if (geniusComplianceEnabled && address(geniusCompliance) != address(0)) {
+            require(!geniusCompliance.isYieldBlocked(), "TBillVault: yield distribution blocked by GENIUS Act");
+        }
+        
         uint256 totalYieldValue = 0;
 
         for (uint256 i = 0; i < supportedTokens.length; i++) {

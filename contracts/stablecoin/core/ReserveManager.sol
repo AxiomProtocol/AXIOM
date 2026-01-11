@@ -35,6 +35,8 @@ contract ReserveManager is AccessControl, ReentrancyGuard, Pausable {
     event RebalanceExecuted(uint256 tbillDelta, uint256 backstopDelta);
     event TargetRatiosUpdated(uint256 tbillRatio, uint256 backstopRatio);
     event RebalanceThresholdUpdated(uint256 newThreshold);
+    event BackstopVaultUpdated(address indexed oldVault, address indexed newVault);
+    event TBillVaultUpdated(address indexed oldVault, address indexed newVault);
 
     constructor(
         address _backstopVault,
@@ -130,12 +132,16 @@ contract ReserveManager is AccessControl, ReentrancyGuard, Pausable {
 
     function setBackstopVault(address _vault) external onlyRole(ADMIN_ROLE) {
         require(_vault != address(0), "ReserveManager: zero address");
+        address oldVault = address(backstopVault);
         backstopVault = IBackstopVault(_vault);
+        emit BackstopVaultUpdated(oldVault, _vault);
     }
 
     function setTBillVault(address _vault) external onlyRole(ADMIN_ROLE) {
         require(_vault != address(0), "ReserveManager: zero address");
+        address oldVault = address(tbillVault);
         tbillVault = ITBillVault(_vault);
+        emit TBillVaultUpdated(oldVault, _vault);
     }
 
     function pause() external onlyRole(GUARDIAN_ROLE) {

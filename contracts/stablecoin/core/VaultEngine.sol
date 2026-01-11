@@ -12,6 +12,11 @@ import "../interfaces/IRateLimiter.sol";
 import "../interfaces/IVaultEngine.sol";
 import "../lib/VaultMath.sol";
 
+interface IGeniusCompliance {
+    function isApprovedCollateral(address token) external view returns (bool);
+    function isYieldBlocked() external view returns (bool);
+}
+
 contract VaultEngine is AccessControl, Pausable, ReentrancyGuard, IVaultEngine {
     using SafeERC20 for IERC20;
     using VaultMath for uint256;
@@ -24,6 +29,9 @@ contract VaultEngine is AccessControl, Pausable, ReentrancyGuard, IVaultEngine {
     IOracleAdapter public oracleAdapter;
     IRateLimiter public rateLimiter;
     address public feeBurner;
+    
+    IGeniusCompliance public geniusCompliance;
+    bool public geniusComplianceEnabled;
 
     uint256 public globalDebtCeiling;
     uint256 public totalGlobalDebt;
@@ -44,6 +52,7 @@ contract VaultEngine is AccessControl, Pausable, ReentrancyGuard, IVaultEngine {
     event OracleAdapterUpdated(address indexed newAdapter);
     event RateLimiterUpdated(address indexed newLimiter);
     event FeeBurnerUpdated(address indexed newFeeBurner);
+    event GeniusComplianceUpdated(address indexed compliance, bool enabled);
 
     constructor(
         address _axusd,
@@ -65,6 +74,12 @@ contract VaultEngine is AccessControl, Pausable, ReentrancyGuard, IVaultEngine {
         _grantRole(GUARDIAN_ROLE, msg.sender);
     }
 
+    function setGeniusCompliance(address _compliance, bool _enabled) external onlyRole(ADMIN_ROLE) {
+        geniusCompliance = IGeniusCompliance(_compliance);
+        geniusComplianceEnabled = _enabled;
+        emit GeniusComplianceUpdated(_compliance, _enabled);
+    }
+
     function addCollateral(
         address collateral,
         uint256 minCollateralRatio,
@@ -81,6 +96,10 @@ contract VaultEngine is AccessControl, Pausable, ReentrancyGuard, IVaultEngine {
         require(liquidationPenalty <= 2000, "VaultEngine: penalty too high");
         require(stabilityFee <= 2000, "VaultEngine: fee too high");
         require(oracleAdapter.isFeedValid(collateral), "VaultEngine: no valid feed");
+        
+        if (geniusComplianceEnabled && address(geniusCompliance) != address(0)) {
+            require(geniusCompliance.isApprovedCollateral(collateral), "VaultEngine: collateral not GENIUS compliant");
+        }
 
         collateralConfigs[collateral] = CollateralConfig({
             priceFeed: address(0),
@@ -102,12 +121,32 @@ contract VaultEngine is AccessControl, Pausable, ReentrancyGuard, IVaultEngine {
         collateralConfigs[collateral].enabled = false;
         emit CollateralDisabled(collateral);
     }
+    
+    function disableNonCompliantCollateral() external onlyRole(ADMIN_ROLE) {
+        require(geniusComplianceEnabled && address(geniusCompliance) != address(0), "VaultEngine: compliance not enabled");
+        
+        for (uint256 i = 0; i < collateralList.length; i++) {
+            address collateral = collateralList[i];
+            if (collateralConfigs[collateral].enabled && !geniusCompliance.isApprovedCollateral(collateral)) {
+                collateralConfigs[collateral].enabled = false;
+                emit CollateralDisabled(collateral);
+            }
+        }
+    }
+    
+    function getCollateralList() external view returns (address[] memory) {
+        return collateralList;
+    }
 
     function depositCollateral(address collateral, uint256 amount) external override nonReentrant whenNotPaused {
         require(amount > 0, "VaultEngine: zero amount");
         CollateralConfig storage config = collateralConfigs[collateral];
         require(config.minCollateralRatio > 0, "VaultEngine: unsupported collateral");
         require(config.enabled, "VaultEngine: collateral disabled");
+        
+        if (geniusComplianceEnabled && address(geniusCompliance) != address(0)) {
+            require(geniusCompliance.isApprovedCollateral(collateral), "VaultEngine: collateral not GENIUS compliant");
+        }
 
         IERC20(collateral).safeTransferFrom(msg.sender, address(this), amount);
         
@@ -150,6 +189,10 @@ contract VaultEngine is AccessControl, Pausable, ReentrancyGuard, IVaultEngine {
         CollateralConfig storage config = collateralConfigs[collateral];
         require(config.minCollateralRatio > 0, "VaultEngine: unsupported collateral");
         require(config.enabled, "VaultEngine: collateral disabled");
+        
+        if (geniusComplianceEnabled && address(geniusCompliance) != address(0)) {
+            require(geniusCompliance.isApprovedCollateral(collateral), "VaultEngine: collateral not GENIUS compliant");
+        }
         
         Vault storage vault = vaults[msg.sender][collateral];
         require(vault.collateralAmount > 0, "VaultEngine: no collateral");
