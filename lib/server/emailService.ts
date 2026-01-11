@@ -294,71 +294,71 @@ axiomprotocol.app
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; background-color: #0f172a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+<body style="margin: 0; padding: 0; background-color: #F9FAFB; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
   <div style="max-width: 640px; margin: 0 auto; padding: 20px;">
     
     <!-- Header Banner -->
-    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px 16px 0 0; padding: 40px 30px; text-align: center; border-bottom: 3px solid #fbbf24;">
+    <div style="background: linear-gradient(135deg, #00D4AA 0%, #7B68EE 100%); border-radius: 20px 20px 0 0; padding: 40px 30px; text-align: center;">
       <div style="font-size: 48px; margin-bottom: 15px;">✨</div>
-      <h1 style="color: #fbbf24; margin: 0; font-size: 32px; font-weight: 700;">Welcome to The Wealth Practice</h1>
-      <p style="color: #94a3b8; margin: 15px 0 0; font-size: 16px;">Building Wealth Together Through Group Economics</p>
+      <h1 style="color: #FFFFFF; margin: 0; font-size: 32px; font-weight: 700;">Welcome to The Wealth Practice</h1>
+      <p style="color: rgba(255,255,255,0.9); margin: 15px 0 0; font-size: 16px;">Building Wealth Together Through Group Economics</p>
     </div>
     
     <!-- Main Content -->
-    <div style="background: #1e293b; padding: 35px 30px; color: #e2e8f0;">
+    <div style="background: #FFFFFF; padding: 35px 30px; color: #0A0F1C; border-left: 1px solid rgba(0,0,0,0.06); border-right: 1px solid rgba(0,0,0,0.06);">
       
       <!-- Personal Greeting -->
-      <p style="font-size: 20px; margin: 0 0 20px; color: #ffffff;">Hi ${memberName},</p>
-      <p style="margin: 0 0 25px; line-height: 1.7; font-size: 16px;">
+      <p style="font-size: 20px; margin: 0 0 20px; color: #0A0F1C;">Hi ${memberName},</p>
+      <p style="margin: 0 0 25px; line-height: 1.7; font-size: 16px; color: rgba(10, 15, 28, 0.75);">
         Congratulations! You've just taken the most important step toward building real, lasting wealth - 
-        joining a community that believes in the power of <strong style="color: #fbbf24;">Group Economics</strong>.
+        joining a community that believes in the power of <strong style="color: #00D4AA;">Group Economics</strong>.
       </p>
       
       <!-- Registration Summary Box -->
-      <div style="background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 100%); border-radius: 12px; padding: 25px; margin: 25px 0; border-left: 4px solid #fbbf24;">
-        <h2 style="color: #fbbf24; margin: 0 0 20px; font-size: 18px; text-transform: uppercase; letter-spacing: 1px;">📋 Your Registration Summary</h2>
-        <table style="width: 100%; color: #e2e8f0; font-size: 15px;">
+      <div style="background: linear-gradient(135deg, rgba(0, 212, 170, 0.08) 0%, rgba(123, 104, 238, 0.08) 100%); border-radius: 16px; padding: 25px; margin: 25px 0; border: 1px solid rgba(0, 212, 170, 0.2);">
+        <h2 style="color: #0A0F1C; margin: 0 0 20px; font-size: 18px; text-transform: uppercase; letter-spacing: 1px;">📋 Your Registration Summary</h2>
+        <table style="width: 100%; color: #0A0F1C; font-size: 15px;">
           <tr>
-            <td style="padding: 10px 0; color: #94a3b8;">Region:</td>
+            <td style="padding: 10px 0; color: rgba(10, 15, 28, 0.6);">Region:</td>
             <td style="padding: 10px 0; text-align: right; font-weight: 600;">${regionDisplay}</td>
           </tr>
           <tr>
-            <td style="padding: 10px 0; color: #94a3b8;">Purpose:</td>
+            <td style="padding: 10px 0; color: rgba(10, 15, 28, 0.6);">Purpose:</td>
             <td style="padding: 10px 0; text-align: right; font-weight: 600;">${purposeDisplay}</td>
           </tr>
-          <tr style="border-top: 1px solid #334155;">
-            <td style="padding: 15px 0 10px; color: #94a3b8;">Monthly Commitment:</td>
-            <td style="padding: 15px 0 10px; text-align: right; color: #fbbf24; font-weight: 700; font-size: 20px;">$${commitmentAmount}</td>
+          <tr style="border-top: 1px solid rgba(0,0,0,0.08);">
+            <td style="padding: 15px 0 10px; color: rgba(10, 15, 28, 0.6);">Monthly Commitment:</td>
+            <td style="padding: 15px 0 10px; text-align: right; color: #00D4AA; font-weight: 700; font-size: 20px;">$${commitmentAmount}</td>
           </tr>
           <tr>
-            <td style="padding: 10px 0; color: #94a3b8;">Annual Projection:</td>
-            <td style="padding: 10px 0; text-align: right; color: #22c55e; font-weight: 600;">$${annualProjection}</td>
+            <td style="padding: 10px 0; color: rgba(10, 15, 28, 0.6);">Annual Projection:</td>
+            <td style="padding: 10px 0; text-align: right; color: #059669; font-weight: 600;">$${annualProjection}</td>
           </tr>
           <tr>
-            <td style="padding: 10px 0; color: #94a3b8;">3-Year Potential:</td>
-            <td style="padding: 10px 0; text-align: right; color: #22c55e; font-weight: 600;">$${threeYearProjection}+</td>
+            <td style="padding: 10px 0; color: rgba(10, 15, 28, 0.6);">3-Year Potential:</td>
+            <td style="padding: 10px 0; text-align: right; color: #059669; font-weight: 600;">$${threeYearProjection}+</td>
           </tr>
         </table>
       </div>
       
       <!-- Purpose Description -->
-      <div style="background: #334155; border-radius: 12px; padding: 20px; margin: 25px 0;">
-        <h3 style="color: #fbbf24; margin: 0 0 10px; font-size: 16px;">🎯 About Your Purpose Group</h3>
-        <p style="margin: 0; color: #e2e8f0; line-height: 1.6;">${purposeDesc}</p>
+      <div style="background: #F9FAFB; border-radius: 16px; padding: 20px; margin: 25px 0; border: 1px solid rgba(0,0,0,0.06);">
+        <h3 style="color: #7B68EE; margin: 0 0 10px; font-size: 16px;">🎯 About Your Purpose Group</h3>
+        <p style="margin: 0; color: rgba(10, 15, 28, 0.75); line-height: 1.6;">${purposeDesc}</p>
       </div>
       
       <!-- 30-Day Action Plan -->
-      <h2 style="color: #ffffff; margin: 35px 0 20px; font-size: 20px; border-bottom: 2px solid #fbbf24; padding-bottom: 10px;">
+      <h2 style="color: #0A0F1C; margin: 35px 0 20px; font-size: 20px; border-bottom: 2px solid #00D4AA; padding-bottom: 10px;">
         📅 Your First 30 Days - Action Plan
       </h2>
       
       <!-- Week 1 -->
       <div style="margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; margin-bottom: 10px;">
-          <span style="background: #fbbf24; color: #1a1a2e; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 12px;">WEEK 1</span>
-          <span style="color: #ffffff; margin-left: 12px; font-weight: 600;">Orientation</span>
+        <div style="margin-bottom: 10px;">
+          <span style="background: #00D4AA; color: #FFFFFF; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 12px;">WEEK 1</span>
+          <span style="color: #0A0F1C; margin-left: 12px; font-weight: 600;">Orientation</span>
         </div>
-        <ul style="margin: 0; padding-left: 20px; color: #94a3b8; line-height: 1.8;">
+        <ul style="margin: 0; padding-left: 20px; color: rgba(10, 15, 28, 0.7); line-height: 1.8;">
           <li>Log into your personalized dashboard</li>
           <li>Complete your member profile (add photo and bio)</li>
           <li>Review Purpose Group guidelines and expectations</li>
@@ -368,11 +368,11 @@ axiomprotocol.app
       
       <!-- Week 2 -->
       <div style="margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; margin-bottom: 10px;">
-          <span style="background: #22c55e; color: #1a1a2e; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 12px;">WEEK 2</span>
-          <span style="color: #ffffff; margin-left: 12px; font-weight: 600;">Connection</span>
+        <div style="margin-bottom: 10px;">
+          <span style="background: #7B68EE; color: #FFFFFF; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 12px;">WEEK 2</span>
+          <span style="color: #0A0F1C; margin-left: 12px; font-weight: 600;">Connection</span>
         </div>
-        <ul style="margin: 0; padding-left: 20px; color: #94a3b8; line-height: 1.8;">
+        <ul style="margin: 0; padding-left: 20px; color: rgba(10, 15, 28, 0.7); line-height: 1.8;">
           <li>Attend your first regional Interest Hub meetup</li>
           <li>Connect with at least 3 fellow members</li>
           <li>Set up your payment method for contributions</li>
@@ -382,11 +382,11 @@ axiomprotocol.app
       
       <!-- Week 3 -->
       <div style="margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; margin-bottom: 10px;">
-          <span style="background: #8b5cf6; color: #ffffff; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 12px;">WEEK 3</span>
-          <span style="color: #ffffff; margin-left: 12px; font-weight: 600;">Education</span>
+        <div style="margin-bottom: 10px;">
+          <span style="background: #FFD700; color: #0A0F1C; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 12px;">WEEK 3</span>
+          <span style="color: #0A0F1C; margin-left: 12px; font-weight: 600;">Education</span>
         </div>
-        <ul style="margin: 0; padding-left: 20px; color: #94a3b8; line-height: 1.8;">
+        <ul style="margin: 0; padding-left: 20px; color: rgba(10, 15, 28, 0.7); line-height: 1.8;">
           <li>Complete "Wealth Practice Foundations" course</li>
           <li>Learn about the 3-stage wealth building system</li>
           <li>Understand how trust scores work</li>
@@ -396,11 +396,11 @@ axiomprotocol.app
       
       <!-- Week 4 -->
       <div style="margin-bottom: 25px;">
-        <div style="display: flex; align-items: center; margin-bottom: 10px;">
-          <span style="background: #ef4444; color: #ffffff; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 12px;">WEEK 4</span>
-          <span style="color: #ffffff; margin-left: 12px; font-weight: 600;">Activation</span>
+        <div style="margin-bottom: 10px;">
+          <span style="background: #059669; color: #FFFFFF; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 12px;">WEEK 4</span>
+          <span style="color: #0A0F1C; margin-left: 12px; font-weight: 600;">Activation</span>
         </div>
-        <ul style="margin: 0; padding-left: 20px; color: #94a3b8; line-height: 1.8;">
+        <ul style="margin: 0; padding-left: 20px; color: rgba(10, 15, 28, 0.7); line-height: 1.8;">
           <li>Make your first contribution</li>
           <li>Set up automatic monthly payments (recommended)</li>
           <li>Share your journey with someone who could benefit</li>
@@ -409,124 +409,124 @@ axiomprotocol.app
       </div>
       
       <!-- Three Stages -->
-      <h2 style="color: #ffffff; margin: 35px 0 20px; font-size: 20px; border-bottom: 2px solid #fbbf24; padding-bottom: 10px;">
+      <h2 style="color: #0A0F1C; margin: 35px 0 20px; font-size: 20px; border-bottom: 2px solid #7B68EE; padding-bottom: 10px;">
         🚀 The Three Stages of Wealth Building
       </h2>
       
       <div style="display: flex; flex-direction: column; gap: 15px;">
-        <div style="background: #0f172a; border-radius: 10px; padding: 20px; border-left: 4px solid #fbbf24;">
-          <div style="display: flex; align-items: center; margin-bottom: 8px;">
-            <span style="background: #fbbf24; color: #1a1a2e; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; margin-right: 10px;">1</span>
-            <strong style="color: #fbbf24;">Purpose Groups</strong>
-            <span style="background: #22c55e; color: #ffffff; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 10px;">YOU ARE HERE</span>
+        <div style="background: #FFFFFF; border-radius: 12px; padding: 20px; border: 2px solid #00D4AA; box-shadow: 0 4px 12px rgba(0, 212, 170, 0.15);">
+          <div style="margin-bottom: 8px;">
+            <span style="background: #00D4AA; color: #FFFFFF; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; margin-right: 10px;">1</span>
+            <strong style="color: #00D4AA;">Purpose Groups</strong>
+            <span style="background: #059669; color: #FFFFFF; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 10px;">YOU ARE HERE</span>
           </div>
-          <p style="margin: 0; color: #94a3b8; font-size: 14px;">Build trust through consistent participation. Prove your commitment to the community.</p>
+          <p style="margin: 0; color: rgba(10, 15, 28, 0.7); font-size: 14px;">Build trust through consistent participation. Prove your commitment to the community.</p>
         </div>
         
-        <div style="background: #0f172a; border-radius: 10px; padding: 20px; border-left: 4px solid #64748b;">
-          <div style="display: flex; align-items: center; margin-bottom: 8px;">
-            <span style="background: #64748b; color: #ffffff; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; margin-right: 10px;">2</span>
-            <strong style="color: #ffffff;">Wealth Circles</strong>
+        <div style="background: #F9FAFB; border-radius: 12px; padding: 20px; border: 1px solid rgba(0,0,0,0.08);">
+          <div style="margin-bottom: 8px;">
+            <span style="background: #9CA3AF; color: #FFFFFF; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; margin-right: 10px;">2</span>
+            <strong style="color: #0A0F1C;">Wealth Circles</strong>
           </div>
-          <p style="margin: 0; color: #94a3b8; font-size: 14px;">Graduate to larger savings pools with proven, trusted members. Access bigger opportunities.</p>
+          <p style="margin: 0; color: rgba(10, 15, 28, 0.6); font-size: 14px;">Graduate to larger savings pools with proven, trusted members. Access bigger opportunities.</p>
         </div>
         
-        <div style="background: #0f172a; border-radius: 10px; padding: 20px; border-left: 4px solid #64748b;">
-          <div style="display: flex; align-items: center; margin-bottom: 8px;">
-            <span style="background: #64748b; color: #ffffff; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; margin-right: 10px;">3</span>
-            <strong style="color: #ffffff;">Capital Mode</strong>
+        <div style="background: #F9FAFB; border-radius: 12px; padding: 20px; border: 1px solid rgba(0,0,0,0.08);">
+          <div style="margin-bottom: 8px;">
+            <span style="background: #9CA3AF; color: #FFFFFF; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; margin-right: 10px;">3</span>
+            <strong style="color: #0A0F1C;">Capital Mode</strong>
           </div>
-          <p style="margin: 0; color: #94a3b8; font-size: 14px;">Access significant investment opportunities, land deals, and business funding with your trusted network.</p>
+          <p style="margin: 0; color: rgba(10, 15, 28, 0.6); font-size: 14px;">Access significant investment opportunities, land deals, and business funding with your trusted network.</p>
         </div>
       </div>
       
       <!-- Principles -->
-      <h2 style="color: #ffffff; margin: 35px 0 20px; font-size: 20px; border-bottom: 2px solid #fbbf24; padding-bottom: 10px;">
+      <h2 style="color: #0A0F1C; margin: 35px 0 20px; font-size: 20px; border-bottom: 2px solid #FFD700; padding-bottom: 10px;">
         📜 The Wealth Practice Principles
       </h2>
       
-      <div style="background: #0f172a; border-radius: 12px; padding: 25px;">
+      <div style="background: #F9FAFB; border-radius: 16px; padding: 25px; border: 1px solid rgba(0,0,0,0.06);">
         <div style="margin-bottom: 15px; display: flex; align-items: flex-start;">
-          <span style="color: #fbbf24; font-size: 18px; margin-right: 12px;">1.</span>
+          <span style="color: #00D4AA; font-size: 18px; margin-right: 12px; font-weight: 700;">1.</span>
           <div>
-            <strong style="color: #ffffff;">Consistency Over Intensity</strong>
-            <p style="margin: 5px 0 0; color: #94a3b8; font-size: 14px;">Small, regular contributions beat sporadic large ones.</p>
+            <strong style="color: #0A0F1C;">Consistency Over Intensity</strong>
+            <p style="margin: 5px 0 0; color: rgba(10, 15, 28, 0.7); font-size: 14px;">Small, regular contributions beat sporadic large ones.</p>
           </div>
         </div>
         <div style="margin-bottom: 15px; display: flex; align-items: flex-start;">
-          <span style="color: #fbbf24; font-size: 18px; margin-right: 12px;">2.</span>
+          <span style="color: #00D4AA; font-size: 18px; margin-right: 12px; font-weight: 700;">2.</span>
           <div>
-            <strong style="color: #ffffff;">Trust Is Currency</strong>
-            <p style="margin: 5px 0 0; color: #94a3b8; font-size: 14px;">Your reputation is your most valuable asset in this community.</p>
+            <strong style="color: #0A0F1C;">Trust Is Currency</strong>
+            <p style="margin: 5px 0 0; color: rgba(10, 15, 28, 0.7); font-size: 14px;">Your reputation is your most valuable asset in this community.</p>
           </div>
         </div>
         <div style="margin-bottom: 15px; display: flex; align-items: flex-start;">
-          <span style="color: #fbbf24; font-size: 18px; margin-right: 12px;">3.</span>
+          <span style="color: #00D4AA; font-size: 18px; margin-right: 12px; font-weight: 700;">3.</span>
           <div>
-            <strong style="color: #ffffff;">Community Over Competition</strong>
-            <p style="margin: 5px 0 0; color: #94a3b8; font-size: 14px;">We rise together. Your success is our success.</p>
+            <strong style="color: #0A0F1C;">Community Over Competition</strong>
+            <p style="margin: 5px 0 0; color: rgba(10, 15, 28, 0.7); font-size: 14px;">We rise together. Your success is our success.</p>
           </div>
         </div>
         <div style="margin-bottom: 15px; display: flex; align-items: flex-start;">
-          <span style="color: #fbbf24; font-size: 18px; margin-right: 12px;">4.</span>
+          <span style="color: #00D4AA; font-size: 18px; margin-right: 12px; font-weight: 700;">4.</span>
           <div>
-            <strong style="color: #ffffff;">Transparency Always</strong>
-            <p style="margin: 5px 0 0; color: #94a3b8; font-size: 14px;">Every transaction is recorded and visible. No hidden dealings.</p>
+            <strong style="color: #0A0F1C;">Transparency Always</strong>
+            <p style="margin: 5px 0 0; color: rgba(10, 15, 28, 0.7); font-size: 14px;">Every transaction is recorded and visible. No hidden dealings.</p>
           </div>
         </div>
         <div style="display: flex; align-items: flex-start;">
-          <span style="color: #fbbf24; font-size: 18px; margin-right: 12px;">5.</span>
+          <span style="color: #00D4AA; font-size: 18px; margin-right: 12px; font-weight: 700;">5.</span>
           <div>
-            <strong style="color: #ffffff;">Long-Term Thinking</strong>
-            <p style="margin: 5px 0 0; color: #94a3b8; font-size: 14px;">Wealth is built over years, not days. Patience pays dividends.</p>
+            <strong style="color: #0A0F1C;">Long-Term Thinking</strong>
+            <p style="margin: 5px 0 0; color: rgba(10, 15, 28, 0.7); font-size: 14px;">Wealth is built over years, not days. Patience pays dividends.</p>
           </div>
         </div>
       </div>
       
       <!-- CTA Buttons -->
       <div style="text-align: center; margin: 35px 0;">
-        <a href="https://axiomprotocol.app/dashboard" style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #1a1a2e; padding: 16px 40px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 16px; margin-bottom: 15px;">
+        <a href="https://axiomprotocol.app/dashboard" style="display: inline-block; background: linear-gradient(135deg, #00D4AA 0%, #7B68EE 100%); color: #FFFFFF; padding: 16px 40px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px; margin-bottom: 15px; box-shadow: 0 4px 14px rgba(0, 212, 170, 0.3);">
           Go to Your Dashboard →
         </a>
         <div style="margin-top: 15px;">
-          <a href="https://axiomprotocol.app/learn-wealth-practice" style="color: #fbbf24; text-decoration: none; margin: 0 15px; font-size: 14px;">Learn More</a>
-          <span style="color: #64748b;">|</span>
-          <a href="https://axiomprotocol.app/susu-faq" style="color: #fbbf24; text-decoration: none; margin: 0 15px; font-size: 14px;">FAQ</a>
-          <span style="color: #64748b;">|</span>
-          <a href="https://axiomprotocol.app/academy" style="color: #fbbf24; text-decoration: none; margin: 0 15px; font-size: 14px;">Academy</a>
+          <a href="https://axiomprotocol.app/learn-wealth-practice" style="color: #7B68EE; text-decoration: none; margin: 0 15px; font-size: 14px;">Learn More</a>
+          <span style="color: #D1D5DB;">|</span>
+          <a href="https://axiomprotocol.app/susu-faq" style="color: #7B68EE; text-decoration: none; margin: 0 15px; font-size: 14px;">FAQ</a>
+          <span style="color: #D1D5DB;">|</span>
+          <a href="https://axiomprotocol.app/academy" style="color: #7B68EE; text-decoration: none; margin: 0 15px; font-size: 14px;">Academy</a>
         </div>
       </div>
       
       <!-- Inspirational Quote -->
-      <div style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border-radius: 12px; padding: 25px; text-align: center; margin: 25px 0;">
-        <p style="margin: 0; color: #1a1a2e; font-size: 18px; font-style: italic; font-weight: 500;">
+      <div style="background: linear-gradient(135deg, rgba(0, 212, 170, 0.1) 0%, rgba(123, 104, 238, 0.1) 100%); border-radius: 16px; padding: 25px; text-align: center; margin: 25px 0; border: 1px solid rgba(0, 212, 170, 0.2);">
+        <p style="margin: 0; color: #0A0F1C; font-size: 18px; font-style: italic; font-weight: 500;">
           "The best time to plant a tree was 20 years ago.<br>The second best time is now."
         </p>
-        <p style="margin: 15px 0 0; color: #1a1a2e; font-weight: 700;">You've planted your tree today. 🌳</p>
+        <p style="margin: 15px 0 0; color: #00D4AA; font-weight: 700;">You've planted your tree today. 🌳</p>
       </div>
       
       <!-- Closing -->
       <div style="text-align: center; padding-top: 20px;">
-        <p style="color: #ffffff; font-size: 18px; margin: 0 0 10px;">
+        <p style="color: #0A0F1C; font-size: 18px; margin: 0 0 10px;">
           Welcome to the family, <strong>${memberName}</strong>.
         </p>
-        <p style="color: #94a3b8; margin: 0;">We're honored to have you on this journey.</p>
+        <p style="color: rgba(10, 15, 28, 0.6); margin: 0;">We're honored to have you on this journey.</p>
       </div>
       
     </div>
     
     <!-- Footer -->
-    <div style="background: #0f172a; border-radius: 0 0 16px 16px; padding: 25px 30px; text-align: center; border-top: 1px solid #334155;">
-      <p style="color: #fbbf24; font-weight: 600; margin: 0 0 10px; font-size: 14px;">Building Wealth Together</p>
-      <p style="color: #64748b; margin: 0 0 15px; font-size: 13px;">
+    <div style="background: #FFFFFF; border-radius: 0 0 20px 20px; padding: 25px 30px; text-align: center; border: 1px solid rgba(0,0,0,0.06); border-top: none;">
+      <p style="color: #00D4AA; font-weight: 600; margin: 0 0 10px; font-size: 14px;">Building Wealth Together</p>
+      <p style="color: rgba(10, 15, 28, 0.5); margin: 0 0 15px; font-size: 13px;">
         Axiom Protocol | The Wealth Practice
       </p>
       <div style="margin-bottom: 15px;">
-        <a href="https://axiomprotocol.app" style="color: #94a3b8; text-decoration: none; font-size: 12px; margin: 0 10px;">Website</a>
-        <a href="https://axiomprotocol.app/transparency" style="color: #94a3b8; text-decoration: none; font-size: 12px; margin: 0 10px;">Transparency</a>
-        <a href="https://axiomprotocol.app/governance" style="color: #94a3b8; text-decoration: none; font-size: 12px; margin: 0 10px;">Governance</a>
+        <a href="https://axiomprotocol.app" style="color: #7B68EE; text-decoration: none; font-size: 12px; margin: 0 10px;">Website</a>
+        <a href="https://axiomprotocol.app/transparency" style="color: #7B68EE; text-decoration: none; font-size: 12px; margin: 0 10px;">Transparency</a>
+        <a href="https://axiomprotocol.app/governance" style="color: #7B68EE; text-decoration: none; font-size: 12px; margin: 0 10px;">Governance</a>
       </div>
-      <p style="color: #475569; margin: 0; font-size: 11px;">
+      <p style="color: rgba(10, 15, 28, 0.4); margin: 0; font-size: 11px;">
         © 2026 Axiom Protocol. All rights reserved.<br>
         You're receiving this email because you registered for The Wealth Practice.
       </p>
