@@ -1,78 +1,147 @@
-# Dependencies
+# ============================================
+# AGGRESSIVE .dockerignore for deployment size reduction
+# ============================================
+
+# ALL node_modules - standalone has its own minimal deps
 node_modules
 .pnpm-store
+package-lock.json
 
-# Build artifacts (standalone output handles these)
+# Next.js build artifacts EXCEPT standalone
 .next/cache
-.next/static
 .next/server
+.next/static
+.next/types
+.next/trace
+.next/BUILD_ID
+.next/build-manifest.json
+.next/prerender-manifest.json
+.next/react-loadable-manifest.json
+.next/required-server-files.json
+.next/routes-manifest.json
 
-# Development files
-*.log
-*.md
-!README.md
-.env.local
-.env.development
-.env.test
+# Source files (standalone has compiled versions)
+pages/
+components/
+lib/
+utils/
+server/
+client/
+middleware/
+shared/
+routes/
+styles/
+apps/
 
-# Version control
-.git
-.gitignore
-
-# IDE and editor files
-.idea
-.vscode
-*.swp
-*.swo
-
-# Test files
+# Development and test files
 test/
 tests/
-__tests__
+__tests__/
 coverage/
-.nyc_output
+.nyc_output/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
 
-# Documentation and non-essential directories
+# Documentation
 docs/
 AXIOM.wiki/
 wiki/
 prompts/
+*.md
+!README.md
+
+# Build/development tools
+drizzle/
+migrations/
+scripts/
+integration/
+contracts/
+stablecoin-deploy/
+hardhat.config.ts
+drizzle.config.ts
+tsconfig.json
+postcss.config.js
+tailwind.config.js
+next.config.js
+next-env.d.ts
+
+# Data and logs
 crawled_data/
 tribevest_analysis/
 logs/
-temp-compile-*
+data/
+cache/
+artifacts/
+
+# Temporary directories
+temp-compile-*/
 denet-storage/
 download/
 recruit-standalone/
+universe-blockchain/
+project/
+content/
 
-# Python files (not needed for Node.js deployment)
-*.py
-pyproject.toml
-uv.lock
-__pycache__
-
-# Large binary/data files
+# Large assets
+attached_assets/
+public/images/
 *.zip
 *.tar.gz
 *.pdf
-slither-report.sarif
-*.json.backup
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.mp4
+*.webm
 
-# Scripts not needed in production
+# Python files
+*.py
+pyproject.toml
+uv.lock
+__pycache__/
+
+# Shell scripts
 *.sh
-!start.sh
 
-# Hardhat/Solidity artifacts (keep only essential)
-cache/
-artifacts/
-stablecoin-deploy/
-
-# Other large directories
-attached_assets/generated_images
-attached_assets/stock_images
-public/images/axusd/*.png
+# Security and deployment
+security/
+web3/
 
 # Replit specific
 replit_agent/
 .replit
 replit.nix
+replit.md
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment files
+.env.local
+.env.development
+.env.test
+
+# Version control
+.git/
+.gitignore
+
+# Hardhat/Solidity
+*.sol
+*.sarif
+
+# Miscellaneous large files
+*.json.backup
+*.txt
+*.html
+wallets.json
+delegations.json
+stakingLogs.json
+simple-admin-data.json
