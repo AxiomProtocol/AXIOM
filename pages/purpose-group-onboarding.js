@@ -203,6 +203,7 @@ export default function PurposeGroupOnboarding() {
         throw new Error(data.error || 'Failed to join Purpose Group');
       }
       
+      localStorage.setItem('axiom_onboarding_completed', 'true');
       setCurrentStep(steps.length);
     } catch (error) {
       console.error('Submission error:', error);

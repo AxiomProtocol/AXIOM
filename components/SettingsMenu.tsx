@@ -14,6 +14,7 @@ export function SettingsMenu({ isOpen, onClose }: SettingsMenuProps) {
   if (!isOpen) return null;
 
   const handleRestartOnboarding = () => {
+    localStorage.removeItem('axiom_onboarding_completed');
     onClose();
     router.push('/purpose-group-onboarding');
   };
