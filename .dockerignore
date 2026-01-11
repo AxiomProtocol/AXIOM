@@ -1,142 +1,75 @@
 # ============================================
-# AGGRESSIVE .dockerignore for deployment size reduction
+# .dockerignore - Exclude non-essential files only
+# Keep all source code needed for Next.js build
 # ============================================
 
-# ALL node_modules - standalone has its own minimal deps
-node_modules
-.pnpm-store
-package-lock.json
-
-# Next.js build artifacts EXCEPT standalone
+# Development cache and temp files
 .next/cache
-.next/server
-.next/static
-.next/types
-.next/trace
-.next/BUILD_ID
-.next/build-manifest.json
-.next/prerender-manifest.json
-.next/react-loadable-manifest.json
-.next/required-server-files.json
-.next/routes-manifest.json
+node_modules/.cache
+.pnpm-store
 
-# Source files (standalone has compiled versions)
-pages/
-components/
-lib/
-utils/
-server/
-client/
-middleware/
-shared/
-routes/
-styles/
-apps/
+# Version control
+.git
+.gitignore
 
-# Development and test files
+# IDE and editor files
+.idea
+.vscode
+*.swp
+*.swo
+
+# Test files
 test/
 tests/
 __tests__/
 coverage/
 .nyc_output/
-*.test.ts
-*.test.js
-*.spec.ts
-*.spec.js
 
-# Documentation
+# Documentation (not needed for runtime)
 docs/
 AXIOM.wiki/
 wiki/
 prompts/
-*.md
-!README.md
 
-# Build/development tools (keep next.config.js, package.json, tsconfig.json for build)
-drizzle/
-migrations/
-scripts/
-integration/
-contracts/
-stablecoin-deploy/
-hardhat.config.ts
-drizzle.config.ts
-
-# Data and logs
+# Data and logs (runtime generates its own)
 crawled_data/
 tribevest_analysis/
 logs/
-data/
-cache/
-artifacts/
+*.log
 
-# Temporary directories
+# Temporary and backup directories
 temp-compile-*/
 denet-storage/
 download/
 recruit-standalone/
-universe-blockchain/
-project/
-content/
 
-# Large assets
-attached_assets/
-public/images/
-*.zip
-*.tar.gz
-*.pdf
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.svg
-*.ico
-*.mp4
-*.webm
-
-# Python files
+# Python files (not needed for Node.js app)
 *.py
 pyproject.toml
 uv.lock
 __pycache__/
 
-# Shell scripts
-*.sh
+# Hardhat/Solidity development
+cache/
+artifacts/
+stablecoin-deploy/
+universe-blockchain/
 
-# Security and deployment
-security/
-web3/
+# Large binary files
+*.zip
+*.tar.gz
+*.sarif
 
-# Replit specific
+# Replit specific (not needed in deployment)
 replit_agent/
 .replit
 replit.nix
-replit.md
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Environment files
+# Development environment files
 .env.local
 .env.development
 .env.test
 
-# Version control
-.git/
-.gitignore
-
-# Hardhat/Solidity
-*.sol
-*.sarif
-
-# Miscellaneous large files
+# Backup files
+*.backup
 *.json.backup
-*.txt
-*.html
-wallets.json
-delegations.json
-stakingLogs.json
-simple-admin-data.json
