@@ -1,10 +1,41 @@
-import sgMail from '@sendgrid/mail';
+import { Resend } from 'resend';
 
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'noreply@axiom.city';
+let connectionSettings: any;
 
-if (SENDGRID_API_KEY) {
-  sgMail.setApiKey(SENDGRID_API_KEY);
+async function getCredentials() {
+  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+  const xReplitToken = process.env.REPL_IDENTITY 
+    ? 'repl ' + process.env.REPL_IDENTITY 
+    : process.env.WEB_REPL_RENEWAL 
+    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
+    : null;
+
+  if (!xReplitToken) {
+    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+  }
+
+  connectionSettings = await fetch(
+    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
+    {
+      headers: {
+        'Accept': 'application/json',
+        'X_REPLIT_TOKEN': xReplitToken
+      }
+    }
+  ).then(res => res.json()).then(data => data.items?.[0]);
+
+  if (!connectionSettings || (!connectionSettings.settings.api_key)) {
+    throw new Error('Resend not connected');
+  }
+  return {apiKey: connectionSettings.settings.api_key, fromEmail: connectionSettings.settings.from_email};
+}
+
+async function getResendClient() {
+  const { apiKey, fromEmail } = await getCredentials();
+  return {
+    client: new Resend(apiKey),
+    fromEmail: fromEmail || 'noreply@axiom.city'
+  };
 }
 
 interface EmailOptions {
@@ -12,35 +43,23 @@ interface EmailOptions {
   subject: string;
   text?: string;
   html?: string;
-  templateId?: string;
-  dynamicTemplateData?: Record<string, any>;
 }
 
 export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
-  if (!SENDGRID_API_KEY) {
-    console.warn('SendGrid API key not configured');
-    return { success: false, error: 'Email service not configured' };
-  }
-
   try {
-    const msg: any = {
-      to: options.to,
-      from: FROM_EMAIL,
+    const { client, fromEmail } = await getResendClient();
+    
+    await client.emails.send({
+      from: fromEmail,
+      to: Array.isArray(options.to) ? options.to : [options.to],
       subject: options.subject,
-    };
-
-    if (options.templateId) {
-      msg.templateId = options.templateId;
-      msg.dynamicTemplateData = options.dynamicTemplateData;
-    } else {
-      msg.text = options.text || '';
-      msg.html = options.html || options.text || '';
-    }
-
-    await sgMail.send(msg);
+      text: options.text || '',
+      html: options.html || options.text || ''
+    });
+    
     return { success: true };
   } catch (error: any) {
-    console.error('SendGrid error:', error?.response?.body || error);
+    console.error('Resend error:', error);
     return { success: false, error: error?.message || 'Failed to send email' };
   }
 }
