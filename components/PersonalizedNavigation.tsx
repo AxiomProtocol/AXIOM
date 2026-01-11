@@ -83,7 +83,7 @@ export function PersonalizedNavigation() {
           }}>
             <button
               onClick={() => {
-                router.push('/');
+                router.push('/dashboard');
                 setIsExpanded(false);
               }}
               style={{
