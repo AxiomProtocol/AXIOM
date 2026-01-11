@@ -30,7 +30,6 @@ const REBUILD_NAV_PAGES = [
   '/transparency',
   '/team',
   '/land-acquisition',
-  '/axusd',
   '/workbook',
   '/purpose-group-onboarding',
   '/dashboard'
