@@ -18,6 +18,11 @@
     "segregatedCustody": "0x1Ba851cfB9B3e34D88BC0cbf5a0042F9eb1Af66b",
     "backstopVaultETH": "0xF2540BD6fa365Bf8F1b9dd4efa7534Ff6522393f",
     "liquidator": "0xF6518B363aB4D461D59E1c9A54De3B7f66Da5384",
-    "marketOperations": "pending-dex-integration"
+    "marketOperations": "0x4398297204fe9B581fBD3d78Ce34b935A7378E48"
+  },
+  "dexIntegration": {
+    "router": "0xc873fEcbd354f5A56E00E710B90EF4201db2448d",
+    "pair": "0x266F6Cf7eA36d3f676eb292B274EAb25172790a2",
+    "dex": "Camelot"
   }
 }

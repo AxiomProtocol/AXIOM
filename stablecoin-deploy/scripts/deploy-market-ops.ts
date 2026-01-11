@@ -20,24 +20,12 @@ async function main() {
   const CAMELOT_ROUTER = "0xc873fEcbd354f5A56E00E710B90EF4201db2448d";
   const USDC_ARBITRUM = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
   
-  // NOTE: You need to create an AXUSD/USDC liquidity pair on Camelot first
-  // Once created, replace this with the actual pair address
-  const AXUSD_USDC_PAIR = "0x0000000000000000000000000000000000000000"; // REPLACE AFTER LP CREATION
+  // AXUSD/USDC liquidity pair on Camelot (created via add-liquidity-camelot.ts)
+  const AXUSD_USDC_PAIR = "0x266F6Cf7eA36d3f676eb292B274EAb25172790a2";
 
   console.log("\n[INFO] Camelot Router:", CAMELOT_ROUTER);
   console.log("[INFO] USDC:", USDC_ARBITRUM);
-  
-  if (AXUSD_USDC_PAIR === "0x0000000000000000000000000000000000000000") {
-    console.log("\n⚠️  AXUSD/USDC Pair not created yet!");
-    console.log("\nTo create the liquidity pair:");
-    console.log("1. Go to https://app.camelot.exchange/liquidity");
-    console.log("2. Connect wallet with AXUSD + USDC tokens");
-    console.log("3. Add liquidity for AXUSD/USDC pair");
-    console.log("4. Copy the LP pair address from Arbiscan/Camelot");
-    console.log("5. Update AXUSD_USDC_PAIR in this script");
-    console.log("6. Re-run this deployment");
-    return;
-  }
+  console.log("[INFO] LP Pair:", AXUSD_USDC_PAIR);
 
   console.log("\nDeploying MarketOperations...");
   const lowerBound = ethers.parseEther("0.995"); // $0.995 - buy AXUSD
