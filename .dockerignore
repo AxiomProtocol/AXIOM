@@ -52,7 +52,7 @@ prompts/
 *.md
 !README.md
 
-# Build/development tools
+# Build/development tools (keep next.config.js, package.json, tsconfig.json for build)
 drizzle/
 migrations/
 scripts/
@@ -61,11 +61,6 @@ contracts/
 stablecoin-deploy/
 hardhat.config.ts
 drizzle.config.ts
-tsconfig.json
-postcss.config.js
-tailwind.config.js
-next.config.js
-next-env.d.ts
 
 # Data and logs
 crawled_data/
