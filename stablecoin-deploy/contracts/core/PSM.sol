@@ -72,10 +72,14 @@ contract PSM is AccessControl, ReentrancyGuard, Pausable, IPSM {
     }
 
     function swapCollateralForAXUSD(uint256 collateralAmount) external override nonReentrant whenNotPaused returns (uint256 axusdAmount) {
-        return swapCollateralForAXUSDWithMin(collateralAmount, 0);
+        return _swapCollateralForAXUSDInternal(collateralAmount, 0);
     }
 
     function swapCollateralForAXUSDWithMin(uint256 collateralAmount, uint256 minAxusdOut) public nonReentrant whenNotPaused returns (uint256 axusdAmount) {
+        return _swapCollateralForAXUSDInternal(collateralAmount, minAxusdOut);
+    }
+
+    function _swapCollateralForAXUSDInternal(uint256 collateralAmount, uint256 minAxusdOut) internal returns (uint256 axusdAmount) {
         require(collateralAmount > 0, "PSM: zero amount");
         
         if (_lastSwapBlock[msg.sender] == block.number) revert FlashLoanDetected();
@@ -108,10 +112,14 @@ contract PSM is AccessControl, ReentrancyGuard, Pausable, IPSM {
     }
 
     function swapAXUSDForCollateral(uint256 axusdAmount) external override nonReentrant whenNotPaused returns (uint256 collateralAmount) {
-        return swapAXUSDForCollateralWithMin(axusdAmount, 0);
+        return _swapAXUSDForCollateralInternal(axusdAmount, 0);
     }
 
     function swapAXUSDForCollateralWithMin(uint256 axusdAmount, uint256 minCollateralOut) public nonReentrant whenNotPaused returns (uint256 collateralAmount) {
+        return _swapAXUSDForCollateralInternal(axusdAmount, minCollateralOut);
+    }
+
+    function _swapAXUSDForCollateralInternal(uint256 axusdAmount, uint256 minCollateralOut) internal returns (uint256 collateralAmount) {
         require(axusdAmount > 0, "PSM: zero amount");
 
         if (_lastSwapBlock[msg.sender] == block.number) revert FlashLoanDetected();
