@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import Layout from '../components/Layout';
 import Link from 'next/link';
 
 function cleanAIContent(text) {
@@ -633,40 +632,37 @@ export default function PurposeGroupOnboarding() {
 
   if (showVideo) {
     return (
-      <Layout showWallet={false}>
-        <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4 py-8">
-          <div className="w-full max-w-4xl">
-            <video 
-              className="w-full rounded-2xl shadow-2xl"
-              controls
-              autoPlay
-              playsInline
-              onEnded={handleVideoEnd}
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4 py-8">
+        <div className="w-full max-w-4xl">
+          <video 
+            className="w-full rounded-2xl shadow-2xl"
+            controls
+            autoPlay
+            playsInline
+            onEnded={handleVideoEnd}
+          >
+            <source src="/api/video/lv_0_20260110224924_1768107248690.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          
+          <div className="mt-8 text-center">
+            <button
+              onClick={skipVideo}
+              className="px-8 py-4 bg-yellow-500 text-black rounded-xl font-bold text-lg hover:bg-yellow-400 transition-colors shadow-lg"
             >
-              <source src="/api/video/lv_0_20260110224924_1768107248690.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-            
-            <div className="mt-8 text-center">
-              <button
-                onClick={skipVideo}
-                className="px-8 py-4 bg-yellow-500 text-black rounded-xl font-bold text-lg hover:bg-yellow-400 transition-colors shadow-lg"
-              >
-                Continue to Next Step
-              </button>
-              <p className="text-gray-500 text-sm mt-4">
-                Or wait for the video to finish
-              </p>
-            </div>
+              Continue to Next Step
+            </button>
+            <p className="text-gray-500 text-sm mt-4">
+              Or wait for the video to finish
+            </p>
           </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <Layout showWallet={false}>
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 py-12 px-4 pb-24">
         <div className="max-w-3xl mx-auto">
           {currentStep < steps.length && currentStep > 0 && (
             <div className="mb-12">
@@ -741,7 +737,6 @@ export default function PurposeGroupOnboarding() {
             </div>
           )}
         </div>
-      </div>
-    </Layout>
+    </div>
   );
 }
