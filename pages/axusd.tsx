@@ -3,6 +3,7 @@ import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import { SiteLayout } from "../components/navigation";
+import { useWallet } from "../components/WalletConnect/WalletContext";
 import { 
   LayoutDashboard, Coins, ArrowLeftRight, Droplets, CircleDot, 
   BarChart3, Vault, Gift, Waypoints, History, Bell, HelpCircle,
@@ -301,6 +302,9 @@ const FAQ_DATA = [
 ];
 
 export default function AXUSDStablecoinPage() {
+  const { walletState, connectWallet } = useWallet();
+  const isWalletConnected = walletState?.isConnected && walletState?.address;
+  
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [mintAmount, setMintAmount] = useState('');
   const [collateralType, setCollateralType] = useState('WETH');
@@ -1104,9 +1108,26 @@ export default function AXUSDStablecoinPage() {
                         className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
                       />
                     </div>
-                    <button className="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition-colors">
-                      Connect Wallet to Add Liquidity
-                    </button>
+                    {isWalletConnected ? (
+                      <button 
+                        className="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition-colors"
+                        onClick={() => {
+                          if (parseFloat(lpAxusdAmount) > 0 && parseFloat(lpUsdcAmount) > 0) {
+                            alert(`Adding liquidity: ${lpAxusdAmount} AXUSD + ${lpUsdcAmount} USDC`);
+                          }
+                        }}
+                        disabled={!lpAxusdAmount || parseFloat(lpAxusdAmount) <= 0}
+                      >
+                        Add Liquidity
+                      </button>
+                    ) : (
+                      <button 
+                        className="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition-colors"
+                        onClick={connectWallet}
+                      >
+                        Connect Wallet to Add Liquidity
+                      </button>
+                    )}
                   </div>
                 </Card>
               </div>
