@@ -51,6 +51,7 @@ const commitmentLevels = [
 ];
 
 export default function PurposeGroupOnboarding() {
+  const [showVideo, setShowVideo] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
     region: '',
@@ -67,6 +68,16 @@ export default function PurposeGroupOnboarding() {
   const [submitError, setSubmitError] = useState(null);
   const [matchedGroups, setMatchedGroups] = useState([]);
   const [matchLoading, setMatchLoading] = useState(false);
+
+  const handleVideoEnd = () => {
+    setShowVideo(false);
+    setCurrentStep(1);
+  };
+
+  const skipVideo = () => {
+    setShowVideo(false);
+    setCurrentStep(1);
+  };
 
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -604,7 +615,6 @@ export default function PurposeGroupOnboarding() {
 
   const canProceed = () => {
     switch (currentStep) {
-      case 0: return true;
       case 1: return formData.region !== '';
       case 2: return formData.purpose !== '';
       case 3: return formData.commitmentAmount > 0;
@@ -613,29 +623,70 @@ export default function PurposeGroupOnboarding() {
     }
   };
 
+  const handleBackWithVideo = () => {
+    if (currentStep === 1) {
+      setShowVideo(true);
+    } else {
+      handleBack();
+    }
+  };
+
+  if (showVideo) {
+    return (
+      <Layout showWallet={false}>
+        <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4 py-8">
+          <div className="w-full max-w-4xl">
+            <video 
+              className="w-full rounded-2xl shadow-2xl"
+              controls
+              autoPlay
+              playsInline
+              onEnded={handleVideoEnd}
+            >
+              <source src="/api/video/lv_0_20260110224924_1768107248690.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            
+            <div className="mt-8 text-center">
+              <button
+                onClick={skipVideo}
+                className="px-8 py-4 bg-yellow-500 text-black rounded-xl font-bold text-lg hover:bg-yellow-400 transition-colors shadow-lg"
+              >
+                Continue to Next Step
+              </button>
+              <p className="text-gray-500 text-sm mt-4">
+                Or wait for the video to finish
+              </p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout showWallet={false}>
       <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 py-12 px-4">
         <div className="max-w-3xl mx-auto">
-          {currentStep < steps.length && (
+          {currentStep < steps.length && currentStep > 0 && (
             <div className="mb-12">
               <div className="flex items-center justify-between mb-4">
-                {steps.map((step, idx) => (
+                {steps.slice(1).map((step, idx) => (
                   <div 
                     key={step.id}
-                    className={`flex items-center ${idx < steps.length - 1 ? 'flex-1' : ''}`}
+                    className={`flex items-center ${idx < steps.length - 2 ? 'flex-1' : ''}`}
                   >
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg
-                      ${idx <= currentStep 
+                      ${idx + 1 <= currentStep 
                         ? 'bg-yellow-500 text-black' 
                         : 'bg-gray-700 text-gray-400'
                       }`}
                     >
                       {step.icon}
                     </div>
-                    {idx < steps.length - 1 && (
+                    {idx < steps.length - 2 && (
                       <div className={`flex-1 h-1 mx-2 rounded ${
-                        idx < currentStep ? 'bg-yellow-500' : 'bg-gray-700'
+                        idx + 1 < currentStep ? 'bg-yellow-500' : 'bg-gray-700'
                       }`} />
                     )}
                   </div>
@@ -643,7 +694,7 @@ export default function PurposeGroupOnboarding() {
               </div>
               <div className="text-center">
                 <span className="text-sm text-gray-400">
-                  Step {currentStep + 1} of {steps.length}: {steps[currentStep].title}
+                  Step {currentStep} of {steps.length - 1}: {steps[currentStep].title}
                 </span>
               </div>
             </div>
@@ -653,16 +704,11 @@ export default function PurposeGroupOnboarding() {
             {renderStep()}
           </div>
 
-          {currentStep < steps.length && (
+          {currentStep < steps.length && currentStep > 0 && (
             <div className="flex justify-between mt-8">
               <button
-                onClick={handleBack}
-                disabled={currentStep === 0}
-                className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-                  currentStep === 0
-                    ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
-                    : 'bg-gray-700 text-white hover:bg-gray-600'
-                }`}
+                onClick={handleBackWithVideo}
+                className="px-6 py-3 rounded-lg font-semibold transition-colors bg-gray-700 text-white hover:bg-gray-600"
               >
                 Back
               </button>

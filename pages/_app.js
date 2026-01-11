@@ -66,7 +66,8 @@ export default function App({ Component, pageProps }) {
       const completed = localStorage.getItem('axiom_onboarding_complete')
       const isPublicPage = ['/', '/origin', '/how-it-works', '/about-us', '/team'].includes(router.pathname)
       const isAdminPage = router.pathname.startsWith('/admin')
-      if (!completed && !isPublicPage && !isAdminPage) {
+      const isCustomOnboardingPage = router.pathname === '/purpose-group-onboarding'
+      if (!completed && !isPublicPage && !isAdminPage && !isCustomOnboardingPage) {
         setShowOnboarding(true)
       }
       setOnboardingChecked(true)
