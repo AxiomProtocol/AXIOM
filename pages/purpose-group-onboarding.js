@@ -614,19 +614,19 @@ export default function PurposeGroupOnboarding() {
               </ul>
             </div>
             
-            <div className="flex gap-4 justify-center">
-              <Link 
-                href="/dashboard"
-                className="px-6 py-3 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 transition-colors"
+            <div className="flex gap-4 justify-center flex-wrap">
+              <button 
+                onClick={() => router.push('/dashboard')}
+                className="px-6 py-3 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 transition-colors cursor-pointer"
               >
                 Go to Your Dashboard
-              </Link>
-              <Link 
-                href="/"
-                className="px-6 py-3 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors"
+              </button>
+              <button 
+                onClick={() => router.push('/')}
+                className="px-6 py-3 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors cursor-pointer"
               >
                 Explore Homepage
-              </Link>
+              </button>
             </div>
           </div>
         );
