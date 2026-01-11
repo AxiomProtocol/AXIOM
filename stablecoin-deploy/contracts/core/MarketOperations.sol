@@ -61,6 +61,9 @@ contract MarketOperations is AccessControl, ReentrancyGuard, Pausable, IMarketOp
     IUniswapV2Router public immutable router;
     IUniswapV2Pair public immutable pair;
     IBackstopVault public backstopVault;
+    
+    uint8 public immutable collateralDecimals;
+    uint256 public immutable decimalScaler;
 
     uint256 public lowerPegBound;
     uint256 public upperPegBound;
@@ -81,6 +84,7 @@ contract MarketOperations is AccessControl, ReentrancyGuard, Pausable, IMarketOp
     constructor(
         address _axusd,
         address _collateral,
+        uint8 _collateralDecimals,
         address _router,
         address _pair,
         uint256 _lowerBound,
@@ -97,6 +101,8 @@ contract MarketOperations is AccessControl, ReentrancyGuard, Pausable, IMarketOp
 
         axusd = IAxiomStable(_axusd);
         collateral = IERC20(_collateral);
+        collateralDecimals = _collateralDecimals;
+        decimalScaler = 10 ** (18 - _collateralDecimals);
         router = IUniswapV2Router(_router);
         pair = IUniswapV2Pair(_pair);
 
@@ -251,9 +257,11 @@ contract MarketOperations is AccessControl, ReentrancyGuard, Pausable, IMarketOp
         if (reserve0 == 0 || reserve1 == 0) return PEG_TARGET;
 
         if (axusdIsToken0) {
-            return (uint256(reserve1) * PRECISION) / uint256(reserve0);
+            uint256 collateralReserveNormalized = uint256(reserve1) * decimalScaler;
+            return (collateralReserveNormalized * PRECISION) / uint256(reserve0);
         } else {
-            return (uint256(reserve0) * PRECISION) / uint256(reserve1);
+            uint256 collateralReserveNormalized = uint256(reserve0) * decimalScaler;
+            return (collateralReserveNormalized * PRECISION) / uint256(reserve1);
         }
     }
 

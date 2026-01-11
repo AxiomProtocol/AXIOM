@@ -28,15 +28,17 @@ async function main() {
   console.log("[INFO] LP Pair:", AXUSD_USDC_PAIR);
 
   console.log("\nDeploying MarketOperations...");
+  const USDC_DECIMALS = 6;
   const lowerBound = ethers.parseEther("0.995"); // $0.995 - buy AXUSD
   const upperBound = ethers.parseEther("1.005"); // $1.005 - sell AXUSD
-  const dailyBuyLimit = ethers.parseEther("100000"); // 100k AXUSD
-  const dailySellLimit = ethers.parseEther("100000"); // 100k AXUSD
+  const dailyBuyLimit = ethers.parseEther("100000"); // 100k AXUSD worth
+  const dailySellLimit = ethers.parseEther("100000"); // 100k AXUSD worth
 
   const MarketOperations = await ethers.getContractFactory("MarketOperations");
   const marketOps = await MarketOperations.deploy(
     contracts.axusd,
     USDC_ARBITRUM,
+    USDC_DECIMALS,
     CAMELOT_ROUTER,
     AXUSD_USDC_PAIR,
     lowerBound,
