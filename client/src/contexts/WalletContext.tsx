@@ -216,6 +216,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   // Provider ref for reliable Web3 browser compatibility
   const providerRef = useRef<any>(null);
   const eventListenersAttached = useRef(false);
+  const signingInProgress = useRef(false);
   
   // State management
   const [walletState, setWalletState] = useState<WalletState>({
@@ -575,6 +576,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       
       console.log('🚀 Starting wallet authentication for:', walletAddress);
       
+      // Prevent duplicate signing requests (MetaMask throws "already pending" error)
+      if (signingInProgress.current) {
+        console.log('⚠️ Signing already in progress, skipping duplicate request');
+        return false;
+      }
+      signingInProgress.current = true;
+      
       // Step 1: Request authentication challenge from server
       console.log('🔐 Requesting secure authentication challenge...');
       const challengeResponse = await fetch('/api/auth/wallet-challenge', {
@@ -660,6 +668,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }));
         
         console.log('🎉 Secure wallet authentication complete!');
+        signingInProgress.current = false;
         return true;
       } else {
         console.error('❌ Authentication verification failed');
@@ -680,10 +689,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           ...prev,
           loginError: errorMessage
         }));
+        signingInProgress.current = false;
         return false;
       }
     } catch (error: any) {
       console.error('💥 CRITICAL ERROR during wallet authentication:', error);
+      signingInProgress.current = false;
       
       // Handle user-friendly error messages
       let errorMessage = 'Secure wallet authentication failed. Please ensure your wallet is connected and try again.';

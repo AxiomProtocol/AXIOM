@@ -25,6 +25,7 @@ export interface SIWESignInResult {
 class SIWEService {
   private cachedSession: SIWESession | null = null;
   private sessionCheckPromise: Promise<SIWESession> | null = null;
+  private signingInProgress: boolean = false;
 
   private async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -119,6 +120,16 @@ class SIWEService {
     address: string,
     chainId: number = ARBITRUM_CHAIN_ID
   ): Promise<SIWESignInResult> {
+    // Prevent duplicate signing requests (MetaMask throws "already pending" error)
+    if (this.signingInProgress) {
+      console.log('⚠️ SIWE signing already in progress, skipping duplicate request');
+      return {
+        success: false,
+        error: 'Signing already in progress. Please wait for the current request to complete.'
+      };
+    }
+    this.signingInProgress = true;
+    
     try {
       // Convert to checksum format for consistency
       const checksumAddress = ethers.getAddress(address);
@@ -156,6 +167,7 @@ class SIWEService {
       const result = await response.json();
       
       if (!response.ok) {
+        this.signingInProgress = false;
         return {
           success: false,
           error: result.error || 'Verification failed'
@@ -169,12 +181,15 @@ class SIWEService {
         authenticatedAt: new Date().toISOString()
       };
       
+      this.signingInProgress = false;
       return {
         success: true,
         address: result.address,
         chainId: result.chainId
       };
     } catch (error: any) {
+      this.signingInProgress = false;
+      
       if (error.code === 4001 || error.message?.includes('rejected')) {
         return {
           success: false,
