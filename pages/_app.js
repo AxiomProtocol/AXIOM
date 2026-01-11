@@ -32,7 +32,8 @@ const REBUILD_NAV_PAGES = [
   '/land-acquisition',
   '/axusd',
   '/workbook',
-  '/purpose-group-onboarding'
+  '/purpose-group-onboarding',
+  '/dashboard'
 ]
 
 function matchesRebuildNavPages(pathname) {

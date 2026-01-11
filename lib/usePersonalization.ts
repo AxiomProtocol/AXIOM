@@ -39,8 +39,8 @@ export const INTEREST_CONFIGS: Record<string, InterestConfig> = {
   },
   susu: {
     id: 'susu',
-    label: 'Savings Circles (SUSU)',
-    description: 'Join community savings groups',
+    label: 'The Wealth Practice',
+    description: 'Join Group Economics savings circles',
     icon: '💰',
     path: '/susu',
     color: '#D97706',
