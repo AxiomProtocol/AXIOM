@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useOnboarding } from '../pages/_app';
+import { useRouter } from 'next/router';
 import { useTheme } from '../lib/theme';
 
 interface SettingsMenuProps {
@@ -8,14 +8,14 @@ interface SettingsMenuProps {
 }
 
 export function SettingsMenu({ isOpen, onClose }: SettingsMenuProps) {
-  const { triggerOnboarding } = useOnboarding();
+  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
 
   if (!isOpen) return null;
 
   const handleRestartOnboarding = () => {
-    triggerOnboarding();
     onClose();
+    router.push('/purpose-group-onboarding');
   };
 
   return (
