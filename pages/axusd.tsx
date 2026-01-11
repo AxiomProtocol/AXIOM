@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { SiteLayout } from "../components/navigation";
-import axusdHeroImage from "@assets/generated_images/3d_axusd_stablecoin_hero_image.png";
-import treasuryVaultImage from "@assets/generated_images/3d_treasury_vault_visualization.png";
-import bridgeImage from "@assets/generated_images/3d_cross-chain_bridge_visual.png";
-import liquidityPoolImage from "@assets/generated_images/3d_liquidity_pool_visual.png";
+
+const axusdHeroImage = "/images/axusd/3d_axusd_stablecoin_hero_image.png";
+const treasuryVaultImage = "/images/axusd/3d_treasury_vault_visualization.png";
+const bridgeImage = "/images/axusd/3d_cross-chain_bridge_visual.png";
+const liquidityPoolImage = "/images/axusd/3d_liquidity_pool_visual.png";
 
 interface SupplyData {
   totalSupply: string;
