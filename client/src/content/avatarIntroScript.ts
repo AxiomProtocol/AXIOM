@@ -1,7 +1,7 @@
 /**
  * Avatar Introduction Video Script for Axiom Onboarding Wizard
  * 
- * Voice Style: Napoleon Hill meets Rev Ike
+ * Voice Style: Napoleon Hill meets Rev Ike, inspired by Powernomics
  * Prosperous, disciplined, uplifting, conviction-driven, warm, spiritually confident
  * 
  * Duration Target: 60-90 seconds (approximately 180 words at natural pace)
@@ -25,11 +25,11 @@ export interface AvatarScript {
 }
 
 export const AXIOM_INTRO_SCRIPT: AvatarScript = {
-  id: "axiom-onboarding-intro-v1",
+  id: "axiom-onboarding-intro-v2",
   title: "Welcome to Axiom Protocol",
-  version: "1.0.0",
-  estimatedDurationSeconds: 75,
-  wordCount: 188,
+  version: "2.0.0",
+  estimatedDurationSeconds: 80,
+  wordCount: 195,
   scriptText: `Most people do not have a money problem.
 They have a system problem.
 
@@ -39,30 +39,30 @@ But at the end of the month, nothing is built.
 Axiom exists to change that.
 
 This is not a trading app. This is not about speculation.
-Axiom is a way for people to save together, access real money, earn while they wait, and own real assets.
+Axiom is a system for building wealth together through Group Economics.
 
 Here is the core idea.
 
-If ten people save two hundred dollars a month alone, it takes them years to build anything meaningful.
-But if those same ten people save together, someone receives two thousand dollars every single month.
+If ten people save two hundred dollars a month alone, it takes years to build anything meaningful.
+But when those same ten people practice Group Economics together, someone receives two thousand dollars every single month.
 
-That is called a SUSU.
+This is The Wealth Practice.
 
-Axiom puts this system on the blockchain so nobody can cheat, and everyone's money earns while it waits.
+Axiom places this ancient wisdom on modern technology so every commitment is honored and every dollar works while it waits.
 
-When you join, you get three things.
+When you join, you receive three powerful advantages.
 
-First, enforced savings. Your contributions happen automatically so you actually build capital.
+First, enforced discipline. Your contributions happen automatically so you actually build capital.
 
-Second, lump sums. Instead of saving slowly, you get access to thousands of dollars at once.
+Second, collective power. Instead of saving alone, you access thousands of dollars through the strength of your community.
 
-Third, ownership. Your money is not sitting in someone else's vault. It is working for you and building real assets.
+Third, real ownership. Your wealth is not sitting in someone else's vault. It is working for you and building real assets in your name.
 
 This is not about getting rich quick.
 This is about never being broke again.
 This is about owning something real.
 
-If you are ready to stop surviving and start building, let us begin.
+If you are ready to stop surviving and start building wealth together, let us begin.
 
 Your first step is to connect your wallet.`,
 
@@ -75,21 +75,27 @@ Your first step is to connect your wallet.`,
     },
     {
       id: "core-concept",
-      label: "The SUSU Concept",
+      label: "Group Economics",
       timestampSeconds: 18,
-      text: "If ten people save together, someone receives two thousand dollars every single month."
+      text: "When ten people practice Group Economics together, someone receives two thousand dollars every single month."
+    },
+    {
+      id: "wealth-practice",
+      label: "The Wealth Practice",
+      timestampSeconds: 30,
+      text: "This is The Wealth Practice. Ancient wisdom on modern technology."
     },
     {
       id: "benefits",
-      label: "What You Get",
-      timestampSeconds: 38,
-      text: "Enforced savings. Lump sums. Ownership."
+      label: "Your Advantages",
+      timestampSeconds: 42,
+      text: "Enforced discipline. Collective power. Real ownership."
     },
     {
       id: "closing",
       label: "Call to Action",
-      timestampSeconds: 62,
-      text: "If you are ready to stop surviving and start building, let us begin."
+      timestampSeconds: 65,
+      text: "If you are ready to stop surviving and start building wealth together, let us begin."
     }
   ]
 };
