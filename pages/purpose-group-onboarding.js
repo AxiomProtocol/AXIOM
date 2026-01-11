@@ -207,7 +207,19 @@ export default function PurposeGroupOnboarding() {
       case 0:
         return (
           <div className="text-center">
-            <div className="text-6xl mb-6">🌟</div>
+            <div className="max-w-3xl mx-auto mb-8">
+              <video 
+                className="w-full rounded-2xl shadow-2xl border border-gray-700"
+                controls
+                autoPlay
+                playsInline
+                poster="/api/video-poster"
+              >
+                <source src="/api/video/lv_0_20260110224924_1768107248690.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+            
             <h2 className="text-3xl font-bold text-yellow-500 mb-4">Welcome to The Wealth Practice</h2>
             <p className="text-gray-300 text-lg mb-8 max-w-xl mx-auto">
               You're about to join a community of people building wealth together through trust, 
@@ -222,8 +234,8 @@ export default function PurposeGroupOnboarding() {
               </div>
               <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
                 <div className="text-3xl mb-3">💰</div>
-                <h3 className="font-semibold text-white mb-2">Stage 2: SUSU Circles</h3>
-                <p className="text-gray-400 text-sm">Graduate to rotating savings with proven trust</p>
+                <h3 className="font-semibold text-white mb-2">Stage 2: Wealth Circles</h3>
+                <p className="text-gray-400 text-sm">Graduate to Group Economics with proven trust</p>
               </div>
               <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
                 <div className="text-3xl mb-3">📈</div>
