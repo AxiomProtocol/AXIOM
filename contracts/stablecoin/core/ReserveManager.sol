@@ -4,8 +4,14 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IBackstopVault.sol";
 import "../interfaces/ITBillVault.sol";
+
+interface IPSM {
+    function collateral() external view returns (address);
+    function debtOutstanding() external view returns (uint256);
+}
 
 contract ReserveManager is AccessControl, ReentrancyGuard, Pausable {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
@@ -15,6 +21,9 @@ contract ReserveManager is AccessControl, ReentrancyGuard, Pausable {
     IBackstopVault public backstopVault;
     ITBillVault public tbillVault;
     address public vaultEngine;
+    
+    address public psm;
+    uint8 public psmCollateralDecimals;
 
     uint256 public targetTBillRatio;
     uint256 public targetBackstopRatio;
@@ -37,6 +46,7 @@ contract ReserveManager is AccessControl, ReentrancyGuard, Pausable {
     event RebalanceThresholdUpdated(uint256 newThreshold);
     event BackstopVaultUpdated(address indexed oldVault, address indexed newVault);
     event TBillVaultUpdated(address indexed oldVault, address indexed newVault);
+    event PSMUpdated(address indexed newPsm, uint8 decimals);
 
     constructor(
         address _backstopVault,
@@ -60,11 +70,32 @@ contract ReserveManager is AccessControl, ReentrancyGuard, Pausable {
         _grantRole(GUARDIAN_ROLE, msg.sender);
     }
 
+    function setPSM(address _psm, uint8 _decimals) external onlyRole(ADMIN_ROLE) {
+        psm = _psm;
+        psmCollateralDecimals = _decimals;
+        emit PSMUpdated(_psm, _decimals);
+    }
+    
+    function _getPSMReserves() internal view returns (uint256) {
+        if (psm == address(0)) return 0;
+        
+        address collateralToken = IPSM(psm).collateral();
+        uint256 balance = IERC20(collateralToken).balanceOf(psm);
+        
+        if (psmCollateralDecimals < 18) {
+            return balance * (10 ** (18 - psmCollateralDecimals));
+        } else if (psmCollateralDecimals > 18) {
+            return balance / (10 ** (psmCollateralDecimals - 18));
+        }
+        return balance;
+    }
+
     function getReserveStatus() external view returns (ReserveStatus memory) {
         uint256 tbillValue = tbillVault.getTotalValue();
         uint256 backstopValue = backstopVault.getBalance();
+        uint256 psmValue = _getPSMReserves();
         
-        uint256 totalReserves = tbillValue + backstopValue;
+        uint256 totalReserves = tbillValue + backstopValue + psmValue;
 
         uint256 currentTBillRatio = 0;
         uint256 currentBackstopRatio = 0;
@@ -96,7 +127,8 @@ contract ReserveManager is AccessControl, ReentrancyGuard, Pausable {
     function getHealthFactor() external view returns (uint256) {
         uint256 tbillValue = tbillVault.getTotalValue();
         uint256 backstopValue = backstopVault.getBalance();
-        uint256 totalReserves = tbillValue + backstopValue;
+        uint256 psmValue = _getPSMReserves();
+        uint256 totalReserves = tbillValue + backstopValue + psmValue;
 
         if (totalReserves == 0) return 0;
 

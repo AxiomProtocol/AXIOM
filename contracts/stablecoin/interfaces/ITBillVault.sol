@@ -7,15 +7,17 @@ interface ITBillVault {
         string name;
         uint256 balance;
         uint256 yieldRate;
+        uint256 maturityDate;
         bool enabled;
     }
 
     event TBillDeposited(address indexed token, uint256 amount, uint256 axusdMinted);
     event TBillWithdrawn(address indexed token, uint256 amount);
     event YieldHarvested(address indexed token, uint256 yieldAmount);
-    event TBillAssetAdded(address indexed token, string name);
+    event TBillAssetAdded(address indexed token, string name, uint256 maturityDate);
     event TBillAssetRemoved(address indexed token);
     event YieldDistributed(uint256 totalYield, uint256 toFeeBurner, uint256 toInsurance);
+    event MaturityEnforcementUpdated(bool enforced, uint256 maxDays);
 
     function depositTBill(address token, uint256 amount) external;
     function withdrawTBill(address token, uint256 amount) external;

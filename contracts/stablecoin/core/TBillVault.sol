@@ -56,6 +56,10 @@ contract TBillVault is AccessControl, ReentrancyGuard, Pausable, ITBillVault {
     
     IGeniusComplianceTBill public geniusCompliance;
     bool public geniusComplianceEnabled;
+    
+    bool public maturityEnforcementEnabled;
+    uint256 public maxMaturityDays;
+    uint256 public constant GENIUS_ACT_MAX_MATURITY = 93 days;
 
     event MaxMintRatioUpdated(uint256 newRatio);
     event FeeBurnerUpdated(address indexed newFeeBurner);
@@ -63,6 +67,7 @@ contract TBillVault is AccessControl, ReentrancyGuard, Pausable, ITBillVault {
     event SharesUpdated(uint256 feeBurnerShare, uint256 insuranceShare);
     event YieldSourceUpdated(address indexed newSource);
     event GeniusComplianceUpdated(address indexed compliance, bool enabled);
+    event MaturityEnforcementUpdated(bool enforced, uint256 maxDays);
 
     constructor(
         address _axusd,
@@ -87,13 +92,25 @@ contract TBillVault is AccessControl, ReentrancyGuard, Pausable, ITBillVault {
         _grantRole(YIELD_MANAGER_ROLE, msg.sender);
     }
 
+    function setMaturityEnforcement(bool _enabled, uint256 _maxDays) external onlyRole(ADMIN_ROLE) {
+        maturityEnforcementEnabled = _enabled;
+        maxMaturityDays = _maxDays > 0 ? _maxDays : GENIUS_ACT_MAX_MATURITY;
+        emit MaturityEnforcementUpdated(_enabled, maxMaturityDays);
+    }
+
     function addTBillAsset(
         address token,
         string calldata name,
-        uint256 expectedYieldRate
+        uint256 expectedYieldRate,
+        uint256 maturityDate
     ) external onlyRole(ADMIN_ROLE) {
         require(token != address(0), "TBillVault: zero token");
         require(tbillAssets[token].token == address(0), "TBillVault: already added");
+        
+        if (maturityEnforcementEnabled) {
+            require(maturityDate > block.timestamp, "TBillVault: maturity must be in future");
+            require(maturityDate <= block.timestamp + maxMaturityDays, "TBillVault: maturity exceeds GENIUS Act limit");
+        }
 
         uint8 decimals = ITBillToken(token).decimals();
         tokenDecimals[token] = decimals;
@@ -103,13 +120,14 @@ contract TBillVault is AccessControl, ReentrancyGuard, Pausable, ITBillVault {
             name: name,
             balance: 0,
             yieldRate: expectedYieldRate,
+            maturityDate: maturityDate,
             enabled: true
         });
 
         supportedTokens.push(token);
         lastYieldTimestamp[token] = block.timestamp;
 
-        emit TBillAssetAdded(token, name);
+        emit TBillAssetAdded(token, name, maturityDate);
     }
 
     function removeTBillAsset(address token) external onlyRole(ADMIN_ROLE) {
