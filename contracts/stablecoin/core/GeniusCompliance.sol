@@ -178,6 +178,16 @@ contract GeniusCompliance is AccessControl {
     }
     
     /**
+     * @notice Toggle yield distribution blocking (GENIUS Act requires blocking to AXUSD holders)
+     * @dev Note: Yield can still go to protocol treasury/insurance, just not token holders
+     * @param blocked True to block yield distribution
+     */
+    function setYieldDistributionBlocked(bool blocked) external onlyRole(COMPLIANCE_ADMIN) {
+        yieldDistributionBlocked = blocked;
+        emit YieldDistributionBlocked(blocked);
+    }
+    
+    /**
      * @notice Check if yield distribution is blocked (GENIUS Act requirement)
      * @return bool True if yield cannot be distributed to holders
      */

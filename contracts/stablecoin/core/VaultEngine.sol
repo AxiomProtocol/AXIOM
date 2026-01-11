@@ -17,6 +17,18 @@ interface IGeniusCompliance {
     function isYieldBlocked() external view returns (bool);
 }
 
+interface IReserveManager {
+    function getReserveStatus() external view returns (
+        uint256 totalReserves,
+        uint256 tbillValue,
+        uint256 backstopValue,
+        uint256 vaultCollateral,
+        uint256 currentTBillRatio,
+        uint256 currentBackstopRatio,
+        bool needsRebalance
+    );
+}
+
 contract VaultEngine is AccessControl, Pausable, ReentrancyGuard, IVaultEngine {
     using SafeERC20 for IERC20;
     using VaultMath for uint256;
@@ -32,6 +44,9 @@ contract VaultEngine is AccessControl, Pausable, ReentrancyGuard, IVaultEngine {
     
     IGeniusCompliance public geniusCompliance;
     bool public geniusComplianceEnabled;
+    
+    IReserveManager public reserveManager;
+    bool public reserveBackingEnforced;
 
     uint256 public globalDebtCeiling;
     uint256 public totalGlobalDebt;
@@ -53,6 +68,7 @@ contract VaultEngine is AccessControl, Pausable, ReentrancyGuard, IVaultEngine {
     event RateLimiterUpdated(address indexed newLimiter);
     event FeeBurnerUpdated(address indexed newFeeBurner);
     event GeniusComplianceUpdated(address indexed compliance, bool enabled);
+    event ReserveManagerUpdated(address indexed manager, bool backingEnforced);
 
     constructor(
         address _axusd,
@@ -78,6 +94,21 @@ contract VaultEngine is AccessControl, Pausable, ReentrancyGuard, IVaultEngine {
         geniusCompliance = IGeniusCompliance(_compliance);
         geniusComplianceEnabled = _enabled;
         emit GeniusComplianceUpdated(_compliance, _enabled);
+    }
+    
+    function setReserveManager(address _manager, bool _enforced) external onlyRole(ADMIN_ROLE) {
+        reserveManager = IReserveManager(_manager);
+        reserveBackingEnforced = _enforced;
+        emit ReserveManagerUpdated(_manager, _enforced);
+    }
+    
+    function _checkReserveBacking(uint256 additionalDebt) internal view {
+        if (!reserveBackingEnforced || address(reserveManager) == address(0)) return;
+        
+        (uint256 totalReserves,,,,,, ) = reserveManager.getReserveStatus();
+        uint256 projectedSupply = totalGlobalDebt + additionalDebt;
+        
+        require(totalReserves >= projectedSupply, "VaultEngine: insufficient reserves for 100% backing");
     }
 
     function addCollateral(
@@ -198,6 +229,8 @@ contract VaultEngine is AccessControl, Pausable, ReentrancyGuard, IVaultEngine {
         require(vault.collateralAmount > 0, "VaultEngine: no collateral");
 
         _accrueInterest(msg.sender, collateral);
+        
+        _checkReserveBacking(amount);
 
         require(totalGlobalDebt + amount <= globalDebtCeiling, "VaultEngine: global ceiling");
         require(config.totalDebt + amount <= config.debtCeiling, "VaultEngine: collateral ceiling");
