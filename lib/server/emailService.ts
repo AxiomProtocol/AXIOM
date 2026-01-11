@@ -178,51 +178,362 @@ export async function sendWelcomeEmail(params: {
     'community_development': 'Community Development'
   };
 
+  const purposeDescriptions: Record<string, string> = {
+    'emergency_fund': 'Build a financial safety net with your community. Your group will help you prepare for life\'s unexpected moments.',
+    'land_acquisition': 'Pool resources with like-minded individuals to acquire land and build generational wealth through real property ownership.',
+    'business_capital': 'Access the capital you need to start or grow your business through community-backed funding.',
+    'education': 'Invest in yourself and your family\'s future through coordinated educational funding.',
+    'family_wealth': 'Create lasting prosperity that spans generations through disciplined group savings and investment.',
+    'community_development': 'Transform your community by pooling resources for infrastructure, programs, and local economic development.'
+  };
+
   const purposeDisplay = purposeLabels[purpose] || purpose;
+  const purposeDesc = purposeDescriptions[purpose] || 'Build wealth together with your community through Group Economics.';
   const regionDisplay = region.charAt(0).toUpperCase() + region.slice(1).replace(/-/g, ' ');
+  const annualProjection = commitmentAmount * 12;
+  const threeYearProjection = annualProjection * 3;
 
   return sendEmail({
     to,
-    subject: `Welcome to The Wealth Practice, ${memberName}!`,
-    text: `Hi ${memberName},\n\nWelcome to The Wealth Practice!\n\nYou've taken the first step toward building wealth together through Group Economics. Here's a summary of your registration:\n\n• Region: ${regionDisplay}\n• Purpose: ${purposeDisplay}\n• Monthly Commitment: $${commitmentAmount}\n\nWhat's Next?\n\n1. Join your regional Interest Hub to connect with like-minded members\n2. Meet your fellow Purpose Group members\n3. Prepare for your first contribution\n4. Explore your personalized dashboard\n\nRemember: Wealth is built through consistency, trust, and community. You're now part of a movement that believes in Group Economics - the principle that together, we can achieve what none of us could alone.\n\nWe're excited to have you on this journey!\n\n- The Axiom Team`,
-    html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 30px; border-radius: 12px;">
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h1 style="color: #fbbf24; margin: 0; font-size: 28px;">✨ Welcome to The Wealth Practice</h1>
-          <p style="color: #94a3b8; margin: 10px 0 0;">Building Wealth Together Through Group Economics</p>
-        </div>
-        
-        <div style="background: #1e293b; padding: 25px; border-radius: 8px; color: #e2e8f0;">
-          <p style="font-size: 18px; margin: 0 0 15px;">Hi ${memberName},</p>
-          <p>Congratulations on taking the first step toward building wealth together! You're now part of a community that believes in the power of Group Economics.</p>
-          
-          <div style="background: #0f172a; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="color: #fbbf24; margin: 0 0 15px;">Your Registration Summary</h3>
-            <table style="width: 100%; color: #e2e8f0;">
-              <tr><td style="padding: 8px 0; color: #94a3b8;">Region:</td><td style="padding: 8px 0; text-align: right;">${regionDisplay}</td></tr>
-              <tr><td style="padding: 8px 0; color: #94a3b8;">Purpose:</td><td style="padding: 8px 0; text-align: right;">${purposeDisplay}</td></tr>
-              <tr><td style="padding: 8px 0; color: #94a3b8;">Monthly Commitment:</td><td style="padding: 8px 0; text-align: right; color: #fbbf24; font-weight: bold;">$${commitmentAmount}</td></tr>
-            </table>
-          </div>
-          
-          <h3 style="color: #fbbf24; margin: 25px 0 15px;">What's Next?</h3>
-          <div style="margin-left: 10px;">
-            <p style="margin: 10px 0;"><span style="color: #fbbf24;">✓</span> Join your regional Interest Hub</p>
-            <p style="margin: 10px 0;"><span style="color: #fbbf24;">✓</span> Meet your fellow Purpose Group members</p>
-            <p style="margin: 10px 0;"><span style="color: #fbbf24;">✓</span> Prepare for your first contribution</p>
-            <p style="margin: 10px 0;"><span style="color: #fbbf24;">✓</span> Explore your personalized dashboard</p>
-          </div>
-          
-          <div style="text-align: center; margin-top: 25px;">
-            <a href="https://axiomprotocol.app/dashboard" style="display: inline-block; background: #fbbf24; color: #1a1a2e; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: bold;">Go to Your Dashboard</a>
-          </div>
-        </div>
-        
-        <p style="color: #94a3b8; font-size: 12px; margin-top: 20px; text-align: center;">
-          Remember: Wealth is built through consistency, trust, and community.<br>
-          Together, we can achieve what none of us could alone.
-        </p>
+    subject: `Welcome to The Wealth Practice, ${memberName}! Your Journey Begins Now`,
+    text: `Hi ${memberName},
+
+WELCOME TO THE WEALTH PRACTICE!
+
+You've just taken the most important step toward building real, lasting wealth - joining a community that believes in Group Economics.
+
+YOUR REGISTRATION SUMMARY
+-------------------------
+Region: ${regionDisplay}
+Purpose: ${purposeDisplay}
+Monthly Commitment: $${commitmentAmount}
+Annual Projection: $${annualProjection}
+3-Year Potential: $${threeYearProjection}+
+
+ABOUT YOUR PURPOSE GROUP
+------------------------
+${purposeDesc}
+
+YOUR FIRST 30 DAYS - ACTION PLAN
+--------------------------------
+Week 1: Orientation
+- Log into your personalized dashboard at axiomprotocol.app/dashboard
+- Complete your member profile (add photo and bio)
+- Review the Purpose Group guidelines and expectations
+- Introduce yourself in the community chat
+
+Week 2: Connection
+- Attend your first regional Interest Hub virtual meetup
+- Connect with at least 3 fellow Purpose Group members
+- Set up your payment method for contributions
+- Review the savings calendar and payout schedule
+
+Week 3: Education
+- Complete the "Wealth Practice Foundations" course in our Academy
+- Learn about the 3-stage wealth building system
+- Understand how trust scores work
+- Explore the land acquisition opportunities
+
+Week 4: Activation
+- Make your first contribution
+- Set up automatic monthly payments (recommended)
+- Share your journey with one person who could benefit
+- Celebrate your commitment to Group Economics!
+
+THE THREE STAGES OF WEALTH BUILDING
+-----------------------------------
+Stage 1: Purpose Groups (You Are Here)
+Build trust through consistent participation. Prove your commitment.
+
+Stage 2: Wealth Circles
+Graduate to larger savings pools with proven, trusted members.
+
+Stage 3: Capital Mode
+Access significant investment opportunities, land deals, and business funding.
+
+IMPORTANT RESOURCES
+-------------------
+- Dashboard: axiomprotocol.app/dashboard
+- Learn More: axiomprotocol.app/learn-wealth-practice
+- FAQ: axiomprotocol.app/susu-faq
+- Support: support@axiomprotocol.app
+
+THE WEALTH PRACTICE PRINCIPLES
+------------------------------
+1. Consistency Over Intensity - Small, regular contributions beat sporadic large ones
+2. Trust Is Currency - Your reputation is your most valuable asset
+3. Community Over Competition - We rise together
+4. Transparency Always - Every transaction is recorded and visible
+5. Long-Term Thinking - Wealth is built over years, not days
+
+WHAT MAKES US DIFFERENT
+-----------------------
+Unlike traditional savings, The Wealth Practice combines:
+- Group accountability and support
+- Transparent, on-chain record keeping
+- Real asset acquisition (land, property)
+- Community governance and ownership
+- Education and skill development
+
+Your commitment of $${commitmentAmount}/month isn't just saving - it's an investment in a new economic system where communities own their future.
+
+Remember: "The best time to plant a tree was 20 years ago. The second best time is now." You've planted your tree today.
+
+Welcome to the family, ${memberName}. We're honored to have you.
+
+Building Wealth Together,
+The Axiom Team
+
+---
+Axiom Protocol | The Wealth Practice
+axiomprotocol.app
+`,
+    html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0f172a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <div style="max-width: 640px; margin: 0 auto; padding: 20px;">
+    
+    <!-- Header Banner -->
+    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px 16px 0 0; padding: 40px 30px; text-align: center; border-bottom: 3px solid #fbbf24;">
+      <div style="font-size: 48px; margin-bottom: 15px;">✨</div>
+      <h1 style="color: #fbbf24; margin: 0; font-size: 32px; font-weight: 700;">Welcome to The Wealth Practice</h1>
+      <p style="color: #94a3b8; margin: 15px 0 0; font-size: 16px;">Building Wealth Together Through Group Economics</p>
+    </div>
+    
+    <!-- Main Content -->
+    <div style="background: #1e293b; padding: 35px 30px; color: #e2e8f0;">
+      
+      <!-- Personal Greeting -->
+      <p style="font-size: 20px; margin: 0 0 20px; color: #ffffff;">Hi ${memberName},</p>
+      <p style="margin: 0 0 25px; line-height: 1.7; font-size: 16px;">
+        Congratulations! You've just taken the most important step toward building real, lasting wealth - 
+        joining a community that believes in the power of <strong style="color: #fbbf24;">Group Economics</strong>.
+      </p>
+      
+      <!-- Registration Summary Box -->
+      <div style="background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 100%); border-radius: 12px; padding: 25px; margin: 25px 0; border-left: 4px solid #fbbf24;">
+        <h2 style="color: #fbbf24; margin: 0 0 20px; font-size: 18px; text-transform: uppercase; letter-spacing: 1px;">📋 Your Registration Summary</h2>
+        <table style="width: 100%; color: #e2e8f0; font-size: 15px;">
+          <tr>
+            <td style="padding: 10px 0; color: #94a3b8;">Region:</td>
+            <td style="padding: 10px 0; text-align: right; font-weight: 600;">${regionDisplay}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; color: #94a3b8;">Purpose:</td>
+            <td style="padding: 10px 0; text-align: right; font-weight: 600;">${purposeDisplay}</td>
+          </tr>
+          <tr style="border-top: 1px solid #334155;">
+            <td style="padding: 15px 0 10px; color: #94a3b8;">Monthly Commitment:</td>
+            <td style="padding: 15px 0 10px; text-align: right; color: #fbbf24; font-weight: 700; font-size: 20px;">$${commitmentAmount}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; color: #94a3b8;">Annual Projection:</td>
+            <td style="padding: 10px 0; text-align: right; color: #22c55e; font-weight: 600;">$${annualProjection}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; color: #94a3b8;">3-Year Potential:</td>
+            <td style="padding: 10px 0; text-align: right; color: #22c55e; font-weight: 600;">$${threeYearProjection}+</td>
+          </tr>
+        </table>
       </div>
-    </div>`
+      
+      <!-- Purpose Description -->
+      <div style="background: #334155; border-radius: 12px; padding: 20px; margin: 25px 0;">
+        <h3 style="color: #fbbf24; margin: 0 0 10px; font-size: 16px;">🎯 About Your Purpose Group</h3>
+        <p style="margin: 0; color: #e2e8f0; line-height: 1.6;">${purposeDesc}</p>
+      </div>
+      
+      <!-- 30-Day Action Plan -->
+      <h2 style="color: #ffffff; margin: 35px 0 20px; font-size: 20px; border-bottom: 2px solid #fbbf24; padding-bottom: 10px;">
+        📅 Your First 30 Days - Action Plan
+      </h2>
+      
+      <!-- Week 1 -->
+      <div style="margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+          <span style="background: #fbbf24; color: #1a1a2e; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 12px;">WEEK 1</span>
+          <span style="color: #ffffff; margin-left: 12px; font-weight: 600;">Orientation</span>
+        </div>
+        <ul style="margin: 0; padding-left: 20px; color: #94a3b8; line-height: 1.8;">
+          <li>Log into your personalized dashboard</li>
+          <li>Complete your member profile (add photo and bio)</li>
+          <li>Review Purpose Group guidelines and expectations</li>
+          <li>Introduce yourself in the community chat</li>
+        </ul>
+      </div>
+      
+      <!-- Week 2 -->
+      <div style="margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+          <span style="background: #22c55e; color: #1a1a2e; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 12px;">WEEK 2</span>
+          <span style="color: #ffffff; margin-left: 12px; font-weight: 600;">Connection</span>
+        </div>
+        <ul style="margin: 0; padding-left: 20px; color: #94a3b8; line-height: 1.8;">
+          <li>Attend your first regional Interest Hub meetup</li>
+          <li>Connect with at least 3 fellow members</li>
+          <li>Set up your payment method for contributions</li>
+          <li>Review the savings calendar and payout schedule</li>
+        </ul>
+      </div>
+      
+      <!-- Week 3 -->
+      <div style="margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+          <span style="background: #8b5cf6; color: #ffffff; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 12px;">WEEK 3</span>
+          <span style="color: #ffffff; margin-left: 12px; font-weight: 600;">Education</span>
+        </div>
+        <ul style="margin: 0; padding-left: 20px; color: #94a3b8; line-height: 1.8;">
+          <li>Complete "Wealth Practice Foundations" course</li>
+          <li>Learn about the 3-stage wealth building system</li>
+          <li>Understand how trust scores work</li>
+          <li>Explore land acquisition opportunities</li>
+        </ul>
+      </div>
+      
+      <!-- Week 4 -->
+      <div style="margin-bottom: 25px;">
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+          <span style="background: #ef4444; color: #ffffff; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 12px;">WEEK 4</span>
+          <span style="color: #ffffff; margin-left: 12px; font-weight: 600;">Activation</span>
+        </div>
+        <ul style="margin: 0; padding-left: 20px; color: #94a3b8; line-height: 1.8;">
+          <li>Make your first contribution</li>
+          <li>Set up automatic monthly payments (recommended)</li>
+          <li>Share your journey with someone who could benefit</li>
+          <li>Celebrate your commitment to Group Economics!</li>
+        </ul>
+      </div>
+      
+      <!-- Three Stages -->
+      <h2 style="color: #ffffff; margin: 35px 0 20px; font-size: 20px; border-bottom: 2px solid #fbbf24; padding-bottom: 10px;">
+        🚀 The Three Stages of Wealth Building
+      </h2>
+      
+      <div style="display: flex; flex-direction: column; gap: 15px;">
+        <div style="background: #0f172a; border-radius: 10px; padding: 20px; border-left: 4px solid #fbbf24;">
+          <div style="display: flex; align-items: center; margin-bottom: 8px;">
+            <span style="background: #fbbf24; color: #1a1a2e; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; margin-right: 10px;">1</span>
+            <strong style="color: #fbbf24;">Purpose Groups</strong>
+            <span style="background: #22c55e; color: #ffffff; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 10px;">YOU ARE HERE</span>
+          </div>
+          <p style="margin: 0; color: #94a3b8; font-size: 14px;">Build trust through consistent participation. Prove your commitment to the community.</p>
+        </div>
+        
+        <div style="background: #0f172a; border-radius: 10px; padding: 20px; border-left: 4px solid #64748b;">
+          <div style="display: flex; align-items: center; margin-bottom: 8px;">
+            <span style="background: #64748b; color: #ffffff; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; margin-right: 10px;">2</span>
+            <strong style="color: #ffffff;">Wealth Circles</strong>
+          </div>
+          <p style="margin: 0; color: #94a3b8; font-size: 14px;">Graduate to larger savings pools with proven, trusted members. Access bigger opportunities.</p>
+        </div>
+        
+        <div style="background: #0f172a; border-radius: 10px; padding: 20px; border-left: 4px solid #64748b;">
+          <div style="display: flex; align-items: center; margin-bottom: 8px;">
+            <span style="background: #64748b; color: #ffffff; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; margin-right: 10px;">3</span>
+            <strong style="color: #ffffff;">Capital Mode</strong>
+          </div>
+          <p style="margin: 0; color: #94a3b8; font-size: 14px;">Access significant investment opportunities, land deals, and business funding with your trusted network.</p>
+        </div>
+      </div>
+      
+      <!-- Principles -->
+      <h2 style="color: #ffffff; margin: 35px 0 20px; font-size: 20px; border-bottom: 2px solid #fbbf24; padding-bottom: 10px;">
+        📜 The Wealth Practice Principles
+      </h2>
+      
+      <div style="background: #0f172a; border-radius: 12px; padding: 25px;">
+        <div style="margin-bottom: 15px; display: flex; align-items: flex-start;">
+          <span style="color: #fbbf24; font-size: 18px; margin-right: 12px;">1.</span>
+          <div>
+            <strong style="color: #ffffff;">Consistency Over Intensity</strong>
+            <p style="margin: 5px 0 0; color: #94a3b8; font-size: 14px;">Small, regular contributions beat sporadic large ones.</p>
+          </div>
+        </div>
+        <div style="margin-bottom: 15px; display: flex; align-items: flex-start;">
+          <span style="color: #fbbf24; font-size: 18px; margin-right: 12px;">2.</span>
+          <div>
+            <strong style="color: #ffffff;">Trust Is Currency</strong>
+            <p style="margin: 5px 0 0; color: #94a3b8; font-size: 14px;">Your reputation is your most valuable asset in this community.</p>
+          </div>
+        </div>
+        <div style="margin-bottom: 15px; display: flex; align-items: flex-start;">
+          <span style="color: #fbbf24; font-size: 18px; margin-right: 12px;">3.</span>
+          <div>
+            <strong style="color: #ffffff;">Community Over Competition</strong>
+            <p style="margin: 5px 0 0; color: #94a3b8; font-size: 14px;">We rise together. Your success is our success.</p>
+          </div>
+        </div>
+        <div style="margin-bottom: 15px; display: flex; align-items: flex-start;">
+          <span style="color: #fbbf24; font-size: 18px; margin-right: 12px;">4.</span>
+          <div>
+            <strong style="color: #ffffff;">Transparency Always</strong>
+            <p style="margin: 5px 0 0; color: #94a3b8; font-size: 14px;">Every transaction is recorded and visible. No hidden dealings.</p>
+          </div>
+        </div>
+        <div style="display: flex; align-items: flex-start;">
+          <span style="color: #fbbf24; font-size: 18px; margin-right: 12px;">5.</span>
+          <div>
+            <strong style="color: #ffffff;">Long-Term Thinking</strong>
+            <p style="margin: 5px 0 0; color: #94a3b8; font-size: 14px;">Wealth is built over years, not days. Patience pays dividends.</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- CTA Buttons -->
+      <div style="text-align: center; margin: 35px 0;">
+        <a href="https://axiomprotocol.app/dashboard" style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #1a1a2e; padding: 16px 40px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 16px; margin-bottom: 15px;">
+          Go to Your Dashboard →
+        </a>
+        <div style="margin-top: 15px;">
+          <a href="https://axiomprotocol.app/learn-wealth-practice" style="color: #fbbf24; text-decoration: none; margin: 0 15px; font-size: 14px;">Learn More</a>
+          <span style="color: #64748b;">|</span>
+          <a href="https://axiomprotocol.app/susu-faq" style="color: #fbbf24; text-decoration: none; margin: 0 15px; font-size: 14px;">FAQ</a>
+          <span style="color: #64748b;">|</span>
+          <a href="https://axiomprotocol.app/academy" style="color: #fbbf24; text-decoration: none; margin: 0 15px; font-size: 14px;">Academy</a>
+        </div>
+      </div>
+      
+      <!-- Inspirational Quote -->
+      <div style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border-radius: 12px; padding: 25px; text-align: center; margin: 25px 0;">
+        <p style="margin: 0; color: #1a1a2e; font-size: 18px; font-style: italic; font-weight: 500;">
+          "The best time to plant a tree was 20 years ago.<br>The second best time is now."
+        </p>
+        <p style="margin: 15px 0 0; color: #1a1a2e; font-weight: 700;">You've planted your tree today. 🌳</p>
+      </div>
+      
+      <!-- Closing -->
+      <div style="text-align: center; padding-top: 20px;">
+        <p style="color: #ffffff; font-size: 18px; margin: 0 0 10px;">
+          Welcome to the family, <strong>${memberName}</strong>.
+        </p>
+        <p style="color: #94a3b8; margin: 0;">We're honored to have you on this journey.</p>
+      </div>
+      
+    </div>
+    
+    <!-- Footer -->
+    <div style="background: #0f172a; border-radius: 0 0 16px 16px; padding: 25px 30px; text-align: center; border-top: 1px solid #334155;">
+      <p style="color: #fbbf24; font-weight: 600; margin: 0 0 10px; font-size: 14px;">Building Wealth Together</p>
+      <p style="color: #64748b; margin: 0 0 15px; font-size: 13px;">
+        Axiom Protocol | The Wealth Practice
+      </p>
+      <div style="margin-bottom: 15px;">
+        <a href="https://axiomprotocol.app" style="color: #94a3b8; text-decoration: none; font-size: 12px; margin: 0 10px;">Website</a>
+        <a href="https://axiomprotocol.app/transparency" style="color: #94a3b8; text-decoration: none; font-size: 12px; margin: 0 10px;">Transparency</a>
+        <a href="https://axiomprotocol.app/governance" style="color: #94a3b8; text-decoration: none; font-size: 12px; margin: 0 10px;">Governance</a>
+      </div>
+      <p style="color: #475569; margin: 0; font-size: 11px;">
+        © 2026 Axiom Protocol. All rights reserved.<br>
+        You're receiving this email because you registered for The Wealth Practice.
+      </p>
+    </div>
+    
+  </div>
+</body>
+</html>`
   });
 }
