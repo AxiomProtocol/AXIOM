@@ -64,7 +64,7 @@ This is about owning something real.
 
 If you are ready to stop surviving and start building wealth together, let us begin.
 
-Your first step is to connect your wallet.`,
+Your first step is to tell us where you are located so we can connect you with people in your region.`,
 
   sectionMarkers: [
     {
@@ -95,7 +95,7 @@ Your first step is to connect your wallet.`,
       id: "closing",
       label: "Call to Action",
       timestampSeconds: 65,
-      text: "If you are ready to stop surviving and start building wealth together, let us begin."
+      text: "Your first step is to tell us where you are located so we can connect you with people in your region."
     }
   ]
 };
