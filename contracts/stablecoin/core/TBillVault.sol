@@ -60,6 +60,8 @@ contract TBillVault is AccessControl, ReentrancyGuard, Pausable, ITBillVault {
     bool public maturityEnforcementEnabled;
     uint256 public maxMaturityDays;
     uint256 public constant GENIUS_ACT_MAX_MATURITY = 93 days;
+    
+    bool public holderYieldDistributionBlocked;
 
     event MaxMintRatioUpdated(uint256 newRatio);
     event FeeBurnerUpdated(address indexed newFeeBurner);
@@ -85,6 +87,10 @@ contract TBillVault is AccessControl, ReentrancyGuard, Pausable, ITBillVault {
 
         feeBurnerShare = 5000;
         insuranceShare = 2500;
+        
+        maturityEnforcementEnabled = true;
+        maxMaturityDays = GENIUS_ACT_MAX_MATURITY;
+        holderYieldDistributionBlocked = true;
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);
@@ -143,6 +149,10 @@ contract TBillVault is AccessControl, ReentrancyGuard, Pausable, ITBillVault {
         TBillAsset storage asset = tbillAssets[token];
         require(asset.token != address(0), "TBillVault: unsupported token");
         require(asset.enabled, "TBillVault: token disabled");
+        
+        if (maturityEnforcementEnabled && asset.maturityDate > 0) {
+            require(asset.maturityDate > block.timestamp, "TBillVault: asset has matured");
+        }
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
@@ -235,6 +245,8 @@ contract TBillVault is AccessControl, ReentrancyGuard, Pausable, ITBillVault {
     }
 
     function distributeYield() external nonReentrant onlyRole(YIELD_MANAGER_ROLE) {
+        require(!holderYieldDistributionBlocked, "TBillVault: yield to holders blocked by GENIUS Act");
+        
         if (geniusComplianceEnabled && address(geniusCompliance) != address(0)) {
             require(!geniusCompliance.isYieldBlocked(), "TBillVault: yield distribution blocked by GENIUS Act");
         }

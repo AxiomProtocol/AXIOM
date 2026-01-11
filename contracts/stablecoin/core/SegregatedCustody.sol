@@ -81,7 +81,7 @@ contract SegregatedCustody is AccessControl, ReentrancyGuard, Pausable {
     error UnauthorizedDestination();
     error InsolvencyProtectionActive();
     
-    constructor(address _stablecoinContract) {
+    constructor(address _stablecoinContract, address _psmContract) {
         stablecoinContract = _stablecoinContract;
         rehypothecationBlocked = true;
         insolvencyProtectionActive = true;
@@ -89,6 +89,16 @@ contract SegregatedCustody is AccessControl, ReentrancyGuard, Pausable {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(CUSTODIAN_ROLE, msg.sender);
         _grantRole(AUDITOR_ROLE, msg.sender);
+        
+        if (_psmContract != address(0)) {
+            _grantRole(REDEMPTION_ROLE, _psmContract);
+            approvedDestinations[_psmContract] = true;
+        }
+    }
+    
+    function grantRedemptionRole(address account) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _grantRole(REDEMPTION_ROLE, account);
+        approvedDestinations[account] = true;
     }
     
     function depositAsset(
