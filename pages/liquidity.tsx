@@ -2,6 +2,21 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 
+function formatCurrency(value: number): string {
+  if (value >= 1_000_000_000) {
+    return `$${(value / 1_000_000_000).toFixed(2)}B`;
+  } else if (value >= 1_000_000) {
+    return `$${(value / 1_000_000).toFixed(2)}M`;
+  } else if (value >= 1_000) {
+    return `$${(value / 1_000).toFixed(2)}K`;
+  } else if (value >= 1) {
+    return `$${value.toFixed(2)}`;
+  } else if (value > 0) {
+    return `$${value.toFixed(4)}`;
+  }
+  return '$0.00';
+}
+
 interface LiquidityPool {
   id: string;
   name: string;
@@ -126,7 +141,7 @@ export default function LiquidityPage() {
               <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
                 <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: '12px', padding: '16px 24px' }}>
                   <div style={{ fontSize: '14px', opacity: 0.8 }}>Total TVL</div>
-                  <div style={{ fontSize: '28px', fontWeight: 700 }}>${(totalTvl / 1000000).toFixed(2)}M</div>
+                  <div style={{ fontSize: '28px', fontWeight: 700 }}>{formatCurrency(totalTvl)}</div>
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: '12px', padding: '16px 24px' }}>
                   <div style={{ fontSize: '14px', opacity: 0.8 }}>Active Pools</div>
@@ -188,15 +203,15 @@ export default function LiquidityPage() {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
                           <div>
                             <div style={{ fontSize: '12px', color: '#6B7280' }}>TVL</div>
-                            <div style={{ fontSize: '18px', fontWeight: 600 }}>${(pool.tvl / 1000).toFixed(0)}K</div>
+                            <div style={{ fontSize: '18px', fontWeight: 600 }}>{formatCurrency(pool.tvl)}</div>
                           </div>
                           <div>
                             <div style={{ fontSize: '12px', color: '#6B7280' }}>24h Volume</div>
-                            <div style={{ fontSize: '18px', fontWeight: 600 }}>${(pool.volume24h / 1000).toFixed(0)}K</div>
+                            <div style={{ fontSize: '18px', fontWeight: 600 }}>{formatCurrency(pool.volume24h)}</div>
                           </div>
                           <div>
                             <div style={{ fontSize: '12px', color: '#6B7280' }}>24h Fees</div>
-                            <div style={{ fontSize: '18px', fontWeight: 600 }}>${pool.fees24h.toFixed(0)}</div>
+                            <div style={{ fontSize: '18px', fontWeight: 600 }}>{formatCurrency(pool.fees24h)}</div>
                           </div>
                           <div>
                             <button style={{ width: '100%', padding: '12px', background: '#059669', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>
