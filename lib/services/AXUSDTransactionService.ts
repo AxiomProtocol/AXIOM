@@ -21,14 +21,20 @@ const ERC20_ABI = [
   'function symbol() external view returns (string)',
 ];
 
-const ROUTER_ABI = [
+const CAMELOT_ROUTER_ABI = [
   'function addLiquidity(address tokenA, address tokenB, uint256 amountADesired, uint256 amountBDesired, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline) external returns (uint256 amountA, uint256 amountB, uint256 liquidity)',
-  'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] calldata path, address to, uint256 deadline) external returns (uint256[] memory amounts)',
-  'function getAmountsOut(uint256 amountIn, address[] calldata path) external view returns (uint256[] memory amounts)',
+  'function swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256 amountIn, uint256 amountOutMin, tuple(address from, address to, bool stable)[] routes, address to, uint256 deadline) external',
+  'function getAmountsOut(uint256 amountIn, tuple(address from, address to, bool stable)[] routes) external view returns (uint256[] memory amounts)',
 ];
 
-const FACTORY_ABI = [
-  'function getPair(address tokenA, address tokenB) external view returns (address pair)',
+const CAMELOT_FACTORY_ABI = [
+  'function getPair(address tokenA, address tokenB, bool stable) external view returns (address pair)',
+];
+
+const PAIR_ABI = [
+  'function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint16 token0FeePercent, uint16 token1FeePercent)',
+  'function token0() external view returns (address)',
+  'function token1() external view returns (address)',
 ];
 
 export interface TransactionResult {
@@ -66,20 +72,28 @@ export class AXUSDTransactionService {
 
   async checkPoolLiquidity(): Promise<{ hasLiquidity: boolean; pairAddress: string | null; axusdReserve: string; usdcReserve: string }> {
     try {
-      const factory = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_FACTORY, FACTORY_ABI, this.signer);
-      const pairAddress = await factory.getPair(AXUSD_CONTRACTS.AXUSD, AXUSD_CONTRACTS.USDC);
+      const factory = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_FACTORY, CAMELOT_FACTORY_ABI, this.signer);
+      
+      // Camelot requires stable parameter - try volatile first (false), then stable (true)
+      let pairAddress = await factory.getPair(AXUSD_CONTRACTS.AXUSD, AXUSD_CONTRACTS.USDC, false);
+      
+      if (pairAddress === ethers.ZeroAddress) {
+        pairAddress = await factory.getPair(AXUSD_CONTRACTS.AXUSD, AXUSD_CONTRACTS.USDC, true);
+      }
       
       if (pairAddress === ethers.ZeroAddress) {
         return { hasLiquidity: false, pairAddress: null, axusdReserve: '0', usdcReserve: '0' };
       }
 
-      const axusd = new ethers.Contract(AXUSD_CONTRACTS.AXUSD, ERC20_ABI, this.signer);
-      const usdc = new ethers.Contract(AXUSD_CONTRACTS.USDC, ERC20_ABI, this.signer);
-      
-      const [axusdReserve, usdcReserve] = await Promise.all([
-        axusd.balanceOf(pairAddress),
-        usdc.balanceOf(pairAddress),
+      const pair = new ethers.Contract(pairAddress, PAIR_ABI, this.signer);
+      const [reserves, token0] = await Promise.all([
+        pair.getReserves(),
+        pair.token0(),
       ]);
+
+      const isToken0Axusd = token0.toLowerCase() === AXUSD_CONTRACTS.AXUSD.toLowerCase();
+      const axusdReserve = isToken0Axusd ? reserves[0] : reserves[1];
+      const usdcReserve = isToken0Axusd ? reserves[1] : reserves[0];
 
       const hasLiquidity = axusdReserve > 0n && usdcReserve > 0n;
       
@@ -137,7 +151,7 @@ export class AXUSDTransactionService {
         return { success: false, error: `USDC approval failed: ${usdcApproval.error}` };
       }
 
-      const router = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_ROUTER, ROUTER_ABI, this.signer);
+      const router = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_ROUTER, CAMELOT_ROUTER_ABI, this.signer);
       const deadline = Math.floor(Date.now() / 1000) + 3600;
       const minAxusd = axusdWei * 95n / 100n;
       const minUsdc = usdcWei * 95n / 100n;
@@ -180,11 +194,16 @@ export class AXUSDTransactionService {
         return { success: false, error: `Insufficient USDC balance. You have ${balances.usdc} USDC` };
       }
 
-      const router = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_ROUTER, ROUTER_ABI, this.signer);
+      const router = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_ROUTER, CAMELOT_ROUTER_ABI, this.signer);
       
+      // Camelot uses Route[] struct: { from, to, stable }
+      const routes = [{ from: AXUSD_CONTRACTS.USDC, to: AXUSD_CONTRACTS.AXUSD, stable: false }];
+      
+      let expectedOut: bigint;
       try {
-        const amountsOut = await router.getAmountsOut(usdcWei, [AXUSD_CONTRACTS.USDC, AXUSD_CONTRACTS.AXUSD]);
-        console.log('Expected output:', ethers.formatEther(amountsOut[1]), 'AXUSD');
+        const amountsOut = await router.getAmountsOut(usdcWei, routes);
+        expectedOut = amountsOut[amountsOut.length - 1];
+        console.log('Expected output:', ethers.formatEther(expectedOut), 'AXUSD');
       } catch (quoteError) {
         console.error('Quote error:', quoteError);
         return { success: false, error: 'Unable to get swap quote. Pool may have insufficient liquidity for this amount.' };
@@ -196,12 +215,12 @@ export class AXUSDTransactionService {
       }
 
       const deadline = Math.floor(Date.now() / 1000) + 3600;
-      const minOut = ethers.parseEther(usdcAmount) * 95n / 100n;
+      const minOut = expectedOut * 95n / 100n; // 5% slippage
 
-      const tx = await router.swapExactTokensForTokens(
+      const tx = await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
         usdcWei,
         minOut,
-        [AXUSD_CONTRACTS.USDC, AXUSD_CONTRACTS.AXUSD],
+        routes,
         this.address,
         deadline
       );
@@ -236,11 +255,16 @@ export class AXUSDTransactionService {
         return { success: false, error: `Insufficient AXUSD balance. You have ${balances.axusd} AXUSD` };
       }
 
-      const router = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_ROUTER, ROUTER_ABI, this.signer);
+      const router = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_ROUTER, CAMELOT_ROUTER_ABI, this.signer);
       
+      // Camelot uses Route[] struct: { from, to, stable }
+      const routes = [{ from: AXUSD_CONTRACTS.AXUSD, to: AXUSD_CONTRACTS.USDC, stable: false }];
+      
+      let expectedOut: bigint;
       try {
-        const amountsOut = await router.getAmountsOut(axusdWei, [AXUSD_CONTRACTS.AXUSD, AXUSD_CONTRACTS.USDC]);
-        console.log('Expected output:', ethers.formatUnits(amountsOut[1], 6), 'USDC');
+        const amountsOut = await router.getAmountsOut(axusdWei, routes);
+        expectedOut = amountsOut[amountsOut.length - 1];
+        console.log('Expected output:', ethers.formatUnits(expectedOut, 6), 'USDC');
       } catch (quoteError) {
         console.error('Quote error:', quoteError);
         return { success: false, error: 'Unable to get swap quote. Pool may have insufficient liquidity for this amount.' };
@@ -252,12 +276,12 @@ export class AXUSDTransactionService {
       }
 
       const deadline = Math.floor(Date.now() / 1000) + 3600;
-      const minOut = ethers.parseUnits(axusdAmount, 6) * 95n / 100n;
+      const minOut = expectedOut * 95n / 100n; // 5% slippage
 
-      const tx = await router.swapExactTokensForTokens(
+      const tx = await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
         axusdWei,
         minOut,
-        [AXUSD_CONTRACTS.AXUSD, AXUSD_CONTRACTS.USDC],
+        routes,
         this.address,
         deadline
       );
