@@ -6,6 +6,7 @@ The Axiom Smart City project aims to establish America's first 1,000-acre on-cha
 ## User Preferences
 - **Communication style**: Simple, everyday language explaining technical concepts.
 - **Video scripts**: Always deliver in a plain text code block format (```text```) so the copy button appears for easy one-click copying. No markdown formatting, no scene directions with brackets - just clean, copyable text with the script, caption, and hashtags.
+- **Navigation system**: ALWAYS use the RebuildNav system (`components/axiomRebuild/navConfig.ts`) for new routes. NEVER add routes to the old navigation system (`lib/navigation.js` or `components/Layout.js`). New pages must be added to `REBUILD_NAV_PAGES` in `pages/_app.js` or use the `startsWith()` pattern matching.
 
 ## System Architecture
 
