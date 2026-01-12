@@ -410,9 +410,10 @@ export default function AXUSDStablecoinPage() {
         return;
       }
       
+      // Use PSM for direct 1:1 mint/redeem (bypasses DEX pool liquidity constraints)
       const result = psmDirection === 'usdcToAxusd' 
-        ? await service.swapUSDCToAXUSD(psmAmount)
-        : await service.swapAXUSDToUSDC(psmAmount);
+        ? await service.psmMint(psmAmount)
+        : await service.psmRedeem(psmAmount);
       
       if (result.success) {
         setTxStatus({ type: 'success', message: `Swap completed! Tx: ${result.txHash?.slice(0, 10)}...` });

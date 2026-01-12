@@ -11,6 +11,7 @@ export const AXUSD_CONTRACTS = {
   USDC: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
   CAMELOT_ROUTER: '0xc873fEcbd354f5A56E00E710B90EF4201db2448d',
   CAMELOT_FACTORY: '0x6EcCab422D763aC031210895C81787E87B43A652',
+  PSM: '0x5db58d9c21369d1532a48Bdd658E4Fe415404922',
 };
 
 const ERC20_ABI = [
@@ -35,6 +36,15 @@ const PAIR_ABI = [
   'function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint16 token0FeePercent, uint16 token1FeePercent)',
   'function token0() external view returns (address)',
   'function token1() external view returns (address)',
+];
+
+const PSM_ABI = [
+  'function deposit(uint256 usdcAmount) external returns (uint256 axusdMinted)',
+  'function withdraw(uint256 axusdAmount) external returns (uint256 usdcReturned)',
+  'function depositFee() external view returns (uint256)',
+  'function withdrawFee() external view returns (uint256)',
+  'function usdcReserve() external view returns (uint256)',
+  'function maxDeposit() external view returns (uint256)',
 ];
 
 export interface TransactionResult {
@@ -289,6 +299,58 @@ export class AXUSDTransactionService {
         return { success: false, error: 'Swap failed: Insufficient liquidity in pool. Try a smaller amount or add liquidity first.' };
       }
       return { success: false, error: error.reason || error.message || 'Swap failed' };
+    }
+  }
+
+  async psmMint(usdcAmount: string): Promise<TransactionResult> {
+    try {
+      const usdcWei = ethers.parseUnits(usdcAmount, 6);
+
+      const balances = await this.getBalances();
+      if (parseFloat(balances.usdc) < parseFloat(usdcAmount)) {
+        return { success: false, error: `Insufficient USDC balance. You have ${balances.usdc} USDC` };
+      }
+
+      const usdcApproval = await this.approveToken(AXUSD_CONTRACTS.USDC, AXUSD_CONTRACTS.PSM, usdcWei);
+      if (!usdcApproval.success) {
+        return { success: false, error: `USDC approval failed: ${usdcApproval.error}` };
+      }
+
+      const psm = new ethers.Contract(AXUSD_CONTRACTS.PSM, PSM_ABI, this.signer);
+      
+      const tx = await psm.deposit(usdcWei);
+      const receipt = await tx.wait();
+      
+      return { success: true, txHash: tx.hash, receipt };
+    } catch (error: any) {
+      console.error('PSM mint error:', error);
+      return { success: false, error: error.reason || error.message || 'PSM mint failed' };
+    }
+  }
+
+  async psmRedeem(axusdAmount: string): Promise<TransactionResult> {
+    try {
+      const axusdWei = ethers.parseEther(axusdAmount);
+
+      const balances = await this.getBalances();
+      if (parseFloat(balances.axusd) < parseFloat(axusdAmount)) {
+        return { success: false, error: `Insufficient AXUSD balance. You have ${balances.axusd} AXUSD` };
+      }
+
+      const axusdApproval = await this.approveToken(AXUSD_CONTRACTS.AXUSD, AXUSD_CONTRACTS.PSM, axusdWei);
+      if (!axusdApproval.success) {
+        return { success: false, error: `AXUSD approval failed: ${axusdApproval.error}` };
+      }
+
+      const psm = new ethers.Contract(AXUSD_CONTRACTS.PSM, PSM_ABI, this.signer);
+      
+      const tx = await psm.withdraw(axusdWei);
+      const receipt = await tx.wait();
+      
+      return { success: true, txHash: tx.hash, receipt };
+    } catch (error: any) {
+      console.error('PSM redeem error:', error);
+      return { success: false, error: error.reason || error.message || 'PSM redeem failed' };
     }
   }
 }
