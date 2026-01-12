@@ -163,8 +163,8 @@ export default function SecondaryMarketPage() {
       <main style={{ background: '#FFFFFF', minHeight: '100vh', padding: '40px 20px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ marginBottom: 40 }}>
-            <Link href="/land-acquisition" style={{ color: theme.primary, textDecoration: 'none' }}>
-              Back to Land Acquisition
+            <Link href="/land" style={{ color: theme.primary, textDecoration: 'none' }}>
+              ← Back to Land Marketplace
             </Link>
             <h1 style={{ fontSize: 32, fontWeight: 700, marginTop: 16 }}>Secondary Market</h1>
             <p style={{ color: '#666' }}>Buy and sell land investment shares from other investors</p>

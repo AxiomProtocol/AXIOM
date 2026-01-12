@@ -30,6 +30,9 @@ const REBUILD_NAV_PAGES = [
   '/transparency',
   '/team',
   '/land-acquisition',
+  '/land',
+  '/liquidity',
+  '/axusd',
   '/workbook',
   '/purpose-group-onboarding',
   '/dashboard'
@@ -38,6 +41,8 @@ const REBUILD_NAV_PAGES = [
 function matchesRebuildNavPages(pathname) {
   if (REBUILD_NAV_PAGES.includes(pathname)) return true;
   if (pathname.startsWith('/workbook/')) return true;
+  if (pathname.startsWith('/land-acquisition/')) return true;
+  if (pathname.startsWith('/land/')) return true;
   return false;
 }
 
