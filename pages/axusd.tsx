@@ -985,19 +985,18 @@ export default function AXUSDStablecoinPage() {
                   </div>
                   {isWalletConnected ? (
                     <button 
-                      className={`w-full font-bold py-4 rounded-xl transition-colors ${
-                        mintAmount && parseFloat(mintAmount) > 0 
-                          ? 'bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer' 
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      }`}
+                      className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl hover:bg-emerald-700 transition-colors"
                       onClick={() => {
-                        if (parseFloat(mintAmount) > 0) {
-                          alert(`Minting AXUSD with ${mintAmount} ${collateralType}`);
+                        console.log('Mint clicked', { mintAmount, collateralType });
+                        const amount = parseFloat(mintAmount) || 0;
+                        if (amount > 0) {
+                          alert(`Minting AXUSD with ${mintAmount} ${collateralType}\n\nThis will initiate a transaction to mint AXUSD.`);
+                        } else {
+                          alert('Please enter a collateral amount to mint AXUSD');
                         }
                       }}
-                      disabled={!mintAmount || parseFloat(mintAmount) <= 0}
                     >
-                      {mintAmount && parseFloat(mintAmount) > 0 ? 'Mint AXUSD' : 'Enter Amount to Mint'}
+                      Mint AXUSD
                     </button>
                   ) : (
                     <button 
@@ -1055,21 +1054,18 @@ export default function AXUSDStablecoinPage() {
                   </div>
                   {isWalletConnected ? (
                     <button 
-                      className={`w-full font-bold py-4 rounded-xl transition-colors ${
-                        psmAmount && parseFloat(psmAmount) > 0 
-                          ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer' 
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      }`}
+                      className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors"
                       onClick={() => {
-                        if (parseFloat(psmAmount) > 0) {
-                          alert(`Swapping ${psmAmount} ${psmDirection === 'usdcToAxusd' ? 'USDC to AXUSD' : 'AXUSD to USDC'}`);
+                        console.log('Swap clicked', { psmAmount, psmDirection });
+                        const amount = parseFloat(psmAmount) || 0;
+                        if (amount > 0) {
+                          alert(`Swapping ${psmAmount} ${psmDirection === 'usdcToAxusd' ? 'USDC to AXUSD' : 'AXUSD to USDC'}\n\nThis will initiate a PSM swap transaction.`);
+                        } else {
+                          alert('Please enter an amount to swap');
                         }
                       }}
-                      disabled={!psmAmount || parseFloat(psmAmount) <= 0}
                     >
-                      {psmAmount && parseFloat(psmAmount) > 0 
-                        ? `Swap ${psmDirection === 'usdcToAxusd' ? 'USDC → AXUSD' : 'AXUSD → USDC'}` 
-                        : 'Enter Amount to Swap'}
+                      Swap {psmDirection === 'usdcToAxusd' ? 'USDC → AXUSD' : 'AXUSD → USDC'}
                     </button>
                   ) : (
                     <button 
