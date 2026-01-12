@@ -73,6 +73,8 @@ export const navItems: NavItem[] = [
       { label: "Treasury", href: "/bank" },
       { label: "The Wealth Practice", href: "/wealth-practice" },
       { label: "AXUSD Stablecoin", href: "/axusd" },
+      { label: "Land Crowdfunding", href: "/land-acquisition/portfolio" },
+      { label: "LP Incentives", href: "/liquidity" },
       { label: "Land Acquisition", href: "/land-acquisition" },
       { label: "Land Reclamation Workbook", href: "/workbook" },
       { label: "Land Pipeline", href: "/admin/land-pipeline" },
