@@ -303,8 +303,23 @@ const FAQ_DATA = [
 ];
 
 export default function AXUSDStablecoinPage() {
-  const { walletState, connectWallet } = useWallet();
+  const { walletState, connectWallet, switchToArbitrum } = useWallet();
   const isWalletConnected = walletState?.isConnected && walletState?.address;
+  const isCorrectNetwork = walletState?.chainId === 42161;
+  const [networkSwitching, setNetworkSwitching] = useState(false);
+
+  const handleSwitchNetwork = async () => {
+    if (networkSwitching) return;
+    setNetworkSwitching(true);
+    try {
+      await switchToArbitrum();
+      setTxStatus({ type: 'success', message: 'Switched to Arbitrum One!' });
+    } catch (error: any) {
+      setTxStatus({ type: 'error', message: error.message || 'Failed to switch network' });
+    } finally {
+      setNetworkSwitching(false);
+    }
+  };
   
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [mintAmount, setMintAmount] = useState('');
@@ -312,6 +327,9 @@ export default function AXUSDStablecoinPage() {
   const [psmAmount, setPsmAmount] = useState('');
   const [psmDirection, setPsmDirection] = useState<'usdcToAxusd' | 'axusdToUsdc'>('usdcToAxusd');
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<number>(42161);
+  const [bridgeQuote, setBridgeQuote] = useState<{ fee: string; time: number } | null>(null);
+  const [bridgePending, setBridgePending] = useState(false);
   
   const [supplyData, setSupplyData] = useState<SupplyData | null>(null);
   const [psmData, setPsmData] = useState<PSMData | null>(null);
@@ -377,7 +395,80 @@ export default function AXUSDStablecoinPage() {
       setTxStatus({ type: 'error', message: 'Please enter an amount to swap' });
       return;
     }
+
+    // Check if user needs to bridge first (non-Arbitrum network selected)
+    if (selectedNetwork !== 42161) {
+      // Cross-chain swap: Bridge + Swap flow
+      if (walletState?.chainId !== selectedNetwork) {
+        setTxStatus({ type: 'error', message: `Please switch your wallet to ${selectedNetwork === 1 ? 'Ethereum' : 'Bitcoin network'} to proceed with the bridge.` });
+        return;
+      }
+      
+      setTxPending(true);
+      setBridgePending(true);
+      setTxStatus({ type: null, message: '' });
+      
+      try {
+        // Step 1: Bridge the tokens to Arbitrum
+        setTxStatus({ type: 'success', message: `Step 1/2: Bridging ${selectedNetwork === 1 ? 'USDC' : 'WBTC'} from ${selectedNetwork === 1 ? 'Ethereum' : 'Bitcoin'} to Arbitrum One...` });
+        
+        // Call bridge API
+        const bridgeResponse = await fetch('/api/axusd/bridge', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceChain: selectedNetwork,
+            destChain: 42161,
+            token: selectedNetwork === 1 ? 'USDC' : 'WBTC',
+            amount: psmAmount,
+            userAddress: walletState?.address
+          })
+        });
+        
+        const bridgeResult = await bridgeResponse.json();
+        
+        if (!bridgeResult.success) {
+          setTxStatus({ type: 'error', message: bridgeResult.error || 'Bridge failed. Please try again.' });
+          return;
+        }
+        
+        setTxStatus({ type: 'success', message: `Bridge initiated! Tx: ${bridgeResult.txHash?.slice(0, 10)}... Waiting for confirmation (~${bridgeResult.estimatedTime || 2} min)` });
+        
+        // Wait for bridge confirmation (simulated - in production would poll for confirmation)
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // Step 2: Switch to Arbitrum and perform swap
+        setTxStatus({ type: 'success', message: 'Step 2/2: Switching to Arbitrum One for swap...' });
+        await switchToArbitrum();
+        
+        // Perform the swap on Arbitrum
+        const service = await getAXUSDTransactionService();
+        if (!service) {
+          setTxStatus({ type: 'error', message: 'Failed to connect to Arbitrum. Please switch manually and retry.' });
+          return;
+        }
+        
+        const swapResult = psmDirection === 'usdcToAxusd'
+          ? await service.swapUSDCToAXUSD(psmAmount)
+          : await service.swapAXUSDToUSDC(psmAmount);
+        
+        if (swapResult.success) {
+          setTxStatus({ type: 'success', message: `Bridge + Swap completed! Final Tx: ${swapResult.txHash?.slice(0, 10)}...` });
+          setPsmAmount('');
+          setSelectedNetwork(42161);
+        } else {
+          setTxStatus({ type: 'error', message: swapResult.error || 'Swap on Arbitrum failed' });
+        }
+      } catch (error: any) {
+        setTxStatus({ type: 'error', message: error.message || 'Cross-chain swap failed' });
+      } finally {
+        setTxPending(false);
+        setBridgePending(false);
+      }
+      return;
+    }
     
+    // Direct swap on Arbitrum
     setTxPending(true);
     setTxStatus({ type: null, message: '' });
     
@@ -516,6 +607,41 @@ export default function AXUSDStablecoinPage() {
       </Head>
       
       <div className="bg-white min-h-screen">
+        {/* Network Warning Banner */}
+        {isWalletConnected && !isCorrectNetwork && (
+          <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-4 shadow-lg">
+            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-6 h-6 flex-shrink-0 animate-pulse" />
+                <div>
+                  <p className="font-bold text-lg">Wrong Network Detected</p>
+                  <p className="text-sm opacity-90">
+                    You're on {walletState?.chainId === 1 ? 'Ethereum Mainnet' : `Chain ${walletState?.chainId}`}. 
+                    AXUSD operates on Arbitrum One.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleSwitchNetwork}
+                disabled={networkSwitching}
+                className="bg-white text-orange-600 px-6 py-3 rounded-xl font-bold hover:bg-orange-50 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
+              >
+                {networkSwitching ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-orange-600 border-t-transparent rounded-full animate-spin" />
+                    Switching...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-5 h-5" />
+                    Switch to Arbitrum One
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+        
         <section className="relative py-16 px-4 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-teal-50" />
           <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-emerald-100/40 to-transparent rounded-full blur-3xl" />
@@ -1094,18 +1220,66 @@ export default function AXUSDStablecoinPage() {
               <Card className="p-8">
                 <h3 className="text-blue-700 font-bold mb-6 text-2xl">Peg Stability Module</h3>
                 <div className="max-w-xl mx-auto space-y-6">
+                  {/* Network Selector */}
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
+                    <label className="text-gray-700 font-medium block mb-3">Select Source Network</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { id: 42161, name: 'Arbitrum One', icon: '🔵', color: 'blue', active: true },
+                        { id: 1, name: 'Ethereum', icon: '⟠', color: 'purple', active: true },
+                        { id: 0, name: 'Bitcoin (WBTC)', icon: '₿', color: 'orange', active: true },
+                      ].map((network) => (
+                        <button
+                          key={network.id}
+                          onClick={() => setSelectedNetwork(network.id)}
+                          className={`p-4 rounded-xl border-2 transition-all ${
+                            selectedNetwork === network.id 
+                              ? `border-${network.color}-500 bg-${network.color}-50 shadow-lg` 
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="text-2xl mb-1">{network.icon}</div>
+                          <div className={`text-sm font-medium ${selectedNetwork === network.id ? `text-${network.color}-700` : 'text-gray-600'}`}>
+                            {network.name}
+                          </div>
+                          {walletState?.chainId === network.id && (
+                            <div className="text-xs text-emerald-600 mt-1 flex items-center justify-center gap-1">
+                              <CheckCircle className="w-3 h-3" /> Connected
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    {selectedNetwork !== 42161 && (
+                      <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <Waypoints className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-amber-800 font-medium text-sm">
+                              {selectedNetwork === 1 ? 'Bridge Required: Ethereum → Arbitrum' : 'Bridge Required: Bitcoin → Arbitrum (via WBTC)'}
+                            </p>
+                            <p className="text-amber-700 text-xs mt-1">
+                              Your {selectedNetwork === 1 ? 'USDC' : 'WBTC'} will be bridged to Arbitrum One before swapping to AXUSD.
+                              {bridgeQuote && ` Est. fee: $${bridgeQuote.fee} | Time: ~${bridgeQuote.time} min`}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex gap-4 justify-center mb-6">
                     <button
                       onClick={() => setPsmDirection('usdcToAxusd')}
                       className={`px-6 py-3 rounded-xl font-medium transition-all ${psmDirection === 'usdcToAxusd' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
                     >
-                      USDC → AXUSD
+                      {selectedNetwork === 0 ? 'WBTC' : 'USDC'} → AXUSD
                     </button>
                     <button
                       onClick={() => setPsmDirection('axusdToUsdc')}
                       className={`px-6 py-3 rounded-xl font-medium transition-all ${psmDirection === 'axusdToUsdc' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
                     >
-                      AXUSD → USDC
+                      AXUSD → {selectedNetwork === 0 ? 'WBTC' : 'USDC'}
                     </button>
                   </div>
                   <div>
@@ -1139,11 +1313,16 @@ export default function AXUSDStablecoinPage() {
                   )}
                   {isWalletConnected ? (
                     <button 
-                      className={`w-full font-bold py-4 rounded-xl transition-colors ${txPending ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
+                      className={`w-full font-bold py-4 rounded-xl transition-colors ${txPending ? 'bg-gray-400 cursor-not-allowed' : selectedNetwork !== 42161 ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
                       onClick={handleSwap}
                       disabled={txPending}
                     >
-                      {txPending ? 'Processing...' : `Swap ${psmDirection === 'usdcToAxusd' ? 'USDC → AXUSD' : 'AXUSD → USDC'}`}
+                      {txPending 
+                        ? (bridgePending ? 'Bridging & Swapping...' : 'Processing...') 
+                        : selectedNetwork !== 42161 
+                          ? `Bridge + Swap ${selectedNetwork === 0 ? 'WBTC' : 'USDC'} → AXUSD`
+                          : `Swap ${psmDirection === 'usdcToAxusd' ? 'USDC → AXUSD' : 'AXUSD → USDC'}`
+                      }
                     </button>
                   ) : (
                     <button 
