@@ -1,0 +1,215 @@
+/**
+ * AXUSD Transaction Service
+ * Handles mint, swap (PSM), and add liquidity transactions
+ * Network: Arbitrum One (Chain ID: 42161)
+ */
+
+import { ethers } from 'ethers';
+
+export const AXUSD_CONTRACTS = {
+  AXUSD: '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C',
+  USDC: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+  CAMELOT_ROUTER: '0xc873fEcbd354f5A56E00E710B90EF4201db2448d',
+  CAMELOT_FACTORY: '0x6EcCab422D763aC031210895C81787E87B43A652',
+};
+
+const ERC20_ABI = [
+  'function approve(address spender, uint256 amount) external returns (bool)',
+  'function allowance(address owner, address spender) external view returns (uint256)',
+  'function balanceOf(address account) external view returns (uint256)',
+  'function decimals() external view returns (uint8)',
+  'function symbol() external view returns (string)',
+];
+
+const ROUTER_ABI = [
+  'function addLiquidity(address tokenA, address tokenB, uint256 amountADesired, uint256 amountBDesired, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline) external returns (uint256 amountA, uint256 amountB, uint256 liquidity)',
+  'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] calldata path, address to, uint256 deadline) external returns (uint256[] memory amounts)',
+];
+
+export interface TransactionResult {
+  success: boolean;
+  txHash?: string;
+  error?: string;
+  receipt?: any;
+}
+
+export class AXUSDTransactionService {
+  private signer: ethers.Signer;
+  private address: string;
+
+  constructor(signer: ethers.Signer, address: string) {
+    this.signer = signer;
+    this.address = address;
+  }
+
+  async getBalances(): Promise<{ axusd: string; usdc: string; eth: string }> {
+    const axusd = new ethers.Contract(AXUSD_CONTRACTS.AXUSD, ERC20_ABI, this.signer);
+    const usdc = new ethers.Contract(AXUSD_CONTRACTS.USDC, ERC20_ABI, this.signer);
+    
+    const [axusdBalance, usdcBalance, ethBalance] = await Promise.all([
+      axusd.balanceOf(this.address),
+      usdc.balanceOf(this.address),
+      this.signer.provider?.getBalance(this.address) || BigInt(0),
+    ]);
+
+    return {
+      axusd: ethers.formatEther(axusdBalance),
+      usdc: ethers.formatUnits(usdcBalance, 6),
+      eth: ethers.formatEther(ethBalance),
+    };
+  }
+
+  async approveToken(tokenAddress: string, spenderAddress: string, amount: bigint): Promise<TransactionResult> {
+    try {
+      const token = new ethers.Contract(tokenAddress, ERC20_ABI, this.signer);
+      
+      const currentAllowance = await token.allowance(this.address, spenderAddress);
+      if (currentAllowance >= amount) {
+        return { success: true, txHash: 'already-approved' };
+      }
+
+      const tx = await token.approve(spenderAddress, ethers.MaxUint256);
+      const receipt = await tx.wait();
+      
+      return { success: true, txHash: tx.hash, receipt };
+    } catch (error: any) {
+      console.error('Approve error:', error);
+      return { success: false, error: error.message || 'Approval failed' };
+    }
+  }
+
+  async addLiquidity(axusdAmount: string, usdcAmount: string): Promise<TransactionResult> {
+    try {
+      const axusdWei = ethers.parseEther(axusdAmount);
+      const usdcWei = ethers.parseUnits(usdcAmount, 6);
+
+      const balances = await this.getBalances();
+      if (parseFloat(balances.axusd) < parseFloat(axusdAmount)) {
+        return { success: false, error: `Insufficient AXUSD balance. You have ${balances.axusd} AXUSD` };
+      }
+      if (parseFloat(balances.usdc) < parseFloat(usdcAmount)) {
+        return { success: false, error: `Insufficient USDC balance. You have ${balances.usdc} USDC` };
+      }
+
+      const axusdApproval = await this.approveToken(AXUSD_CONTRACTS.AXUSD, AXUSD_CONTRACTS.CAMELOT_ROUTER, axusdWei);
+      if (!axusdApproval.success) {
+        return { success: false, error: `AXUSD approval failed: ${axusdApproval.error}` };
+      }
+
+      const usdcApproval = await this.approveToken(AXUSD_CONTRACTS.USDC, AXUSD_CONTRACTS.CAMELOT_ROUTER, usdcWei);
+      if (!usdcApproval.success) {
+        return { success: false, error: `USDC approval failed: ${usdcApproval.error}` };
+      }
+
+      const router = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_ROUTER, ROUTER_ABI, this.signer);
+      const deadline = Math.floor(Date.now() / 1000) + 3600;
+      const minAxusd = axusdWei * 95n / 100n;
+      const minUsdc = usdcWei * 95n / 100n;
+
+      const tx = await router.addLiquidity(
+        AXUSD_CONTRACTS.AXUSD,
+        AXUSD_CONTRACTS.USDC,
+        axusdWei,
+        usdcWei,
+        minAxusd,
+        minUsdc,
+        this.address,
+        deadline
+      );
+
+      const receipt = await tx.wait();
+      return { success: true, txHash: tx.hash, receipt };
+    } catch (error: any) {
+      console.error('Add liquidity error:', error);
+      return { success: false, error: error.reason || error.message || 'Add liquidity failed' };
+    }
+  }
+
+  async swapUSDCToAXUSD(usdcAmount: string): Promise<TransactionResult> {
+    try {
+      const usdcWei = ethers.parseUnits(usdcAmount, 6);
+
+      const balances = await this.getBalances();
+      if (parseFloat(balances.usdc) < parseFloat(usdcAmount)) {
+        return { success: false, error: `Insufficient USDC balance. You have ${balances.usdc} USDC` };
+      }
+
+      const usdcApproval = await this.approveToken(AXUSD_CONTRACTS.USDC, AXUSD_CONTRACTS.CAMELOT_ROUTER, usdcWei);
+      if (!usdcApproval.success) {
+        return { success: false, error: `USDC approval failed: ${usdcApproval.error}` };
+      }
+
+      const router = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_ROUTER, ROUTER_ABI, this.signer);
+      const deadline = Math.floor(Date.now() / 1000) + 3600;
+      const minOut = ethers.parseEther(usdcAmount) * 99n / 100n;
+
+      const tx = await router.swapExactTokensForTokens(
+        usdcWei,
+        minOut,
+        [AXUSD_CONTRACTS.USDC, AXUSD_CONTRACTS.AXUSD],
+        this.address,
+        deadline
+      );
+
+      const receipt = await tx.wait();
+      return { success: true, txHash: tx.hash, receipt };
+    } catch (error: any) {
+      console.error('Swap USDC->AXUSD error:', error);
+      return { success: false, error: error.reason || error.message || 'Swap failed' };
+    }
+  }
+
+  async swapAXUSDToUSDC(axusdAmount: string): Promise<TransactionResult> {
+    try {
+      const axusdWei = ethers.parseEther(axusdAmount);
+
+      const balances = await this.getBalances();
+      if (parseFloat(balances.axusd) < parseFloat(axusdAmount)) {
+        return { success: false, error: `Insufficient AXUSD balance. You have ${balances.axusd} AXUSD` };
+      }
+
+      const axusdApproval = await this.approveToken(AXUSD_CONTRACTS.AXUSD, AXUSD_CONTRACTS.CAMELOT_ROUTER, axusdWei);
+      if (!axusdApproval.success) {
+        return { success: false, error: `AXUSD approval failed: ${axusdApproval.error}` };
+      }
+
+      const router = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_ROUTER, ROUTER_ABI, this.signer);
+      const deadline = Math.floor(Date.now() / 1000) + 3600;
+      const minOut = ethers.parseUnits(axusdAmount, 6) * 99n / 100n;
+
+      const tx = await router.swapExactTokensForTokens(
+        axusdWei,
+        minOut,
+        [AXUSD_CONTRACTS.AXUSD, AXUSD_CONTRACTS.USDC],
+        this.address,
+        deadline
+      );
+
+      const receipt = await tx.wait();
+      return { success: true, txHash: tx.hash, receipt };
+    } catch (error: any) {
+      console.error('Swap AXUSD->USDC error:', error);
+      return { success: false, error: error.reason || error.message || 'Swap failed' };
+    }
+  }
+}
+
+export async function getAXUSDTransactionService(): Promise<AXUSDTransactionService | null> {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const { WalletService } = await import('./WalletService');
+    const wallet = WalletService.getInstance();
+    const state = wallet.getState();
+    const signer = wallet.getSigner();
+    
+    if (!state.isConnected || !state.address || !signer) {
+      return null;
+    }
+    
+    return new AXUSDTransactionService(signer, state.address);
+  } catch (error) {
+    console.error('Failed to get AXUSD transaction service:', error);
+    return null;
+  }
+}

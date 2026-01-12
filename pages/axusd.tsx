@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { SiteLayout } from "../components/navigation";
 import { useWallet } from "../components/WalletConnect/WalletContext";
+import { getAXUSDTransactionService, AXUSD_CONTRACTS } from "../lib/services/AXUSDTransactionService";
 import { 
   LayoutDashboard, Coins, ArrowLeftRight, Droplets, CircleDot, 
   BarChart3, Vault, Gift, Waypoints, History, Bell, HelpCircle,
@@ -327,6 +328,87 @@ export default function AXUSDStablecoinPage() {
   const [lpAxusdAmount, setLpAxusdAmount] = useState('');
   const [lpUsdcAmount, setLpUsdcAmount] = useState('');
   const [selectedScenario, setSelectedScenario] = useState(0);
+  const [txPending, setTxPending] = useState(false);
+  const [txStatus, setTxStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
+
+  const handleAddLiquidity = async () => {
+    if (txPending) return;
+    
+    const axusdVal = parseFloat(lpAxusdAmount) || 0;
+    const usdcVal = parseFloat(lpUsdcAmount) || 0;
+    
+    if (axusdVal <= 0 || usdcVal <= 0) {
+      setTxStatus({ type: 'error', message: 'Please enter amounts for both AXUSD and USDC' });
+      return;
+    }
+    
+    setTxPending(true);
+    setTxStatus({ type: null, message: '' });
+    
+    try {
+      const service = await getAXUSDTransactionService();
+      if (!service) {
+        setTxStatus({ type: 'error', message: 'Wallet not connected. Please connect your wallet first.' });
+        setTxPending(false);
+        return;
+      }
+      
+      const result = await service.addLiquidity(lpAxusdAmount, lpUsdcAmount);
+      
+      if (result.success) {
+        setTxStatus({ type: 'success', message: `Liquidity added successfully! Tx: ${result.txHash?.slice(0, 10)}...` });
+        setLpAxusdAmount('');
+        setLpUsdcAmount('');
+      } else {
+        setTxStatus({ type: 'error', message: result.error || 'Transaction failed' });
+      }
+    } catch (error: any) {
+      setTxStatus({ type: 'error', message: error.message || 'Transaction failed' });
+    } finally {
+      setTxPending(false);
+    }
+  };
+
+  const handleSwap = async () => {
+    if (txPending) return;
+    
+    const amount = parseFloat(psmAmount) || 0;
+    if (amount <= 0) {
+      setTxStatus({ type: 'error', message: 'Please enter an amount to swap' });
+      return;
+    }
+    
+    setTxPending(true);
+    setTxStatus({ type: null, message: '' });
+    
+    try {
+      const service = await getAXUSDTransactionService();
+      if (!service) {
+        setTxStatus({ type: 'error', message: 'Wallet not connected. Please connect your wallet first.' });
+        setTxPending(false);
+        return;
+      }
+      
+      const result = psmDirection === 'usdcToAxusd' 
+        ? await service.swapUSDCToAXUSD(psmAmount)
+        : await service.swapAXUSDToUSDC(psmAmount);
+      
+      if (result.success) {
+        setTxStatus({ type: 'success', message: `Swap completed! Tx: ${result.txHash?.slice(0, 10)}...` });
+        setPsmAmount('');
+      } else {
+        setTxStatus({ type: 'error', message: result.error || 'Swap failed' });
+      }
+    } catch (error: any) {
+      setTxStatus({ type: 'error', message: error.message || 'Swap failed' });
+    } finally {
+      setTxPending(false);
+    }
+  };
+
+  const handleMint = async () => {
+    setTxStatus({ type: 'error', message: 'CDP minting is coming soon. Use the PSM swap to acquire AXUSD for now.' });
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -983,20 +1065,18 @@ export default function AXUSDStablecoinPage() {
                       <span className="text-gray-900 font-bold">{mintAmount ? (parseFloat(mintAmount) * 2000 / 1.5).toFixed(2) : '0.00'} AXUSD</span>
                     </div>
                   </div>
+                  {txStatus.message && activeTab === 'mint' && (
+                    <div className={`p-4 rounded-xl mb-4 ${txStatus.type === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                      {txStatus.message}
+                    </div>
+                  )}
                   {isWalletConnected ? (
                     <button 
-                      className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl hover:bg-emerald-700 transition-colors"
-                      onClick={() => {
-                        console.log('Mint clicked', { mintAmount, collateralType });
-                        const amount = parseFloat(mintAmount) || 0;
-                        if (amount > 0) {
-                          alert(`Minting AXUSD with ${mintAmount} ${collateralType}\n\nThis will initiate a transaction to mint AXUSD.`);
-                        } else {
-                          alert('Please enter a collateral amount to mint AXUSD');
-                        }
-                      }}
+                      className={`w-full font-bold py-4 rounded-xl transition-colors ${txPending ? 'bg-gray-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'} text-white`}
+                      onClick={handleMint}
+                      disabled={txPending}
                     >
-                      Mint AXUSD
+                      {txPending ? 'Processing...' : 'Mint AXUSD'}
                     </button>
                   ) : (
                     <button 
@@ -1052,20 +1132,18 @@ export default function AXUSDStablecoinPage() {
                       <span className="text-gray-900 font-bold">{psmAmount ? (parseFloat(psmAmount) * 0.999).toFixed(4) : '0.00'} {psmDirection === 'usdcToAxusd' ? 'AXUSD' : 'USDC'}</span>
                     </div>
                   </div>
+                  {txStatus.message && activeTab === 'psm' && (
+                    <div className={`p-4 rounded-xl mb-4 ${txStatus.type === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                      {txStatus.message}
+                    </div>
+                  )}
                   {isWalletConnected ? (
                     <button 
-                      className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors"
-                      onClick={() => {
-                        console.log('Swap clicked', { psmAmount, psmDirection });
-                        const amount = parseFloat(psmAmount) || 0;
-                        if (amount > 0) {
-                          alert(`Swapping ${psmAmount} ${psmDirection === 'usdcToAxusd' ? 'USDC to AXUSD' : 'AXUSD to USDC'}\n\nThis will initiate a PSM swap transaction.`);
-                        } else {
-                          alert('Please enter an amount to swap');
-                        }
-                      }}
+                      className={`w-full font-bold py-4 rounded-xl transition-colors ${txPending ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
+                      onClick={handleSwap}
+                      disabled={txPending}
                     >
-                      Swap {psmDirection === 'usdcToAxusd' ? 'USDC → AXUSD' : 'AXUSD → USDC'}
+                      {txPending ? 'Processing...' : `Swap ${psmDirection === 'usdcToAxusd' ? 'USDC → AXUSD' : 'AXUSD → USDC'}`}
                     </button>
                   ) : (
                     <button 
@@ -1148,21 +1226,18 @@ export default function AXUSDStablecoinPage() {
                         className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
                       />
                     </div>
+                    {txStatus.message && activeTab === 'liquidity' && (
+                      <div className={`p-4 rounded-xl mb-4 ${txStatus.type === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                        {txStatus.message}
+                      </div>
+                    )}
                     {isWalletConnected ? (
                       <button 
-                        className="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition-colors"
-                        onClick={() => {
-                          console.log('Add Liquidity clicked', { lpAxusdAmount, lpUsdcAmount });
-                          const axusdVal = parseFloat(lpAxusdAmount) || 0;
-                          const usdcVal = parseFloat(lpUsdcAmount) || 0;
-                          if (axusdVal > 0 && usdcVal > 0) {
-                            alert(`Adding liquidity: ${lpAxusdAmount} AXUSD + ${lpUsdcAmount} USDC\n\nThis will initiate a transaction to add liquidity to the AXUSD/USDC pool.`);
-                          } else {
-                            alert('Please enter amounts for both AXUSD and USDC');
-                          }
-                        }}
+                        className={`w-full font-bold py-4 rounded-xl transition-colors ${txPending ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'} text-white`}
+                        onClick={handleAddLiquidity}
+                        disabled={txPending}
                       >
-                        Add Liquidity
+                        {txPending ? 'Processing...' : 'Add Liquidity'}
                       </button>
                     ) : (
                       <button 
