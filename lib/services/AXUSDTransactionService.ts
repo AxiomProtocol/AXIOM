@@ -28,7 +28,7 @@ const CAMELOT_ROUTER_ABI = [
 ];
 
 const CAMELOT_FACTORY_ABI = [
-  'function getPair(address tokenA, address tokenB, bool stable) external view returns (address pair)',
+  'function getPair(address tokenA, address tokenB) external view returns (address pair)',
 ];
 
 const PAIR_ABI = [
@@ -74,12 +74,7 @@ export class AXUSDTransactionService {
     try {
       const factory = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_FACTORY, CAMELOT_FACTORY_ABI, this.signer);
       
-      // Camelot requires stable parameter - try volatile first (false), then stable (true)
-      let pairAddress = await factory.getPair(AXUSD_CONTRACTS.AXUSD, AXUSD_CONTRACTS.USDC, false);
-      
-      if (pairAddress === ethers.ZeroAddress) {
-        pairAddress = await factory.getPair(AXUSD_CONTRACTS.AXUSD, AXUSD_CONTRACTS.USDC, true);
-      }
+      const pairAddress = await factory.getPair(AXUSD_CONTRACTS.AXUSD, AXUSD_CONTRACTS.USDC);
       
       if (pairAddress === ethers.ZeroAddress) {
         return { hasLiquidity: false, pairAddress: null, axusdReserve: '0', usdcReserve: '0' };
