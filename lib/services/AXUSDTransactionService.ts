@@ -24,6 +24,11 @@ const ERC20_ABI = [
 const ROUTER_ABI = [
   'function addLiquidity(address tokenA, address tokenB, uint256 amountADesired, uint256 amountBDesired, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline) external returns (uint256 amountA, uint256 amountB, uint256 liquidity)',
   'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] calldata path, address to, uint256 deadline) external returns (uint256[] memory amounts)',
+  'function getAmountsOut(uint256 amountIn, address[] calldata path) external view returns (uint256[] memory amounts)',
+];
+
+const FACTORY_ABI = [
+  'function getPair(address tokenA, address tokenB) external view returns (address pair)',
 ];
 
 export interface TransactionResult {
@@ -57,6 +62,37 @@ export class AXUSDTransactionService {
       usdc: ethers.formatUnits(usdcBalance, 6),
       eth: ethers.formatEther(ethBalance),
     };
+  }
+
+  async checkPoolLiquidity(): Promise<{ hasLiquidity: boolean; pairAddress: string | null; axusdReserve: string; usdcReserve: string }> {
+    try {
+      const factory = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_FACTORY, FACTORY_ABI, this.signer);
+      const pairAddress = await factory.getPair(AXUSD_CONTRACTS.AXUSD, AXUSD_CONTRACTS.USDC);
+      
+      if (pairAddress === ethers.ZeroAddress) {
+        return { hasLiquidity: false, pairAddress: null, axusdReserve: '0', usdcReserve: '0' };
+      }
+
+      const axusd = new ethers.Contract(AXUSD_CONTRACTS.AXUSD, ERC20_ABI, this.signer);
+      const usdc = new ethers.Contract(AXUSD_CONTRACTS.USDC, ERC20_ABI, this.signer);
+      
+      const [axusdReserve, usdcReserve] = await Promise.all([
+        axusd.balanceOf(pairAddress),
+        usdc.balanceOf(pairAddress),
+      ]);
+
+      const hasLiquidity = axusdReserve > 0n && usdcReserve > 0n;
+      
+      return {
+        hasLiquidity,
+        pairAddress,
+        axusdReserve: ethers.formatEther(axusdReserve),
+        usdcReserve: ethers.formatUnits(usdcReserve, 6),
+      };
+    } catch (error) {
+      console.error('Check pool liquidity error:', error);
+      return { hasLiquidity: false, pairAddress: null, axusdReserve: '0', usdcReserve: '0' };
+    }
   }
 
   async approveToken(tokenAddress: string, spenderAddress: string, amount: bigint): Promise<TransactionResult> {
@@ -129,9 +165,29 @@ export class AXUSDTransactionService {
     try {
       const usdcWei = ethers.parseUnits(usdcAmount, 6);
 
+      const poolInfo = await this.checkPoolLiquidity();
+      if (!poolInfo.hasLiquidity) {
+        return { 
+          success: false, 
+          error: poolInfo.pairAddress 
+            ? `No liquidity in pool. Pool has ${poolInfo.axusdReserve} AXUSD and ${poolInfo.usdcReserve} USDC. Please add liquidity first.`
+            : 'No AXUSD/USDC liquidity pool exists yet. Please add liquidity first to create the pool.'
+        };
+      }
+
       const balances = await this.getBalances();
       if (parseFloat(balances.usdc) < parseFloat(usdcAmount)) {
         return { success: false, error: `Insufficient USDC balance. You have ${balances.usdc} USDC` };
+      }
+
+      const router = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_ROUTER, ROUTER_ABI, this.signer);
+      
+      try {
+        const amountsOut = await router.getAmountsOut(usdcWei, [AXUSD_CONTRACTS.USDC, AXUSD_CONTRACTS.AXUSD]);
+        console.log('Expected output:', ethers.formatEther(amountsOut[1]), 'AXUSD');
+      } catch (quoteError) {
+        console.error('Quote error:', quoteError);
+        return { success: false, error: 'Unable to get swap quote. Pool may have insufficient liquidity for this amount.' };
       }
 
       const usdcApproval = await this.approveToken(AXUSD_CONTRACTS.USDC, AXUSD_CONTRACTS.CAMELOT_ROUTER, usdcWei);
@@ -139,9 +195,8 @@ export class AXUSDTransactionService {
         return { success: false, error: `USDC approval failed: ${usdcApproval.error}` };
       }
 
-      const router = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_ROUTER, ROUTER_ABI, this.signer);
       const deadline = Math.floor(Date.now() / 1000) + 3600;
-      const minOut = ethers.parseEther(usdcAmount) * 99n / 100n;
+      const minOut = ethers.parseEther(usdcAmount) * 95n / 100n;
 
       const tx = await router.swapExactTokensForTokens(
         usdcWei,
@@ -155,6 +210,9 @@ export class AXUSDTransactionService {
       return { success: true, txHash: tx.hash, receipt };
     } catch (error: any) {
       console.error('Swap USDC->AXUSD error:', error);
+      if (error.message?.includes('require(false)') || error.reason?.includes('INSUFFICIENT_LIQUIDITY')) {
+        return { success: false, error: 'Swap failed: Insufficient liquidity in pool. Try a smaller amount or add liquidity first.' };
+      }
       return { success: false, error: error.reason || error.message || 'Swap failed' };
     }
   }
@@ -163,9 +221,29 @@ export class AXUSDTransactionService {
     try {
       const axusdWei = ethers.parseEther(axusdAmount);
 
+      const poolInfo = await this.checkPoolLiquidity();
+      if (!poolInfo.hasLiquidity) {
+        return { 
+          success: false, 
+          error: poolInfo.pairAddress 
+            ? `No liquidity in pool. Pool has ${poolInfo.axusdReserve} AXUSD and ${poolInfo.usdcReserve} USDC. Please add liquidity first.`
+            : 'No AXUSD/USDC liquidity pool exists yet. Please add liquidity first to create the pool.'
+        };
+      }
+
       const balances = await this.getBalances();
       if (parseFloat(balances.axusd) < parseFloat(axusdAmount)) {
         return { success: false, error: `Insufficient AXUSD balance. You have ${balances.axusd} AXUSD` };
+      }
+
+      const router = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_ROUTER, ROUTER_ABI, this.signer);
+      
+      try {
+        const amountsOut = await router.getAmountsOut(axusdWei, [AXUSD_CONTRACTS.AXUSD, AXUSD_CONTRACTS.USDC]);
+        console.log('Expected output:', ethers.formatUnits(amountsOut[1], 6), 'USDC');
+      } catch (quoteError) {
+        console.error('Quote error:', quoteError);
+        return { success: false, error: 'Unable to get swap quote. Pool may have insufficient liquidity for this amount.' };
       }
 
       const axusdApproval = await this.approveToken(AXUSD_CONTRACTS.AXUSD, AXUSD_CONTRACTS.CAMELOT_ROUTER, axusdWei);
@@ -173,9 +251,8 @@ export class AXUSDTransactionService {
         return { success: false, error: `AXUSD approval failed: ${axusdApproval.error}` };
       }
 
-      const router = new ethers.Contract(AXUSD_CONTRACTS.CAMELOT_ROUTER, ROUTER_ABI, this.signer);
       const deadline = Math.floor(Date.now() / 1000) + 3600;
-      const minOut = ethers.parseUnits(axusdAmount, 6) * 99n / 100n;
+      const minOut = ethers.parseUnits(axusdAmount, 6) * 95n / 100n;
 
       const tx = await router.swapExactTokensForTokens(
         axusdWei,
@@ -189,6 +266,9 @@ export class AXUSDTransactionService {
       return { success: true, txHash: tx.hash, receipt };
     } catch (error: any) {
       console.error('Swap AXUSD->USDC error:', error);
+      if (error.message?.includes('require(false)') || error.reason?.includes('INSUFFICIENT_LIQUIDITY')) {
+        return { success: false, error: 'Swap failed: Insufficient liquidity in pool. Try a smaller amount or add liquidity first.' };
+      }
       return { success: false, error: error.reason || error.message || 'Swap failed' };
     }
   }
