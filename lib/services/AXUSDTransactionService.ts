@@ -39,12 +39,12 @@ const PAIR_ABI = [
 ];
 
 const PSM_ABI = [
-  'function deposit(uint256 usdcAmount) external returns (uint256 axusdMinted)',
-  'function withdraw(uint256 axusdAmount) external returns (uint256 usdcReturned)',
-  'function depositFee() external view returns (uint256)',
-  'function withdrawFee() external view returns (uint256)',
-  'function usdcReserve() external view returns (uint256)',
-  'function maxDeposit() external view returns (uint256)',
+  'function swapCollateralForAXUSD(uint256 collateralAmount) external returns (uint256 axusdMinted)',
+  'function swapAXUSDForCollateral(uint256 axusdAmount) external returns (uint256 collateralReturned)',
+  'function mintFee() external view returns (uint256)',
+  'function redeemFee() external view returns (uint256)',
+  'function getCollateralBalance() external view returns (uint256)',
+  'function debtCeiling() external view returns (uint256)',
 ];
 
 export interface TransactionResult {
@@ -318,7 +318,7 @@ export class AXUSDTransactionService {
 
       const psm = new ethers.Contract(AXUSD_CONTRACTS.PSM, PSM_ABI, this.signer);
       
-      const tx = await psm.deposit(usdcWei);
+      const tx = await psm.swapCollateralForAXUSD(usdcWei);
       const receipt = await tx.wait();
       
       return { success: true, txHash: tx.hash, receipt };
@@ -344,7 +344,7 @@ export class AXUSDTransactionService {
 
       const psm = new ethers.Contract(AXUSD_CONTRACTS.PSM, PSM_ABI, this.signer);
       
-      const tx = await psm.withdraw(axusdWei);
+      const tx = await psm.swapAXUSDForCollateral(axusdWei);
       const receipt = await tx.wait();
       
       return { success: true, txHash: tx.hash, receipt };
