@@ -181,7 +181,7 @@ interface AlertType {
   unit: string;
 }
 
-const AXUSD_CONTRACTS: Record<string, string> = {
+const AXUSD_CONTRACT_LIST: Record<string, string> = {
   'AXUSD Token': '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C',
   'PSM': '0x5db58d9c21369d1532a48Bdd658E4Fe415404922',
   'Vault Engine': '0x4675C09dDC1B3094cd86F6b59904CC3E06c98028',
@@ -676,7 +676,7 @@ export default function AXUSDStablecoinPage() {
                 <Card className="p-6">
                   <h3 className="text-gray-900 font-bold mb-4 text-xl">Deployed Contracts</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {Object.entries(AXUSD_CONTRACTS).map(([name, addr]) => (
+                    {Object.entries(AXUSD_CONTRACT_LIST).map(([name, addr]) => (
                       <a
                         key={name}
                         href={`https://arbiscan.io/address/${addr}`}
