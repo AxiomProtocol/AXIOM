@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { SiteLayout } from '../../components/navigation';
 
 interface Property {
   id: number;
@@ -113,7 +112,7 @@ export default function CompareProperties() {
   };
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>Compare Properties | Axiom Protocol</title>
         <meta name="description" content="Compare land candidates side by side" />
@@ -297,6 +296,6 @@ export default function CompareProperties() {
           ) : null}
         </div>
       </div>
-    </SiteLayout>
+    </>
   );
 }

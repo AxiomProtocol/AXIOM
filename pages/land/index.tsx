@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { SiteLayout } from '../../components/navigation/SiteLayout';
 import LandCandidateCard from '../../components/land/LandCandidateCard';
 
 const landImage = "/images/land_stewardship_pipeline_illustration.png";
@@ -79,7 +78,7 @@ export default function LandPage() {
   const visibleStages = ['candidate', 'under_review', 'due_diligence', 'ready_for_vote', 'approved_for_execution', 'acquired'];
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>Land Candidates | Axiom Protocol</title>
         <meta name="description" content="Explore land stewardship candidates under review by the Axiom Protocol community. Transparent due diligence and governance-driven acquisition." />
@@ -433,6 +432,6 @@ export default function LandPage() {
           </div>
         </div>
       </div>
-    </SiteLayout>
+    </>
   );
 }

@@ -2,7 +2,6 @@ import React, { useState, useEffect, FormEvent } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { SiteLayout } from '../../components/navigation';
 
 interface ChecklistItem {
   id: number;
@@ -202,7 +201,7 @@ export default function LandCandidateDetail() {
   const stageInfo = candidate ? STAGE_LABELS[candidate.stage] || { label: candidate.stage, color: "#6b7280" } : null;
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>{candidate?.name || 'Land Candidate'} | Axiom Protocol</title>
         <meta name="description" content={candidate?.publicSummary || 'View details about this land stewardship candidate.'} />
@@ -720,6 +719,6 @@ export default function LandCandidateDetail() {
           }
         }
       `}</style>
-    </SiteLayout>
+    </>
   );
 }
