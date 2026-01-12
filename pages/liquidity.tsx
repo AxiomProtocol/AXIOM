@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import Layout from '../components/Layout';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 
 interface LiquidityPool {
@@ -111,7 +110,6 @@ export default function LiquidityPage() {
         <title>AXUSD Liquidity | Axiom</title>
         <meta name="description" content="AXUSD liquidity pools and treasury automation" />
       </Head>
-      <Layout>
         <div style={{ minHeight: '100vh', background: '#F9FAFB' }}>
           <div style={{ 
             background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
@@ -334,7 +332,6 @@ export default function LiquidityPage() {
             )}
           </div>
         </div>
-      </Layout>
     </>
   );
 }

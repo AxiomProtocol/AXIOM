@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
-import { SiteLayout } from "../components/navigation";
 import { useWallet } from "../components/WalletConnect/WalletContext";
 import { getAXUSDTransactionService, AXUSD_CONTRACTS } from "../lib/services/AXUSDTransactionService";
 import { 
@@ -531,7 +530,7 @@ export default function AXUSDStablecoinPage() {
   };
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>AXUSD Stablecoin | Axiom Protocol</title>
         <meta name="description" content="AXUSD - The GENIUS Act compliant hybrid CDP stablecoin. 100% backed, segregated custody, cross-chain enabled. The settlement layer of Axiom Protocol." />
@@ -1534,6 +1533,6 @@ export default function AXUSDStablecoinPage() {
           </div>
         </section>
       </div>
-    </SiteLayout>
+    </>
   );
 }
