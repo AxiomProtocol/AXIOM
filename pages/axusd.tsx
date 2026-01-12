@@ -634,7 +634,7 @@ export default function AXUSDStablecoinPage() {
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Current Price</p>
-                        <p className="text-lg font-bold text-gray-900">${pegStatus?.currentPrice || '1.00'}</p>
+                        <p className="text-lg font-bold text-gray-900">${parseFloat(pegStatus?.currentPrice || '1').toFixed(2)}</p>
                       </div>
                     </div>
                   </div>
