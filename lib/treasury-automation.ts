@@ -1,3 +1,5 @@
+import { camelotPoolService, PoolData, LPIncentive as PoolLPIncentive } from './services/CamelotPoolService';
+
 export interface LiquidityPool {
   id: string;
   name: string;
@@ -51,12 +53,16 @@ export interface BridgeRoute {
   available: boolean;
 }
 
-const liquidityPools: LiquidityPool[] = [
-  { id: 'axm-eth', name: 'AXM-ETH', token0: 'AXM', token1: 'ETH', tvl: 450000, apr: 18.5, volume24h: 125000, fees24h: 375, yourLiquidity: 0, yourShare: 0 },
-  { id: 'axusd-usdc', name: 'AXUSD-USDC', token0: 'AXUSD', token1: 'USDC', tvl: 890000, apr: 8.2, volume24h: 340000, fees24h: 680, yourLiquidity: 0, yourShare: 0 },
-  { id: 'axm-axusd', name: 'AXM-AXUSD', token0: 'AXM', token1: 'AXUSD', tvl: 320000, apr: 24.7, volume24h: 89000, fees24h: 267, yourLiquidity: 0, yourShare: 0 },
-  { id: 'axusd-dai', name: 'AXUSD-DAI', token0: 'AXUSD', token1: 'DAI', tvl: 156000, apr: 6.8, volume24h: 45000, fees24h: 90, yourLiquidity: 0, yourShare: 0 }
-];
+export interface LPIncentive {
+  poolId: string;
+  poolName: string;
+  baseApr: number;
+  boostApr: number;
+  totalApr: number;
+  axmRewards: number;
+  duration: string;
+  eligibleTvl?: number;
+}
 
 const automationRules: AutomationRule[] = [
   {
@@ -66,15 +72,15 @@ const automationRules: AutomationRule[] = [
     trigger: { type: 'schedule', config: { interval: '24h', time: '00:00' } },
     action: { type: 'harvest', config: { pools: ['all'], minAmount: 10 } },
     enabled: true,
-    lastRun: '2026-01-09T00:00:00Z',
-    nextRun: '2026-01-10T00:00:00Z'
+    lastRun: new Date(Date.now() - 86400000).toISOString(),
+    nextRun: new Date(Date.now() + 86400000).toISOString()
   },
   {
     id: '2',
     name: 'Auto-Compound Rewards',
     description: 'Reinvest harvested rewards into LP positions',
     trigger: { type: 'threshold', config: { metric: 'pendingRewards', value: 100 } },
-    action: { type: 'compound', config: { targetPool: 'axm-axusd' } },
+    action: { type: 'compound', config: { targetPool: 'axusd-usdc' } },
     enabled: true
   },
   {
@@ -104,8 +110,52 @@ const bridgeRoutes: BridgeRoute[] = [
 
 const operations: TreasuryOperation[] = [];
 
+export async function getLiquidityPoolsAsync(userAddress?: string): Promise<LiquidityPool[]> {
+  try {
+    const pools = await camelotPoolService.getAllPools(userAddress);
+    return pools.map(pool => ({
+      id: pool.id,
+      name: pool.name,
+      token0: pool.token0,
+      token1: pool.token1,
+      tvl: pool.tvl,
+      apr: pool.apr,
+      volume24h: pool.volume24h,
+      fees24h: pool.fees24h,
+      yourLiquidity: pool.yourLiquidity,
+      yourShare: pool.yourShare
+    }));
+  } catch (error) {
+    console.error('Error fetching liquidity pools from blockchain:', error);
+    return [];
+  }
+}
+
 export function getLiquidityPools(): LiquidityPool[] {
-  return liquidityPools;
+  return [];
+}
+
+export async function getLPIncentivesAsync(): Promise<LPIncentive[]> {
+  try {
+    const incentives = await camelotPoolService.getLPIncentives();
+    return incentives.map(inc => ({
+      poolId: inc.poolId,
+      poolName: inc.poolName,
+      baseApr: inc.baseApr,
+      boostApr: inc.boostApr,
+      totalApr: inc.totalApr,
+      axmRewards: inc.axmRewards,
+      duration: inc.duration,
+      eligibleTvl: inc.eligibleTvl
+    }));
+  } catch (error) {
+    console.error('Error fetching LP incentives from blockchain:', error);
+    return [];
+  }
+}
+
+export function getLPIncentives(): LPIncentive[] {
+  return [];
 }
 
 export function getAutomationRules(): AutomationRule[] {
@@ -154,31 +204,14 @@ export function createOperation(op: Omit<TreasuryOperation, 'id' | 'createdAt' |
   return newOp;
 }
 
-export interface LPIncentive {
-  poolId: string;
-  poolName: string;
-  baseApr: number;
-  boostApr: number;
-  totalApr: number;
-  axmRewards: number;
-  duration: string;
-  eligibleTvl: number;
-}
-
-export function getLPIncentives(): LPIncentive[] {
-  return [
-    { poolId: 'axusd-usdc', poolName: 'AXUSD-USDC', baseApr: 8.2, boostApr: 5.0, totalApr: 13.2, axmRewards: 10000, duration: '30 days', eligibleTvl: 500000 },
-    { poolId: 'axm-axusd', poolName: 'AXM-AXUSD', baseApr: 24.7, boostApr: 10.0, totalApr: 34.7, axmRewards: 25000, duration: '30 days', eligibleTvl: 200000 },
-    { poolId: 'axm-eth', poolName: 'AXM-ETH', baseApr: 18.5, boostApr: 7.5, totalApr: 26.0, axmRewards: 15000, duration: '30 days', eligibleTvl: 300000 }
-  ];
-}
-
 export default {
   getLiquidityPools,
+  getLiquidityPoolsAsync,
   getAutomationRules,
   toggleAutomationRule,
   getBridgeRoutes,
   getOperations,
   createOperation,
-  getLPIncentives
+  getLPIncentives,
+  getLPIncentivesAsync
 };
