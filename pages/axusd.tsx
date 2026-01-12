@@ -1154,19 +1154,19 @@ export default function AXUSDStablecoinPage() {
                     </div>
                     {isWalletConnected ? (
                       <button 
-                        className={`w-full font-bold py-4 rounded-xl transition-colors ${
-                          lpAxusdAmount && parseFloat(lpAxusdAmount) > 0 
-                            ? 'bg-purple-600 text-white hover:bg-purple-700 cursor-pointer' 
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        }`}
+                        className="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition-colors"
                         onClick={() => {
-                          if (parseFloat(lpAxusdAmount) > 0 && parseFloat(lpUsdcAmount) > 0) {
-                            alert(`Adding liquidity: ${lpAxusdAmount} AXUSD + ${lpUsdcAmount} USDC`);
+                          console.log('Add Liquidity clicked', { lpAxusdAmount, lpUsdcAmount });
+                          const axusdVal = parseFloat(lpAxusdAmount) || 0;
+                          const usdcVal = parseFloat(lpUsdcAmount) || 0;
+                          if (axusdVal > 0 && usdcVal > 0) {
+                            alert(`Adding liquidity: ${lpAxusdAmount} AXUSD + ${lpUsdcAmount} USDC\n\nThis will initiate a transaction to add liquidity to the AXUSD/USDC pool.`);
+                          } else {
+                            alert('Please enter amounts for both AXUSD and USDC');
                           }
                         }}
-                        disabled={!lpAxusdAmount || parseFloat(lpAxusdAmount) <= 0}
                       >
-                        {lpAxusdAmount && parseFloat(lpAxusdAmount) > 0 ? 'Add Liquidity' : 'Enter Amount to Add Liquidity'}
+                        Add Liquidity
                       </button>
                     ) : (
                       <button 
