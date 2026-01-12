@@ -1278,7 +1278,7 @@ export default function AXUSDStablecoinPage() {
                     </h4>
                     <div className="space-y-4">
                       <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
-                        <div className="text-2xl font-bold text-purple-600">${formatNumber(lpData?.totalLiquidity || '0')}</div>
+                        <div className="text-2xl font-bold text-purple-600">${formatNumber(lpData?.totalValueUsd || lpAnalytics?.pool?.tvl || '0')}</div>
                         <div className="text-gray-500 text-sm">Total Liquidity</div>
                       </div>
                       <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
