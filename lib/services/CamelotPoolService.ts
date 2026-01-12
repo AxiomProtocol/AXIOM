@@ -1,6 +1,6 @@
 /**
  * Camelot Pool Service - Real blockchain data from Camelot DEX on Arbitrum One
- * Fetches live liquidity pool data, reserves, APR calculations
+ * Fetches live liquidity pool data, reserves, real trading volume from swap events
  */
 
 import { ethers } from 'ethers';
@@ -13,10 +13,9 @@ const CAMELOT_PAIR_ABI = [
   'function totalSupply() external view returns (uint256)',
   'function balanceOf(address account) external view returns (uint256)',
   'function decimals() external view returns (uint8)',
-  'function stableSwap() external view returns (bool)',
-  'function FEE_DENOMINATOR() external view returns (uint256)',
   'function token0FeePercent() external view returns (uint16)',
-  'function token1FeePercent() external view returns (uint16)'
+  'function token1FeePercent() external view returns (uint16)',
+  'event Swap(address indexed sender, uint256 amount0In, uint256 amount1In, uint256 amount0Out, uint256 amount1Out, address indexed to)'
 ];
 
 const ERC20_ABI = [
@@ -48,6 +47,7 @@ export interface PoolData {
   yourShare: number;
   totalSupply: string;
   feePercent: number;
+  swapCount24h: number;
 }
 
 export interface LPIncentive {
@@ -104,6 +104,8 @@ function calculateUserShare(userBalance: bigint, totalSupply: bigint, tvl: numbe
 class CamelotPoolService {
   private provider: ethers.JsonRpcProvider;
   private initialized: boolean = false;
+  private volumeCache: Map<string, { volume: number; fees: number; swapCount: number; timestamp: number }> = new Map();
+  private CACHE_TTL = 5 * 60 * 1000;
 
   constructor() {
     this.provider = new ethers.JsonRpcProvider(NETWORK_CONFIG.rpcUrl);
@@ -120,6 +122,82 @@ class CamelotPoolService {
       }
     }
     return this.provider;
+  }
+
+  private async get24hVolumeFromSwapEvents(
+    pairAddress: string,
+    token0Decimals: number,
+    token1Decimals: number,
+    feePercent: number
+  ): Promise<{ volume: number; fees: number; swapCount: number }> {
+    const cacheKey = pairAddress.toLowerCase();
+    const cached = this.volumeCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+      return { volume: cached.volume, fees: cached.fees, swapCount: cached.swapCount };
+    }
+
+    try {
+      const provider = await this.getProvider();
+      const pairContract = new ethers.Contract(pairAddress, CAMELOT_PAIR_ABI, provider);
+      
+      const currentBlock = await provider.getBlockNumber();
+      const blocksIn24h = Math.floor((24 * 60 * 60) / 0.25);
+      const fromBlock = Math.max(0, currentBlock - blocksIn24h);
+      
+      const swapFilter = pairContract.filters.Swap();
+      
+      let allEvents: ethers.Log[] = [];
+      const batchSize = 10000;
+      
+      for (let startBlock = fromBlock; startBlock <= currentBlock; startBlock += batchSize) {
+        const endBlock = Math.min(startBlock + batchSize - 1, currentBlock);
+        try {
+          const events = await pairContract.queryFilter(swapFilter, startBlock, endBlock);
+          allEvents = allEvents.concat(events);
+        } catch (error) {
+          console.error(`Error fetching events for blocks ${startBlock}-${endBlock}:`, error);
+        }
+      }
+
+      let totalVolume = 0;
+      let swapCount = allEvents.length;
+
+      for (const event of allEvents) {
+        try {
+          const log = event as ethers.EventLog;
+          if (log.args) {
+            const amount0In = log.args[1] as bigint;
+            const amount1In = log.args[2] as bigint;
+            const amount0Out = log.args[3] as bigint;
+            const amount1Out = log.args[4] as bigint;
+
+            const vol0In = formatBigIntWithDecimals(amount0In, token0Decimals);
+            const vol1In = formatBigIntWithDecimals(amount1In, token1Decimals);
+            const vol0Out = formatBigIntWithDecimals(amount0Out, token0Decimals);
+            const vol1Out = formatBigIntWithDecimals(amount1Out, token1Decimals);
+
+            totalVolume += vol0In + vol1In + vol0Out + vol1Out;
+          }
+        } catch (err) {
+          console.error('Error parsing swap event:', err);
+        }
+      }
+
+      totalVolume = totalVolume / 2;
+      const fees = totalVolume * (feePercent / 100);
+
+      this.volumeCache.set(cacheKey, {
+        volume: totalVolume,
+        fees,
+        swapCount,
+        timestamp: Date.now()
+      });
+
+      return { volume: totalVolume, fees, swapCount };
+    } catch (error) {
+      console.error('Error fetching swap events:', error);
+      return { volume: 0, fees: 0, swapCount: 0 };
+    }
   }
 
   async getPoolData(poolConfig: typeof POOL_CONFIGS[0], userAddress?: string): Promise<PoolData | null> {
@@ -168,11 +246,15 @@ class CamelotPoolService {
         }
       } catch {
       }
-      
-      const estimatedDailyVolumeRatio = 0.1;
-      const dailyVolume = tvl * estimatedDailyVolumeRatio;
-      const dailyFees = dailyVolume * (feePercent / 100);
-      const annualFees = dailyFees * 365;
+
+      const { volume: volume24h, fees: fees24h, swapCount: swapCount24h } = await this.get24hVolumeFromSwapEvents(
+        poolConfig.pairAddress,
+        Number(token0Decimals),
+        Number(token1Decimals),
+        feePercent
+      );
+
+      const annualFees = fees24h * 365;
       const baseApr = tvl > 0 ? (annualFees / tvl) * 100 : 0;
 
       let yourLiquidity = 0;
@@ -199,14 +281,15 @@ class CamelotPoolService {
         pairAddress: poolConfig.pairAddress,
         reserve0: reserve0.toFixed(2),
         reserve1: reserve1.toFixed(2),
-        tvl: Math.round(tvl),
-        apr: Math.round(baseApr * 10) / 10,
-        volume24h: Math.round(dailyVolume),
-        fees24h: Math.round(dailyFees * 100) / 100,
+        tvl: Math.round(tvl * 100) / 100,
+        apr: Math.round(baseApr * 100) / 100,
+        volume24h: Math.round(volume24h * 100) / 100,
+        fees24h: Math.round(fees24h * 100) / 100,
         yourLiquidity,
         yourShare,
         totalSupply: ethers.formatEther(totalSupplyBN),
-        feePercent
+        feePercent,
+        swapCount24h
       };
     } catch (error) {
       console.error(`Error fetching pool data for ${poolConfig.name}:`, error);
@@ -271,6 +354,10 @@ class CamelotPoolService {
       console.error('Error getting pair address:', error);
       return null;
     }
+  }
+
+  clearCache(): void {
+    this.volumeCache.clear();
   }
 }
 
