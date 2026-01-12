@@ -54,6 +54,9 @@ Key features include:
 -   **Compliance Automation** (KYC/AML verification with 3 levels, regulatory transaction limits, immutable audit ledger, compliance reporting)
 -   **DePIN & Asset Oracles** (IoT device monitoring, real-time asset price feeds via Chainlink, cross-chain settlement, energy credit tokenization)
 
+## Enhancement Roadmap
+See `docs/ENHANCEMENT_ROADMAP.md` for planned improvements to Land Crowdfunding and LP Incentives features, organized into 6 phases covering wallet integration, AXUSD payments, visual enhancements, interactive features, on-chain actions, and cross-feature integration.
+
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
 -   **Blockchain RPC Provider:** Alchemy API
