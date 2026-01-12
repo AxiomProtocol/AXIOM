@@ -75,7 +75,7 @@ export const navItems: NavItem[] = [
       { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "Land Crowdfunding", href: "/land-acquisition/portfolio" },
       { label: "LP Incentives", href: "/liquidity" },
-      { label: "Land Acquisition", href: "/land-acquisition" },
+      { label: "Land Marketplace", href: "/land" },
       { label: "Land Reclamation Workbook", href: "/workbook" },
       { label: "Land Pipeline", href: "/admin/land-pipeline" },
       { label: "Staking", href: "/staking" },
