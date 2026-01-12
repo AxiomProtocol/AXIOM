@@ -985,7 +985,11 @@ export default function AXUSDStablecoinPage() {
                   </div>
                   {isWalletConnected ? (
                     <button 
-                      className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl hover:bg-emerald-700 transition-colors"
+                      className={`w-full font-bold py-4 rounded-xl transition-colors ${
+                        mintAmount && parseFloat(mintAmount) > 0 
+                          ? 'bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer' 
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
                       onClick={() => {
                         if (parseFloat(mintAmount) > 0) {
                           alert(`Minting AXUSD with ${mintAmount} ${collateralType}`);
@@ -993,7 +997,7 @@ export default function AXUSDStablecoinPage() {
                       }}
                       disabled={!mintAmount || parseFloat(mintAmount) <= 0}
                     >
-                      Mint AXUSD
+                      {mintAmount && parseFloat(mintAmount) > 0 ? 'Mint AXUSD' : 'Enter Amount to Mint'}
                     </button>
                   ) : (
                     <button 
@@ -1051,7 +1055,11 @@ export default function AXUSDStablecoinPage() {
                   </div>
                   {isWalletConnected ? (
                     <button 
-                      className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors"
+                      className={`w-full font-bold py-4 rounded-xl transition-colors ${
+                        psmAmount && parseFloat(psmAmount) > 0 
+                          ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer' 
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
                       onClick={() => {
                         if (parseFloat(psmAmount) > 0) {
                           alert(`Swapping ${psmAmount} ${psmDirection === 'usdcToAxusd' ? 'USDC to AXUSD' : 'AXUSD to USDC'}`);
@@ -1059,7 +1067,9 @@ export default function AXUSDStablecoinPage() {
                       }}
                       disabled={!psmAmount || parseFloat(psmAmount) <= 0}
                     >
-                      Swap {psmDirection === 'usdcToAxusd' ? 'USDC → AXUSD' : 'AXUSD → USDC'}
+                      {psmAmount && parseFloat(psmAmount) > 0 
+                        ? `Swap ${psmDirection === 'usdcToAxusd' ? 'USDC → AXUSD' : 'AXUSD → USDC'}` 
+                        : 'Enter Amount to Swap'}
                     </button>
                   ) : (
                     <button 
@@ -1144,7 +1154,11 @@ export default function AXUSDStablecoinPage() {
                     </div>
                     {isWalletConnected ? (
                       <button 
-                        className="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition-colors"
+                        className={`w-full font-bold py-4 rounded-xl transition-colors ${
+                          lpAxusdAmount && parseFloat(lpAxusdAmount) > 0 
+                            ? 'bg-purple-600 text-white hover:bg-purple-700 cursor-pointer' 
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
                         onClick={() => {
                           if (parseFloat(lpAxusdAmount) > 0 && parseFloat(lpUsdcAmount) > 0) {
                             alert(`Adding liquidity: ${lpAxusdAmount} AXUSD + ${lpUsdcAmount} USDC`);
@@ -1152,7 +1166,7 @@ export default function AXUSDStablecoinPage() {
                         }}
                         disabled={!lpAxusdAmount || parseFloat(lpAxusdAmount) <= 0}
                       >
-                        Add Liquidity
+                        {lpAxusdAmount && parseFloat(lpAxusdAmount) > 0 ? 'Add Liquidity' : 'Enter Amount to Add Liquidity'}
                       </button>
                     ) : (
                       <button 
