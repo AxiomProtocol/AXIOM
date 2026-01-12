@@ -6,13 +6,17 @@
 import { ethers } from 'ethers';
 import { NETWORK_CONFIG, AXUSD_GENIUS_CONTRACTS, CAMELOT_DEX, STABLECOINS, CORE_CONTRACTS } from '../../shared/contracts';
 
-const PAIR_ABI = [
-  'function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint16 token0FeePercent, uint16 token1FeePercent)',
+const CAMELOT_PAIR_ABI = [
+  'function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)',
   'function token0() external view returns (address)',
   'function token1() external view returns (address)',
   'function totalSupply() external view returns (uint256)',
   'function balanceOf(address account) external view returns (uint256)',
-  'function decimals() external view returns (uint8)'
+  'function decimals() external view returns (uint8)',
+  'function stableSwap() external view returns (bool)',
+  'function FEE_DENOMINATOR() external view returns (uint256)',
+  'function token0FeePercent() external view returns (uint16)',
+  'function token1FeePercent() external view returns (uint16)'
 ];
 
 const ERC20_ABI = [
@@ -64,17 +68,38 @@ const POOL_CONFIGS = [
     token0Address: AXUSD_GENIUS_CONTRACTS.AXUSD,
     token1Address: STABLECOINS.USDC,
     pairAddress: AXUSD_GENIUS_CONTRACTS.LP_POOL_CAMELOT,
-    incentive: { boostApr: 5.0, axmRewards: 10000, duration: '30 days' }
+    incentive: { boostApr: 5.0, axmRewards: 10000, duration: '30 days' },
+    defaultFeePercent: 0.3
   },
   {
     id: 'axm-eth',
     name: 'AXM-ETH',
     token0Address: CORE_CONTRACTS.AXM_TOKEN,
-    token1Address: '0x0000000000000000000000000000000000000000', // Native ETH (WETH wrapper)
+    token1Address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
     pairAddress: null,
-    incentive: { boostApr: 7.5, axmRewards: 15000, duration: '30 days' }
+    incentive: { boostApr: 7.5, axmRewards: 15000, duration: '30 days' },
+    defaultFeePercent: 0.3
   }
 ];
+
+function formatBigIntWithDecimals(value: bigint, decimals: number): number {
+  const divisor = 10n ** BigInt(decimals);
+  const integerPart = value / divisor;
+  const fractionalPart = value % divisor;
+  const fractionalStr = fractionalPart.toString().padStart(decimals, '0');
+  return parseFloat(`${integerPart}.${fractionalStr}`);
+}
+
+function calculateUserShare(userBalance: bigint, totalSupply: bigint, tvl: number): { share: number; liquidity: number } {
+  if (totalSupply === 0n || userBalance === 0n) {
+    return { share: 0, liquidity: 0 };
+  }
+  const precision = 10000n;
+  const shareScaled = (userBalance * precision * 100n) / totalSupply;
+  const share = Number(shareScaled) / Number(precision);
+  const liquidity = tvl * (share / 100);
+  return { share: Math.round(share * 1000) / 1000, liquidity: Math.round(liquidity * 100) / 100 };
+}
 
 class CamelotPoolService {
   private provider: ethers.JsonRpcProvider;
@@ -91,23 +116,22 @@ class CamelotPoolService {
         this.initialized = true;
       } catch (error) {
         console.error('Failed to connect to Arbitrum RPC:', error);
-        throw new Error('Failed to connect to blockchain');
+        throw new Error('BLOCKCHAIN_CONNECTION_FAILED');
       }
     }
     return this.provider;
   }
 
   async getPoolData(poolConfig: typeof POOL_CONFIGS[0], userAddress?: string): Promise<PoolData | null> {
+    if (!poolConfig.pairAddress) {
+      return null;
+    }
+
     try {
       const provider = await this.getProvider();
+      const pairContract = new ethers.Contract(poolConfig.pairAddress, CAMELOT_PAIR_ABI, provider);
       
-      if (!poolConfig.pairAddress) {
-        return null;
-      }
-
-      const pairContract = new ethers.Contract(poolConfig.pairAddress, PAIR_ABI, provider);
-      
-      const [reserves, token0, token1, totalSupply] = await Promise.all([
+      const [reserves, token0, token1, totalSupplyBN] = await Promise.all([
         pairContract.getReserves(),
         pairContract.token0(),
         pairContract.token1(),
@@ -124,18 +148,29 @@ class CamelotPoolService {
         token1Contract.symbol().catch(() => 'TOKEN1')
       ]);
 
-      const reserve0 = parseFloat(ethers.formatUnits(reserves[0], token0Decimals));
-      const reserve1 = parseFloat(ethers.formatUnits(reserves[1], token1Decimals));
+      const reserve0 = formatBigIntWithDecimals(reserves[0], Number(token0Decimals));
+      const reserve1 = formatBigIntWithDecimals(reserves[1], Number(token1Decimals));
       
       const isToken0Axusd = token0.toLowerCase() === AXUSD_GENIUS_CONTRACTS.AXUSD.toLowerCase();
       const axusdReserve = isToken0Axusd ? reserve0 : reserve1;
       const usdcReserve = isToken0Axusd ? reserve1 : reserve0;
       
-      const tvl = (axusdReserve + usdcReserve);
+      const tvl = axusdReserve + usdcReserve;
 
-      const feePercent = Number(reserves[2]) / 100;
+      let feePercent = poolConfig.defaultFeePercent;
+      try {
+        const [token0Fee, token1Fee] = await Promise.all([
+          pairContract.token0FeePercent().catch(() => null),
+          pairContract.token1FeePercent().catch(() => null)
+        ]);
+        if (token0Fee !== null && token1Fee !== null) {
+          feePercent = (Number(token0Fee) + Number(token1Fee)) / 200;
+        }
+      } catch {
+      }
       
-      const dailyVolume = tvl * 0.15;
+      const estimatedDailyVolumeRatio = 0.1;
+      const dailyVolume = tvl * estimatedDailyVolumeRatio;
       const dailyFees = dailyVolume * (feePercent / 100);
       const annualFees = dailyFees * 365;
       const baseApr = tvl > 0 ? (annualFees / tvl) * 100 : 0;
@@ -145,13 +180,10 @@ class CamelotPoolService {
       
       if (userAddress && poolConfig.pairAddress) {
         try {
-          const userLpBalance = await pairContract.balanceOf(userAddress);
-          const totalLpSupply = await pairContract.totalSupply();
-          
-          if (totalLpSupply > 0n) {
-            yourShare = (Number(userLpBalance) / Number(totalLpSupply)) * 100;
-            yourLiquidity = tvl * (yourShare / 100);
-          }
+          const userLpBalance: bigint = await pairContract.balanceOf(userAddress);
+          const { share, liquidity } = calculateUserShare(userLpBalance, totalSupplyBN, tvl);
+          yourShare = share;
+          yourLiquidity = liquidity;
         } catch (error) {
           console.error('Error fetching user LP balance:', error);
         }
@@ -171,21 +203,32 @@ class CamelotPoolService {
         apr: Math.round(baseApr * 10) / 10,
         volume24h: Math.round(dailyVolume),
         fees24h: Math.round(dailyFees * 100) / 100,
-        yourLiquidity: Math.round(yourLiquidity * 100) / 100,
-        yourShare: Math.round(yourShare * 1000) / 1000,
-        totalSupply: ethers.formatEther(totalSupply),
+        yourLiquidity,
+        yourShare,
+        totalSupply: ethers.formatEther(totalSupplyBN),
         feePercent
       };
     } catch (error) {
       console.error(`Error fetching pool data for ${poolConfig.name}:`, error);
-      return null;
+      throw error;
     }
   }
 
   async getAllPools(userAddress?: string): Promise<PoolData[]> {
-    const poolPromises = POOL_CONFIGS.map(config => this.getPoolData(config, userAddress));
-    const results = await Promise.all(poolPromises);
-    return results.filter((pool): pool is PoolData => pool !== null);
+    const results: PoolData[] = [];
+    
+    for (const config of POOL_CONFIGS) {
+      try {
+        const pool = await this.getPoolData(config, userAddress);
+        if (pool) {
+          results.push(pool);
+        }
+      } catch (error) {
+        console.error(`Failed to fetch pool ${config.id}:`, error);
+      }
+    }
+    
+    return results;
   }
 
   async getLPIncentives(): Promise<LPIncentive[]> {

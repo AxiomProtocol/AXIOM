@@ -11,16 +11,22 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userAddress = req.query.userAddress as string | undefined;
 
   try {
-    const [pools, incentives, bridges] = await Promise.all([
+    const [pools, incentives] = await Promise.all([
       getLiquidityPoolsAsync(userAddress),
-      getLPIncentivesAsync(),
-      Promise.resolve(getBridgeRoutes())
+      getLPIncentivesAsync()
     ]);
+    
+    const bridges = getBridgeRoutes();
+
+    const isBlockchainDataAvailable = pools.length > 0;
 
     logAuditEvent({
       action: 'liquidity_data_viewed',
       ipAddress: clientId,
-      details: { poolCount: pools.length, source: 'blockchain' },
+      details: { 
+        poolCount: pools.length, 
+        source: isBlockchainDataAvailable ? 'blockchain' : 'fallback' 
+      },
       severity: 'info',
       success: true
     });
@@ -30,26 +36,34 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       pools,
       incentives,
       bridges,
-      source: 'arbitrum_one',
+      source: isBlockchainDataAvailable ? 'arbitrum_one' : 'fallback',
+      dataAvailable: isBlockchainDataAvailable,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error('Error fetching liquidity data:', error);
     
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const isConnectionError = errorMessage === 'BLOCKCHAIN_CONNECTION_FAILED';
+    
     logAuditEvent({
       action: 'liquidity_data_error',
       ipAddress: clientId,
-      details: { error: error instanceof Error ? error.message : 'Unknown error' },
+      details: { error: errorMessage },
       severity: 'error',
       success: false
     });
 
-    return res.status(500).json({ 
+    return res.status(isConnectionError ? 503 : 502).json({ 
       success: false, 
-      error: 'Failed to fetch liquidity data from blockchain',
+      error: isConnectionError 
+        ? 'Blockchain network temporarily unavailable' 
+        : 'Failed to fetch liquidity data',
       pools: [],
       incentives: [],
-      bridges: getBridgeRoutes()
+      bridges: getBridgeRoutes(),
+      source: 'unavailable',
+      dataAvailable: false
     });
   }
 }
