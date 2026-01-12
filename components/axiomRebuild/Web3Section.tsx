@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { sectionIcons } from "./styles/web3Theme";
 
 interface Web3SectionProps {
@@ -310,11 +309,10 @@ export function Web3Section({
                   zIndex: 1,
                   pointerEvents: "none"
                 }} />
-                <Image
+                <img
                   src={image}
                   alt={imageAlt || title}
-                  width={600}
-                  height={400}
+                  loading="lazy"
                   style={{
                     width: "100%",
                     height: "auto",
