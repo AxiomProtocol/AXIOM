@@ -55,11 +55,10 @@ export default async function handler(
       marketOps.dailySellUsed()
     ]);
 
-    const reserve0 = reserves[0];
-    const reserve1 = reserves[1];
+    const reserve0 = BigInt(reserves[0]);
+    const reserve1 = BigInt(reserves[1]);
     
     const axusdAddress = AXUSD_GENIUS_CONTRACTS.AXUSD.toLowerCase();
-    const usdcAddress = AXUSD_GENIUS_CONTRACTS.USDC.toLowerCase();
     const token0Lower = token0.toLowerCase();
     
     let axusdReserve: bigint;
@@ -73,13 +72,15 @@ export default async function handler(
       usdcReserve = reserve0;
     }
     
-    const axusdAmount = parseFloat(ethers.formatEther(axusdReserve));
-    const usdcAmount = parseFloat(ethers.formatUnits(usdcReserve, 6));
-    
     let priceUsd = 1.0;
-    if (axusdAmount > 0) {
-      priceUsd = usdcAmount / axusdAmount;
+    if (axusdReserve > 0n) {
+      const scaledUsdcReserve = usdcReserve * (10n ** 12n);
+      const priceScaled = (scaledUsdcReserve * 10000n) / axusdReserve;
+      priceUsd = Number(priceScaled) / 10000;
     }
+    
+    const axusdAmount = Number(axusdReserve) / 1e18;
+    const usdcAmount = Number(usdcReserve) / 1e6;
     
     const pegDefenseNeeded = priceUsd < 0.995 || priceUsd > 1.005;
 
