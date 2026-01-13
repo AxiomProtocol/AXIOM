@@ -31,6 +31,15 @@ export const navItems: NavItem[] = [
     ]
   },
   {
+    label: "Lending Fund",
+    children: [
+      { label: "Overview", href: "/lending-fund" },
+      { label: "Invest in Fund", href: "/lending-fund/invest" },
+      { label: "Apply for Loan", href: "/lending-fund/apply" },
+      { label: "Fund Performance", href: "/lending-fund/performance" }
+    ]
+  },
+  {
     label: "Steward Corps",
     children: [
       { label: "Overview", href: "/stewards" },
@@ -85,8 +94,7 @@ export const navItems: NavItem[] = [
       { label: "Launchpad", href: "/launchpad" },
       { label: "Axiom Nodes", href: "/axiom-nodes" },
       { label: "Analytics", href: "/v2-analytics" },
-      { label: "PMA Trust", href: "/pma" },
-      { label: "Real Estate Fund", href: "/lending-fund" }
+      { label: "PMA Trust", href: "/pma" }
     ]
   }
 ];
