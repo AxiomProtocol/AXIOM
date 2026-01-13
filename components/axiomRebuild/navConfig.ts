@@ -36,7 +36,9 @@ export const navItems: NavItem[] = [
       { label: "Overview", href: "/lending-fund" },
       { label: "Invest in Fund", href: "/lending-fund/invest" },
       { label: "Apply for Loan", href: "/lending-fund/apply" },
-      { label: "Fund Performance", href: "/lending-fund/performance" }
+      { label: "Fund Performance", href: "/lending-fund/performance" },
+      { label: "DSCR Rental Loans", href: "/dscr/apply" },
+      { label: "DSCR Investor Dashboard", href: "/dscr/investor/dashboard" }
     ]
   },
   {

@@ -53,6 +53,8 @@ function matchesRebuildNavPages(pathname) {
   if (pathname.startsWith('/stewards/')) return true;
   if (pathname.startsWith('/susu/')) return true;
   if (pathname.startsWith('/academy/')) return true;
+  if (pathname.startsWith('/dscr/')) return true;
+  if (pathname.startsWith('/admin/loan-tape')) return true;
   return false;
 }
 
