@@ -230,32 +230,32 @@ export const CAMELOT_DEX = {
 } as const;
 
 // Real Estate Lending Fund Contracts (41-46)
-// Status: Pending deployment | Arbitrum One
+// Status: DEPLOYED | Arbitrum One | January 13, 2026
 // Features: Fix & Flip bridge loans, ERC4626 vault, ERC721 loan receipts
 export const REALESTATE_LENDING_CONTRACTS = {
   // Contract 41: RiskConfig
   // Per-product risk parameters (LTV, rates, terms)
-  RISK_CONFIG: process.env.RISK_CONFIG_ADDRESS || '',
+  RISK_CONFIG: '0xE7E6aC1d9df331f1804D29762e5A11019A4fFa53',
   
   // Contract 42: LoanReceiptNFT
   // ERC721 tokens representing active loans
-  LOAN_RECEIPT_NFT: process.env.LOAN_RECEIPT_ADDRESS || '',
+  LOAN_RECEIPT_NFT: '0x91B0228D87F5D52039BD47c95628707E83DD102c',
   
   // Contract 43: FixFlipPoolVault
   // ERC4626 vault for investor deposits
-  FIXFLIP_VAULT: process.env.FIXFLIP_VAULT_ADDRESS || '',
+  FIXFLIP_VAULT: '0xAd1Fb0467139bbaA50E4A5F3E3f8CF34D6B54a65',
   
   // Contract 44: RepaymentRouter
   // Routes payments to vault, insurance, and treasury
-  REPAYMENT_ROUTER: process.env.REPAYMENT_ROUTER_ADDRESS || '',
+  REPAYMENT_ROUTER: '0x34c18F5944539D28AC86cb1E12875A3e7735E336',
   
   // Contract 45: FixFlipManager
   // Loan origination and lifecycle management
-  FIXFLIP_MANAGER: process.env.FIXFLIP_MANAGER_ADDRESS || '',
+  FIXFLIP_MANAGER: '0x6Bae6F362b2d3AE91Bb5415B4718dee0e0f80dbC',
   
   // Contract 46: ProductRegistry
   // Registry of lending products
-  PRODUCT_REGISTRY: process.env.PRODUCT_REGISTRY_ADDRESS || ''
+  PRODUCT_REGISTRY: '0x1B297D92a6D6b80684a81a050D2cA6cd87187E07'
 } as const;
 
 // Stablecoins on Arbitrum
