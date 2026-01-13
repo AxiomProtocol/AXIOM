@@ -85,7 +85,8 @@ export const navItems: NavItem[] = [
       { label: "Launchpad", href: "/launchpad" },
       { label: "Axiom Nodes", href: "/axiom-nodes" },
       { label: "Analytics", href: "/v2-analytics" },
-      { label: "PMA Trust", href: "/pma" }
+      { label: "PMA Trust", href: "/pma" },
+      { label: "Real Estate Fund", href: "/lending-fund" }
     ]
   }
 ];

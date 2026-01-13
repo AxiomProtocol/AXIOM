@@ -229,6 +229,35 @@ export const CAMELOT_DEX = {
   FACTORY: '0x6EcCab422D763aC031210895C81787E87B43A652'
 } as const;
 
+// Real Estate Lending Fund Contracts (41-46)
+// Status: Pending deployment | Arbitrum One
+// Features: Fix & Flip bridge loans, ERC4626 vault, ERC721 loan receipts
+export const REALESTATE_LENDING_CONTRACTS = {
+  // Contract 41: RiskConfig
+  // Per-product risk parameters (LTV, rates, terms)
+  RISK_CONFIG: process.env.RISK_CONFIG_ADDRESS || '',
+  
+  // Contract 42: LoanReceiptNFT
+  // ERC721 tokens representing active loans
+  LOAN_RECEIPT_NFT: process.env.LOAN_RECEIPT_ADDRESS || '',
+  
+  // Contract 43: FixFlipPoolVault
+  // ERC4626 vault for investor deposits
+  FIXFLIP_VAULT: process.env.FIXFLIP_VAULT_ADDRESS || '',
+  
+  // Contract 44: RepaymentRouter
+  // Routes payments to vault, insurance, and treasury
+  REPAYMENT_ROUTER: process.env.REPAYMENT_ROUTER_ADDRESS || '',
+  
+  // Contract 45: FixFlipManager
+  // Loan origination and lifecycle management
+  FIXFLIP_MANAGER: process.env.FIXFLIP_MANAGER_ADDRESS || '',
+  
+  // Contract 46: ProductRegistry
+  // Registry of lending products
+  PRODUCT_REGISTRY: process.env.PRODUCT_REGISTRY_ADDRESS || ''
+} as const;
+
 // Stablecoins on Arbitrum
 export const STABLECOINS = {
   USDC: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
@@ -273,7 +302,8 @@ export const ALL_CONTRACTS = {
   ...COMMUNITY_SAVINGS_CONTRACTS,
   ...AXUSD_STABLECOIN_CONTRACTS,
   ...AXUSD_INTEGRATION_CONTRACTS,
-  ...AXUSD_GENIUS_CONTRACTS
+  ...AXUSD_GENIUS_CONTRACTS,
+  ...REALESTATE_LENDING_CONTRACTS
 } as const;
 
 // Deployer Address

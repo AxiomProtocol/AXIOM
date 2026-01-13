@@ -35,7 +35,8 @@ const REBUILD_NAV_PAGES = [
   '/axusd',
   '/workbook',
   '/purpose-group-onboarding',
-  '/dashboard'
+  '/dashboard',
+  '/lending-fund'
 ]
 
 function matchesRebuildNavPages(pathname) {
@@ -43,6 +44,7 @@ function matchesRebuildNavPages(pathname) {
   if (pathname.startsWith('/workbook/')) return true;
   if (pathname.startsWith('/land-acquisition/')) return true;
   if (pathname.startsWith('/land/')) return true;
+  if (pathname.startsWith('/lending-fund/')) return true;
   return false;
 }
 

@@ -1,58 +1,107 @@
-# AXUSD Real Estate Lending Stack
+# AXUSD Real Estate Lending System
 
-## Step A: Contract Inventory & Mapping
+## Overview
 
-### Existing Contracts to REUSE
+This directory contains smart contracts for the AXUSD Fix & Flip Lending Fund - a real estate bridge loan platform that allows accredited investors to pool AXUSD and earn returns by funding short-term fix-and-flip loans.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        AXUSD FIX & FLIP SYSTEM                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌─────────────┐    ┌─────────────────┐    ┌──────────────────┐    │
+│  │   Investors  │───▶│ FixFlipPoolVault│───▶│  FixFlipManager  │    │
+│  │  (Deposit    │    │   (ERC4626)     │    │  (Origination)   │    │
+│  │   AXUSD)     │    │                 │    │                  │    │
+│  └─────────────┘    └─────────────────┘    └────────┬─────────┘    │
+│                              │                       │              │
+│                              │                       ▼              │
+│                              │            ┌──────────────────┐      │
+│                              │            │  LoanReceiptNFT  │      │
+│                              │            │    (ERC721)      │      │
+│                              │            └──────────────────┘      │
+│                              │                       │              │
+│                              ▼                       │              │
+│                    ┌─────────────────┐               │              │
+│                    │ RepaymentRouter │◀──────────────┘              │
+│                    │  (Splits Yield) │                              │
+│                    └────────┬────────┘                              │
+│                              │                                      │
+│            ┌─────────────────┼─────────────────┐                    │
+│            ▼                 ▼                 ▼                    │
+│    ┌──────────────┐  ┌──────────────┐  ┌──────────────┐            │
+│    │    Vault     │  │  Insurance   │  │   Treasury   │            │
+│    │   (Yield)    │  │    Fund      │  │  (Protocol)  │            │
+│    └──────────────┘  └──────────────┘  └──────────────┘            │
+│                                                                      │
+│  ┌─────────────────┐    ┌─────────────────┐                        │
+│  │   RiskConfig    │    │ ProductRegistry │                        │
+│  │ (LTV, Rates,    │    │ (Product IDs)   │                        │
+│  │  Terms)         │    │                 │                        │
+│  └─────────────────┘    └─────────────────┘                        │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+## Contracts
+
+| Contract | Description | Key Functions |
+|----------|-------------|---------------|
+| **FixFlipPoolVault.sol** | ERC4626 vault for AXUSD deposits | `deposit()`, `withdraw()`, `lockForLoan()` |
+| **LoanReceiptNFT.sol** | ERC721 tokens representing loans | `mintLoan()`, `recordPayment()`, `getLoan()` |
+| **RiskConfig.sol** | Per-product risk parameters | `getProductRisk()`, `setProductRisk()` |
+| **RepaymentRouter.sol** | Payment routing engine | `routePayment()`, `getRoutingSplit()` |
+| **FixFlipManager.sol** | Loan lifecycle management | `originate()`, `pay()`, `closeLoan()` |
+| **ProductRegistry.sol** | Product registration | `registerProduct()`, `getManager()` |
+| **Interfaces.sol** | Shared interfaces and types | N/A |
+
+## Existing Contracts REUSED
 
 | Role | Contract | Address | Reuse Strategy |
 |------|----------|---------|----------------|
 | **AXUSD Token** | AxiomStable (GENIUS) | `0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C` | Settlement asset for all lending operations |
 | **Treasury** | AxiomTreasuryAndRevenueHub | `0x3fD63728288546AC41dAe3bf25ca383061c3A929` | Fee routing destination |
 | **Revenue Router** | AXUSDRevenueRouter | `0x39A9Ca593d350450d93aF7F24dC1A682df47F30a` | Reference for routing patterns |
-| **Oracle Adapter** | OracleAdapter (GENIUS) | `0xE3b1f38AaBAd138d0EF2e2C7429ee57c512fDF3D` | Price feed integration |
-| **Rate Limiter** | RateLimiter (GENIUS) | `0xE19E4172786A193997f985edC27f7932a0B65327` | Minting controls |
-| **Vault Engine** | VaultEngine (GENIUS) | `0x4675C09dDC1B3094cd86F6b59904CC3E06c98028` | CDP minting reference |
-| **Fee Burner** | AxiomFeeBurner | `0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94` | Protocol fee handling |
 | **Credit SBT** | AxiomScoreSBT | `0x8Ae0f77e2cB2dED0496Dbe2F827be38F5756B008` | Borrower credit scoring |
-| **Segregated Custody** | SegregatedCustody | `0x1Ba851cfB9B3e34D88BC0cbf5a0042F9eb1Af66b` | GENIUS compliance reference |
 
-### Existing Patterns to REFERENCE
+## Product ID
 
-| Pattern | Contract | Usage |
-|---------|----------|-------|
-| **Share-based pooling** | CapitalPoolsAndFunds | Fund/share accounting model |
-| **Soulbound token** | AxiomScoreSBT | ERC-5192 pattern for loan receipts |
-| **Emergency timelock** | BackstopVault | 24h withdrawal delay pattern |
-| **Access control** | All contracts | OpenZeppelin AccessControl standard |
-| **Pausable** | All contracts | Emergency pause capability |
+| ID | Product | Status |
+|----|---------|--------|
+| 1 | Fix & Flip Bridge Loans | Active |
 
-### NEW Contracts Required
+## Risk Parameters (Product 1)
 
-| Contract | Purpose | OpenZeppelin Base |
-|----------|---------|-------------------|
-| `Interfaces.sol` | Shared interfaces (IPoolVault, IRiskConfig, ILoanReceipt, IRepaymentRouter) | - |
-| `FixFlipPoolVault.sol` | ERC4626 vault for AXUSD deposits | ERC4626, AccessControl, Pausable, ReentrancyGuard |
-| `LoanReceiptNFT.sol` | ERC721 loan tracking token | ERC721, AccessControl |
-| `RiskConfig.sol` | Per-product risk parameters | AccessControl |
-| `RepaymentRouter.sol` | Payment splits (yield, insurance, treasury) | AccessControl, ReentrancyGuard |
-| `FixFlipManager.sol` | Fix & Flip loan lifecycle | AccessControl, Pausable, ReentrancyGuard |
-| `ProductRegistry.sol` | Product/manager registration | AccessControl |
-| `ProductBase.sol` | Abstract base for future products | - |
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `maxLtvBps` | 7000 | 70% max LTV on ARV |
+| `maxTermDays` | 365 | 12-month maximum term |
+| `minLoanSize` | $50,000 | Minimum loan amount |
+| `maxLoanSize` | $500,000 | Maximum loan amount |
+| `interestRateBps` | 1400 | 14% annual interest |
+| `originationFeeBps` | 300 | 3 points origination |
+| `lateFeePerDayBps` | 50 | 0.5% per day late fee |
+| `insuranceReserveBps` | 200 | 2% to insurance fund |
+| `protocolFeeBps` | 150 | 1.5% to treasury |
 
-## Folder Structure
+## Yield Distribution
 
-```
-contracts/realestate/
-├── Interfaces.sol           # Shared interfaces
-├── RiskConfig.sol           # Risk parameters
-├── LoanReceiptNFT.sol       # ERC721 loan tracking
-├── RepaymentRouter.sol      # Payment routing
-├── FixFlipPoolVault.sol     # ERC4626 AXUSD vault
-├── FixFlipManager.sol       # Fix & Flip product
-├── ProductBase.sol          # Abstract base
-├── ProductRegistry.sol      # Product registration
-└── README.md               # This file
-```
+When a borrower makes an interest payment:
+
+1. **Vault (Investors)**: ~96.5% of interest → shared among depositors
+2. **Insurance Fund**: 2% of interest → covers defaults
+3. **Protocol Treasury**: 1.5% of interest → protocol operations
+
+## Roles
+
+| Role | Capabilities |
+|------|-------------|
+| `ADMIN_ROLE` | Full configuration, pause/unpause |
+| `MANAGER_ROLE` | Lock/unlock funds, report yield |
+| `UNDERWRITER_ROLE` | Originate loans |
+| `GUARDIAN_ROLE` | Emergency pause |
 
 ## Deployment Order
 
@@ -63,13 +112,45 @@ contracts/realestate/
 5. Deploy `FixFlipManager` (with all dependencies)
 6. Deploy `ProductRegistry`
 7. Register FixFlipManager in ProductRegistry
-8. Grant roles: ORIGINATOR_ROLE, MANAGER_ROLE
+8. Grant roles: MANAGER_ROLE, UNDERWRITER_ROLE
 
-## Test Commands
+## Deployment Commands
 
 ```bash
-npx hardhat test test/realestate/*.ts
+# Compile contracts
+npx hardhat compile
+
+# Run tests
+npx hardhat test test/realestate/FixFlipSystem.test.js
+
+# Deploy to Arbitrum One
+npx hardhat run scripts/deploy-realestate.js --network arbitrum
 ```
+
+## Environment Variables
+
+```env
+AXUSD_ADDRESS=0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C
+TREASURY_ADDRESS=<your_treasury>
+INSURANCE_FUND_ADDRESS=<your_insurance_fund>
+ALCHEMY_RPC_URL=<your_alchemy_url>
+DEPLOYER_PK=<your_private_key>
+```
+
+## Security Considerations
+
+- All functions use OpenZeppelin's `ReentrancyGuard`
+- Pausable emergency stops via `GUARDIAN_ROLE`
+- Access control for sensitive operations
+- 70% max LTV provides equity buffer
+- Insurance reserve for default coverage
+
+## Legal Structure
+
+- **Entity**: Axiom Nexus LLC (Mississippi)
+- **Offering**: SEC Rule 506(c)
+- **Investors**: Accredited only
+- **Minimum**: $10,000 AXUSD
 
 ## Key Events
 
@@ -85,3 +166,14 @@ npx hardhat test test/realestate/*.ts
 - `LoanPayment(loanId, payer, amount)`
 - `LoanStatusChanged(loanId, status)`
 - `LoanClosed(loanId)`
+
+### Payment Events
+- `PaymentRouted(loanId, principal, yieldToVault, toInsurance, toTreasury)`
+
+## Related Files
+
+- Legal documents: `/docs/legal/`
+- Frontend pages: `/pages/lending-fund/`
+- API endpoints: `/pages/api/realestate/`
+- Tests: `/test/realestate/`
+- Deployment script: `/scripts/deploy-realestate.js`
