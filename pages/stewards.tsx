@@ -19,7 +19,6 @@ import {
   StewardStatusIndicator 
 } from '../components/stewardCorps';
 import { trackOnce, track } from '../components/axiomRebuild/analytics';
-import { SiteLayout } from '../components/navigation';
 
 const stewardsImage = "/images/steward_corps_unity_illustration.png";
 
@@ -75,7 +74,7 @@ export default function StewardCorpsPage() {
   };
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>{publicCopy.pageTitle} | Axiom Protocol</title>
         <meta name="description" content={publicCopy.subtitle} />
@@ -591,6 +590,6 @@ export default function StewardCorpsPage() {
           </div>
         </section>
       </main>
-    </SiteLayout>
+    </>
   );
 }

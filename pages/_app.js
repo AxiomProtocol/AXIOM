@@ -37,10 +37,8 @@ const REBUILD_NAV_PAGES = [
   '/purpose-group-onboarding',
   '/dashboard',
   '/lending-fund',
-  '/lending-fund/dashboard',
-  '/lending-fund/invest',
-  '/lending-fund/docs',
-  '/lending-fund/onboarding'
+  '/stewards',
+  '/holders'
 ]
 
 function matchesRebuildNavPages(pathname) {
@@ -49,6 +47,7 @@ function matchesRebuildNavPages(pathname) {
   if (pathname.startsWith('/land-acquisition/')) return true;
   if (pathname.startsWith('/land/')) return true;
   if (pathname.startsWith('/lending-fund/')) return true;
+  if (pathname.startsWith('/stewards/')) return true;
   return false;
 }
 
