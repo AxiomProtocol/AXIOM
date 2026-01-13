@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import Layout from '../../components/Layout';
+import { SiteLayout } from '../../components/navigation';
 
 type OnboardingStep = 'connect' | 'personal' | 'accreditation' | 'documents' | 'signature' | 'complete';
 
@@ -450,7 +450,7 @@ This signature constitutes my legally binding electronic signature.`;
     .every(d => acknowledgedDocs.has(d.id));
 
   return (
-    <Layout>
+    <SiteLayout>
       <Head>
         <title>Investor Onboarding | AXUSD Fix & Flip Lending Fund</title>
       </Head>
@@ -906,6 +906,6 @@ This signature constitutes my legally binding electronic signature.`;
           </div>
         </div>
       </div>
-    </Layout>
+    </SiteLayout>
   );
 }
