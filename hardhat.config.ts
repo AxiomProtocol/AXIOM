@@ -31,6 +31,16 @@ const config: HardhatUserConfig = {
           viaIR: true,
         },
       },
+      "contracts/realestate/*.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+          viaIR: true,
+        },
+      },
     },
   },
   networks: {
