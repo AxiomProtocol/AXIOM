@@ -1,9 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../../server/db';
-import { investorCommitments, dscrApplications, fundSubscriptions, accreditedInvestors } from '../../../../shared/schema';
-import { eq, desc, sql, and } from 'drizzle-orm';
+import { Pool } from 'pg';
 import { ethers } from 'ethers';
 import { REALESTATE_LENDING_CONTRACTS, STABLECOIN_CONTRACTS } from '../../../../shared/contracts';
+
+// Direct pool connection to bypass schema import issues
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
 const DSCR_VAULT_ABI = [
   "function totalAssets() view returns (uint256)",
@@ -132,50 +135,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const onChainMetrics = await getOnChainMetrics();
 
-    let applications: any[] = [];
-    try {
-      applications = await db.select({
-        status: dscrApplications.status,
-        tier: dscrApplications.tier,
-        loanAmount: dscrApplications.loanAmountRequested,
-        dscrBps: dscrApplications.dscrBps,
-        ltvBps: dscrApplications.ltvBps,
-        monthlyPayment: dscrApplications.monthlyPayment
-      })
-        .from(dscrApplications)
-        .where(sql`${dscrApplications.status} = 'funded'`);
-    } catch (dbError) {
-      console.log('No funded applications yet');
-    }
+    // Use raw SQL queries instead of Drizzle ORM to avoid schema import issues
+    const applicationsResult = await pool.query(`
+      SELECT status, tier, loan_amount_requested, dscr_bps, ltv_bps, monthly_payment
+      FROM dscr_applications
+      WHERE status = 'funded'
+    `);
+    const applications = applicationsResult.rows;
 
     const loanBook = {
       funded: applications.length,
-      totalFunded: applications.reduce((sum, a) => sum + parseFloat(a.loanAmount || '0'), 0),
+      totalFunded: applications.reduce((sum: number, a: any) => sum + parseFloat(a.loan_amount_requested || '0'), 0),
       avgDscr: applications.length > 0 
-        ? applications.reduce((sum, a) => sum + (a.dscrBps || 0), 0) / applications.length / 100 
+        ? applications.reduce((sum: number, a: any) => sum + (a.dscr_bps || 0), 0) / applications.length / 100 
         : 0,
       avgLtv: applications.length > 0 
-        ? applications.reduce((sum, a) => sum + (a.ltvBps || 0), 0) / applications.length / 10000 
+        ? applications.reduce((sum: number, a: any) => sum + (a.ltv_bps || 0), 0) / applications.length / 10000 
         : 0,
-      monthlyPayments: applications.reduce((sum, a) => sum + parseFloat(a.monthlyPayment || '0'), 0),
+      monthlyPayments: applications.reduce((sum: number, a: any) => sum + parseFloat(a.monthly_payment || '0'), 0),
       tierDistribution: {
-        low: applications.filter(a => a.tier === 'low').length,
-        standard: applications.filter(a => a.tier === 'standard').length,
-        yield: applications.filter(a => a.tier === 'yield').length
+        low: applications.filter((a: any) => a.tier === 'low').length,
+        standard: applications.filter((a: any) => a.tier === 'standard').length,
+        yield: applications.filter((a: any) => a.tier === 'yield').length
       }
     };
 
-    let commitmentStats: any[] = [{ count: 0, total: 0 }];
-    try {
-      commitmentStats = await db.select({
-        count: sql<number>`count(*)`,
-        total: sql<number>`coalesce(sum(cast(commitment_amount as decimal)), 0)`
-      })
-        .from(investorCommitments)
-        .where(sql`${investorCommitments.status} = 'soft_commit'`);
-    } catch (dbError) {
-      console.log('No commitments yet');
-    }
+    const commitmentResult = await pool.query(`
+      SELECT count(*) as count, coalesce(sum(commitment_amount::decimal), 0) as total
+      FROM investor_commitments
+      WHERE status = 'soft_commit'
+    `);
+    const commitmentStats = commitmentResult.rows;
 
     let investorPosition = null;
     let investorCommitmentHistory = null;
@@ -183,10 +173,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (wallet && typeof wallet === 'string') {
       investorPosition = await getInvestorPosition(wallet);
       
-      investorCommitmentHistory = await db.select()
-        .from(investorCommitments)
-        .where(eq(investorCommitments.walletAddress, wallet))
-        .orderBy(desc(investorCommitments.createdAt));
+      const historyResult = await pool.query(`
+        SELECT * FROM investor_commitments
+        WHERE wallet_address = $1
+        ORDER BY created_at DESC
+      `, [wallet]);
+      // Map snake_case columns to camelCase for frontend compatibility
+      investorCommitmentHistory = historyResult.rows.map((row: any) => ({
+        id: row.id,
+        email: row.email,
+        fullName: row.full_name,
+        walletAddress: row.wallet_address,
+        isAccredited: row.is_accredited,
+        commitmentAmount: row.commitment_amount,
+        tierPreference: row.tier_preference,
+        status: row.status,
+        notes: row.notes,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        expiresAt: row.expires_at
+      }));
     }
 
     const realizedCashflows = {
