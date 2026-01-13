@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 
@@ -10,6 +11,7 @@ interface InvestmentStep {
 }
 
 export default function InvestPage() {
+  const router = useRouter();
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [amount, setAmount] = useState('10000');
@@ -31,6 +33,10 @@ export default function InvestPage() {
     accreditedInvestor: false,
     noGuarantees: false
   });
+
+  useEffect(() => {
+    router.replace('/lending-fund/onboarding');
+  }, [router]);
 
   useEffect(() => {
     checkWalletConnection();
@@ -168,35 +174,40 @@ export default function InvestPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1">
-              <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 sticky top-6">
-                <h3 className="text-lg font-bold text-white mb-4">Investment Steps</h3>
+              <div className="rounded-xl p-6 sticky top-6" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
+                <h3 className="text-lg font-bold mb-4" style={{ color: "#1a1a2e" }}>Investment Steps</h3>
                 <div className="space-y-4">
                   {steps.map((step) => (
                     <div
                       key={step.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                      className="flex items-center gap-3 p-3 rounded-lg transition-all"
+                      style={
                         currentStep === step.id
-                          ? 'bg-yellow-500/20 border border-yellow-500/50'
+                          ? { background: "rgba(0, 212, 170, 0.1)", border: "1px solid rgba(0, 212, 170, 0.5)" }
                           : step.completed
-                          ? 'bg-green-500/10'
-                          : 'bg-gray-900/50'
-                      }`}
+                          ? { background: "rgba(34, 197, 94, 0.1)", border: "1px solid transparent" }
+                          : { background: "#ffffff", border: "1px solid #e5e7eb" }
+                      }
                     >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm ${
-                        step.completed
-                          ? 'bg-green-500 text-white'
-                          : currentStep === step.id
-                          ? 'bg-yellow-500 text-black'
-                          : 'bg-gray-700 text-gray-400'
-                      }`}>
+                      <div 
+                        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm"
+                        style={
+                          step.completed
+                            ? { background: "#22c55e", color: "#ffffff" }
+                            : currentStep === step.id
+                            ? { background: "#00D4AA", color: "#ffffff" }
+                            : { background: "#e5e7eb", color: "#6b7280" }
+                        }
+                      >
                         {step.completed ? '✓' : step.id}
                       </div>
                       <div>
-                        <div className={`font-medium text-sm ${
-                          step.completed ? 'text-green-400' :
-                          currentStep === step.id ? 'text-yellow-400' :
-                          'text-gray-500'
-                        }`}>
+                        <div 
+                          className="font-medium text-sm"
+                          style={{ 
+                            color: step.completed ? "#22c55e" : currentStep === step.id ? "#00D4AA" : "#6b7280" 
+                          }}
+                        >
                           {step.title}
                         </div>
                       </div>
@@ -205,9 +216,9 @@ export default function InvestPage() {
                 </div>
 
                 {walletConnected && (
-                  <div className="mt-6 pt-6 border-t border-gray-700">
-                    <div className="text-gray-400 text-sm mb-1">Your AXUSD Balance</div>
-                    <div className="text-xl font-bold text-white">{formatUSD(axusdBalance)}</div>
+                  <div className="mt-6 pt-6" style={{ borderTop: "1px solid #e5e7eb" }}>
+                    <div className="text-sm mb-1" style={{ color: "#6b7280" }}>Your AXUSD Balance</div>
+                    <div className="text-xl font-bold" style={{ color: "#1a1a2e" }}>{formatUSD(axusdBalance)}</div>
                   </div>
                 )}
               </div>
@@ -216,13 +227,14 @@ export default function InvestPage() {
             <div className="lg:col-span-2">
               {currentStep === 1 && !walletConnected && (
                 <StepCard title="Step 1: Connect Your Wallet">
-                  <p className="text-gray-400 mb-6">
+                  <p className="mb-6" style={{ color: "#6b7280" }}>
                     Connect your Web3 wallet to begin the investment process. Make sure you're connected to Arbitrum One network.
                   </p>
                   <button
                     onClick={connectWallet}
                     disabled={loading}
-                    className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg transition-all disabled:opacity-50"
+                    className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50"
+                    style={{ background: "#00D4AA" }}
                   >
                     {loading ? 'Connecting...' : 'Connect Wallet'}
                   </button>
@@ -231,7 +243,7 @@ export default function InvestPage() {
 
               {currentStep === 2 && (
                 <StepCard title="Step 2: Review Documents">
-                  <p className="text-gray-400 mb-6">
+                  <p className="mb-6" style={{ color: "#6b7280" }}>
                     Please review the following documents and confirm your understanding:
                   </p>
 
@@ -239,28 +251,30 @@ export default function InvestPage() {
                     <Link
                       href="/lending-fund/docs"
                       target="_blank"
-                      className="block p-4 bg-gray-900/50 border border-gray-700 rounded-lg hover:border-yellow-500/50 transition-all"
+                      className="block p-4 rounded-lg transition-all"
+                      style={{ background: "#ffffff", border: "1px solid #e5e7eb" }}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-white font-medium">Private Placement Memorandum</div>
-                          <div className="text-gray-500 text-sm">Complete fund disclosure document</div>
+                          <div className="font-medium" style={{ color: "#1a1a2e" }}>Private Placement Memorandum</div>
+                          <div className="text-sm" style={{ color: "#6b7280" }}>Complete fund disclosure document</div>
                         </div>
-                        <span className="text-yellow-400">View →</span>
+                        <span style={{ color: "#00D4AA" }}>View →</span>
                       </div>
                     </Link>
 
                     <Link
                       href="/api/realestate/documents/Risk_Disclosure_Supplement.md?view=true"
                       target="_blank"
-                      className="block p-4 bg-gray-900/50 border border-gray-700 rounded-lg hover:border-yellow-500/50 transition-all"
+                      className="block p-4 rounded-lg transition-all"
+                      style={{ background: "#ffffff", border: "1px solid #e5e7eb" }}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-white font-medium">Risk Disclosure Supplement</div>
-                          <div className="text-gray-500 text-sm">Detailed risk factors</div>
+                          <div className="font-medium" style={{ color: "#1a1a2e" }}>Risk Disclosure Supplement</div>
+                          <div className="text-sm" style={{ color: "#6b7280" }}>Detailed risk factors</div>
                         </div>
-                        <span className="text-yellow-400">View →</span>
+                        <span style={{ color: "#00D4AA" }}>View →</span>
                       </div>
                     </Link>
                   </div>
@@ -291,7 +305,8 @@ export default function InvestPage() {
                   <button
                     onClick={completeDocumentReview}
                     disabled={!allAcknowledged}
-                    className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: "#00D4AA" }}
                   >
                     Continue to Verification
                   </button>
@@ -300,14 +315,14 @@ export default function InvestPage() {
 
               {currentStep === 3 && (
                 <StepCard title="Step 3: Accredited Investor Verification">
-                  <p className="text-gray-400 mb-6">
+                  <p className="mb-6" style={{ color: "#6b7280" }}>
                     Under SEC Rule 506(c), we must verify your accredited investor status.
                     Please complete the verification questionnaire.
                   </p>
 
-                  <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 mb-6">
-                    <h4 className="text-yellow-400 font-bold mb-2">Accredited Investor Qualifications</h4>
-                    <ul className="text-gray-300 text-sm space-y-2">
+                  <div className="rounded-lg p-4 mb-6" style={{ background: "rgba(0, 212, 170, 0.1)", border: "1px solid rgba(0, 212, 170, 0.3)" }}>
+                    <h4 className="font-bold mb-2" style={{ color: "#00D4AA" }}>Accredited Investor Qualifications</h4>
+                    <ul className="text-sm space-y-2" style={{ color: "#374151" }}>
                       <li>• Income: $200K+ individual or $300K+ joint for past 2 years</li>
                       <li>• Net Worth: $1M+ (excluding primary residence)</li>
                       <li>• Professional: Series 7, 65, or 82 license holder</li>
@@ -318,24 +333,26 @@ export default function InvestPage() {
                   <Link
                     href="/api/realestate/documents/Accredited_Investor_Questionnaire.md?view=true"
                     target="_blank"
-                    className="block p-4 bg-gray-900/50 border border-gray-700 rounded-lg hover:border-yellow-500/50 transition-all mb-6"
+                    className="block p-4 rounded-lg transition-all mb-6"
+                    style={{ background: "#ffffff", border: "1px solid #e5e7eb" }}
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-white font-medium">Accredited Investor Questionnaire</div>
-                        <div className="text-gray-500 text-sm">Download and complete this form</div>
+                        <div className="font-medium" style={{ color: "#1a1a2e" }}>Accredited Investor Questionnaire</div>
+                        <div className="text-sm" style={{ color: "#6b7280" }}>Download and complete this form</div>
                       </div>
-                      <span className="text-yellow-400">Download →</span>
+                      <span style={{ color: "#00D4AA" }}>Download →</span>
                     </div>
                   </Link>
 
-                  <p className="text-gray-500 text-sm mb-4">
+                  <p className="text-sm mb-4" style={{ color: "#6b7280" }}>
                     For this demo, click below to proceed. In production, you would upload your verification documents.
                   </p>
 
                   <button
                     onClick={completeAccreditation}
-                    className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg transition-all"
+                    className="w-full py-4 text-white font-bold rounded-lg transition-all"
+                    style={{ background: "#00D4AA" }}
                   >
                     Confirm Accredited Status
                   </button>
@@ -344,24 +361,25 @@ export default function InvestPage() {
 
               {currentStep === 4 && (
                 <StepCard title="Step 4: Investment Amount">
-                  <p className="text-gray-400 mb-6">
+                  <p className="mb-6" style={{ color: "#6b7280" }}>
                     Enter the amount you wish to invest. Minimum investment is $10,000 AXUSD.
                   </p>
 
                   <div className="mb-6">
-                    <label className="block text-gray-400 text-sm mb-2">Investment Amount (AXUSD)</label>
+                    <label className="block text-sm mb-2" style={{ color: "#6b7280" }}>Investment Amount (AXUSD)</label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl">$</span>
+                      <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-xl" style={{ color: "#6b7280" }}>$</span>
                       <input
                         type="text"
                         value={amount}
                         onChange={(e) => handleAmountChange(e.target.value)}
-                        className="w-full py-4 pl-10 pr-4 bg-gray-900 border border-gray-700 rounded-lg text-white text-2xl font-bold focus:border-yellow-500 focus:outline-none"
+                        className="w-full py-4 pl-10 pr-4 rounded-lg text-2xl font-bold focus:outline-none"
+                        style={{ background: "#ffffff", border: "1px solid #e5e7eb", color: "#1a1a2e" }}
                         placeholder="10000"
                       />
                     </div>
                     {parseInt(amount) < 10000 && (
-                      <p className="text-red-400 text-sm mt-2">Minimum investment is $10,000</p>
+                      <p className="text-sm mt-2" style={{ color: "#ef4444" }}>Minimum investment is $10,000</p>
                     )}
                   </div>
 
@@ -370,31 +388,31 @@ export default function InvestPage() {
                       <button
                         key={preset}
                         onClick={() => handleAmountChange(preset)}
-                        className={`py-2 rounded-lg font-medium transition-all ${
-                          amount === preset
-                            ? 'bg-yellow-500 text-black'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        }`}
+                        className="py-2 rounded-lg font-medium transition-all"
+                        style={amount === preset 
+                          ? { background: "#00D4AA", color: "#ffffff" }
+                          : { background: "#e5e7eb", color: "#374151" }
+                        }
                       >
                         ${parseInt(preset).toLocaleString()}
                       </button>
                     ))}
                   </div>
 
-                  <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 mb-6">
-                    <h4 className="text-white font-bold mb-3">Investment Summary</h4>
+                  <div className="rounded-lg p-4 mb-6" style={{ background: "#ffffff", border: "1px solid #e5e7eb" }}>
+                    <h4 className="font-bold mb-3" style={{ color: "#1a1a2e" }}>Investment Summary</h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Investment Amount</span>
-                        <span className="text-white">{formatUSD(amount)}</span>
+                        <span style={{ color: "#6b7280" }}>Investment Amount</span>
+                        <span style={{ color: "#1a1a2e" }}>{formatUSD(amount)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Target Annual Return</span>
-                        <span className="text-yellow-400">10-14%</span>
+                        <span style={{ color: "#6b7280" }}>Target Annual Return</span>
+                        <span style={{ color: "#00D4AA" }}>10-14%</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Lock-up Period</span>
-                        <span className="text-white">12 months</span>
+                        <span style={{ color: "#6b7280" }}>Lock-up Period</span>
+                        <span style={{ color: "#1a1a2e" }}>12 months</span>
                       </div>
                     </div>
                   </div>
@@ -402,7 +420,8 @@ export default function InvestPage() {
                   <button
                     onClick={proceedToDeposit}
                     disabled={parseInt(amount) < 10000}
-                    className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: "#00D4AA" }}
                   >
                     Proceed to Deposit
                   </button>
@@ -411,34 +430,34 @@ export default function InvestPage() {
 
               {currentStep === 5 && (
                 <StepCard title="Step 5: Sign & Deposit">
-                  <p className="text-gray-400 mb-6">
+                  <p className="mb-6" style={{ color: "#6b7280" }}>
                     Review your investment details and complete the deposit.
                   </p>
 
-                  <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6 mb-6">
-                    <h4 className="text-white font-bold mb-4">Final Investment Summary</h4>
+                  <div className="rounded-lg p-6 mb-6" style={{ background: "#ffffff", border: "1px solid #e5e7eb" }}>
+                    <h4 className="font-bold mb-4" style={{ color: "#1a1a2e" }}>Final Investment Summary</h4>
                     <div className="space-y-3">
-                      <div className="flex justify-between py-2 border-b border-gray-700">
-                        <span className="text-gray-400">Investment Amount</span>
-                        <span className="text-white font-bold text-xl">{formatUSD(amount)}</span>
+                      <div className="flex justify-between py-2" style={{ borderBottom: "1px solid #e5e7eb" }}>
+                        <span style={{ color: "#6b7280" }}>Investment Amount</span>
+                        <span className="font-bold text-xl" style={{ color: "#1a1a2e" }}>{formatUSD(amount)}</span>
                       </div>
-                      <div className="flex justify-between py-2 border-b border-gray-700">
-                        <span className="text-gray-400">Wallet Address</span>
-                        <span className="text-white font-mono text-sm">{walletAddress?.slice(0, 10)}...{walletAddress?.slice(-8)}</span>
+                      <div className="flex justify-between py-2" style={{ borderBottom: "1px solid #e5e7eb" }}>
+                        <span style={{ color: "#6b7280" }}>Wallet Address</span>
+                        <span className="font-mono text-sm" style={{ color: "#1a1a2e" }}>{walletAddress?.slice(0, 10)}...{walletAddress?.slice(-8)}</span>
                       </div>
-                      <div className="flex justify-between py-2 border-b border-gray-700">
-                        <span className="text-gray-400">Network</span>
-                        <span className="text-white">Arbitrum One</span>
+                      <div className="flex justify-between py-2" style={{ borderBottom: "1px solid #e5e7eb" }}>
+                        <span style={{ color: "#6b7280" }}>Network</span>
+                        <span style={{ color: "#1a1a2e" }}>Arbitrum One</span>
                       </div>
                       <div className="flex justify-between py-2">
-                        <span className="text-gray-400">Fund</span>
-                        <span className="text-white">AXUSD Fix & Flip Lending Fund</span>
+                        <span style={{ color: "#6b7280" }}>Fund</span>
+                        <span style={{ color: "#1a1a2e" }}>AXUSD Fix & Flip Lending Fund</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 mb-6">
-                    <p className="text-yellow-400 text-sm">
+                  <div className="rounded-lg p-4 mb-6" style={{ background: "rgba(0, 212, 170, 0.1)", border: "1px solid rgba(0, 212, 170, 0.3)" }}>
+                    <p className="text-sm" style={{ color: "#00D4AA" }}>
                       By clicking "Sign & Deposit", you agree to the terms of the Subscription Agreement
                       and authorize the transfer of {formatUSD(amount)} AXUSD to the fund.
                     </p>
@@ -447,12 +466,13 @@ export default function InvestPage() {
                   <button
                     onClick={handleDeposit}
                     disabled={loading}
-                    className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg transition-all disabled:opacity-50"
+                    className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50"
+                    style={{ background: "#00D4AA" }}
                   >
                     {loading ? 'Processing...' : `Sign & Deposit ${formatUSD(amount)}`}
                   </button>
 
-                  <p className="text-gray-500 text-sm text-center mt-4">
+                  <p className="text-sm text-center mt-4" style={{ color: "#6b7280" }}>
                     Smart contract deposit will be enabled after mainnet deployment
                   </p>
                 </StepCard>
@@ -467,8 +487,8 @@ export default function InvestPage() {
 
 function StepCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-8">
-      <h2 className="text-xl font-bold text-white mb-6">{title}</h2>
+    <div className="rounded-2xl p-8" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
+      <h2 className="text-xl font-bold mb-6" style={{ color: "#1a1a2e" }}>{title}</h2>
       {children}
     </div>
   );
@@ -481,13 +501,17 @@ function AcknowledgmentCheckbox({ checked, onChange, label }: {
 }) {
   return (
     <label className="flex items-start gap-3 cursor-pointer group">
-      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
-        checked ? 'bg-yellow-500 border-yellow-500' : 'border-gray-600 group-hover:border-yellow-500/50'
-      }`}>
-        {checked && <span className="text-black text-xs font-bold">✓</span>}
+      <div 
+        className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all"
+        style={checked 
+          ? { background: "#00D4AA", borderColor: "#00D4AA" } 
+          : { borderColor: "#d1d5db" }
+        }
+      >
+        {checked && <span className="text-white text-xs font-bold">✓</span>}
       </div>
       <input type="checkbox" checked={checked} onChange={onChange} className="sr-only" />
-      <span className={`text-sm ${checked ? 'text-white' : 'text-gray-400'}`}>{label}</span>
+      <span className="text-sm" style={{ color: checked ? "#1a1a2e" : "#6b7280" }}>{label}</span>
     </label>
   );
 }
