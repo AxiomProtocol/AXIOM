@@ -169,6 +169,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Application ID and action required' });
     }
 
+    const applicationId = typeof id === 'string' ? parseInt(id, 10) : id;
+    if (isNaN(applicationId)) {
+      return res.status(400).json({ error: 'Invalid application ID' });
+    }
+
     try {
       const updateData: Record<string, any> = {
         updatedAt: new Date(),
@@ -209,7 +214,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       await db.update(loanApplications)
         .set(updateData)
-        .where(eq(loanApplications.id, id));
+        .where(eq(loanApplications.id, applicationId));
 
       return res.status(200).json({ success: true, message: `Action '${action}' completed` });
     } catch (error) {
