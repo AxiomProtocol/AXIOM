@@ -175,4 +175,12 @@ contract FixFlipPoolVault is ERC4626, AccessControl, Pausable, ReentrancyGuard, 
         require(token != asset(), "FixFlipPoolVault: cannot withdraw base asset");
         IERC20(token).safeTransfer(to, amount);
     }
+
+    function approveSpender(address spender, uint256 amount) external onlyRole(ADMIN_ROLE) {
+        require(spender != address(0), "FixFlipPoolVault: invalid spender");
+        IERC20(asset()).approve(spender, amount);
+        emit SpenderApproved(spender, amount);
+    }
+
+    event SpenderApproved(address indexed spender, uint256 amount);
 }
