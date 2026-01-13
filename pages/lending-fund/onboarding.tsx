@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import RebuildLayout from '../../components/axiomRebuild/RebuildLayout';
+import Layout from '../../components/Layout';
 
 type OnboardingStep = 'connect' | 'personal' | 'accreditation' | 'documents' | 'signature' | 'complete';
 
@@ -53,7 +53,7 @@ async function hashData(data: any): Promise<string> {
   const dataBuffer = encoder.encode(JSON.stringify(data));
   const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 async function signMessage(message: string, walletAddress: string): Promise<string> {
@@ -450,7 +450,7 @@ This signature constitutes my legally binding electronic signature.`;
     .every(d => acknowledgedDocs.has(d.id));
 
   return (
-    <RebuildLayout>
+    <Layout>
       <Head>
         <title>Investor Onboarding | AXUSD Fix & Flip Lending Fund</title>
       </Head>
@@ -906,6 +906,6 @@ This signature constitutes my legally binding electronic signature.`;
           </div>
         </div>
       </div>
-    </RebuildLayout>
+    </Layout>
   );
 }

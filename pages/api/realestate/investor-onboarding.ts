@@ -84,7 +84,7 @@ async function checkAndRecordNonce(nonce: string, walletAddress: string, signatu
 }
 
 function hashData(data: any): string {
-  return crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex').slice(0, 16);
+  return crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex');
 }
 
 function buildPersonalInfoMessage(wallet: string, data: any, timestamp: number, nonce: string): string {
