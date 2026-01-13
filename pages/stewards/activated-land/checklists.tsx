@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { RebuildNav } from '../../../components/axiomRebuild/RebuildNav';
 import { trackActivatedLand, ActivatedLandEvents } from '../../../lib/stewards/activatedLandAnalytics';
 
 const checklists = [
@@ -118,9 +117,8 @@ export default function ActivatedLandChecklistsPage() {
         <title>Checklists | Activated Land | Stewards | Axiom Protocol</title>
         <meta name="description" content="Operational checklists for the Steward-Activated Land Program." />
       </Head>
-      <RebuildNav />
       
-      <main className="min-h-screen bg-gray-50 pt-20">
+      <main className="min-h-screen bg-gray-50">
         <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
           <Link href="/stewards/activated-land" className="text-amber-600 hover:underline text-sm mb-4 inline-block">
             ← Back to Activated Land Overview

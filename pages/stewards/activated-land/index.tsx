@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { RebuildNav } from '../../../components/axiomRebuild/RebuildNav';
 import { trackActivatedLand, ActivatedLandEvents } from '../../../lib/stewards/activatedLandAnalytics';
 
 export default function ActivatedLandOverviewPage() {
@@ -15,9 +14,8 @@ export default function ActivatedLandOverviewPage() {
         <title>Steward-Activated Land Program | Stewards | Axiom Protocol</title>
         <meta name="description" content="Overview of the Steward-Activated Land Program for community stewards." />
       </Head>
-      <RebuildNav />
       
-      <main className="min-h-screen bg-white pt-20">
+      <main className="min-h-screen bg-white">
         <section className="max-w-4xl mx-auto px-4 sm:px-6 py-16">
           <div className="mb-8">
             <span className="inline-block px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium mb-4">

@@ -18,7 +18,6 @@ import {
   StewardStatusIndicator
 } from '../../components/stewardCorps';
 import { track } from '../../components/axiomRebuild/analytics';
-import { RebuildNav } from '../../components/axiomRebuild/RebuildNav';
 
 export default function StewardApplyPage() {
   const router = useRouter();
@@ -127,12 +126,10 @@ export default function StewardApplyPage() {
         <Head>
           <title>Application Status | Axiom Steward Corps</title>
         </Head>
-        <RebuildNav />
         
         <main style={{ 
           minHeight: '100vh', 
           background: '#FAFBFC',
-          paddingTop: '80px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center'
@@ -224,12 +221,10 @@ export default function StewardApplyPage() {
         <title>Apply | Axiom Steward Corps</title>
         <meta name="description" content="Apply to join the Axiom Steward Corps" />
       </Head>
-      <RebuildNav />
       
       <main style={{ 
         minHeight: '100vh', 
-        background: '#FAFBFC',
-        paddingTop: '80px'
+        background: '#FAFBFC'
       }}>
         <section style={{
           padding: '60px 24px 40px',
