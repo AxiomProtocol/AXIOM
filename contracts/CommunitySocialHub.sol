@@ -660,14 +660,9 @@ contract CommunitySocialHub is AccessControl, ReentrancyGuard, Pausable {
         return profiles[user];
     }
     
-    /**
-     * @notice Get post with privacy enforcement
-     */
-    function getPost(uint256 postId) external view returns (Post memory) {
-        Post memory post = posts[postId];
+    function _enforcePostPrivacy(uint256 postId) internal view {
+        Post storage post = posts[postId];
         require(post.author != address(0), "Post does not exist");
-        
-        // CRITICAL FIX: Enforce privacy settings
         if (post.privacy == PrivacyLevel.Private) {
             require(msg.sender == post.author, "Private post");
         } else if (post.privacy == PrivacyLevel.FollowersOnly) {
@@ -676,9 +671,55 @@ contract CommunitySocialHub is AccessControl, ReentrancyGuard, Pausable {
                 "Followers only"
             );
         }
-        // Public posts visible to all
-        
-        return post;
+    }
+    
+    function getPostCore(uint256 postId) external view returns (
+        uint256 postId_,
+        address author,
+        ContentType contentType,
+        PrivacyLevel privacy,
+        bool isPinned,
+        bool isHidden,
+        uint256 createdAt
+    ) {
+        _enforcePostPrivacy(postId);
+        Post storage post = posts[postId];
+        return (
+            post.postId,
+            post.author,
+            post.contentType,
+            post.privacy,
+            post.isPinned,
+            post.isHidden,
+            post.createdAt
+        );
+    }
+    
+    function getPostEngagement(uint256 postId) external view returns (
+        uint256 likeCount,
+        uint256 commentCount,
+        uint256 shareCount
+    ) {
+        _enforcePostPrivacy(postId);
+        Post storage post = posts[postId];
+        return (post.likeCount, post.commentCount, post.shareCount);
+    }
+    
+    function getPostContent(uint256 postId) external view returns (
+        string memory content,
+        string[] memory tags
+    ) {
+        _enforcePostPrivacy(postId);
+        Post storage post = posts[postId];
+        return (post.content, post.tags);
+    }
+    
+    function getPostFlags(uint256 postId) external view returns (
+        bool isPostReported_,
+        uint256 reportCount
+    ) {
+        _enforcePostPrivacy(postId);
+        return (isPostReported[postId], postReportCount[postId]);
     }
     
     /**

@@ -557,47 +557,90 @@ contract CapitalPoolsAndFunds is AccessControl, ReentrancyGuard, Pausable {
     }
     
     // ============================================
-    // VIEW FUNCTIONS
+    // VIEW FUNCTIONS (Split to avoid stack depth issues)
     // ============================================
     
-    /**
-     * @notice Get fund details
-     */
-    function getFund(uint256 fundId) external view returns (Fund memory) {
-        return funds[fundId];
+    function getFundCore(uint256 fundId) external view returns (
+        uint256 fundId_,
+        FundType fundType,
+        address fundManager,
+        FundStatus status,
+        uint256 createdAt
+    ) {
+        Fund storage f = funds[fundId];
+        return (f.fundId, f.fundType, f.fundManager, f.status, f.createdAt);
     }
     
-    /**
-     * @notice Get investment details
-     */
-    function getInvestment(uint256 investmentId) external view returns (Investment memory) {
-        return investments[investmentId];
+    function getFundMetadata(uint256 fundId) external view returns (string memory name) {
+        return funds[fundId].name;
     }
     
-    /**
-     * @notice Get investor's funds
-     */
+    function getFundCapital(uint256 fundId) external view returns (
+        uint256 totalCapital,
+        uint256 totalShares,
+        uint256 minimumInvestment,
+        uint256 lockupPeriod
+    ) {
+        Fund storage f = funds[fundId];
+        return (f.totalCapital, f.totalShares, f.minimumInvestment, f.lockupPeriod);
+    }
+    
+    function getFundFees(uint256 fundId) external view returns (
+        uint256 managementFeeBps,
+        uint256 performanceFeeBps,
+        uint256 lastFeeCollection,
+        uint256 totalFeesCollected
+    ) {
+        Fund storage f = funds[fundId];
+        return (f.managementFeeBps, f.performanceFeeBps, f.lastFeeCollection, f.totalFeesCollected);
+    }
+    
+    function getFundYieldStats(uint256 fundId) external view returns (uint256 totalYieldDistributed) {
+        return funds[fundId].totalYieldDistributed;
+    }
+    
+    function getInvestmentCore(uint256 investmentId) external view returns (
+        uint256 investmentId_,
+        uint256 fundId,
+        address investor,
+        InvestmentStatus status,
+        uint256 investmentDate
+    ) {
+        Investment storage i = investments[investmentId];
+        return (i.investmentId, i.fundId, i.investor, i.status, i.investmentDate);
+    }
+    
+    function getInvestmentAmounts(uint256 investmentId) external view returns (
+        uint256 amountInvested,
+        uint256 sharesOwned,
+        uint256 lastYieldClaim,
+        uint256 totalYieldClaimed
+    ) {
+        Investment storage i = investments[investmentId];
+        return (i.amountInvested, i.sharesOwned, i.lastYieldClaim, i.totalYieldClaimed);
+    }
+    
     function getInvestorFunds(address investor) external view returns (uint256[] memory) {
         return investorFunds[investor];
     }
     
-    /**
-     * @notice Get fund's investments
-     */
     function getFundInvestments(uint256 fundId) external view returns (uint256[] memory) {
         return fundInvestments[fundId];
     }
     
-    /**
-     * @notice Get yield history for a fund
-     */
-    function getYieldHistory(uint256 fundId) external view returns (YieldDistribution[] memory) {
-        return yieldHistory[fundId];
+    function getYieldHistoryCount(uint256 fundId) external view returns (uint256) {
+        return yieldHistory[fundId].length;
     }
     
-    /**
-     * @notice Get pending withdrawals for a fund
-     */
+    function getYieldHistoryEntry(uint256 fundId, uint256 index) external view returns (
+        uint256 totalYield,
+        uint256 yieldPerShare,
+        uint256 timestamp
+    ) {
+        YieldDistribution storage y = yieldHistory[fundId][index];
+        return (y.totalYield, y.yieldPerShare, y.timestamp);
+    }
+    
     function getPendingWithdrawals(uint256 fundId) external view returns (uint256[] memory) {
         return pendingWithdrawals[fundId];
     }

@@ -594,31 +594,143 @@ contract SustainabilityHub is AccessControl, ReentrancyGuard, Pausable {
     }
     
     // ============================================
-    // VIEW FUNCTIONS
+    // VIEW FUNCTIONS (Split to avoid stack depth issues)
     // ============================================
     
-    function getUserProfile(address user) external view returns (UserProfile memory) {
-        return userProfiles[user];
+    function getUserProfile(address user) external view returns (
+        address userAddress,
+        uint256 carbonCreditsOwned,
+        uint256 carbonCreditsRetired,
+        uint256 recsOwned,
+        uint256 recsRetired,
+        uint256 totalCarbonOffset
+    ) {
+        UserProfile storage p = userProfiles[user];
+        return (p.userAddress, p.carbonCreditsOwned, p.carbonCreditsRetired, p.recsOwned, p.recsRetired, p.totalCarbonOffset);
     }
     
-    function getCarbonCredit(uint256 creditId) external view returns (CarbonCredit memory) {
-        return carbonCredits[creditId];
+    function getUserSustainability(address user) external view returns (
+        uint256 sustainabilityScore,
+        uint256 lastUpdateAt
+    ) {
+        UserProfile storage p = userProfiles[user];
+        return (p.sustainabilityScore, p.lastUpdateAt);
     }
     
-    function getREC(uint256 recId) external view returns (RenewableEnergyCertificate memory) {
-        return recs[recId];
+    function getCarbonCreditCore(uint256 creditId) external view returns (
+        uint256 creditId_,
+        address owner,
+        uint256 amount,
+        uint256 projectId,
+        bool isRetired,
+        uint256 retiredAt
+    ) {
+        CarbonCredit storage c = carbonCredits[creditId];
+        return (c.creditId, c.owner, c.amount, c.projectId, c.isRetired, c.retiredAt);
     }
     
-    function getProject(uint256 projectId) external view returns (SustainabilityProject memory) {
-        return projects[projectId];
+    function getCarbonCreditVerification(uint256 creditId) external view returns (
+        string memory verificationURI,
+        address verifier,
+        uint256 issuedAt
+    ) {
+        CarbonCredit storage c = carbonCredits[creditId];
+        return (c.verificationURI, c.verifier, c.issuedAt);
     }
     
-    function getOffsetProgram(uint256 programId) external view returns (OffsetProgram memory) {
-        return offsetPrograms[programId];
+    function getRECCore(uint256 recId) external view returns (
+        uint256 recId_,
+        address owner,
+        uint256 energyMWh,
+        EnergySource source,
+        uint256 projectId,
+        bool isRetired
+    ) {
+        RenewableEnergyCertificate storage r = recs[recId];
+        return (r.recId, r.owner, r.energyMWh, r.source, r.projectId, r.isRetired);
     }
     
-    function getEmissionReport(uint256 reportId) external view returns (EmissionReport memory) {
-        return emissionReports[reportId];
+    function getRECVerification(uint256 recId) external view returns (
+        string memory verificationURI,
+        address verifier,
+        uint256 issuedAt
+    ) {
+        RenewableEnergyCertificate storage r = recs[recId];
+        return (r.verificationURI, r.verifier, r.issuedAt);
+    }
+    
+    function getProjectCore(uint256 projectId) external view returns (
+        uint256 projectId_,
+        address operator,
+        ProjectStatus status,
+        uint256 creditsIssued,
+        uint256 createdAt
+    ) {
+        SustainabilityProject storage p = projects[projectId];
+        return (p.projectId, p.operator, p.status, p.creditsIssued, p.createdAt);
+    }
+    
+    function getProjectDetails(uint256 projectId) external view returns (
+        string memory name,
+        string memory description,
+        string memory metadataURI
+    ) {
+        SustainabilityProject storage p = projects[projectId];
+        return (p.name, p.description, p.metadataURI);
+    }
+    
+    function getProjectReduction(uint256 projectId) external view returns (
+        uint256 targetCO2Reduction,
+        uint256 actualCO2Reduction
+    ) {
+        SustainabilityProject storage p = projects[projectId];
+        return (p.targetCO2Reduction, p.actualCO2Reduction);
+    }
+    
+    function getOffsetProgramCore(uint256 programId) external view returns (
+        uint256 programId_,
+        uint256 pricePerTon,
+        uint256 availableCredits,
+        uint256 totalOffset,
+        bool isActive,
+        uint256 createdAt
+    ) {
+        OffsetProgram storage o = offsetPrograms[programId];
+        return (o.programId, o.pricePerTon, o.availableCredits, o.totalOffset, o.isActive, o.createdAt);
+    }
+    
+    function getOffsetProgramDetails(uint256 programId) external view returns (
+        string memory name,
+        string memory description
+    ) {
+        OffsetProgram storage o = offsetPrograms[programId];
+        return (o.name, o.description);
+    }
+    
+    function getEmissionReportCore(uint256 reportId) external view returns (
+        uint256 reportId_,
+        address reporter,
+        uint256 totalEmissions,
+        bool isVerified,
+        address verifier
+    ) {
+        EmissionReport storage r = emissionReports[reportId];
+        return (r.reportId, r.reporter, r.totalEmissions, r.isVerified, r.verifier);
+    }
+    
+    function getEmissionReportScopes(uint256 reportId) external view returns (
+        uint256 scope1Emissions,
+        uint256 scope2Emissions,
+        uint256 scope3Emissions,
+        uint256 reportPeriodStart,
+        uint256 reportPeriodEnd
+    ) {
+        EmissionReport storage r = emissionReports[reportId];
+        return (r.scope1Emissions, r.scope2Emissions, r.scope3Emissions, r.reportPeriodStart, r.reportPeriodEnd);
+    }
+    
+    function getEmissionReportURI(uint256 reportId) external view returns (string memory) {
+        return emissionReports[reportId].reportURI;
     }
     
     function getUserCarbonCredits(address user) external view returns (uint256[] memory) {

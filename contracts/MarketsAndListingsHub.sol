@@ -868,23 +868,102 @@ contract MarketsAndListingsHub is AccessControl, ReentrancyGuard, Pausable {
     }
     
     // ============================================
-    // VIEW FUNCTIONS
+    // VIEW FUNCTIONS (Split to avoid stack depth issues)
     // ============================================
     
-    function getListing(uint256 listingId) external view returns (AssetListing memory) {
-        return listings[listingId];
+    function getListingCore(uint256 listingId) external view returns (
+        uint256 listingId_,
+        AssetType assetType,
+        address tokenAddress,
+        address issuer,
+        ListingStatus status,
+        uint256 listedAt
+    ) {
+        AssetListing storage l = listings[listingId];
+        return (l.listingId, l.assetType, l.tokenAddress, l.issuer, l.status, l.listedAt);
     }
     
-    function getOrder(uint256 orderId) external view returns (Order memory) {
-        return orders[orderId];
+    function getListingDetails(uint256 listingId) external view returns (
+        string memory symbol,
+        string memory name,
+        string memory regulatoryFramework
+    ) {
+        AssetListing storage l = listings[listingId];
+        return (l.symbol, l.name, l.regulatoryFramework);
     }
     
-    function getTrade(uint256 tradeId) external view returns (Trade memory) {
-        return trades[tradeId];
+    function getListingMarket(uint256 listingId) external view returns (
+        uint256 totalSupply,
+        uint256 pricePerToken,
+        bool requiresKYC,
+        bool accreditedOnly
+    ) {
+        AssetListing storage l = listings[listingId];
+        return (l.totalSupply, l.pricePerToken, l.requiresKYC, l.accreditedOnly);
     }
     
-    function getInvestorProfile(address investor) external view returns (InvestorProfile memory) {
-        return investors[investor];
+    function getOrderCore(uint256 orderId) external view returns (
+        uint256 orderId_,
+        uint256 listingId,
+        address trader,
+        OrderType orderType,
+        OrderStatus status
+    ) {
+        Order storage o = orders[orderId];
+        return (o.orderId, o.listingId, o.trader, o.orderType, o.status);
+    }
+    
+    function getOrderAmounts(uint256 orderId) external view returns (
+        uint256 quantity,
+        uint256 pricePerToken,
+        uint256 filledQuantity,
+        uint256 maxSlippageBps,
+        uint256 escrowedAmount
+    ) {
+        Order storage o = orders[orderId];
+        return (o.quantity, o.pricePerToken, o.filledQuantity, o.maxSlippageBps, o.escrowedAmount);
+    }
+    
+    function getOrderTimes(uint256 orderId) external view returns (
+        uint256 createdAt,
+        uint256 expiresAt
+    ) {
+        Order storage o = orders[orderId];
+        return (o.createdAt, o.expiresAt);
+    }
+    
+    function getTradeCore(uint256 tradeId) external view returns (
+        uint256 tradeId_,
+        uint256 listingId,
+        uint256 buyOrderId,
+        uint256 sellOrderId,
+        uint256 tradedAt
+    ) {
+        Trade storage t = trades[tradeId];
+        return (t.tradeId, t.listingId, t.buyOrderId, t.sellOrderId, t.tradedAt);
+    }
+    
+    function getTradeParties(uint256 tradeId) external view returns (
+        address buyer,
+        address seller,
+        uint256 quantity,
+        uint256 pricePerToken,
+        uint256 feeAmount
+    ) {
+        Trade storage t = trades[tradeId];
+        return (t.buyer, t.seller, t.quantity, t.pricePerToken, t.feeAmount);
+    }
+    
+    function getInvestorProfile(address investor) external view returns (
+        bool isKYCVerified,
+        bool isAccredited,
+        uint256 kycExpiresAt,
+        ComplianceStatus complianceStatus,
+        uint256 totalTradesCount,
+        uint256 totalVolumeUSD
+    ) {
+        InvestorProfile storage i = investors[investor];
+        return (i.isKYCVerified, i.isAccredited, i.kycExpiresAt, i.complianceStatus, i.totalTradesCount, i.totalVolumeUSD);
     }
     
     function getUserOrders(address user) external view returns (uint256[] memory) {

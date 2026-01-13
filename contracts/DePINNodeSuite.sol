@@ -689,60 +689,121 @@ contract DePINNodeSuite is AccessControl, ReentrancyGuard, Pausable {
     }
     
     // ============================================
-    // VIEW FUNCTIONS
+    // VIEW FUNCTIONS (Split to avoid stack depth issues)
     // ============================================
     
-    /**
-     * @notice Get node details
-     */
-    function getNode(uint256 nodeId) external view returns (Node memory) {
-        return nodes[nodeId];
+    function getNodeCore(uint256 nodeId) external view returns (
+        uint256 nodeId_,
+        NodeType nodeType,
+        address operator,
+        NodeStatus status,
+        bool isLeased,
+        uint256 currentLeaseId
+    ) {
+        Node storage n = nodes[nodeId];
+        return (n.nodeId, n.nodeType, n.operator, n.status, n.isLeased, n.currentLeaseId);
     }
     
-    /**
-     * @notice Get lease details
-     */
-    function getLease(uint256 leaseId) external view returns (NodeLease memory) {
-        return leases[leaseId];
+    function getNodeMetadata(uint256 nodeId) external view returns (
+        string memory ipAddress,
+        string memory metadata
+    ) {
+        Node storage n = nodes[nodeId];
+        return (n.ipAddress, n.metadata);
     }
     
-    /**
-     * @notice Get nodes operated by an address
-     */
+    function getNodeStaking(uint256 nodeId) external view returns (
+        uint256 stakedAmount,
+        uint256 slashedAmount,
+        uint256 registrationDate
+    ) {
+        Node storage n = nodes[nodeId];
+        return (n.stakedAmount, n.slashedAmount, n.registrationDate);
+    }
+    
+    function getNodePerformance(uint256 nodeId) external view returns (
+        uint256 totalUptime,
+        uint256 totalDowntime,
+        uint256 lastHealthCheck,
+        uint256 totalRevenueGenerated
+    ) {
+        Node storage n = nodes[nodeId];
+        return (n.totalUptime, n.totalDowntime, n.lastHealthCheck, n.totalRevenueGenerated);
+    }
+    
+    function getLeaseCore(uint256 leaseId) external view returns (
+        uint256 leaseId_,
+        uint256 nodeId,
+        address lessee,
+        address operator,
+        LeaseStatus status
+    ) {
+        NodeLease storage l = leases[leaseId];
+        return (l.leaseId, l.nodeId, l.lessee, l.operator, l.status);
+    }
+    
+    function getLeaseTerms(uint256 leaseId) external view returns (
+        uint256 monthlyFee,
+        uint256 leaseDuration,
+        uint256 startDate,
+        uint256 endDate,
+        uint256 securityDeposit
+    ) {
+        NodeLease storage l = leases[leaseId];
+        return (l.monthlyFee, l.leaseDuration, l.startDate, l.endDate, l.securityDeposit);
+    }
+    
+    function getLeasePayments(uint256 leaseId) external view returns (
+        uint256 totalRevenue,
+        uint256 totalPaid,
+        uint256 lastPaymentDate
+    ) {
+        NodeLease storage l = leases[leaseId];
+        return (l.totalRevenue, l.totalPaid, l.lastPaymentDate);
+    }
+    
     function getOperatorNodes(address operator) external view returns (uint256[] memory) {
         return operatorNodes[operator];
     }
     
-    /**
-     * @notice Get leases for a lessee
-     */
     function getLesseeLeases(address lessee) external view returns (uint256[] memory) {
         return lesseeLeases[lessee];
     }
     
-    /**
-     * @notice Get performance history for a node
-     */
-    function getPerformanceHistory(uint256 nodeId) external view returns (PerformanceRecord[] memory) {
-        return performanceHistory[nodeId];
+    function getPerformanceHistoryCount(uint256 nodeId) external view returns (uint256) {
+        return performanceHistory[nodeId].length;
     }
     
-    /**
-     * @notice Get revenue distribution history for a lease
-     */
-    function getRevenueHistory(uint256 leaseId) external view returns (RevenueDistribution[] memory) {
-        return revenueHistory[leaseId];
+    function getPerformanceRecord(uint256 nodeId, uint256 index) external view returns (
+        uint256 timestamp,
+        uint256 uptimeSeconds,
+        uint256 downtimeSeconds,
+        uint256 revenueGenerated,
+        bool healthCheckPassed
+    ) {
+        PerformanceRecord storage p = performanceHistory[nodeId][index];
+        return (p.timestamp, p.uptimeSeconds, p.downtimeSeconds, p.revenueGenerated, p.healthCheckPassed);
     }
     
-    /**
-     * @notice Calculate node uptime percentage
-     */
+    function getRevenueHistoryCount(uint256 leaseId) external view returns (uint256) {
+        return revenueHistory[leaseId].length;
+    }
+    
+    function getRevenueRecord(uint256 leaseId, uint256 index) external view returns (
+        uint256 totalRevenue,
+        uint256 lesseeShare,
+        uint256 operatorShare,
+        uint256 treasuryShare,
+        uint256 timestamp
+    ) {
+        RevenueDistribution storage r = revenueHistory[leaseId][index];
+        return (r.totalRevenue, r.lesseeShare, r.operatorShare, r.treasuryShare, r.timestamp);
+    }
+    
     function getUptimePercentage(uint256 nodeId) external view returns (uint256) {
-        Node memory node = nodes[nodeId];
+        Node storage node = nodes[nodeId];
         uint256 totalTime = node.totalUptime + node.totalDowntime;
-        
         if (totalTime == 0) return 0;
-        
         return (node.totalUptime * 10000) / totalTime;
     }
 }

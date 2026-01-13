@@ -574,27 +574,89 @@ contract AxiomAcademyHub is AccessControl, ReentrancyGuard, Pausable {
     }
     
     // ============================================
-    // VIEW FUNCTIONS
+    // VIEW FUNCTIONS (Split to avoid stack depth issues)
     // ============================================
     
-    function getCourse(uint256 courseId) external view returns (Course memory) {
-        return courses[courseId];
+    function getCourseCore(uint256 courseId) external view returns (
+        uint256 courseId_,
+        address instructor,
+        CourseLevel level,
+        CourseStatus status,
+        uint256 moduleCount,
+        uint256 totalLessons
+    ) {
+        Course storage c = courses[courseId];
+        return (c.courseId, c.instructor, c.level, c.status, c.moduleCount, c.totalLessons);
     }
     
-    function getCourseModules(uint256 courseId) external view returns (Module[] memory) {
-        return courseModules[courseId];
+    function getCourseMetadata(uint256 courseId) external view returns (
+        string memory title,
+        string memory description,
+        string memory imageURI
+    ) {
+        Course storage c = courses[courseId];
+        return (c.title, c.description, c.imageURI);
     }
     
-    function getModuleLessons(uint256 moduleId) external view returns (Lesson[] memory) {
-        return moduleLessons[moduleId];
+    function getCourseStats(uint256 courseId) external view returns (
+        uint256 enrollmentCount,
+        uint256 completionCount,
+        bool requiresVerification,
+        uint256 createdAt
+    ) {
+        Course storage c = courses[courseId];
+        return (c.enrollmentCount, c.completionCount, c.requiresVerification, c.createdAt);
     }
     
-    function getEnrollment(address student, uint256 courseId) external view returns (Enrollment memory) {
-        return enrollments[student][courseId];
+    function getCourseModuleCount(uint256 courseId) external view returns (uint256) {
+        return courseModules[courseId].length;
     }
     
-    function getLessonProgress(address student, uint256 lessonId) external view returns (LessonProgress memory) {
-        return lessonProgress[student][lessonId];
+    function getCourseModule(uint256 courseId, uint256 index) external view returns (
+        uint256 moduleId,
+        string memory title,
+        string memory description,
+        uint256 lessonCount,
+        uint256 orderIndex,
+        bool isRequired
+    ) {
+        Module storage m = courseModules[courseId][index];
+        return (m.moduleId, m.title, m.description, m.lessonCount, m.orderIndex, m.isRequired);
+    }
+    
+    function getModuleLessonCount(uint256 moduleId) external view returns (uint256) {
+        return moduleLessons[moduleId].length;
+    }
+    
+    function getModuleLesson(uint256 moduleId, uint256 index) external view returns (
+        uint256 lessonId,
+        string memory title,
+        string memory contentURI,
+        uint256 orderIndex,
+        uint256 estimatedMinutes
+    ) {
+        Lesson storage l = moduleLessons[moduleId][index];
+        return (l.lessonId, l.title, l.contentURI, l.orderIndex, l.estimatedMinutes);
+    }
+    
+    function getEnrollment(address student, uint256 courseId) external view returns (
+        uint256 enrolledAt,
+        uint256 lastAccessedAt,
+        uint256 progressPercentage,
+        bool isCompleted,
+        uint256 completedAt
+    ) {
+        Enrollment storage e = enrollments[student][courseId];
+        return (e.enrolledAt, e.lastAccessedAt, e.progressPercentage, e.isCompleted, e.completedAt);
+    }
+    
+    function getLessonProgress(address student, uint256 lessonId) external view returns (
+        bool isCompleted,
+        uint256 completedAt,
+        uint256 timeSpentMinutes
+    ) {
+        LessonProgress storage lp = lessonProgress[student][lessonId];
+        return (lp.isCompleted, lp.completedAt, lp.timeSpentMinutes);
     }
     
     function getStudentCourses(address student) external view returns (uint256[] memory) {
@@ -605,12 +667,40 @@ contract AxiomAcademyHub is AccessControl, ReentrancyGuard, Pausable {
         return studentCertifications[student];
     }
     
-    function getCertification(uint256 certificationId) external view returns (Certification memory) {
-        return certifications[certificationId];
+    function getCertificationCore(uint256 certificationId) external view returns (
+        uint256 certId,
+        address recipient,
+        uint256 courseId,
+        CertificationType certificationType,
+        address certifier,
+        uint256 issuedAt,
+        bool isRevoked
+    ) {
+        Certification storage c = certifications[certificationId];
+        return (c.certificationId, c.recipient, c.courseId, c.certificationType, c.certifier, c.issuedAt, c.isRevoked);
     }
     
-    function getInstructor(address instructor) external view returns (Instructor memory) {
-        return instructors[instructor];
+    function getCertificationURI(uint256 certificationId) external view returns (string memory) {
+        return certifications[certificationId].credentialURI;
+    }
+    
+    function getInstructorCore(address instructor) external view returns (
+        string memory name,
+        string memory bio,
+        string memory imageURI,
+        bool isVerified,
+        uint256 registeredAt
+    ) {
+        Instructor storage i = instructors[instructor];
+        return (i.name, i.bio, i.imageURI, i.isVerified, i.registeredAt);
+    }
+    
+    function getInstructorStats(address instructor) external view returns (
+        uint256 courseCount,
+        uint256 studentCount
+    ) {
+        Instructor storage i = instructors[instructor];
+        return (i.courseCount, i.studentCount);
     }
     
     function getInstructorCourses(address instructor) external view returns (uint256[] memory) {

@@ -820,23 +820,129 @@ contract TransportAndLogisticsHub is AccessControl, ReentrancyGuard, Pausable {
     }
     
     // ============================================
-    // VIEW FUNCTIONS
+    // VIEW FUNCTIONS (Split to avoid stack depth issues)
     // ============================================
     
-    function getDriver(uint256 driverId) external view returns (Driver memory) {
-        return drivers[driverId];
+    function getDriverCore(uint256 driverId) external view returns (
+        uint256 driverId_,
+        address driverAddress,
+        DriverStatus status,
+        uint256 registrationDate,
+        uint256 reputationScore
+    ) {
+        Driver storage d = drivers[driverId];
+        return (d.driverId, d.driverAddress, d.status, d.registrationDate, d.reputationScore);
     }
     
-    function getRoute(uint256 routeId) external view returns (Route memory) {
-        return routes[routeId];
+    function getDriverInfo(uint256 driverId) external view returns (
+        string memory name,
+        string memory licenseNumber,
+        string memory vehicleInfo
+    ) {
+        Driver storage d = drivers[driverId];
+        return (d.name, d.licenseNumber, d.vehicleInfo);
     }
     
-    function getRide(uint256 rideId) external view returns (Ride memory) {
-        return rides[rideId];
+    function getDriverStats(uint256 driverId) external view returns (
+        uint256 totalRides,
+        uint256 totalEarnings
+    ) {
+        Driver storage d = drivers[driverId];
+        return (d.totalRides, d.totalEarnings);
     }
     
-    function getDelivery(uint256 deliveryId) external view returns (Delivery memory) {
-        return deliveries[deliveryId];
+    function getDriverSupportedModes(uint256 driverId) external view returns (TransportMode[] memory) {
+        return drivers[driverId].supportedModes;
+    }
+    
+    function getRouteCore(uint256 routeId) external view returns (
+        uint256 routeId_,
+        TransportMode mode,
+        bool isActive,
+        RouteStatus status
+    ) {
+        Route storage r = routes[routeId];
+        return (r.routeId, r.mode, r.isActive, r.status);
+    }
+    
+    function getRouteLocations(uint256 routeId) external view returns (
+        string memory startLocation,
+        string memory endLocation
+    ) {
+        Route storage r = routes[routeId];
+        return (r.startLocation, r.endLocation);
+    }
+    
+    function getRouteFares(uint256 routeId) external view returns (
+        uint256 distance,
+        uint256 estimatedDuration,
+        uint256 baseFare,
+        uint256 perKmRate
+    ) {
+        Route storage r = routes[routeId];
+        return (r.distance, r.estimatedDuration, r.baseFare, r.perKmRate);
+    }
+    
+    function getRideCore(uint256 rideId) external view returns (
+        uint256 rideId_,
+        uint256 routeId,
+        address passenger,
+        uint256 driverId,
+        TransportMode mode,
+        RideStatus status
+    ) {
+        Ride storage r = rides[rideId];
+        return (r.rideId, r.routeId, r.passenger, r.driverId, r.mode, r.status);
+    }
+    
+    function getRideTimes(uint256 rideId) external view returns (
+        uint256 requestTime,
+        uint256 acceptTime,
+        uint256 startTime,
+        uint256 endTime
+    ) {
+        Ride storage r = rides[rideId];
+        return (r.requestTime, r.acceptTime, r.startTime, r.endTime);
+    }
+    
+    function getRideFinancials(uint256 rideId) external view returns (
+        uint256 distance,
+        uint256 fare,
+        uint256 carbonOffset
+    ) {
+        Ride storage r = rides[rideId];
+        return (r.distance, r.fare, r.carbonOffset);
+    }
+    
+    function getDeliveryCore(uint256 deliveryId) external view returns (
+        uint256 deliveryId_,
+        address sender,
+        address recipient,
+        uint256 driverId,
+        RideStatus status
+    ) {
+        Delivery storage d = deliveries[deliveryId];
+        return (d.deliveryId, d.sender, d.recipient, d.driverId, d.status);
+    }
+    
+    function getDeliveryLocations(uint256 deliveryId) external view returns (
+        string memory pickupLocation,
+        string memory dropoffLocation
+    ) {
+        Delivery storage d = deliveries[deliveryId];
+        return (d.pickupLocation, d.dropoffLocation);
+    }
+    
+    function getDeliveryDetails(uint256 deliveryId) external view returns (
+        uint256 weight,
+        uint256 requestTime,
+        uint256 pickupTime,
+        uint256 deliveryTime,
+        uint256 deadline,
+        uint256 fee
+    ) {
+        Delivery storage d = deliveries[deliveryId];
+        return (d.weight, d.requestTime, d.pickupTime, d.deliveryTime, d.deadline, d.fee);
     }
     
     function getDriverRides(uint256 driverId) external view returns (uint256[] memory) {
@@ -847,8 +953,16 @@ contract TransportAndLogisticsHub is AccessControl, ReentrancyGuard, Pausable {
         return passengerRides[passenger];
     }
     
-    function getDriverMetrics(uint256 driverId) external view returns (PerformanceMetrics memory) {
-        return driverMetrics[driverId];
+    function getDriverMetrics(uint256 driverId) external view returns (
+        uint256 totalRides,
+        uint256 completedRides,
+        uint256 cancelledRides,
+        uint256 averageRating,
+        uint256 totalEarnings,
+        uint256 carbonCreds
+    ) {
+        PerformanceMetrics storage m = driverMetrics[driverId];
+        return (m.totalRides, m.completedRides, m.cancelledRides, m.averageRating, m.totalEarnings, m.carbonCredits);
     }
     
     function getPendingEarnings(address driver) external view returns (uint256) {

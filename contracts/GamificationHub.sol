@@ -698,39 +698,138 @@ contract GamificationHub is AccessControl, ReentrancyGuard, Pausable {
     }
     
     // ============================================
-    // VIEW FUNCTIONS
+    // VIEW FUNCTIONS (Split to avoid stack depth issues)
     // ============================================
     
-    function getUserProfile(address user) external view returns (UserProfile memory) {
-        return userProfiles[user];
+    function getUserProfile(address user) external view returns (
+        address userAddress,
+        uint256 totalPoints,
+        uint256 totalXP,
+        uint256 level,
+        uint256 rank,
+        uint256 lastActivityAt
+    ) {
+        UserProfile storage p = userProfiles[user];
+        return (p.userAddress, p.totalPoints, p.totalXP, p.level, p.rank, p.lastActivityAt);
     }
     
-    function getAchievementType(uint256 typeId) external view returns (AchievementType memory) {
-        return achievementTypes[typeId];
+    function getUserStats(address user) external view returns (
+        uint256 achievementCount,
+        uint256 questsCompleted
+    ) {
+        UserProfile storage p = userProfiles[user];
+        return (p.achievementCount, p.questsCompleted);
     }
     
-    function getAchievement(uint256 achievementId) external view returns (Achievement memory) {
-        return achievements[achievementId];
+    function getAchievementTypeCore(uint256 typeId) external view returns (
+        uint256 typeId_,
+        AchievementTier tier,
+        uint256 pointsReward,
+        uint256 xpReward,
+        bool isActive,
+        uint256 totalIssued
+    ) {
+        AchievementType storage a = achievementTypes[typeId];
+        return (a.typeId, a.tier, a.pointsReward, a.xpReward, a.isActive, a.totalIssued);
+    }
+    
+    function getAchievementTypeDetails(uint256 typeId) external view returns (
+        string memory name,
+        string memory description,
+        string memory imageURI
+    ) {
+        AchievementType storage a = achievementTypes[typeId];
+        return (a.name, a.description, a.imageURI);
+    }
+    
+    function getAchievement(uint256 achievementId) external view returns (
+        uint256 achievementId_,
+        uint256 typeId,
+        address recipient,
+        uint256 earnedAt,
+        string memory metadataURI
+    ) {
+        Achievement storage a = achievements[achievementId];
+        return (a.achievementId, a.typeId, a.recipient, a.earnedAt, a.metadataURI);
     }
     
     function getUserAchievements(address user) external view returns (uint256[] memory) {
         return userAchievements[user];
     }
     
-    function getQuest(uint256 questId) external view returns (Quest memory) {
-        return quests[questId];
+    function getQuestCore(uint256 questId) external view returns (
+        uint256 questId_,
+        address creator,
+        uint256 startTime,
+        uint256 endTime,
+        bool isActive
+    ) {
+        Quest storage q = quests[questId];
+        return (q.questId, q.creator, q.startTime, q.endTime, q.isActive);
     }
     
-    function getQuestObjectives(uint256 questId) external view returns (QuestObjective[] memory) {
-        return questObjectives[questId];
+    function getQuestDetails(uint256 questId) external view returns (
+        string memory name,
+        string memory description
+    ) {
+        Quest storage q = quests[questId];
+        return (q.name, q.description);
+    }
+    
+    function getQuestRewards(uint256 questId) external view returns (
+        uint256 pointsReward,
+        uint256 xpReward,
+        uint256 participantCount,
+        uint256 completionCount
+    ) {
+        Quest storage q = quests[questId];
+        return (q.pointsReward, q.xpReward, q.participantCount, q.completionCount);
+    }
+    
+    function getQuestObjectiveCount(uint256 questId) external view returns (uint256) {
+        return questObjectives[questId].length;
+    }
+    
+    function getQuestObjective(uint256 questId, uint256 index) external view returns (
+        uint256 objectiveId,
+        string memory description,
+        uint256 targetValue,
+        bool isRequired
+    ) {
+        QuestObjective storage o = questObjectives[questId][index];
+        return (o.objectiveId, o.description, o.targetValue, o.isRequired);
     }
     
     function getUserQuests(address user) external view returns (uint256[] memory) {
         return userQuests[user];
     }
     
-    function getChallenge(uint256 challengeId) external view returns (Challenge memory) {
-        return challenges[challengeId];
+    function getChallengeCore(uint256 challengeId) external view returns (
+        uint256 challengeId_,
+        ChallengeType challengeType,
+        uint256 startTime,
+        uint256 endTime,
+        bool isCompleted
+    ) {
+        Challenge storage c = challenges[challengeId];
+        return (c.challengeId, c.challengeType, c.startTime, c.endTime, c.isCompleted);
+    }
+    
+    function getChallengeDetails(uint256 challengeId) external view returns (
+        string memory name,
+        string memory description
+    ) {
+        Challenge storage c = challenges[challengeId];
+        return (c.name, c.description);
+    }
+    
+    function getChallengeProgress(uint256 challengeId) external view returns (
+        uint256 targetValue,
+        uint256 currentValue,
+        uint256 participantCount
+    ) {
+        Challenge storage c = challenges[challengeId];
+        return (c.targetValue, c.currentValue, c.participantCount);
     }
     
     // ============================================

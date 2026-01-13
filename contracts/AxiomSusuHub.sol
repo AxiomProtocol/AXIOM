@@ -712,33 +712,84 @@ contract AxiomSusuHub is AccessControl, ReentrancyGuard, Pausable {
     }
 
     // ============================================
-    // VIEW FUNCTIONS
+    // VIEW FUNCTIONS (Split to avoid stack depth issues)
     // ============================================
     
-    /**
-     * @notice Get pool details
-     */
-    function getPool(uint256 poolId) external view returns (Pool memory) {
-        return pools[poolId];
+    function getPoolCore(uint256 poolId) external view returns (
+        uint256 poolId_,
+        address creator,
+        address token,
+        PoolStatus status,
+        uint256 createdAt
+    ) {
+        Pool storage p = pools[poolId];
+        return (p.poolId, p.creator, p.token, p.status, p.createdAt);
     }
     
-    /**
-     * @notice Get pool members
-     */
+    function getPoolConfig(uint256 poolId) external view returns (
+        uint256 memberCount,
+        uint256 contributionAmount,
+        uint256 cycleDuration,
+        uint256 gracePeriod,
+        bool randomizedOrder,
+        bool openJoin
+    ) {
+        Pool storage p = pools[poolId];
+        return (p.memberCount, p.contributionAmount, p.cycleDuration, p.gracePeriod, p.randomizedOrder, p.openJoin);
+    }
+    
+    function getPoolCycleInfo(uint256 poolId) external view returns (
+        uint256 startTime,
+        uint256 currentCycle,
+        uint256 totalCycles,
+        uint256 lastPayoutTime
+    ) {
+        Pool storage p = pools[poolId];
+        return (p.startTime, p.currentCycle, p.totalCycles, p.lastPayoutTime);
+    }
+    
+    function getPoolFees(uint256 poolId) external view returns (
+        uint16 protocolFeeBps,
+        uint16 lateFeeBps,
+        uint256 totalFeesPaid
+    ) {
+        Pool storage p = pools[poolId];
+        return (p.protocolFeeBps, p.lateFeeBps, p.totalFeesPaid);
+    }
+    
+    function getPoolFinancials(uint256 poolId) external view returns (
+        uint256 totalContributed,
+        uint256 totalPaidOut
+    ) {
+        Pool storage p = pools[poolId];
+        return (p.totalContributed, p.totalPaidOut);
+    }
+    
     function getPoolMembers(uint256 poolId) external view returns (address[] memory) {
         return poolMembers[poolId];
     }
     
-    /**
-     * @notice Get member details
-     */
-    function getMember(uint256 poolId, address wallet) external view returns (Member memory) {
-        return members[poolId][wallet];
+    function getMemberCore(uint256 poolId, address wallet) external view returns (
+        address wallet_,
+        uint256 payoutPosition,
+        uint256 joinedAt,
+        bool hasReceivedPayout,
+        MemberStatus status
+    ) {
+        Member storage m = members[poolId][wallet];
+        return (m.wallet, m.payoutPosition, m.joinedAt, m.hasReceivedPayout, m.status);
     }
     
-    /**
-     * @notice Get payout order for a pool
-     */
+    function getMemberFinancials(uint256 poolId, address wallet) external view returns (
+        uint256 totalContributed,
+        uint256 totalReceived,
+        uint256 missedPayments,
+        uint256 lateFees
+    ) {
+        Member storage m = members[poolId][wallet];
+        return (m.totalContributed, m.totalReceived, m.missedPayments, m.lateFees);
+    }
+    
     function getPayoutOrder(uint256 poolId) external view returns (address[] memory) {
         Pool storage pool = pools[poolId];
         address[] memory order = new address[](pool.memberCount);
@@ -748,22 +799,22 @@ contract AxiomSusuHub is AccessControl, ReentrancyGuard, Pausable {
         return order;
     }
     
-    /**
-     * @notice Get user's pools
-     */
     function getUserPools(address user) external view returns (uint256[] memory) {
         return userPools[user];
     }
     
-    /**
-     * @notice Get contribution status for a member in a cycle
-     */
     function getContribution(
         uint256 poolId,
         uint256 cycle,
         address wallet
-    ) external view returns (CycleContribution memory) {
-        return cycleContributions[poolId][cycle][wallet];
+    ) external view returns (
+        bool hasPaid,
+        uint256 amount,
+        uint256 paidAt,
+        bool wasLate
+    ) {
+        CycleContribution storage c = cycleContributions[poolId][cycle][wallet];
+        return (c.hasPaid, c.amount, c.paidAt, c.wasLate);
     }
     
     /**

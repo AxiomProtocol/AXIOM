@@ -582,27 +582,96 @@ contract CitizenReputationOracle is AccessControl, ReentrancyGuard, Pausable {
     }
     
     // ============================================
-    // VIEW FUNCTIONS
+    // VIEW FUNCTIONS (Split to avoid stack depth issues)
     // ============================================
     
-    function getProfile(address citizen) external view returns (ReputationProfile memory) {
-        return profiles[citizen];
+    function getProfileScores(address citizen) external view returns (
+        uint256 overallScore,
+        uint256 financialScore,
+        uint256 civicScore,
+        uint256 socialScore,
+        uint256 environmentalScore
+    ) {
+        ReputationProfile storage p = profiles[citizen];
+        return (p.overallScore, p.financialScore, p.civicScore, p.socialScore, p.environmentalScore);
     }
     
-    function getPaymentHistory(address citizen) external view returns (PaymentHistory memory) {
-        return paymentHistories[citizen];
+    function getProfileStats(address citizen) external view returns (
+        uint256 totalReports,
+        uint256 positiveReports,
+        uint256 negativeReports,
+        uint256 lastUpdateTime,
+        bool isActive
+    ) {
+        ReputationProfile storage p = profiles[citizen];
+        return (p.totalReports, p.positiveReports, p.negativeReports, p.lastUpdateTime, p.isActive);
     }
     
-    function getReport(uint256 reportId) external view returns (ReputationReport memory) {
-        return reports[reportId];
+    function getPaymentCounts(address citizen) external view returns (
+        uint256 totalPayments,
+        uint256 onTimePayments,
+        uint256 latePayments,
+        uint256 missedPayments
+    ) {
+        PaymentHistory storage h = paymentHistories[citizen];
+        return (h.totalPayments, h.onTimePayments, h.latePayments, h.missedPayments);
+    }
+    
+    function getPaymentAmounts(address citizen) external view returns (
+        uint256 totalBorrowed,
+        uint256 totalRepaid,
+        uint256 currentDebt,
+        uint256 maxCreditLimit
+    ) {
+        PaymentHistory storage h = paymentHistories[citizen];
+        return (h.totalBorrowed, h.totalRepaid, h.currentDebt, h.maxCreditLimit);
+    }
+    
+    function getReportCore(uint256 reportId) external view returns (
+        uint256 reportId_,
+        address citizen,
+        address reporter,
+        ReputationCategory category,
+        ReportType reportType,
+        int256 scoreImpact
+    ) {
+        ReputationReport storage r = reports[reportId];
+        return (r.reportId, r.citizen, r.reporter, r.category, r.reportType, r.scoreImpact);
+    }
+    
+    function getReportStatus(uint256 reportId) external view returns (
+        uint256 timestamp,
+        bool isVerified,
+        bool scoreApplied,
+        bool isInvalidated
+    ) {
+        ReputationReport storage r = reports[reportId];
+        return (r.timestamp, r.isVerified, r.scoreApplied, r.isInvalidated);
+    }
+    
+    function getReportEvidence(uint256 reportId) external view returns (string memory evidenceURI) {
+        return reports[reportId].evidenceURI;
     }
     
     function getCitizenReports(address citizen) external view returns (uint256[] memory) {
         return citizenReports[citizen];
     }
     
-    function getDispute(uint256 disputeId) external view returns (Dispute memory) {
-        return disputes[disputeId];
+    function getDispute(uint256 disputeId) external view returns (
+        uint256 disputeId_,
+        uint256 reportId,
+        address disputer,
+        DisputeStatus status,
+        uint256 filedAt,
+        uint256 resolvedAt
+    ) {
+        Dispute storage d = disputes[disputeId];
+        return (d.disputeId, d.reportId, d.disputer, d.status, d.filedAt, d.resolvedAt);
+    }
+    
+    function getDisputeResolver(uint256 disputeId) external view returns (address resolver, string memory reason) {
+        Dispute storage d = disputes[disputeId];
+        return (d.resolver, d.reason);
     }
     
     function getCreditLimit(address citizen) external view returns (uint256) {
