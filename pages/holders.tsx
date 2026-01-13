@@ -11,7 +11,6 @@ import {
 import { AccessTierCard, EligibilityBadge, ParticipationQueueCard } from '../components/holderValue';
 import { web3Theme } from '../components/axiomRebuild/styles/web3Theme';
 import { trackOnce, track } from '../components/axiomRebuild/analytics';
-import { RebuildNav } from '../components/axiomRebuild/RebuildNav';
 
 export default function HoldersPage() {
   const { walletState } = useWallet();
@@ -78,12 +77,10 @@ export default function HoldersPage() {
         <title>Holder Benefits | Axiom Protocol</title>
         <meta name="description" content={holderBenefitsCopy.pageSubtitle} />
       </Head>
-      <RebuildNav />
       
       <main style={{ 
         minHeight: '100vh', 
-        background: '#FAFBFC',
-        paddingTop: '80px'
+        background: '#FAFBFC'
       }}>
         <section style={{
           padding: '60px 24px 40px',
