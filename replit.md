@@ -56,6 +56,7 @@ Key features include:
 -   **Compliance Automation** (KYC/AML verification with 3 levels, regulatory transaction limits, immutable audit ledger, compliance reporting)
 -   **DePIN & Asset Oracles** (IoT device monitoring, real-time asset price feeds via Chainlink, cross-chain settlement, energy credit tokenization)
 -   **AXUSD Real Estate Lending Fund** (SEC Reg D 506(c) compliant fix-and-flip bridge loan fund for accredited investors. 6 deployed contracts on Arbitrum One: RiskConfig, LoanReceiptNFT, FixFlipPoolVault (ERC4626), RepaymentRouter, FixFlipManager, ProductRegistry. 70% max LTV, 14% interest, 10-14% target APY. Entity: Axiom Nexus LLC, Mississippi.)
+-   **AXUSD DSCR Rental & BRRRR Loans** (Long-term rental property financing with Debt Service Coverage Ratio underwriting. Contracts: DSCRRiskConfig, DSCRLoanReceiptNFT, DSCRPoolVault (ERC4626), DSCRLoanManager. Three tiers: LOW (65% LTV, 1.25 DSCR, 7% APR), STANDARD (70% LTV, 1.20 DSCR, 8% APR), YIELD (75% LTV, 1.10 DSCR, 9.5% APR). 30-year amortizing terms. BRRRR refinance pathway converts completed fix-and-flip loans to long-term DSCR loans. Off-chain payment posting via Servicer role with referenceHash audit trail.)
 
 ## Enhancement Roadmap
 See `docs/ENHANCEMENT_ROADMAP.md` for planned improvements to Land Crowdfunding and LP Incentives features, organized into 6 phases covering wallet integration, AXUSD payments, visual enhancements, interactive features, on-chain actions, and cross-feature integration.
