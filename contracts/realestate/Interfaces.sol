@@ -11,6 +11,7 @@ interface IPoolVault {
     function lockForLoan(uint256 amount) external;
     function unlockFromLoan(uint256 amount) external;
     function reportYield(uint256 amount) external;
+    function disburse(address recipient, uint256 amount) external;
     function totalAssets() external view returns (uint256);
     function availableLiquidity() external view returns (uint256);
     function lockedLiquidity() external view returns (uint256);

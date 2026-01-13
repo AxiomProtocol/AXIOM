@@ -116,6 +116,12 @@ contract FixFlipPoolVault is ERC4626, AccessControl, Pausable, ReentrancyGuard, 
         emit YieldReported(amount);
     }
 
+    function disburse(address recipient, uint256 amount) external override onlyRole(MANAGER_ROLE) {
+        require(recipient != address(0), "FixFlipPoolVault: invalid recipient");
+        require(amount <= IERC20(asset()).balanceOf(address(this)), "FixFlipPoolVault: insufficient balance");
+        IERC20(asset()).safeTransfer(recipient, amount);
+    }
+
     function totalAssets() public view override(ERC4626, IPoolVault) returns (uint256) {
         return IERC20(asset()).balanceOf(address(this)) + _lockedLiquidity;
     }
