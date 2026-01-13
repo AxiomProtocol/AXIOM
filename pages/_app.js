@@ -39,7 +39,8 @@ const REBUILD_NAV_PAGES = [
   '/lending-fund',
   '/lending-fund/dashboard',
   '/lending-fund/invest',
-  '/lending-fund/docs'
+  '/lending-fund/docs',
+  '/lending-fund/onboarding'
 ]
 
 function matchesRebuildNavPages(pathname) {

@@ -7003,3 +7003,166 @@ export type AxusdBridgeRoute = typeof axusdBridgeRoutes.$inferSelect;
 export type InsertAxusdBridgeRoute = typeof axusdBridgeRoutes.$inferInsert;
 export type AxusdBridgeTransaction = typeof axusdBridgeTransactions.$inferSelect;
 export type InsertAxusdBridgeTransaction = typeof axusdBridgeTransactions.$inferInsert;
+
+// ============================================
+// REAL ESTATE LENDING FUND - INVESTOR TABLES
+// ============================================
+
+// Accreditation verification status
+export const accreditationStatusEnum = pgEnum('accreditation_status', [
+  'pending',
+  'documents_submitted',
+  'under_review',
+  'verified',
+  'rejected',
+  'expired'
+]);
+
+// Accreditation method used
+export const accreditationMethodEnum = pgEnum('accreditation_method', [
+  'income',           // $200K+ individual / $300K+ joint
+  'net_worth',        // $1M+ excluding primary residence
+  'professional',     // Series 7, 65, or 82 license
+  'entity',           // Entity with $5M+ assets
+  'knowledgeable'     // Knowledgeable employee of fund
+]);
+
+// Investor subscription status
+export const subscriptionInvestorStatusEnum = pgEnum('subscription_investor_status', [
+  'pending',
+  'documents_signed',
+  'funds_pending',
+  'active',
+  'redeemed',
+  'cancelled'
+]);
+
+// Accredited Investors table
+export const accreditedInvestors = pgTable("accredited_investors", {
+  id: serial("id").primaryKey(),
+  
+  // User linkage
+  userId: integer("user_id").references(() => users.id),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  
+  // Personal Information
+  legalName: varchar("legal_name", { length: 200 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 20 }),
+  dateOfBirth: timestamp("date_of_birth"),
+  ssn: varchar("ssn_hash", { length: 64 }), // Hashed SSN for compliance
+  
+  // Address
+  street: varchar("street", { length: 255 }),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  zipCode: varchar("zip_code", { length: 20 }),
+  country: varchar("country", { length: 50 }).default('USA'),
+  
+  // Accreditation
+  accreditationStatus: accreditationStatusEnum("accreditation_status").default('pending'),
+  accreditationMethod: accreditationMethodEnum("accreditation_method"),
+  accreditationVerifiedAt: timestamp("accreditation_verified_at"),
+  accreditationExpiresAt: timestamp("accreditation_expires_at"),
+  
+  // Verification documents (stored securely)
+  verificationDocuments: jsonb("verification_documents"), // Array of doc references
+  
+  // Questionnaire responses
+  questionnaireResponses: jsonb("questionnaire_responses"),
+  questionnaireCompletedAt: timestamp("questionnaire_completed_at"),
+  
+  // Document acknowledgments
+  ppmAcknowledgedAt: timestamp("ppm_acknowledged_at"),
+  subscriptionSignedAt: timestamp("subscription_signed_at"),
+  riskDisclosureAcknowledgedAt: timestamp("risk_disclosure_acknowledged_at"),
+  
+  // Investor classification (for entity investors)
+  isEntity: boolean("is_entity").default(false),
+  entityName: varchar("entity_name", { length: 255 }),
+  entityType: varchar("entity_type", { length: 50 }), // LLC, Trust, Corporation
+  entityState: varchar("entity_state", { length: 50 }),
+  
+  // Compliance
+  kycVerified: boolean("kyc_verified").default(false),
+  amlCleared: boolean("aml_cleared").default(false),
+  ofacCleared: boolean("ofac_cleared").default(false),
+  
+  // Notes
+  adminNotes: text("admin_notes"),
+  rejectionReason: text("rejection_reason"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  walletIdx: index("investor_wallet_idx").on(table.walletAddress),
+  statusIdx: index("investor_status_idx").on(table.accreditationStatus),
+  emailIdx: index("investor_email_idx").on(table.email),
+}));
+
+// Fund Subscriptions (investments)
+export const fundSubscriptions = pgTable("fund_subscriptions", {
+  id: serial("id").primaryKey(),
+  investorId: integer("investor_id").references(() => accreditedInvestors.id).notNull(),
+  
+  // Fund details
+  fundId: varchar("fund_id", { length: 50 }).default('fixflip-001'), // Future-proof for multiple funds
+  productId: integer("product_id").default(1), // Maps to on-chain ProductRegistry
+  
+  // Investment
+  investmentAmount: decimal("investment_amount", { precision: 24, scale: 8 }).notNull(),
+  sharesIssued: decimal("shares_issued", { precision: 24, scale: 8 }),
+  sharePrice: decimal("share_price", { precision: 18, scale: 8 }).default('1.00000000'),
+  
+  // On-chain tracking
+  depositTxHash: varchar("deposit_tx_hash", { length: 66 }),
+  vaultSharesBalance: decimal("vault_shares_balance", { precision: 24, scale: 8 }),
+  
+  // Status
+  status: subscriptionInvestorStatusEnum("status").default('pending'),
+  
+  // Lock-up
+  subscriptionDate: timestamp("subscription_date").defaultNow(),
+  lockupExpiresAt: timestamp("lockup_expires_at"),
+  
+  // Distribution tracking
+  totalDistributions: decimal("total_distributions", { precision: 24, scale: 8 }).default('0'),
+  lastDistributionAt: timestamp("last_distribution_at"),
+  
+  // Documents
+  signedSubscriptionDoc: varchar("signed_subscription_doc"), // Storage reference
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  investorIdx: index("subscription_investor_idx").on(table.investorId),
+  fundIdx: index("subscription_fund_idx").on(table.fundId),
+  statusIdx: index("subscription_status_idx").on(table.status),
+}));
+
+// Investor Document Acknowledgments (audit trail)
+export const investorDocumentAcknowledgments = pgTable("investor_document_acknowledgments", {
+  id: serial("id").primaryKey(),
+  investorId: integer("investor_id").references(() => accreditedInvestors.id).notNull(),
+  
+  documentType: varchar("document_type", { length: 50 }).notNull(), // ppm, subscription, risk_disclosure
+  documentVersion: varchar("document_version", { length: 20 }),
+  documentHash: varchar("document_hash", { length: 66 }), // SHA256 of document
+  
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  
+  acknowledgedAt: timestamp("acknowledged_at").defaultNow(),
+  signatureHash: varchar("signature_hash", { length: 66 }), // For e-signature
+}, (table) => ({
+  investorDocIdx: index("doc_ack_investor_idx").on(table.investorId),
+  docTypeIdx: index("doc_ack_type_idx").on(table.documentType),
+}));
+
+// Real Estate Lending Fund Types
+export type AccreditedInvestor = typeof accreditedInvestors.$inferSelect;
+export type InsertAccreditedInvestor = typeof accreditedInvestors.$inferInsert;
+export type FundSubscription = typeof fundSubscriptions.$inferSelect;
+export type InsertFundSubscription = typeof fundSubscriptions.$inferInsert;
+export type InvestorDocumentAcknowledgment = typeof investorDocumentAcknowledgments.$inferSelect;
+export type InsertInvestorDocumentAcknowledgment = typeof investorDocumentAcknowledgments.$inferInsert;
