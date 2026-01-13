@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import Layout from '../components/Layout';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 
 const AXM_CONTRACT = '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D';
@@ -29,23 +28,23 @@ export default function BuyAXMPage() {
   };
 
   return (
-    <Layout>
+    <>
       <Head>
         <title>Buy AXM | Axiom Protocol</title>
         <meta name="description" content="Buy Axiom (AXM) tokens - multiple options available" />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black py-12">
+      <div className="min-h-screen bg-white py-12">
         <div className="max-w-4xl mx-auto px-4">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-yellow-500/10 text-yellow-500 text-sm px-4 py-2 rounded-full mb-4">
-              <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
+            <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-600 text-sm px-4 py-2 rounded-full mb-4 border border-teal-100">
+              <span className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></span>
               Get AXM Tokens
             </div>
-            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600 mb-3">
+            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-purple-600 mb-3">
               Buy AXM Tokens
             </h1>
-            <p className="text-gray-400 max-w-xl mx-auto">
+            <p className="text-gray-600 max-w-xl mx-auto">
               Choose the option that works best for you. Already have crypto? Go straight to our DEX!
             </p>
           </div>
@@ -53,55 +52,55 @@ export default function BuyAXMPage() {
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             <div 
               onClick={() => setSelectedMethod('dex')}
-              className={`bg-gray-800 rounded-2xl p-6 border-2 cursor-pointer transition-all hover:border-yellow-500/50 ${
-                selectedMethod === 'dex' ? 'border-yellow-500 ring-2 ring-yellow-500/20' : 'border-gray-700'
+              className={`bg-white rounded-2xl p-6 border-2 cursor-pointer transition-all hover:border-teal-400 shadow-sm ${
+                selectedMethod === 'dex' ? 'border-teal-500 ring-2 ring-teal-100' : 'border-gray-200'
               }`}
             >
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center">
-                  <svg className="w-7 h-7 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-14 h-14 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl flex items-center justify-center">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">Swap on DEX</h3>
-                  <p className="text-green-400 text-sm font-medium">Best Rates</p>
+                  <h3 className="text-xl font-bold text-gray-900">Swap on DEX</h3>
+                  <p className="text-teal-600 text-sm font-medium">Best Rates</p>
                 </div>
               </div>
-              <p className="text-gray-400 mb-4 text-sm">
+              <p className="text-gray-600 mb-4 text-sm">
                 Already have ETH or USDC? Swap directly for AXM on our DEX.
               </p>
               <ul className="space-y-2 text-sm">
-                <li className="flex items-center gap-2 text-gray-300">
-                  <span className="text-green-400">✓</span> No signup required
+                <li className="flex items-center gap-2 text-gray-700">
+                  <span className="text-teal-500">✓</span> No signup required
                 </li>
-                <li className="flex items-center gap-2 text-gray-300">
-                  <span className="text-green-400">✓</span> Instant swaps
+                <li className="flex items-center gap-2 text-gray-700">
+                  <span className="text-teal-500">✓</span> Instant swaps
                 </li>
               </ul>
             </div>
 
             <div 
               onClick={() => setSelectedMethod('buy-crypto')}
-              className={`bg-gray-800 rounded-2xl p-6 border-2 cursor-pointer transition-all hover:border-orange-500/50 relative ${
-                selectedMethod === 'buy-crypto' ? 'border-orange-500 ring-2 ring-orange-500/20' : 'border-gray-700'
+              className={`bg-white rounded-2xl p-6 border-2 cursor-pointer transition-all hover:border-purple-400 relative shadow-sm ${
+                selectedMethod === 'buy-crypto' ? 'border-purple-500 ring-2 ring-purple-100' : 'border-gray-200'
               }`}
             >
-              <div className="absolute -top-3 left-4 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+              <div className="absolute -top-3 left-4 bg-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full">
                 NEW TO CRYPTO?
               </div>
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-700 rounded-xl flex items-center justify-center">
+                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">Buy with Card</h3>
-                  <p className="text-orange-400 text-sm font-medium">Via MetaMask</p>
+                  <h3 className="text-xl font-bold text-gray-900">Buy with Card</h3>
+                  <p className="text-purple-600 text-sm font-medium">Via MetaMask</p>
                 </div>
               </div>
-              <p className="text-gray-400 mb-4 text-sm">
+              <p className="text-gray-600 mb-4 text-sm">
                 Buy ETH directly in MetaMask with your card, then swap for AXM.
               </p>
               <ul className="space-y-2 text-sm">
@@ -325,14 +324,14 @@ export default function BuyAXMPage() {
             </div>
           </div>
 
-          <div className="mt-6 bg-blue-500/10 rounded-xl p-4 border border-blue-500/20">
+          <div className="mt-6 bg-blue-50 rounded-xl p-4 border border-blue-200">
             <div className="flex items-start gap-3">
-              <svg className="w-5 h-5 text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>
-                <p className="text-blue-200 font-medium mb-1">Self-Custody Model</p>
-                <p className="text-gray-400 text-sm">
+                <p className="text-blue-700 font-medium mb-1">Self-Custody Model</p>
+                <p className="text-gray-600 text-sm">
                   Axiom is a non-custodial DeFi protocol. All funds are delivered directly to your wallet - we never hold or control your assets. Not a bank. No FDIC insurance.
                 </p>
               </div>
@@ -340,6 +339,6 @@ export default function BuyAXMPage() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

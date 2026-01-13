@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Layout from '../../components/Layout';
+import Head from 'next/head';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 import StepProgressBanner from '../../components/StepProgressBanner';
@@ -383,18 +383,22 @@ export default function Academy() {
   };
 
   return (
-    <Layout>
+    <>
+      <Head>
+        <title>Axiom Academy | Learn Financial Literacy</title>
+        <meta name="description" content="Master financial literacy, budgeting, wealth building, and blockchain fundamentals." />
+      </Head>
       <StepProgressBanner currentStep={"learn" as any} />
       <Toaster position="top-right" />
       
-      <div className="min-h-screen bg-gradient-to-b from-gray-100 via-white to-gray-100">
+      <div className="min-h-screen bg-white">
         
         <div className="relative py-20 px-4 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-yellow-100 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-teal-50 via-white to-purple-50"></div>
           <div className="max-w-6xl mx-auto relative z-10">
-            <p className="text-amber-600 text-sm mb-3 font-medium">Step 1: Learn — Build your financial foundation through education and discipline.</p>
+            <p className="text-teal-600 text-sm mb-3 font-medium">Step 1: Learn — Build your financial foundation through education and discipline.</p>
             <h1 className="text-5xl md:text-6xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-teal-500 to-purple-600 bg-clip-text text-transparent">
                 Axiom Academy
               </span>
             </h1>
@@ -409,12 +413,12 @@ export default function Academy() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
-                className="flex-1 bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:border-yellow-500 focus:outline-none shadow-sm"
+                className="flex-1 bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:border-teal-500 focus:outline-none shadow-sm"
               />
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-bold py-3 px-6 rounded-lg transition-all disabled:opacity-50 shadow-sm"
+                className="bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-bold py-3 px-6 rounded-lg transition-all disabled:opacity-50 shadow-sm"
               >
                 {isSubmitting ? 'Joining...' : 'Start Learning'}
               </button>
@@ -579,19 +583,19 @@ export default function Academy() {
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-4 gap-8 text-center">
               <div>
-                <p className="text-4xl font-bold text-yellow-600 mb-2">16+</p>
+                <p className="text-4xl font-bold text-teal-600 mb-2">16+</p>
                 <p className="text-gray-600">Courses Available</p>
               </div>
               <div>
-                <p className="text-4xl font-bold text-yellow-600 mb-2">70+</p>
+                <p className="text-4xl font-bold text-teal-600 mb-2">70+</p>
                 <p className="text-gray-600">Video Lessons</p>
               </div>
               <div>
-                <p className="text-4xl font-bold text-yellow-600 mb-2">1,000+</p>
+                <p className="text-4xl font-bold text-teal-600 mb-2">1,000+</p>
                 <p className="text-gray-600">Students Enrolled</p>
               </div>
               <div>
-                <p className="text-4xl font-bold text-yellow-600 mb-2">100%</p>
+                <p className="text-4xl font-bold text-teal-600 mb-2">100%</p>
                 <p className="text-gray-600">Free to Start</p>
               </div>
             </div>
@@ -599,6 +603,6 @@ export default function Academy() {
         </div>
 
       </div>
-    </Layout>
+    </>
   );
 }
