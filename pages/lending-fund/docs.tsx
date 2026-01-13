@@ -1,6 +1,5 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import RebuildLayout from '../../components/axiomRebuild/RebuildLayout';
 
 interface Document {
   title: string;
@@ -75,30 +74,30 @@ export default function LendingFundDocs() {
   };
 
   return (
-    <RebuildLayout>
+    <>
       <Head>
         <title>Fund Documents | AXUSD Lending Fund</title>
         <meta name="description" content="Access PPM, subscription agreement, and other legal documents for the AXUSD Fix & Flip Lending Fund." />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black py-12">
+      <div style={{ background: "#FFFFFF", minHeight: "100vh" }} className="py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
-            <Link href="/lending-fund" className="text-yellow-400 hover:text-yellow-300 mb-4 inline-block">
+            <Link href="/lending-fund" style={{ color: "#00D4AA" }} className="hover:opacity-80 mb-4 inline-block">
               ← Back to Fund Overview
             </Link>
-            <h1 className="text-3xl font-bold text-white">Fund Documents</h1>
-            <p className="text-gray-400 mt-2">
+            <h1 className="text-3xl font-bold" style={{ color: "#1a1a2e" }}>Fund Documents</h1>
+            <p className="mt-2" style={{ color: "#6b7280" }}>
               Review all legal documents before investing. Documents marked as required must be signed.
             </p>
           </div>
 
-          <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-6 mb-8">
+          <div className="rounded-xl p-6 mb-8" style={{ background: "rgba(0, 212, 170, 0.1)", border: "1px solid rgba(0, 212, 170, 0.3)" }}>
             <div className="flex items-start gap-4">
               <div className="text-2xl">⚠️</div>
               <div>
-                <h3 className="text-yellow-400 font-bold mb-2">Important Notice</h3>
-                <p className="text-gray-300 text-sm">
+                <h3 className="font-bold mb-2" style={{ color: "#00D4AA" }}>Important Notice</h3>
+                <p className="text-sm" style={{ color: "#6b7280" }}>
                   This offering is available only to verified accredited investors under SEC Rule 506(c).
                   Please read all documents carefully before investing. Securities have not been registered
                   under the Securities Act of 1933 and involve substantial risk including possible loss of principal.
@@ -111,31 +110,34 @@ export default function LendingFundDocs() {
             {documents.map((doc) => (
               <div
                 key={doc.filename}
-                className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 hover:border-gray-600 transition-all"
+                className="rounded-xl p-6 transition-all"
+                style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-lg font-bold text-white">{doc.title}</h3>
+                      <h3 className="text-lg font-bold" style={{ color: "#1a1a2e" }}>{doc.title}</h3>
                       {doc.required && (
-                        <span className="px-2 py-0.5 bg-red-500/20 text-red-400 text-xs font-medium rounded">
+                        <span className="px-2 py-0.5 text-xs font-medium rounded" style={{ background: "rgba(239, 68, 68, 0.1)", color: "#ef4444" }}>
                           Required
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-400 text-sm">{doc.description}</p>
+                    <p className="text-sm" style={{ color: "#6b7280" }}>{doc.description}</p>
                   </div>
                   <div className="flex gap-2">
                     <Link
                       href={`/api/realestate/documents/${doc.filename}?view=true`}
                       target="_blank"
-                      className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm transition-all"
+                      className="px-4 py-2 rounded-lg text-sm transition-all"
+                      style={{ background: "#e5e7eb", color: "#374151" }}
                     >
                       View
                     </Link>
                     <button
                       onClick={() => downloadDocument(doc.filename)}
-                      className="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-black font-medium rounded-lg text-sm transition-all"
+                      className="px-4 py-2 text-white font-medium rounded-lg text-sm transition-all"
+                      style={{ background: "#00D4AA" }}
                     >
                       Download
                     </button>
@@ -145,8 +147,8 @@ export default function LendingFundDocs() {
             ))}
           </div>
 
-          <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-            <h3 className="text-xl font-bold text-white mb-4">Investment Process</h3>
+          <div className="rounded-xl p-6" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
+            <h3 className="text-xl font-bold mb-4" style={{ color: "#1a1a2e" }}>Investment Process</h3>
             <div className="space-y-4">
               <ProcessStep
                 number={1}
@@ -180,10 +182,11 @@ export default function LendingFundDocs() {
               />
             </div>
 
-            <div className="mt-6 pt-6 border-t border-gray-700">
+            <div className="mt-6 pt-6" style={{ borderTop: "1px solid #e5e7eb" }}>
               <Link
-                href="/lending-fund/invest"
-                className="block w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg text-center transition-all"
+                href="/lending-fund/onboarding"
+                className="block w-full py-3 text-white font-bold rounded-lg text-center transition-all"
+                style={{ background: "#00D4AA" }}
               >
                 Start Investment Process
               </Link>
@@ -191,16 +194,16 @@ export default function LendingFundDocs() {
           </div>
 
           <div className="mt-8 text-center">
-            <p className="text-gray-500 text-sm">
+            <p className="text-sm" style={{ color: "#6b7280" }}>
               Questions? Contact us at{' '}
-              <a href="mailto:invest@axiomprotocol.app" className="text-yellow-400 hover:text-yellow-300">
+              <a href="mailto:invest@axiomprotocol.app" style={{ color: "#00D4AA" }} className="hover:opacity-80">
                 invest@axiomprotocol.app
               </a>
             </p>
           </div>
         </div>
       </div>
-    </RebuildLayout>
+    </>
   );
 }
 
@@ -210,20 +213,28 @@ function ProcessStep({ number, title, description, status }: {
   description: string;
   status: 'completed' | 'current' | 'pending';
 }) {
+  const getCircleStyle = () => {
+    if (status === 'completed') return { background: '#22c55e', color: '#ffffff' };
+    if (status === 'current') return { background: '#00D4AA', color: '#ffffff' };
+    return { background: '#e5e7eb', color: '#6b7280' };
+  };
+
   return (
     <div className="flex items-start gap-4">
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold ${
-        status === 'completed' ? 'bg-green-500 text-white' :
-        status === 'current' ? 'bg-yellow-500 text-black' :
-        'bg-gray-700 text-gray-400'
-      }`}>
+      <div 
+        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold"
+        style={getCircleStyle()}
+      >
         {status === 'completed' ? '✓' : number}
       </div>
       <div>
-        <h4 className={`font-semibold ${status === 'pending' ? 'text-gray-500' : 'text-white'}`}>
+        <h4 
+          className="font-semibold"
+          style={{ color: status === 'pending' ? '#6b7280' : '#1a1a2e' }}
+        >
           {title}
         </h4>
-        <p className="text-gray-500 text-sm">{description}</p>
+        <p className="text-sm" style={{ color: "#6b7280" }}>{description}</p>
       </div>
     </div>
   );
