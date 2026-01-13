@@ -7435,6 +7435,69 @@ export const investorCommitments = pgTable("investor_commitments", {
   tierIdx: index("investor_commit_tier_idx").on(table.tierPreference),
 }));
 
+// DSCR Investor Onboarding Table (SEC Reg D 506(c) compliance)
+export const dscrInvestorOnboardingStatusEnum = pgEnum('dscr_investor_onboarding_status', [
+  'pending',
+  'under_review',
+  'verified',
+  'rejected'
+]);
+
+export const dscrInvestorOnboarding = pgTable("dscr_investor_onboarding", {
+  id: serial("id").primaryKey(),
+  
+  // Wallet
+  walletAddress: varchar("wallet_address", { length: 42 }).unique().notNull(),
+  
+  // Personal Info
+  legalName: varchar("legal_name", { length: 255 }),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 50 }),
+  dateOfBirth: timestamp("date_of_birth"),
+  street: varchar("street", { length: 255 }),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  zipCode: varchar("zip_code", { length: 20 }),
+  country: varchar("country", { length: 50 }).default('USA'),
+  
+  // Entity Info
+  isEntity: boolean("is_entity").default(false),
+  entityName: varchar("entity_name", { length: 255 }),
+  entityType: varchar("entity_type", { length: 50 }),
+  entityState: varchar("entity_state", { length: 50 }),
+  
+  // Accreditation
+  accreditationMethod: varchar("accreditation_method", { length: 50 }),
+  incomeAmount: varchar("income_amount", { length: 50 }),
+  netWorthAmount: varchar("net_worth_amount", { length: 50 }),
+  professionalLicense: varchar("professional_license", { length: 100 }),
+  investmentAmount: varchar("investment_amount", { length: 50 }),
+  questionnaireCompleted: boolean("questionnaire_completed").default(false),
+  
+  // Document Acknowledgments with Signatures
+  ppmAcknowledged: boolean("ppm_acknowledged").default(false),
+  ppmSignature: varchar("ppm_signature", { length: 132 }),
+  ppmSignatureTimestamp: decimal("ppm_signature_timestamp", { precision: 20, scale: 0 }),
+  
+  riskDisclosureAcknowledged: boolean("risk_disclosure_acknowledged").default(false),
+  riskDisclosureSignature: varchar("risk_disclosure_signature", { length: 132 }),
+  riskDisclosureSignatureTimestamp: decimal("risk_disclosure_signature_timestamp", { precision: 20, scale: 0 }),
+  
+  subscriptionSigned: boolean("subscription_signed").default(false),
+  subscriptionSignature: varchar("subscription_signature", { length: 132 }),
+  subscriptionSignatureTimestamp: decimal("subscription_signature_timestamp", { precision: 20, scale: 0 }),
+  
+  // Status
+  status: dscrInvestorOnboardingStatusEnum("status").default('pending'),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  walletIdx: index("dscr_onboard_wallet_idx").on(table.walletAddress),
+  statusIdx: index("dscr_onboard_status_idx").on(table.status),
+  emailIdx: index("dscr_onboard_email_idx").on(table.email),
+}));
+
 // DSCR Types
 export type DscrBorrower = typeof dscrBorrowers.$inferSelect;
 export type InsertDscrBorrower = typeof dscrBorrowers.$inferInsert;
@@ -7446,3 +7509,5 @@ export type DscrDocument = typeof dscrDocuments.$inferSelect;
 export type InsertDscrDocument = typeof dscrDocuments.$inferInsert;
 export type InvestorCommitment = typeof investorCommitments.$inferSelect;
 export type InsertInvestorCommitment = typeof investorCommitments.$inferInsert;
+export type DscrInvestorOnboarding = typeof dscrInvestorOnboarding.$inferSelect;
+export type InsertDscrInvestorOnboarding = typeof dscrInvestorOnboarding.$inferInsert;
