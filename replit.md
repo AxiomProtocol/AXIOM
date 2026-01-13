@@ -55,6 +55,7 @@ Key features include:
 -   **Incentive & Rewards Economy** (Quest system with XP/badges/AXM rewards, 10-level progression, staking boosts up to +15% APY, community leaderboard)
 -   **Compliance Automation** (KYC/AML verification with 3 levels, regulatory transaction limits, immutable audit ledger, compliance reporting)
 -   **DePIN & Asset Oracles** (IoT device monitoring, real-time asset price feeds via Chainlink, cross-chain settlement, energy credit tokenization)
+-   **AXUSD Real Estate Lending Fund** (SEC Reg D 506(c) compliant fix-and-flip bridge loan fund for accredited investors. 6 deployed contracts on Arbitrum One: RiskConfig, LoanReceiptNFT, FixFlipPoolVault (ERC4626), RepaymentRouter, FixFlipManager, ProductRegistry. 70% max LTV, 14% interest, 10-14% target APY. Entity: Axiom Nexus LLC, Mississippi.)
 
 ## Enhancement Roadmap
 See `docs/ENHANCEMENT_ROADMAP.md` for planned improvements to Land Crowdfunding and LP Incentives features, organized into 6 phases covering wallet integration, AXUSD payments, visual enhancements, interactive features, on-chain actions, and cross-feature integration.
