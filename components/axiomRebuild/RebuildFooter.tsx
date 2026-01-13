@@ -28,6 +28,7 @@ export function RebuildFooter() {
             <Link href="/contact">Contact</Link>
             <Link href="/about-us">About</Link>
             <Link href="/team">Team</Link>
+            <Link href="/admin/investors">Investor Admin</Link>
           </div>
         </div>
 

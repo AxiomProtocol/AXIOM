@@ -120,6 +120,7 @@ export const FOOTER_SECTIONS: FooterSection[] = [
       { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "Land Acquisition", href: "/land-acquisition" },
       { label: "Land Pipeline", href: "/admin/land-pipeline" },
+      { label: "Investor Admin", href: "/admin/investors" },
       { label: "Governance", href: "/governance" },
       { label: "Staking", href: "/staking" }
     ]
