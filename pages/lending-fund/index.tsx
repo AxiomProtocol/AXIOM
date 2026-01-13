@@ -104,6 +104,9 @@ export default function LendingFundPage() {
                 <Link href="/lending-fund/apply" className="px-8 py-4 min-h-[48px] text-white font-bold rounded-lg transition-all transform hover:scale-105 text-center active:scale-95" style={{ background: "#7C3AED" }}>
                   Apply for Loan
                 </Link>
+                <Link href="/lending-fund/borrower-guide" className="px-8 py-4 min-h-[48px] bg-transparent font-bold rounded-lg transition-all text-center active:scale-95" style={{ border: "2px solid #7C3AED", color: "#7C3AED" }}>
+                  Borrower Guide
+                </Link>
                 <Link href="/lending-fund/docs" className="px-8 py-4 min-h-[48px] bg-transparent font-bold rounded-lg transition-all text-center active:scale-95" style={{ border: "2px solid #00D4AA", color: "#00D4AA" }}>
                   View PPM Documents
                 </Link>

@@ -172,9 +172,14 @@ export default function LoanApplication() {
           color: '#FFFFFF'
         }}>
           <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <Link href="/lending-fund" style={{ color: '#99F6E4', fontSize: '14px', textDecoration: 'none' }}>
-              ← Back to Fund
-            </Link>
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <Link href="/lending-fund" style={{ color: '#99F6E4', fontSize: '14px', textDecoration: 'none' }}>
+                ← Back to Fund
+              </Link>
+              <Link href="/lending-fund/borrower-guide" style={{ color: '#FFFFFF', fontSize: '14px', textDecoration: 'none', padding: '6px 12px', background: 'rgba(255,255,255,0.15)', borderRadius: '6px' }}>
+                Read Borrower Guide
+              </Link>
+            </div>
             <h1 style={{ fontSize: '28px', fontWeight: 700, marginTop: '16px' }}>
               Fix & Flip Loan Application
             </h1>
