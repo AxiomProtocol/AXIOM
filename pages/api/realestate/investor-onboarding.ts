@@ -1,9 +1,80 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../server/db';
-import { accreditedInvestors, investorDocumentAcknowledgments, fundSubscriptions } from '../../../shared/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import crypto from 'crypto';
 import { ethers } from 'ethers';
+import { pgTable, serial, varchar, text, timestamp, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
+
+// Define tables locally to avoid import issues with large schema file
+const accreditedInvestors = pgTable("accredited_investors", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id"),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  legalName: varchar("legal_name", { length: 200 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 20 }),
+  dateOfBirth: timestamp("date_of_birth"),
+  ssn: varchar("ssn_hash", { length: 64 }),
+  street: varchar("street", { length: 255 }),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  zipCode: varchar("zip_code", { length: 20 }),
+  country: varchar("country", { length: 50 }),
+  accreditationStatus: varchar("accreditation_status", { length: 50 }),
+  accreditationMethod: varchar("accreditation_method", { length: 50 }),
+  accreditationVerifiedAt: timestamp("accreditation_verified_at"),
+  accreditationExpiresAt: timestamp("accreditation_expires_at"),
+  verificationDocuments: jsonb("verification_documents"),
+  questionnaireResponses: jsonb("questionnaire_responses"),
+  questionnaireCompletedAt: timestamp("questionnaire_completed_at"),
+  ppmAcknowledgedAt: timestamp("ppm_acknowledged_at"),
+  subscriptionSignedAt: timestamp("subscription_signed_at"),
+  riskDisclosureAcknowledgedAt: timestamp("risk_disclosure_acknowledged_at"),
+  isEntity: boolean("is_entity"),
+  entityName: varchar("entity_name", { length: 255 }),
+  entityType: varchar("entity_type", { length: 50 }),
+  entityState: varchar("entity_state", { length: 50 }),
+  kycVerified: boolean("kyc_verified"),
+  amlCleared: boolean("aml_cleared"),
+  ofacCleared: boolean("ofac_cleared"),
+  adminNotes: text("admin_notes"),
+  rejectionReason: text("rejection_reason"),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at"),
+});
+
+const fundSubscriptions = pgTable("fund_subscriptions", {
+  id: serial("id").primaryKey(),
+  investorId: integer("investor_id").notNull(),
+  fundId: varchar("fund_id", { length: 50 }),
+  investmentAmount: varchar("investment_amount", { length: 50 }).notNull(),
+  sharesIssued: varchar("shares_issued", { length: 50 }),
+  navAtPurchase: varchar("nav_at_purchase", { length: 50 }),
+  status: varchar("status", { length: 50 }),
+  subscriptionDate: timestamp("subscription_date"),
+  fundingDate: timestamp("funding_date"),
+  redemptionDate: timestamp("redemption_date"),
+  redemptionAmount: varchar("redemption_amount", { length: 50 }),
+  txHash: varchar("tx_hash", { length: 66 }),
+  blockchainConfirmation: integer("blockchain_confirmation"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at"),
+});
+
+const investorDocumentAcknowledgments = pgTable("investor_document_acknowledgments", {
+  id: serial("id").primaryKey(),
+  investorId: integer("investor_id").notNull(),
+  documentType: varchar("document_type", { length: 50 }).notNull(),
+  documentHash: varchar("document_hash", { length: 64 }).notNull(),
+  signature: varchar("signature", { length: 132 }).notNull(),
+  signedMessage: text("signed_message").notNull(),
+  timestamp: varchar("timestamp", { length: 20 }).notNull(),
+  nonce: varchar("nonce", { length: 32 }).notNull(),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at"),
+});
 
 const DOCUMENT_HASHES: Record<string, string> = {
   ppm: 'b8e7c9f4d2a6e8b3c5f7d9a2e4b6c8f0d2a4e6b8c0f2d4a6e8b0c2f4d6a8e0b2',
