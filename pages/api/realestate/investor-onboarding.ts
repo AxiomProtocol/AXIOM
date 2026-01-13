@@ -68,6 +68,7 @@ const investorDocumentAcknowledgments = pgTable("investor_document_acknowledgmen
   documentType: varchar("document_type", { length: 50 }).notNull(),
   documentHash: varchar("document_hash", { length: 64 }).notNull(),
   signature: varchar("signature", { length: 132 }).notNull(),
+  signatureHash: varchar("signature_hash", { length: 64 }),
   signedMessage: text("signed_message").notNull(),
   timestamp: varchar("timestamp", { length: 20 }).notNull(),
   nonce: varchar("nonce", { length: 32 }).notNull(),
