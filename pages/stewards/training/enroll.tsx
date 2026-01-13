@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { SiteLayout } from '../../../components/navigation';
 import { useWallet } from '../../../components/WalletConnect/WalletContext';
 import { trainingTiers, getTierById, TrainingTier } from '../../../lib/stewardTraining';
 
@@ -135,7 +134,7 @@ export default function TrainingEnrollPage() {
 
   if (loading) {
     return (
-      <SiteLayout>
+      <>
         <div style={{ 
           minHeight: '60vh', 
           display: 'flex', 
@@ -146,12 +145,12 @@ export default function TrainingEnrollPage() {
             <div style={{ fontSize: '24px', marginBottom: '16px' }}>Loading...</div>
           </div>
         </div>
-      </SiteLayout>
+      </>
     );
   }
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>Enroll in Training | Steward Corps | Axiom Protocol</title>
         <meta name="description" content="Complete your enrollment in the Steward Corps Training Program." />
@@ -578,6 +577,6 @@ export default function TrainingEnrollPage() {
           </div>
         </div>
       </main>
-    </SiteLayout>
+    </>
   );
 }

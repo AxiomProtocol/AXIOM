@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { SiteLayout } from '../../../components/navigation';
 import { useWallet } from '../../../components/WalletConnect/WalletContext';
 import { stewardCovenant, getTierById } from '../../../lib/stewardTraining';
 
@@ -88,17 +87,17 @@ export default function CovenantSigningPage() {
 
   if (loading) {
     return (
-      <SiteLayout>
+      <>
         <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div>Loading...</div>
         </div>
-      </SiteLayout>
+      </>
     );
   }
 
   if (!isConnected) {
     return (
-      <SiteLayout>
+      <>
         <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ textAlign: 'center', maxWidth: '400px' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔗</div>
@@ -121,14 +120,14 @@ export default function CovenantSigningPage() {
             </button>
           </div>
         </div>
-      </SiteLayout>
+      </>
     );
   }
 
   if (signed) {
     const tier = enrollment ? getTierById(enrollment.tier) : null;
     return (
-      <SiteLayout>
+      <>
         <Head>
           <title>Welcome to the Steward Corps | Axiom Protocol</title>
         </Head>
@@ -216,12 +215,12 @@ export default function CovenantSigningPage() {
             </div>
           </div>
         </main>
-      </SiteLayout>
+      </>
     );
   }
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>Sign the Steward Covenant | Axiom Protocol</title>
       </Head>
@@ -432,6 +431,6 @@ export default function CovenantSigningPage() {
           </p>
         </div>
       </main>
-    </SiteLayout>
+    </>
   );
 }

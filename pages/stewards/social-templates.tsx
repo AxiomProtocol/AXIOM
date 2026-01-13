@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
-import { SiteLayout } from '../../components/navigation';
 import { web3Theme } from '../../components/axiomRebuild/styles/web3Theme';
 
 interface Template {
@@ -210,7 +209,7 @@ export default function SocialTemplatesPage() {
   };
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>Social Content Templates | Steward Recruitment</title>
       </Head>
@@ -427,6 +426,6 @@ export default function SocialTemplatesPage() {
           </div>
         </div>
       </main>
-    </SiteLayout>
+    </>
   );
 }

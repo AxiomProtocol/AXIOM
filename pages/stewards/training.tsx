@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { SiteLayout } from '../../components/navigation';
 import { 
   trainingTiers, 
   trainingSeasons,
@@ -46,7 +45,7 @@ export default function StewardTrainingPage() {
   };
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>12-Month Steward Training Program | Axiom Protocol</title>
         <meta name="description" content="Comprehensive 12-month training through all four seasons. Learn to grow, manage, and steward land through spring, summer, fall, and winter." />
@@ -601,6 +600,6 @@ export default function StewardTrainingPage() {
           </div>
         </section>
       </main>
-    </SiteLayout>
+    </>
   );
 }

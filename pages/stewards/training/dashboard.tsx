@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { SiteLayout } from '../../../components/navigation';
 import { useWallet } from '../../../components/WalletConnect/WalletContext';
 import { trainingSeasons, getModulesBySeason, getTierById, SeasonId, TrainingModule, seasonalMilestones } from '../../../lib/stewardTraining';
 
@@ -87,19 +86,19 @@ export default function TrainingDashboard() {
 
   if (loading) {
     return (
-      <SiteLayout>
+      <>
         <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '24px', marginBottom: '16px' }}>Loading your training...</div>
           </div>
         </div>
-      </SiteLayout>
+      </>
     );
   }
 
   if (!isConnected) {
     return (
-      <SiteLayout>
+      <>
         <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ textAlign: 'center', maxWidth: '400px' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔗</div>
@@ -107,13 +106,13 @@ export default function TrainingDashboard() {
             <p style={{ color: '#6B7280', marginBottom: '24px' }}>Connect your wallet to access your training dashboard.</p>
           </div>
         </div>
-      </SiteLayout>
+      </>
     );
   }
 
   if (!enrollment) {
     return (
-      <SiteLayout>
+      <>
         <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ textAlign: 'center', maxWidth: '500px' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>📚</div>
@@ -137,7 +136,7 @@ export default function TrainingDashboard() {
             </Link>
           </div>
         </div>
-      </SiteLayout>
+      </>
     );
   }
 
@@ -147,7 +146,7 @@ export default function TrainingDashboard() {
   const activeSznData = trainingSeasons.find(s => s.id === activeSeason);
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>Training Dashboard | Steward Corps | Axiom Protocol</title>
       </Head>
@@ -445,6 +444,6 @@ export default function TrainingDashboard() {
           )}
         </div>
       </main>
-    </SiteLayout>
+    </>
   );
 }

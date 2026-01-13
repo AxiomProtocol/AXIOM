@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { SiteLayout } from '../../components/navigation';
 import { web3Theme } from '../../components/axiomRebuild/styles/web3Theme';
 import { ImmersiveCard } from '../../components/axiomRebuild/ImmersiveCard';
 import { track } from '../../components/axiomRebuild/analytics';
@@ -87,7 +86,7 @@ export default function StewardRecruitPage() {
 
   if (submitted) {
     return (
-      <SiteLayout>
+      <>
         <Head>
           <title>Thank You | Steward Corps</title>
         </Head>
@@ -143,12 +142,12 @@ export default function StewardRecruitPage() {
             </Link>
           </div>
         </div>
-      </SiteLayout>
+      </>
     );
   }
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>Become a Steward | Axiom Land Corps</title>
         <meta name="description" content="Join 250 stewards coordinating land activation across America. Lead your community, access land first, build your reputation." />
@@ -498,6 +497,6 @@ export default function StewardRecruitPage() {
           </div>
         </section>
       </main>
-    </SiteLayout>
+    </>
   );
 }

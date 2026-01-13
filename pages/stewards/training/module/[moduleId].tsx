@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { SiteLayout } from '../../../../components/navigation';
 import { useWallet } from '../../../../components/WalletConnect/WalletContext';
 import { getModulesByPhase, trainingPhases, TrainingModule } from '../../../../lib/stewardTraining';
 
@@ -73,17 +72,17 @@ export default function ModuleViewer() {
 
   if (loading) {
     return (
-      <SiteLayout>
+      <>
         <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div>Loading module...</div>
         </div>
-      </SiteLayout>
+      </>
     );
   }
 
   if (!module) {
     return (
-      <SiteLayout>
+      <>
         <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>📚</div>
@@ -93,12 +92,12 @@ export default function ModuleViewer() {
             </Link>
           </div>
         </div>
-      </SiteLayout>
+      </>
     );
   }
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>{module.title} | Steward Training | Axiom Protocol</title>
       </Head>
@@ -284,6 +283,6 @@ export default function ModuleViewer() {
           </div>
         </div>
       </main>
-    </SiteLayout>
+    </>
   );
 }
