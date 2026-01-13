@@ -7166,3 +7166,283 @@ export type FundSubscription = typeof fundSubscriptions.$inferSelect;
 export type InsertFundSubscription = typeof fundSubscriptions.$inferInsert;
 export type InvestorDocumentAcknowledgment = typeof investorDocumentAcknowledgments.$inferSelect;
 export type InsertInvestorDocumentAcknowledgment = typeof investorDocumentAcknowledgments.$inferInsert;
+
+// ============================================================================
+// DSCR Loan Origination System - Database Schema
+// Status: NEW | January 13, 2026
+// Features: 30-year amortizing rental loans, investor soft commitments
+// ============================================================================
+
+// DSCR Application Status Enum
+export const dscrApplicationStatusEnum = pgEnum('dscr_application_status', [
+  'submitted',
+  'pre_screened',
+  'conditional_approval',
+  'docs_complete',
+  'ready_to_close',
+  'funded',
+  'declined'
+]);
+
+// DSCR Tier Enum (maps to on-chain product IDs)
+export const dscrTierEnum = pgEnum('dscr_tier', [
+  'low',      // 65% LTV, 1.25 DSCR, 7% APR
+  'standard', // 70% LTV, 1.20 DSCR, 8% APR
+  'yield'     // 75% LTV, 1.10 DSCR, 9.5% APR
+]);
+
+// DSCR Document Type Enum
+export const dscrDocumentTypeEnum = pgEnum('dscr_document_type', [
+  'government_id',
+  'rent_roll',
+  'purchase_contract',
+  'appraisal',
+  'scope_of_work',
+  'insurance',
+  'title_report',
+  'entity_docs',
+  'bank_statements',
+  'other'
+]);
+
+// Investor Commitment Status Enum
+export const investorCommitmentStatusEnum = pgEnum('investor_commitment_status', [
+  'soft_commit',
+  'confirmed',
+  'funded',
+  'withdrawn',
+  'expired'
+]);
+
+// DSCR Borrowers Table
+export const dscrBorrowers = pgTable("dscr_borrowers", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  
+  // Identity
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 20 }),
+  
+  // Entity information (if applicable)
+  isEntity: boolean("is_entity").default(false),
+  entityName: varchar("entity_name", { length: 255 }),
+  entityType: varchar("entity_type", { length: 50 }), // LLC, Corporation, Trust
+  entityState: varchar("entity_state", { length: 50 }),
+  
+  // Address
+  streetAddress: varchar("street_address", { length: 500 }),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  zipCode: varchar("zip_code", { length: 20 }),
+  
+  // Experience
+  yearsExperience: integer("years_experience"),
+  propertiesOwned: integer("properties_owned"),
+  totalUnitsOwned: integer("total_units_owned"),
+  
+  // Wallet
+  walletAddress: varchar("wallet_address", { length: 42 }),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  emailIdx: index("dscr_borrower_email_idx").on(table.email),
+  walletIdx: index("dscr_borrower_wallet_idx").on(table.walletAddress),
+}));
+
+// DSCR Properties Table
+export const dscrProperties = pgTable("dscr_properties", {
+  id: serial("id").primaryKey(),
+  
+  // Property address
+  streetAddress: varchar("street_address", { length: 500 }).notNull(),
+  city: varchar("city", { length: 100 }).notNull(),
+  state: varchar("state", { length: 50 }).notNull(),
+  zipCode: varchar("zip_code", { length: 20 }).notNull(),
+  county: varchar("county", { length: 100 }),
+  
+  // Property details
+  propertyType: varchar("property_type", { length: 50 }), // sfr, duplex, triplex, fourplex, multifamily
+  yearBuilt: integer("year_built"),
+  squareFeet: integer("square_feet"),
+  lotSize: integer("lot_size"),
+  bedrooms: integer("bedrooms"),
+  bathrooms: decimal("bathrooms", { precision: 3, scale: 1 }),
+  units: integer("units").default(1),
+  
+  // Valuation
+  purchasePrice: decimal("purchase_price", { precision: 18, scale: 2 }),
+  appraisedValue: decimal("appraised_value", { precision: 18, scale: 2 }),
+  afterRepairValue: decimal("after_repair_value", { precision: 18, scale: 2 }),
+  
+  // Rental income
+  monthlyRent: decimal("monthly_rent", { precision: 12, scale: 2 }),
+  marketRent: decimal("market_rent", { precision: 12, scale: 2 }),
+  occupancyStatus: varchar("occupancy_status", { length: 50 }), // occupied, vacant, partially_occupied
+  
+  // Expenses
+  monthlyExpenses: decimal("monthly_expenses", { precision: 12, scale: 2 }), // PITI minus P
+  propertyTaxes: decimal("property_taxes", { precision: 12, scale: 2 }),
+  insurance: decimal("insurance", { precision: 12, scale: 2 }),
+  hoaFees: decimal("hoa_fees", { precision: 12, scale: 2 }),
+  managementFees: decimal("management_fees", { precision: 12, scale: 2 }),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  addressIdx: index("dscr_property_address_idx").on(table.streetAddress, table.city, table.state),
+  stateIdx: index("dscr_property_state_idx").on(table.state),
+}));
+
+// DSCR Applications Table
+export const dscrApplications = pgTable("dscr_applications", {
+  id: serial("id").primaryKey(),
+  
+  // Foreign keys
+  borrowerId: integer("borrower_id").references(() => dscrBorrowers.id).notNull(),
+  propertyId: integer("property_id").references(() => dscrProperties.id).notNull(),
+  
+  // Application reference
+  applicationNumber: varchar("application_number", { length: 20 }).unique(), // DSCR-2026-0001
+  
+  // Loan request
+  loanAmountRequested: decimal("loan_amount_requested", { precision: 18, scale: 2 }).notNull(),
+  loanPurpose: varchar("loan_purpose", { length: 50 }), // purchase, refinance, cash_out_refi
+  termMonths: integer("term_months").default(360), // 30 years
+  
+  // Tier selection
+  tier: dscrTierEnum("tier").default('standard'),
+  
+  // Calculator outputs (stored after computation)
+  monthlyPayment: decimal("monthly_payment", { precision: 12, scale: 2 }),
+  dscrBps: integer("dscr_bps"), // DSCR * 100 (e.g., 125 = 1.25x)
+  ltvBps: integer("ltv_bps"),   // LTV * 100 (e.g., 7000 = 70%)
+  interestRateBps: integer("interest_rate_bps"), // APR * 100 (e.g., 800 = 8%)
+  
+  // Status workflow
+  status: dscrApplicationStatusEnum("status").default('submitted'),
+  preScreenedAt: timestamp("pre_screened_at"),
+  conditionalApprovalAt: timestamp("conditional_approval_at"),
+  docsCompleteAt: timestamp("docs_complete_at"),
+  readyToCloseAt: timestamp("ready_to_close_at"),
+  fundedAt: timestamp("funded_at"),
+  declinedAt: timestamp("declined_at"),
+  
+  // Term sheet
+  termSheetGeneratedAt: timestamp("term_sheet_generated_at"),
+  termSheetExpiresAt: timestamp("term_sheet_expires_at"),
+  termSheetStorageKey: varchar("term_sheet_storage_key", { length: 255 }),
+  
+  // Underwriting
+  underwriterNotes: text("underwriter_notes"),
+  declineReason: text("decline_reason"),
+  conditions: jsonb("conditions"), // Array of conditions to clear
+  
+  // On-chain reference (after funding)
+  onChainLoanId: integer("on_chain_loan_id"),
+  originationTxHash: varchar("origination_tx_hash", { length: 66 }),
+  
+  // Wallet
+  walletAddress: varchar("wallet_address", { length: 42 }),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  applicationNumberIdx: index("dscr_app_number_idx").on(table.applicationNumber),
+  statusIdx: index("dscr_app_status_idx").on(table.status),
+  tierIdx: index("dscr_app_tier_idx").on(table.tier),
+  borrowerIdx: index("dscr_app_borrower_idx").on(table.borrowerId),
+}));
+
+// DSCR Documents Table
+export const dscrDocuments = pgTable("dscr_documents", {
+  id: serial("id").primaryKey(),
+  
+  applicationId: integer("application_id").references(() => dscrApplications.id).notNull(),
+  
+  documentType: dscrDocumentTypeEnum("document_type").notNull(),
+  fileName: varchar("file_name", { length: 255 }).notNull(),
+  storageKey: varchar("storage_key", { length: 500 }).notNull(),
+  mimeType: varchar("mime_type", { length: 100 }),
+  fileSize: integer("file_size"), // bytes
+  
+  // Metadata
+  description: text("description"),
+  uploadedBy: varchar("uploaded_by", { length: 100 }),
+  
+  // Status
+  isVerified: boolean("is_verified").default(false),
+  verifiedAt: timestamp("verified_at"),
+  verifiedBy: varchar("verified_by", { length: 100 }),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  applicationIdx: index("dscr_doc_app_idx").on(table.applicationId),
+  typeIdx: index("dscr_doc_type_idx").on(table.documentType),
+}));
+
+// Investor Commitments Table (soft commits for DSCR fund)
+export const investorCommitments = pgTable("investor_commitments", {
+  id: serial("id").primaryKey(),
+  
+  // Link to user if registered
+  userId: integer("user_id").references(() => users.id),
+  
+  // Identity
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 20 }),
+  
+  // Wallet
+  walletAddress: varchar("wallet_address", { length: 42 }),
+  
+  // Commitment details
+  commitmentAmount: decimal("commitment_amount", { precision: 24, scale: 8 }).notNull(),
+  tierPreference: dscrTierEnum("tier_preference"),
+  timelineMonths: integer("timeline_months"), // When they plan to invest
+  
+  // Accreditation
+  isAccredited: boolean("is_accredited").default(false),
+  accreditationMethod: varchar("accreditation_method", { length: 100 }), // income, net_worth, professional
+  accreditationVerifiedAt: timestamp("accreditation_verified_at"),
+  
+  // Entity
+  isEntity: boolean("is_entity").default(false),
+  entityName: varchar("entity_name", { length: 255 }),
+  entityType: varchar("entity_type", { length: 50 }),
+  
+  // Status
+  status: investorCommitmentStatusEnum("status").default('soft_commit'),
+  
+  // Notes
+  investorNotes: text("investor_notes"),
+  adminNotes: text("admin_notes"),
+  
+  // Tracking
+  source: varchar("source", { length: 100 }), // website, referral, event
+  referralCode: varchar("referral_code", { length: 50 }),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  expiresAt: timestamp("expires_at"), // Commitment expiration
+}, (table) => ({
+  emailIdx: index("investor_commit_email_idx").on(table.email),
+  walletIdx: index("investor_commit_wallet_idx").on(table.walletAddress),
+  statusIdx: index("investor_commit_status_idx").on(table.status),
+  tierIdx: index("investor_commit_tier_idx").on(table.tierPreference),
+}));
+
+// DSCR Types
+export type DscrBorrower = typeof dscrBorrowers.$inferSelect;
+export type InsertDscrBorrower = typeof dscrBorrowers.$inferInsert;
+export type DscrProperty = typeof dscrProperties.$inferSelect;
+export type InsertDscrProperty = typeof dscrProperties.$inferInsert;
+export type DscrApplication = typeof dscrApplications.$inferSelect;
+export type InsertDscrApplication = typeof dscrApplications.$inferInsert;
+export type DscrDocument = typeof dscrDocuments.$inferSelect;
+export type InsertDscrDocument = typeof dscrDocuments.$inferInsert;
+export type InvestorCommitment = typeof investorCommitments.$inferSelect;
+export type InsertInvestorCommitment = typeof investorCommitments.$inferInsert;
