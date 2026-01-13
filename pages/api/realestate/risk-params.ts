@@ -1,8 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
+import { REALESTATE_LENDING_CONTRACTS, NETWORK_CONFIG } from '../../../shared/contracts';
 
-const ARBITRUM_RPC = process.env.ALCHEMY_RPC_URL || 'https://arb1.arbitrum.io/rpc';
-const RISK_CONFIG_ADDRESS = process.env.RISK_CONFIG_ADDRESS;
+const ARBITRUM_RPC = NETWORK_CONFIG.rpcUrl;
+const RISK_CONFIG_ADDRESS = REALESTATE_LENDING_CONTRACTS.RISK_CONFIG;
+const DSCR_RISK_CONFIG_ADDRESS = REALESTATE_LENDING_CONTRACTS.DSCR_RISK_CONFIG;
 
 const RISK_CONFIG_ABI = [
   'function getProductRisk(uint256 productId) view returns (tuple(uint256 productId, uint256 maxLtvBps, uint256 maxTermDays, uint256 maxLoanSize, uint256 minLoanSize, uint256 originationFeeBps, uint256 interestRateBps, uint256 lateFeePerDayBps, uint256 insuranceReserveBps, uint256 protocolFeeBps, bool active))',
@@ -32,14 +34,12 @@ export default async function handler(
   }
 
   const productId = parseInt(req.query.productId as string) || 1;
+  const isDSCR = productId >= 100;
 
   try {
-    if (!RISK_CONFIG_ADDRESS) {
-      return res.status(200).json(DEFAULT_RISK_PARAMS);
-    }
-
     const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
-    const riskConfig = new ethers.Contract(RISK_CONFIG_ADDRESS, RISK_CONFIG_ABI, provider);
+    const configAddress = isDSCR ? DSCR_RISK_CONFIG_ADDRESS : RISK_CONFIG_ADDRESS;
+    const riskConfig = new ethers.Contract(configAddress, RISK_CONFIG_ABI, provider);
 
     const risk = await riskConfig.getProductRisk(productId);
 

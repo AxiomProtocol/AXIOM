@@ -80,8 +80,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         interestRateBps: Number(config.interestRateBps),
         originationFeeBps: Number(config.originationFeeBps),
         maxTermDays: Number(config.maxTermDays),
-        minLoanSize: ethers.formatUnits(config.minLoanSize, 6),
-        maxLoanSize: ethers.formatUnits(config.maxLoanSize, 6),
+        minLoanSize: ethers.formatUnits(config.minLoanSize, 18),
+        maxLoanSize: ethers.formatUnits(config.maxLoanSize, 18),
         active: config.active
       };
     } catch (e) {
@@ -89,7 +89,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       riskParams = {
         maxLtvBps: 7000,
         interestRateBps: 1400,
-        originationFeeBps: 200,
+        originationFeeBps: 300,
         maxTermDays: 365,
         minLoanSize: '50000',
         maxLoanSize: '500000',
@@ -97,9 +97,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
     }
 
-    const totalAssetsUSD = ethers.formatUnits(totalAssets, 6);
-    const availableLiquidity = ethers.formatUnits(totalAssets - lockedCapital, 6);
-    const lockedInLoans = ethers.formatUnits(lockedCapital, 6);
+    const totalAssetsUSD = ethers.formatUnits(totalAssets, 18);
+    const availableLiquidity = ethers.formatUnits(totalAssets - lockedCapital, 18);
+    const lockedInLoans = ethers.formatUnits(lockedCapital, 18);
 
     let sharePrice = '1.00';
     if (totalSupply > 0n) {

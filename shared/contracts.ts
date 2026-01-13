@@ -229,33 +229,24 @@ export const CAMELOT_DEX = {
   FACTORY: '0x6EcCab422D763aC031210895C81787E87B43A652'
 } as const;
 
-// Real Estate Lending Fund Contracts (41-46)
-// Status: DEPLOYED | Arbitrum One | January 13, 2026
-// Features: Fix & Flip bridge loans, ERC4626 vault, ERC721 loan receipts
+// Real Estate Lending Fund Contracts (41-52)
+// Status: DEPLOYED & VERIFIED | Arbitrum One | January 13, 2026
+// Features: Fix & Flip bridge loans, DSCR rental loans, ERC4626 vaults, ERC721 loan receipts
 export const REALESTATE_LENDING_CONTRACTS = {
-  // Contract 41: RiskConfig
-  // Per-product risk parameters (LTV, rates, terms)
-  RISK_CONFIG: '0xE7E6aC1d9df331f1804D29762e5A11019A4fFa53',
+  // Fix & Flip Bridge Loan Contracts
+  RISK_CONFIG: '0x07A7b9644d32E0f1f113976B0FB3F5F5fbb1E937',
+  LOAN_RECEIPT_NFT: '0x6C4181A15EAC950A2504aC63ebE7F5A0999265e9',
+  FIXFLIP_VAULT: '0xe39dCDf4C703BdA4527a7368a1E513DB2316F6b4',
+  REPAYMENT_ROUTER: '0x68fe7924c56c7B9D13F21B3a22Fe2B5bc59Ab9D5',
+  FIXFLIP_MANAGER: '0x0d249eea77Efd1977731c9CF421797E291e0971E',
+  PRODUCT_REGISTRY: '0x24C5796dCcF09deCD3Ac92063558E0B25c076743',
   
-  // Contract 42: LoanReceiptNFT
-  // ERC721 tokens representing active loans
-  LOAN_RECEIPT_NFT: '0x91B0228D87F5D52039BD47c95628707E83DD102c',
-  
-  // Contract 43: FixFlipPoolVault
-  // ERC4626 vault for investor deposits
-  FIXFLIP_VAULT: '0xAd1Fb0467139bbaA50E4A5F3E3f8CF34D6B54a65',
-  
-  // Contract 44: RepaymentRouter
-  // Routes payments to vault, insurance, and treasury
-  REPAYMENT_ROUTER: '0x34c18F5944539D28AC86cb1E12875A3e7735E336',
-  
-  // Contract 45: FixFlipManager
-  // Loan origination and lifecycle management
-  FIXFLIP_MANAGER: '0x6Bae6F362b2d3AE91Bb5415B4718dee0e0f80dbC',
-  
-  // Contract 46: ProductRegistry
-  // Registry of lending products
-  PRODUCT_REGISTRY: '0x1B297D92a6D6b80684a81a050D2cA6cd87187E07'
+  // DSCR Rental Loan Contracts
+  DSCR_RISK_CONFIG: '0xa93c623Ef901295454abBA6BB4314cFe82C5f0B9',
+  DSCR_LOAN_RECEIPT_NFT: '0x66DB145A7ac0de369da88098E8F85467cFaD7674',
+  DSCR_POOL_VAULT: '0x1E2ae36ffab9b0f0811B404E7b55FbD6824Cb504',
+  DSCR_REPAYMENT_ROUTER: '0xa03e35afeE61c965522D88e778B356A2F2eF9Eab',
+  DSCR_LOAN_MANAGER: '0x2657F688Af2fF327987dd7A8d4CCf1E781349052'
 } as const;
 
 // Stablecoins on Arbitrum
