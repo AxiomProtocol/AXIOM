@@ -8,9 +8,12 @@ async function main() {
   console.log("Deployer:", deployer.address);
   console.log("Balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "ETH\n");
 
-  const AXUSD_ADDRESS = process.env.AXUSD_ADDRESS || "0x0000000000000000000000000000000000000000";
-  const TREASURY_ADDRESS = process.env.TREASURY_ADDRESS || deployer.address;
-  const INSURANCE_FUND_ADDRESS = process.env.INSURANCE_FUND_ADDRESS || deployer.address;
+  // AXUSD Stablecoin - deployed Jan 11, 2026
+  const AXUSD_ADDRESS = "0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C";
+  // Treasury Safe
+  const TREASURY_ADDRESS = "0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d";
+  // SUSU Insurance Fund contract
+  const INSURANCE_FUND_ADDRESS = "0x7B69ce0d83f45C2dBa3e5B73076beA8b1Be1271F";
   
   const FIXFLIP_VAULT_ADDRESS = process.env.FIXFLIP_VAULT_ADDRESS;
   const FIXFLIP_LOAN_RECEIPT_ADDRESS = process.env.FIXFLIP_LOAN_RECEIPT_ADDRESS;
@@ -24,21 +27,21 @@ async function main() {
   console.log("");
 
   console.log("1. Deploying DSCRRiskConfig...");
-  const DSCRRiskConfig = await ethers.getContractFactory("contracts/realestate/dscr/DSCRRiskConfig.sol:DSCRRiskConfig");
+  const DSCRRiskConfig = await ethers.getContractFactory("contracts-axusd/realestate/dscr/DSCRRiskConfig.sol:DSCRRiskConfig");
   const riskConfig = await DSCRRiskConfig.deploy();
   await riskConfig.waitForDeployment();
   const riskConfigAddress = await riskConfig.getAddress();
   console.log("   DSCRRiskConfig deployed to:", riskConfigAddress);
 
   console.log("\n2. Deploying DSCRLoanReceiptNFT...");
-  const DSCRLoanReceiptNFT = await ethers.getContractFactory("contracts/realestate/dscr/DSCRLoanReceiptNFT.sol:DSCRLoanReceiptNFT");
+  const DSCRLoanReceiptNFT = await ethers.getContractFactory("contracts-axusd/realestate/dscr/DSCRLoanReceiptNFT.sol:DSCRLoanReceiptNFT");
   const loanReceipt = await DSCRLoanReceiptNFT.deploy();
   await loanReceipt.waitForDeployment();
   const loanReceiptAddress = await loanReceipt.getAddress();
   console.log("   DSCRLoanReceiptNFT deployed to:", loanReceiptAddress);
 
   console.log("\n3. Deploying DSCRPoolVault...");
-  const DSCRPoolVault = await ethers.getContractFactory("contracts/realestate/dscr/DSCRPoolVault.sol:DSCRPoolVault");
+  const DSCRPoolVault = await ethers.getContractFactory("contracts-axusd/realestate/dscr/DSCRPoolVault.sol:DSCRPoolVault");
   const vault = await DSCRPoolVault.deploy(
     AXUSD_ADDRESS,
     "AXUSD DSCR Pool Shares",
@@ -49,7 +52,7 @@ async function main() {
   console.log("   DSCRPoolVault deployed to:", vaultAddress);
 
   console.log("\n4. Deploying RepaymentRouter for DSCR...");
-  const RepaymentRouter = await ethers.getContractFactory("contracts/realestate/RepaymentRouter.sol:RepaymentRouter");
+  const RepaymentRouter = await ethers.getContractFactory("contracts-axusd/realestate/RepaymentRouter.sol:RepaymentRouter");
   const router = await RepaymentRouter.deploy(
     AXUSD_ADDRESS,
     vaultAddress,
@@ -63,7 +66,7 @@ async function main() {
   console.log("   RepaymentRouter deployed to:", routerAddress);
 
   console.log("\n5. Deploying DSCRLoanManager...");
-  const DSCRLoanManager = await ethers.getContractFactory("contracts/realestate/dscr/DSCRLoanManager.sol:DSCRLoanManager");
+  const DSCRLoanManager = await ethers.getContractFactory("contracts-axusd/realestate/dscr/DSCRLoanManager.sol:DSCRLoanManager");
   const manager = await DSCRLoanManager.deploy(
     AXUSD_ADDRESS,
     vaultAddress,

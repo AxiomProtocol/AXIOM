@@ -12,9 +12,12 @@ async function main() {
   const balance = await hre.ethers.provider.getBalance(deployer.address);
   console.log("Balance:", hre.ethers.formatEther(balance), "ETH\n");
 
+  // AXUSD Stablecoin - deployed Jan 11, 2026
   const AXUSD_ADDRESS = "0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C";
-  const TREASURY_ADDRESS = "0x3fD63728288546AC41dAe3bf25ca383061c3A929";
-  const INSURANCE_FUND = deployer.address;
+  // Treasury Safe from deployment-info.json
+  const TREASURY_ADDRESS = "0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d";
+  // Insurance fund - using SUSU Insurance Fund contract
+  const INSURANCE_FUND = "0x7B69ce0d83f45C2dBa3e5B73076beA8b1Be1271F";
 
   console.log("Configuration:");
   console.log("  AXUSD:", AXUSD_ADDRESS);
@@ -95,12 +98,13 @@ async function main() {
   console.log("   Registered Product 1: Fix & Flip Bridge Loans");
 
   await riskConfig.setProductRisk(1, {
+    productId: 1,
     maxLtvBps: 7000,
     maxTermDays: 365,
-    minLoanSize: hre.ethers.parseUnits("50000", 18),
     maxLoanSize: hre.ethers.parseUnits("500000", 18),
-    interestRateBps: 1400,
+    minLoanSize: hre.ethers.parseUnits("50000", 18),
     originationFeeBps: 300,
+    interestRateBps: 1400,
     lateFeePerDayBps: 50,
     insuranceReserveBps: 200,
     protocolFeeBps: 150,
