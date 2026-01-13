@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import RebuildLayout from '../../components/axiomRebuild/RebuildLayout';
 
 interface InvestmentStep {
   id: number;
@@ -149,20 +148,20 @@ export default function InvestPage() {
   };
 
   return (
-    <RebuildLayout>
+    <>
       <Head>
         <title>Invest | AXUSD Fix & Flip Lending Fund</title>
         <meta name="description" content="Invest in the AXUSD Fix & Flip Lending Fund - Accredited investors only" />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black py-12">
+      <div style={{ background: "#FFFFFF", minHeight: "100vh" }} className="py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
-            <Link href="/lending-fund" className="text-yellow-400 hover:text-yellow-300 mb-4 inline-block">
+            <Link href="/lending-fund" className="mb-4 inline-block" style={{ color: "#00D4AA" }}>
               ← Back to Fund Overview
             </Link>
-            <h1 className="text-3xl font-bold text-white">Invest in the Fund</h1>
-            <p className="text-gray-400 mt-2">
+            <h1 className="text-3xl font-bold" style={{ color: "#1a1a2e" }}>Invest in the Fund</h1>
+            <p className="mt-2" style={{ color: "#6b7280" }}>
               Complete the steps below to invest in the AXUSD Fix & Flip Lending Fund
             </p>
           </div>
@@ -462,7 +461,7 @@ export default function InvestPage() {
           </div>
         </div>
       </div>
-    </RebuildLayout>
+    </>
   );
 }
 

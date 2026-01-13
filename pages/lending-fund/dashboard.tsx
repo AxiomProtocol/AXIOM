@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import RebuildLayout from '../../components/axiomRebuild/RebuildLayout';
 
 interface InvestorPosition {
   shares: string;
@@ -133,46 +132,47 @@ export default function InvestorDashboard() {
 
   if (!walletConnected) {
     return (
-      <RebuildLayout>
+      <>
         <Head>
           <title>Investor Dashboard | AXUSD Lending Fund</title>
         </Head>
-        <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black flex items-center justify-center">
+        <div style={{ background: "#FFFFFF", minHeight: "100vh" }} className="flex items-center justify-center">
           <div className="text-center max-w-md mx-auto p-8">
             <div className="text-6xl mb-6">🔗</div>
-            <h1 className="text-3xl font-bold text-white mb-4">Connect Your Wallet</h1>
-            <p className="text-gray-400 mb-8">
+            <h1 className="text-3xl font-bold mb-4" style={{ color: "#1a1a2e" }}>Connect Your Wallet</h1>
+            <p className="mb-8" style={{ color: "#6b7280" }}>
               Connect your wallet to view your investment position in the AXUSD Fix & Flip Lending Fund.
             </p>
             <button
               onClick={connectWallet}
-              className="px-8 py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg transition-all w-full"
+              className="px-8 py-4 text-white font-bold rounded-lg transition-all w-full"
+              style={{ background: "#00D4AA" }}
             >
               Connect Wallet
             </button>
-            <Link href="/lending-fund" className="block mt-4 text-yellow-400 hover:text-yellow-300">
+            <Link href="/lending-fund" className="block mt-4" style={{ color: "#00D4AA" }}>
               ← Back to Fund Overview
             </Link>
           </div>
         </div>
-      </RebuildLayout>
+      </>
     );
   }
 
   return (
-    <RebuildLayout>
+    <>
       <Head>
         <title>Investor Dashboard | AXUSD Lending Fund</title>
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black py-12">
+      <div style={{ background: "#FFFFFF", minHeight: "100vh" }} className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-white">Investor Dashboard</h1>
-              <p className="text-gray-400">Connected: {walletAddress && formatAddress(walletAddress)}</p>
+              <h1 className="text-3xl font-bold" style={{ color: "#1a1a2e" }}>Investor Dashboard</h1>
+              <p style={{ color: "#6b7280" }}>Connected: {walletAddress && formatAddress(walletAddress)}</p>
             </div>
-            <Link href="/lending-fund/invest" className="px-6 py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg transition-all">
+            <Link href="/lending-fund/onboarding" className="px-6 py-3 text-white font-bold rounded-lg transition-all" style={{ background: "#00D4AA" }}>
               + Add Investment
             </Link>
           </div>
@@ -289,7 +289,7 @@ export default function InvestorDashboard() {
           </div>
         </div>
       </div>
-    </RebuildLayout>
+    </>
   );
 }
 
