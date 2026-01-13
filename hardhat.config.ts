@@ -14,7 +14,7 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 200,
+            runs: 50,
           },
           viaIR: true,
         },
@@ -26,7 +26,57 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 50,
+            runs: 10,
+          },
+          viaIR: true,
+        },
+      },
+      "contracts/AxiomAcademyHub.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 10,
+          },
+          viaIR: true,
+        },
+      },
+      "contracts/GamificationHub.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 10,
+          },
+          viaIR: true,
+        },
+      },
+      "contracts/SustainabilityHub.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 10,
+          },
+          viaIR: true,
+        },
+      },
+      "contracts/TransportAndLogisticsHub.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 10,
+          },
+          viaIR: true,
+        },
+      },
+      "contracts/CommunitySocialHub.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 10,
           },
           viaIR: true,
         },
@@ -36,7 +86,7 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 200,
+            runs: 50,
           },
           viaIR: true,
         },
