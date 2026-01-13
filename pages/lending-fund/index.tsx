@@ -99,7 +99,10 @@ export default function LendingFundPage() {
 
               <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 px-4 sm:px-0">
                 <Link href="/lending-fund/onboarding" className="px-8 py-4 min-h-[48px] text-white font-bold rounded-lg transition-all transform hover:scale-105 text-center active:scale-95" style={{ background: "#00D4AA" }}>
-                  Invest Now
+                  Invest in Fund
+                </Link>
+                <Link href="/lending-fund/apply" className="px-8 py-4 min-h-[48px] text-white font-bold rounded-lg transition-all transform hover:scale-105 text-center active:scale-95" style={{ background: "#7C3AED" }}>
+                  Apply for Loan
                 </Link>
                 <Link href="/lending-fund/docs" className="px-8 py-4 min-h-[48px] bg-transparent font-bold rounded-lg transition-all text-center active:scale-95" style={{ border: "2px solid #00D4AA", color: "#00D4AA" }}>
                   View PPM Documents
