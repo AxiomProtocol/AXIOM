@@ -10,6 +10,8 @@ The AXUSD Real Estate Lending smart contracts were analyzed using Slither static
 
 **Compilation Status:** 89 Solidity files compiled successfully with viaIR optimization.
 
+**IMPORTANT SCOPE NOTE:** This audit covers ONLY the AXUSD Real Estate Lending contracts (Fix-and-Flip, DSCR, and Stablecoin core). The 11 "hub" contracts (Community, Academy, Transport, etc.) are explicitly EXCLUDED from this audit and deployment scope due to ongoing compilation refactoring. They remain unaudited and should not be deployed until separately reviewed.
+
 ## Contracts Analyzed
 
 ### Fix-and-Flip Lending Product
@@ -102,9 +104,10 @@ The AXUSD Real Estate Lending smart contracts were analyzed using Slither static
 ## Recommendations
 
 ### Immediate Actions (Before Deployment)
-1. Verify vault approval setup for loan managers
-2. Test emergency pause functionality
-3. Set appropriate initial risk parameters
+1. **CRITICAL: Vault Approval Setup** - Each vault (FixFlipPoolVault, DSCRPoolVault) MUST approve its respective loan manager to spend AXUSD before origination can work. Call `axusd.approve(loanManagerAddress, type(uint256).max)` from the vault.
+2. Verify all role assignments (ADMIN, UNDERWRITER, GUARDIAN, SERVICER)
+3. Test emergency pause functionality
+4. Set appropriate initial risk parameters for each product tier
 
 ### Future Improvements
 1. Consider adding timelock for admin actions
