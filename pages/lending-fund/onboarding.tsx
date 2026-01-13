@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import MobileBottomNav from '../../components/lending-fund/MobileBottomNav';
 
 type OnboardingStep = 'connect' | 'personal' | 'accreditation' | 'documents' | 'signature' | 'complete';
 
@@ -912,6 +913,8 @@ This signature constitutes my legally binding electronic signature.`;
             )}
           </div>
         </div>
+
+        <MobileBottomNav />
       </div>
     </>
   );

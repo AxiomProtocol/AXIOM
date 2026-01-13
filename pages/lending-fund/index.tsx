@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import MobileBottomNav from '../../components/lending-fund/MobileBottomNav';
 
 interface FundStats {
   totalAssets: string;
@@ -96,17 +97,17 @@ export default function LendingFundPage() {
                 Backed by property collateral. Settled in AXUSD stablecoin.
               </p>
 
-              <div className="flex flex-wrap justify-center gap-4">
-                <Link href="/lending-fund/onboarding" className="px-8 py-4 text-white font-bold rounded-lg transition-all transform hover:scale-105" style={{ background: "#00D4AA" }}>
+              <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 px-4 sm:px-0">
+                <Link href="/lending-fund/onboarding" className="px-8 py-4 min-h-[48px] text-white font-bold rounded-lg transition-all transform hover:scale-105 text-center active:scale-95" style={{ background: "#00D4AA" }}>
                   Invest Now
                 </Link>
-                <Link href="/lending-fund/docs" className="px-8 py-4 bg-transparent font-bold rounded-lg transition-all" style={{ border: "2px solid #00D4AA", color: "#00D4AA" }}>
+                <Link href="/lending-fund/docs" className="px-8 py-4 min-h-[48px] bg-transparent font-bold rounded-lg transition-all text-center active:scale-95" style={{ border: "2px solid #00D4AA", color: "#00D4AA" }}>
                   View PPM Documents
                 </Link>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-12 sm:mb-16">
               <StatCard
                 label="Total Pool Assets"
                 value={loading ? '...' : formatUSD(stats?.totalAssets || '0')}
@@ -202,8 +203,8 @@ export default function LendingFundPage() {
               />
             </div>
 
-            <div className="mt-16 p-6 rounded-xl" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
-              <p className="text-sm text-center" style={{ color: "#6b7280" }}>
+            <div className="mt-12 sm:mt-16 p-4 sm:p-6 rounded-xl mb-20 sm:mb-0" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
+              <p className="text-xs sm:text-sm text-center" style={{ color: "#6b7280" }}>
                 <strong>Disclosure:</strong> This offering is made pursuant to SEC Rule 506(c) and is available only to verified accredited investors.
                 Securities have not been registered under the Securities Act of 1933. Investment involves substantial risk including possible loss of principal.
                 Past performance is not indicative of future results. Read the Private Placement Memorandum before investing.
@@ -211,17 +212,20 @@ export default function LendingFundPage() {
             </div>
           </div>
         </div>
+
+        <MobileBottomNav />
       </div>
     </>
   );
 }
 
+
 function StatCard({ label, value, icon }: { label: string; value: string; icon: string }) {
   return (
-    <div className="backdrop-blur rounded-xl p-6 text-center" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
-      <div className="text-3xl mb-2">{icon}</div>
-      <div className="text-2xl font-bold mb-1" style={{ color: "#1a1a2e" }}>{value}</div>
-      <div className="text-sm" style={{ color: "#6b7280" }}>{label}</div>
+    <div className="backdrop-blur rounded-xl p-4 sm:p-6 text-center touch-manipulation" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
+      <div className="text-2xl sm:text-3xl mb-2">{icon}</div>
+      <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: "#1a1a2e" }}>{value}</div>
+      <div className="text-xs sm:text-sm" style={{ color: "#6b7280" }}>{label}</div>
     </div>
   );
 }

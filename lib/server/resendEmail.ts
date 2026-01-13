@@ -397,3 +397,300 @@ function getLandStatusEmailHtml(params: {
 </html>
   `.trim();
 }
+
+export async function sendLendingFundDepositEmail(params: {
+  investorEmail: string;
+  investorName: string;
+  amount: string;
+  shares: string;
+  txHash: string;
+  newBalance: string;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    
+    const { data, error } = await client.emails.send({
+      from: fromEmail || 'AXUSD Lending Fund <fund@axiom.money>',
+      to: [params.investorEmail],
+      subject: 'Investment Confirmed - AXUSD Fix & Flip Fund',
+      html: getLendingFundDepositHtml(params)
+    });
+
+    if (error) {
+      console.error('Resend error:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('Lending fund deposit email sent:', data?.id);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Failed to send deposit email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function sendLendingFundWithdrawalEmail(params: {
+  investorEmail: string;
+  investorName: string;
+  amount: string;
+  shares: string;
+  txHash: string;
+  remainingBalance: string;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    
+    const { data, error } = await client.emails.send({
+      from: fromEmail || 'AXUSD Lending Fund <fund@axiom.money>',
+      to: [params.investorEmail],
+      subject: 'Withdrawal Processed - AXUSD Fix & Flip Fund',
+      html: getLendingFundWithdrawalHtml(params)
+    });
+
+    if (error) {
+      console.error('Resend error:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('Lending fund withdrawal email sent:', data?.id);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Failed to send withdrawal email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function sendLendingFundYieldEmail(params: {
+  investorEmail: string;
+  investorName: string;
+  yieldAmount: string;
+  period: string;
+  apy: string;
+  totalEarned: string;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    
+    const { data, error } = await client.emails.send({
+      from: fromEmail || 'AXUSD Lending Fund <fund@axiom.money>',
+      to: [params.investorEmail],
+      subject: `Yield Distribution - $${params.yieldAmount} Earned`,
+      html: getLendingFundYieldHtml(params)
+    });
+
+    if (error) {
+      console.error('Resend error:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('Lending fund yield email sent:', data?.id);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Failed to send yield email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+function getLendingFundDepositHtml(params: {
+  investorName: string;
+  amount: string;
+  shares: string;
+  txHash: string;
+  newBalance: string;
+}): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Investment Confirmed</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9fafb;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #00D4AA 0%, #0891b2 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+      <h1 style="color: white; margin: 0; font-size: 28px;">Investment Confirmed</h1>
+      <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0; font-size: 16px;">AXUSD Fix & Flip Lending Fund</p>
+    </div>
+    <div style="background: white; padding: 40px 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+      <p style="color: #1f2937; font-size: 16px; line-height: 1.6;">
+        Hi ${params.investorName},
+      </p>
+      <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+        Your investment in the AXUSD Fix & Flip Lending Fund has been confirmed and recorded on-chain.
+      </p>
+      <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 24px; margin: 24px 0;">
+        <h3 style="color: #166534; margin: 0 0 16px; font-size: 18px;">Transaction Details</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="color: #6b7280; padding: 8px 0; font-size: 14px;">Amount Invested</td>
+            <td style="color: #1f2937; padding: 8px 0; font-size: 14px; text-align: right; font-weight: bold;">$${params.amount}</td>
+          </tr>
+          <tr>
+            <td style="color: #6b7280; padding: 8px 0; font-size: 14px;">Shares Received</td>
+            <td style="color: #1f2937; padding: 8px 0; font-size: 14px; text-align: right; font-weight: bold;">${params.shares}</td>
+          </tr>
+          <tr>
+            <td style="color: #6b7280; padding: 8px 0; font-size: 14px;">New Total Balance</td>
+            <td style="color: #00D4AA; padding: 8px 0; font-size: 14px; text-align: right; font-weight: bold;">$${params.newBalance}</td>
+          </tr>
+        </table>
+      </div>
+      <div style="background: #f8fafc; border-radius: 8px; padding: 16px; margin: 16px 0;">
+        <p style="color: #6b7280; font-size: 12px; margin: 0 0 8px;">Transaction Hash</p>
+        <a href="https://arbiscan.io/tx/${params.txHash}" style="color: #00D4AA; font-size: 12px; word-break: break-all; text-decoration: none;">
+          ${params.txHash}
+        </a>
+      </div>
+      <p style="color: #4b5563; font-size: 14px; line-height: 1.6; margin-top: 24px;">
+        Your investment is now earning yield from our portfolio of fix-and-flip bridge loans. View your dashboard anytime to track performance.
+      </p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="https://axiomprotocol.app/lending-fund/dashboard" style="display: inline-block; background: #00D4AA; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+          View Dashboard
+        </a>
+      </div>
+      <p style="color: #1f2937; margin-top: 24px; font-size: 14px;">
+        Thank you for investing with us,<br>
+        <strong>AXUSD Lending Fund Team</strong>
+      </p>
+    </div>
+    <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 11px;">
+      <p style="margin: 0;">SEC Regulation D 506(c) - Accredited Investors Only</p>
+      <p style="margin: 8px 0 0;">Axiom Nexus LLC | Mississippi</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+
+function getLendingFundWithdrawalHtml(params: {
+  investorName: string;
+  amount: string;
+  shares: string;
+  txHash: string;
+  remainingBalance: string;
+}): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Withdrawal Processed</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9fafb;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 10px;">💸</div>
+      <h1 style="color: white; margin: 0; font-size: 28px;">Withdrawal Processed</h1>
+      <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0; font-size: 16px;">AXUSD Fix & Flip Lending Fund</p>
+    </div>
+    <div style="background: white; padding: 40px 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+      <p style="color: #1f2937; font-size: 16px; line-height: 1.6;">
+        Hi ${params.investorName},
+      </p>
+      <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+        Your withdrawal request has been processed and funds have been sent to your wallet.
+      </p>
+      <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; margin: 24px 0;">
+        <h3 style="color: #1f2937; margin: 0 0 16px; font-size: 18px;">Withdrawal Details</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="color: #6b7280; padding: 8px 0; font-size: 14px;">Amount Withdrawn</td>
+            <td style="color: #1f2937; padding: 8px 0; font-size: 14px; text-align: right; font-weight: bold;">$${params.amount}</td>
+          </tr>
+          <tr>
+            <td style="color: #6b7280; padding: 8px 0; font-size: 14px;">Shares Redeemed</td>
+            <td style="color: #1f2937; padding: 8px 0; font-size: 14px; text-align: right; font-weight: bold;">${params.shares}</td>
+          </tr>
+          <tr>
+            <td style="color: #6b7280; padding: 8px 0; font-size: 14px;">Remaining Balance</td>
+            <td style="color: #00D4AA; padding: 8px 0; font-size: 14px; text-align: right; font-weight: bold;">$${params.remainingBalance}</td>
+          </tr>
+        </table>
+      </div>
+      <div style="background: #f8fafc; border-radius: 8px; padding: 16px; margin: 16px 0;">
+        <p style="color: #6b7280; font-size: 12px; margin: 0 0 8px;">Transaction Hash</p>
+        <a href="https://arbiscan.io/tx/${params.txHash}" style="color: #00D4AA; font-size: 12px; word-break: break-all; text-decoration: none;">
+          ${params.txHash}
+        </a>
+      </div>
+      <p style="color: #1f2937; margin-top: 24px; font-size: 14px;">
+        Best regards,<br>
+        <strong>AXUSD Lending Fund Team</strong>
+      </p>
+    </div>
+    <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 11px;">
+      <p style="margin: 0;">SEC Regulation D 506(c) - Accredited Investors Only</p>
+      <p style="margin: 8px 0 0;">Axiom Nexus LLC | Mississippi</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+
+function getLendingFundYieldHtml(params: {
+  investorName: string;
+  yieldAmount: string;
+  period: string;
+  apy: string;
+  totalEarned: string;
+}): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Yield Distribution</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9fafb;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 10px;">💰</div>
+      <h1 style="color: white; margin: 0; font-size: 28px;">Yield Distribution</h1>
+      <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0; font-size: 16px;">${params.period}</p>
+    </div>
+    <div style="background: white; padding: 40px 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+      <p style="color: #1f2937; font-size: 16px; line-height: 1.6;">
+        Hi ${params.investorName},
+      </p>
+      <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+        Great news! Your investment in the AXUSD Fix & Flip Lending Fund has generated yield this period.
+      </p>
+      <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center;">
+        <p style="color: #92400e; margin: 0 0 8px; font-size: 14px;">Yield This Period</p>
+        <p style="color: #1f2937; margin: 0; font-size: 36px; font-weight: bold;">$${params.yieldAmount}</p>
+        <p style="color: #92400e; margin: 8px 0 0; font-size: 14px;">Current APY: ${params.apy}</p>
+      </div>
+      <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin: 24px 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="color: #6b7280; padding: 8px 0; font-size: 14px;">Total Lifetime Earnings</td>
+            <td style="color: #00D4AA; padding: 8px 0; font-size: 14px; text-align: right; font-weight: bold;">$${params.totalEarned}</td>
+          </tr>
+        </table>
+      </div>
+      <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
+        Your yield is automatically reinvested into your position, compounding your returns. View your full earnings history on your dashboard.
+      </p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="https://axiomprotocol.app/lending-fund/dashboard" style="display: inline-block; background: #00D4AA; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+          View Dashboard
+        </a>
+      </div>
+      <p style="color: #1f2937; margin-top: 24px; font-size: 14px;">
+        Keep building wealth,<br>
+        <strong>AXUSD Lending Fund Team</strong>
+      </p>
+    </div>
+    <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 11px;">
+      <p style="margin: 0;">SEC Regulation D 506(c) - Accredited Investors Only</p>
+      <p style="margin: 8px 0 0;">Axiom Nexus LLC | Mississippi</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}

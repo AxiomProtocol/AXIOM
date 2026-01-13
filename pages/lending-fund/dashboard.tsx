@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import MobileBottomNav from '../../components/lending-fund/MobileBottomNav';
 
 interface InvestorPosition {
   shares: string;
@@ -336,6 +337,8 @@ export default function InvestorDashboard() {
             </div>
           </div>
         </div>
+
+        <MobileBottomNav />
       </div>
     </>
   );

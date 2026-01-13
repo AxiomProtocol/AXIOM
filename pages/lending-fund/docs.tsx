@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import MobileBottomNav from '../../components/lending-fund/MobileBottomNav';
 
 interface Document {
   title: string;
@@ -193,7 +194,7 @@ export default function LendingFundDocs() {
             </div>
           </div>
 
-          <div className="mt-8 text-center">
+          <div className="mt-8 mb-20 sm:mb-8 text-center">
             <p className="text-sm" style={{ color: "#6b7280" }}>
               Questions? Contact us at{' '}
               <a href="mailto:invest@axiomprotocol.app" style={{ color: "#00D4AA" }} className="hover:opacity-80">
@@ -202,6 +203,8 @@ export default function LendingFundDocs() {
             </p>
           </div>
         </div>
+
+        <MobileBottomNav />
       </div>
     </>
   );
