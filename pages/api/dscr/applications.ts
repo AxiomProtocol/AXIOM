@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../server/db';
-import { dscrBorrowers, dscrProperties, dscrApplications, dscrDocuments } from '../../../shared/schema';
-import { eq, desc, and, sql } from 'drizzle-orm';
+import { Pool } from 'pg';
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 function verifyAdminToken(req: NextApiRequest): boolean {
   const authHeader = req.headers.authorization;
@@ -44,51 +44,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: 'Loan amount required' });
       }
 
-      const [newBorrower] = await db.insert(dscrBorrowers)
-        .values({
-          firstName: borrower.firstName,
-          lastName: borrower.lastName,
-          email: borrower.email,
-          phone: borrower.phone,
-          isEntity: borrower.isEntity || false,
-          entityName: borrower.entityName,
-          entityType: borrower.entityType,
-          entityState: borrower.entityState,
-          streetAddress: borrower.streetAddress,
-          city: borrower.city,
-          state: borrower.state,
-          zipCode: borrower.zipCode,
-          yearsExperience: borrower.yearsExperience ? parseInt(borrower.yearsExperience) : null,
-          propertiesOwned: borrower.propertiesOwned ? parseInt(borrower.propertiesOwned) : null,
-          totalUnitsOwned: borrower.totalUnitsOwned ? parseInt(borrower.totalUnitsOwned) : null,
-          walletAddress: walletAddress || null,
-        })
-        .returning();
+      const borrowerResult = await pool.query(`
+        INSERT INTO dscr_borrowers (
+          first_name, last_name, email, phone, is_entity, entity_name, entity_type, entity_state,
+          street_address, city, state, zip_code, years_experience, properties_owned, total_units_owned, wallet_address
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        RETURNING id
+      `, [
+        borrower.firstName, borrower.lastName, borrower.email, borrower.phone || null,
+        borrower.isEntity || false, borrower.entityName || null, borrower.entityType || null, borrower.entityState || null,
+        borrower.streetAddress || null, borrower.city || null, borrower.state || null, borrower.zipCode || null,
+        borrower.yearsExperience ? parseInt(borrower.yearsExperience) : null,
+        borrower.propertiesOwned ? parseInt(borrower.propertiesOwned) : null,
+        borrower.totalUnitsOwned ? parseInt(borrower.totalUnitsOwned) : null,
+        walletAddress || null
+      ]);
+      const borrowerId = borrowerResult.rows[0].id;
 
-      const [newProperty] = await db.insert(dscrProperties)
-        .values({
-          streetAddress: property.streetAddress,
-          city: property.city,
-          state: property.state,
-          zipCode: property.zipCode,
-          county: property.county,
-          propertyType: property.propertyType || 'sfr',
-          yearBuilt: property.yearBuilt ? parseInt(property.yearBuilt) : null,
-          squareFeet: property.squareFeet ? parseInt(property.squareFeet) : null,
-          bedrooms: property.bedrooms ? parseInt(property.bedrooms) : null,
-          bathrooms: property.bathrooms ? parseFloat(property.bathrooms) : null,
-          units: property.units ? parseInt(property.units) : 1,
-          purchasePrice: property.purchasePrice?.toString(),
-          appraisedValue: property.appraisedValue?.toString(),
-          monthlyRent: property.monthlyRent?.toString(),
-          occupancyStatus: property.occupancyStatus || 'occupied',
-          monthlyExpenses: property.monthlyExpenses?.toString(),
-          propertyTaxes: property.propertyTaxes?.toString(),
-          insurance: property.insurance?.toString(),
-          hoaFees: property.hoaFees?.toString(),
-          managementFees: property.managementFees?.toString(),
-        })
-        .returning();
+      const propertyResult = await pool.query(`
+        INSERT INTO dscr_properties (
+          street_address, city, state, zip_code, county, property_type, year_built, square_feet,
+          bedrooms, bathrooms, units, purchase_price, appraised_value, monthly_rent, occupancy_status,
+          monthly_expenses, property_taxes, insurance, hoa_fees, management_fees
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+        RETURNING id
+      `, [
+        property.streetAddress, property.city, property.state, property.zipCode,
+        property.county || null, property.propertyType || 'sfr',
+        property.yearBuilt ? parseInt(property.yearBuilt) : null,
+        property.squareFeet ? parseInt(property.squareFeet) : null,
+        property.bedrooms ? parseInt(property.bedrooms) : null,
+        property.bathrooms ? parseFloat(property.bathrooms) : null,
+        property.units ? parseInt(property.units) : 1,
+        property.purchasePrice || null, property.appraisedValue || null,
+        property.monthlyRent || null, property.occupancyStatus || 'occupied',
+        property.monthlyExpenses || null, property.propertyTaxes || null,
+        property.insurance || null, property.hoaFees || null, property.managementFees || null
+      ]);
+      const propertyId = propertyResult.rows[0].id;
 
       const tier = loan.tier || 'standard';
       const rate = TIER_RATES[tier] || 0.08;
@@ -105,29 +98,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const applicationNumber = generateApplicationNumber();
 
-      const [application] = await db.insert(dscrApplications)
-        .values({
-          borrowerId: newBorrower.id,
-          propertyId: newProperty.id,
-          applicationNumber,
-          loanAmountRequested: principal.toString(),
-          loanPurpose: loan.loanPurpose || 'purchase',
-          termMonths,
-          tier: tier as any,
-          monthlyPayment: monthlyPayment.toFixed(2),
-          dscrBps: Math.round(dscr * 100),
-          ltvBps: Math.round(ltv * 10000),
-          interestRateBps: Math.round(rate * 10000),
-          status: 'submitted',
-          walletAddress: walletAddress || null,
-        })
-        .returning();
+      const appResult = await pool.query(`
+        INSERT INTO dscr_applications (
+          borrower_id, property_id, application_number, loan_amount_requested, loan_purpose,
+          term_months, tier, monthly_payment, dscr_bps, ltv_bps, interest_rate_bps, status, wallet_address
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        RETURNING id, application_number
+      `, [
+        borrowerId, propertyId, applicationNumber, principal, loan.loanPurpose || 'purchase',
+        termMonths, tier, monthlyPayment.toFixed(2), Math.round(dscr * 100), Math.round(ltv * 10000),
+        Math.round(rate * 10000), 'submitted', walletAddress || null
+      ]);
 
       return res.status(201).json({
         success: true,
         message: 'DSCR loan application submitted successfully',
-        applicationId: application.id,
-        applicationNumber: application.applicationNumber,
+        applicationId: appResult.rows[0].id,
+        applicationNumber: appResult.rows[0].application_number,
         calculatedMetrics: {
           monthlyPayment: Math.round(monthlyPayment * 100) / 100,
           dscr: Math.round(dscr * 100) / 100,
