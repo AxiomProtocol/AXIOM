@@ -155,25 +155,96 @@ export default function InvestorCommitment() {
       <Head>
         <title>Invest in DSCR Fund | AXUSD Rental Lending</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="Invest in a diversified portfolio of DSCR rental property loans. Target 10-14% annual returns backed by real estate. SEC Reg D 506(c) for accredited investors." />
       </Head>
       <div style={{ minHeight: '100vh', background: '#F8FAFC', padding: '20px' }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <Link href="/lending-fund" style={{ color: '#6b7280', fontSize: '14px', textDecoration: 'none' }}>
               ← Back to Lending Fund
             </Link>
-            <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#1a1a2e', marginTop: '16px' }}>
-              Invest in DSCR Rental Fund
+            <h1 style={{ fontSize: '32px', fontWeight: 700, color: '#1a1a2e', marginTop: '16px' }}>
+              DSCR Rental Lending Fund
             </h1>
-            <p style={{ fontSize: '16px', color: '#6b7280', marginTop: '8px' }}>
-              Register your investment commitment for 30-year amortizing rental property loans
+            <p style={{ fontSize: '18px', color: '#6b7280', marginTop: '12px', maxWidth: '600px', margin: '12px auto 0' }}>
+              Earn passive income backed by a diversified portfolio of 30-year rental property loans
             </p>
+          </div>
+
+          <div style={{ ...cardStyle, background: 'linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%)', color: 'white', marginBottom: '24px' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '20px', color: '#D4AF37' }}>Fund Highlights</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '24px', textAlign: 'center' }}>
+              <div>
+                <div style={{ fontSize: '28px', fontWeight: 700, color: '#D4AF37' }}>10-14%</div>
+                <div style={{ fontSize: '14px', color: '#9CA3AF' }}>Target Annual Return</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '28px', fontWeight: 700, color: '#D4AF37' }}>$25K</div>
+                <div style={{ fontSize: '14px', color: '#9CA3AF' }}>Minimum Investment</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '28px', fontWeight: 700, color: '#D4AF37' }}>Monthly</div>
+                <div style={{ fontSize: '14px', color: '#9CA3AF' }}>Distributions</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '28px', fontWeight: 700, color: '#D4AF37' }}>1st Lien</div>
+                <div style={{ fontSize: '14px', color: '#9CA3AF' }}>Secured Position</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ ...cardStyle, marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px', color: '#1a1a2e' }}>How the Fund Works</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#D4AF3720', color: '#D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, flexShrink: 0 }}>1</div>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '15px', color: '#374151', marginBottom: '4px' }}>You Invest</div>
+                  <p style={{ fontSize: '13px', color: '#6b7280', margin: 0, lineHeight: 1.5 }}>Your capital is pooled with other accredited investors in the DSCR Pool Vault.</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#D4AF3720', color: '#D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, flexShrink: 0 }}>2</div>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '15px', color: '#374151', marginBottom: '4px' }}>We Originate</div>
+                  <p style={{ fontSize: '13px', color: '#6b7280', margin: 0, lineHeight: 1.5 }}>Fund is deployed into carefully underwritten 30-year rental property loans.</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#D4AF3720', color: '#D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, flexShrink: 0 }}>3</div>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '15px', color: '#374151', marginBottom: '4px' }}>Borrowers Repay</div>
+                  <p style={{ fontSize: '13px', color: '#6b7280', margin: 0, lineHeight: 1.5 }}>Monthly loan payments include principal and interest, secured by 1st lien position.</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#22C55E20', color: '#22C55E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, flexShrink: 0 }}>4</div>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '15px', color: '#374151', marginBottom: '4px' }}>You Earn</div>
+                  <p style={{ fontSize: '13px', color: '#6b7280', margin: 0, lineHeight: 1.5 }}>Receive monthly distributions proportional to your share of the fund.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+            {Object.entries(TIER_INFO).map(([key, tier]) => (
+              <div key={key} style={{ ...cardStyle, borderLeft: `4px solid ${key === 'low' ? '#22C55E' : key === 'standard' ? '#3B82F6' : '#F59E0B'}` }}>
+                <div style={{ fontWeight: 600, color: key === 'low' ? '#22C55E' : key === 'standard' ? '#3B82F6' : '#F59E0B', marginBottom: '8px' }}>{tier.name}</div>
+                <div style={{ fontSize: '13px', color: '#6b7280', lineHeight: 1.6 }}>
+                  <div>Interest Rate: {tier.rate}</div>
+                  <div>Target Return: {tier.targetReturn}</div>
+                  <div style={{ marginTop: '8px', fontSize: '12px' }}>{tier.description}</div>
+                </div>
+              </div>
+            ))}
           </div>
 
           <div style={{ ...cardStyle, background: '#FFFBEB', borderColor: '#FCD34D', marginBottom: '24px' }}>
             <div style={{ fontSize: '14px', color: '#92400E' }}>
               <strong>SEC Reg D 506(c) Offering</strong> — This investment opportunity is available to accredited investors only. 
-              Minimum investment: $25,000. Target returns are based on historical performance and are not guaranteed.
+              Minimum investment: $25,000. All investors must complete accreditation verification. Target returns are based on 
+              projected loan performance and are not guaranteed. Past performance does not guarantee future results.
             </div>
           </div>
 
@@ -364,6 +435,74 @@ export default function InvestorCommitment() {
               This is a non-binding soft commitment and does not obligate you to invest.
             </p>
           </form>
+
+          <div style={{ ...cardStyle, marginTop: '32px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px', color: '#1a1a2e' }}>Investor FAQ</h3>
+            
+            <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '16px', marginBottom: '16px' }}>
+              <div style={{ fontWeight: 600, fontSize: '15px', color: '#374151', marginBottom: '8px' }}>
+                What is an accredited investor?
+              </div>
+              <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                An accredited investor is an individual with annual income exceeding $200,000 (or $300,000 with spouse) 
+                for two consecutive years, or net worth over $1 million excluding primary residence. Entities must have 
+                $5 million in assets. This status allows participation in private securities offerings.
+              </p>
+            </div>
+
+            <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '16px', marginBottom: '16px' }}>
+              <div style={{ fontWeight: 600, fontSize: '15px', color: '#374151', marginBottom: '8px' }}>
+                How are returns generated?
+              </div>
+              <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                Returns come from the interest payments made by borrowers on 30-year DSCR loans. With rates between 
+                7-9.5% APR on the loans and low default rates due to conservative underwriting, the fund targets 
+                10-14% annual returns after expenses and reserves.
+              </p>
+            </div>
+
+            <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '16px', marginBottom: '16px' }}>
+              <div style={{ fontWeight: 600, fontSize: '15px', color: '#374151', marginBottom: '8px' }}>
+                What happens if a borrower defaults?
+              </div>
+              <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                All loans are secured by first-lien position on the property with maximum 75% LTV. This means the 
+                property value exceeds the loan balance by at least 25%. In case of default, the fund can foreclose 
+                and recover the principal. We also maintain loss reserves to protect investor returns.
+              </p>
+            </div>
+
+            <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '16px', marginBottom: '16px' }}>
+              <div style={{ fontWeight: 600, fontSize: '15px', color: '#374151', marginBottom: '8px' }}>
+                Can I redeem my investment early?
+              </div>
+              <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                The fund has a 12-month lockup period. After that, quarterly redemption requests are processed 
+                subject to available liquidity. Early redemption fees may apply. Full details are provided in the 
+                Private Placement Memorandum (PPM).
+              </p>
+            </div>
+
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '15px', color: '#374151', marginBottom: '8px' }}>
+                How is this different from REITs?
+              </div>
+              <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                Unlike REITs that own and manage properties, this fund focuses on lending to property investors. 
+                You earn fixed income from loan interest rather than variable returns from property appreciation 
+                and rental income. This provides more predictable, bond-like returns with real estate backing.
+              </p>
+            </div>
+          </div>
+
+          <div style={{ ...cardStyle, marginTop: '24px', background: '#F0FDF4', border: '1px solid #86EFAC' }}>
+            <h4 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px', color: '#166534' }}>Need More Information?</h4>
+            <p style={{ fontSize: '14px', color: '#166534', lineHeight: 1.6, margin: 0 }}>
+              Schedule a call with our investor relations team to discuss the opportunity in detail. 
+              We&apos;ll walk you through the fund structure, current portfolio, and answer any questions 
+              before you commit. Email <strong>investors@axiomprotocol.app</strong> or submit the form above.
+            </p>
+          </div>
         </div>
       </div>
     </>

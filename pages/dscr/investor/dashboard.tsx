@@ -397,9 +397,13 @@ export default function InvestorDashboard() {
 
           <div style={cardStyle}>
             <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px' }}>Smart Contracts</h2>
+            <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px', lineHeight: 1.6 }}>
+              All fund operations are managed by verified smart contracts on Arbitrum One. 
+              Click the addresses to view real-time transaction history on Arbiscan.
+            </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
               <div>
-                <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>DSCR Pool Vault</div>
+                <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>DSCR Pool Vault (ERC-4626)</div>
                 <a 
                   href={`https://arbiscan.io/address/${data?.contracts.vault}`}
                   target="_blank"
@@ -423,6 +427,68 @@ export default function InvestorDashboard() {
             </div>
             <div style={{ marginTop: '12px', fontSize: '12px', color: '#6b7280' }}>
               Network: {data?.contracts.network} (Chain ID: {data?.contracts.chainId})
+            </div>
+          </div>
+
+          <div style={{ ...cardStyle, marginTop: '24px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px' }}>Understanding the Metrics</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+              <div>
+                <h4 style={{ fontSize: '15px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>Total Assets</h4>
+                <p style={{ fontSize: '13px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                  The total value of AXUSD held in the vault, including both deployed capital (active loans) 
+                  and available liquidity waiting to be deployed. This represents the fund&apos;s total size.
+                </p>
+              </div>
+              <div>
+                <h4 style={{ fontSize: '15px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>Utilization Rate</h4>
+                <p style={{ fontSize: '13px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                  The percentage of fund assets currently deployed in loans. Higher utilization means more 
+                  capital is earning interest. We target 60-80% utilization to balance returns with liquidity.
+                </p>
+              </div>
+              <div>
+                <h4 style={{ fontSize: '15px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>Portfolio DSCR</h4>
+                <p style={{ fontSize: '13px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                  The weighted average Debt Service Coverage Ratio across all loans. A DSCR of 1.20 means 
+                  properties generate 20% more income than needed to cover loan payments, providing a safety buffer.
+                </p>
+              </div>
+              <div>
+                <h4 style={{ fontSize: '15px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>Portfolio LTV</h4>
+                <p style={{ fontSize: '13px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                  The average Loan-to-Value ratio. Lower LTV means more equity cushion protecting the fund. 
+                  Our maximum LTV is 75%, meaning properties are worth at least 33% more than the loan balance.
+                </p>
+              </div>
+              <div>
+                <h4 style={{ fontSize: '15px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>Realized Cashflows</h4>
+                <p style={{ fontSize: '13px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                  Actual interest and principal payments collected from borrowers. We show realized returns only, 
+                  not projections. This represents real money earned by the fund that can be distributed to investors.
+                </p>
+              </div>
+              <div>
+                <h4 style={{ fontSize: '15px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>Vault Shares</h4>
+                <p style={{ fontSize: '13px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                  Your ownership stake in the fund, represented as ERC-4626 vault shares. As the fund earns 
+                  interest, the value per share increases, growing your position without additional deposits.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ ...cardStyle, marginTop: '24px', background: '#F0FDF4', border: '1px solid #86EFAC' }}>
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <div style={{ fontSize: '32px' }}>ℹ️</div>
+              <div style={{ flex: 1, minWidth: '250px' }}>
+                <h4 style={{ fontSize: '15px', fontWeight: 600, color: '#166534', marginBottom: '8px' }}>Important Note on Returns</h4>
+                <p style={{ fontSize: '13px', color: '#166534', lineHeight: 1.6, margin: 0 }}>
+                  This dashboard displays <strong>realized returns only</strong> — actual interest collected and principal repaid. 
+                  We do not show projected or promised yields. Past performance does not guarantee future results. 
+                  Your investment in the DSCR Fund is subject to risk, including potential loss of principal.
+                </p>
+              </div>
             </div>
           </div>
         </div>

@@ -232,20 +232,85 @@ export default function DSCRLoanApplication() {
       <Head>
         <title>Apply for DSCR Loan | AXUSD Rental Lending Fund</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="Apply for 30-year DSCR rental loans with competitive rates. No personal income verification required - qualify based on property cash flow." />
       </Head>
       <div style={{ minHeight: '100vh', background: '#F8FAFC', padding: '20px' }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <Link href="/lending-fund" style={{ color: '#6b7280', fontSize: '14px', textDecoration: 'none' }}>
               ← Back to Lending Fund
             </Link>
-            <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#1a1a2e', marginTop: '16px' }}>
-              DSCR Rental Loan Application
+            <h1 style={{ fontSize: '32px', fontWeight: 700, color: '#1a1a2e', marginTop: '16px' }}>
+              DSCR Rental Property Loans
             </h1>
-            <p style={{ fontSize: '16px', color: '#6b7280', marginTop: '8px' }}>
-              30-year amortizing loans for rental investment properties
+            <p style={{ fontSize: '18px', color: '#6b7280', marginTop: '12px', maxWidth: '600px', margin: '12px auto 0' }}>
+              Long-term financing for buy-and-hold investors. Qualify based on property income, not your personal W-2.
             </p>
           </div>
+
+          {step === 1 && (
+            <>
+              <div style={{ ...cardStyle, background: 'linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%)', color: 'white', marginBottom: '24px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '16px', color: '#D4AF37' }}>Why Choose DSCR Loans?</h2>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+                  <div>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>No W-2 Required</div>
+                    <p style={{ fontSize: '14px', color: '#9CA3AF', lineHeight: 1.5 }}>
+                      Qualify based on the property&apos;s rental income, not your personal tax returns or employment history.
+                    </p>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>30-Year Terms</div>
+                    <p style={{ fontSize: '14px', color: '#9CA3AF', lineHeight: 1.5 }}>
+                      Fully amortizing loans with predictable monthly payments. Build equity while generating cash flow.
+                    </p>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>Fast Closings</div>
+                    <p style={{ fontSize: '14px', color: '#9CA3AF', lineHeight: 1.5 }}>
+                      Streamlined process with conditional term sheets in 24-48 hours. Close in as little as 21 days.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ ...cardStyle, marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px', color: '#1a1a2e' }}>Available Loan Tiers</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+                  {Object.entries(TIER_INFO).map(([key, tier]) => (
+                    <div key={key} style={{ 
+                      padding: '16px', 
+                      borderRadius: '12px', 
+                      border: `2px solid ${tier.color}20`,
+                      background: `${tier.color}08`
+                    }}>
+                      <div style={{ fontWeight: 600, color: tier.color, marginBottom: '8px' }}>{tier.name}</div>
+                      <div style={{ fontSize: '13px', color: '#6b7280', lineHeight: 1.5 }}>
+                        <div>Max LTV: {tier.ltv}</div>
+                        <div>Min DSCR: {tier.dscr}</div>
+                        <div>Rate: {tier.rate} APR</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '16px', lineHeight: 1.5 }}>
+                  <strong>What is DSCR?</strong> Debt Service Coverage Ratio measures how well the property&apos;s rental income covers the loan payment. 
+                  A DSCR of 1.20 means the property generates 20% more income than needed to cover the mortgage.
+                </p>
+              </div>
+
+              <div style={{ ...cardStyle, background: '#FFFBEB', border: '1px solid #FCD34D', marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px', color: '#92400E' }}>Eligible Properties</h3>
+                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '14px', color: '#78350F', lineHeight: 1.8 }}>
+                  <li>Single family homes, duplexes, triplexes, and fourplexes</li>
+                  <li>Small multifamily properties (5-8 units considered case-by-case)</li>
+                  <li>Condos and townhomes with HOA approval</li>
+                  <li>Properties in all 50 U.S. states</li>
+                  <li>Must be investment properties (not owner-occupied)</li>
+                </ul>
+              </div>
+            </>
+          )}
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '32px' }}>
             {[1, 2, 3, 4].map(s => (
@@ -615,6 +680,65 @@ export default function DSCRLoanApplication() {
                 }}>
                   {loading ? 'Submitting...' : 'Submit Application'}
                 </button>
+              </div>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div style={{ ...cardStyle, marginTop: '24px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px', color: '#1a1a2e' }}>Frequently Asked Questions</h3>
+              
+              <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '16px', marginBottom: '16px' }}>
+                <div style={{ fontWeight: 600, fontSize: '15px', color: '#374151', marginBottom: '8px' }}>
+                  What documents will I need to provide?
+                </div>
+                <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                  Unlike traditional mortgages, DSCR loans require minimal documentation: property appraisal, 
+                  lease agreements or rent roll, proof of hazard insurance, and entity documents if applicable. 
+                  No personal tax returns, W-2s, or pay stubs required.
+                </p>
+              </div>
+
+              <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '16px', marginBottom: '16px' }}>
+                <div style={{ fontWeight: 600, fontSize: '15px', color: '#374151', marginBottom: '8px' }}>
+                  Can I use this for a BRRRR strategy?
+                </div>
+                <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                  Yes! Our DSCR loans are perfect for the refinance step in BRRRR (Buy, Rehab, Rent, Refinance, Repeat). 
+                  If you have an existing fix-and-flip loan with us, we can convert it to a 30-year DSCR loan once 
+                  the property is stabilized and leased.
+                </p>
+              </div>
+
+              <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '16px', marginBottom: '16px' }}>
+                <div style={{ fontWeight: 600, fontSize: '15px', color: '#374151', marginBottom: '8px' }}>
+                  What if my property is currently vacant?
+                </div>
+                <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                  We can underwrite based on market rent as determined by a third-party appraisal. For vacant properties, 
+                  we may require 3-6 months of reserves and use 75% of market rent for DSCR calculations.
+                </p>
+              </div>
+
+              <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '16px', marginBottom: '16px' }}>
+                <div style={{ fontWeight: 600, fontSize: '15px', color: '#374151', marginBottom: '8px' }}>
+                  Are there prepayment penalties?
+                </div>
+                <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                  Standard terms include a 3-year prepayment penalty (3%, 2%, 1%). We also offer no-prepay options 
+                  at a slightly higher rate. Speak with our team about the best structure for your investment goals.
+                </p>
+              </div>
+
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '15px', color: '#374151', marginBottom: '8px' }}>
+                  How is the loan funded?
+                </div>
+                <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
+                  Loans are funded through the AXUSD DSCR Pool, a DeFi-powered lending vault on Arbitrum. 
+                  This allows for faster decisions and competitive rates while maintaining regulatory compliance. 
+                  All funds are AXUSD stablecoin converted to USD at closing.
+                </p>
               </div>
             </div>
           )}
