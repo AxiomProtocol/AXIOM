@@ -45,8 +45,21 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      arbitrumOne: process.env.ARBISCAN_API_KEY || "no-api-key-needed",
+      arbitrum: process.env.ARBISCAN_API_KEY || "",
     },
+    customChains: [
+      {
+        network: "arbitrum",
+        chainId: 42161,
+        urls: {
+          apiURL: "https://api.arbiscan.io/api",
+          browserURL: "https://arbiscan.io"
+        }
+      }
+    ]
+  },
+  sourcify: {
+    enabled: false
   },
   paths: {
     sources: "./contracts-axusd",
