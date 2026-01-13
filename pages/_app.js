@@ -36,7 +36,10 @@ const REBUILD_NAV_PAGES = [
   '/workbook',
   '/purpose-group-onboarding',
   '/dashboard',
-  '/lending-fund'
+  '/lending-fund',
+  '/lending-fund/dashboard',
+  '/lending-fund/invest',
+  '/lending-fund/docs'
 ]
 
 function matchesRebuildNavPages(pathname) {
