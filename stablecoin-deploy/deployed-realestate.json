@@ -3,16 +3,42 @@
   "chainId": 42161,
   "deployer": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
   "timestamp": "2026-01-13T00:00:00.000Z",
+  "verified": true,
+  "verifiedOn": "Blockscout",
   "axusdAddress": "0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C",
   "treasuryAddress": "0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d",
   "insuranceFundAddress": "0x7B69ce0d83f45C2dBa3e5B73076beA8b1Be1271F",
   "fixAndFlip": {
-    "RiskConfig": "0x07A7b9644d32E0f1f113976B0FB3F5F5fbb1E937",
-    "LoanReceiptNFT": "0x6C4181A15EAC950A2504aC63ebE7F5A0999265e9",
-    "FixFlipPoolVault": "0xe39dCDf4C703BdA4527a7368a1E513DB2316F6b4",
-    "RepaymentRouter": "0x68fe7924c56c7B9D13F21B3a22Fe2B5bc59Ab9D5",
-    "FixFlipManager": "0x0d249eea77Efd1977731c9CF421797E291e0971E",
-    "ProductRegistry": "0x24C5796dCcF09deCD3Ac92063558E0B25c076743",
+    "RiskConfig": {
+      "address": "0x07A7b9644d32E0f1f113976B0FB3F5F5fbb1E937",
+      "verified": true,
+      "explorer": "https://arbitrum.blockscout.com/address/0x07A7b9644d32E0f1f113976B0FB3F5F5fbb1E937#code"
+    },
+    "LoanReceiptNFT": {
+      "address": "0x6C4181A15EAC950A2504aC63ebE7F5A0999265e9",
+      "verified": true,
+      "explorer": "https://arbitrum.blockscout.com/address/0x6C4181A15EAC950A2504aC63ebE7F5A0999265e9#code"
+    },
+    "FixFlipPoolVault": {
+      "address": "0xe39dCDf4C703BdA4527a7368a1E513DB2316F6b4",
+      "verified": true,
+      "explorer": "https://arbitrum.blockscout.com/address/0xe39dCDf4C703BdA4527a7368a1E513DB2316F6b4#code"
+    },
+    "RepaymentRouter": {
+      "address": "0x68fe7924c56c7B9D13F21B3a22Fe2B5bc59Ab9D5",
+      "verified": true,
+      "explorer": "https://arbitrum.blockscout.com/address/0x68fe7924c56c7B9D13F21B3a22Fe2B5bc59Ab9D5#code"
+    },
+    "FixFlipManager": {
+      "address": "0x0d249eea77Efd1977731c9CF421797E291e0971E",
+      "verified": true,
+      "explorer": "https://arbitrum.blockscout.com/address/0x0d249eea77Efd1977731c9CF421797E291e0971E#code"
+    },
+    "ProductRegistry": {
+      "address": "0x24C5796dCcF09deCD3Ac92063558E0B25c076743",
+      "verified": true,
+      "explorer": "https://arbitrum.blockscout.com/address/0x24C5796dCcF09deCD3Ac92063558E0B25c076743#code"
+    },
     "productConfig": {
       "productId": 1,
       "name": "Fix & Flip Bridge Loans",
@@ -25,11 +51,31 @@
     }
   },
   "dscr": {
-    "DSCRRiskConfig": "0xa93c623Ef901295454abBA6BB4314cFe82C5f0B9",
-    "DSCRLoanReceiptNFT": "0x66DB145A7ac0de369da88098E8F85467cFaD7674",
-    "DSCRPoolVault": "0x1E2ae36ffab9b0f0811B404E7b55FbD6824Cb504",
-    "RepaymentRouter": "0xa03e35afeE61c965522D88e778B356A2F2eF9Eab",
-    "DSCRLoanManager": "0x2657F688Af2fF327987dd7A8d4CCf1E781349052",
+    "DSCRRiskConfig": {
+      "address": "0xa93c623Ef901295454abBA6BB4314cFe82C5f0B9",
+      "verified": true,
+      "explorer": "https://arbitrum.blockscout.com/address/0xa93c623Ef901295454abBA6BB4314cFe82C5f0B9#code"
+    },
+    "DSCRLoanReceiptNFT": {
+      "address": "0x66DB145A7ac0de369da88098E8F85467cFaD7674",
+      "verified": true,
+      "explorer": "https://arbitrum.blockscout.com/address/0x66DB145A7ac0de369da88098E8F85467cFaD7674#code"
+    },
+    "DSCRPoolVault": {
+      "address": "0x1E2ae36ffab9b0f0811B404E7b55FbD6824Cb504",
+      "verified": true,
+      "explorer": "https://arbitrum.blockscout.com/address/0x1E2ae36ffab9b0f0811B404E7b55FbD6824Cb504#code"
+    },
+    "RepaymentRouter": {
+      "address": "0xa03e35afeE61c965522D88e778B356A2F2eF9Eab",
+      "verified": true,
+      "explorer": "https://arbitrum.blockscout.com/address/0xa03e35afeE61c965522D88e778B356A2F2eF9Eab#code"
+    },
+    "DSCRLoanManager": {
+      "address": "0x2657F688Af2fF327987dd7A8d4CCf1E781349052",
+      "verified": true,
+      "explorer": "https://arbitrum.blockscout.com/address/0x2657F688Af2fF327987dd7A8d4CCf1E781349052#code"
+    },
     "productTiers": {
       "100": {
         "name": "AXUSD_DSCR_RENTAL_V1_LOW",
@@ -50,11 +96,5 @@
         "interestRateBps": 950
       }
     }
-  },
-  "explorerUrls": {
-    "FixFlipManager": "https://arbiscan.io/address/0x0d249eea77Efd1977731c9CF421797E291e0971E",
-    "FixFlipPoolVault": "https://arbiscan.io/address/0xe39dCDf4C703BdA4527a7368a1E513DB2316F6b4",
-    "DSCRLoanManager": "https://arbiscan.io/address/0x2657F688Af2fF327987dd7A8d4CCf1E781349052",
-    "DSCRPoolVault": "https://arbiscan.io/address/0x1E2ae36ffab9b0f0811B404E7b55FbD6824Cb504"
   }
 }
