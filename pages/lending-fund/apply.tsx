@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { MobileBottomNav } from '../../components/lending-fund/MobileBottomNav';
+import MobileBottomNav from '../../components/lending-fund/MobileBottomNav';
 
 const US_STATES = [
   'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
