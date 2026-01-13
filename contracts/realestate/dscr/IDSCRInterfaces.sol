@@ -104,9 +104,39 @@ interface IDSCRLoanReceipt is IERC721 {
     ) external;
 
     function updateDSCRLoanStatus(uint256 loanId, DSCRLoanStatus status) external;
-    function getDSCRLoan(uint256 loanId) external view returns (DSCRLoanData memory);
     function getDSCRLoansByBorrower(address borrower) external view returns (uint256[] memory);
     function setRefinancedOut(uint256 loanId, uint256 newLoanId) external;
+    
+    function getDSCRLoanCore(uint256 loanId) external view returns (
+        uint256 loanId_,
+        uint256 productId,
+        address borrower,
+        uint256 originalPrincipal,
+        uint256 principalOutstanding,
+        DSCRLoanStatus status
+    );
+    
+    function getDSCRLoanTerms(uint256 loanId) external view returns (
+        uint256 interestRateBps,
+        uint256 monthlyPayment,
+        uint256 termMonths,
+        uint256 paymentsRemaining,
+        uint256 dscrBps,
+        uint256 ltvBps
+    );
+    
+    function getDSCRLoanPayments(uint256 loanId) external view returns (
+        uint256 startTimestamp,
+        uint256 lastPaymentTimestamp,
+        uint256 totalInterestPaid,
+        uint256 totalPrincipalPaid
+    );
+    
+    function getDSCRLoanProperty(uint256 loanId) external view returns (
+        uint256 appraisedValue,
+        uint256 monthlyRent,
+        bytes32 collateralHash
+    );
 
     event DSCRLoanOriginated(
         uint256 indexed loanId,

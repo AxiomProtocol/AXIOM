@@ -143,18 +143,38 @@ contract DSCRLoanManager is AccessControl, Pausable, ReentrancyGuard, IDSCRLoanM
     function payOnChain(uint256 loanId, uint256 amount) external override nonReentrant whenNotPaused {
         require(amount > 0, "DSCRLoanManager: zero amount");
 
-        IDSCRLoanReceipt.DSCRLoanData memory loan = loanReceipt.getDSCRLoan(loanId);
-        require(loan.loanId == loanId, "DSCRLoanManager: loan not found");
+        (
+            uint256 loanId_,
+            ,
+            address borrower,
+            uint256 originalPrincipal,
+            uint256 principalOutstanding,
+            IDSCRLoanReceipt.DSCRLoanStatus status
+        ) = loanReceipt.getDSCRLoanCore(loanId);
+        require(loanId_ == loanId, "DSCRLoanManager: loan not found");
         require(
-            loan.status == IDSCRLoanReceipt.DSCRLoanStatus.Active ||
-            loan.status == IDSCRLoanReceipt.DSCRLoanStatus.Current ||
-            loan.status == IDSCRLoanReceipt.DSCRLoanStatus.Delinquent30 ||
-            loan.status == IDSCRLoanReceipt.DSCRLoanStatus.Delinquent60 ||
-            loan.status == IDSCRLoanReceipt.DSCRLoanStatus.Delinquent90,
+            status == IDSCRLoanReceipt.DSCRLoanStatus.Active ||
+            status == IDSCRLoanReceipt.DSCRLoanStatus.Current ||
+            status == IDSCRLoanReceipt.DSCRLoanStatus.Delinquent30 ||
+            status == IDSCRLoanReceipt.DSCRLoanStatus.Delinquent60 ||
+            status == IDSCRLoanReceipt.DSCRLoanStatus.Delinquent90,
             "DSCRLoanManager: loan not payable"
         );
 
-        (uint256 principalPortion, uint256 interestPortion) = _computePaymentSplit(loan, amount);
+        (
+            uint256 interestRateBps,
+            uint256 monthlyPayment,
+            ,
+            ,
+            ,
+        ) = loanReceipt.getDSCRLoanTerms(loanId);
+
+        (uint256 principalPortion, uint256 interestPortion) = _computePaymentSplitSimple(
+            principalOutstanding,
+            interestRateBps,
+            monthlyPayment,
+            amount
+        );
 
         axusd.safeTransferFrom(msg.sender, address(repaymentRouter), amount);
         repaymentRouter.routePayment(loanId, amount, principalPortion, interestPortion);
@@ -164,10 +184,10 @@ contract DSCRLoanManager is AccessControl, Pausable, ReentrancyGuard, IDSCRLoanM
         totalRepaid += principalPortion;
         totalInterestCollected += interestPortion;
 
-        if (loan.principalOutstanding <= principalPortion) {
+        if (principalOutstanding <= principalPortion) {
             activeLoans--;
-            borrowerExposure[loan.borrower] -= loan.originalPrincipal;
-            dscrVault.unlockFromLoan(loan.originalPrincipal);
+            borrowerExposure[borrower] -= originalPrincipal;
+            dscrVault.unlockFromLoan(originalPrincipal);
         }
 
         emit PaymentReceived(loanId, amount, principalPortion, interestPortion, true);
@@ -181,28 +201,48 @@ contract DSCRLoanManager is AccessControl, Pausable, ReentrancyGuard, IDSCRLoanM
         require(amount > 0, "DSCRLoanManager: zero amount");
         require(referenceHash != bytes32(0), "DSCRLoanManager: invalid reference");
 
-        IDSCRLoanReceipt.DSCRLoanData memory loan = loanReceipt.getDSCRLoan(loanId);
-        require(loan.loanId == loanId, "DSCRLoanManager: loan not found");
+        (
+            uint256 loanId_,
+            ,
+            address borrower,
+            uint256 originalPrincipal,
+            uint256 principalOutstanding,
+            IDSCRLoanReceipt.DSCRLoanStatus status
+        ) = loanReceipt.getDSCRLoanCore(loanId);
+        require(loanId_ == loanId, "DSCRLoanManager: loan not found");
         require(
-            loan.status == IDSCRLoanReceipt.DSCRLoanStatus.Active ||
-            loan.status == IDSCRLoanReceipt.DSCRLoanStatus.Current ||
-            loan.status == IDSCRLoanReceipt.DSCRLoanStatus.Delinquent30 ||
-            loan.status == IDSCRLoanReceipt.DSCRLoanStatus.Delinquent60 ||
-            loan.status == IDSCRLoanReceipt.DSCRLoanStatus.Delinquent90,
+            status == IDSCRLoanReceipt.DSCRLoanStatus.Active ||
+            status == IDSCRLoanReceipt.DSCRLoanStatus.Current ||
+            status == IDSCRLoanReceipt.DSCRLoanStatus.Delinquent30 ||
+            status == IDSCRLoanReceipt.DSCRLoanStatus.Delinquent60 ||
+            status == IDSCRLoanReceipt.DSCRLoanStatus.Delinquent90,
             "DSCRLoanManager: loan not payable"
         );
 
-        (uint256 principalPortion, uint256 interestPortion) = _computePaymentSplit(loan, amount);
+        (
+            uint256 interestRateBps,
+            uint256 monthlyPayment,
+            ,
+            ,
+            ,
+        ) = loanReceipt.getDSCRLoanTerms(loanId);
+
+        (uint256 principalPortion, uint256 interestPortion) = _computePaymentSplitSimple(
+            principalOutstanding,
+            interestRateBps,
+            monthlyPayment,
+            amount
+        );
 
         loanReceipt.recordDSCRPayment(loanId, principalPortion, interestPortion);
 
         totalRepaid += principalPortion;
         totalInterestCollected += interestPortion;
 
-        if (loan.principalOutstanding <= principalPortion) {
+        if (principalOutstanding <= principalPortion) {
             activeLoans--;
-            borrowerExposure[loan.borrower] -= loan.originalPrincipal;
-            dscrVault.unlockFromLoan(loan.originalPrincipal);
+            borrowerExposure[borrower] -= originalPrincipal;
+            dscrVault.unlockFromLoan(originalPrincipal);
         }
 
         dscrVault.reportYield(interestPortion);
@@ -334,13 +374,13 @@ contract DSCRLoanManager is AccessControl, Pausable, ReentrancyGuard, IDSCRLoanM
         return numerator / denominator;
     }
 
-    function _computePaymentSplit(
-        IDSCRLoanReceipt.DSCRLoanData memory loan,
+    function _computePaymentSplitSimple(
+        uint256 principalOutstanding,
+        uint256 interestRateBps,
+        uint256 monthlyPayment,
         uint256 amount
     ) internal pure returns (uint256 principalPortion, uint256 interestPortion) {
-        uint256 expectedPayment = loan.monthlyPayment;
-        
-        uint256 monthlyInterest = (loan.principalOutstanding * loan.interestRateBps) / (BASIS_POINTS * MONTHS_PER_YEAR);
+        uint256 monthlyInterest = (principalOutstanding * interestRateBps) / (BASIS_POINTS * MONTHS_PER_YEAR);
         
         if (amount <= monthlyInterest) {
             interestPortion = amount;
@@ -349,8 +389,8 @@ contract DSCRLoanManager is AccessControl, Pausable, ReentrancyGuard, IDSCRLoanM
             interestPortion = monthlyInterest;
             principalPortion = amount - interestPortion;
             
-            if (principalPortion > loan.principalOutstanding) {
-                principalPortion = loan.principalOutstanding;
+            if (principalPortion > principalOutstanding) {
+                principalPortion = principalOutstanding;
             }
         }
     }
@@ -370,17 +410,24 @@ contract DSCRLoanManager is AccessControl, Pausable, ReentrancyGuard, IDSCRLoanM
     }
 
     function markDefault(uint256 loanId) external override onlyRole(ADMIN_ROLE) {
-        IDSCRLoanReceipt.DSCRLoanData memory loan = loanReceipt.getDSCRLoan(loanId);
-        require(loan.loanId == loanId, "DSCRLoanManager: loan not found");
+        (
+            uint256 loanId_,
+            ,
+            ,
+            ,
+            uint256 principalOutstanding,
+            IDSCRLoanReceipt.DSCRLoanStatus status
+        ) = loanReceipt.getDSCRLoanCore(loanId);
+        require(loanId_ == loanId, "DSCRLoanManager: loan not found");
         require(
-            loan.status == IDSCRLoanReceipt.DSCRLoanStatus.Delinquent90,
+            status == IDSCRLoanReceipt.DSCRLoanStatus.Delinquent90,
             "DSCRLoanManager: must be 90+ days delinquent"
         );
 
         loanReceipt.updateDSCRLoanStatus(loanId, IDSCRLoanReceipt.DSCRLoanStatus.Default);
         activeLoans--;
 
-        emit LoanDefaulted(loanId, loan.principalOutstanding);
+        emit LoanDefaulted(loanId, principalOutstanding);
     }
 
     function setFixFlipContracts(

@@ -41,6 +41,16 @@ const config: HardhatUserConfig = {
           viaIR: true,
         },
       },
+      "contracts/realestate/dscr/*.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 50,
+          },
+          viaIR: true,
+        },
+      },
     },
   },
   networks: {

@@ -150,13 +150,78 @@ contract DSCRLoanReceiptNFT is ERC721Enumerable, AccessControl, Pausable, IDSCRL
         emit DSCRLoanRefinanced(loanId, newLoanId);
     }
 
-    function getDSCRLoan(uint256 loanId) external view override returns (DSCRLoanData memory) {
-        require(_exists(loanId), "DSCRLoanReceiptNFT: loan does not exist");
-        return _loans[loanId];
-    }
-
     function getDSCRLoansByBorrower(address borrower) external view override returns (uint256[] memory) {
         return _borrowerLoans[borrower];
+    }
+
+    function getDSCRLoanCore(uint256 loanId) external view override returns (
+        uint256 loanId_,
+        uint256 productId,
+        address borrower,
+        uint256 originalPrincipal,
+        uint256 principalOutstanding,
+        DSCRLoanStatus status
+    ) {
+        require(_exists(loanId), "DSCRLoanReceiptNFT: loan does not exist");
+        DSCRLoanData storage loan = _loans[loanId];
+        return (
+            loan.loanId,
+            loan.productId,
+            loan.borrower,
+            loan.originalPrincipal,
+            loan.principalOutstanding,
+            loan.status
+        );
+    }
+
+    function getDSCRLoanTerms(uint256 loanId) external view override returns (
+        uint256 interestRateBps,
+        uint256 monthlyPayment,
+        uint256 termMonths,
+        uint256 paymentsRemaining,
+        uint256 dscrBps,
+        uint256 ltvBps
+    ) {
+        require(_exists(loanId), "DSCRLoanReceiptNFT: loan does not exist");
+        DSCRLoanData storage loan = _loans[loanId];
+        return (
+            loan.interestRateBps,
+            loan.monthlyPayment,
+            loan.termMonths,
+            loan.paymentsRemaining,
+            loan.dscrBps,
+            loan.ltvBps
+        );
+    }
+
+    function getDSCRLoanPayments(uint256 loanId) external view override returns (
+        uint256 startTimestamp,
+        uint256 lastPaymentTimestamp,
+        uint256 totalInterestPaid,
+        uint256 totalPrincipalPaid
+    ) {
+        require(_exists(loanId), "DSCRLoanReceiptNFT: loan does not exist");
+        DSCRLoanData storage loan = _loans[loanId];
+        return (
+            loan.startTimestamp,
+            loan.lastPaymentTimestamp,
+            loan.totalInterestPaid,
+            loan.totalPrincipalPaid
+        );
+    }
+
+    function getDSCRLoanProperty(uint256 loanId) external view override returns (
+        uint256 appraisedValue,
+        uint256 monthlyRent,
+        bytes32 collateralHash
+    ) {
+        require(_exists(loanId), "DSCRLoanReceiptNFT: loan does not exist");
+        DSCRLoanData storage loan = _loans[loanId];
+        return (
+            loan.appraisedValue,
+            loan.monthlyRent,
+            loan.collateralHash
+        );
     }
 
     function getRefinancedTo(uint256 loanId) external view returns (uint256) {
