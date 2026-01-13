@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import Layout from '../../components/Layout';
 import { useWallet } from '../../components/WalletConnect/WalletContext';
 import { ethers } from 'ethers';
 import DisclosureBanner from '../../components/DisclosureBanner';
@@ -496,41 +496,45 @@ export default function SusuPage() {
   ];
 
   return (
-    <Layout>
+    <>
+      <Head>
+        <title>SUSU Savings Circles | Axiom Protocol</title>
+        <meta name="description" content="Join community savings circles. Build wealth together through structured rotating savings." />
+      </Head>
       <StepProgressBanner currentStep="save" />
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-        <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white py-16">
+      <div className="min-h-screen bg-white">
+        <div className="bg-gradient-to-r from-teal-50 via-white to-purple-50 py-16 border-b border-gray-100">
           <div className="max-w-6xl mx-auto px-6">
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-teal-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
                 🤝
               </div>
               <div>
-                <h1 className="text-4xl font-bold mb-1">The Wealth Practice</h1>
-                <p className="text-gray-300">Structured Savings Built With Others</p>
+                <h1 className="text-4xl font-bold mb-1 text-gray-900">The Wealth Practice</h1>
+                <p className="text-gray-600">Structured Savings Built With Others</p>
               </div>
             </div>
 
-            <p className="text-amber-200 text-sm mb-2">Step 3: Practice Wealth — Start small, build consistency, grow over time.</p>
-            <p className="text-gray-400 max-w-2xl mt-2 mb-4">
+            <p className="text-teal-600 text-sm mb-2 font-medium">Step 3: Practice Wealth — Start small, build consistency, grow over time.</p>
+            <p className="text-gray-600 max-w-2xl mt-2 mb-4">
               A structured savings practice built with others. Focus on consistency, discipline, and alignment — not investing or speculation.
             </p>
             <p className="text-gray-500 text-xs mb-4">Based on the traditional SUSU (rotating savings) method.</p>
             <div className="flex flex-wrap gap-4 mb-4">
-              <Link href={SUSU_ROUTES.SUSU_START_PATH} className="text-amber-400 hover:text-amber-300 underline text-sm">
+              <Link href={SUSU_ROUTES.SUSU_START_PATH} className="text-teal-600 hover:text-teal-500 underline text-sm font-medium">
                 New to The Wealth Practice? Start here
               </Link>
-              <Link href={SUSU_ROUTES.SUSU_FAQ_PATH} className="text-gray-400 hover:text-gray-300 underline text-sm">
+              <Link href={SUSU_ROUTES.SUSU_FAQ_PATH} className="text-gray-600 hover:text-gray-500 underline text-sm">
                 Read the FAQ
               </Link>
-              <Link href="/onramp" className="text-purple-400 hover:text-purple-300 underline text-sm">
+              <Link href="/onramp" className="text-purple-600 hover:text-purple-500 underline text-sm">
                 Get Axiom Units
               </Link>
             </div>
             <div className="flex flex-wrap gap-4 mb-4">
               <button
                 onClick={() => setShowTrustModal(true)}
-                className="inline-flex items-center gap-2 text-amber-300 hover:text-amber-200 text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-500 text-sm font-medium transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1863,6 +1867,6 @@ export default function SusuPage() {
         isOpen={showTrustModal} 
         onClose={() => setShowTrustModal(false)} 
       />
-    </Layout>
+    </>
   );
 }

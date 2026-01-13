@@ -38,7 +38,8 @@ const REBUILD_NAV_PAGES = [
   '/dashboard',
   '/lending-fund',
   '/stewards',
-  '/holders'
+  '/holders',
+  '/susu'
 ]
 
 function matchesRebuildNavPages(pathname) {
@@ -48,6 +49,7 @@ function matchesRebuildNavPages(pathname) {
   if (pathname.startsWith('/land/')) return true;
   if (pathname.startsWith('/lending-fund/')) return true;
   if (pathname.startsWith('/stewards/')) return true;
+  if (pathname.startsWith('/susu/')) return true;
   return false;
 }
 
