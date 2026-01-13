@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { SiteLayout } from '../../components/navigation';
 
 type OnboardingStep = 'connect' | 'personal' | 'accreditation' | 'documents' | 'signature' | 'complete';
 
@@ -450,19 +449,19 @@ This signature constitutes my legally binding electronic signature.`;
     .every(d => acknowledgedDocs.has(d.id));
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>Investor Onboarding | AXUSD Fix & Flip Lending Fund</title>
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black py-12">
+      <div style={{ background: "#FFFFFF", minHeight: "100vh", paddingTop: "40px", paddingBottom: "60px" }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
-            <Link href="/lending-fund" className="text-yellow-400 hover:text-yellow-300 mb-4 inline-block">
+            <Link href="/lending-fund" style={{ color: "#00D4AA" }} className="hover:opacity-80 mb-4 inline-block">
               ← Back to Fund Overview
             </Link>
-            <h1 className="text-3xl font-bold text-white">Investor Onboarding</h1>
-            <p className="text-gray-400 mt-2">
+            <h1 className="text-3xl font-bold" style={{ color: "#1a1a2e" }}>Investor Onboarding</h1>
+            <p style={{ color: "#6b7280" }} className="mt-2">
               SEC Reg D 506(c) - Accredited Investor Verification Required
             </p>
           </div>
@@ -471,33 +470,35 @@ This signature constitutes my legally binding electronic signature.`;
             {['connect', 'personal', 'accreditation', 'documents', 'signature', 'complete'].map((s, i) => (
               <div
                 key={s}
-                className={`flex-1 h-2 rounded-full ${
-                  step === s ? 'bg-yellow-500' :
-                  ['connect', 'personal', 'accreditation', 'documents', 'signature', 'complete'].indexOf(step) > i
-                    ? 'bg-green-500' : 'bg-gray-700'
-                }`}
+                className="flex-1 h-2 rounded-full"
+                style={{
+                  background: step === s ? '#00D4AA' :
+                    ['connect', 'personal', 'accreditation', 'documents', 'signature', 'complete'].indexOf(step) > i
+                      ? '#7B68EE' : '#e5e7eb'
+                }}
               />
             ))}
           </div>
 
           {error && (
-            <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4 mb-6">
-              <p className="text-red-400">{error}</p>
+            <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)" }} className="rounded-lg p-4 mb-6">
+              <p style={{ color: "#dc2626" }}>{error}</p>
             </div>
           )}
 
-          <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-8">
+          <div style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }} className="rounded-2xl p-8">
             {step === 'connect' && (
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-white mb-4">Connect Your Wallet</h2>
-                <p className="text-gray-400 mb-8">
+                <h2 className="text-2xl font-bold mb-4" style={{ color: "#1a1a2e" }}>Connect Your Wallet</h2>
+                <p style={{ color: "#6b7280" }} className="mb-8">
                   Connect your Web3 wallet to begin the investor verification process.
                   Your wallet signature will authenticate each step.
                 </p>
                 <button
                   onClick={connectWallet}
                   disabled={loading}
-                  className="px-8 py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg transition-all disabled:opacity-50"
+                  className="px-8 py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50"
+                  style={{ background: "#00D4AA" }}
                 >
                   {loading ? 'Connecting...' : 'Connect Wallet'}
                 </button>
@@ -506,30 +507,30 @@ This signature constitutes my legally binding electronic signature.`;
 
             {step === 'personal' && (
               <div>
-                <h2 className="text-2xl font-bold text-white mb-6">Personal Information</h2>
-                <p className="text-gray-400 text-sm mb-4">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Personal Information</h2>
+                <p className="text-gray-600 text-sm mb-4">
                   Your wallet will sign this information to prove ownership. Each signature includes a unique nonce to prevent replay attacks.
                 </p>
                 
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-gray-400 text-sm mb-1">Legal Full Name *</label>
+                      <label className="block text-gray-600 text-sm mb-1">Legal Full Name *</label>
                       <input
                         type="text"
                         value={formData.legalName}
                         onChange={(e) => handleInputChange('legalName', e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:border-yellow-500 focus:outline-none"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none"
                         placeholder="John Doe"
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-400 text-sm mb-1">Email Address *</label>
+                      <label className="block text-gray-600 text-sm mb-1">Email Address *</label>
                       <input
                         type="email"
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:border-yellow-500 focus:outline-none"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none"
                         placeholder="john@example.com"
                       />
                     </div>
@@ -537,96 +538,96 @@ This signature constitutes my legally binding electronic signature.`;
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-gray-400 text-sm mb-1">Phone</label>
+                      <label className="block text-gray-600 text-sm mb-1">Phone</label>
                       <input
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => handleInputChange('phone', e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:border-yellow-500 focus:outline-none"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none"
                         placeholder="+1 (555) 123-4567"
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-400 text-sm mb-1">Date of Birth</label>
+                      <label className="block text-gray-600 text-sm mb-1">Date of Birth</label>
                       <input
                         type="date"
                         value={formData.dateOfBirth}
                         onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:border-yellow-500 focus:outline-none"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-gray-400 text-sm mb-1">Street Address</label>
+                    <label className="block text-gray-600 text-sm mb-1">Street Address</label>
                     <input
                       type="text"
                       value={formData.street}
                       onChange={(e) => handleInputChange('street', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:border-yellow-500 focus:outline-none"
+                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none"
                       placeholder="123 Main St"
                     />
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-gray-400 text-sm mb-1">City</label>
+                      <label className="block text-gray-600 text-sm mb-1">City</label>
                       <input
                         type="text"
                         value={formData.city}
                         onChange={(e) => handleInputChange('city', e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:border-yellow-500 focus:outline-none"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-400 text-sm mb-1">State</label>
+                      <label className="block text-gray-600 text-sm mb-1">State</label>
                       <input
                         type="text"
                         value={formData.state}
                         onChange={(e) => handleInputChange('state', e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:border-yellow-500 focus:outline-none"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-400 text-sm mb-1">ZIP Code</label>
+                      <label className="block text-gray-600 text-sm mb-1">ZIP Code</label>
                       <input
                         type="text"
                         value={formData.zipCode}
                         onChange={(e) => handleInputChange('zipCode', e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:border-yellow-500 focus:outline-none"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none"
                       />
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-gray-700">
+                  <div className="pt-4 border-t border-gray-300">
                     <label className="flex items-center gap-3 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={formData.isEntity}
                         onChange={(e) => handleInputChange('isEntity', e.target.checked)}
-                        className="w-5 h-5 rounded border-gray-700 bg-gray-900 text-yellow-500 focus:ring-yellow-500"
+                        className="w-5 h-5 rounded border-gray-300 bg-white text-yellow-500 focus:ring-yellow-500"
                       />
-                      <span className="text-white">I am investing as an entity (LLC, Trust, Corporation)</span>
+                      <span className="text-gray-900">I am investing as an entity (LLC, Trust, Corporation)</span>
                     </label>
                   </div>
 
                   {formData.isEntity && (
                     <div className="grid grid-cols-3 gap-4 pt-4">
                       <div>
-                        <label className="block text-gray-400 text-sm mb-1">Entity Name</label>
+                        <label className="block text-gray-600 text-sm mb-1">Entity Name</label>
                         <input
                           type="text"
                           value={formData.entityName}
                           onChange={(e) => handleInputChange('entityName', e.target.value)}
-                          className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:border-yellow-500 focus:outline-none"
+                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-400 text-sm mb-1">Entity Type</label>
+                        <label className="block text-gray-600 text-sm mb-1">Entity Type</label>
                         <select
                           value={formData.entityType}
                           onChange={(e) => handleInputChange('entityType', e.target.value)}
-                          className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:border-yellow-500 focus:outline-none"
+                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none"
                         >
                           <option value="">Select type</option>
                           <option value="llc">LLC</option>
@@ -636,12 +637,12 @@ This signature constitutes my legally binding electronic signature.`;
                         </select>
                       </div>
                       <div>
-                        <label className="block text-gray-400 text-sm mb-1">State of Formation</label>
+                        <label className="block text-gray-600 text-sm mb-1">State of Formation</label>
                         <input
                           type="text"
                           value={formData.entityState}
                           onChange={(e) => handleInputChange('entityState', e.target.value)}
-                          className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:border-yellow-500 focus:outline-none"
+                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none"
                         />
                       </div>
                     </div>
@@ -651,7 +652,8 @@ This signature constitutes my legally binding electronic signature.`;
                 <button
                   onClick={submitPersonalInfo}
                   disabled={loading || !formData.legalName || !formData.email}
-                  className="w-full mt-8 py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full mt-8 py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: "#00D4AA" }}
                 >
                   {loading ? 'Signing & Saving...' : 'Sign & Continue to Accreditation'}
                 </button>
@@ -660,8 +662,8 @@ This signature constitutes my legally binding electronic signature.`;
 
             {step === 'accreditation' && (
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">Accredited Investor Verification</h2>
-                <p className="text-gray-400 mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Accredited Investor Verification</h2>
+                <p className="text-gray-600 mb-6">
                   Under SEC Rule 506(c), we must verify your accredited investor status.
                   Select the qualification that applies to you:
                 </p>
@@ -673,7 +675,7 @@ This signature constitutes my legally binding electronic signature.`;
                       className={`block p-4 border rounded-lg cursor-pointer transition-all ${
                         formData.accreditationMethod === method.id
                           ? 'border-yellow-500 bg-yellow-500/10'
-                          : 'border-gray-700 hover:border-gray-600'
+                          : 'border-gray-300 hover:border-gray-600'
                       }`}
                     >
                       <div className="flex items-start gap-3">
@@ -686,8 +688,8 @@ This signature constitutes my legally binding electronic signature.`;
                           className="mt-1"
                         />
                         <div>
-                          <div className="text-white font-medium">{method.label}</div>
-                          <div className="text-gray-400 text-sm">{method.description}</div>
+                          <div className="text-gray-900 font-medium">{method.label}</div>
+                          <div className="text-gray-600 text-sm">{method.description}</div>
                         </div>
                       </div>
                     </label>
@@ -695,14 +697,14 @@ This signature constitutes my legally binding electronic signature.`;
                 </div>
 
                 {formData.accreditationMethod === 'income' && (
-                  <div className="mb-6 p-4 bg-gray-900/50 rounded-lg">
-                    <label className="block text-gray-400 text-sm mb-2">
+                  <div className="mb-6 p-4 bg-white/50 rounded-lg">
+                    <label className="block text-gray-600 text-sm mb-2">
                       Annual Income (past 2 years average)
                     </label>
                     <select
                       value={formData.incomeAmount}
                       onChange={(e) => handleInputChange('incomeAmount', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900"
                     >
                       <option value="">Select income range</option>
                       <option value="200k-300k">$200,000 - $300,000</option>
@@ -714,14 +716,14 @@ This signature constitutes my legally binding electronic signature.`;
                 )}
 
                 {formData.accreditationMethod === 'net_worth' && (
-                  <div className="mb-6 p-4 bg-gray-900/50 rounded-lg">
-                    <label className="block text-gray-400 text-sm mb-2">
+                  <div className="mb-6 p-4 bg-white/50 rounded-lg">
+                    <label className="block text-gray-600 text-sm mb-2">
                       Net Worth (excluding primary residence)
                     </label>
                     <select
                       value={formData.netWorthAmount}
                       onChange={(e) => handleInputChange('netWorthAmount', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900"
                     >
                       <option value="">Select net worth range</option>
                       <option value="1m-2m">$1,000,000 - $2,000,000</option>
@@ -733,14 +735,14 @@ This signature constitutes my legally binding electronic signature.`;
                 )}
 
                 {formData.accreditationMethod === 'professional' && (
-                  <div className="mb-6 p-4 bg-gray-900/50 rounded-lg">
-                    <label className="block text-gray-400 text-sm mb-2">
+                  <div className="mb-6 p-4 bg-white/50 rounded-lg">
+                    <label className="block text-gray-600 text-sm mb-2">
                       Professional License Held
                     </label>
                     <select
                       value={formData.professionalLicense}
                       onChange={(e) => handleInputChange('professionalLicense', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900"
                     >
                       <option value="">Select license</option>
                       <option value="series7">Series 7</option>
@@ -750,8 +752,8 @@ This signature constitutes my legally binding electronic signature.`;
                   </div>
                 )}
 
-                <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 mb-6">
-                  <p className="text-blue-400 text-sm">
+                <div style={{ background: "rgba(59, 130, 246, 0.1)", border: "1px solid rgba(59, 130, 246, 0.3)" }} className="rounded-lg p-4 mb-6">
+                  <p style={{ color: "#2563eb" }} className="text-sm">
                     Note: Under 506(c), your accreditation status will be verified by our compliance team.
                     You may be asked to provide supporting documentation such as tax returns, bank statements, 
                     or a letter from your CPA/attorney.
@@ -761,7 +763,8 @@ This signature constitutes my legally binding electronic signature.`;
                 <button
                   onClick={submitAccreditation}
                   disabled={loading || !formData.accreditationMethod}
-                  className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: "#00D4AA" }}
                 >
                   {loading ? 'Signing & Submitting...' : 'Sign & Continue to Documents'}
                 </button>
@@ -770,8 +773,8 @@ This signature constitutes my legally binding electronic signature.`;
 
             {step === 'documents' && (
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">Review & Acknowledge Documents</h2>
-                <p className="text-gray-400 mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Review & Acknowledge Documents</h2>
+                <p className="text-gray-600 mb-6">
                   Please review each document and sign with your wallet to acknowledge.
                   Each acknowledgment is cryptographically linked to the specific document version.
                 </p>
@@ -783,27 +786,27 @@ This signature constitutes my legally binding electronic signature.`;
                       className={`p-4 border rounded-lg ${
                         acknowledgedDocs.has(doc.id)
                           ? 'border-green-500/50 bg-green-500/10'
-                          : 'border-gray-700'
+                          : 'border-gray-300'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-white font-medium flex items-center gap-2">
+                          <div className="text-gray-900 font-medium flex items-center gap-2">
                             {doc.name}
-                            {doc.required && <span className="text-red-400 text-xs">Required</span>}
+                            {doc.required && <span className="text-red-600 text-xs">Required</span>}
                           </div>
                           <div className="text-gray-500 text-xs mt-1 font-mono">
                             Hash: {DOCUMENT_HASHES[doc.id]?.slice(0, 16)}...
                           </div>
                           {acknowledgedDocs.has(doc.id) && (
-                            <div className="text-green-400 text-sm mt-1">Signed & Acknowledged</div>
+                            <div className="text-green-600 text-sm mt-1">Signed & Acknowledged</div>
                           )}
                         </div>
                         <div className="flex gap-2">
                           <Link
                             href={`/lending-fund/docs?doc=${doc.id}`}
                             target="_blank"
-                            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm"
+                            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm"
                           >
                             View
                           </Link>
@@ -811,7 +814,8 @@ This signature constitutes my legally binding electronic signature.`;
                             <button
                               onClick={() => acknowledgeDocument(doc.id)}
                               disabled={loading}
-                              className="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-black rounded-lg text-sm font-medium disabled:opacity-50"
+                              className="px-4 py-2 text-white font-medium rounded-lg text-sm disabled:opacity-50"
+                              style={{ background: "#00D4AA" }}
                             >
                               Sign to Acknowledge
                             </button>
@@ -825,7 +829,8 @@ This signature constitutes my legally binding electronic signature.`;
                 <button
                   onClick={() => setStep('signature')}
                   disabled={!allDocsAcknowledged}
-                  className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: "#00D4AA" }}
                 >
                   Continue to Final Signature
                 </button>
@@ -834,38 +839,38 @@ This signature constitutes my legally binding electronic signature.`;
 
             {step === 'signature' && (
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">Sign Subscription Agreement</h2>
-                <p className="text-gray-400 mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Sign Subscription Agreement</h2>
+                <p className="text-gray-600 mb-6">
                   By signing below, you agree to the terms of the Subscription Agreement and
                   confirm that you meet the accredited investor requirements.
                 </p>
 
-                <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6 mb-8">
-                  <h3 className="text-white font-bold mb-4">Subscription Summary</h3>
+                <div className="bg-white/50 border border-gray-300 rounded-lg p-6 mb-8">
+                  <h3 className="text-gray-900 font-bold mb-4">Subscription Summary</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Investor</span>
-                      <span className="text-white">{formData.legalName}</span>
+                      <span className="text-gray-600">Investor</span>
+                      <span className="text-gray-900">{formData.legalName}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Fund</span>
-                      <span className="text-white">AXUSD Fix & Flip Lending Fund</span>
+                      <span className="text-gray-600">Fund</span>
+                      <span className="text-gray-900">AXUSD Fix & Flip Lending Fund</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Wallet</span>
-                      <span className="text-white font-mono text-xs">
+                      <span className="text-gray-600">Wallet</span>
+                      <span className="text-gray-900 font-mono text-xs">
                         {walletAddress?.slice(0, 10)}...{walletAddress?.slice(-8)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Accreditation</span>
-                      <span className="text-yellow-400">Pending Verification</span>
+                      <span className="text-gray-600">Accreditation</span>
+                      <span className="text-amber-600">Pending Verification</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 mb-6">
-                  <p className="text-yellow-400 text-sm">
+                <div style={{ background: "rgba(234, 179, 8, 0.1)", border: "1px solid rgba(234, 179, 8, 0.3)" }} className="rounded-lg p-4 mb-6">
+                  <p style={{ color: "#b45309" }} className="text-sm">
                     Your wallet signature serves as your legally binding electronic signature 
                     on the Subscription Agreement. The signature includes a unique nonce and 
                     timestamp for security and will be cryptographically verified.
@@ -875,7 +880,8 @@ This signature constitutes my legally binding electronic signature.`;
                 <button
                   onClick={signSubscription}
                   disabled={loading}
-                  className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg transition-all disabled:opacity-50"
+                  className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50"
+                  style={{ background: "#00D4AA" }}
                 >
                   {loading ? 'Signing...' : 'Sign Subscription Agreement'}
                 </button>
@@ -884,11 +890,11 @@ This signature constitutes my legally binding electronic signature.`;
 
             {step === 'complete' && (
               <div className="text-center">
-                <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <span className="text-4xl text-green-400">✓</span>
+                <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: "rgba(0, 212, 170, 0.15)" }}>
+                  <span className="text-4xl" style={{ color: "#00D4AA" }}>✓</span>
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-4">Onboarding Complete!</h2>
-                <p className="text-gray-400 mb-8">
+                <h2 className="text-2xl font-bold mb-4" style={{ color: "#1a1a2e" }}>Onboarding Complete!</h2>
+                <p style={{ color: "#6b7280" }} className="mb-8">
                   Your application has been submitted. Our compliance team will verify your 
                   accredited investor status within 2-3 business days. You will be notified 
                   once approved to invest.
@@ -896,7 +902,8 @@ This signature constitutes my legally binding electronic signature.`;
                 <div className="flex gap-4 justify-center">
                   <Link
                     href="/lending-fund"
-                    className="px-6 py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg"
+                    className="px-6 py-3 font-bold rounded-lg"
+                    style={{ background: "#00D4AA", color: "#FFFFFF" }}
                   >
                     Back to Fund
                   </Link>
@@ -906,6 +913,6 @@ This signature constitutes my legally binding electronic signature.`;
           </div>
         </div>
       </div>
-    </SiteLayout>
+    </>
   );
 }

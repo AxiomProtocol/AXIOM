@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import RebuildLayout from '../../components/axiomRebuild/RebuildLayout';
 
 interface FundStats {
   totalAssets: string;
@@ -71,13 +70,13 @@ export default function LendingFundPage() {
   };
 
   return (
-    <RebuildLayout>
+    <>
       <Head>
         <title>AXUSD Fix & Flip Lending Fund | Axiom Nexus</title>
         <meta name="description" content="Earn 10-14% target returns backing real estate investors with the AXUSD Fix & Flip Lending Fund." />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">
+      <div style={{ background: "#FFFFFF", minHeight: "100vh" }}>
         <div className="relative overflow-hidden py-20">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-yellow-900/20 via-transparent to-transparent" />
 
@@ -213,7 +212,7 @@ export default function LendingFundPage() {
           </div>
         </div>
       </div>
-    </RebuildLayout>
+    </>
   );
 }
 
