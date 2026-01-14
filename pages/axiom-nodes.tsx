@@ -701,7 +701,7 @@ export default function AxiomDePINNodes() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]" style={{ color: '#fff' }}>
+    <div style={{ minHeight: '100vh', background: '#FFFFFF', color: '#1a1a1a' }}>
       <StepProgressBanner isAdvanced={true} />
       <Toaster position="top-right" />
       
@@ -765,9 +765,9 @@ export default function AxiomDePINNodes() {
             { label: 'APY Range', value: stats.apy },
             { label: 'Network', value: 'Arbitrum One' }
           ].map((stat, idx) => (
-            <div key={idx} style={{ background: 'rgba(255, 215, 0, 0.05)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255, 215, 0, 0.2)', textAlign: 'center' }}>
-              <div style={{ color: '#FFD700', fontSize: '0.85rem', marginBottom: '0.25rem' }}>{stat.label}</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stat.value}</div>
+            <div key={idx} style={{ background: '#f8f9fa', padding: '1.25rem', borderRadius: '12px', border: '1px solid #e5e7eb', textAlign: 'center' }}>
+              <div style={{ color: '#b8860b', fontSize: '0.85rem', marginBottom: '0.25rem' }}>{stat.label}</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1a1a1a' }}>{stat.value}</div>
             </div>
           ))}
         </div>
@@ -780,11 +780,11 @@ export default function AxiomDePINNodes() {
           gap: '1rem', 
           marginBottom: '1.5rem',
           padding: '1rem',
-          background: 'rgba(255, 215, 0, 0.05)',
+          background: '#f8f9fa',
           borderRadius: '12px',
-          border: '1px solid rgba(255, 215, 0, 0.2)'
+          border: '1px solid #e5e7eb'
         }}>
-          <span style={{ color: '#999', fontSize: '0.9rem' }}>Payment Method:</span>
+          <span style={{ color: '#666', fontSize: '0.9rem' }}>Payment Method:</span>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               onClick={() => setPaymentMethod('ETH')}
@@ -829,7 +829,7 @@ export default function AxiomDePINNodes() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', flexWrap: 'wrap', justifyContent: 'center', background: '#1a1a1a', padding: '0.5rem', borderRadius: '12px', border: '1px solid #333' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', flexWrap: 'wrap', justifyContent: 'center', background: '#f1f5f9', padding: '0.5rem', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -837,7 +837,7 @@ export default function AxiomDePINNodes() {
               style={{
                 padding: '0.75rem 1rem',
                 background: activeTab === tab.id ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)' : 'transparent',
-                color: activeTab === tab.id ? '#000' : '#999',
+                color: activeTab === tab.id ? '#000' : '#666',
                 border: 'none', borderRadius: '8px',
                 fontSize: '0.9rem', fontWeight: activeTab === tab.id ? 'bold' : '500',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', position: 'relative'
