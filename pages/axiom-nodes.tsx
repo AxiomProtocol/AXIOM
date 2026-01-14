@@ -687,10 +687,10 @@ export default function AxiomDePINNodes() {
   const inputStyle = {
     width: '100%',
     padding: '0.75rem',
-    background: '#2a2a2a',
-    border: '1px solid #444',
+    background: '#f8f9fa',
+    border: '1px solid #d1d5db',
     borderRadius: '8px',
-    color: '#fff',
+    color: '#1a1a1a',
     fontSize: '1rem',
     boxSizing: 'border-box' as const
   };
@@ -711,7 +711,7 @@ export default function AxiomDePINNodes() {
           <h1 style={{ fontSize: 'clamp(1.75rem, 6vw, 2.5rem)', background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '0.5rem' }}>
             Power the Axiom Network
           </h1>
-          <p style={{ fontSize: '1.1rem', color: '#999', marginBottom: '1.5rem' }}>
+          <p style={{ fontSize: '1.1rem', color: '#666', marginBottom: '1.5rem' }}>
             Run a node. Earn rewards. Build the future.
           </p>
           
@@ -861,23 +861,23 @@ export default function AxiomDePINNodes() {
           <>
             <div style={{ background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 165, 0, 0.05) 100%)', padding: '2rem', borderRadius: '16px', border: '1px solid rgba(255, 215, 0, 0.3)', marginBottom: '2rem', textAlign: 'center' }}>
               <h2 style={{ color: '#FFD700', marginBottom: '1rem' }}>Choose Your Path</h2>
-              <p style={{ color: '#ccc', maxWidth: '700px', margin: '0 auto' }}>
+              <p style={{ color: '#4b5563', maxWidth: '700px', margin: '0 auto' }}>
                 Whether you're a beginner or an infrastructure professional, there's a way for you to earn with Axiom DePIN.
               </p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
               {/* Lite */}
-              <div style={{ background: '#1a1a1a', padding: '2rem', borderRadius: '16px', border: '2px solid #4ade80' }}>
+              <div style={{ background: '#ffffff', padding: '2rem', borderRadius: '16px', border: '2px solid #4ade80' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                   <span style={{ fontSize: '2.5rem' }}>🌐</span>
                   <span style={{ background: '#4ade80', color: '#000', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>EASIEST</span>
                 </div>
                 <h3 style={{ color: '#4ade80', marginBottom: '0.5rem', fontSize: '1.5rem' }}>Lite Nodes</h3>
-                <p style={{ color: '#999', marginBottom: '1rem', fontSize: '0.95rem' }}>
+                <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.95rem' }}>
                   Browser extension or mobile app. Zero technical knowledge required. Start earning in under 60 seconds.
                 </p>
-                <ul style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '1.5rem', paddingLeft: '1.25rem' }}>
+                <ul style={{ color: '#4b5563', fontSize: '0.9rem', marginBottom: '1.5rem', paddingLeft: '1.25rem' }}>
                   <li>No downloads or installation</li>
                   <li>Works on any device</li>
                   <li>8-15% APY</li>
@@ -889,16 +889,16 @@ export default function AxiomDePINNodes() {
               </div>
 
               {/* Standard */}
-              <div style={{ background: '#1a1a1a', padding: '2rem', borderRadius: '16px', border: '2px solid #60a5fa' }}>
+              <div style={{ background: '#ffffff', padding: '2rem', borderRadius: '16px', border: '2px solid #60a5fa' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                   <span style={{ fontSize: '2.5rem' }}>💻</span>
                   <span style={{ background: '#60a5fa', color: '#000', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>RECOMMENDED</span>
                 </div>
                 <h3 style={{ color: '#60a5fa', marginBottom: '0.5rem', fontSize: '1.5rem' }}>Standard Nodes</h3>
-                <p style={{ color: '#999', marginBottom: '1rem', fontSize: '0.95rem' }}>
+                <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.95rem' }}>
                   Desktop application with one-click setup. Fill out a simple form, download the app, and start earning.
                 </p>
-                <ul style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '1.5rem', paddingLeft: '1.25rem' }}>
+                <ul style={{ color: '#4b5563', fontSize: '0.9rem', marginBottom: '1.5rem', paddingLeft: '1.25rem' }}>
                   <li>Simple form - no technical setup</li>
                   <li>Auto-configuration</li>
                   <li>15-35% APY</li>
@@ -910,16 +910,16 @@ export default function AxiomDePINNodes() {
               </div>
 
               {/* Pro */}
-              <div style={{ background: '#1a1a1a', padding: '2rem', borderRadius: '16px', border: '2px solid #FFD700' }}>
+              <div style={{ background: '#ffffff', padding: '2rem', borderRadius: '16px', border: '2px solid #FFD700' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                   <span style={{ fontSize: '2.5rem' }}>🏢</span>
                   <span style={{ background: '#FFD700', color: '#000', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>HIGHEST REWARDS</span>
                 </div>
                 <h3 style={{ color: '#FFD700', marginBottom: '0.5rem', fontSize: '1.5rem' }}>Pro Operators</h3>
-                <p style={{ color: '#999', marginBottom: '1rem', fontSize: '0.95rem' }}>
+                <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.95rem' }}>
                   For infrastructure professionals. Stake AXM tokens and register dedicated servers, IoT devices, or storage systems.
                 </p>
-                <ul style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '1.5rem', paddingLeft: '1.25rem' }}>
+                <ul style={{ color: '#4b5563', fontSize: '0.9rem', marginBottom: '1.5rem', paddingLeft: '1.25rem' }}>
                   <li>Dedicated infrastructure</li>
                   <li>Static IP required</li>
                   <li>12-45% APY + fees</li>
@@ -948,7 +948,7 @@ export default function AxiomDePINNodes() {
             </div>
 
             {/* Quick Comparison */}
-            <div style={{ background: '#1a1a1a', padding: '2rem', borderRadius: '16px', border: '1px solid #333', overflowX: 'auto' }}>
+            <div style={{ background: '#ffffff', padding: '2rem', borderRadius: '16px', border: '1px solid #e5e7eb', overflowX: 'auto' }}>
               <h3 style={{ color: '#FFD700', marginBottom: '1.5rem', textAlign: 'center' }}>Quick Comparison</h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                 <thead>
@@ -970,10 +970,10 @@ export default function AxiomDePINNodes() {
                     ['Best For', 'Beginners', 'Home users', 'Professionals'],
                   ].map((row, idx) => (
                     <tr key={idx} style={{ borderBottom: '1px solid #222' }}>
-                      <td style={{ padding: '0.75rem', color: '#999' }}>{row[0]}</td>
-                      <td style={{ padding: '0.75rem', textAlign: 'center', color: '#ccc' }}>{row[1]}</td>
-                      <td style={{ padding: '0.75rem', textAlign: 'center', color: '#ccc' }}>{row[2]}</td>
-                      <td style={{ padding: '0.75rem', textAlign: 'center', color: '#ccc' }}>{row[3]}</td>
+                      <td style={{ padding: '0.75rem', color: '#666' }}>{row[0]}</td>
+                      <td style={{ padding: '0.75rem', textAlign: 'center', color: '#4b5563' }}>{row[1]}</td>
+                      <td style={{ padding: '0.75rem', textAlign: 'center', color: '#4b5563' }}>{row[2]}</td>
+                      <td style={{ padding: '0.75rem', textAlign: 'center', color: '#4b5563' }}>{row[3]}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -987,11 +987,11 @@ export default function AxiomDePINNodes() {
           <>
             <div style={{ background: 'linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%)', padding: '2rem', borderRadius: '16px', border: '1px solid rgba(74, 222, 128, 0.3)', marginBottom: '2rem' }}>
               <h2 style={{ color: '#4ade80', marginBottom: '0.75rem' }}>Lite Nodes - Zero Technical Setup</h2>
-              <p style={{ color: '#ccc', marginBottom: '1rem' }}>
+              <p style={{ color: '#4b5563', marginBottom: '1rem' }}>
                 The easiest way to participate in the Axiom DePIN network. Our browser extension runs silently in the background,
                 sharing minimal bandwidth and earning you rewards 24/7.
               </p>
-              <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', color: '#999', fontSize: '0.9rem' }}>
+              <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', color: '#666', fontSize: '0.9rem' }}>
                 <div><strong style={{ color: '#4ade80' }}>✓</strong> No static IP needed</div>
                 <div><strong style={{ color: '#4ade80' }}>✓</strong> No downloads</div>
                 <div><strong style={{ color: '#4ade80' }}>✓</strong> No configuration</div>
@@ -999,10 +999,10 @@ export default function AxiomDePINNodes() {
               </div>
             </div>
 
-            <h3 style={{ marginBottom: '1.5rem', color: '#fff' }}>Choose Your Lite Node</h3>
+            <h3 style={{ marginBottom: '1.5rem', color: '#1a1a1a' }}>Choose Your Lite Node</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
               {LITE_NODE_TIERS.map(node => (
-                <div key={node.tierId} style={{ background: '#1a1a1a', padding: '2rem', borderRadius: '16px', border: '2px solid #333', transition: 'border-color 0.3s' }}>
+                <div key={node.tierId} style={{ background: '#ffffff', padding: '2rem', borderRadius: '16px', border: '2px solid #d1d5db', transition: 'border-color 0.3s' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <span style={{ fontSize: '3rem' }}>{node.icon}</span>
                     <div style={{ textAlign: 'right' }}>
@@ -1014,23 +1014,23 @@ export default function AxiomDePINNodes() {
                           <div style={{ color: '#22c55e', fontSize: '0.75rem' }}>15% discount applied</div>
                         </div>
                       )}
-                      <div style={{ color: '#999', fontSize: '0.85rem' }}>{node.apy} APY</div>
+                      <div style={{ color: '#666', fontSize: '0.85rem' }}>{node.apy} APY</div>
                     </div>
                   </div>
                   <h3 style={{ color: '#4ade80', marginBottom: '0.5rem' }}>{node.name}</h3>
-                  <p style={{ color: '#999', fontSize: '0.9rem', marginBottom: '1rem' }}>{node.description}</p>
+                  <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>{node.description}</p>
                   
                   <div style={{ marginBottom: '1rem' }}>
                     {node.features.map((f, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ccc', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4b5563', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
                         <span style={{ color: '#4ade80' }}>✓</span> {f}
                       </div>
                     ))}
                   </div>
                   
-                  <div style={{ background: '#2a2a2a', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>
-                    <div style={{ color: '#999', fontSize: '0.8rem' }}>Requirements</div>
-                    <div style={{ color: '#ccc', fontSize: '0.9rem' }}>{node.requirements}</div>
+                  <div style={{ background: '#f8f9fa', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>
+                    <div style={{ color: '#666', fontSize: '0.8rem' }}>Requirements</div>
+                    <div style={{ color: '#4b5563', fontSize: '0.9rem' }}>{node.requirements}</div>
                   </div>
                   
                   <button
@@ -1054,7 +1054,7 @@ export default function AxiomDePINNodes() {
 
             <div style={{ background: 'rgba(96, 165, 250, 0.1)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(96, 165, 250, 0.3)' }}>
               <h4 style={{ color: '#60a5fa', marginBottom: '0.75rem' }}>How Lite Nodes Work</h4>
-              <ol style={{ color: '#ccc', fontSize: '0.9rem', margin: 0, paddingLeft: '1.25rem' }}>
+              <ol style={{ color: '#4b5563', fontSize: '0.9rem', margin: 0, paddingLeft: '1.25rem' }}>
                 <li style={{ marginBottom: '0.5rem' }}>Purchase your Lite Node with ETH (one-time payment)</li>
                 <li style={{ marginBottom: '0.5rem' }}>Install the Axiom browser extension (Chrome, Brave, Firefox)</li>
                 <li style={{ marginBottom: '0.5rem' }}>The extension runs silently, sharing minimal bandwidth</li>
@@ -1069,11 +1069,11 @@ export default function AxiomDePINNodes() {
           <>
             <div style={{ background: 'linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%)', padding: '2rem', borderRadius: '16px', border: '1px solid rgba(96, 165, 250, 0.3)', marginBottom: '2rem' }}>
               <h2 style={{ color: '#60a5fa', marginBottom: '0.75rem' }}>Standard Nodes - Simple Form Registration</h2>
-              <p style={{ color: '#ccc', marginBottom: '1rem' }}>
+              <p style={{ color: '#4b5563', marginBottom: '1rem' }}>
                 Fill out a simple form with your computer specs, and we handle all the technical configuration automatically.
                 No IPFS, no static IP, no complex setup required.
               </p>
-              <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', color: '#999', fontSize: '0.9rem' }}>
+              <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', color: '#666', fontSize: '0.9rem' }}>
                 <div><strong style={{ color: '#60a5fa' }}>✓</strong> Auto-generated metadata</div>
                 <div><strong style={{ color: '#60a5fa' }}>✓</strong> No static IP needed</div>
                 <div><strong style={{ color: '#60a5fa' }}>✓</strong> One-click app install</div>
@@ -1082,9 +1082,9 @@ export default function AxiomDePINNodes() {
             </div>
 
             {/* Registration Form */}
-            <div style={{ background: '#1a1a1a', padding: '2rem', borderRadius: '16px', border: '1px solid #333', marginBottom: '2rem' }}>
+            <div style={{ background: '#ffffff', padding: '2rem', borderRadius: '16px', border: '1px solid #e5e7eb', marginBottom: '2rem' }}>
               <h3 style={{ color: '#60a5fa', marginBottom: '1.5rem' }}>Quick Registration Form</h3>
-              <p style={{ color: '#999', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+              <p style={{ color: '#666', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
                 Fill in the basic details below. We'll automatically configure everything else for you.
               </p>
               
@@ -1149,10 +1149,10 @@ export default function AxiomDePINNodes() {
               </div>
             </div>
 
-            <h3 style={{ marginBottom: '1.5rem', color: '#fff' }}>Select Your Node Tier</h3>
+            <h3 style={{ marginBottom: '1.5rem', color: '#1a1a1a' }}>Select Your Node Tier</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
               {STANDARD_NODE_TIERS.map(node => (
-                <div key={node.tierId} style={{ background: '#1a1a1a', padding: '2rem', borderRadius: '16px', border: '2px solid #333' }}>
+                <div key={node.tierId} style={{ background: '#ffffff', padding: '2rem', borderRadius: '16px', border: '2px solid #d1d5db' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <span style={{ fontSize: '3rem' }}>{node.icon}</span>
                     <div style={{ textAlign: 'right' }}>
@@ -1164,23 +1164,23 @@ export default function AxiomDePINNodes() {
                           <div style={{ color: '#22c55e', fontSize: '0.75rem' }}>15% discount applied</div>
                         </div>
                       )}
-                      <div style={{ color: '#999', fontSize: '0.85rem' }}>{node.apy} APY</div>
+                      <div style={{ color: '#666', fontSize: '0.85rem' }}>{node.apy} APY</div>
                     </div>
                   </div>
                   <h3 style={{ color: '#60a5fa', marginBottom: '0.5rem' }}>{node.name}</h3>
-                  <p style={{ color: '#999', fontSize: '0.9rem', marginBottom: '1rem' }}>{node.description}</p>
+                  <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>{node.description}</p>
                   
                   <div style={{ marginBottom: '1rem' }}>
                     {node.features.map((f, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ccc', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4b5563', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
                         <span style={{ color: '#60a5fa' }}>✓</span> {f}
                       </div>
                     ))}
                   </div>
                   
-                  <div style={{ background: '#2a2a2a', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>
-                    <div style={{ color: '#999', fontSize: '0.8rem' }}>Requirements</div>
-                    <div style={{ color: '#ccc', fontSize: '0.9rem' }}>{node.requirements}</div>
+                  <div style={{ background: '#f8f9fa', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>
+                    <div style={{ color: '#666', fontSize: '0.8rem' }}>Requirements</div>
+                    <div style={{ color: '#4b5563', fontSize: '0.9rem' }}>{node.requirements}</div>
                   </div>
                   
                   <button
@@ -1209,23 +1209,23 @@ export default function AxiomDePINNodes() {
           <>
             <div style={{ background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 165, 0, 0.05) 100%)', padding: '2rem', borderRadius: '16px', border: '1px solid rgba(255, 215, 0, 0.3)', marginBottom: '2rem' }}>
               <h2 style={{ color: '#FFD700', marginBottom: '0.75rem' }}>Pro Infrastructure Operators</h2>
-              <p style={{ color: '#ccc', marginBottom: '1rem' }}>
+              <p style={{ color: '#4b5563', marginBottom: '1rem' }}>
                 For professionals with dedicated infrastructure. Stake AXM tokens as collateral and earn the highest rewards by providing real-world infrastructure services.
               </p>
               <div style={{ background: 'rgba(251, 191, 36, 0.1)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(251, 191, 36, 0.3)' }}>
                 <strong style={{ color: '#fbbf24' }}>Requirements:</strong>
-                <span style={{ color: '#ccc', marginLeft: '0.5rem' }}>Static IP address or domain, AXM tokens for staking, minimum uptime commitment</span>
+                <span style={{ color: '#4b5563', marginLeft: '0.5rem' }}>Static IP address or domain, AXM tokens for staking, minimum uptime commitment</span>
               </div>
             </div>
 
             {proForm.selectedType ? (
               <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-                <div style={{ background: '#1a1a1a', padding: '2rem', borderRadius: '16px', border: '2px solid #FFD700' }}>
+                <div style={{ background: '#ffffff', padding: '2rem', borderRadius: '16px', border: '2px solid #FFD700' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                     <span style={{ fontSize: '3rem' }}>{proForm.selectedType.icon}</span>
                     <div>
                       <h2 style={{ color: '#FFD700', marginBottom: '0.25rem' }}>{proForm.selectedType.name}</h2>
-                      <div style={{ color: '#999', fontSize: '0.9rem' }}>Stake: {proForm.selectedType.stake} AXM | APY: {proForm.selectedType.apy}</div>
+                      <div style={{ color: '#666', fontSize: '0.9rem' }}>Stake: {proForm.selectedType.stake} AXM | APY: {proForm.selectedType.apy}</div>
                     </div>
                   </div>
 
@@ -1305,7 +1305,7 @@ export default function AxiomDePINNodes() {
                     </button>
                   </div>
 
-                  <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#999', textAlign: 'center' }}>
+                  <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#666', textAlign: 'center' }}>
                     After registration, your node will be reviewed and activated within 24-48 hours.
                   </p>
                 </div>
@@ -1313,7 +1313,7 @@ export default function AxiomDePINNodes() {
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
                 {PRO_OPERATOR_TIERS.map(node => (
-                  <div key={node.id} style={{ background: '#1a1a1a', padding: '1.5rem', borderRadius: '16px', border: '2px solid #333' }}>
+                  <div key={node.id} style={{ background: '#ffffff', padding: '1.5rem', borderRadius: '16px', border: '2px solid #d1d5db' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                       <span style={{ fontSize: '2.5rem' }}>{node.icon}</span>
                       <div style={{ textAlign: 'right' }}>
@@ -1322,17 +1322,17 @@ export default function AxiomDePINNodes() {
                       </div>
                     </div>
                     <h3 style={{ color: '#FFD700', marginBottom: '0.5rem', fontSize: '1.2rem' }}>{node.name}</h3>
-                    <p style={{ color: '#999', fontSize: '0.85rem', marginBottom: '1rem' }}>{node.description}</p>
+                    <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '1rem' }}>{node.description}</p>
                     
                     <div style={{ marginBottom: '1rem' }}>
                       {node.requirements.map((r, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ccc', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4b5563', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
                           <span style={{ color: '#fbbf24' }}>•</span> {r}
                         </div>
                       ))}
                     </div>
                     
-                    <div style={{ color: '#999', fontSize: '0.8rem', marginBottom: '1rem' }}>Min. Uptime: {node.minUptime}</div>
+                    <div style={{ color: '#666', fontSize: '0.8rem', marginBottom: '1rem' }}>Min. Uptime: {node.minUptime}</div>
                     
                     <button
                       onClick={() => setProForm({...proForm, selectedType: node})}
@@ -1360,13 +1360,13 @@ export default function AxiomDePINNodes() {
           <>
             <div style={{ background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 165, 0, 0.05) 100%)', padding: '2rem', borderRadius: '16px', border: '1px solid rgba(255, 215, 0, 0.3)', marginBottom: '2rem' }}>
               <h2 style={{ color: '#FFD700', marginBottom: '0.5rem' }}>My Nodes</h2>
-              <p style={{ color: '#ccc' }}>View and manage all your registered nodes across all tiers.</p>
+              <p style={{ color: '#4b5563' }}>View and manage all your registered nodes across all tiers.</p>
             </div>
 
             {/* Rewards Summary Card */}
             {isConnected && (
               <div style={{ 
-                background: 'linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)', 
+                background: '#ffffff', 
                 padding: '1.5rem', 
                 borderRadius: '16px', 
                 border: '1px solid #FFD700', 
@@ -1377,17 +1377,17 @@ export default function AxiomDePINNodes() {
                 alignItems: 'center'
               }}>
                 <div>
-                  <div style={{ color: '#999', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Total Nodes</div>
-                  <div style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 'bold' }}>{userNodes.length}</div>
+                  <div style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Total Nodes</div>
+                  <div style={{ color: '#1a1a1a', fontSize: '1.5rem', fontWeight: 'bold' }}>{userNodes.length}</div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Pending Rewards</div>
+                  <div style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Pending Rewards</div>
                   <div style={{ color: '#FFD700', fontSize: '1.5rem', fontWeight: 'bold' }}>
                     {parseFloat(pendingRewards).toFixed(4)} AXM
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Your AXM Balance</div>
+                  <div style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Your AXM Balance</div>
                   <div style={{ color: '#4ade80', fontSize: '1.5rem', fontWeight: 'bold' }}>
                     {parseFloat(axmBalance).toLocaleString(undefined, { maximumFractionDigits: 2 })} AXM
                   </div>
@@ -1433,25 +1433,25 @@ export default function AxiomDePINNodes() {
             )}
 
             {!isConnected ? (
-              <div style={{ background: '#1a1a1a', padding: '4rem 2rem', borderRadius: '16px', border: '1px solid #333', textAlign: 'center' }}>
+              <div style={{ background: '#ffffff', padding: '4rem 2rem', borderRadius: '16px', border: '1px solid #e5e7eb', textAlign: 'center' }}>
                 <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🔗</div>
-                <h3 style={{ color: '#fff', marginBottom: '1rem' }}>Connect Your Wallet</h3>
-                <p style={{ color: '#999', marginBottom: '1.5rem' }}>Connect your wallet to view your nodes</p>
+                <h3 style={{ color: '#1a1a1a', marginBottom: '1rem' }}>Connect Your Wallet</h3>
+                <p style={{ color: '#666', marginBottom: '1.5rem' }}>Connect your wallet to view your nodes</p>
                 <button onClick={connectMetaMask} style={{ padding: '1rem 2rem', background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', color: '#000', border: 'none', borderRadius: '8px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer' }}>
                   Connect Wallet
                 </button>
               </div>
             ) : loadingNodes ? (
-              <div style={{ background: '#1a1a1a', padding: '4rem 2rem', borderRadius: '16px', border: '1px solid #333', textAlign: 'center' }}>
+              <div style={{ background: '#ffffff', padding: '4rem 2rem', borderRadius: '16px', border: '1px solid #e5e7eb', textAlign: 'center' }}>
                 <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
-                <h3 style={{ color: '#fff', marginBottom: '1rem' }}>Loading your nodes...</h3>
-                <p style={{ color: '#999' }}>Fetching data from Arbitrum One</p>
+                <h3 style={{ color: '#1a1a1a', marginBottom: '1rem' }}>Loading your nodes...</h3>
+                <p style={{ color: '#666' }}>Fetching data from Arbitrum One</p>
               </div>
             ) : userNodes.length > 0 ? (
               <>
                 <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', marginBottom: '2rem' }}>
                   {userNodes.map((node, index) => (
-                    <div key={index} style={{ background: 'linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)', borderRadius: '16px', border: '1px solid #4ade80', padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
+                    <div key={index} style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #4ade80', padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
                       <div style={{ position: 'absolute', top: '1rem', right: '1rem', background: '#4ade80', color: '#000', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>
                         ACTIVE
                       </div>
@@ -1460,21 +1460,21 @@ export default function AxiomDePINNodes() {
                         {node.icon || '📱'}
                       </div>
                       
-                      <h3 style={{ color: '#fff', fontSize: '1.25rem', marginBottom: '0.5rem' }}>
+                      <h3 style={{ color: '#1a1a1a', fontSize: '1.25rem', marginBottom: '0.5rem' }}>
                         {node.nodeName || `Node #${node.id}`}
                       </h3>
                       
-                      <div style={{ color: '#999', fontSize: '0.875rem', marginBottom: '1rem' }}>
+                      <div style={{ color: '#666', fontSize: '0.875rem', marginBottom: '1rem' }}>
                         {node.tier} Tier • Type {node.nodeType}
                       </div>
                       
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                         <div style={{ background: 'rgba(255, 215, 0, 0.1)', padding: '0.75rem', borderRadius: '8px', textAlign: 'center' }}>
-                          <div style={{ color: '#999', fontSize: '0.75rem', marginBottom: '0.25rem' }}>Uptime</div>
+                          <div style={{ color: '#666', fontSize: '0.75rem', marginBottom: '0.25rem' }}>Uptime</div>
                           <div style={{ color: '#4ade80', fontSize: '1rem', fontWeight: 'bold' }}>{node.uptime || '99.9%'}</div>
                         </div>
                         <div style={{ background: 'rgba(255, 215, 0, 0.1)', padding: '0.75rem', borderRadius: '8px', textAlign: 'center' }}>
-                          <div style={{ color: '#999', fontSize: '0.75rem', marginBottom: '0.25rem' }}>Rewards</div>
+                          <div style={{ color: '#666', fontSize: '0.75rem', marginBottom: '0.25rem' }}>Rewards</div>
                           <div style={{ color: '#FFD700', fontSize: '1rem', fontWeight: 'bold' }}>{node.rewards || '0'} AXM</div>
                         </div>
                       </div>
@@ -1497,7 +1497,7 @@ export default function AxiomDePINNodes() {
                 </div>
                 
                 <div style={{ textAlign: 'center', padding: '2rem', background: 'rgba(255, 215, 0, 0.05)', borderRadius: '12px', border: '1px dashed rgba(255, 215, 0, 0.3)' }}>
-                  <p style={{ color: '#999', marginBottom: '1rem' }}>Want to expand your node network?</p>
+                  <p style={{ color: '#666', marginBottom: '1rem' }}>Want to expand your node network?</p>
                   <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                     <button onClick={() => setActiveTab('lite')} style={{ padding: '0.75rem 1.5rem', background: 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
                       Add Lite Node
@@ -1509,10 +1509,10 @@ export default function AxiomDePINNodes() {
                 </div>
               </>
             ) : (
-              <div style={{ background: '#1a1a1a', padding: '4rem 2rem', borderRadius: '16px', border: '1px solid #333', textAlign: 'center' }}>
+              <div style={{ background: '#ffffff', padding: '4rem 2rem', borderRadius: '16px', border: '1px solid #e5e7eb', textAlign: 'center' }}>
                 <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📦</div>
-                <h3 style={{ color: '#fff', marginBottom: '1rem' }}>No Nodes Found</h3>
-                <p style={{ color: '#999', marginBottom: '1.5rem' }}>Get started by registering a node from any of our tiers.</p>
+                <h3 style={{ color: '#1a1a1a', marginBottom: '1rem' }}>No Nodes Found</h3>
+                <p style={{ color: '#666', marginBottom: '1.5rem' }}>Get started by registering a node from any of our tiers.</p>
                 <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                   <button onClick={() => setActiveTab('lite')} style={{ padding: '0.875rem 1.5rem', background: 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
                     Try Lite Nodes
@@ -1530,9 +1530,9 @@ export default function AxiomDePINNodes() {
         <div style={{ marginTop: '3rem', padding: '1.5rem', background: 'rgba(96, 165, 250, 0.05)', border: '1px solid rgba(96, 165, 250, 0.2)', borderRadius: '12px' }}>
           <h4 style={{ color: '#60a5fa', marginBottom: '1rem', fontSize: '1rem' }}>Smart Contract Addresses (Arbitrum One)</h4>
           <div style={{ display: 'grid', gap: '0.5rem', fontSize: '0.85rem' }}>
-            <div><span style={{ color: '#999' }}>DePIN Suite: </span><code style={{ color: '#4ade80' }}>{DEPIN_SUITE_ADDRESS}</code></div>
-            <div><span style={{ color: '#999' }}>DePIN Sales: </span><code style={{ color: '#4ade80' }}>{DEPIN_SALES_ADDRESS}</code></div>
-            <div><span style={{ color: '#999' }}>AXM Token: </span><code style={{ color: '#4ade80' }}>{AXM_TOKEN_ADDRESS}</code></div>
+            <div><span style={{ color: '#666' }}>DePIN Suite: </span><code style={{ color: '#4ade80' }}>{DEPIN_SUITE_ADDRESS}</code></div>
+            <div><span style={{ color: '#666' }}>DePIN Sales: </span><code style={{ color: '#4ade80' }}>{DEPIN_SALES_ADDRESS}</code></div>
+            <div><span style={{ color: '#666' }}>AXM Token: </span><code style={{ color: '#4ade80' }}>{AXM_TOKEN_ADDRESS}</code></div>
           </div>
         </div>
       </div>
@@ -1544,10 +1544,10 @@ export default function AxiomDePINNodes() {
           <h3 style={{ background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: '1.25rem', marginBottom: '0.5rem' }}>AXIOM</h3>
           <p style={{ color: '#666', marginBottom: '1.5rem' }}>Build Wealth Together, On-Chain</p>
           <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-            <Link href="/" style={{ color: '#999', textDecoration: 'none' }}>Home</Link>
-            <Link href="/about-us" style={{ color: '#999', textDecoration: 'none' }}>About</Link>
-            <Link href="/bank" style={{ color: '#999', textDecoration: 'none' }}>Treasury</Link>
-            <Link href="/governance" style={{ color: '#999', textDecoration: 'none' }}>Governance</Link>
+            <Link href="/" style={{ color: '#666', textDecoration: 'none' }}>Home</Link>
+            <Link href="/about-us" style={{ color: '#666', textDecoration: 'none' }}>About</Link>
+            <Link href="/bank" style={{ color: '#666', textDecoration: 'none' }}>Treasury</Link>
+            <Link href="/governance" style={{ color: '#666', textDecoration: 'none' }}>Governance</Link>
           </div>
           <p style={{ color: '#666', fontSize: '0.85rem' }}>© 2025 Axiom Smart City. Built on Arbitrum One.</p>
         </div>
