@@ -839,6 +839,10 @@ function DistributionsList({ distributions, formatCurrency }: { distributions: D
 }
 
 function StatementsList({ statements }: { statements: Statement[] }) {
+  const handleDownloadStatement = (period: string, type: string) => {
+    window.open(`/api/dscr/documents/statement?period=${encodeURIComponent(period)}&type=${type}`, '_blank');
+  };
+
   if (statements.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '48px 20px', color: '#94a3b8' }}>
@@ -859,7 +863,10 @@ function StatementsList({ statements }: { statements: Statement[] }) {
               <p style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'capitalize' }}>{statement.type} Statement</p>
             </div>
           </div>
-          <button style={{ width: '100%', padding: '10px', background: '#334155', color: '#e2e8f0', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
+          <button 
+            onClick={() => handleDownloadStatement(statement.period, statement.type)}
+            style={{ width: '100%', padding: '10px', background: '#334155', color: '#e2e8f0', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
+          >
             Download PDF
           </button>
         </div>
@@ -869,6 +876,11 @@ function StatementsList({ statements }: { statements: Statement[] }) {
 }
 
 function TaxDocuments({ statements, totalYield, totalCommitted, formatCurrency }: { statements: Statement[]; totalYield: number; totalCommitted: number; formatCurrency: (v: number) => string }) {
+  const handleDownloadK1 = (period: string) => {
+    const year = period.match(/\d{4}/)?.[0] || '2025';
+    window.open(`/api/dscr/documents/k1?year=${year}`, '_blank');
+  };
+
   return (
     <div>
       <div style={{ padding: '16px', background: '#422006', border: '1px solid #854d0e', borderRadius: '12px', marginBottom: '20px' }}>
@@ -894,7 +906,10 @@ function TaxDocuments({ statements, totalYield, totalCommitted, formatCurrency }
                   <p style={{ color: '#94a3b8', fontSize: '12px' }}>Generated {new Date(doc.generatedDate).toLocaleDateString()}</p>
                 </div>
               </div>
-              <button style={{ width: '100%', padding: '10px', background: '#22c55e', color: '#000', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+              <button 
+                onClick={() => handleDownloadK1(doc.period)}
+                style={{ width: '100%', padding: '10px', background: '#22c55e', color: '#000', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
+              >
                 Download K-1
               </button>
             </div>
@@ -905,7 +920,7 @@ function TaxDocuments({ statements, totalYield, totalCommitted, formatCurrency }
           <p style={{ fontSize: '32px', marginBottom: '8px' }}>📑</p>
           <p>No K-1 documents available yet.</p>
         </div>
-      )}
+      )
 
       <div style={{ padding: '16px', background: '#0f172a', borderRadius: '12px' }}>
         <h4 style={{ color: '#f1f5f9', fontWeight: 500, marginBottom: '12px' }}>Tax Information Summary (Estimated)</h4>
