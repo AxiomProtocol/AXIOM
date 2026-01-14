@@ -701,32 +701,9 @@ export default function AxiomDePINNodes() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)', color: '#fff' }}>
+    <div className="min-h-screen bg-[#0a0a0a]" style={{ color: '#fff' }}>
       <StepProgressBanner isAdvanced={true} />
       <Toaster position="top-right" />
-      
-      {/* Navigation */}
-      <nav style={{
-        background: 'rgba(10, 10, 10, 0.95)',
-        borderBottom: '1px solid #333',
-        padding: '1rem 2rem',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        backdropFilter: 'blur(10px)'
-      }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
-            <img src="/images/axiom-token.png" alt="Axiom" style={{ width: '40px', height: '40px', borderRadius: '50%' }} />
-            <span style={{ fontSize: '1.5rem', fontWeight: 'bold', background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>AXIOM</span>
-          </Link>
-          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <Link href="/about-us" style={{ color: '#ccc', textDecoration: 'none', fontSize: '0.9rem' }}>About</Link>
-            <Link href="/bank" style={{ color: '#ccc', textDecoration: 'none', fontSize: '0.9rem' }}>Treasury</Link>
-            <Link href="/governance" style={{ color: '#ccc', textDecoration: 'none', fontSize: '0.9rem' }}>Governance</Link>
-          </div>
-        </div>
-      </nav>
       
       <div style={{ padding: 'clamp(1rem, 4vw, 2rem)', maxWidth: '1400px', margin: '0 auto' }}>
         {/* Hero */}
