@@ -1,8 +1,8 @@
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 
-const PersonalizedDashboard = dynamic(
-  () => import('../components/PersonalizedDashboard').then(mod => mod.PersonalizedDashboard),
+const UnifiedDashboard = dynamic(
+  () => import('../components/UnifiedDashboard').then(mod => mod.UnifiedDashboard),
   { ssr: false }
 );
 
@@ -11,11 +11,9 @@ export default function DashboardPage() {
     <>
       <Head>
         <title>Dashboard | Axiom Protocol</title>
-        <meta name="description" content="Your personalized Axiom dashboard" />
+        <meta name="description" content="Your personalized Axiom dashboard with investments and governance" />
       </Head>
-      <div style={{ minHeight: '100vh', background: '#F9FAFB', paddingBottom: '100px' }}>
-        <PersonalizedDashboard />
-      </div>
+      <UnifiedDashboard />
     </>
   );
 }
