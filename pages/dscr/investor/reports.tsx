@@ -76,6 +76,10 @@ export default function InvestorReports() {
   const totalGain = positions.reduce((sum, p) => sum + p.unrealizedGain, 0);
   const overallReturn = totalCommitted > 0 ? ((totalValue - totalCommitted) / totalCommitted) * 100 : 0;
 
+  const handleExportReport = (format: 'pdf' | 'csv' = 'pdf') => {
+    window.open(`/api/dscr/investor/reports/export?format=${format}`, '_blank');
+  };
+
   return (
     <>
       <Head>
@@ -92,7 +96,13 @@ export default function InvestorReports() {
             </div>
             <div className="flex gap-3 mt-4 md:mt-0">
               <button 
-                onClick={() => window.print()}
+                onClick={() => handleExportReport('csv')}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors"
+              >
+                Export CSV
+              </button>
+              <button 
+                onClick={() => handleExportReport('pdf')}
                 className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
               >
                 Print Report
