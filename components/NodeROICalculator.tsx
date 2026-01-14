@@ -86,15 +86,15 @@ export default function NodeROICalculator({ onSelectTier }: Props) {
   }, [uptimePercent]);
 
   return (
-    <div className="bg-gray-800/50 border border-green-500/20 rounded-xl p-6">
-      <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+    <div className="bg-white/50 border border-green-500/20 rounded-xl p-6">
+      <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
         <span className="text-2xl">📊</span>
         DePIN Node ROI Calculator
       </h3>
 
       <div className="grid md:grid-cols-3 gap-4 mb-6">
         <div>
-          <label className="block text-sm text-gray-400 mb-2">Node Type</label>
+          <label className="block text-sm text-gray-600 mb-2">Node Type</label>
           <select
             value={selectedTierId}
             onChange={(e) => {
@@ -102,7 +102,7 @@ export default function NodeROICalculator({ onSelectTier }: Props) {
               setSelectedTierId(id);
               onSelectTier?.(id);
             }}
-            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-green-500 focus:outline-none"
+            className="w-full bg-gray-100 border border-gray-200 rounded-lg px-4 py-3 text-gray-900 focus:border-green-500 focus:outline-none"
           >
             {NODE_TIERS.map(tier => (
               <option key={tier.tierId} value={tier.tierId}>
@@ -113,7 +113,7 @@ export default function NodeROICalculator({ onSelectTier }: Props) {
         </div>
         
         <div>
-          <label className="block text-sm text-gray-400 mb-2">Expected Uptime: {uptimePercent}%</label>
+          <label className="block text-sm text-gray-600 mb-2">Expected Uptime: {uptimePercent}%</label>
           <input
             type="range"
             min="50"
@@ -129,7 +129,7 @@ export default function NodeROICalculator({ onSelectTier }: Props) {
         </div>
         
         <div>
-          <label className="block text-sm text-gray-400 mb-2">Holding Period: {holdingMonths} months</label>
+          <label className="block text-sm text-gray-600 mb-2">Holding Period: {holdingMonths} months</label>
           <input
             type="range"
             min="1"
@@ -145,36 +145,36 @@ export default function NodeROICalculator({ onSelectTier }: Props) {
         </div>
       </div>
 
-      <div className="bg-gray-900/50 rounded-xl p-4 mb-6">
+      <div className="bg-gray-100/50 rounded-xl p-4 mb-6">
         <div className="flex items-center gap-3 mb-4">
           <span className="text-3xl">{selected.icon}</span>
           <div>
-            <div className="text-lg font-bold text-white">{selected.name}</div>
-            <div className="text-sm text-gray-400">{selected.priceEth} ETH (~${calculations.priceUsd.toLocaleString()})</div>
+            <div className="text-lg font-bold text-gray-900">{selected.name}</div>
+            <div className="text-sm text-gray-600">{selected.priceEth} ETH (~${calculations.priceUsd.toLocaleString()})</div>
           </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-3 bg-gray-800/50 rounded-lg">
-            <div className="text-sm text-gray-400">Adjusted APY</div>
+          <div className="text-center p-3 bg-white/50 rounded-lg">
+            <div className="text-sm text-gray-600">Adjusted APY</div>
             <div className="text-xl font-bold text-green-400">{calculations.adjustedApy.toFixed(1)}%</div>
             <div className="text-xs text-gray-500">at {uptimePercent}% uptime</div>
           </div>
           
-          <div className="text-center p-3 bg-gray-800/50 rounded-lg">
-            <div className="text-sm text-gray-400">Monthly Rewards</div>
+          <div className="text-center p-3 bg-white/50 rounded-lg">
+            <div className="text-sm text-gray-600">Monthly Rewards</div>
             <div className="text-xl font-bold text-yellow-400">${calculations.monthlyRewardUsd.toFixed(2)}</div>
             <div className="text-xs text-gray-500">{calculations.monthlyRewardAxm.toLocaleString(undefined, { maximumFractionDigits: 0 })} AXM</div>
           </div>
           
-          <div className="text-center p-3 bg-gray-800/50 rounded-lg">
-            <div className="text-sm text-gray-400">Break-Even</div>
+          <div className="text-center p-3 bg-white/50 rounded-lg">
+            <div className="text-sm text-gray-600">Break-Even</div>
             <div className="text-xl font-bold text-blue-400">{calculations.breakEvenMonths} mo</div>
             <div className="text-xs text-gray-500">to recover cost</div>
           </div>
           
-          <div className="text-center p-3 bg-gray-800/50 rounded-lg">
-            <div className="text-sm text-gray-400">{holdingMonths}mo Total</div>
+          <div className="text-center p-3 bg-white/50 rounded-lg">
+            <div className="text-sm text-gray-600">{holdingMonths}mo Total</div>
             <div className={`text-xl font-bold ${calculations.isProfitable ? 'text-green-400' : 'text-red-400'}`}>
               ${calculations.totalRewardUsd.toFixed(2)}
             </div>
@@ -186,11 +186,11 @@ export default function NodeROICalculator({ onSelectTier }: Props) {
       </div>
 
       <div className="mb-4">
-        <h4 className="text-sm font-semibold text-gray-400 mb-3">All Tiers Comparison (at {uptimePercent}% uptime)</h4>
+        <h4 className="text-sm font-semibold text-gray-600 mb-3">All Tiers Comparison (at {uptimePercent}% uptime)</h4>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-gray-400 border-b border-gray-700">
+              <tr className="text-gray-600 border-b border-gray-200">
                 <th className="text-left py-2">Node</th>
                 <th className="text-right py-2">Price</th>
                 <th className="text-right py-2">APY</th>
@@ -202,10 +202,10 @@ export default function NodeROICalculator({ onSelectTier }: Props) {
               {allTierCalculations.map((tier) => (
                 <tr 
                   key={tier.tierId} 
-                  className={`border-b border-gray-800 cursor-pointer hover:bg-gray-800/30 ${selectedTierId === tier.tierId ? 'bg-green-500/10' : ''}`}
+                  className={`border-b border-gray-800 cursor-pointer hover:bg-white/30 ${selectedTierId === tier.tierId ? 'bg-green-500/10' : ''}`}
                   onClick={() => setSelectedTierId(tier.tierId)}
                 >
-                  <td className="py-3 text-white">
+                  <td className="py-3 text-gray-900">
                     <span className="mr-2">{tier.icon}</span>
                     {tier.name}
                   </td>

@@ -26,10 +26,10 @@ export default function IoTDashboard({ compact = false }) {
 
   if (loading) {
     return (
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
+      <div className="bg-white border border-gray-200 rounded-xl p-6">
         <div className="flex items-center gap-3">
           <div className="animate-spin w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full" />
-          <span className="text-gray-400">Loading IoT telemetry...</span>
+          <span className="text-gray-600">Loading IoT telemetry...</span>
         </div>
       </div>
     );
@@ -44,9 +44,9 @@ export default function IoTDashboard({ compact = false }) {
 
   if (compact) {
     return (
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-white">Network Status</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Network Status</h3>
           <span className={`px-2 py-1 text-xs rounded-full ${
             iot.networkHealth === 'Excellent' || iot.networkHealth === 'Optimal' 
               ? 'bg-green-500/20 text-green-400' 
@@ -74,35 +74,35 @@ export default function IoTDashboard({ compact = false }) {
   }
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
+    <div className="bg-white border border-gray-200 rounded-xl p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-bold text-white">IoT Network Telemetry</h3>
-          <p className="text-gray-400 text-sm">Live data from DePIN infrastructure</p>
+          <h3 className="text-xl font-bold text-gray-900">IoT Network Telemetry</h3>
+          <p className="text-gray-600 text-sm">Live data from DePIN infrastructure</p>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          <span className="text-sm text-gray-400">Live</span>
+          <span className="text-sm text-gray-600">Live</span>
         </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gray-900/50 rounded-lg p-4">
-          <div className="text-sm text-gray-400 mb-1">Nodes Sold</div>
+        <div className="bg-gray-100/50 rounded-lg p-4">
+          <div className="text-sm text-gray-600 mb-1">Nodes Sold</div>
           <div className="text-2xl font-bold text-yellow-400">{sales.totalNodesSold}</div>
         </div>
-        <div className="bg-gray-900/50 rounded-lg p-4">
-          <div className="text-sm text-gray-400 mb-1">ETH Collected</div>
+        <div className="bg-gray-100/50 rounded-lg p-4">
+          <div className="text-sm text-gray-600 mb-1">ETH Collected</div>
           <div className="text-2xl font-bold text-blue-400">
             {parseFloat(sales.totalEthCollected).toFixed(2)} ETH
           </div>
         </div>
-        <div className="bg-gray-900/50 rounded-lg p-4">
-          <div className="text-sm text-gray-400 mb-1">Network Uptime</div>
+        <div className="bg-gray-100/50 rounded-lg p-4">
+          <div className="text-sm text-gray-600 mb-1">Network Uptime</div>
           <div className="text-2xl font-bold text-green-400">{iot.averageUptime}%</div>
         </div>
-        <div className="bg-gray-900/50 rounded-lg p-4">
-          <div className="text-sm text-gray-400 mb-1">Network Health</div>
+        <div className="bg-gray-100/50 rounded-lg p-4">
+          <div className="text-sm text-gray-600 mb-1">Network Health</div>
           <div className={`text-2xl font-bold ${
             iot.networkHealth === 'Excellent' || iot.networkHealth === 'Optimal' 
               ? 'text-green-400' 
@@ -115,17 +115,17 @@ export default function IoTDashboard({ compact = false }) {
 
       {sensors.length > 0 && (
         <div className="mb-6">
-          <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Live Sensor Readings</h4>
+          <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3">Live Sensor Readings</h4>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {sensors.map((sensor) => (
               <div 
                 key={sensor.id}
-                className="bg-gray-900/30 border border-gray-700 rounded-lg p-3 flex items-center justify-between"
+                className="bg-gray-100/30 border border-gray-200 rounded-lg p-3 flex items-center justify-between"
               >
                 <div>
                   <div className="text-xs text-gray-500">{sensor.type}</div>
-                  <div className="text-lg font-semibold text-white">
-                    {sensor.value} <span className="text-sm text-gray-400">{sensor.unit}</span>
+                  <div className="text-lg font-semibold text-gray-900">
+                    {sensor.value} <span className="text-sm text-gray-600">{sensor.unit}</span>
                   </div>
                   <div className="text-xs text-gray-500">{sensor.location}</div>
                 </div>
@@ -139,21 +139,21 @@ export default function IoTDashboard({ compact = false }) {
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-gray-900/30 border border-gray-700 rounded-lg p-4">
-          <div className="text-sm text-gray-400 mb-1">Total Staked</div>
-          <div className="text-lg font-semibold text-white">
+        <div className="bg-gray-100/30 border border-gray-200 rounded-lg p-4">
+          <div className="text-sm text-gray-600 mb-1">Total Staked</div>
+          <div className="text-lg font-semibold text-gray-900">
             {parseFloat(network.totalStaked).toLocaleString(undefined, { maximumFractionDigits: 0 })} AXM
           </div>
         </div>
-        <div className="bg-gray-900/30 border border-gray-700 rounded-lg p-4">
-          <div className="text-sm text-gray-400 mb-1">Rewards Distributed</div>
-          <div className="text-lg font-semibold text-white">
+        <div className="bg-gray-100/30 border border-gray-200 rounded-lg p-4">
+          <div className="text-sm text-gray-600 mb-1">Rewards Distributed</div>
+          <div className="text-lg font-semibold text-gray-900">
             {parseFloat(network.totalRewards).toLocaleString(undefined, { maximumFractionDigits: 0 })} AXM
           </div>
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-gray-700 flex gap-4">
+      <div className="mt-4 pt-4 border-t border-gray-200 flex gap-4">
         <a 
           href={`https://arbitrum.blockscout.com/address/${data.contracts.depinSales}`}
           target="_blank"
