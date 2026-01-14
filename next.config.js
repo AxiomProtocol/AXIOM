@@ -48,6 +48,9 @@ const nextConfig = {
         './.git/**',
       ],
     },
+    outputFileTracingIncludes: {
+      '*': ['./node_modules/pg/**', './node_modules/@neondatabase/serverless/**'],
+    },
   },
   webpack: (config, { isServer, webpack }) => {
     // Ignore large Hardhat/Solidity artifact directories to speed up build
