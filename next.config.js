@@ -40,7 +40,20 @@ const nextConfig = {
       'drizzle-orm',
     ],
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, webpack }) => {
+    // Ignore large Hardhat/Solidity artifact directories to speed up build
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^\.\/artifacts(-axusd)?|^\.\/typechain-types|^\.\/stablecoin-deploy|^\.\/cache/,
+      })
+    );
+    
+    // Exclude artifact directories from module resolution
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: ['**/node_modules', '**/artifacts*', '**/typechain-types', '**/cache', '**/stablecoin-deploy'],
+    };
+    
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
