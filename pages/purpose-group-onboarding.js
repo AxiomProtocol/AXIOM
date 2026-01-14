@@ -246,7 +246,7 @@ export default function PurposeGroupOnboarding() {
                 playsInline
                 poster="/api/video-poster"
               >
-                <source src="/api/video/lv_0_20260110224924_1768107248690.mp4" type="video/mp4" />
+                <source src="/videos/wealth-practice-intro.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             </div>
@@ -679,7 +679,7 @@ export default function PurposeGroupOnboarding() {
             playsInline
             onEnded={handleVideoEnd}
           >
-            <source src="/api/video/lv_0_20260110224924_1768107248690.mp4" type="video/mp4" />
+            <source src="/videos/wealth-practice-intro.mp4" type="video/mp4" />
             Your browser does not support the video tag.
           </video>
           
