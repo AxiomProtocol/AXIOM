@@ -920,7 +920,7 @@ function TaxDocuments({ statements, totalYield, totalCommitted, formatCurrency }
           <p style={{ fontSize: '32px', marginBottom: '8px' }}>📑</p>
           <p>No K-1 documents available yet.</p>
         </div>
-      )
+      )}
 
       <div style={{ padding: '16px', background: '#0f172a', borderRadius: '12px' }}>
         <h4 style={{ color: '#f1f5f9', fontWeight: 500, marginBottom: '12px' }}>Tax Information Summary (Estimated)</h4>
