@@ -89,3 +89,8 @@ attached_assets/*.txt
 *.tmp
 *.temp
 zitDykih
+
+# Large Hardhat/Solidity build artifacts - exclude from deployment
+artifacts-axusd/
+stablecoin-deploy/
+cache/

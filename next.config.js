@@ -39,6 +39,15 @@ const nextConfig = {
       '@neondatabase/serverless',
       'drizzle-orm',
     ],
+    outputFileTracingExcludes: {
+      '*': [
+        './artifacts-axusd/**',
+        './stablecoin-deploy/**',
+        './typechain-types/**',
+        './cache/**',
+        './.git/**',
+      ],
+    },
   },
   webpack: (config, { isServer, webpack }) => {
     // Ignore large Hardhat/Solidity artifact directories to speed up build
