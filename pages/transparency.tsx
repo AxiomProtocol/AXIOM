@@ -1,9 +1,34 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { pagesCopy } from '../components/axiomRebuild/copy/pagesCopy';
 import { Web3Hero } from '../components/axiomRebuild/Web3Hero';
 import { Web3Section } from '../components/axiomRebuild/Web3Section';
 import { useScrollToSection } from '../components/axiomRebuild/useScrollToSection';
+
+interface TreasuryMetrics {
+  totalAUM: string;
+  seriesABalance: string;
+  seriesBBalance: string;
+  activeLoansCount: number;
+  totalLoansOriginated: string;
+  totalRepaid: string;
+  totalInterestEarned: string;
+  utilizationRate: number;
+  axusdSupply: string;
+  reserveRatio: number;
+  pendingCommitments: string;
+  investorCount: number;
+}
+
+interface RecentActivity {
+  id: string;
+  type: string;
+  amount: string;
+  description: string;
+  timestamp: string;
+  txHash?: string;
+}
 
 interface ContractInfo {
   name: string;
@@ -34,8 +59,22 @@ const SECURITY_FEATURES = [
   { name: 'SafeERC20 Transfers', status: 'active', description: 'Safe token transfer handling', icon: '💸' },
 ];
 
+const formatCurrency = (value: string | number) => {
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(num);
+};
+
+const formatNumber = (value: string | number) => {
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  return new Intl.NumberFormat('en-US').format(num);
+};
+
 export default function TransparencyPage() {
   const [expandedContract, setExpandedContract] = useState<number | null>(null);
+  const [metrics, setMetrics] = useState<TreasuryMetrics | null>(null);
+  const [activities, setActivities] = useState<RecentActivity[]>([]);
+  const [treasuryLoading, setTreasuryLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   
   const getSearch = useCallback(() => {
     if (typeof window === 'undefined') return '';
@@ -43,6 +82,28 @@ export default function TransparencyPage() {
   }, []);
   
   useScrollToSection(getSearch);
+
+  useEffect(() => {
+    fetchTreasuryData();
+    const interval = setInterval(fetchTreasuryData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  async function fetchTreasuryData() {
+    try {
+      const response = await fetch('/api/transparency/treasury');
+      if (response.ok) {
+        const data = await response.json();
+        setMetrics(data.metrics);
+        setActivities(data.activities || []);
+        setLastUpdated(new Date());
+      }
+    } catch (error) {
+      console.error('Failed to fetch treasury data:', error);
+    } finally {
+      setTreasuryLoading(false);
+    }
+  }
 
   const copy = pagesCopy.transparency;
 
@@ -64,6 +125,117 @@ export default function TransparencyPage() {
             microcopy={copy.hero.microcopy || ''}
           />
         )}
+
+        {/* Treasury Dashboard Section */}
+        <section id="treasury" style={{ padding: '80px 20px', background: 'linear-gradient(180deg, #1a1a2e 0%, #0a0a1a 100%)' }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: 48 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: 'rgba(0,212,170,0.1)', borderRadius: 24, marginBottom: 16 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00D4AA', animation: 'pulse 2s infinite' }} />
+                <span style={{ color: '#00D4AA', fontSize: 14, fontWeight: 500 }}>Live Data</span>
+              </div>
+              <h2 style={{ fontSize: 40, fontWeight: 700, margin: '8px 0 0 0', color: 'white' }}>Treasury Dashboard</h2>
+              <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.6)', marginTop: 12 }}>
+                Real-time visibility into Axiom Nexus lending pools and reserves
+              </p>
+              {lastUpdated && (
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 8 }}>
+                  Last updated: {lastUpdated.toLocaleTimeString()}
+                </p>
+              )}
+            </div>
+
+            {treasuryLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
+                <div style={{ width: 48, height: 48, border: '3px solid rgba(0,212,170,0.3)', borderTopColor: '#00D4AA', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 24, marginBottom: 48 }}>
+                  <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.2) 0%, rgba(59,130,246,0.2) 100%)', backdropFilter: 'blur(20px)', borderRadius: 20, padding: 28, border: '1px solid rgba(124,58,237,0.3)' }}>
+                    <span style={{ fontSize: 32, marginBottom: 12, display: 'block' }}>💎</span>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 4 }}>Total AUM</p>
+                    <p style={{ color: 'white', fontSize: 32, fontWeight: 700, margin: 0 }}>{formatCurrency(metrics?.totalAUM || 0)}</p>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 4 }}>Assets Under Management</p>
+                  </div>
+                  <div style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.2) 0%, rgba(6,182,212,0.2) 100%)', backdropFilter: 'blur(20px)', borderRadius: 20, padding: 28, border: '1px solid rgba(59,130,246,0.3)' }}>
+                    <span style={{ fontSize: 32, marginBottom: 12, display: 'block' }}>📄</span>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 4 }}>Active Loans</p>
+                    <p style={{ color: 'white', fontSize: 32, fontWeight: 700, margin: 0 }}>{formatNumber(metrics?.activeLoansCount || 0)}</p>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 4 }}>Currently outstanding</p>
+                  </div>
+                  <div style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(5,150,105,0.2) 100%)', backdropFilter: 'blur(20px)', borderRadius: 20, padding: 28, border: '1px solid rgba(16,185,129,0.3)' }}>
+                    <span style={{ fontSize: 32, marginBottom: 12, display: 'block' }}>🏠</span>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 4 }}>Total Originated</p>
+                    <p style={{ color: 'white', fontSize: 32, fontWeight: 700, margin: 0 }}>{formatCurrency(metrics?.totalLoansOriginated || 0)}</p>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 4 }}>Lifetime loan volume</p>
+                  </div>
+                  <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(249,115,22,0.2) 100%)', backdropFilter: 'blur(20px)', borderRadius: 20, padding: 28, border: '1px solid rgba(245,158,11,0.3)' }}>
+                    <span style={{ fontSize: 32, marginBottom: 12, display: 'block' }}>📈</span>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 4 }}>Interest Earned</p>
+                    <p style={{ color: 'white', fontSize: 32, fontWeight: 700, margin: 0 }}>{formatCurrency(metrics?.totalInterestEarned || 0)}</p>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 4 }}>Revenue generated</p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 24 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)', borderRadius: 20, padding: 28, border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <h3 style={{ color: 'white', fontSize: 20, fontWeight: 600, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span>🏦</span> Fund Allocation
+                    </h3>
+                    <div style={{ marginBottom: 24 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <span style={{ color: 'white' }}>Series A: Fix & Flip</span>
+                        <span style={{ color: 'rgba(255,255,255,0.6)' }}>{formatCurrency(metrics?.seriesABalance || 0)}</span>
+                      </div>
+                      <div style={{ height: 8, background: 'rgba(255,255,255,0.1)', borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: '35%', background: 'linear-gradient(90deg, #7C3AED, #3B82F6)', borderRadius: 4 }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <span style={{ color: 'white' }}>Series B: DSCR Rental</span>
+                        <span style={{ color: 'rgba(255,255,255,0.6)' }}>{formatCurrency(metrics?.seriesBBalance || 0)}</span>
+                      </div>
+                      <div style={{ height: 8, background: 'rgba(255,255,255,0.1)', borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: '65%', background: 'linear-gradient(90deg, #10B981, #14B8A6)', borderRadius: 4 }} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginTop: 24, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <p style={{ color: 'white', fontSize: 24, fontWeight: 700, margin: 0 }}>{metrics?.utilizationRate?.toFixed(1) || 0}%</p>
+                        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Utilization Rate</p>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <p style={{ color: 'white', fontSize: 24, fontWeight: 700, margin: 0 }}>{formatNumber(metrics?.investorCount || 0)}</p>
+                        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Investors</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)', borderRadius: 20, padding: 28, border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <h3 style={{ color: 'white', fontSize: 20, fontWeight: 600, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span>📊</span> Recent Activity
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {activities.length > 0 ? activities.slice(0, 5).map((activity) => (
+                        <div key={activity.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, background: 'rgba(255,255,255,0.05)', borderRadius: 12 }}>
+                          <div>
+                            <p style={{ color: 'white', fontSize: 14, margin: 0 }}>{activity.description}</p>
+                            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, margin: '4px 0 0 0' }}>{new Date(activity.timestamp).toLocaleString()}</p>
+                          </div>
+                          <span style={{ color: '#00D4AA', fontWeight: 600 }}>{formatCurrency(activity.amount)}</span>
+                        </div>
+                      )) : (
+                        <p style={{ color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: 24 }}>No recent activity</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </section>
 
         <section id="contracts" style={{ padding: '80px 20px', background: 'linear-gradient(180deg, rgba(0,212,170,0.05) 0%, white 100%)' }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>

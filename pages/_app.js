@@ -56,6 +56,9 @@ function matchesRebuildNavPages(pathname) {
   if (pathname.startsWith('/dscr/')) return true;
   if (pathname.startsWith('/admin/loan-tape')) return true;
   if (pathname.startsWith('/axiom-nexus')) return true;
+  if (pathname.startsWith('/transparency')) return true;
+  if (pathname.startsWith('/treasury')) return true;
+  if (pathname.startsWith('/governance')) return true;
   return false;
 }
 
@@ -83,7 +86,7 @@ export default function App({ Component, pageProps }) {
   useEffect(() => {
     if (typeof window !== 'undefined' && !onboardingChecked) {
       const completed = localStorage.getItem('axiom_onboarding_complete')
-      const isPublicPage = ['/', '/origin', '/how-it-works', '/about-us', '/team', '/axiom-nexus'].includes(router.pathname)
+      const isPublicPage = ['/', '/origin', '/how-it-works', '/about-us', '/team', '/axiom-nexus', '/transparency', '/governance', '/treasury'].includes(router.pathname)
       const isAdminPage = router.pathname.startsWith('/admin')
       const isCustomOnboardingPage = router.pathname === '/purpose-group-onboarding'
       if (!completed && !isPublicPage && !isAdminPage && !isCustomOnboardingPage) {

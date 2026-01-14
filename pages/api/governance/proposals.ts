@@ -3,9 +3,38 @@ import { pool } from '../../../lib/db';
 import { isDatabaseConfigured, createDatabaseErrorResponse } from '../../../lib/envValidation';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method === 'GET') {
+    return getProposals(req, res);
+  } else if (req.method === 'POST') {
+    return createProposal(req, res);
   }
+  return res.status(405).json({ error: 'Method not allowed' });
+}
+
+async function createProposal(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    const { title, category, description, discussionUrl } = req.body;
+    if (!title || !description) {
+      return res.status(400).json({ error: 'Title and description required' });
+    }
+    const client = await pool.connect();
+    try {
+      const result = await client.query(`
+        INSERT INTO dao_grants (title, description, category, status, proposer_address, voting_start_date, voting_end_date)
+        VALUES ($1, $2, $3, 'pending', $4, $5, $6) RETURNING id
+      `, [title, description, category || 'other', '0x0000000000000000000000000000000000000000', 
+          new Date(), new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)]);
+      res.status(201).json({ success: true, proposalId: result.rows[0].id });
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Create proposal error:', error);
+    res.status(500).json({ error: 'Failed to create proposal' });
+  }
+}
+
+async function getProposals(req: NextApiRequest, res: NextApiResponse) {
 
   if (!isDatabaseConfigured()) {
     return res.status(503).json({
