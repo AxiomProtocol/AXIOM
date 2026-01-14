@@ -8,12 +8,12 @@ interface Proposal {
   id: string;
   title: string;
   description: string;
-  category: 'treasury' | 'protocol' | 'lending' | 'community' | 'emergency';
+  category: string;
   status: 'active' | 'passed' | 'rejected' | 'executed' | 'pending';
   proposer: string;
-  votesFor: number;
-  votesAgainst: number;
-  votesAbstain: number;
+  forVotes: number;
+  againstVotes: number;
+  abstainVotes: number;
   quorum: number;
   quorumReached: boolean;
   startDate: string;
@@ -225,9 +225,9 @@ export default function Governance() {
 }
 
 function ProposalCard({ proposal }: { proposal: Proposal }) {
-  const totalVotes = proposal.votesFor + proposal.votesAgainst + proposal.votesAbstain;
-  const forPercent = totalVotes > 0 ? (proposal.votesFor / totalVotes) * 100 : 0;
-  const againstPercent = totalVotes > 0 ? (proposal.votesAgainst / totalVotes) * 100 : 0;
+  const totalVotes = proposal.forVotes + proposal.againstVotes + proposal.abstainVotes;
+  const forPercent = totalVotes > 0 ? (proposal.forVotes / totalVotes) * 100 : 0;
+  const againstPercent = totalVotes > 0 ? (proposal.againstVotes / totalVotes) * 100 : 0;
 
   const getCategoryColor = (category: string) => {
     switch (category) {
