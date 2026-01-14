@@ -41,6 +41,7 @@ Key features include:
 -   **Closed-Loop Coordination System** (Membership-based coordination with PMA Membership Gate, Purpose Pools for resource coordination, a robust Governance System, Land Candidates Pipeline, and Treasury Transparency. All terminology focuses on coordination and participation, with AXUSD for settlement and accounting only.)
 -   **Land Reclamation Workbook** (Paid subscription tool for genealogical land research with case management, evidence tracking, AI Research Assistant, and ethical use safeguards.)
 -   **Personalized Journeys** (Dashboard customization based on user interests and experience level, smart feature recommendations, goal tracking)
+-   **Unified Investor Dashboard** (Tabbed dashboard at /dashboard combining Home, My Investments, and Governance tabs. Home tab shows personalized widgets and stats. My Investments tab displays portfolio positions, yield tracking, distributions, statements, and K-1 tax documents with PDF/CSV export. Governance tab shows proposals, voting interface, voting power stats, and proposal creation. Lazy loading for optimal performance.)
 -   **Mobile Dashboard Optimization** (Touch-friendly interfaces, responsive layouts, mobile bottom navigation, swipe gestures)
 -   **Community Coordination Marketplace** (SUSU group matching with land opportunities, skill sharing, resource coordination)
 -   **Cross-Program Contribution Planner** (Unified financial planning across SUSU, Land, Staking with suggested contribution schedules)
