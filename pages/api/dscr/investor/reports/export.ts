@@ -168,28 +168,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 }
 
 function generateCSV(positions: any[], distributions: any[], totalCommitted: number, totalValue: number, totalYield: number): string {
-  const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+  const returnRate = totalCommitted > 0 ? ((totalValue - totalCommitted) / totalCommitted * 100).toFixed(2) : '0.00';
+  const totalNetDistributions = distributions.reduce((sum: number, d: any) => sum + parseFloat(d.amount || 0) * 0.98, 0);
   
   let csv = 'AXIOM NEXUS INVESTOR PORTFOLIO REPORT\n';
-  csv += `Generated: ${new Date().toLocaleString()}\n\n`;
+  csv += `Generated,${new Date().toLocaleString()}\n`;
+  csv += `Entity,Axiom Nexus LLC\n`;
+  csv += `Regulation,SEC Reg D 506(c)\n\n`;
   
   csv += 'PORTFOLIO SUMMARY\n';
-  csv += 'Metric,Value\n';
-  csv += `Total Invested,${formatCurrency(totalCommitted)}\n`;
-  csv += `Current Value,${formatCurrency(totalValue)}\n`;
-  csv += `Total Yield,${formatCurrency(totalYield)}\n`;
-  csv += `Unrealized Gain,${formatCurrency(totalValue - totalCommitted)}\n\n`;
+  csv += 'Metric,Value,Raw Amount\n';
+  csv += `Total Invested,$${totalCommitted.toLocaleString()},${totalCommitted}\n`;
+  csv += `Current Value,$${totalValue.toLocaleString()},${totalValue}\n`;
+  csv += `Total Yield Earned,$${totalYield.toLocaleString()},${totalYield}\n`;
+  csv += `Unrealized Gain,$${(totalValue - totalCommitted).toLocaleString()},${totalValue - totalCommitted}\n`;
+  csv += `Overall Return,${returnRate}%,${returnRate}\n`;
+  csv += `Total Net Distributions,$${totalNetDistributions.toLocaleString()},${totalNetDistributions}\n\n`;
   
   csv += 'POSITIONS\n';
-  csv += 'Fund Series,Committed,Deployed,Current Value,Yield Earned\n';
+  csv += 'Fund Series,Committed,Deployed,Current Value,Yield Earned,Committed Raw,Deployed Raw,Value Raw,Yield Raw\n';
   positions.forEach((pos: any) => {
-    csv += `"${pos.fund_series || pos.fundSeries}",${pos.committed_amount || pos.committedAmount},${pos.deployed_amount || pos.deployedAmount},${pos.current_value || pos.currentValue},${pos.earned_yield || pos.earnedYield}\n`;
+    const committed = parseFloat(pos.committed_amount || pos.committedAmount || 0);
+    const deployed = parseFloat(pos.deployed_amount || pos.deployedAmount || 0);
+    const value = parseFloat(pos.current_value || pos.currentValue || 0);
+    const earned = parseFloat(pos.earned_yield || pos.earnedYield || 0);
+    csv += `"${pos.fund_series || pos.fundSeries}",$${committed.toLocaleString()},$${deployed.toLocaleString()},$${value.toLocaleString()},$${earned.toLocaleString()},${committed},${deployed},${value},${earned}\n`;
   });
   
   csv += '\nDISTRIBUTIONS\n';
-  csv += 'Date,Fund Series,Amount\n';
+  csv += 'Date,Fund Series,Gross Amount,Net Amount,Gross Raw,Net Raw\n';
   distributions.forEach((dist: any) => {
-    csv += `"${new Date(dist.date || dist.created_at).toLocaleDateString()}","${dist.fund_series || dist.fundSeries}",${dist.amount}\n`;
+    const gross = parseFloat(dist.amount || dist.grossAmount || 0);
+    const net = gross * 0.98;
+    csv += `"${new Date(dist.date || dist.created_at).toLocaleDateString()}","${dist.fund_series || dist.fundSeries}",$${gross.toLocaleString()},$${net.toLocaleString()},${gross},${net}\n`;
   });
   
   return csv;

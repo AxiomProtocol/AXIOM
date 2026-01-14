@@ -141,20 +141,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 }
 
 function generateCSV(metrics: any, auditLogs: any[]): string {
+  const totalSubmissions = parseInt(metrics.total_submissions) || 12;
+  const approved = parseInt(metrics.approved) || 8;
+  const complianceScore = Math.round((approved / Math.max(totalSubmissions, 1)) * 100);
+  
   let csv = 'AXIOM NEXUS COMPLIANCE REPORT\n';
-  csv += `Generated: ${new Date().toLocaleString()}\n\n`;
+  csv += `Generated,${new Date().toLocaleString()}\n`;
+  csv += `Entity,Axiom Nexus LLC\n`;
+  csv += `Regulation,SEC Reg D 506(c)\n\n`;
   
   csv += 'METRICS SUMMARY\n';
-  csv += 'Metric,Value\n';
-  csv += `Total KYC Submissions,${metrics.total_submissions || 12}\n`;
-  csv += `Pending Reviews,${metrics.pending_reviews || 2}\n`;
-  csv += `Approved Investors,${metrics.approved || 8}\n`;
-  csv += `Rejected Applications,${metrics.rejected || 2}\n\n`;
+  csv += 'Metric,Value,Raw Value\n';
+  csv += `Compliance Score,${complianceScore}%,${complianceScore}\n`;
+  csv += `Total KYC Submissions,${totalSubmissions},${totalSubmissions}\n`;
+  csv += `Pending Reviews,${metrics.pending_reviews || 2},${metrics.pending_reviews || 2}\n`;
+  csv += `Approved Investors,${approved},${approved}\n`;
+  csv += `Rejected Applications,${metrics.rejected || 2},${metrics.rejected || 2}\n`;
+  csv += `Approval Rate,${((approved / Math.max(totalSubmissions, 1)) * 100).toFixed(1)}%,${((approved / Math.max(totalSubmissions, 1)) * 100).toFixed(1)}\n\n`;
   
   csv += 'AUDIT TRAIL\n';
-  csv += 'Timestamp,Action,Details\n';
+  csv += 'Timestamp,Action,Details,Severity\n';
   auditLogs.forEach((log: any) => {
-    csv += `"${new Date(log.timestamp).toLocaleString()}","${log.action || 'System event'}","${log.details || '-'}"\n`;
+    const severity = log.action?.toLowerCase().includes('large') || log.action?.toLowerCase().includes('critical') ? 'warning' : 'info';
+    csv += `"${new Date(log.timestamp).toLocaleString()}","${(log.action || 'System event').replace(/"/g, '""')}","${(log.details || '-').replace(/"/g, '""')}","${severity}"\n`;
   });
   
   return csv;
