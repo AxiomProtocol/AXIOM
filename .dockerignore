@@ -3,9 +3,11 @@
 # Keep all source code needed for Next.js build
 # ============================================
 
+# Node modules (rebuild during deployment)
+node_modules/
+
 # Development cache and temp files
 .next/cache
-node_modules/.cache
 .pnpm-store
 
 # Version control
@@ -49,11 +51,15 @@ pyproject.toml
 uv.lock
 __pycache__/
 
-# Hardhat/Solidity development
+# Hardhat/Solidity development (LARGE - must exclude)
 cache/
 artifacts/
+artifacts-axusd/
 stablecoin-deploy/
+typechain/
+typechain-types/
 universe-blockchain/
+hardhat.config.*
 
 # Large binary files
 *.zip
