@@ -8,12 +8,27 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   productionBrowserSourceMaps: false,
-  swcMinify: false,
+  swcMinify: true,
+  poweredByHeader: false,
+  compress: true,
   images: {
-    unoptimized: true
+    unoptimized: true,
+    minimumCacheTTL: 60,
   },
   generateBuildId: async () => 'build-' + Date.now(),
+  modularizeImports: {
+    'lucide-react': {
+      transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
+    },
+    '@heroicons/react/24/outline': {
+      transform: '@heroicons/react/24/outline/{{member}}',
+    },
+    '@heroicons/react/24/solid': {
+      transform: '@heroicons/react/24/solid/{{member}}',
+    },
+  },
   experimental: {
+    optimizePackageImports: ['recharts', 'framer-motion', 'lucide-react'],
     serverComponentsExternalPackages: [
       'canvas',
       '@napi-rs/canvas',
