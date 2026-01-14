@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { RebuildNav } from '../../../components/axiomRebuild/RebuildNav';
-import { RebuildFooter } from '../../../components/axiomRebuild/RebuildFooter';
 
 interface InvestorPosition {
   fundSeries: string;
@@ -84,8 +82,6 @@ export default function InvestorReports() {
         <title>Investor Reports | Axiom Nexus</title>
         <meta name="description" content="View your investment positions, distributions, and tax documents" />
       </Head>
-
-      <RebuildNav />
 
       <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
         <div className="max-w-7xl mx-auto px-4 py-12">
@@ -379,8 +375,6 @@ export default function InvestorReports() {
           )}
         </div>
       </div>
-
-      <RebuildFooter />
     </>
   );
 }

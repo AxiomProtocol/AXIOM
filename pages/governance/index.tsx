@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { RebuildNav } from '../../components/axiomRebuild/RebuildNav';
-import { RebuildFooter } from '../../components/axiomRebuild/RebuildFooter';
 
 interface Proposal {
   id: string;
@@ -96,8 +94,6 @@ export default function Governance() {
         <title>Governance | Axiom Protocol</title>
         <meta name="description" content="Participate in Axiom Protocol governance - vote on proposals, delegate voting power, and shape the future of the protocol" />
       </Head>
-
-      <RebuildNav />
 
       <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
         <div className="max-w-7xl mx-auto px-4 py-12">
@@ -218,8 +214,6 @@ export default function Governance() {
       {showCreateModal && (
         <CreateProposalModal onClose={() => setShowCreateModal(false)} onSubmit={fetchGovernanceData} />
       )}
-
-      <RebuildFooter />
     </>
   );
 }
