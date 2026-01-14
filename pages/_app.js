@@ -59,6 +59,8 @@ function matchesRebuildNavPages(pathname) {
   if (pathname.startsWith('/transparency')) return true;
   if (pathname.startsWith('/treasury')) return true;
   if (pathname.startsWith('/governance')) return true;
+  if (pathname.startsWith('/nodes')) return true;
+  if (pathname.startsWith('/axiom-nodes')) return true;
   return false;
 }
 
