@@ -818,8 +818,8 @@ export default function AxiomDePINNodes() {
               }}
             >
               AXM <span style={{ 
-                background: paymentMethod === 'AXM' ? '#000' : '#22c55e', 
-                color: paymentMethod === 'AXM' ? '#FFD700' : '#000',
+                background: paymentMethod === 'AXM' ? '#b8860b' : '#22c55e', 
+                color: '#fff',
                 padding: '0.15rem 0.4rem', 
                 borderRadius: '4px', 
                 fontSize: '0.7rem' 
@@ -847,8 +847,8 @@ export default function AxiomDePINNodes() {
               <span>{tab.label}</span>
               {tab.badge && (
                 <span style={{
-                  background: activeTab === tab.id ? '#000' : '#4ade80',
-                  color: activeTab === tab.id ? '#FFD700' : '#000',
+                  background: activeTab === tab.id ? '#b8860b' : '#22c55e',
+                  color: '#fff',
                   fontSize: '0.65rem', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 'bold'
                 }}>{tab.badge}</span>
               )}
@@ -1400,7 +1400,7 @@ export default function AxiomDePINNodes() {
                       padding: '0.875rem 1.5rem',
                       background: parseFloat(pendingRewards) > 0 
                         ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)' 
-                        : '#333',
+                        : '#d1d5db',
                       color: parseFloat(pendingRewards) > 0 ? '#000' : '#666',
                       border: 'none',
                       borderRadius: '10px',
