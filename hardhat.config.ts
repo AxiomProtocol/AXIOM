@@ -20,23 +20,83 @@ const config: HardhatUserConfig = {
           evmVersion: "paris",
         },
       },
+      {
+        version: "0.8.24",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 50,
+          },
+          viaIR: true,
+          evmVersion: "paris",
+        },
+      },
     ],
     overrides: {
       "contracts/land-acquisition/LandOptionRegistry.sol": {
-        version: "0.8.20",
+        version: "0.8.24",
         settings: {
           optimizer: { enabled: true, runs: 50 },
           viaIR: true,
         },
       },
       "contracts/land-acquisition/RegCFCrowdfunding.sol": {
-        version: "0.8.20",
+        version: "0.8.24",
         settings: {
           optimizer: { enabled: true, runs: 50 },
           viaIR: true,
         },
       },
       "contracts/land-acquisition/LandAcquisitionPool.sol": {
+        version: "0.8.24",
+        settings: {
+          optimizer: { enabled: true, runs: 50 },
+          viaIR: true,
+        },
+      },
+      "contracts/land-simple/LandOptionRegistry.sol": {
+        version: "0.8.24",
+        settings: {
+          optimizer: { enabled: true, runs: 50 },
+          viaIR: true,
+        },
+      },
+      "contracts/land-simple/RegCFCrowdfunding.sol": {
+        version: "0.8.24",
+        settings: {
+          optimizer: { enabled: true, runs: 50 },
+          viaIR: true,
+        },
+      },
+      "contracts/land-simple/LandAcquisitionPool.sol": {
+        version: "0.8.24",
+        settings: {
+          optimizer: { enabled: true, runs: 50 },
+          viaIR: true,
+        },
+      },
+      "contracts/land-simple/BuilderFarmerCredit.sol": {
+        version: "0.8.24",
+        settings: {
+          optimizer: { enabled: true, runs: 50 },
+          viaIR: true,
+        },
+      },
+      "contracts/phase3/CreditLineVault.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 50 },
+          viaIR: true,
+        },
+      },
+      "contracts/phase3/InsurancePoolHub.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 50 },
+          viaIR: true,
+        },
+      },
+      "contracts/phase3/TreasuryNoteToken.sol": {
         version: "0.8.20",
         settings: {
           optimizer: { enabled: true, runs: 50 },
