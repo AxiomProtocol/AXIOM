@@ -78,3 +78,28 @@ Key features include:
 -   **Auth Provider:** Supabase
 -   **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image)
 -   **Property Data:** ATTOM Data, RentCast API, Walk Score API
+
+## Deployment Configuration (STANDARD - DO NOT CHANGE)
+All deployments MUST use these exact settings to prevent build timeouts:
+
+**Target:** VM (Virtual Machine) - handles complex builds better than autoscale
+
+**Build Command:** `npm run build:deploy:clean`
+- Runs `prebuild:deploy` first to remove large artifact directories
+- Excludes: artifacts, artifacts-land, artifacts-axusd, typechain-types, cache, stablecoin-deploy, .next/cache, node_modules/.cache
+- Then runs Next.js production build with 4GB memory allocation
+
+**Run Command:** `npm run start:minimal`
+- Uses `next start` directly on port 5000
+- Binds to 0.0.0.0 for external access
+
+**next.config.js Exclusions:**
+- outputFileTracingExcludes: artifacts/**, attached_assets/**, integration/**, scripts/**, contracts/**, typechain-types/**, cache/**, stablecoin-deploy/**
+- These folders are ignored during build file tracing to prevent timeout
+
+**Why These Settings:**
+- The repo contains 445MB+ of attached_assets and large Solidity artifacts
+- Without exclusions, the build scans all files causing timeout
+- VM deployment handles longer builds better than autoscale
+
+**IMPORTANT:** Never use autoscale or change these settings without explicit user approval
