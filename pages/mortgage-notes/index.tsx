@@ -120,7 +120,7 @@ export default function MortgageNotesPage() {
             </p>
 
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48 }}>
-              <Link href="/lending-fund/onboarding" style={{
+              <Link href="/lending-fund/onboarding?product=mortgage-notes" style={{
                 padding: '16px 32px',
                 background: '#d4af37',
                 color: '#111827',

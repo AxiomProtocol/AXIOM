@@ -900,13 +900,30 @@ This signature constitutes my legally binding electronic signature.`;
                   accredited investor status within 2-3 business days. You will be notified 
                   once approved to invest.
                 </p>
-                <div className="flex gap-4 justify-center">
+                <div className="flex gap-4 justify-center flex-wrap">
+                  {typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('product') ? (
+                    <Link
+                      href={`/${new URLSearchParams(window.location.search).get('product')}`}
+                      className="px-6 py-3 font-bold rounded-lg"
+                      style={{ background: "#00D4AA", color: "#FFFFFF" }}
+                    >
+                      Back to Product
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/lending-fund"
+                      className="px-6 py-3 font-bold rounded-lg"
+                      style={{ background: "#00D4AA", color: "#FFFFFF" }}
+                    >
+                      Back to Fund
+                    </Link>
+                  )}
                   <Link
-                    href="/lending-fund"
+                    href="/products"
                     className="px-6 py-3 font-bold rounded-lg"
-                    style={{ background: "#00D4AA", color: "#FFFFFF" }}
+                    style={{ background: "#1a1a2e", color: "#FFFFFF" }}
                   >
-                    Back to Fund
+                    View All Products
                   </Link>
                 </div>
               </div>
