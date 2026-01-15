@@ -94,18 +94,6 @@ export const navItems: NavItem[] = [
     ]
   },
   {
-    label: "DeFi",
-    children: [
-      { label: "AXUSD Credit Lines", href: "/credit-lines" },
-      { label: "Insurance Pools", href: "/insurance-pools" },
-      { label: "Treasury Notes", href: "/treasury-notes" },
-      { label: "AXUSD Stablecoin", href: "/axusd" },
-      { label: "Staking", href: "/staking" },
-      { label: "DEX Exchange", href: "/dex" },
-      { label: "LP Incentives", href: "/liquidity" }
-    ]
-  },
-  {
     label: "Tools",
     children: [
       { label: "Treasury", href: "/bank" },
