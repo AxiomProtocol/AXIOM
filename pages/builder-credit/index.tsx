@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { LAND_ACQUISITION_CONTRACTS } from '../../shared/contracts';
+
+interface CreditTier {
+  type: string;
+  maxLTV: number;
+  interestRateBps: number;
+  interestRatePercent: number;
+  maxTermMonths: number;
+  minCollateralValue: string;
+}
 
 interface CreditProduct {
   id: string;
@@ -14,17 +24,15 @@ interface CreditProduct {
   collateralTypes: string[];
   requirements: string[];
   features: string[];
+  onChain?: boolean;
 }
 
-interface LoanApplication {
-  id: string;
-  productId: string;
-  amount: number;
-  status: 'pending' | 'under-review' | 'approved' | 'funded' | 'repaying';
-  createdAt: string;
+interface ContractStatus {
+  address: string;
+  connected: boolean;
 }
 
-const CREDIT_PRODUCTS: CreditProduct[] = [
+const DEFAULT_CREDIT_PRODUCTS: CreditProduct[] = [
   {
     id: 'builder-working-capital',
     name: 'Builder Working Capital',
@@ -32,11 +40,11 @@ const CREDIT_PRODUCTS: CreditProduct[] = [
     description: 'Short-term financing for construction projects, materials, and labor costs on community land.',
     minAmount: 10000,
     maxAmount: 250000,
-    termMonths: 12,
-    interestRate: 10,
+    termMonths: 24,
+    interestRate: 12,
     collateralTypes: ['Work in Progress', 'Equipment', 'Materials'],
     requirements: ['Community land steward status', 'Construction experience', 'Project plan approval'],
-    features: ['Draw schedule based on milestones', 'Interest-only during construction', 'Flexible repayment']
+    features: ['70% Max LTV', 'Draw schedule based on milestones', 'Interest-only during construction']
   },
   {
     id: 'equipment-financing',
@@ -45,8 +53,8 @@ const CREDIT_PRODUCTS: CreditProduct[] = [
     description: 'Finance heavy equipment and tools needed for land development and construction projects.',
     minAmount: 5000,
     maxAmount: 150000,
-    termMonths: 36,
-    interestRate: 8,
+    termMonths: 24,
+    interestRate: 12,
     collateralTypes: ['Equipment being financed'],
     requirements: ['Equipment quote or invoice', 'Insurance coverage', 'Steward or community member status'],
     features: ['Equipment serves as collateral', 'Fixed monthly payments', 'Ownership at term end']
@@ -58,11 +66,11 @@ const CREDIT_PRODUCTS: CreditProduct[] = [
     description: 'Working capital for planting seasons including seeds, fertilizer, equipment rental, and labor.',
     minAmount: 5000,
     maxAmount: 100000,
-    termMonths: 8,
-    interestRate: 9,
+    termMonths: 36,
+    interestRate: 10,
     collateralTypes: ['Crop Proceeds', 'Equipment'],
     requirements: ['Farming plan', 'Community land access', 'Agricultural experience'],
-    features: ['Balloon payment at harvest', 'Input cost coverage', 'Crop insurance required']
+    features: ['65% Max LTV', 'Balloon payment at harvest', 'Crop insurance required']
   },
   {
     id: 'livestock-credit',
@@ -71,8 +79,8 @@ const CREDIT_PRODUCTS: CreditProduct[] = [
     description: 'Financing for livestock purchase, feed, veterinary care, and pasture improvements.',
     minAmount: 10000,
     maxAmount: 200000,
-    termMonths: 24,
-    interestRate: 9.5,
+    termMonths: 36,
+    interestRate: 10,
     collateralTypes: ['Livestock', 'Equipment', 'Land Improvements'],
     requirements: ['Livestock management plan', 'Adequate land access', 'Veterinary relationship'],
     features: ['Flexible draw schedule', 'Livestock as collateral', 'Herd expansion focus']
@@ -84,8 +92,8 @@ const CREDIT_PRODUCTS: CreditProduct[] = [
     description: 'Longer-term financing for barns, irrigation systems, fencing, and permanent improvements.',
     minAmount: 25000,
     maxAmount: 500000,
-    termMonths: 60,
-    interestRate: 8.5,
+    termMonths: 36,
+    interestRate: 10,
     collateralTypes: ['Improvements', 'Land Lease Rights', 'Equipment'],
     requirements: ['Engineering plans', 'Permits and approvals', 'Long-term land access'],
     features: ['Progress-based draws', 'Deferred principal start', 'Value-add improvements']
@@ -96,12 +104,75 @@ export default function BuilderCreditPage() {
   const [selectedType, setSelectedType] = useState<'all' | 'builder' | 'farmer'>('all');
   const [selectedProduct, setSelectedProduct] = useState<CreditProduct | null>(null);
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const [creditTiers, setCreditTiers] = useState<CreditTier[]>([]);
+  const [contractStatus, setContractStatus] = useState<ContractStatus | null>(null);
+  const [products, setProducts] = useState<CreditProduct[]>(DEFAULT_CREDIT_PRODUCTS);
+  const [loading, setLoading] = useState(true);
+  const [creditStats, setCreditStats] = useState({ totalApplications: 0, totalLoans: 0 });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const connectivityRes = await fetch('/api/phase2/test-connectivity');
+        if (connectivityRes.ok) {
+          const data = await connectivityRes.json();
+          setContractStatus(data.contracts.builderFarmerCredit);
+          if (data.creditTiers && data.creditTiers.length > 0) {
+            setCreditTiers(data.creditTiers);
+            const updatedProducts = DEFAULT_CREDIT_PRODUCTS.map(p => {
+              const tier = data.creditTiers.find((t: CreditTier) => t.type.toLowerCase() === p.type);
+              if (tier) {
+                return {
+                  ...p,
+                  interestRate: tier.interestRatePercent,
+                  termMonths: tier.maxTermMonths,
+                  onChain: true,
+                  features: [
+                    `${tier.maxLTV}% Max LTV`,
+                    ...p.features.filter(f => !f.includes('Max LTV'))
+                  ]
+                };
+              }
+              return p;
+            });
+            setProducts(updatedProducts);
+          }
+        }
+
+        const statsRes = await fetch('/api/phase2/credit');
+        if (statsRes.ok) {
+          const stats = await statsRes.json();
+          setCreditStats(stats);
+        }
+      } catch (error) {
+        console.error('Error fetching credit data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const filteredProducts = selectedType === 'all' 
-    ? CREDIT_PRODUCTS 
-    : CREDIT_PRODUCTS.filter(p => p.type === selectedType);
+    ? products 
+    : products.filter(p => p.type === selectedType);
 
-  const totalCapacity = CREDIT_PRODUCTS.reduce((sum, p) => sum + p.maxAmount, 0);
+  const builderTier = creditTiers.find(t => t.type === 'Builder');
+  const farmerTier = creditTiers.find(t => t.type === 'Farmer');
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: 48, height: 48, border: '3px solid #e5e7eb', borderTopColor: '#d4af37', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
+          <p style={{ color: '#6b7280' }}>Loading credit products...</p>
+          <p style={{ color: '#9ca3af', fontSize: 12, marginTop: 8 }}>Connecting to Arbitrum One...</p>
+        </div>
+        <style jsx>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -113,13 +184,18 @@ export default function BuilderCreditPage() {
       <main style={{ minHeight: '100vh', background: '#ffffff' }}>
         <div style={{ background: 'linear-gradient(135deg, #111827 0%, #1f2937 100%)', padding: '80px 24px', color: '#ffffff' }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
               <span style={{ padding: '4px 12px', background: 'rgba(212, 175, 55, 0.2)', borderRadius: 9999, fontSize: 12, fontWeight: 600, color: '#d4af37' }}>
                 PHASE 2
               </span>
               <span style={{ padding: '4px 12px', background: 'rgba(16, 185, 129, 0.2)', borderRadius: 9999, fontSize: 12, fontWeight: 600, color: '#10b981' }}>
                 COMMUNITY CREDIT
               </span>
+              {contractStatus?.connected && (
+                <span style={{ padding: '4px 12px', background: 'rgba(59, 130, 246, 0.2)', borderRadius: 9999, fontSize: 12, fontWeight: 600, color: '#3b82f6' }}>
+                  ON-CHAIN CONNECTED
+                </span>
+              )}
             </div>
             <h1 style={{ fontSize: 48, fontWeight: 700, marginBottom: 16 }}>Builder & Farmer Credit</h1>
             <p style={{ fontSize: 20, color: '#9ca3af', maxWidth: 700 }}>
@@ -127,11 +203,98 @@ export default function BuilderCreditPage() {
             </p>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 24, marginTop: 48 }}>
-              <StatCard label="Products Available" value={CREDIT_PRODUCTS.length.toString()} />
-              <StatCard label="Max Credit Line" value={`$${(Math.max(...CREDIT_PRODUCTS.map(p => p.maxAmount)) / 1000)}K`} />
-              <StatCard label="Rates From" value="8%" suffix="APR" />
-              <StatCard label="Terms Up To" value="60" suffix="months" />
+              <StatCard label="Products Available" value={products.length.toString()} />
+              <StatCard 
+                label="Builder Rate" 
+                value={builderTier ? `${builderTier.interestRatePercent}%` : '12%'} 
+                suffix="APR"
+                highlight={builderTier ? 'On-chain verified' : undefined}
+              />
+              <StatCard 
+                label="Farmer Rate" 
+                value={farmerTier ? `${farmerTier.interestRatePercent}%` : '10%'} 
+                suffix="APR"
+                highlight={farmerTier ? 'On-chain verified' : undefined}
+              />
+              <StatCard 
+                label="Terms Up To" 
+                value={Math.max(builderTier?.maxTermMonths || 24, farmerTier?.maxTermMonths || 36).toString()} 
+                suffix="months" 
+              />
             </div>
+
+            {contractStatus && (
+              <div style={{ marginTop: 32, padding: 16, background: 'rgba(255,255,255,0.05)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)' }}>
+                <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 8 }}>SMART CONTRACT STATUS</p>
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: contractStatus.connected ? '#10b981' : '#ef4444' }} />
+                    <span style={{ fontSize: 12, color: contractStatus.connected ? '#10b981' : '#ef4444' }}>BuilderFarmerCredit</span>
+                  </div>
+                  <span style={{ fontSize: 11, color: '#6b7280', fontFamily: 'monospace' }}>
+                    {LAND_ACQUISITION_CONTRACTS.BUILDER_FARMER_CREDIT.slice(0, 10)}...{LAND_ACQUISITION_CONTRACTS.BUILDER_FARMER_CREDIT.slice(-8)}
+                  </span>
+                </div>
+                {creditStats.totalApplications > 0 && (
+                  <div style={{ marginTop: 12, display: 'flex', gap: 24 }}>
+                    <span style={{ fontSize: 12, color: '#9ca3af' }}>Applications: <strong style={{ color: '#ffffff' }}>{creditStats.totalApplications}</strong></span>
+                    <span style={{ fontSize: 12, color: '#9ca3af' }}>Active Loans: <strong style={{ color: '#ffffff' }}>{creditStats.totalLoans}</strong></span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {creditTiers.length > 0 && (
+              <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+                {creditTiers.map(tier => (
+                  <div key={tier.type} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 20, border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                      <div style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        background: tier.type === 'Builder' ? '#3b82f6' : '#10b981',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        {tier.type === 'Builder' ? (
+                          <svg style={{ width: 18, height: 18, color: '#fff' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1" />
+                          </svg>
+                        ) : (
+                          <svg style={{ width: 18, height: 18, color: '#fff' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2" />
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <h4 style={{ fontSize: 14, fontWeight: 700, color: '#ffffff' }}>{tier.type} Credit Tier</h4>
+                        <p style={{ fontSize: 11, color: '#9ca3af' }}>On-chain parameters</p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div>
+                        <p style={{ fontSize: 10, color: '#6b7280' }}>Max LTV</p>
+                        <p style={{ fontSize: 16, fontWeight: 600, color: '#ffffff' }}>{tier.maxLTV}%</p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: 10, color: '#6b7280' }}>Interest Rate</p>
+                        <p style={{ fontSize: 16, fontWeight: 600, color: '#ffffff' }}>{tier.interestRatePercent}% APR</p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: 10, color: '#6b7280' }}>Max Term</p>
+                        <p style={{ fontSize: 16, fontWeight: 600, color: '#ffffff' }}>{tier.maxTermMonths} months</p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: 10, color: '#6b7280' }}>Min Collateral</p>
+                        <p style={{ fontSize: 16, fontWeight: 600, color: '#ffffff' }}>${parseFloat(tier.minCollateralValue).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -163,7 +326,7 @@ export default function BuilderCreditPage() {
                 )}
                 {type === 'farmer' && (
                   <svg style={{ width: 18, height: 18 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064" />
                   </svg>
                 )}
                 {type === 'all' ? 'All Products' : type === 'builder' ? 'Builder Credit' : 'Farmer Credit'}
@@ -173,7 +336,7 @@ export default function BuilderCreditPage() {
 
           <div style={{ display: 'grid', gap: 24, gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))' }}>
             {filteredProducts.map((product) => (
-              <div key={product.id} style={{ background: '#f9fafb', borderRadius: 16, padding: 24, border: '1px solid #e5e7eb' }}>
+              <div key={product.id} style={{ background: '#f9fafb', borderRadius: 16, padding: 24, border: product.onChain ? '2px solid #3b82f6' : '1px solid #e5e7eb' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                   <div style={{
                     width: 48,
@@ -196,14 +359,21 @@ export default function BuilderCreditPage() {
                   </div>
                   <div>
                     <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111827' }}>{product.name}</h3>
-                    <span style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                      color: product.type === 'builder' ? '#3b82f6' : '#10b981'
-                    }}>
-                      {product.type} Credit
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        color: product.type === 'builder' ? '#3b82f6' : '#10b981'
+                      }}>
+                        {product.type} Credit
+                      </span>
+                      {product.onChain && (
+                        <span style={{ fontSize: 10, color: '#3b82f6', background: '#dbeafe', padding: '2px 6px', borderRadius: 4 }}>
+                          ON-CHAIN
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
@@ -219,7 +389,7 @@ export default function BuilderCreditPage() {
                     <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>{product.interestRate}% APR</p>
                   </div>
                   <div style={{ background: '#ffffff', padding: 12, borderRadius: 8 }}>
-                    <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>Term Length</p>
+                    <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>Max Term</p>
                     <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>{product.termMonths} months</p>
                   </div>
                   <div style={{ background: '#ffffff', padding: 12, borderRadius: 8 }}>
@@ -232,7 +402,13 @@ export default function BuilderCreditPage() {
                   <p style={{ fontSize: 12, fontWeight: 600, color: '#9ca3af', marginBottom: 8, textTransform: 'uppercase' }}>Features</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {product.features.map((feature) => (
-                      <span key={feature} style={{ padding: '4px 10px', background: '#e5e7eb', borderRadius: 6, fontSize: 12, color: '#374151' }}>
+                      <span key={feature} style={{ 
+                        padding: '4px 10px', 
+                        background: feature.includes('LTV') ? '#dbeafe' : '#e5e7eb',
+                        color: feature.includes('LTV') ? '#1d4ed8' : '#374151',
+                        borderRadius: 6, 
+                        fontSize: 12 
+                      }}>
                         {feature}
                       </span>
                     ))}
@@ -266,9 +442,9 @@ export default function BuilderCreditPage() {
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 24 }}>
               <BenefitCard 
-                icon="🏛️" 
-                title="Community-Backed" 
-                description="Credit is funded by community capital, creating a circular economy that benefits all members."
+                icon="🔗" 
+                title="On-Chain Transparency" 
+                description="Credit terms and loan status verified on Arbitrum One. Full transparency with immutable records."
               />
               <BenefitCard 
                 icon="⚡" 
@@ -335,9 +511,9 @@ export default function BuilderCreditPage() {
               </div>
             </div>
             
-            <div style={{ background: '#fef3c7', padding: 16, borderRadius: 8, marginBottom: 24 }}>
-              <p style={{ fontSize: 13, color: '#92400e' }}>
-                <strong>Note:</strong> Credit applications require membership in the Axiom community and connection to community land projects.
+            <div style={{ background: '#dbeafe', padding: 16, borderRadius: 8, marginBottom: 24 }}>
+              <p style={{ fontSize: 13, color: '#1e40af' }}>
+                <strong>On-Chain Credit:</strong> Your application and loan terms will be recorded on Arbitrum One for full transparency and immutability.
               </p>
             </div>
             
@@ -378,7 +554,7 @@ export default function BuilderCreditPage() {
   );
 }
 
-function StatCard({ label, value, suffix }: { label: string; value: string; suffix?: string }) {
+function StatCard({ label, value, suffix, highlight }: { label: string; value: string; suffix?: string; highlight?: string }) {
   return (
     <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: 20 }}>
       <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</p>
@@ -386,6 +562,7 @@ function StatCard({ label, value, suffix }: { label: string; value: string; suff
         {value}
         {suffix && <span style={{ fontSize: 14, fontWeight: 400, marginLeft: 4 }}>{suffix}</span>}
       </p>
+      {highlight && <p style={{ fontSize: 11, color: '#3b82f6', marginTop: 4 }}>{highlight}</p>}
     </div>
   );
 }

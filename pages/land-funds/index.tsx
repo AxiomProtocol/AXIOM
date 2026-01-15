@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { LAND_ACQUISITION_CONTRACTS } from '../../shared/contracts';
 
 interface LandParcel {
   id: string;
+  optionId?: number;
   name: string;
   location: string;
   acreage: number;
@@ -15,6 +17,16 @@ interface LandParcel {
   description: string;
   features: string[];
   stewardApplications: number;
+  fundingProgress: number;
+  regCFCompliant: boolean;
+  onChain: boolean;
+}
+
+interface ContractStatus {
+  landOptionRegistry: { address: string; connected: boolean };
+  landAcquisitionPool: { address: string; connected: boolean };
+  regCFCrowdfunding: { address: string; connected: boolean };
+  builderFarmerCredit: { address: string; connected: boolean };
 }
 
 const DEMO_PARCELS: LandParcel[] = [
@@ -29,7 +41,10 @@ const DEMO_PARCELS: LandParcel[] = [
     status: 'funding',
     description: 'Prime agricultural land with existing water rights and road access. Ideal for community farming and sustainable agriculture initiatives.',
     features: ['Water Rights', 'Road Access', 'Fertile Soil', 'Creek Frontage'],
-    stewardApplications: 8
+    stewardApplications: 8,
+    fundingProgress: 80,
+    regCFCompliant: true,
+    onChain: false
   },
   {
     id: 'parcel-2',
@@ -42,7 +57,10 @@ const DEMO_PARCELS: LandParcel[] = [
     status: 'acquired',
     description: 'Mixed-use land with mature timber and pasture areas. Recently acquired and now entering the development planning phase.',
     features: ['Timber Value', 'Pasture Land', 'Power Available', 'County Road'],
-    stewardApplications: 5
+    stewardApplications: 5,
+    fundingProgress: 100,
+    regCFCompliant: true,
+    onChain: false
   },
   {
     id: 'parcel-3',
@@ -55,20 +73,10 @@ const DEMO_PARCELS: LandParcel[] = [
     status: 'due-diligence',
     description: 'Large parcel with natural springs and diverse terrain. Currently undergoing environmental assessment and title verification.',
     features: ['Natural Springs', 'Diverse Terrain', 'Wildlife Habitat', 'Privacy'],
-    stewardApplications: 12
-  },
-  {
-    id: 'parcel-4',
-    name: 'Sunrise Valley',
-    location: 'Neshoba County, Mississippi',
-    acreage: 75,
-    targetPrice: 225000,
-    currentFunding: 0,
-    contributors: 0,
-    status: 'sourcing',
-    description: 'Newly identified opportunity with excellent development potential. Property evaluation in progress.',
-    features: ['Development Ready', 'Utility Access', 'Gentle Slopes', 'Near Town'],
-    stewardApplications: 0
+    stewardApplications: 12,
+    fundingProgress: 25,
+    regCFCompliant: true,
+    onChain: false
   }
 ];
 
@@ -86,13 +94,68 @@ export default function LandFundsPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [showStewardModal, setShowStewardModal] = useState(false);
   const [selectedParcel, setSelectedParcel] = useState<LandParcel | null>(null);
+  const [contractStatus, setContractStatus] = useState<ContractStatus | null>(null);
+  const [connectivityChecked, setConnectivityChecked] = useState(false);
 
   useEffect(() => {
-    setTimeout(() => {
-      setParcels(DEMO_PARCELS);
-      setLoading(false);
-    }, 500);
+    const fetchData = async () => {
+      try {
+        const connectivityRes = await fetch('/api/phase2/test-connectivity');
+        if (connectivityRes.ok) {
+          const data = await connectivityRes.json();
+          setContractStatus(data.contracts);
+          setConnectivityChecked(true);
+        }
+
+        const optionsRes = await fetch('/api/phase2/land-options');
+        if (optionsRes.ok) {
+          const data = await optionsRes.json();
+          if (data.options && data.options.length > 0) {
+            const onChainParcels: LandParcel[] = data.options.map((opt: any) => ({
+              id: `option-${opt.optionId}`,
+              optionId: opt.optionId,
+              name: opt.parcelId || `Land Option #${opt.optionId}`,
+              location: opt.location || 'Mississippi',
+              acreage: opt.acreage,
+              targetPrice: parseFloat(opt.purchasePrice),
+              currentFunding: (opt.sharesSold / opt.totalShares) * parseFloat(opt.purchasePrice),
+              contributors: opt.investorCount,
+              status: mapContractStatus(opt.status),
+              description: `On-chain land option with ${opt.totalShares} total shares. ${opt.regCFCompliant ? 'SEC Reg CF compliant.' : ''}`,
+              features: opt.regCFCompliant ? ['SEC Reg CF', 'ERC1155 Tokenized', 'On-Chain'] : ['ERC1155 Tokenized', 'On-Chain'],
+              stewardApplications: 0,
+              fundingProgress: opt.fundingProgress,
+              regCFCompliant: opt.regCFCompliant,
+              onChain: true
+            }));
+            setParcels([...onChainParcels, ...DEMO_PARCELS]);
+          } else {
+            setParcels(DEMO_PARCELS);
+          }
+        } else {
+          setParcels(DEMO_PARCELS);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setParcels(DEMO_PARCELS);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
+
+  function mapContractStatus(status: string): 'sourcing' | 'due-diligence' | 'funding' | 'acquired' | 'development' {
+    switch (status) {
+      case 'Draft': return 'sourcing';
+      case 'Active': return 'funding';
+      case 'OptionFeePaid':
+      case 'ExerciseReady': return 'due-diligence';
+      case 'Exercised': return 'acquired';
+      default: return 'sourcing';
+    }
+  }
 
   const filteredParcels = selectedStatus === 'all' 
     ? parcels 
@@ -101,6 +164,7 @@ export default function LandFundsPage() {
   const totalAcreage = parcels.reduce((sum, p) => sum + p.acreage, 0);
   const totalFunding = parcels.reduce((sum, p) => sum + p.currentFunding, 0);
   const totalContributors = parcels.reduce((sum, p) => sum + p.contributors, 0);
+  const onChainCount = parcels.filter(p => p.onChain).length;
 
   if (loading) {
     return (
@@ -108,6 +172,7 @@ export default function LandFundsPage() {
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: 48, height: 48, border: '3px solid #e5e7eb', borderTopColor: '#d4af37', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
           <p style={{ color: '#6b7280' }}>Loading land opportunities...</p>
+          <p style={{ color: '#9ca3af', fontSize: 12, marginTop: 8 }}>Connecting to Arbitrum One...</p>
         </div>
         <style jsx>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -124,13 +189,18 @@ export default function LandFundsPage() {
       <main style={{ minHeight: '100vh', background: '#ffffff' }}>
         <div style={{ background: 'linear-gradient(135deg, #111827 0%, #1f2937 100%)', padding: '80px 24px', color: '#ffffff' }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
               <span style={{ padding: '4px 12px', background: 'rgba(212, 175, 55, 0.2)', borderRadius: 9999, fontSize: 12, fontWeight: 600, color: '#d4af37' }}>
                 PHASE 2
               </span>
               <span style={{ padding: '4px 12px', background: 'rgba(16, 185, 129, 0.2)', borderRadius: 9999, fontSize: 12, fontWeight: 600, color: '#10b981' }}>
                 SEC REG CF COMPLIANT
               </span>
+              {connectivityChecked && contractStatus?.landOptionRegistry.connected && (
+                <span style={{ padding: '4px 12px', background: 'rgba(59, 130, 246, 0.2)', borderRadius: 9999, fontSize: 12, fontWeight: 600, color: '#3b82f6' }}>
+                  ON-CHAIN CONNECTED
+                </span>
+              )}
             </div>
             <h1 style={{ fontSize: 48, fontWeight: 700, marginBottom: 16 }}>Community Land Funds</h1>
             <p style={{ fontSize: 20, color: '#9ca3af', maxWidth: 700 }}>
@@ -141,8 +211,19 @@ export default function LandFundsPage() {
               <StatCard label="Total Acreage" value={totalAcreage.toLocaleString()} suffix="acres" />
               <StatCard label="Capital Pooled" value={`$${(totalFunding / 1000).toFixed(0)}K`} />
               <StatCard label="Contributors" value={totalContributors.toString()} />
-              <StatCard label="Active Parcels" value={parcels.length.toString()} />
+              <StatCard label="Active Parcels" value={parcels.length.toString()} highlight={onChainCount > 0 ? `${onChainCount} on-chain` : undefined} />
             </div>
+
+            {connectivityChecked && (
+              <div style={{ marginTop: 32, padding: 16, background: 'rgba(255,255,255,0.05)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)' }}>
+                <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 8 }}>SMART CONTRACT STATUS</p>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                  <ContractBadge name="LandOptionRegistry" connected={contractStatus?.landOptionRegistry.connected || false} />
+                  <ContractBadge name="LandAcquisitionPool" connected={contractStatus?.landAcquisitionPool.connected || false} />
+                  <ContractBadge name="RegCFCrowdfunding" connected={contractStatus?.regCFCrowdfunding.connected || false} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -191,11 +272,20 @@ export default function LandFundsPage() {
 
           <div style={{ display: 'grid', gap: 24, gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))' }}>
             {filteredParcels.map((parcel) => (
-              <div key={parcel.id} style={{ background: '#f9fafb', borderRadius: 16, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-                <div style={{ height: 160, background: 'linear-gradient(135deg, #374151 0%, #1f2937 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                  <svg style={{ width: 48, height: 48, color: '#6b7280' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+              <div key={parcel.id} style={{ background: '#f9fafb', borderRadius: 16, overflow: 'hidden', border: parcel.onChain ? '2px solid #3b82f6' : '1px solid #e5e7eb' }}>
+                <div style={{ height: 160, background: parcel.onChain ? 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)' : 'linear-gradient(135deg, #374151 0%, #1f2937 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  {parcel.onChain ? (
+                    <div style={{ textAlign: 'center' }}>
+                      <svg style={{ width: 40, height: 40, color: '#ffffff', marginBottom: 8 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                      <p style={{ color: '#ffffff', fontSize: 12, fontWeight: 600 }}>ON-CHAIN VERIFIED</p>
+                    </div>
+                  ) : (
+                    <svg style={{ width: 48, height: 48, color: '#6b7280' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
                   <div style={{ position: 'absolute', top: 12, right: 12 }}>
                     <span style={{
                       padding: '4px 12px',
@@ -224,7 +314,13 @@ export default function LandFundsPage() {
                   
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
                     {parcel.features.map((feature) => (
-                      <span key={feature} style={{ padding: '4px 10px', background: '#e5e7eb', borderRadius: 6, fontSize: 12, color: '#374151' }}>
+                      <span key={feature} style={{ 
+                        padding: '4px 10px', 
+                        background: feature === 'On-Chain' || feature === 'ERC1155 Tokenized' ? '#dbeafe' : '#e5e7eb', 
+                        color: feature === 'On-Chain' || feature === 'ERC1155 Tokenized' ? '#1e40af' : '#374151',
+                        borderRadius: 6, 
+                        fontSize: 12
+                      }}>
                         {feature}
                       </span>
                     ))}
@@ -241,17 +337,17 @@ export default function LandFundsPage() {
                     </div>
                   </div>
                   
-                  {parcel.status === 'funding' && (
+                  {(parcel.status === 'funding' || parcel.fundingProgress > 0) && (
                     <div style={{ marginBottom: 20 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <span style={{ fontSize: 14, color: '#374151' }}>{Math.round((parcel.currentFunding / parcel.targetPrice) * 100)}% funded</span>
+                        <span style={{ fontSize: 14, color: '#374151' }}>{Math.round(parcel.fundingProgress)}% funded</span>
                         <span style={{ fontSize: 14, color: '#6b7280' }}>{parcel.contributors} contributors</span>
                       </div>
                       <div style={{ height: 8, background: '#e5e7eb', borderRadius: 9999, overflow: 'hidden' }}>
                         <div style={{
                           height: '100%',
-                          width: `${Math.min((parcel.currentFunding / parcel.targetPrice) * 100, 100)}%`,
-                          background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)',
+                          width: `${Math.min(parcel.fundingProgress, 100)}%`,
+                          background: parcel.onChain ? 'linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%)' : 'linear-gradient(90deg, #10b981 0%, #059669 100%)',
                           borderRadius: 9999,
                           transition: 'width 0.5s ease'
                         }} />
@@ -261,10 +357,10 @@ export default function LandFundsPage() {
                   
                   <div style={{ display: 'flex', gap: 12 }}>
                     {parcel.status === 'funding' && (
-                      <Link href={`/lending-fund/invest?product=land-funds&parcel=${parcel.id}`} style={{
+                      <Link href={`/lending-fund/invest?product=land-funds&parcel=${parcel.id}${parcel.optionId ? `&optionId=${parcel.optionId}` : ''}`} style={{
                         flex: 1,
                         padding: '12px 20px',
-                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        background: parcel.onChain ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                         color: '#ffffff',
                         borderRadius: 8,
                         fontWeight: 600,
@@ -289,7 +385,7 @@ export default function LandFundsPage() {
                         fontSize: 14
                       }}
                     >
-                      Apply as Steward ({parcel.stewardApplications})
+                      Apply as Steward
                     </button>
                   </div>
                 </div>
@@ -364,7 +460,7 @@ export default function LandFundsPage() {
   );
 }
 
-function StatCard({ label, value, suffix }: { label: string; value: string; suffix?: string }) {
+function StatCard({ label, value, suffix, highlight }: { label: string; value: string; suffix?: string; highlight?: string }) {
   return (
     <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: 20 }}>
       <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</p>
@@ -372,6 +468,16 @@ function StatCard({ label, value, suffix }: { label: string; value: string; suff
         {value}
         {suffix && <span style={{ fontSize: 14, fontWeight: 400, marginLeft: 4 }}>{suffix}</span>}
       </p>
+      {highlight && <p style={{ fontSize: 11, color: '#3b82f6', marginTop: 4 }}>{highlight}</p>}
+    </div>
+  );
+}
+
+function ContractBadge({ name, connected }: { name: string; connected: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ width: 8, height: 8, borderRadius: '50%', background: connected ? '#10b981' : '#ef4444' }} />
+      <span style={{ fontSize: 12, color: connected ? '#10b981' : '#ef4444' }}>{name}</span>
     </div>
   );
 }
