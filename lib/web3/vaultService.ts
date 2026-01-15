@@ -1,38 +1,43 @@
 import { ethers } from 'ethers';
 import { ERC4626_VAULT_ABI, ERC20_ABI } from './vaultAbi';
-import { REALESTATE_LENDING_CONTRACTS, AXUSD_GENIUS_CONTRACTS, NETWORK_CONFIG, STABLECOINS } from '../../shared/contracts';
+import { REALESTATE_LENDING_CONTRACTS, AXUSD_STABLECOIN_CONTRACTS, NETWORK_CONFIG, STABLECOINS } from '../../shared/contracts';
 
 export interface VaultInfo {
   address: string;
   name: string;
   assetAddress: string;
   assetSymbol: string;
+  assetDecimals: number;
 }
 
 export const PRODUCT_VAULTS: Record<string, VaultInfo> = {
   'mortgage-notes': {
     address: REALESTATE_LENDING_CONTRACTS.FIXFLIP_VAULT,
     name: 'Fix & Flip Lending Vault',
-    assetAddress: STABLECOINS.USDC,
-    assetSymbol: 'USDC'
+    assetAddress: AXUSD_STABLECOIN_CONTRACTS.AXUSD,
+    assetSymbol: 'AXUSD',
+    assetDecimals: 18
   },
   'savings': {
     address: REALESTATE_LENDING_CONTRACTS.DSCR_POOL_VAULT,
     name: 'DSCR Pool Vault',
-    assetAddress: STABLECOINS.USDC,
-    assetSymbol: 'USDC'
+    assetAddress: AXUSD_STABLECOIN_CONTRACTS.AXUSD,
+    assetSymbol: 'AXUSD',
+    assetDecimals: 18
   },
   'rent-streams': {
     address: REALESTATE_LENDING_CONTRACTS.DSCR_POOL_VAULT,
     name: 'Rent Streams Vault',
-    assetAddress: STABLECOINS.USDC,
-    assetSymbol: 'USDC'
+    assetAddress: AXUSD_STABLECOIN_CONTRACTS.AXUSD,
+    assetSymbol: 'AXUSD',
+    assetDecimals: 18
   },
   'lending-fund': {
     address: REALESTATE_LENDING_CONTRACTS.FIXFLIP_VAULT,
     name: 'Fix & Flip Lending Fund',
-    assetAddress: STABLECOINS.USDC,
-    assetSymbol: 'USDC'
+    assetAddress: AXUSD_STABLECOIN_CONTRACTS.AXUSD,
+    assetSymbol: 'AXUSD',
+    assetDecimals: 18
   }
 };
 

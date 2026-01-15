@@ -403,11 +403,11 @@ export default function InvestPage() {
               {currentStep === 4 && (
                 <StepCard title="Step 4: Investment Amount">
                   <p className="mb-6" style={{ color: "#6b7280" }}>
-                    Enter the amount you wish to invest. Minimum investment is {formatUSD(vaultPosition?.minDeposit || '100')} USDC.
+                    Enter the amount you wish to invest. Minimum investment is {formatUSD(vaultPosition?.minDeposit || '100')} AXUSD.
                   </p>
 
                   <div className="mb-6">
-                    <label className="block text-sm mb-2" style={{ color: "#6b7280" }}>Investment Amount (USDC)</label>
+                    <label className="block text-sm mb-2" style={{ color: "#6b7280" }}>Investment Amount (AXUSD)</label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-xl" style={{ color: "#6b7280" }}>$</span>
                       <input
@@ -522,7 +522,7 @@ export default function InvestPage() {
                           </div>
                           {vaultPosition && (
                             <div className="flex justify-between py-2">
-                              <span style={{ color: "#6b7280" }}>Your USDC Balance</span>
+                              <span style={{ color: "#6b7280" }}>Your AXUSD Balance</span>
                               <span style={{ color: "#1a1a2e" }}>${parseFloat(vaultPosition.assetBalance).toLocaleString()}</span>
                             </div>
                           )}
@@ -544,8 +544,8 @@ export default function InvestPage() {
                           <div className="rounded-lg p-4 mb-6" style={{ background: "rgba(0, 212, 170, 0.1)", border: "1px solid rgba(0, 212, 170, 0.3)" }}>
                             <p className="text-sm" style={{ color: "#00D4AA" }}>
                               {checkNeedsApproval()
-                                ? "Step 1: Approve the vault to spend your USDC, then deposit."
-                                : "Your USDC is approved. Click below to complete the deposit."}
+                                ? "Step 1: Approve the vault to spend your AXUSD, then deposit."
+                                : "Your AXUSD is approved. Click below to complete the deposit."}
                             </p>
                           </div>
 
@@ -556,7 +556,7 @@ export default function InvestPage() {
                               className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50"
                               style={{ background: "#d4af37" }}
                             >
-                              {txStatus === 'approving' ? 'Approving...' : `Approve USDC for ${formatUSD(amount)}`}
+                              {txStatus === 'approving' ? 'Approving...' : `Approve AXUSD for ${formatUSD(amount)}`}
                             </button>
                           ) : (
                             <button
