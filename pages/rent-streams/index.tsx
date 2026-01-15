@@ -345,7 +345,7 @@ export default function RentStreamsPage() {
               Join {stats?.totalInvestors || 0} investors earning passive income from real properties.
             </p>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/lending-fund/onboarding" style={{
+              <Link href="/lending-fund/onboarding?product=rent-streams" style={{
                 padding: '16px 32px',
                 background: '#d4af37',
                 color: '#111827',

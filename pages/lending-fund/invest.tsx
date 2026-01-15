@@ -64,6 +64,7 @@ export default function InvestPage() {
           setWalletAddress(accounts[0]);
           setWalletConnected(true);
           updateStep(1, true);
+          setCurrentStep(2);
           fetchVaultPosition(accounts[0]);
         }
       } catch (error) {

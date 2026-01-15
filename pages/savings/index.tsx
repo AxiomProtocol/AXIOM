@@ -287,7 +287,7 @@ export default function SavingsPage() {
             <p style={{ color: '#9ca3af', marginBottom: 32 }}>
               Minimum deposit of just ${vault?.minDeposit || 100}. No lock-up period for standard tier.
             </p>
-            <Link href="/lending-fund/onboarding" style={{
+            <Link href="/lending-fund/onboarding?product=savings" style={{
               display: 'inline-block',
               padding: '16px 48px',
               background: '#d4af37',
