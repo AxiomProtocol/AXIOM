@@ -108,7 +108,7 @@ export async function getVaultPosition(productKey: string, userAddress: string) 
     positionValueRaw: assetsFromShares.toString(),
     allowance: ethers.formatUnits(allowance, assetDecimals),
     allowanceRaw: allowance.toString(),
-    minDeposit: ethers.formatUnits(minDepositRaw, assetDecimals),
+    minDeposit: ethers.formatUnits(minDepositRaw, 18),
     minDepositRaw: minDepositRaw.toString(),
     decimals: Number(assetDecimals),
     needsApproval: allowance === BigInt(0)
