@@ -41,11 +41,17 @@ const nextConfig = {
     ],
     outputFileTracingExcludes: {
       '*': [
+        './artifacts/**',
+        './artifacts-land/**',
         './artifacts-axusd/**',
         './stablecoin-deploy/**',
         './typechain-types/**',
         './cache/**',
         './.git/**',
+        './attached_assets/**',
+        './integration/**',
+        './scripts/**',
+        './contracts/**',
       ],
     },
     outputFileTracingIncludes: {
@@ -63,7 +69,7 @@ const nextConfig = {
     // Exclude artifact directories from module resolution
     config.watchOptions = {
       ...config.watchOptions,
-      ignored: ['**/node_modules', '**/artifacts*', '**/typechain-types', '**/cache', '**/stablecoin-deploy'],
+      ignored: ['**/node_modules', '**/artifacts*', '**/typechain-types', '**/cache', '**/stablecoin-deploy', '**/attached_assets', '**/integration', '**/contracts'],
     };
     
     if (!isServer) {
