@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getCreditTiers, getCreditStats, getCreditApplication, getCreditLoan } from '../../../lib/web3/landAcquisitionService';
+import { getCreditTiers, getCreditStats, getCreditApplication, getCreditLoan } from '../../../lib/web3/builderFarmerCreditService';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { testContractConnectivity, getCreditTiers, getPlatformStats } from '../../../lib/web3/landAcquisitionService';
+import { testLandContractConnectivity, getPlatformStats } from '../../../lib/web3/landAcquisitionService';
+import { getCreditTiers, testCreditContractConnectivity } from '../../../lib/web3/builderFarmerCreditService';
 import { LAND_ACQUISITION_CONTRACTS } from '../../../shared/contracts';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -8,30 +9,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const connectivity = await testContractConnectivity();
-    const creditTiers = await getCreditTiers();
-    const platformStats = await getPlatformStats();
+    const [landConnectivity, creditConnected, creditTiers, platformStats] = await Promise.all([
+      testLandContractConnectivity(),
+      testCreditContractConnectivity(),
+      getCreditTiers(),
+      getPlatformStats()
+    ]);
     
-    const allConnected = Object.values(connectivity).every(v => v);
+    const allConnected = Object.values(landConnectivity).every(v => v) && creditConnected;
 
     return res.status(200).json({
       success: allConnected,
       contracts: {
         landOptionRegistry: {
           address: LAND_ACQUISITION_CONTRACTS.LAND_OPTION_REGISTRY,
-          connected: connectivity.landOptionRegistry
+          connected: landConnectivity.landOptionRegistry
         },
         landAcquisitionPool: {
           address: LAND_ACQUISITION_CONTRACTS.LAND_ACQUISITION_POOL,
-          connected: connectivity.landAcquisitionPool
+          connected: landConnectivity.landAcquisitionPool
         },
         regCFCrowdfunding: {
           address: LAND_ACQUISITION_CONTRACTS.REG_CF_CROWDFUNDING,
-          connected: connectivity.regCFCrowdfunding
+          connected: landConnectivity.regCFCrowdfunding
         },
         builderFarmerCredit: {
           address: LAND_ACQUISITION_CONTRACTS.BUILDER_FARMER_CREDIT,
-          connected: connectivity.builderFarmerCredit
+          connected: creditConnected
         }
       },
       creditTiers,
