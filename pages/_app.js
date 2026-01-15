@@ -89,7 +89,7 @@ export default function App({ Component, pageProps }) {
   useEffect(() => {
     if (typeof window !== 'undefined' && !onboardingChecked) {
       const completed = localStorage.getItem('axiom_onboarding_complete')
-      const isPublicPage = ['/', '/origin', '/how-it-works', '/about-us', '/team', '/axiom-nexus', '/transparency', '/governance', '/treasury'].includes(router.pathname) || router.pathname.startsWith('/dscr/investor')
+      const isPublicPage = ['/', '/origin', '/how-it-works', '/about-us', '/team', '/axiom-nexus', '/transparency', '/governance', '/treasury', '/roadmap'].includes(router.pathname) || router.pathname.startsWith('/dscr/investor')
       const isAdminPage = router.pathname.startsWith('/admin')
       const isCustomOnboardingPage = router.pathname === '/purpose-group-onboarding'
       if (!completed && !isPublicPage && !isAdminPage && !isCustomOnboardingPage) {

@@ -60,18 +60,24 @@ export default function AdminRoadmapEditor() {
       setToken(urlToken);
       fetchRoadmap(urlToken);
     } else {
-      setLoading(false);
+      fetchRoadmap('');
     }
   }, [router.query.token]);
 
   const fetchRoadmap = async (adminToken: string) => {
     try {
-      const res = await fetch(`/api/roadmap?admin=true&token=${adminToken}`);
+      const url = adminToken 
+        ? `/api/roadmap?admin=true&token=${adminToken}`
+        : '/api/roadmap?admin=true';
+      const res = await fetch(url, { credentials: 'include' });
       const data = await res.json();
       if (data.success && data.isAdmin) {
         setRoadmap(data.roadmap);
+        if (!adminToken) {
+          setToken('jwt');
+        }
       } else {
-        setMessage({ type: 'error', text: 'Admin access denied. Check your token.' });
+        setMessage({ type: 'error', text: 'Admin access denied. Use token in URL or login as admin.' });
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to fetch roadmap data' });
@@ -86,9 +92,13 @@ export default function AdminRoadmapEditor() {
     setMessage(null);
 
     try {
-      const res = await fetch(`/api/roadmap?token=${token}`, {
+      const url = token && token !== 'jwt' 
+        ? `/api/roadmap?token=${token}` 
+        : '/api/roadmap';
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ roadmap })
       });
       const data = await res.json();
@@ -257,17 +267,6 @@ export default function AdminRoadmapEditor() {
     textTransform: 'uppercase' as const
   };
 
-  if (!token && !loading) {
-    return (
-      <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ background: '#ffffff', padding: 32, borderRadius: 12, boxShadow: '0 4px 6px rgba(0,0,0,0.05)', maxWidth: 400, width: '100%' }}>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111827', marginBottom: 8 }}>Admin Access Required</h1>
-          <p style={{ color: '#6b7280', marginBottom: 24 }}>Add your admin token to the URL: ?token=YOUR_TOKEN</p>
-          <p style={{ fontSize: 14, color: '#9ca3af' }}>Set ADMIN_EDIT_TOKEN in your environment variables.</p>
-        </div>
-      </div>
-    );
-  }
 
   if (loading) {
     return (

@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
+import jwt from 'jsonwebtoken';
 
 const ROADMAP_FILE = path.join(process.cwd(), 'data', 'roadmap.json');
 
@@ -46,10 +47,27 @@ function filterPublishedContent(roadmap: any) {
 
 function verifyAdminAccess(req: NextApiRequest): boolean {
   const adminToken = process.env.ADMIN_EDIT_TOKEN;
-  if (!adminToken) return false;
-  
   const providedToken = req.query.token || req.headers['x-admin-token'];
-  return providedToken === adminToken;
+  if (adminToken && providedToken === adminToken) {
+    return true;
+  }
+  
+  const jwtToken = req.cookies.admin_token;
+  if (jwtToken) {
+    try {
+      const secret = process.env.SESSION_SECRET || process.env.JWT_SECRET;
+      if (secret) {
+        const decoded = jwt.verify(jwtToken, secret) as any;
+        if (decoded && decoded.id) {
+          return true;
+        }
+      }
+    } catch (e) {
+      // Invalid JWT, fall through
+    }
+  }
+  
+  return false;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
