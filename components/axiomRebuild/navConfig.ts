@@ -31,6 +31,16 @@ export const navItems: NavItem[] = [
     ]
   },
   {
+    label: "Products",
+    children: [
+      { label: "All Products", href: "/products" },
+      { label: "Mortgage Notes", href: "/mortgage-notes" },
+      { label: "High Yield Savings", href: "/savings" },
+      { label: "Rent Streams", href: "/rent-streams" },
+      { label: "Product Roadmap", href: "/roadmap" }
+    ]
+  },
+  {
     label: "Lending Fund",
     children: [
       { label: "Overview", href: "/lending-fund" },

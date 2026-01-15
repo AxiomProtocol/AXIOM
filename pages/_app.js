@@ -45,7 +45,8 @@ const REBUILD_NAV_PAGES = [
   '/roadmap',
   '/mortgage-notes',
   '/savings',
-  '/rent-streams'
+  '/rent-streams',
+  '/products'
 ]
 
 function matchesRebuildNavPages(pathname) {
@@ -92,7 +93,7 @@ export default function App({ Component, pageProps }) {
   useEffect(() => {
     if (typeof window !== 'undefined' && !onboardingChecked) {
       const completed = localStorage.getItem('axiom_onboarding_complete')
-      const isPublicPage = ['/', '/origin', '/how-it-works', '/about-us', '/team', '/axiom-nexus', '/transparency', '/governance', '/treasury', '/roadmap', '/mortgage-notes', '/savings', '/rent-streams'].includes(router.pathname) || router.pathname.startsWith('/dscr/investor')
+      const isPublicPage = ['/', '/origin', '/how-it-works', '/about-us', '/team', '/axiom-nexus', '/transparency', '/governance', '/treasury', '/roadmap', '/mortgage-notes', '/savings', '/rent-streams', '/products'].includes(router.pathname) || router.pathname.startsWith('/dscr/investor')
       const isAdminPage = router.pathname.startsWith('/admin')
       const isCustomOnboardingPage = router.pathname === '/purpose-group-onboarding'
       if (!completed && !isPublicPage && !isAdminPage && !isCustomOnboardingPage) {
