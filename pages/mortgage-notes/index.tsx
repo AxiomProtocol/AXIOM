@@ -34,10 +34,17 @@ interface Fund {
   status: string;
 }
 
+interface LiveData {
+  source: 'blockchain' | 'static';
+  contracts?: { vault: string; manager: string };
+  lastUpdated: string;
+}
+
 export default function MortgageNotesPage() {
   const [fund, setFund] = useState<Fund | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [liveData, setLiveData] = useState<LiveData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,6 +56,7 @@ export default function MortgageNotesPage() {
           setFund(data.fund);
           setStats(data.stats);
           setNotes(data.notes || []);
+          setLiveData(data.liveData || null);
         }
       } catch (err) {
         console.error('Failed to load mortgage notes data');
@@ -78,16 +86,30 @@ export default function MortgageNotesPage() {
       <main style={{ background: '#ffffff', minHeight: '100vh' }}>
         <section style={{ padding: '80px 24px', background: 'linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%)' }}>
           <div style={{ maxWidth: 1200, margin: '0 auto', textAlign: 'center' }}>
-            <div style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              padding: '8px 16px', 
-              borderRadius: 9999, 
-              background: 'rgba(212, 175, 55, 0.1)', 
-              border: '1px solid rgba(212, 175, 55, 0.3)',
-              marginBottom: 24
-            }}>
-              <span style={{ color: '#b8860b', fontSize: 14, fontWeight: 500 }}>SEC Reg D 506(c) | Accredited Investors</span>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
+              <div style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                padding: '8px 16px', 
+                borderRadius: 9999, 
+                background: 'rgba(212, 175, 55, 0.1)', 
+                border: '1px solid rgba(212, 175, 55, 0.3)'
+              }}>
+                <span style={{ color: '#b8860b', fontSize: 14, fontWeight: 500 }}>SEC Reg D 506(c) | Accredited Investors</span>
+              </div>
+              {liveData?.source === 'blockchain' && (
+                <div style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  padding: '8px 16px', 
+                  borderRadius: 9999, 
+                  background: 'rgba(34, 197, 94, 0.1)', 
+                  border: '1px solid rgba(34, 197, 94, 0.3)'
+                }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', marginRight: 8, animation: 'pulse 2s infinite' }}></span>
+                  <span style={{ color: '#16a34a', fontSize: 14, fontWeight: 500 }}>Live On-Chain Data</span>
+                </div>
+              )}
             </div>
 
             <h1 style={{ fontSize: 48, fontWeight: 700, color: '#111827', marginBottom: 16, lineHeight: 1.2 }}>

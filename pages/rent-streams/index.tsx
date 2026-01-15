@@ -42,11 +42,18 @@ interface Distribution {
   properties: number;
 }
 
+interface LiveData {
+  source: 'blockchain' | 'static';
+  contracts?: { leaseEngine: string; revenueRouter: string };
+  lastUpdated: string;
+}
+
 export default function RentStreamsPage() {
   const [program, setProgram] = useState<Program | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
   const [distributions, setDistributions] = useState<Distribution[]>([]);
+  const [liveData, setLiveData] = useState<LiveData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
 
@@ -60,6 +67,7 @@ export default function RentStreamsPage() {
           setStats(data.stats);
           setProperties(data.properties || []);
           setDistributions(data.distributions || []);
+          setLiveData(data.liveData || null);
         }
       } catch (err) {
         console.error('Failed to load rent streams data');
@@ -89,16 +97,30 @@ export default function RentStreamsPage() {
       <main style={{ background: '#ffffff', minHeight: '100vh' }}>
         <section style={{ padding: '80px 24px', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)' }}>
           <div style={{ maxWidth: 1200, margin: '0 auto', textAlign: 'center' }}>
-            <div style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              padding: '8px 16px', 
-              borderRadius: 9999, 
-              background: 'rgba(99, 102, 241, 0.2)', 
-              border: '1px solid rgba(99, 102, 241, 0.4)',
-              marginBottom: 24
-            }}>
-              <span style={{ color: '#818cf8', fontSize: 14, fontWeight: 500 }}>Passive Income | Real Property</span>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
+              <div style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                padding: '8px 16px', 
+                borderRadius: 9999, 
+                background: 'rgba(99, 102, 241, 0.2)', 
+                border: '1px solid rgba(99, 102, 241, 0.4)'
+              }}>
+                <span style={{ color: '#818cf8', fontSize: 14, fontWeight: 500 }}>Passive Income | Real Property</span>
+              </div>
+              {liveData?.source === 'blockchain' && (
+                <div style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  padding: '8px 16px', 
+                  borderRadius: 9999, 
+                  background: 'rgba(34, 197, 94, 0.2)', 
+                  border: '1px solid rgba(34, 197, 94, 0.4)'
+                }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', marginRight: 8 }}></span>
+                  <span style={{ color: '#22c55e', fontSize: 14, fontWeight: 500 }}>Live On-Chain Data</span>
+                </div>
+              )}
             </div>
 
             <h1 style={{ fontSize: 48, fontWeight: 700, color: '#ffffff', marginBottom: 16, lineHeight: 1.2 }}>

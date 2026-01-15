@@ -34,12 +34,20 @@ interface ApyHistory {
   apy: number;
 }
 
+interface LiveData {
+  source: 'blockchain' | 'static';
+  axusdCirculating?: number;
+  contracts?: { fixFlipVault: string; dscrVault: string; axusd: string };
+  lastUpdated: string;
+}
+
 export default function SavingsPage() {
   const [vault, setVault] = useState<Vault | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [apyHistory, setApyHistory] = useState<ApyHistory[]>([]);
   const [features, setFeatures] = useState<string[]>([]);
+  const [liveData, setLiveData] = useState<LiveData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -53,6 +61,7 @@ export default function SavingsPage() {
           setTiers(data.tiers || []);
           setApyHistory(data.apyHistory || []);
           setFeatures(data.features || []);
+          setLiveData(data.liveData || null);
         }
       } catch (err) {
         console.error('Failed to load savings data');
@@ -82,16 +91,30 @@ export default function SavingsPage() {
       <main style={{ background: '#ffffff', minHeight: '100vh' }}>
         <section style={{ padding: '80px 24px', background: 'linear-gradient(180deg, #111827 0%, #1f2937 100%)' }}>
           <div style={{ maxWidth: 1200, margin: '0 auto', textAlign: 'center' }}>
-            <div style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              padding: '8px 16px', 
-              borderRadius: 9999, 
-              background: 'rgba(212, 175, 55, 0.2)', 
-              border: '1px solid rgba(212, 175, 55, 0.4)',
-              marginBottom: 24
-            }}>
-              <span style={{ color: '#d4af37', fontSize: 14, fontWeight: 500 }}>Accredited Investors Only</span>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
+              <div style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                padding: '8px 16px', 
+                borderRadius: 9999, 
+                background: 'rgba(212, 175, 55, 0.2)', 
+                border: '1px solid rgba(212, 175, 55, 0.4)'
+              }}>
+                <span style={{ color: '#d4af37', fontSize: 14, fontWeight: 500 }}>Accredited Investors Only</span>
+              </div>
+              {liveData?.source === 'blockchain' && (
+                <div style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  padding: '8px 16px', 
+                  borderRadius: 9999, 
+                  background: 'rgba(34, 197, 94, 0.2)', 
+                  border: '1px solid rgba(34, 197, 94, 0.4)'
+                }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', marginRight: 8 }}></span>
+                  <span style={{ color: '#22c55e', fontSize: 14, fontWeight: 500 }}>Live On-Chain Data</span>
+                </div>
+              )}
             </div>
 
             <h1 style={{ fontSize: 48, fontWeight: 700, color: '#ffffff', marginBottom: 16, lineHeight: 1.2 }}>
