@@ -241,6 +241,92 @@
         "ReentrancyGuard",
         "Pausable"
       ]
+    },
+    "CreditLineVault": {
+      "address": "0xc997416666686A22EBAE8Eb7cc9224c10B08a35c",
+      "name": "Credit Line Vault",
+      "description": "Phase 3 collateralized lending system for AXUSD credit lines",
+      "verified": false,
+      "deployedAt": "Jan 15 2026 (UTC)",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0xc997416666686A22EBAE8Eb7cc9224c10B08a35c",
+      "compiler": {
+        "version": "0.8.20",
+        "optimizationRuns": 50,
+        "viaIR": true
+      },
+      "constructorArgs": {
+        "axusd": "0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c",
+        "treasury": "0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d",
+        "scoreSBT": "0x8Ae0f77e2cB2dED0496Dbe2F827be38F5756B008"
+      },
+      "features": [
+        "Multi-Collateral Support (AXM, SEED, LP, Land NFT)",
+        "Variable LTV Ratios (40-60%)",
+        "Liquidation Engine with Thresholds",
+        "Interest Accrual System",
+        "Health Factor Monitoring",
+        "Oracle Price Integration",
+        "AccessControl",
+        "ReentrancyGuard",
+        "Pausable"
+      ]
+    },
+    "InsurancePoolHub": {
+      "address": "0x1553b9B1Ebad0Cb52c6D457bEB2Ee6270A3b5d98",
+      "name": "Insurance Pool Hub",
+      "description": "Phase 3 community-backed insurance pools for protocol risk coverage",
+      "verified": false,
+      "deployedAt": "Jan 15 2026 (UTC)",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0x1553b9B1Ebad0Cb52c6D457bEB2Ee6270A3b5d98",
+      "compiler": {
+        "version": "0.8.20",
+        "optimizationRuns": 50,
+        "viaIR": true
+      },
+      "constructorArgs": {
+        "axusd": "0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c",
+        "treasury": "0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d"
+      },
+      "features": [
+        "4 Coverage Pools (Smart Contract, Depeg, Liquidation, Oracle)",
+        "Policy Purchase and Renewal",
+        "Claims Submission and Processing",
+        "Premium Rate Configuration",
+        "Reserve Management",
+        "AccessControl",
+        "ReentrancyGuard",
+        "Pausable"
+      ]
+    },
+    "TreasuryNoteToken": {
+      "address": "0x712640Fde009a7FB0c3668e9eFb9AD5Bf67bEAbd",
+      "name": "Treasury Note Token",
+      "description": "Phase 3 ERC-1155 fixed-income treasury notes for SEC Reg D 506(c) investors",
+      "verified": false,
+      "deployedAt": "Jan 15 2026 (UTC)",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0x712640Fde009a7FB0c3668e9eFb9AD5Bf67bEAbd",
+      "compiler": {
+        "version": "0.8.20",
+        "optimizationRuns": 50,
+        "viaIR": true
+      },
+      "constructorArgs": {
+        "axusd": "0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c",
+        "treasury": "0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d",
+        "uri": "https://axiom.city/api/treasury-notes/metadata/{id}"
+      },
+      "features": [
+        "ERC-1155 Multi-Token Standard",
+        "4 Note Series (6M, 12M, 24M, 36M)",
+        "Coupon Rate 6-12% APY",
+        "KYC/Accredited Investor Verification",
+        "Coupon Distribution System",
+        "Maturity Redemption",
+        "SEC Reg D 506(c) Compliance",
+        "AccessControl",
+        "ReentrancyGuard",
+        "Pausable"
+      ]
     }
   }
 }
