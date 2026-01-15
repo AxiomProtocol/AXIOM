@@ -96,23 +96,6 @@ export default function InsurancePoolsPage() {
       </Head>
 
       <div className="min-h-screen bg-gray-950">
-        <nav className="bg-gray-900 border-b border-gray-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16 items-center">
-              <Link href="/" className="text-2xl font-bold text-white">Axiom</Link>
-              <div className="hidden md:flex items-center space-x-6">
-                <Link href="/savings" className="text-gray-300 hover:text-white">Savings</Link>
-                <Link href="/mortgage-notes" className="text-gray-300 hover:text-white">Notes</Link>
-                <Link href="/land-funds" className="text-gray-300 hover:text-white">Land</Link>
-                <Link href="/credit-lines" className="text-gray-300 hover:text-white">Credit</Link>
-                <Link href="/insurance-pools" className="text-yellow-400 font-semibold">Insurance</Link>
-                <Link href="/treasury-notes" className="text-gray-300 hover:text-white">Treasury</Link>
-              </div>
-              <WalletButton />
-            </div>
-          </div>
-        </nav>
-
         <div className="relative bg-gradient-to-b from-blue-900/30 to-gray-950 py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <span className="inline-block bg-blue-500/20 text-blue-400 px-4 py-1 rounded-full text-sm mb-4">
