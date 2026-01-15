@@ -539,6 +539,27 @@ export default function InvestPage() {
                         <div className="rounded-lg p-4 mb-6" style={{ background: "rgba(0, 212, 170, 0.1)", border: "1px solid rgba(0, 212, 170, 0.3)" }}>
                           <p className="text-sm" style={{ color: "#00D4AA" }}>Loading wallet position...</p>
                         </div>
+                      ) : parseFloat(vaultPosition.assetBalance) < parseFloat(amount) ? (
+                        <div className="rounded-lg p-6 mb-6" style={{ background: "rgba(251, 191, 36, 0.1)", border: "1px solid rgba(251, 191, 36, 0.3)" }}>
+                          <h4 className="font-bold mb-2" style={{ color: "#d97706" }}>Insufficient AXUSD Balance</h4>
+                          <p className="text-sm mb-4" style={{ color: "#92400e" }}>
+                            You need {formatUSD(amount)} AXUSD to invest, but your balance is ${parseFloat(vaultPosition.assetBalance).toLocaleString()}.
+                          </p>
+                          <p className="text-sm mb-4" style={{ color: "#78716c" }}>
+                            <strong>How to get AXUSD:</strong>
+                          </p>
+                          <ul className="text-sm space-y-2 mb-4" style={{ color: "#78716c" }}>
+                            <li>1. Swap USDC for AXUSD 1:1 via the <Link href="/axusd" style={{ color: "#d4af37", textDecoration: "underline" }}>PSM (Peg Stability Module)</Link></li>
+                            <li>2. Mint AXUSD by depositing ETH/BTC collateral in the <Link href="/axusd" style={{ color: "#d4af37", textDecoration: "underline" }}>Vault Engine</Link></li>
+                          </ul>
+                          <Link 
+                            href="/axusd" 
+                            className="inline-block px-6 py-3 font-bold rounded-lg"
+                            style={{ background: "#d4af37", color: "#ffffff" }}
+                          >
+                            Get AXUSD →
+                          </Link>
+                        </div>
                       ) : (
                         <>
                           <div className="rounded-lg p-4 mb-6" style={{ background: "rgba(0, 212, 170, 0.1)", border: "1px solid rgba(0, 212, 170, 0.3)" }}>
