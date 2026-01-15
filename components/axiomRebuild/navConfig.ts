@@ -37,6 +37,8 @@ export const navItems: NavItem[] = [
       { label: "Mortgage Notes", href: "/mortgage-notes" },
       { label: "High Yield Savings", href: "/savings" },
       { label: "Rent Streams", href: "/rent-streams" },
+      { label: "Community Land Funds", href: "/land-funds" },
+      { label: "Builder & Farmer Credit", href: "/builder-credit" },
       { label: "Product Roadmap", href: "/roadmap" }
     ]
   },

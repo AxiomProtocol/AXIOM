@@ -29,7 +29,7 @@
               "description": "Deploy savings vault contracts with yield distribution logic",
               "targetDate": "2026-Q1",
               "owner": "Engineering",
-              "status": "InProgress"
+              "status": "Done"
             },
             {
               "id": "m-1-2",
@@ -38,7 +38,7 @@
               "description": "Launch web interface for deposits, withdrawals, and yield tracking",
               "targetDate": "2026-Q2",
               "owner": "Product",
-              "status": "Planned"
+              "status": "Done"
             }
           ]
         },
@@ -71,7 +71,7 @@
               "description": "Expand to long-term rental property financing",
               "targetDate": "2026-Q2",
               "owner": "Axiom Nexus",
-              "status": "InProgress"
+              "status": "Done"
             }
           ]
         },
@@ -95,7 +95,7 @@
               "description": "Onboard first 5 rental properties to the platform",
               "targetDate": "2026-Q2",
               "owner": "Operations",
-              "status": "Planned"
+              "status": "Done"
             }
           ]
         }

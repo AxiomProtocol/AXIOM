@@ -46,7 +46,9 @@ const REBUILD_NAV_PAGES = [
   '/mortgage-notes',
   '/savings',
   '/rent-streams',
-  '/products'
+  '/products',
+  '/land-funds',
+  '/builder-credit'
 ]
 
 function matchesRebuildNavPages(pathname) {
@@ -66,6 +68,8 @@ function matchesRebuildNavPages(pathname) {
   if (pathname.startsWith('/governance')) return true;
   if (pathname.startsWith('/nodes')) return true;
   if (pathname.startsWith('/axiom-nodes')) return true;
+  if (pathname.startsWith('/land-funds')) return true;
+  if (pathname.startsWith('/builder-credit')) return true;
   return false;
 }
 

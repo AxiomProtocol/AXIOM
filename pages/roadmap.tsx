@@ -102,6 +102,7 @@ export default function RoadmapPage() {
         </div>
         <style jsx>{`
           @keyframes spin { to { transform: rotate(360deg); } }
+          @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
         `}</style>
       </div>
     );
@@ -241,7 +242,24 @@ export default function RoadmapPage() {
                           onClick={() => setExpandedProduct(expandedProduct === product.id ? null : product.id)}
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                            <h3 style={{ fontSize: 18, fontWeight: 600, color: '#111827' }}>{product.name}</h3>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <h3 style={{ fontSize: 18, fontWeight: 600, color: '#111827' }}>{product.name}</h3>
+                              {product.milestones.length > 0 && product.milestones.every(m => m.status === 'Done') && (
+                                <span style={{
+                                  padding: '3px 10px',
+                                  borderRadius: 9999,
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                  color: '#ffffff',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.05em',
+                                  animation: 'pulse 2s infinite'
+                                }}>
+                                  LIVE
+                                </span>
+                              )}
+                            </div>
                             <svg 
                               style={{ 
                                 width: 20, 
@@ -301,6 +319,31 @@ export default function RoadmapPage() {
                                     ))}
                                   </div>
                                 </div>
+                              )}
+
+                              {product.milestones.length > 0 && product.milestones.every(m => m.status === 'Done') && (
+                                <Link
+                                  href={product.name.includes('Savings') ? '/savings' : product.name.includes('Mortgage') ? '/mortgage-notes' : product.name.includes('Rent') ? '/rent-streams' : product.name.includes('Land') ? '/land-funds' : product.name.includes('Builder') || product.name.includes('Farmer') ? '/builder-credit' : '/products'}
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                    marginTop: 20,
+                                    padding: '10px 20px',
+                                    background: 'linear-gradient(135deg, #d4af37 0%, #b8860b 100%)',
+                                    color: '#ffffff',
+                                    borderRadius: 8,
+                                    fontWeight: 600,
+                                    textDecoration: 'none',
+                                    fontSize: 14
+                                  }}
+                                >
+                                  View Product
+                                  <svg style={{ width: 16, height: 16 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                  </svg>
+                                </Link>
                               )}
                             </div>
                           )}
