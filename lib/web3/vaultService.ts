@@ -129,10 +129,9 @@ export async function approveVault(productKey: string, amount: string) {
   const signer = await provider.getSigner();
   
   const assetContract = new ethers.Contract(vault.assetAddress, ERC20_ABI, signer);
-  const decimals = await assetContract.decimals();
-  const amountWei = ethers.parseUnits(amount, decimals);
+  const maxApproval = ethers.MaxUint256;
 
-  const tx = await assetContract.approve(vault.address, amountWei);
+  const tx = await assetContract.approve(vault.address, maxApproval);
   const receipt = await tx.wait();
   
   return {
