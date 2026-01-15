@@ -171,7 +171,7 @@ export default function InvestPage() {
   const handleAmountChange = (value: string) => {
     const num = value.replace(/[^0-9]/g, '');
     setAmount(num);
-    if (parseInt(num) >= 10000) {
+    if (parseInt(num) >= 100) {
       updateStep(4, true);
     } else {
       updateStep(4, false);
@@ -179,7 +179,7 @@ export default function InvestPage() {
   };
 
   const proceedToDeposit = () => {
-    if (parseInt(amount) >= 10000) {
+    if (parseInt(amount) >= 100) {
       setCurrentStep(5);
     }
   };

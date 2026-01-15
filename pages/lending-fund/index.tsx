@@ -140,7 +140,7 @@ export default function LendingFundPage() {
               <div className="backdrop-blur rounded-2xl p-8" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
                 <h2 className="text-2xl font-bold mb-6" style={{ color: "#1a1a2e" }}>How It Works</h2>
                 <div className="space-y-6">
-                  <Step number={1} title="Deposit AXUSD" description="Invest a minimum of $10,000 AXUSD into the lending pool" />
+                  <Step number={1} title="Deposit USDC" description="Invest a minimum of $100 USDC into the lending pool" />
                   <Step number={2} title="Pool Funds Loans" description="Your capital backs short-term bridge loans to fix-and-flip investors" />
                   <Step number={3} title="Earn Interest" description="Receive monthly distributions from loan interest payments" />
                   <Step number={4} title="Property Secured" description="All loans are secured by real estate at max 70% LTV" />
@@ -178,7 +178,7 @@ export default function LendingFundPage() {
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                 <div>
                   <h3 className="text-2xl font-bold mb-2" style={{ color: "#1a1a2e" }}>Ready to Invest?</h3>
-                  <p style={{ color: "#6b7280" }}>Minimum investment: $10,000 AXUSD | Accredited investors only</p>
+                  <p style={{ color: "#6b7280" }}>Minimum investment: $100 USDC | Accredited investors only</p>
                 </div>
                 <div className="flex gap-4">
                   <Link href="/lending-fund/onboarding" className="px-6 py-3 text-white font-bold rounded-lg transition-all" style={{ background: "#00D4AA" }}>
