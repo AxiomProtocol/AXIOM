@@ -185,7 +185,7 @@
           "legalNotes": "Collateralized lending with automated liquidation, no securities involved",
           "onchainModules": "CreditLineVault, CollateralManager, LiquidationEngine, AxiomScoreSBT",
           "offchainModules": "Credit scoring integration, notification system, position monitoring",
-          "status": "Draft",
+          "status": "Published",
           "milestones": [
             {
               "id": "m-6-1",
@@ -194,7 +194,16 @@
               "description": "Define acceptable collateral types and LTV ratios",
               "targetDate": "2026-Q4",
               "owner": "Risk Team",
-              "status": "Planned"
+              "status": "Done"
+            },
+            {
+              "id": "m-6-2",
+              "order": 2,
+              "name": "Investor Portal Launch",
+              "description": "Launch web interface for borrowing, repayment, and position tracking",
+              "targetDate": "2026-Q4",
+              "owner": "Product",
+              "status": "Done"
             }
           ]
         },
@@ -209,7 +218,7 @@
           "legalNotes": "Structured as risk-sharing pool, not licensed insurance product",
           "onchainModules": "InsurancePool, ClaimsProcessor, PremiumDistributor, SusuInsuranceFund",
           "offchainModules": "Claims assessment, actuarial modeling, reserve management",
-          "status": "Draft",
+          "status": "Published",
           "milestones": [
             {
               "id": "m-7-1",
@@ -218,7 +227,16 @@
               "description": "Build actuarial models for protocol risks",
               "targetDate": "2026-Q4",
               "owner": "Risk Team",
-              "status": "Planned"
+              "status": "Done"
+            },
+            {
+              "id": "m-7-2",
+              "order": 2,
+              "name": "Coverage Portal Launch",
+              "description": "Launch web interface for purchasing coverage and filing claims",
+              "targetDate": "2026-Q4",
+              "owner": "Product",
+              "status": "Done"
             }
           ]
         },
@@ -233,16 +251,25 @@
           "legalNotes": "SEC Reg D 506(c) offering, fixed maturity and coupon structure",
           "onchainModules": "TreasuryNote (ERC-1155), CouponDistributor, MaturityProcessor",
           "offchainModules": "Investor relations, quarterly reporting, rating agency liaison",
-          "status": "Draft",
+          "status": "Published",
           "milestones": [
             {
               "id": "m-8-1",
               "order": 1,
               "name": "Structure Design",
               "description": "Define note terms, maturities, and coupon structures",
-              "targetDate": "2027-Q1",
+              "targetDate": "2026-Q4",
               "owner": "Treasury",
-              "status": "Planned"
+              "status": "Done"
+            },
+            {
+              "id": "m-8-2",
+              "order": 2,
+              "name": "Investment Portal Launch",
+              "description": "Launch web interface for note purchases and coupon tracking",
+              "targetDate": "2026-Q4",
+              "owner": "Product",
+              "status": "Done"
             }
           ]
         }

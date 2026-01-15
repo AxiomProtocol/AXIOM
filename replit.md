@@ -1,7 +1,7 @@
 # Axiom Smart City - Sovereign Digital-Physical Economy
 
 ## Overview
-The Axiom Smart City project aims to establish America's first 1,000-acre on-chain sovereign smart city economy. It operates as a community-governed DeFi protocol with a treasury system and economic engine. Key capabilities include a governance token (AXM), DeFi treasury tools, real estate tokenization, DePIN infrastructure, smart city services, cross-chain interoperability, and sustainability initiatives within a decentralized, community-governed framework. The project's vision is to create a model for future sovereign digital-physical economies, emphasizing a self-custody and non-custodial DeFi approach.
+The Axiom Smart City project aims to establish America's first 1,000-acre on-chain sovereign smart city economy. It functions as a community-governed DeFi protocol with a robust treasury system and economic engine. Its core purpose is to create a model for future sovereign digital-physical economies, emphasizing self-custody and a non-custodial DeFi approach. Key capabilities include a governance token (AXM), DeFi treasury tools, real estate tokenization, DePIN infrastructure, smart city services, cross-chain interoperability, and sustainability initiatives within a decentralized, community-governed framework.
 
 ## User Preferences
 - **Communication style**: Simple, everyday language explaining technical concepts.
@@ -31,43 +31,38 @@ Key features include:
 -   **AI Member Support** (Gemini-powered chat assistant)
 -   **SEED (Wealth Engine)** (AXM locking for voting power and participation benefits)
 -   **On-Chain Credit Score Display** (`CreditScoreCard` with FICO-like visualization)
--   **Steward Corps & Recruitment System** (elite coordination corps with 12-month seasonal training program covering Foundations + Spring/Summer/Fall/Winter quarters, operational dashboard, and land program. Three tiers: Premium $6,000, Standard $3,000, Scholarship $750 with AXUSD graduation rewards.)
+-   **Steward Corps & Recruitment System** (elite coordination corps with training program and operational dashboard)
 -   **Wealth Engine V2 Contracts** (DeFi Treasury System including AxiomScoreSBT, SusuInsuranceFund, SEED, and AxiomFeeBurner)
 -   **AXUSD Stablecoin System** (CDP-style hybrid stablecoin with PSM, VaultEngine, Liquidator, BackstopVault, TBillVault, and MarketOperations)
 -   **AXUSD Ecosystem Integrations** (SusuAXUSDAdapter, KeyGrowPaymentModule, SEEDYieldDistributor, AXUSDRevenueRouter, LiquidityBootstrapper on Arbitrum One mainnet)
--   **Land Acquisition System** (SEC Reg CF compliant crowdfunding with tokenized land options, community pooling, and enhanced admin tools for property submission, listing import, and multi-stage approval workflow)
--   **Social Campaign & Referral System** (Marketing tools with short links, social sharing, and referral tracking for crowdfunding campaigns)
--   **SEC Reg CF Compliance System** (Investor protection and regulatory compliance with investment limit calculator, KYC verification, required risk disclosures, and full audit trail)
--   **Closed-Loop Coordination System** (Membership-based coordination with PMA Membership Gate, Purpose Pools for resource coordination, a robust Governance System, Land Candidates Pipeline, and Treasury Transparency. All terminology focuses on coordination and participation, with AXUSD for settlement and accounting only.)
--   **Land Reclamation Workbook** (Paid subscription tool for genealogical land research with case management, evidence tracking, AI Research Assistant, and ethical use safeguards.)
--   **Personalized Journeys** (Dashboard customization based on user interests and experience level, smart feature recommendations, goal tracking)
--   **Unified Investor Dashboard** (Tabbed dashboard at /dashboard combining Home, My Investments, and Governance tabs. Home tab shows personalized widgets and stats. My Investments tab displays portfolio positions, yield tracking, distributions, statements, and K-1 tax documents with PDF/CSV export. Governance tab shows proposals, voting interface, voting power stats, and proposal creation. Lazy loading for optimal performance.)
+-   **Land Acquisition System** (SEC Reg CF compliant crowdfunding with tokenized land options, community pooling, and enhanced admin tools)
+-   **Social Campaign & Referral System** (Marketing tools for crowdfunding campaigns)
+-   **SEC Reg CF Compliance System** (Investor protection with investment limit calculator, KYC, risk disclosures, and audit trail)
+-   **Closed-Loop Coordination System** (Membership-based coordination with PMA Membership Gate, Purpose Pools, Governance, Land Candidates Pipeline, and Treasury Transparency)
+-   **Land Reclamation Workbook** (Paid subscription tool for genealogical land research with AI Assistant)
+-   **Personalized Journeys** (Dashboard customization, smart feature recommendations, goal tracking)
+-   **Unified Investor Dashboard** (Tabbed dashboard at `/dashboard` for investments, governance, and personalized widgets)
 -   **Mobile Dashboard Optimization** (Touch-friendly interfaces, responsive layouts, mobile bottom navigation, swipe gestures)
 -   **Community Coordination Marketplace** (SUSU group matching with land opportunities, skill sharing, resource coordination)
--   **Cross-Program Contribution Planner** (Unified financial planning across SUSU, Land, Staking with suggested contribution schedules)
--   **Treasury Risk Dashboard** (Real-time treasury health metrics, stress testing scenarios, risk indicators, alert system)
--   **Security Enhancements** (Rate limiting middleware, audit logging, session management, anomaly detection, input sanitization)
+-   **Cross-Program Contribution Planner** (Unified financial planning across SUSU, Land, Staking)
+-   **Treasury Risk Dashboard** (Real-time treasury health metrics, stress testing, risk indicators, alert system)
+-   **Security Enhancements** (Rate limiting, audit logging, session management, anomaly detection, input sanitization)
 -   **Smart Contract Monitoring** (On-chain activity monitoring dashboard with security event tracking)
 -   **Real-Time Intelligence Platform** (Analytics dashboard with treasury metrics, protocol health indicators, configurable alerts system)
--   **AXUSD Liquidity & Treasury Automation** (LP incentive programs, automation rules for harvest/compound/rebalance, cross-chain bridge routes)
--   **AXUSD Advanced Analytics APIs** (6 endpoints: history tracking with growth metrics, wallet position tracking, peg deviation alerts, multi-pool support, LP incentive programs with bonus tiers, cross-chain bridge routes to ETH/Base/Optimism/Polygon)
--   **Land Asset Lifecycle Suite** (6-stage pipeline from discovery to development, due diligence checklists, steward application workflow)
--   **Monetization & Membership Services** (4-tier membership system: Free/Basic/Premium/Enterprise, paywall content, referral program with 10% discount/15% commission)
--   **Incentive & Rewards Economy** (Quest system with XP/badges/AXM rewards, 10-level progression, staking boosts up to +15% APY, community leaderboard)
--   **Compliance Automation** (KYC/AML verification with 3 levels, regulatory transaction limits, immutable audit ledger, compliance reporting)
+-   **AXUSD Liquidity & Treasury Automation** (LP incentive programs, automation rules, cross-chain bridge routes)
+-   **AXUSD Advanced Analytics APIs** (6 endpoints for history, wallet position, peg deviation, multi-pool, LP incentives, cross-chain routes)
+-   **Land Asset Lifecycle Suite** (6-stage pipeline from discovery to development, due diligence, steward application)
+-   **Monetization & Membership Services** (4-tier membership system, paywall content, referral program)
+-   **Incentive & Rewards Economy** (Quest system with XP/badges/AXM rewards, staking boosts, community leaderboard)
+-   **Compliance Automation** (KYC/AML verification, regulatory transaction limits, immutable audit ledger, compliance reporting)
 -   **DePIN & Asset Oracles** (IoT device monitoring, real-time asset price feeds via Chainlink, cross-chain settlement, energy credit tokenization)
--   **AXUSD Real Estate Lending Fund** (SEC Reg D 506(c) compliant fix-and-flip bridge loan fund for accredited investors. 6 deployed contracts on Arbitrum One: RiskConfig, LoanReceiptNFT, FixFlipPoolVault (ERC4626), RepaymentRouter, FixFlipManager, ProductRegistry. 70% max LTV, 14% interest, 10-14% target APY. Entity: Axiom Nexus LLC, Mississippi.)
--   **AXUSD DSCR Rental & BRRRR Loans** (Long-term rental property financing with Debt Service Coverage Ratio underwriting. Contracts: DSCRRiskConfig, DSCRLoanReceiptNFT, DSCRPoolVault (ERC4626), DSCRLoanManager. Three tiers: LOW (65% LTV, 1.25 DSCR, 7% APR), STANDARD (70% LTV, 1.20 DSCR, 8% APR), YIELD (75% LTV, 1.10 DSCR, 9.5% APR). 30-year amortizing terms. BRRRR refinance pathway converts completed fix-and-flip loans to long-term DSCR loans. Off-chain payment posting via Servicer role with referenceHash audit trail.)
--   **DSCR Governance & Reporting System** (4-phase institutional-grade transparency system for SEC Reg D 506(c) compliance. Phase 1: Treasury Transparency Dashboard at /transparency with live AUM, active loans, fund allocation visualization, and 30-second auto-refresh. Phase 2: Investor Reporting Portal at /dscr/investor/reports with position tracking, yield distributions, monthly/quarterly statements, and K-1 tax documents. Phase 3: Governance System MVP at /governance with proposal creation, voting interface, governance stats, and voting power calculations. Phase 4: Compliance & Audit Tools at /admin/compliance with KYC review queue, audit trail filtering, compliance scoring, and regulatory report generation. All APIs provide demo data fallbacks for demonstration purposes.)
--   **Product Roadmap System** (Public roadmap page at /roadmap with timeline and list views, search filtering, and expandable product details. Admin editor at /admin/roadmap with full CRUD for phases, products, and milestones. Dual auth support: JWT admin sessions and ADMIN_EDIT_TOKEN env variable. Three phases covering 8 products: High Yield Savings, Mortgage Notes, Rent Streams, Community Land Funds, Builder/Farmer Credit, AXUSD Credit Lines, Insurance Pools, Treasury Notes. Data stored in data/roadmap.json with publish/draft status control.)
--   **Phase 1 Products - Build the Balance Sheet** (Three foundational capital products launched:
-    - Axiom Mortgage Notes at /mortgage-notes: Fractional ownership in performing real estate loans. Shows $2.45M total notes, 18 active notes, 10-14% target APY, 98.2% performing rate. Portfolio of 5 property-backed loans with LTV, interest rates, and payment status.
-    - Axiom High Yield Savings at /savings: Vault-style savings with 8.5% current APY. Four tiers (Standard, Silver, Gold, Platinum) with APY boosts up to +1%. $1.85M total deposits, 234 depositors, 78.5% utilization.
-    - Axiom Rent Streams at /rent-streams: Tokenized rental income from 8 properties. 6-9% target yield, 94.5% occupancy, $32.5K monthly rent, $285K distributed. Interactive property cards with occupancy, yield, and distribution details.
-    All products use JSON data storage, SEC Reg D 506(c) compliance badges, and link to lending-fund onboarding.)
-
-## Enhancement Roadmap
-See `docs/ENHANCEMENT_ROADMAP.md` for planned improvements to Land Crowdfunding and LP Incentives features, organized into 6 phases covering wallet integration, AXUSD payments, visual enhancements, interactive features, on-chain actions, and cross-feature integration.
+-   **AXUSD Real Estate Lending Fund** (SEC Reg D 506(c) compliant fix-and-flip bridge loan fund for accredited investors, with 6 deployed contracts)
+-   **AXUSD DSCR Rental & BRRRR Loans** (Long-term rental property financing with Debt Service Coverage Ratio underwriting, including BRRRR refinance pathway)
+-   **DSCR Governance & Reporting System** (4-phase institutional-grade transparency system for SEC Reg D 506(c) compliance, including Treasury Transparency Dashboard, Investor Reporting Portal, Governance System, and Compliance & Audit Tools)
+-   **Product Roadmap System** (Public roadmap page and admin editor for managing phases, products, and milestones)
+-   **Phase 1 Products - Build the Balance Sheet** (Axiom Mortgage Notes, Axiom High Yield Savings, Axiom Rent Streams, all SEC Reg D 506(c) compliant with JSON data storage)
+-   **Phase 2 Products - Turn Capital Into Infrastructure** (Community Land Funds with MetaMask integration and on-chain transactions; Builder & Farmer Credit for working capital loans via credit application modal)
+-   **Phase 3 Products - Turn Axiom Into a Financial State** (AXUSD Credit Lines, Insurance Pools, Axiom Treasury Notes, all with Web3 wallet integration and live API data)
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
@@ -80,30 +75,6 @@ See `docs/ENHANCEMENT_ROADMAP.md` for planned improvements to Land Crowdfunding 
 -   **Email Service:** Resend
 -   **Payment Processing:** Stripe
 -   **Cloud Storage:** Google Cloud Storage, Storacha (Web3 Storage/IPFS)
--   **Property Data:** ATTOM Data, RentCast API, Walk Score API
 -   **Auth Provider:** Supabase
 -   **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image)
-
-## Deployment Configuration (Standard)
-All deployments must use these settings to prevent timeouts:
-
-**Target:** VM (Virtual Machine) - handles complex builds better than autoscale
-
-**Build Command:** `npm run build:deploy:clean`
-- Runs `prebuild:deploy` first to remove large artifact directories
-- Excludes: artifacts, artifacts-land, artifacts-axusd, typechain-types, cache, stablecoin-deploy, .next/cache, node_modules/.cache
-- Then runs Next.js production build with 4GB memory allocation
-
-**Run Command:** `npm run start:minimal`
-- Uses `next start` directly on port 5000
-- Binds to 0.0.0.0 for external access
-
-**next.config.js Exclusions:**
-- outputFileTracingExcludes: artifacts/**, attached_assets/**, integration/**, scripts/**, contracts/**, typechain-types/**, cache/**, stablecoin-deploy/**
-- These folders are ignored during build file tracing to prevent timeout
-
-**Why These Settings:**
-- The repo contains 445MB+ of attached_assets and large Solidity artifacts
-- Without exclusions, the build scans all files causing timeout
-- VM deployment handles longer builds better than autoscale
-- The clean script removes temporary build artifacts before each deployment
+-   **Property Data:** ATTOM Data, RentCast API, Walk Score API
