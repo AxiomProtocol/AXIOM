@@ -39,6 +39,9 @@ export const navItems: NavItem[] = [
       { label: "Rent Streams", href: "/rent-streams" },
       { label: "Community Land Funds", href: "/land-funds" },
       { label: "Builder & Farmer Credit", href: "/builder-credit" },
+      { label: "AXUSD Credit Lines", href: "/credit-lines" },
+      { label: "Insurance Pools", href: "/insurance-pools" },
+      { label: "Treasury Notes", href: "/treasury-notes" },
       { label: "Product Roadmap", href: "/roadmap" }
     ]
   },
