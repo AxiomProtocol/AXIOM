@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import WalletButton from '../../components/web3/WalletButton';
-import VaultDepositModal from '../../components/web3/VaultDepositModal';
-import { useWallet } from '../../lib/web3/useWallet';
-import { getVaultPosition } from '../../lib/web3/vaultService';
 
 interface Vault {
   name: string;
@@ -46,7 +42,6 @@ interface LiveData {
 }
 
 export default function SavingsPage() {
-  const { isConnected, address } = useWallet();
   const [vault, setVault] = useState<Vault | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [tiers, setTiers] = useState<Tier[]>([]);
@@ -54,8 +49,6 @@ export default function SavingsPage() {
   const [features, setFeatures] = useState<string[]>([]);
   const [liveData, setLiveData] = useState<LiveData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showDepositModal, setShowDepositModal] = useState(false);
-  const [position, setPosition] = useState<any>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -79,20 +72,6 @@ export default function SavingsPage() {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    async function loadPosition() {
-      if (isConnected && address) {
-        try {
-          const pos = await getVaultPosition('savings', address);
-          setPosition(pos);
-        } catch (e) {
-          console.error('Error loading position:', e);
-        }
-      }
-    }
-    loadPosition();
-  }, [isConnected, address]);
-
   const formatUSD = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -111,114 +90,79 @@ export default function SavingsPage() {
 
       <main style={{ background: '#ffffff', minHeight: '100vh' }}>
         <section style={{ padding: '80px 24px', background: 'linear-gradient(180deg, #111827 0%, #1f2937 100%)' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
-              <WalletButton />
-            </div>
-
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto', textAlign: 'center' }}>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
+              <div style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                padding: '8px 16px', 
+                borderRadius: 9999, 
+                background: 'rgba(212, 175, 55, 0.2)', 
+                border: '1px solid rgba(212, 175, 55, 0.4)'
+              }}>
+                <span style={{ color: '#d4af37', fontSize: 14, fontWeight: 500 }}>Accredited Investors Only</span>
+              </div>
+              {liveData?.source === 'blockchain' && (
                 <div style={{ 
                   display: 'inline-flex', 
                   alignItems: 'center', 
                   padding: '8px 16px', 
                   borderRadius: 9999, 
-                  background: 'rgba(212, 175, 55, 0.2)', 
-                  border: '1px solid rgba(212, 175, 55, 0.4)'
+                  background: 'rgba(34, 197, 94, 0.2)', 
+                  border: '1px solid rgba(34, 197, 94, 0.4)'
                 }}>
-                  <span style={{ color: '#d4af37', fontSize: 14, fontWeight: 500 }}>Accredited Investors Only</span>
-                </div>
-                {liveData?.source === 'blockchain' && (
-                  <div style={{ 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    padding: '8px 16px', 
-                    borderRadius: 9999, 
-                    background: 'rgba(34, 197, 94, 0.2)', 
-                    border: '1px solid rgba(34, 197, 94, 0.4)'
-                  }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', marginRight: 8 }}></span>
-                    <span style={{ color: '#22c55e', fontSize: 14, fontWeight: 500 }}>Live On-Chain Data</span>
-                  </div>
-                )}
-              </div>
-
-              <h1 style={{ fontSize: 48, fontWeight: 700, color: '#ffffff', marginBottom: 16, lineHeight: 1.2 }}>
-                High Yield Savings
-              </h1>
-              <p style={{ fontSize: 20, color: '#9ca3af', maxWidth: 700, margin: '0 auto 24px' }}>
-                {vault?.tagline || 'Earn competitive yields backed by real estate cash flows'}
-              </p>
-
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'baseline',
-                gap: 8,
-                background: 'rgba(212, 175, 55, 0.1)',
-                padding: '16px 32px',
-                borderRadius: 12,
-                marginBottom: 24
-              }}>
-                <span style={{ fontSize: 56, fontWeight: 700, color: '#d4af37' }}>
-                  {loading ? '...' : `${vault?.currentApy || 0}%`}
-                </span>
-                <span style={{ fontSize: 20, color: '#9ca3af' }}>APY</span>
-              </div>
-
-              {isConnected && position && parseFloat(position.positionValue) > 0 && (
-                <div style={{ 
-                  background: 'rgba(255, 255, 255, 0.1)', 
-                  padding: 20, 
-                  borderRadius: 12, 
-                  border: '2px solid #d4af37',
-                  maxWidth: 400,
-                  margin: '0 auto 24px',
-                  backdropFilter: 'blur(10px)'
-                }}>
-                  <p style={{ fontSize: 14, color: '#d4af37', marginBottom: 4 }}>Your Savings Balance</p>
-                  <p style={{ fontSize: 32, fontWeight: 700, color: '#ffffff' }}>
-                    ${parseFloat(position.positionValue).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </p>
-                  <p style={{ fontSize: 12, color: '#9ca3af' }}>
-                    Earning {vault?.currentApy || 8.5}% APY
-                  </p>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', marginRight: 8 }}></span>
+                  <span style={{ color: '#22c55e', fontSize: 14, fontWeight: 500 }}>Live On-Chain Data</span>
                 </div>
               )}
+            </div>
 
-              <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => setShowDepositModal(true)}
-                  style={{
-                    padding: '16px 32px',
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    color: '#ffffff',
-                    borderRadius: 8,
-                    fontWeight: 600,
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: 16,
-                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
-                  }}
-                >
-                  {isConnected && position && parseFloat(position.positionValue) > 0 
-                    ? 'Deposit / Withdraw' 
-                    : isConnected 
-                      ? 'Open Account' 
-                      : 'Connect & Deposit'}
-                </button>
-                <Link href="/lending-fund/docs" style={{
-                  padding: '16px 32px',
-                  background: 'transparent',
-                  color: '#ffffff',
-                  borderRadius: 8,
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  fontSize: 16,
-                  border: '2px solid #4b5563'
-                }}>
-                  Learn More
-                </Link>
-              </div>
+            <h1 style={{ fontSize: 48, fontWeight: 700, color: '#ffffff', marginBottom: 16, lineHeight: 1.2 }}>
+              High Yield Savings
+            </h1>
+            <p style={{ fontSize: 20, color: '#9ca3af', maxWidth: 700, margin: '0 auto 24px' }}>
+              {vault?.tagline || 'Earn competitive yields backed by real estate cash flows'}
+            </p>
+
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'baseline',
+              gap: 8,
+              background: 'rgba(212, 175, 55, 0.1)',
+              padding: '16px 32px',
+              borderRadius: 12,
+              marginBottom: 32
+            }}>
+              <span style={{ fontSize: 56, fontWeight: 700, color: '#d4af37' }}>
+                {loading ? '...' : `${vault?.currentApy || 0}%`}
+              </span>
+              <span style={{ fontSize: 20, color: '#9ca3af' }}>APY</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link href="/lending-fund/onboarding?product=savings" style={{
+                padding: '16px 32px',
+                background: '#d4af37',
+                color: '#111827',
+                borderRadius: 8,
+                fontWeight: 600,
+                textDecoration: 'none',
+                fontSize: 16
+              }}>
+                Open Account
+              </Link>
+              <Link href="/lending-fund/docs" style={{
+                padding: '16px 32px',
+                background: 'transparent',
+                color: '#ffffff',
+                borderRadius: 8,
+                fontWeight: 600,
+                textDecoration: 'none',
+                fontSize: 16,
+                border: '2px solid #4b5563'
+              }}>
+                Learn More
+              </Link>
             </div>
           </div>
         </section>
@@ -343,38 +287,21 @@ export default function SavingsPage() {
             <p style={{ color: '#9ca3af', marginBottom: 32 }}>
               Minimum deposit of just ${vault?.minDeposit || 100}. No lock-up period for standard tier.
             </p>
-            <button
-              onClick={() => setShowDepositModal(true)}
-              style={{
-                padding: '16px 48px',
-                background: '#d4af37',
-                color: '#111827',
-                borderRadius: 8,
-                fontWeight: 600,
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: 18
-              }}
-            >
+            <Link href="/lending-fund/onboarding?product=savings" style={{
+              display: 'inline-block',
+              padding: '16px 48px',
+              background: '#d4af37',
+              color: '#111827',
+              borderRadius: 8,
+              fontWeight: 600,
+              textDecoration: 'none',
+              fontSize: 18
+            }}>
               Open Savings Account
-            </button>
+            </Link>
           </div>
         </section>
       </main>
-
-      <VaultDepositModal
-        isOpen={showDepositModal}
-        onClose={() => setShowDepositModal(false)}
-        productKey="savings"
-        productName="High Yield Savings"
-        targetApy={`${vault?.currentApy || 8.5}%`}
-        minDeposit={String(vault?.minDeposit || 100)}
-        onSuccess={() => {
-          if (address) {
-            getVaultPosition('savings', address).then(setPosition);
-          }
-        }}
-      />
     </>
   );
 }

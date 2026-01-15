@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import WalletButton from '../../components/web3/WalletButton';
-import VaultDepositModal from '../../components/web3/VaultDepositModal';
-import { useWallet } from '../../lib/web3/useWallet';
-import { getVaultPosition } from '../../lib/web3/vaultService';
 
 interface Property {
   id: string;
@@ -53,7 +49,6 @@ interface LiveData {
 }
 
 export default function RentStreamsPage() {
-  const { isConnected, address } = useWallet();
   const [program, setProgram] = useState<Program | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -61,8 +56,6 @@ export default function RentStreamsPage() {
   const [liveData, setLiveData] = useState<LiveData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
-  const [showInvestModal, setShowInvestModal] = useState(false);
-  const [position, setPosition] = useState<any>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -85,20 +78,6 @@ export default function RentStreamsPage() {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    async function loadPosition() {
-      if (isConnected && address) {
-        try {
-          const pos = await getVaultPosition('rent-streams', address);
-          setPosition(pos);
-        } catch (e) {
-          console.error('Error loading position:', e);
-        }
-      }
-    }
-    loadPosition();
-  }, [isConnected, address]);
-
   const formatUSD = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -117,116 +96,85 @@ export default function RentStreamsPage() {
 
       <main style={{ background: '#ffffff', minHeight: '100vh' }}>
         <section style={{ padding: '80px 24px', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
-              <WalletButton />
-            </div>
-
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto', textAlign: 'center' }}>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
+              <div style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                padding: '8px 16px', 
+                borderRadius: 9999, 
+                background: 'rgba(99, 102, 241, 0.2)', 
+                border: '1px solid rgba(99, 102, 241, 0.4)'
+              }}>
+                <span style={{ color: '#818cf8', fontSize: 14, fontWeight: 500 }}>Passive Income | Real Property</span>
+              </div>
+              {liveData?.source === 'blockchain' && (
                 <div style={{ 
                   display: 'inline-flex', 
                   alignItems: 'center', 
                   padding: '8px 16px', 
                   borderRadius: 9999, 
-                  background: 'rgba(99, 102, 241, 0.2)', 
-                  border: '1px solid rgba(99, 102, 241, 0.4)'
+                  background: 'rgba(34, 197, 94, 0.2)', 
+                  border: '1px solid rgba(34, 197, 94, 0.4)'
                 }}>
-                  <span style={{ color: '#818cf8', fontSize: 14, fontWeight: 500 }}>Passive Income | Real Property</span>
-                </div>
-                {liveData?.source === 'blockchain' && (
-                  <div style={{ 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    padding: '8px 16px', 
-                    borderRadius: 9999, 
-                    background: 'rgba(34, 197, 94, 0.2)', 
-                    border: '1px solid rgba(34, 197, 94, 0.4)'
-                  }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', marginRight: 8 }}></span>
-                    <span style={{ color: '#22c55e', fontSize: 14, fontWeight: 500 }}>Live On-Chain Data</span>
-                  </div>
-                )}
-              </div>
-
-              <h1 style={{ fontSize: 48, fontWeight: 700, color: '#ffffff', marginBottom: 16, lineHeight: 1.2 }}>
-                Axiom Rent Streams
-              </h1>
-              <p style={{ fontSize: 20, color: '#9ca3af', maxWidth: 700, margin: '0 auto 24px' }}>
-                {program?.tagline || 'Tokenized rental income from real properties'}
-              </p>
-
-              <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: 36, fontWeight: 700, color: '#d4af37' }}>
-                    {program?.targetYield || '6-9%'}
-                  </p>
-                  <p style={{ fontSize: 14, color: '#9ca3af' }}>Target Yield</p>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: 36, fontWeight: 700, color: '#ffffff' }}>
-                    {loading ? '...' : `${stats?.occupancyRate || 0}%`}
-                  </p>
-                  <p style={{ fontSize: 14, color: '#9ca3af' }}>Occupancy Rate</p>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: 36, fontWeight: 700, color: '#ffffff' }}>
-                    {loading ? '...' : stats?.activeProperties || 0}
-                  </p>
-                  <p style={{ fontSize: 14, color: '#9ca3af' }}>Properties</p>
-                </div>
-              </div>
-
-              {isConnected && position && parseFloat(position.positionValue) > 0 && (
-                <div style={{ 
-                  background: 'rgba(255, 255, 255, 0.1)', 
-                  padding: 20, 
-                  borderRadius: 12, 
-                  border: '2px solid #818cf8',
-                  maxWidth: 400,
-                  margin: '0 auto 24px',
-                  backdropFilter: 'blur(10px)'
-                }}>
-                  <p style={{ fontSize: 14, color: '#818cf8', marginBottom: 4 }}>Your Rent Stream Position</p>
-                  <p style={{ fontSize: 32, fontWeight: 700, color: '#ffffff' }}>
-                    ${parseFloat(position.positionValue).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </p>
-                  <p style={{ fontSize: 12, color: '#9ca3af' }}>
-                    Earning monthly distributions
-                  </p>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', marginRight: 8 }}></span>
+                  <span style={{ color: '#22c55e', fontSize: 14, fontWeight: 500 }}>Live On-Chain Data</span>
                 </div>
               )}
+            </div>
 
-              <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => setShowInvestModal(true)}
-                  style={{
-                    padding: '16px 32px',
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    color: '#ffffff',
-                    borderRadius: 8,
-                    fontWeight: 600,
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: 16,
-                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
-                  }}
-                >
-                  {isConnected ? 'Invest in Rent Streams' : 'Connect & Invest'}
-                </button>
-                <Link href="/lending-fund/docs" style={{
-                  padding: '16px 32px',
-                  background: 'transparent',
-                  color: '#ffffff',
-                  borderRadius: 8,
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  fontSize: 16,
-                  border: '2px solid #4b5563'
-                }}>
-                  View Properties
-                </Link>
+            <h1 style={{ fontSize: 48, fontWeight: 700, color: '#ffffff', marginBottom: 16, lineHeight: 1.2 }}>
+              Axiom Rent Streams
+            </h1>
+            <p style={{ fontSize: 20, color: '#9ca3af', maxWidth: 700, margin: '0 auto 24px' }}>
+              {program?.tagline || 'Tokenized rental income from real properties'}
+            </p>
+
+            <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 32 }}>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: 36, fontWeight: 700, color: '#d4af37' }}>
+                  {program?.targetYield || '6-9%'}
+                </p>
+                <p style={{ fontSize: 14, color: '#9ca3af' }}>Target Yield</p>
               </div>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: 36, fontWeight: 700, color: '#ffffff' }}>
+                  {loading ? '...' : `${stats?.occupancyRate || 0}%`}
+                </p>
+                <p style={{ fontSize: 14, color: '#9ca3af' }}>Occupancy Rate</p>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: 36, fontWeight: 700, color: '#ffffff' }}>
+                  {loading ? '...' : stats?.activeProperties || 0}
+                </p>
+                <p style={{ fontSize: 14, color: '#9ca3af' }}>Properties</p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link href="/lending-fund/onboarding?product=rent-streams" style={{
+                padding: '16px 32px',
+                background: '#d4af37',
+                color: '#111827',
+                borderRadius: 8,
+                fontWeight: 600,
+                textDecoration: 'none',
+                fontSize: 16
+              }}>
+                Invest in Rent Streams
+              </Link>
+              <Link href="/lending-fund/docs" style={{
+                padding: '16px 32px',
+                background: 'transparent',
+                color: '#ffffff',
+                borderRadius: 8,
+                fontWeight: 600,
+                textDecoration: 'none',
+                fontSize: 16,
+                border: '2px solid #4b5563'
+              }}>
+                View Properties
+              </Link>
             </div>
           </div>
         </section>
@@ -272,28 +220,10 @@ export default function RentStreamsPage() {
 
         <section style={{ padding: '64px 24px', background: '#f8f9fa' }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
-              <div>
-                <h2 style={{ fontSize: 28, fontWeight: 700, color: '#111827', marginBottom: 8 }}>Active Properties</h2>
-                <p style={{ color: '#6b7280' }}>
-                  Properties currently generating rental income for investors
-                </p>
-              </div>
-              <button
-                onClick={() => setShowInvestModal(true)}
-                style={{
-                  padding: '12px 24px',
-                  background: '#d4af37',
-                  color: '#111827',
-                  borderRadius: 8,
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                Invest in All Properties
-              </button>
-            </div>
+            <h2 style={{ fontSize: 28, fontWeight: 700, color: '#111827', marginBottom: 8 }}>Active Properties</h2>
+            <p style={{ color: '#6b7280', marginBottom: 32 }}>
+              Properties currently generating rental income for investors
+            </p>
 
             {loading ? (
               <div style={{ textAlign: 'center', padding: 48 }}>
@@ -415,21 +345,17 @@ export default function RentStreamsPage() {
               Join {stats?.totalInvestors || 0} investors earning passive income from real properties.
             </p>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setShowInvestModal(true)}
-                style={{
-                  padding: '16px 32px',
-                  background: '#d4af37',
-                  color: '#111827',
-                  borderRadius: 8,
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
+              <Link href="/lending-fund/onboarding?product=rent-streams" style={{
+                padding: '16px 32px',
+                background: '#d4af37',
+                color: '#111827',
+                borderRadius: 8,
+                fontWeight: 600,
+                textDecoration: 'none'
+              }}>
                 Invest Now
-              </button>
-              <Link href="/dscr/investor/reports" style={{
+              </Link>
+              <Link href="/dscr/investor" style={{
                 padding: '16px 32px',
                 background: 'transparent',
                 color: '#ffffff',
@@ -444,20 +370,6 @@ export default function RentStreamsPage() {
           </div>
         </section>
       </main>
-
-      <VaultDepositModal
-        isOpen={showInvestModal}
-        onClose={() => setShowInvestModal(false)}
-        productKey="rent-streams"
-        productName="Axiom Rent Streams"
-        targetApy={program?.targetYield || '6-9%'}
-        minDeposit={String(program?.minInvestment || 100)}
-        onSuccess={() => {
-          if (address) {
-            getVaultPosition('rent-streams', address).then(setPosition);
-          }
-        }}
-      />
     </>
   );
 }

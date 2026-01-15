@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import WalletButton from '../../components/web3/WalletButton';
-import VaultDepositModal from '../../components/web3/VaultDepositModal';
-import { useWallet } from '../../lib/web3/useWallet';
-import { getVaultPosition } from '../../lib/web3/vaultService';
 
 interface Note {
   id: string;
@@ -45,14 +41,11 @@ interface LiveData {
 }
 
 export default function MortgageNotesPage() {
-  const { isConnected, address } = useWallet();
   const [fund, setFund] = useState<Fund | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [liveData, setLiveData] = useState<LiveData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showInvestModal, setShowInvestModal] = useState(false);
-  const [position, setPosition] = useState<any>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -74,20 +67,6 @@ export default function MortgageNotesPage() {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    async function loadPosition() {
-      if (isConnected && address) {
-        try {
-          const pos = await getVaultPosition('mortgage-notes', address);
-          setPosition(pos);
-        } catch (e) {
-          console.error('Error loading position:', e);
-        }
-      }
-    }
-    loadPosition();
-  }, [isConnected, address]);
-
   const formatUSD = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -106,101 +85,71 @@ export default function MortgageNotesPage() {
 
       <main style={{ background: '#ffffff', minHeight: '100vh' }}>
         <section style={{ padding: '80px 24px', background: 'linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%)' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
-              <WalletButton />
-            </div>
-
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto', textAlign: 'center' }}>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
+              <div style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                padding: '8px 16px', 
+                borderRadius: 9999, 
+                background: 'rgba(212, 175, 55, 0.1)', 
+                border: '1px solid rgba(212, 175, 55, 0.3)'
+              }}>
+                <span style={{ color: '#b8860b', fontSize: 14, fontWeight: 500 }}>SEC Reg D 506(c) | Accredited Investors</span>
+              </div>
+              {liveData?.source === 'blockchain' && (
                 <div style={{ 
                   display: 'inline-flex', 
                   alignItems: 'center', 
                   padding: '8px 16px', 
                   borderRadius: 9999, 
-                  background: 'rgba(212, 175, 55, 0.1)', 
-                  border: '1px solid rgba(212, 175, 55, 0.3)'
+                  background: 'rgba(34, 197, 94, 0.1)', 
+                  border: '1px solid rgba(34, 197, 94, 0.3)'
                 }}>
-                  <span style={{ color: '#b8860b', fontSize: 14, fontWeight: 500 }}>SEC Reg D 506(c) | Accredited Investors</span>
-                </div>
-                {liveData?.source === 'blockchain' && (
-                  <div style={{ 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    padding: '8px 16px', 
-                    borderRadius: 9999, 
-                    background: 'rgba(34, 197, 94, 0.1)', 
-                    border: '1px solid rgba(34, 197, 94, 0.3)'
-                  }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', marginRight: 8, animation: 'pulse 2s infinite' }}></span>
-                    <span style={{ color: '#16a34a', fontSize: 14, fontWeight: 500 }}>Live On-Chain Data</span>
-                  </div>
-                )}
-              </div>
-
-              <h1 style={{ fontSize: 48, fontWeight: 700, color: '#111827', marginBottom: 16, lineHeight: 1.2 }}>
-                Axiom Mortgage Notes
-              </h1>
-              <p style={{ fontSize: 20, color: '#6b7280', maxWidth: 700, margin: '0 auto 32px' }}>
-                {fund?.tagline || 'Fractional ownership in performing real estate loans'}
-              </p>
-
-              {isConnected && position && parseFloat(position.positionValue) > 0 && (
-                <div style={{ 
-                  background: 'linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%)', 
-                  padding: 20, 
-                  borderRadius: 12, 
-                  border: '2px solid #d4af37',
-                  maxWidth: 400,
-                  margin: '0 auto 32px'
-                }}>
-                  <p style={{ fontSize: 14, color: '#92400e', marginBottom: 4 }}>Your Position</p>
-                  <p style={{ fontSize: 32, fontWeight: 700, color: '#111827' }}>
-                    ${parseFloat(position.positionValue).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </p>
-                  <p style={{ fontSize: 12, color: '#78716c' }}>
-                    {parseFloat(position.shares).toFixed(4)} vault shares
-                  </p>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', marginRight: 8, animation: 'pulse 2s infinite' }}></span>
+                  <span style={{ color: '#16a34a', fontSize: 14, fontWeight: 500 }}>Live On-Chain Data</span>
                 </div>
               )}
+            </div>
 
-              <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48 }}>
-                <button
-                  onClick={() => setShowInvestModal(true)}
-                  style={{
-                    padding: '16px 32px',
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    color: '#ffffff',
-                    borderRadius: 8,
-                    fontWeight: 600,
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: 16,
-                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
-                  }}
-                >
-                  {isConnected ? 'Invest Now' : 'Connect & Invest'}
-                </button>
-                <Link href="/lending-fund/docs" style={{
-                  padding: '16px 32px',
-                  background: 'transparent',
-                  color: '#374151',
-                  borderRadius: 8,
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  fontSize: 16,
-                  border: '2px solid #e5e7eb'
-                }}>
-                  View Documents
-                </Link>
-              </div>
+            <h1 style={{ fontSize: 48, fontWeight: 700, color: '#111827', marginBottom: 16, lineHeight: 1.2 }}>
+              Axiom Mortgage Notes
+            </h1>
+            <p style={{ fontSize: 20, color: '#6b7280', maxWidth: 700, margin: '0 auto 32px' }}>
+              {fund?.tagline || 'Fractional ownership in performing real estate loans'}
+            </p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24, maxWidth: 900, margin: '0 auto' }}>
-                <StatCard label="Total Notes Value" value={loading ? '...' : formatUSD(stats?.totalNotesValue || 0)} />
-                <StatCard label="Active Notes" value={loading ? '...' : String(stats?.activeNotes || 0)} />
-                <StatCard label="Target APY" value={fund?.targetApy || '10-14%'} highlight />
-                <StatCard label="Performing Rate" value={loading ? '...' : `${stats?.performingRate || 0}%`} />
-              </div>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48 }}>
+              <Link href="/lending-fund/onboarding?product=mortgage-notes" style={{
+                padding: '16px 32px',
+                background: '#d4af37',
+                color: '#111827',
+                borderRadius: 8,
+                fontWeight: 600,
+                textDecoration: 'none',
+                fontSize: 16
+              }}>
+                Invest Now
+              </Link>
+              <Link href="/lending-fund/docs" style={{
+                padding: '16px 32px',
+                background: 'transparent',
+                color: '#374151',
+                borderRadius: 8,
+                fontWeight: 600,
+                textDecoration: 'none',
+                fontSize: 16,
+                border: '2px solid #e5e7eb'
+              }}>
+                View Documents
+              </Link>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24, maxWidth: 900, margin: '0 auto' }}>
+              <StatCard label="Total Notes Value" value={loading ? '...' : formatUSD(stats?.totalNotesValue || 0)} />
+              <StatCard label="Active Notes" value={loading ? '...' : String(stats?.activeNotes || 0)} />
+              <StatCard label="Target APY" value={fund?.targetApy || '10-14%'} highlight />
+              <StatCard label="Performing Rate" value={loading ? '...' : `${stats?.performingRate || 0}%`} />
             </div>
           </div>
         </section>
@@ -305,21 +254,17 @@ export default function MortgageNotesPage() {
               Join {stats?.totalInvestors || 0} investors earning stable yields from real estate-backed notes.
             </p>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setShowInvestModal(true)}
-                style={{
-                  padding: '16px 32px',
-                  background: '#d4af37',
-                  color: '#111827',
-                  borderRadius: 8,
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
+              <Link href="/lending-fund/onboarding" style={{
+                padding: '16px 32px',
+                background: '#d4af37',
+                color: '#111827',
+                borderRadius: 8,
+                fontWeight: 600,
+                textDecoration: 'none'
+              }}>
                 Start Investing
-              </button>
-              <Link href="/dscr/investor/reports" style={{
+              </Link>
+              <Link href="/dscr/investor" style={{
                 padding: '16px 32px',
                 background: '#111827',
                 color: '#ffffff',
@@ -333,20 +278,6 @@ export default function MortgageNotesPage() {
           </div>
         </section>
       </main>
-
-      <VaultDepositModal
-        isOpen={showInvestModal}
-        onClose={() => setShowInvestModal(false)}
-        productKey="mortgage-notes"
-        productName="Axiom Mortgage Notes"
-        targetApy={fund?.targetApy || '10-14%'}
-        minDeposit="100"
-        onSuccess={() => {
-          if (address) {
-            getVaultPosition('mortgage-notes', address).then(setPosition);
-          }
-        }}
-      />
     </>
   );
 }
