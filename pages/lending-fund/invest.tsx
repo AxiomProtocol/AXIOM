@@ -2,12 +2,23 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
+import { getVaultPosition, approveVault, depositToVault, PRODUCT_VAULTS } from '../../lib/web3/vaultService';
+import { NETWORK_CONFIG } from '../../shared/contracts';
 
 interface InvestmentStep {
   id: number;
   title: string;
   description: string;
   completed: boolean;
+}
+
+interface VaultPosition {
+  shares: string;
+  assetBalance: string;
+  positionValue: string;
+  allowance: string;
+  needsApproval: boolean;
+  decimals: number;
 }
 
 export default function InvestPage() {
@@ -18,6 +29,10 @@ export default function InvestPage() {
   const [axusdBalance, setAxusdBalance] = useState('0');
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [vaultPosition, setVaultPosition] = useState<VaultPosition | null>(null);
+  const [txStatus, setTxStatus] = useState<'idle' | 'approving' | 'depositing' | 'success' | 'error'>('idle');
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const [txError, setTxError] = useState<string | null>(null);
 
   const [steps, setSteps] = useState<InvestmentStep[]>([
     { id: 1, title: 'Connect Wallet', description: 'Connect your Web3 wallet', completed: false },
@@ -50,10 +65,52 @@ export default function InvestPage() {
           setWalletConnected(true);
           updateStep(1, true);
           fetchBalance(accounts[0]);
+          fetchVaultPosition(accounts[0]);
         }
       } catch (error) {
         console.error('Wallet check error:', error);
       }
+    }
+  };
+
+  const fetchVaultPosition = async (address: string) => {
+    try {
+      const position = await getVaultPosition(productKey, address);
+      setVaultPosition(position);
+      setAxusdBalance(position.assetBalance);
+    } catch (error) {
+      console.error('Failed to fetch vault position:', error);
+    }
+  };
+
+  const handleApprove = async () => {
+    if (!walletAddress) return;
+    setTxStatus('approving');
+    setTxError(null);
+    try {
+      const result = await approveVault(productKey, amount);
+      setTxHash(result.txHash);
+      await fetchVaultPosition(walletAddress);
+      setTxStatus('idle');
+    } catch (error: any) {
+      setTxError(error.message || 'Approval failed');
+      setTxStatus('error');
+    }
+  };
+
+  const handleOnChainDeposit = async () => {
+    if (!walletAddress) return;
+    setTxStatus('depositing');
+    setTxError(null);
+    try {
+      const result = await depositToVault(productKey, amount, walletAddress);
+      setTxHash(result.txHash);
+      setTxStatus('success');
+      updateStep(5, true);
+      await fetchVaultPosition(walletAddress);
+    } catch (error: any) {
+      setTxError(error.message || 'Deposit failed');
+      setTxStatus('error');
     }
   };
 
@@ -429,51 +486,103 @@ export default function InvestPage() {
 
               {currentStep === 5 && (
                 <StepCard title="Step 5: Sign & Deposit">
-                  <p className="mb-6" style={{ color: "#6b7280" }}>
-                    Review your investment details and complete the deposit.
-                  </p>
-
-                  <div className="rounded-lg p-6 mb-6" style={{ background: "#ffffff", border: "1px solid #e5e7eb" }}>
-                    <h4 className="font-bold mb-4" style={{ color: "#1a1a2e" }}>Final Investment Summary</h4>
-                    <div className="space-y-3">
-                      <div className="flex justify-between py-2" style={{ borderBottom: "1px solid #e5e7eb" }}>
-                        <span style={{ color: "#6b7280" }}>Investment Amount</span>
-                        <span className="font-bold text-xl" style={{ color: "#1a1a2e" }}>{formatUSD(amount)}</span>
+                  {txStatus === 'success' ? (
+                    <div className="text-center">
+                      <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: "rgba(34, 197, 94, 0.15)" }}>
+                        <span className="text-4xl" style={{ color: "#22c55e" }}>✓</span>
                       </div>
-                      <div className="flex justify-between py-2" style={{ borderBottom: "1px solid #e5e7eb" }}>
-                        <span style={{ color: "#6b7280" }}>Wallet Address</span>
-                        <span className="font-mono text-sm" style={{ color: "#1a1a2e" }}>{walletAddress?.slice(0, 10)}...{walletAddress?.slice(-8)}</span>
-                      </div>
-                      <div className="flex justify-between py-2" style={{ borderBottom: "1px solid #e5e7eb" }}>
-                        <span style={{ color: "#6b7280" }}>Network</span>
-                        <span style={{ color: "#1a1a2e" }}>Arbitrum One</span>
-                      </div>
-                      <div className="flex justify-between py-2">
-                        <span style={{ color: "#6b7280" }}>Fund</span>
-                        <span style={{ color: "#1a1a2e" }}>AXUSD Fix & Flip Lending Fund</span>
+                      <h3 className="text-xl font-bold mb-2" style={{ color: "#1a1a2e" }}>Deposit Successful!</h3>
+                      <p className="mb-4" style={{ color: "#6b7280" }}>Your investment of {formatUSD(amount)} has been deposited.</p>
+                      {txHash && (
+                        <a
+                          href={`${NETWORK_CONFIG.blockExplorer}/tx/${txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm underline"
+                          style={{ color: "#00D4AA" }}
+                        >
+                          View Transaction on Blockscout
+                        </a>
+                      )}
+                      <div className="mt-6">
+                        <Link href="/products" className="px-6 py-3 font-bold rounded-lg" style={{ background: "#00D4AA", color: "#FFFFFF" }}>
+                          Back to Products
+                        </Link>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      <p className="mb-6" style={{ color: "#6b7280" }}>
+                        Review your investment details and complete the on-chain deposit.
+                      </p>
 
-                  <div className="rounded-lg p-4 mb-6" style={{ background: "rgba(0, 212, 170, 0.1)", border: "1px solid rgba(0, 212, 170, 0.3)" }}>
-                    <p className="text-sm" style={{ color: "#00D4AA" }}>
-                      By clicking "Sign & Deposit", you agree to the terms of the Subscription Agreement
-                      and authorize the transfer of {formatUSD(amount)} AXUSD to the fund.
-                    </p>
-                  </div>
+                      <div className="rounded-lg p-6 mb-6" style={{ background: "#ffffff", border: "1px solid #e5e7eb" }}>
+                        <h4 className="font-bold mb-4" style={{ color: "#1a1a2e" }}>Investment Summary</h4>
+                        <div className="space-y-3">
+                          <div className="flex justify-between py-2" style={{ borderBottom: "1px solid #e5e7eb" }}>
+                            <span style={{ color: "#6b7280" }}>Investment Amount</span>
+                            <span className="font-bold text-xl" style={{ color: "#1a1a2e" }}>{formatUSD(amount)}</span>
+                          </div>
+                          <div className="flex justify-between py-2" style={{ borderBottom: "1px solid #e5e7eb" }}>
+                            <span style={{ color: "#6b7280" }}>Vault</span>
+                            <span style={{ color: "#1a1a2e" }}>{PRODUCT_VAULTS[productKey]?.name || 'Lending Fund'}</span>
+                          </div>
+                          <div className="flex justify-between py-2" style={{ borderBottom: "1px solid #e5e7eb" }}>
+                            <span style={{ color: "#6b7280" }}>Wallet</span>
+                            <span className="font-mono text-sm" style={{ color: "#1a1a2e" }}>{walletAddress?.slice(0, 10)}...{walletAddress?.slice(-8)}</span>
+                          </div>
+                          <div className="flex justify-between py-2" style={{ borderBottom: "1px solid #e5e7eb" }}>
+                            <span style={{ color: "#6b7280" }}>Network</span>
+                            <span style={{ color: "#1a1a2e" }}>Arbitrum One</span>
+                          </div>
+                          {vaultPosition && (
+                            <div className="flex justify-between py-2">
+                              <span style={{ color: "#6b7280" }}>Your USDC Balance</span>
+                              <span style={{ color: "#1a1a2e" }}>${parseFloat(vaultPosition.assetBalance).toLocaleString()}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
-                  <button
-                    onClick={handleDeposit}
-                    disabled={loading}
-                    className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50"
-                    style={{ background: "#00D4AA" }}
-                  >
-                    {loading ? 'Processing...' : `Sign & Deposit ${formatUSD(amount)}`}
-                  </button>
+                      {txError && (
+                        <div className="rounded-lg p-4 mb-4" style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)" }}>
+                          <p className="text-sm" style={{ color: "#ef4444" }}>{txError}</p>
+                        </div>
+                      )}
 
-                  <p className="text-sm text-center mt-4" style={{ color: "#6b7280" }}>
-                    Smart contract deposit will be enabled after mainnet deployment
-                  </p>
+                      <div className="rounded-lg p-4 mb-6" style={{ background: "rgba(0, 212, 170, 0.1)", border: "1px solid rgba(0, 212, 170, 0.3)" }}>
+                        <p className="text-sm" style={{ color: "#00D4AA" }}>
+                          {vaultPosition?.needsApproval 
+                            ? "Step 1: Approve the vault to spend your USDC, then deposit."
+                            : "Your USDC is approved. Click below to complete the deposit."}
+                        </p>
+                      </div>
+
+                      {vaultPosition?.needsApproval ? (
+                        <button
+                          onClick={handleApprove}
+                          disabled={txStatus === 'approving'}
+                          className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50"
+                          style={{ background: "#d4af37" }}
+                        >
+                          {txStatus === 'approving' ? 'Approving...' : `Approve USDC for ${formatUSD(amount)}`}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleOnChainDeposit}
+                          disabled={txStatus === 'depositing'}
+                          className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50"
+                          style={{ background: "#00D4AA" }}
+                        >
+                          {txStatus === 'depositing' ? 'Depositing...' : `Deposit ${formatUSD(amount)}`}
+                        </button>
+                      )}
+
+                      <p className="text-sm text-center mt-4" style={{ color: "#6b7280" }}>
+                        Deposits are made to ERC-4626 vaults on Arbitrum One
+                      </p>
+                    </>
+                  )}
                 </StepCard>
               )}
             </div>
