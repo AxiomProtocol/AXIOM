@@ -78,7 +78,7 @@ export async function getVaultPosition(productKey: string, userAddress: string) 
   const vaultContract = new ethers.Contract(vault.address, ERC4626_VAULT_ABI, provider);
   const assetContract = new ethers.Contract(vault.assetAddress, ERC20_ABI, provider);
 
-  const [shares, assetBalance, allowance, decimals] = await Promise.all([
+  const [shares, assetBalance, allowance, assetDecimals] = await Promise.all([
     vaultContract.balanceOf(userAddress),
     assetContract.balanceOf(userAddress),
     assetContract.allowance(userAddress, vault.address),
@@ -90,16 +90,18 @@ export async function getVaultPosition(productKey: string, userAddress: string) 
     assetsFromShares = await vaultContract.convertToAssets(shares);
   }
 
+  const shareDecimals = 18;
+
   return {
-    shares: ethers.formatUnits(shares, decimals),
+    shares: ethers.formatUnits(shares, shareDecimals),
     sharesRaw: shares.toString(),
-    assetBalance: ethers.formatUnits(assetBalance, decimals),
+    assetBalance: ethers.formatUnits(assetBalance, assetDecimals),
     assetBalanceRaw: assetBalance.toString(),
-    positionValue: ethers.formatUnits(assetsFromShares, decimals),
+    positionValue: ethers.formatUnits(assetsFromShares, assetDecimals),
     positionValueRaw: assetsFromShares.toString(),
-    allowance: ethers.formatUnits(allowance, decimals),
+    allowance: ethers.formatUnits(allowance, assetDecimals),
     allowanceRaw: allowance.toString(),
-    decimals: Number(decimals),
+    decimals: Number(assetDecimals),
     needsApproval: allowance === BigInt(0)
   };
 }
@@ -156,9 +158,7 @@ export async function withdrawFromVault(productKey: string, shares: string, rece
   const signer = await provider.getSigner();
   
   const vaultContract = new ethers.Contract(vault.address, ERC4626_VAULT_ABI, signer);
-  const assetContract = new ethers.Contract(vault.assetAddress, ERC20_ABI, provider);
-  const decimals = await assetContract.decimals();
-  const sharesWei = ethers.parseUnits(shares, decimals);
+  const sharesWei = ethers.parseUnits(shares, 18);
 
   const tx = await vaultContract.redeem(sharesWei, receiver, receiver);
   const receipt = await tx.wait();

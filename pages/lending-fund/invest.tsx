@@ -64,7 +64,6 @@ export default function InvestPage() {
           setWalletAddress(accounts[0]);
           setWalletConnected(true);
           updateStep(1, true);
-          fetchBalance(accounts[0]);
           fetchVaultPosition(accounts[0]);
         }
       } catch (error) {
@@ -124,7 +123,7 @@ export default function InvestPage() {
           setWalletConnected(true);
           updateStep(1, true);
           setCurrentStep(2);
-          fetchBalance(accounts[0]);
+          fetchVaultPosition(accounts[0]);
         }
       } catch (error) {
         console.error('Failed to connect wallet:', error);
@@ -136,16 +135,11 @@ export default function InvestPage() {
     }
   };
 
-  const fetchBalance = async (address: string) => {
-    try {
-      const res = await fetch(`/api/axusd/balance?address=${address}`);
-      if (res.ok) {
-        const data = await res.json();
-        setAxusdBalance(data.balance || '0');
-      }
-    } catch (error) {
-      console.error('Error fetching balance:', error);
-    }
+  const checkNeedsApproval = () => {
+    if (!vaultPosition) return true;
+    const currentAmount = parseFloat(amount) || 0;
+    const currentAllowance = parseFloat(vaultPosition.allowance) || 0;
+    return currentAllowance < currentAmount;
   };
 
   const updateStep = (stepId: number, completed: boolean) => {
@@ -185,17 +179,6 @@ export default function InvestPage() {
   const proceedToDeposit = () => {
     if (parseInt(amount) >= 10000) {
       setCurrentStep(5);
-    }
-  };
-
-  const handleDeposit = async () => {
-    setLoading(true);
-    try {
-      alert('Deposit functionality will be connected to smart contracts after deployment');
-    } catch (error) {
-      console.error('Deposit error:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -550,32 +533,40 @@ export default function InvestPage() {
                         </div>
                       )}
 
-                      <div className="rounded-lg p-4 mb-6" style={{ background: "rgba(0, 212, 170, 0.1)", border: "1px solid rgba(0, 212, 170, 0.3)" }}>
-                        <p className="text-sm" style={{ color: "#00D4AA" }}>
-                          {vaultPosition?.needsApproval 
-                            ? "Step 1: Approve the vault to spend your USDC, then deposit."
-                            : "Your USDC is approved. Click below to complete the deposit."}
-                        </p>
-                      </div>
-
-                      {vaultPosition?.needsApproval ? (
-                        <button
-                          onClick={handleApprove}
-                          disabled={txStatus === 'approving'}
-                          className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50"
-                          style={{ background: "#d4af37" }}
-                        >
-                          {txStatus === 'approving' ? 'Approving...' : `Approve USDC for ${formatUSD(amount)}`}
-                        </button>
+                      {!vaultPosition ? (
+                        <div className="rounded-lg p-4 mb-6" style={{ background: "rgba(0, 212, 170, 0.1)", border: "1px solid rgba(0, 212, 170, 0.3)" }}>
+                          <p className="text-sm" style={{ color: "#00D4AA" }}>Loading wallet position...</p>
+                        </div>
                       ) : (
-                        <button
-                          onClick={handleOnChainDeposit}
-                          disabled={txStatus === 'depositing'}
-                          className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50"
-                          style={{ background: "#00D4AA" }}
-                        >
-                          {txStatus === 'depositing' ? 'Depositing...' : `Deposit ${formatUSD(amount)}`}
-                        </button>
+                        <>
+                          <div className="rounded-lg p-4 mb-6" style={{ background: "rgba(0, 212, 170, 0.1)", border: "1px solid rgba(0, 212, 170, 0.3)" }}>
+                            <p className="text-sm" style={{ color: "#00D4AA" }}>
+                              {checkNeedsApproval()
+                                ? "Step 1: Approve the vault to spend your USDC, then deposit."
+                                : "Your USDC is approved. Click below to complete the deposit."}
+                            </p>
+                          </div>
+
+                          {checkNeedsApproval() ? (
+                            <button
+                              onClick={handleApprove}
+                              disabled={txStatus === 'approving'}
+                              className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50"
+                              style={{ background: "#d4af37" }}
+                            >
+                              {txStatus === 'approving' ? 'Approving...' : `Approve USDC for ${formatUSD(amount)}`}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={handleOnChainDeposit}
+                              disabled={txStatus === 'depositing'}
+                              className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50"
+                              style={{ background: "#00D4AA" }}
+                            >
+                              {txStatus === 'depositing' ? 'Depositing...' : `Deposit ${formatUSD(amount)}`}
+                            </button>
+                          )}
+                        </>
                       )}
 
                       <p className="text-sm text-center mt-4" style={{ color: "#6b7280" }}>
