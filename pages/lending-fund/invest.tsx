@@ -26,7 +26,7 @@ export default function InvestPage() {
   const router = useRouter();
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [amount, setAmount] = useState('25000');
+  const [amount, setAmount] = useState('100');
   const [axusdBalance, setAxusdBalance] = useState('0');
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -403,7 +403,7 @@ export default function InvestPage() {
               {currentStep === 4 && (
                 <StepCard title="Step 4: Investment Amount">
                   <p className="mb-6" style={{ color: "#6b7280" }}>
-                    Enter the amount you wish to invest. Minimum investment is {formatUSD(vaultPosition?.minDeposit || '25000')} USDC.
+                    Enter the amount you wish to invest. Minimum investment is {formatUSD(vaultPosition?.minDeposit || '100')} USDC.
                   </p>
 
                   <div className="mb-6">
@@ -416,16 +416,16 @@ export default function InvestPage() {
                         onChange={(e) => handleAmountChange(e.target.value)}
                         className="w-full py-4 pl-10 pr-4 rounded-lg text-2xl font-bold focus:outline-none"
                         style={{ background: "#ffffff", border: "1px solid #e5e7eb", color: "#1a1a2e" }}
-                        placeholder={vaultPosition?.minDeposit || '25000'}
+                        placeholder={vaultPosition?.minDeposit || '100'}
                       />
                     </div>
-                    {parseFloat(amount) < parseFloat(vaultPosition?.minDeposit || '25000') && (
-                      <p className="text-sm mt-2" style={{ color: "#ef4444" }}>Minimum investment is {formatUSD(vaultPosition?.minDeposit || '25000')}</p>
+                    {parseFloat(amount) < parseFloat(vaultPosition?.minDeposit || '100') && (
+                      <p className="text-sm mt-2" style={{ color: "#ef4444" }}>Minimum investment is {formatUSD(vaultPosition?.minDeposit || '100')}</p>
                     )}
                   </div>
 
                   <div className="grid grid-cols-4 gap-2 mb-6">
-                    {['25000', '50000', '100000', '250000'].map((preset) => (
+                    {['100', '500', '1000', '5000'].map((preset) => (
                       <button
                         key={preset}
                         onClick={() => handleAmountChange(preset)}
@@ -460,7 +460,7 @@ export default function InvestPage() {
 
                   <button
                     onClick={proceedToDeposit}
-                    disabled={parseFloat(amount) < parseFloat(vaultPosition?.minDeposit || '25000')}
+                    disabled={parseFloat(amount) < parseFloat(vaultPosition?.minDeposit || '100')}
                     className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ background: "#00D4AA" }}
                   >
