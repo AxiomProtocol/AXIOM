@@ -295,7 +295,12 @@ export const LAND_ACQUISITION_CONTRACTS = {
   
   // Contract 55: RegCFCrowdfunding
   // SEC Reg CF compliant crowdfunding campaigns for land investments
-  REG_CF_CROWDFUNDING: '0x02f967Ba52132E63272bbf8b01EF676605eA99d2'
+  REG_CF_CROWDFUNDING: '0x02f967Ba52132E63272bbf8b01EF676605eA99d2',
+  
+  // Contract 56: BuilderFarmerCredit
+  // Credit facility for builders and farmers with tiered underwriting
+  // Builder: 70% LTV, 12% APR, 24mo max | Farmer: 65% LTV, 10% APR, 36mo max
+  BUILDER_FARMER_CREDIT: '0x814A9795bAbEE0DEd433d127dacD03031fB193b4'
 } as const;
 
 // All contracts in a single object for easy access
