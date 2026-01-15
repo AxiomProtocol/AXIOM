@@ -14,13 +14,36 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 50,
+            runs: 200,
           },
           viaIR: true,
+          evmVersion: "paris",
         },
       },
     ],
-    overrides: {},
+    overrides: {
+      "contracts/land-acquisition/LandOptionRegistry.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 50 },
+          viaIR: true,
+        },
+      },
+      "contracts/land-acquisition/RegCFCrowdfunding.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 50 },
+          viaIR: true,
+        },
+      },
+      "contracts/land-acquisition/LandAcquisitionPool.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 50 },
+          viaIR: true,
+        },
+      },
+    },
   },
   networks: {
     hardhat: {

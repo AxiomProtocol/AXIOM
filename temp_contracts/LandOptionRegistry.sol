@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -12,7 +13,7 @@ interface IERC20 {
     function balanceOf(address account) external view returns (uint256);
 }
 
-contract LandOptionRegistry is ERC1155, AccessControl, Pausable, ReentrancyGuard {
+contract LandOptionRegistry is ERC1155, ERC1155Supply, AccessControl, Pausable, ReentrancyGuard {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant STEWARD_ROLE = keccak256("STEWARD_ROLE");
     bytes32 public constant COMPLIANCE_ROLE = keccak256("COMPLIANCE_ROLE");
@@ -54,21 +55,6 @@ contract LandOptionRegistry is ERC1155, AccessControl, Pausable, ReentrancyGuard
         bool kycVerified;
         bool accredited;
         uint256 purchaseDate;
-    }
-
-    struct CreateOptionParams {
-        string parcelId;
-        string location;
-        uint256 acreage;
-        uint256 purchasePrice;
-        uint256 optionFee;
-        uint256 optionPeriodDays;
-        address landowner;
-        uint256 totalShares;
-        uint256 minInvestment;
-        uint256 maxInvestment;
-        bool regCFCompliant;
-        string ipfsMetadata;
     }
 
     IERC20 public paymentToken;
@@ -116,40 +102,52 @@ contract LandOptionRegistry is ERC1155, AccessControl, Pausable, ReentrancyGuard
     }
 
     function createLandOption(
-        CreateOptionParams calldata params
+        string calldata parcelId,
+        string calldata location,
+        uint256 acreage,
+        uint256 purchasePrice,
+        uint256 optionFee,
+        uint256 optionPeriodDays,
+        address landowner,
+        uint256 totalShares,
+        uint256 minInvestment,
+        uint256 maxInvestment,
+        bool regCFCompliant,
+        string calldata ipfsMetadata
     ) external onlyRole(STEWARD_ROLE) whenNotPaused returns (uint256) {
-        require(params.landowner != address(0), "Invalid landowner");
-        require(params.purchasePrice > 0, "Invalid purchase price");
-        require(params.totalShares > 0, "Invalid total shares");
-        require(params.optionPeriodDays >= 30 && params.optionPeriodDays <= 730, "Option period must be 30-730 days");
+        require(landowner != address(0), "Invalid landowner");
+        require(purchasePrice > 0, "Invalid purchase price");
+        require(totalShares > 0, "Invalid total shares");
+        require(optionPeriodDays >= 30 && optionPeriodDays <= 730, "Option period must be 30-730 days");
         
-        if (params.regCFCompliant) {
-            require(params.purchasePrice <= MAX_REG_CF_RAISE, "Exceeds Reg CF $5M limit");
+        if (regCFCompliant) {
+            require(purchasePrice <= MAX_REG_CF_RAISE, "Exceeds Reg CF $5M limit");
         }
 
         uint256 optionId = nextOptionId++;
-        LandOption storage opt = options[optionId];
         
-        opt.optionId = optionId;
-        opt.parcelId = params.parcelId;
-        opt.location = params.location;
-        opt.acreage = params.acreage;
-        opt.purchasePrice = params.purchasePrice;
-        opt.optionFee = params.optionFee;
-        opt.optionPeriodDays = params.optionPeriodDays;
-        opt.createdAt = block.timestamp;
-        opt.expiresAt = 0;
-        opt.landowner = params.landowner;
-        opt.steward = msg.sender;
-        opt.status = OptionStatus.Draft;
-        opt.totalShares = params.totalShares;
-        opt.sharesSold = 0;
-        opt.minInvestment = params.minInvestment;
-        opt.maxInvestment = params.maxInvestment;
-        opt.regCFCompliant = params.regCFCompliant;
-        opt.ipfsMetadata = params.ipfsMetadata;
+        options[optionId] = LandOption({
+            optionId: optionId,
+            parcelId: parcelId,
+            location: location,
+            acreage: acreage,
+            purchasePrice: purchasePrice,
+            optionFee: optionFee,
+            optionPeriodDays: optionPeriodDays,
+            createdAt: block.timestamp,
+            expiresAt: 0,
+            landowner: landowner,
+            steward: msg.sender,
+            status: OptionStatus.Draft,
+            totalShares: totalShares,
+            sharesSold: 0,
+            minInvestment: minInvestment,
+            maxInvestment: maxInvestment,
+            regCFCompliant: regCFCompliant,
+            ipfsMetadata: ipfsMetadata
+        });
 
-        emit LandOptionCreated(optionId, params.parcelId, params.landowner, params.purchasePrice);
+        emit LandOptionCreated(optionId, parcelId, landowner, purchasePrice);
         return optionId;
     }
 
@@ -337,55 +335,8 @@ contract LandOptionRegistry is ERC1155, AccessControl, Pausable, ReentrancyGuard
         option.status = OptionStatus.ExerciseReady;
     }
 
-    function getOptionBasic(uint256 optionId) external view returns (
-        uint256 _optionId,
-        string memory parcelId,
-        string memory location,
-        uint256 acreage,
-        uint256 purchasePrice,
-        uint256 optionFee,
-        uint256 optionPeriodDays,
-        OptionStatus status
-    ) {
-        LandOption storage opt = options[optionId];
-        return (
-            opt.optionId,
-            opt.parcelId,
-            opt.location,
-            opt.acreage,
-            opt.purchasePrice,
-            opt.optionFee,
-            opt.optionPeriodDays,
-            opt.status
-        );
-    }
-
-    function getOptionTiming(uint256 optionId) external view returns (
-        uint256 createdAt,
-        uint256 expiresAt,
-        address landowner,
-        address steward
-    ) {
-        LandOption storage opt = options[optionId];
-        return (opt.createdAt, opt.expiresAt, opt.landowner, opt.steward);
-    }
-
-    function getOptionShares(uint256 optionId) external view returns (
-        uint256 totalShares,
-        uint256 sharesSold,
-        uint256 minInvestment,
-        uint256 maxInvestment
-    ) {
-        LandOption storage opt = options[optionId];
-        return (opt.totalShares, opt.sharesSold, opt.minInvestment, opt.maxInvestment);
-    }
-
-    function getOptionCompliance(uint256 optionId) external view returns (
-        bool regCFCompliant,
-        string memory ipfsMetadata
-    ) {
-        LandOption storage opt = options[optionId];
-        return (opt.regCFCompliant, opt.ipfsMetadata);
+    function getOption(uint256 optionId) external view returns (LandOption memory) {
+        return options[optionId];
     }
 
     function getShareHolder(uint256 optionId, address investor) external view returns (ShareHolder memory) {
@@ -426,6 +377,15 @@ contract LandOptionRegistry is ERC1155, AccessControl, Pausable, ReentrancyGuard
 
     function unpause() external onlyRole(ADMIN_ROLE) {
         _unpause();
+    }
+
+    function _update(
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory values
+    ) internal virtual override(ERC1155, ERC1155Supply) {
+        super._update(from, to, ids, values);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155, AccessControl) returns (bool) {

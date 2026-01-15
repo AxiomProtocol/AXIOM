@@ -281,6 +281,23 @@ export const AXUSD_INTEGRATION_CONTRACTS = {
   LIQUIDITY_BOOTSTRAPPER: '0xd690F8A987542772FDd65a9813c0Ae55Cfb1AD19'
 } as const;
 
+// Phase 2 Land Acquisition Contracts (53-55)
+// Deployed: January 15, 2026 | Arbitrum One
+// Features: SEC Reg CF compliant land crowdfunding, community pooling, ERC1155 land options
+export const LAND_ACQUISITION_CONTRACTS = {
+  // Contract 53: LandOptionRegistry (ERC1155)
+  // Tokenized land acquisition options with SEC Reg CF compliance
+  LAND_OPTION_REGISTRY: '0xCE0Df38260E626BA45628C4576254276B8C62A0D',
+  
+  // Contract 54: LandAcquisitionPool
+  // Community pooling for land purchases with SUSU-style contributions
+  LAND_ACQUISITION_POOL: '0x14162c6EE2BbcBC22Fd911c6f252807D186f5545',
+  
+  // Contract 55: RegCFCrowdfunding
+  // SEC Reg CF compliant crowdfunding campaigns for land investments
+  REG_CF_CROWDFUNDING: '0x02f967Ba52132E63272bbf8b01EF676605eA99d2'
+} as const;
+
 // All contracts in a single object for easy access
 export const ALL_CONTRACTS = {
   ...CORE_CONTRACTS,
@@ -295,7 +312,8 @@ export const ALL_CONTRACTS = {
   ...AXUSD_STABLECOIN_CONTRACTS,
   ...AXUSD_INTEGRATION_CONTRACTS,
   ...AXUSD_GENIUS_CONTRACTS,
-  ...REALESTATE_LENDING_CONTRACTS
+  ...REALESTATE_LENDING_CONTRACTS,
+  ...LAND_ACQUISITION_CONTRACTS
 } as const;
 
 // Deployer Address
