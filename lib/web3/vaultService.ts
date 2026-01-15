@@ -90,6 +90,13 @@ export async function getVaultPosition(productKey: string, userAddress: string) 
     assetsFromShares = await vaultContract.convertToAssets(shares);
   }
 
+  let minDepositRaw = BigInt(0);
+  try {
+    minDepositRaw = await vaultContract.minDeposit();
+  } catch (e) {
+    console.log('minDeposit not available on vault');
+  }
+
   const shareDecimals = 18;
 
   return {
@@ -101,6 +108,8 @@ export async function getVaultPosition(productKey: string, userAddress: string) 
     positionValueRaw: assetsFromShares.toString(),
     allowance: ethers.formatUnits(allowance, assetDecimals),
     allowanceRaw: allowance.toString(),
+    minDeposit: ethers.formatUnits(minDepositRaw, assetDecimals),
+    minDepositRaw: minDepositRaw.toString(),
     decimals: Number(assetDecimals),
     needsApproval: allowance === BigInt(0)
   };

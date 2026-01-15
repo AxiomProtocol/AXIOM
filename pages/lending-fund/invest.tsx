@@ -17,6 +17,7 @@ interface VaultPosition {
   assetBalance: string;
   positionValue: string;
   allowance: string;
+  minDeposit: string;
   needsApproval: boolean;
   decimals: number;
 }
@@ -25,7 +26,7 @@ export default function InvestPage() {
   const router = useRouter();
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [amount, setAmount] = useState('10000');
+  const [amount, setAmount] = useState('25000');
   const [axusdBalance, setAxusdBalance] = useState('0');
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -38,7 +39,7 @@ export default function InvestPage() {
     { id: 1, title: 'Connect Wallet', description: 'Connect your Web3 wallet', completed: false },
     { id: 2, title: 'Review Documents', description: 'Read and acknowledge PPM and risks', completed: false },
     { id: 3, title: 'Verify Accreditation', description: 'Complete accredited investor verification', completed: false },
-    { id: 4, title: 'Set Amount', description: 'Choose investment amount (min $10,000)', completed: false },
+    { id: 4, title: 'Set Amount', description: 'Choose investment amount', completed: false },
     { id: 5, title: 'Sign & Deposit', description: 'Sign subscription and deposit AXUSD', completed: false }
   ]);
 
@@ -402,11 +403,11 @@ export default function InvestPage() {
               {currentStep === 4 && (
                 <StepCard title="Step 4: Investment Amount">
                   <p className="mb-6" style={{ color: "#6b7280" }}>
-                    Enter the amount you wish to invest. Minimum investment is $10,000 AXUSD.
+                    Enter the amount you wish to invest. Minimum investment is {formatUSD(vaultPosition?.minDeposit || '25000')} USDC.
                   </p>
 
                   <div className="mb-6">
-                    <label className="block text-sm mb-2" style={{ color: "#6b7280" }}>Investment Amount (AXUSD)</label>
+                    <label className="block text-sm mb-2" style={{ color: "#6b7280" }}>Investment Amount (USDC)</label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-xl" style={{ color: "#6b7280" }}>$</span>
                       <input
@@ -415,16 +416,16 @@ export default function InvestPage() {
                         onChange={(e) => handleAmountChange(e.target.value)}
                         className="w-full py-4 pl-10 pr-4 rounded-lg text-2xl font-bold focus:outline-none"
                         style={{ background: "#ffffff", border: "1px solid #e5e7eb", color: "#1a1a2e" }}
-                        placeholder="10000"
+                        placeholder={vaultPosition?.minDeposit || '25000'}
                       />
                     </div>
-                    {parseInt(amount) < 10000 && (
-                      <p className="text-sm mt-2" style={{ color: "#ef4444" }}>Minimum investment is $10,000</p>
+                    {parseFloat(amount) < parseFloat(vaultPosition?.minDeposit || '25000') && (
+                      <p className="text-sm mt-2" style={{ color: "#ef4444" }}>Minimum investment is {formatUSD(vaultPosition?.minDeposit || '25000')}</p>
                     )}
                   </div>
 
                   <div className="grid grid-cols-4 gap-2 mb-6">
-                    {['10000', '25000', '50000', '100000'].map((preset) => (
+                    {['25000', '50000', '100000', '250000'].map((preset) => (
                       <button
                         key={preset}
                         onClick={() => handleAmountChange(preset)}
@@ -459,7 +460,7 @@ export default function InvestPage() {
 
                   <button
                     onClick={proceedToDeposit}
-                    disabled={parseInt(amount) < 10000}
+                    disabled={parseFloat(amount) < parseFloat(vaultPosition?.minDeposit || '25000')}
                     className="w-full py-4 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ background: "#00D4AA" }}
                   >

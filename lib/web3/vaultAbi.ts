@@ -89,6 +89,13 @@ export const ERC4626_VAULT_ABI = [
     "outputs": [{"name": "", "type": "address"}],
     "stateMutability": "view",
     "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "minDeposit",
+    "outputs": [{"name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
   }
 ] as const;
 
