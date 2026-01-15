@@ -1,0 +1,252 @@
+{
+  "version": "1.0.0",
+  "updatedAt": "2026-01-15T00:00:00.000Z",
+  "phases": [
+    {
+      "id": "phase-1",
+      "order": 1,
+      "name": "Build the Balance Sheet",
+      "summary": "Establish foundational capital products that generate yield from real-world assets and create the core balance sheet for the Axiom ecosystem.",
+      "status": "Published",
+      "products": [
+        {
+          "id": "product-1",
+          "order": 1,
+          "name": "Axiom High Yield Savings",
+          "tagline": "Earn competitive yields backed by real estate cash flows",
+          "strategicValue": "Creates the first on-ramp for capital into the Axiom ecosystem. Establishes trust through transparent, yield-generating accounts backed by real assets.",
+          "targetUsers": "Retail investors, crypto-native savers, community members seeking stable yields",
+          "revenueModel": "Spread between lending rates and deposit yields, management fees on AUM",
+          "legalNotes": "Structured as participation in lending pool returns under SEC Reg D 506(c)",
+          "onchainModules": "AXUSD VaultEngine, Yield Distribution Router, Balance Tracking SBT",
+          "offchainModules": "KYC verification, investor onboarding, reporting portal",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-1-1",
+              "order": 1,
+              "name": "Smart Contract Development",
+              "description": "Deploy savings vault contracts with yield distribution logic",
+              "targetDate": "2026-Q1",
+              "owner": "Engineering",
+              "status": "InProgress"
+            },
+            {
+              "id": "m-1-2",
+              "order": 2,
+              "name": "Investor Portal Launch",
+              "description": "Launch web interface for deposits, withdrawals, and yield tracking",
+              "targetDate": "2026-Q2",
+              "owner": "Product",
+              "status": "Planned"
+            }
+          ]
+        },
+        {
+          "id": "product-2",
+          "order": 2,
+          "name": "Axiom Mortgage Notes",
+          "tagline": "Fractional ownership in performing real estate loans",
+          "strategicValue": "Enables community participation in private credit markets previously reserved for institutions. Diversifies protocol revenue through loan origination fees.",
+          "targetUsers": "Accredited investors, family offices, crypto funds seeking real-world yield",
+          "revenueModel": "Origination fees (1-2%), servicing fees (0.25-0.5% annually), spread on interest",
+          "legalNotes": "SEC Reg D 506(c) compliant offering, accredited investor verification required",
+          "onchainModules": "LoanReceiptNFT (ERC-721), RepaymentRouter, FixFlipPoolVault (ERC-4626)",
+          "offchainModules": "Loan origination system, borrower underwriting, payment servicing",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-2-1",
+              "order": 1,
+              "name": "Fix-and-Flip Pool Launch",
+              "description": "Deploy first lending pool for bridge loans",
+              "targetDate": "2026-Q1",
+              "owner": "Axiom Nexus",
+              "status": "Done"
+            },
+            {
+              "id": "m-2-2",
+              "order": 2,
+              "name": "DSCR Rental Loans",
+              "description": "Expand to long-term rental property financing",
+              "targetDate": "2026-Q2",
+              "owner": "Axiom Nexus",
+              "status": "InProgress"
+            }
+          ]
+        },
+        {
+          "id": "product-3",
+          "order": 3,
+          "name": "Axiom Rent Streams",
+          "tagline": "Tokenized rental income from real properties",
+          "strategicValue": "Creates predictable cash flow streams that back AXUSD minting. Connects physical property performance to on-chain settlement.",
+          "targetUsers": "Yield-focused investors, protocol treasury, liquidity providers",
+          "revenueModel": "Property management fees, rent collection fees, protocol revenue share",
+          "legalNotes": "Structured as revenue participation agreements with property SPVs",
+          "onchainModules": "RentStreamNFT, AXUSDRevenueRouter, PropertyRegistry",
+          "offchainModules": "Property management integration, rent collection, tenant screening",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-3-1",
+              "order": 1,
+              "name": "Pilot Properties",
+              "description": "Onboard first 5 rental properties to the platform",
+              "targetDate": "2026-Q2",
+              "owner": "Operations",
+              "status": "Planned"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "order": 2,
+      "name": "Turn Capital Into Infrastructure",
+      "summary": "Deploy accumulated capital into land acquisition and community development projects that create long-term value and infrastructure.",
+      "status": "Published",
+      "products": [
+        {
+          "id": "product-4",
+          "order": 1,
+          "name": "Community Land Funds",
+          "tagline": "Collective ownership of strategic land parcels",
+          "strategicValue": "Enables community-scale land acquisition that individuals cannot achieve alone. Creates physical infrastructure for the Axiom ecosystem.",
+          "targetUsers": "Community members, stewards, land-focused investors",
+          "revenueModel": "Land appreciation, development fees, lease income, token value accrual",
+          "legalNotes": "SEC Reg CF compliant crowdfunding with tokenized land options",
+          "onchainModules": "LandOptionNFT, CommunityPoolVault, GovernanceVoting",
+          "offchainModules": "Property sourcing, due diligence, title verification, steward coordination",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-4-1",
+              "order": 1,
+              "name": "Land Acquisition Pipeline",
+              "description": "Establish property sourcing and evaluation workflow",
+              "targetDate": "2026-Q1",
+              "owner": "Land Team",
+              "status": "Done"
+            },
+            {
+              "id": "m-4-2",
+              "order": 2,
+              "name": "First Community Purchase",
+              "description": "Complete first community-funded land acquisition",
+              "targetDate": "2026-Q3",
+              "owner": "Land Team",
+              "status": "Planned"
+            }
+          ]
+        },
+        {
+          "id": "product-5",
+          "order": 2,
+          "name": "Builder and Farmer Credit",
+          "tagline": "Working capital for land development and agriculture",
+          "strategicValue": "Finances productive use of community land. Creates circular economy where development generates returns that fund more development.",
+          "targetUsers": "Builders, farmers, contractors, community developers",
+          "revenueModel": "Interest on working capital loans, equipment financing fees, harvest revenue share",
+          "legalNotes": "Commercial lending under state regulations, collateralized by equipment and crops",
+          "onchainModules": "WorkingCapitalPool, CollateralRegistry, RepaymentScheduler",
+          "offchainModules": "Borrower underwriting, equipment appraisal, crop monitoring",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-5-1",
+              "order": 1,
+              "name": "Credit Framework Design",
+              "description": "Define underwriting criteria and loan structures",
+              "targetDate": "2026-Q3",
+              "owner": "Credit Team",
+              "status": "Planned"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "order": 3,
+      "name": "Turn Axiom Into a Financial State",
+      "summary": "Establish Axiom as a self-sustaining financial ecosystem with its own credit creation, insurance, and treasury management capabilities.",
+      "status": "Published",
+      "products": [
+        {
+          "id": "product-6",
+          "order": 1,
+          "name": "AXUSD Credit Lines",
+          "tagline": "Borrow against your Axiom assets without selling",
+          "strategicValue": "Enables community members to access liquidity without exiting positions. Creates demand for AXUSD and deepens ecosystem engagement.",
+          "targetUsers": "AXM holders, property owners, protocol participants",
+          "revenueModel": "Interest on credit lines, origination fees, liquidation penalties",
+          "legalNotes": "Collateralized lending with automated liquidation, no securities involved",
+          "onchainModules": "CreditLineVault, CollateralManager, LiquidationEngine, AxiomScoreSBT",
+          "offchainModules": "Credit scoring integration, notification system, position monitoring",
+          "status": "Draft",
+          "milestones": [
+            {
+              "id": "m-6-1",
+              "order": 1,
+              "name": "Collateral Framework",
+              "description": "Define acceptable collateral types and LTV ratios",
+              "targetDate": "2026-Q4",
+              "owner": "Risk Team",
+              "status": "Planned"
+            }
+          ]
+        },
+        {
+          "id": "product-7",
+          "order": 2,
+          "name": "Insurance Pools",
+          "tagline": "Community-backed protection for protocol participants",
+          "strategicValue": "Reduces systemic risk and increases confidence in protocol participation. Creates additional yield opportunities for capital providers.",
+          "targetUsers": "Risk-averse participants, capital providers seeking premium income",
+          "revenueModel": "Insurance premiums, investment returns on reserves, reinsurance fees",
+          "legalNotes": "Structured as risk-sharing pool, not licensed insurance product",
+          "onchainModules": "InsurancePool, ClaimsProcessor, PremiumDistributor, SusuInsuranceFund",
+          "offchainModules": "Claims assessment, actuarial modeling, reserve management",
+          "status": "Draft",
+          "milestones": [
+            {
+              "id": "m-7-1",
+              "order": 1,
+              "name": "Risk Model Development",
+              "description": "Build actuarial models for protocol risks",
+              "targetDate": "2026-Q4",
+              "owner": "Risk Team",
+              "status": "Planned"
+            }
+          ]
+        },
+        {
+          "id": "product-8",
+          "order": 3,
+          "name": "Axiom Treasury Notes",
+          "tagline": "Fixed-income instruments backed by protocol revenue",
+          "strategicValue": "Creates institutional-grade fixed income product. Establishes Axiom as issuer of sovereign-like debt instruments.",
+          "targetUsers": "Institutional investors, treasuries, conservative allocators",
+          "revenueModel": "Spread between note yields and treasury investment returns",
+          "legalNotes": "SEC Reg D 506(c) offering, fixed maturity and coupon structure",
+          "onchainModules": "TreasuryNote (ERC-1155), CouponDistributor, MaturityProcessor",
+          "offchainModules": "Investor relations, quarterly reporting, rating agency liaison",
+          "status": "Draft",
+          "milestones": [
+            {
+              "id": "m-8-1",
+              "order": 1,
+              "name": "Structure Design",
+              "description": "Define note terms, maturities, and coupon structures",
+              "targetDate": "2027-Q1",
+              "owner": "Treasury",
+              "status": "Planned"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

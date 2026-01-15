@@ -41,7 +41,8 @@ const REBUILD_NAV_PAGES = [
   '/holders',
   '/susu',
   '/buy-axm',
-  '/academy'
+  '/academy',
+  '/roadmap'
 ]
 
 function matchesRebuildNavPages(pathname) {
