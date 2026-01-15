@@ -48,7 +48,10 @@ const REBUILD_NAV_PAGES = [
   '/rent-streams',
   '/products',
   '/land-funds',
-  '/builder-credit'
+  '/builder-credit',
+  '/credit-lines',
+  '/insurance-pools',
+  '/treasury-notes'
 ]
 
 function matchesRebuildNavPages(pathname) {

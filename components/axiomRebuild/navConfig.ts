@@ -91,18 +91,26 @@ export const navItems: NavItem[] = [
     ]
   },
   {
+    label: "DeFi",
+    children: [
+      { label: "AXUSD Credit Lines", href: "/credit-lines" },
+      { label: "Insurance Pools", href: "/insurance-pools" },
+      { label: "Treasury Notes", href: "/treasury-notes" },
+      { label: "AXUSD Stablecoin", href: "/axusd" },
+      { label: "Staking", href: "/staking" },
+      { label: "DEX Exchange", href: "/dex" },
+      { label: "LP Incentives", href: "/liquidity" }
+    ]
+  },
+  {
     label: "Tools",
     children: [
       { label: "Treasury", href: "/bank" },
       { label: "The Wealth Practice", href: "/wealth-practice" },
-      { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "Land Crowdfunding", href: "/land-acquisition/portfolio" },
-      { label: "LP Incentives", href: "/liquidity" },
       { label: "Land Marketplace", href: "/land" },
       { label: "Land Reclamation Workbook", href: "/workbook" },
       { label: "Land Pipeline", href: "/admin/land-pipeline" },
-      { label: "Staking", href: "/staking" },
-      { label: "DEX Exchange", href: "/dex" },
       { label: "Governance", href: "/governance" },
       { label: "Tokenomics", href: "/tokenomics" },
       { label: "Launchpad", href: "/launchpad" },
