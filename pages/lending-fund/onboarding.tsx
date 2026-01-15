@@ -897,25 +897,25 @@ This signature constitutes my legally binding electronic signature.`;
                 <h2 className="text-2xl font-bold mb-4" style={{ color: "#1a1a2e" }}>Onboarding Complete!</h2>
                 <p style={{ color: "#6b7280" }} className="mb-8">
                   Your application has been submitted. Our compliance team will verify your 
-                  accredited investor status within 2-3 business days. You will be notified 
-                  once approved to invest.
+                  accredited investor status within 2-3 business days. You can proceed to 
+                  submit your investment commitment while we review.
                 </p>
                 <div className="flex gap-4 justify-center flex-wrap">
                   {typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('product') ? (
                     <Link
-                      href={`/${new URLSearchParams(window.location.search).get('product')}`}
+                      href={`/lending-fund/invest?product=${new URLSearchParams(window.location.search).get('product')}`}
                       className="px-6 py-3 font-bold rounded-lg"
                       style={{ background: "#00D4AA", color: "#FFFFFF" }}
                     >
-                      Back to Product
+                      Continue to Invest
                     </Link>
                   ) : (
                     <Link
-                      href="/lending-fund"
+                      href="/lending-fund/invest"
                       className="px-6 py-3 font-bold rounded-lg"
                       style={{ background: "#00D4AA", color: "#FFFFFF" }}
                     >
-                      Back to Fund
+                      Continue to Invest
                     </Link>
                   )}
                   <Link

@@ -34,9 +34,8 @@ export default function InvestPage() {
     noGuarantees: false
   });
 
-  useEffect(() => {
-    router.replace('/lending-fund/onboarding');
-  }, [router]);
+  const { product } = router.query;
+  const productKey = (product as string) || 'lending-fund';
 
   useEffect(() => {
     checkWalletConnection();
