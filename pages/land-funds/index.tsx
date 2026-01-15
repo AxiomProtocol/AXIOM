@@ -370,8 +370,12 @@ export default function LandFundsPage() {
                     {parcel.status === 'funding' && (
                       <button
                         onClick={() => {
+                          if (!parcel.optionId || !parcel.onChain) {
+                            window.location.href = `/lending-fund/invest?product=land-funds&parcel=${parcel.id}`;
+                            return;
+                          }
                           setSelectedParcel(parcel);
-                          setSelectedCampaignId(parcel.optionId || 1);
+                          setSelectedCampaignId(parcel.optionId);
                           setShowInvestModal(true);
                         }}
                         style={{
@@ -482,8 +486,6 @@ export default function LandFundsPage() {
           onClose={() => setShowInvestModal(false)}
           campaignId={selectedCampaignId}
           campaignTitle={selectedParcel.name}
-          minInvestment="100"
-          maxInvestment="10000"
           onSuccess={() => {
             setTimeout(() => {
               window.location.reload();

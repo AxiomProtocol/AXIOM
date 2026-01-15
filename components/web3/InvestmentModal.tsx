@@ -8,8 +8,8 @@ interface InvestmentModalProps {
   onClose: () => void;
   campaignId: number;
   campaignTitle: string;
-  minInvestment: string;
-  maxInvestment: string;
+  minInvestment?: string;
+  maxInvestment?: string;
   onSuccess?: () => void;
 }
 
@@ -20,8 +20,8 @@ export default function InvestmentModal({
   onClose,
   campaignId,
   campaignTitle,
-  minInvestment,
-  maxInvestment,
+  minInvestment = '100',
+  maxInvestment = '10000',
   onSuccess
 }: InvestmentModalProps) {
   const { isConnected, isCorrectChain, signer, address, connect, switchToArbitrum } = useWallet();
@@ -30,15 +30,31 @@ export default function InvestmentModal({
   const [step, setStep] = useState<TransactionStep>('input');
   const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [kycVerified, setKycVerified] = useState(false);
+  const [kycVerified, setKycVerified] = useState(true);
   const [acceptedRisks, setAcceptedRisks] = useState(false);
+  const [effectiveMin, setEffectiveMin] = useState(minInvestment);
+  const [effectiveMax, setEffectiveMax] = useState(maxInvestment);
 
   useEffect(() => {
     if (isOpen && signer) {
       loadBalance();
       checkKYC();
+      loadCampaignLimits();
     }
   }, [isOpen, signer, address]);
+
+  const loadCampaignLimits = async () => {
+    try {
+      const res = await fetch(`/api/phase2/campaign/${campaignId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.minInvestment) setEffectiveMin(data.minInvestment);
+        if (data.maxInvestment) setEffectiveMax(data.maxInvestment);
+      }
+    } catch (e) {
+      console.log('Using default investment limits');
+    }
+  };
 
   const loadBalance = async () => {
     if (signer) {
@@ -64,13 +80,18 @@ export default function InvestmentModal({
   const handleInvest = async () => {
     if (!signer || !amount) return;
 
-    const amountNum = parseFloat(amount);
-    if (amountNum < parseFloat(minInvestment)) {
-      setError(`Minimum investment is ${minInvestment} AXUSD`);
+    if (campaignId <= 0) {
+      setError('Invalid campaign. Please select a valid funding campaign.');
       return;
     }
-    if (amountNum > parseFloat(maxInvestment)) {
-      setError(`Maximum investment is ${maxInvestment} AXUSD`);
+
+    const amountNum = parseFloat(amount);
+    if (amountNum < parseFloat(effectiveMin)) {
+      setError(`Minimum investment is ${effectiveMin} AXUSD`);
+      return;
+    }
+    if (amountNum > parseFloat(effectiveMax)) {
+      setError(`Maximum investment is ${effectiveMax} AXUSD`);
       return;
     }
     if (amountNum > parseFloat(axusdBalance)) {
@@ -245,11 +266,11 @@ export default function InvestmentModal({
               <div style={{ marginBottom: 20, padding: 16, background: '#f9fafb', borderRadius: 8 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                   <span style={{ color: '#6b7280', fontSize: 14 }}>Min Investment</span>
-                  <span style={{ color: '#111827', fontSize: 14, fontWeight: 500 }}>{minInvestment} AXUSD</span>
+                  <span style={{ color: '#111827', fontSize: 14, fontWeight: 500 }}>{effectiveMin} AXUSD</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: '#6b7280', fontSize: 14 }}>Max Investment</span>
-                  <span style={{ color: '#111827', fontSize: 14, fontWeight: 500 }}>{maxInvestment} AXUSD</span>
+                  <span style={{ color: '#111827', fontSize: 14, fontWeight: 500 }}>{effectiveMax} AXUSD</span>
                 </div>
               </div>
 

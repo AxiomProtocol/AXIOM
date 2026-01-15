@@ -32,11 +32,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
+    if (address && typeof address === 'string') {
+      return res.status(200).json({ 
+        verified: true, 
+        pending: false, 
+        status: 'verified',
+        message: 'Wallet-based verification approved for demo'
+      });
+    }
+
     return res.status(200).json({ 
       verified: false, 
       pending: false, 
-      status: null,
-      message: 'For demo purposes, wallet-based KYC is auto-approved'
+      status: null
     });
   } catch (error) {
     console.error('KYC status error:', error);
