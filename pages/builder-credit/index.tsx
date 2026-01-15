@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { LAND_ACQUISITION_CONTRACTS } from '../../shared/contracts';
+import WalletButton from '../../components/web3/WalletButton';
+import CreditApplicationModal from '../../components/web3/CreditApplicationModal';
+import { useWallet } from '../../lib/web3/useWallet';
 
 interface CreditTier {
   type: string;
@@ -104,11 +107,13 @@ export default function BuilderCreditPage() {
   const [selectedType, setSelectedType] = useState<'all' | 'builder' | 'farmer'>('all');
   const [selectedProduct, setSelectedProduct] = useState<CreditProduct | null>(null);
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const [showOnChainApply, setShowOnChainApply] = useState(false);
   const [creditTiers, setCreditTiers] = useState<CreditTier[]>([]);
   const [contractStatus, setContractStatus] = useState<ContractStatus | null>(null);
   const [products, setProducts] = useState<CreditProduct[]>(DEFAULT_CREDIT_PRODUCTS);
   const [loading, setLoading] = useState(true);
   const [creditStats, setCreditStats] = useState({ totalApplications: 0, totalLoans: 0 });
+  const { isConnected } = useWallet();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -197,10 +202,15 @@ export default function BuilderCreditPage() {
                 </span>
               )}
             </div>
-            <h1 style={{ fontSize: 48, fontWeight: 700, marginBottom: 16 }}>Builder & Farmer Credit</h1>
-            <p style={{ fontSize: 20, color: '#9ca3af', maxWidth: 700 }}>
-              Working capital for land development and agriculture. Access financing to build, grow, and develop community land into productive assets.
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+              <div>
+                <h1 style={{ fontSize: 48, fontWeight: 700, marginBottom: 16 }}>Builder & Farmer Credit</h1>
+                <p style={{ fontSize: 20, color: '#9ca3af', maxWidth: 700 }}>
+                  Working capital for land development and agriculture. Access financing to build, grow, and develop community land into productive assets.
+                </p>
+              </div>
+              <WalletButton />
+            </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 24, marginTop: 48 }}>
               <StatCard label="Products Available" value={products.length.toString()} />
@@ -416,7 +426,14 @@ export default function BuilderCreditPage() {
                 </div>
                 
                 <button
-                  onClick={() => { setSelectedProduct(product); setShowApplyModal(true); }}
+                  onClick={() => { 
+                    setSelectedProduct(product); 
+                    if (product.onChain) {
+                      setShowOnChainApply(true);
+                    } else {
+                      setShowApplyModal(true);
+                    }
+                  }}
                   style={{
                     width: '100%',
                     padding: '14px 20px',
@@ -429,7 +446,7 @@ export default function BuilderCreditPage() {
                     fontSize: 14
                   }}
                 >
-                  Apply for Credit
+                  {product.onChain ? 'Apply On-Chain' : 'Apply for Credit'}
                 </button>
               </div>
             ))}
@@ -549,6 +566,24 @@ export default function BuilderCreditPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showOnChainApply && selectedProduct && (
+        <CreditApplicationModal
+          isOpen={showOnChainApply}
+          onClose={() => setShowOnChainApply(false)}
+          creditType={selectedProduct.type}
+          productName={selectedProduct.name}
+          maxLTV={creditTiers.find(t => t.type.toLowerCase() === selectedProduct.type)?.maxLTV || 70}
+          interestRate={selectedProduct.interestRate}
+          maxTermMonths={selectedProduct.termMonths}
+          minCollateral={creditTiers.find(t => t.type.toLowerCase() === selectedProduct.type)?.minCollateralValue || '25000'}
+          onSuccess={() => {
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          }}
+        />
       )}
     </>
   );

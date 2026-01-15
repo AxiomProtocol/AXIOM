@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { LAND_ACQUISITION_CONTRACTS } from '../../shared/contracts';
+import WalletButton from '../../components/web3/WalletButton';
+import InvestmentModal from '../../components/web3/InvestmentModal';
+import { useWallet } from '../../lib/web3/useWallet';
 
 interface LandParcel {
   id: string;
@@ -96,6 +99,9 @@ export default function LandFundsPage() {
   const [selectedParcel, setSelectedParcel] = useState<LandParcel | null>(null);
   const [contractStatus, setContractStatus] = useState<ContractStatus | null>(null);
   const [connectivityChecked, setConnectivityChecked] = useState(false);
+  const [showInvestModal, setShowInvestModal] = useState(false);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<number>(0);
+  const { isConnected, isCorrectChain } = useWallet();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -202,10 +208,15 @@ export default function LandFundsPage() {
                 </span>
               )}
             </div>
-            <h1 style={{ fontSize: 48, fontWeight: 700, marginBottom: 16 }}>Community Land Funds</h1>
-            <p style={{ fontSize: 20, color: '#9ca3af', maxWidth: 700 }}>
-              Collective ownership of strategic land parcels. Pool resources with your community to acquire land that builds generational wealth.
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+              <div>
+                <h1 style={{ fontSize: 48, fontWeight: 700, marginBottom: 16 }}>Community Land Funds</h1>
+                <p style={{ fontSize: 20, color: '#9ca3af', maxWidth: 700 }}>
+                  Collective ownership of strategic land parcels. Pool resources with your community to acquire land that builds generational wealth.
+                </p>
+              </div>
+              <WalletButton />
+            </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 24, marginTop: 48 }}>
               <StatCard label="Total Acreage" value={totalAcreage.toLocaleString()} suffix="acres" />
@@ -357,19 +368,27 @@ export default function LandFundsPage() {
                   
                   <div style={{ display: 'flex', gap: 12 }}>
                     {parcel.status === 'funding' && (
-                      <Link href={`/lending-fund/invest?product=land-funds&parcel=${parcel.id}${parcel.optionId ? `&optionId=${parcel.optionId}` : ''}`} style={{
-                        flex: 1,
-                        padding: '12px 20px',
-                        background: parcel.onChain ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                        color: '#ffffff',
-                        borderRadius: 8,
-                        fontWeight: 600,
-                        textDecoration: 'none',
-                        fontSize: 14,
-                        textAlign: 'center'
-                      }}>
-                        Contribute AXUSD
-                      </Link>
+                      <button
+                        onClick={() => {
+                          setSelectedParcel(parcel);
+                          setSelectedCampaignId(parcel.optionId || 1);
+                          setShowInvestModal(true);
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '12px 20px',
+                          background: parcel.onChain ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                          color: '#ffffff',
+                          borderRadius: 8,
+                          fontWeight: 600,
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: 14,
+                          textAlign: 'center'
+                        }}
+                      >
+                        Invest AXUSD
+                      </button>
                     )}
                     <button
                       onClick={() => { setSelectedParcel(parcel); setShowStewardModal(true); }}
@@ -455,6 +474,22 @@ export default function LandFundsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showInvestModal && selectedParcel && (
+        <InvestmentModal
+          isOpen={showInvestModal}
+          onClose={() => setShowInvestModal(false)}
+          campaignId={selectedCampaignId}
+          campaignTitle={selectedParcel.name}
+          minInvestment="100"
+          maxInvestment="10000"
+          onSuccess={() => {
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          }}
+        />
       )}
     </>
   );
