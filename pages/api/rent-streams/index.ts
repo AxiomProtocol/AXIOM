@@ -2,17 +2,13 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 import { ethers } from 'ethers';
-import { REAL_ESTATE_CONTRACTS, AXUSD_INTEGRATION_CONTRACTS, NETWORK_CONFIG } from '../../../shared/contracts';
+import { REAL_ESTATE_CONTRACTS, NETWORK_CONFIG } from '../../../shared/contracts';
 
 const DATA_FILE = path.join(process.cwd(), 'data', 'rent-streams.json');
 
-const LEASE_RENT_ABI = [
-  'function totalActiveLeases() view returns (uint256)',
-  'function totalRentCollected() view returns (uint256)'
-];
-
-const REVENUE_ROUTER_ABI = [
-  'function totalDistributed() view returns (uint256)'
+const CAPITAL_POOLS_ABI = [
+  'function totalValueLocked() view returns (uint256)',
+  'function poolCount() view returns (uint256)'
 ];
 
 function readStaticData() {
@@ -29,35 +25,28 @@ async function fetchLiveBlockchainData() {
   try {
     const provider = new ethers.JsonRpcProvider(NETWORK_CONFIG.rpcUrl);
 
-    const leaseContract = new ethers.Contract(
-      REAL_ESTATE_CONTRACTS.LEASE_RENT_ENGINE,
-      LEASE_RENT_ABI,
+    const capitalPoolsContract = new ethers.Contract(
+      REAL_ESTATE_CONTRACTS.CAPITAL_POOLS,
+      CAPITAL_POOLS_ABI,
       provider
     );
 
-    const revenueRouter = new ethers.Contract(
-      AXUSD_INTEGRATION_CONTRACTS.REVENUE_ROUTER,
-      REVENUE_ROUTER_ABI,
-      provider
-    );
-
-    const [activeLeases, totalRent, totalDistributed] = await Promise.all([
-      leaseContract.totalActiveLeases().catch(() => BigInt(0)),
-      leaseContract.totalRentCollected().catch(() => BigInt(0)),
-      revenueRouter.totalDistributed().catch(() => BigInt(0))
+    const results = await Promise.allSettled([
+      capitalPoolsContract.totalValueLocked(),
+      capitalPoolsContract.poolCount()
     ]);
 
-    const totalRentUSD = parseFloat(ethers.formatUnits(totalRent, 18));
-    const distributedUSD = parseFloat(ethers.formatUnits(totalDistributed, 18));
+    const tvl = results[0].status === 'fulfilled' ? results[0].value : BigInt(0);
+    const poolCount = results[1].status === 'fulfilled' ? results[1].value : BigInt(0);
+
+    const hasLiveData = results.some(r => r.status === 'fulfilled' && r.value > 0n);
 
     return {
-      live: true,
-      activeLeases: Number(activeLeases),
-      totalRentCollected: totalRentUSD,
-      totalDistributed: distributedUSD,
+      live: hasLiveData,
+      totalValueLocked: parseFloat(ethers.formatUnits(tvl, 18)),
+      poolCount: Number(poolCount),
       contractAddresses: {
-        leaseEngine: REAL_ESTATE_CONTRACTS.LEASE_RENT_ENGINE,
-        revenueRouter: AXUSD_INTEGRATION_CONTRACTS.REVENUE_ROUTER
+        capitalPools: REAL_ESTATE_CONTRACTS.CAPITAL_POOLS
       },
       lastUpdated: new Date().toISOString()
     };
@@ -80,13 +69,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const liveData = await fetchLiveBlockchainData();
 
-  if (liveData && (liveData.totalDistributed > 0 || liveData.activeLeases > 0)) {
-    if (liveData.totalDistributed > 0) {
-      staticData.stats.totalDistributed = liveData.totalDistributed;
-    }
-    if (liveData.totalRentCollected > 0) {
-      staticData.stats.monthlyRentCollected = liveData.totalRentCollected / 12;
-    }
+  if (liveData && liveData.live && liveData.totalValueLocked > 0) {
+    staticData.stats = {
+      ...staticData.stats,
+      totalPropertyValue: liveData.totalValueLocked
+    };
     staticData.liveData = {
       source: 'blockchain',
       contracts: liveData.contractAddresses,
@@ -95,7 +82,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } else {
     staticData.liveData = {
       source: 'static',
-      note: 'Blockchain data unavailable, showing representative data',
+      note: 'Blockchain data unavailable or zero, showing representative data',
       lastUpdated: new Date().toISOString()
     };
   }

@@ -43,22 +43,27 @@ async function fetchLiveBlockchainData() {
       provider
     );
 
-    const [totalAssets, totalSupply, loanCount, activeLoans, lockedCapital] = await Promise.all([
-      vaultContract.totalAssets().catch(() => BigInt(0)),
-      vaultContract.totalSupply().catch(() => BigInt(0)),
-      managerContract.loanCount().catch(() => BigInt(0)),
-      managerContract.totalActiveLoans().catch(() => BigInt(0)),
-      managerContract.totalLockedCapital().catch(() => BigInt(0))
+    const results = await Promise.allSettled([
+      vaultContract.totalAssets(),
+      vaultContract.totalSupply(),
+      managerContract.loanCount(),
+      managerContract.totalActiveLoans(),
+      managerContract.totalLockedCapital()
     ]);
+
+    const totalAssets = results[0].status === 'fulfilled' ? results[0].value : BigInt(0);
+    const activeLoans = results[3].status === 'fulfilled' ? results[3].value : BigInt(0);
+    const lockedCapital = results[4].status === 'fulfilled' ? results[4].value : BigInt(0);
+
+    const hasLiveData = results.some(r => r.status === 'fulfilled' && r.value > 0n);
 
     const totalAssetsUSD = parseFloat(ethers.formatUnits(totalAssets, 18));
     const lockedCapitalUSD = parseFloat(ethers.formatUnits(lockedCapital, 18));
 
     return {
-      live: true,
+      live: hasLiveData,
       totalNotesValue: totalAssetsUSD,
       activeNotes: Number(activeLoans),
-      totalLoansOriginated: Number(loanCount),
       lockedCapital: lockedCapitalUSD,
       contractAddresses: {
         vault: REALESTATE_LENDING_CONTRACTS.FIXFLIP_VAULT,
@@ -85,7 +90,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const liveData = await fetchLiveBlockchainData();
 
-  if (liveData && liveData.totalNotesValue > 0) {
+  if (liveData && liveData.live && liveData.totalNotesValue > 0) {
     staticData.stats = {
       ...staticData.stats,
       totalNotesValue: liveData.totalNotesValue,
@@ -100,7 +105,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } else {
     staticData.liveData = {
       source: 'static',
-      note: 'Blockchain data unavailable, showing representative data',
+      note: 'Blockchain data unavailable or zero, showing representative data',
       lastUpdated: new Date().toISOString()
     };
   }

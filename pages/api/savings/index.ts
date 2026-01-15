@@ -12,8 +12,7 @@ const VAULT_ABI = [
 ];
 
 const AXUSD_ABI = [
-  'function totalSupply() view returns (uint256)',
-  'function balanceOf(address) view returns (uint256)'
+  'function totalSupply() view returns (uint256)'
 ];
 
 function readStaticData() {
@@ -48,28 +47,26 @@ async function fetchLiveBlockchainData() {
       provider
     );
 
-    const [
-      fixFlipAssets,
-      dscrAssets,
-      axusdTotalSupply
-    ] = await Promise.all([
-      fixFlipVault.totalAssets().catch(() => BigInt(0)),
-      dscrVault.totalAssets().catch(() => BigInt(0)),
-      axusdToken.totalSupply().catch(() => BigInt(0))
+    const results = await Promise.allSettled([
+      fixFlipVault.totalAssets(),
+      dscrVault.totalAssets(),
+      axusdToken.totalSupply()
     ]);
+
+    const fixFlipAssets = results[0].status === 'fulfilled' ? results[0].value : BigInt(0);
+    const dscrAssets = results[1].status === 'fulfilled' ? results[1].value : BigInt(0);
+    const axusdSupply = results[2].status === 'fulfilled' ? results[2].value : BigInt(0);
+
+    const hasLiveData = results.some(r => r.status === 'fulfilled' && r.value > 0n);
 
     const totalVaultAssets = parseFloat(ethers.formatUnits(fixFlipAssets, 18)) + 
                              parseFloat(ethers.formatUnits(dscrAssets, 18));
-    const axusdSupply = parseFloat(ethers.formatUnits(axusdTotalSupply, 18));
-
-    const utilizationRate = totalVaultAssets > 0 ? 
-      Math.min(95, (totalVaultAssets / (totalVaultAssets * 1.3)) * 100) : 0;
+    const axusdCirculating = parseFloat(ethers.formatUnits(axusdSupply, 18));
 
     return {
-      live: true,
+      live: hasLiveData,
       totalDeposits: totalVaultAssets,
-      axusdCirculating: axusdSupply,
-      utilizationRate: utilizationRate.toFixed(1),
+      axusdCirculating: axusdCirculating,
       contractAddresses: {
         fixFlipVault: REALESTATE_LENDING_CONTRACTS.FIXFLIP_VAULT,
         dscrVault: REALESTATE_LENDING_CONTRACTS.DSCR_POOL_VAULT,
@@ -96,11 +93,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const liveData = await fetchLiveBlockchainData();
 
-  if (liveData && liveData.totalDeposits > 0) {
+  if (liveData && liveData.live && liveData.totalDeposits > 0) {
     staticData.stats = {
       ...staticData.stats,
-      totalDeposits: liveData.totalDeposits,
-      utilizationRate: parseFloat(liveData.utilizationRate)
+      totalDeposits: liveData.totalDeposits
     };
     staticData.liveData = {
       source: 'blockchain',
@@ -111,7 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } else {
     staticData.liveData = {
       source: 'static',
-      note: 'Blockchain data unavailable, showing representative data',
+      note: 'Blockchain data unavailable or zero, showing representative data',
       lastUpdated: new Date().toISOString()
     };
   }
