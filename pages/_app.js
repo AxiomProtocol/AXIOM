@@ -101,7 +101,7 @@ export default function App({ Component, pageProps }) {
   useEffect(() => {
     if (typeof window !== 'undefined' && !onboardingChecked) {
       const completed = localStorage.getItem('axiom_onboarding_complete')
-      const isPublicPage = ['/', '/origin', '/how-it-works', '/about-us', '/team', '/axiom-nexus', '/transparency', '/governance', '/treasury', '/roadmap', '/mortgage-notes', '/savings', '/rent-streams', '/products', '/reclaim', '/workbook'].includes(router.pathname) || router.pathname.startsWith('/dscr/investor') || router.pathname.startsWith('/reclaim') || router.pathname.startsWith('/workbook')
+      const isPublicPage = ['/', '/origin', '/how-it-works', '/about-us', '/team', '/axiom-nexus', '/transparency', '/governance', '/treasury', '/roadmap', '/mortgage-notes', '/savings', '/rent-streams', '/products', '/reclaim', '/workbook'].includes(router.pathname) || router.pathname.startsWith('/dscr/investor') || router.pathname.startsWith('/reclaim') || router.pathname.startsWith('/workbook') || router.pathname.startsWith('/workbook/search')
       const isAdminPage = router.pathname.startsWith('/admin')
       const isCustomOnboardingPage = router.pathname === '/purpose-group-onboarding'
       if (!completed && !isPublicPage && !isAdminPage && !isCustomOnboardingPage) {
