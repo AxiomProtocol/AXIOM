@@ -261,6 +261,34 @@ export default function WorkbookDashboard() {
             </div>
           )}
 
+          {/* AI Genealogy Search - Main Feature */}
+          <div 
+            onClick={() => router.push('/workbook/search')}
+            className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl p-6 mb-6 cursor-pointer hover:shadow-lg transition group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="text-white">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-3xl">🔍</span>
+                  <h2 className="text-xl font-bold">AI Genealogy Search</h2>
+                </div>
+                <p className="text-amber-100 mb-3">
+                  Search real databases with 22+ billion historical records
+                </p>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <span className="bg-white/20 px-2 py-1 rounded">FamilySearch</span>
+                  <span className="bg-white/20 px-2 py-1 rounded">Census Records</span>
+                  <span className="bg-white/20 px-2 py-1 rounded">Land Deeds</span>
+                  <span className="bg-white/20 px-2 py-1 rounded">Freedmen's Bureau</span>
+                  <span className="bg-white/20 px-2 py-1 rounded">State Archives</span>
+                </div>
+              </div>
+              <div className="text-white text-3xl group-hover:translate-x-1 transition-transform">
+                →
+              </div>
+            </div>
+          </div>
+
           {usage && (
             <div className="bg-white rounded-lg border p-4 mb-6">
               <h3 className="font-medium text-gray-900 mb-3">Monthly Usage</h3>
