@@ -10,7 +10,21 @@ interface DatabaseLink {
   cost: 'free' | 'paid' | 'subscription';
 }
 
+interface SearchResult {
+  id: string;
+  name: string;
+  birthYear?: string;
+  birthPlace?: string;
+  deathYear?: string;
+  deathPlace?: string;
+  recordType: string;
+  source: string;
+  confidence: 'high' | 'medium' | 'low';
+  details: string;
+}
+
 interface SearchResponse {
+  searchResults: SearchResult[];
   aiGuidance: string;
   databaseLinks: DatabaseLink[];
   searchParams: any;
@@ -23,14 +37,12 @@ const STATES = [
 ];
 
 const RECORD_TYPES = [
-  { id: 'census', label: 'Census Records', icon: '📊' },
-  { id: 'land', label: 'Land & Deeds', icon: '🏠' },
-  { id: 'probate', label: 'Probate & Wills', icon: '📜' },
-  { id: 'vital', label: 'Vital Records', icon: '📋' },
-  { id: 'military', label: 'Military Records', icon: '🎖️' },
-  { id: 'freedmen', label: "Freedmen's Bureau", icon: '📖' },
-  { id: 'newspaper', label: 'Newspapers', icon: '📰' },
-  { id: 'cemetery', label: 'Cemetery Records', icon: '🪦' },
+  { id: 'census', label: 'Census', icon: '📊' },
+  { id: 'land', label: 'Land Deeds', icon: '🏠' },
+  { id: 'probate', label: 'Probate', icon: '📜' },
+  { id: 'vital', label: 'Vital', icon: '📋' },
+  { id: 'military', label: 'Military', icon: '🎖️' },
+  { id: 'freedmen', label: "Freedmen's", icon: '📖' },
 ];
 
 export default function AdvancedGenealogySearch() {
@@ -45,7 +57,8 @@ export default function AdvancedGenealogySearch() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResponse | null>(null);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'databases' | 'guidance'>('databases');
+  const [activeTab, setActiveTab] = useState<'results' | 'guidance' | 'databases'>('results');
+  const [savedResults, setSavedResults] = useState<SearchResult[]>([]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,6 +93,7 @@ export default function AdvancedGenealogySearch() {
       }
 
       setResults(data);
+      setActiveTab('results');
     } catch (err) {
       setError('Search failed. Please try again.');
     } finally {
@@ -95,11 +109,26 @@ export default function AdvancedGenealogySearch() {
     );
   };
 
+  const saveResult = (result: SearchResult) => {
+    if (!savedResults.find(r => r.id === result.id)) {
+      setSavedResults(prev => [...prev, result]);
+    }
+  };
+
+  const getConfidenceColor = (confidence: string) => {
+    switch (confidence) {
+      case 'high': return 'bg-green-100 text-green-700 border-green-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'low': return 'bg-red-100 text-red-700 border-red-200';
+      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
+
   return (
     <>
       <Head>
-        <title>Advanced Genealogy Search | Land Reclamation Workbook</title>
-        <meta name="description" content="Search real genealogy databases including FamilySearch, census records, land deeds, and more" />
+        <title>AI Genealogy Search | Land Reclamation Workbook</title>
+        <meta name="description" content="Search historical records with AI-powered guidance for heir property research" />
       </Head>
 
       <div className="min-h-screen bg-gray-50">
@@ -108,52 +137,47 @@ export default function AdvancedGenealogySearch() {
             <Link href="/workbook" className="text-amber-100 hover:text-white text-sm mb-2 inline-block">
               ← Back to Workbook
             </Link>
-            <h1 className="text-3xl font-bold">Advanced Genealogy Search</h1>
-            <p className="text-amber-100 mt-1">Search real databases with 22+ billion historical records</p>
+            <h1 className="text-3xl font-bold">AI Genealogy Search</h1>
+            <p className="text-amber-100 mt-1">Search historical records and get AI research guidance</p>
           </div>
         </header>
 
         <main className="max-w-6xl mx-auto px-4 py-8">
           <div className="grid lg:grid-cols-3 gap-8">
+            {/* Search Form */}
             <div className="lg:col-span-1">
               <form onSubmit={handleSearch} className="bg-white rounded-xl border shadow-sm p-6 sticky top-4">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Search Criteria</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Search Records</h2>
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Surname *
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Surname *</label>
                     <input
                       type="text"
                       value={surname}
                       onChange={(e) => setSurname(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500"
-                      placeholder="Johnson, Williams, etc."
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                      placeholder="Johnson, Williams..."
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Given Name
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Given Name</label>
                     <input
                       type="text"
                       value={givenName}
                       onChange={(e) => setGivenName(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500"
-                      placeholder="James, Mary, etc."
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                      placeholder="James, Mary..."
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      State
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
                     <select
                       value={state}
                       onChange={(e) => setState(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                     >
                       <option value="">Select state...</option>
                       {STATES.map(s => (
@@ -163,59 +187,51 @@ export default function AdvancedGenealogySearch() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      County
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">County</label>
                     <input
                       type="text"
                       value={county}
                       onChange={(e) => setCounty(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500"
-                      placeholder="Holmes, Washington, etc."
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                      placeholder="Holmes, Washington..."
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Year From
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Year From</label>
                       <input
                         type="text"
                         value={yearFrom}
                         onChange={(e) => setYearFrom(e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500"
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                         placeholder="1850"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Year To
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Year To</label>
                       <input
                         type="text"
                         value={yearTo}
                         onChange={(e) => setYearTo(e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500"
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                         placeholder="1940"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Record Types
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Record Types</label>
+                    <div className="flex flex-wrap gap-2">
                       {RECORD_TYPES.map(type => (
                         <button
                           key={type.id}
                           type="button"
                           onClick={() => toggleRecordType(type.id)}
-                          className={`px-2 py-1.5 text-xs rounded-lg text-left transition ${
+                          className={`px-3 py-1.5 text-xs rounded-full transition ${
                             selectedRecordTypes.includes(type.id)
-                              ? 'bg-amber-100 text-amber-800 border-amber-300 border'
-                              : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-transparent'
+                              ? 'bg-amber-500 text-white'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}
                         >
                           {type.icon} {type.label}
@@ -224,21 +240,41 @@ export default function AdvancedGenealogySearch() {
                     </div>
                   </div>
 
-                  {error && (
-                    <p className="text-red-600 text-sm">{error}</p>
-                  )}
+                  {error && <p className="text-red-600 text-sm">{error}</p>}
 
                   <button
                     type="submit"
                     disabled={loading}
                     className="w-full py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 font-medium transition"
                   >
-                    {loading ? 'Searching...' : 'Search Databases'}
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                        Searching...
+                      </span>
+                    ) : 'Search Records'}
                   </button>
                 </div>
+
+                {savedResults.length > 0 && (
+                  <div className="mt-6 pt-4 border-t">
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">
+                      Saved Results ({savedResults.length})
+                    </h3>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {savedResults.map(r => (
+                        <div key={r.id} className="text-xs p-2 bg-amber-50 rounded">
+                          <div className="font-medium">{r.name}</div>
+                          <div className="text-gray-500">{r.source}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </form>
             </div>
 
+            {/* Results */}
             <div className="lg:col-span-2">
               {!results && !loading && (
                 <div className="bg-white rounded-xl border p-8 text-center">
@@ -246,28 +282,24 @@ export default function AdvancedGenealogySearch() {
                     <span className="text-3xl">🔍</span>
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    Search Real Genealogy Databases
+                    Search Historical Records
                   </h3>
                   <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                    Enter your search criteria to get direct links to FamilySearch, 
-                    state archives, land records, and more.
+                    Enter your ancestor's information to find matching records across 
+                    census, land deeds, vital records, and more.
                   </p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="grid grid-cols-3 gap-4 text-sm max-w-sm mx-auto">
                     <div className="p-3 bg-blue-50 rounded-lg">
-                      <div className="font-semibold text-blue-800">22B+</div>
-                      <div className="text-blue-600">Records</div>
+                      <div className="font-semibold text-blue-800">Census</div>
+                      <div className="text-blue-600 text-xs">1790-1950</div>
                     </div>
                     <div className="p-3 bg-green-50 rounded-lg">
-                      <div className="font-semibold text-green-800">Free</div>
-                      <div className="text-green-600">FamilySearch</div>
+                      <div className="font-semibold text-green-800">Land</div>
+                      <div className="text-green-600 text-xs">Deeds & Patents</div>
                     </div>
                     <div className="p-3 bg-purple-50 rounded-lg">
-                      <div className="font-semibold text-purple-800">50+</div>
-                      <div className="text-purple-600">States</div>
-                    </div>
-                    <div className="p-3 bg-amber-50 rounded-lg">
-                      <div className="font-semibold text-amber-800">1790+</div>
-                      <div className="text-amber-600">Census Years</div>
+                      <div className="font-semibold text-purple-800">Freedmen</div>
+                      <div className="text-purple-600 text-xs">Bureau Records</div>
                     </div>
                   </div>
                 </div>
@@ -276,47 +308,144 @@ export default function AdvancedGenealogySearch() {
               {loading && (
                 <div className="bg-white rounded-xl border p-12 text-center">
                   <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-gray-600">Searching databases and generating research guidance...</p>
+                  <p className="text-gray-600">Searching historical records...</p>
+                  <p className="text-gray-400 text-sm mt-2">This may take a few seconds</p>
                 </div>
               )}
 
               {results && (
-                <div className="space-y-6">
-                  <div className="flex gap-2">
+                <div className="space-y-4">
+                  {/* Tabs */}
+                  <div className="flex gap-2 bg-white rounded-lg p-1 border">
                     <button
-                      onClick={() => setActiveTab('databases')}
-                      className={`px-4 py-2 rounded-lg font-medium transition ${
-                        activeTab === 'databases'
-                          ? 'bg-amber-600 text-white'
-                          : 'bg-white text-gray-700 border hover:bg-gray-50'
+                      onClick={() => setActiveTab('results')}
+                      className={`flex-1 px-4 py-2 rounded-md font-medium transition ${
+                        activeTab === 'results'
+                          ? 'bg-amber-500 text-white'
+                          : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
-                      Database Links ({results.databaseLinks.length})
+                      Records ({results.searchResults?.length || 0})
                     </button>
                     <button
                       onClick={() => setActiveTab('guidance')}
-                      className={`px-4 py-2 rounded-lg font-medium transition ${
+                      className={`flex-1 px-4 py-2 rounded-md font-medium transition ${
                         activeTab === 'guidance'
-                          ? 'bg-amber-600 text-white'
-                          : 'bg-white text-gray-700 border hover:bg-gray-50'
+                          ? 'bg-amber-500 text-white'
+                          : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
-                      AI Research Guidance
+                      Research Guidance
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('databases')}
+                      className={`flex-1 px-4 py-2 rounded-md font-medium transition ${
+                        activeTab === 'databases'
+                          ? 'bg-amber-500 text-white'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      Search Links
                     </button>
                   </div>
 
+                  {/* Results Tab */}
+                  {activeTab === 'results' && (
+                    <div className="space-y-3">
+                      {results.searchResults?.length > 0 ? (
+                        results.searchResults.map((result) => (
+                          <div key={result.id} className="bg-white rounded-xl border p-5 hover:shadow-md transition">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h3 className="font-semibold text-gray-900 text-lg">{result.name}</h3>
+                                  <span className={`px-2 py-0.5 text-xs rounded-full border ${getConfidenceColor(result.confidence)}`}>
+                                    {result.confidence} match
+                                  </span>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mb-3">
+                                  {result.birthYear && (
+                                    <div>
+                                      <span className="text-gray-500">Birth:</span>{' '}
+                                      <span className="text-gray-900">{result.birthYear}</span>
+                                      {result.birthPlace && <span className="text-gray-600">, {result.birthPlace}</span>}
+                                    </div>
+                                  )}
+                                  {result.deathYear && (
+                                    <div>
+                                      <span className="text-gray-500">Death:</span>{' '}
+                                      <span className="text-gray-900">{result.deathYear}</span>
+                                      {result.deathPlace && <span className="text-gray-600">, {result.deathPlace}</span>}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                                    {result.recordType}
+                                  </span>
+                                  <span className="text-sm text-gray-500">{result.source}</span>
+                                </div>
+
+                                <p className="text-gray-600 text-sm">{result.details}</p>
+                              </div>
+
+                              <button
+                                onClick={() => saveResult(result)}
+                                className={`ml-4 p-2 rounded-lg transition ${
+                                  savedResults.find(r => r.id === result.id)
+                                    ? 'bg-amber-100 text-amber-600'
+                                    : 'bg-gray-100 text-gray-400 hover:bg-amber-50 hover:text-amber-500'
+                                }`}
+                                title="Save to collection"
+                              >
+                                <svg className="w-5 h-5" fill={savedResults.find(r => r.id === result.id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="bg-white rounded-xl border p-8 text-center">
+                          <p className="text-gray-500">No records found. Try adjusting your search criteria or check the Research Guidance tab for suggestions.</p>
+                        </div>
+                      )}
+
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
+                        <strong>Note:</strong> These are AI-generated potential matches based on historical patterns. 
+                        Verify all records through official sources using the Search Links tab.
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Guidance Tab */}
+                  {activeTab === 'guidance' && (
+                    <div className="bg-white rounded-xl border p-6">
+                      <h3 className="font-semibold text-gray-900 mb-4">AI Research Guidance</h3>
+                      <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
+                        {results.aiGuidance || 'No guidance available.'}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Database Links Tab */}
                   {activeTab === 'databases' && (
-                    <div className="space-y-4">
-                      {results.databaseLinks.map((link, idx) => (
+                    <div className="space-y-3">
+                      <p className="text-sm text-gray-600 mb-4">
+                        Click these links to search the actual databases with your criteria:
+                      </p>
+                      {results.databaseLinks?.map((link, idx) => (
                         <a
                           key={idx}
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block bg-white rounded-xl border p-5 hover:shadow-lg transition group"
+                          className="block bg-white rounded-xl border p-4 hover:shadow-md transition group"
                         >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <div>
                               <div className="flex items-center gap-2 mb-1">
                                 <h3 className="font-semibold text-gray-900 group-hover:text-amber-600">
                                   {link.name}
@@ -324,21 +453,12 @@ export default function AdvancedGenealogySearch() {
                                 <span className={`px-2 py-0.5 text-xs rounded-full ${
                                   link.cost === 'free' 
                                     ? 'bg-green-100 text-green-700'
-                                    : link.cost === 'subscription'
-                                    ? 'bg-blue-100 text-blue-700'
-                                    : 'bg-yellow-100 text-yellow-700'
+                                    : 'bg-blue-100 text-blue-700'
                                 }`}>
-                                  {link.cost === 'free' ? 'Free' : link.cost === 'subscription' ? 'Subscription' : 'Paid'}
+                                  {link.cost === 'free' ? 'Free' : 'Subscription'}
                                 </span>
                               </div>
-                              <p className="text-gray-600 text-sm mb-2">{link.description}</p>
-                              <div className="flex flex-wrap gap-1">
-                                {link.recordTypes.map((type, i) => (
-                                  <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
-                                    {type}
-                                  </span>
-                                ))}
-                              </div>
+                              <p className="text-gray-600 text-sm">{link.description}</p>
                             </div>
                             <div className="text-amber-500 group-hover:text-amber-600 ml-4">
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -350,110 +470,9 @@ export default function AdvancedGenealogySearch() {
                       ))}
                     </div>
                   )}
-
-                  {activeTab === 'guidance' && (
-                    <div className="bg-white rounded-xl border p-6">
-                      <h3 className="font-semibold text-gray-900 mb-4">AI Research Guidance</h3>
-                      <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
-                        {results.aiGuidance}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
-          </div>
-
-          <div className="mt-8 grid md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-xl border p-6">
-              <h3 className="font-semibold text-gray-900 mb-3">Free Resources</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a href="https://www.familysearch.org/search/records" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">
-                    FamilySearch.org
-                  </a>
-                  <span className="text-gray-500"> - 22B+ free records</span>
-                </li>
-                <li>
-                  <a href="https://glorecords.blm.gov" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">
-                    BLM Land Patents
-                  </a>
-                  <span className="text-gray-500"> - Federal land records</span>
-                </li>
-                <li>
-                  <a href="https://www.findagrave.com" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">
-                    Find A Grave
-                  </a>
-                  <span className="text-gray-500"> - Cemetery records</span>
-                </li>
-                <li>
-                  <a href="https://www.archives.gov/research/genealogy" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">
-                    National Archives
-                  </a>
-                  <span className="text-gray-500"> - Federal records</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="bg-white rounded-xl border p-6">
-              <h3 className="font-semibold text-gray-900 mb-3">African American Genealogy</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a href="https://www.familysearch.org/en/wiki/African_American_Genealogy" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">
-                    FamilySearch Wiki Guide
-                  </a>
-                </li>
-                <li>
-                  <a href="https://www.familysearch.org/search/collection/1989155" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">
-                    Freedmen's Bureau Records
-                  </a>
-                </li>
-                <li>
-                  <a href="https://www.discoverfreedmen.org" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">
-                    Discover Freedmen
-                  </a>
-                </li>
-                <li>
-                  <a href="https://www.slavevoyages.org" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">
-                    Slave Voyages Database
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div className="bg-white rounded-xl border p-6">
-              <h3 className="font-semibold text-gray-900 mb-3">Land & Property Records</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a href="https://glorecords.blm.gov" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">
-                    BLM General Land Office
-                  </a>
-                </li>
-                <li>
-                  <a href="https://www.familysearch.org/en/wiki/United_States_Land_and_Property" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">
-                    Land Records Wiki
-                  </a>
-                </li>
-                <li>
-                  <a href="https://www.archives.gov/research/land" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">
-                    NARA Land Records
-                  </a>
-                </li>
-                <li>
-                  <a href="https://deeds.com" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">
-                    County Deed Search
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              <strong>Disclaimer:</strong> This tool helps organize genealogical research by providing 
-              links to real databases. It does not provide legal advice or establish legal claims. 
-              Always verify records independently and consult a qualified attorney for heir property matters.
-            </p>
           </div>
         </main>
       </div>

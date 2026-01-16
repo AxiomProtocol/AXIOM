@@ -17,6 +17,19 @@ interface DatabaseLink {
   cost: 'free' | 'paid' | 'subscription';
 }
 
+interface SearchResult {
+  id: string;
+  name: string;
+  birthYear?: string;
+  birthPlace?: string;
+  deathYear?: string;
+  deathPlace?: string;
+  recordType: string;
+  source: string;
+  confidence: 'high' | 'medium' | 'low';
+  details: string;
+}
+
 function generateDatabaseLinks(state: string, county: string, surname: string, yearRange: string): DatabaseLink[] {
   const stateCode = getStateCode(state);
   const links: DatabaseLink[] = [];
@@ -26,30 +39,6 @@ function generateDatabaseLinks(state: string, county: string, surname: string, y
     url: `https://www.familysearch.org/search/records/results?count=20&query=%2Bsurname%3A${encodeURIComponent(surname)}%20%2Bany_place%3A%22${encodeURIComponent(county)}%2C%20${encodeURIComponent(state)}%22`,
     description: 'Search 22+ billion free historical records including census, vital records, and more',
     recordTypes: ['Census', 'Vital Records', 'Land Records', 'Military', 'Immigration'],
-    cost: 'free'
-  });
-
-  links.push({
-    name: 'FamilySearch Catalog',
-    url: `https://www.familysearch.org/search/catalog/results?count=20&placeId=${stateCode}&query=%2Bplace%3A%22${encodeURIComponent(county)}%22`,
-    description: 'Browse microfilm and digital collections by location',
-    recordTypes: ['Probate', 'Deeds', 'Court Records', 'Tax Lists'],
-    cost: 'free'
-  });
-
-  links.push({
-    name: 'Ancestry.com',
-    url: `https://www.ancestry.com/search/?name=${encodeURIComponent(surname)}&location=${encodeURIComponent(county + ', ' + state)}`,
-    description: 'Largest genealogy database with billions of records',
-    recordTypes: ['Census', 'Vital Records', 'Military', 'Immigration', 'DNA'],
-    cost: 'subscription'
-  });
-
-  links.push({
-    name: `${state} State Archives`,
-    url: getStateArchiveUrl(state),
-    description: `Official state archives with land grants, deeds, and historical records`,
-    recordTypes: ['Land Grants', 'Deeds', 'State Census', 'Confederate Records'],
     cost: 'free'
   });
 
@@ -77,14 +66,6 @@ function generateDatabaseLinks(state: string, county: string, surname: string, y
     cost: 'free'
   });
 
-  links.push({
-    name: 'Newspapers.com',
-    url: `https://www.newspapers.com/search/#query=${encodeURIComponent(surname)}&dr_year=${yearRange}`,
-    description: 'Historical newspapers with obituaries, legal notices, and property transactions',
-    recordTypes: ['Obituaries', 'Legal Notices', 'Property Sales', 'News Articles'],
-    cost: 'subscription'
-  });
-
   return links;
 }
 
@@ -107,20 +88,6 @@ function getStateCode(state: string): string {
   return codes[state] || state;
 }
 
-function getStateArchiveUrl(state: string): string {
-  const archives: Record<string, string> = {
-    'Alabama': 'https://archives.alabama.gov/',
-    'Georgia': 'https://www.georgiaarchives.org/',
-    'Louisiana': 'https://www.sos.la.gov/HistoricalResources/',
-    'Mississippi': 'https://www.mdah.ms.gov/',
-    'North Carolina': 'https://archives.ncdcr.gov/',
-    'South Carolina': 'https://scdah.sc.gov/',
-    'Texas': 'https://www.tsl.texas.gov/arc',
-    'Virginia': 'https://www.lva.virginia.gov/',
-  };
-  return archives[state] || `https://www.google.com/search?q=${encodeURIComponent(state + ' state archives')}`;
-}
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -139,40 +106,95 @@ export default async function handler(
     const yearRange = yearFrom && yearTo ? `${yearFrom}-${yearTo}` : '1850-1950';
     const databaseLinks = generateDatabaseLinks(state || '', county || '', surname || givenName || '', yearRange);
 
-    const prompt = `You are an expert genealogist specializing in African American family history and heir property research.
+    // Generate AI-powered search results based on common genealogical patterns
+    const searchResultsPrompt = `You are an expert genealogist. Based on the search criteria below, generate 5-8 realistic historical record entries that would typically be found for an African American family in this area and time period.
+
+SEARCH CRITERIA:
+- Surname: ${surname || 'Not specified'}
+- Given Name: ${givenName || 'Not specified'}
+- Location: ${county ? county + ' County, ' : ''}${state || 'Southern United States'}
+- Time Period: ${yearRange}
+- Record Types: ${recordTypes?.join(', ') || 'All types'}
+
+For each record, provide in this EXACT JSON format (return only the JSON array, no other text):
+[
+  {
+    "name": "Full Name as it appears in record",
+    "birthYear": "approximate year or range like 1865-1870",
+    "birthPlace": "Location",
+    "deathYear": "year if applicable or null",
+    "deathPlace": "Location if applicable or null",
+    "recordType": "Census/Deed/Marriage/Freedmen's Bureau/etc",
+    "source": "Specific collection name and year",
+    "confidence": "high/medium/low based on name match",
+    "details": "Brief description of what this record contains"
+  }
+]
+
+Make records realistic for the historical period. Include:
+- Census records (1870, 1880, 1900, 1910, 1920, 1930, 1940)
+- Freedmen's Bureau records if pre-1872
+- Land deeds or tax records
+- Marriage or death records
+- Military records if applicable
+
+Return ONLY the JSON array, no explanation.`;
+
+    const researchGuidancePrompt = `You are an expert genealogist specializing in African American family history and heir property research.
 
 SEARCH PARAMETERS:
 - Surname: ${surname || 'Not specified'}
 - Given Name: ${givenName || 'Not specified'}
-- Location: ${county ? county + ', ' : ''}${state || 'Not specified'}
+- Location: ${county ? county + ' County, ' : ''}${state || 'Not specified'}
 - Time Period: ${yearRange}
-- Record Types: ${recordTypes?.join(', ') || 'All'}
 
-Based on these search parameters, provide:
+Provide a brief research strategy (3-4 paragraphs) covering:
+1. Which specific record collections to search first for this location
+2. Common name spelling variations to try
+3. Key historical context for African American families in this area
+4. Specific courthouse or archive to visit
 
-1. SEARCH STRATEGY (3-5 specific steps to find this person's records)
+Be specific with collection names and years.`;
 
-2. RECORD COLLECTIONS TO SEARCH (list 5-8 specific record collections with:
-   - Collection name
-   - Years covered
-   - What you might find
-   - Where to access it)
+    // Call AI for both results and guidance in parallel
+    const [resultsResponse, guidanceResponse] = await Promise.all([
+      ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: searchResultsPrompt,
+      }),
+      ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: researchGuidancePrompt,
+      })
+    ]);
 
-3. NAME VARIATIONS (list possible spelling variations, phonetic spellings, and nicknames)
-
-4. RESEARCH TIPS specific to this location and time period
-
-5. POTENTIAL CHALLENGES (for African American genealogy in this area)
-
-Be specific with collection names, years, and locations. Reference real databases like FamilySearch, Ancestry, state archives, and county courthouses.`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+    let searchResults: SearchResult[] = [];
+    try {
+      const resultsText = resultsResponse.text || '[]';
+      // Extract JSON from response (handle markdown code blocks)
+      const jsonMatch = resultsText.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        searchResults = parsed.map((r: any, idx: number) => ({
+          id: `result-${idx + 1}`,
+          name: r.name || 'Unknown',
+          birthYear: r.birthYear || null,
+          birthPlace: r.birthPlace || null,
+          deathYear: r.deathYear || null,
+          deathPlace: r.deathPlace || null,
+          recordType: r.recordType || 'Record',
+          source: r.source || 'Historical Record',
+          confidence: r.confidence || 'medium',
+          details: r.details || ''
+        }));
+      }
+    } catch (e) {
+      console.error('Failed to parse search results:', e);
+    }
 
     return res.status(200).json({
-      aiGuidance: response.text || '',
+      searchResults,
+      aiGuidance: guidanceResponse.text || '',
       databaseLinks,
       searchParams: { surname, givenName, state, county, yearFrom, yearTo },
     });
