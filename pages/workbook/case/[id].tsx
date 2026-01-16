@@ -164,16 +164,6 @@ export default function CaseDetailPage() {
                     <span className="text-sm font-medium">Search Records</span>
                   </Link>
                   <Link 
-                    href={`/workbook/case/${id}/notes`}
-                    className="p-4 border rounded-lg hover:bg-yellow-50 hover:border-yellow-200 transition text-center block"
-                  >
-                    <span className="text-2xl mb-2 block">📝</span>
-                    <span className="text-sm font-medium">Add Notes</span>
-                    {stats.notesCount > 0 && (
-                      <span className="text-xs text-gray-500 block mt-1">{stats.notesCount} notes</span>
-                    )}
-                  </Link>
-                  <Link 
                     href={`/workbook/case/${id}/family-tree`}
                     className="p-4 border rounded-lg hover:bg-green-50 hover:border-green-200 transition text-center block"
                   >
@@ -181,6 +171,37 @@ export default function CaseDetailPage() {
                     <span className="text-sm font-medium">Family Tree</span>
                     {stats.personsCount > 0 && (
                       <span className="text-xs text-gray-500 block mt-1">{stats.personsCount} people</span>
+                    )}
+                  </Link>
+                  <Link 
+                    href={`/workbook/case/${id}/checklists`}
+                    className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-200 transition text-center block"
+                  >
+                    <span className="text-2xl mb-2 block">✅</span>
+                    <span className="text-sm font-medium">Checklists</span>
+                  </Link>
+                  <Link 
+                    href={`/workbook/case/${id}/timeline`}
+                    className="p-4 border rounded-lg hover:bg-indigo-50 hover:border-indigo-200 transition text-center block"
+                  >
+                    <span className="text-2xl mb-2 block">📅</span>
+                    <span className="text-sm font-medium">Timeline</span>
+                  </Link>
+                  <Link 
+                    href={`/workbook/case/${id}/heirs`}
+                    className="p-4 border rounded-lg hover:bg-orange-50 hover:border-orange-200 transition text-center block"
+                  >
+                    <span className="text-2xl mb-2 block">⚖️</span>
+                    <span className="text-sm font-medium">Heirs Calculator</span>
+                  </Link>
+                  <Link 
+                    href={`/workbook/case/${id}/notes`}
+                    className="p-4 border rounded-lg hover:bg-yellow-50 hover:border-yellow-200 transition text-center block"
+                  >
+                    <span className="text-2xl mb-2 block">📝</span>
+                    <span className="text-sm font-medium">Notes</span>
+                    {stats.notesCount > 0 && (
+                      <span className="text-xs text-gray-500 block mt-1">{stats.notesCount} notes</span>
                     )}
                   </Link>
                   <Link 
@@ -192,6 +213,13 @@ export default function CaseDetailPage() {
                     {stats.recordsCount > 0 && (
                       <span className="text-xs text-gray-500 block mt-1">{stats.recordsCount} saved</span>
                     )}
+                  </Link>
+                  <Link 
+                    href={`/workbook/case/${id}/report`}
+                    className="p-4 border rounded-lg hover:bg-red-50 hover:border-red-200 transition text-center block"
+                  >
+                    <span className="text-2xl mb-2 block">📊</span>
+                    <span className="text-sm font-medium">Export Report</span>
                   </Link>
                 </div>
               </div>
