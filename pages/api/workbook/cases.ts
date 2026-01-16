@@ -80,11 +80,14 @@ export default async function handler(
         );
       `);
 
+      // In test mode, use a placeholder user_id (0 = test user)
+      const testUserId = 0;
+      
       const result = await pool.query(`
-        INSERT INTO workbook_cases (case_title, ancestor_primary_name, ancestor_name_variants, jurisdiction_code, status)
-        VALUES ($1, $2, $3, $4, 'active')
+        INSERT INTO workbook_cases (user_id, case_title, ancestor_primary_name, ancestor_name_variants, jurisdiction_code, status)
+        VALUES ($1, $2, $3, $4, $5, 'active')
         RETURNING *
-      `, [caseTitle, ancestorPrimaryName, ancestorNameVariants || null, jurisdictionCode || null]);
+      `, [testUserId, caseTitle, ancestorPrimaryName, ancestorNameVariants ? JSON.stringify(ancestorNameVariants) : '{}', jurisdictionCode || null]);
 
       return res.status(201).json({
         success: true,
