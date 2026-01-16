@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 interface DatabaseLink {
   name: string;
@@ -46,6 +47,9 @@ const RECORD_TYPES = [
 ];
 
 export default function AdvancedGenealogySearch() {
+  const router = useRouter();
+  const { caseId, surname: urlSurname, state: urlState } = router.query;
+
   const [surname, setSurname] = useState('');
   const [givenName, setGivenName] = useState('');
   const [state, setState] = useState('');
@@ -59,6 +63,12 @@ export default function AdvancedGenealogySearch() {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'results' | 'guidance' | 'databases'>('results');
   const [savedResults, setSavedResults] = useState<SearchResult[]>([]);
+  const [savingRecord, setSavingRecord] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (urlSurname && typeof urlSurname === 'string') setSurname(urlSurname);
+    if (urlState && typeof urlState === 'string') setState(urlState);
+  }, [urlSurname, urlState]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,10 +119,42 @@ export default function AdvancedGenealogySearch() {
     );
   };
 
-  const saveResult = (result: SearchResult) => {
-    if (!savedResults.find(r => r.id === result.id)) {
+  const saveResult = async (result: SearchResult) => {
+    if (savedResults.find(r => r.id === result.id)) return;
+    
+    setSavingRecord(result.id);
+    
+    if (caseId) {
+      try {
+        const res = await fetch(`/api/workbook/saved-records?caseId=${caseId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recordName: result.name,
+            recordType: result.recordType,
+            source: result.source,
+            birthYear: result.birthYear,
+            birthPlace: result.birthPlace,
+            deathYear: result.deathYear,
+            deathPlace: result.deathPlace,
+            details: result.details,
+            confidence: result.confidence,
+            isLandRecord: result.recordType?.toLowerCase().includes('land') || result.recordType?.toLowerCase().includes('deed'),
+            rawData: result,
+          }),
+        });
+
+        if (res.ok) {
+          setSavedResults(prev => [...prev, result]);
+        }
+      } catch (err) {
+        console.error('Failed to save record:', err);
+      }
+    } else {
       setSavedResults(prev => [...prev, result]);
     }
+    
+    setSavingRecord(null);
   };
 
   const getConfidenceColor = (confidence: string) => {
@@ -134,11 +176,17 @@ export default function AdvancedGenealogySearch() {
       <div className="min-h-screen bg-gray-50">
         <header className="bg-gradient-to-r from-amber-600 to-orange-600 text-white">
           <div className="max-w-6xl mx-auto px-4 py-6">
-            <Link href="/workbook" className="text-amber-100 hover:text-white text-sm mb-2 inline-block">
-              ← Back to Workbook
+            <Link 
+              href={caseId ? `/workbook/case/${caseId}` : '/workbook'} 
+              className="text-amber-100 hover:text-white text-sm mb-2 inline-block"
+            >
+              ← {caseId ? 'Back to Case' : 'Back to Workbook'}
             </Link>
             <h1 className="text-3xl font-bold">AI Genealogy Search</h1>
-            <p className="text-amber-100 mt-1">Search historical records and get AI research guidance</p>
+            <p className="text-amber-100 mt-1">
+              Search historical records and get AI research guidance
+              {caseId && <span className="ml-2 px-2 py-0.5 bg-white/20 rounded text-sm">Saving to Case</span>}
+            </p>
           </div>
         </header>
 
@@ -393,6 +441,7 @@ export default function AdvancedGenealogySearch() {
 
                               <button
                                 onClick={() => saveResult(result)}
+                                disabled={savingRecord === result.id}
                                 className={`ml-4 p-2 rounded-lg transition ${
                                   savedResults.find(r => r.id === result.id)
                                     ? 'bg-amber-100 text-amber-600'

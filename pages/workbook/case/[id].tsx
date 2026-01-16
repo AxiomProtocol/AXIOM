@@ -14,28 +14,51 @@ interface Case {
   updated_at: string;
 }
 
+interface Stats {
+  personsCount: number;
+  recordsCount: number;
+  notesCount: number;
+  relationshipsCount: number;
+}
+
 export default function CaseDetailPage() {
   const router = useRouter();
   const { id } = router.query;
   
   const [caseData, setCaseData] = useState<Case | null>(null);
+  const [stats, setStats] = useState<Stats>({ personsCount: 0, recordsCount: 0, notesCount: 0, relationshipsCount: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!id) return;
     
-    const fetchCase = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(`/api/workbook/cases/${id}`);
-        const data = await res.json();
+        const [caseRes, treeRes, recordsRes, notesRes] = await Promise.all([
+          fetch(`/api/workbook/cases/${id}`),
+          fetch(`/api/workbook/family-tree/persons?caseId=${id}`),
+          fetch(`/api/workbook/saved-records?caseId=${id}`),
+          fetch(`/api/workbook/notes?caseId=${id}`),
+        ]);
         
-        if (!res.ok) {
-          setError(data.error || 'Failed to load case');
+        const caseJson = await caseRes.json();
+        const treeJson = await treeRes.json();
+        const recordsJson = await recordsRes.json();
+        const notesJson = await notesRes.json();
+        
+        if (!caseRes.ok) {
+          setError(caseJson.error || 'Failed to load case');
           return;
         }
         
-        setCaseData(data.data);
+        setCaseData(caseJson.data);
+        setStats({
+          personsCount: treeJson.persons?.length || 0,
+          recordsCount: recordsJson.records?.length || 0,
+          notesCount: notesJson.notes?.length || 0,
+          relationshipsCount: treeJson.relationships?.length || 0,
+        });
       } catch (err) {
         setError('Failed to load case');
       } finally {
@@ -43,7 +66,7 @@ export default function CaseDetailPage() {
       }
     };
 
-    fetchCase();
+    fetchData();
   }, [id]);
 
   if (loading) {
@@ -134,24 +157,42 @@ export default function CaseDetailPage() {
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <Link 
-                    href={`/workbook/search?surname=${encodeURIComponent(caseData.ancestor_primary_name.split(' ').pop() || '')}&state=${caseData.jurisdiction_code || ''}`}
-                    className="p-4 border rounded-lg hover:bg-amber-50 hover:border-amber-200 transition text-center"
+                    href={`/workbook/search?caseId=${id}&surname=${encodeURIComponent(caseData.ancestor_primary_name.split(' ').pop() || '')}&state=${caseData.jurisdiction_code || ''}`}
+                    className="p-4 border rounded-lg hover:bg-amber-50 hover:border-amber-200 transition text-center block"
                   >
                     <span className="text-2xl mb-2 block">🔍</span>
                     <span className="text-sm font-medium">Search Records</span>
                   </Link>
-                  <button className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition text-center">
+                  <Link 
+                    href={`/workbook/case/${id}/notes`}
+                    className="p-4 border rounded-lg hover:bg-yellow-50 hover:border-yellow-200 transition text-center block"
+                  >
                     <span className="text-2xl mb-2 block">📝</span>
                     <span className="text-sm font-medium">Add Notes</span>
-                  </button>
-                  <button className="p-4 border rounded-lg hover:bg-green-50 hover:border-green-200 transition text-center">
+                    {stats.notesCount > 0 && (
+                      <span className="text-xs text-gray-500 block mt-1">{stats.notesCount} notes</span>
+                    )}
+                  </Link>
+                  <Link 
+                    href={`/workbook/case/${id}/family-tree`}
+                    className="p-4 border rounded-lg hover:bg-green-50 hover:border-green-200 transition text-center block"
+                  >
                     <span className="text-2xl mb-2 block">🌳</span>
                     <span className="text-sm font-medium">Family Tree</span>
-                  </button>
-                  <button className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-200 transition text-center">
+                    {stats.personsCount > 0 && (
+                      <span className="text-xs text-gray-500 block mt-1">{stats.personsCount} people</span>
+                    )}
+                  </Link>
+                  <Link 
+                    href={`/workbook/case/${id}/documents`}
+                    className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition text-center block"
+                  >
                     <span className="text-2xl mb-2 block">📄</span>
                     <span className="text-sm font-medium">Documents</span>
-                  </button>
+                    {stats.recordsCount > 0 && (
+                      <span className="text-xs text-gray-500 block mt-1">{stats.recordsCount} saved</span>
+                    )}
+                  </Link>
                 </div>
               </div>
             </div>
@@ -162,20 +203,38 @@ export default function CaseDetailPage() {
                 <div className="space-y-3">
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">Records Found</span>
-                      <span className="font-medium">0</span>
+                      <span className="text-gray-600">Family Members</span>
+                      <span className="font-medium">{stats.personsCount}</span>
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full">
-                      <div className="h-2 bg-amber-500 rounded-full" style={{ width: '0%' }}></div>
+                      <div className="h-2 bg-green-500 rounded-full transition-all" style={{ width: `${Math.min(stats.personsCount * 10, 100)}%` }}></div>
                     </div>
                   </div>
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">Documents Saved</span>
-                      <span className="font-medium">0</span>
+                      <span className="text-gray-600">Records Saved</span>
+                      <span className="font-medium">{stats.recordsCount}</span>
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full">
-                      <div className="h-2 bg-blue-500 rounded-full" style={{ width: '0%' }}></div>
+                      <div className="h-2 bg-blue-500 rounded-full transition-all" style={{ width: `${Math.min(stats.recordsCount * 10, 100)}%` }}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-600">Connections</span>
+                      <span className="font-medium">{stats.relationshipsCount}</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full">
+                      <div className="h-2 bg-purple-500 rounded-full transition-all" style={{ width: `${Math.min(stats.relationshipsCount * 15, 100)}%` }}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-600">Research Notes</span>
+                      <span className="font-medium">{stats.notesCount}</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full">
+                      <div className="h-2 bg-amber-500 rounded-full transition-all" style={{ width: `${Math.min(stats.notesCount * 20, 100)}%` }}></div>
                     </div>
                   </div>
                 </div>
@@ -183,15 +242,43 @@ export default function CaseDetailPage() {
 
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                 <h3 className="font-semibold text-amber-800 mb-2">Next Step</h3>
-                <p className="text-sm text-amber-700 mb-3">
-                  Start by searching for records related to {caseData.ancestor_primary_name.split(' ').pop()}.
-                </p>
-                <Link 
-                  href={`/workbook/search?surname=${encodeURIComponent(caseData.ancestor_primary_name.split(' ').pop() || '')}`}
-                  className="text-sm text-amber-600 hover:underline font-medium"
-                >
-                  Begin Search →
-                </Link>
+                {stats.personsCount === 0 ? (
+                  <>
+                    <p className="text-sm text-amber-700 mb-3">
+                      Start by adding your primary ancestor to the family tree.
+                    </p>
+                    <Link 
+                      href={`/workbook/case/${id}/family-tree`}
+                      className="text-sm text-amber-600 hover:underline font-medium"
+                    >
+                      Build Family Tree →
+                    </Link>
+                  </>
+                ) : stats.recordsCount === 0 ? (
+                  <>
+                    <p className="text-sm text-amber-700 mb-3">
+                      Search for records related to {caseData.ancestor_primary_name.split(' ').pop()}.
+                    </p>
+                    <Link 
+                      href={`/workbook/search?caseId=${id}&surname=${encodeURIComponent(caseData.ancestor_primary_name.split(' ').pop() || '')}`}
+                      className="text-sm text-amber-600 hover:underline font-medium"
+                    >
+                      Begin Search →
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-amber-700 mb-3">
+                      Review your saved records and connect them to family members.
+                    </p>
+                    <Link 
+                      href={`/workbook/case/${id}/documents`}
+                      className="text-sm text-amber-600 hover:underline font-medium"
+                    >
+                      View Documents →
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
