@@ -7498,6 +7498,24 @@ export const dscrInvestorOnboarding = pgTable("dscr_investor_onboarding", {
   emailIdx: index("dscr_onboard_email_idx").on(table.email),
 }));
 
+// Workbook Email Leads Table
+export const workbookLeads = pgTable("workbook_leads", {
+  id: serial("id").primaryKey(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  firstName: varchar("first_name", { length: 100 }),
+  source: varchar("source", { length: 100 }), // reclaim-landing, workbook-gate, etc.
+  status: varchar("status", { length: 20 }).default('active'), // active, unsubscribed
+  createdAt: timestamp("created_at").defaultNow(),
+  convertedAt: timestamp("converted_at"), // When they became a subscriber
+  lastEmailSentAt: timestamp("last_email_sent_at"),
+}, (table) => ({
+  emailIdx: index("workbook_leads_email_idx").on(table.email),
+  statusIdx: index("workbook_leads_status_idx").on(table.status),
+}));
+
+export type WorkbookLead = typeof workbookLeads.$inferSelect;
+export type InsertWorkbookLead = typeof workbookLeads.$inferInsert;
+
 // DSCR Types
 export type DscrBorrower = typeof dscrBorrowers.$inferSelect;
 export type InsertDscrBorrower = typeof dscrBorrowers.$inferInsert;

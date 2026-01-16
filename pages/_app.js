@@ -34,6 +34,7 @@ const REBUILD_NAV_PAGES = [
   '/liquidity',
   '/axusd',
   '/workbook',
+  '/reclaim',
   '/purpose-group-onboarding',
   '/dashboard',
   '/lending-fund',

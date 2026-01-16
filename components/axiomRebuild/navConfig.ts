@@ -100,6 +100,7 @@ export const navItems: NavItem[] = [
       { label: "The Wealth Practice", href: "/wealth-practice" },
       { label: "Land Crowdfunding", href: "/land-acquisition/portfolio" },
       { label: "Land Marketplace", href: "/land" },
+      { label: "Reclaim Your Land", href: "/reclaim" },
       { label: "Land Reclamation Workbook", href: "/workbook" },
       { label: "Land Pipeline", href: "/admin/land-pipeline" },
       { label: "Governance", href: "/governance" },
