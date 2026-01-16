@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { SiteLayout } from '../../components/navigation';
 
 export default function ReclaimLandingPage() {
   const [email, setEmail] = useState('');
@@ -36,7 +35,7 @@ export default function ReclaimLandingPage() {
   };
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>Land Reclamation Workbook | Research Your Family's Lost Land</title>
         <meta name="description" content="Free tools and AI assistance to help you research heir property and trace your family's historical land ownership. Organize genealogical research for land claims." />
@@ -319,6 +318,6 @@ export default function ReclaimLandingPage() {
           </div>
         </section>
       </main>
-    </SiteLayout>
+    </>
   );
 }

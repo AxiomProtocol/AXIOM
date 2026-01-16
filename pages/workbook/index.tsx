@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { SiteLayout } from '../../components/navigation';
 import SubscriptionGate from '../../components/workbook/SubscriptionGate';
 import EthicalUseModal from '../../components/workbook/EthicalUseModal';
 
@@ -190,26 +189,26 @@ export default function WorkbookDashboard() {
 
   if (loading) {
     return (
-      <SiteLayout>
+      <>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-500">Loading workbook...</p>
           </div>
         </div>
-      </SiteLayout>
+      </>
     );
   }
 
   if (!subscription?.hasAccess) {
     return (
-      <SiteLayout>
+      <>
         <Head>
           <title>Land Reclamation Workbook | Axiom Protocol</title>
           <meta name="description" content="Organize your genealogical land research with AI assistance" />
         </Head>
         <SubscriptionGate onSubscribe={handleSubscribe} isLoading={checkoutLoading} />
-      </SiteLayout>
+      </>
     );
   }
 
@@ -217,7 +216,7 @@ export default function WorkbookDashboard() {
   const archivedCases = cases.filter(c => c.status === 'archived');
 
   return (
-    <SiteLayout>
+    <>
       <Head>
         <title>Land Reclamation Workbook | Axiom Protocol</title>
         <meta name="description" content="Organize your genealogical land research with AI assistance" />
@@ -461,6 +460,6 @@ export default function WorkbookDashboard() {
           </div>
         </div>
       )}
-    </SiteLayout>
+    </>
   );
 }
