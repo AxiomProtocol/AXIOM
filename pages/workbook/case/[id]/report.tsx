@@ -269,18 +269,21 @@ For legal purposes, verify all information with official records.
                   </div>
 
                   <button
-                    onClick={generateReport}
-                    disabled={generating}
-                    className="w-full py-3 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition disabled:opacity-50"
+                    onClick={printReport}
+                    className="w-full py-3 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition"
                   >
-                    {generating ? 'Generating...' : 'Download Report'}
+                    Save as PDF / Print
                   </button>
+                  <p className="text-xs text-gray-500 text-center">
+                    Use your browser's "Save as PDF" option in the print dialog
+                  </p>
 
                   <button
-                    onClick={printReport}
-                    className="w-full py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
+                    onClick={generateReport}
+                    disabled={generating}
+                    className="w-full py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition disabled:opacity-50"
                   >
-                    Print Preview
+                    {generating ? 'Generating...' : 'Download Text Report'}
                   </button>
                 </div>
               </div>

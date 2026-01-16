@@ -221,6 +221,13 @@ export default function CaseDetailPage() {
                     <span className="text-2xl mb-2 block">📊</span>
                     <span className="text-sm font-medium">Export Report</span>
                   </Link>
+                  <Link 
+                    href={`/workbook/case/${id}/achievements`}
+                    className="p-4 border rounded-lg hover:bg-gradient-to-br hover:from-amber-50 hover:to-orange-50 hover:border-amber-200 transition text-center block"
+                  >
+                    <span className="text-2xl mb-2 block">🏆</span>
+                    <span className="text-sm font-medium">Achievements</span>
+                  </Link>
                 </div>
               </div>
             </div>
