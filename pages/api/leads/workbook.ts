@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
+import { sendWorkbookWelcomeEmail } from '../../../lib/email/resend';
 
 export default async function handler(
   req: NextApiRequest,
@@ -17,7 +18,7 @@ export default async function handler(
     }
 
     const cleanEmail = email.toLowerCase().trim();
-    const cleanFirstName = firstName?.trim() || null;
+    const cleanFirstName = firstName?.trim() || 'Friend';
     const cleanSource = source || 'reclaim-landing';
 
     // Check if email already exists
@@ -40,6 +41,20 @@ export default async function handler(
        VALUES ($1, $2, $3, 'active', NOW())`,
       [cleanEmail, cleanFirstName, cleanSource]
     );
+
+    // Send welcome email with checklist
+    try {
+      await sendWorkbookWelcomeEmail(cleanEmail, cleanFirstName);
+      
+      // Update last_email_sent_at
+      await pool.query(
+        'UPDATE workbook_leads SET last_email_sent_at = NOW() WHERE email = $1',
+        [cleanEmail]
+      );
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Don't fail the request if email fails - lead is already saved
+    }
 
     return res.status(200).json({ 
       success: true, 
