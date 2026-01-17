@@ -1,7 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { GoogleGenAI } from '@google/genai';
 
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+const genAI = new GoogleGenAI({ 
+  apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '' 
+});
 
 const SYSTEM_PROMPT = `You are an expert genealogy research assistant specializing in heir property, African American land ownership history, and Native American tribal records. You help families research their ancestral land claims and trace property ownership through generations.
 
