@@ -52,12 +52,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 - Research Notes: ${caseContext.notesCount || 0}`;
     }
 
+    const historyMessages: Anthropic.MessageParam[] = conversationHistory.map((msg: any) => ({
+      role: msg.role === 'model' ? 'assistant' : msg.role,
+      content: msg.content
+    } as Anthropic.MessageParam));
+
     const messages: Anthropic.MessageParam[] = [
-      { role: 'assistant', content: 'I understand. I\'m ready to help with heir property and genealogy research. How can I assist you today?' },
-      ...conversationHistory.map((msg: any) => ({
-        role: msg.role === 'model' ? 'assistant' : msg.role,
-        content: msg.content
-      } as Anthropic.MessageParam)),
+      ...historyMessages,
       { role: 'user', content: message }
     ];
 
