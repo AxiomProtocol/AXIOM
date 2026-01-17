@@ -1,8 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { GoogleGenAI } from '@google/genai';
+import OpenAI from 'openai';
 
-const genAI = new GoogleGenAI({ 
-  apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '' 
+const openai = new OpenAI({
+  apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY || '',
+  baseURL: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai',
 });
 
 const SYSTEM_PROMPT = `You are an expert genealogy research assistant specializing in heir property, African American land ownership history, and Native American tribal records. You help families research their ancestral land claims and trace property ownership through generations.
@@ -51,26 +52,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 - Research Notes: ${caseContext.notesCount || 0}`;
     }
 
-    const messages = [
-      { role: 'user' as const, parts: [{ text: contextPrompt }] },
-      { role: 'model' as const, parts: [{ text: 'I understand. I\'m ready to help with heir property and genealogy research. How can I assist you today?' }] },
+    const messages: OpenAI.ChatCompletionMessageParam[] = [
+      { role: 'system', content: contextPrompt },
+      { role: 'assistant', content: 'I understand. I\'m ready to help with heir property and genealogy research. How can I assist you today?' },
       ...conversationHistory.map((msg: any) => ({
-        role: msg.role as 'user' | 'model',
-        parts: [{ text: msg.content }]
-      })),
-      { role: 'user' as const, parts: [{ text: message }] }
+        role: msg.role === 'model' ? 'assistant' : msg.role,
+        content: msg.content
+      } as OpenAI.ChatCompletionMessageParam)),
+      { role: 'user', content: message }
     ];
 
-    const response = await genAI.models.generateContent({
+    const response = await openai.chat.completions.create({
       model: 'gemini-2.5-flash',
-      contents: messages,
-      config: {
-        maxOutputTokens: 1024,
-        temperature: 0.7,
-      }
+      messages,
+      max_tokens: 1024,
+      temperature: 0.7,
     });
 
-    const assistantMessage = response.text || 'I apologize, but I was unable to generate a response. Please try again.';
+    const assistantMessage = response.choices[0]?.message?.content || 'I apologize, but I was unable to generate a response. Please try again.';
 
     return res.status(200).json({
       message: assistantMessage,
