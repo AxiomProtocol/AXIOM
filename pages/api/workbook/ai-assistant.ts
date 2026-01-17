@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY || '',
-  baseURL: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai',
+const anthropic = new Anthropic({
+  apiKey: process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY || '',
+  baseURL: process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL,
 });
 
 const SYSTEM_PROMPT = `You are an expert genealogy research assistant specializing in heir property, African American land ownership history, and Native American tribal records. You help families research their ancestral land claims and trace property ownership through generations.
@@ -52,24 +52,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 - Research Notes: ${caseContext.notesCount || 0}`;
     }
 
-    const messages: OpenAI.ChatCompletionMessageParam[] = [
-      { role: 'system', content: contextPrompt },
+    const messages: Anthropic.MessageParam[] = [
       { role: 'assistant', content: 'I understand. I\'m ready to help with heir property and genealogy research. How can I assist you today?' },
       ...conversationHistory.map((msg: any) => ({
         role: msg.role === 'model' ? 'assistant' : msg.role,
         content: msg.content
-      } as OpenAI.ChatCompletionMessageParam)),
+      } as Anthropic.MessageParam)),
       { role: 'user', content: message }
     ];
 
-    const response = await openai.chat.completions.create({
-      model: 'gemini-2.5-flash',
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5',
+      system: contextPrompt,
       messages,
       max_tokens: 1024,
-      temperature: 0.7,
     });
 
-    const assistantMessage = response.choices[0]?.message?.content || 'I apologize, but I was unable to generate a response. Please try again.';
+    const assistantMessage = response.content[0]?.type === 'text' 
+      ? response.content[0].text 
+      : 'I apologize, but I was unable to generate a response. Please try again.';
 
     return res.status(200).json({
       message: assistantMessage,
