@@ -157,7 +157,7 @@ export default function CaseDetailPage() {
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <Link 
-                    href={`/workbook/search?caseId=${id}&surname=${encodeURIComponent(caseData.ancestor_primary_name.split(' ').pop() || '')}&state=${caseData.jurisdiction_code || ''}`}
+                    href={`/workbook/case/${id}/search-records`}
                     className="p-4 border rounded-lg hover:bg-amber-50 hover:border-amber-200 transition text-center block"
                   >
                     <span className="text-2xl mb-2 block">🔍</span>

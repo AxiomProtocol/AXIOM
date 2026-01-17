@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -29,61 +29,81 @@ export default function CollaboratePage() {
   const [inviteRole, setInviteRole] = useState<'viewer' | 'contributor'>('contributor');
   const [inviteSent, setInviteSent] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (!id) return;
 
-    const loadData = async () => {
-      try {
-        const caseRes = await fetch(`/api/workbook/cases/${id}`);
-        const caseJson = await caseRes.json();
-        setCaseData(caseJson.data);
+    try {
+      setLoading(true);
+      const [caseRes, collabRes] = await Promise.all([
+        fetch(`/api/workbook/cases/${id}`),
+        fetch(`/api/workbook/collaborators?caseId=${id}`)
+      ]);
+      
+      const caseJson = await caseRes.json();
+      setCaseData(caseJson.data);
 
-        const saved = localStorage.getItem(`collaborators_${id}`);
-        if (saved) {
-          setCollaborators(JSON.parse(saved));
-        }
-      } catch (err) {
-        console.error('Failed to load:', err);
-      } finally {
-        setLoading(false);
+      const collabJson = await collabRes.json();
+      if (collabJson.success) {
+        setCollaborators(collabJson.data);
       }
-    };
-
-    loadData();
+    } catch (err) {
+      console.error('Failed to load:', err);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
   useEffect(() => {
-    if (id && collaborators.length > 0) {
-      localStorage.setItem(`collaborators_${id}`, JSON.stringify(collaborators));
-    }
-  }, [collaborators, id]);
+    loadData();
+  }, [loadData]);
 
-  const handleInvite = (e: React.FormEvent) => {
+  const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!inviteEmail || !inviteName) return;
+    if (!inviteEmail || !inviteName || !id) return;
 
-    const newCollaborator: Collaborator = {
-      id: Date.now().toString(),
-      email: inviteEmail,
-      name: inviteName,
-      role: inviteRole,
-      status: 'pending',
-      invitedAt: new Date().toISOString(),
-    };
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/workbook/collaborators?caseId=${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: inviteEmail,
+          name: inviteName,
+          role: inviteRole,
+        }),
+      });
 
-    setCollaborators([...collaborators, newCollaborator]);
-    setInviteEmail('');
-    setInviteName('');
-    setShowInviteForm(false);
-    setInviteSent(true);
-    setTimeout(() => setInviteSent(false), 3000);
+      const json = await res.json();
+      if (json.success) {
+        setCollaborators([json.data, ...collaborators]);
+        setInviteEmail('');
+        setInviteName('');
+        setShowInviteForm(false);
+        setInviteSent(true);
+        setTimeout(() => setInviteSent(false), 3000);
+      }
+    } catch (err) {
+      console.error('Failed to invite:', err);
+      alert('Failed to send invitation. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleRemove = (collaboratorId: string) => {
-    if (confirm('Remove this collaborator?')) {
+  const handleRemove = async (collaboratorId: string) => {
+    if (!confirm('Remove this collaborator?')) return;
+    
+    try {
+      await fetch(`/api/workbook/collaborators?caseId=${id}&collaboratorId=${collaboratorId}`, {
+        method: 'DELETE',
+      });
       setCollaborators(collaborators.filter(c => c.id !== collaboratorId));
+    } catch (err) {
+      console.error('Failed to remove:', err);
+      alert('Failed to remove collaborator. Please try again.');
     }
   };
 
@@ -127,7 +147,7 @@ export default function CollaboratePage() {
               {inviteSent && (
                 <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
                   <span>✅</span>
-                  Invitation added! In a full version, an email would be sent to the collaborator.
+                  Invitation saved! The collaborator has been added to this case.
                 </div>
               )}
 
@@ -215,9 +235,10 @@ export default function CollaboratePage() {
                       </button>
                       <button
                         type="submit"
-                        className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700"
+                        disabled={saving}
+                        className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:opacity-50"
                       >
-                        Send Invitation
+                        {saving ? 'Saving...' : 'Send Invitation'}
                       </button>
                     </div>
                   </form>
