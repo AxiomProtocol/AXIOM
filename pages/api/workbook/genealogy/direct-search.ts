@@ -58,15 +58,13 @@ function searchRecords(query: string, categories: string[], state?: string, year
       
       const relevanceScore = calculateRelevance(collection, searchTerms);
       
-      if (relevanceScore > 0 || searchTerms.length === 0) {
-        results.push({
-          ...collection,
-          category,
-          relevanceScore,
-          searchUrl: generateSearchUrl(collection.id, query, state),
-          directLinks: generateDirectLinks(collection.id, query, state),
-        });
-      }
+      results.push({
+        ...collection,
+        category,
+        relevanceScore,
+        searchUrl: generateSearchUrl(collection.id, query, state),
+        directLinks: generateDirectLinks(collection.id, query, state),
+      });
     }
   }
   
