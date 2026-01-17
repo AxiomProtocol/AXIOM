@@ -1,7 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../server/db';
-import { workbookLeads } from '../../../shared/schema';
-import { eq } from 'drizzle-orm';
+import { pool } from '../../../server/db';
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,13 +16,17 @@ export default async function handler(
       return res.status(400).json({ error: 'Valid email required' });
     }
 
-    const existingLead = await db
-      .select()
-      .from(workbookLeads)
-      .where(eq(workbookLeads.email, email.toLowerCase().trim()))
-      .limit(1);
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanFirstName = firstName?.trim() || null;
+    const cleanSource = source || 'reclaim-landing';
 
-    if (existingLead.length > 0) {
+    // Check if email already exists
+    const existingResult = await pool.query(
+      'SELECT id FROM workbook_leads WHERE email = $1 LIMIT 1',
+      [cleanEmail]
+    );
+
+    if (existingResult.rows.length > 0) {
       return res.status(200).json({ 
         success: true, 
         message: 'Already subscribed',
@@ -32,21 +34,33 @@ export default async function handler(
       });
     }
 
-    await db.insert(workbookLeads).values({
-      email: email.toLowerCase().trim(),
-      firstName: firstName?.trim() || null,
-      source: source || 'reclaim-landing',
-      status: 'active',
-      createdAt: new Date(),
-    });
+    // Insert new lead using raw SQL for reliability
+    await pool.query(
+      `INSERT INTO workbook_leads (email, first_name, source, status, created_at) 
+       VALUES ($1, $2, $3, 'active', NOW())`,
+      [cleanEmail, cleanFirstName, cleanSource]
+    );
 
     return res.status(200).json({ 
       success: true, 
       message: 'Successfully subscribed' 
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Lead capture error:', error);
-    return res.status(500).json({ error: 'Failed to save. Please try again.' });
+    
+    // Handle unique constraint violation (email already exists)
+    if (error?.code === '23505' || error?.message?.includes('unique') || error?.message?.includes('duplicate')) {
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Already subscribed',
+        isExisting: true 
+      });
+    }
+    
+    return res.status(500).json({ 
+      error: 'Failed to save. Please try again.',
+      details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+    });
   }
 }
