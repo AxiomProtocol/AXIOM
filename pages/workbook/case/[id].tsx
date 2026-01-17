@@ -230,6 +230,61 @@ export default function CaseDetailPage() {
                   </Link>
                 </div>
               </div>
+
+              <div className="bg-white rounded-xl border p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Advanced Tools</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <Link 
+                    href={`/workbook/case/${id}/assistant`}
+                    className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-200 transition text-center block"
+                  >
+                    <span className="text-2xl mb-2 block">🤖</span>
+                    <span className="text-sm font-medium">AI Assistant</span>
+                  </Link>
+                  <Link 
+                    href={`/workbook/case/${id}/dawes-roll`}
+                    className="p-4 border rounded-lg hover:bg-teal-50 hover:border-teal-200 transition text-center block"
+                  >
+                    <span className="text-2xl mb-2 block">🪶</span>
+                    <span className="text-sm font-medium">Dawes Roll</span>
+                  </Link>
+                  <Link 
+                    href={`/workbook/case/${id}/land-patents`}
+                    className="p-4 border rounded-lg hover:bg-emerald-50 hover:border-emerald-200 transition text-center block"
+                  >
+                    <span className="text-2xl mb-2 block">🗺️</span>
+                    <span className="text-sm font-medium">Land Patents</span>
+                  </Link>
+                  <Link 
+                    href={`/workbook/case/${id}/title-chain`}
+                    className="p-4 border rounded-lg hover:bg-indigo-50 hover:border-indigo-200 transition text-center block"
+                  >
+                    <span className="text-2xl mb-2 block">🔗</span>
+                    <span className="text-sm font-medium">Title Chain</span>
+                  </Link>
+                  <Link 
+                    href={`/workbook/case/${id}/legal-templates`}
+                    className="p-4 border rounded-lg hover:bg-slate-50 hover:border-slate-200 transition text-center block"
+                  >
+                    <span className="text-2xl mb-2 block">⚖️</span>
+                    <span className="text-sm font-medium">Legal Templates</span>
+                  </Link>
+                  <Link 
+                    href={`/workbook/case/${id}/county-links`}
+                    className="p-4 border rounded-lg hover:bg-rose-50 hover:border-rose-200 transition text-center block"
+                  >
+                    <span className="text-2xl mb-2 block">🏛️</span>
+                    <span className="text-sm font-medium">County Records</span>
+                  </Link>
+                  <Link 
+                    href={`/workbook/case/${id}/collaborate`}
+                    className="p-4 border rounded-lg hover:bg-cyan-50 hover:border-cyan-200 transition text-center block col-span-2"
+                  >
+                    <span className="text-2xl mb-2 block">👥</span>
+                    <span className="text-sm font-medium">Invite Family to Collaborate</span>
+                  </Link>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-6">
