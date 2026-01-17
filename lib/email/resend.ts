@@ -157,7 +157,7 @@ export async function sendWorkbookWelcomeEmail(to: string, firstName: string) {
           <!-- CTA Button -->
           <tr>
             <td style="padding: 0 30px 40px 30px; text-align: center;">
-              <a href="https://www.axiomprotocol.app/workbook" style="display: inline-block; background-color: #f59e0b; color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+              <a href="https://axiomprotocol.app/workbook" style="display: inline-block; background-color: #f59e0b; color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 8px; font-weight: 600; font-size: 16px;">
                 Start Using the Workbook →
               </a>
               <p style="color: #6b7280; font-size: 14px; margin: 15px 0 0 0;">
@@ -174,7 +174,7 @@ export async function sendWorkbookWelcomeEmail(to: string, firstName: string) {
               </p>
               <p style="color: #6b7280; font-size: 12px; margin: 0;">
                 You're receiving this because you signed up for the Land Reclamation Workbook checklist.<br>
-                <a href="https://www.axiomprotocol.app/unsubscribe" style="color: #9ca3af;">Unsubscribe</a>
+                <a href="https://axiomprotocol.app/unsubscribe" style="color: #9ca3af;">Unsubscribe</a>
               </p>
             </td>
           </tr>
