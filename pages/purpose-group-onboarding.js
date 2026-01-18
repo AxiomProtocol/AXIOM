@@ -244,7 +244,7 @@ export default function PurposeGroupOnboarding() {
                 controls
                 autoPlay
                 playsInline
-                poster="/api/video-poster"
+                style={{ backgroundColor: '#1a1a2e' }}
               >
                 <source src="/videos/wealth-practice-intro.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
@@ -678,6 +678,7 @@ export default function PurposeGroupOnboarding() {
             muted={false}
             playsInline
             onEnded={handleVideoEnd}
+            style={{ backgroundColor: '#1a1a2e' }}
           >
             <source src="/videos/wealth-practice-intro.mp4" type="video/mp4" />
             Your browser does not support the video tag.
