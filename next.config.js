@@ -56,7 +56,12 @@ const nextConfig = {
       ],
     },
     outputFileTracingIncludes: {
-      '*': ['./node_modules/pg/**', './node_modules/@neondatabase/serverless/**'],
+      '*': [
+        './node_modules/pg/**', 
+        './node_modules/@neondatabase/serverless/**',
+        './node_modules/react-hot-toast/**',
+        './node_modules/goober/**',
+      ],
     },
   },
   webpack: (config, { isServer, webpack }) => {
