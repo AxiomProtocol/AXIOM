@@ -1,7 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useWallet } from '../components/WalletConnect/WalletContext';
-import toast, { Toaster } from 'react-hot-toast';
+const toast = {
+  success: (msg: string) => console.log('Success:', msg),
+  error: (msg: string) => console.error('Error:', msg),
+  loading: (msg: string) => console.log('Loading:', msg),
+};
+const Toaster = () => null;
 import { ethers } from 'ethers';
 import Link from 'next/link';
 import DisclosureBanner from '../components/DisclosureBanner';
