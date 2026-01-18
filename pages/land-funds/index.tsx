@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { LAND_ACQUISITION_CONTRACTS } from '../../shared/contracts';
 import WalletButton from '../../components/web3/WalletButton';
 import InvestmentModal from '../../components/web3/InvestmentModal';
 import { useWallet } from '../../lib/web3/useWallet';
+import HeroSection from '../../components/land-funds/HeroSection';
+import InvestmentCalculator from '../../components/land-funds/InvestmentCalculator';
+import TrustBadges from '../../components/land-funds/TrustBadges';
+import QuickSignupFlow from '../../components/land-funds/QuickSignupFlow';
 
 interface LandParcel {
   id: string;
@@ -92,6 +97,7 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
 };
 
 export default function LandFundsPage() {
+  const router = useRouter();
   const [parcels, setParcels] = useState<LandParcel[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -101,7 +107,34 @@ export default function LandFundsPage() {
   const [connectivityChecked, setConnectivityChecked] = useState(false);
   const [showInvestModal, setShowInvestModal] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState<number>(0);
+  const [showSignupFlow, setShowSignupFlow] = useState(false);
+  const [foundingMembersRemaining, setFoundingMembersRemaining] = useState(7342);
   const { isConnected, isCorrectChain } = useWallet();
+
+  useEffect(() => {
+    const { utm_source, utm_medium, utm_campaign, utm_content, utm_term, ref } = router.query;
+    if (utm_source || utm_campaign || ref) {
+      fetch('/api/land-funds/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventType: 'page_view',
+          utmSource: utm_source,
+          utmMedium: utm_medium,
+          utmCampaign: utm_campaign,
+          utmContent: utm_content,
+          utmTerm: utm_term,
+          referralCode: ref,
+          landingPage: '/land-funds'
+        })
+      }).catch(console.error);
+    }
+
+    fetch('/api/land-funds/founding-status')
+      .then(res => res.json())
+      .then(data => setFoundingMembersRemaining(data.remaining))
+      .catch(() => {});
+  }, [router.query]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -193,48 +226,32 @@ export default function LandFundsPage() {
       </Head>
 
       <main style={{ minHeight: '100vh', background: '#ffffff' }}>
-        <div style={{ background: 'linear-gradient(135deg, #111827 0%, #1f2937 100%)', padding: '80px 24px', color: '#ffffff' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-              <span style={{ padding: '4px 12px', background: 'rgba(212, 175, 55, 0.2)', borderRadius: 9999, fontSize: 12, fontWeight: 600, color: '#d4af37' }}>
-                PHASE 2
-              </span>
-              <span style={{ padding: '4px 12px', background: 'rgba(16, 185, 129, 0.2)', borderRadius: 9999, fontSize: 12, fontWeight: 600, color: '#10b981' }}>
-                SEC REG CF COMPLIANT
-              </span>
-              {connectivityChecked && contractStatus?.landOptionRegistry.connected && (
-                <span style={{ padding: '4px 12px', background: 'rgba(59, 130, 246, 0.2)', borderRadius: 9999, fontSize: 12, fontWeight: 600, color: '#3b82f6' }}>
-                  ON-CHAIN CONNECTED
-                </span>
-              )}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
-              <div>
-                <h1 style={{ fontSize: 48, fontWeight: 700, marginBottom: 16 }}>Community Land Funds</h1>
-                <p style={{ fontSize: 20, color: '#9ca3af', maxWidth: 700 }}>
-                  Collective ownership of strategic land parcels. Pool resources with your community to acquire land that builds generational wealth.
-                </p>
-              </div>
-              <WalletButton />
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 24, marginTop: 48 }}>
-              <StatCard label="Total Acreage" value={totalAcreage.toLocaleString()} suffix="acres" />
-              <StatCard label="Capital Pooled" value={`$${(totalFunding / 1000).toFixed(0)}K`} />
-              <StatCard label="Contributors" value={totalContributors.toString()} />
-              <StatCard label="Active Parcels" value={parcels.length.toString()} highlight={onChainCount > 0 ? `${onChainCount} on-chain` : undefined} />
-            </div>
+        <HeroSection
+          totalAcreage={totalAcreage}
+          totalFunding={totalFunding}
+          totalContributors={totalContributors}
+          activeParcelCount={parcels.length}
+          onInvestClick={() => setShowSignupFlow(true)}
+          foundingMembersRemaining={foundingMembersRemaining}
+        />
 
-            {connectivityChecked && (
-              <div style={{ marginTop: 32, padding: 16, background: 'rgba(255,255,255,0.05)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)' }}>
-                <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 8 }}>SMART CONTRACT STATUS</p>
-                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                  <ContractBadge name="LandOptionRegistry" connected={contractStatus?.landOptionRegistry.connected || false} />
-                  <ContractBadge name="LandAcquisitionPool" connected={contractStatus?.landAcquisitionPool.connected || false} />
-                  <ContractBadge name="RegCFCrowdfunding" connected={contractStatus?.regCFCrowdfunding.connected || false} />
-                </div>
-              </div>
-            )}
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 48, marginBottom: 64 }}>
+            <div>
+              <h2 style={{ fontSize: 28, fontWeight: 700, color: '#111827', marginBottom: 16 }}>
+                Start Building Wealth Today
+              </h2>
+              <p style={{ color: '#6b7280', fontSize: 16, lineHeight: 1.7, marginBottom: 24 }}>
+                For generations, land ownership has been the foundation of wealth in America. 
+                Now you can own a piece of strategic land for as little as $100/month.
+              </p>
+              <TrustBadges variant="vertical" showDisclosure={true} />
+            </div>
+            <InvestmentCalculator 
+              parcelPrice={360000}
+              parcelName="Heritage Meadows"
+              onInvestClick={() => setShowSignupFlow(true)}
+            />
           </div>
         </div>
 
@@ -493,6 +510,20 @@ export default function LandFundsPage() {
           }}
         />
       )}
+
+      <QuickSignupFlow
+        isOpen={showSignupFlow}
+        onClose={() => setShowSignupFlow(false)}
+        parcelName={selectedParcel?.name || 'Heritage Meadows'}
+        parcelId={selectedParcel?.id || 'parcel-1'}
+        onComplete={(data) => {
+          console.log('Signup complete:', data);
+          fetch('/api/land-funds/founding-status')
+            .then(res => res.json())
+            .then(data => setFoundingMembersRemaining(data.remaining))
+            .catch(() => {});
+        }}
+      />
     </>
   );
 }

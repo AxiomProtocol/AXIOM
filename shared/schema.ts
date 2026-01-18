@@ -7529,3 +7529,150 @@ export type InvestorCommitment = typeof investorCommitments.$inferSelect;
 export type InsertInvestorCommitment = typeof investorCommitments.$inferInsert;
 export type DscrInvestorOnboarding = typeof dscrInvestorOnboarding.$inferSelect;
 export type InsertDscrInvestorOnboarding = typeof dscrInvestorOnboarding.$inferInsert;
+
+// ============================================
+// COMMUNITY LAND FUNDS - PHASE 1 TABLES
+// ============================================
+
+// Subscription plan types
+export const landFundPlanTypeEnum = pgEnum('land_fund_plan_type', [
+  'weekly',
+  'monthly', 
+  'annual'
+]);
+
+// Subscription status
+export const landFundSubscriptionStatusEnum = pgEnum('land_fund_subscription_status', [
+  'active',
+  'paused',
+  'cancelled',
+  'past_due'
+]);
+
+// Attribution tracking for ads (TikTok, Facebook, etc.)
+export const landFundAttribution = pgTable("land_fund_attribution", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  sessionId: varchar("session_id", { length: 255 }),
+  utmSource: varchar("utm_source", { length: 100 }),
+  utmMedium: varchar("utm_medium", { length: 100 }),
+  utmCampaign: varchar("utm_campaign", { length: 100 }),
+  utmContent: varchar("utm_content", { length: 100 }),
+  utmTerm: varchar("utm_term", { length: 100 }),
+  referralCode: varchar("referral_code", { length: 50 }),
+  landingPage: varchar("landing_page", { length: 255 }),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("land_attr_user_idx").on(table.userId),
+  sourceIdx: index("land_attr_source_idx").on(table.utmSource),
+  campaignIdx: index("land_attr_campaign_idx").on(table.utmCampaign),
+  referralIdx: index("land_attr_referral_idx").on(table.referralCode),
+}));
+
+// Investor subscription plans for recurring investment
+export const landFundSubscriptions = pgTable("land_fund_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  parcelId: varchar("parcel_id", { length: 50 }),
+  planType: landFundPlanTypeEnum("plan_type").notNull(),
+  amountCents: integer("amount_cents").notNull(),
+  currency: varchar("currency", { length: 10 }).default('USD'),
+  status: landFundSubscriptionStatusEnum("status").default('active'),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  nextPaymentDate: timestamp("next_payment_date"),
+  totalInvestedCents: integer("total_invested_cents").default(0),
+  totalShares: integer("total_shares").default(0),
+  startDate: timestamp("start_date").defaultNow(),
+  pausedAt: timestamp("paused_at"),
+  cancelledAt: timestamp("cancelled_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("land_sub_user_idx").on(table.userId),
+  statusIdx: index("land_sub_status_idx").on(table.status),
+  parcelIdx: index("land_sub_parcel_idx").on(table.parcelId),
+}));
+
+// Funnel events tracking (view, start_checkout, complete)
+export const landFundFunnelEvents = pgTable("land_fund_funnel_events", {
+  id: serial("id").primaryKey(),
+  sessionId: varchar("session_id", { length: 255 }),
+  userId: integer("user_id").references(() => users.id),
+  eventType: varchar("event_type", { length: 50 }).notNull(),
+  eventData: jsonb("event_data"),
+  attributionId: integer("attribution_id").references(() => landFundAttribution.id),
+  parcelId: varchar("parcel_id", { length: 50 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  sessionIdx: index("land_funnel_session_idx").on(table.sessionId),
+  eventIdx: index("land_funnel_event_idx").on(table.eventType),
+  userIdx: index("land_funnel_user_idx").on(table.userId),
+}));
+
+// Founding member tracking (first 10,000 investors)
+export const landFundFoundingMembers = pgTable("land_fund_founding_members", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).unique().notNull(),
+  rank: integer("rank").notNull(),
+  status: varchar("status", { length: 20 }).default('active'),
+  badgeClaimed: boolean("badge_claimed").default(false),
+  badgeTokenId: varchar("badge_token_id", { length: 100 }),
+  claimedAt: timestamp("claimed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  rankIdx: index("land_founding_rank_idx").on(table.rank),
+}));
+
+// Investment activity log (for live ticker)
+export const landFundInvestmentActivity = pgTable("land_fund_investment_activity", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  subscriptionId: integer("subscription_id").references(() => landFundSubscriptions.id),
+  parcelId: varchar("parcel_id", { length: 50 }),
+  amountCents: integer("amount_cents").notNull(),
+  sharesPurchased: integer("shares_purchased").default(0),
+  displayName: varchar("display_name", { length: 100 }),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  isPublic: boolean("is_public").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("land_activity_user_idx").on(table.userId),
+  parcelIdx: index("land_activity_parcel_idx").on(table.parcelId),
+  createdIdx: index("land_activity_created_idx").on(table.createdAt),
+}));
+
+// Referral tracking for viral growth
+export const landFundReferrals = pgTable("land_fund_referrals", {
+  id: serial("id").primaryKey(),
+  referrerUserId: integer("referrer_user_id").references(() => users.id).notNull(),
+  referredUserId: integer("referred_user_id").references(() => users.id),
+  referralCode: varchar("referral_code", { length: 20 }).notNull(),
+  status: varchar("status", { length: 20 }).default('clicked'),
+  rewardStatus: varchar("reward_status", { length: 20 }).default('pending'),
+  rewardAmountCents: integer("reward_amount_cents"),
+  createdAt: timestamp("created_at").defaultNow(),
+  convertedAt: timestamp("converted_at"),
+}, (table) => ({
+  referrerIdx: index("land_ref_referrer_idx").on(table.referrerUserId),
+  referredIdx: index("land_ref_referred_idx").on(table.referredUserId),
+  codeIdx: index("land_ref_code_idx").on(table.referralCode),
+  statusIdx: index("land_ref_status_idx").on(table.status),
+}));
+
+// Types for new tables
+export type LandFundAttribution = typeof landFundAttribution.$inferSelect;
+export type InsertLandFundAttribution = typeof landFundAttribution.$inferInsert;
+export type LandFundSubscription = typeof landFundSubscriptions.$inferSelect;
+export type InsertLandFundSubscription = typeof landFundSubscriptions.$inferInsert;
+export type LandFundFunnelEvent = typeof landFundFunnelEvents.$inferSelect;
+export type InsertLandFundFunnelEvent = typeof landFundFunnelEvents.$inferInsert;
+export type LandFundFoundingMember = typeof landFundFoundingMembers.$inferSelect;
+export type InsertLandFundFoundingMember = typeof landFundFoundingMembers.$inferInsert;
+export type LandFundInvestmentActivity = typeof landFundInvestmentActivity.$inferSelect;
+export type InsertLandFundInvestmentActivity = typeof landFundInvestmentActivity.$inferInsert;
+export type LandFundReferral = typeof landFundReferrals.$inferSelect;
+export type InsertLandFundReferral = typeof landFundReferrals.$inferInsert;
