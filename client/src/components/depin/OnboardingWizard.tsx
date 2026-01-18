@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { UserResources } from '../../types/depin';
 import { HARDWARE_TIERS, NODE_TYPES } from '../../data/depinTiers';
-const toast = {
-  success: (msg: string) => console.log('Success:', msg),
-  error: (msg: string) => console.error('Error:', msg),
-  loading: (msg: string) => console.log('Loading:', msg),
-};
+import toast from 'react-hot-toast';
 
 interface OnboardingWizardProps {
   onComplete: (resources: UserResources) => void;

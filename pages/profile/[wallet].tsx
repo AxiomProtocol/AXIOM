@@ -4,12 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Layout from '../../components/Layout';
 import { useWallet } from '../../components/WalletConnect/WalletContext';
-const toast = {
-  success: (msg: string) => console.log('Success:', msg),
-  error: (msg: string) => console.error('Error:', msg),
-  loading: (msg: string) => console.log('Loading:', msg),
-};
-const Toaster = () => null;
+import toast, { Toaster } from 'react-hot-toast';
 
 interface Profile {
   id: number;

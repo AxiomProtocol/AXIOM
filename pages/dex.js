@@ -3,12 +3,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Layout from '../components/Layout';
 import { useWallet } from '../components/WalletConnect/WalletContext';
-const toast = {
-  success: (msg) => console.log('Success:', msg),
-  error: (msg) => console.error('Error:', msg),
-  loading: (msg) => console.log('Loading:', msg),
-};
-const Toaster = () => null;
+import toast, { Toaster } from 'react-hot-toast';
 import { ethers } from 'ethers';
 import DisclosureBanner from '../components/DisclosureBanner';
 import StepProgressBanner from '../components/StepProgressBanner';

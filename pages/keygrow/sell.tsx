@@ -2,11 +2,7 @@ import { useState, useEffect } from 'react';
 import { useWallet } from '../../components/WalletConnect/WalletContext';
 import Head from 'next/head';
 import Link from 'next/link';
-const toast = {
-  success: (msg: string) => console.log('Success:', msg),
-  error: (msg: string) => console.error('Error:', msg),
-  loading: (msg: string) => console.log('Loading:', msg),
-};
+import { toast } from 'react-hot-toast';
 
 interface SellerProfile {
   id: number;

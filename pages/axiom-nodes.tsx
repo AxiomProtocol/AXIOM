@@ -6,12 +6,22 @@ import NodeROICalculator from '../components/NodeROICalculator';
 import NodeReferralWidget from '../components/NodeReferralWidget';
 import NodeUpgradePath from '../components/NodeUpgradePath';
 
-const Toaster = () => null;
+const Toaster = dynamic(
+  () => import('react-hot-toast').then((mod) => mod.Toaster),
+  { ssr: false }
+);
+
+let toastLib: typeof import('react-hot-toast') | null = null;
+if (typeof window !== 'undefined') {
+  import('react-hot-toast').then((mod) => {
+    toastLib = mod;
+  });
+}
 
 const showToast = {
-  success: (msg: string, opts?: any) => console.log('Success:', msg),
-  error: (msg: string, opts?: any) => console.error('Error:', msg),
-  loading: (msg: string, opts?: any) => console.log('Loading:', msg),
+  success: (msg: string, opts?: any) => toastLib?.toast.success(msg, opts),
+  error: (msg: string, opts?: any) => toastLib?.toast.error(msg, opts),
+  loading: (msg: string, opts?: any) => toastLib?.toast.loading(msg, opts),
 };
 import Link from 'next/link';
 import StepProgressBanner from '../components/StepProgressBanner';
