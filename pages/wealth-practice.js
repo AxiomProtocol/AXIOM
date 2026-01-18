@@ -167,7 +167,7 @@ export default function SusuStartPage() {
             </p>
             <div className="flex justify-center mb-6">
               <Link
-                href="/purpose-group-onboarding"
+                href="/join"
                 className="px-10 py-5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-gray-900 rounded-xl font-bold hover:from-amber-600 hover:via-yellow-500 hover:to-amber-600 transition-all text-xl shadow-lg ring-2 ring-amber-300 ring-offset-2 ring-offset-gray-900"
               >
                 Start a Wealth Practice

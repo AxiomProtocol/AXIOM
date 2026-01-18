@@ -10,7 +10,7 @@ export default function Home() {
   useEffect(() => {
     const completed = localStorage.getItem('axiom_onboarding_completed');
     if (!completed) {
-      router.replace('/purpose-group-onboarding');
+      router.replace('/join');
     } else {
       setHasCompletedOnboarding(true);
       setIsLoading(false);

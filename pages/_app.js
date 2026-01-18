@@ -35,7 +35,7 @@ const REBUILD_NAV_PAGES = [
   '/axusd',
   '/workbook',
   '/reclaim',
-  '/purpose-group-onboarding',
+  '/join',
   '/dashboard',
   '/lending-fund',
   '/stewards',
@@ -103,7 +103,7 @@ export default function App({ Component, pageProps }) {
       const completed = localStorage.getItem('axiom_onboarding_complete')
       const isPublicPage = ['/', '/origin', '/how-it-works', '/about-us', '/team', '/axiom-nexus', '/transparency', '/governance', '/treasury', '/roadmap', '/mortgage-notes', '/savings', '/rent-streams', '/products', '/reclaim', '/workbook', '/land-funds'].includes(router.pathname) || router.pathname.startsWith('/dscr/investor') || router.pathname.startsWith('/reclaim') || router.pathname.startsWith('/workbook') || router.pathname.startsWith('/workbook/search') || router.pathname.startsWith('/land-funds')
       const isAdminPage = router.pathname.startsWith('/admin')
-      const isCustomOnboardingPage = router.pathname === '/purpose-group-onboarding'
+      const isCustomOnboardingPage = router.pathname === '/join'
       if (!completed && !isPublicPage && !isAdminPage && !isCustomOnboardingPage) {
         setShowOnboarding(true)
       }
