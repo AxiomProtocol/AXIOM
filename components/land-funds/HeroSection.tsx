@@ -61,9 +61,8 @@ export default function HeroSection({
           </span>
         </div>
 
-        <div style={{ 
+        <div className="hero-grid" style={{ 
           display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) minmax(300px, 400px)',
           gap: 48,
           alignItems: 'center'
         }}>
@@ -190,9 +189,12 @@ export default function HeroSection({
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
         }
-        @media (max-width: 768px) {
-          div[style*="gridTemplateColumns: 'minmax(0, 1fr) minmax(300px, 400px)'"] {
-            grid-template-columns: 1fr !important;
+        .hero-grid {
+          grid-template-columns: 1fr;
+        }
+        @media (min-width: 768px) {
+          .hero-grid {
+            grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
           }
         }
       `}</style>

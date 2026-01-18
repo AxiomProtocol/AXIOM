@@ -98,10 +98,29 @@ export default function TrustBadges({ variant = 'horizontal', showDisclosure = t
               <p style={{ fontWeight: 600, fontSize: 13, color: '#92400e', marginBottom: 4 }}>
                 Investment Risk Disclosure
               </p>
-              <p style={{ fontSize: 12, color: '#78350f', lineHeight: 1.5 }}>
+              <p style={{ fontSize: 12, color: '#78350f', lineHeight: 1.5, marginBottom: 8 }}>
                 Investing involves risk including possible loss of principal. Land values can fluctuate. 
-                Past performance does not guarantee future results. Read all offering documents before investing.
+                Past performance does not guarantee future results.
               </p>
+              <a 
+                href="/docs/investor/COMMUNITY_LAND_FUNDS_REGCF.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: '#92400e',
+                  textDecoration: 'underline'
+                }}
+              >
+                Read Full Offering Documents
+                <svg style={{ width: 12, height: 12 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
             </div>
           </div>
         </div>

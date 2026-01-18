@@ -10,6 +10,7 @@ import HeroSection from '../../components/land-funds/HeroSection';
 import InvestmentCalculator from '../../components/land-funds/InvestmentCalculator';
 import TrustBadges from '../../components/land-funds/TrustBadges';
 import QuickSignupFlow from '../../components/land-funds/QuickSignupFlow';
+import RegCFDisclosure from '../../components/land-funds/RegCFDisclosure';
 
 interface LandParcel {
   id: string;
@@ -448,6 +449,10 @@ export default function LandFundsPage() {
               <ProcessStep number={4} title="Steward Assignment" description="Qualified stewards are selected to manage and develop the land." />
               <ProcessStep number={5} title="Development" description="Land is developed according to community-approved plans and steward expertise." />
             </div>
+          </div>
+
+          <div style={{ marginTop: 48 }}>
+            <RegCFDisclosure showCalculator={true} />
           </div>
         </div>
       </main>
