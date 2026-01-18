@@ -188,16 +188,20 @@ export async function sendMessage(guildId: string, channelName: string, message:
   const discordClient = await getDiscordClient();
   if (!discordClient) return false;
 
-  const guild = discordClient.guilds.cache.get(guildId);
-  if (!guild) return false;
-
-  const channel = guild.channels.cache.find(
-    ch => ch.name === channelName && ch.type === ChannelType.GuildText
-  ) as TextChannel | undefined;
-
-  if (!channel) return false;
-
   try {
+    const guild = await discordClient.guilds.fetch(guildId);
+    if (!guild) return false;
+
+    const channels = await guild.channels.fetch();
+    const channel = channels.find(
+      ch => ch?.name === channelName && ch?.type === ChannelType.GuildText
+    ) as TextChannel | undefined;
+
+    if (!channel) {
+      console.error(`Channel #${channelName} not found in guild`);
+      return false;
+    }
+
     await channel.send(message);
     return true;
   } catch (error) {
