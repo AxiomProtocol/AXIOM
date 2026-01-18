@@ -676,6 +676,19 @@ export default function PurposeGroupOnboarding() {
             </p>
           </div>
 
+          <div className="max-w-3xl mx-auto mb-8">
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <iframe
+                className="absolute top-0 left-0 w-full h-full rounded-2xl shadow-2xl border border-gray-700"
+                src="https://www.youtube.com/embed/SeU1i0h9o_Y?rel=0"
+                title="Axiom - Reclaim What Was Taken"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+
           <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl p-8 border border-yellow-500/30 mb-8">
             <h2 className="text-2xl font-bold text-white mb-4 text-center">Axiom exists to change that.</h2>
             <p className="text-gray-300 text-center mb-6">
