@@ -39,6 +39,7 @@ const nextConfig = {
       'pg',
       '@neondatabase/serverless',
       'drizzle-orm',
+      'discord.js',
     ],
     outputFileTracingExcludes: {
       '*': [
