@@ -225,6 +225,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         throw new Error('No signer available');
       }
       
+      // Reset any stale signing state before attempting
+      siweService.resetSigningState();
+      
       const result = await siweService.signIn(
         signer,
         walletState.address,

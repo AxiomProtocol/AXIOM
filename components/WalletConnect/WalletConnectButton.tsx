@@ -129,6 +129,9 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
             console.log('📝 [MetaMask] Calling siweService.signIn...');
             setSIWEState(prev => ({ ...prev, isAuthenticating: true, authError: null }));
             
+            // Reset any stale signing state before attempting
+            siweService.resetSigningState();
+            
             const result = await siweService.signIn(
               signer,
               address,
@@ -186,6 +189,9 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
             console.log('📝 Requesting SIWE signature...');
             setSIWEState(prev => ({ ...prev, isAuthenticating: true, authError: null }));
             
+            // Reset any stale signing state before attempting
+            siweService.resetSigningState();
+            
             const result = await siweService.signIn(
               signer,
               address,
@@ -239,6 +245,9 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
       }
       
       console.log('📝 Manual SIWE sign-in requested...');
+      // Reset any stale signing state before attempting
+      siweService.resetSigningState();
+      
       const result = await siweService.signIn(
         signer,
         walletState.address,
