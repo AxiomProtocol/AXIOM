@@ -147,8 +147,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         walletState.isConnected && 
         walletState.address && 
         !siweState.isAuthenticated && 
-        !siweState.isAuthenticating &&
-        !siweState.authError
+        !siweState.isAuthenticating
       ) {
         console.log('🔐 Auto-triggering SIWE for connected wallet:', walletState.address);
         
@@ -160,6 +159,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         
         try {
           const { siweService } = await import('../../lib/services/SIWEService');
+          
+          // Reset any stale signing state before attempting
+          siweService.resetSigningState();
           
           const result = await siweService.signIn(
             null, // Will use window.ethereum directly
@@ -195,7 +197,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     };
 
     triggerSIWE();
-  }, [mounted, walletState.isConnected, walletState.address, siweState.isAuthenticated, siweState.isAuthenticating, siweState.authError, walletState.chainId]);
+  }, [mounted, walletState.isConnected, walletState.address, siweState.isAuthenticated, siweState.isAuthenticating, walletState.chainId]);
 
   const signInWithEthereum = async (): Promise<boolean> => {
     if (typeof window === 'undefined') return false;
@@ -298,6 +300,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           
           try {
             console.log('📝 Requesting signature...');
+            // Reset any stale signing state before attempting
+            siweService.resetSigningState();
+            
             const result = await siweService.signIn(
               signer,
               connectedAddress,
@@ -370,6 +375,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           
           try {
             console.log('📝 Requesting signature...');
+            // Reset any stale signing state before attempting
+            siweService.resetSigningState();
+            
             const result = await siweService.signIn(
               signer,
               connectedAddress,
