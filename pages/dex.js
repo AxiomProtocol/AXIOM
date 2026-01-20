@@ -289,8 +289,52 @@ export default function DexPage() {
       const provider = getReadOnlyProvider();
       const contract = new ethers.Contract(EXCHANGE_HUB_ADDRESS, EXCHANGE_ABI, provider);
       
+      console.log('🔍 Loading user positions for:', account);
+      
+      // First, try to get pools from the contract's getUserPools function
+      let userPoolIds = [];
+      try {
+        userPoolIds = await contract.getUserPools(account);
+        console.log('📊 User pool IDs from contract:', userPoolIds.map(id => Number(id)));
+      } catch (e) {
+        console.log('getUserPools not available, falling back to checking known pools');
+      }
+      
       const positions = [];
+      
+      // Check positions from getUserPools first
+      for (const poolId of userPoolIds) {
+        try {
+          const [pool, liquidity] = await Promise.all([
+            contract.getPool(poolId),
+            contract.getUserLiquidity(poolId, account)
+          ]);
+          
+          if (liquidity > 0n) {
+            const tokenAInfo = TOKENS.find(t => t.address.toLowerCase() === pool.tokenA.toLowerCase());
+            const tokenBInfo = TOKENS.find(t => t.address.toLowerCase() === pool.tokenB.toLowerCase());
+            
+            positions.push({
+              poolId: Number(poolId),
+              liquidity: liquidity.toString(),
+              tokenA: tokenAInfo || { symbol: pool.tokenA.slice(0, 6), address: pool.tokenA, decimals: 18 },
+              tokenB: tokenBInfo || { symbol: pool.tokenB.slice(0, 6), address: pool.tokenB, decimals: 18 },
+              reserveA: pool.reserveA.toString(),
+              reserveB: pool.reserveB.toString(),
+              totalLiquidity: pool.totalLiquidity.toString()
+            });
+            console.log(`✅ Found position in pool ${poolId}: ${ethers.formatEther(liquidity)} LP tokens`);
+          }
+        } catch (e) {
+          console.error(`Failed to load position for pool ${poolId}:`, e);
+        }
+      }
+      
+      // Also check any known pools that might not be in getUserPools
       for (const pool of pools) {
+        // Skip if we already have this pool
+        if (positions.some(p => p.poolId === pool.poolId)) continue;
+        
         try {
           const liquidity = await contract.getUserLiquidity(pool.poolId, account);
           if (liquidity > 0n) {
@@ -306,12 +350,14 @@ export default function DexPage() {
               reserveB: pool.reserveB,
               totalLiquidity: pool.totalLiquidity
             });
+            console.log(`✅ Found position in known pool ${pool.poolId}`);
           }
         } catch (e) {
           console.error(`Failed to load position for pool ${pool.poolId}:`, e);
         }
       }
       
+      console.log(`📊 Total positions found: ${positions.length}`);
       setUserPositions(positions);
     } catch (error) {
       console.error('Failed to load user positions:', error);

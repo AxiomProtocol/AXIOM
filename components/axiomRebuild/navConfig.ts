@@ -97,6 +97,7 @@ export const navItems: NavItem[] = [
     label: "Tools",
     children: [
       { label: "Treasury", href: "/bank" },
+      { label: "DEX Exchange", href: "/dex" },
       { label: "The Wealth Practice", href: "/wealth-practice" },
       { label: "Land Crowdfunding", href: "/land-acquisition/portfolio" },
       { label: "Land Marketplace", href: "/land" },
