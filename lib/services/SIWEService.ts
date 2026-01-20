@@ -26,6 +26,20 @@ class SIWEService {
   private cachedSession: SIWESession | null = null;
   private sessionCheckPromise: Promise<SIWESession> | null = null;
   private signingInProgress: boolean = false;
+  private signingStartTime: number = 0;
+  private readonly SIGNING_TIMEOUT_MS = 60000;
+
+  resetSigningState(): void {
+    console.log('[SIWEService] Manually resetting signing state');
+    this.signingInProgress = false;
+    this.signingStartTime = 0;
+  }
+
+  private isSigningStale(): boolean {
+    if (!this.signingInProgress) return false;
+    const elapsed = Date.now() - this.signingStartTime;
+    return elapsed > this.SIGNING_TIMEOUT_MS;
+  }
 
   private async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -120,6 +134,12 @@ class SIWEService {
     address: string,
     chainId: number = ARBITRUM_CHAIN_ID
   ): Promise<SIWESignInResult> {
+    // Check if previous signing request is stale (over 60 seconds)
+    if (this.signingInProgress && this.isSigningStale()) {
+      console.log('[SIWEService] Previous signing request was stale, resetting...');
+      this.resetSigningState();
+    }
+    
     // Prevent duplicate signing requests (MetaMask throws "already pending" error)
     if (this.signingInProgress) {
       console.log('⚠️ SIWE signing already in progress, skipping duplicate request');
@@ -129,6 +149,7 @@ class SIWEService {
       };
     }
     this.signingInProgress = true;
+    this.signingStartTime = Date.now();
     
     try {
       // Convert to checksum format for consistency
