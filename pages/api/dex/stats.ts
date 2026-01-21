@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import dexService from '../../../server/services/dex/DexService';
+import camelotPoolService from '../../../lib/services/CamelotPoolService';
 
 export default async function handler(
   req: NextApiRequest,
@@ -10,10 +10,27 @@ export default async function handler(
   }
 
   try {
-    const stats = await dexService.getProtocolStats();
-    return res.status(200).json({ stats });
+    const poolData = await camelotPoolService.getAllPools();
+    
+    const totalTVL = poolData.reduce((sum, pool) => sum + pool.tvl, 0);
+    const totalVolume24h = poolData.reduce((sum, pool) => sum + pool.volume24h, 0);
+    const totalFees24h = poolData.reduce((sum, pool) => sum + pool.fees24h, 0);
+    
+    return res.status(200).json({
+      totalPools: poolData.length,
+      totalTVL: totalTVL.toString(),
+      totalVolume24h: totalVolume24h.toString(),
+      totalFees24h: totalFees24h.toString(),
+      source: 'camelot'
+    });
   } catch (error) {
-    console.error('Error fetching DEX stats:', error);
-    return res.status(500).json({ error: 'Failed to fetch DEX stats' });
+    console.error('Error getting protocol stats:', error);
+    return res.status(500).json({ 
+      totalPools: 0,
+      totalTVL: '0',
+      totalVolume24h: '0',
+      totalFees24h: '0',
+      error: 'Failed to fetch stats'
+    });
   }
 }

@@ -86,11 +86,16 @@ export function useDexStats() {
       const response = await fetch('/api/dex/stats');
       const data = await response.json();
       
-      if (data.error) {
+      if (data.error && !data.totalPools) {
         throw new Error(data.error);
       }
       
-      setStats(data.stats);
+      setStats({
+        totalPools: data.totalPools || 0,
+        totalTVL: data.totalTVL || '0',
+        totalVolume24h: data.totalVolume24h || '0',
+        totalFees24h: data.totalFees24h || '0'
+      });
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch stats');
