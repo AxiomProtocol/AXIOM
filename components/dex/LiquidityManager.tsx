@@ -53,6 +53,17 @@ export default function LiquidityManager() {
       setIsLoading(true);
       setTxStatus({ type: null, message: '' });
 
+      const existingPool = pools.find(p => 
+        (p.tokenA.toLowerCase() === tokenA.address.toLowerCase() && p.tokenB.toLowerCase() === tokenB.address.toLowerCase()) ||
+        (p.tokenA.toLowerCase() === tokenB.address.toLowerCase() && p.tokenB.toLowerCase() === tokenA.address.toLowerCase())
+      );
+      
+      if (existingPool) {
+        setTxStatus({ type: 'error', message: `A ${tokenA.symbol}/${tokenB.symbol} pool already exists. Use "Add Liquidity" instead.` });
+        setIsLoading(false);
+        return;
+      }
+
       const exchangeHub = new ethers.Contract(
         DEX_V2_CONTRACTS.EXCHANGE_HUB_V2,
         EXCHANGE_HUB_ABI,
@@ -60,9 +71,11 @@ export default function LiquidityManager() {
       );
 
       const feeInBps = Math.floor(parseFloat(swapFee));
+      
+      setTxStatus({ type: null, message: 'Creating pool... Please confirm in your wallet' });
       const tx = await exchangeHub.createPool(tokenA.address, tokenB.address, feeInBps);
       
-      setTxStatus({ type: null, message: 'Creating pool... Waiting for confirmation' });
+      setTxStatus({ type: null, message: 'Pool creation submitted. Waiting for confirmation...' });
       await tx.wait();
       
       setTxStatus({ type: 'success', message: `Pool ${tokenA.symbol}/${tokenB.symbol} created successfully!` });
@@ -70,7 +83,19 @@ export default function LiquidityManager() {
       setActiveTab('add');
     } catch (error: any) {
       console.error('Create pool error:', error);
-      setTxStatus({ type: 'error', message: error.reason || error.message || 'Failed to create pool' });
+      let errorMessage = 'Failed to create pool';
+      
+      if (error.code === 'CALL_EXCEPTION') {
+        errorMessage = 'Transaction failed. The pool may already exist, or pool creation may be restricted to authorized addresses.';
+      } else if (error.code === 'ACTION_REJECTED') {
+        errorMessage = 'Transaction was cancelled';
+      } else if (error.reason) {
+        errorMessage = error.reason;
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = 'Insufficient ETH for gas fees';
+      }
+      
+      setTxStatus({ type: 'error', message: errorMessage });
     } finally {
       setIsLoading(false);
     }
