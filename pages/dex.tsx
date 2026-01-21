@@ -106,7 +106,7 @@ export default function DexPage() {
             <main className="flex-1">
               {activeTab === 'swap' && (
                 <div className="space-y-6">
-                  <TradingViewChart tokenA="AXM" tokenB="USDC" pairName="AXM / USDC" />
+                  <TradingViewChart />
                   <div className="flex justify-center">
                     <SwapInterface />
                   </div>
