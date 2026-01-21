@@ -166,19 +166,17 @@ export default function LiquidityManager() {
     }
   };
 
-  if (!isConnected) {
-    return (
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-8 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 bg-gray-700 rounded-full flex items-center justify-center">
-          <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-        </div>
-        <h3 className="text-lg font-semibold text-white mb-2">Connect Wallet</h3>
-        <p className="text-gray-400 text-sm">Connect your wallet to manage liquidity positions.</p>
+  const WalletRequiredMessage = () => (
+    <div className="text-center py-8">
+      <div className="w-16 h-16 mx-auto mb-4 bg-gray-700 rounded-full flex items-center justify-center">
+        <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
       </div>
-    );
-  }
+      <h3 className="text-lg font-semibold text-white mb-2">Connect Wallet</h3>
+      <p className="text-gray-400 text-sm">Connect your wallet to use this feature.</p>
+    </div>
+  );
 
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
@@ -226,7 +224,9 @@ export default function LiquidityManager() {
       <div className="p-6">
         {activeTab === 'positions' && (
           <div>
-            {positionsLoading ? (
+            {!isConnected ? (
+              <WalletRequiredMessage />
+            ) : positionsLoading ? (
               <div className="flex items-center gap-3 justify-center py-8">
                 <div className="animate-spin w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full" />
                 <span className="text-gray-400">Loading positions...</span>
@@ -326,6 +326,10 @@ export default function LiquidityManager() {
 
         {activeTab === 'add' && (
           <div className="space-y-4">
+            {!isConnected ? (
+              <WalletRequiredMessage />
+            ) : (
+            <>
             <div>
               <label className="block text-sm text-gray-400 mb-2">Select Pool</label>
               <select
@@ -387,11 +391,17 @@ export default function LiquidityManager() {
             >
               {isLoading ? 'Processing...' : 'Add Liquidity'}
             </button>
+            </>
+            )}
           </div>
         )}
 
         {activeTab === 'create' && (
           <div className="space-y-4">
+            {!isConnected ? (
+              <WalletRequiredMessage />
+            ) : (
+            <>
             <div className="bg-gray-900/50 p-4 rounded-xl mb-4">
               <p className="text-sm text-gray-400">
                 Create a new liquidity pool for any token pair. You'll need to add initial liquidity after creating the pool.
@@ -465,6 +475,8 @@ export default function LiquidityManager() {
             >
               {isLoading ? 'Creating Pool...' : `Create ${tokenA.symbol}/${tokenB.symbol} Pool`}
             </button>
+            </>
+            )}
           </div>
         )}
       </div>
