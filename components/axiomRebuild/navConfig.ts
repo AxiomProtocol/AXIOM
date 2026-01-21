@@ -98,6 +98,7 @@ export const navItems: NavItem[] = [
     children: [
       { label: "Treasury", href: "/bank" },
       { label: "DEX Exchange", href: "/dex" },
+      { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "The Wealth Practice", href: "/wealth-practice" },
       { label: "Land Crowdfunding", href: "/land-acquisition/portfolio" },
       { label: "Land Marketplace", href: "/land" },
