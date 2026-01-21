@@ -242,6 +242,8 @@ contract AxiomLimitOrders is
     }
 
     function batchExecuteOrders(uint256[] calldata orderIds) external nonReentrant onlyRole(KEEPER_ROLE) {
+        uint256 executedCount = 0;
+        
         for (uint256 i = 0; i < orderIds.length; i++) {
             Order storage order = orders[orderIds[i]];
             
@@ -271,6 +273,7 @@ contract AxiomLimitOrders is
                 order.filledAt = block.timestamp;
                 order.amountReceived = amountReceived;
                 userActiveOrderCount[order.owner]--;
+                executedCount++;
 
                 _removePendingOrder(orderIds[i]);
 
@@ -282,8 +285,8 @@ contract AxiomLimitOrders is
             }
         }
 
-        uint256 totalFee = executionFee * orderIds.length;
-        if (address(this).balance >= totalFee) {
+        uint256 totalFee = executionFee * executedCount;
+        if (executedCount > 0 && address(this).balance >= totalFee) {
             payable(msg.sender).transfer(totalFee);
         }
     }
@@ -298,11 +301,16 @@ contract AxiomLimitOrders is
         uint256 currentPrice = (currentOutput * PRECISION) / order.amountIn;
 
         if (oracleAdapter != address(0)) {
-            (uint256 oraclePrice,) = IAxiomOracleAdapter(oracleAdapter).getPrice(order.tokenOut);
-            if (oraclePrice > 0) {
-                uint256 deviation = currentPrice > oraclePrice 
-                    ? ((currentPrice - oraclePrice) * BASIS_POINTS) / oraclePrice
-                    : ((oraclePrice - currentPrice) * BASIS_POINTS) / oraclePrice;
+            (uint256 oraclePriceIn,) = IAxiomOracleAdapter(oracleAdapter).getPrice(order.tokenIn);
+            (uint256 oraclePriceOut,) = IAxiomOracleAdapter(oracleAdapter).getPrice(order.tokenOut);
+            
+            if (oraclePriceIn > 0 && oraclePriceOut > 0) {
+                uint256 oracleRatio = (oraclePriceOut * PRECISION) / oraclePriceIn;
+                uint256 ammRatio = currentPrice;
+                
+                uint256 deviation = ammRatio > oracleRatio 
+                    ? ((ammRatio - oracleRatio) * BASIS_POINTS) / oracleRatio
+                    : ((oracleRatio - ammRatio) * BASIS_POINTS) / oracleRatio;
                 
                 if (deviation > maxPriceDeviation) {
                     return false;

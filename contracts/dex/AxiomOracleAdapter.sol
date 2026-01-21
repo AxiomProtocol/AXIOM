@@ -135,11 +135,18 @@ contract AxiomOracleAdapter is
         emit PriceFeedRemoved(token);
     }
 
+    uint256 public minTWAPUpdateInterval;
+    mapping(address => uint256) public lastTWAPUpdate;
+
     function setFallbackPrice(address token, uint256 price) external onlyRole(OPERATOR_ROLE) {
         fallbackPrices[token] = price;
         fallbackTimestamps[token] = block.timestamp;
         
         emit FallbackPriceSet(token, price);
+    }
+
+    function setMinTWAPUpdateInterval(uint256 interval) external onlyRole(ADMIN_ROLE) {
+        minTWAPUpdateInterval = interval;
     }
 
     function getPrice(address token) external view returns (uint256 price, uint256 timestamp) {
@@ -191,7 +198,9 @@ contract AxiomOracleAdapter is
         return (fallbackPrices[token], fallbackTimestamps[token]);
     }
 
-    function updateTWAP(address token) external {
+    function updateTWAP(address token) external onlyRole(OPERATOR_ROLE) {
+        require(block.timestamp >= lastTWAPUpdate[token] + minTWAPUpdateInterval, "Update too frequent");
+        
         (uint256 price, uint256 timestamp) = this.getPrice(token);
         require(price > 0, "No price");
 
@@ -204,6 +213,8 @@ contract AxiomOracleAdapter is
         if (data.size < data.maxSize) {
             data.size++;
         }
+
+        lastTWAPUpdate[token] = block.timestamp;
 
         emit TWAPUpdated(token, price, timestamp);
     }

@@ -71,11 +71,15 @@ contract AxiomDEXGovernor is
     uint256 public executionDelay;
     uint256 public quorumPercentage;
     uint256 public nextProposalId;
+    uint256 public proposalDeposit;
+    uint256 public maxActiveProposalsPerUser;
 
     mapping(uint256 => Proposal) public proposals;
     mapping(uint256 => mapping(address => uint256)) public proposalVotes;
     mapping(uint256 => mapping(address => bool)) public hasVoted;
     mapping(bytes32 => PoolCandidate) public poolCandidates;
+    mapping(uint256 => uint256) public proposalDeposits;
+    mapping(address => uint256) public activeProposalCount;
 
     bytes32[] public pendingPoolHashes;
 
@@ -85,6 +89,7 @@ contract AxiomDEXGovernor is
     event ProposalCancelled(uint256 indexed proposalId);
     event PoolCandidateProposed(bytes32 indexed poolHash, address tokenA, address tokenB, uint256 proposedFee);
     event PoolCandidateApproved(bytes32 indexed poolHash);
+    event DepositRefunded(uint256 indexed proposalId, address indexed proposer, uint256 amount);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() { _disableInitializers(); }
@@ -111,6 +116,8 @@ contract AxiomDEXGovernor is
         executionDelay = _executionDelay;
         quorumPercentage = 400;
         nextProposalId = 1;
+        proposalDeposit = _proposalThreshold / 10;
+        maxActiveProposalsPerUser = 3;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _treasurySafe);
         _grantRole(ADMIN_ROLE, _treasurySafe);
@@ -174,7 +181,14 @@ contract AxiomDEXGovernor is
         string calldata description,
         bytes memory data
     ) internal returns (uint256) {
+        require(activeProposalCount[msg.sender] < maxActiveProposalsPerUser, "Too many active proposals");
+        
+        if (proposalDeposit > 0) {
+            IERC20(governanceToken).transferFrom(msg.sender, address(this), proposalDeposit);
+        }
+
         uint256 proposalId = nextProposalId++;
+        activeProposalCount[msg.sender]++;
 
         proposals[proposalId] = Proposal({
             proposalId: proposalId,
@@ -190,6 +204,8 @@ contract AxiomDEXGovernor is
             status: ProposalStatus.ACTIVE,
             executed: false
         });
+
+        proposalDeposits[proposalId] = proposalDeposit;
 
         emit ProposalCreated(proposalId, msg.sender, proposalType, description);
 
@@ -226,11 +242,20 @@ contract AxiomDEXGovernor is
         uint256 quorum = (totalSupply * quorumPercentage) / BASIS_POINTS;
         uint256 totalVotes = proposal.votesFor + proposal.votesAgainst;
 
+        activeProposalCount[proposal.proposer]--;
+
         if (totalVotes >= quorum && proposal.votesFor > proposal.votesAgainst) {
             proposal.status = ProposalStatus.PASSED;
             proposal.executionTime = block.timestamp + executionDelay;
         } else {
             proposal.status = ProposalStatus.REJECTED;
+        }
+
+        uint256 depositAmount = proposalDeposits[proposalId];
+        if (depositAmount > 0) {
+            proposalDeposits[proposalId] = 0;
+            IERC20(governanceToken).transfer(proposal.proposer, depositAmount);
+            emit DepositRefunded(proposalId, proposal.proposer, depositAmount);
         }
     }
 
@@ -276,6 +301,14 @@ contract AxiomDEXGovernor is
         require(proposal.status == ProposalStatus.ACTIVE || proposal.status == ProposalStatus.PASSED, "Cannot cancel");
 
         proposal.status = ProposalStatus.CANCELLED;
+        activeProposalCount[proposal.proposer]--;
+
+        uint256 depositAmount = proposalDeposits[proposalId];
+        if (depositAmount > 0) {
+            proposalDeposits[proposalId] = 0;
+            IERC20(governanceToken).transfer(proposal.proposer, depositAmount);
+            emit DepositRefunded(proposalId, proposal.proposer, depositAmount);
+        }
 
         emit ProposalCancelled(proposalId);
     }
@@ -295,6 +328,15 @@ contract AxiomDEXGovernor is
     function setQuorumPercentage(uint256 percentage) external onlyRole(ADMIN_ROLE) {
         require(percentage <= BASIS_POINTS, "Too high");
         quorumPercentage = percentage;
+    }
+
+    function setProposalDeposit(uint256 deposit) external onlyRole(ADMIN_ROLE) {
+        proposalDeposit = deposit;
+    }
+
+    function setMaxActiveProposals(uint256 max) external onlyRole(ADMIN_ROLE) {
+        require(max >= 1, "Must be at least 1");
+        maxActiveProposalsPerUser = max;
     }
 
     function getProposal(uint256 proposalId) external view returns (Proposal memory) {
