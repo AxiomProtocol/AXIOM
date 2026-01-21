@@ -35,9 +35,10 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
-    apiKey: {
-      arbitrumOne: process.env.ARBISCAN_API_KEY || "",
-    },
+    apiKey: process.env.ARBISCAN_API_KEY || "abc",
+  },
+  sourcify: {
+    enabled: true
   },
 };
 
