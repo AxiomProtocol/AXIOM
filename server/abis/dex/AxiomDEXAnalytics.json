@@ -1,0 +1,1164 @@
+[
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "AccessControlBadConfirmation",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "neededRole",
+        "type": "bytes32"
+      }
+    ],
+    "name": "AccessControlUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "target",
+        "type": "address"
+      }
+    ],
+    "name": "AddressEmptyCode",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "implementation",
+        "type": "address"
+      }
+    ],
+    "name": "ERC1967InvalidImplementation",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ERC1967NonPayable",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FailedCall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidInitialization",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotInitializing",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "UUPSUnauthorizedCallContext",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "slot",
+        "type": "bytes32"
+      }
+    ],
+    "name": "UUPSUnsupportedProxiableUUID",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "day",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "totalTVL",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "volume24h",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "fees24h",
+        "type": "uint256"
+      }
+    ],
+    "name": "GlobalSnapshotTaken",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "version",
+        "type": "uint64"
+      }
+    ],
+    "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "poolId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "day",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "tvl",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "volume24h",
+        "type": "uint256"
+      }
+    ],
+    "name": "PoolSnapshotTaken",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "previousAdminRole",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "newAdminRole",
+        "type": "bytes32"
+      }
+    ],
+    "name": "RoleAdminChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "RoleGranted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "RoleRevoked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "name": "TokenPriceUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "implementation",
+        "type": "address"
+      }
+    ],
+    "name": "Upgraded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "poolId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "volume",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "fees",
+        "type": "uint256"
+      }
+    ],
+    "name": "VolumeRecorded",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "ADMIN_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "DEFAULT_ADMIN_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "OPERATOR_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "PRECISION",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "UPGRADER_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "UPGRADE_INTERFACE_VERSION",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "dailySnapshots",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalTVL",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalVolume24h",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalFees24h",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "activePools",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalSwaps",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "exchangeHub",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "day",
+        "type": "uint256"
+      }
+    ],
+    "name": "getDailySnapshots",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalTVL",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalVolume24h",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalFees24h",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "activePools",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalSwaps",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct AxiomDEXAnalytics.DailySnapshot[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getGlobalMetrics",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "totalTVL",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "activePools",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalVolume24h",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalFees24h",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalSwaps",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "historicalVolume",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "historicalFees",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct AxiomDEXAnalytics.GlobalMetrics",
+        "name": "metrics",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "poolId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getPoolAPR",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "poolId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getPoolMetrics",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "tvl",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "volume24h",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "fees24h",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "apr",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reserveA",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reserveB",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalLiquidity",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct AxiomDEXAnalytics.PoolMetrics",
+        "name": "metrics",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "poolId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "day",
+        "type": "uint256"
+      }
+    ],
+    "name": "getPoolSnapshots",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reserveA",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reserveB",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalLiquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "volume24h",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "fees24h",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "apr",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct AxiomDEXAnalytics.PoolSnapshot[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "poolId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getPoolTVL",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getRoleAdmin",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTotalTVL",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "tvl",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "activePools",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "grantRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "hasRole",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_exchangeHub",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_treasurySafe",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lastGlobalSnapshotTime",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "poolFeesLast24h",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "poolLastVolumeUpdate",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "poolSnapshots",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "reserveA",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "reserveB",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalLiquidity",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "volume24h",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fees24h",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "apr",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "poolVolumeLast24h",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "proxiableUUID",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "poolId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "volume",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fees",
+        "type": "uint256"
+      }
+    ],
+    "name": "recordSwapVolume",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "callerConfirmation",
+        "type": "address"
+      }
+    ],
+    "name": "renounceRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "revokeRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "interval",
+        "type": "uint256"
+      }
+    ],
+    "name": "setSnapshotInterval",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "name": "setTokenPrice",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "tokens",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "prices",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "setTokenPrices",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "snapshotInterval",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes4",
+        "name": "interfaceId",
+        "type": "bytes4"
+      }
+    ],
+    "name": "supportsInterface",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "takeGlobalSnapshot",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "poolId",
+        "type": "uint256"
+      }
+    ],
+    "name": "takePoolSnapshot",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "tokenPrices",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalHistoricalFees",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalHistoricalVolume",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "treasurySafe",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newImplementation",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "upgradeToAndCall",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  }
+]

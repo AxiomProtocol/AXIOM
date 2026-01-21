@@ -110,6 +110,39 @@ export const SUSTAINABILITY_CONTRACTS = {
   SUSTAINABILITY: '0xAf4dF8a7733BAB64b7Ce83F2494d6446eF9eC046'
 } as const;
 
+// DEX V2 Ecosystem Contracts (Deployed January 21, 2026)
+export const DEX_V2_CONTRACTS = {
+  // Core DEX Hub - handles pools, swaps, liquidity
+  EXCHANGE_HUB_V2: '0x31eF3DCB076ba97229113F4e58Cc9315cb8Dcd28',
+  
+  // Oracle Adapter - price feeds for trading pairs
+  ORACLE_ADAPTER: '0xe0074F15EFe0E39fdc39c8e13f752DDC63AB35c7',
+  
+  // LP Staking - stake LP tokens for rewards
+  LP_STAKING: '0x066623787044440015f7Ea2eC04cA58126cA00a5',
+  
+  // Fee Distributor - distributes trading fees
+  FEE_DISTRIBUTOR: '0xD981748E2ed17681D8088be84480FE294d635ae8',
+  
+  // Trading Rewards - rewards for active traders
+  TRADING_REWARDS: '0xb75b6e3D02116421fbd7c830a0f24d9a42420984',
+  
+  // DEX Router - optimal swap routing
+  DEX_ROUTER: '0x05c655801dbf4ce8Db5aaE159769B7a1a0bFC0d8',
+  
+  // Analytics - on-chain trading analytics
+  DEX_ANALYTICS: '0x93cDF4AeCE237C62032e40C82d8b09dd76Fdf3E9',
+  
+  // Limit Orders - place limit orders
+  LIMIT_ORDERS: '0xBdC968773915095b71156bf265b0b10B23B9F8E2',
+  
+  // DEX Governor - governance proposals for DEX
+  DEX_GOVERNOR: '0x9A86CF2715D4c4Bb6728FB401ACd103527ABf96d',
+  
+  // Insurance Fund - protocol insurance
+  INSURANCE_FUND: '0x449769453e5bc43345092EeD31780bbbfc400F39'
+} as const;
+
 // All contracts in a single object for easy access
 export const ALL_CONTRACTS = {
   ...CORE_CONTRACTS,
@@ -118,7 +151,8 @@ export const ALL_CONTRACTS = {
   ...ADVANCED_DEFI_CONTRACTS,
   ...MARKET_CONTRACTS,
   ...COMMUNITY_CONTRACTS,
-  ...SUSTAINABILITY_CONTRACTS
+  ...SUSTAINABILITY_CONTRACTS,
+  ...DEX_V2_CONTRACTS
 } as const;
 
 // Deployer Address
