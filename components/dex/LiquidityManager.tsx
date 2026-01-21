@@ -358,20 +358,20 @@ export default function LiquidityManager() {
             <div>
               <label className="block text-sm text-gray-500 mb-2">Select Pool</label>
               <select
-                value={selectedPool || ''}
-                onChange={(e) => setSelectedPool(e.target.value ? Number(e.target.value) : null)}
+                value={selectedPool !== null ? selectedPool.toString() : ''}
+                onChange={(e) => setSelectedPool(e.target.value !== '' ? Number(e.target.value) : null)}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500"
               >
                 <option value="">Choose a pool...</option>
                 {pools.map((pool) => (
-                  <option key={pool.id} value={pool.id}>
+                  <option key={pool.id} value={pool.id.toString()}>
                     {getTokenSymbol(pool.tokenA)} / {getTokenSymbol(pool.tokenB)} (Pool #{pool.id})
                   </option>
                 ))}
               </select>
             </div>
 
-            {selectedPool && pools.find(p => p.id === selectedPool) && (
+            {selectedPool !== null && pools.find(p => p.id === selectedPool) && (
               <>
                 <div>
                   <label className="block text-sm text-gray-500 mb-2">
@@ -407,9 +407,9 @@ export default function LiquidityManager() {
 
             <button
               onClick={handleAddLiquidity}
-              disabled={!selectedPool || !amountA || !amountB || isLoading}
+              disabled={selectedPool === null || !amountA || !amountB || isLoading}
               className={`w-full py-4 rounded-xl font-bold transition-all ${
-                selectedPool && amountA && amountB && !isLoading
+                selectedPool !== null && amountA && amountB && !isLoading
                   ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-gray-900 hover:from-yellow-400 hover:to-yellow-500'
                   : 'bg-gray-100 text-gray-500 cursor-not-allowed'
               }`}
