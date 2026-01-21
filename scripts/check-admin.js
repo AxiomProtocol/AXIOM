@@ -8,7 +8,8 @@ const abi = [
 
 // Known addresses to check - fixed checksums
 const addresses = [
-  { name: "Deployer PK", addr: "0xDFf9e47eb007bF02e47477d577De9ffA99791528" },
+  { name: "Current Deployer", addr: "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96" },
+  { name: "Original Deployer (lost)", addr: "0xDFf9e47eb007bF02e47477d577De9ffA99791528" },
   { name: "Treasury Multisig", addr: ethers.getAddress("0x2bb2c2a7a1d82097488bf0b9c2a59c1910cd8d5d") },
   { name: "Token Contract", addr: AXM }
 ];

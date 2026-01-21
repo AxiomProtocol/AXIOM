@@ -14,7 +14,8 @@
 | **Chain ID** | 42161 |
 | **RPC URL** | https://arb1.arbitrum.io/rpc |
 | **Block Explorer** | https://arbitrum.blockscout.com |
-| **Deployer Address** | `0xDFf9e47eb007bF02e47477d577De9ffA99791528` |
+| **Current Deployer** | `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` |
+| **Original Deployer** | `0xDFf9e47eb007bF02e47477d577De9ffA99791528` (lost - contracts 1-22) |
 | **Total Contracts** | 23 |
 | **Initial Deployment** | November 22, 2025 |
 | **Most Recent Deployment** | November 26, 2025 (DePINNodeSales V2) |
