@@ -8,6 +8,8 @@ import TradingRewardsABI from '../../abis/dex/AxiomTradingRewards.json';
 import DEXRouterABI from '../../abis/dex/AxiomDEXRouter.json';
 import DEXAnalyticsABI from '../../abis/dex/AxiomDEXAnalytics.json';
 import LimitOrdersABI from '../../abis/dex/AxiomLimitOrders.json';
+import DEXGovernorABI from '../../abis/dex/AxiomDEXGovernor.json';
+import InsuranceFundABI from '../../abis/dex/AxiomInsuranceFund.json';
 
 export const DEX_ADDRESSES = {
   EXCHANGE_HUB_V2: '0x31eF3DCB076ba97229113F4e58Cc9315cb8Dcd28',
@@ -65,6 +67,8 @@ class DexService {
   private dexRouter: ethers.Contract;
   private dexAnalytics: ethers.Contract;
   private limitOrders: ethers.Contract;
+  private dexGovernor: ethers.Contract;
+  private insuranceFund: ethers.Contract;
 
   constructor() {
     this.provider = new ethers.JsonRpcProvider(RPC_URL);
@@ -108,6 +112,18 @@ class DexService {
     this.dexAnalytics = new ethers.Contract(
       DEX_ADDRESSES.DEX_ANALYTICS,
       DEXAnalyticsABI,
+      this.provider
+    );
+    
+    this.dexGovernor = new ethers.Contract(
+      DEX_ADDRESSES.DEX_GOVERNOR,
+      DEXGovernorABI,
+      this.provider
+    );
+    
+    this.insuranceFund = new ethers.Contract(
+      DEX_ADDRESSES.INSURANCE_FUND,
+      InsuranceFundABI,
       this.provider
     );
     
@@ -337,6 +353,93 @@ class DexService {
         totalTVL: '0',
         totalVolume24h: '0',
         totalFees24h: '0'
+      };
+    }
+  }
+
+  async getGovernanceProposalCount(): Promise<number> {
+    try {
+      const count = await this.dexGovernor.proposalCount();
+      return Number(count);
+    } catch (error) {
+      console.error('Error getting proposal count:', error);
+      return 0;
+    }
+  }
+
+  async getGovernanceProposal(proposalId: number): Promise<any | null> {
+    try {
+      const proposal = await this.dexGovernor.proposals(proposalId);
+      return {
+        id: proposalId,
+        proposer: proposal.proposer,
+        description: proposal.description,
+        forVotes: ethers.formatEther(proposal.forVotes),
+        againstVotes: ethers.formatEther(proposal.againstVotes),
+        startTime: Number(proposal.startTime),
+        endTime: Number(proposal.endTime),
+        executed: proposal.executed,
+        canceled: proposal.canceled
+      };
+    } catch (error) {
+      console.error('Error getting proposal:', error);
+      return null;
+    }
+  }
+
+  async getActiveProposals(): Promise<any[]> {
+    try {
+      const count = await this.getGovernanceProposalCount();
+      const proposals: any[] = [];
+      const now = Math.floor(Date.now() / 1000);
+      
+      for (let i = 1; i <= count; i++) {
+        const proposal = await this.getGovernanceProposal(i);
+        if (proposal && !proposal.executed && !proposal.canceled && proposal.endTime > now) {
+          proposals.push(proposal);
+        }
+      }
+      
+      return proposals;
+    } catch (error) {
+      console.error('Error getting active proposals:', error);
+      return [];
+    }
+  }
+
+  async getInsuranceFundBalance(): Promise<string> {
+    try {
+      const balance = await this.insuranceFund.totalBalance();
+      return ethers.formatEther(balance);
+    } catch (error) {
+      console.error('Error getting insurance fund balance:', error);
+      return '0';
+    }
+  }
+
+  async getInsuranceFundStats(): Promise<{
+    totalBalance: string;
+    totalClaims: string;
+    activeCoverage: string;
+  }> {
+    try {
+      const [balance, claims, coverage] = await Promise.all([
+        this.insuranceFund.totalBalance(),
+        this.insuranceFund.totalClaimsPaid(),
+        this.insuranceFund.activeCoverage()
+      ]);
+      
+      return {
+        totalBalance: ethers.formatEther(balance),
+        totalClaims: ethers.formatEther(claims),
+        activeCoverage: ethers.formatEther(coverage)
+      };
+    } catch (error) {
+      console.error('Error getting insurance fund stats:', error);
+      return {
+        totalBalance: '0',
+        totalClaims: '0',
+        activeCoverage: '0'
       };
     }
   }
