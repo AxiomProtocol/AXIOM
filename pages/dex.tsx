@@ -1,7 +1,17 @@
 import { useState } from 'react';
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import { SwapInterface, PoolList, LiquidityManager, DexStats, UserRewards } from '../components/dex';
 import WalletButton from '../components/web3/WalletButton';
+
+const TradingViewChart = dynamic(() => import('../components/dex/TradingViewChart'), { 
+  ssr: false,
+  loading: () => (
+    <div className="bg-gray-800 rounded-xl border border-gray-700 h-[500px] flex items-center justify-center">
+      <div className="text-gray-400">Loading chart...</div>
+    </div>
+  )
+});
 
 type Tab = 'swap' | 'pools' | 'liquidity' | 'rewards';
 
@@ -95,8 +105,11 @@ export default function DexPage() {
 
             <main className="flex-1">
               {activeTab === 'swap' && (
-                <div className="flex justify-center">
-                  <SwapInterface />
+                <div className="space-y-6">
+                  <TradingViewChart tokenA="AXM" tokenB="USDC" pairName="AXM / USDC" />
+                  <div className="flex justify-center">
+                    <SwapInterface />
+                  </div>
                 </div>
               )}
               {activeTab === 'pools' && <PoolList />}
