@@ -50,6 +50,7 @@ contract AxiomLPStaking is
     struct StakePosition {
         uint256 poolId;
         uint256 amount;
+        uint256 boostedAmount;
         uint256 stakedAt;
         uint256 lockEnd;
         LockTier tier;
@@ -134,6 +135,8 @@ contract AxiomLPStaking is
             active: true
         });
 
+        activePoolIds.push(poolId);
+
         emit PoolAdded(poolId, allocPoints);
     }
 
@@ -162,6 +165,7 @@ contract AxiomLPStaking is
         if (pos.amount > 0) {
             uint256 pending = _calculatePending(poolId, msg.sender);
             pos.pendingRewards += pending;
+            poolRewards[poolId].totalBoostedStaked -= pos.boostedAmount;
         } else {
             userStakedPools[msg.sender].push(poolId);
         }
@@ -174,17 +178,19 @@ contract AxiomLPStaking is
             tier = pos.tier;
         }
 
-        uint256 boostedAmount = (amount * tierConfigs[tier].multiplier) / BASIS_POINTS;
+        uint256 newAmount = pos.amount + amount;
+        uint256 newBoostedAmount = (newAmount * tierConfigs[tier].multiplier) / BASIS_POINTS;
 
         pos.poolId = poolId;
-        pos.amount += amount;
+        pos.amount = newAmount;
+        pos.boostedAmount = newBoostedAmount;
         pos.stakedAt = block.timestamp;
         pos.lockEnd = lockEnd;
         pos.tier = tier;
-        pos.rewardDebt = (pos.amount * tierConfigs[pos.tier].multiplier / BASIS_POINTS) * poolRewards[poolId].accRewardPerShare / PRECISION;
+        pos.rewardDebt = (newBoostedAmount * poolRewards[poolId].accRewardPerShare) / PRECISION;
 
         poolRewards[poolId].totalStaked += amount;
-        poolRewards[poolId].totalBoostedStaked += boostedAmount;
+        poolRewards[poolId].totalBoostedStaked += newBoostedAmount;
 
         emit Staked(msg.sender, poolId, amount, tier, lockEnd);
     }
@@ -199,13 +205,16 @@ contract AxiomLPStaking is
         uint256 pending = _calculatePending(poolId, msg.sender) + pos.pendingRewards;
         pos.pendingRewards = 0;
 
-        uint256 boostedAmount = (amount * tierConfigs[pos.tier].multiplier) / BASIS_POINTS;
+        uint256 oldBoostedAmount = pos.boostedAmount;
+        uint256 newAmount = pos.amount - amount;
+        uint256 newBoostedAmount = (newAmount * tierConfigs[pos.tier].multiplier) / BASIS_POINTS;
 
-        pos.amount -= amount;
-        pos.rewardDebt = (pos.amount * tierConfigs[pos.tier].multiplier / BASIS_POINTS) * poolRewards[poolId].accRewardPerShare / PRECISION;
+        pos.amount = newAmount;
+        pos.boostedAmount = newBoostedAmount;
+        pos.rewardDebt = (newBoostedAmount * poolRewards[poolId].accRewardPerShare) / PRECISION;
 
         poolRewards[poolId].totalStaked -= amount;
-        poolRewards[poolId].totalBoostedStaked -= boostedAmount;
+        poolRewards[poolId].totalBoostedStaked -= (oldBoostedAmount - newBoostedAmount);
 
         if (pending > 0) {
             IERC20(rewardToken).safeTransfer(msg.sender, pending);
@@ -220,15 +229,17 @@ contract AxiomLPStaking is
         require(pos.amount > 0, "No stake");
 
         uint256 amount = pos.amount;
+        uint256 boostedAmount = pos.boostedAmount;
         uint256 penalty = 0;
 
         if (block.timestamp < pos.lockEnd) {
             penalty = (amount * 1000) / BASIS_POINTS;
         }
 
-        uint256 boostedAmount = (amount * tierConfigs[pos.tier].multiplier) / BASIS_POINTS;
+        uint256 pendingRewardsForfeited = pos.pendingRewards;
 
         pos.amount = 0;
+        pos.boostedAmount = 0;
         pos.pendingRewards = 0;
         pos.rewardDebt = 0;
         pos.lockEnd = 0;
@@ -236,7 +247,7 @@ contract AxiomLPStaking is
         poolRewards[poolId].totalStaked -= amount;
         poolRewards[poolId].totalBoostedStaked -= boostedAmount;
 
-        emit EmergencyUnstaked(msg.sender, poolId, amount, penalty);
+        emit EmergencyUnstaked(msg.sender, poolId, amount, penalty + pendingRewardsForfeited);
     }
 
     function claimRewards(uint256 poolId) external nonReentrant {
@@ -249,7 +260,7 @@ contract AxiomLPStaking is
         require(pending > 0, "No rewards");
 
         pos.pendingRewards = 0;
-        pos.rewardDebt = (pos.amount * tierConfigs[pos.tier].multiplier / BASIS_POINTS) * poolRewards[poolId].accRewardPerShare / PRECISION;
+        pos.rewardDebt = (pos.boostedAmount * poolRewards[poolId].accRewardPerShare) / PRECISION;
 
         IERC20(rewardToken).safeTransfer(msg.sender, pending);
 
@@ -270,7 +281,7 @@ contract AxiomLPStaking is
                 
                 if (pending > 0) {
                     pos.pendingRewards = 0;
-                    pos.rewardDebt = (pos.amount * tierConfigs[pos.tier].multiplier / BASIS_POINTS) * poolRewards[poolId].accRewardPerShare / PRECISION;
+                    pos.rewardDebt = (pos.boostedAmount * poolRewards[poolId].accRewardPerShare) / PRECISION;
                     totalPending += pending;
                     
                     emit RewardsClaimed(msg.sender, poolId, pending);
@@ -298,10 +309,13 @@ contract AxiomLPStaking is
         pool.lastRewardTime = block.timestamp;
     }
 
+    uint256[] public activePoolIds;
+
     function updateAllPools() public {
-        for (uint256 i = 1; i <= 100; i++) {
-            if (poolRewards[i].active) {
-                updatePool(i);
+        for (uint256 i = 0; i < activePoolIds.length; i++) {
+            uint256 poolId = activePoolIds[i];
+            if (poolRewards[poolId].active) {
+                updatePool(poolId);
             }
         }
     }
@@ -332,8 +346,7 @@ contract AxiomLPStaking is
             accRewardPerShare += (reward * PRECISION) / pool.totalBoostedStaked;
         }
 
-        uint256 boostedAmount = (pos.amount * tierConfigs[pos.tier].multiplier) / BASIS_POINTS;
-        uint256 pending = (boostedAmount * accRewardPerShare / PRECISION) - pos.rewardDebt;
+        uint256 pending = (pos.boostedAmount * accRewardPerShare / PRECISION) - pos.rewardDebt;
         
         return pending + pos.pendingRewards;
     }
@@ -356,8 +369,7 @@ contract AxiomLPStaking is
 
     function _calculatePending(uint256 poolId, address user) internal view returns (uint256) {
         StakePosition storage pos = userStakes[user][poolId];
-        uint256 boostedAmount = (pos.amount * tierConfigs[pos.tier].multiplier) / BASIS_POINTS;
-        return (boostedAmount * poolRewards[poolId].accRewardPerShare / PRECISION) - pos.rewardDebt;
+        return (pos.boostedAmount * poolRewards[poolId].accRewardPerShare / PRECISION) - pos.rewardDebt;
     }
 
     function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) {}

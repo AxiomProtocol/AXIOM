@@ -130,12 +130,16 @@ contract AxiomDEXRouter is
             uint256 poolId = IAxiomExchangeHubRouter(exchangeHub).pairToPoolId(tokenIn, tokenOut);
             require(poolId > 0, "Pool not found");
 
-            IERC20(tokenIn).approve(exchangeHub, currentAmount);
+            IERC20(tokenIn).forceApprove(exchangeHub, currentAmount);
+            
+            uint256 expectedOut = IAxiomExchangeHubRouter(exchangeHub).getAmountOut(poolId, tokenIn, currentAmount);
+            uint256 hopMinOut = (expectedOut * 9900) / 10000;
+            
             currentAmount = IAxiomExchangeHubRouter(exchangeHub).swap(
                 poolId,
                 tokenIn,
                 currentAmount,
-                0,
+                hopMinOut,
                 deadline
             );
         }
@@ -171,12 +175,16 @@ contract AxiomDEXRouter is
             address tIn = bestRoute.path[i];
             address tOut = bestRoute.path[i + 1];
             
-            IERC20(tIn).approve(exchangeHub, currentAmount);
+            IERC20(tIn).forceApprove(exchangeHub, currentAmount);
+            
+            uint256 expectedOut = IAxiomExchangeHubRouter(exchangeHub).getAmountOut(bestRoute.poolIds[i], tIn, currentAmount);
+            uint256 hopMinOut = (expectedOut * 9900) / 10000;
+            
             currentAmount = IAxiomExchangeHubRouter(exchangeHub).swap(
                 bestRoute.poolIds[i],
                 tIn,
                 currentAmount,
-                0,
+                hopMinOut,
                 deadline
             );
         }
