@@ -1,15 +1,170 @@
-import { useState } from 'react';
-import { useUserLiquidity, useDexPools } from '../../lib/hooks/useDex';
+import { useState, useEffect } from 'react';
+import { useUserLiquidity, useDexPools, DEX_V2_CONTRACTS } from '../../lib/hooks/useDex';
 import { useWallet } from '../../lib/web3/useWallet';
+import { ethers } from 'ethers';
+
+const TOKENS = [
+  { symbol: 'AXUSD', address: '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c', decimals: 18 },
+  { symbol: 'USDC', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', decimals: 6 },
+  { symbol: 'WETH', address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', decimals: 18 },
+  { symbol: 'AXM', address: '0x53e79F3a8e60eB0a6bE88B60f3c95Bc7b22C5A54', decimals: 18 },
+  { symbol: 'ARB', address: '0x912CE59144191C1204E64559FE8253a0e49E6548', decimals: 18 },
+  { symbol: 'WBTC', address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f', decimals: 8 },
+];
+
+const ERC20_ABI = [
+  'function approve(address spender, uint256 amount) external returns (bool)',
+  'function allowance(address owner, address spender) external view returns (uint256)',
+  'function balanceOf(address account) external view returns (uint256)',
+];
+
+const EXCHANGE_HUB_ABI = [
+  'function createPool(address tokenA, address tokenB, uint256 swapFee) external returns (uint256)',
+  'function addLiquidity(uint256 poolId, uint256 amountA, uint256 amountB, uint256 minLiquidity) external returns (uint256)',
+  'function removeLiquidity(uint256 poolId, uint256 liquidity, uint256 minAmountA, uint256 minAmountB) external returns (uint256, uint256)',
+  'function pools(uint256) external view returns (address tokenA, address tokenB, uint256 reserveA, uint256 reserveB, uint256 totalLiquidity, uint256 swapFee, bool isActive)',
+];
 
 export default function LiquidityManager() {
-  const { isConnected, address } = useWallet();
+  const { isConnected, address, signer } = useWallet();
   const { positions, loading: positionsLoading, refetch } = useUserLiquidity(address);
-  const { pools } = useDexPools();
-  const [activeTab, setActiveTab] = useState<'positions' | 'add'>('positions');
+  const { pools, refetch: refetchPools } = useDexPools();
+  const [activeTab, setActiveTab] = useState<'positions' | 'add' | 'create'>('positions');
   const [selectedPool, setSelectedPool] = useState<number | null>(null);
   const [amountA, setAmountA] = useState('');
   const [amountB, setAmountB] = useState('');
+  const [tokenA, setTokenA] = useState(TOKENS[0]);
+  const [tokenB, setTokenB] = useState(TOKENS[1]);
+  const [swapFee, setSwapFee] = useState('30');
+  const [isLoading, setIsLoading] = useState(false);
+  const [txStatus, setTxStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
+  const [removeAmount, setRemoveAmount] = useState('');
+  const [selectedPosition, setSelectedPosition] = useState<number | null>(null);
+
+  const getTokenSymbol = (addr: string) => {
+    const token = TOKENS.find(t => t.address.toLowerCase() === addr.toLowerCase());
+    return token?.symbol || addr.slice(0, 6) + '...';
+  };
+
+  const handleCreatePool = async () => {
+    if (!signer || !tokenA || !tokenB) return;
+    
+    try {
+      setIsLoading(true);
+      setTxStatus({ type: null, message: '' });
+
+      const exchangeHub = new ethers.Contract(
+        DEX_V2_CONTRACTS.EXCHANGE_HUB_V2,
+        EXCHANGE_HUB_ABI,
+        signer
+      );
+
+      const feeInBps = Math.floor(parseFloat(swapFee));
+      const tx = await exchangeHub.createPool(tokenA.address, tokenB.address, feeInBps);
+      
+      setTxStatus({ type: null, message: 'Creating pool... Waiting for confirmation' });
+      await tx.wait();
+      
+      setTxStatus({ type: 'success', message: `Pool ${tokenA.symbol}/${tokenB.symbol} created successfully!` });
+      refetchPools();
+      setActiveTab('add');
+    } catch (error: any) {
+      console.error('Create pool error:', error);
+      setTxStatus({ type: 'error', message: error.reason || error.message || 'Failed to create pool' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddLiquidity = async () => {
+    if (!signer || selectedPool === null || !amountA || !amountB) return;
+
+    try {
+      setIsLoading(true);
+      setTxStatus({ type: null, message: '' });
+
+      const pool = pools.find(p => p.id === selectedPool);
+      if (!pool) throw new Error('Pool not found');
+
+      const tokenAData = TOKENS.find(t => t.address.toLowerCase() === pool.tokenA.toLowerCase());
+      const tokenBData = TOKENS.find(t => t.address.toLowerCase() === pool.tokenB.toLowerCase());
+
+      const amountAWei = ethers.parseUnits(amountA, tokenAData?.decimals || 18);
+      const amountBWei = ethers.parseUnits(amountB, tokenBData?.decimals || 18);
+
+      const tokenAContract = new ethers.Contract(pool.tokenA, ERC20_ABI, signer);
+      const tokenBContract = new ethers.Contract(pool.tokenB, ERC20_ABI, signer);
+
+      setTxStatus({ type: null, message: 'Checking allowances...' });
+
+      const allowanceA = await tokenAContract.allowance(address, DEX_V2_CONTRACTS.EXCHANGE_HUB_V2);
+      if (allowanceA < amountAWei) {
+        setTxStatus({ type: null, message: `Approving ${tokenAData?.symbol || 'Token A'}...` });
+        const approveTxA = await tokenAContract.approve(DEX_V2_CONTRACTS.EXCHANGE_HUB_V2, ethers.MaxUint256);
+        await approveTxA.wait();
+      }
+
+      const allowanceB = await tokenBContract.allowance(address, DEX_V2_CONTRACTS.EXCHANGE_HUB_V2);
+      if (allowanceB < amountBWei) {
+        setTxStatus({ type: null, message: `Approving ${tokenBData?.symbol || 'Token B'}...` });
+        const approveTxB = await tokenBContract.approve(DEX_V2_CONTRACTS.EXCHANGE_HUB_V2, ethers.MaxUint256);
+        await approveTxB.wait();
+      }
+
+      const exchangeHub = new ethers.Contract(
+        DEX_V2_CONTRACTS.EXCHANGE_HUB_V2,
+        EXCHANGE_HUB_ABI,
+        signer
+      );
+
+      setTxStatus({ type: null, message: 'Adding liquidity...' });
+      const tx = await exchangeHub.addLiquidity(selectedPool, amountAWei, amountBWei, 0);
+      await tx.wait();
+
+      setTxStatus({ type: 'success', message: 'Liquidity added successfully!' });
+      setAmountA('');
+      setAmountB('');
+      refetch();
+      refetchPools();
+    } catch (error: any) {
+      console.error('Add liquidity error:', error);
+      setTxStatus({ type: 'error', message: error.reason || error.message || 'Failed to add liquidity' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRemoveLiquidity = async (poolId: number, liquidity: string) => {
+    if (!signer) return;
+
+    try {
+      setIsLoading(true);
+      setTxStatus({ type: null, message: '' });
+
+      const liquidityWei = ethers.parseEther(liquidity);
+
+      const exchangeHub = new ethers.Contract(
+        DEX_V2_CONTRACTS.EXCHANGE_HUB_V2,
+        EXCHANGE_HUB_ABI,
+        signer
+      );
+
+      setTxStatus({ type: null, message: 'Removing liquidity...' });
+      const tx = await exchangeHub.removeLiquidity(poolId, liquidityWei, 0, 0);
+      await tx.wait();
+
+      setTxStatus({ type: 'success', message: 'Liquidity removed successfully!' });
+      setSelectedPosition(null);
+      setRemoveAmount('');
+      refetch();
+      refetchPools();
+    } catch (error: any) {
+      console.error('Remove liquidity error:', error);
+      setTxStatus({ type: 'error', message: error.reason || error.message || 'Failed to remove liquidity' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (!isConnected) {
     return (
@@ -27,10 +182,10 @@ export default function LiquidityManager() {
 
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
-      <div className="flex border-b border-gray-700">
+      <div className="flex border-b border-gray-700 overflow-x-auto">
         <button
           onClick={() => setActiveTab('positions')}
-          className={`flex-1 py-4 px-6 text-sm font-semibold transition-colors ${
+          className={`flex-1 py-4 px-4 sm:px-6 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
             activeTab === 'positions'
               ? 'text-yellow-400 border-b-2 border-yellow-400 bg-gray-900/30'
               : 'text-gray-400 hover:text-white'
@@ -40,7 +195,7 @@ export default function LiquidityManager() {
         </button>
         <button
           onClick={() => setActiveTab('add')}
-          className={`flex-1 py-4 px-6 text-sm font-semibold transition-colors ${
+          className={`flex-1 py-4 px-4 sm:px-6 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
             activeTab === 'add'
               ? 'text-yellow-400 border-b-2 border-yellow-400 bg-gray-900/30'
               : 'text-gray-400 hover:text-white'
@@ -48,7 +203,25 @@ export default function LiquidityManager() {
         >
           Add Liquidity
         </button>
+        <button
+          onClick={() => setActiveTab('create')}
+          className={`flex-1 py-4 px-4 sm:px-6 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
+            activeTab === 'create'
+              ? 'text-yellow-400 border-b-2 border-yellow-400 bg-gray-900/30'
+              : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          Create Pool
+        </button>
       </div>
+
+      {txStatus.type && (
+        <div className={`mx-6 mt-4 p-3 rounded-lg text-sm ${
+          txStatus.type === 'success' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+        }`}>
+          {txStatus.message}
+        </div>
+      )}
 
       <div className="p-6">
         {activeTab === 'positions' && (
@@ -75,35 +248,77 @@ export default function LiquidityManager() {
               </div>
             ) : (
               <div className="space-y-3">
-                {positions.map((pos) => (
-                  <div
-                    key={pos.poolId}
-                    className="flex items-center justify-between p-4 bg-gray-900/50 rounded-xl"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex -space-x-2">
-                        <div className="w-8 h-8 bg-yellow-500/20 border-2 border-gray-700 rounded-full flex items-center justify-center">
-                          <span className="text-xs font-bold text-yellow-400">A</span>
+                {positions.map((pos) => {
+                  const pool = pools.find(p => p.id === pos.poolId);
+                  return (
+                    <div
+                      key={pos.poolId}
+                      className="p-4 bg-gray-900/50 rounded-xl"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex -space-x-2">
+                            <div className="w-8 h-8 bg-yellow-500/20 border-2 border-gray-700 rounded-full flex items-center justify-center">
+                              <span className="text-xs font-bold text-yellow-400">
+                                {pool ? getTokenSymbol(pool.tokenA).charAt(0) : 'A'}
+                              </span>
+                            </div>
+                            <div className="w-8 h-8 bg-blue-500/20 border-2 border-gray-700 rounded-full flex items-center justify-center">
+                              <span className="text-xs font-bold text-blue-400">
+                                {pool ? getTokenSymbol(pool.tokenB).charAt(0) : 'B'}
+                              </span>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-white">
+                              {pool ? `${getTokenSymbol(pool.tokenA)} / ${getTokenSymbol(pool.tokenB)}` : `Pool #${pos.poolId}`}
+                            </div>
+                            <div className="text-xs text-gray-400">{pos.sharePercent.toFixed(4)}% share</div>
+                          </div>
                         </div>
-                        <div className="w-8 h-8 bg-blue-500/20 border-2 border-gray-700 rounded-full flex items-center justify-center">
-                          <span className="text-xs font-bold text-blue-400">B</span>
+                        <div className="text-right">
+                          <div className="text-sm font-semibold text-yellow-400">
+                            {parseFloat(pos.liquidity).toFixed(4)} LP
+                          </div>
+                          {selectedPosition === pos.poolId ? (
+                            <div className="flex items-center gap-2 mt-2">
+                              <input
+                                type="number"
+                                value={removeAmount}
+                                onChange={(e) => setRemoveAmount(e.target.value)}
+                                placeholder="Amount"
+                                className="w-20 px-2 py-1 text-xs bg-gray-800 border border-gray-600 rounded text-white"
+                              />
+                              <button
+                                onClick={() => handleRemoveLiquidity(pos.poolId, removeAmount || pos.liquidity)}
+                                disabled={isLoading}
+                                className="text-xs px-2 py-1 bg-red-500 hover:bg-red-400 text-white rounded transition-colors disabled:opacity-50"
+                              >
+                                {isLoading ? '...' : 'Remove'}
+                              </button>
+                              <button
+                                onClick={() => setSelectedPosition(null)}
+                                className="text-xs text-gray-400 hover:text-white"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setSelectedPosition(pos.poolId);
+                                setRemoveAmount(pos.liquidity);
+                              }}
+                              className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                            >
+                              Remove
+                            </button>
+                          )}
                         </div>
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium text-white">Pool #{pos.poolId}</div>
-                        <div className="text-xs text-gray-400">{pos.sharePercent.toFixed(4)}% share</div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-semibold text-yellow-400">
-                        {parseFloat(pos.liquidity).toFixed(4)} LP
-                      </div>
-                      <button className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -121,43 +336,134 @@ export default function LiquidityManager() {
                 <option value="">Choose a pool...</option>
                 {pools.map((pool) => (
                   <option key={pool.id} value={pool.id}>
-                    Pool #{pool.id}
+                    {getTokenSymbol(pool.tokenA)} / {getTokenSymbol(pool.tokenB)} (Pool #{pool.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedPool && pools.find(p => p.id === selectedPool) && (
+              <>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    {getTokenSymbol(pools.find(p => p.id === selectedPool)!.tokenA)} Amount
+                  </label>
+                  <input
+                    type="number"
+                    value={amountA}
+                    onChange={(e) => setAmountA(e.target.value)}
+                    placeholder="0.0"
+                    className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    {getTokenSymbol(pools.find(p => p.id === selectedPool)!.tokenB)} Amount
+                  </label>
+                  <input
+                    type="number"
+                    value={amountB}
+                    onChange={(e) => setAmountB(e.target.value)}
+                    placeholder="0.0"
+                    className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500"
+                  />
+                </div>
+              </>
+            )}
+
+            {txStatus.message && !txStatus.type && (
+              <div className="text-center text-sm text-yellow-400">{txStatus.message}</div>
+            )}
+
+            <button
+              onClick={handleAddLiquidity}
+              disabled={!selectedPool || !amountA || !amountB || isLoading}
+              className={`w-full py-4 rounded-xl font-bold transition-all ${
+                selectedPool && amountA && amountB && !isLoading
+                  ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-gray-900 hover:from-yellow-400 hover:to-yellow-500'
+                  : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              {isLoading ? 'Processing...' : 'Add Liquidity'}
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'create' && (
+          <div className="space-y-4">
+            <div className="bg-gray-900/50 p-4 rounded-xl mb-4">
+              <p className="text-sm text-gray-400">
+                Create a new liquidity pool for any token pair. You'll need to add initial liquidity after creating the pool.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">Token A</label>
+              <select
+                value={tokenA.address}
+                onChange={(e) => setTokenA(TOKENS.find(t => t.address === e.target.value) || TOKENS[0])}
+                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:outline-none focus:border-yellow-500"
+              >
+                {TOKENS.map((token) => (
+                  <option key={token.address} value={token.address}>
+                    {token.symbol}
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Token A Amount</label>
-              <input
-                type="number"
-                value={amountA}
-                onChange={(e) => setAmountA(e.target.value)}
-                placeholder="0.0"
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500"
-              />
+              <label className="block text-sm text-gray-400 mb-2">Token B</label>
+              <select
+                value={tokenB.address}
+                onChange={(e) => setTokenB(TOKENS.find(t => t.address === e.target.value) || TOKENS[1])}
+                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:outline-none focus:border-yellow-500"
+              >
+                {TOKENS.filter(t => t.address !== tokenA.address).map((token) => (
+                  <option key={token.address} value={token.address}>
+                    {token.symbol}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Token B Amount</label>
-              <input
-                type="number"
-                value={amountB}
-                onChange={(e) => setAmountB(e.target.value)}
-                placeholder="0.0"
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500"
-              />
+              <label className="block text-sm text-gray-400 mb-2">Swap Fee (basis points)</label>
+              <div className="flex gap-2">
+                {['10', '30', '50', '100'].map((fee) => (
+                  <button
+                    key={fee}
+                    onClick={() => setSwapFee(fee)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      swapFee === fee
+                        ? 'bg-yellow-500 text-black'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    {(parseFloat(fee) / 100).toFixed(2)}%
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Fee charged on each swap. 30 bps = 0.30%
+              </p>
             </div>
 
+            {txStatus.message && !txStatus.type && (
+              <div className="text-center text-sm text-yellow-400">{txStatus.message}</div>
+            )}
+
             <button
-              disabled={!selectedPool || !amountA || !amountB}
+              onClick={handleCreatePool}
+              disabled={tokenA.address === tokenB.address || isLoading}
               className={`w-full py-4 rounded-xl font-bold transition-all ${
-                selectedPool && amountA && amountB
+                tokenA.address !== tokenB.address && !isLoading
                   ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-gray-900 hover:from-yellow-400 hover:to-yellow-500'
                   : 'bg-gray-700 text-gray-400 cursor-not-allowed'
               }`}
             >
-              Add Liquidity
+              {isLoading ? 'Creating Pool...' : `Create ${tokenA.symbol}/${tokenB.symbol} Pool`}
             </button>
           </div>
         )}
