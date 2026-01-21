@@ -68,6 +68,7 @@ function matchesRebuildNavPages(pathname) {
   if (pathname.startsWith('/academy/')) return true;
   if (pathname.startsWith('/dscr/')) return true;
   if (pathname.startsWith('/admin/loan-tape')) return true;
+  if (pathname.startsWith('/dex/')) return true;
   if (pathname.startsWith('/axiom-nexus')) return true;
   if (pathname.startsWith('/transparency')) return true;
   if (pathname.startsWith('/treasury')) return true;
