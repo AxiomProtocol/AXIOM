@@ -1030,624 +1030,10 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/AxiomExchangeHubV2.sol:AxiomExchangeHubV2": {
-        "src": "contracts-dex/AxiomExchangeHubV2.sol:17",
+      "contracts-dex/AxiomDEXAnalytics.sol:AxiomDEXAnalytics": {
+        "src": "contracts-dex/AxiomDEXAnalytics.sol:28",
         "version": {
-          "withMetadata": "fd5f15837d100616db831179be3240a58ea65723198280efa55023e1c4462865",
-          "withoutMetadata": "b878ee6ea0604459c753e370e600841957f51284f55327f6d5988afc023a3cdf",
-          "linkedWithoutMetadata": "b878ee6ea0604459c753e370e600841957f51284f55327f6d5988afc023a3cdf"
-        },
-        "inherit": [
-          "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:UUPSUpgradeable",
-          "@openzeppelin/contracts/interfaces/draft-IERC1822.sol:IERC1822Proxiable",
-          "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:PausableUpgradeable",
-          "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:ReentrancyGuardUpgradeable",
-          "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:AccessControlUpgradeable",
-          "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol:ERC165Upgradeable",
-          "@openzeppelin/contracts/utils/introspection/IERC165.sol:IERC165",
-          "@openzeppelin/contracts/access/IAccessControl.sol:IAccessControl",
-          "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:ContextUpgradeable",
-          "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:Initializable"
-        ],
-        "libraries": [
-          "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol:SafeERC20"
-        ],
-        "methods": [
-          "()",
-          "initialize(address,address,uint256)",
-          "createPool(address,address,uint256,uint256)",
-          "addLiquidity(uint256,uint256,uint256,uint256,uint256)",
-          "removeLiquidity(uint256,uint256,uint256,uint256,uint256)",
-          "emergencyWithdraw(uint256)",
-          "swap(uint256,address,uint256,uint256,uint256)",
-          "scheduleTimelock(uint8,bytes)",
-          "executeTimelock(uint256)",
-          "cancelTimelock(uint256)",
-          "collectPoolFees(uint256)",
-          "pause()",
-          "unpause()",
-          "getPoolCore(uint256)",
-          "getPoolMeta(uint256)",
-          "getUserLiquidity(uint256,address)",
-          "getSwap(uint256)",
-          "getTimelockOp(uint256)",
-          "getAmountOut(uint256,address,uint256)",
-          "getEffectiveFee(uint256)"
-        ],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [
-            {
-              "label": "treasurySafe",
-              "offset": 0,
-              "slot": "0",
-              "type": "t_address",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:42"
-            },
-            {
-              "label": "backupAdmin",
-              "offset": 0,
-              "slot": "1",
-              "type": "t_address",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:43"
-            },
-            {
-              "label": "swapFee",
-              "offset": 0,
-              "slot": "2",
-              "type": "t_uint256",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:44"
-            },
-            {
-              "label": "totalPools",
-              "offset": 0,
-              "slot": "3",
-              "type": "t_uint256",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:45"
-            },
-            {
-              "label": "totalSwaps",
-              "offset": 0,
-              "slot": "4",
-              "type": "t_uint256",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:46"
-            },
-            {
-              "label": "timelockNonce",
-              "offset": 0,
-              "slot": "5",
-              "type": "t_uint256",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:47"
-            },
-            {
-              "label": "maxSwapPerBlock",
-              "offset": 0,
-              "slot": "6",
-              "type": "t_uint256",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:48"
-            },
-            {
-              "label": "blockSwapVolume",
-              "offset": 0,
-              "slot": "7",
-              "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:50"
-            },
-            {
-              "label": "bannedTokens",
-              "offset": 0,
-              "slot": "8",
-              "type": "t_mapping(t_address,t_bool)",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:51"
-            },
-            {
-              "label": "timelockQueue",
-              "offset": 0,
-              "slot": "9",
-              "type": "t_mapping(t_uint256,t_struct(TimelockOp)3476_storage)",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:60"
-            },
-            {
-              "label": "withdrawTracking",
-              "offset": 0,
-              "slot": "10",
-              "type": "t_mapping(t_uint256,t_mapping(t_address,t_struct(WithdrawWindow)3488_storage))",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:67"
-            },
-            {
-              "label": "poolCore",
-              "offset": 0,
-              "slot": "11",
-              "type": "t_mapping(t_uint256,t_struct(PoolCore)3510_storage)",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:86"
-            },
-            {
-              "label": "poolMeta",
-              "offset": 0,
-              "slot": "12",
-              "type": "t_mapping(t_uint256,t_struct(PoolMeta)3519_storage)",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:87"
-            },
-            {
-              "label": "pairToPoolId",
-              "offset": 0,
-              "slot": "13",
-              "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:88"
-            },
-            {
-              "label": "liquidityBalances",
-              "offset": 0,
-              "slot": "14",
-              "type": "t_mapping(t_uint256,t_mapping(t_address,t_uint256))",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:89"
-            },
-            {
-              "label": "poolFeeReserveA",
-              "offset": 0,
-              "slot": "15",
-              "type": "t_mapping(t_uint256,t_uint256)",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:90"
-            },
-            {
-              "label": "poolFeeReserveB",
-              "offset": 0,
-              "slot": "16",
-              "type": "t_mapping(t_uint256,t_uint256)",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:91"
-            },
-            {
-              "label": "swaps",
-              "offset": 0,
-              "slot": "17",
-              "type": "t_mapping(t_uint256,t_struct(SwapRec)3566_storage)",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:103"
-            },
-            {
-              "label": "__gap",
-              "offset": 0,
-              "slot": "18",
-              "type": "t_array(t_uint256)40_storage",
-              "contract": "AxiomExchangeHubV2",
-              "src": "contracts-dex/AxiomExchangeHubV2.sol:532"
-            }
-          ],
-          "types": {
-            "t_address": {
-              "label": "address",
-              "numberOfBytes": "20"
-            },
-            "t_bool": {
-              "label": "bool",
-              "numberOfBytes": "1"
-            },
-            "t_bytes32": {
-              "label": "bytes32",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_address,t_bool)": {
-              "label": "mapping(address => bool)",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_bytes32,t_struct(RoleData)26_storage)": {
-              "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
-              "numberOfBytes": "32"
-            },
-            "t_struct(AccessControlStorage)36_storage": {
-              "label": "struct AccessControlUpgradeable.AccessControlStorage",
-              "members": [
-                {
-                  "label": "_roles",
-                  "type": "t_mapping(t_bytes32,t_struct(RoleData)26_storage)",
-                  "offset": 0,
-                  "slot": "0"
-                }
-              ],
-              "numberOfBytes": "32"
-            },
-            "t_struct(InitializableStorage)147_storage": {
-              "label": "struct Initializable.InitializableStorage",
-              "members": [
-                {
-                  "label": "_initialized",
-                  "type": "t_uint64",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "_initializing",
-                  "type": "t_bool",
-                  "offset": 8,
-                  "slot": "0"
-                }
-              ],
-              "numberOfBytes": "32"
-            },
-            "t_struct(PausableStorage)298_storage": {
-              "label": "struct PausableUpgradeable.PausableStorage",
-              "members": [
-                {
-                  "label": "_paused",
-                  "type": "t_bool",
-                  "offset": 0,
-                  "slot": "0"
-                }
-              ],
-              "numberOfBytes": "32"
-            },
-            "t_struct(ReentrancyGuardStorage)362_storage": {
-              "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
-              "members": [
-                {
-                  "label": "_status",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "0"
-                }
-              ],
-              "numberOfBytes": "32"
-            },
-            "t_struct(RoleData)26_storage": {
-              "label": "struct AccessControlUpgradeable.RoleData",
-              "members": [
-                {
-                  "label": "hasRole",
-                  "type": "t_mapping(t_address,t_bool)",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "adminRole",
-                  "type": "t_bytes32",
-                  "offset": 0,
-                  "slot": "1"
-                }
-              ],
-              "numberOfBytes": "64"
-            },
-            "t_uint256": {
-              "label": "uint256",
-              "numberOfBytes": "32"
-            },
-            "t_uint64": {
-              "label": "uint64",
-              "numberOfBytes": "8"
-            },
-            "t_array(t_uint256)40_storage": {
-              "label": "uint256[40]",
-              "numberOfBytes": "1280"
-            },
-            "t_bytes_storage": {
-              "label": "bytes",
-              "numberOfBytes": "32"
-            },
-            "t_enum(TimelockOpType)3440": {
-              "label": "enum AxiomExchangeHubV2.TimelockOpType",
-              "members": [
-                "UPDATE_SWAP_FEE",
-                "UPDATE_POOL_FEE",
-                "BAN_TOKEN",
-                "UPDATE_MAX_SWAP",
-                "UPDATE_BACKUP",
-                "SET_POOL_ACTIVE"
-              ],
-              "numberOfBytes": "1"
-            },
-            "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
-              "label": "mapping(address => mapping(address => uint256))",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_address,t_struct(WithdrawWindow)3488_storage)": {
-              "label": "mapping(address => struct AxiomExchangeHubV2.WithdrawWindow)",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_address,t_uint256)": {
-              "label": "mapping(address => uint256)",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_uint256,t_mapping(t_address,t_struct(WithdrawWindow)3488_storage))": {
-              "label": "mapping(uint256 => mapping(address => struct AxiomExchangeHubV2.WithdrawWindow))",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_uint256,t_mapping(t_address,t_uint256))": {
-              "label": "mapping(uint256 => mapping(address => uint256))",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))": {
-              "label": "mapping(uint256 => mapping(uint256 => uint256))",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_uint256,t_struct(PoolCore)3510_storage)": {
-              "label": "mapping(uint256 => struct AxiomExchangeHubV2.PoolCore)",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_uint256,t_struct(PoolMeta)3519_storage)": {
-              "label": "mapping(uint256 => struct AxiomExchangeHubV2.PoolMeta)",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_uint256,t_struct(SwapRec)3566_storage)": {
-              "label": "mapping(uint256 => struct AxiomExchangeHubV2.SwapRec)",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_uint256,t_struct(TimelockOp)3476_storage)": {
-              "label": "mapping(uint256 => struct AxiomExchangeHubV2.TimelockOp)",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_uint256,t_uint256)": {
-              "label": "mapping(uint256 => uint256)",
-              "numberOfBytes": "32"
-            },
-            "t_struct(PoolCore)3510_storage": {
-              "label": "struct AxiomExchangeHubV2.PoolCore",
-              "members": [
-                {
-                  "label": "tokenA",
-                  "type": "t_address",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "tokenB",
-                  "type": "t_address",
-                  "offset": 0,
-                  "slot": "1"
-                },
-                {
-                  "label": "reserveA",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "2"
-                },
-                {
-                  "label": "reserveB",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "3"
-                },
-                {
-                  "label": "totalLiquidity",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "4"
-                },
-                {
-                  "label": "lockedLiquidity",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "5"
-                },
-                {
-                  "label": "isActive",
-                  "type": "t_bool",
-                  "offset": 0,
-                  "slot": "6"
-                }
-              ],
-              "numberOfBytes": "224"
-            },
-            "t_struct(PoolMeta)3519_storage": {
-              "label": "struct AxiomExchangeHubV2.PoolMeta",
-              "members": [
-                {
-                  "label": "createdAt",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "totalVolume",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "1"
-                },
-                {
-                  "label": "totalFees",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "2"
-                },
-                {
-                  "label": "poolFee",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "3"
-                }
-              ],
-              "numberOfBytes": "128"
-            },
-            "t_struct(SwapRec)3566_storage": {
-              "label": "struct AxiomExchangeHubV2.SwapRec",
-              "members": [
-                {
-                  "label": "poolId",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "trader",
-                  "type": "t_address",
-                  "offset": 0,
-                  "slot": "1"
-                },
-                {
-                  "label": "tokenIn",
-                  "type": "t_address",
-                  "offset": 0,
-                  "slot": "2"
-                },
-                {
-                  "label": "tokenOut",
-                  "type": "t_address",
-                  "offset": 0,
-                  "slot": "3"
-                },
-                {
-                  "label": "amountIn",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "4"
-                },
-                {
-                  "label": "amountOut",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "5"
-                },
-                {
-                  "label": "fee",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "6"
-                },
-                {
-                  "label": "timestamp",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "7"
-                }
-              ],
-              "numberOfBytes": "256"
-            },
-            "t_struct(TimelockOp)3476_storage": {
-              "label": "struct AxiomExchangeHubV2.TimelockOp",
-              "members": [
-                {
-                  "label": "opType",
-                  "type": "t_enum(TimelockOpType)3440",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "params",
-                  "type": "t_bytes_storage",
-                  "offset": 0,
-                  "slot": "1"
-                },
-                {
-                  "label": "executeAfter",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "2"
-                },
-                {
-                  "label": "executed",
-                  "type": "t_bool",
-                  "offset": 0,
-                  "slot": "3"
-                },
-                {
-                  "label": "cancelled",
-                  "type": "t_bool",
-                  "offset": 1,
-                  "slot": "3"
-                }
-              ],
-              "numberOfBytes": "128"
-            },
-            "t_struct(WithdrawWindow)3488_storage": {
-              "label": "struct AxiomExchangeHubV2.WithdrawWindow",
-              "members": [
-                {
-                  "label": "windowStart",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "cumWithdrawn",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "1"
-                },
-                {
-                  "label": "poolLiqAtStart",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "2"
-                }
-              ],
-              "numberOfBytes": "96"
-            }
-          },
-          "layoutVersion": "1.2",
-          "flat": true,
-          "namespaces": {
-            "erc7201:openzeppelin.storage.Pausable": [
-              {
-                "contract": "PausableUpgradeable",
-                "label": "_paused",
-                "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:21",
-                "offset": 0,
-                "slot": "0"
-              }
-            ],
-            "erc7201:openzeppelin.storage.ReentrancyGuard": [
-              {
-                "contract": "ReentrancyGuardUpgradeable",
-                "label": "_status",
-                "type": "t_uint256",
-                "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
-                "offset": 0,
-                "slot": "0"
-              }
-            ],
-            "erc7201:openzeppelin.storage.AccessControl": [
-              {
-                "contract": "AccessControlUpgradeable",
-                "label": "_roles",
-                "type": "t_mapping(t_bytes32,t_struct(RoleData)26_storage)",
-                "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:62",
-                "offset": 0,
-                "slot": "0"
-              }
-            ],
-            "erc7201:openzeppelin.storage.Initializable": [
-              {
-                "contract": "Initializable",
-                "label": "_initialized",
-                "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "contract": "Initializable",
-                "label": "_initializing",
-                "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
-                "offset": 8,
-                "slot": "0"
-              }
-            ]
-          }
-        },
-        "solcVersion": "0.8.24"
-      },
-      "contracts-dex/dex/AxiomDEXAnalytics.sol:AxiomDEXAnalytics": {
-        "src": "contracts-dex/dex/AxiomDEXAnalytics.sol:28",
-        "version": {
-          "withMetadata": "d34cc6df2cd317e993e2c6f6a0e55dc4aa94a41dcce2e63321469a77aaf7bde5",
+          "withMetadata": "1b2228ee83ea6890ed8da0ce337b1d055718d8b576ef67278bd3b025bff288d4",
           "withoutMetadata": "4a2d43117cbd98d47da6e268ed30723ec55dad64001c5beba9373469f50649e6",
           "linkedWithoutMetadata": "4a2d43117cbd98d47da6e268ed30723ec55dad64001c5beba9373469f50649e6"
         },
@@ -1689,7 +1075,7 @@
               "slot": "0",
               "type": "t_address",
               "contract": "AxiomDEXAnalytics",
-              "src": "contracts-dex/dex/AxiomDEXAnalytics.sol:78"
+              "src": "contracts-dex/AxiomDEXAnalytics.sol:78"
             },
             {
               "label": "treasurySafe",
@@ -1697,7 +1083,7 @@
               "slot": "1",
               "type": "t_address",
               "contract": "AxiomDEXAnalytics",
-              "src": "contracts-dex/dex/AxiomDEXAnalytics.sol:79"
+              "src": "contracts-dex/AxiomDEXAnalytics.sol:79"
             },
             {
               "label": "tokenPrices",
@@ -1705,23 +1091,23 @@
               "slot": "2",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "AxiomDEXAnalytics",
-              "src": "contracts-dex/dex/AxiomDEXAnalytics.sol:81"
+              "src": "contracts-dex/AxiomDEXAnalytics.sol:81"
             },
             {
               "label": "dailySnapshots",
               "offset": 0,
               "slot": "3",
-              "type": "t_mapping(t_uint256,t_array(t_struct(DailySnapshot)6343_storage)dyn_storage)",
+              "type": "t_mapping(t_uint256,t_array(t_struct(DailySnapshot)3465_storage)dyn_storage)",
               "contract": "AxiomDEXAnalytics",
-              "src": "contracts-dex/dex/AxiomDEXAnalytics.sol:82"
+              "src": "contracts-dex/AxiomDEXAnalytics.sol:82"
             },
             {
               "label": "poolSnapshots",
               "offset": 0,
               "slot": "4",
-              "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_array(t_struct(PoolSnapshot)6358_storage)dyn_storage))",
+              "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_array(t_struct(PoolSnapshot)3480_storage)dyn_storage))",
               "contract": "AxiomDEXAnalytics",
-              "src": "contracts-dex/dex/AxiomDEXAnalytics.sol:83"
+              "src": "contracts-dex/AxiomDEXAnalytics.sol:83"
             },
             {
               "label": "lastGlobalSnapshotTime",
@@ -1729,7 +1115,7 @@
               "slot": "5",
               "type": "t_uint256",
               "contract": "AxiomDEXAnalytics",
-              "src": "contracts-dex/dex/AxiomDEXAnalytics.sol:85"
+              "src": "contracts-dex/AxiomDEXAnalytics.sol:85"
             },
             {
               "label": "snapshotInterval",
@@ -1737,7 +1123,7 @@
               "slot": "6",
               "type": "t_uint256",
               "contract": "AxiomDEXAnalytics",
-              "src": "contracts-dex/dex/AxiomDEXAnalytics.sol:86"
+              "src": "contracts-dex/AxiomDEXAnalytics.sol:86"
             },
             {
               "label": "totalHistoricalVolume",
@@ -1745,7 +1131,7 @@
               "slot": "7",
               "type": "t_uint256",
               "contract": "AxiomDEXAnalytics",
-              "src": "contracts-dex/dex/AxiomDEXAnalytics.sol:88"
+              "src": "contracts-dex/AxiomDEXAnalytics.sol:88"
             },
             {
               "label": "totalHistoricalFees",
@@ -1753,7 +1139,7 @@
               "slot": "8",
               "type": "t_uint256",
               "contract": "AxiomDEXAnalytics",
-              "src": "contracts-dex/dex/AxiomDEXAnalytics.sol:89"
+              "src": "contracts-dex/AxiomDEXAnalytics.sol:89"
             },
             {
               "label": "poolVolumeLast24h",
@@ -1761,7 +1147,7 @@
               "slot": "9",
               "type": "t_mapping(t_uint256,t_uint256)",
               "contract": "AxiomDEXAnalytics",
-              "src": "contracts-dex/dex/AxiomDEXAnalytics.sol:91"
+              "src": "contracts-dex/AxiomDEXAnalytics.sol:91"
             },
             {
               "label": "poolFeesLast24h",
@@ -1769,7 +1155,7 @@
               "slot": "10",
               "type": "t_mapping(t_uint256,t_uint256)",
               "contract": "AxiomDEXAnalytics",
-              "src": "contracts-dex/dex/AxiomDEXAnalytics.sol:92"
+              "src": "contracts-dex/AxiomDEXAnalytics.sol:92"
             },
             {
               "label": "poolLastVolumeUpdate",
@@ -1777,7 +1163,7 @@
               "slot": "11",
               "type": "t_mapping(t_uint256,t_uint256)",
               "contract": "AxiomDEXAnalytics",
-              "src": "contracts-dex/dex/AxiomDEXAnalytics.sol:93"
+              "src": "contracts-dex/AxiomDEXAnalytics.sol:93"
             },
             {
               "label": "__gap",
@@ -1785,7 +1171,7 @@
               "slot": "12",
               "type": "t_array(t_uint256)40_storage",
               "contract": "AxiomDEXAnalytics",
-              "src": "contracts-dex/dex/AxiomDEXAnalytics.sol:320"
+              "src": "contracts-dex/AxiomDEXAnalytics.sol:320"
             }
           ],
           "types": {
@@ -1861,11 +1247,11 @@
               "label": "uint64",
               "numberOfBytes": "8"
             },
-            "t_array(t_struct(DailySnapshot)6343_storage)dyn_storage": {
+            "t_array(t_struct(DailySnapshot)3465_storage)dyn_storage": {
               "label": "struct AxiomDEXAnalytics.DailySnapshot[]",
               "numberOfBytes": "32"
             },
-            "t_array(t_struct(PoolSnapshot)6358_storage)dyn_storage": {
+            "t_array(t_struct(PoolSnapshot)3480_storage)dyn_storage": {
               "label": "struct AxiomDEXAnalytics.PoolSnapshot[]",
               "numberOfBytes": "32"
             },
@@ -1877,15 +1263,15 @@
               "label": "mapping(address => uint256)",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_uint256,t_array(t_struct(DailySnapshot)6343_storage)dyn_storage)": {
+            "t_mapping(t_uint256,t_array(t_struct(DailySnapshot)3465_storage)dyn_storage)": {
               "label": "mapping(uint256 => struct AxiomDEXAnalytics.DailySnapshot[])",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_uint256,t_array(t_struct(PoolSnapshot)6358_storage)dyn_storage)": {
+            "t_mapping(t_uint256,t_array(t_struct(PoolSnapshot)3480_storage)dyn_storage)": {
               "label": "mapping(uint256 => struct AxiomDEXAnalytics.PoolSnapshot[])",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_uint256,t_mapping(t_uint256,t_array(t_struct(PoolSnapshot)6358_storage)dyn_storage))": {
+            "t_mapping(t_uint256,t_mapping(t_uint256,t_array(t_struct(PoolSnapshot)3480_storage)dyn_storage))": {
               "label": "mapping(uint256 => mapping(uint256 => struct AxiomDEXAnalytics.PoolSnapshot[]))",
               "numberOfBytes": "32"
             },
@@ -1893,7 +1279,7 @@
               "label": "mapping(uint256 => uint256)",
               "numberOfBytes": "32"
             },
-            "t_struct(DailySnapshot)6343_storage": {
+            "t_struct(DailySnapshot)3465_storage": {
               "label": "struct AxiomDEXAnalytics.DailySnapshot",
               "members": [
                 {
@@ -1935,7 +1321,7 @@
               ],
               "numberOfBytes": "192"
             },
-            "t_struct(PoolSnapshot)6358_storage": {
+            "t_struct(PoolSnapshot)3480_storage": {
               "label": "struct AxiomDEXAnalytics.PoolSnapshot",
               "members": [
                 {
@@ -2023,8 +1409,8 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomDEXAnalytics.sol:IAxiomExchangeHubAnalytics": {
-        "src": "contracts-dex/dex/AxiomDEXAnalytics.sol:8",
+      "contracts-dex/AxiomDEXAnalytics.sol:IAxiomExchangeHubAnalytics": {
+        "src": "contracts-dex/AxiomDEXAnalytics.sol:8",
         "inherit": [],
         "libraries": [],
         "methods": [
@@ -2046,10 +1432,10 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomDEXGovernor.sol:AxiomDEXGovernor": {
-        "src": "contracts-dex/dex/AxiomDEXGovernor.sol:25",
+      "contracts-dex/AxiomDEXGovernor.sol:AxiomDEXGovernor": {
+        "src": "contracts-dex/AxiomDEXGovernor.sol:25",
         "version": {
-          "withMetadata": "692b46c84fecb6a8c1752f086bde74796eeb09e5e04ec28d377be6360161652b",
+          "withMetadata": "2162947937b81bb8dad4b4b46bfd261922801a5b78997389dfd01c10e52b4fe9",
           "withoutMetadata": "e4e76e571d9a2a1b64611562277a8220e8a31bf25022b6b520228de5a82f1135",
           "linkedWithoutMetadata": "e4e76e571d9a2a1b64611562277a8220e8a31bf25022b6b520228de5a82f1135"
         },
@@ -2096,7 +1482,7 @@
               "slot": "0",
               "type": "t_address",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:65"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:65"
             },
             {
               "label": "exchangeHub",
@@ -2104,7 +1490,7 @@
               "slot": "1",
               "type": "t_address",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:66"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:66"
             },
             {
               "label": "treasurySafe",
@@ -2112,7 +1498,7 @@
               "slot": "2",
               "type": "t_address",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:67"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:67"
             },
             {
               "label": "proposalThreshold",
@@ -2120,7 +1506,7 @@
               "slot": "3",
               "type": "t_uint256",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:69"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:69"
             },
             {
               "label": "votingPeriod",
@@ -2128,7 +1514,7 @@
               "slot": "4",
               "type": "t_uint256",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:70"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:70"
             },
             {
               "label": "executionDelay",
@@ -2136,7 +1522,7 @@
               "slot": "5",
               "type": "t_uint256",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:71"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:71"
             },
             {
               "label": "quorumPercentage",
@@ -2144,7 +1530,7 @@
               "slot": "6",
               "type": "t_uint256",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:72"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:72"
             },
             {
               "label": "nextProposalId",
@@ -2152,7 +1538,7 @@
               "slot": "7",
               "type": "t_uint256",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:73"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:73"
             },
             {
               "label": "proposalDeposit",
@@ -2160,7 +1546,7 @@
               "slot": "8",
               "type": "t_uint256",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:74"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:74"
             },
             {
               "label": "maxActiveProposalsPerUser",
@@ -2168,15 +1554,15 @@
               "slot": "9",
               "type": "t_uint256",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:75"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:75"
             },
             {
               "label": "proposals",
               "offset": 0,
               "slot": "10",
-              "type": "t_mapping(t_uint256,t_struct(Proposal)7501_storage)",
+              "type": "t_mapping(t_uint256,t_struct(Proposal)4623_storage)",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:77"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:77"
             },
             {
               "label": "proposalVotes",
@@ -2184,7 +1570,7 @@
               "slot": "11",
               "type": "t_mapping(t_uint256,t_mapping(t_address,t_uint256))",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:78"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:78"
             },
             {
               "label": "hasVoted",
@@ -2192,15 +1578,15 @@
               "slot": "12",
               "type": "t_mapping(t_uint256,t_mapping(t_address,t_bool))",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:79"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:79"
             },
             {
               "label": "poolCandidates",
               "offset": 0,
               "slot": "13",
-              "type": "t_mapping(t_bytes32,t_struct(PoolCandidate)7514_storage)",
+              "type": "t_mapping(t_bytes32,t_struct(PoolCandidate)4636_storage)",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:80"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:80"
             },
             {
               "label": "proposalDeposits",
@@ -2208,7 +1594,7 @@
               "slot": "14",
               "type": "t_mapping(t_uint256,t_uint256)",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:81"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:81"
             },
             {
               "label": "activeProposalCount",
@@ -2216,7 +1602,7 @@
               "slot": "15",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:82"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:82"
             },
             {
               "label": "pendingPoolHashes",
@@ -2224,7 +1610,7 @@
               "slot": "16",
               "type": "t_array(t_bytes32)dyn_storage",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:84"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:84"
             },
             {
               "label": "__gap",
@@ -2232,7 +1618,7 @@
               "slot": "17",
               "type": "t_array(t_uint256)40_storage",
               "contract": "AxiomDEXGovernor",
-              "src": "contracts-dex/dex/AxiomDEXGovernor.sol:360"
+              "src": "contracts-dex/AxiomDEXGovernor.sol:360"
             }
           ],
           "types": {
@@ -2336,7 +1722,7 @@
               "label": "bytes",
               "numberOfBytes": "32"
             },
-            "t_enum(ProposalStatus)7474": {
+            "t_enum(ProposalStatus)4596": {
               "label": "enum AxiomDEXGovernor.ProposalStatus",
               "members": [
                 "PENDING",
@@ -2348,7 +1734,7 @@
               ],
               "numberOfBytes": "1"
             },
-            "t_enum(ProposalType)7467": {
+            "t_enum(ProposalType)4589": {
               "label": "enum AxiomDEXGovernor.ProposalType",
               "members": [
                 "FEE_CHANGE",
@@ -2361,7 +1747,7 @@
               "label": "mapping(address => uint256)",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_bytes32,t_struct(PoolCandidate)7514_storage)": {
+            "t_mapping(t_bytes32,t_struct(PoolCandidate)4636_storage)": {
               "label": "mapping(bytes32 => struct AxiomDEXGovernor.PoolCandidate)",
               "numberOfBytes": "32"
             },
@@ -2373,7 +1759,7 @@
               "label": "mapping(uint256 => mapping(address => uint256))",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_uint256,t_struct(Proposal)7501_storage)": {
+            "t_mapping(t_uint256,t_struct(Proposal)4623_storage)": {
               "label": "mapping(uint256 => struct AxiomDEXGovernor.Proposal)",
               "numberOfBytes": "32"
             },
@@ -2385,7 +1771,7 @@
               "label": "string",
               "numberOfBytes": "32"
             },
-            "t_struct(PoolCandidate)7514_storage": {
+            "t_struct(PoolCandidate)4636_storage": {
               "label": "struct AxiomDEXGovernor.PoolCandidate",
               "members": [
                 {
@@ -2427,7 +1813,7 @@
               ],
               "numberOfBytes": "160"
             },
-            "t_struct(Proposal)7501_storage": {
+            "t_struct(Proposal)4623_storage": {
               "label": "struct AxiomDEXGovernor.Proposal",
               "members": [
                 {
@@ -2444,7 +1830,7 @@
                 },
                 {
                   "label": "proposalType",
-                  "type": "t_enum(ProposalType)7467",
+                  "type": "t_enum(ProposalType)4589",
                   "offset": 20,
                   "slot": "1"
                 },
@@ -2492,7 +1878,7 @@
                 },
                 {
                   "label": "status",
-                  "type": "t_enum(ProposalStatus)7474",
+                  "type": "t_enum(ProposalStatus)4596",
                   "offset": 0,
                   "slot": "9"
                 },
@@ -2551,8 +1937,8 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomDEXGovernor.sol:IAxiomExchangeHubGov": {
-        "src": "contracts-dex/dex/AxiomDEXGovernor.sol:10",
+      "contracts-dex/AxiomDEXGovernor.sol:IAxiomExchangeHubGov": {
+        "src": "contracts-dex/AxiomDEXGovernor.sol:10",
         "inherit": [],
         "libraries": [],
         "methods": [
@@ -2571,10 +1957,10 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomDEXRouter.sol:AxiomDEXRouter": {
-        "src": "contracts-dex/dex/AxiomDEXRouter.sol:29",
+      "contracts-dex/AxiomDEXRouter.sol:AxiomDEXRouter": {
+        "src": "contracts-dex/AxiomDEXRouter.sol:29",
         "version": {
-          "withMetadata": "d2d8249133529f79ff6a4c37bd37f4a37db9d48cec5b0c70c3a5c43dfcd5ad27",
+          "withMetadata": "c0c33d27c28c8401abf848be93a0f4b01db8dd20da8485c0854e2ebc0fa88359",
           "withoutMetadata": "94715d442c1a59d0726e51eb06e7f27983cdd67f6f782d1623040967e7faae85",
           "linkedWithoutMetadata": "94715d442c1a59d0726e51eb06e7f27983cdd67f6f782d1623040967e7faae85"
         },
@@ -2618,7 +2004,7 @@
               "slot": "0",
               "type": "t_address",
               "contract": "AxiomDEXRouter",
-              "src": "contracts-dex/dex/AxiomDEXRouter.sol:51"
+              "src": "contracts-dex/AxiomDEXRouter.sol:51"
             },
             {
               "label": "treasurySafe",
@@ -2626,7 +2012,7 @@
               "slot": "1",
               "type": "t_address",
               "contract": "AxiomDEXRouter",
-              "src": "contracts-dex/dex/AxiomDEXRouter.sol:52"
+              "src": "contracts-dex/AxiomDEXRouter.sol:52"
             },
             {
               "label": "axusdToken",
@@ -2634,7 +2020,7 @@
               "slot": "2",
               "type": "t_address",
               "contract": "AxiomDEXRouter",
-              "src": "contracts-dex/dex/AxiomDEXRouter.sol:53"
+              "src": "contracts-dex/AxiomDEXRouter.sol:53"
             },
             {
               "label": "wethToken",
@@ -2642,7 +2028,7 @@
               "slot": "3",
               "type": "t_address",
               "contract": "AxiomDEXRouter",
-              "src": "contracts-dex/dex/AxiomDEXRouter.sol:54"
+              "src": "contracts-dex/AxiomDEXRouter.sol:54"
             },
             {
               "label": "axmToken",
@@ -2650,7 +2036,7 @@
               "slot": "4",
               "type": "t_address",
               "contract": "AxiomDEXRouter",
-              "src": "contracts-dex/dex/AxiomDEXRouter.sol:55"
+              "src": "contracts-dex/AxiomDEXRouter.sol:55"
             },
             {
               "label": "preferredBases",
@@ -2658,7 +2044,7 @@
               "slot": "5",
               "type": "t_array(t_address)dyn_storage",
               "contract": "AxiomDEXRouter",
-              "src": "contracts-dex/dex/AxiomDEXRouter.sol:57"
+              "src": "contracts-dex/AxiomDEXRouter.sol:57"
             },
             {
               "label": "isPreferredBase",
@@ -2666,7 +2052,7 @@
               "slot": "6",
               "type": "t_mapping(t_address,t_bool)",
               "contract": "AxiomDEXRouter",
-              "src": "contracts-dex/dex/AxiomDEXRouter.sol:58"
+              "src": "contracts-dex/AxiomDEXRouter.sol:58"
             },
             {
               "label": "__gap",
@@ -2674,7 +2060,7 @@
               "slot": "7",
               "type": "t_array(t_uint256)40_storage",
               "contract": "AxiomDEXRouter",
-              "src": "contracts-dex/dex/AxiomDEXRouter.sol:309"
+              "src": "contracts-dex/AxiomDEXRouter.sol:309"
             }
           ],
           "types": {
@@ -2842,8 +2228,8 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomDEXRouter.sol:IAxiomExchangeHubRouter": {
-        "src": "contracts-dex/dex/AxiomDEXRouter.sol:12",
+      "contracts-dex/AxiomDEXRouter.sol:IAxiomExchangeHubRouter": {
+        "src": "contracts-dex/AxiomDEXRouter.sol:12",
         "inherit": [],
         "libraries": [],
         "methods": [
@@ -2864,10 +2250,624 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomFeeDistributor.sol:AxiomFeeDistributor": {
-        "src": "contracts-dex/dex/AxiomFeeDistributor.sol:28",
+      "contracts-dex/AxiomExchangeHubV2.sol:AxiomExchangeHubV2": {
+        "src": "contracts-dex/AxiomExchangeHubV2.sol:17",
         "version": {
-          "withMetadata": "eabd8d233e6116b8abbdcc0579be2acf1523dd5c3d6c7713c27698e02c014ae1",
+          "withMetadata": "fd5f15837d100616db831179be3240a58ea65723198280efa55023e1c4462865",
+          "withoutMetadata": "b878ee6ea0604459c753e370e600841957f51284f55327f6d5988afc023a3cdf",
+          "linkedWithoutMetadata": "b878ee6ea0604459c753e370e600841957f51284f55327f6d5988afc023a3cdf"
+        },
+        "inherit": [
+          "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:UUPSUpgradeable",
+          "@openzeppelin/contracts/interfaces/draft-IERC1822.sol:IERC1822Proxiable",
+          "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:PausableUpgradeable",
+          "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:ReentrancyGuardUpgradeable",
+          "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:AccessControlUpgradeable",
+          "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol:ERC165Upgradeable",
+          "@openzeppelin/contracts/utils/introspection/IERC165.sol:IERC165",
+          "@openzeppelin/contracts/access/IAccessControl.sol:IAccessControl",
+          "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:ContextUpgradeable",
+          "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:Initializable"
+        ],
+        "libraries": [
+          "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol:SafeERC20"
+        ],
+        "methods": [
+          "()",
+          "initialize(address,address,uint256)",
+          "createPool(address,address,uint256,uint256)",
+          "addLiquidity(uint256,uint256,uint256,uint256,uint256)",
+          "removeLiquidity(uint256,uint256,uint256,uint256,uint256)",
+          "emergencyWithdraw(uint256)",
+          "swap(uint256,address,uint256,uint256,uint256)",
+          "scheduleTimelock(uint8,bytes)",
+          "executeTimelock(uint256)",
+          "cancelTimelock(uint256)",
+          "collectPoolFees(uint256)",
+          "pause()",
+          "unpause()",
+          "getPoolCore(uint256)",
+          "getPoolMeta(uint256)",
+          "getUserLiquidity(uint256,address)",
+          "getSwap(uint256)",
+          "getTimelockOp(uint256)",
+          "getAmountOut(uint256,address,uint256)",
+          "getEffectiveFee(uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "treasurySafe",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_address",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:42"
+            },
+            {
+              "label": "backupAdmin",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_address",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:43"
+            },
+            {
+              "label": "swapFee",
+              "offset": 0,
+              "slot": "2",
+              "type": "t_uint256",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:44"
+            },
+            {
+              "label": "totalPools",
+              "offset": 0,
+              "slot": "3",
+              "type": "t_uint256",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:45"
+            },
+            {
+              "label": "totalSwaps",
+              "offset": 0,
+              "slot": "4",
+              "type": "t_uint256",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:46"
+            },
+            {
+              "label": "timelockNonce",
+              "offset": 0,
+              "slot": "5",
+              "type": "t_uint256",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:47"
+            },
+            {
+              "label": "maxSwapPerBlock",
+              "offset": 0,
+              "slot": "6",
+              "type": "t_uint256",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:48"
+            },
+            {
+              "label": "blockSwapVolume",
+              "offset": 0,
+              "slot": "7",
+              "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:50"
+            },
+            {
+              "label": "bannedTokens",
+              "offset": 0,
+              "slot": "8",
+              "type": "t_mapping(t_address,t_bool)",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:51"
+            },
+            {
+              "label": "timelockQueue",
+              "offset": 0,
+              "slot": "9",
+              "type": "t_mapping(t_uint256,t_struct(TimelockOp)7175_storage)",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:60"
+            },
+            {
+              "label": "withdrawTracking",
+              "offset": 0,
+              "slot": "10",
+              "type": "t_mapping(t_uint256,t_mapping(t_address,t_struct(WithdrawWindow)7187_storage))",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:67"
+            },
+            {
+              "label": "poolCore",
+              "offset": 0,
+              "slot": "11",
+              "type": "t_mapping(t_uint256,t_struct(PoolCore)7209_storage)",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:86"
+            },
+            {
+              "label": "poolMeta",
+              "offset": 0,
+              "slot": "12",
+              "type": "t_mapping(t_uint256,t_struct(PoolMeta)7218_storage)",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:87"
+            },
+            {
+              "label": "pairToPoolId",
+              "offset": 0,
+              "slot": "13",
+              "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:88"
+            },
+            {
+              "label": "liquidityBalances",
+              "offset": 0,
+              "slot": "14",
+              "type": "t_mapping(t_uint256,t_mapping(t_address,t_uint256))",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:89"
+            },
+            {
+              "label": "poolFeeReserveA",
+              "offset": 0,
+              "slot": "15",
+              "type": "t_mapping(t_uint256,t_uint256)",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:90"
+            },
+            {
+              "label": "poolFeeReserveB",
+              "offset": 0,
+              "slot": "16",
+              "type": "t_mapping(t_uint256,t_uint256)",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:91"
+            },
+            {
+              "label": "swaps",
+              "offset": 0,
+              "slot": "17",
+              "type": "t_mapping(t_uint256,t_struct(SwapRec)7265_storage)",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:103"
+            },
+            {
+              "label": "__gap",
+              "offset": 0,
+              "slot": "18",
+              "type": "t_array(t_uint256)40_storage",
+              "contract": "AxiomExchangeHubV2",
+              "src": "contracts-dex/AxiomExchangeHubV2.sol:532"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_bytes32": {
+              "label": "bytes32",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_address,t_bool)": {
+              "label": "mapping(address => bool)",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_bytes32,t_struct(RoleData)26_storage)": {
+              "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+              "numberOfBytes": "32"
+            },
+            "t_struct(AccessControlStorage)36_storage": {
+              "label": "struct AccessControlUpgradeable.AccessControlStorage",
+              "members": [
+                {
+                  "label": "_roles",
+                  "type": "t_mapping(t_bytes32,t_struct(RoleData)26_storage)",
+                  "offset": 0,
+                  "slot": "0"
+                }
+              ],
+              "numberOfBytes": "32"
+            },
+            "t_struct(InitializableStorage)147_storage": {
+              "label": "struct Initializable.InitializableStorage",
+              "members": [
+                {
+                  "label": "_initialized",
+                  "type": "t_uint64",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "_initializing",
+                  "type": "t_bool",
+                  "offset": 8,
+                  "slot": "0"
+                }
+              ],
+              "numberOfBytes": "32"
+            },
+            "t_struct(PausableStorage)298_storage": {
+              "label": "struct PausableUpgradeable.PausableStorage",
+              "members": [
+                {
+                  "label": "_paused",
+                  "type": "t_bool",
+                  "offset": 0,
+                  "slot": "0"
+                }
+              ],
+              "numberOfBytes": "32"
+            },
+            "t_struct(ReentrancyGuardStorage)362_storage": {
+              "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
+              "members": [
+                {
+                  "label": "_status",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "0"
+                }
+              ],
+              "numberOfBytes": "32"
+            },
+            "t_struct(RoleData)26_storage": {
+              "label": "struct AccessControlUpgradeable.RoleData",
+              "members": [
+                {
+                  "label": "hasRole",
+                  "type": "t_mapping(t_address,t_bool)",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "adminRole",
+                  "type": "t_bytes32",
+                  "offset": 0,
+                  "slot": "1"
+                }
+              ],
+              "numberOfBytes": "64"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            },
+            "t_uint64": {
+              "label": "uint64",
+              "numberOfBytes": "8"
+            },
+            "t_array(t_uint256)40_storage": {
+              "label": "uint256[40]",
+              "numberOfBytes": "1280"
+            },
+            "t_bytes_storage": {
+              "label": "bytes",
+              "numberOfBytes": "32"
+            },
+            "t_enum(TimelockOpType)7139": {
+              "label": "enum AxiomExchangeHubV2.TimelockOpType",
+              "members": [
+                "UPDATE_SWAP_FEE",
+                "UPDATE_POOL_FEE",
+                "BAN_TOKEN",
+                "UPDATE_MAX_SWAP",
+                "UPDATE_BACKUP",
+                "SET_POOL_ACTIVE"
+              ],
+              "numberOfBytes": "1"
+            },
+            "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+              "label": "mapping(address => mapping(address => uint256))",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_address,t_struct(WithdrawWindow)7187_storage)": {
+              "label": "mapping(address => struct AxiomExchangeHubV2.WithdrawWindow)",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_address,t_uint256)": {
+              "label": "mapping(address => uint256)",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_mapping(t_address,t_struct(WithdrawWindow)7187_storage))": {
+              "label": "mapping(uint256 => mapping(address => struct AxiomExchangeHubV2.WithdrawWindow))",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_mapping(t_address,t_uint256))": {
+              "label": "mapping(uint256 => mapping(address => uint256))",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))": {
+              "label": "mapping(uint256 => mapping(uint256 => uint256))",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_struct(PoolCore)7209_storage)": {
+              "label": "mapping(uint256 => struct AxiomExchangeHubV2.PoolCore)",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_struct(PoolMeta)7218_storage)": {
+              "label": "mapping(uint256 => struct AxiomExchangeHubV2.PoolMeta)",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_struct(SwapRec)7265_storage)": {
+              "label": "mapping(uint256 => struct AxiomExchangeHubV2.SwapRec)",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_struct(TimelockOp)7175_storage)": {
+              "label": "mapping(uint256 => struct AxiomExchangeHubV2.TimelockOp)",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_uint256)": {
+              "label": "mapping(uint256 => uint256)",
+              "numberOfBytes": "32"
+            },
+            "t_struct(PoolCore)7209_storage": {
+              "label": "struct AxiomExchangeHubV2.PoolCore",
+              "members": [
+                {
+                  "label": "tokenA",
+                  "type": "t_address",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "tokenB",
+                  "type": "t_address",
+                  "offset": 0,
+                  "slot": "1"
+                },
+                {
+                  "label": "reserveA",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "2"
+                },
+                {
+                  "label": "reserveB",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "3"
+                },
+                {
+                  "label": "totalLiquidity",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "4"
+                },
+                {
+                  "label": "lockedLiquidity",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "5"
+                },
+                {
+                  "label": "isActive",
+                  "type": "t_bool",
+                  "offset": 0,
+                  "slot": "6"
+                }
+              ],
+              "numberOfBytes": "224"
+            },
+            "t_struct(PoolMeta)7218_storage": {
+              "label": "struct AxiomExchangeHubV2.PoolMeta",
+              "members": [
+                {
+                  "label": "createdAt",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "totalVolume",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "1"
+                },
+                {
+                  "label": "totalFees",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "2"
+                },
+                {
+                  "label": "poolFee",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "3"
+                }
+              ],
+              "numberOfBytes": "128"
+            },
+            "t_struct(SwapRec)7265_storage": {
+              "label": "struct AxiomExchangeHubV2.SwapRec",
+              "members": [
+                {
+                  "label": "poolId",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "trader",
+                  "type": "t_address",
+                  "offset": 0,
+                  "slot": "1"
+                },
+                {
+                  "label": "tokenIn",
+                  "type": "t_address",
+                  "offset": 0,
+                  "slot": "2"
+                },
+                {
+                  "label": "tokenOut",
+                  "type": "t_address",
+                  "offset": 0,
+                  "slot": "3"
+                },
+                {
+                  "label": "amountIn",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "4"
+                },
+                {
+                  "label": "amountOut",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "5"
+                },
+                {
+                  "label": "fee",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "6"
+                },
+                {
+                  "label": "timestamp",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "7"
+                }
+              ],
+              "numberOfBytes": "256"
+            },
+            "t_struct(TimelockOp)7175_storage": {
+              "label": "struct AxiomExchangeHubV2.TimelockOp",
+              "members": [
+                {
+                  "label": "opType",
+                  "type": "t_enum(TimelockOpType)7139",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "params",
+                  "type": "t_bytes_storage",
+                  "offset": 0,
+                  "slot": "1"
+                },
+                {
+                  "label": "executeAfter",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "2"
+                },
+                {
+                  "label": "executed",
+                  "type": "t_bool",
+                  "offset": 0,
+                  "slot": "3"
+                },
+                {
+                  "label": "cancelled",
+                  "type": "t_bool",
+                  "offset": 1,
+                  "slot": "3"
+                }
+              ],
+              "numberOfBytes": "128"
+            },
+            "t_struct(WithdrawWindow)7187_storage": {
+              "label": "struct AxiomExchangeHubV2.WithdrawWindow",
+              "members": [
+                {
+                  "label": "windowStart",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "cumWithdrawn",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "1"
+                },
+                {
+                  "label": "poolLiqAtStart",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "2"
+                }
+              ],
+              "numberOfBytes": "96"
+            }
+          },
+          "layoutVersion": "1.2",
+          "flat": true,
+          "namespaces": {
+            "erc7201:openzeppelin.storage.Pausable": [
+              {
+                "contract": "PausableUpgradeable",
+                "label": "_paused",
+                "type": "t_bool",
+                "src": "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:21",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "erc7201:openzeppelin.storage.ReentrancyGuard": [
+              {
+                "contract": "ReentrancyGuardUpgradeable",
+                "label": "_status",
+                "type": "t_uint256",
+                "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "erc7201:openzeppelin.storage.AccessControl": [
+              {
+                "contract": "AccessControlUpgradeable",
+                "label": "_roles",
+                "type": "t_mapping(t_bytes32,t_struct(RoleData)26_storage)",
+                "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:62",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "erc7201:openzeppelin.storage.Initializable": [
+              {
+                "contract": "Initializable",
+                "label": "_initialized",
+                "type": "t_uint64",
+                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "contract": "Initializable",
+                "label": "_initializing",
+                "type": "t_bool",
+                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+                "offset": 8,
+                "slot": "0"
+              }
+            ]
+          }
+        },
+        "solcVersion": "0.8.24"
+      },
+      "contracts-dex/AxiomFeeDistributor.sol:AxiomFeeDistributor": {
+        "src": "contracts-dex/AxiomFeeDistributor.sol:28",
+        "version": {
+          "withMetadata": "c7ab8721bfaa66185814d8d0b2310d570ba44a0a807f9d8e642cdd50091c2c1a",
           "withoutMetadata": "ae18cf942002540e23c665ae397f50c35656f936e509b0923ba268228782eb18",
           "linkedWithoutMetadata": "ae18cf942002540e23c665ae397f50c35656f936e509b0923ba268228782eb18"
         },
@@ -2912,7 +2912,7 @@
               "slot": "0",
               "type": "t_address",
               "contract": "AxiomFeeDistributor",
-              "src": "contracts-dex/dex/AxiomFeeDistributor.sol:63"
+              "src": "contracts-dex/AxiomFeeDistributor.sol:63"
             },
             {
               "label": "treasurySafe",
@@ -2920,7 +2920,7 @@
               "slot": "1",
               "type": "t_address",
               "contract": "AxiomFeeDistributor",
-              "src": "contracts-dex/dex/AxiomFeeDistributor.sol:64"
+              "src": "contracts-dex/AxiomFeeDistributor.sol:64"
             },
             {
               "label": "protocolFeeShare",
@@ -2928,7 +2928,7 @@
               "slot": "2",
               "type": "t_uint256",
               "contract": "AxiomFeeDistributor",
-              "src": "contracts-dex/dex/AxiomFeeDistributor.sol:66"
+              "src": "contracts-dex/AxiomFeeDistributor.sol:66"
             },
             {
               "label": "minDistributionInterval",
@@ -2936,7 +2936,7 @@
               "slot": "3",
               "type": "t_uint256",
               "contract": "AxiomFeeDistributor",
-              "src": "contracts-dex/dex/AxiomFeeDistributor.sol:67"
+              "src": "contracts-dex/AxiomFeeDistributor.sol:67"
             },
             {
               "label": "poolFeeInfo",
@@ -2944,7 +2944,7 @@
               "slot": "4",
               "type": "t_mapping(t_uint256,t_struct(PoolFeeInfo)10047_storage)",
               "contract": "AxiomFeeDistributor",
-              "src": "contracts-dex/dex/AxiomFeeDistributor.sol:69"
+              "src": "contracts-dex/AxiomFeeDistributor.sol:69"
             },
             {
               "label": "userFeeInfo",
@@ -2952,7 +2952,7 @@
               "slot": "5",
               "type": "t_mapping(t_uint256,t_mapping(t_address,t_struct(UserFeeInfo)10058_storage))",
               "contract": "AxiomFeeDistributor",
-              "src": "contracts-dex/dex/AxiomFeeDistributor.sol:70"
+              "src": "contracts-dex/AxiomFeeDistributor.sol:70"
             },
             {
               "label": "userPools",
@@ -2960,7 +2960,7 @@
               "slot": "6",
               "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
               "contract": "AxiomFeeDistributor",
-              "src": "contracts-dex/dex/AxiomFeeDistributor.sol:71"
+              "src": "contracts-dex/AxiomFeeDistributor.sol:71"
             },
             {
               "label": "__gap",
@@ -2968,7 +2968,7 @@
               "slot": "7",
               "type": "t_array(t_uint256)40_storage",
               "contract": "AxiomFeeDistributor",
-              "src": "contracts-dex/dex/AxiomFeeDistributor.sol:289"
+              "src": "contracts-dex/AxiomFeeDistributor.sol:289"
             }
           ],
           "types": {
@@ -3242,8 +3242,8 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomFeeDistributor.sol:IAxiomExchangeHubFees": {
-        "src": "contracts-dex/dex/AxiomFeeDistributor.sol:12",
+      "contracts-dex/AxiomFeeDistributor.sol:IAxiomExchangeHubFees": {
+        "src": "contracts-dex/AxiomFeeDistributor.sol:12",
         "inherit": [],
         "libraries": [],
         "methods": [
@@ -3263,10 +3263,10 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomInsuranceFund.sol:AxiomInsuranceFund": {
-        "src": "contracts-dex/dex/AxiomInsuranceFund.sol:18",
+      "contracts-dex/AxiomInsuranceFund.sol:AxiomInsuranceFund": {
+        "src": "contracts-dex/AxiomInsuranceFund.sol:18",
         "version": {
-          "withMetadata": "5fe29262c5394e339ce534c474b105c8c371a5fa85f5384a891b0fed81985dbc",
+          "withMetadata": "8064bbe44a610c7169153e6c7b49535040bb83ad706cebafc340559611cb62b0",
           "withoutMetadata": "f73117fcd5efd216832bb668a36e693b2cc78efc58e87954ca82352235c2a16e",
           "linkedWithoutMetadata": "f73117fcd5efd216832bb668a36e693b2cc78efc58e87954ca82352235c2a16e"
         },
@@ -3321,7 +3321,7 @@
               "slot": "0",
               "type": "t_address",
               "contract": "AxiomInsuranceFund",
-              "src": "contracts-dex/dex/AxiomInsuranceFund.sol:60"
+              "src": "contracts-dex/AxiomInsuranceFund.sol:60"
             },
             {
               "label": "primaryToken",
@@ -3329,7 +3329,7 @@
               "slot": "1",
               "type": "t_address",
               "contract": "AxiomInsuranceFund",
-              "src": "contracts-dex/dex/AxiomInsuranceFund.sol:61"
+              "src": "contracts-dex/AxiomInsuranceFund.sol:61"
             },
             {
               "label": "nextClaimId",
@@ -3337,7 +3337,7 @@
               "slot": "2",
               "type": "t_uint256",
               "contract": "AxiomInsuranceFund",
-              "src": "contracts-dex/dex/AxiomInsuranceFund.sol:63"
+              "src": "contracts-dex/AxiomInsuranceFund.sol:63"
             },
             {
               "label": "minClaimAmount",
@@ -3345,7 +3345,7 @@
               "slot": "3",
               "type": "t_uint256",
               "contract": "AxiomInsuranceFund",
-              "src": "contracts-dex/dex/AxiomInsuranceFund.sol:64"
+              "src": "contracts-dex/AxiomInsuranceFund.sol:64"
             },
             {
               "label": "maxClaimPercentage",
@@ -3353,7 +3353,7 @@
               "slot": "4",
               "type": "t_uint256",
               "contract": "AxiomInsuranceFund",
-              "src": "contracts-dex/dex/AxiomInsuranceFund.sol:65"
+              "src": "contracts-dex/AxiomInsuranceFund.sol:65"
             },
             {
               "label": "cooldownPeriod",
@@ -3361,7 +3361,7 @@
               "slot": "5",
               "type": "t_uint256",
               "contract": "AxiomInsuranceFund",
-              "src": "contracts-dex/dex/AxiomInsuranceFund.sol:66"
+              "src": "contracts-dex/AxiomInsuranceFund.sol:66"
             },
             {
               "label": "tokenBalances",
@@ -3369,7 +3369,7 @@
               "slot": "6",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "AxiomInsuranceFund",
-              "src": "contracts-dex/dex/AxiomInsuranceFund.sol:68"
+              "src": "contracts-dex/AxiomInsuranceFund.sol:68"
             },
             {
               "label": "tokenStats",
@@ -3377,7 +3377,7 @@
               "slot": "7",
               "type": "t_mapping(t_address,t_struct(FundStats)11189_storage)",
               "contract": "AxiomInsuranceFund",
-              "src": "contracts-dex/dex/AxiomInsuranceFund.sol:69"
+              "src": "contracts-dex/AxiomInsuranceFund.sol:69"
             },
             {
               "label": "claims",
@@ -3385,7 +3385,7 @@
               "slot": "8",
               "type": "t_mapping(t_uint256,t_struct(Claim)11180_storage)",
               "contract": "AxiomInsuranceFund",
-              "src": "contracts-dex/dex/AxiomInsuranceFund.sol:70"
+              "src": "contracts-dex/AxiomInsuranceFund.sol:70"
             },
             {
               "label": "userClaims",
@@ -3393,7 +3393,7 @@
               "slot": "9",
               "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
               "contract": "AxiomInsuranceFund",
-              "src": "contracts-dex/dex/AxiomInsuranceFund.sol:71"
+              "src": "contracts-dex/AxiomInsuranceFund.sol:71"
             },
             {
               "label": "lastClaimTime",
@@ -3401,7 +3401,7 @@
               "slot": "10",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "AxiomInsuranceFund",
-              "src": "contracts-dex/dex/AxiomInsuranceFund.sol:72"
+              "src": "contracts-dex/AxiomInsuranceFund.sol:72"
             },
             {
               "label": "supportedTokens",
@@ -3409,7 +3409,7 @@
               "slot": "11",
               "type": "t_array(t_address)dyn_storage",
               "contract": "AxiomInsuranceFund",
-              "src": "contracts-dex/dex/AxiomInsuranceFund.sol:74"
+              "src": "contracts-dex/AxiomInsuranceFund.sol:74"
             },
             {
               "label": "isSupported",
@@ -3417,7 +3417,7 @@
               "slot": "12",
               "type": "t_mapping(t_address,t_bool)",
               "contract": "AxiomInsuranceFund",
-              "src": "contracts-dex/dex/AxiomInsuranceFund.sol:75"
+              "src": "contracts-dex/AxiomInsuranceFund.sol:75"
             },
             {
               "label": "__gap",
@@ -3425,7 +3425,7 @@
               "slot": "13",
               "type": "t_array(t_uint256)40_storage",
               "contract": "AxiomInsuranceFund",
-              "src": "contracts-dex/dex/AxiomInsuranceFund.sol:304"
+              "src": "contracts-dex/AxiomInsuranceFund.sol:304"
             }
           ],
           "types": {
@@ -3740,10 +3740,10 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomLPStaking.sol:AxiomLPStaking": {
-        "src": "contracts-dex/dex/AxiomLPStaking.sol:26",
+      "contracts-dex/AxiomLPStaking.sol:AxiomLPStaking": {
+        "src": "contracts-dex/AxiomLPStaking.sol:26",
         "version": {
-          "withMetadata": "924a39429eb03b947adf0f440518e0699590be996cfd6143a259c80b4f719c28",
+          "withMetadata": "2895efaabed9efcef20c1323f0bac86f5b0b327668c4b241badb4cebb9669018",
           "withoutMetadata": "254d1a21c29664e1961bd2bd4be41c63c01b49d13dd396e903cb934a155a059f",
           "linkedWithoutMetadata": "254d1a21c29664e1961bd2bd4be41c63c01b49d13dd396e903cb934a155a059f"
         },
@@ -3794,7 +3794,7 @@
               "slot": "0",
               "type": "t_address",
               "contract": "AxiomLPStaking",
-              "src": "contracts-dex/dex/AxiomLPStaking.sol:69"
+              "src": "contracts-dex/AxiomLPStaking.sol:69"
             },
             {
               "label": "rewardToken",
@@ -3802,7 +3802,7 @@
               "slot": "1",
               "type": "t_address",
               "contract": "AxiomLPStaking",
-              "src": "contracts-dex/dex/AxiomLPStaking.sol:70"
+              "src": "contracts-dex/AxiomLPStaking.sol:70"
             },
             {
               "label": "treasurySafe",
@@ -3810,7 +3810,7 @@
               "slot": "2",
               "type": "t_address",
               "contract": "AxiomLPStaking",
-              "src": "contracts-dex/dex/AxiomLPStaking.sol:71"
+              "src": "contracts-dex/AxiomLPStaking.sol:71"
             },
             {
               "label": "rewardPerSecond",
@@ -3818,7 +3818,7 @@
               "slot": "3",
               "type": "t_uint256",
               "contract": "AxiomLPStaking",
-              "src": "contracts-dex/dex/AxiomLPStaking.sol:73"
+              "src": "contracts-dex/AxiomLPStaking.sol:73"
             },
             {
               "label": "totalAllocPoints",
@@ -3826,7 +3826,7 @@
               "slot": "4",
               "type": "t_uint256",
               "contract": "AxiomLPStaking",
-              "src": "contracts-dex/dex/AxiomLPStaking.sol:74"
+              "src": "contracts-dex/AxiomLPStaking.sol:74"
             },
             {
               "label": "tierConfigs",
@@ -3834,7 +3834,7 @@
               "slot": "5",
               "type": "t_mapping(t_enum(LockTier)12279,t_struct(TierConfig)12286_storage)",
               "contract": "AxiomLPStaking",
-              "src": "contracts-dex/dex/AxiomLPStaking.sol:76"
+              "src": "contracts-dex/AxiomLPStaking.sol:76"
             },
             {
               "label": "poolRewards",
@@ -3842,7 +3842,7 @@
               "slot": "6",
               "type": "t_mapping(t_uint256,t_struct(PoolRewards)12315_storage)",
               "contract": "AxiomLPStaking",
-              "src": "contracts-dex/dex/AxiomLPStaking.sol:77"
+              "src": "contracts-dex/AxiomLPStaking.sol:77"
             },
             {
               "label": "poolAllocPoints",
@@ -3850,7 +3850,7 @@
               "slot": "7",
               "type": "t_mapping(t_uint256,t_uint256)",
               "contract": "AxiomLPStaking",
-              "src": "contracts-dex/dex/AxiomLPStaking.sol:78"
+              "src": "contracts-dex/AxiomLPStaking.sol:78"
             },
             {
               "label": "userStakes",
@@ -3858,7 +3858,7 @@
               "slot": "8",
               "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(StakePosition)12304_storage))",
               "contract": "AxiomLPStaking",
-              "src": "contracts-dex/dex/AxiomLPStaking.sol:79"
+              "src": "contracts-dex/AxiomLPStaking.sol:79"
             },
             {
               "label": "userStakedPools",
@@ -3866,7 +3866,7 @@
               "slot": "9",
               "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
               "contract": "AxiomLPStaking",
-              "src": "contracts-dex/dex/AxiomLPStaking.sol:80"
+              "src": "contracts-dex/AxiomLPStaking.sol:80"
             },
             {
               "label": "activePoolIds",
@@ -3874,7 +3874,7 @@
               "slot": "10",
               "type": "t_array(t_uint256)dyn_storage",
               "contract": "AxiomLPStaking",
-              "src": "contracts-dex/dex/AxiomLPStaking.sol:312"
+              "src": "contracts-dex/AxiomLPStaking.sol:312"
             },
             {
               "label": "__gap",
@@ -3882,7 +3882,7 @@
               "slot": "11",
               "type": "t_array(t_uint256)40_storage",
               "contract": "AxiomLPStaking",
-              "src": "contracts-dex/dex/AxiomLPStaking.sol:377"
+              "src": "contracts-dex/AxiomLPStaking.sol:377"
             }
           ],
           "types": {
@@ -4199,8 +4199,8 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomLPStaking.sol:IAxiomExchangeHub": {
-        "src": "contracts-dex/dex/AxiomLPStaking.sol:12",
+      "contracts-dex/AxiomLPStaking.sol:IAxiomExchangeHub": {
+        "src": "contracts-dex/AxiomLPStaking.sol:12",
         "inherit": [],
         "libraries": [],
         "methods": [
@@ -4218,10 +4218,10 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomLimitOrders.sol:AxiomLimitOrders": {
-        "src": "contracts-dex/dex/AxiomLimitOrders.sol:33",
+      "contracts-dex/AxiomLimitOrders.sol:AxiomLimitOrders": {
+        "src": "contracts-dex/AxiomLimitOrders.sol:33",
         "version": {
-          "withMetadata": "37ad4a3931c68d5073ec6c238013729ecc2f458e25a8db5b908c39a5a0aa3893",
+          "withMetadata": "6cb31d75db31d393658da546d4adc6abb510e8485ca52059e6734e1b3e8942d1",
           "withoutMetadata": "754bd7c50c0dd1df6e3578979be11c1fbf2b03dcbf0ea72c4161a0957e3f2192",
           "linkedWithoutMetadata": "754bd7c50c0dd1df6e3578979be11c1fbf2b03dcbf0ea72c4161a0957e3f2192"
         },
@@ -4271,7 +4271,7 @@
               "slot": "0",
               "type": "t_address",
               "contract": "AxiomLimitOrders",
-              "src": "contracts-dex/dex/AxiomLimitOrders.sol:71"
+              "src": "contracts-dex/AxiomLimitOrders.sol:71"
             },
             {
               "label": "oracleAdapter",
@@ -4279,7 +4279,7 @@
               "slot": "1",
               "type": "t_address",
               "contract": "AxiomLimitOrders",
-              "src": "contracts-dex/dex/AxiomLimitOrders.sol:72"
+              "src": "contracts-dex/AxiomLimitOrders.sol:72"
             },
             {
               "label": "treasurySafe",
@@ -4287,7 +4287,7 @@
               "slot": "2",
               "type": "t_address",
               "contract": "AxiomLimitOrders",
-              "src": "contracts-dex/dex/AxiomLimitOrders.sol:73"
+              "src": "contracts-dex/AxiomLimitOrders.sol:73"
             },
             {
               "label": "nextOrderId",
@@ -4295,7 +4295,7 @@
               "slot": "3",
               "type": "t_uint256",
               "contract": "AxiomLimitOrders",
-              "src": "contracts-dex/dex/AxiomLimitOrders.sol:75"
+              "src": "contracts-dex/AxiomLimitOrders.sol:75"
             },
             {
               "label": "executionFee",
@@ -4303,7 +4303,7 @@
               "slot": "4",
               "type": "t_uint256",
               "contract": "AxiomLimitOrders",
-              "src": "contracts-dex/dex/AxiomLimitOrders.sol:76"
+              "src": "contracts-dex/AxiomLimitOrders.sol:76"
             },
             {
               "label": "maxPriceDeviation",
@@ -4311,7 +4311,7 @@
               "slot": "5",
               "type": "t_uint256",
               "contract": "AxiomLimitOrders",
-              "src": "contracts-dex/dex/AxiomLimitOrders.sol:77"
+              "src": "contracts-dex/AxiomLimitOrders.sol:77"
             },
             {
               "label": "minOrderDuration",
@@ -4319,7 +4319,7 @@
               "slot": "6",
               "type": "t_uint256",
               "contract": "AxiomLimitOrders",
-              "src": "contracts-dex/dex/AxiomLimitOrders.sol:78"
+              "src": "contracts-dex/AxiomLimitOrders.sol:78"
             },
             {
               "label": "maxOrderDuration",
@@ -4327,7 +4327,7 @@
               "slot": "7",
               "type": "t_uint256",
               "contract": "AxiomLimitOrders",
-              "src": "contracts-dex/dex/AxiomLimitOrders.sol:79"
+              "src": "contracts-dex/AxiomLimitOrders.sol:79"
             },
             {
               "label": "orders",
@@ -4335,7 +4335,7 @@
               "slot": "8",
               "type": "t_mapping(t_uint256,t_struct(Order)13934_storage)",
               "contract": "AxiomLimitOrders",
-              "src": "contracts-dex/dex/AxiomLimitOrders.sol:81"
+              "src": "contracts-dex/AxiomLimitOrders.sol:81"
             },
             {
               "label": "userOrders",
@@ -4343,7 +4343,7 @@
               "slot": "9",
               "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
               "contract": "AxiomLimitOrders",
-              "src": "contracts-dex/dex/AxiomLimitOrders.sol:82"
+              "src": "contracts-dex/AxiomLimitOrders.sol:82"
             },
             {
               "label": "userActiveOrderCount",
@@ -4351,7 +4351,7 @@
               "slot": "10",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "AxiomLimitOrders",
-              "src": "contracts-dex/dex/AxiomLimitOrders.sol:83"
+              "src": "contracts-dex/AxiomLimitOrders.sol:83"
             },
             {
               "label": "pendingOrderIds",
@@ -4359,7 +4359,7 @@
               "slot": "11",
               "type": "t_array(t_uint256)dyn_storage",
               "contract": "AxiomLimitOrders",
-              "src": "contracts-dex/dex/AxiomLimitOrders.sol:85"
+              "src": "contracts-dex/AxiomLimitOrders.sol:85"
             },
             {
               "label": "pendingOrderIndex",
@@ -4367,7 +4367,7 @@
               "slot": "12",
               "type": "t_mapping(t_uint256,t_uint256)",
               "contract": "AxiomLimitOrders",
-              "src": "contracts-dex/dex/AxiomLimitOrders.sol:86"
+              "src": "contracts-dex/AxiomLimitOrders.sol:86"
             },
             {
               "label": "__gap",
@@ -4375,7 +4375,7 @@
               "slot": "13",
               "type": "t_array(t_uint256)40_storage",
               "contract": "AxiomLimitOrders",
-              "src": "contracts-dex/dex/AxiomLimitOrders.sol:409"
+              "src": "contracts-dex/AxiomLimitOrders.sol:409"
             }
           ],
           "types": {
@@ -4669,8 +4669,8 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomLimitOrders.sol:IAxiomExchangeHubOrders": {
-        "src": "contracts-dex/dex/AxiomLimitOrders.sol:12",
+      "contracts-dex/AxiomLimitOrders.sol:IAxiomExchangeHubOrders": {
+        "src": "contracts-dex/AxiomLimitOrders.sol:12",
         "inherit": [],
         "libraries": [],
         "methods": [
@@ -4690,8 +4690,8 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomLimitOrders.sol:IAxiomOracleAdapter": {
-        "src": "contracts-dex/dex/AxiomLimitOrders.sol:22",
+      "contracts-dex/AxiomLimitOrders.sol:IAxiomOracleAdapter": {
+        "src": "contracts-dex/AxiomLimitOrders.sol:22",
         "inherit": [],
         "libraries": [],
         "methods": [
@@ -4709,8 +4709,8 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomOracleAdapter.sol:AggregatorV3Interface": {
-        "src": "contracts-dex/dex/AxiomOracleAdapter.sol:8",
+      "contracts-dex/AxiomOracleAdapter.sol:AggregatorV3Interface": {
+        "src": "contracts-dex/AxiomOracleAdapter.sol:8",
         "inherit": [],
         "libraries": [],
         "methods": [
@@ -4731,10 +4731,10 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomOracleAdapter.sol:AxiomOracleAdapter": {
-        "src": "contracts-dex/dex/AxiomOracleAdapter.sol:34",
+      "contracts-dex/AxiomOracleAdapter.sol:AxiomOracleAdapter": {
+        "src": "contracts-dex/AxiomOracleAdapter.sol:34",
         "version": {
-          "withMetadata": "5324ae714308a1c8e3af6583795d918249d01b3aff011035a83e4c136df1b329",
+          "withMetadata": "570450fa94ab78f9ce1c35f05d27428c92b13e5d4f83bf337a40678b24faf908",
           "withoutMetadata": "8543e1d39134dda5317e4f40f422539448a4f61a4144fd26a334ac7d3e7dd5f1",
           "linkedWithoutMetadata": "8543e1d39134dda5317e4f40f422539448a4f61a4144fd26a334ac7d3e7dd5f1"
         },
@@ -4777,7 +4777,7 @@
               "slot": "0",
               "type": "t_address",
               "contract": "AxiomOracleAdapter",
-              "src": "contracts-dex/dex/AxiomOracleAdapter.sol:62"
+              "src": "contracts-dex/AxiomOracleAdapter.sol:62"
             },
             {
               "label": "defaultHeartbeat",
@@ -4785,7 +4785,7 @@
               "slot": "1",
               "type": "t_uint256",
               "contract": "AxiomOracleAdapter",
-              "src": "contracts-dex/dex/AxiomOracleAdapter.sol:63"
+              "src": "contracts-dex/AxiomOracleAdapter.sol:63"
             },
             {
               "label": "priceFeeds",
@@ -4793,7 +4793,7 @@
               "slot": "2",
               "type": "t_mapping(t_address,t_struct(PriceFeed)15308_storage)",
               "contract": "AxiomOracleAdapter",
-              "src": "contracts-dex/dex/AxiomOracleAdapter.sol:65"
+              "src": "contracts-dex/AxiomOracleAdapter.sol:65"
             },
             {
               "label": "twapData",
@@ -4801,7 +4801,7 @@
               "slot": "3",
               "type": "t_mapping(t_address,t_struct(TWAPData)15321_storage)",
               "contract": "AxiomOracleAdapter",
-              "src": "contracts-dex/dex/AxiomOracleAdapter.sol:66"
+              "src": "contracts-dex/AxiomOracleAdapter.sol:66"
             },
             {
               "label": "fallbackPrices",
@@ -4809,7 +4809,7 @@
               "slot": "4",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "AxiomOracleAdapter",
-              "src": "contracts-dex/dex/AxiomOracleAdapter.sol:67"
+              "src": "contracts-dex/AxiomOracleAdapter.sol:67"
             },
             {
               "label": "fallbackTimestamps",
@@ -4817,7 +4817,7 @@
               "slot": "5",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "AxiomOracleAdapter",
-              "src": "contracts-dex/dex/AxiomOracleAdapter.sol:68"
+              "src": "contracts-dex/AxiomOracleAdapter.sol:68"
             },
             {
               "label": "supportedTokens",
@@ -4825,7 +4825,7 @@
               "slot": "6",
               "type": "t_array(t_address)dyn_storage",
               "contract": "AxiomOracleAdapter",
-              "src": "contracts-dex/dex/AxiomOracleAdapter.sol:70"
+              "src": "contracts-dex/AxiomOracleAdapter.sol:70"
             },
             {
               "label": "isSupported",
@@ -4833,7 +4833,7 @@
               "slot": "7",
               "type": "t_mapping(t_address,t_bool)",
               "contract": "AxiomOracleAdapter",
-              "src": "contracts-dex/dex/AxiomOracleAdapter.sol:71"
+              "src": "contracts-dex/AxiomOracleAdapter.sol:71"
             },
             {
               "label": "minTWAPUpdateInterval",
@@ -4841,7 +4841,7 @@
               "slot": "8",
               "type": "t_uint256",
               "contract": "AxiomOracleAdapter",
-              "src": "contracts-dex/dex/AxiomOracleAdapter.sol:138"
+              "src": "contracts-dex/AxiomOracleAdapter.sol:138"
             },
             {
               "label": "lastTWAPUpdate",
@@ -4849,7 +4849,7 @@
               "slot": "9",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "AxiomOracleAdapter",
-              "src": "contracts-dex/dex/AxiomOracleAdapter.sol:139"
+              "src": "contracts-dex/AxiomOracleAdapter.sol:139"
             },
             {
               "label": "__gap",
@@ -4857,7 +4857,7 @@
               "slot": "10",
               "type": "t_array(t_uint256)40_storage",
               "contract": "AxiomOracleAdapter",
-              "src": "contracts-dex/dex/AxiomOracleAdapter.sol:318"
+              "src": "contracts-dex/AxiomOracleAdapter.sol:318"
             }
           ],
           "types": {
@@ -5077,10 +5077,10 @@
         },
         "solcVersion": "0.8.24"
       },
-      "contracts-dex/dex/AxiomTradingRewards.sol:AxiomTradingRewards": {
-        "src": "contracts-dex/dex/AxiomTradingRewards.sol:18",
+      "contracts-dex/AxiomTradingRewards.sol:AxiomTradingRewards": {
+        "src": "contracts-dex/AxiomTradingRewards.sol:18",
         "version": {
-          "withMetadata": "ff1b6191f694c8c821e48876fd9ed2caa084b51c2454bb187873ad8ba952ca74",
+          "withMetadata": "36291fcbb9701e0fdda0e2e017f9830d94433188a3d1766381c392230e494c0c",
           "withoutMetadata": "e4d8dac1265e53b9e066d10cde3b8874ec97a39fd13d51f6b730b4a6aa04d482",
           "linkedWithoutMetadata": "e4d8dac1265e53b9e066d10cde3b8874ec97a39fd13d51f6b730b4a6aa04d482"
         },
@@ -5132,7 +5132,7 @@
               "slot": "0",
               "type": "t_address",
               "contract": "AxiomTradingRewards",
-              "src": "contracts-dex/dex/AxiomTradingRewards.sol:55"
+              "src": "contracts-dex/AxiomTradingRewards.sol:55"
             },
             {
               "label": "treasurySafe",
@@ -5140,7 +5140,7 @@
               "slot": "1",
               "type": "t_address",
               "contract": "AxiomTradingRewards",
-              "src": "contracts-dex/dex/AxiomTradingRewards.sol:56"
+              "src": "contracts-dex/AxiomTradingRewards.sol:56"
             },
             {
               "label": "exchangeHub",
@@ -5148,7 +5148,7 @@
               "slot": "2",
               "type": "t_address",
               "contract": "AxiomTradingRewards",
-              "src": "contracts-dex/dex/AxiomTradingRewards.sol:57"
+              "src": "contracts-dex/AxiomTradingRewards.sol:57"
             },
             {
               "label": "currentEpoch",
@@ -5156,7 +5156,7 @@
               "slot": "3",
               "type": "t_uint256",
               "contract": "AxiomTradingRewards",
-              "src": "contracts-dex/dex/AxiomTradingRewards.sol:59"
+              "src": "contracts-dex/AxiomTradingRewards.sol:59"
             },
             {
               "label": "epochDuration",
@@ -5164,7 +5164,7 @@
               "slot": "4",
               "type": "t_uint256",
               "contract": "AxiomTradingRewards",
-              "src": "contracts-dex/dex/AxiomTradingRewards.sol:60"
+              "src": "contracts-dex/AxiomTradingRewards.sol:60"
             },
             {
               "label": "rewardRateBps",
@@ -5172,7 +5172,7 @@
               "slot": "5",
               "type": "t_uint256",
               "contract": "AxiomTradingRewards",
-              "src": "contracts-dex/dex/AxiomTradingRewards.sol:61"
+              "src": "contracts-dex/AxiomTradingRewards.sol:61"
             },
             {
               "label": "maxRewardPerEpoch",
@@ -5180,7 +5180,7 @@
               "slot": "6",
               "type": "t_uint256",
               "contract": "AxiomTradingRewards",
-              "src": "contracts-dex/dex/AxiomTradingRewards.sol:62"
+              "src": "contracts-dex/AxiomTradingRewards.sol:62"
             },
             {
               "label": "epochs",
@@ -5188,7 +5188,7 @@
               "slot": "7",
               "type": "t_mapping(t_uint256,t_struct(Epoch)16350_storage)",
               "contract": "AxiomTradingRewards",
-              "src": "contracts-dex/dex/AxiomTradingRewards.sol:64"
+              "src": "contracts-dex/AxiomTradingRewards.sol:64"
             },
             {
               "label": "userEpochData",
@@ -5196,7 +5196,7 @@
               "slot": "8",
               "type": "t_mapping(t_uint256,t_mapping(t_address,t_struct(UserEpochData)16355_storage))",
               "contract": "AxiomTradingRewards",
-              "src": "contracts-dex/dex/AxiomTradingRewards.sol:65"
+              "src": "contracts-dex/AxiomTradingRewards.sol:65"
             },
             {
               "label": "userStats",
@@ -5204,7 +5204,7 @@
               "slot": "9",
               "type": "t_mapping(t_address,t_struct(UserStats)16362_storage)",
               "contract": "AxiomTradingRewards",
-              "src": "contracts-dex/dex/AxiomTradingRewards.sol:66"
+              "src": "contracts-dex/AxiomTradingRewards.sol:66"
             },
             {
               "label": "userEpochs",
@@ -5212,7 +5212,7 @@
               "slot": "10",
               "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
               "contract": "AxiomTradingRewards",
-              "src": "contracts-dex/dex/AxiomTradingRewards.sol:67"
+              "src": "contracts-dex/AxiomTradingRewards.sol:67"
             },
             {
               "label": "__gap",
@@ -5220,7 +5220,7 @@
               "slot": "11",
               "type": "t_array(t_uint256)40_storage",
               "contract": "AxiomTradingRewards",
-              "src": "contracts-dex/dex/AxiomTradingRewards.sol:295"
+              "src": "contracts-dex/AxiomTradingRewards.sol:295"
             }
           ],
           "types": {
