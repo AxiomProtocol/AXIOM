@@ -20,7 +20,7 @@ const config: HardhatUserConfig = {
   },
   paths: {
     sources: "./contracts-dex",
-    tests: "./test",
+    tests: "./test/dex",
     cache: "./cache-dex",
     artifacts: "./artifacts-dex",
   },

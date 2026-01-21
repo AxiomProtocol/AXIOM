@@ -16,7 +16,7 @@ const config: HardhatUserConfig = {
             enabled: true,
             runs: 200,
           },
-          viaIR: true,
+          viaIR: false,
           evmVersion: "paris",
         },
       },
@@ -27,8 +27,8 @@ const config: HardhatUserConfig = {
             enabled: true,
             runs: 50,
           },
-          viaIR: true,
-          evmVersion: "paris",
+          viaIR: false,
+          evmVersion: "cancun",
         },
       },
     ],
@@ -58,63 +58,63 @@ const config: HardhatUserConfig = {
         version: "0.8.24",
         settings: {
           optimizer: { enabled: true, runs: 50 },
-          viaIR: true,
+          viaIR: false,
         },
       },
       "contracts/land-simple/RegCFCrowdfunding.sol": {
         version: "0.8.24",
         settings: {
           optimizer: { enabled: true, runs: 50 },
-          viaIR: true,
+          viaIR: false,
         },
       },
       "contracts/land-simple/LandAcquisitionPool.sol": {
         version: "0.8.24",
         settings: {
           optimizer: { enabled: true, runs: 50 },
-          viaIR: true,
+          viaIR: false,
         },
       },
       "contracts/land-simple/BuilderFarmerCredit.sol": {
         version: "0.8.24",
         settings: {
           optimizer: { enabled: true, runs: 50 },
-          viaIR: true,
+          viaIR: false,
         },
       },
       "contracts/phase3/CreditLineVault.sol": {
         version: "0.8.20",
         settings: {
           optimizer: { enabled: true, runs: 50 },
-          viaIR: true,
+          viaIR: false,
         },
       },
       "contracts/phase3/InsurancePoolHub.sol": {
         version: "0.8.20",
         settings: {
           optimizer: { enabled: true, runs: 50 },
-          viaIR: true,
+          viaIR: false,
         },
       },
       "contracts/phase3/TreasuryNoteToken.sol": {
         version: "0.8.20",
         settings: {
           optimizer: { enabled: true, runs: 50 },
-          viaIR: true,
+          viaIR: false,
         },
       },
       "contracts/AxiomExchangeHub.sol": {
         version: "0.8.20",
         settings: {
           optimizer: { enabled: true, runs: 50 },
-          viaIR: true,
+          viaIR: false,
         },
       },
       "contracts/AxiomSusuHub.sol": {
         version: "0.8.20",
         settings: {
           optimizer: { enabled: true, runs: 50 },
-          viaIR: true,
+          viaIR: false,
         },
       },
     },
