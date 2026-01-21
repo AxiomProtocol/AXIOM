@@ -104,29 +104,31 @@ export default function TradingViewChart({ tokenA, tokenB, pairName }: TradingVi
 
   return (
     <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-      <div className="p-4 border-b border-gray-700">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h3 className="text-lg font-semibold text-white">
-              {pairName || `${tokenA}/${tokenB}`}
-            </h3>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-white">
-                ${currentPrice.toFixed(4)}
-              </span>
-              <span className={`text-sm font-medium ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
-              </span>
+      <div className="p-3 sm:p-4 border-b border-gray-700">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <h3 className="text-base sm:text-lg font-semibold text-white">
+                {pairName || `${tokenA}/${tokenB}`}
+              </h3>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <span className="text-lg sm:text-2xl font-bold text-white">
+                  ${currentPrice.toFixed(4)}
+                </span>
+                <span className={`text-xs sm:text-sm font-medium ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                  {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
+                </span>
+              </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <div className="flex bg-gray-700 rounded-lg p-1">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 -mb-1 scrollbar-thin">
+            <div className="flex bg-gray-700 rounded-lg p-1 flex-shrink-0">
               {(['1D', '1W', '1M', '3M'] as const).map((tf) => (
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                  className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-md transition-colors ${
                     timeframe === tf
                       ? 'bg-yellow-500 text-black font-medium'
                       : 'text-gray-300 hover:text-white'
@@ -137,10 +139,10 @@ export default function TradingViewChart({ tokenA, tokenB, pairName }: TradingVi
               ))}
             </div>
             
-            <div className="flex bg-gray-700 rounded-lg p-1">
+            <div className="flex bg-gray-700 rounded-lg p-1 flex-shrink-0">
               <button
                 onClick={() => setChartType('candle')}
-                className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-md transition-colors whitespace-nowrap ${
                   chartType === 'candle'
                     ? 'bg-yellow-500 text-black font-medium'
                     : 'text-gray-300 hover:text-white'
@@ -150,7 +152,7 @@ export default function TradingViewChart({ tokenA, tokenB, pairName }: TradingVi
               </button>
               <button
                 onClick={() => setChartType('line')}
-                className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-md transition-colors ${
                   chartType === 'line'
                     ? 'bg-yellow-500 text-black font-medium'
                     : 'text-gray-300 hover:text-white'
@@ -162,18 +164,18 @@ export default function TradingViewChart({ tokenA, tokenB, pairName }: TradingVi
           </div>
         </div>
         
-        <div className="flex gap-6 mt-3 text-sm">
-          <div>
+        <div className="flex gap-3 sm:gap-6 mt-3 text-xs sm:text-sm overflow-x-auto">
+          <div className="flex-shrink-0">
             <span className="text-gray-400">24h High:</span>
-            <span className="ml-2 text-white">${(currentPrice * 1.02).toFixed(4)}</span>
+            <span className="ml-1 sm:ml-2 text-white">${(currentPrice * 1.02).toFixed(4)}</span>
           </div>
-          <div>
+          <div className="flex-shrink-0">
             <span className="text-gray-400">24h Low:</span>
-            <span className="ml-2 text-white">${(currentPrice * 0.98).toFixed(4)}</span>
+            <span className="ml-1 sm:ml-2 text-white">${(currentPrice * 0.98).toFixed(4)}</span>
           </div>
-          <div>
-            <span className="text-gray-400">24h Volume:</span>
-            <span className="ml-2 text-white">$1.2M</span>
+          <div className="flex-shrink-0">
+            <span className="text-gray-400">24h Vol:</span>
+            <span className="ml-1 sm:ml-2 text-white">$1.2M</span>
           </div>
         </div>
       </div>
