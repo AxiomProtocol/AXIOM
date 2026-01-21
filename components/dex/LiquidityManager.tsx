@@ -3,6 +3,8 @@ import { useUserLiquidity, useDexPools, DEX_V2_CONTRACTS } from '../../lib/hooks
 import { useWallet } from '../../lib/web3/useWallet';
 import { ethers } from 'ethers';
 
+const CAMELOT_ROUTER = '0xc873fEcbd354f5A56E00E710B90EF4201db2448d';
+
 const TOKENS = [
   { symbol: 'AXUSD', address: '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c', decimals: 18 },
   { symbol: 'USDC', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', decimals: 6 },
@@ -18,11 +20,15 @@ const ERC20_ABI = [
   'function balanceOf(address account) external view returns (uint256)',
 ];
 
-const EXCHANGE_HUB_ABI = [
-  'function createPool(address tokenA, address tokenB, uint256 swapFee) external returns (uint256)',
-  'function addLiquidity(uint256 poolId, uint256 amountA, uint256 amountB, uint256 minLiquidity) external returns (uint256)',
-  'function removeLiquidity(uint256 poolId, uint256 liquidity, uint256 minAmountA, uint256 minAmountB) external returns (uint256, uint256)',
-  'function pools(uint256) external view returns (address tokenA, address tokenB, uint256 reserveA, uint256 reserveB, uint256 totalLiquidity, uint256 swapFee, bool isActive)',
+const CAMELOT_ROUTER_ABI = [
+  'function addLiquidity(address tokenA, address tokenB, uint256 amountADesired, uint256 amountBDesired, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline) external returns (uint256 amountA, uint256 amountB, uint256 liquidity)',
+  'function removeLiquidity(address tokenA, address tokenB, uint256 liquidity, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline) external returns (uint256 amountA, uint256 amountB)',
+];
+
+const CAMELOT_PAIR_ABI = [
+  'function approve(address spender, uint256 amount) external returns (bool)',
+  'function allowance(address owner, address spender) external view returns (uint256)',
+  'function balanceOf(address account) external view returns (uint256)',
 ];
 
 export default function LiquidityManager() {
@@ -102,7 +108,7 @@ export default function LiquidityManager() {
   };
 
   const handleAddLiquidity = async () => {
-    if (!signer || selectedPool === null || !amountA || !amountB) return;
+    if (!signer || selectedPool === null || !amountA || !amountB || !address) return;
 
     try {
       setIsLoading(true);
@@ -122,60 +128,108 @@ export default function LiquidityManager() {
 
       setTxStatus({ type: null, message: 'Checking allowances...' });
 
-      const allowanceA = await tokenAContract.allowance(address, DEX_V2_CONTRACTS.EXCHANGE_HUB_V2);
+      // Approve tokens to Camelot Router
+      const allowanceA = await tokenAContract.allowance(address, CAMELOT_ROUTER);
       if (allowanceA < amountAWei) {
         setTxStatus({ type: null, message: `Approving ${tokenAData?.symbol || 'Token A'}...` });
-        const approveTxA = await tokenAContract.approve(DEX_V2_CONTRACTS.EXCHANGE_HUB_V2, ethers.MaxUint256);
+        const approveTxA = await tokenAContract.approve(CAMELOT_ROUTER, ethers.MaxUint256);
         await approveTxA.wait();
       }
 
-      const allowanceB = await tokenBContract.allowance(address, DEX_V2_CONTRACTS.EXCHANGE_HUB_V2);
+      const allowanceB = await tokenBContract.allowance(address, CAMELOT_ROUTER);
       if (allowanceB < amountBWei) {
         setTxStatus({ type: null, message: `Approving ${tokenBData?.symbol || 'Token B'}...` });
-        const approveTxB = await tokenBContract.approve(DEX_V2_CONTRACTS.EXCHANGE_HUB_V2, ethers.MaxUint256);
+        const approveTxB = await tokenBContract.approve(CAMELOT_ROUTER, ethers.MaxUint256);
         await approveTxB.wait();
       }
 
-      const exchangeHub = new ethers.Contract(
-        DEX_V2_CONTRACTS.EXCHANGE_HUB_V2,
-        EXCHANGE_HUB_ABI,
+      // Use Camelot Router to add liquidity
+      const router = new ethers.Contract(
+        CAMELOT_ROUTER,
+        CAMELOT_ROUTER_ABI,
         signer
       );
 
-      setTxStatus({ type: null, message: 'Adding liquidity...' });
-      const tx = await exchangeHub.addLiquidity(selectedPool, amountAWei, amountBWei, 0);
+      // Set deadline to 20 minutes from now
+      const deadline = Math.floor(Date.now() / 1000) + 20 * 60;
+      
+      // Allow 1% slippage on minimum amounts
+      const amountAMin = amountAWei * 99n / 100n;
+      const amountBMin = amountBWei * 99n / 100n;
+
+      setTxStatus({ type: null, message: 'Adding liquidity via Camelot...' });
+      const tx = await router.addLiquidity(
+        pool.tokenA,
+        pool.tokenB,
+        amountAWei,
+        amountBWei,
+        amountAMin,
+        amountBMin,
+        address,
+        deadline
+      );
       await tx.wait();
 
-      setTxStatus({ type: 'success', message: 'Liquidity added successfully!' });
+      setTxStatus({ type: 'success', message: 'Liquidity added successfully to Camelot!' });
       setAmountA('');
       setAmountB('');
       refetch();
       refetchPools();
     } catch (error: any) {
       console.error('Add liquidity error:', error);
-      setTxStatus({ type: 'error', message: error.reason || error.message || 'Failed to add liquidity' });
+      let errorMessage = error.reason || error.message || 'Failed to add liquidity';
+      if (error.code === 'CALL_EXCEPTION') {
+        errorMessage = 'Transaction failed. Make sure you have enough tokens and ETH for gas.';
+      }
+      setTxStatus({ type: 'error', message: errorMessage });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleRemoveLiquidity = async (poolId: number, liquidity: string) => {
-    if (!signer) return;
+    if (!signer || !address) return;
 
     try {
       setIsLoading(true);
       setTxStatus({ type: null, message: '' });
 
+      const pool = pools.find(p => p.id === poolId);
+      if (!pool || !pool.pairAddress) {
+        throw new Error('Pool not found');
+      }
+
       const liquidityWei = ethers.parseEther(liquidity);
 
-      const exchangeHub = new ethers.Contract(
-        DEX_V2_CONTRACTS.EXCHANGE_HUB_V2,
-        EXCHANGE_HUB_ABI,
+      // Approve LP tokens to Camelot Router
+      const pairContract = new ethers.Contract(pool.pairAddress, CAMELOT_PAIR_ABI, signer);
+      
+      setTxStatus({ type: null, message: 'Approving LP tokens...' });
+      const allowance = await pairContract.allowance(address, CAMELOT_ROUTER);
+      if (allowance < liquidityWei) {
+        const approveTx = await pairContract.approve(CAMELOT_ROUTER, ethers.MaxUint256);
+        await approveTx.wait();
+      }
+
+      // Use Camelot Router to remove liquidity
+      const router = new ethers.Contract(
+        CAMELOT_ROUTER,
+        CAMELOT_ROUTER_ABI,
         signer
       );
 
-      setTxStatus({ type: null, message: 'Removing liquidity...' });
-      const tx = await exchangeHub.removeLiquidity(poolId, liquidityWei, 0, 0);
+      const deadline = Math.floor(Date.now() / 1000) + 20 * 60;
+
+      setTxStatus({ type: null, message: 'Removing liquidity from Camelot...' });
+      const tx = await router.removeLiquidity(
+        pool.tokenA,
+        pool.tokenB,
+        liquidityWei,
+        0, // amountAMin - accept any amount
+        0, // amountBMin - accept any amount
+        address,
+        deadline
+      );
       await tx.wait();
 
       setTxStatus({ type: 'success', message: 'Liquidity removed successfully!' });
@@ -185,7 +239,11 @@ export default function LiquidityManager() {
       refetchPools();
     } catch (error: any) {
       console.error('Remove liquidity error:', error);
-      setTxStatus({ type: 'error', message: error.reason || error.message || 'Failed to remove liquidity' });
+      let errorMessage = error.reason || error.message || 'Failed to remove liquidity';
+      if (error.code === 'CALL_EXCEPTION') {
+        errorMessage = 'Transaction failed. Make sure you have LP tokens and ETH for gas.';
+      }
+      setTxStatus({ type: 'error', message: errorMessage });
     } finally {
       setIsLoading(false);
     }
