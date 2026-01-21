@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useSwapQuote } from '../../client/src/hooks/useDex';
+import { useSwapQuote } from '../../lib/hooks/useDex';
 import { useWallet } from '../../lib/web3/useWallet';
-import { ethers } from 'ethers';
 
 const TOKENS = [
   { symbol: 'AXM', address: '0x53e79F3a8e60eB0a6bE88B60f3c95Bc7b22C5A54', decimals: 18, logo: '/axm-token.png' },

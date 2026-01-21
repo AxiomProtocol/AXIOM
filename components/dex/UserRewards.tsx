@@ -1,4 +1,4 @@
-import { useUserRewards, useUserLimitOrders } from '../../client/src/hooks/useDex';
+import { useUserRewards, useUserLimitOrders } from '../../lib/hooks/useDex';
 import { useWallet } from '../../lib/web3/useWallet';
 
 export default function UserRewards() {

@@ -1,4 +1,4 @@
-import { useDexPools, Pool } from '../../client/src/hooks/useDex';
+import { useDexPools, Pool } from '../../lib/hooks/useDex';
 
 export default function PoolList() {
   const { pools, loading, error, refetch } = useDexPools();

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useUserLiquidity, useDexPools } from '../../client/src/hooks/useDex';
+import { useUserLiquidity, useDexPools } from '../../lib/hooks/useDex';
 import { useWallet } from '../../lib/web3/useWallet';
 
 export default function LiquidityManager() {

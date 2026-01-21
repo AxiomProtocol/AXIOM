@@ -1,4 +1,4 @@
-import { useDexStats } from '../../client/src/hooks/useDex';
+import { useDexStats } from '../../lib/hooks/useDex';
 
 export default function DexStats() {
   const { stats, loading, error, refetch } = useDexStats();
