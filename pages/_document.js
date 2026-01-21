@@ -6,6 +6,8 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
+        <link rel="icon" href="/axiom-logo.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/axiom-logo.png" />
         {GA_ID && (
           <>
             <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} />
