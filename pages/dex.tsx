@@ -2,13 +2,12 @@ import { useState } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { SwapInterface, PoolList, LiquidityManager, DexStats, UserRewards } from '../components/dex';
-import WalletButton from '../components/web3/WalletButton';
 
 const TradingViewChart = dynamic(() => import('../components/dex/TradingViewChart'), { 
   ssr: false,
   loading: () => (
-    <div className="bg-gray-800 rounded-xl border border-gray-700 h-[500px] flex items-center justify-center">
-      <div className="text-gray-400">Loading chart...</div>
+    <div className="bg-white rounded-xl border border-gray-200 h-[500px] flex items-center justify-center">
+      <div className="text-gray-500">Loading chart...</div>
     </div>
   )
 });
@@ -64,37 +63,24 @@ export default function DexPage() {
         <meta name="description" content="Trade tokens, provide liquidity, and earn rewards on Axiom DEX" />
       </Head>
 
-      <div className="min-h-screen bg-gray-900">
-        <header className="bg-gray-800 border-b border-gray-700">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center">
-                  <span className="text-gray-900 font-bold text-lg">A</span>
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-white">Axiom DEX</h1>
-                  <p className="text-xs text-gray-400">Decentralized Exchange</p>
-                </div>
-              </div>
-              <WalletButton />
-            </div>
-          </div>
-        </header>
-
+      <div className="min-h-screen bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Axiom DEX</h1>
+            <p className="text-gray-600 mt-1">Decentralized Exchange on Arbitrum</p>
+          </div>
           <DexStats />
 
           <div className="mt-8 flex flex-col lg:flex-row gap-6">
-            <nav className="lg:w-48 flex lg:flex-col gap-2 overflow-x-auto">
+            <nav className="lg:w-48 flex lg:flex-col gap-2 overflow-x-auto pb-2 lg:pb-0">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors whitespace-nowrap ${
                     activeTab === tab.id
-                      ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/30'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                      ? 'bg-teal-50 text-teal-700 border border-teal-200'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }`}
                 >
                   {tab.icon}
@@ -119,27 +105,6 @@ export default function DexPage() {
           </div>
         </div>
 
-        <footer className="mt-16 py-8 border-t border-gray-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full" />
-                <span className="text-sm text-gray-400">Powered by Axiom Protocol</span>
-              </div>
-              <div className="flex items-center gap-6 text-sm text-gray-400">
-                <a href="https://arbiscan.io" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-                  Arbitrum One
-                </a>
-                <a href="/docs" className="hover:text-white transition-colors">
-                  Docs
-                </a>
-                <a href="/transparency" className="hover:text-white transition-colors">
-                  Transparency
-                </a>
-              </div>
-            </div>
-          </div>
-        </footer>
       </div>
     </>
   );

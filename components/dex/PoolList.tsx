@@ -5,10 +5,10 @@ export default function PoolList() {
 
   if (loading) {
     return (
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
+      <div className="bg-white border border-gray-200 rounded-xl p-6">
         <div className="flex items-center gap-3">
-          <div className="animate-spin w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full" />
-          <span className="text-gray-400">Loading pools...</span>
+          <div className="animate-spin w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full" />
+          <span className="text-gray-500">Loading pools...</span>
         </div>
       </div>
     );
@@ -16,11 +16,11 @@ export default function PoolList() {
 
   if (error) {
     return (
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
+      <div className="bg-white border border-gray-200 rounded-xl p-6">
         <div className="text-red-400">{error}</div>
         <button
           onClick={refetch}
-          className="mt-3 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-sm"
+          className="mt-3 px-4 py-2 bg-gray-100 hover:bg-gray-600 rounded-lg text-gray-900 text-sm"
         >
           Retry
         </button>
@@ -30,36 +30,36 @@ export default function PoolList() {
 
   if (pools.length === 0) {
     return (
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-8 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 bg-gray-700 rounded-full flex items-center justify-center">
+      <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
+        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
           <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-white mb-2">No Pools Yet</h3>
-        <p className="text-gray-400 text-sm">Liquidity pools will appear here once created.</p>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Pools Yet</h3>
+        <p className="text-gray-500 text-sm">Liquidity pools will appear here once created.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
-      <div className="p-4 border-b border-gray-700">
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white">Liquidity Pools</h3>
+          <h3 className="text-lg font-bold text-gray-900">Liquidity Pools</h3>
           <button
             onClick={refetch}
-            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             title="Refresh"
           >
-            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
         </div>
       </div>
 
-      <div className="hidden md:grid grid-cols-6 gap-4 px-4 py-3 bg-gray-900/50 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+      <div className="hidden md:grid grid-cols-6 gap-4 px-4 py-3 bg-gray-50/50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
         <div className="col-span-2">Pool</div>
         <div className="text-right">Liquidity</div>
         <div className="text-right">Reserve A</div>
@@ -87,40 +87,40 @@ function PoolRow({ pool }: { pool: Pool }) {
   const truncateAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-6 gap-4 px-4 py-4 hover:bg-gray-700/30 transition-colors">
+    <div className="grid grid-cols-2 md:grid-cols-6 gap-4 px-4 py-4 hover:bg-gray-100/30 transition-colors">
       <div className="col-span-2 flex items-center gap-3">
         <div className="flex -space-x-2">
-          <div className="w-8 h-8 bg-yellow-500/20 border-2 border-gray-800 rounded-full flex items-center justify-center">
-            <span className="text-xs font-bold text-yellow-400">A</span>
+          <div className="w-8 h-8 bg-teal-500/20 border-2 border-gray-800 rounded-full flex items-center justify-center">
+            <span className="text-xs font-bold text-teal-600">A</span>
           </div>
           <div className="w-8 h-8 bg-blue-500/20 border-2 border-gray-800 rounded-full flex items-center justify-center">
             <span className="text-xs font-bold text-blue-400">B</span>
           </div>
         </div>
         <div>
-          <div className="text-sm font-medium text-white">Pool #{pool.id}</div>
-          <div className="text-xs text-gray-400">
+          <div className="text-sm font-medium text-gray-900">Pool #{pool.id}</div>
+          <div className="text-xs text-gray-500">
             {truncateAddress(pool.tokenA)} / {truncateAddress(pool.tokenB)}
           </div>
         </div>
       </div>
 
       <div className="hidden md:flex flex-col items-end justify-center">
-        <span className="text-sm font-semibold text-yellow-400">{formatAmount(pool.totalLiquidity)}</span>
-        <span className="text-xs text-gray-400">Total LP</span>
+        <span className="text-sm font-semibold text-teal-600">{formatAmount(pool.totalLiquidity)}</span>
+        <span className="text-xs text-gray-500">Total LP</span>
       </div>
 
       <div className="hidden md:flex flex-col items-end justify-center">
-        <span className="text-sm text-white">{formatAmount(pool.reserveA)}</span>
+        <span className="text-sm text-gray-900">{formatAmount(pool.reserveA)}</span>
       </div>
 
       <div className="hidden md:flex flex-col items-end justify-center">
-        <span className="text-sm text-white">{formatAmount(pool.reserveB)}</span>
+        <span className="text-sm text-gray-900">{formatAmount(pool.reserveB)}</span>
       </div>
 
       <div className="flex flex-col items-end justify-center">
         <span className="text-sm font-medium text-green-400">{(pool.swapFee / 100).toFixed(2)}%</span>
-        <span className="text-xs text-gray-400 md:hidden">{formatAmount(pool.totalLiquidity)} LP</span>
+        <span className="text-xs text-gray-500 md:hidden">{formatAmount(pool.totalLiquidity)} LP</span>
       </div>
     </div>
   );

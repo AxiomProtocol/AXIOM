@@ -7,9 +7,9 @@ export default function DexStats() {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-gray-800 border border-gray-700 rounded-xl p-4 animate-pulse">
-            <div className="h-4 bg-gray-700 rounded w-20 mb-2" />
-            <div className="h-6 bg-gray-700 rounded w-24" />
+          <div key={i} className="bg-gray-50 border border-gray-200 rounded-xl p-4 animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-20 mb-2" />
+            <div className="h-6 bg-gray-200 rounded w-24" />
           </div>
         ))}
       </div>
@@ -18,11 +18,11 @@ export default function DexStats() {
 
   if (error || !stats) {
     return (
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 text-center">
-        <p className="text-red-400 mb-3">{error || 'Failed to load stats'}</p>
+      <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
+        <p className="text-red-600 mb-3">{error || 'Failed to load stats'}</p>
         <button
           onClick={refetch}
-          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-sm"
+          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-800 text-sm"
         >
           Retry
         </button>
@@ -95,19 +95,19 @@ function StatCard({
   color: 'yellow' | 'green' | 'purple' | 'blue';
 }) {
   const colorClasses = {
-    yellow: 'text-yellow-400 bg-yellow-500/10',
-    green: 'text-green-400 bg-green-500/10',
-    purple: 'text-purple-400 bg-purple-500/10',
-    blue: 'text-blue-400 bg-blue-500/10'
+    yellow: 'text-amber-600 bg-amber-100',
+    green: 'text-teal-600 bg-teal-100',
+    purple: 'text-purple-600 bg-purple-100',
+    blue: 'text-blue-600 bg-blue-100'
   };
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
+    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
       <div className="flex items-center gap-3 mb-3">
         <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
           {icon}
         </div>
-        <span className="text-sm text-gray-400">{label}</span>
+        <span className="text-sm text-gray-600">{label}</span>
       </div>
       <div className={`text-2xl font-bold ${colorClasses[color].split(' ')[0]}`}>
         {value}

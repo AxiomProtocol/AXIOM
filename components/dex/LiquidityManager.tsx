@@ -168,25 +168,25 @@ export default function LiquidityManager() {
 
   const WalletRequiredMessage = () => (
     <div className="text-center py-8">
-      <div className="w-16 h-16 mx-auto mb-4 bg-gray-700 rounded-full flex items-center justify-center">
+      <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
         <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2">Connect Wallet</h3>
-      <p className="text-gray-400 text-sm">Connect your wallet to use this feature.</p>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">Connect Wallet</h3>
+      <p className="text-gray-500 text-sm">Connect your wallet to use this feature.</p>
     </div>
   );
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
-      <div className="flex border-b border-gray-700 overflow-x-auto">
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="flex border-b border-gray-200 overflow-x-auto">
         <button
           onClick={() => setActiveTab('positions')}
           className={`flex-1 py-4 px-4 sm:px-6 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
             activeTab === 'positions'
-              ? 'text-yellow-400 border-b-2 border-yellow-400 bg-gray-900/30'
-              : 'text-gray-400 hover:text-white'
+              ? 'text-teal-600 border-b-2 border-teal-500 bg-teal-50/50'
+              : 'text-gray-500 hover:text-gray-900'
           }`}
         >
           Your Positions
@@ -195,8 +195,8 @@ export default function LiquidityManager() {
           onClick={() => setActiveTab('add')}
           className={`flex-1 py-4 px-4 sm:px-6 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
             activeTab === 'add'
-              ? 'text-yellow-400 border-b-2 border-yellow-400 bg-gray-900/30'
-              : 'text-gray-400 hover:text-white'
+              ? 'text-teal-600 border-b-2 border-teal-500 bg-teal-50/50'
+              : 'text-gray-500 hover:text-gray-900'
           }`}
         >
           Add Liquidity
@@ -205,8 +205,8 @@ export default function LiquidityManager() {
           onClick={() => setActiveTab('create')}
           className={`flex-1 py-4 px-4 sm:px-6 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
             activeTab === 'create'
-              ? 'text-yellow-400 border-b-2 border-yellow-400 bg-gray-900/30'
-              : 'text-gray-400 hover:text-white'
+              ? 'text-teal-600 border-b-2 border-teal-500 bg-teal-50/50'
+              : 'text-gray-500 hover:text-gray-900'
           }`}
         >
           Create Pool
@@ -215,7 +215,7 @@ export default function LiquidityManager() {
 
       {txStatus.type && (
         <div className={`mx-6 mt-4 p-3 rounded-lg text-sm ${
-          txStatus.type === 'success' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+          txStatus.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
         }`}>
           {txStatus.message}
         </div>
@@ -228,20 +228,20 @@ export default function LiquidityManager() {
               <WalletRequiredMessage />
             ) : positionsLoading ? (
               <div className="flex items-center gap-3 justify-center py-8">
-                <div className="animate-spin w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full" />
-                <span className="text-gray-400">Loading positions...</span>
+                <div className="animate-spin w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full" />
+                <span className="text-gray-500">Loading positions...</span>
               </div>
             ) : positions.length === 0 ? (
               <div className="text-center py-8">
-                <div className="w-12 h-12 mx-auto mb-3 bg-gray-700 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
                   <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                   </svg>
                 </div>
-                <p className="text-gray-400 text-sm">No liquidity positions found</p>
+                <p className="text-gray-500 text-sm">No liquidity positions found</p>
                 <button
                   onClick={() => setActiveTab('add')}
-                  className="mt-4 px-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-gray-900 rounded-lg text-sm font-semibold transition-colors"
+                  className="mt-4 px-4 py-2 bg-teal-500 hover:bg-teal-600 text-gray-900 rounded-lg text-sm font-semibold transition-colors"
                 >
                   Add Liquidity
                 </button>
@@ -253,13 +253,13 @@ export default function LiquidityManager() {
                   return (
                     <div
                       key={pos.poolId}
-                      className="p-4 bg-gray-900/50 rounded-xl"
+                      className="p-4 bg-gray-50 border border-gray-200 rounded-xl"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="flex -space-x-2">
-                            <div className="w-8 h-8 bg-yellow-500/20 border-2 border-gray-700 rounded-full flex items-center justify-center">
-                              <span className="text-xs font-bold text-yellow-400">
+                            <div className="w-8 h-8 bg-teal-500/20 border-2 border-gray-700 rounded-full flex items-center justify-center">
+                              <span className="text-xs font-bold text-teal-600">
                                 {pool ? getTokenSymbol(pool.tokenA).charAt(0) : 'A'}
                               </span>
                             </div>
@@ -270,14 +270,14 @@ export default function LiquidityManager() {
                             </div>
                           </div>
                           <div>
-                            <div className="text-sm font-medium text-white">
+                            <div className="text-sm font-medium text-gray-900">
                               {pool ? `${getTokenSymbol(pool.tokenA)} / ${getTokenSymbol(pool.tokenB)}` : `Pool #${pos.poolId}`}
                             </div>
-                            <div className="text-xs text-gray-400">{pos.sharePercent.toFixed(4)}% share</div>
+                            <div className="text-xs text-gray-500">{pos.sharePercent.toFixed(4)}% share</div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-sm font-semibold text-yellow-400">
+                          <div className="text-sm font-semibold text-teal-600">
                             {parseFloat(pos.liquidity).toFixed(4)} LP
                           </div>
                           {selectedPosition === pos.poolId ? (
@@ -287,18 +287,18 @@ export default function LiquidityManager() {
                                 value={removeAmount}
                                 onChange={(e) => setRemoveAmount(e.target.value)}
                                 placeholder="Amount"
-                                className="w-20 px-2 py-1 text-xs bg-gray-800 border border-gray-600 rounded text-white"
+                                className="w-20 px-2 py-1 text-xs bg-gray-800 border border-gray-300 rounded text-gray-900"
                               />
                               <button
                                 onClick={() => handleRemoveLiquidity(pos.poolId, removeAmount || pos.liquidity)}
                                 disabled={isLoading}
-                                className="text-xs px-2 py-1 bg-red-500 hover:bg-red-400 text-white rounded transition-colors disabled:opacity-50"
+                                className="text-xs px-2 py-1 bg-red-500 hover:bg-red-400 text-gray-900 rounded transition-colors disabled:opacity-50"
                               >
                                 {isLoading ? '...' : 'Remove'}
                               </button>
                               <button
                                 onClick={() => setSelectedPosition(null)}
-                                className="text-xs text-gray-400 hover:text-white"
+                                className="text-xs text-gray-500 hover:text-gray-900"
                               >
                                 Cancel
                               </button>
@@ -331,11 +331,11 @@ export default function LiquidityManager() {
             ) : (
             <>
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Select Pool</label>
+              <label className="block text-sm text-gray-500 mb-2">Select Pool</label>
               <select
                 value={selectedPool || ''}
                 onChange={(e) => setSelectedPool(e.target.value ? Number(e.target.value) : null)}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:outline-none focus:border-yellow-500"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500"
               >
                 <option value="">Choose a pool...</option>
                 {pools.map((pool) => (
@@ -349,7 +349,7 @@ export default function LiquidityManager() {
             {selectedPool && pools.find(p => p.id === selectedPool) && (
               <>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">
+                  <label className="block text-sm text-gray-500 mb-2">
                     {getTokenSymbol(pools.find(p => p.id === selectedPool)!.tokenA)} Amount
                   </label>
                   <input
@@ -357,12 +357,12 @@ export default function LiquidityManager() {
                     value={amountA}
                     onChange={(e) => setAmountA(e.target.value)}
                     placeholder="0.0"
-                    className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:border-teal-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">
+                  <label className="block text-sm text-gray-500 mb-2">
                     {getTokenSymbol(pools.find(p => p.id === selectedPool)!.tokenB)} Amount
                   </label>
                   <input
@@ -370,14 +370,14 @@ export default function LiquidityManager() {
                     value={amountB}
                     onChange={(e) => setAmountB(e.target.value)}
                     placeholder="0.0"
-                    className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:border-teal-500"
                   />
                 </div>
               </>
             )}
 
             {txStatus.message && !txStatus.type && (
-              <div className="text-center text-sm text-yellow-400">{txStatus.message}</div>
+              <div className="text-center text-sm text-teal-600">{txStatus.message}</div>
             )}
 
             <button
@@ -386,7 +386,7 @@ export default function LiquidityManager() {
               className={`w-full py-4 rounded-xl font-bold transition-all ${
                 selectedPool && amountA && amountB && !isLoading
                   ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-gray-900 hover:from-yellow-400 hover:to-yellow-500'
-                  : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                  : 'bg-gray-100 text-gray-500 cursor-not-allowed'
               }`}
             >
               {isLoading ? 'Processing...' : 'Add Liquidity'}
@@ -402,18 +402,18 @@ export default function LiquidityManager() {
               <WalletRequiredMessage />
             ) : (
             <>
-            <div className="bg-gray-900/50 p-4 rounded-xl mb-4">
-              <p className="text-sm text-gray-400">
+            <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl mb-4">
+              <p className="text-sm text-gray-500">
                 Create a new liquidity pool for any token pair. You'll need to add initial liquidity after creating the pool.
               </p>
             </div>
 
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Token A</label>
+              <label className="block text-sm text-gray-500 mb-2">Token A</label>
               <select
                 value={tokenA.address}
                 onChange={(e) => setTokenA(TOKENS.find(t => t.address === e.target.value) || TOKENS[0])}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:outline-none focus:border-yellow-500"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500"
               >
                 {TOKENS.map((token) => (
                   <option key={token.address} value={token.address}>
@@ -424,11 +424,11 @@ export default function LiquidityManager() {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Token B</label>
+              <label className="block text-sm text-gray-500 mb-2">Token B</label>
               <select
                 value={tokenB.address}
                 onChange={(e) => setTokenB(TOKENS.find(t => t.address === e.target.value) || TOKENS[1])}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:outline-none focus:border-yellow-500"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500"
               >
                 {TOKENS.filter(t => t.address !== tokenA.address).map((token) => (
                   <option key={token.address} value={token.address}>
@@ -439,7 +439,7 @@ export default function LiquidityManager() {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Swap Fee (basis points)</label>
+              <label className="block text-sm text-gray-500 mb-2">Swap Fee (basis points)</label>
               <div className="flex gap-2">
                 {['10', '30', '50', '100'].map((fee) => (
                   <button
@@ -447,8 +447,8 @@ export default function LiquidityManager() {
                     onClick={() => setSwapFee(fee)}
                     className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
                       swapFee === fee
-                        ? 'bg-yellow-500 text-black'
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        ? 'bg-teal-500 text-black'
+                        : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
                     }`}
                   >
                     {(parseFloat(fee) / 100).toFixed(2)}%
@@ -461,7 +461,7 @@ export default function LiquidityManager() {
             </div>
 
             {txStatus.message && !txStatus.type && (
-              <div className="text-center text-sm text-yellow-400">{txStatus.message}</div>
+              <div className="text-center text-sm text-teal-600">{txStatus.message}</div>
             )}
 
             <button
@@ -470,7 +470,7 @@ export default function LiquidityManager() {
               className={`w-full py-4 rounded-xl font-bold transition-all ${
                 tokenA.address !== tokenB.address && !isLoading
                   ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-gray-900 hover:from-yellow-400 hover:to-yellow-500'
-                  : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                  : 'bg-gray-100 text-gray-500 cursor-not-allowed'
               }`}
             >
               {isLoading ? 'Creating Pool...' : `Create ${tokenA.symbol}/${tokenB.symbol} Pool`}

@@ -52,14 +52,14 @@ export default function SwapInterface() {
   };
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 max-w-md mx-auto">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 max-w-md mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-white">Swap</h2>
+        <h2 className="text-xl font-bold text-gray-900">Swap</h2>
         <button
           onClick={() => setShowSettings(!showSettings)}
-          className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
@@ -67,8 +67,8 @@ export default function SwapInterface() {
       </div>
 
       {showSettings && (
-        <div className="mb-4 p-4 bg-gray-900/50 rounded-xl">
-          <div className="text-sm text-gray-400 mb-2">Slippage Tolerance</div>
+        <div className="mb-4 p-4 bg-gray-50/50 rounded-xl">
+          <div className="text-sm text-gray-500 mb-2">Slippage Tolerance</div>
           <div className="flex gap-2">
             {['0.1', '0.5', '1.0'].map((val) => (
               <button
@@ -76,8 +76,8 @@ export default function SwapInterface() {
                 onClick={() => setSlippage(val)}
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                   slippage === val
-                    ? 'bg-yellow-500 text-gray-900'
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    ? 'bg-teal-500 text-gray-900'
+                    : 'bg-gray-100 text-gray-300 hover:bg-gray-600'
                 }`}
               >
                 {val}%
@@ -87,7 +87,7 @@ export default function SwapInterface() {
               type="number"
               value={slippage}
               onChange={(e) => setSlippage(e.target.value)}
-              className="w-16 px-2 py-1 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white text-center"
+              className="w-16 px-2 py-1 bg-gray-100 border border-gray-600 rounded-lg text-sm text-gray-900 text-center"
               placeholder="Custom"
             />
           </div>
@@ -95,10 +95,10 @@ export default function SwapInterface() {
       )}
 
       <div className="space-y-2">
-        <div className="bg-gray-900/50 rounded-xl p-4">
+        <div className="bg-gray-50/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-400">You pay</span>
-            <span className="text-sm text-gray-400">Balance: 0.00</span>
+            <span className="text-sm text-gray-500">You pay</span>
+            <span className="text-sm text-gray-500">Balance: 0.00</span>
           </div>
           <div className="flex items-center gap-3">
             <input
@@ -106,7 +106,7 @@ export default function SwapInterface() {
               value={amountIn}
               onChange={(e) => setAmountIn(e.target.value)}
               placeholder="0.0"
-              className="flex-1 bg-transparent text-2xl font-semibold text-white outline-none"
+              className="flex-1 bg-transparent text-2xl font-semibold text-gray-900 outline-none"
             />
             <TokenSelector
               token={tokenIn}
@@ -119,21 +119,21 @@ export default function SwapInterface() {
         <div className="flex justify-center -my-1 z-10 relative">
           <button
             onClick={handleSwapTokens}
-            className="p-2 bg-gray-700 hover:bg-gray-600 border-4 border-gray-800 rounded-xl transition-colors"
+            className="p-2 bg-gray-100 hover:bg-gray-600 border-4 border-gray-800 rounded-xl transition-colors"
           >
-            <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
             </svg>
           </button>
         </div>
 
-        <div className="bg-gray-900/50 rounded-xl p-4">
+        <div className="bg-gray-50/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-400">You receive</span>
-            <span className="text-sm text-gray-400">Balance: 0.00</span>
+            <span className="text-sm text-gray-500">You receive</span>
+            <span className="text-sm text-gray-500">Balance: 0.00</span>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex-1 text-2xl font-semibold text-white">
+            <div className="flex-1 text-2xl font-semibold text-gray-900">
               {quoteLoading ? (
                 <span className="text-gray-500">Loading...</span>
               ) : quote ? (
@@ -152,19 +152,19 @@ export default function SwapInterface() {
       </div>
 
       {quote && (
-        <div className="mt-4 p-3 bg-gray-900/30 rounded-xl space-y-2">
+        <div className="mt-4 p-3 bg-gray-50/30 rounded-xl space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">Price Impact</span>
+            <span className="text-gray-500">Price Impact</span>
             <span className={quote.priceImpact > 5 ? 'text-red-400' : 'text-gray-300'}>
               {quote.priceImpact.toFixed(2)}%
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">Fee</span>
+            <span className="text-gray-500">Fee</span>
             <span className="text-gray-300">{parseFloat(quote.fee).toFixed(6)} {tokenIn.symbol}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">Route</span>
+            <span className="text-gray-500">Route</span>
             <span className="text-gray-300">{quote.route.length > 2 ? `${quote.route.length} hops` : 'Direct'}</span>
           </div>
         </div>
@@ -182,7 +182,7 @@ export default function SwapInterface() {
         className={`w-full mt-4 py-4 rounded-xl font-bold text-lg transition-all ${
           isConnected && quote && !quoteLoading
             ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-gray-900 hover:from-yellow-400 hover:to-yellow-500'
-            : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+            : 'bg-gray-100 text-gray-500 cursor-not-allowed'
         }`}
       >
         {!isConnected
@@ -214,13 +214,13 @@ function TokenSelector({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl transition-colors"
+        className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-600 rounded-xl transition-colors"
       >
-        <div className="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center text-xs font-bold text-yellow-400">
+        <div className="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center text-xs font-bold text-teal-600">
           {token.symbol.charAt(0)}
         </div>
-        <span className="font-semibold text-white">{token.symbol}</span>
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <span className="font-semibold text-gray-900">{token.symbol}</span>
+        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
@@ -228,7 +228,7 @@ function TokenSelector({
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 w-48 bg-gray-800 border border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden">
+          <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
             {tokens.map((t) => (
               <button
                 key={t.symbol}
@@ -236,14 +236,14 @@ function TokenSelector({
                   onSelect(t);
                   setIsOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-700 transition-colors ${
-                  t.address === token.address ? 'bg-gray-700' : ''
+                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition-colors ${
+                  t.address === token.address ? 'bg-gray-100' : ''
                 }`}
               >
-                <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-sm font-bold text-yellow-400">
+                <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-sm font-bold text-teal-600">
                   {t.symbol.charAt(0)}
                 </div>
-                <span className="font-medium text-white">{t.symbol}</span>
+                <span className="font-medium text-gray-900">{t.symbol}</span>
               </button>
             ))}
           </div>
