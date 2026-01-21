@@ -443,6 +443,100 @@ class DexService {
       };
     }
   }
+
+  async getPriceFeed(tokenAddress: string): Promise<{
+    feed: string;
+    heartbeat: number;
+    decimals: number;
+    isActive: boolean;
+  } | null> {
+    try {
+      const feedInfo = await this.oracleAdapter.getPriceFeed(tokenAddress);
+      return {
+        feed: feedInfo.feed,
+        heartbeat: Number(feedInfo.heartbeat),
+        decimals: Number(feedInfo.decimals),
+        isActive: feedInfo.isActive
+      };
+    } catch (error) {
+      console.error('Error getting price feed:', error);
+      return null;
+    }
+  }
+
+  async getTokenPriceUSD(tokenAddress: string): Promise<{
+    price: string;
+    timestamp: number;
+    isStale: boolean;
+  } | null> {
+    try {
+      const [price, timestamp] = await this.oracleAdapter.getPrice(tokenAddress);
+      const feedInfo = await this.oracleAdapter.getPriceFeed(tokenAddress);
+      const now = Math.floor(Date.now() / 1000);
+      const isStale = now - Number(timestamp) > Number(feedInfo.heartbeat);
+      
+      return {
+        price: ethers.formatUnits(price, 8),
+        timestamp: Number(timestamp),
+        isStale
+      };
+    } catch (error) {
+      console.error('Error getting token price USD:', error);
+      return null;
+    }
+  }
+
+  async getAllConfiguredPriceFeeds(): Promise<Array<{
+    token: string;
+    feed: string;
+    heartbeat: number;
+    decimals: number;
+    isActive: boolean;
+    currentPrice: string | null;
+  }>> {
+    const configuredTokens = [
+      '0x53e79F3a8e60eB0a6bE88B60f3c95Bc7b22C5A54', // AXM
+      '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', // WETH
+      '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', // USDC
+      '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', // USDT
+      '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1', // DAI
+      '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f', // WBTC
+      '0x912CE59144191C1204E64559FE8253a0e49E6548', // ARB
+      '0xf97f4df75117a78c1A5a0DBb814Af92458539FB4', // LINK
+    ];
+
+    const feeds: Array<{
+      token: string;
+      feed: string;
+      heartbeat: number;
+      decimals: number;
+      isActive: boolean;
+      currentPrice: string | null;
+    }> = [];
+
+    for (const token of configuredTokens) {
+      try {
+        const feedInfo = await this.getPriceFeed(token);
+        const priceInfo = await this.getTokenPriceUSD(token);
+        
+        if (feedInfo) {
+          feeds.push({
+            token,
+            ...feedInfo,
+            currentPrice: priceInfo?.price || null
+          });
+        }
+      } catch (error) {
+        // Token not configured, skip
+      }
+    }
+
+    return feeds;
+  }
+
+  getOracleAdapterAddress(): string {
+    return DEX_ADDRESSES.ORACLE_ADAPTER;
+  }
 }
 
 export const dexService = new DexService();
