@@ -103,6 +103,20 @@ const config: HardhatUserConfig = {
           viaIR: true,
         },
       },
+      "contracts/AxiomExchangeHub.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 50 },
+          viaIR: true,
+        },
+      },
+      "contracts/AxiomSusuHub.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 50 },
+          viaIR: true,
+        },
+      },
     },
   },
   networks: {
