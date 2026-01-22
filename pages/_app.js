@@ -104,7 +104,7 @@ export default function App({ Component, pageProps }) {
   useEffect(() => {
     if (typeof window !== 'undefined' && !onboardingChecked) {
       const completed = localStorage.getItem('axiom_onboarding_complete')
-      const isPublicPage = ['/', '/origin', '/how-it-works', '/about-us', '/team', '/axiom-nexus', '/transparency', '/governance', '/treasury', '/roadmap', '/mortgage-notes', '/savings', '/rent-streams', '/products', '/reclaim', '/workbook', '/land-funds', '/joincommunity'].includes(router.pathname) || router.pathname.startsWith('/dscr/investor') || router.pathname.startsWith('/reclaim') || router.pathname.startsWith('/workbook') || router.pathname.startsWith('/workbook/search') || router.pathname.startsWith('/land-funds')
+      const isPublicPage = ['/', '/origin', '/how-it-works', '/about-us', '/team', '/axiom-nexus', '/transparency', '/governance', '/treasury', '/roadmap', '/mortgage-notes', '/savings', '/rent-streams', '/products', '/reclaim', '/workbook', '/land-funds', '/joincommunity', '/partner'].includes(router.pathname) || router.pathname.startsWith('/dscr/investor') || router.pathname.startsWith('/reclaim') || router.pathname.startsWith('/workbook') || router.pathname.startsWith('/workbook/search') || router.pathname.startsWith('/land-funds')
       const isAdminPage = router.pathname.startsWith('/admin')
       const isCustomOnboardingPage = router.pathname === '/join'
       if (!completed && !isPublicPage && !isAdminPage && !isCustomOnboardingPage) {
