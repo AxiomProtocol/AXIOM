@@ -14,7 +14,9 @@ const phases = [
       { name: 'Axiom Mortgage Notes', href: '/mortgage-notes', live: true },
       { name: 'Community Land Funds', href: '/land-funds', live: true }
     ],
-    description: 'Land acquisition is executed through regulated real estate finance, not speculation.',
+    narrative: 'Imagine a family who lost their ancestral farmland three generations ago. They remember the stories. The soil their great-grandparents tended. The harvests that fed their community. For decades, that land seemed unreachable, a dream locked behind systems they could never access.',
+    revelation: 'Until now.',
+    description: 'Land acquisition is executed through regulated real estate finance, not speculation. We are not buying property to flip it. We are reclaiming the foundation of generational wealth.',
     details: [
       { name: 'AXUSD Real Estate Lending Fund', text: 'provides private credit for acquiring agricultural and mixed-use land using conservative loan-to-value ratios that protect long-term stewardship. SEC Reg D 506(c) compliant for accredited investors.' },
       { name: 'Axiom Mortgage Notes', text: 'offer fractional participation in property-backed mortgage notes, generating 10-14% target APY while aligning community investors with productive land assets.' },
@@ -39,7 +41,9 @@ const phases = [
       { name: 'Builder & Farmer Credit', href: '/builder-credit', live: true },
       { name: 'AXUSD Settlement', href: '/axusd', live: true }
     ],
-    description: 'Once land is secured, productivity begins.',
+    narrative: 'The land is secured. But land alone does not feed families. It does not heal communities. It does not build wealth. What transforms land from an asset into a living economy is what grows from it, what is built upon it, and the hands that tend it with purpose.',
+    revelation: 'This is where capital meets calling.',
+    description: 'Once land is secured, productivity begins. Seeds are planted. Equipment is purchased. Infrastructure rises. Communities transform from consumers into producers.',
     details: [
       { name: 'Builder & Farmer Credit', text: 'provides working capital for seeds, equipment, irrigation, soil regeneration, and agricultural infrastructure. Rates from 8% APR with up to $500K in credit.' },
       { name: 'AXUSD', text: 'functions as the stable settlement medium used to pay farmers, stewards, and suppliers, eliminating banking friction and volatility while enabling predictable budgeting.' }
@@ -67,7 +71,9 @@ const phases = [
       { name: 'High Yield Savings', href: '/savings', live: true },
       { name: 'AXUSD Payments', href: '/axusd', live: true }
     ],
-    description: 'Resources must reach the people with dignity and discipline.',
+    narrative: 'A mother drives 45 minutes to find fresh produce. A farmer watches half their harvest spoil because they cannot reach the people who need it. A community sits on abundance but experiences scarcity, not because resources do not exist, but because the bridges between them were never built.',
+    revelation: 'We build those bridges.',
+    description: 'Resources must reach the people with dignity and discipline. Distribution infrastructure transforms isolated abundance into community prosperity.',
     details: [
       { name: 'Axiom Rent Streams', text: 'finance and tokenize income-producing infrastructure such as storage facilities, distribution hubs, and properties, offering 6-9% target yield from monthly tenant payments.' },
       { name: 'High Yield Savings', text: 'allows community members to earn competitive yields backed by real estate cash flows from lending activities.' },
@@ -94,7 +100,9 @@ const phases = [
       { name: 'Insurance Pools', href: '/insurance-pools', live: true },
       { name: 'Axiom Treasury Notes', href: '/treasury-notes', live: true }
     ],
-    description: 'Capital coordination is the backbone of civilization.',
+    narrative: 'Every great civilization that endured did so because it protected what it built. They did not leave their granaries unguarded. They did not trust their water supply to chance. They understood that creation without protection is just delayed destruction.',
+    revelation: 'We protect what we build.',
+    description: 'Capital coordination is the backbone of civilization. Without financial resilience, everything built can be swept away by a single crisis.',
     details: [
       { name: 'AXUSD Credit Lines', text: 'allow stewards and operators to access liquidity without selling assets, supporting expansion of transport and distribution capacity through Web3 wallet integration.' },
       { name: 'Insurance Pools', text: 'protect land, infrastructure, and logistics systems from operational and systemic risk, increasing resilience through community-backed coverage.' },
@@ -184,29 +192,69 @@ export default function PartnerPage() {
           </div>
         </section>
 
+        <section className="relative py-32 px-6 bg-gradient-to-b from-slate-950 to-slate-900">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-8 text-white">
+                The Problem We Refuse to Accept
+              </h2>
+            </div>
+            
+            <div className="space-y-8 text-lg text-slate-300 leading-relaxed">
+              <p>
+                For too long, communities have been told to wait. Wait for permission. Wait for programs. Wait for someone else to decide they are worthy of investment. Wait for systems designed without them to somehow include them.
+              </p>
+              <p>
+                Meanwhile, land changes hands. Wealth concentrates elsewhere. Infrastructure bypasses their neighborhoods. And generation after generation inherits the same starting line, or further back.
+              </p>
+              <p className="text-xl text-white font-medium">
+                We reject this.
+              </p>
+              <p>
+                Not with anger. With architecture. Not with protests. With protocols. Not with demands. With delivery.
+              </p>
+            </div>
+
+            <div className="mt-16 p-8 rounded-2xl bg-gradient-to-r from-amber-900/20 to-amber-800/10 border border-amber-500/20">
+              <p className="text-xl md:text-2xl text-center italic text-amber-200">
+                "We are not asking for a seat at the table. <br />
+                <span className="font-bold">We are building our own table.</span>"
+              </p>
+            </div>
+          </div>
+        </section>
+
         <section className="relative py-24 px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-8 text-white">
               Foundational Principles
             </h2>
+            <p className="text-lg text-slate-300 mb-6 max-w-3xl mx-auto">
+              Every movement that transformed communities, not just inspired them, understood something fundamental: 
+            </p>
+            <p className="text-xl text-amber-300 font-medium mb-12">
+              Hope without infrastructure is just a feeling. Infrastructure without purpose is just construction.
+            </p>
+            
             <p className="text-lg text-slate-300 mb-12">
               A community uplift initiative must ensure that members:
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-12">
               {[
-                { icon: '🏛️', text: 'Control land lawfully' },
-                { icon: '🌱', text: 'Build wealth locally' },
-                { icon: '📦', text: 'Distribute resources reliably' },
-                { icon: '💰', text: 'Coordinate capital transparently' },
-                { icon: '⚖️', text: 'Govern resources responsibly' }
+                { icon: '🏛️', text: 'Control land lawfully', subtext: 'The foundation of all sovereignty' },
+                { icon: '🌱', text: 'Build wealth locally', subtext: 'Money that stays is money that grows' },
+                { icon: '📦', text: 'Distribute resources reliably', subtext: 'Abundance must reach those who need it' },
+                { icon: '💰', text: 'Coordinate capital transparently', subtext: 'Trust is built through visibility' },
+                { icon: '⚖️', text: 'Govern resources responsibly', subtext: 'Power with accountability' }
               ].map((item, i) => (
                 <div 
                   key={i}
                   className="p-6 rounded-2xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border border-slate-700/50 backdrop-blur-sm hover:border-amber-500/30 transition-all duration-300 hover:transform hover:scale-105"
                 >
                   <div className="text-3xl mb-3">{item.icon}</div>
-                  <p className="text-sm text-slate-300">{item.text}</p>
+                  <p className="text-sm font-medium text-white mb-2">{item.text}</p>
+                  <p className="text-xs text-slate-400">{item.subtext}</p>
                 </div>
               ))}
             </div>
@@ -217,11 +265,32 @@ export default function PartnerPage() {
           </div>
         </section>
 
+        <section className="relative py-16 px-6 bg-slate-900/50">
+          <div className="max-w-4xl mx-auto text-center">
+            <p className="text-2xl md:text-3xl text-slate-300 leading-relaxed">
+              What follows is not a pitch.{' '}
+              <span className="text-white font-medium">It is a blueprint.</span>{' '}
+              Each phase builds on the last. Each product serves a purpose. Each step brings communities closer to the self-determination they deserve.
+            </p>
+          </div>
+        </section>
+
         {phases.map((phase, index) => (
           <section 
             key={phase.id}
-            className={`relative py-0 ${index % 2 === 0 ? '' : ''}`}
+            className="relative py-0"
           >
+            <div className="relative py-20 px-6 bg-gradient-to-b from-slate-900 to-slate-950">
+              <div className="max-w-4xl mx-auto">
+                <p className="text-lg text-slate-400 leading-relaxed mb-6">
+                  {phase.narrative}
+                </p>
+                <p className="text-2xl font-bold text-amber-400">
+                  {phase.revelation}
+                </p>
+              </div>
+            </div>
+
             <div className="relative h-[60vh] md:h-[70vh] overflow-hidden">
               <Image
                 src={phase.image}
@@ -293,53 +362,130 @@ export default function PartnerPage() {
           </section>
         ))}
 
-        <section className="relative py-24 px-6 bg-gradient-to-b from-slate-900 to-slate-950">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-8 text-white">
-              Why This System Works
-            </h2>
-            <p className="text-lg text-slate-300 mb-12">
-              This framework succeeds because it replaces fragility with structure.
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-              {[
-                'Land is financed responsibly',
-                'Wealth is built locally',
-                'Infrastructure is professionally coordinated',
-                'Capital is transparent and accountable',
-                'Communities govern their own resources'
-              ].map((item, i) => (
-                <div 
-                  key={i}
-                  className="p-6 rounded-xl bg-slate-800/30 border border-slate-700/50 hover:border-amber-500/30 transition-all"
-                >
-                  <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center mb-4 mx-auto">
-                    <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+        <section className="relative py-32 px-6 bg-gradient-to-b from-slate-900 to-slate-950">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-8 text-white">
+                The Difference This Makes
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+              <div className="p-8 rounded-2xl bg-slate-800/30 border border-red-500/20">
+                <h3 className="text-red-400 font-semibold mb-6 text-lg">Without This System</h3>
+                <ul className="space-y-4 text-slate-400">
+                  <li className="flex gap-3">
+                    <span className="text-red-400">x</span>
+                    <span>Land remains out of reach</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="text-red-400">x</span>
+                    <span>Wealth flows out of communities</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="text-red-400">x</span>
+                    <span>Resources spoil or never arrive</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="text-red-400">x</span>
+                    <span>Capital is opaque and exploitative</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="text-red-400">x</span>
+                    <span>Crisis destroys what was built</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="p-8 rounded-2xl bg-gradient-to-b from-amber-900/20 to-slate-800/30 border border-amber-500/30">
+                <h3 className="text-amber-400 font-semibold mb-6 text-lg">With Axiom</h3>
+                <ul className="space-y-4 text-slate-300">
+                  <li className="flex gap-3">
+                    <svg className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
-                  </div>
-                  <p className="text-slate-200">{item}</p>
-                </div>
-              ))}
+                    <span>Land is financed and stewarded responsibly</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <svg className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span>Wealth is built and retained locally</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <svg className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span>Infrastructure ensures reliable distribution</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <svg className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span>Capital is transparent and accountable</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <svg className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span>Insurance and reserves protect against crisis</span>
+                  </li>
+                </ul>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
               {[
-                { name: 'Axiom Nexus', desc: 'provides lawful execution' },
-                { name: 'AXUSD', desc: 'provides monetary stability' },
-                { name: 'Axiom Protocol', desc: 'provides coordination and visibility' }
+                { name: 'Axiom Nexus', desc: 'provides lawful execution', detail: 'SEC-compliant structures for real-world assets' },
+                { name: 'AXUSD', desc: 'provides monetary stability', detail: 'Predictable settlement without volatility' },
+                { name: 'Axiom Protocol', desc: 'provides coordination and visibility', detail: 'On-chain transparency for every transaction' }
               ].map((item, i) => (
-                <div key={i} className="text-center">
+                <div key={i} className="text-center p-6 rounded-xl bg-slate-800/30 border border-slate-700/50">
                   <h3 className="text-xl font-bold text-amber-400 mb-2">{item.name}</h3>
-                  <p className="text-slate-400">{item.desc}</p>
+                  <p className="text-slate-300 mb-2">{item.desc}</p>
+                  <p className="text-sm text-slate-500">{item.detail}</p>
                 </div>
               ))}
             </div>
 
-            <p className="text-2xl font-semibold text-white italic">
+            <p className="text-2xl font-semibold text-white italic text-center">
               Together, they form a complete civilizational stack.
             </p>
+          </div>
+        </section>
+
+        <section className="relative py-32 px-6 bg-slate-950">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-8 text-white">
+                Who This Is For
+              </h2>
+            </div>
+
+            <div className="space-y-8 text-lg text-slate-300 leading-relaxed mb-16">
+              <p>
+                This is for the grandmother who saved every dollar so her grandchildren might own something. This is for the farmer who remembers when their family fed the whole county. This is for the entrepreneur who wants their success to lift their neighbors, not leave them behind.
+              </p>
+              <p>
+                This is for anyone who believes that building wealth together is not only possible but necessary.
+              </p>
+              <p className="text-xl text-white font-medium">
+                You do not need to understand blockchain to participate. You do not need to be wealthy to begin. You only need to believe that your community deserves better, and be willing to help build it.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                { title: 'Investors', desc: 'Earn real yields from real assets while building community infrastructure' },
+                { title: 'Stewards', desc: 'Lead local coordination, manage resources, and earn from your contribution' },
+                { title: 'Community Members', desc: 'Access savings, credit, and ownership opportunities previously unavailable' }
+              ].map((item, i) => (
+                <div key={i} className="p-6 rounded-xl bg-slate-800/30 border border-slate-700/50 hover:border-amber-500/30 transition-all">
+                  <h3 className="text-lg font-semibold text-amber-400 mb-3">{item.title}</h3>
+                  <p className="text-slate-400 text-sm">{item.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -361,9 +507,17 @@ export default function PartnerPage() {
               </p>
             </div>
 
-            <p className="text-lg text-slate-300 mb-12 max-w-3xl mx-auto">
-              Those engaged in uplifting humanity restore the fundamentals of life itself: land, resources, trade, and governance, using modern tools that honor timeless principles.
-            </p>
+            <div className="space-y-6 text-lg text-slate-300 mb-12 max-w-3xl mx-auto text-left">
+              <p>
+                One day, there will be communities where children grow up on land their grandparents helped acquire. Where local businesses are supplied by local farms. Where the money earned in a neighborhood stays in that neighborhood, multiplying with each transaction.
+              </p>
+              <p>
+                Where families do not fear a medical bill or a market crash because they have real assets, real reserves, and real community behind them.
+              </p>
+              <p className="text-center text-xl text-white font-medium">
+                This is not utopia. This is engineering.
+              </p>
+            </div>
 
             <p className="text-xl italic text-slate-400 mb-16">
               Axiom Nexus and AXUSD do not replace human leadership.<br />
