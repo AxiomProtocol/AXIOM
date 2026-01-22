@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const phases = [
   {
     id: 'land',
     phase: 'PHASE I',
     title: 'Land Acquisition & Stewardship',
-    subtitle: 'Aligned Axiom Nexus Products',
-    products: ['Axiom Nexus Lending Fund', 'Axiom Mortgage Notes', 'Community Land Funds'],
+    subtitle: 'Axiom Nexus Products',
+    products: [
+      { name: 'AXUSD Real Estate Lending Fund', href: '/lending-fund', live: true },
+      { name: 'Axiom Mortgage Notes', href: '/mortgage-notes', live: true },
+      { name: 'Community Land Funds', href: '/land-funds', live: true }
+    ],
     description: 'Land acquisition is executed through regulated real estate finance, not speculation.',
     details: [
-      { name: 'Axiom Nexus Lending Fund', text: 'provides private credit for acquiring agricultural and mixed-use land using conservative loan-to-value ratios that protect long-term stewardship.' },
-      { name: 'Axiom Mortgage Notes', text: 'allow fractional participation in land-backed loans, aligning community investors with productive land assets while generating stable income streams.' },
-      { name: 'Community Land Funds', text: 'enable collective land acquisition through lawful crowdfunding structures that preserve real-world title while allowing transparent participation and governance.' }
+      { name: 'AXUSD Real Estate Lending Fund', text: 'provides private credit for acquiring agricultural and mixed-use land using conservative loan-to-value ratios that protect long-term stewardship. SEC Reg D 506(c) compliant for accredited investors.' },
+      { name: 'Axiom Mortgage Notes', text: 'offer fractional participation in property-backed mortgage notes, generating 10-14% target APY while aligning community investors with productive land assets.' },
+      { name: 'Community Land Funds', text: 'enable collective land acquisition through SEC Reg CF compliant crowdfunding structures that preserve real-world title while allowing transparent participation and governance.' }
     ],
     quote: 'Land is not traded. Land is placed into purpose.',
     image: '/images/partner/land-stewardship.png',
@@ -28,12 +33,15 @@ const phases = [
   {
     id: 'farming',
     phase: 'PHASE II',
-    title: 'Community Farming & Food Production',
-    subtitle: 'Aligned Axiom Nexus Products',
-    products: ['Builder and Farmer Credit', 'AXUSD Settlement Infrastructure'],
+    title: 'Community Development & Production',
+    subtitle: 'Axiom Nexus Products',
+    products: [
+      { name: 'Builder & Farmer Credit', href: '/builder-credit', live: true },
+      { name: 'AXUSD Settlement', href: '/axusd', live: true }
+    ],
     description: 'Once land is secured, productivity begins.',
     details: [
-      { name: 'Builder and Farmer Credit', text: 'provides working capital for seeds, equipment, irrigation, soil regeneration, and agricultural infrastructure without creating debt traps.' },
+      { name: 'Builder & Farmer Credit', text: 'provides working capital for seeds, equipment, irrigation, soil regeneration, and agricultural infrastructure. Rates from 8% APR with up to $500K in credit.' },
       { name: 'AXUSD', text: 'functions as the stable settlement medium used to pay farmers, stewards, and suppliers, eliminating banking friction and volatility while enabling predictable budgeting.' }
     ],
     quote: 'AXUSD is not speculative. It is circulatory.',
@@ -52,16 +60,20 @@ const phases = [
   {
     id: 'distribution',
     phase: 'PHASE III',
-    title: 'Food Drop Points & Community Access',
-    subtitle: 'Aligned Axiom Nexus Products',
-    products: ['Axiom Rent Streams', 'Builder and Farmer Credit', 'AXUSD Payments'],
-    description: 'Food must reach the people with dignity and discipline.',
+    title: 'Infrastructure & Community Access',
+    subtitle: 'Axiom Nexus Products',
+    products: [
+      { name: 'Axiom Rent Streams', href: '/rent-streams', live: true },
+      { name: 'High Yield Savings', href: '/savings', live: true },
+      { name: 'AXUSD Payments', href: '/axusd', live: true }
+    ],
+    description: 'Resources must reach the people with dignity and discipline.',
     details: [
-      { name: 'Axiom Rent Streams', text: 'finance and tokenize income-producing infrastructure such as storage facilities, distribution hubs, and cold-chain assets, converting logistics into sustainable yield sources.' },
-      { name: 'Builder and Farmer Credit', text: 'supports vehicles, storage upgrades, and operational scaling for consistent food distribution.' },
+      { name: 'Axiom Rent Streams', text: 'finance and tokenize income-producing infrastructure such as storage facilities, distribution hubs, and properties, offering 6-9% target yield from monthly tenant payments.' },
+      { name: 'High Yield Savings', text: 'allows community members to earn competitive yields backed by real estate cash flows from lending activities.' },
       { name: 'AXUSD payments', text: 'provide transparent pricing, access credits, and expense tracking, ensuring accountability across inventory and distribution.' }
     ],
-    quote: 'Food access becomes infrastructure, not charity.',
+    quote: 'Access becomes infrastructure, not charity.',
     image: '/images/partner/food-distribution.png',
     icon: (
       <svg className="w-12 h-12" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -75,13 +87,17 @@ const phases = [
   {
     id: 'logistics',
     phase: 'PHASE IV',
-    title: 'Logistics, Trade & Economic Circulation',
-    subtitle: 'Aligned Axiom Nexus Products',
-    products: ['AXUSD Credit Lines', 'Insurance Pools', 'Axiom Treasury Notes'],
-    description: 'Logistics is the backbone of civilization.',
+    title: 'Economic Sovereignty & Resilience',
+    subtitle: 'Axiom Nexus Products',
+    products: [
+      { name: 'AXUSD Credit Lines', href: '/credit-lines', live: true },
+      { name: 'Insurance Pools', href: '/insurance-pools', live: true },
+      { name: 'Axiom Treasury Notes', href: '/treasury-notes', live: true }
+    ],
+    description: 'Capital coordination is the backbone of civilization.',
     details: [
-      { name: 'AXUSD Credit Lines', text: 'allow stewards and operators to access liquidity without selling assets, supporting expansion of transport and distribution capacity.' },
-      { name: 'Insurance Pools', text: 'protect land, food, and logistics systems from operational and systemic risk, increasing resilience.' },
+      { name: 'AXUSD Credit Lines', text: 'allow stewards and operators to access liquidity without selling assets, supporting expansion of transport and distribution capacity through Web3 wallet integration.' },
+      { name: 'Insurance Pools', text: 'protect land, infrastructure, and logistics systems from operational and systemic risk, increasing resilience through community-backed coverage.' },
       { name: 'Axiom Treasury Notes', text: 'convert protocol-level revenue into fixed-income instruments that support long-term infrastructure planning and capital stability.' }
     ],
     quote: 'Capital remains disciplined, protected, and reinvestable.',
@@ -111,7 +127,7 @@ export default function PartnerPage() {
     <>
       <Head>
         <title>Partner With Axiom | A Framework for Uplifting Humanity</title>
-        <meta name="description" content="A Moorish American Framework for Uplifting Humanity - Executed Through Axiom Nexus and AXUSD" />
+        <meta name="description" content="A Framework for Uplifting Humanity - Executed Through Axiom Nexus and AXUSD" />
       </Head>
 
       <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white overflow-x-hidden">
@@ -171,17 +187,17 @@ export default function PartnerPage() {
         <section className="relative py-24 px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-8 text-white">
-              Foundational Objective
+              Foundational Principles
             </h2>
             <p className="text-lg text-slate-300 mb-12">
-              A Moorish American uplift initiative must ensure that communities:
+              A community uplift initiative must ensure that members:
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-12">
               {[
                 { icon: '🏛️', text: 'Control land lawfully' },
-                { icon: '🌱', text: 'Produce food locally' },
-                { icon: '📦', text: 'Distribute essentials reliably' },
+                { icon: '🌱', text: 'Build wealth locally' },
+                { icon: '📦', text: 'Distribute resources reliably' },
                 { icon: '💰', text: 'Coordinate capital transparently' },
                 { icon: '⚖️', text: 'Govern resources responsibly' }
               ].map((item, i) => (
@@ -242,12 +258,16 @@ export default function PartnerPage() {
                   <h3 className="text-amber-400 font-semibold mb-4">{phase.subtitle}</h3>
                   <div className="flex flex-wrap gap-3">
                     {phase.products.map((product, i) => (
-                      <span 
+                      <Link 
                         key={i}
-                        className="px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm"
+                        href={product.href}
+                        className="px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm hover:bg-amber-500/20 transition-all flex items-center gap-2"
                       >
-                        {product}
-                      </span>
+                        {product.name}
+                        {product.live && (
+                          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                        )}
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -276,19 +296,19 @@ export default function PartnerPage() {
         <section className="relative py-24 px-6 bg-gradient-to-b from-slate-900 to-slate-950">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-8 text-white">
-              Why This System Uplifts Humanity
+              Why This System Works
             </h2>
             <p className="text-lg text-slate-300 mb-12">
-              This framework uplifts humanity because it replaces fragility with structure.
+              This framework succeeds because it replaces fragility with structure.
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
               {[
                 'Land is financed responsibly',
-                'Food is produced locally',
-                'Logistics are professionally coordinated',
+                'Wealth is built locally',
+                'Infrastructure is professionally coordinated',
                 'Capital is transparent and accountable',
-                'Communities govern their own necessities'
+                'Communities govern their own resources'
               ].map((item, i) => (
                 <div 
                   key={i}
@@ -331,7 +351,7 @@ export default function PartnerPage() {
 
           <div className="relative max-w-4xl mx-auto text-center">
             <h2 className="text-4xl md:text-5xl font-bold mb-8 text-white">
-              Conclusion
+              The Vision
             </h2>
             
             <div className="mb-12">
@@ -342,7 +362,7 @@ export default function PartnerPage() {
             </div>
 
             <p className="text-lg text-slate-300 mb-12 max-w-3xl mx-auto">
-              A Moorish American engaged in uplifting humanity restores the fundamentals of life itself: land, food, trade, and governance, using modern tools that honor ancient principles.
+              Those engaged in uplifting humanity restore the fundamentals of life itself: land, resources, trade, and governance, using modern tools that honor timeless principles.
             </p>
 
             <p className="text-xl italic text-slate-400 mb-16">
@@ -352,10 +372,25 @@ export default function PartnerPage() {
 
             <div className="h-px w-48 mx-auto bg-gradient-to-r from-transparent via-amber-500 to-transparent mb-16" />
 
-            <div className="space-y-4">
+            <div className="space-y-4 mb-16">
               <p className="text-2xl md:text-3xl font-bold text-white">Structure over chaos.</p>
               <p className="text-2xl md:text-3xl font-bold text-amber-400">Stewardship over extraction.</p>
               <p className="text-2xl md:text-3xl font-bold text-amber-200">Life over speculation.</p>
+            </div>
+
+            <div className="pt-8">
+              <a
+                href="https://axiomprotocol.app/join"
+                className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 font-bold text-lg rounded-full transition-all transform hover:scale-105 shadow-lg shadow-amber-500/25"
+              >
+                <span>Join the Movement</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </a>
+              <p className="mt-4 text-slate-500 text-sm">
+                Become a member and build wealth together, on-chain.
+              </p>
             </div>
           </div>
         </section>
