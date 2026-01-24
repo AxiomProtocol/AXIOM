@@ -532,20 +532,26 @@ export default function PartnerPage() {
               <p className="text-2xl md:text-3xl font-bold text-amber-200">Life over speculation.</p>
             </div>
 
-            <div className="pt-8">
+            <div className="pt-8 flex flex-col sm:flex-row gap-4 items-center justify-center">
               <a
-                href="https://axiomprotocol.app/join"
+                href="/partner/onboarding"
                 className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 font-bold text-lg rounded-full transition-all transform hover:scale-105 shadow-lg shadow-amber-500/25"
               >
-                <span>Join the Movement</span>
+                <span>Match Your Deal</span>
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
               </a>
-              <p className="mt-4 text-slate-500 text-sm">
-                Become a member and build wealth together, on-chain.
-              </p>
+              <a
+                href="https://axiomprotocol.app/join"
+                className="inline-flex items-center gap-3 px-8 py-4 border-2 border-amber-500/50 hover:border-amber-500 text-amber-400 hover:text-amber-300 font-bold text-lg rounded-full transition-all"
+              >
+                <span>Join the Movement</span>
+              </a>
             </div>
+            <p className="mt-4 text-slate-500 text-sm">
+              Have a deal? Match it to capital. Ready to partner? Join the movement.
+            </p>
           </div>
         </section>
 
