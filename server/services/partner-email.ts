@@ -210,3 +210,34 @@ export async function sendPasswordResetEmail(
   console.log('Email service not available. Reset URL:', resetUrl);
   return false;
 }
+
+export async function sendPartnerEmail({
+  to,
+  subject,
+  html,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+}): Promise<boolean> {
+  const resend = await getResendClient();
+  
+  if (resend) {
+    try {
+      const result = await resend.client.emails.send({
+        from: resend.fromEmail,
+        to,
+        subject,
+        html,
+      });
+      console.log('Email sent:', result);
+      return true;
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      return false;
+    }
+  }
+  
+  console.log('Email service not available. Would send to:', to, 'Subject:', subject);
+  return false;
+}

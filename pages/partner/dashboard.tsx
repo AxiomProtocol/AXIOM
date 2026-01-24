@@ -328,7 +328,7 @@ export default function PartnerDashboard() {
                 {email}
               </p>
             </div>
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <Link href="/partner/onboarding" style={{
                 padding: '12px 24px',
                 background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
@@ -340,6 +340,18 @@ export default function PartnerDashboard() {
                 fontWeight: 600,
               }}>
                 + Submit New Deal
+              </Link>
+              <Link href="/partner/portal-setup" style={{
+                padding: '12px 24px',
+                background: `${theme.secondary}20`,
+                border: `1px solid ${theme.secondary}`,
+                borderRadius: 8,
+                color: theme.secondary,
+                textDecoration: 'none',
+                fontSize: 14,
+                fontWeight: 600,
+              }}>
+                Investor Portal
               </Link>
               <button
                 onClick={() => setShowSettings(true)}
