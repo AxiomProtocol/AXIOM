@@ -399,9 +399,22 @@ function getProductRecommendation(deal: DealData): ProductRecommendation {
   };
 }
 
+interface ContactData {
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  dealDescription: string;
+  propertyAddress: string;
+}
+
 export default function PartnerOnboarding() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [dealData, setDealData] = useState<DealData>({
     propertyType: '',
     acquisitionStructure: '',
@@ -412,9 +425,65 @@ export default function PartnerOnboarding() {
     partnerRole: '',
     hasExistingCashflow: false,
   });
+  const [contactData, setContactData] = useState<ContactData>({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    dealDescription: '',
+    propertyAddress: '',
+  });
 
   const updateDeal = (field: keyof DealData, value: string | boolean) => {
     setDealData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const updateContact = (field: keyof ContactData, value: string) => {
+    setContactData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmitDeal = async () => {
+    if (!contactData.name || !contactData.email) {
+      setSubmitError('Please provide your name and email');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(contactData.email)) {
+      setSubmitError('Please enter a valid email address');
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const response = await fetch('/api/partner/submit-deal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...contactData,
+          ...dealData,
+          recommendedPrimary: recommendation.primary,
+          recommendedSecondary: recommendation.secondary,
+          recommendedProtection: recommendation.protection,
+          compliancePath: recommendation.compliance,
+          estimatedTerms: recommendation.estimatedTerms,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to submit deal');
+      }
+
+      setSubmitSuccess(true);
+      setShowContactModal(false);
+    } catch (error: any) {
+      setSubmitError(error.message || 'Failed to submit deal. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const canProceed = () => {
@@ -833,41 +902,96 @@ export default function PartnerOnboarding() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 16, marginTop: 16 }}>
-              <a
-                href="/join"
-                style={{
-                  flex: 1,
-                  padding: '18px 32px',
-                  background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
-                  border: 'none',
-                  borderRadius: 12,
-                  color: '#fff',
-                  fontSize: 16,
-                  fontWeight: 700,
-                  textAlign: 'center',
-                  textDecoration: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                Submit Your Deal
-              </a>
-              <button
-                onClick={() => setCurrentStep(0)}
-                style={{
-                  padding: '18px 32px',
-                  background: 'transparent',
-                  border: `2px solid ${theme.border}`,
-                  borderRadius: 12,
-                  color: '#fff',
-                  fontSize: 16,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Start Over
-              </button>
-            </div>
+            {submitSuccess ? (
+              <div style={{
+                padding: 24,
+                background: `${theme.primary}20`,
+                border: `2px solid ${theme.primary}`,
+                borderRadius: 16,
+                textAlign: 'center',
+                marginTop: 16,
+              }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>✓</div>
+                <h3 style={{ margin: '0 0 8px', color: theme.primary, fontSize: 20 }}>
+                  Deal Submitted Successfully
+                </h3>
+                <p style={{ margin: 0, color: theme.muted, fontSize: 15 }}>
+                  Our team will review your deal and reach out within 24-48 hours to discuss next steps.
+                </p>
+                <button
+                  onClick={() => {
+                    setSubmitSuccess(false);
+                    setCurrentStep(0);
+                    setDealData({
+                      propertyType: '',
+                      acquisitionStructure: '',
+                      capitalNeed: '',
+                      exitStrategy: '',
+                      timeline: '',
+                      dealValue: '',
+                      partnerRole: '',
+                      hasExistingCashflow: false,
+                    });
+                    setContactData({
+                      name: '',
+                      email: '',
+                      phone: '',
+                      company: '',
+                      dealDescription: '',
+                      propertyAddress: '',
+                    });
+                  }}
+                  style={{
+                    marginTop: 20,
+                    padding: '12px 24px',
+                    background: 'transparent',
+                    border: `2px solid ${theme.primary}`,
+                    borderRadius: 8,
+                    color: theme.primary,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Submit Another Deal
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 16, marginTop: 16 }}>
+                <button
+                  onClick={() => setShowContactModal(true)}
+                  style={{
+                    flex: 1,
+                    padding: '18px 32px',
+                    background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
+                    border: 'none',
+                    borderRadius: 12,
+                    color: '#fff',
+                    fontSize: 16,
+                    fontWeight: 700,
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Submit Your Deal
+                </button>
+                <button
+                  onClick={() => setCurrentStep(0)}
+                  style={{
+                    padding: '18px 32px',
+                    background: 'transparent',
+                    border: `2px solid ${theme.border}`,
+                    borderRadius: 12,
+                    color: '#fff',
+                    fontSize: 16,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Start Over
+                </button>
+              </div>
+            )}
           </div>
         );
       
@@ -1057,6 +1181,281 @@ export default function PartnerOnboarding() {
           )}
         </div>
       </div>
+
+      {showContactModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.85)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+          zIndex: 1000,
+        }}>
+          <div style={{
+            background: '#111',
+            border: `1px solid ${theme.border}`,
+            borderRadius: 20,
+            padding: 32,
+            maxWidth: 500,
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: 24,
+            }}>
+              <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#fff' }}>
+                Submit Your Deal
+              </h2>
+              <button
+                onClick={() => setShowContactModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: theme.muted,
+                  fontSize: 24,
+                  cursor: 'pointer',
+                  padding: 4,
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <p style={{ 
+              margin: '0 0 24px', 
+              color: theme.muted, 
+              fontSize: 14,
+              lineHeight: 1.6,
+            }}>
+              Provide your contact information to submit this deal for review. 
+              Our team will reach out within 24-48 hours.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: 6, 
+                  fontSize: 13, 
+                  color: theme.muted,
+                  fontWeight: 500,
+                }}>
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  value={contactData.name}
+                  onChange={(e) => updateContact('name', e.target.value)}
+                  placeholder="John Smith"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: 10,
+                    color: '#fff',
+                    fontSize: 15,
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: 6, 
+                  fontSize: 13, 
+                  color: theme.muted,
+                  fontWeight: 500,
+                }}>
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  value={contactData.email}
+                  onChange={(e) => updateContact('email', e.target.value)}
+                  placeholder="john@example.com"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: 10,
+                    color: '#fff',
+                    fontSize: 15,
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: 6, 
+                  fontSize: 13, 
+                  color: theme.muted,
+                  fontWeight: 500,
+                }}>
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={contactData.phone}
+                  onChange={(e) => updateContact('phone', e.target.value)}
+                  placeholder="(555) 123-4567"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: 10,
+                    color: '#fff',
+                    fontSize: 15,
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: 6, 
+                  fontSize: 13, 
+                  color: theme.muted,
+                  fontWeight: 500,
+                }}>
+                  Company / Entity Name
+                </label>
+                <input
+                  type="text"
+                  value={contactData.company}
+                  onChange={(e) => updateContact('company', e.target.value)}
+                  placeholder="Smith Real Estate LLC"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: 10,
+                    color: '#fff',
+                    fontSize: 15,
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: 6, 
+                  fontSize: 13, 
+                  color: theme.muted,
+                  fontWeight: 500,
+                }}>
+                  Property Address (if known)
+                </label>
+                <input
+                  type="text"
+                  value={contactData.propertyAddress}
+                  onChange={(e) => updateContact('propertyAddress', e.target.value)}
+                  placeholder="123 Main St, Atlanta, GA 30301"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: 10,
+                    color: '#fff',
+                    fontSize: 15,
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: 6, 
+                  fontSize: 13, 
+                  color: theme.muted,
+                  fontWeight: 500,
+                }}>
+                  Additional Details
+                </label>
+                <textarea
+                  value={contactData.dealDescription}
+                  onChange={(e) => updateContact('dealDescription', e.target.value)}
+                  placeholder="Tell us more about your deal..."
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: 10,
+                    color: '#fff',
+                    fontSize: 15,
+                    resize: 'vertical',
+                  }}
+                />
+              </div>
+            </div>
+
+            {submitError && (
+              <div style={{
+                marginTop: 16,
+                padding: '12px 16px',
+                background: 'rgba(255, 100, 100, 0.1)',
+                border: '1px solid rgba(255, 100, 100, 0.3)',
+                borderRadius: 8,
+                color: '#ff6b6b',
+                fontSize: 14,
+              }}>
+                {submitError}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+              <button
+                onClick={() => setShowContactModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '14px 24px',
+                  background: 'transparent',
+                  border: `2px solid ${theme.border}`,
+                  borderRadius: 10,
+                  color: '#fff',
+                  fontSize: 15,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitDeal}
+                disabled={submitting}
+                style={{
+                  flex: 1,
+                  padding: '14px 24px',
+                  background: submitting 
+                    ? 'rgba(255,255,255,0.1)' 
+                    : `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
+                  border: 'none',
+                  borderRadius: 10,
+                  color: '#fff',
+                  fontSize: 15,
+                  fontWeight: 700,
+                  cursor: submitting ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {submitting ? 'Submitting...' : 'Submit Deal'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

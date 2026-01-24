@@ -7663,7 +7663,65 @@ export const landFundReferrals = pgTable("land_fund_referrals", {
   statusIdx: index("land_ref_status_idx").on(table.status),
 }));
 
+// Partner Deal Submissions
+export const partnerDealStatusEnum = pgEnum('partner_deal_status', [
+  'new',
+  'contacted',
+  'in_review',
+  'approved',
+  'funded',
+  'declined',
+  'withdrawn'
+]);
+
+export const partnerDealSubmissions = pgTable("partner_deal_submissions", {
+  id: serial("id").primaryKey(),
+  
+  // Contact Information
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  company: varchar("company", { length: 255 }),
+  
+  // Deal Data from Questionnaire
+  propertyType: varchar("property_type", { length: 50 }).notNull(),
+  acquisitionStructure: varchar("acquisition_structure", { length: 50 }).notNull(),
+  capitalNeed: varchar("capital_need", { length: 50 }).notNull(),
+  exitStrategy: varchar("exit_strategy", { length: 50 }).notNull(),
+  timeline: varchar("timeline", { length: 50 }).notNull(),
+  dealValue: varchar("deal_value", { length: 50 }).notNull(),
+  partnerRole: varchar("partner_role", { length: 50 }).notNull(),
+  
+  // Recommendation Generated
+  recommendedPrimary: varchar("recommended_primary", { length: 255 }),
+  recommendedSecondary: jsonb("recommended_secondary"),
+  recommendedProtection: jsonb("recommended_protection"),
+  compliancePath: varchar("compliance_path", { length: 50 }),
+  estimatedTerms: jsonb("estimated_terms"),
+  
+  // Additional Context
+  dealDescription: text("deal_description"),
+  propertyAddress: varchar("property_address", { length: 500 }),
+  
+  // Status & Tracking
+  status: partnerDealStatusEnum("status").default('new'),
+  notes: text("notes"),
+  assignedTo: integer("assigned_to").references(() => users.id),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  contactedAt: timestamp("contacted_at"),
+}, (table) => ({
+  emailIdx: index("partner_deal_email_idx").on(table.email),
+  statusIdx: index("partner_deal_status_idx").on(table.status),
+  createdIdx: index("partner_deal_created_idx").on(table.createdAt),
+}));
+
 // Types for new tables
+export type PartnerDealSubmission = typeof partnerDealSubmissions.$inferSelect;
+export type InsertPartnerDealSubmission = typeof partnerDealSubmissions.$inferInsert;
+
 export type LandFundAttribution = typeof landFundAttribution.$inferSelect;
 export type InsertLandFundAttribution = typeof landFundAttribution.$inferInsert;
 export type LandFundSubscription = typeof landFundSubscriptions.$inferSelect;
