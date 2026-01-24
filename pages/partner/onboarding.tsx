@@ -835,9 +835,7 @@ export default function PartnerOnboarding() {
 
             <div style={{ display: 'flex', gap: 16, marginTop: 16 }}>
               <a
-                href="https://axiomprotocol.app/join"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/join"
                 style={{
                   flex: 1,
                   padding: '18px 32px',
