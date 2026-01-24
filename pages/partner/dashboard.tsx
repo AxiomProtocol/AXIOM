@@ -103,14 +103,21 @@ export default function PartnerDashboard() {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
+  const [partnerName, setPartnerName] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
   const [authError, setAuthError] = useState('');
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [passwordResetSent, setPasswordResetSent] = useState(false);
 
   useEffect(() => {
-    const savedEmail = localStorage.getItem('partner_email');
+    const savedEmail = localStorage.getItem('partnerEmail') || localStorage.getItem('partner_email');
+    const savedToken = localStorage.getItem('partnerToken');
+    const savedName = localStorage.getItem('partnerName');
+    
     if (savedEmail) {
       setEmail(savedEmail);
+      if (savedName) setPartnerName(savedName);
       fetchDeals(savedEmail);
     } else {
       setLoading(false);
@@ -124,9 +131,13 @@ export default function PartnerDashboard() {
         const data = await response.json();
         setDeals(data.deals || []);
         setAuthenticated(true);
-        localStorage.setItem('partner_email', partnerEmail);
+        localStorage.setItem('partnerEmail', partnerEmail);
+      } else if (response.status === 404) {
+        setDeals([]);
+        setAuthenticated(true);
+        localStorage.setItem('partnerEmail', partnerEmail);
       } else {
-        setAuthError('No deals found for this email');
+        setAuthError('Unable to access your account. Please login.');
         setAuthenticated(false);
       }
     } catch (error) {
@@ -138,16 +149,33 @@ export default function PartnerDashboard() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setAuthError('');
-    await fetchDeals(email);
+    router.push('/partner/login');
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('partnerEmail');
     localStorage.removeItem('partner_email');
+    localStorage.removeItem('partnerToken');
+    localStorage.removeItem('partnerName');
     setAuthenticated(false);
     setDeals([]);
     setEmail('');
+    router.push('/partner/login');
+  };
+
+  const requestPasswordReset = async () => {
+    try {
+      const res = await fetch('/api/partner/auth/request-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) {
+        setPasswordResetSent(true);
+      }
+    } catch (err) {
+      console.error('Failed to request password reset');
+    }
   };
 
   if (loading) {
@@ -314,7 +342,7 @@ export default function PartnerDashboard() {
                 + Submit New Deal
               </Link>
               <button
-                onClick={handleLogout}
+                onClick={() => setShowSettings(true)}
                 style={{
                   padding: '12px 24px',
                   background: 'transparent',
@@ -323,9 +351,12 @@ export default function PartnerDashboard() {
                   color: theme.muted,
                   fontSize: 14,
                   cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
                 }}
               >
-                Sign Out
+                <span>⚙️</span> Settings
               </button>
             </div>
           </div>
@@ -707,6 +738,112 @@ export default function PartnerDashboard() {
             <div style={{ color: theme.muted, fontSize: 13 }}>
               Submitted on {formatDate(selectedDeal.createdAt)}
             </div>
+          </div>
+        </div>
+      )}
+
+      {showSettings && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: 20,
+        }}
+          onClick={() => setShowSettings(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#111',
+              border: `1px solid ${theme.border}`,
+              borderRadius: 16,
+              padding: 32,
+              maxWidth: 420,
+              width: '100%',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <h2 style={{ margin: 0, fontSize: 20, color: '#fff' }}>
+                Account Settings
+              </h2>
+              <button
+                onClick={() => setShowSettings(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: theme.muted,
+                  fontSize: 24,
+                  cursor: 'pointer',
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: `1px solid ${theme.border}`,
+              borderRadius: 12,
+              padding: 20,
+              marginBottom: 20,
+            }}>
+              <div style={{ color: theme.muted, fontSize: 12, marginBottom: 4 }}>Email</div>
+              <div style={{ color: '#fff', fontSize: 16 }}>{email}</div>
+            </div>
+
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: `1px solid ${theme.border}`,
+              borderRadius: 12,
+              padding: 20,
+              marginBottom: 24,
+            }}>
+              <div style={{ color: theme.muted, fontSize: 12, marginBottom: 8 }}>Password</div>
+              {passwordResetSent ? (
+                <div style={{ color: theme.primary, fontSize: 14 }}>
+                  Password reset link sent to your email!
+                </div>
+              ) : (
+                <button
+                  onClick={requestPasswordReset}
+                  style={{
+                    padding: '10px 20px',
+                    background: 'transparent',
+                    border: `1px solid ${theme.primary}`,
+                    borderRadius: 8,
+                    color: theme.primary,
+                    fontSize: 14,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Change Password
+                </button>
+              )}
+            </div>
+
+            <button
+              onClick={handleLogout}
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: 8,
+                color: '#EF4444',
+                fontSize: 15,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Sign Out
+            </button>
           </div>
         </div>
       )}

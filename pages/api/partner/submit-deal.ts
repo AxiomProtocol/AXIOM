@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../server/db';
 import { sql } from 'drizzle-orm';
+import { generatePasswordToken, sendPartnerWelcomeEmail } from '../../../server/services/partner-email';
 
 export default async function handler(
   req: NextApiRequest,
@@ -41,6 +42,8 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid email address' });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
     const result = await db.execute(sql`
       INSERT INTO partner_deal_submissions (
         name, email, phone, company,
@@ -50,7 +53,7 @@ export default async function handler(
         compliance_path, estimated_terms, deal_description, property_address,
         status, created_at, updated_at
       ) VALUES (
-        ${name}, ${email}, ${phone || null}, ${company || null},
+        ${name}, ${normalizedEmail}, ${phone || null}, ${company || null},
         ${propertyType}, ${acquisitionStructure}, ${capitalNeed}, ${exitStrategy},
         ${timeline}, ${dealValue}, ${partnerRole},
         ${recommendedPrimary || null}, 
@@ -64,12 +67,51 @@ export default async function handler(
       RETURNING id
     `);
 
-    const id = result.rows[0]?.id;
+    const dealId = result.rows[0]?.id;
+
+    const existingAuth = await db.execute(sql`
+      SELECT id, password_hash FROM partner_auth WHERE email = ${normalizedEmail}
+    `);
+
+    let passwordToken: string | null = null;
+    let isNewAccount = false;
+
+    if (existingAuth.rows.length === 0) {
+      passwordToken = generatePasswordToken();
+      const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      
+      await db.execute(sql`
+        INSERT INTO partner_auth (email, password_reset_token, password_reset_expires, created_at, updated_at)
+        VALUES (${normalizedEmail}, ${passwordToken}, ${tokenExpires.toISOString()}::timestamp, NOW(), NOW())
+      `);
+      isNewAccount = true;
+    } else if (!existingAuth.rows[0].password_hash) {
+      passwordToken = generatePasswordToken();
+      const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      
+      await db.execute(sql`
+        UPDATE partner_auth 
+        SET password_reset_token = ${passwordToken}, 
+            password_reset_expires = ${tokenExpires.toISOString()}::timestamp,
+            updated_at = NOW()
+        WHERE email = ${normalizedEmail}
+      `);
+      isNewAccount = true;
+    }
+
+    if (passwordToken) {
+      try {
+        await sendPartnerWelcomeEmail(normalizedEmail, name, passwordToken, dealId);
+      } catch (emailError) {
+        console.error('Failed to send welcome email:', emailError);
+      }
+    }
 
     return res.status(201).json({
       success: true,
       message: 'Deal submitted successfully',
-      id,
+      id: dealId,
+      isNewAccount,
     });
   } catch (error) {
     console.error('Partner deal submission error:', error);

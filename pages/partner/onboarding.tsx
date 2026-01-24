@@ -915,46 +915,70 @@ export default function PartnerOnboarding() {
                 <h3 style={{ margin: '0 0 8px', color: theme.primary, fontSize: 20 }}>
                   Deal Submitted Successfully
                 </h3>
-                <p style={{ margin: 0, color: theme.muted, fontSize: 15 }}>
-                  Our team will review your deal and reach out within 24-48 hours to discuss next steps.
+                <p style={{ margin: 0, color: theme.muted, fontSize: 15, lineHeight: 1.6 }}>
+                  We've sent a confirmation email to <strong>{contactData.email}</strong> with instructions to set up your partner account.
                 </p>
-                <button
-                  onClick={() => {
-                    setSubmitSuccess(false);
-                    setCurrentStep(0);
-                    setDealData({
-                      propertyType: '',
-                      acquisitionStructure: '',
-                      capitalNeed: '',
-                      exitStrategy: '',
-                      timeline: '',
-                      dealValue: '',
-                      partnerRole: '',
-                      hasExistingCashflow: false,
-                    });
-                    setContactData({
-                      name: '',
-                      email: '',
-                      phone: '',
-                      company: '',
-                      dealDescription: '',
-                      propertyAddress: '',
-                    });
-                  }}
-                  style={{
-                    marginTop: 20,
-                    padding: '12px 24px',
-                    background: 'transparent',
-                    border: `2px solid ${theme.primary}`,
-                    borderRadius: 8,
-                    color: theme.primary,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Submit Another Deal
-                </button>
+                <p style={{ margin: '12px 0 0', color: theme.muted, fontSize: 14 }}>
+                  Our team will review your deal and reach out within 24-48 hours.
+                </p>
+                <div style={{ display: 'flex', gap: 12, marginTop: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <button
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('partnerEmail', contactData.email);
+                      }
+                      router.push('/partner/dashboard');
+                    }}
+                    style={{
+                      padding: '14px 28px',
+                      background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
+                      border: 'none',
+                      borderRadius: 8,
+                      color: '#fff',
+                      fontSize: 15,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    View Your Dashboard
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSubmitSuccess(false);
+                      setCurrentStep(0);
+                      setDealData({
+                        propertyType: '',
+                        acquisitionStructure: '',
+                        capitalNeed: '',
+                        exitStrategy: '',
+                        timeline: '',
+                        dealValue: '',
+                        partnerRole: '',
+                        hasExistingCashflow: false,
+                      });
+                      setContactData({
+                        name: '',
+                        email: '',
+                        phone: '',
+                        company: '',
+                        dealDescription: '',
+                        propertyAddress: '',
+                      });
+                    }}
+                    style={{
+                      padding: '14px 28px',
+                      background: 'transparent',
+                      border: `2px solid ${theme.border}`,
+                      borderRadius: 8,
+                      color: '#fff',
+                      fontSize: 15,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Submit Another Deal
+                  </button>
+                </div>
               </div>
             ) : (
               <div style={{ display: 'flex', gap: 16, marginTop: 16 }}>
