@@ -66,9 +66,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const portalData = portal.rows[0];
       
+      const normalizedEmail = investor_email.toLowerCase().trim();
+      
       const existing = await pool.query(
-        'SELECT id FROM portal_investors WHERE portal_id = $1 AND email = $2',
-        [portalData.id, investor_email]
+        'SELECT id FROM portal_investors WHERE portal_id = $1 AND LOWER(email) = $2',
+        [portalData.id, normalizedEmail]
       );
 
       if (existing.rows.length > 0) {
@@ -83,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           (portal_id, email, name, phone, password_reset_token, password_reset_expires)
          VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING id, email, name`,
-        [portalData.id, investor_email, investor_name, investor_phone, token, expires]
+        [portalData.id, normalizedEmail, investor_name, investor_phone, token, expires]
       );
 
       const baseUrl = process.env.REPLIT_DEV_DOMAIN 

@@ -29,6 +29,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
+  const normalizedEmail = email.toLowerCase().trim();
+
   try {
     const portal = await pool.query(
       'SELECT id FROM partner_portal_config WHERE portal_slug = $1 AND is_active = true',
@@ -41,8 +43,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const investor = await pool.query(
       `SELECT id, name, password_hash FROM portal_investors 
-       WHERE portal_id = $1 AND email = $2`,
-      [portal.rows[0].id, email.toLowerCase()]
+       WHERE portal_id = $1 AND LOWER(email) = $2`,
+      [portal.rows[0].id, normalizedEmail]
     );
 
     if (investor.rows.length === 0) {
@@ -65,6 +67,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     const token = generateToken();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await pool.query(
+      'DELETE FROM investor_sessions WHERE investor_id = $1',
+      [inv.id]
+    );
+
+    await pool.query(
+      'INSERT INTO investor_sessions (investor_id, token, expires_at) VALUES ($1, $2, $3)',
+      [inv.id, token, expiresAt]
+    );
 
     return res.status(200).json({
       success: true,
