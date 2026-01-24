@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../server/db';
-import { partnerDealSubmissions } from '../../../shared/schema';
-import { eq, desc } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,33 +17,40 @@ export default async function handler(
       return res.status(400).json({ error: 'Email is required' });
     }
 
-    const deals = await db.select()
-      .from(partnerDealSubmissions)
-      .where(eq(partnerDealSubmissions.email, email.toLowerCase()))
-      .orderBy(desc(partnerDealSubmissions.createdAt));
+    const result = await db.execute(sql`
+      SELECT 
+        id, property_type, acquisition_structure, capital_need,
+        exit_strategy, timeline, deal_value, partner_role,
+        recommended_primary, recommended_secondary, recommended_protection,
+        compliance_path, estimated_terms, status, property_address,
+        deal_description, created_at
+      FROM partner_deal_submissions
+      WHERE LOWER(email) = LOWER(${email})
+      ORDER BY created_at DESC
+    `);
 
-    if (deals.length === 0) {
-      return res.status(404).json({ error: 'No deals found for this email' });
+    if (result.rows.length === 0) {
+      return res.status(200).json({ deals: [] });
     }
 
-    const formattedDeals = deals.map(deal => ({
+    const formattedDeals = result.rows.map((deal: any) => ({
       id: deal.id,
-      propertyType: deal.propertyType,
-      acquisitionStructure: deal.acquisitionStructure,
-      capitalNeed: deal.capitalNeed,
-      exitStrategy: deal.exitStrategy,
+      propertyType: deal.property_type,
+      acquisitionStructure: deal.acquisition_structure,
+      capitalNeed: deal.capital_need,
+      exitStrategy: deal.exit_strategy,
       timeline: deal.timeline,
-      dealValue: deal.dealValue,
-      partnerRole: deal.partnerRole,
-      recommendedPrimary: deal.recommendedPrimary,
-      recommendedSecondary: deal.recommendedSecondary || [],
-      recommendedProtection: deal.recommendedProtection || [],
-      compliancePath: deal.compliancePath,
-      estimatedTerms: deal.estimatedTerms,
+      dealValue: deal.deal_value,
+      partnerRole: deal.partner_role,
+      recommendedPrimary: deal.recommended_primary,
+      recommendedSecondary: deal.recommended_secondary || [],
+      recommendedProtection: deal.recommended_protection || [],
+      compliancePath: deal.compliance_path,
+      estimatedTerms: deal.estimated_terms,
       status: deal.status,
-      propertyAddress: deal.propertyAddress,
-      dealDescription: deal.dealDescription,
-      createdAt: deal.createdAt,
+      propertyAddress: deal.property_address,
+      dealDescription: deal.deal_description,
+      createdAt: deal.created_at,
     }));
 
     return res.status(200).json({ deals: formattedDeals });

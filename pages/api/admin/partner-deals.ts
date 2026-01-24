@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../server/db';
-import { partnerDealSubmissions, adminAuditLogs, users } from '../../../shared/schema';
-import { eq, desc, and, or, ilike, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 async function verifyAdminAuth(req: NextApiRequest): Promise<{ valid: boolean; adminId?: string }> {
   const authHeader = req.headers.authorization;
@@ -34,49 +33,79 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'GET') {
     try {
       const { status, search, limit = '50', offset = '0' } = req.query;
+      const limitNum = parseInt(limit as string) || 50;
+      const offsetNum = parseInt(offset as string) || 0;
 
-      let query = db.select().from(partnerDealSubmissions);
-      
-      const conditions = [];
+      let whereClause = sql`1=1`;
       
       if (status && typeof status === 'string' && status !== 'all') {
-        conditions.push(eq(partnerDealSubmissions.status, status as any));
+        whereClause = sql`${whereClause} AND status = ${status}`;
       }
       
       if (search && typeof search === 'string') {
-        conditions.push(
-          or(
-            ilike(partnerDealSubmissions.name, `%${search}%`),
-            ilike(partnerDealSubmissions.email, `%${search}%`),
-            ilike(partnerDealSubmissions.company, `%${search}%`),
-            ilike(partnerDealSubmissions.propertyAddress, `%${search}%`)
-          )
-        );
+        const searchTerm = `%${search}%`;
+        whereClause = sql`${whereClause} AND (
+          name ILIKE ${searchTerm} OR 
+          email ILIKE ${searchTerm} OR 
+          company ILIKE ${searchTerm} OR 
+          property_address ILIKE ${searchTerm}
+        )`;
       }
 
-      const deals = await db.select()
-        .from(partnerDealSubmissions)
-        .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(desc(partnerDealSubmissions.createdAt))
-        .limit(parseInt(limit as string))
-        .offset(parseInt(offset as string));
+      const deals = await db.execute(sql`
+        SELECT * FROM partner_deal_submissions
+        WHERE ${whereClause}
+        ORDER BY created_at DESC
+        LIMIT ${limitNum} OFFSET ${offsetNum}
+      `);
 
-      const [countResult] = await db.select({ count: sql<number>`count(*)` })
-        .from(partnerDealSubmissions)
-        .where(conditions.length > 0 ? and(...conditions) : undefined);
+      const countResult = await db.execute(sql`
+        SELECT COUNT(*) as count FROM partner_deal_submissions
+        WHERE ${whereClause}
+      `);
 
-      const stats = await db.select({
-        status: partnerDealSubmissions.status,
-        count: sql<number>`count(*)`,
-      })
-        .from(partnerDealSubmissions)
-        .groupBy(partnerDealSubmissions.status);
+      const statsResult = await db.execute(sql`
+        SELECT status, COUNT(*) as count
+        FROM partner_deal_submissions
+        GROUP BY status
+      `);
+
+      const formattedDeals = deals.rows.map((deal: any) => ({
+        id: deal.id,
+        name: deal.name,
+        email: deal.email,
+        phone: deal.phone,
+        company: deal.company,
+        propertyType: deal.property_type,
+        acquisitionStructure: deal.acquisition_structure,
+        capitalNeed: deal.capital_need,
+        exitStrategy: deal.exit_strategy,
+        timeline: deal.timeline,
+        dealValue: deal.deal_value,
+        partnerRole: deal.partner_role,
+        recommendedPrimary: deal.recommended_primary,
+        recommendedSecondary: deal.recommended_secondary || [],
+        recommendedProtection: deal.recommended_protection || [],
+        compliancePath: deal.compliance_path,
+        estimatedTerms: deal.estimated_terms,
+        dealDescription: deal.deal_description,
+        propertyAddress: deal.property_address,
+        status: deal.status,
+        notes: deal.notes,
+        assignedTo: deal.assigned_to,
+        createdAt: deal.created_at,
+        updatedAt: deal.updated_at,
+        contactedAt: deal.contacted_at,
+      }));
 
       return res.status(200).json({
         success: true,
-        deals,
-        total: countResult?.count || 0,
-        stats: stats.reduce((acc, s) => ({ ...acc, [s.status || 'unknown']: Number(s.count) }), {}),
+        deals: formattedDeals,
+        total: countResult.rows[0]?.count || 0,
+        stats: statsResult.rows.reduce((acc: any, s: any) => ({ 
+          ...acc, 
+          [s.status || 'unknown']: Number(s.count) 
+        }), {}),
       });
     } catch (error) {
       console.error('Admin partner deals fetch error:', error);
@@ -88,47 +117,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const { id, status, notes, assignedTo } = req.body;
 
-      if (!id) {
-        return res.status(400).json({ error: 'Deal ID is required' });
+      if (!id || typeof id !== 'number') {
+        return res.status(400).json({ error: 'Valid deal ID is required' });
       }
 
-      const updateData: any = {
-        updatedAt: new Date(),
-      };
-
-      if (status) {
-        updateData.status = status;
-        if (status === 'contacted' && !updateData.contactedAt) {
-          updateData.contactedAt = new Date();
-        }
+      const validStatuses = ['new', 'contacted', 'in_review', 'approved', 'funded', 'declined', 'withdrawn'];
+      if (status && !validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Invalid status value' });
       }
 
-      if (notes !== undefined) {
-        updateData.notes = notes;
-      }
+      const setContactedAt = status === 'contacted';
+      const safeNotes = notes !== undefined ? notes : null;
+      const updateAssignedTo = assignedTo !== undefined;
+      const safeAssignedTo = updateAssignedTo ? (assignedTo || null) : null;
 
-      if (assignedTo !== undefined) {
-        updateData.assignedTo = assignedTo;
-      }
+      const result = await db.execute(sql`
+        UPDATE partner_deal_submissions
+        SET 
+          updated_at = NOW(),
+          status = CASE WHEN ${status !== null && status !== undefined} THEN ${status}::partner_deal_status ELSE status END,
+          notes = CASE WHEN ${notes !== undefined} THEN ${safeNotes} ELSE notes END,
+          assigned_to = CASE WHEN ${updateAssignedTo} THEN ${safeAssignedTo}::integer ELSE assigned_to END,
+          contacted_at = CASE WHEN ${setContactedAt} THEN NOW() ELSE contacted_at END
+        WHERE id = ${id}
+        RETURNING *
+      `);
 
-      const [updated] = await db.update(partnerDealSubmissions)
-        .set(updateData)
-        .where(eq(partnerDealSubmissions.id, id))
-        .returning();
+      const deal = result.rows[0];
 
-      try {
-        await db.insert(adminAuditLogs).values({
-          adminId: 0,
-          action: 'update_partner_deal',
-          resource: 'partner_deal_submissions',
-          resourceId: String(id),
-          details: { changes: updateData, adminId: auth.adminId },
-        });
-      } catch (auditError) {
-        console.warn('Failed to log audit:', auditError);
-      }
-
-      return res.status(200).json({ success: true, deal: updated });
+      return res.status(200).json({ 
+        success: true, 
+        deal: deal ? {
+          id: deal.id,
+          name: deal.name,
+          email: deal.email,
+          status: deal.status,
+          notes: deal.notes,
+          updatedAt: deal.updated_at,
+        } : null 
+      });
     } catch (error) {
       console.error('Admin partner deal update error:', error);
       return res.status(500).json({ error: 'Failed to update deal' });

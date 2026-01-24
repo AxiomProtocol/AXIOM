@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../server/db';
-import { partnerDealSubmissions } from '../../../shared/schema';
+import { sql } from 'drizzle-orm';
 
 export default async function handler(
   req: NextApiRequest,
@@ -41,31 +41,35 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid email address' });
     }
 
-    const [submission] = await db.insert(partnerDealSubmissions).values({
-      name,
-      email,
-      phone: phone || null,
-      company: company || null,
-      propertyType,
-      acquisitionStructure,
-      capitalNeed,
-      exitStrategy,
-      timeline,
-      dealValue,
-      partnerRole,
-      recommendedPrimary: recommendedPrimary || null,
-      recommendedSecondary: recommendedSecondary || null,
-      recommendedProtection: recommendedProtection || null,
-      compliancePath: compliancePath || null,
-      estimatedTerms: estimatedTerms || null,
-      dealDescription: dealDescription || null,
-      propertyAddress: propertyAddress || null,
-    }).returning();
+    const result = await db.execute(sql`
+      INSERT INTO partner_deal_submissions (
+        name, email, phone, company,
+        property_type, acquisition_structure, capital_need, exit_strategy,
+        timeline, deal_value, partner_role,
+        recommended_primary, recommended_secondary, recommended_protection,
+        compliance_path, estimated_terms, deal_description, property_address,
+        status, created_at, updated_at
+      ) VALUES (
+        ${name}, ${email}, ${phone || null}, ${company || null},
+        ${propertyType}, ${acquisitionStructure}, ${capitalNeed}, ${exitStrategy},
+        ${timeline}, ${dealValue}, ${partnerRole},
+        ${recommendedPrimary || null}, 
+        ${recommendedSecondary ? JSON.stringify(recommendedSecondary) : null}::jsonb,
+        ${recommendedProtection ? JSON.stringify(recommendedProtection) : null}::jsonb,
+        ${compliancePath || null}, 
+        ${estimatedTerms ? JSON.stringify(estimatedTerms) : null}::jsonb,
+        ${dealDescription || null}, ${propertyAddress || null},
+        'new', NOW(), NOW()
+      )
+      RETURNING id
+    `);
+
+    const id = result.rows[0]?.id;
 
     return res.status(201).json({
       success: true,
       message: 'Deal submitted successfully',
-      id: submission.id,
+      id,
     });
   } catch (error) {
     console.error('Partner deal submission error:', error);
