@@ -1,13 +1,19 @@
 /**
- * Governance Service
+ * Protocol Governance Service
  * 
- * Handles voting operations with automatic fallback between
- * on-chain governance and API-based voting.
+ * Handles PROTOCOL-LEVEL token voting operations (AXM/SEED voting on proposals).
+ * This is SEPARATE from the Lending Governance System (GovernanceHub timelock).
+ * 
+ * Protocol Voting Status: NOT YET DEPLOYED (falls back to API-based voting)
+ * Lending Governance Status: DEPLOYED (see LendingGovernanceService for GovernanceHub)
+ * 
+ * This service provides automatic fallback between on-chain governance 
+ * (when deployed) and API-based voting (current).
  */
 
 import { ethers } from 'ethers';
 import { 
-  GOVERNANCE_CONFIG, 
+  PROTOCOL_GOVERNANCE_CONFIG,
   GOVERNANCE_ABI, 
   isOnchainVotingEnabled,
   getGovernanceContractAddress,
