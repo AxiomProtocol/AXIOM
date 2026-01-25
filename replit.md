@@ -22,7 +22,7 @@ The architecture employs a "Product Factory Approach" for scalability. Arbitrum 
 
 Key features include:
 -   **Axiom Nodes Marketplace & DEX Exchange**
--   **Governance** (API-based, transitioning to on-chain)
+-   **Governance** (On-chain GovernanceHub with 24h timelock, role-based access, and emergency pause)
 -   **Admin Authentication & RBAC** (JWT-based with two-step approval and audit logging)
 -   **AI Agent & Upgrade Framework** (security-first, configurable modes, audit logging, idempotency)
 -   **KeyGrow Rent-to-Own Program** (ERC-1155 tokenized fractional property shares)
