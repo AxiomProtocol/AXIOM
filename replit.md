@@ -80,6 +80,30 @@ Key features include:
 -   **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image)
 -   **Property Data:** ATTOM Data, RentCast API, Walk Score API
 
+## Lending Governance System (Institutional Ready)
+
+**Status:** Fully deployed and operational on Arbitrum One
+
+**GovernanceHub:** `0x52Dc85fd653a75323b5307f4D2629ab9A070530E`
+- 24-hour timelock on all governance actions
+- Role-based access (RISK_COMMITTEE, SETTLEMENT_AUTHORITY, GUARDIAN)
+- Emergency pause functionality
+
+**Lending Contracts (V3 with Governance):**
+- RiskConfig: `0xD9a53c691B688351283Fecc33D8D9AF964A9a078`
+- DSCRRiskConfig: `0xd9d5a2A1aDF917BECd9454De632DfC69895a2B26`
+- FixFlipManager: `0xD6ebaBEAEf4B263fa10cc0E630Ab2B9A2e478958`
+- DSCRLoanManager: `0x105117F1AD1B65a5d0C7F0E9A870683A06738E16`
+- ProductRegistry: `0x31AD75DB98F142069ff30D6C7C206Ca4b5a10e5d`
+
+**Configured Loan Products:**
+1. Fix & Flip Bridge Loan: 75% LTV, 12% APR, $50K-$5M
+2. DSCR 30-Year Rental: 75% LTV, 1.25 DSCR, 8% APR, $75K-$3M
+3. DSCR 15-Year Rental: 80% LTV, 1.15 DSCR, 7.25% APR, $75K-$3M
+4. BRRRR Refinance: 70% LTV, 1.30 DSCR, 8.5% APR, $100K-$2M
+
+**Compilation Note:** Use specialized configs (`hardhat.governance.config.ts`, `hardhat.realestate.config.ts`) for realestate/governance contracts. Main hardhat config may timeout due to viaIR compilation on complex contracts.
+
 ## Deployment Configuration (STANDARD - DO NOT CHANGE)
 All deployments MUST use these exact settings to prevent build timeouts:
 
