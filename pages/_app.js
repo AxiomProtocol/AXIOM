@@ -54,7 +54,8 @@ const REBUILD_NAV_PAGES = [
   '/insurance-pools',
   '/treasury-notes',
   '/joincommunity',
-  '/dex'
+  '/dex',
+  '/treasury-ops'
 ]
 
 function matchesRebuildNavPages(pathname) {
