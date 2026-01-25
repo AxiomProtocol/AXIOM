@@ -143,6 +143,19 @@ export const DEX_V2_CONTRACTS = {
   INSURANCE_FUND: '0x449769453e5bc43345092EeD31780bbbfc400F39'
 } as const;
 
+// Governance & Lending Contracts (Deployed January 25, 2026)
+export const GOVERNANCE_CONTRACTS = {
+  // GovernanceHub - Timelock governance for lending infrastructure
+  GOVERNANCE_HUB: '0x52Dc85fd653a75323b5307f4D2629ab9A070530E',
+  
+  // Lending Contracts with Governance Integration
+  RISK_CONFIG: '0xD9a53c691B688351283Fecc33D8D9AF964A9a078',
+  DSCR_RISK_CONFIG: '0xd9d5a2A1aDF917BECd9454De632DfC69895a2B26',
+  FIXFLIP_MANAGER: '0xD6ebaBEAEf4B263fa10cc0E630Ab2B9A2e478958',
+  DSCR_LOAN_MANAGER: '0x105117F1AD1B65a5d0C7F0E9A870683A06738E16',
+  PRODUCT_REGISTRY: '0x31AD75DB98F142069ff30D6C7C206Ca4b5a10e5d'
+} as const;
+
 // All contracts in a single object for easy access
 export const ALL_CONTRACTS = {
   ...CORE_CONTRACTS,
@@ -152,7 +165,8 @@ export const ALL_CONTRACTS = {
   ...MARKET_CONTRACTS,
   ...COMMUNITY_CONTRACTS,
   ...SUSTAINABILITY_CONTRACTS,
-  ...DEX_V2_CONTRACTS
+  ...DEX_V2_CONTRACTS,
+  ...GOVERNANCE_CONTRACTS
 } as const;
 
 // Deployer Address
