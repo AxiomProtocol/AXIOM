@@ -16,7 +16,7 @@ const config: HardhatUserConfig = {
             enabled: true,
             runs: 200,
           },
-          viaIR: false,
+          viaIR: true,
           evmVersion: "paris",
         },
       },
@@ -115,6 +115,83 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: { enabled: true, runs: 50 },
           viaIR: false,
+        },
+      },
+      "contracts/governance/GovernanceHub.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
+        },
+      },
+      "contracts/governance/IGovernanceHub.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
+        },
+      },
+      "contracts/realestate/RiskConfig.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
+        },
+      },
+      "contracts/realestate/dscr/DSCRRiskConfig.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
+        },
+      },
+      "contracts/realestate/FixFlipManager.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
+        },
+      },
+      "contracts/realestate/dscr/DSCRLoanManager.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
+        },
+      },
+      "contracts/realestate/ProductRegistry.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
+        },
+      },
+      "contracts/realestate/dscr/DSCRLoanReceiptNFT.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
+        },
+      },
+      "contracts/realestate/dscr/IDSCRInterfaces.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
+        },
+      },
+      "contracts/realestate/LoanReceiptNFT.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
+        },
+      },
+      "contracts/realestate/Interfaces.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
         },
       },
     },

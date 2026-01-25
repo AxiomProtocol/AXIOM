@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./Interfaces.sol";
+import "../governance/IGovernanceHub.sol";
 
 contract FixFlipManager is AccessControl, Pausable, ReentrancyGuard, IProductManager {
     using SafeERC20 for IERC20;
@@ -14,14 +15,18 @@ contract FixFlipManager is AccessControl, Pausable, ReentrancyGuard, IProductMan
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant UNDERWRITER_ROLE = keccak256("UNDERWRITER_ROLE");
     bytes32 public constant GUARDIAN_ROLE = keccak256("GUARDIAN_ROLE");
+    bytes32 public constant GOVERNANCE_HUB_ROLE = keccak256("GOVERNANCE_HUB_ROLE");
 
-    uint256 public constant PRODUCT_ID = 1; // Fix & Flip = Product 1
+    uint256 public constant PRODUCT_ID = 1;
 
     IERC20 public immutable axusd;
     IPoolVault public vault;
     ILoanReceipt public loanReceipt;
     IRiskConfig public riskConfig;
     IRepaymentRouter public repaymentRouter;
+
+    IGovernanceHub public governanceHub;
+    bool public governanceEnforced;
 
     bool public active;
     uint256 public totalOriginated;
@@ -52,6 +57,8 @@ contract FixFlipManager is AccessControl, Pausable, ReentrancyGuard, IProductMan
     event LoanDefaulted(uint256 indexed loanId);
     event ManagerActivated();
     event ManagerDeactivated();
+    event GovernanceHubUpdated(address indexed oldHub, address indexed newHub);
+    event GovernanceEnforcementUpdated(bool enforced);
 
     constructor(
         address _axusd,
@@ -72,6 +79,7 @@ contract FixFlipManager is AccessControl, Pausable, ReentrancyGuard, IProductMan
         riskConfig = IRiskConfig(_riskConfig);
         repaymentRouter = IRepaymentRouter(_repaymentRouter);
         active = true;
+        governanceEnforced = false;
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);
@@ -79,11 +87,49 @@ contract FixFlipManager is AccessControl, Pausable, ReentrancyGuard, IProductMan
         _grantRole(GUARDIAN_ROLE, msg.sender);
     }
 
+    modifier whenNotGovernancePaused() {
+        if (governanceEnforced && address(governanceHub) != address(0)) {
+            require(!governanceHub.lendingPaused(), "FixFlipManager: governance paused");
+        }
+        _;
+    }
+
+    modifier onlyAdminAuthority() {
+        bool authorized = hasRole(ADMIN_ROLE, msg.sender) ||
+                          hasRole(GOVERNANCE_HUB_ROLE, msg.sender);
+        require(authorized, "FixFlipManager: not authorized");
+        _;
+    }
+
+    function setGovernanceHub(address _governanceHub) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        address oldHub = address(governanceHub);
+        governanceHub = IGovernanceHub(_governanceHub);
+        
+        if (oldHub != address(0)) {
+            _revokeRole(GOVERNANCE_HUB_ROLE, oldHub);
+        }
+        if (_governanceHub != address(0)) {
+            _grantRole(GOVERNANCE_HUB_ROLE, _governanceHub);
+        }
+        
+        emit GovernanceHubUpdated(oldHub, _governanceHub);
+    }
+
+    function setGovernanceEnforced(bool _enforced) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        governanceEnforced = _enforced;
+        emit GovernanceEnforcementUpdated(_enforced);
+    }
+
     function productId() external pure override returns (uint256) {
         return PRODUCT_ID;
     }
 
     function isActive() external view override returns (bool) {
+        if (governanceEnforced && address(governanceHub) != address(0)) {
+            if (governanceHub.lendingPaused()) {
+                return false;
+            }
+        }
         return active && !paused();
     }
 
@@ -91,7 +137,7 @@ contract FixFlipManager is AccessControl, Pausable, ReentrancyGuard, IProductMan
         address borrower,
         uint256 principal,
         IUnderwriter.DealTerms calldata terms
-    ) external override onlyRole(UNDERWRITER_ROLE) nonReentrant whenNotPaused returns (uint256) {
+    ) external override onlyRole(UNDERWRITER_ROLE) nonReentrant whenNotPaused whenNotGovernancePaused returns (uint256) {
         require(active, "FixFlipManager: not active");
         require(borrower != address(0), "FixFlipManager: invalid borrower");
         require(principal > 0, "FixFlipManager: zero principal");
@@ -194,7 +240,7 @@ contract FixFlipManager is AccessControl, Pausable, ReentrancyGuard, IProductMan
         }
     }
 
-    function closeLoan(uint256 loanId) external override onlyRole(ADMIN_ROLE) {
+    function closeLoan(uint256 loanId) external override onlyAdminAuthority {
         ILoanReceipt.LoanData memory loan = loanReceipt.getLoan(loanId);
         require(loan.loanId == loanId, "FixFlipManager: loan not found");
         require(
@@ -207,7 +253,7 @@ contract FixFlipManager is AccessControl, Pausable, ReentrancyGuard, IProductMan
         }
     }
 
-    function markDefaulted(uint256 loanId) external onlyRole(ADMIN_ROLE) {
+    function markDefaulted(uint256 loanId) external onlyAdminAuthority {
         ILoanReceipt.LoanData memory loan = loanReceipt.getLoan(loanId);
         require(loan.loanId == loanId, "FixFlipManager: loan not found");
         require(
@@ -244,32 +290,32 @@ contract FixFlipManager is AccessControl, Pausable, ReentrancyGuard, IProductMan
         return (totalOriginated, totalRepaid, activeLoans, vault.availableLiquidity());
     }
 
-    function activate() external onlyRole(ADMIN_ROLE) {
+    function activate() external onlyAdminAuthority whenNotGovernancePaused {
         active = true;
         emit ManagerActivated();
     }
 
-    function deactivate() external onlyRole(ADMIN_ROLE) {
+    function deactivate() external onlyAdminAuthority {
         active = false;
         emit ManagerDeactivated();
     }
 
-    function setVault(address _vault) external onlyRole(ADMIN_ROLE) {
+    function setVault(address _vault) external onlyAdminAuthority whenNotGovernancePaused {
         require(_vault != address(0), "FixFlipManager: invalid vault");
         vault = IPoolVault(_vault);
     }
 
-    function setLoanReceipt(address _loanReceipt) external onlyRole(ADMIN_ROLE) {
+    function setLoanReceipt(address _loanReceipt) external onlyAdminAuthority whenNotGovernancePaused {
         require(_loanReceipt != address(0), "FixFlipManager: invalid loanReceipt");
         loanReceipt = ILoanReceipt(_loanReceipt);
     }
 
-    function setRiskConfig(address _riskConfig) external onlyRole(ADMIN_ROLE) {
+    function setRiskConfig(address _riskConfig) external onlyAdminAuthority whenNotGovernancePaused {
         require(_riskConfig != address(0), "FixFlipManager: invalid riskConfig");
         riskConfig = IRiskConfig(_riskConfig);
     }
 
-    function setRepaymentRouter(address _router) external onlyRole(ADMIN_ROLE) {
+    function setRepaymentRouter(address _router) external onlyAdminAuthority whenNotGovernancePaused {
         require(_router != address(0), "FixFlipManager: invalid router");
         repaymentRouter = IRepaymentRouter(_router);
     }
@@ -278,7 +324,7 @@ contract FixFlipManager is AccessControl, Pausable, ReentrancyGuard, IProductMan
         _pause();
     }
 
-    function unpause() external onlyRole(ADMIN_ROLE) {
+    function unpause() external onlyAdminAuthority {
         _unpause();
     }
 }

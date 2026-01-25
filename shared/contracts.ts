@@ -303,6 +303,18 @@ export const LAND_ACQUISITION_CONTRACTS = {
   BUILDER_FARMER_CREDIT: '0x814A9795bAbEE0DEd433d127dacD03031fB193b4'
 } as const;
 
+// Governance Infrastructure Contracts
+// Status: READY FOR DEPLOYMENT | Arbitrum One
+// Features: On-chain timelock governance, role-based access, emergency controls
+// Deploy: npx hardhat run scripts/deploy-governance-hub.ts --config hardhat.governance.config.ts --network arbitrumOne
+export const GOVERNANCE_CONTRACTS = {
+  // GovernanceHub: Timelock-based governance for lending infrastructure
+  // Roles: RISK_COMMITTEE_ROLE, SETTLEMENT_AUTHORITY_ROLE, GUARDIAN_ROLE
+  // Features: 24h minimum delay, emergency pause, action queue
+  // Integration: RiskConfig, DSCRRiskConfig, FixFlipManager, DSCRLoanManager, ProductRegistry
+  // Address will be added after mainnet deployment
+} as const;
+
 // All contracts in a single object for easy access
 export const ALL_CONTRACTS = {
   ...CORE_CONTRACTS,
@@ -318,7 +330,8 @@ export const ALL_CONTRACTS = {
   ...AXUSD_INTEGRATION_CONTRACTS,
   ...AXUSD_GENIUS_CONTRACTS,
   ...REALESTATE_LENDING_CONTRACTS,
-  ...LAND_ACQUISITION_CONTRACTS
+  ...LAND_ACQUISITION_CONTRACTS,
+  ...GOVERNANCE_CONTRACTS
 } as const;
 
 // Deployer Address
