@@ -14,8 +14,23 @@ import {
   DrawRequest,
   TreasuryLayer,
 } from '../../../lib/treasury/policy';
+import { REALESTATE_LENDING_CONTRACTS, STABLECOINS, AXUSD_GENIUS_CONTRACTS, CORE_CONTRACTS } from '../../../shared/contracts';
+
+const ADMIN_WALLET = process.env.ADMIN_WALLET_ADDRESS || '0xDFf9e47eb007bF02e47477d577De9ffA99791528';
 
 const STATE_FILE = path.join(process.cwd(), 'logs', 'treasury', 'treasury-state.json');
+const TRANSACTION_LOG = path.join(process.cwd(), 'logs', 'treasury', 'transactions.json');
+
+interface TreasuryTransaction {
+  id: string;
+  type: 'deposit' | 'withdraw';
+  layer: TreasuryLayer;
+  amountUsd: number;
+  description: string;
+  adminUserId: string;
+  timestamp: string;
+  txHash?: string;
+}
 
 function loadPersistedState(): Partial<TreasuryState> | null {
   try {
@@ -41,110 +56,141 @@ function savePersistedState(state: TreasuryState) {
   }
 }
 
-const BACKSTOP_VAULT_ABI = [
-  'function getBalance() external view returns (uint256)',
-  'function marketOpsLimit() external view returns (uint256)',
-  'function marketOpsUsedToday() external view returns (uint256)',
-  'function getRemainingMarketOpsLimit() external view returns (uint256)',
-  'function emergencyMode() external view returns (bool)',
-  'function paused() external view returns (bool)',
-];
+function loadTransactions(): TreasuryTransaction[] {
+  try {
+    if (fs.existsSync(TRANSACTION_LOG)) {
+      const raw = fs.readFileSync(TRANSACTION_LOG, 'utf-8');
+      return JSON.parse(raw);
+    }
+  } catch (error) {
+    console.error('Failed to load transactions:', error);
+  }
+  return [];
+}
 
-const REVENUE_ROUTER_ABI = [
-  'function seedShareBps() external view returns (uint16)',
-  'function treasuryShareBps() external view returns (uint16)',
-  'function backstopShareBps() external view returns (uint16)',
-  'function getRevenueStats() external view returns (uint256 totalRouted, uint256 seedTotal, uint256 treasuryTotal, uint256 backstopTotal)',
+function saveTransaction(tx: TreasuryTransaction) {
+  try {
+    const dir = path.dirname(TRANSACTION_LOG);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    const transactions = loadTransactions();
+    transactions.push(tx);
+    fs.writeFileSync(TRANSACTION_LOG, JSON.stringify(transactions, null, 2));
+  } catch (error) {
+    console.error('Failed to save transaction:', error);
+  }
+}
+
+const ERC20_BALANCE_ABI = ['function balanceOf(address) view returns (uint256)'];
+const VAULT_ABI = [
+  'function totalAssets() view returns (uint256)',
+  'function totalSupply() view returns (uint256)',
 ];
 
 async function fetchTreasuryState(): Promise<TreasuryState> {
   const rpcUrl = process.env.ARBITRUM_RPC_URL || 'https://arb1.arbitrum.io/rpc';
   const provider = new ethers.JsonRpcProvider(rpcUrl);
   
-  const ethPrice = 3500;
+  const USDC_PRICE = 1.0;
+  const ETH_PRICE = 3500;
   
-  let backstopData = {
-    balance: BigInt(0),
-    remaining: BigInt(0),
-    isPaused: false,
-    isEmergency: false,
-  };
-  
-  let revenueData = {
-    totalRouted: BigInt(0),
-    seedTotal: BigInt(0),
-    treasuryTotal: BigInt(0),
-    backstopTotal: BigInt(0),
-    shares: { seed: 5000, treasury: 3000, backstop: 2000 },
-  };
+  let totalTreasuryUsd = 0;
+  let lendingFundUsd = 0;
+  let backstopUsd = 0;
   
   try {
-    const backstopVault = new ethers.Contract(
-      TREASURY_ADDRESSES.BACKSTOP_VAULT,
-      BACKSTOP_VAULT_ABI,
+    const fixFlipVault = new ethers.Contract(
+      REALESTATE_LENDING_CONTRACTS.FIXFLIP_VAULT,
+      VAULT_ABI,
       provider
     );
-    
-    const [balance, remaining, isPaused, isEmergency] = await Promise.all([
-      backstopVault.getBalance().catch(() => BigInt(0)),
-      backstopVault.getRemainingMarketOpsLimit().catch(() => BigInt(0)),
-      backstopVault.paused().catch(() => false),
-      backstopVault.emergencyMode().catch(() => false),
+    const [fixFlipAssets] = await Promise.all([
+      fixFlipVault.totalAssets().catch(() => BigInt(0)),
     ]);
-    
-    backstopData = { balance, remaining, isPaused, isEmergency };
+    lendingFundUsd += Number(ethers.formatUnits(fixFlipAssets, 6)) * USDC_PRICE;
   } catch (error) {
-    console.error('BackstopVault fetch error:', error);
+    console.error('FixFlip vault fetch error:', error);
   }
   
   try {
-    const revenueRouter = new ethers.Contract(
-      TREASURY_ADDRESSES.REVENUE_ROUTER,
-      REVENUE_ROUTER_ABI,
+    const dscrVault = new ethers.Contract(
+      REALESTATE_LENDING_CONTRACTS.DSCR_POOL_VAULT,
+      VAULT_ABI,
       provider
     );
-    
-    const [seedShare, treasuryShare, backstopShare, stats] = await Promise.all([
-      revenueRouter.seedShareBps().catch(() => 5000),
-      revenueRouter.treasuryShareBps().catch(() => 3000),
-      revenueRouter.backstopShareBps().catch(() => 2000),
-      revenueRouter.getRevenueStats().catch(() => [BigInt(0), BigInt(0), BigInt(0), BigInt(0)]),
+    const [dscrAssets] = await Promise.all([
+      dscrVault.totalAssets().catch(() => BigInt(0)),
     ]);
-    
-    revenueData = {
-      totalRouted: stats[0],
-      seedTotal: stats[1],
-      treasuryTotal: stats[2],
-      backstopTotal: stats[3],
-      shares: { seed: seedShare, treasury: treasuryShare, backstop: backstopShare },
-    };
+    lendingFundUsd += Number(ethers.formatUnits(dscrAssets, 6)) * USDC_PRICE;
   } catch (error) {
-    console.error('RevenueRouter fetch error:', error);
+    console.error('DSCR vault fetch error:', error);
   }
   
-  const reserveUsd = Number(ethers.formatEther(backstopData.balance)) * ethPrice;
-  const dailyRemainingUsd = Number(ethers.formatEther(backstopData.remaining)) * ethPrice;
+  try {
+    const usdc = new ethers.Contract(STABLECOINS.USDC, ERC20_BALANCE_ABI, provider);
+    const treasuryUsdcBalance = await usdc.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => BigInt(0));
+    backstopUsd += Number(ethers.formatUnits(treasuryUsdcBalance, 6)) * USDC_PRICE;
+  } catch (error) {
+    console.error('Treasury USDC balance fetch error:', error);
+  }
+  
+  try {
+    const backstopUsdc = new ethers.Contract(AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_USDC, VAULT_ABI, provider);
+    const backstopUsdcAssets = await backstopUsdc.totalAssets().catch(() => BigInt(0));
+    backstopUsd += Number(ethers.formatUnits(backstopUsdcAssets, 6)) * USDC_PRICE;
+  } catch (error) {
+    console.error('Backstop USDC vault fetch error:', error);
+  }
+  
+  try {
+    const backstopEth = new ethers.Contract(AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_ETH, VAULT_ABI, provider);
+    const backstopEthAssets = await backstopEth.totalAssets().catch(() => BigInt(0));
+    backstopUsd += Number(ethers.formatEther(backstopEthAssets)) * ETH_PRICE;
+  } catch (error) {
+    console.error('Backstop ETH vault fetch error:', error);
+  }
+  
+  totalTreasuryUsd = lendingFundUsd + backstopUsd;
   
   const persistedState = loadPersistedState();
+  
+  const manualAdjustments = {
+    operatingUsd: persistedState?.balances?.operatingUsd || 0,
+    survivalUsd: persistedState?.balances?.survivalUsd || 0,
+    reserveUsd: persistedState?.balances?.reserveUsd || 0,
+  };
+  
+  const operatingUsd = manualAdjustments.operatingUsd > 0 
+    ? manualAdjustments.operatingUsd 
+    : Math.min(backstopUsd * 0.3, TREASURY_POLICY.layers.operating.targetBalanceUsd);
+    
+  const survivalUsd = manualAdjustments.survivalUsd > 0
+    ? manualAdjustments.survivalUsd
+    : 0;
+    
+  const reserveUsd = manualAdjustments.reserveUsd > 0
+    ? manualAdjustments.reserveUsd
+    : lendingFundUsd + (backstopUsd * 0.7);
   
   const state: TreasuryState = {
     timestamp: new Date().toISOString(),
     status: 'normal',
-    isPaused: backstopData.isPaused || backstopData.isEmergency,
+    isPaused: false,
     balances: {
-      operatingUsd: Math.min(dailyRemainingUsd, TREASURY_POLICY.layers.operating.targetBalanceUsd),
-      reserveUsd: reserveUsd,
-      survivalUsd: TREASURY_POLICY.layers.survival.targetBalanceUsd,
-      totalUsd: reserveUsd + dailyRemainingUsd + TREASURY_POLICY.layers.survival.targetBalanceUsd,
+      operatingUsd,
+      reserveUsd,
+      survivalUsd,
+      totalUsd: operatingUsd + reserveUsd + survivalUsd,
     },
     weeklyMetrics: {
-      incomeUsd: Number(ethers.formatUnits(revenueData.totalRouted, 18)) / 52,
+      incomeUsd: persistedState?.weeklyMetrics?.incomeUsd || 0,
       drawsUsd: persistedState?.weeklyMetrics?.drawsUsd || 0,
       netFlowUsd: 0,
       isLowIncomeWeek: false,
     },
     drawsRemaining: {
-      dailyOperatingUsd: dailyRemainingUsd,
+      dailyOperatingUsd: persistedState?.drawsRemaining?.dailyOperatingUsd ?? TREASURY_POLICY.drawLimits.dailyOperatingMaxUsd,
       weeklyOperatingUsd: persistedState?.drawsRemaining?.weeklyOperatingUsd ?? TREASURY_POLICY.drawLimits.weeklyOperatingMaxUsd,
       emergencyReserveUsd: persistedState?.drawsRemaining?.emergencyReserveUsd ?? TREASURY_POLICY.drawLimits.emergencyReserveMaxUsd,
     },
@@ -186,6 +232,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const state = await fetchTreasuryState();
       const replenishment = calculateReplenishment(state);
       const pauseCheck = shouldPauseTreasury(state);
+      const transactions = loadTransactions().slice(-20);
       
       return res.status(200).json({
         success: true,
@@ -199,6 +246,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
         replenishment,
         pauseCheck,
+        recentTransactions: transactions,
       });
     } catch (error) {
       console.error('Treasury ops API error:', error);
@@ -207,7 +255,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   
   if (req.method === 'POST') {
-    const { action, layer, amount, purpose } = req.body;
+    const { action, layer, amount, purpose, description } = req.body;
     
     if (action === 'validate-draw') {
       const state = await fetchTreasuryState();
@@ -229,6 +277,93 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         request,
         validation,
         currentState: state,
+      });
+    }
+    
+    if (action === 'admin-deposit' || action === 'admin-withdraw') {
+      const adminSecret = req.headers['x-admin-secret'] as string;
+      const walletAddress = req.headers['x-wallet-address'] as string;
+      
+      const isAuthorized = 
+        (adminSecret && adminSecret === process.env.ADMIN_SETUP_SECRET) ||
+        (walletAddress && walletAddress.toLowerCase() === ADMIN_WALLET.toLowerCase());
+      
+      if (!isAuthorized) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Unauthorized. Admin access required.' 
+        });
+      }
+      
+      const amountUsd = parseFloat(amount);
+      if (isNaN(amountUsd) || amountUsd <= 0) {
+        return res.status(400).json({ success: false, error: 'Invalid amount' });
+      }
+      
+      const validLayers: TreasuryLayer[] = ['survival', 'operating', 'reserve'];
+      if (!validLayers.includes(layer)) {
+        return res.status(400).json({ success: false, error: 'Invalid layer' });
+      }
+      
+      const currentState = await fetchTreasuryState();
+      const persistedState = loadPersistedState() || {};
+      
+      const balances = {
+        operatingUsd: currentState.balances.operatingUsd,
+        survivalUsd: currentState.balances.survivalUsd,
+        reserveUsd: currentState.balances.reserveUsd,
+      };
+      
+      if (action === 'admin-deposit') {
+        if (layer === 'operating') balances.operatingUsd += amountUsd;
+        else if (layer === 'survival') balances.survivalUsd += amountUsd;
+        else if (layer === 'reserve') balances.reserveUsd += amountUsd;
+      } else {
+        if (layer === 'operating') {
+          if (balances.operatingUsd < amountUsd) {
+            return res.status(400).json({ success: false, error: 'Insufficient operating balance' });
+          }
+          balances.operatingUsd -= amountUsd;
+        } else if (layer === 'survival') {
+          if (balances.survivalUsd < amountUsd) {
+            return res.status(400).json({ success: false, error: 'Insufficient survival balance' });
+          }
+          balances.survivalUsd -= amountUsd;
+        } else if (layer === 'reserve') {
+          if (balances.reserveUsd < amountUsd) {
+            return res.status(400).json({ success: false, error: 'Insufficient reserve balance' });
+          }
+          balances.reserveUsd -= amountUsd;
+        }
+      }
+      
+      const newState: TreasuryState = {
+        ...currentState,
+        balances: {
+          ...balances,
+          totalUsd: balances.operatingUsd + balances.survivalUsd + balances.reserveUsd,
+        },
+      };
+      
+      savePersistedState(newState);
+      
+      const transaction: TreasuryTransaction = {
+        id: `tx-${Date.now()}`,
+        type: action === 'admin-deposit' ? 'deposit' : 'withdraw',
+        layer: layer as TreasuryLayer,
+        amountUsd,
+        description: description || `${action === 'admin-deposit' ? 'Deposit' : 'Withdrawal'} by admin`,
+        adminUserId: walletAddress || 'admin',
+        timestamp: new Date().toISOString(),
+      };
+      
+      saveTransaction(transaction);
+      
+      return res.status(200).json({
+        success: true,
+        message: `Successfully ${action === 'admin-deposit' ? 'deposited' : 'withdrew'} $${amountUsd.toLocaleString()} to ${layer}`,
+        transaction,
+        newBalances: newState.balances,
       });
     }
     

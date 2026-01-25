@@ -70,6 +70,15 @@ const LAYER_GRADIENTS: Record<string, { bg: string; border: string }> = {
   reserve: { bg: 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(249,115,22,0.2) 100%)', border: 'rgba(245,158,11,0.3)' },
 };
 
+interface TreasuryTransaction {
+  id: string;
+  type: 'deposit' | 'withdraw';
+  layer: string;
+  amountUsd: number;
+  description: string;
+  timestamp: string;
+}
+
 export default function TreasuryOpsPage() {
   const { walletState } = useWallet();
   const [loading, setLoading] = useState(true);
@@ -78,6 +87,11 @@ export default function TreasuryOpsPage() {
   const [drawForm, setDrawForm] = useState({ layer: 'operating', amount: '', purpose: '' });
   const [drawValidation, setDrawValidation] = useState<{ allowed: boolean; reason: string } | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [adminForm, setAdminForm] = useState({ action: 'deposit', layer: 'operating', amount: '', description: '' });
+  const [adminResult, setAdminResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [transactions, setTransactions] = useState<TreasuryTransaction[]>([]);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
 
   useEffect(() => {
     fetchTreasuryState();
@@ -150,11 +164,57 @@ export default function TreasuryOpsPage() {
       
       setLastUpdated(new Date());
       setError(null);
+      
+      if (data.recentTransactions) {
+        setTransactions(data.recentTransactions);
+      }
     } catch (err) {
       console.error('Treasury ops fetch error:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAdminAction = async () => {
+    setAdminLoading(true);
+    setAdminResult(null);
+    
+    try {
+      const connectedWallet = walletState?.address;
+      if (!connectedWallet) {
+        setAdminResult({ success: false, message: 'Please connect your wallet first.' });
+        setAdminLoading(false);
+        return;
+      }
+      
+      const res = await fetch('/api/treasury/ops', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Wallet-Address': connectedWallet,
+        },
+        body: JSON.stringify({
+          action: adminForm.action === 'deposit' ? 'admin-deposit' : 'admin-withdraw',
+          layer: adminForm.layer,
+          amount: adminForm.amount,
+          description: adminForm.description,
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        setAdminResult({ success: true, message: data.message });
+        setAdminForm({ ...adminForm, amount: '', description: '' });
+        fetchTreasuryState();
+      } else {
+        setAdminResult({ success: false, message: data.error || 'Operation failed' });
+      }
+    } catch (err) {
+      setAdminResult({ success: false, message: 'Request failed' });
+    } finally {
+      setAdminLoading(false);
     }
   };
 
@@ -413,6 +473,129 @@ export default function TreasuryOpsPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Admin Panel - Toggle Button */}
+                <div style={{ textAlign: 'center', marginBottom: 32 }}>
+                  <button
+                    onClick={() => setShowAdminPanel(!showAdminPanel)}
+                    style={{ 
+                      padding: '12px 24px', 
+                      background: showAdminPanel ? 'rgba(239,68,68,0.2)' : 'rgba(124,58,237,0.2)', 
+                      border: `1px solid ${showAdminPanel ? 'rgba(239,68,68,0.5)' : 'rgba(124,58,237,0.5)'}`, 
+                      borderRadius: 8, 
+                      color: showAdminPanel ? '#EF4444' : '#A78BFA',
+                      cursor: 'pointer',
+                      fontSize: 14,
+                      fontWeight: 600
+                    }}
+                  >
+                    {showAdminPanel ? 'Hide Admin Panel' : 'Show Admin Panel (Superadmin Only)'}
+                  </button>
+                </div>
+
+                {showAdminPanel && (
+                  <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.15) 0%, rgba(79,70,229,0.1) 100%)', backdropFilter: 'blur(20px)', borderRadius: 20, padding: 28, border: '2px solid rgba(124,58,237,0.4)', marginBottom: 32 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                      <span style={{ fontSize: 28 }}>🔐</span>
+                      <h3 style={{ color: '#A78BFA', fontSize: 22, fontWeight: 700, margin: 0 }}>Admin Treasury Controls</h3>
+                    </div>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 24 }}>
+                      Superadmin only. Manual deposit and withdraw to adjust treasury layer balances.
+                    </p>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
+                      <div>
+                        <label style={{ display: 'block', color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 6 }}>Action</label>
+                        <select
+                          value={adminForm.action}
+                          onChange={(e) => setAdminForm({ ...adminForm, action: e.target.value })}
+                          style={{ width: '100%', padding: '12px 16px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(124,58,237,0.4)', borderRadius: 8, color: 'white', fontSize: 14 }}
+                        >
+                          <option value="deposit">Deposit</option>
+                          <option value="withdraw">Withdraw</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 6 }}>Layer</label>
+                        <select
+                          value={adminForm.layer}
+                          onChange={(e) => setAdminForm({ ...adminForm, layer: e.target.value })}
+                          style={{ width: '100%', padding: '12px 16px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(124,58,237,0.4)', borderRadius: 8, color: 'white', fontSize: 14 }}
+                        >
+                          <option value="operating">Operating Cash</option>
+                          <option value="reserve">Treasury Reserve</option>
+                          <option value="survival">Survival Buffer</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 6 }}>Amount (USD)</label>
+                        <input
+                          type="number"
+                          value={adminForm.amount}
+                          onChange={(e) => setAdminForm({ ...adminForm, amount: e.target.value })}
+                          placeholder="10000"
+                          style={{ width: '100%', padding: '12px 16px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(124,58,237,0.4)', borderRadius: 8, color: 'white', fontSize: 14 }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 6 }}>Description</label>
+                        <input
+                          type="text"
+                          value={adminForm.description}
+                          onChange={(e) => setAdminForm({ ...adminForm, description: e.target.value })}
+                          placeholder="Initial funding"
+                          style={{ width: '100%', padding: '12px 16px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(124,58,237,0.4)', borderRadius: 8, color: 'white', fontSize: 14 }}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                        <button
+                          onClick={handleAdminAction}
+                          disabled={adminLoading}
+                          style={{ 
+                            width: '100%', 
+                            padding: '12px 24px', 
+                            background: adminForm.action === 'deposit' ? '#10B981' : '#EF4444', 
+                            color: 'white', 
+                            fontWeight: 600, 
+                            border: 'none', 
+                            borderRadius: 8, 
+                            cursor: adminLoading ? 'wait' : 'pointer', 
+                            fontSize: 14,
+                            opacity: adminLoading ? 0.6 : 1
+                          }}
+                        >
+                          {adminLoading ? 'Processing...' : (adminForm.action === 'deposit' ? 'Deposit Funds' : 'Withdraw Funds')}
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {adminResult && (
+                      <div style={{ marginTop: 16, padding: 16, background: adminResult.success ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)', border: `1px solid ${adminResult.success ? 'rgba(16,185,129,0.5)' : 'rgba(239,68,68,0.5)'}`, borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ fontSize: 24 }}>{adminResult.success ? '✅' : '❌'}</span>
+                        <span style={{ color: adminResult.success ? '#10B981' : '#EF4444', fontSize: 16 }}>{adminResult.message}</span>
+                      </div>
+                    )}
+
+                    {transactions.length > 0 && (
+                      <div style={{ marginTop: 24 }}>
+                        <h4 style={{ color: 'rgba(255,255,255,0.8)', fontSize: 16, margin: '0 0 12px 0' }}>Recent Transactions</h4>
+                        <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+                          {transactions.slice().reverse().map(tx => (
+                            <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.2)', borderRadius: 8, marginBottom: 8 }}>
+                              <div>
+                                <span style={{ color: tx.type === 'deposit' ? '#10B981' : '#EF4444', fontWeight: 600, marginRight: 8 }}>
+                                  {tx.type === 'deposit' ? '+' : '-'}${tx.amountUsd.toLocaleString()}
+                                </span>
+                                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>{tx.layer}</span>
+                              </div>
+                              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>{new Date(tx.timestamp).toLocaleDateString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>
