@@ -39,10 +39,10 @@ export const INTEREST_CONFIGS: Record<string, InterestConfig> = {
   },
   susu: {
     id: 'susu',
-    label: 'The Wealth Practice',
-    description: 'Join Group Economics savings circles',
+    label: 'Products',
+    description: 'Explore our product offerings',
     icon: '💰',
-    path: '/susu',
+    path: '/products',
     color: '#D97706',
     features: ['circle-management', 'contribution-tracking', 'payout-calendar']
   },
