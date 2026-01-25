@@ -296,15 +296,14 @@ export const LAND_ACQUISITION_CONTRACTS = {
 } as const;
 
 // Governance Infrastructure Contracts
-// Status: READY FOR DEPLOYMENT | Arbitrum One
+// Status: DEPLOYED & VERIFIED | Arbitrum One | January 25, 2026
 // Features: On-chain timelock governance, role-based access, emergency controls
-// Deploy: npx hardhat run scripts/deploy-governance-hub.ts --config hardhat.governance.config.ts --network arbitrumOne
 export const GOVERNANCE_CONTRACTS = {
   // GovernanceHub: Timelock-based governance for lending infrastructure
   // Roles: RISK_COMMITTEE_ROLE, SETTLEMENT_AUTHORITY_ROLE, GUARDIAN_ROLE
   // Features: 24h minimum delay, emergency pause, action queue
   // Integration: RiskConfig, DSCRRiskConfig, FixFlipManager, DSCRLoanManager, ProductRegistry
-  // Address will be added after mainnet deployment
+  GOVERNANCE_HUB: '0x52Dc85fd653a75323b5307f4D2629ab9A070530E'
 } as const;
 
 // All contracts in a single object for easy access
