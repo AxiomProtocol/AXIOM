@@ -7,14 +7,24 @@ dotenv.config();
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.20",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
+          evmVersion: "paris",
+        },
       },
-      viaIR: true,
-    },
+      {
+        version: "0.8.24",
+        settings: {
+          optimizer: { enabled: true, runs: 50 },
+          viaIR: true,
+          evmVersion: "cancun",
+        },
+      },
+    ],
   },
   networks: {
     hardhat: {
@@ -47,8 +57,8 @@ const config: HardhatUserConfig = {
     ],
   },
   paths: {
-    sources: "./contracts/realestate",
-    tests: "./test/realestate",
+    sources: "./contracts-lending",
+    tests: "./test",
     cache: "./cache-realestate",
     artifacts: "./artifacts-realestate",
   },

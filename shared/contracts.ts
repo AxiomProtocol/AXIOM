@@ -222,24 +222,24 @@ export const CAMELOT_DEX = {
 } as const;
 
 // Real Estate Lending Fund Contracts (41-52)
-// Status: DEPLOYED & VERIFIED | Arbitrum One | January 13, 2026
+// Status: DEPLOYED & VERIFIED | Arbitrum One | January 25, 2026
 // Features: Fix & Flip bridge loans, DSCR rental loans, ERC4626 vaults, ERC721 loan receipts
-// Vault Upgrade: V2 vaults with approveSpender function deployed Jan 13, 2026
+// V3 Upgrade: Governance integration with GovernanceHub for on-chain risk parameter control
 export const REALESTATE_LENDING_CONTRACTS = {
   // Fix & Flip Bridge Loan Contracts
-  RISK_CONFIG: '0x07A7b9644d32E0f1f113976B0FB3F5F5fbb1E937',
+  RISK_CONFIG: '0xD9a53c691B688351283Fecc33D8D9AF964A9a078',  // V3 with GovernanceHub
   LOAN_RECEIPT_NFT: '0x6C4181A15EAC950A2504aC63ebE7F5A0999265e9',
   FIXFLIP_VAULT: '0xF4AcD4B7EaBfDA7E1b96D3abA1C6340557aa93E5',  // V2 with approveSpender
   REPAYMENT_ROUTER: '0x68fe7924c56c7B9D13F21B3a22Fe2B5bc59Ab9D5',
-  FIXFLIP_MANAGER: '0x0d249eea77Efd1977731c9CF421797E291e0971E',
-  PRODUCT_REGISTRY: '0x24C5796dCcF09deCD3Ac92063558E0B25c076743',
+  FIXFLIP_MANAGER: '0xD6ebaBEAEf4B263fa10cc0E630Ab2B9A2e478958',  // V3 with GovernanceHub
+  PRODUCT_REGISTRY: '0x31AD75DB98F142069ff30D6C7C206Ca4b5a10e5d',  // V3 with GovernanceHub
   
   // DSCR Rental Loan Contracts
-  DSCR_RISK_CONFIG: '0xa93c623Ef901295454abBA6BB4314cFe82C5f0B9',
+  DSCR_RISK_CONFIG: '0xd9d5a2A1aDF917BECd9454De632DfC69895a2B26',  // V3 with GovernanceHub
   DSCR_LOAN_RECEIPT_NFT: '0x66DB145A7ac0de369da88098E8F85467cFaD7674',
   DSCR_POOL_VAULT: '0x5a09cb67518e6E28d8307D75174430939C044A7d',  // V2 with approveSpender
   DSCR_REPAYMENT_ROUTER: '0xa03e35afeE61c965522D88e778B356A2F2eF9Eab',
-  DSCR_LOAN_MANAGER: '0x2657F688Af2fF327987dd7A8d4CCf1E781349052'
+  DSCR_LOAN_MANAGER: '0x105117F1AD1B65a5d0C7F0E9A870683A06738E16'  // V3 with GovernanceHub
 } as const;
 
 // Stablecoins on Arbitrum
