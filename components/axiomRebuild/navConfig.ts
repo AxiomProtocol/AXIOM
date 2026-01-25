@@ -97,6 +97,7 @@ export const navItems: NavItem[] = [
     label: "Tools",
     children: [
       { label: "Treasury", href: "/bank" },
+      { label: "Treasury Operations", href: "/treasury-ops" },
       { label: "DEX Exchange", href: "/dex" },
       { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "The Wealth Practice", href: "/wealth-practice" },
