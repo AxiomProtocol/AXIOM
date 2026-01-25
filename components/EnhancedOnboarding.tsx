@@ -17,7 +17,7 @@ const experienceLevels = [
 const interests = [
   { id: 'land', label: 'Land Stewardship', description: 'Acquire and develop land as a community', icon: '🌍', path: '/land' },
   { id: 'keygrow', label: 'KeyGrow (Rent-to-Own)', description: 'Build ownership through monthly contributions', icon: '🏠', path: '/keygrow' },
-  { id: 'susu', label: 'Savings Circles (SUSU)', description: 'Join community savings groups', icon: '💰', path: '/susu' },
+  { id: 'products', label: 'Products', description: 'Explore our product offerings', icon: '💰', path: '/products' },
   { id: 'governance', label: 'Community Governance', description: 'Vote on proposals and shape the future', icon: '🗳️', path: '/governance' },
   { id: 'training', label: 'Steward Corps Training', description: '12-month leadership development program', icon: '📚', path: '/steward-corps' },
   { id: 'staking', label: 'Staking & Rewards', description: 'Earn yields by participating in the protocol', icon: '🌾', path: '/staking' },

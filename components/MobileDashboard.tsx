@@ -12,7 +12,7 @@ interface MobileNavItem {
 const DEFAULT_NAV_ITEMS: MobileNavItem[] = [
   { id: 'home', label: 'Home', icon: '🏠', path: '/' },
   { id: 'land', label: 'Land', icon: '🌍', path: '/land' },
-  { id: 'susu', label: 'Savings', icon: '💰', path: '/susu' },
+  { id: 'products', label: 'Products', icon: '💰', path: '/products' },
   { id: 'more', label: 'More', icon: '☰', path: '' }
 ];
 
