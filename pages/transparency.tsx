@@ -151,6 +151,26 @@ export default function TransparencyPage() {
               </div>
             ) : (
               <>
+                {parseFloat(metrics?.totalAUM || '0') === 0 && (
+                  <div style={{ 
+                    background: 'rgba(245,158,11,0.1)', 
+                    border: '1px solid rgba(245,158,11,0.3)', 
+                    borderRadius: 12, 
+                    padding: '16px 24px', 
+                    marginBottom: 24,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12
+                  }}>
+                    <span style={{ fontSize: 24 }}>🚀</span>
+                    <div>
+                      <p style={{ color: 'white', fontWeight: 600, margin: 0 }}>Pre-Launch Phase</p>
+                      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, margin: '4px 0 0 0' }}>
+                        Lending fund is accepting investor commitments. Values will update as capital is deployed.
+                      </p>
+                    </div>
+                  </div>
+                )}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 24, marginBottom: 48 }}>
                   <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.2) 0%, rgba(59,130,246,0.2) 100%)', backdropFilter: 'blur(20px)', borderRadius: 20, padding: 28, border: '1px solid rgba(124,58,237,0.3)' }}>
                     <span style={{ fontSize: 32, marginBottom: 12, display: 'block' }}>💎</span>

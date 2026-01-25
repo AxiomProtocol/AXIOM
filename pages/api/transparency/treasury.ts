@@ -168,55 +168,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ? (parseFloat(ethers.formatUnits(onChainMetrics.lockedForLoans, 18)) / totalAUM) * 100 
       : 0;
 
-    const hasRealData = totalAUM > 0 || dbMetrics.investorCount > 0 || activities.length > 0;
-
-    let metrics;
-    let activityData = activities;
-
-    if (hasRealData) {
-      metrics = {
-        totalAUM: totalAUM.toFixed(2),
-        seriesABalance: (totalAUM * 0.35).toFixed(2),
-        seriesBBalance: (totalAUM * 0.65).toFixed(2),
-        activeLoansCount: onChainMetrics.activeLoans + dbMetrics.approvedCount,
-        totalLoansOriginated: ethers.formatUnits(onChainMetrics.totalOriginated, 18),
-        totalRepaid: ethers.formatUnits(onChainMetrics.totalRepaid, 18),
-        totalInterestEarned: ethers.formatUnits(onChainMetrics.totalInterestCollected, 18),
-        utilizationRate,
-        axusdSupply: (totalAUM * 0.8).toFixed(2),
-        reserveRatio: 100 - utilizationRate,
-        pendingCommitments: dbMetrics.pendingAmount.toFixed(2),
-        investorCount: dbMetrics.investorCount
-      };
-    } else {
-      metrics = {
-        totalAUM: "2450000.00",
-        seriesABalance: "857500.00",
-        seriesBBalance: "1592500.00",
-        activeLoansCount: 12,
-        totalLoansOriginated: "4800000.00",
-        totalRepaid: "2350000.00",
-        totalInterestEarned: "215000.00",
-        utilizationRate: 68.5,
-        axusdSupply: "1960000.00",
-        reserveRatio: 31.5,
-        pendingCommitments: "350000.00",
-        investorCount: 47
-      };
-      activityData = [
-        { id: '1', type: 'loan_originated', amount: '185000', description: 'DSCR Loan #DSCR-2026-0012 originated', timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
-        { id: '2', type: 'payment_received', amount: '12500', description: 'Monthly payment received - Loan #DSCR-2026-0008', timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString() },
-        { id: '3', type: 'investor_deposit', amount: '50000', description: 'Investor commitment to Series B', timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
-        { id: '4', type: 'distribution', amount: '8750', description: 'Q4 2025 yield distribution', timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString() },
-        { id: '5', type: 'loan_originated', amount: '225000', description: 'DSCR Loan #DSCR-2026-0011 originated', timestamp: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString() }
-      ];
-    }
+    const metrics = {
+      totalAUM: totalAUM.toFixed(2),
+      seriesABalance: dbMetrics.committedAmount > 0 ? (dbMetrics.committedAmount * 0.35).toFixed(2) : "0.00",
+      seriesBBalance: dbMetrics.committedAmount > 0 ? (dbMetrics.committedAmount * 0.65).toFixed(2) : "0.00",
+      activeLoansCount: onChainMetrics.activeLoans + dbMetrics.approvedCount,
+      totalLoansOriginated: ethers.formatUnits(onChainMetrics.totalOriginated, 18),
+      totalRepaid: ethers.formatUnits(onChainMetrics.totalRepaid, 18),
+      totalInterestEarned: ethers.formatUnits(onChainMetrics.totalInterestCollected, 18),
+      utilizationRate,
+      axusdSupply: "0.00",
+      reserveRatio: 100 - utilizationRate,
+      pendingCommitments: dbMetrics.pendingAmount.toFixed(2),
+      investorCount: dbMetrics.investorCount,
+      approvedLoanVolume: dbMetrics.approvedVolume.toFixed(2),
+      totalApplications: dbMetrics.totalApplications
+    };
 
     res.status(200).json({
       metrics,
-      activities: activityData,
+      activities,
       lastUpdated: new Date().toISOString(),
-      isDemo: !hasRealData
+      dataSource: 'live'
     });
   } catch (error) {
     console.error('Treasury API error:', error);
