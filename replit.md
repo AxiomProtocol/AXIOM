@@ -113,6 +113,7 @@ All deployments MUST use these exact settings to prevent build timeouts:
 - Runs `prebuild:deploy` first to remove large artifact directories
 - Excludes: artifacts, artifacts-land, artifacts-axusd, typechain-types, cache, stablecoin-deploy, .next/cache, node_modules/.cache
 - Then runs Next.js production build with 4GB memory allocation
+- Copies `public/` and `.next/static/` to `.next/standalone/` for static assets in standalone mode
 
 **Run Command:** `npm run start:minimal`
 - Uses `next start` directly on port 5000
