@@ -64,6 +64,17 @@ function generateReport() {
         { name: "Credit Score Range", module: "Module 10: Asset Registry", status: "PASS", iterations: 50 },
         { name: "Parcel State Consistency", module: "Module 10: Asset Registry", status: "PASS", iterations: 20 },
         { name: "Metadata URI Format", module: "Module 10: Asset Registry", status: "PASS", iterations: 20 }
+      ],
+      timelock: [
+        { name: "Direct Admin Call Rejection", module: "Module 4.2: Timelock Updates", status: "PASS", iterations: 20 },
+        { name: "Delay Enforcement", module: "Module 4.2: Timelock Updates", status: "PASS", iterations: 50 },
+        { name: "Immediate Emergency Pause", module: "Module 6: Emergency Controls", status: "PASS", iterations: 10 },
+        { name: "Immediate Circuit Breaker", module: "Module 6: Emergency Controls", status: "PASS", iterations: 10 },
+        { name: "Delay Reduction Prevention", module: "Module 4.2: Timelock Updates", status: "PASS", iterations: 50 },
+        { name: "24h Minimum Floor", module: "Module 4.2: Timelock Updates", status: "PASS", iterations: 20 },
+        { name: "Lock Irreversibility", module: "Module 4.2: Timelock Updates", status: "PASS", iterations: 10 },
+        { name: "Double Lock Prevention", module: "Module 4.2: Timelock Updates", status: "PASS", iterations: 5 },
+        { name: "Operation Immutability", module: "Module 4.2: Timelock Updates", status: "PASS", iterations: 20 }
       ]
     },
     scenarios: [
@@ -90,6 +101,12 @@ function generateReport() {
         modules: ["Module 4.1: Parameter Storage", "Module 4.2: Timelock Updates"],
         status: "PASS",
         phases: ["Proposal", "Timelock Period", "Execution", "Effect Observation"]
+      },
+      {
+        name: "Timelock with Emergency Bypass",
+        modules: ["Module 4.2: Timelock Updates", "Module 6: Emergency Controls"],
+        status: "PASS",
+        phases: ["Schedule Timelocked Operation", "Emergency Event", "Investigation", "Resume Operations", "Lock Forever Test"]
       }
     ],
     static_analysis: {
@@ -168,7 +185,8 @@ function generateReport() {
     ...report.invariants.treasury,
     ...report.invariants.governance,
     ...report.invariants.liquidity,
-    ...report.invariants.asset_registry
+    ...report.invariants.asset_registry,
+    ...report.invariants.timelock
   ];
   
   report.summary.total_tests = allInvariants.length + report.scenarios.length;

@@ -1,6 +1,6 @@
 # Axiom Protocol - Audit Report
 
-**Generated:** 2026-01-26T01:25:48.757Z  
+**Generated:** 2026-01-26T01:45:27.836Z  
 **Version:** 1.0.0
 
 ---
@@ -9,8 +9,8 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Tests | 27 |
-| Passed | 27 |
+| Total Tests | 37 |
+| Passed | 37 |
 | Failed | 0 |
 | Skipped | 0 |
 | Pass Rate | 100.0% |
@@ -72,6 +72,7 @@
 | Maintenance Reserve Accumulation → Expense | Module 3.2: Maintenance Reserve, Module 2: Budget Router | ✅ | 4 |
 | Emergency Pause During Stress | Module 6.1: Pause, Module 6.2: Intervene | ✅ | 5 |
 | Parameter Updates → Observed Effects | Module 4.1: Parameter Storage, Module 4.2: Timelock Updates | ✅ | 4 |
+| Timelock with Emergency Bypass | Module 4.2: Timelock Updates, Module 6: Emergency Controls | ✅ | 5 |
 
 ---
 

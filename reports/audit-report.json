@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-01-26T01:25:48.757Z",
+  "timestamp": "2026-01-26T01:45:27.836Z",
   "version": "1.0.0",
   "summary": {
-    "total_tests": 27,
-    "passed": 27,
+    "total_tests": 37,
+    "passed": 37,
     "failed": 0,
     "skipped": 0
   },
@@ -153,6 +153,62 @@
         "status": "PASS",
         "iterations": 20
       }
+    ],
+    "timelock": [
+      {
+        "name": "Direct Admin Call Rejection",
+        "module": "Module 4.2: Timelock Updates",
+        "status": "PASS",
+        "iterations": 20
+      },
+      {
+        "name": "Delay Enforcement",
+        "module": "Module 4.2: Timelock Updates",
+        "status": "PASS",
+        "iterations": 50
+      },
+      {
+        "name": "Immediate Emergency Pause",
+        "module": "Module 6: Emergency Controls",
+        "status": "PASS",
+        "iterations": 10
+      },
+      {
+        "name": "Immediate Circuit Breaker",
+        "module": "Module 6: Emergency Controls",
+        "status": "PASS",
+        "iterations": 10
+      },
+      {
+        "name": "Delay Reduction Prevention",
+        "module": "Module 4.2: Timelock Updates",
+        "status": "PASS",
+        "iterations": 50
+      },
+      {
+        "name": "24h Minimum Floor",
+        "module": "Module 4.2: Timelock Updates",
+        "status": "PASS",
+        "iterations": 20
+      },
+      {
+        "name": "Lock Irreversibility",
+        "module": "Module 4.2: Timelock Updates",
+        "status": "PASS",
+        "iterations": 10
+      },
+      {
+        "name": "Double Lock Prevention",
+        "module": "Module 4.2: Timelock Updates",
+        "status": "PASS",
+        "iterations": 5
+      },
+      {
+        "name": "Operation Immutability",
+        "module": "Module 4.2: Timelock Updates",
+        "status": "PASS",
+        "iterations": 20
+      }
     ]
   },
   "scenarios": [
@@ -211,6 +267,21 @@
         "Timelock Period",
         "Execution",
         "Effect Observation"
+      ]
+    },
+    {
+      "name": "Timelock with Emergency Bypass",
+      "modules": [
+        "Module 4.2: Timelock Updates",
+        "Module 6: Emergency Controls"
+      ],
+      "status": "PASS",
+      "phases": [
+        "Schedule Timelocked Operation",
+        "Emergency Event",
+        "Investigation",
+        "Resume Operations",
+        "Lock Forever Test"
       ]
     }
   ],

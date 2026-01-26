@@ -1,7 +1,46 @@
 # Axiom Protocol - Permissions & Role Analysis
 
 **Generated:** 2026-01-26  
-**Network:** Arbitrum One (42161)
+**Network:** Arbitrum One (42161)  
+**Timelock Status:** Pending Deployment (Configurable → Lock Forever Mode)
+
+---
+
+## Pre vs Post Timelock Comparison
+
+### Before Timelock (Current State)
+
+| Action | Execution | Delay | Risk Level |
+|--------|-----------|-------|------------|
+| Role grants/revokes | Direct by Safe | Immediate | HIGH |
+| Fee rate changes | Direct by Safe | Immediate | HIGH |
+| Treasury allocation | Direct by Safe | Immediate | HIGH |
+| Risk parameter updates | Direct by Safe | Immediate | HIGH |
+| Emergency pause | Direct by Safe | Immediate | LOW (intended) |
+| Circuit breaker | Not implemented | N/A | GAP |
+
+### After Timelock (Target State)
+
+| Action | Execution | Delay | Risk Level |
+|--------|-----------|-------|------------|
+| Role grants/revokes | Via TimelockController | 24h+ | MITIGATED |
+| Fee rate changes | Via TimelockController | 24h+ | MITIGATED |
+| Treasury allocation | Via TimelockController | 24h+ | MITIGATED |
+| Risk parameter updates | Via TimelockController | 24h+ | MITIGATED |
+| Emergency pause | Direct by Guardian | Immediate | LOW (intended) |
+| Circuit breaker | Direct by CIRCUIT_BREAKER | Immediate | LOW (new) |
+
+### Permission Changes Summary
+
+| Contract | Function | Pre-Timelock | Post-Timelock |
+|----------|----------|--------------|---------------|
+| All | `grantRole()` | Safe → Direct | Safe → Timelock → Contract |
+| All | `revokeRole()` | Safe → Direct | Safe → Timelock → Contract |
+| AxiomV2 | `setFeeRates()` | Safe → Direct | Safe → Timelock → Contract |
+| Treasury | `setAllocation()` | Safe → Direct | Safe → Timelock → Contract |
+| RiskConfig | `setMaxLTV()` | Safe → Direct | Safe → Timelock → Contract |
+| All | `pause()` | Safe → Direct | Guardian → Direct (unchanged) |
+| All | `unpause()` | Safe → Direct | Admin → Direct (unchanged) |
 
 ---
 
