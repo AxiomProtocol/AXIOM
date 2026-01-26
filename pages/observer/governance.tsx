@@ -1,40 +1,6 @@
-/**
- * Institutional Observer Dashboard - Governance Page
- * 
- * Roles, parameters, timelock queue, and emergency controls.
- */
-
 import React, { useState, useEffect } from 'react';
-import Head from 'next/head';
-import Link from 'next/link';
+import { ObserverLayout, ObserverCard, ObserverLoading, ProofLink } from '../../components/observer/ObserverLayout';
 import { GovernanceData } from '../../server/services/observer/types';
-
-function NavTabs({ current }: { current: string }) {
-  const tabs = [
-    { name: 'Overview', href: '/observer' },
-    { name: 'Treasury', href: '/observer/treasury' },
-    { name: 'Governance', href: '/observer/governance' },
-    { name: 'Risk', href: '/observer/risk' },
-    { name: 'Assets', href: '/observer/assets' },
-    { name: 'Reports', href: '/observer/reports' },
-  ];
-
-  return (
-    <nav className="flex space-x-4 mb-8">
-      {tabs.map((tab) => (
-        <Link
-          key={tab.name}
-          href={tab.href}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            tab.name === current ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          {tab.name}
-        </Link>
-      ))}
-    </nav>
-  );
-}
 
 export default function ObserverGovernance() {
   const [data, setData] = useState<GovernanceData | null>(null);
@@ -56,179 +22,139 @@ export default function ObserverGovernance() {
   }, []);
 
   return (
-    <>
-      <Head>
-        <title>Governance | Institutional Observer | Axiom Protocol</title>
-      </Head>
+    <ObserverLayout
+      title="Governance"
+      description="Roles, permissions, parameters, and timelock operations"
+      currentTab="governance"
+    >
+      {loading ? (
+        <ObserverLoading />
+      ) : data ? (
+        <>
+          <ObserverCard title="Timelock Status" className="mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Minimum Delay</p>
+                <p className="text-xl font-bold text-amber-600">{data.timelockStatus ? (data.timelockStatus.minDelay / 3600) : 0} hours</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Max Delay Cap</p>
+                <p className="text-xl font-bold text-purple-600">{data.timelockStatus ? (data.timelockStatus.maxDelay / 86400) : 0} days</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Configuration</p>
+                <p className={`text-xl font-bold ${data.timelockStatus?.configurationLocked ? 'text-teal-600' : 'text-amber-600'}`}>
+                  {data.timelockStatus?.configurationLocked ? 'LOCKED' : 'CONFIGURABLE'}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Lock Timestamp</p>
+                <p className="text-xl font-bold text-gray-900">{data.timelockStatus?.lockTimestamp || 'Not locked'}</p>
+              </div>
+            </div>
+          </ObserverCard>
 
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Governance</h1>
-            <p className="mt-2 text-gray-600">Roles, permissions, parameters, and timelock operations</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <ObserverCard title="Role Assignments">
+              <div className="space-y-3">
+                {(data.roles || []).map((role) => (
+                  <div key={role.name} className="border-b border-gray-100 pb-3">
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="font-medium">{role.name}</p>
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                        {role.holders.length} holder(s)
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      {role.holders.map((holder) => (
+                        <ProofLink key={holder} type="address" value={holder} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ObserverCard>
+
+            <ObserverCard title="Configuration Parameters">
+              <div className="space-y-3">
+                {(data.parameters || []).map((param) => (
+                  <div key={param.name} className="flex justify-between items-center border-b border-gray-100 pb-3">
+                    <div>
+                      <p className="font-medium">{param.name}</p>
+                      <p className="text-xs text-gray-500">Last updated: {param.lastUpdated}</p>
+                    </div>
+                    <p className="font-mono text-amber-600">{param.value}</p>
+                  </div>
+                ))}
+              </div>
+            </ObserverCard>
           </div>
 
-          <NavTabs current="Governance" />
-
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-            </div>
-          ) : data ? (
-            <>
-              <div className="bg-white rounded-lg shadow p-6 mb-8">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Timelock Status</h2>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Minimum Delay</p>
-                    <p className="text-xl font-bold">{data.timelockStatus.minDelay / 3600} hours</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Max Delay Cap</p>
-                    <p className="text-xl font-bold">{data.timelockStatus.maxDelay / 86400} days</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Configuration</p>
-                    <p className={`text-xl font-bold ${data.timelockStatus.configurationLocked ? 'text-green-600' : 'text-yellow-600'}`}>
-                      {data.timelockStatus.configurationLocked ? 'LOCKED' : 'CONFIGURABLE'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Lock Timestamp</p>
-                    <p className="text-xl font-bold">{data.timelockStatus.lockTimestamp || 'Not locked'}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Role Holders</h2>
-                  <div className="space-y-4">
-                    {data.roles.map((role) => (
-                      <div key={role.role} className="border-b pb-3">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium">{role.role}</p>
-                            <a
-                              href={`https://arbiscan.io/address/${role.holder}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-blue-600 hover:text-blue-800"
-                            >
-                              {role.holder.slice(0, 8)}...{role.holder.slice(-6)}
-                            </a>
-                          </div>
+          <ObserverCard title="Pending Timelock Operations">
+            {!data.timelockQueue || data.timelockQueue.length === 0 ? (
+              <p className="text-gray-500">No pending operations</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Operation</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Target</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Executable At</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {(data.timelockQueue || []).map((op) => (
+                      <tr key={op.id}>
+                        <td className="px-4 py-3 text-sm font-mono">{op.id.slice(0, 8)}...</td>
+                        <td className="px-4 py-3 text-sm">{op.operation}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <ProofLink type="address" value={op.target} />
+                        </td>
+                        <td className="px-4 py-3 text-sm">{op.executableAt}</td>
+                        <td className="px-4 py-3 text-sm">
                           <span className={`px-2 py-1 text-xs rounded ${
-                            role.holderType === 'safe' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            op.status === 'pending' ? 'bg-amber-100 text-amber-800' :
+                            op.status === 'ready' ? 'bg-teal-100 text-teal-800' :
+                            'bg-gray-100 text-gray-800'
                           }`}>
-                            {role.holderType.toUpperCase()}
+                            {op.status.toUpperCase()}
                           </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Emergency Controls</h2>
-                  <div className="space-y-4">
-                    {data.emergencyControls.map((control) => (
-                      <div key={control.name} className="flex justify-between items-center border-b pb-3">
-                        <div>
-                          <p className="font-medium">{control.name}</p>
-                          <p className="text-sm text-gray-500">{control.holder} ({control.policy})</p>
-                        </div>
-                        <span className={`px-2 py-1 text-xs rounded ${
-                          control.currentState === 'active' ? 'bg-red-100 text-red-800' :
-                          control.currentState === 'inactive' ? 'bg-green-100 text-green-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {control.currentState.toUpperCase()}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg shadow p-6 mb-8">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Timelock Queue</h2>
-                {data.timelockQueue.length === 0 ? (
-                  <p className="text-gray-500">No pending timelock operations</p>
-                ) : (
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead>
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Operation</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Target</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Function</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ETA</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {data.timelockQueue.map((op) => (
-                        <tr key={op.id}>
-                          <td className="px-4 py-3 text-sm font-mono">{op.id.slice(0, 10)}...</td>
-                          <td className="px-4 py-3 text-sm">{op.targetName}</td>
-                          <td className="px-4 py-3 text-sm">{op.functionName}</td>
-                          <td className="px-4 py-3 text-sm">{op.eta}</td>
-                          <td className="px-4 py-3 text-sm">
-                            <span className={`px-2 py-1 text-xs rounded ${
-                              op.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              op.status === 'ready' ? 'bg-green-100 text-green-800' :
-                              op.status === 'executed' ? 'bg-blue-100 text-blue-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {op.status.toUpperCase()}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+                    ))}
+                  </tbody>
+                </table>
               </div>
+            )}
+          </ObserverCard>
 
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Parameter Registry</h2>
-                {data.parameters.length === 0 ? (
-                  <p className="text-gray-500">No parameter changes recorded</p>
-                ) : (
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead>
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Parameter</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Changed</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tx</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {data.parameters.map((param) => (
-                        <tr key={param.name}>
-                          <td className="px-4 py-3 text-sm font-medium">{param.name}</td>
-                          <td className="px-4 py-3 text-sm">{param.currentValue}</td>
-                          <td className="px-4 py-3 text-sm text-gray-500">{param.lastChanged}</td>
-                          <td className="px-4 py-3 text-sm">
-                            <a href={`https://arbiscan.io/tx/${param.txHash}`} target="_blank" rel="noopener noreferrer" className="text-blue-600">
-                              {param.txHash.slice(0, 8)}...
-                            </a>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+          <ObserverCard title="Emergency Controls" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className={`rounded-xl p-4 ${data.emergencyStatus?.paused ? 'bg-red-50 border border-red-200' : 'bg-teal-50 border border-teal-200'}`}>
+                <p className="text-sm text-gray-600">System Status</p>
+                <p className={`text-xl font-bold ${data.emergencyStatus?.paused ? 'text-red-600' : 'text-teal-600'}`}>
+                  {data.emergencyStatus?.paused ? 'PAUSED' : 'ACTIVE'}
+                </p>
               </div>
-
-              <div className="mt-8 text-center text-sm text-gray-500">
-                Last updated: {data.lastUpdated}
+              <div className={`rounded-xl p-4 ${data.emergencyStatus?.lendingPaused ? 'bg-amber-50 border border-amber-200' : 'bg-teal-50 border border-teal-200'}`}>
+                <p className="text-sm text-gray-600">Lending</p>
+                <p className={`text-xl font-bold ${data.emergencyStatus?.lendingPaused ? 'text-amber-600' : 'text-teal-600'}`}>
+                  {data.emergencyStatus?.lendingPaused ? 'PAUSED' : 'ACTIVE'}
+                </p>
               </div>
-            </>
-          ) : null}
-        </div>
-      </div>
-    </>
+              <div className="rounded-xl p-4 bg-gray-50 border border-gray-200">
+                <p className="text-sm text-gray-600">Last Pause Event</p>
+                <p className="text-xl font-bold text-gray-900">{data.emergencyStatus?.lastPauseEvent || 'Never'}</p>
+              </div>
+            </div>
+          </ObserverCard>
+        </>
+      ) : (
+        <p className="text-gray-500">Failed to load governance data</p>
+      )}
+    </ObserverLayout>
   );
 }
