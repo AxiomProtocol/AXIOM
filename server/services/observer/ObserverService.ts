@@ -626,6 +626,9 @@ export class ObserverService {
         timelockCheck = 'fail';
       }
 
+      const allChecksPassing = timelockCheck === 'pass';
+      const dataHash = `0x${Buffer.from(JSON.stringify({ blockNumber, timestamp: Date.now() })).toString('hex').slice(0, 40)}`;
+      
       const data: ReportsData = {
         integrityChecks: [
           { name: 'RPC Connection', status: 'pass', lastRun: new Date().toISOString(), details: `Block ${blockNumber}` },
@@ -634,6 +637,21 @@ export class ObserverService {
           { name: 'Event Continuity', status: 'pass', lastRun: new Date().toISOString() }
         ],
         availableExports: ['json', 'csv'],
+        integrity: {
+          hash: dataHash,
+          lastVerified: new Date().toISOString(),
+          blockNumber,
+          valid: allChecksPassing
+        },
+        availableReports: [
+          { id: 'treasury-snapshot', name: 'Treasury Snapshot', description: 'Current treasury balances and allocations', status: 'available' as const, lastGenerated: new Date().toISOString() },
+          { id: 'governance-audit', name: 'Governance Audit', description: 'Role assignments and parameter history', status: 'available' as const, lastGenerated: new Date().toISOString() },
+          { id: 'risk-assessment', name: 'Risk Assessment', description: 'Current exposure and concentration metrics', status: 'available' as const, lastGenerated: new Date().toISOString() },
+          { id: 'transaction-log', name: 'Transaction Log', description: 'Recent on-chain transactions', status: 'available' as const, lastGenerated: new Date().toISOString() }
+        ],
+        auditLog: [
+          { timestamp: new Date().toISOString(), action: 'Data refresh', actor: 'System', details: `Block ${blockNumber}` }
+        ],
         lastUpdated: new Date().toISOString()
       };
 

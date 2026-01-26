@@ -250,6 +250,25 @@ export interface ReportsData {
     timestamp: string;
     hash: string;
   };
+  integrity: {
+    hash: string;
+    lastVerified: string;
+    blockNumber: number;
+    valid: boolean;
+  };
+  availableReports: {
+    id: string;
+    name: string;
+    description: string;
+    lastGenerated?: string;
+    status: 'available' | 'generating' | 'pending';
+  }[];
+  auditLog: {
+    timestamp: string;
+    action: string;
+    actor: string;
+    details?: string;
+  }[];
   lastUpdated: string;
 }
 
