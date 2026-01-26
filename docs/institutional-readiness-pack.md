@@ -98,6 +98,8 @@ DEFAULT_ADMIN_ROLE (Gnosis Safe: 0x2Bb2c2A7...)
 - Lock is permanent and irreversible
 - Emergency functions remain immediate
 
+**Governance Hardening:** See `/docs/governance-hardening.md` for the 1-6 month observation window criteria and lock readiness checklist.
+
 ---
 
 ## 3. Minimum Invariants

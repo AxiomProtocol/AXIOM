@@ -96,6 +96,13 @@ Key features include:
 - 24-hour minimum delay, emergency functions bypass timelock
 - Lock Forever can be activated to make delay irreversible
 
+**Governance Hardening Window (Active):**
+- `governanceHardeningActive = true`
+- Observation window: 1-6 months before Lock Forever
+- Earliest lock review: Month 2 (2026-03-26)
+- Latest lock review: Month 6 (2026-07-26)
+- See `/docs/governance-hardening.md` for full checklist
+
 **Lending Contracts (V3 with Governance):**
 - RiskConfig: `0xD9a53c691B688351283Fecc33D8D9AF964A9a078`
 - DSCRRiskConfig: `0xd9d5a2A1aDF917BECd9454De632DfC69895a2B26`
