@@ -64,6 +64,7 @@ Key features include:
 -   **Phase 2 Products - Turn Capital Into Infrastructure** (Community Land Funds with MetaMask integration and on-chain transactions; Builder & Farmer Credit for working capital loans via credit application modal)
 -   **Phase 3 Products - Turn Axiom Into a Financial State** (AXUSD Credit Lines, Insurance Pools, Axiom Treasury Notes, all with Web3 wallet integration and live API data)
 -   **DEX V2 Ecosystem** (10 mainnet contracts on Arbitrum One: ExchangeHubV2, OracleAdapter, LPStaking, FeeDistributor, TradingRewards, Router, Analytics, LimitOrders, Governor, InsuranceFund. Backend service at `server/services/dex/DexService.ts`, 10 API routes at `pages/api/dex/*`, React hooks at `client/src/hooks/useDex.ts`)
+-   **Institutional Observer Dashboard** (Read-only transparency dashboard for allocators and auditors at `/observer`. 6 pages: Overview, Treasury, Governance, Risk, Assets, Reports. Live RPC data from Arbitrum One via `ObserverService.ts`. No transaction signing - pure read-only. Docs: `/docs/observer-dashboard-spec.md`, `/docs/observer-events.md`)
 
 ## External Dependencies
 -   **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
