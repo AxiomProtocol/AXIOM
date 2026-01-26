@@ -60,7 +60,7 @@ function ProofLink({ type, value, label }: ProofLinkProps) {
       href={urlMap[type]} 
       target="_blank" 
       rel="noopener noreferrer"
-      className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm"
+      className="inline-flex items-center text-yellow-600 hover:text-yellow-700 text-sm"
     >
       {label || shortValue}
       <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,8 +89,8 @@ function NavTabs() {
           href={tab.href}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             tab.current
-              ? 'bg-gray-900 text-white'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'bg-yellow-500 text-white'
+              : 'text-gray-600 hover:bg-yellow-50'
           }`}
         >
           {tab.name}
@@ -184,7 +184,7 @@ function LockReadinessBadge({ data }: LockReadinessBadgeProps) {
           <span className="text-gray-300">|</span>
           <span>{data.daysRemaining} days until latest review</span>
         </div>
-        <Link href="/docs/governance-hardening.md" className="text-blue-600 hover:text-blue-800 flex items-center">
+        <Link href="/docs/governance-hardening.md" className="text-yellow-600 hover:text-yellow-700 flex items-center">
           View Full Checklist
           <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -236,7 +236,7 @@ export default function ObserverOverview() {
         <meta name="description" content="Read-only governance and treasury transparency dashboard" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Institutional Observer</h1>
@@ -263,7 +263,7 @@ export default function ObserverOverview() {
 
           {loading ? (
             <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500"></div>
             </div>
           ) : error ? (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
