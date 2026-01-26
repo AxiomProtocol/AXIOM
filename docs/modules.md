@@ -16,7 +16,7 @@ This document provides unambiguous, audit-friendly definitions for each Axiom Pr
 - **Failure Modes**: What can go wrong
 - **On-Chain Observability**: Events and state for monitoring
 
-All claims cite specific contracts and functions from `/docs/module-to-contract-map.md`.
+All claims cite specific contracts with Arbiscan links for verification. Cross-reference with `/docs/module-to-contract-map.md` for function selectors and full mapping.
 
 ---
 
@@ -46,11 +46,11 @@ Central treasury management for protocol revenue collection, storage, and contro
 ### Control Surfaces
 | Actor | Capability | Delay | Contract Reference |
 |-------|------------|-------|-------------------|
-| Anyone | `depositRevenue()` | None | TreasuryHub:L45-52 |
-| OPERATOR | `routeToVault()` | None | TreasuryHub:L78-95 |
-| DEFAULT_ADMIN | `setAllocation()` | 24h | TreasuryHub:L112-130 |
-| GUARDIAN | `emergencySweep()` | None | TreasuryHub:L145-168 |
-| GUARDIAN | `pause()` | None | TreasuryHub:L32 |
+| Anyone | `depositRevenue()` | None | [Arbiscan](https://arbiscan.io/address/0x3fD63728288546AC41dAe3bf25ca383061c3A929#readContract) |
+| OPERATOR | `routeToVault()` | None | [Arbiscan](https://arbiscan.io/address/0x3fD63728288546AC41dAe3bf25ca383061c3A929#writeContract) |
+| DEFAULT_ADMIN | `setAllocation()` | 24h | Via Timelock → [GovernanceHub](https://arbiscan.io/address/0x52Dc85fd653a75323b5307f4D2629ab9A070530E) |
+| GUARDIAN | `emergencySweep()` | None | [Arbiscan](https://arbiscan.io/address/0x3fD63728288546AC41dAe3bf25ca383061c3A929#writeContract) |
+| GUARDIAN | `pause()` | None | [Arbiscan](https://arbiscan.io/address/0x3fD63728288546AC41dAe3bf25ca383061c3A929#writeContract) |
 
 ### Failure Modes
 | Failure | Impact | Detection | Recovery |
