@@ -19,8 +19,8 @@ This document maps each Axiom module to its deployed contracts and classifies fu
 
 | Contract | Address | Status |
 |----------|---------|--------|
-| AxiomTimelockController | *Pending Deployment* | Configurable |
-| AxiomGovernanceConfig | *Pending Deployment* | Configurable |
+| AxiomTimelockController | `0xf1B1D594d6Edc9f045dF55B32006A24e666Ed899` | Configurable (not locked) |
+| AxiomGovernanceConfig | `0xa645a0Fcc15dD22Ee44d774F19731Fb0fE70b2CC` | Configurable (not locked) |
 
 ---
 

@@ -89,6 +89,12 @@ Key features include:
 - Role-based access (RISK_COMMITTEE, SETTLEMENT_AUTHORITY, GUARDIAN)
 - Emergency pause functionality
 
+**TimelockController (Configurable - Lock Forever NOT activated):**
+- AxiomTimelockController: `0xf1B1D594d6Edc9f045dF55B32006A24e666Ed899`
+- AxiomGovernanceConfig: `0xa645a0Fcc15dD22Ee44d774F19731Fb0fE70b2CC`
+- 24-hour minimum delay, emergency functions bypass timelock
+- Lock Forever can be activated to make delay irreversible
+
 **Lending Contracts (V3 with Governance):**
 - RiskConfig: `0xD9a53c691B688351283Fecc33D8D9AF964A9a078`
 - DSCRRiskConfig: `0xd9d5a2A1aDF917BECd9454De632DfC69895a2B26`

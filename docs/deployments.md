@@ -2,7 +2,7 @@
 
 **Network:** Arbitrum One (42161)  
 **Generated:** 2026-01-26  
-**Status:** Ready for Deployment
+**Status:** DEPLOYED (Lock Forever NOT activated)
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Property | Value |
 |----------|-------|
-| **Address** | *Pending Deployment* |
+| **Address** | `0xf1B1D594d6Edc9f045dF55B32006A24e666Ed899` |
 | **Minimum Delay** | 24 hours (86400 seconds) |
 | **Max Delay Cap** | 30 days (2592000 seconds) |
 | **Lock Status** | Configurable (not yet locked) |
@@ -46,8 +46,8 @@
 
 | Property | Value |
 |----------|-------|
-| **Address** | *Pending Deployment* |
-| **Timelock Controller** | *AxiomTimelockController Address* |
+| **Address** | `0xa645a0Fcc15dD22Ee44d774F19731Fb0fE70b2CC` |
+| **Timelock Controller** | `0xf1B1D594d6Edc9f045dF55B32006A24e666Ed899` |
 | **Registry Locked** | false |
 
 ---
