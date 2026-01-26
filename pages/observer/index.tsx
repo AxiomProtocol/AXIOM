@@ -8,7 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { OverviewMetrics } from '../../server/services/observer/types';
+import { OverviewMetrics, LockReadinessData, LockGate } from '../../server/services/observer/types';
 
 const OBSERVER_CONTRACTS = {
   TimelockController: '0xf1B1D594d6Edc9f045dF55B32006A24e666Ed899',
@@ -77,6 +77,7 @@ function NavTabs() {
     { name: 'Governance', href: '/observer/governance', current: false },
     { name: 'Risk', href: '/observer/risk', current: false },
     { name: 'Assets', href: '/observer/assets', current: false },
+    { name: 'Controls', href: '/observer/controls', current: false },
     { name: 'Reports', href: '/observer/reports', current: false },
   ];
 
@@ -99,20 +100,125 @@ function NavTabs() {
   );
 }
 
+interface GateStatusProps {
+  gate: LockGate;
+}
+
+function GateStatus({ gate }: GateStatusProps) {
+  const statusColors = {
+    green: 'bg-green-100 text-green-800 border-green-300',
+    yellow: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    red: 'bg-red-100 text-red-800 border-red-300'
+  };
+
+  const statusIcons = {
+    green: (
+      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+      </svg>
+    ),
+    yellow: (
+      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+      </svg>
+    ),
+    red: (
+      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+      </svg>
+    )
+  };
+
+  return (
+    <div className={`rounded-lg border p-3 ${statusColors[gate.status]}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          {statusIcons[gate.status]}
+          <span className="font-medium text-sm">{gate.name}</span>
+        </div>
+        <span className="text-xs font-mono">{gate.passingCount}/{gate.totalCount}</span>
+      </div>
+    </div>
+  );
+}
+
+interface LockReadinessBadgeProps {
+  data: LockReadinessData;
+}
+
+function LockReadinessBadge({ data }: LockReadinessBadgeProps) {
+  const overallColors = {
+    ready: 'from-green-500 to-green-600',
+    in_progress: 'from-yellow-500 to-yellow-600',
+    blocked: 'from-red-500 to-red-600'
+  };
+
+  const overallLabels = {
+    ready: 'Ready for Lock',
+    in_progress: 'In Progress',
+    blocked: 'Blocked'
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 mb-8">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">Governance Hardening</h2>
+          <p className="text-sm text-gray-500">Lock Forever Readiness Status</p>
+        </div>
+        <div className={`px-4 py-2 rounded-full bg-gradient-to-r ${overallColors[data.overallStatus]} text-white font-medium text-sm`}>
+          {data.passingCriteria}/{data.totalCriteria} Criteria Passing
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <GateStatus gate={data.gates.governance} />
+        <GateStatus gate={data.gates.treasury} />
+        <GateStatus gate={data.gates.observability} />
+        <GateStatus gate={data.gates.operations} />
+      </div>
+
+      <div className="flex items-center justify-between text-sm text-gray-600 border-t border-gray-100 pt-4">
+        <div className="flex items-center space-x-4">
+          <span>Day {data.daysElapsed} of observation window</span>
+          <span className="text-gray-300">|</span>
+          <span>{data.daysRemaining} days until latest review</span>
+        </div>
+        <Link href="/docs/governance-hardening.md" className="text-blue-600 hover:text-blue-800 flex items-center">
+          View Full Checklist
+          <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function ObserverOverview() {
   const [data, setData] = useState<OverviewMetrics | null>(null);
+  const [lockReadiness, setLockReadiness] = useState<LockReadinessData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch('/api/observer/overview');
-        const result = await response.json();
-        if (result.success) {
-          setData(result.data);
+        const [overviewRes, lockRes] = await Promise.all([
+          fetch('/api/observer/overview'),
+          fetch('/api/observer/lock-readiness')
+        ]);
+        const [overviewResult, lockResult] = await Promise.all([
+          overviewRes.json(),
+          lockRes.json()
+        ]);
+        if (overviewResult.success) {
+          setData(overviewResult.data);
         } else {
-          setError(result.error || 'Failed to fetch data');
+          setError(overviewResult.error || 'Failed to fetch data');
+        }
+        if (lockResult.success) {
+          setLockReadiness(lockResult.data);
         }
       } catch (err) {
         setError('Failed to connect to API');
@@ -165,6 +271,8 @@ export default function ObserverOverview() {
             </div>
           ) : data ? (
             <>
+              {lockReadiness && <LockReadinessBadge data={lockReadiness} />}
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <MetricCard
                   title="Treasury Total"

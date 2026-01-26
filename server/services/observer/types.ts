@@ -282,3 +282,38 @@ export interface ObserverResponse<T> {
   cacheAge?: number;
   proofLinks: ProofLink[];
 }
+
+// Lock Readiness Types
+export interface LockCriterion {
+  id: string;
+  name: string;
+  status: 'passing' | 'pending' | 'failing';
+  note?: string;
+}
+
+export interface LockGate {
+  name: string;
+  criteria: LockCriterion[];
+  passingCount: number;
+  totalCount: number;
+  status: 'green' | 'yellow' | 'red';
+}
+
+export interface LockReadinessData {
+  hardeningActive: boolean;
+  windowStart: string;
+  earliestLockReview: string;
+  latestLockReview: string;
+  daysElapsed: number;
+  daysRemaining: number;
+  gates: {
+    governance: LockGate;
+    treasury: LockGate;
+    observability: LockGate;
+    operations: LockGate;
+  };
+  overallStatus: 'ready' | 'in_progress' | 'blocked';
+  passingCriteria: number;
+  totalCriteria: number;
+  lastUpdated: string;
+}
