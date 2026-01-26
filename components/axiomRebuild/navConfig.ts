@@ -111,7 +111,19 @@ export const navItems: NavItem[] = [
       { label: "Launchpad", href: "/launchpad" },
       { label: "Axiom Nodes", href: "/axiom-nodes" },
       { label: "Analytics", href: "/v2-analytics" },
-      { label: "PMA Trust", href: "/pma" }
+      { label: "PMA Trust", href: "/pma" },
+      { label: "Observer Dashboard", href: "/observer" }
+    ]
+  },
+  {
+    label: "Institutional",
+    children: [
+      { label: "Observer Dashboard", href: "/observer" },
+      { label: "Treasury View", href: "/observer/treasury" },
+      { label: "Governance View", href: "/observer/governance" },
+      { label: "Risk View", href: "/observer/risk" },
+      { label: "Assets View", href: "/observer/assets" },
+      { label: "Reports", href: "/observer/reports" }
     ]
   }
 ];

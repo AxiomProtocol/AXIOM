@@ -55,7 +55,8 @@ const REBUILD_NAV_PAGES = [
   '/treasury-notes',
   '/joincommunity',
   '/dex',
-  '/treasury-ops'
+  '/treasury-ops',
+  '/observer'
 ]
 
 function matchesRebuildNavPages(pathname) {
@@ -77,6 +78,7 @@ function matchesRebuildNavPages(pathname) {
   if (pathname.startsWith('/nodes')) return true;
   if (pathname.startsWith('/axiom-nodes')) return true;
   if (pathname.startsWith('/land-funds')) return true;
+  if (pathname.startsWith('/observer')) return true;
   if (pathname.startsWith('/builder-credit')) return true;
   return false;
 }
