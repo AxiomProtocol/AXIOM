@@ -62,11 +62,11 @@ export default function ObserverGovernance() {
                     <div className="flex justify-between items-start mb-1">
                       <p className="font-medium">{role.name}</p>
                       <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                        {role.holders.length} holder(s)
+                        {(role.holders || []).length} holder(s)
                       </span>
                     </div>
                     <div className="space-y-1">
-                      {role.holders.map((holder) => (
+                      {(role.holders || []).map((holder) => (
                         <ProofLink key={holder} type="address" value={holder} />
                       ))}
                     </div>
