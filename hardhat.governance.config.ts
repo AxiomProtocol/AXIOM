@@ -32,8 +32,13 @@ const config: HardhatUserConfig = {
       chainId: 31337,
     },
     arbitrumOne: {
-      url: process.env.ARBITRUM_RPC_URL || "https://arb1.arbitrum.io/rpc",
-      accounts: process.env.DEPLOYER_PK ? [process.env.DEPLOYER_PK] : [],
+      url: process.env.ARBITRUM_RPC_URL || `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 42161,
+    },
+    arbitrum: {
+      url: process.env.ARBITRUM_RPC_URL || `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 42161,
     },
   },
