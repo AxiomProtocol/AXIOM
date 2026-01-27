@@ -1,314 +1,444 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 
-const OBSERVATION_WINDOW = {
-  active: true,
-  startDate: '2026-01-26',
-  minEndDate: '2026-03-26',
-  maxEndDate: '2026-07-26',
+const sections = [
+  {
+    id: 'purpose',
+    title: 'Purpose',
+    content: 'This memorandum explains why Axiom Protocol has established a defined observation window during which external capital intake is not permitted. The intent is to demonstrate institutional-grade governance, reduce execution risk, and protect users, operators, and the project during early operational maturity.'
+  },
+  {
+    id: 'summary',
+    title: 'Plain-English Summary',
+    bullets: [
+      'Tokenization moves assets on-chain. Institutions stay when operations are predictable under stress.',
+      'An observation window is a controlled period where the system runs in real conditions, but without external capital flowing in.',
+      'During this window, Axiom Protocol focuses on safety, controls, reporting, and reliability.'
+    ]
+  },
+  {
+    id: 'scope',
+    title: 'Scope',
+    content: 'This policy governs the Axiom Protocol web application, associated modules, and any user-facing flows related to:',
+    bullets: [
+      'Deposits, subscriptions, investments, or contributions from external participants',
+      'Public fundraising workflows',
+      'Any language or interface that could be interpreted as a solicitation of capital'
+    ],
+    footer: 'This policy does not prohibit internal testing or internal ledger activity when performed under admin-only access and with no external capital intake.'
+  }
+];
+
+const policyMeans = {
+  title: 'What This Policy Means',
+  intro: 'During the observation window:',
+  items: [
+    'No external capital can be accepted through the platform.',
+    'Public-facing calls-to-action for investing are disabled or blocked.',
+    'Any routes that could initiate capital intake are protected by runtime guards.',
+    'The platform may still run in observation mode for user onboarding, non-financial product exploration, admin-only internal settlement, and self-funded test notes.'
+  ]
 };
 
+const policyDoesNotMean = {
+  title: 'What This Policy Does Not Mean',
+  intro: 'This observation window is not:',
+  items: [
+    'A token sale',
+    'A public offering',
+    'A solicitation of funds',
+    'An invitation to invest',
+    'A commitment that any investment product will be launched on a specific date'
+  ]
+};
+
+const rationale = [
+  {
+    number: '01',
+    title: 'Safety Before Scale',
+    description: 'Axiom Protocol will not accept external capital until key controls are proven under real traffic, runtime guards are validated in production, and error handling paths are tested and documented.'
+  },
+  {
+    number: '02',
+    title: 'Governance Institutions Can Defend',
+    description: 'This window produces evidence that privileged actions are controlled, financial actions have clear authorization boundaries, and risk limits and kill-switches are present and tested.'
+  },
+  {
+    number: '03',
+    title: 'Operational Readiness Under Stress',
+    description: 'Trust is created by rules, not demos. This window validates stress behavior, incident response procedures, monitoring coverage, and data integrity in ledger and reporting pathways.'
+  },
+  {
+    number: '04',
+    title: 'Regulatory Posture Without Unnecessary Cost',
+    description: 'By prohibiting external capital intake during this period, Axiom reduces licensing pressure, compliance scope creep, legal ambiguity around solicitation, and operational risk.'
+  }
+];
+
+const controls = [
+  { name: 'Master Gate', description: 'A single authoritative control that disables external capital intake at runtime.' },
+  { name: 'Route Guards', description: 'Capital-related endpoints are wrapped with observation blockers that prevent execution.' },
+  { name: 'Feature Flags', description: 'Environment flags disable external modules and ensure the UI reflects observation mode.' },
+  { name: 'User-Facing Transparency', description: 'The platform clearly states that no investments are accepted and disables related CTAs.' },
+  { name: 'Reporting & Audit Readiness', description: 'Observation reports are generated and retained for governance records.' }
+];
+
+const exitCriteria = [
+  {
+    category: 'Technical Controls',
+    items: ['All external-capital routes remain fully blocked', 'Monitoring is active and alerting is functional', 'Incident playbooks exist and have been tested']
+  },
+  {
+    category: 'Governance Controls',
+    items: ['Privileged access paths are defined and restricted', 'Change management is in place for risk parameters', 'Pause and rollback procedures are tested']
+  },
+  {
+    category: 'Documentation & Evidence',
+    items: ['Observation report exists with findings and remediations', 'Public statement of readiness is drafted', 'Internal approval is recorded']
+  }
+];
+
 export default function ObservationWindowRationale() {
+  const [scrollY, setScrollY] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <>
       <Head>
-        <title>Observation Window Rationale - Axiom Protocol</title>
+        <title>Observation Window Rationale | Axiom Protocol Governance</title>
         <meta 
           name="description" 
           content="Governance memorandum explaining why external capital intake is disabled during the observation window." 
         />
       </Head>
 
-      <div className="min-h-screen bg-white">
-        {OBSERVATION_WINDOW.active && (
-          <div className="bg-amber-50 border-b border-amber-200">
-            <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-center">
-              <svg className="w-5 h-5 text-amber-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <span className="text-amber-800 font-medium text-center">
-                Observation Mode Active: No external capital is accepted during the observation window.
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white overflow-x-hidden">
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-900/20 via-transparent to-slate-950" />
+          <div 
+            className="absolute inset-0 opacity-30"
+            style={{
+              backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(245, 158, 11, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(245, 158, 11, 0.1) 0%, transparent 50%)',
+              transform: mounted ? `translateY(${scrollY * 0.3}px)` : 'none'
+            }}
+          />
+          
+          <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
+            <div className="inline-block mb-8">
+              <span className="px-6 py-2 bg-amber-500/20 border border-amber-500/30 rounded-full text-amber-400 text-sm font-medium tracking-wider">
+                GOVERNANCE MEMORANDUM
               </span>
             </div>
-          </div>
-        )}
+            
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+              <span className="text-white/90 italic">Observation Window</span>
+              <br />
+              <span className="text-amber-400">Rationale</span>
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-slate-300 mb-8">
+              Document ID: <span className="text-amber-400 font-mono">AXM-GOV-001</span> | Version 1.0 | Authoritative
+            </p>
+            
+            <p className="text-lg md:text-xl text-slate-400 italic max-w-3xl mx-auto mb-12">
+              "Institutional capital requires more than token mechanics.<br />
+              It requires predictable behavior, clear controls, and defensible governance."
+            </p>
 
-        <div className="max-w-4xl mx-auto px-4 py-12">
-          <div className="mb-6">
-            <Link href="/governance" className="text-amber-600 hover:text-amber-700 text-sm font-medium">
-              &larr; Back to Governance
-            </Link>
-          </div>
-
-          <article className="prose prose-lg max-w-none">
-            <header className="mb-10 pb-8 border-b border-gray-200">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                Observation Window Rationale
-              </h1>
-              <p className="text-xl text-gray-600 mb-6">
-                Axiom Protocol Governance Memorandum
-              </p>
-              
-              <div className="bg-gray-50 rounded-lg p-6 not-prose">
-                <dl className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <dt className="text-gray-500 font-medium">Document ID</dt>
-                    <dd className="text-gray-900 font-mono">AXM-GOV-001</dd>
-                  </div>
-                  <div>
-                    <dt className="text-gray-500 font-medium">Status</dt>
-                    <dd className="text-gray-900">Authoritative</dd>
-                  </div>
-                  <div>
-                    <dt className="text-gray-500 font-medium">Version</dt>
-                    <dd className="text-gray-900">1.0</dd>
-                  </div>
-                  <div>
-                    <dt className="text-gray-500 font-medium">Effective Date</dt>
-                    <dd className="text-gray-900">2026-01-26</dd>
-                  </div>
-                  <div>
-                    <dt className="text-gray-500 font-medium">Observation Window</dt>
-                    <dd className="text-gray-900">2026-01-26 through minimum 2026-03-26</dd>
-                  </div>
-                  <div>
-                    <dt className="text-gray-500 font-medium">Optional Extension</dt>
-                    <dd className="text-gray-900">up to 2026-07-26</dd>
-                  </div>
-                  <div className="col-span-2">
-                    <dt className="text-gray-500 font-medium">Owner</dt>
-                    <dd className="text-gray-900">Axiom Protocol Governance</dd>
-                  </div>
-                </dl>
+            <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-400 mb-16">
+              <div className="px-4 py-2 bg-slate-800/50 rounded-lg border border-slate-700">
+                <span className="text-slate-500">Effective:</span> <span className="text-white">2026-01-26</span>
               </div>
-            </header>
+              <div className="px-4 py-2 bg-slate-800/50 rounded-lg border border-slate-700">
+                <span className="text-slate-500">Minimum End:</span> <span className="text-white">2026-03-26</span>
+              </div>
+              <div className="px-4 py-2 bg-slate-800/50 rounded-lg border border-slate-700">
+                <span className="text-slate-500">Optional Extension:</span> <span className="text-white">2026-07-26</span>
+              </div>
+            </div>
+            
+            <div className="animate-bounce">
+              <svg className="w-8 h-8 mx-auto text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </div>
+          </div>
+        </section>
 
-            <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Purpose</h2>
-              <p className="text-gray-700">
-                This memorandum explains why Axiom Protocol has established a defined observation window during which external capital intake is not permitted. The intent is to demonstrate institutional-grade governance, reduce execution risk, and protect users, operators, and the project during early operational maturity.
-              </p>
-            </section>
-
-            <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Plain-English Summary</h2>
-              <ul className="list-disc pl-6 text-gray-700 space-y-2">
-                <li>Tokenization moves assets on-chain. Institutions stay when operations are predictable under stress.</li>
-                <li>An observation window is a controlled period where the system runs in real conditions, but without external capital flowing in.</li>
-                <li>During this window, Axiom Protocol focuses on safety, controls, reporting, and reliability.</li>
-              </ul>
-            </section>
-
-            <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Scope</h2>
-              <p className="text-gray-700 mb-4">
-                This policy governs the Axiom Protocol web application, associated modules, and any user-facing flows related to:
-              </p>
-              <ol className="list-decimal pl-6 text-gray-700 space-y-2">
-                <li>Deposits, subscriptions, investments, or contributions from external participants</li>
-                <li>Public fundraising workflows</li>
-                <li>Any language or interface that could be interpreted as a solicitation of capital</li>
-              </ol>
-              <p className="text-gray-700 mt-4">
-                This policy does not prohibit internal testing or internal ledger activity when performed under admin-only access and with no external capital intake.
-              </p>
-            </section>
-
-            <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">What This Policy Means</h2>
-              <p className="text-gray-700 mb-4">During the observation window:</p>
-              <ol className="list-decimal pl-6 text-gray-700 space-y-2">
-                <li>No external capital can be accepted through the platform.</li>
-                <li>Public-facing calls-to-action for investing are disabled or blocked.</li>
-                <li>Any routes that could initiate capital intake are protected by runtime guards.</li>
-                <li>The platform may still run in observation mode for:
-                  <ul className="list-disc pl-6 mt-2 space-y-1">
-                    <li>User onboarding and profile creation</li>
-                    <li>Non-financial product exploration</li>
-                    <li>Admin-only internal settlement ledger workflows</li>
-                    <li>Admin-only test note creation that is self-funded and not publicly offered</li>
-                  </ul>
-                </li>
-              </ol>
-            </section>
-
-            <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">What This Policy Does Not Mean</h2>
-              <p className="text-gray-700 mb-4">This observation window is not:</p>
-              <ol className="list-decimal pl-6 text-gray-700 space-y-2">
-                <li>A token sale</li>
-                <li>A public offering</li>
-                <li>A solicitation of funds</li>
-                <li>An invitation to invest</li>
-                <li>A commitment that any investment product will be launched on a specific date</li>
-              </ol>
-            </section>
-
-            <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Definitions</h2>
-              
-              <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-2">Observation Window</h3>
-              <p className="text-gray-700">
-                A defined period where production systems operate with real monitoring, logging, and controls, while external capital intake is prohibited.
-              </p>
-              
-              <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-2">External Capital</h3>
-              <p className="text-gray-700">
-                Any funds, stablecoins, fiat, or other value transferred from the public or any outside participant into Axiom-controlled flows for the purpose of investment, subscription, contribution, or capital allocation.
-              </p>
-              
-              <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-2">Admin-Only</h3>
-              <p className="text-gray-700">
-                Restricted access features available only to authorized operators for internal testing, reporting, and system hardening.
-              </p>
-            </section>
-
-            <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Rationale</h2>
-              <p className="text-gray-700 mb-4">
-                Axiom Protocol is intentionally aligning with how serious financial infrastructure is rolled out. Institutional capital requires more than token mechanics. It requires predictable behavior, clear controls, and defensible governance.
-              </p>
-              <p className="text-gray-700 mb-6">The observation window exists to achieve four outcomes:</p>
-
-              <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-3">1. Safety Before Scale</h3>
-              <p className="text-gray-700 mb-2">Axiom Protocol will not accept external capital until:</p>
-              <ul className="list-disc pl-6 text-gray-700 space-y-1">
-                <li>Key controls are proven under real traffic and real operational constraints</li>
-                <li>Runtime guards and feature flags are validated in production</li>
-                <li>Error handling and rollback paths are tested and documented</li>
-              </ul>
-
-              <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-3">2. Governance That Institutions Can Defend Internally</h3>
-              <p className="text-gray-700 mb-2">Institutions optimize for control after arrival. This window is designed to produce evidence that:</p>
-              <ul className="list-disc pl-6 text-gray-700 space-y-1">
-                <li>Privileged actions are controlled</li>
-                <li>Financial actions have clear authorization boundaries</li>
-                <li>Risk limits and kill-switches are present and tested</li>
-                <li>System state transitions are documented</li>
-              </ul>
-
-              <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-3">3. Operational Readiness Under Stress</h3>
-              <p className="text-gray-700 mb-2">Trust is created by rules, not demos. This window validates:</p>
-              <ul className="list-disc pl-6 text-gray-700 space-y-1">
-                <li>Stress behavior, including traffic spikes and degraded dependencies</li>
-                <li>Incident response procedures</li>
-                <li>Monitoring coverage</li>
-                <li>Logging and audit trail completeness</li>
-                <li>Data integrity in ledger and reporting pathways</li>
-              </ul>
-
-              <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-3">4. Regulatory Posture Without Unnecessary Cost</h3>
-              <p className="text-gray-700 mb-2">Axiom Protocol is deliberately limiting risk and cost exposure while it matures. By prohibiting external capital intake during this period, Axiom reduces:</p>
-              <ul className="list-disc pl-6 text-gray-700 space-y-1">
-                <li>Licensing pressure</li>
-                <li>Compliance scope creep</li>
-                <li>Legal ambiguity around solicitation</li>
-                <li>Operational risk from handling third-party funds prematurely</li>
-              </ul>
-            </section>
-
-            <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Controls Implemented</h2>
-              <p className="text-gray-700 mb-4">Axiom Protocol enforces observation mode using layered controls:</p>
-
-              <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-2">1. Master Gate</h3>
-              <p className="text-gray-700">A single authoritative control that disables external capital intake at runtime.</p>
-
-              <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-2">2. Route Guards</h3>
-              <p className="text-gray-700">Capital-related endpoints are wrapped with observation blockers that prevent execution.</p>
-
-              <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-2">3. Feature Flags</h3>
-              <p className="text-gray-700">Environment flags disable external modules and ensure the UI reflects observation mode.</p>
-
-              <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-2">4. User-Facing Transparency</h3>
-              <p className="text-gray-700">The platform clearly states that no investments are accepted during the observation window and disables or blocks any related CTAs.</p>
-
-              <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-2">5. Reporting and Audit Readiness</h3>
-              <p className="text-gray-700 mb-2">Observation reports are generated and retained for governance records, including:</p>
-              <ul className="list-disc pl-6 text-gray-700 space-y-1">
-                <li>Routes blocked</li>
-                <li>UI CTAs disabled</li>
-                <li>Findings from safety scans</li>
-                <li>Incident logs and remediation actions</li>
-              </ul>
-            </section>
-
-            <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Success Criteria for Exiting Observation Mode</h2>
-              <p className="text-gray-700 mb-4">Observation mode may be lifted only when all criteria below are satisfied and documented:</p>
-
-              <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-2">1. Technical Controls</h3>
-              <ul className="list-disc pl-6 text-gray-700 space-y-1">
-                <li>All external-capital routes remain fully blocked during the window</li>
-                <li>Monitoring is active and alerting is functional</li>
-                <li>Incident playbooks exist and have been tested at least once</li>
-              </ul>
-
-              <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-2">2. Governance Controls</h3>
-              <ul className="list-disc pl-6 text-gray-700 space-y-1">
-                <li>Privileged access paths are defined and restricted</li>
-                <li>Change management is in place for risk-related parameters</li>
-                <li>Pause and rollback procedures are defined and tested</li>
-              </ul>
-
-              <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-2">3. Documentation and Evidence</h3>
-              <ul className="list-disc pl-6 text-gray-700 space-y-1">
-                <li>An observation report exists with findings and remediations</li>
-                <li>A public statement of readiness is drafted for transparency</li>
-                <li>Internal approval is recorded</li>
-              </ul>
-            </section>
-
-            <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Timeline and Review</h2>
-              <p className="text-gray-700 mb-4">This policy is effective starting 2026-01-26.</p>
-              <ul className="list-disc pl-6 text-gray-700 space-y-2 mb-4">
-                <li><strong>Minimum observation period ends:</strong> 2026-03-26</li>
-                <li><strong>Optional extension through:</strong> 2026-07-26 (depending on findings)</li>
-              </ul>
-              <p className="text-gray-700 mb-2">Reviews occur:</p>
-              <ol className="list-decimal pl-6 text-gray-700 space-y-1">
-                <li>Weekly internal governance review during the observation window</li>
-                <li>Immediately following any incident or high-severity finding</li>
-                <li>At the end of the minimum period to determine whether to lift or extend</li>
-              </ol>
-            </section>
-
-            <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Communications Policy</h2>
-              <p className="text-gray-700 mb-2">Public communications during observation mode must:</p>
-              <ol className="list-decimal pl-6 text-gray-700 space-y-1">
-                <li>Avoid language that could be interpreted as an invitation to invest</li>
-                <li>Direct users to this memorandum for clarity</li>
-                <li>Focus on governance, safety, and readiness, not returns or fundraising</li>
-              </ol>
-            </section>
-
-            <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Contact</h2>
-              <ul className="list-none text-gray-700 space-y-2">
-                <li><strong>Governance inquiries:</strong> governance@axiomprotocol.app</li>
-                <li><strong>Security reports:</strong> security@axiomprotocol.app</li>
-              </ul>
-            </section>
-
-            <section className="mb-10 pt-8 border-t border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Change Log</h2>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Version 1.0</h3>
-              <p className="text-gray-700">Initial publication of Observation Window Rationale and controls.</p>
-            </section>
-          </article>
+        <div className="bg-amber-500/10 border-y border-amber-500/20">
+          <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-center gap-3">
+            <svg className="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span className="text-amber-200 font-medium">
+              Observation Mode Active: No external capital is accepted during the observation window.
+            </span>
+          </div>
         </div>
 
-        <footer className="bg-gray-50 border-t border-gray-200 py-8 mt-12">
-          <div className="max-w-4xl mx-auto px-4 text-center text-gray-600 text-sm">
-            <p>Axiom Protocol Governance | Document ID: AXM-GOV-001 | Version 1.0</p>
-            <p className="mt-2">
-              <Link href="/faq" className="text-amber-600 hover:text-amber-700">FAQ</Link>
-              {' | '}
-              <Link href="/governance" className="text-amber-600 hover:text-amber-700">Governance</Link>
-            </p>
+        <section className="py-24">
+          <div className="max-w-5xl mx-auto px-6">
+            {sections.map((section, idx) => (
+              <div key={section.id} className={`mb-16 ${idx > 0 ? 'pt-16 border-t border-slate-800' : ''}`}>
+                <h2 className="text-3xl font-bold text-white mb-6">{section.title}</h2>
+                {section.content && (
+                  <p className="text-lg text-slate-300 leading-relaxed mb-4">{section.content}</p>
+                )}
+                {section.bullets && (
+                  <ul className="space-y-3">
+                    {section.bullets.map((bullet, i) => (
+                      <li key={i} className="flex items-start gap-3 text-slate-300">
+                        <span className="text-amber-400 mt-1">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </span>
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {section.footer && (
+                  <p className="text-slate-400 mt-4 italic">{section.footer}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="py-24 bg-slate-900/50">
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="grid md:grid-cols-2 gap-12">
+              <div className="bg-slate-800/30 border border-slate-700 rounded-2xl p-8">
+                <h3 className="text-2xl font-bold text-white mb-4">{policyMeans.title}</h3>
+                <p className="text-slate-400 mb-4">{policyMeans.intro}</p>
+                <ol className="space-y-3">
+                  {policyMeans.items.map((item, i) => (
+                    <li key={i} className="flex items-start gap-3 text-slate-300">
+                      <span className="flex-shrink-0 w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center text-sm font-bold">
+                        {i + 1}
+                      </span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              <div className="bg-slate-800/30 border border-red-900/30 rounded-2xl p-8">
+                <h3 className="text-2xl font-bold text-white mb-4">{policyDoesNotMean.title}</h3>
+                <p className="text-slate-400 mb-4">{policyDoesNotMean.intro}</p>
+                <ul className="space-y-3">
+                  {policyDoesNotMean.items.map((item, i) => (
+                    <li key={i} className="flex items-start gap-3 text-slate-300">
+                      <span className="text-red-400 mt-1">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-24">
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <span className="px-4 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full text-amber-400 text-sm font-medium">
+                THE RATIONALE
+              </span>
+              <h2 className="text-4xl font-bold text-white mt-6 mb-4">Four Outcomes</h2>
+              <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+                The observation window exists to demonstrate institutional-grade governance and reduce execution risk.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {rationale.map((item) => (
+                <div key={item.number} className="group relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700 rounded-2xl p-8 hover:border-amber-500/30 transition-all duration-300">
+                  <div className="absolute -top-4 -left-4 w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center text-slate-900 font-bold text-lg shadow-lg shadow-amber-500/25">
+                    {item.number}
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-3 mt-4">{item.title}</h3>
+                  <p className="text-slate-400 leading-relaxed">{item.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="py-24 bg-slate-900/50">
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <span className="px-4 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full text-amber-400 text-sm font-medium">
+                IMPLEMENTATION
+              </span>
+              <h2 className="text-4xl font-bold text-white mt-6 mb-4">Controls Implemented</h2>
+              <p className="text-xl text-slate-400">
+                Axiom Protocol enforces observation mode using layered controls.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {controls.map((control, idx) => (
+                <div key={idx} className="bg-slate-800/30 border border-slate-700 rounded-xl p-6 hover:bg-slate-800/50 transition-colors">
+                  <div className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center mb-4">
+                    <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">{control.name}</h3>
+                  <p className="text-sm text-slate-400">{control.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="py-24">
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <span className="px-4 py-1 bg-green-500/20 border border-green-500/30 rounded-full text-green-400 text-sm font-medium">
+                EXIT CRITERIA
+              </span>
+              <h2 className="text-4xl font-bold text-white mt-6 mb-4">Success Criteria for Exiting</h2>
+              <p className="text-xl text-slate-400">
+                Observation mode may be lifted only when all criteria below are satisfied and documented.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {exitCriteria.map((category, idx) => (
+                <div key={idx} className="bg-gradient-to-b from-slate-800/50 to-transparent border border-slate-700 rounded-2xl overflow-hidden">
+                  <div className="bg-slate-800 px-6 py-4 border-b border-slate-700">
+                    <h3 className="text-lg font-semibold text-white">{category.category}</h3>
+                  </div>
+                  <div className="p-6">
+                    <ul className="space-y-3">
+                      {category.items.map((item, i) => (
+                        <li key={i} className="flex items-start gap-3 text-slate-300 text-sm">
+                          <span className="text-green-400 mt-0.5">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="py-24 bg-slate-900/50">
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="grid md:grid-cols-2 gap-12">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-6">Timeline & Review</h2>
+                <p className="text-slate-300 mb-6">This policy is effective starting 2026-01-26.</p>
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-3 h-3 bg-amber-500 rounded-full" />
+                    <span className="text-slate-300"><strong className="text-white">Minimum observation period ends:</strong> 2026-03-26</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-3 h-3 bg-amber-500/50 rounded-full" />
+                    <span className="text-slate-300"><strong className="text-white">Optional extension through:</strong> 2026-07-26</span>
+                  </div>
+                </div>
+                <p className="text-slate-400 mb-2">Reviews occur:</p>
+                <ol className="list-decimal list-inside text-slate-300 space-y-2">
+                  <li>Weekly internal governance review during the observation window</li>
+                  <li>Immediately following any incident or high-severity finding</li>
+                  <li>At the end of the minimum period to determine whether to lift or extend</li>
+                </ol>
+              </div>
+
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-6">Communications Policy</h2>
+                <p className="text-slate-300 mb-6">Public communications during observation mode must:</p>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3 text-slate-300">
+                    <span className="text-amber-400 mt-1">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                    <span>Avoid language that could be interpreted as an invitation to invest</span>
+                  </li>
+                  <li className="flex items-start gap-3 text-slate-300">
+                    <span className="text-amber-400 mt-1">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                    <span>Direct users to this memorandum for clarity</span>
+                  </li>
+                  <li className="flex items-start gap-3 text-slate-300">
+                    <span className="text-amber-400 mt-1">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                    <span>Focus on governance, safety, and readiness, not returns or fundraising</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-24">
+          <div className="max-w-3xl mx-auto px-6 text-center">
+            <h2 className="text-3xl font-bold text-white mb-8">Contact</h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-slate-800/30 border border-slate-700 rounded-xl p-6">
+                <p className="text-slate-400 mb-2">Governance Inquiries</p>
+                <p className="text-amber-400 font-mono">governance@axiomprotocol.app</p>
+              </div>
+              <div className="bg-slate-800/30 border border-slate-700 rounded-xl p-6">
+                <p className="text-slate-400 mb-2">Security Reports</p>
+                <p className="text-amber-400 font-mono">security@axiomprotocol.app</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer className="py-12 border-t border-slate-800">
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="text-center md:text-left">
+                <p className="text-slate-400 text-sm">
+                  Axiom Protocol Governance | Document ID: AXM-GOV-001 | Version 1.0
+                </p>
+                <p className="text-slate-500 text-sm mt-1">
+                  Initial publication of Observation Window Rationale and controls.
+                </p>
+              </div>
+              <div className="flex gap-4">
+                <Link href="/faq" className="text-amber-400 hover:text-amber-300 text-sm transition-colors">
+                  FAQ
+                </Link>
+                <span className="text-slate-700">|</span>
+                <Link href="/governance" className="text-amber-400 hover:text-amber-300 text-sm transition-colors">
+                  Governance
+                </Link>
+              </div>
+            </div>
           </div>
         </footer>
       </div>
