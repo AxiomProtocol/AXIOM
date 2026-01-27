@@ -290,11 +290,10 @@ export default function ObservationWindowRationale() {
                 <div key={item.number} className={`flex flex-col ${idx % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-12`}>
                   <div className="flex-1 relative">
                     <div className="relative h-80 lg:h-96 rounded-2xl overflow-hidden">
-                      <Image
+                      <img
                         src={item.image}
                         alt={item.title}
-                        fill
-                        className="object-cover"
+                        className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
                     </div>
