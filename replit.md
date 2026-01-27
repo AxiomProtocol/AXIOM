@@ -1,5 +1,15 @@
 # Axiom Smart City - Sovereign Digital-Physical Economy
 
+## Observation Mode (ACTIVE)
+
+**Status:** OBSERVATION WINDOW ACTIVE  
+**Started:** 2026-01-26  
+**Minimum Duration:** 2 months (ends 2026-03-26)  
+**Optional Extension:** up to 2026-07-26  
+**Authoritative Document:** `/docs/governance/AXM-GOV-001-observation-window-rationale.md`
+
+During this window: NO external investments, deposits, or contributions accepted. Admin-only access to internal financial modules.
+
 ## Overview
 The Axiom Smart City project aims to establish America's first 1,000-acre on-chain sovereign smart city economy. It functions as a community-governed DeFi protocol with a robust treasury system and economic engine. Its core purpose is to create a model for future sovereign digital-physical economies, emphasizing self-custody and a non-custodial DeFi approach. Key capabilities include a governance token (AXM), DeFi treasury tools, real estate tokenization, DePIN infrastructure, smart city services, cross-chain interoperability, and sustainability initiatives within a decentralized, community-governed framework.
 
