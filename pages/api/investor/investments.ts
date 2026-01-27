@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Pool } from '@neondatabase/serverless';
+import { blockDuringObservation } from '@/middleware/observationGuard';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -17,7 +18,7 @@ async function validateInvestorToken(token: string): Promise<{ investorId: numbe
   }
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -72,3 +73,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Failed to fetch investments' });
   }
 }
+
+export default blockDuringObservation(handler);

@@ -7734,3 +7734,240 @@ export type LandFundInvestmentActivity = typeof landFundInvestmentActivity.$infe
 export type InsertLandFundInvestmentActivity = typeof landFundInvestmentActivity.$inferInsert;
 export type LandFundReferral = typeof landFundReferrals.$inferSelect;
 export type InsertLandFundReferral = typeof landFundReferrals.$inferInsert;
+
+// ==== OBSERVATION MODE: INTERNAL SETTLEMENT MODULE ====
+
+// Treasury account type enum
+export const treasuryAccountTypeEnum = pgEnum('treasury_account_type', [
+  'operating',
+  'reserve',
+  'escrow',
+  'development',
+  'insurance',
+  'contingency'
+]);
+
+// Ledger entry status enum
+export const ledgerEntryStatusEnum = pgEnum('ledger_entry_status', [
+  'pending',
+  'approved',
+  'rejected',
+  'reconciled'
+]);
+
+// Ledger entry type enum
+export const ledgerEntryTypeEnum = pgEnum('ledger_entry_type', [
+  'credit',
+  'debit',
+  'transfer',
+  'adjustment'
+]);
+
+// Internal treasury accounts (internal bookkeeping only)
+export const treasuryAccounts = pgTable("treasury_accounts", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  accountType: treasuryAccountTypeEnum("account_type").notNull(),
+  balance: decimal("balance", { precision: 18, scale: 6 }).default('0'),
+  currency: varchar("currency", { length: 10 }).default('USD'),
+  isActive: boolean("is_active").default(true),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  nameIdx: index("treasury_accounts_name_idx").on(table.name),
+  typeIdx: index("treasury_accounts_type_idx").on(table.accountType),
+}));
+
+// Internal counterparties (internal entities only - NO external investors)
+export const internalCounterparties = pgTable("internal_counterparties", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  entityType: varchar("entity_type", { length: 50 }).notNull(),
+  description: text("description"),
+  taxId: varchar("tax_id", { length: 50 }),
+  isInternal: boolean("is_internal").default(true).notNull(),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  nameIdx: index("internal_counterparties_name_idx").on(table.name),
+}));
+
+// Ledger entries (journal entries for internal settlement)
+export const ledgerEntries = pgTable("ledger_entries", {
+  id: serial("id").primaryKey(),
+  entryDate: timestamp("entry_date").notNull(),
+  description: varchar("description", { length: 500 }).notNull(),
+  entryType: ledgerEntryTypeEnum("entry_type").notNull(),
+  amount: decimal("amount", { precision: 18, scale: 6 }).notNull(),
+  currency: varchar("currency", { length: 10 }).default('USD'),
+  
+  // Account references
+  debitAccountId: integer("debit_account_id").references(() => treasuryAccounts.id),
+  creditAccountId: integer("credit_account_id").references(() => treasuryAccounts.id),
+  counterpartyId: integer("counterparty_id").references(() => internalCounterparties.id),
+  
+  // Category and reference
+  category: varchar("category", { length: 100 }),
+  referenceNumber: varchar("reference_number", { length: 100 }),
+  externalReference: varchar("external_reference", { length: 200 }),
+  
+  // Approval workflow
+  status: ledgerEntryStatusEnum("status").default('pending'),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  approvedBy: integer("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  rejectedBy: integer("rejected_by").references(() => users.id),
+  rejectedAt: timestamp("rejected_at"),
+  rejectionReason: text("rejection_reason"),
+  
+  // Metadata
+  attachments: jsonb("attachments"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  dateIdx: index("ledger_entries_date_idx").on(table.entryDate),
+  statusIdx: index("ledger_entries_status_idx").on(table.status),
+  debitIdx: index("ledger_entries_debit_idx").on(table.debitAccountId),
+  creditIdx: index("ledger_entries_credit_idx").on(table.creditAccountId),
+}));
+
+// ==== OBSERVATION MODE: PRIVATE CREDIT NOTE (SELF-FUNDED) ====
+
+// Note status enum
+export const privateCreditNoteStatusEnum = pgEnum('private_credit_note_status', [
+  'draft',
+  'active',
+  'current',
+  'delinquent',
+  'paid_off',
+  'defaulted',
+  'cancelled'
+]);
+
+// Payment event type enum
+export const notePaymentEventTypeEnum = pgEnum('note_payment_event_type', [
+  'scheduled_payment',
+  'principal',
+  'interest',
+  'prepayment',
+  'late_fee',
+  'adjustment'
+]);
+
+// Private credit notes (self-funded only - NO external investors)
+export const privateCreditNotes = pgTable("private_credit_notes", {
+  id: serial("id").primaryKey(),
+  noteNumber: varchar("note_number", { length: 50 }).unique().notNull(),
+  
+  // Note terms
+  principal: decimal("principal", { precision: 18, scale: 2 }).notNull(),
+  interestRate: decimal("interest_rate", { precision: 5, scale: 4 }).notNull(),
+  termMonths: integer("term_months").notNull(),
+  paymentFrequency: varchar("payment_frequency", { length: 20 }).default('monthly'),
+  
+  // Internal parties only
+  issuer: varchar("issuer", { length: 200 }).default('Axiom Protocol Treasury'),
+  borrowerEntityName: varchar("borrower_entity_name", { length: 200 }),
+  isSelfFunded: boolean("is_self_funded").default(true).notNull(),
+  
+  // Collateral reference
+  collateralType: varchar("collateral_type", { length: 100 }),
+  collateralDescription: text("collateral_description"),
+  collateralValue: decimal("collateral_value", { precision: 18, scale: 2 }),
+  ltvRatio: decimal("ltv_ratio", { precision: 5, scale: 4 }),
+  
+  // Dates
+  originationDate: timestamp("origination_date"),
+  maturityDate: timestamp("maturity_date"),
+  firstPaymentDate: timestamp("first_payment_date"),
+  
+  // Status and balances
+  status: privateCreditNoteStatusEnum("status").default('draft'),
+  outstandingPrincipal: decimal("outstanding_principal", { precision: 18, scale: 2 }),
+  accruedInterest: decimal("accrued_interest", { precision: 18, scale: 2 }).default('0'),
+  totalPaymentsReceived: decimal("total_payments_received", { precision: 18, scale: 2 }).default('0'),
+  
+  // Governance alignment
+  governanceConfigHash: varchar("governance_config_hash", { length: 100 }),
+  riskConfigSnapshot: jsonb("risk_config_snapshot"),
+  
+  // Admin only
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  noteNumberIdx: index("private_credit_notes_number_idx").on(table.noteNumber),
+  statusIdx: index("private_credit_notes_status_idx").on(table.status),
+  maturityIdx: index("private_credit_notes_maturity_idx").on(table.maturityDate),
+}));
+
+// Note payment events
+export const notePaymentEvents = pgTable("note_payment_events", {
+  id: serial("id").primaryKey(),
+  noteId: integer("note_id").references(() => privateCreditNotes.id).notNull(),
+  eventDate: timestamp("event_date").notNull(),
+  eventType: notePaymentEventTypeEnum("event_type").notNull(),
+  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
+  principalPortion: decimal("principal_portion", { precision: 18, scale: 2 }).default('0'),
+  interestPortion: decimal("interest_portion", { precision: 18, scale: 2 }).default('0'),
+  lateFee: decimal("late_fee", { precision: 18, scale: 2 }).default('0'),
+  balanceAfter: decimal("balance_after", { precision: 18, scale: 2 }),
+  reference: varchar("reference", { length: 200 }),
+  notes: text("notes"),
+  recordedBy: integer("recorded_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  noteIdIdx: index("note_payment_events_note_idx").on(table.noteId),
+  dateIdx: index("note_payment_events_date_idx").on(table.eventDate),
+}));
+
+// Note covenants checklist
+export const noteCovenants = pgTable("note_covenants", {
+  id: serial("id").primaryKey(),
+  noteId: integer("note_id").references(() => privateCreditNotes.id).notNull(),
+  covenantName: varchar("covenant_name", { length: 200 }).notNull(),
+  description: text("description"),
+  checkFrequency: varchar("check_frequency", { length: 20 }).default('monthly'),
+  isCompliant: boolean("is_compliant"),
+  lastCheckedAt: timestamp("last_checked_at"),
+  lastCheckedBy: integer("last_checked_by").references(() => users.id),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  noteIdIdx: index("note_covenants_note_idx").on(table.noteId),
+}));
+
+// Note documents
+export const noteDocuments = pgTable("note_documents", {
+  id: serial("id").primaryKey(),
+  noteId: integer("note_id").references(() => privateCreditNotes.id).notNull(),
+  documentType: varchar("document_type", { length: 100 }).notNull(),
+  fileName: varchar("file_name", { length: 255 }).notNull(),
+  fileUrl: varchar("file_url", { length: 500 }),
+  fileHash: varchar("file_hash", { length: 128 }),
+  uploadedBy: integer("uploaded_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  noteIdIdx: index("note_documents_note_idx").on(table.noteId),
+}));
+
+// Types for observation mode tables
+export type TreasuryAccount = typeof treasuryAccounts.$inferSelect;
+export type InsertTreasuryAccount = typeof treasuryAccounts.$inferInsert;
+export type InternalCounterparty = typeof internalCounterparties.$inferSelect;
+export type InsertInternalCounterparty = typeof internalCounterparties.$inferInsert;
+export type LedgerEntry = typeof ledgerEntries.$inferSelect;
+export type InsertLedgerEntry = typeof ledgerEntries.$inferInsert;
+export type PrivateCreditNote = typeof privateCreditNotes.$inferSelect;
+export type InsertPrivateCreditNote = typeof privateCreditNotes.$inferInsert;
+export type NotePaymentEvent = typeof notePaymentEvents.$inferSelect;
+export type InsertNotePaymentEvent = typeof notePaymentEvents.$inferInsert;
+export type NoteCovenant = typeof noteCovenants.$inferSelect;
+export type InsertNoteCovenant = typeof noteCovenants.$inferInsert;
+export type NoteDocument = typeof noteDocuments.$inferSelect;
+export type InsertNoteDocument = typeof noteDocuments.$inferInsert;
