@@ -111,6 +111,31 @@ export default function FAQPage() {
                   <p className="mt-2">
                     Window Duration: {OBSERVATION_WINDOW.startDate} to {OBSERVATION_WINDOW.minEndDate} (minimum) or {OBSERVATION_WINDOW.maxEndDate} (maximum)
                   </p>
+                  <p className="mt-2">
+                    See the{' '}
+                    <Link href="/governance/observation-window" className="text-amber-600 hover:text-amber-700 underline">
+                      Observation Window Rationale
+                    </Link>
+                    {' '}for the full governance memorandum.
+                  </p>
+                </>
+              }
+            />
+
+            <FAQItem
+              question="Are investments accepted during the observation window?"
+              answer={
+                <>
+                  <p>
+                    <strong>No.</strong> Axiom Protocol does not accept external capital during observation mode.
+                  </p>
+                  <p className="mt-2">
+                    See the{' '}
+                    <Link href="/governance/observation-window" className="text-amber-600 hover:text-amber-700 underline">
+                      Observation Window Rationale
+                    </Link>
+                    {' '}for details on why external capital intake is disabled and the criteria for exiting observation mode.
+                  </p>
                 </>
               }
             />

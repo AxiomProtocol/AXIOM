@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
+import { blockDuringObservation } from '@/middleware/observationGuard';
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY || '', {
   apiVersion: '2023-10-16',
@@ -7,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_API_KEY || '', {
 
 const WORKBOOK_PRICE_ID = process.env.WORKBOOK_STRIPE_PRICE_ID;
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
@@ -51,3 +52,5 @@ export default async function handler(
     });
   }
 }
+
+export default blockDuringObservation(handler);

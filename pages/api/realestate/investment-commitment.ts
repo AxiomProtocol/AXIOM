@@ -1,9 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Pool } from 'pg';
+import { blockDuringObservation } from '@/middleware/observationGuard';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -48,3 +49,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Failed to record investment commitment' });
   }
 }
+
+export default blockDuringObservation(handler);

@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
 import { investorCommitments } from '../../../../shared/schema';
 import { eq, desc } from 'drizzle-orm';
+import { blockDuringObservation } from '@/middleware/observationGuard';
 
 function verifyAdminToken(req: NextApiRequest): boolean {
   const authHeader = req.headers.authorization;
@@ -10,7 +11,7 @@ function verifyAdminToken(req: NextApiRequest): boolean {
   return token === process.env.ADMIN_SETUP_SECRET;
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     try {
       const {
@@ -180,3 +181,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   return res.status(405).json({ error: 'Method not allowed' });
 }
+
+export default blockDuringObservation(handler);
