@@ -306,6 +306,33 @@ export const GOVERNANCE_CONTRACTS = {
   GOVERNANCE_HUB: '0x52Dc85fd653a75323b5307f4D2629ab9A070530E'
 } as const;
 
+// Euler V2 AXUSD Lending Markets
+// Status: DEPLOYED & LIVE | Arbitrum One | January 29, 2026
+// Features: Vault-to-vault collateral, external LP yield, supply/borrow enabled
+export const EULER_LENDING_CONTRACTS = {
+  // AXUSD Lending Vault V3 - Main lending vault for AXUSD
+  // Users deposit AXUSD to earn yield, borrowers use vault shares as collateral
+  AXUSD_VAULT: '0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429',
+  
+  // Vault Governor - Manages LTV, caps, and vault parameters
+  VAULT_GOVERNOR: '0xE742Ee9b946043ecc75bFc71B47216C1f8248316',
+  
+  // Oracle - Decimal-corrected price oracle for AXUSD and collateral
+  PRICE_ORACLE: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15',
+  
+  // Euler Infrastructure (Arbitrum One)
+  EVK_FACTORY: '0x78Df1CF5bf06a7f27f2ACc580B934238C1b80D50',
+  EVC: '0x6302ef0F34100CDDFb5489fbcB6eE1AA95CD1066',
+  PROTOCOL_CONFIG: '0x06c1Ab0A1672E8FC7F7D10BD7B869B4116D18a2c',
+  IMPLEMENTATION: '0x832ff4011a3164ea76cea06a313ee0b6cd72ba96',
+  
+  // Accepted Collateral Vaults (existing Euler vaults on Arbitrum)
+  COLLATERAL_USDC_VAULT: '0x0a1eCC5Fe8C9be3C809844fcBe615B46A869b899',
+  COLLATERAL_USDT_VAULT: '0x37512F45B4ba8808910632323b73783Ca938CD51',
+  COLLATERAL_WETH_VAULT: '0x78E3E051D32157AACD550fBB78458762d8f7edFF',
+  COLLATERAL_ARB_VAULT: '0x7eD866D2D66c3149FaFE854C30C68a8BA7ceE8B9'
+} as const;
+
 // All contracts in a single object for easy access
 export const ALL_CONTRACTS = {
   ...CORE_CONTRACTS,
@@ -322,7 +349,8 @@ export const ALL_CONTRACTS = {
   ...AXUSD_GENIUS_CONTRACTS,
   ...REALESTATE_LENDING_CONTRACTS,
   ...LAND_ACQUISITION_CONTRACTS,
-  ...GOVERNANCE_CONTRACTS
+  ...GOVERNANCE_CONTRACTS,
+  ...EULER_LENDING_CONTRACTS
 } as const;
 
 // Deployer Address

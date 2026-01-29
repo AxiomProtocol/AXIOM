@@ -11,17 +11,17 @@
 
 ## Deployed Markets
 
-### Euler V2 Vault (LIVE - SUPPLY ENABLED)
+### Euler V2 Vault (LIVE - FULLY OPERATIONAL)
 
 | Vault | Asset | Liquidity | Address | Status |
 |-------|-------|-----------|---------|--------|
-| **AXUSD Lending Vault V3** | AXUSD | 56.5 AXUSD | [`0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429`](https://arbiscan.io/address/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429) | ✅ SUPPLY LIVE |
+| **AXUSD Lending Vault V3** | AXUSD | 56.5 AXUSD | [`0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429`](https://arbiscan.io/address/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429) | ✅ FULLY LIVE |
 
 **View on Euler:** [app.euler.finance/vault/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429?network=arbitrumone](https://app.euler.finance/vault/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429?network=arbitrumone)
 
 **Current Status:**
 - ✅ Supply/Deposit: ENABLED - LPs can deposit AXUSD to earn yield
-- ⏸️ Borrowing: PENDING - Requires Euler governance setup (see notes below)
+- ✅ Borrowing: ENABLED - Users can borrow AXUSD against vault share collateral
 
 **Vault Configuration:**
 - Oracle: `0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15` (Axiom Price Oracle V2 - decimal-corrected)
@@ -37,7 +37,18 @@
 - 1.03:1 pricing for USDY (includes yield premium)
 - Contract: [`0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15`](https://arbiscan.io/address/0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15)
 
-**Accepted Collateral (5 types configured):**
+**Accepted Collateral (9 types configured - Vault Shares + Raw Tokens):**
+
+Euler V2 uses **vault-to-vault collateral**: users deposit assets into Euler vaults, then use vault shares as collateral.
+
+| Collateral Vault | Asset | Vault Address | Borrow LTV | Liquidation LTV |
+|------------------|-------|---------------|------------|-----------------|
+| **eUSDC Vault** | USDC | `0x0a1eCC5Fe8C9be3C809844fcBe615B46A869b899` | 90% | 95% |
+| **eUSDT Vault** | USDT | `0x37512F45B4ba8808910632323b73783Ca938CD51` | 90% | 95% |
+| **eWETH Vault** | WETH | `0x78E3E051D32157AACD550fBB78458762d8f7edFF` | 80% | 85% |
+| **eARB Vault** | ARB | `0x7eD866D2D66c3149FaFE854C30C68a8BA7ceE8B9` | 70% | 75% |
+
+Legacy raw token LTVs (for direct collateral if supported):
 
 | Collateral | Address | Borrow LTV | Liquidation LTV |
 |------------|---------|------------|-----------------|
@@ -47,7 +58,7 @@
 | **WETH** | `0x82aF49447D8a07e3bd95BD0d56f35241523fBab1` | 80% | 85% |
 | **ARB** | `0x912CE59144191C1204E64559FE8253a0e49E6548` | 70% | 75% |
 
-**Status: SUPPLY ENABLED - Borrowing requires Euler team coordination**
+**Status: FULLY OPERATIONAL - Supply and Borrowing ENABLED**
 
 Caps configured:
 - Supply Cap: 1,000,000 AXUSD (encoded: 64005)
@@ -56,27 +67,19 @@ Caps configured:
 **Governor Contract:**
 - AxiomVaultGovernorV2: `0xE742Ee9b946043ecc75bFc71B47216C1f8248316`
 
-**Infrastructure Discovery:**
-Our vault was created using a specific Euler deployment on Arbitrum with:
+**Infrastructure (Arbitrum One):**
+- EVK Factory: `0x78Df1CF5bf06a7f27f2ACc580B934238C1b80D50` (105 vaults deployed)
 - EVC: `0x6302ef0F34100CDDFb5489fbcB6eE1AA95CD1066`
 - Protocol Config: `0x06c1Ab0A1672E8FC7F7D10BD7B869B4116D18a2c`
 - Implementation: `0x832ff4011a3164ea76cea06a313ee0b6cd72ba96`
 
-Note: The factory address in Euler docs (`0x29a56a1b...`) has no code on Arbitrum, suggesting there may be multiple or legacy deployments.
-
-**Borrowing Configuration - Required Steps:**
+**How Borrowing Works:**
 
 Euler V2 uses **vault-to-vault collateral**:
-1. Users deposit USDC into a USDC vault → receive vault shares
-2. Those vault shares serve as collateral
+1. Users deposit USDC into an eUSDC vault → receive vault shares
+2. Those vault shares serve as collateral for the AXUSD vault
 3. Users borrow AXUSD against their vault share position
-
-**Recommended Next Steps:**
-1. **Contact Euler Discord** (discord.euler.finance) to:
-   - Get correct factory address for our Arbitrum deployment
-   - Request assistance creating escrow vaults for collateral
-   - Join an existing cluster if applicable
-2. **Alternative:** Wait for Euler ecosystem to grow on Arbitrum with existing vaults that can be configured as collateral
+4. Interest accrues on borrowed AXUSD, paid to LPs
 
 **Technical Note - Euler AmountCap Encoding:**
 Euler V2 uses 16-bit decimal floating point for caps (see `AmountCap.sol`):
