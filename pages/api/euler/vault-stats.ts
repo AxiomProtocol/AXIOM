@@ -48,17 +48,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const provider = new ethers.JsonRpcProvider('https://arb1.arbitrum.io/rpc');
     const vault = new ethers.Contract(EULER_LENDING_CONFIG.AXUSD_VAULT, VAULT_ABI, provider);
 
+    const warnings: string[] = [];
+    
     const [totalAssets, totalBorrows, interestRate, caps, name, symbol, feeReceiver, interestFee, creator, governorAdmin] = await Promise.all([
       vault.totalAssets(),
       vault.totalBorrows(),
-      vault.interestRate().catch(() => BigInt(0)),
+      vault.interestRate().catch(() => { warnings.push('interestRate fetch failed'); return BigInt(0); }),
       vault.caps(),
       vault.name(),
       vault.symbol(),
-      vault.feeReceiver().catch(() => ethers.ZeroAddress),
-      vault.interestFee().catch(() => 0),
-      vault.creator().catch(() => ethers.ZeroAddress),
-      vault.governorAdmin().catch(() => ethers.ZeroAddress)
+      vault.feeReceiver().catch(() => { warnings.push('feeReceiver fetch failed'); return ethers.ZeroAddress; }),
+      vault.interestFee().catch(() => { warnings.push('interestFee fetch failed'); return 0; }),
+      vault.creator().catch(() => { warnings.push('creator fetch failed'); return ethers.ZeroAddress; }),
+      vault.governorAdmin().catch(() => { warnings.push('governorAdmin fetch failed'); return ethers.ZeroAddress; })
     ]);
 
     const totalAssetsNum = parseFloat(ethers.formatEther(totalAssets));
@@ -85,24 +87,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const isTreasurySet = feeReceiverAddress.toLowerCase() === EULER_LENDING_CONFIG.TREASURY_HUB.toLowerCase();
     const isFeeRecipientConfigured = feeReceiverAddress !== ethers.ZeroAddress && (isRevenueRouterSet || isTreasurySet);
     
+    const hasFeeDataWarnings = warnings.some(w => w.includes('feeReceiver') || w.includes('interestFee'));
+    
     const feeConfiguration = {
       feeReceiver: feeReceiverAddress,
       interestFeePercent: interestFeePercent.toFixed(2),
       interestFeeRaw: Number(interestFee),
       creator: creator.toString(),
       governorAdmin: governorAdmin.toString(),
+      dataQuality: hasFeeDataWarnings ? 'PARTIAL_DATA' : 'COMPLETE',
       status: {
         isFeeRecipientConfigured,
         isRevenueRouterSet,
         isTreasurySet,
         expectedRevenueRouter: EULER_LENDING_CONFIG.REVENUE_ROUTER,
         expectedTreasuryHub: EULER_LENDING_CONFIG.TREASURY_HUB,
-        feeRoutingStatus: isFeeRecipientConfigured 
-          ? (isRevenueRouterSet ? 'CONFIGURED_REVENUE_ROUTER' : 'CONFIGURED_TREASURY')
-          : (feeReceiverAddress === ethers.ZeroAddress ? 'NOT_SET' : 'UNKNOWN_RECIPIENT'),
-        actionRequired: !isFeeRecipientConfigured 
-          ? 'Governance action needed to set fee recipient to Revenue Router or Treasury'
-          : null
+        feeRoutingStatus: hasFeeDataWarnings 
+          ? 'DATA_FETCH_ERROR'
+          : (isFeeRecipientConfigured 
+              ? (isRevenueRouterSet ? 'CONFIGURED_REVENUE_ROUTER' : 'CONFIGURED_TREASURY')
+              : (feeReceiverAddress === ethers.ZeroAddress ? 'NOT_SET' : 'UNKNOWN_RECIPIENT')),
+        actionRequired: hasFeeDataWarnings
+          ? 'RPC data fetch error - fee status may be inaccurate'
+          : (!isFeeRecipientConfigured 
+              ? 'Governance action needed to set fee recipient to Revenue Router or Treasury'
+              : null)
       }
     };
 
@@ -150,6 +159,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         chainId: 42161,
         name: 'Arbitrum One'
       },
+      warnings: warnings.length > 0 ? warnings : undefined,
       timestamp: new Date().toISOString()
     });
   } catch (error) {

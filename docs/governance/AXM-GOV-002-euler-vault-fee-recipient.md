@@ -1,28 +1,41 @@
 # AXM-GOV-002: Euler Vault Fee Recipient Configuration
 
 **Document ID:** AXM-GOV-002  
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Created:** 2026-01-29  
-**Status:** PROPOSED  
-**Network:** Arbitrum One (Chain ID: 42161)
+**Updated:** 2026-01-29  
+**Status:** EXECUTED  
+**Network:** Arbitrum One (Chain ID: 42161)  
+**Execution TX:** [`0x2dba6cd2be8d3378974e51086ffb06f507f28df2381aa7265e0f90cf6f4e1a08`](https://arbiscan.io/tx/0x2dba6cd2be8d3378974e51086ffb06f507f28df2381aa7265e0f90cf6f4e1a08)
 
 ---
 
 ## Executive Summary
 
-This governance proposal configures the fee recipient for the AXUSD Lending Vault on Euler V2 to route protocol revenue to the Axiom Revenue Router. Currently, the vault has a 10% interest fee configured but the fee recipient is not set (zero address), meaning no protocol revenue is being collected.
+This governance proposal configured the fee recipient for the AXUSD Lending Vault on Euler V2 to route protocol revenue to the Axiom Revenue Router. The proposal was **successfully executed** on 2026-01-29.
 
 ---
 
-## Current State
+## Final Configuration (LIVE)
 
-| Parameter | Current Value | Status |
-|-----------|---------------|--------|
-| **Fee Receiver** | `0x0000000000000000000000000000000000000000` | ❌ Not Set |
+| Parameter | Value | Status |
+|-----------|-------|--------|
+| **Fee Receiver** | `0x39A9Ca593d350450d93aF7F24dC1A682df47F30a` | ✅ Revenue Router |
 | **Interest Fee** | 10.00% (1000 basis points) | ✅ Configured |
 | **Governor Admin** | `0xE742Ee9b946043ecc75bFc71B47216C1f8248316` | ✅ AxiomVaultGovernorV2 |
 
-**Impact:** All interest earned on the vault currently goes to liquidity providers. The protocol collects zero revenue from lending operations.
+**Impact:** The protocol now collects 10% of all borrower interest, routed through the Revenue Router to SEED holders, Treasury, and Backstop.
+
+---
+
+## Previous State (Before Execution)
+
+| Parameter | Previous Value | Status |
+|-----------|----------------|--------|
+| **Fee Receiver** | `0x0000000000000000000000000000000000000000` | ❌ Was Not Set |
+| **Interest Fee** | 10.00% (1000 basis points) | ✅ Was Configured |
+
+**Previous Impact:** All interest earned went to liquidity providers. Protocol collected zero revenue.
 
 ---
 
@@ -50,45 +63,36 @@ Set the vault's fee recipient to the AXUSDRevenueRouter contract to begin collec
 
 ---
 
-## Execution Path
+## Execution (Completed)
 
-### Option A: Direct Governor Action (Recommended)
+### Method Used: Governor executeCall
 
-If the deployer wallet (`0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`) still has governor privileges:
+The vault is governed by AxiomVaultGovernorV2 contract. Direct calls to `setFeeReceiver` on the vault will revert with access control errors. The correct method is to call through the governor's `executeCall` function.
 
-```solidity
-// Call from deployer wallet or authorized governance address
-IEVault vault = IEVault(0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429);
-vault.setFeeReceiver(0x39A9Ca593d350450d93aF7F24dC1A682df47F30a);
-```
+**Executed Transaction:** [`0x2dba6cd2be8d3378974e51086ffb06f507f28df2381aa7265e0f90cf6f4e1a08`](https://arbiscan.io/tx/0x2dba6cd2be8d3378974e51086ffb06f507f28df2381aa7265e0f90cf6f4e1a08)
 
-**Function Signature:**
-```
-setFeeReceiver(address newFeeReceiver)
-```
-
-**Calldata:**
-```
-0x62d2860200000000000000000000000039a9ca593d350450d93af7f24dc1a682df47f30a
-```
-
-### Option B: Via Vault Governor Contract
-
-If governance goes through AxiomVaultGovernorV2:
-
-1. Submit proposal to AxiomVaultGovernorV2
-2. Wait for 24h timelock period
-3. Execute proposal after timelock
+**Execution Details:**
 
 ```typescript
-// Governance proposal parameters
-const target = '0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429'; // AXUSD Vault
-const value = 0;
-const data = vault.interface.encodeFunctionData('setFeeReceiver', [
-  '0x39A9Ca593d350450d93aF7F24dC1A682df47F30a' // RevenueRouter
-]);
-const description = 'AXM-GOV-002: Set Euler Vault Fee Recipient to Revenue Router';
+// Governor contract call
+const governor = new ethers.Contract(GOVERNOR_ADDRESS, governorAbi, wallet);
+const vaultCalldata = vaultInterface.encodeFunctionData('setFeeReceiver', [REVENUE_ROUTER]);
+await governor.executeCall(VAULT_ADDRESS, vaultCalldata);
 ```
+
+**Addresses:**
+- Governor: `0xE742Ee9b946043ecc75bFc71B47216C1f8248316`
+- Vault: `0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429`
+- Revenue Router: `0x39A9Ca593d350450d93aF7F24dC1A682df47F30a`
+
+**Vault setFeeReceiver Calldata:**
+```
+0xefdcd97400000000000000000000000039a9ca593d350450d93af7f24dc1a682df47f30a
+```
+
+### Important: Direct Vault Calls Will Fail
+
+Do NOT attempt to call `setFeeReceiver` directly on the vault. The vault's `governorAdmin` is set to the AxiomVaultGovernorV2 contract, so only calls originating from that contract are authorized. Use `governor.executeCall(vault, data)` instead.
 
 ---
 
