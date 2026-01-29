@@ -6,7 +6,12 @@ The Axiom Smart City project aims to establish America's first 1,000-acre on-cha
 ## User Preferences
 - **Communication style**: Simple, everyday language explaining technical concepts.
 - **Video scripts**: Always deliver in a plain text code block format (```text```) so the copy button appears for easy one-click copying. No markdown formatting, no scene directions with brackets - just clean, copyable text with the script, caption, and hashtags.
-- **Navigation system**: ALWAYS use the RebuildNav system (`components/axiomRebuild/navConfig.ts`) for new routes. NEVER add routes to the old navigation system (`lib/navigation.js` or `components/Layout.js`). New pages must be added to `REBUILD_NAV_PAGES` in `pages/_app.js` or use the `startsWith()` pattern matching.
+- **Navigation system**: When adding new pages, add them to ALL THREE navigation files:
+  1. `components/axiomRebuild/navConfig.ts` - RebuildNav system (mobile menu)
+  2. `components/navigation/SiteNavModel.ts` - Site navigation model
+  3. `lib/navigation.js` - Desktop dropdown (ADVANCED_DROPDOWN)
+  4. Also add to `REBUILD_NAV_PAGES` in `pages/_app.js` for route matching
+- **Page structure**: New pages should match the DEX page structure - white background, no Layout wrapper, teal accent colors, fragment wrapper (`<>`), consistent container styling (`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8`).
 - **Data sources**: NEVER use hardcoded placeholder data in any new pages. Always fetch real data from blockchain (via services like `CamelotPoolService`), database (PostgreSQL/Drizzle), or external APIs. Use async data fetching patterns with proper loading states and error handling.
 
 ## System Architecture
