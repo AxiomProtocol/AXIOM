@@ -105,8 +105,6 @@ class MorphoMarketService {
   }
 
   getProposedMarkets(): ProposedMarket[] {
-    const isObservationMode = isObservationWindowActive();
-    
     return [
       {
         name: 'AXUSD/USDY',
@@ -117,8 +115,7 @@ class MorphoMarketService {
         lltv: 90,
         estimatedAPY: 8,
         description: 'Borrow AXUSD using yield-bearing USDY as collateral. Collateral continues earning 5.35% while deposited.',
-        status: isObservationMode ? 'blocked' : 'ready',
-        blockReason: isObservationMode ? 'Observation window active until 2026-03-26' : undefined
+        status: 'ready'
       },
       {
         name: 'AXUSD/USDC',
@@ -129,8 +126,7 @@ class MorphoMarketService {
         lltv: 92,
         estimatedAPY: 6,
         description: 'Standard stablecoin borrowing market. Lower risk, lower yield.',
-        status: isObservationMode ? 'blocked' : 'ready',
-        blockReason: isObservationMode ? 'Observation window active until 2026-03-26' : undefined
+        status: 'ready'
       },
       {
         name: 'AXUSD/USTBL',
@@ -141,8 +137,7 @@ class MorphoMarketService {
         lltv: 90,
         estimatedAPY: 7,
         description: 'European T-Bill backed collateral. Collateral earns 4.9% APY.',
-        status: isObservationMode ? 'blocked' : 'ready',
-        blockReason: isObservationMode ? 'Observation window active until 2026-03-26' : undefined
+        status: 'ready'
       }
     ];
   }
@@ -279,7 +274,7 @@ class MorphoMarketService {
         'Collateral token (USDY/USDC) must be available on Arbitrum',
         'Oracle must provide accurate price feeds',
         'Deployer must have ETH for gas',
-        'Observation window must be complete (after 2026-03-26)'
+        'Deployer must have initial AXUSD for seed liquidity'
       ]
     };
   }
@@ -289,21 +284,16 @@ class MorphoMarketService {
     networkSupported: boolean;
     contractsVerified: boolean;
     permissionless: boolean;
-    observationBlocked: boolean;
     readyForDeployment: boolean;
     estimatedCost: string;
-    observationWindow: { active: boolean; endDate: string; daysRemaining: number };
   } {
-    const obsStatus = getObservationStatus();
     return {
       protocol: 'Morpho',
       networkSupported: true,
       contractsVerified: true,
       permissionless: true,
-      observationBlocked: obsStatus.active,
-      readyForDeployment: !obsStatus.active,
-      estimatedCost: '$5-20 (gas only)',
-      observationWindow: obsStatus
+      readyForDeployment: true,
+      estimatedCost: '$5-20 (gas only)'
     };
   }
 }

@@ -120,8 +120,6 @@ class EulerVaultService {
   }
 
   getProposedVaults(): ProposedVault[] {
-    const isObservationMode = isObservationWindowActive();
-
     return [
       {
         name: 'AXUSD Lending Vault',
@@ -136,8 +134,7 @@ class EulerVaultService {
         estimatedAPY: 8,
         description: 'Full-featured AXUSD lending vault with multi-collateral support. Accepts USDY, USDC, and USTBL as collateral via cross-vault borrowing.',
         vaultType: 'governed',
-        status: isObservationMode ? 'blocked' : 'ready',
-        blockReason: isObservationMode ? 'Observation window active until 2026-03-26' : undefined
+        status: 'ready'
       },
       {
         name: 'AXUSD Conservative Vault',
@@ -150,8 +147,7 @@ class EulerVaultService {
         estimatedAPY: 5,
         description: 'Immutable, ungoverned vault for maximum security. USDC-only collateral with conservative parameters.',
         vaultType: 'ungoverned',
-        status: isObservationMode ? 'blocked' : 'ready',
-        blockReason: isObservationMode ? 'Observation window active until 2026-03-26' : undefined
+        status: 'ready'
       }
     ];
   }
@@ -283,7 +279,7 @@ class EulerVaultService {
         'Oracle adapters configured',
         'Axiom multisig wallet ready',
         'ETH for gas fees',
-        'Observation window complete (after 2026-03-26)'
+        'Initial AXUSD for seed liquidity'
       ],
       eulerAdvantages: [
         'Cross-vault collateral via EVC',
@@ -300,20 +296,16 @@ class EulerVaultService {
     networkSupported: boolean;
     contractsVerified: boolean;
     permissionless: boolean;
-    observationBlocked: boolean;
     readyForDeployment: boolean;
     estimatedCost: string;
     uniqueFeatures: string[];
-    observationWindow: { active: boolean; endDate: string; daysRemaining: number };
   } {
-    const obsStatus = getObservationStatus();
     return {
       protocol: 'Euler Finance',
       networkSupported: true,
       contractsVerified: true,
       permissionless: true,
-      observationBlocked: obsStatus.active,
-      readyForDeployment: !obsStatus.active,
+      readyForDeployment: true,
       estimatedCost: '$10-30 (gas only)',
       uniqueFeatures: [
         'Cross-vault collateral (EVC)',
@@ -321,8 +313,7 @@ class EulerVaultService {
         'Custom hooks (KYC, pause, limits)',
         'Batched transactions',
         'Dutch auction liquidations'
-      ],
-      observationWindow: obsStatus
+      ]
     };
   }
 
