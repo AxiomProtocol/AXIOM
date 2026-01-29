@@ -12,6 +12,7 @@ The Axiom Smart City project aims to establish America's first 1,000-acre on-cha
   3. `lib/navigation.js` - Desktop dropdown (ADVANCED_DROPDOWN)
   4. Also add to `REBUILD_NAV_PAGES` in `pages/_app.js` for route matching
 - **Page structure**: New pages should match the DEX page structure - white background, no Layout wrapper, teal accent colors, fragment wrapper (`<>`), consistent container styling (`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8`).
+- **DEPRECATED - Old page structure**: Do NOT use the old dark-themed structure with `<Layout>` wrapper, `bg-black`/`bg-gray-900` backgrounds, or yellow accent colors. This pattern is deprecated. All new pages must follow the DEX page pattern described above.
 - **Data sources**: NEVER use hardcoded placeholder data in any new pages. Always fetch real data from blockchain (via services like `CamelotPoolService`), database (PostgreSQL/Drizzle), or external APIs. Use async data fetching patterns with proper loading states and error handling.
 
 ## System Architecture
