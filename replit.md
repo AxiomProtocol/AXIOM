@@ -91,3 +91,29 @@ Key features include:
 - **Auth Provider:** Supabase
 - **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image)
 - **Property Data:** ATTOM Data, RentCast API, Walk Score API
+
+## Arbitrum 2026 Integration Plan (Phase 4)
+
+**Document:** `/docs/integrations/arbitrum-2026-integration-plan.md`
+
+### During Observation (Q1-Q2 2026)
+- **Stylus Smart Contracts:** Port compute-intensive contracts (AxiomScoreSBT, SEEDLock, Liquidator) to Rust for 30%+ gas savings
+- **RWA Infrastructure:** Apply for STEP 2.0 grant, assess BlackRock BUIDL integration for treasury backing
+- **Timeboost MEV Protection:** Enable for DEX V2 and liquidation transactions
+
+### Post-Observation (Q3 2026+)
+- **Universe Blockchain L3:** Launch Axiom's sovereign L3 on Arbitrum Orbit with custom gas tokens (AXM/AXUSD)
+- **ArbOS Dia Adoption:** Predictable gas pricing, EIP-7702 account abstraction, gasless onboarding
+- **1inch Gasless Swaps:** Enable trading without ETH, AXUSD-only ecosystem experience
+- **Institutional Protocols:** Morpho AXUSD market, Euler integration, Maple Finance DSCR syndication
+
+### Grant Opportunities
+- Stylus Sprint: 5M ARB (Active)
+- STEP 2.0 RWA: 35M ARB (Active)
+- D.A.O. Grant S3: Ongoing until March 2026
+- Audit Subsidy: $14M available
+- Alchemy-Arbitrum Fund: $10M
+
+### Key Milestones in roadmap.json Phase 4
+- 7 products: Stylus Contracts, RWA Integration, Timeboost, Universe L3, ArbOS Dia, 1inch Gasless, Institutional Protocols
+- 21 milestones spanning Q2 2026 through Q1 2027
