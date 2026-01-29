@@ -47,14 +47,26 @@
 | **WETH** | `0x82aF49447D8a07e3bd95BD0d56f35241523fBab1` | 80% | 85% |
 | **ARB** | `0x912CE59144191C1204E64559FE8253a0e49E6548` | 70% | 75% |
 
-**Borrowing Status: ENABLED**
+**Status: SUPPLY ENABLED - Borrowing requires collateral vaults**
 
-Supply and borrow caps are now configured:
+Caps configured:
 - Supply Cap: 1,000,000 AXUSD (encoded: 64005)
 - Borrow Cap: 500,000 AXUSD (encoded: 32005)
 
 **Governor Contract:**
 - AxiomVaultGovernorV2: `0xE742Ee9b946043ecc75bFc71B47216C1f8248316`
+
+**Borrowing Configuration - Next Steps:**
+
+Euler V2 uses **vault-to-vault collateral**:
+1. Users deposit USDC into a USDC vault → receive vault shares
+2. Those vault shares serve as collateral
+3. Users borrow AXUSD against their vault share position
+
+To fully enable borrowing, we need to either:
+1. **Create escrow vaults** for each collateral type (USDC, USDY, USDT, WETH, ARB)
+2. **Join existing cluster** if suitable vaults already exist on Arbitrum
+3. **Configure LTVs** pointing to vault addresses (not raw token addresses)
 
 **Technical Note - Euler AmountCap Encoding:**
 Euler V2 uses 16-bit decimal floating point for caps (see `AmountCap.sol`):
