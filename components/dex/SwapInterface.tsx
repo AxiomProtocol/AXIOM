@@ -3,10 +3,11 @@ import { useSwapQuote } from '../../lib/hooks/useDex';
 import { useWallet } from '../../lib/web3/useWallet';
 
 const TOKENS = [
-  { symbol: 'AXM', address: '0x53e79F3a8e60eB0a6bE88B60f3c95Bc7b22C5A54', decimals: 18, logo: '/axm-token.png' },
+  { symbol: 'ETH', address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', decimals: 18, logo: '/eth.png', isNative: true },
   { symbol: 'WETH', address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', decimals: 18, logo: '/weth.png' },
   { symbol: 'USDC', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', decimals: 6, logo: '/usdc.png' },
-  { symbol: 'AXUSD', address: '0x0000000000000000000000000000000000000000', decimals: 18, logo: '/axusd.png' }
+  { symbol: 'AXUSD', address: '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c', decimals: 18, logo: '/axusd.png' },
+  { symbol: 'AXM', address: '0x0C00fA01729A8FFa7C0F31bC5e95195ed58ce946', decimals: 18, logo: '/axm-token.png' }
 ];
 
 export default function SwapInterface() {
