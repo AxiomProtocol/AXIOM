@@ -115,14 +115,19 @@ Key features include:
 
 **Deployer:** `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`
 
-**Morpho Markets (3 DEPLOYED):**
-- AXUSD/USDY: 90% LLTV, ~8% APY - Market ID: `0xe0bd68...873ac`
-- AXUSD/USDC: 92% LLTV, ~6% APY - Market ID: `0x9be349...cc364`
-- AXUSD/USTBL: 90% LLTV, ~7% APY - Market ID: `0x77c76d...02715`
+**Euler V2 Vault (LIVE on Arbitrum):**
+- AXUSD Lending Vault: `0xFc7145A213833222Eb0e616fDcb95D1746a8c40C`
+- Initial Liquidity: 56.5 AXUSD
+- IRM: `0xd726F97adA1dD330D3C5e479A79c47Dc63dCA770` (Adaptive Curve)
+- Unit of Account: USDC
+- View: https://app.euler.finance/vault/0xFc7145A213833222Eb0e616fDcb95D1746a8c40C?network=arbitrumone
 
-**Euler Vaults (2 ready):**
-- AXUSD Lending Vault: Multi-collateral (USDY, USDC, USTBL), governed, ~8% APY
-- AXUSD Conservative Vault: USDC-only, ungoverned/immutable, ~5% APY
+**Morpho Markets (Pending - Morpho Blue not on Arbitrum):**
+- AXUSD/USDY: 90% LLTV - Market ID: `0xe0bd68...873ac`
+- AXUSD/USDC: 92% LLTV - Market ID: `0x9be349...cc364`
+- AXUSD/USTBL: 90% LLTV - Market ID: `0x77c76d...02715`
+
+**Key Discovery:** Morpho Blue core contract is NOT deployed on Arbitrum One (only infrastructure contracts). Euler V2 is fully operational.
 
 **API Endpoints:**
 - `/api/lending/overview` - Full status of all markets

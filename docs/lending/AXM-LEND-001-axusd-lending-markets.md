@@ -11,11 +11,29 @@
 
 ## Deployed Markets
 
-| Market | Collateral | LLTV | Market ID | TX |
-|--------|------------|------|-----------|-----|
-| AXUSD/USDY | USDY | 90% | `0xe0bd68a4ce092798347c7fe73b9b05576e50adae34ef8a0bdc67f4eb01b873ac` | [View](https://arbiscan.io/tx/0x751b73ebd0239f421b69f683bb9bd0a1c3f109e54ed3781ae51db744be78077e) |
-| AXUSD/USDC | USDC | 92% | `0x9be349db1d04f1b5e4324185188bbd0bde1da0115215451f49a4289e25ecc364` | [View](https://arbiscan.io/tx/0x734cbb50c5de2b1ab0017fb5d7640a33a66dbec29d188f4a0881ccb726defda0) |
-| AXUSD/USTBL | USTBL | 90% | `0x77c76d2851621381ecd4b7c56bda949387c8286ac4dfbd593fc1452f15802715` | [View](https://arbiscan.io/tx/0xc9eed2f8e62ac2f3c41136d439d42d14232825f1b4ff0101eca11a921afa5b0b) |
+### Euler V2 Vault (LIVE)
+
+| Vault | Asset | Initial Liquidity | Address | Status |
+|-------|-------|-------------------|---------|--------|
+| **AXUSD Lending Vault** | AXUSD | 56.5 AXUSD | [`0xFc7145A213833222Eb0e616fDcb95D1746a8c40C`](https://arbiscan.io/address/0xFc7145A213833222Eb0e616fDcb95D1746a8c40C) | ✅ LIVE |
+
+**View on Euler:** [app.euler.finance/vault/0xFc7145A213833222Eb0e616fDcb95D1746a8c40C?network=arbitrumone](https://app.euler.finance/vault/0xFc7145A213833222Eb0e616fDcb95D1746a8c40C?network=arbitrumone)
+
+**Vault Configuration:**
+- IRM: `0xd726F97adA1dD330D3C5e479A79c47Dc63dCA770` (Adaptive Curve)
+- Unit of Account: USDC
+- Governor: `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`
+- Creation TX: [`0x72aafbfaec5903a7a15d1bc15b3f4edf12d39ee1df04200733ce32134f704e99`](https://arbiscan.io/tx/0x72aafbfaec5903a7a15d1bc15b3f4edf12d39ee1df04200733ce32134f704e99)
+
+### Note on Morpho Markets
+
+Morpho Blue core contract is **NOT deployed on Arbitrum One** (only infrastructure contracts exist). The markets listed below were created on Morpho infrastructure but require Morpho Blue mainnet deployment:
+
+| Market | Collateral | LLTV | Market ID | Status |
+|--------|------------|------|-----------|--------|
+| AXUSD/USDY | USDY | 90% | `0xe0bd68...873ac` | ⏸️ Pending Morpho L2 |
+| AXUSD/USDC | USDC | 92% | `0x9be349...cc364` | ⏸️ Pending Morpho L2 |
+| AXUSD/USTBL | USTBL | 90% | `0x77c76d...02715` | ⏸️ Pending Morpho L2 |
 
 **Deployer:** `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`
 
@@ -54,12 +72,15 @@ This document specifies the deployment of AXUSD lending markets on Morpho and Eu
 | **USTBL** | `0x3096e7bfd0878cc65be71f8899bc4cfb57187ba3` | 4.9% | Spiko |
 | **USDC** | `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` | 0% | Circle |
 
-### Protocol Contracts
+### Protocol Contracts (Arbitrum One)
 
-| Protocol | Contract | Address | Network |
-|----------|----------|---------|---------|
-| **Morpho** | Morpho Core | `0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb` | Arbitrum One |
-| **Euler** | EVK Factory | `0x29a56a1b8214D9Cf7c5561811750D5cBDb45CC8e` | Arbitrum One |
+| Protocol | Contract | Address | Status |
+|----------|----------|---------|--------|
+| **Euler V2** | EVK Factory | `0x78Df1CF5bf06a7f27f2ACc580B934238C1b80D50` | ✅ Deployed |
+| **Euler V2** | EVC | `0x6302ef0F34100CDDFb5489fbcB6eE1AA95CD1066` | ✅ Deployed |
+| **Euler V2** | Protocol Config | `0x06c1Ab0A1672E8FC7F7D10BD7B869B4116D18a2c` | ✅ Deployed |
+| **Morpho** | Morpho Blue | `0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb` | ❌ Not on Arbitrum |
+| **Morpho** | Public Allocator | `0x769583af5e9d03589f159ebec31cc2c23e8c355e` | ✅ Infrastructure only |
 
 ---
 
