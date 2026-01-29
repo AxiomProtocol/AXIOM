@@ -124,7 +124,9 @@ Key features include:
 - Accepted Collateral: USDC (90%), USDY (85%), USDT (90%), WETH (80%), ARB (70%)
 - View: https://app.euler.finance/vault/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429?network=arbitrumone
 - Governor Contract: `0xE742Ee9b946043ecc75bFc71B47216C1f8248316` (AxiomVaultGovernorV2)
-- Status: Supply enabled, borrowing requires Euler governance setup for caps
+- Supply Cap: 1,000,000 AXUSD (encoded: 64005)
+- Borrow Cap: 500,000 AXUSD (encoded: 32005)
+- Status: FULLY OPERATIONAL - Supply and borrowing enabled
 - Deprecated V2 (oracle decimal issue): `0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13`
 - Deprecated V1 (no oracle): `0xFc7145A213833222Eb0e616fDcb95D1746a8c40C`
 

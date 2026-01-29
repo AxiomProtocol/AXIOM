@@ -47,19 +47,23 @@
 | **WETH** | `0x82aF49447D8a07e3bd95BD0d56f35241523fBab1` | 80% | 85% |
 | **ARB** | `0x912CE59144191C1204E64559FE8253a0e49E6548` | 70% | 75% |
 
-**Note on Borrowing:**
-Euler V2 EVK vaults require specific governance setup to enable borrowing (setCaps). Multiple approaches were attempted:
-1. Direct governor calls (E_NotAuthorized)
-2. EVC-authenticated calls (E_NoLiability/EVC_NotAuthorized)
-3. Custom governor contracts with EVC integration (still failing)
+**Borrowing Status: ENABLED**
 
-**Deployed Governor Contracts:**
-- AxiomVaultGovernorV2: `0xE742Ee9b946043ecc75bFc71B47216C1f8248316` (current vault governor)
+Supply and borrow caps are now configured:
+- Supply Cap: 1,000,000 AXUSD (encoded: 64005)
+- Borrow Cap: 500,000 AXUSD (encoded: 32005)
 
-**Recommended Next Steps:**
-1. **Contact Euler Discord** (discord.euler.finance) - Ask about cap configuration for new vaults
-2. **Submit via Euler Governance** - May need to go through official Euler DAO process
-3. **Use Euler's euler-vault-scripts** - Follow official deployment patterns at github.com/euler-xyz/euler-vault-scripts
+**Governor Contract:**
+- AxiomVaultGovernorV2: `0xE742Ee9b946043ecc75bFc71B47216C1f8248316`
+
+**Technical Note - Euler AmountCap Encoding:**
+Euler V2 uses 16-bit decimal floating point for caps (see `AmountCap.sol`):
+- Bits 0-5: exponent (0-63)
+- Bits 6-15: mantissa (0-1023), scaled by 100
+- Value = 10^exponent * mantissa / 100
+- Raw 0 = unlimited (no cap)
+
+Example encoding: 1,000,000 = mantissa 1000, exp 5 = (1000 << 6) | 5 = 64005
 
 **Previous Vault Iterations (Deprecated):**
 - V2 (`0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13`): Oracle decimal issue
