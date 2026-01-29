@@ -48,10 +48,18 @@
 | **ARB** | `0x912CE59144191C1204E64559FE8253a0e49E6548` | 70% | 75% |
 
 **Note on Borrowing:**
-Euler V2 EVK vaults require specific governance setup to enable borrowing (setCaps). The vault governor is set, but the caps configuration requires additional steps through Euler's governance framework. Options:
-1. Use Euler's CapRiskSteward or GovernorAccessControl patterns
-2. Contact Euler team via Discord for guidance on cap configuration
-3. Deploy with a governor contract instead of EOA
+Euler V2 EVK vaults require specific governance setup to enable borrowing (setCaps). Multiple approaches were attempted:
+1. Direct governor calls (E_NotAuthorized)
+2. EVC-authenticated calls (E_NoLiability/EVC_NotAuthorized)
+3. Custom governor contracts with EVC integration (still failing)
+
+**Deployed Governor Contracts:**
+- AxiomVaultGovernorV2: `0xE742Ee9b946043ecc75bFc71B47216C1f8248316` (current vault governor)
+
+**Recommended Next Steps:**
+1. **Contact Euler Discord** (discord.euler.finance) - Ask about cap configuration for new vaults
+2. **Submit via Euler Governance** - May need to go through official Euler DAO process
+3. **Use Euler's euler-vault-scripts** - Follow official deployment patterns at github.com/euler-xyz/euler-vault-scripts
 
 **Previous Vault Iterations (Deprecated):**
 - V2 (`0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13`): Oracle decimal issue
