@@ -11,26 +11,31 @@
 
 ## Deployed Markets
 
-### Euler V2 Vault (LIVE)
+### Euler V2 Vault (LIVE - SUPPLY ENABLED)
 
 | Vault | Asset | Liquidity | Address | Status |
 |-------|-------|-----------|---------|--------|
-| **AXUSD Lending Vault V2** | AXUSD | 56.5 AXUSD | [`0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13`](https://arbiscan.io/address/0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13) | ✅ LIVE |
+| **AXUSD Lending Vault V3** | AXUSD | 56.5 AXUSD | [`0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429`](https://arbiscan.io/address/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429) | ✅ SUPPLY LIVE |
 
-**View on Euler:** [app.euler.finance/vault/0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13?network=arbitrumone](https://app.euler.finance/vault/0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13?network=arbitrumone)
+**View on Euler:** [app.euler.finance/vault/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429?network=arbitrumone](https://app.euler.finance/vault/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429?network=arbitrumone)
+
+**Current Status:**
+- ✅ Supply/Deposit: ENABLED - LPs can deposit AXUSD to earn yield
+- ⏸️ Borrowing: PENDING - Requires Euler governance setup (see notes below)
 
 **Vault Configuration:**
-- Oracle: `0xc0E91760D699aA9673aFc8350a67d8ba6c9843db` (Axiom Price Oracle - Chainlink-based)
+- Oracle: `0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15` (Axiom Price Oracle V2 - decimal-corrected)
 - IRM: `0xd726F97adA1dD330D3C5e479A79c47Dc63dCA770` (Adaptive Curve)
 - Unit of Account: USDC
 - Governor: `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`
-- Creation TX: [`0xa222f25361b33e77c446bd3fb9e4d5ea5596c41c5731be56acb7a385a0276999`](https://arbiscan.io/tx/0xa222f25361b33e77c446bd3fb9e4d5ea5596c41c5731be56acb7a385a0276999)
+- Creation TX: [`0x3f794eba26b2125989fb4cd1a6cb0ad018a019bab5d44f7778da3c53aba9e81f`](https://arbiscan.io/tx/0x3f794eba26b2125989fb4cd1a6cb0ad018a019bab5d44f7778da3c53aba9e81f)
 
-**Axiom Price Oracle Features:**
+**Axiom Price Oracle V2 Features:**
 - Uses Chainlink feeds for WETH/USD and ARB/USD pricing
+- Correct decimal handling (USDC 6 decimals, AXUSD 18 decimals)
 - 1:1 pricing for stablecoins (USDC, USDT, AXUSD)
 - 1.03:1 pricing for USDY (includes yield premium)
-- Contract: [`0xc0E91760D699aA9673aFc8350a67d8ba6c9843db`](https://arbiscan.io/address/0xc0E91760D699aA9673aFc8350a67d8ba6c9843db)
+- Contract: [`0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15`](https://arbiscan.io/address/0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15)
 
 **Accepted Collateral (5 types configured):**
 
@@ -42,8 +47,15 @@
 | **WETH** | `0x82aF49447D8a07e3bd95BD0d56f35241523fBab1` | 80% | 85% |
 | **ARB** | `0x912CE59144191C1204E64559FE8253a0e49E6548` | 70% | 75% |
 
-**Deprecated Vault (V1 - No Oracle):**
-The original vault at `0xFc7145A213833222Eb0e616fDcb95D1746a8c40C` was created without an oracle and has been deprecated. All liquidity has been migrated to V2.
+**Note on Borrowing:**
+Euler V2 EVK vaults require specific governance setup to enable borrowing (setCaps). The vault governor is set, but the caps configuration requires additional steps through Euler's governance framework. Options:
+1. Use Euler's CapRiskSteward or GovernorAccessControl patterns
+2. Contact Euler team via Discord for guidance on cap configuration
+3. Deploy with a governor contract instead of EOA
+
+**Previous Vault Iterations (Deprecated):**
+- V2 (`0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13`): Oracle decimal issue
+- V1 (`0xFc7145A213833222Eb0e616fDcb95D1746a8c40C`): No oracle set
 
 ### Note on Morpho Markets
 

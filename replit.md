@@ -116,13 +116,15 @@ Key features include:
 **Deployer:** `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`
 
 **Euler V2 Vault (LIVE on Arbitrum):**
-- AXUSD Lending Vault V2: `0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13`
-- Axiom Price Oracle: `0xc0E91760D699aA9673aFc8350a67d8ba6c9843db` (Chainlink-based)
+- AXUSD Lending Vault V3: `0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429`
+- Axiom Price Oracle V2: `0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15` (Chainlink-based, decimal-corrected)
 - Initial Liquidity: 56.5 AXUSD
 - IRM: `0xd726F97adA1dD330D3C5e479A79c47Dc63dCA770` (Adaptive Curve)
 - Unit of Account: USDC
 - Accepted Collateral: USDC (90%), USDY (85%), USDT (90%), WETH (80%), ARB (70%)
-- View: https://app.euler.finance/vault/0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13?network=arbitrumone
+- View: https://app.euler.finance/vault/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429?network=arbitrumone
+- Status: Supply enabled, borrowing requires Euler governance setup for caps
+- Deprecated V2 (oracle decimal issue): `0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13`
 - Deprecated V1 (no oracle): `0xFc7145A213833222Eb0e616fDcb95D1746a8c40C`
 
 **Morpho Markets (Pending - Morpho Blue not on Arbitrum):**
