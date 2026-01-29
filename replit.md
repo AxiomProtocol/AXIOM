@@ -62,7 +62,7 @@ Key features include:
 - **Phase 3 Products - Turn Axiom Into a Financial State** (AXUSD Credit Lines, Insurance Pools, Axiom Treasury Notes, all with Web3 wallet integration and live API data)
 - **DEX V2 Ecosystem** (10 mainnet contracts on Arbitrum One)
 - **Institutional Observer Dashboard** (Read-only transparency dashboard for allocators and auditors at `/observer`)
-- **Euler V2 AXUSD Lending Markets** (External DeFi lending integration on Arbitrum One at vault 0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429 with USDC/USDT/WETH/ARB collateral support, integrated via /earn page, DEX Earn tab, yield-vault page, and dashboard widget)
+- **Euler V2 AXUSD Lending Markets** (External DeFi lending integration on Arbitrum One at vault 0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429 with USDC/USDT/WETH/ARB collateral support, integrated via /earn page, /borrow page, DEX Earn tab, yield-vault page, and dashboard widget)
 - **Deployment Configuration**: Uses VM for complex builds, `npm run build:deploy:clean` for build command, and `npm run start:minimal` for run command.
 
 ## External Dependencies

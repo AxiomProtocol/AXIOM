@@ -58,7 +58,8 @@ const REBUILD_NAV_PAGES = [
   '/treasury-ops',
   '/observer',
   '/earn',
-  '/yield-vault'
+  '/yield-vault',
+  '/borrow'
 ]
 
 function matchesRebuildNavPages(pathname) {
