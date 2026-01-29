@@ -6,6 +6,8 @@ const EULER_LENDING_CONFIG = {
   VAULT_GOVERNOR: '0xE742Ee9b946043ecc75bFc71B47216C1f8248316',
   PRICE_ORACLE: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15',
   AXUSD_TOKEN: '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c',
+  REVENUE_ROUTER: '0x39A9Ca593d350450d93aF7F24dC1A682df47F30a',
+  TREASURY_HUB: '0x3fD63728288546AC41dAe3bf25ca383061c3A929',
   COLLATERAL_VAULTS: {
     USDC: { address: '0x0a1eCC5Fe8C9be3C809844fcBe615B46A869b899', borrowLTV: 90, liqLTV: 95 },
     USDT: { address: '0x37512F45B4ba8808910632323b73783Ca938CD51', borrowLTV: 90, liqLTV: 95 },
@@ -23,7 +25,11 @@ const VAULT_ABI = [
   'function name() view returns (string)',
   'function symbol() view returns (string)',
   'function convertToAssets(uint256 shares) view returns (uint256)',
-  'function balanceOf(address account) view returns (uint256)'
+  'function balanceOf(address account) view returns (uint256)',
+  'function feeReceiver() view returns (address)',
+  'function interestFee() view returns (uint16)',
+  'function creator() view returns (address)',
+  'function governorAdmin() view returns (address)'
 ];
 
 function decodeAmountCap(encoded: number): number {
@@ -42,13 +48,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const provider = new ethers.JsonRpcProvider('https://arb1.arbitrum.io/rpc');
     const vault = new ethers.Contract(EULER_LENDING_CONFIG.AXUSD_VAULT, VAULT_ABI, provider);
 
-    const [totalAssets, totalBorrows, interestRate, caps, name, symbol] = await Promise.all([
+    const [totalAssets, totalBorrows, interestRate, caps, name, symbol, feeReceiver, interestFee, creator, governorAdmin] = await Promise.all([
       vault.totalAssets(),
       vault.totalBorrows(),
       vault.interestRate().catch(() => BigInt(0)),
       vault.caps(),
       vault.name(),
-      vault.symbol()
+      vault.symbol(),
+      vault.feeReceiver().catch(() => ethers.ZeroAddress),
+      vault.interestFee().catch(() => 0),
+      vault.creator().catch(() => ethers.ZeroAddress),
+      vault.governorAdmin().catch(() => ethers.ZeroAddress)
     ]);
 
     const totalAssetsNum = parseFloat(ethers.formatEther(totalAssets));
@@ -68,6 +78,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       borrowLTV: config.borrowLTV,
       liquidationLTV: config.liqLTV
     }));
+
+    const interestFeePercent = Number(interestFee) / 100;
+    const feeReceiverAddress = feeReceiver.toString();
+    const isRevenueRouterSet = feeReceiverAddress.toLowerCase() === EULER_LENDING_CONFIG.REVENUE_ROUTER.toLowerCase();
+    const isTreasurySet = feeReceiverAddress.toLowerCase() === EULER_LENDING_CONFIG.TREASURY_HUB.toLowerCase();
+    const isFeeRecipientConfigured = feeReceiverAddress !== ethers.ZeroAddress && (isRevenueRouterSet || isTreasurySet);
+    
+    const feeConfiguration = {
+      feeReceiver: feeReceiverAddress,
+      interestFeePercent: interestFeePercent.toFixed(2),
+      interestFeeRaw: Number(interestFee),
+      creator: creator.toString(),
+      governorAdmin: governorAdmin.toString(),
+      status: {
+        isFeeRecipientConfigured,
+        isRevenueRouterSet,
+        isTreasurySet,
+        expectedRevenueRouter: EULER_LENDING_CONFIG.REVENUE_ROUTER,
+        expectedTreasuryHub: EULER_LENDING_CONFIG.TREASURY_HUB,
+        feeRoutingStatus: isFeeRecipientConfigured 
+          ? (isRevenueRouterSet ? 'CONFIGURED_REVENUE_ROUTER' : 'CONFIGURED_TREASURY')
+          : (feeReceiverAddress === ethers.ZeroAddress ? 'NOT_SET' : 'UNKNOWN_RECIPIENT'),
+        actionRequired: !isFeeRecipientConfigured 
+          ? 'Governance action needed to set fee recipient to Revenue Router or Treasury'
+          : null
+      }
+    };
 
     const userAddress = req.query.address as string | undefined;
     let userPosition = null;
@@ -107,6 +144,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         oracle: EULER_LENDING_CONFIG.PRICE_ORACLE,
         eulerLink: `https://app.euler.finance/vault/${EULER_LENDING_CONFIG.AXUSD_VAULT}?network=arbitrumone`
       },
+      feeConfiguration,
       userPosition,
       network: {
         chainId: 42161,
