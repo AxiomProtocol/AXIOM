@@ -1,6 +1,5 @@
 import Head from 'next/head';
 import { useState } from 'react';
-import Layout from '../components/Layout';
 import EulerVaultCard from '../components/EulerVaultCard';
 
 interface YieldOpportunity {
@@ -98,10 +97,10 @@ export default function EarnPage() {
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
-      case 'low': return 'text-green-400 bg-green-500/20';
-      case 'medium': return 'text-yellow-400 bg-yellow-500/20';
-      case 'high': return 'text-red-400 bg-red-500/20';
-      default: return 'text-gray-400 bg-gray-500/20';
+      case 'low': return 'text-green-600 bg-green-50 border-green-200';
+      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'high': return 'text-red-600 bg-red-50 border-red-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
@@ -116,27 +115,24 @@ export default function EarnPage() {
   };
 
   return (
-    <Layout>
+    <>
       <Head>
         <title>Earn Yield | Axiom Protocol</title>
         <meta name="description" content="Earn yield on your AXUSD and AXM tokens through lending, staking, and savings programs." />
       </Head>
 
-      <div className="min-h-screen bg-black py-8 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10">
-            <h1 className="text-4xl font-bold text-white mb-4">
-              Earn Yield
-            </h1>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Put your AXUSD and AXM to work. Choose from lending markets, staking pools, 
-              and savings programs to earn competitive yields.
+      <div className="min-h-screen bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Earn Yield</h1>
+            <p className="text-gray-600 mt-1">
+              Put your AXUSD and AXM to work with lending, staking, and savings programs
             </p>
           </div>
 
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-              <span className="text-yellow-400">⭐</span> Featured: AXUSD Lending on Euler
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span className="text-yellow-500">⭐</span> Featured: AXUSD Lending on Euler
             </h2>
             <EulerVaultCard variant="full" showCollateral={true} />
           </div>
@@ -146,10 +142,10 @@ export default function EarnPage() {
               <button
                 key={type.id}
                 onClick={() => setSelectedType(type.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
                   selectedType === type.id
-                    ? 'bg-yellow-500 text-black'
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                    ? 'bg-teal-50 text-teal-700 border-teal-200'
+                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                 }`}
               >
                 <span className="mr-1">{type.icon}</span>
@@ -162,35 +158,35 @@ export default function EarnPage() {
             {filteredOpportunities.filter(o => !o.featured).map((opportunity) => (
               <div 
                 key={opportunity.id}
-                className="bg-gray-900 rounded-xl p-5 border border-gray-800 hover:border-yellow-500/30 transition-colors"
+                className="bg-white rounded-xl p-5 border border-gray-200 hover:border-teal-300 hover:shadow-md transition-all"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{getTypeIcon(opportunity.type)}</span>
                     <div>
-                      <h3 className="text-white font-semibold">{opportunity.name}</h3>
+                      <h3 className="text-gray-900 font-semibold">{opportunity.name}</h3>
                       <p className="text-gray-500 text-sm">{opportunity.protocol}</p>
                     </div>
                   </div>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getRiskColor(opportunity.risk)}`}>
+                  <span className={`px-2 py-1 rounded text-xs font-medium border ${getRiskColor(opportunity.risk)}`}>
                     {opportunity.risk}
                   </span>
                 </div>
 
-                <p className="text-gray-400 text-sm mb-4">{opportunity.description}</p>
+                <p className="text-gray-600 text-sm mb-4">{opportunity.description}</p>
 
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-gray-500 text-xs">APY</p>
-                    <p className="text-green-400 font-bold">{opportunity.apy}</p>
+                    <p className="text-green-600 font-bold">{opportunity.apy}</p>
                   </div>
                   <div>
                     <p className="text-gray-500 text-xs">Asset</p>
-                    <p className="text-white font-medium">{opportunity.asset}</p>
+                    <p className="text-gray-900 font-medium">{opportunity.asset}</p>
                   </div>
                   <div>
                     <p className="text-gray-500 text-xs">TVL</p>
-                    <p className="text-white font-medium">{opportunity.tvl}</p>
+                    <p className="text-gray-900 font-medium">{opportunity.tvl}</p>
                   </div>
                 </div>
 
@@ -198,7 +194,7 @@ export default function EarnPage() {
                   href={opportunity.link}
                   target={opportunity.link.startsWith('http') ? '_blank' : undefined}
                   rel={opportunity.link.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  className="block w-full py-2 bg-gray-800 hover:bg-gray-700 text-white text-center rounded-lg font-medium transition-colors"
+                  className="block w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 text-center rounded-lg font-medium transition-colors"
                 >
                   {opportunity.link.startsWith('http') ? 'Open App' : 'View Details'}
                 </a>
@@ -206,17 +202,17 @@ export default function EarnPage() {
             ))}
           </div>
 
-          <div className="mt-12 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 rounded-2xl p-6 border border-yellow-500/20">
+          <div className="mt-12 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-2xl p-6 border border-teal-100">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
-                <h3 className="text-white text-xl font-bold mb-2">New to DeFi Yield?</h3>
-                <p className="text-gray-400">
+                <h3 className="text-gray-900 text-xl font-bold mb-2">New to DeFi Yield?</h3>
+                <p className="text-gray-600">
                   Learn how to earn yield safely with our beginner guides and risk management tips.
                 </p>
               </div>
               <a 
                 href="/learn"
-                className="px-6 py-3 bg-yellow-500 hover:bg-yellow-400 text-black rounded-xl font-semibold transition-colors whitespace-nowrap"
+                className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-semibold transition-colors whitespace-nowrap"
               >
                 Learn More
               </a>
@@ -229,6 +225,6 @@ export default function EarnPage() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }
