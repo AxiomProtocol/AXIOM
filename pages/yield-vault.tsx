@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Layout from '../components/Layout';
 import { useWallet } from '../components/WalletConnect/WalletContext';
+import EulerVaultCard from '../components/EulerVaultCard';
 
 interface VaultInfo {
   totalDeposited: string;
@@ -350,6 +351,16 @@ export default function YieldVaultPage() {
                   </ul>
                 </div>
               </div>
+            </div>
+
+            <div className="mt-12">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">External DeFi Yields</h2>
+                <a href="/earn" className="text-yellow-400 hover:text-yellow-300 text-sm font-medium">
+                  View All →
+                </a>
+              </div>
+              <EulerVaultCard variant="compact" showCollateral={false} />
             </div>
           </div>
         </div>

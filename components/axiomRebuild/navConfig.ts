@@ -99,6 +99,7 @@ export const navItems: NavItem[] = [
       { label: "Treasury", href: "/bank" },
       { label: "Treasury Operations", href: "/treasury-ops" },
       { label: "DEX Exchange", href: "/dex" },
+      { label: "Earn Yield", href: "/earn" },
       { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "The Wealth Practice", href: "/wealth-practice" },
       { label: "Land Crowdfunding", href: "/land-acquisition/portfolio" },
