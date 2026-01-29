@@ -120,6 +120,7 @@ Key features include:
 - Initial Liquidity: 56.5 AXUSD
 - IRM: `0xd726F97adA1dD330D3C5e479A79c47Dc63dCA770` (Adaptive Curve)
 - Unit of Account: USDC
+- Accepted Collateral: USDC (90%), USDY (85%), USDT (90%), WETH (80%), ARB (70%)
 - View: https://app.euler.finance/vault/0xFc7145A213833222Eb0e616fDcb95D1746a8c40C?network=arbitrumone
 
 **Morpho Markets (Pending - Morpho Blue not on Arbitrum):**

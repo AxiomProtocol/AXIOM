@@ -25,6 +25,16 @@
 - Governor: `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`
 - Creation TX: [`0x72aafbfaec5903a7a15d1bc15b3f4edf12d39ee1df04200733ce32134f704e99`](https://arbiscan.io/tx/0x72aafbfaec5903a7a15d1bc15b3f4edf12d39ee1df04200733ce32134f704e99)
 
+**Accepted Collateral (5 types configured):**
+
+| Collateral | Address | Borrow LTV | Liquidation LTV |
+|------------|---------|------------|-----------------|
+| **USDC** | `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` | 90% | 95% |
+| **USDY** | `0x35e050d3C0eC2d29D269a8EcEa763a183bDF9A9D` | 85% | 90% |
+| **USDT** | `0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9` | 90% | 95% |
+| **WETH** | `0x82aF49447D8a07e3bd95BD0d56f35241523fBab1` | 80% | 85% |
+| **ARB** | `0x912CE59144191C1204E64559FE8253a0e49E6548` | 70% | 75% |
+
 ### Note on Morpho Markets
 
 Morpho Blue core contract is **NOT deployed on Arbitrum One** (only infrastructure contracts exist). The markets listed below were created on Morpho infrastructure but require Morpho Blue mainnet deployment:
