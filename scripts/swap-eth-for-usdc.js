@@ -22,14 +22,14 @@ async function main() {
   console.log('ETH -> USDC Swap via Camelot');
   console.log('='.repeat(60));
   
-  if (!process.env.DEPLOYER_PRIVATE_KEY) {
-    console.log('\nERROR: DEPLOYER_PRIVATE_KEY not set in environment');
-    console.log('Please set it in Replit Secrets or .env file');
+  const pk = process.env.DEPLOYER_PK || process.env.PRIVATE_KEY;
+  if (!pk) {
+    console.log('\nERROR: DEPLOYER_PK or PRIVATE_KEY not set in environment');
     process.exit(1);
   }
   
   const provider = new ethers.JsonRpcProvider(process.env.ARBITRUM_RPC_URL || 'https://arb1.arbitrum.io/rpc');
-  const wallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY, provider);
+  const wallet = new ethers.Wallet(pk, provider);
   
   console.log('\nWallet:', wallet.address);
   

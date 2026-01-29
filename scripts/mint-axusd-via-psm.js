@@ -6,7 +6,7 @@ const USDC = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
 const AXUSD = '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c';
 
 const PSM_ABI = [
-  'function swapCollateralForAXUSD(uint256 collateralAmount) external returns (uint256)',
+  'function swapCollateralForAXUSDWithMin(uint256 collateralAmount, uint256 minAxusdOut) public returns (uint256)',
   'function getSwapQuote(uint256 amountIn, bool axusdToCollateral) view returns (uint256 amountOut, uint256 fee)',
   'function mintFee() view returns (uint256)',
   'function debtCeiling() view returns (uint256)',
@@ -27,13 +27,14 @@ async function main() {
   console.log('USDC -> AXUSD Mint via PSM');
   console.log('='.repeat(60));
   
-  if (!process.env.DEPLOYER_PRIVATE_KEY) {
-    console.log('\nERROR: DEPLOYER_PRIVATE_KEY not set');
+  const pk = process.env.DEPLOYER_PK || process.env.PRIVATE_KEY;
+  if (!pk) {
+    console.log('\nERROR: DEPLOYER_PK or PRIVATE_KEY not set');
     process.exit(1);
   }
   
   const provider = new ethers.JsonRpcProvider(process.env.ARBITRUM_RPC_URL || 'https://arb1.arbitrum.io/rpc');
-  const wallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY, provider);
+  const wallet = new ethers.Wallet(pk, provider);
   
   console.log('\nWallet:', wallet.address);
   
@@ -85,7 +86,8 @@ async function main() {
   }
   
   console.log('\n--- Minting AXUSD ---');
-  const mintTx = await psm.swapCollateralForAXUSD(amountToMint);
+  const minOut = quote.amountOut * 95n / 100n;
+  const mintTx = await psm.swapCollateralForAXUSDWithMin(amountToMint, minOut);
   console.log('TX Hash:', mintTx.hash);
   console.log('Waiting for confirmation...');
   
