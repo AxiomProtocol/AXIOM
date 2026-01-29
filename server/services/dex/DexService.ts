@@ -540,4 +540,6 @@ class DexService {
 }
 
 export const dexService = new DexService();
+
+export { timeboostService } from './TimeboostService';
 export default dexService;
