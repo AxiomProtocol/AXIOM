@@ -27,7 +27,7 @@
 - Oracle: `0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15` (Axiom Price Oracle V2 - decimal-corrected)
 - IRM: `0xd726F97adA1dD330D3C5e479A79c47Dc63dCA770` (Adaptive Curve)
 - Unit of Account: USDC
-- Governor: `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`
+- Vault Governor: `0xE742Ee9b946043ecc75bFc71B47216C1f8248316` (AxiomVaultGovernorV2)
 - Creation TX: [`0x3f794eba26b2125989fb4cd1a6cb0ad018a019bab5d44f7778da3c53aba9e81f`](https://arbiscan.io/tx/0x3f794eba26b2125989fb4cd1a6cb0ad018a019bab5d44f7778da3c53aba9e81f)
 
 **Axiom Price Oracle V2 Features:**
@@ -48,15 +48,7 @@ Euler V2 uses **vault-to-vault collateral**: users deposit assets into Euler vau
 | **eWETH Vault** | WETH | `0x78E3E051D32157AACD550fBB78458762d8f7edFF` | 80% | 85% |
 | **eARB Vault** | ARB | `0x7eD866D2D66c3149FaFE854C30C68a8BA7ceE8B9` | 70% | 75% |
 
-Legacy raw token LTVs (for direct collateral if supported):
-
-| Collateral | Address | Borrow LTV | Liquidation LTV |
-|------------|---------|------------|-----------------|
-| **USDC** | `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` | 90% | 95% |
-| **USDY** | `0x35e050d3C0eC2d29D269a8EcEa763a183bDF9A9D` | 85% | 90% |
-| **USDT** | `0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9` | 90% | 95% |
-| **WETH** | `0x82aF49447D8a07e3bd95BD0d56f35241523fBab1` | 80% | 85% |
-| **ARB** | `0x912CE59144191C1204E64559FE8253a0e49E6548` | 70% | 75% |
+**Note:** Euler V2 requires vault shares as collateral. Users must first deposit tokens into the respective collateral vault, then use those vault shares to borrow AXUSD. Raw tokens cannot be used directly as collateral.
 
 **Status: FULLY OPERATIONAL - Supply and Borrowing ENABLED**
 
