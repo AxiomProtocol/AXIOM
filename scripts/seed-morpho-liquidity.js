@@ -1,141 +1,146 @@
-const { ethers } = require("ethers");
-require("dotenv").config();
+const { ethers } = require('ethers');
+require('dotenv').config();
 
-const MORPHO_CORE = "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb";
-const ADAPTIVE_CURVE_IRM = "0x870aC11D48B15DB9a138Cf899d20F13F79Ba00BC";
+const MORPHO_BLUE = '0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb';
+const AXUSD = '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c';
 
-const AXUSD_ADDRESS = "0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c";
-const USDY_ADDRESS = "0x35e050d3c0ec2d29d269a8ecea763a183bdf9a9d";
-const USDC_ADDRESS = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
-const USTBL_ADDRESS = "0x3096e7bfd0878cc65be71f8899bc4cfb57187ba3";
-
-const CHAINLINK_USDC_USD = "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3";
-const CHAINLINK_ETH_USD = "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612";
+const MARKETS = {
+  'AXUSD/USDY': {
+    id: '0xe0bd68a4ce092798347c7fe73b9b05576e50adae34ef8a0bdc67f4eb01b873ac',
+    name: 'AXUSD/USDY'
+  },
+  'AXUSD/USDC': {
+    id: '0x9be349db1d04f1b5e4324185188bbd0bde1da0115215451f49a4289e25ecc364',
+    name: 'AXUSD/USDC'
+  },
+  'AXUSD/USTBL': {
+    id: '0x77c76d2851621381ecd4b7c56bda949387c8286ac4dfbd593fc1452f15802715',
+    name: 'AXUSD/USTBL'
+  }
+};
 
 const MORPHO_ABI = [
-  "function supply((address loanToken, address collateralToken, address oracle, address irm, uint256 lltv), uint256 assets, uint256 shares, address onBehalf, bytes data) external returns (uint256 assetsSupplied, uint256 sharesSupplied)",
-  "function market(bytes32 id) external view returns (uint128 totalSupplyAssets, uint128 totalSupplyShares, uint128 totalBorrowAssets, uint128 totalBorrowShares, uint128 lastUpdate, uint128 fee)"
+  'function supply(tuple(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv) marketParams, uint256 assets, uint256 shares, address onBehalf, bytes data) external returns (uint256 assetsSupplied, uint256 sharesSupplied)',
+  'function market(bytes32 id) external view returns (uint128 totalSupplyAssets, uint128 totalSupplyShares, uint128 totalBorrowAssets, uint128 totalBorrowShares, uint128 lastUpdate, uint128 fee)',
+  'function idToMarketParams(bytes32 id) external view returns (address loanToken, address collateralToken, address oracle, address irm, uint256 lltv)'
 ];
 
 const ERC20_ABI = [
-  "function balanceOf(address) view returns (uint256)",
-  "function approve(address spender, uint256 amount) returns (bool)",
-  "function allowance(address owner, address spender) view returns (uint256)",
-  "function decimals() view returns (uint8)",
-  "function symbol() view returns (string)"
-];
-
-const markets = [
-  {
-    name: "AXUSD/USDY",
-    loanToken: AXUSD_ADDRESS,
-    collateralToken: USDY_ADDRESS,
-    oracle: CHAINLINK_ETH_USD,
-    lltv: ethers.parseUnits("0.90", 18)
-  },
-  {
-    name: "AXUSD/USDC",
-    loanToken: AXUSD_ADDRESS,
-    collateralToken: USDC_ADDRESS,
-    oracle: CHAINLINK_USDC_USD,
-    lltv: ethers.parseUnits("0.92", 18)
-  },
-  {
-    name: "AXUSD/USTBL",
-    loanToken: AXUSD_ADDRESS,
-    collateralToken: USTBL_ADDRESS,
-    oracle: CHAINLINK_ETH_USD,
-    lltv: ethers.parseUnits("0.90", 18)
-  }
+  'function balanceOf(address) view returns (uint256)',
+  'function approve(address spender, uint256 amount) external returns (bool)',
+  'function allowance(address owner, address spender) view returns (uint256)'
 ];
 
 async function main() {
-  console.log("=".repeat(60));
-  console.log("AXUSD Morpho Markets - Seed Liquidity");
-  console.log("=".repeat(60));
-
-  const rpcUrl = process.env.ARBITRUM_RPC_URL || "https://arb1.arbitrum.io/rpc";
-  const provider = new ethers.JsonRpcProvider(rpcUrl);
-
-  if (!process.env.DEPLOYER_PK) {
-    console.error("ERROR: DEPLOYER_PK environment variable not set");
+  const marketChoice = process.argv[2] || 'AXUSD/USDC';
+  const amountArg = process.argv[3] || 'all';
+  
+  console.log('='.repeat(60));
+  console.log('Seed Morpho Market with AXUSD');
+  console.log('='.repeat(60));
+  
+  const pk = process.env.DEPLOYER_PK || process.env.PRIVATE_KEY;
+  if (!pk) {
+    console.log('\nERROR: DEPLOYER_PK or PRIVATE_KEY not set');
     process.exit(1);
   }
-
-  const deployer = new ethers.Wallet(process.env.DEPLOYER_PK, provider);
-  console.log("\nDeployer:", deployer.address);
-
-  const axusd = new ethers.Contract(AXUSD_ADDRESS, ERC20_ABI, deployer);
-  const axusdBalance = await axusd.balanceOf(deployer.address);
-  console.log("AXUSD Balance:", ethers.formatUnits(axusdBalance, 18), "AXUSD");
-
-  if (axusdBalance === 0n) {
-    console.error("\nERROR: No AXUSD balance to deposit");
-    console.log("You need AXUSD tokens to seed liquidity.");
-    console.log("\nOptions:");
-    console.log("1. Mint AXUSD using the VaultEngine");
-    console.log("2. Transfer AXUSD from another wallet");
-    console.log("3. Swap for AXUSD on a DEX");
+  
+  const provider = new ethers.JsonRpcProvider(process.env.ARBITRUM_RPC_URL || 'https://arb1.arbitrum.io/rpc');
+  const wallet = new ethers.Wallet(pk, provider);
+  
+  console.log('\nWallet:', wallet.address);
+  
+  const axusd = new ethers.Contract(AXUSD, ERC20_ABI, wallet);
+  const morpho = new ethers.Contract(MORPHO_BLUE, MORPHO_ABI, wallet);
+  
+  const balance = await axusd.balanceOf(wallet.address);
+  console.log('AXUSD Balance:', ethers.formatUnits(balance, 18), 'AXUSD');
+  
+  if (balance === 0n) {
+    console.log('\nERROR: No AXUSD to deposit');
     process.exit(1);
   }
-
-  const depositPerMarket = axusdBalance / 3n;
-  console.log("\nDeposit per market:", ethers.formatUnits(depositPerMarket, 18), "AXUSD");
-
-  const morpho = new ethers.Contract(MORPHO_CORE, MORPHO_ABI, deployer);
-
-  const currentAllowance = await axusd.allowance(deployer.address, MORPHO_CORE);
-  if (currentAllowance < axusdBalance) {
-    console.log("\nApproving AXUSD spending...");
-    const approveTx = await axusd.approve(MORPHO_CORE, ethers.MaxUint256);
-    console.log("Approval TX:", approveTx.hash);
-    await approveTx.wait();
-    console.log("Approved!");
+  
+  const market = MARKETS[marketChoice];
+  if (!market) {
+    console.log('\nERROR: Unknown market. Options:', Object.keys(MARKETS).join(', '));
+    process.exit(1);
+  }
+  
+  console.log('\nMarket:', market.name);
+  console.log('Market ID:', market.id);
+  
+  const marketParams = await morpho.idToMarketParams(market.id);
+  console.log('\n--- Market Params ---');
+  console.log('Loan Token:', marketParams.loanToken);
+  console.log('Collateral:', marketParams.collateralToken);
+  console.log('Oracle:', marketParams.oracle);
+  console.log('IRM:', marketParams.irm);
+  console.log('LLTV:', Number(marketParams.lltv) / 1e16, '%');
+  
+  let amountToDeposit;
+  if (amountArg === 'all') {
+    amountToDeposit = balance;
   } else {
-    console.log("\nAXUSD already approved for Morpho");
+    amountToDeposit = ethers.parseUnits(amountArg, 18);
   }
-
-  for (const market of markets) {
-    console.log(`\n${"─".repeat(50)}`);
-    console.log(`Supplying to: ${market.name}`);
-
-    const marketParams = [
-      market.loanToken,
-      market.collateralToken,
-      market.oracle,
-      ADAPTIVE_CURVE_IRM,
-      market.lltv
-    ];
-
-    try {
-      const tx = await morpho.supply(
-        marketParams,
-        depositPerMarket,
-        0,
-        deployer.address,
-        "0x"
-      );
-
-      console.log("Transaction:", tx.hash);
-      console.log("Arbiscan:", `https://arbiscan.io/tx/${tx.hash}`);
-      const receipt = await tx.wait();
-      console.log(`Supplied ${ethers.formatUnits(depositPerMarket, 18)} AXUSD - Gas: ${receipt.gasUsed}`);
-    } catch (error) {
-      console.error(`Failed to supply: ${error.message}`);
-    }
+  
+  if (amountToDeposit > balance) {
+    console.log('\nERROR: Insufficient balance');
+    process.exit(1);
   }
-
-  console.log(`\n${"=".repeat(60)}`);
-  console.log("LIQUIDITY SEEDING COMPLETE");
-  console.log("=".repeat(60));
-
-  const newBalance = await axusd.balanceOf(deployer.address);
-  console.log("\nRemaining AXUSD Balance:", ethers.formatUnits(newBalance, 18), "AXUSD");
+  
+  console.log('\n--- Deposit ---');
+  console.log('Amount:', ethers.formatUnits(amountToDeposit, 18), 'AXUSD');
+  
+  const currentAllowance = await axusd.allowance(wallet.address, MORPHO_BLUE);
+  if (currentAllowance < amountToDeposit) {
+    console.log('\nApproving AXUSD...');
+    const approveTx = await axusd.approve(MORPHO_BLUE, amountToDeposit);
+    console.log('Approve TX:', approveTx.hash);
+    await approveTx.wait();
+    console.log('Approved!');
+  }
+  
+  console.log('\nSupplying to Morpho...');
+  
+  const marketParamsTuple = {
+    loanToken: marketParams.loanToken,
+    collateralToken: marketParams.collateralToken,
+    oracle: marketParams.oracle,
+    irm: marketParams.irm,
+    lltv: marketParams.lltv
+  };
+  
+  const supplyTx = await morpho.supply(
+    marketParamsTuple,
+    amountToDeposit,
+    0,
+    wallet.address,
+    '0x'
+  );
+  
+  console.log('TX Hash:', supplyTx.hash);
+  console.log('Waiting for confirmation...');
+  
+  const receipt = await supplyTx.wait();
+  console.log('Confirmed in block:', receipt.blockNumber);
+  console.log('Gas used:', receipt.gasUsed.toString());
+  
+  const marketInfo = await morpho.market(market.id);
+  console.log('\n--- Market Status ---');
+  console.log('Total Supply:', ethers.formatUnits(marketInfo.totalSupplyAssets, 18), 'AXUSD');
+  console.log('Total Borrow:', ethers.formatUnits(marketInfo.totalBorrowAssets, 18), 'AXUSD');
+  
+  const newBalance = await axusd.balanceOf(wallet.address);
+  console.log('\n--- Result ---');
+  console.log('Remaining AXUSD:', ethers.formatUnits(newBalance, 18), 'AXUSD');
+  console.log('Deposited:', ethers.formatUnits(amountToDeposit, 18), 'AXUSD');
+  
+  console.log('\n' + '='.repeat(60));
+  console.log('Market is now seeded! LPs can view at:');
+  console.log('https://app.morpho.org/arbitrum/market/' + market.id);
+  console.log('='.repeat(60));
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+main().catch(console.error);
