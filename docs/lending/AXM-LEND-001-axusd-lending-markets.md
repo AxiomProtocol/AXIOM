@@ -1,0 +1,326 @@
+# AXM-LEND-001: AXUSD Lending Markets Specification
+
+**Document ID:** AXM-LEND-001  
+**Version:** 1.0.0  
+**Created:** 2026-01-29  
+**Status:** Ready for Deployment (Post-Observation)  
+**Network:** Arbitrum One (Chain ID: 42161)
+
+---
+
+## Executive Summary
+
+This document specifies the deployment of AXUSD lending markets on Morpho and Euler Finance, enabling external liquidity providers to earn yield while AXUSD holders can borrow against their collateral.
+
+### Value Proposition
+
+| Stakeholder | Benefit |
+|-------------|---------|
+| **Axiom Protocol** | Protocol fees, AXUSD utility, external liquidity |
+| **Liquidity Providers** | 5-15% APY on AXUSD deposits |
+| **Borrowers** | Access liquidity while holding yield-bearing collateral |
+| **AXUSD Holders** | More use cases = more demand = stability |
+
+---
+
+## Contract Addresses
+
+### Axiom Contracts
+
+| Contract | Address | Network |
+|----------|---------|---------|
+| **AXUSD (Stablecoin)** | `0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c` | Arbitrum One |
+| **AXUSD GENIUS** | `0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C` | Arbitrum One |
+| **AXM Token** | `0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D` | Arbitrum One |
+
+### Collateral Assets (RWA Treasury Products)
+
+| Asset | Address | APY | Provider |
+|-------|---------|-----|----------|
+| **USDY** | `0x35e050d3c0ec2d29d269a8ecea763a183bdf9a9d` | 5.35% | Ondo Finance |
+| **USTBL** | `0x3096e7bfd0878cc65be71f8899bc4cfb57187ba3` | 4.9% | Spiko |
+| **USDC** | `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` | 0% | Circle |
+
+### Protocol Contracts
+
+| Protocol | Contract | Address | Network |
+|----------|----------|---------|---------|
+| **Morpho** | Morpho Core | `0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb` | Arbitrum One |
+| **Euler** | EVK Factory | `0x29a56a1b8214D9Cf7c5561811750D5cBDb45CC8e` | Arbitrum One |
+
+---
+
+## Market Specifications
+
+### Market 1: AXUSD/USDY (Morpho)
+
+**Purpose:** Borrow AXUSD using yield-bearing USDY as collateral
+
+```
+Market Parameters:
+├── Loan Token: AXUSD (0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c)
+├── Collateral Token: USDY (0x35e050d3c0ec2d29d269a8ecea763a183bdf9a9d)
+├── Oracle: Chainlink USDY/USD
+├── LLTV (Liquidation LTV): 90% (0.9e18)
+├── Interest Rate Model: Adaptive Curve IRM
+└── Governance: Axiom DAO controlled
+```
+
+**Risk Parameters:**
+- Borrow LTV: 85%
+- Liquidation LTV: 90%
+- Liquidation Penalty: 5%
+- Bad Debt Buffer: 2%
+
+### Market 2: AXUSD/USDC (Morpho)
+
+**Purpose:** Standard stablecoin borrowing market
+
+```
+Market Parameters:
+├── Loan Token: AXUSD (0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c)
+├── Collateral Token: USDC (0xaf88d065e77c8cC2239327C5EDb3A432268e5831)
+├── Oracle: Chainlink USDC/USD
+├── LLTV: 92% (0.92e18)
+├── Interest Rate Model: Adaptive Curve IRM
+└── Governance: Axiom DAO controlled
+```
+
+### Market 3: AXUSD Lending Vault (Euler)
+
+**Purpose:** Full-featured lending vault with cross-vault collateral
+
+```
+Vault Parameters:
+├── Asset: AXUSD (0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c)
+├── Unit of Account: USD
+├── Vault Type: Governed (upgradeable)
+├── Governor: Axiom Multisig
+├── Accepted Collateral:
+│   ├── USDY (90% LTV)
+│   ├── USDC (92% LTV)
+│   └── USTBL (90% LTV)
+├── Interest Rate Model: Kink-based reactive
+└── Hooks: None (standard vault)
+```
+
+---
+
+## Deployment Process
+
+### Phase 1: Pre-Deployment (During Observation)
+
+- [x] Document market specifications
+- [x] Create deployment services
+- [x] Build monitoring infrastructure
+- [ ] Audit market parameters
+- [ ] Test on Arbitrum Sepolia
+
+### Phase 2: Morpho Market Deployment
+
+```typescript
+// Deploy AXUSD/USDY market on Morpho
+const morphoMarketParams = {
+  loanToken: AXUSD_ADDRESS,
+  collateralToken: USDY_ADDRESS,
+  oracle: USDY_ORACLE_ADDRESS,
+  irm: ADAPTIVE_CURVE_IRM,
+  lltv: ethers.parseUnits('0.9', 18)
+};
+
+const marketId = await morpho.createMarket(morphoMarketParams);
+```
+
+### Phase 3: Euler Vault Deployment
+
+```typescript
+// Deploy AXUSD vault on Euler via EVK Factory
+const eulerVaultParams = {
+  asset: AXUSD_ADDRESS,
+  oracle: AXUSD_ORACLE_ADDRESS,
+  unitOfAccount: USDC_ADDRESS,
+  upgradeable: true,
+  governor: AXIOM_MULTISIG
+};
+
+const vaultAddress = await evkFactory.createProxy(eulerVaultParams);
+```
+
+---
+
+## Oracle Configuration
+
+### Chainlink Price Feeds (Arbitrum One)
+
+| Asset | Feed Address | Heartbeat |
+|-------|--------------|-----------|
+| USDY/USD | `0x0A0C6C5C78d0A6C70D58AE5a79e9B2E0F6f4C3D1` | 24h |
+| USDC/USD | `0x50834F3163758fcC1Df9973b6e91f0F0F0370aD1` | 1h |
+| ETH/USD | `0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612` | 1h |
+
+### Custom AXUSD Oracle
+
+```solidity
+// AXUSD maintains 1:1 USD peg via PSM
+// Oracle returns fixed 1e8 with PSM health check
+contract AXUSDOracle {
+    function latestRoundData() external view returns (
+        uint80, int256 answer, uint256, uint256, uint80
+    ) {
+        // Check PSM reserves are healthy
+        require(psmReserveRatio() >= 0.95e18, "PSM undercollateralized");
+        return (0, 1e8, 0, block.timestamp, 0);
+    }
+}
+```
+
+---
+
+## Interest Rate Model
+
+### Morpho Adaptive Curve IRM
+
+```
+Parameters:
+├── Target Utilization: 90%
+├── Base Rate: 0.5% APY
+├── Rate at Target: 4% APY
+├── Rate at 100% Util: 50% APY
+└── Speed: 4% per hour
+```
+
+### Euler Reactive IRM
+
+```
+Parameters:
+├── Kink 1: 80% utilization → 5% APY
+├── Kink 2: 90% utilization → 10% APY
+├── Max Rate: 100% APY at 100% utilization
+└── Adjustment Speed: 2% per hour
+```
+
+---
+
+## Revenue Model
+
+### Protocol Fees
+
+| Fee Type | Rate | Recipient |
+|----------|------|-----------|
+| **Origination Fee** | 0.05% | Axiom Treasury |
+| **Interest Spread** | 10% of interest | Axiom Treasury |
+| **Liquidation Fee** | 0.5% | Axiom Treasury |
+
+### Projected Revenue (Based on TVL)
+
+| TVL | Annual Interest | Protocol Revenue |
+|-----|-----------------|------------------|
+| $100K | $8,000 | $800 |
+| $1M | $80,000 | $8,000 |
+| $10M | $800,000 | $80,000 |
+
+---
+
+## Security Considerations
+
+### Risk Mitigation
+
+1. **Oracle Manipulation**
+   - Use Chainlink decentralized oracles
+   - Implement price deviation checks
+   - Add staleness protection
+
+2. **Liquidation Cascades**
+   - Conservative LTV ratios (85-90%)
+   - Gradual liquidation (Dutch auction)
+   - Bad debt socialization mechanism
+
+3. **Smart Contract Risk**
+   - Deploy on battle-tested protocols (Morpho, Euler)
+   - Use governed vaults with timelock
+   - Emergency pause capability
+
+### Audit Requirements
+
+- [ ] Internal security review
+- [ ] External audit (recommended: Spearbit, Trail of Bits)
+- [ ] Formal verification of oracle logic
+
+---
+
+## Governance
+
+### Market Parameter Changes
+
+All parameter changes require:
+1. Governance proposal (48h voting period)
+2. Timelock execution (24h delay)
+3. On-chain verification
+
+### Emergency Actions
+
+Axiom Security Council can:
+- Pause markets (immediate)
+- Adjust LTV downward (immediate)
+- Halt new borrows (immediate)
+
+Cannot:
+- Increase LTV (requires governance)
+- Access user funds (non-custodial)
+- Change oracle without timelock
+
+---
+
+## Monitoring & Alerts
+
+### Key Metrics
+
+| Metric | Alert Threshold |
+|--------|-----------------|
+| Utilization Rate | > 95% |
+| Bad Debt Ratio | > 0.1% |
+| Oracle Deviation | > 5% |
+| Liquidation Queue | > 10 positions |
+
+### Dashboard Integration
+
+Markets will be visible in:
+- Axiom Observer Dashboard (`/observer/lending`)
+- Morpho App (`app.morpho.org`)
+- Euler App (`app.euler.finance`)
+
+---
+
+## Timeline
+
+| Phase | Target Date | Status |
+|-------|-------------|--------|
+| Specification Complete | 2026-01-29 | ✅ Complete |
+| Service Implementation | 2026-01-29 | ✅ Complete |
+| Testnet Deployment | 2026-02-15 | Pending |
+| Security Audit | 2026-03-01 | Pending |
+| Mainnet Deployment | 2026-03-26+ | Post-Observation |
+
+---
+
+## Appendix
+
+### A. Contract ABIs
+
+See `/contracts/lending/abis/` for:
+- `MorphoCore.json`
+- `EulerEVKFactory.json`
+- `AdaptiveCurveIRM.json`
+
+### B. Deployment Scripts
+
+See `/scripts/lending/` for:
+- `deploy-morpho-market.ts`
+- `deploy-euler-vault.ts`
+- `configure-oracles.ts`
+
+### C. Related Documents
+
+- AXM-GOV-001: Observation Window Rationale
+- AXM-INT-001: Arbitrum 2026 Integration Plan
+- AXUSD Stablecoin Whitepaper
