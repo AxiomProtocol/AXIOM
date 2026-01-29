@@ -45,7 +45,7 @@ console.log("=".repeat(70));
 console.log("SAFE WALLET TRANSACTIONS FOR MORPHO MARKET DEPLOYMENT");
 console.log("=".repeat(70));
 console.log("\nGo to: https://app.safe.global");
-console.log("Connect your Safe: 0xDFf9e47eb007bF02e47477d577De9ffA99791528");
+console.log("Connect your wallet: 0x8d7892CF226B43d48B6e3ce988A1274e6D114C96");
 console.log("Network: Arbitrum One");
 console.log("\nFor each market, create a new transaction with:");
 console.log("  - 'New transaction' > 'Transaction Builder'");

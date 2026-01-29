@@ -212,7 +212,7 @@ AXUSD Lending Stack
 
 **Smart Contracts (Arbitrum One):**
 - AXUSD: `0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c`
-- Axiom Multisig: `0xDFf9e47eb007bF02e47477d577De9ffA99791528`
+- Axiom Deployer: `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`
 
 ---
 

@@ -128,7 +128,7 @@ const AXIOM_ADDRESSES: Record<string, { role: WalletRole; description: string }>
     role: WalletRole.SUSTAINABILITY,
     description: "Carbon credit issuance and renewable energy certificates"
   },
-  "0xDFf9e47eb007bF02e47477d577De9ffA99791528": {
+  "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96": {
     role: WalletRole.DEPLOYER,
     description: "Contract deployer wallet - all 29 contracts deployed"
   }

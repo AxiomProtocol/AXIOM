@@ -39,7 +39,7 @@ const TransparencyReportsPage: React.FC = () => {
             <h3 className="font-semibold text-lg mb-4">Deployment Network</h3>
             <div className="space-y-2">
               <p><span className="font-semibold">Network:</span> Arbitrum One (Chain ID: 42161)</p>
-              <p><span className="font-semibold">Deployer:</span> 0xDFf9e47eb007bF02e47477d577De9ffA99791528</p>
+              <p><span className="font-semibold">Deployer:</span> 0x8d7892CF226B43d48B6e3ce988A1274e6D114C96</p>
               <p><span className="font-semibold">Compiler:</span> Solidity 0.8.20 with optimizer</p>
               <p><span className="font-semibold">Security Rating:</span> 10/10 (21 contracts), 9/10 (1 contract)</p>
             </div>

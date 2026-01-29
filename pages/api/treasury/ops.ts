@@ -16,7 +16,7 @@ import {
 } from '../../../lib/treasury/policy';
 import { REALESTATE_LENDING_CONTRACTS, STABLECOINS, AXUSD_GENIUS_CONTRACTS, CORE_CONTRACTS } from '../../../shared/contracts';
 
-const ADMIN_WALLET = process.env.ADMIN_WALLET_ADDRESS || '0xDFf9e47eb007bF02e47477d577De9ffA99791528';
+const ADMIN_WALLET = process.env.ADMIN_WALLET_ADDRESS || '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96';
 
 const STATE_FILE = path.join(process.cwd(), 'logs', 'treasury', 'treasury-state.json');
 const TRANSACTION_LOG = path.join(process.cwd(), 'logs', 'treasury', 'transactions.json');

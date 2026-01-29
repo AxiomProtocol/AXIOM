@@ -88,7 +88,7 @@ async function main() {
   
   if (!hasAdmin) {
     console.error("\n❌ ERROR: You don't have admin role. Cannot proceed.");
-    console.log("Make sure you're using the deployer wallet (0xDFf9e47eb007bF02e47477d577De9ffA99791528)");
+    console.log("Make sure you're using the deployer wallet (0x8d7892CF226B43d48B6e3ce988A1274e6D114C96)");
     return;
   }
   

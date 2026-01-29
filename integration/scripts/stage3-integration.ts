@@ -15,7 +15,7 @@ async function main() {
   // NOTE: Stage 3 requires TWO admins:
   // - Utility Hub (Contract 10): Uses DEPLOYER
   // - DePIN Suite (Contract 12): Uses ADMIN_1
-  const DEPLOYER_ADDRESS = "0xDFf9e47eb007bF02e47477d577De9ffA99791528";
+  const DEPLOYER_ADDRESS = "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96";
   const ADMIN_1_ADDRESS = "0x93696b537d814Aed5875C4490143195983AED365";
   const network = await ethers.provider.getNetwork();
   

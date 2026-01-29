@@ -12,7 +12,7 @@ export const NETWORK = {
   explorer: "https://arbitrum.blockscout.com"
 };
 
-export const DEPLOYER_ADDRESS = "0xDFf9e47eb007bF02e47477d577De9ffA99791528";
+export const DEPLOYER_ADDRESS = "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96";
 
 /**
  * CORE INFRASTRUCTURE (Contracts 1-6)

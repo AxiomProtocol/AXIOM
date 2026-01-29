@@ -7,7 +7,7 @@
  * Source: COMPLETE_DEPLOYMENT_MANIFEST.md
  * Deployment Date: November 22, 2025
  * Network: Arbitrum One (Chain ID: 42161)
- * Deployer: 0xDFf9e47eb007bF02e47477d577De9ffA99791528
+ * Deployer: 0x8d7892CF226B43d48B6e3ce988A1274e6D114C96
  * Status: All 23 contracts deployed & verified
  * 
  * Explorer: https://arbitrum.blockscout.com/
@@ -127,7 +127,7 @@ export const ALL_CONTRACTS = {
 } as const;
 
 // Deployer Address
-export const DEPLOYER_ADDRESS = '0xDFf9e47eb007bF02e47477d577De9ffA99791528';
+export const DEPLOYER_ADDRESS = '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96';
 
 // Token Configuration
 export const AXM_TOKEN_CONFIG = {

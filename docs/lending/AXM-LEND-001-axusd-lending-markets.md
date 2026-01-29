@@ -1,10 +1,23 @@
 # AXM-LEND-001: AXUSD Lending Markets Specification
 
 **Document ID:** AXM-LEND-001  
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Created:** 2026-01-29  
-**Status:** Ready for Deployment (Post-Observation)  
+**Updated:** 2026-01-29  
+**Status:** DEPLOYED  
 **Network:** Arbitrum One (Chain ID: 42161)
+
+---
+
+## Deployed Markets
+
+| Market | Collateral | LLTV | Market ID | TX |
+|--------|------------|------|-----------|-----|
+| AXUSD/USDY | USDY | 90% | `0xe0bd68a4ce092798347c7fe73b9b05576e50adae34ef8a0bdc67f4eb01b873ac` | [View](https://arbiscan.io/tx/0x751b73ebd0239f421b69f683bb9bd0a1c3f109e54ed3781ae51db744be78077e) |
+| AXUSD/USDC | USDC | 92% | `0x9be349db1d04f1b5e4324185188bbd0bde1da0115215451f49a4289e25ecc364` | [View](https://arbiscan.io/tx/0x734cbb50c5de2b1ab0017fb5d7640a33a66dbec29d188f4a0881ccb726defda0) |
+| AXUSD/USTBL | USTBL | 90% | `0x77c76d2851621381ecd4b7c56bda949387c8286ac4dfbd593fc1452f15802715` | [View](https://arbiscan.io/tx/0xc9eed2f8e62ac2f3c41136d439d42d14232825f1b4ff0101eca11a921afa5b0b) |
+
+**Deployer:** `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`
 
 ---
 

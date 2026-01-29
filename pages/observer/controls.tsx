@@ -2,7 +2,7 @@ import React from 'react';
 import { ObserverLayout, ObserverCard, ProofLink } from '../../components/observer/ObserverLayout';
 
 const GNOSIS_SAFE = '0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d';
-const OPERATOR_EOA = '0xDFf9e47eb007bF02e47477d577De9ffA99791528';
+const OPERATOR_EOA = '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96';
 const TIMELOCK = '0xf1B1D594d6Edc9f045dF55B32006A24e666Ed899';
 
 interface PowerEntry {

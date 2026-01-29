@@ -107,31 +107,31 @@ Key features include:
 - **1inch Gasless Swaps:** Enable trading without ETH, AXUSD-only ecosystem experience
 - **Institutional Protocols:** Morpho AXUSD market, Euler integration, Maple Finance DSCR syndication
 
-### AXUSD Lending Markets (Ready for Post-Observation)
+### AXUSD Lending Markets (DEPLOYED 2026-01-29)
 
 **Document:** `/docs/lending/AXM-LEND-001-axusd-lending-markets.md`
 
 **Purpose:** External liquidity without capital deployment - LPs earn yield, borrowers use USDY/USDC as collateral
 
-**Morpho Markets (3 proposed):**
-- AXUSD/USDY: 90% LLTV, ~8% APY (collateral earns 5.35% while deposited)
-- AXUSD/USDC: 92% LLTV, ~6% APY
-- AXUSD/USTBL: 90% LLTV, ~7% APY
+**Deployer:** `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`
 
-**Euler Vaults (2 proposed):**
+**Morpho Markets (3 DEPLOYED):**
+- AXUSD/USDY: 90% LLTV, ~8% APY - Market ID: `0xe0bd68...873ac`
+- AXUSD/USDC: 92% LLTV, ~6% APY - Market ID: `0x9be349...cc364`
+- AXUSD/USTBL: 90% LLTV, ~7% APY - Market ID: `0x77c76d...02715`
+
+**Euler Vaults (2 ready):**
 - AXUSD Lending Vault: Multi-collateral (USDY, USDC, USTBL), governed, ~8% APY
 - AXUSD Conservative Vault: USDC-only, ungoverned/immutable, ~5% APY
 
 **API Endpoints:**
-- `/api/lending/overview` - Full status of all proposed markets
-- `/api/lending/morpho` - Morpho-specific markets and deployment guide
-- `/api/lending/euler` - Euler vaults and protocol comparison
+- `/api/lending/overview` - Full status of all markets
+- `/api/lending/morpho` - Morpho-specific markets
+- `/api/lending/euler` - Euler vaults
 
 **Services:**
 - `server/services/lending/MorphoMarketService.ts`
 - `server/services/lending/EulerVaultService.ts`
-
-**Deployment Cost:** $15-50 total (gas only, permissionless)
 
 ### Institutional Treasury Products
 
