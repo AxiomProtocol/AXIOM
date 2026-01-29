@@ -43,7 +43,17 @@ export default function DashboardEulerWidget() {
   }
 
   if (!stats) {
-    return null;
+    return (
+      <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+        <div className="flex items-center gap-2 text-gray-400">
+          <span className="text-lg">💰</span>
+          <div>
+            <p className="text-sm font-medium">AXUSD Lending</p>
+            <p className="text-xs">Unable to load data</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

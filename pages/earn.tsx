@@ -1,8 +1,7 @@
 import Head from 'next/head';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Layout from '../components/Layout';
 import EulerVaultCard from '../components/EulerVaultCard';
-import { useWallet } from '../components/WalletConnect/WalletContext';
 
 interface YieldOpportunity {
   id: string;
@@ -83,25 +82,7 @@ const YIELD_OPPORTUNITIES: YieldOpportunity[] = [
 ];
 
 export default function EarnPage() {
-  const { walletState } = useWallet();
   const [selectedType, setSelectedType] = useState<string>('all');
-  const [eulerStats, setEulerStats] = useState<any>(null);
-
-  useEffect(() => {
-    fetchEulerStats();
-  }, []);
-
-  const fetchEulerStats = async () => {
-    try {
-      const res = await fetch('/api/euler/vault-stats');
-      const data = await res.json();
-      if (data.success) {
-        setEulerStats(data.vault);
-      }
-    } catch (err) {
-      console.error('Error fetching Euler stats:', err);
-    }
-  };
 
   const filteredOpportunities = selectedType === 'all' 
     ? YIELD_OPPORTUNITIES 
