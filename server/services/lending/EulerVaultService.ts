@@ -14,6 +14,34 @@ export const USDC_ADDRESS = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
 export const USTBL_ADDRESS = '0x3096e7bfd0878cc65be71f8899bc4cfb57187ba3';
 export const AXIOM_MULTISIG = '0xDFf9e47eb007bF02e47477d577De9ffA99791528';
 
+export const OBSERVATION_END_DATE = new Date('2026-03-26T00:00:00Z');
+
+export function isObservationWindowActive(): boolean {
+  return new Date() < OBSERVATION_END_DATE;
+}
+
+export function getObservationStatus(): {
+  active: boolean;
+  endDate: string;
+  daysRemaining: number;
+} {
+  const now = new Date();
+  const active = now < OBSERVATION_END_DATE;
+  const daysRemaining = Math.max(0, Math.ceil((OBSERVATION_END_DATE.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+  return {
+    active,
+    endDate: '2026-03-26',
+    daysRemaining
+  };
+}
+
+const TOKEN_DECIMALS: Record<string, number> = {
+  [AXUSD_ADDRESS.toLowerCase()]: 18,
+  [USDY_ADDRESS.toLowerCase()]: 18,
+  [USDC_ADDRESS.toLowerCase()]: 6,
+  [USTBL_ADDRESS.toLowerCase()]: 18
+};
+
 const EVK_FACTORY_ABI = [
   'function createProxy(address implementation, bool upgradeable, bytes calldata trailingData) external returns (address)',
   'function getProxyConfig(address proxy) external view returns (bool upgradeable, address implementation, address trailingData)'
@@ -92,7 +120,7 @@ class EulerVaultService {
   }
 
   getProposedVaults(): ProposedVault[] {
-    const isObservationMode = true;
+    const isObservationMode = isObservationWindowActive();
 
     return [
       {
@@ -143,8 +171,9 @@ class EulerVaultService {
       const assetContract = new ethers.Contract(asset, ERC20_ABI, this.provider);
       const assetSymbol = await assetContract.symbol();
 
-      const totalAssetsNum = parseFloat(ethers.formatUnits(totalAssets, 18));
-      const totalBorrowsNum = parseFloat(ethers.formatUnits(totalBorrows, 18));
+      const assetDecimals = TOKEN_DECIMALS[asset.toLowerCase()] || 18;
+      const totalAssetsNum = parseFloat(ethers.formatUnits(totalAssets, assetDecimals));
+      const totalBorrowsNum = parseFloat(ethers.formatUnits(totalBorrows, assetDecimals));
       const utilization = totalAssetsNum > 0 ? (totalBorrowsNum / totalAssetsNum) * 100 : 0;
       const rate = parseFloat(ethers.formatUnits(interestRate, 27)) * 100;
 
@@ -275,14 +304,16 @@ class EulerVaultService {
     readyForDeployment: boolean;
     estimatedCost: string;
     uniqueFeatures: string[];
+    observationWindow: { active: boolean; endDate: string; daysRemaining: number };
   } {
+    const obsStatus = getObservationStatus();
     return {
       protocol: 'Euler Finance',
       networkSupported: true,
       contractsVerified: true,
       permissionless: true,
-      observationBlocked: true,
-      readyForDeployment: false,
+      observationBlocked: obsStatus.active,
+      readyForDeployment: !obsStatus.active,
       estimatedCost: '$10-30 (gas only)',
       uniqueFeatures: [
         'Cross-vault collateral (EVC)',
@@ -290,7 +321,8 @@ class EulerVaultService {
         'Custom hooks (KYC, pause, limits)',
         'Batched transactions',
         'Dutch auction liquidations'
-      ]
+      ],
+      observationWindow: obsStatus
     };
   }
 

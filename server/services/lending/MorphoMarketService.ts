@@ -13,6 +13,34 @@ export const USDY_ADDRESS = '0x35e050d3c0ec2d29d269a8ecea763a183bdf9a9d';
 export const USDC_ADDRESS = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
 export const USTBL_ADDRESS = '0x3096e7bfd0878cc65be71f8899bc4cfb57187ba3';
 
+export const OBSERVATION_END_DATE = new Date('2026-03-26T00:00:00Z');
+
+export function isObservationWindowActive(): boolean {
+  return new Date() < OBSERVATION_END_DATE;
+}
+
+export function getObservationStatus(): {
+  active: boolean;
+  endDate: string;
+  daysRemaining: number;
+} {
+  const now = new Date();
+  const active = now < OBSERVATION_END_DATE;
+  const daysRemaining = Math.max(0, Math.ceil((OBSERVATION_END_DATE.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+  return {
+    active,
+    endDate: '2026-03-26',
+    daysRemaining
+  };
+}
+
+const TOKEN_DECIMALS: Record<string, number> = {
+  [AXUSD_ADDRESS.toLowerCase()]: 18,
+  [USDY_ADDRESS.toLowerCase()]: 18,
+  [USDC_ADDRESS.toLowerCase()]: 6,
+  [USTBL_ADDRESS.toLowerCase()]: 18
+};
+
 const MORPHO_ABI = [
   'function createMarket((address loanToken, address collateralToken, address oracle, address irm, uint256 lltv)) external returns (bytes32 id)',
   'function market(bytes32 id) external view returns (uint128 totalSupplyAssets, uint128 totalSupplyShares, uint128 totalBorrowAssets, uint128 totalBorrowShares, uint128 lastUpdate, uint128 fee)',
@@ -77,7 +105,7 @@ class MorphoMarketService {
   }
 
   getProposedMarkets(): ProposedMarket[] {
-    const isObservationMode = true;
+    const isObservationMode = isObservationWindowActive();
     
     return [
       {
@@ -152,8 +180,9 @@ class MorphoMarketService {
         collateralContract.symbol()
       ]);
 
-      const totalSupply = parseFloat(ethers.formatUnits(market.totalSupplyAssets, 18));
-      const totalBorrow = parseFloat(ethers.formatUnits(market.totalBorrowAssets, 18));
+      const loanDecimals = TOKEN_DECIMALS[params.loanToken.toLowerCase()] || 18;
+      const totalSupply = parseFloat(ethers.formatUnits(market.totalSupplyAssets, loanDecimals));
+      const totalBorrow = parseFloat(ethers.formatUnits(market.totalBorrowAssets, loanDecimals));
       const utilization = totalSupply > 0 ? (totalBorrow / totalSupply) * 100 : 0;
       const lltv = parseFloat(ethers.formatUnits(params.lltv, 18)) * 100;
       const estimatedAPY = this.calculateAPY(utilization);
@@ -263,15 +292,18 @@ class MorphoMarketService {
     observationBlocked: boolean;
     readyForDeployment: boolean;
     estimatedCost: string;
+    observationWindow: { active: boolean; endDate: string; daysRemaining: number };
   } {
+    const obsStatus = getObservationStatus();
     return {
       protocol: 'Morpho',
       networkSupported: true,
       contractsVerified: true,
       permissionless: true,
-      observationBlocked: true,
-      readyForDeployment: false,
-      estimatedCost: '$5-20 (gas only)'
+      observationBlocked: obsStatus.active,
+      readyForDeployment: !obsStatus.active,
+      estimatedCost: '$5-20 (gas only)',
+      observationWindow: obsStatus
     };
   }
 }

@@ -107,6 +107,44 @@ Key features include:
 - **1inch Gasless Swaps:** Enable trading without ETH, AXUSD-only ecosystem experience
 - **Institutional Protocols:** Morpho AXUSD market, Euler integration, Maple Finance DSCR syndication
 
+### AXUSD Lending Markets (Ready for Post-Observation)
+
+**Document:** `/docs/lending/AXM-LEND-001-axusd-lending-markets.md`
+
+**Purpose:** External liquidity without capital deployment - LPs earn yield, borrowers use USDY/USDC as collateral
+
+**Morpho Markets (3 proposed):**
+- AXUSD/USDY: 90% LLTV, ~8% APY (collateral earns 5.35% while deposited)
+- AXUSD/USDC: 92% LLTV, ~6% APY
+- AXUSD/USTBL: 90% LLTV, ~7% APY
+
+**Euler Vaults (2 proposed):**
+- AXUSD Lending Vault: Multi-collateral (USDY, USDC, USTBL), governed, ~8% APY
+- AXUSD Conservative Vault: USDC-only, ungoverned/immutable, ~5% APY
+
+**API Endpoints:**
+- `/api/lending/overview` - Full status of all proposed markets
+- `/api/lending/morpho` - Morpho-specific markets and deployment guide
+- `/api/lending/euler` - Euler vaults and protocol comparison
+
+**Services:**
+- `server/services/lending/MorphoMarketService.ts`
+- `server/services/lending/EulerVaultService.ts`
+
+**Deployment Cost:** $15-50 total (gas only, permissionless)
+
+### Institutional Treasury Products
+
+**Document:** `/server/services/treasury/InstitutionalTreasuryService.ts`
+
+Live on-chain monitoring of RWA treasury products on Arbitrum:
+- USDY (Ondo): $4.9M TVL, 5.35% APY, no minimum
+- USTBL (Spiko): $200M TVL, 4.9% APY, no minimum
+- BUIDL (BlackRock): 5.0% APY, $100K minimum
+- BENJI (Franklin Templeton): 4.8% APY, $1K minimum
+
+**API:** `/api/treasury/institutional`
+
 ### Grant Opportunities
 - Stylus Sprint: 5M ARB (Active)
 - STEP 2.0 RWA: 35M ARB (Active)

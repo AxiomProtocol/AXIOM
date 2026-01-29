@@ -305,22 +305,45 @@ Markets will be visible in:
 
 ## Appendix
 
-### A. Contract ABIs
+### A. Backend Services
 
-See `/contracts/lending/abis/` for:
-- `MorphoCore.json`
-- `EulerEVKFactory.json`
-- `AdaptiveCurveIRM.json`
+The following services provide market management functionality:
 
-### B. Deployment Scripts
+**MorphoMarketService** (`server/services/lending/MorphoMarketService.ts`):
+- `getProposedMarkets()` - List all proposed AXUSD markets
+- `getMarketInfo(marketId)` - Query live market data from chain
+- `computeMarketId(params)` - Calculate market ID from parameters
+- `generateDeploymentTx(params)` - Generate unsigned transaction for market creation
+- `getDeploymentGuide()` - Step-by-step deployment instructions
+- `getIntegrationStatus()` - Current integration and observation status
 
-See `/scripts/lending/` for:
-- `deploy-morpho-market.ts`
-- `deploy-euler-vault.ts`
-- `configure-oracles.ts`
+**EulerVaultService** (`server/services/lending/EulerVaultService.ts`):
+- `getProposedVaults()` - List all proposed AXUSD vaults
+- `getVaultInfo(vaultAddress)` - Query live vault data from chain
+- `generateDeploymentParams(vault)` - Generate deployment parameters
+- `getDeploymentGuide()` - Step-by-step deployment instructions
+- `compareWithMorpho()` - Protocol comparison table
+- `getIntegrationStatus()` - Current integration and observation status
+
+### B. API Endpoints
+
+- `GET /api/lending/overview` - Full status of all markets and vaults
+- `GET /api/lending/morpho` - Morpho-specific integration
+- `GET /api/lending/morpho?action=proposed` - List proposed Morpho markets
+- `GET /api/lending/morpho?action=guide` - Deployment guide
+- `GET /api/lending/euler` - Euler-specific integration
+- `GET /api/lending/euler?action=proposed` - List proposed Euler vaults
+- `GET /api/lending/euler?action=compare` - Protocol comparison
 
 ### C. Related Documents
 
-- AXM-GOV-001: Observation Window Rationale
-- AXM-INT-001: Arbitrum 2026 Integration Plan
-- AXUSD Stablecoin Whitepaper
+- AXM-GOV-001: Observation Window Rationale (`/docs/governance/AXM-GOV-001-observation-window-rationale.md`)
+- AXM-INT-001: Arbitrum 2026 Integration Plan (`/docs/integrations/arbitrum-2026-integration-plan.md`)
+- AXUSD Stablecoin System (`/contracts/stablecoin/`)
+
+### D. External Resources
+
+- Morpho Documentation: https://docs.morpho.org/
+- Euler EVK Documentation: https://docs.euler.finance/creator-tools/vaults/evk/introduction/
+- Morpho Arbitrum App: https://app.morpho.org/arbitrum/
+- Euler App: https://app.euler.finance/
