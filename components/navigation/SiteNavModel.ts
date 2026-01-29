@@ -79,6 +79,8 @@ export const SITE_NAV: NavItem[] = [
       { label: "Tokenomics", href: "/tokenomics" },
       { label: "Staking", href: "/staking" },
       { label: "DEX Exchange", href: "/dex" },
+      { label: "Earn Yield", href: "/earn" },
+      { label: "Borrow AXUSD", href: "/borrow" },
       { label: "Launchpad", href: "/launchpad" },
       { label: "Axiom Nodes", href: "/axiom-nodes" },
       { label: "Analytics", href: "/v2-analytics" }
