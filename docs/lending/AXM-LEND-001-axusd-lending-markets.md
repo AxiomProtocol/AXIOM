@@ -47,7 +47,7 @@
 | **WETH** | `0x82aF49447D8a07e3bd95BD0d56f35241523fBab1` | 80% | 85% |
 | **ARB** | `0x912CE59144191C1204E64559FE8253a0e49E6548` | 70% | 75% |
 
-**Status: SUPPLY ENABLED - Borrowing requires collateral vaults**
+**Status: SUPPLY ENABLED - Borrowing requires Euler team coordination**
 
 Caps configured:
 - Supply Cap: 1,000,000 AXUSD (encoded: 64005)
@@ -56,17 +56,27 @@ Caps configured:
 **Governor Contract:**
 - AxiomVaultGovernorV2: `0xE742Ee9b946043ecc75bFc71B47216C1f8248316`
 
-**Borrowing Configuration - Next Steps:**
+**Infrastructure Discovery:**
+Our vault was created using a specific Euler deployment on Arbitrum with:
+- EVC: `0x6302ef0F34100CDDFb5489fbcB6eE1AA95CD1066`
+- Protocol Config: `0x06c1Ab0A1672E8FC7F7D10BD7B869B4116D18a2c`
+- Implementation: `0x832ff4011a3164ea76cea06a313ee0b6cd72ba96`
+
+Note: The factory address in Euler docs (`0x29a56a1b...`) has no code on Arbitrum, suggesting there may be multiple or legacy deployments.
+
+**Borrowing Configuration - Required Steps:**
 
 Euler V2 uses **vault-to-vault collateral**:
 1. Users deposit USDC into a USDC vault → receive vault shares
 2. Those vault shares serve as collateral
 3. Users borrow AXUSD against their vault share position
 
-To fully enable borrowing, we need to either:
-1. **Create escrow vaults** for each collateral type (USDC, USDY, USDT, WETH, ARB)
-2. **Join existing cluster** if suitable vaults already exist on Arbitrum
-3. **Configure LTVs** pointing to vault addresses (not raw token addresses)
+**Recommended Next Steps:**
+1. **Contact Euler Discord** (discord.euler.finance) to:
+   - Get correct factory address for our Arbitrum deployment
+   - Request assistance creating escrow vaults for collateral
+   - Join an existing cluster if applicable
+2. **Alternative:** Wait for Euler ecosystem to grow on Arbitrum with existing vaults that can be configured as collateral
 
 **Technical Note - Euler AmountCap Encoding:**
 Euler V2 uses 16-bit decimal floating point for caps (see `AmountCap.sol`):
