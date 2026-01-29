@@ -116,12 +116,14 @@ Key features include:
 **Deployer:** `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`
 
 **Euler V2 Vault (LIVE on Arbitrum):**
-- AXUSD Lending Vault: `0xFc7145A213833222Eb0e616fDcb95D1746a8c40C`
+- AXUSD Lending Vault V2: `0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13`
+- Axiom Price Oracle: `0xc0E91760D699aA9673aFc8350a67d8ba6c9843db` (Chainlink-based)
 - Initial Liquidity: 56.5 AXUSD
 - IRM: `0xd726F97adA1dD330D3C5e479A79c47Dc63dCA770` (Adaptive Curve)
 - Unit of Account: USDC
 - Accepted Collateral: USDC (90%), USDY (85%), USDT (90%), WETH (80%), ARB (70%)
-- View: https://app.euler.finance/vault/0xFc7145A213833222Eb0e616fDcb95D1746a8c40C?network=arbitrumone
+- View: https://app.euler.finance/vault/0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13?network=arbitrumone
+- Deprecated V1 (no oracle): `0xFc7145A213833222Eb0e616fDcb95D1746a8c40C`
 
 **Morpho Markets (Pending - Morpho Blue not on Arbitrum):**
 - AXUSD/USDY: 90% LLTV - Market ID: `0xe0bd68...873ac`

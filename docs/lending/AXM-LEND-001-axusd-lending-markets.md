@@ -13,17 +13,24 @@
 
 ### Euler V2 Vault (LIVE)
 
-| Vault | Asset | Initial Liquidity | Address | Status |
-|-------|-------|-------------------|---------|--------|
-| **AXUSD Lending Vault** | AXUSD | 56.5 AXUSD | [`0xFc7145A213833222Eb0e616fDcb95D1746a8c40C`](https://arbiscan.io/address/0xFc7145A213833222Eb0e616fDcb95D1746a8c40C) | ✅ LIVE |
+| Vault | Asset | Liquidity | Address | Status |
+|-------|-------|-----------|---------|--------|
+| **AXUSD Lending Vault V2** | AXUSD | 56.5 AXUSD | [`0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13`](https://arbiscan.io/address/0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13) | ✅ LIVE |
 
-**View on Euler:** [app.euler.finance/vault/0xFc7145A213833222Eb0e616fDcb95D1746a8c40C?network=arbitrumone](https://app.euler.finance/vault/0xFc7145A213833222Eb0e616fDcb95D1746a8c40C?network=arbitrumone)
+**View on Euler:** [app.euler.finance/vault/0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13?network=arbitrumone](https://app.euler.finance/vault/0xf8ff43f8b75c3a630e5e331613f9bdb133a49d13?network=arbitrumone)
 
 **Vault Configuration:**
+- Oracle: `0xc0E91760D699aA9673aFc8350a67d8ba6c9843db` (Axiom Price Oracle - Chainlink-based)
 - IRM: `0xd726F97adA1dD330D3C5e479A79c47Dc63dCA770` (Adaptive Curve)
 - Unit of Account: USDC
 - Governor: `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`
-- Creation TX: [`0x72aafbfaec5903a7a15d1bc15b3f4edf12d39ee1df04200733ce32134f704e99`](https://arbiscan.io/tx/0x72aafbfaec5903a7a15d1bc15b3f4edf12d39ee1df04200733ce32134f704e99)
+- Creation TX: [`0xa222f25361b33e77c446bd3fb9e4d5ea5596c41c5731be56acb7a385a0276999`](https://arbiscan.io/tx/0xa222f25361b33e77c446bd3fb9e4d5ea5596c41c5731be56acb7a385a0276999)
+
+**Axiom Price Oracle Features:**
+- Uses Chainlink feeds for WETH/USD and ARB/USD pricing
+- 1:1 pricing for stablecoins (USDC, USDT, AXUSD)
+- 1.03:1 pricing for USDY (includes yield premium)
+- Contract: [`0xc0E91760D699aA9673aFc8350a67d8ba6c9843db`](https://arbiscan.io/address/0xc0E91760D699aA9673aFc8350a67d8ba6c9843db)
 
 **Accepted Collateral (5 types configured):**
 
@@ -34,6 +41,9 @@
 | **USDT** | `0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9` | 90% | 95% |
 | **WETH** | `0x82aF49447D8a07e3bd95BD0d56f35241523fBab1` | 80% | 85% |
 | **ARB** | `0x912CE59144191C1204E64559FE8253a0e49E6548` | 70% | 75% |
+
+**Deprecated Vault (V1 - No Oracle):**
+The original vault at `0xFc7145A213833222Eb0e616fDcb95D1746a8c40C` was created without an oracle and has been deprecated. All liquidity has been migrated to V2.
 
 ### Note on Morpho Markets
 
