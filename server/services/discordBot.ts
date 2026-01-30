@@ -41,7 +41,10 @@ const AXIOM_ROLES = {
   founder: { name: 'Founding Member', color: 0xeab308, position: 4 },
   level5: { name: 'Rising Steward', color: 0x60a5fa, position: 5 },
   level10: { name: 'Land Guardian', color: 0x8b5cf6, position: 6 },
-  level25: { name: 'Heritage Keeper', color: 0xf472b6, position: 7 }
+  level25: { name: 'Heritage Keeper', color: 0xf472b6, position: 7 },
+  vaultObserver: { name: 'Vault Observer', color: 0x3b82f6, position: 8 },
+  landResearcher: { name: 'Land Researcher', color: 0x22c55e, position: 9 },
+  communityBuilder: { name: 'Community Builder', color: 0xa855f7, position: 10 }
 };
 
 const XP_LEVELS = [
@@ -101,6 +104,18 @@ const FAQ_RESPONSES: Record<string, { question: string; answer: string }> = {
   'find-records': {
     question: 'Where can I find property records?',
     answer: 'Start with: County deed offices, FamilySearch.org (free), Ancestry.com, National Archives (Freedmen\'s Bureau), state historical societies, and local libraries. Many Southern counties have digitized records online.'
+  },
+  'axusd-vault': {
+    question: 'What is the AXUSD Vault?',
+    answer: 'The AXUSD Euler V2 Vault is a permissionless lending market on Arbitrum One. LPs can deposit AXUSD to earn yield, while borrowers can take loans using eUSDC or eWETH as collateral. It is currently in observation mode until March 26, 2026.'
+  },
+  'vault-collateral': {
+    question: 'What collateral can I use?',
+    answer: 'The AXUSD vault accepts two types of collateral:\n• eUSDC (90% Borrow LTV / 95% Liquidation LTV)\n• eWETH (80% Borrow LTV / 85% Liquidation LTV)\nYou must first deposit into Euler\'s USDC or WETH vaults to get the collateral tokens.'
+  },
+  'observation-window': {
+    question: 'What is the observation window?',
+    answer: 'The observation window (ending March 26, 2026) is a monitoring period where we observe vault behavior, collect feedback, and ensure everything works correctly before full external adoption. This is not a call to invest—we are building credibility through transparency.'
   }
 };
 
@@ -254,6 +269,23 @@ const AXIOM_CHANNEL_STRUCTURE: CategoryConfig[] = [
       { name: 'events', topic: 'Community calls, Q&As, workshops, live sessions', type: 'text' },
       { name: 'milestones', topic: 'Celebrating community growth and achievements', type: 'text' }
     ]
+  },
+  {
+    name: '🔷 AXUSD VAULT OBSERVERS',
+    channels: [
+      { name: 'vault-overview', topic: 'Technical overview of the AXUSD Euler V2 Lending Vault on Arbitrum One. Educational content only.', type: 'text' },
+      { name: 'technical-discussion', topic: 'Discuss vault mechanics, liquidation processes, collateral parameters, and Euler V2 architecture.', type: 'text' },
+      { name: 'weekly-reports', topic: 'Weekly transparency reports on vault metrics: TVL, utilization, borrowing activity, and protocol health.', type: 'text' },
+      { name: 'risk-mechanics', topic: 'Understanding LTV ratios, liquidation thresholds, oracle feeds, and risk parameters. Educational only.', type: 'text' },
+      { name: 'feedback-and-questions', topic: 'Share observations, report issues, suggest improvements. Your feedback shapes the protocol.', type: 'text' }
+    ]
+  },
+  {
+    name: '⚖️ GOVERNANCE',
+    channels: [
+      { name: 'proposals', topic: 'Active governance proposals and voting discussions', type: 'text' },
+      { name: 'treasury-transparency', topic: 'On-chain treasury data and protocol metrics', type: 'text' }
+    ]
   }
 ];
 
@@ -291,14 +323,20 @@ const slashCommands = [
           { name: 'Workbook cost', value: 'workbook-cost' },
           { name: 'Land Fund explained', value: 'land-fund' },
           { name: 'Getting started', value: 'get-started' },
-          { name: 'Finding records', value: 'find-records' }
+          { name: 'Finding records', value: 'find-records' },
+          { name: 'AXUSD Vault explained', value: 'axusd-vault' },
+          { name: 'Vault collateral types', value: 'vault-collateral' },
+          { name: 'Observation window', value: 'observation-window' }
         )),
   new SlashCommandBuilder()
     .setName('progress')
     .setDescription('Check your community XP and level'),
   new SlashCommandBuilder()
     .setName('leaderboard')
-    .setDescription('See the top community contributors')
+    .setDescription('See the top community contributors'),
+  new SlashCommandBuilder()
+    .setName('vault')
+    .setDescription('Get AXUSD Euler V2 Vault information and stats')
 ];
 
 async function registerSlashCommands() {
@@ -600,6 +638,22 @@ export async function initializeDiscordBot(): Promise<Client | null> {
             .setDescription(leaderboardText || 'No members on the leaderboard yet. Start participating to earn XP!')
             .setFooter({ text: 'Earn XP by being active in the community!' });
           await interaction.reply({ embeds: [leaderboardEmbed] });
+          break;
+        case 'vault':
+          const vaultEmbed = new EmbedBuilder()
+            .setColor(0x3b82f6)
+            .setTitle('🔷 AXUSD Euler V2 Lending Vault')
+            .setDescription('Permissionless lending market on Arbitrum One. Currently in observation mode.')
+            .addFields(
+              { name: '📍 Status', value: 'Live - Observation Mode', inline: true },
+              { name: '⏳ Window Ends', value: 'March 26, 2026', inline: true },
+              { name: '🔗 Network', value: 'Arbitrum One', inline: true },
+              { name: '💰 Collateral', value: '• eUSDC: 90% LTV / 95% Liq\n• eWETH: 80% LTV / 85% Liq', inline: false },
+              { name: '📊 Fee Structure', value: '• 90% to LPs\n• 10% to Revenue Router', inline: false },
+              { name: '🔗 View on Euler', value: '[Open Vault](https://app.euler.finance/vault/0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059?network=arbitrumone)', inline: false }
+            )
+            .setFooter({ text: 'This is educational information, not financial advice.' });
+          await interaction.reply({ embeds: [vaultEmbed] });
           break;
         default:
           await interaction.reply({ content: 'Unknown command', ephemeral: true });
