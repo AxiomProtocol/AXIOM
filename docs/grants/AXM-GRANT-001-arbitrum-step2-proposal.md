@@ -1,7 +1,7 @@
 # Arbitrum STEP 2.0 Grant Proposal: AXUSD RWA Lending Markets
 
 **Document ID:** AXM-GRANT-001  
-**Version:** 1.2  
+**Version:** 1.3  
 **Date:** 2026-01-29  
 **Updated:** 2026-01-30  
 **Status:** Ready for Submission
@@ -39,15 +39,13 @@ We have already deployed and configured our first institutional lending market o
 |----------|---------|--------|
 | **AXUSD Lending Vault** | `0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059` | LIVE |
 | **Vault Governor** | `0xE742Ee9b946043ecc75bFc71B47216C1f8248316` | LIVE |
-| **Fee Recipient** | `0x39A9Ca593d350450d93aF7F24dC1A682df47F30a` | Configured |
+| **Fee Recipient (Revenue Router)** | `0xd726F97adA1dD330D3C5e479A79c47Dc63dCA770` | Configured |
 
 **Collateral Types (Live):**
 | Asset | Vault Address | Borrow LTV | Liquidation LTV |
 |-------|---------------|------------|-----------------|
-| USDC | `0x0a1eCC5Fe8C9be3C809844fcBe615B46A869b899` | 90% | 95% |
-| USDT | `0x37512F45B4ba8808910632323b73783Ca938CD51` | 90% | 95% |
-| WETH | `0x78E3E051D32157AACD550fBB78458762d8f7edFF` | 80% | 85% |
-| ARB | `0x7eD866D2D66c3149FaFE854C30C68a8BA7ceE8B9` | 70% | 75% |
+| eUSDC | `0x0a1eCC5Fe8C9be3C809844fcBe615B46A869b899` | 90% | 95% |
+| eWETH | `0x78E3E051D32157AACD550fBB78458762d8f7edFF` | 80% | 85% |
 
 **Governance:** Fee recipient configured via [AXM-GOV-002](https://arbiscan.io/tx/0x2dba6cd2be8d3378974e51086ffb06f507f28df2381aa7265e0f90cf6f4e1a08) - Protocol captures 10% of borrower interest
 
@@ -117,7 +115,7 @@ Traditional stablecoin collateral sits idle. AXUSD lending markets accept **yiel
 
 ```
 AXUSD Lending Stack
-├── Euler V2 AXUSD Vault        - LIVE with 4 collateral types
+├── Euler V2 AXUSD Vault        - LIVE with 2 collateral types (eUSDC, eWETH)
 │   ├── Fee routing             - 10% to Revenue Router (CONFIGURED)
 │   ├── Governance              - AxiomVaultGovernorV2 (LIVE)
 │   └── API Endpoint            - /api/euler/vault-stats (LIVE)
@@ -181,10 +179,8 @@ export const EULER_LENDING_CONTRACTS = {
   PRICE_ORACLE: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15',
   EVK_FACTORY: '0x78Df1CF5bf06a7f27f2ACc580B934238C1b80D50',
   EVC: '0x6302ef0F34100CDDFb5489fbcB6eE1AA95CD1066',
-  COLLATERAL_USDC_VAULT: '0x0a1eCC5Fe8C9be3C809844fcBe615B46A869b899',
-  COLLATERAL_USDT_VAULT: '0x37512F45B4ba8808910632323b73783Ca938CD51',
-  COLLATERAL_WETH_VAULT: '0x78E3E051D32157AACD550fBB78458762d8f7edFF',
-  COLLATERAL_ARB_VAULT: '0x7eD866D2D66c3149FaFE854C30C68a8BA7ceE8B9'
+  COLLATERAL_EUSDC_VAULT: '0x0a1eCC5Fe8C9be3C809844fcBe615B46A869b899',
+  COLLATERAL_EWETH_VAULT: '0x78E3E051D32157AACD550fBB78458762d8f7edFF'
 };
 ```
 
@@ -322,7 +318,7 @@ This infrastructure is designed for:
 | AXUSD Stablecoin | Deployed | `0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c` |
 | DEX V2 (10 contracts) | Live | Arbitrum One mainnet |
 | **Euler V2 AXUSD Vault** | **LIVE** | `0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059` |
-| **4 Collateral Vaults** | **LIVE** | USDC/USDT/WETH/ARB |
+| **2 Collateral Vaults** | **LIVE** | eUSDC/eWETH |
 | **Fee Routing** | **Configured** | 10% to Revenue Router |
 | Observer Dashboard | Live | Read-only transparency |
 | Treasury Transparency | Live | Real-time on-chain metrics |
@@ -382,7 +378,7 @@ This infrastructure is designed for:
 | AXUSD Token | `0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c` |
 | AXUSD Lending Vault | `0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059` |
 | Vault Governor | `0xE742Ee9b946043ecc75bFc71B47216C1f8248316` |
-| Revenue Router | `0x39A9Ca593d350450d93aF7F24dC1A682df47F30a` |
+| Revenue Router (Fee Recipient) | `0xd726F97adA1dD330D3C5e479A79c47Dc63dCA770` |
 | Axiom Deployer | `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` |
 
 **Euler V2 Direct Link:** [View on Euler](https://app.euler.finance/vault/0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059?network=arbitrumone)
@@ -411,3 +407,4 @@ AXUSD creates lending markets that connect these protocols, enabling capital-eff
 | 1.0 | 2026-01-29 | Initial draft |
 | 1.1 | 2026-01-30 | Major update: Euler V2 LIVE status, contract addresses, governance TX, milestone M2 complete |
 | 1.2 | 2026-01-30 | Added: Revenue flow architecture, full-stack integration depth, governance maturity section, comprehensive documentation links |
+| 1.3 | 2026-01-30 | Updated: Correct Fee Recipient (Revenue Router 0xd726...), reduced collateral to 2 live vaults (eUSDC, eWETH), removed USDT/ARB which are not yet configured |
