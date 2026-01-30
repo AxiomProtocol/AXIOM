@@ -24,11 +24,12 @@
 ### Caps Configuration
 | Parameter | Value | Encoded |
 |-----------|-------|---------|
-| Supply Cap | 1,000,000 AXUSD | 64023 |
-| Borrow Cap | 1,000,000 AXUSD | 64023 |
+| Supply Cap | 100,000,000 AXUSD | 64023 |
+| Borrow Cap | 100,000,000 AXUSD | 64023 |
 
 **Cap Encoding Formula**: `(mantissa << 6) | exponent`
-- For 1M with 18 decimals: mantissa=1000, exponent=23 → 64023
+- For 100M with 18 decimals: mantissa=1000, exponent=23 → 64023
+- Decode: 1000 × 10^23 = 10^26 raw → 10^26 / 10^18 = 100,000,000 AXUSD
 
 ### Interest Rate Model
 | Parameter | Value |

@@ -33,11 +33,15 @@ const VAULT_ABI = [
   'function governorAdmin() view returns (address)'
 ];
 
-function decodeAmountCap(encoded: number): number {
-  if (encoded === 0) return 0;
-  const exponent = encoded & 0x3F;
-  const mantissa = encoded >> 6;
-  return Math.pow(10, exponent) * mantissa / 100;
+function decodeAmountCap(encoded: number): string {
+  if (encoded === 0) return '0';
+  const exponent = encoded & 0x3F;  // Lower 6 bits
+  const mantissa = encoded >> 6;     // Upper bits
+  // Decode: mantissa * 10^exponent gives raw value with 18 decimals
+  // To get human-readable, divide by 10^18
+  const rawValue = BigInt(mantissa) * (10n ** BigInt(exponent));
+  const humanValue = rawValue / (10n ** 18n);
+  return humanValue.toLocaleString();
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -147,8 +151,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         utilization: utilization.toFixed(2),
         supplyAPY: supplyAPY.toFixed(2),
         borrowAPY: borrowAPY.toFixed(2),
-        supplyCap: supplyCap.toLocaleString(),
-        borrowCap: borrowCap.toLocaleString(),
+        supplyCap: supplyCap,
+        borrowCap: borrowCap,
         collateral: collateralList,
         governor: EULER_LENDING_CONFIG.VAULT_GOVERNOR,
         oracle: EULER_LENDING_CONFIG.PRICE_ORACLE,
