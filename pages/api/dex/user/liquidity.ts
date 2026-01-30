@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import dexService from '../../../../server/services/dex/DexService';
+import camelotPoolService from '../../../../lib/services/CamelotPoolService';
 
 export default async function handler(
   req: NextApiRequest,
@@ -16,8 +16,27 @@ export default async function handler(
       return res.status(400).json({ error: 'Missing wallet address' });
     }
 
-    const positions = await dexService.getUserLiquidity(address as string);
-    return res.status(200).json({ positions });
+    const pools = await camelotPoolService.getAllPools(address as string);
+    
+    const positions = pools
+      .filter(pool => pool.yourLiquidity > 0)
+      .map((pool, index) => ({
+        poolId: index,
+        pairAddress: pool.pairAddress,
+        tokenA: pool.token0Address,
+        tokenB: pool.token1Address,
+        tokenASymbol: pool.token0,
+        tokenBSymbol: pool.token1,
+        liquidity: pool.yourLiquidity.toString(),
+        sharePercent: pool.yourShare,
+        tvl: pool.tvl
+      }));
+    
+    return res.status(200).json({ 
+      positions,
+      source: 'camelot',
+      message: `Found ${positions.length} position(s) for ${address}`
+    });
   } catch (error) {
     console.error('Error fetching user liquidity:', error);
     return res.status(500).json({ error: 'Failed to fetch user liquidity' });
