@@ -1,9 +1,10 @@
 # Arbitrum STEP 2.0 Grant Proposal: AXUSD RWA Lending Markets
 
 **Document ID:** AXM-GRANT-001  
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** 2026-01-29  
-**Status:** Draft
+**Updated:** 2026-01-30  
+**Status:** Ready for Submission
 
 ---
 
@@ -27,8 +28,28 @@ AXUSD is a RWA-backed stablecoin deploying permissionless lending markets on Arb
 | **AXUSD/USDY Market** | Morpho lending market, 90% LLTV, ~8% APY | Ready to deploy |
 | **AXUSD/USDC Market** | Morpho lending market, 92% LLTV, ~6% APY | Ready to deploy |
 | **AXUSD/USTBL Market** | Morpho lending market, 90% LLTV, ~7% APY | Ready to deploy |
-| **AXUSD Lending Vault** | Euler multi-collateral vault | Ready to deploy |
+| **AXUSD Lending Vault** | Euler multi-collateral vault (USDC/USDT/WETH/ARB collateral) | **LIVE** |
 | **AXUSD Conservative Vault** | Euler ungoverned vault | Ready to deploy |
+
+### Euler V2 Integration: Already Deployed
+
+We have already deployed and configured our first institutional lending market on Euler V2:
+
+| Contract | Address | Status |
+|----------|---------|--------|
+| **AXUSD Lending Vault** | `0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429` | LIVE |
+| **Vault Governor** | `0xE742Ee9b946043ecc75bFc71B47216C1f8248316` | LIVE |
+| **Fee Recipient** | `0x39A9Ca593d350450d93aF7F24dC1A682df47F30a` | Configured |
+
+**Collateral Types (Live):**
+| Asset | Vault Address | Borrow LTV | Liquidation LTV |
+|-------|---------------|------------|-----------------|
+| USDC | `0x0a1eCC5Fe8C9be3C809844fcBe615B46A869b899` | 90% | 95% |
+| USDT | `0x37512F45B4ba8808910632323b73783Ca938CD51` | 90% | 95% |
+| WETH | `0x78E3E051D32157AACD550fBB78458762d8f7edFF` | 80% | 85% |
+| ARB | `0x7eD866D2D66c3149FaFE854C30C68a8BA7ceE8B9` | 70% | 75% |
+
+**Governance:** Fee recipient configured via [AXM-GOV-002](https://arbiscan.io/tx/0x2dba6cd2be8d3378974e51086ffb06f507f28df2381aa7265e0f90cf6f4e1a08) - Protocol captures 10% of borrower interest
 
 ### The Innovation
 
@@ -64,12 +85,16 @@ Traditional stablecoin collateral sits idle. AXUSD lending markets accept **yiel
 
 ## Technical Architecture
 
-### Smart Contract Infrastructure (Already Built)
+### Smart Contract Infrastructure (Built & Deployed)
 
 ```
 AXUSD Lending Stack
+├── Euler V2 AXUSD Vault        - LIVE with 4 collateral types
+│   ├── Fee routing             - 10% to Revenue Router (CONFIGURED)
+│   ├── Governance              - AxiomVaultGovernorV2 (LIVE)
+│   └── API Endpoint            - /api/euler/vault-stats (LIVE)
 ├── MorphoMarketService.ts      - 3 proposed markets, deployment ready
-├── EulerVaultService.ts        - 2 proposed vaults, deployment ready
+├── EulerVaultService.ts        - Conservative vault, deployment ready
 ├── API Endpoints               - /api/lending/overview, /morpho, /euler
 ├── Observer Dashboard          - Transparency for LPs and borrowers
 └── Treasury Transparency       - Real-time on-chain metrics
@@ -108,13 +133,15 @@ AXUSD Lending Stack
 
 ### Milestone-Based Disbursement
 
-| Milestone | Deliverable | % of Grant |
-|-----------|-------------|------------|
-| **M1** (Week 1) | Deploy 3 Morpho markets | 20% |
-| **M2** (Week 2) | Deploy 2 Euler vaults | 20% |
-| **M3** (Month 1) | Achieve $100K TVL | 20% |
-| **M4** (Month 3) | Achieve $500K TVL | 20% |
-| **M5** (Month 6) | Achieve $1M TVL | 20% |
+| Milestone | Deliverable | % of Grant | Status |
+|-----------|-------------|------------|--------|
+| **M1** (Week 1) | Deploy 3 Morpho markets | 20% | Pending |
+| **M2** (Week 2) | Deploy Euler vault with fee routing | 20% | **COMPLETE** |
+| **M3** (Month 1) | Achieve $100K TVL | 20% | In Progress |
+| **M4** (Month 3) | Achieve $500K TVL | 20% | Pending |
+| **M5** (Month 6) | Achieve $1M TVL | 20% | Pending |
+
+**Note:** Euler V2 AXUSD Vault (Milestone M2) was deployed and configured prior to grant submission, demonstrating technical capability and commitment.
 
 ---
 
@@ -162,12 +189,16 @@ AXUSD Lending Stack
 
 ### Existing Arbitrum Presence
 
-| Component | Status |
-|-----------|--------|
-| AXUSD Stablecoin | Deployed on Arbitrum One |
-| DEX V2 (10 contracts) | Live on Arbitrum One |
-| Observer Dashboard | Live, read-only transparency |
-| Treasury Transparency | Real-time on-chain metrics |
+| Component | Status | Contract/Link |
+|-----------|--------|---------------|
+| AXUSD Stablecoin | Deployed | `0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c` |
+| DEX V2 (10 contracts) | Live | Arbitrum One mainnet |
+| **Euler V2 AXUSD Vault** | **LIVE** | `0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429` |
+| **4 Collateral Vaults** | **LIVE** | USDC/USDT/WETH/ARB |
+| **Fee Routing** | **Configured** | 10% to Revenue Router |
+| Observer Dashboard | Live | Read-only transparency |
+| Treasury Transparency | Live | Real-time on-chain metrics |
+| Vault Stats API | Live | `/api/euler/vault-stats` |
 
 ---
 
@@ -206,23 +237,48 @@ AXUSD Lending Stack
 ## Contact & Resources
 
 **Website:** [axiomprotocol.io](https://axiomprotocol.io)  
-**Documentation:** `/docs/lending/AXM-LEND-001-axusd-lending-markets.md`  
 **Observer Dashboard:** `/observer`  
-**Lending APIs:** `/api/lending/overview`, `/api/lending/morpho`, `/api/lending/euler`
 
-**Smart Contracts (Arbitrum One):**
-- AXUSD: `0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c`
-- Axiom Deployer: `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`
+**Documentation:**
+- Executive Summary: `/docs/lending/EXECUTIVE-SUMMARY-euler-v2-axusd-lending.md`
+- Technical Specification: `/docs/lending/AXM-LEND-001-axusd-lending-markets.md`
+- Governance Proposal: `/docs/governance/AXM-GOV-002-euler-vault-fee-recipient.md`
+
+**Live APIs:**
+- Vault Stats: `/api/euler/vault-stats` (real-time TVL, APY, utilization, fee status)
+- Lending Overview: `/api/lending/overview`
+
+**Smart Contracts (Arbitrum One - All Verified):**
+| Contract | Address |
+|----------|---------|
+| AXUSD Token | `0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c` |
+| AXUSD Lending Vault | `0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429` |
+| Vault Governor | `0xE742Ee9b946043ecc75bFc71B47216C1f8248316` |
+| Revenue Router | `0x39A9Ca593d350450d93aF7F24dC1A682df47F30a` |
+| Axiom Deployer | `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` |
+
+**Euler V2 Direct Link:** [View on Euler](https://app.euler.finance/vault/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429?network=arbitrumone)
+
+**Governance Transaction:** [Arbiscan TX](https://arbiscan.io/tx/0x2dba6cd2be8d3378974e51086ffb06f507f28df2381aa7265e0f90cf6f4e1a08)
 
 ---
 
 ## Appendix: Comparable Projects
 
-| Project | TVL | Grant Received | Arbitrum Support |
-|---------|-----|----------------|------------------|
-| Ondo (USDY) | $4.9M on Arbitrum | STEP 1.0 recipient | Yes |
-| Spiko (USTBL) | Listed on Arbitrum | STEP 1.0 recipient | Yes |
-| Morpho | $271M on Arbitrum | Arbitrum ecosystem | Yes |
-| Euler | $1B+ total | Arbitrum deployment | Yes |
+| Project | TVL | Grant Received | Axiom Integration |
+|---------|-----|----------------|-------------------|
+| Ondo (USDY) | $4.9M on Arbitrum | STEP 1.0 recipient | Collateral support planned |
+| Spiko (USTBL) | Listed on Arbitrum | STEP 1.0 recipient | Collateral support planned |
+| Morpho | $271M on Arbitrum | Arbitrum ecosystem | Markets ready to deploy |
+| Euler | $1B+ total | Arbitrum deployment | **LIVE INTEGRATION** |
 
 AXUSD creates lending markets that connect these protocols, enabling capital-efficient borrowing with yield-bearing RWA collateral.
+
+---
+
+## Document History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | 2026-01-29 | Initial draft |
+| 1.1 | 2026-01-30 | Updated with live Euler V2 deployment, added contract addresses, governance TX, milestone progress |
