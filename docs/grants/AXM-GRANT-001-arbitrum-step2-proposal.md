@@ -1,7 +1,7 @@
 # Arbitrum STEP 2.0 Grant Proposal: AXUSD RWA Lending Markets
 
 **Document ID:** AXM-GRANT-001  
-**Version:** 1.1  
+**Version:** 1.2  
 **Date:** 2026-01-29  
 **Updated:** 2026-01-30  
 **Status:** Ready for Submission
@@ -51,6 +51,34 @@ We have already deployed and configured our first institutional lending market o
 
 **Governance:** Fee recipient configured via [AXM-GOV-002](https://arbiscan.io/tx/0x2dba6cd2be8d3378974e51086ffb06f507f28df2381aa7265e0f90cf6f4e1a08) - Protocol captures 10% of borrower interest
 
+### Revenue Flow Architecture
+
+Protocol revenue from the Euler vault flows through a transparent, on-chain distribution system:
+
+```
+Borrower Interest (100%)
+       │
+       ├──────────────────────────────┐
+       │                              │
+       ▼                              ▼
+  LPs (90%)                  Revenue Router (10%)
+                                      │
+                    ┌─────────────────┼─────────────────┐
+                    ▼                 ▼                 ▼
+               SEED Yield        Treasury          Backstop
+               Distributor                          Vault
+                    │                 │                 │
+                    ▼                 ▼                 ▼
+              AXM Staker         Protocol          Insurance
+               Rewards          Operations            Fund
+```
+
+This sustainable revenue model ensures:
+- **LP Incentives**: 90% of interest goes directly to liquidity providers
+- **Protocol Sustainability**: 10% funds ongoing development and security
+- **Staker Rewards**: SEED lockers receive yield from protocol revenue
+- **Insurance Buffer**: Backstop vault provides bad debt protection
+
 ### The Innovation
 
 Traditional stablecoin collateral sits idle. AXUSD lending markets accept **yield-bearing RWA collateral**:
@@ -99,6 +127,72 @@ AXUSD Lending Stack
 ├── Observer Dashboard          - Transparency for LPs and borrowers
 └── Treasury Transparency       - Real-time on-chain metrics
 ```
+
+### Full-Stack Integration Depth
+
+We have built comprehensive frontend and backend infrastructure for the Euler integration:
+
+#### Frontend Components (Built & Deployed)
+
+| Component | Location | Features |
+|-----------|----------|----------|
+| **EulerVaultCard** | `components/EulerVaultCard.tsx` | 3 variants (full, compact, widget), real-time TVL/APY, collateral display, direct links |
+| **DashboardEulerWidget** | `components/DashboardEulerWidget.tsx` | Dashboard integration with live stats |
+
+#### Page Integrations (Live)
+
+| Page | Integration | User Journey |
+|------|-------------|--------------|
+| `/earn` | Featured Euler section with full vault card | LPs discover yield opportunities |
+| `/borrow` | Complete borrow interface, collateral selection, step-by-step guide | Borrowers access liquidity |
+| `/dex` | Earn tab with vault card | Traders discover yield while trading |
+| `/yield-vault` | Compact vault card integration | Yield aggregation view |
+| `/dashboard` | Widget showing TVL and APY | User position overview |
+
+#### Backend Services (Operational)
+
+| Service | Location | Capabilities |
+|---------|----------|--------------|
+| **EulerVaultService** | `server/services/lending/EulerVaultService.ts` | On-chain data fetching, observation window management, vault deployment preparation |
+| **Vault Stats API** | `/api/euler/vault-stats` | Real-time TVL, APY, utilization, fee configuration, data quality indicators |
+| **Lending API** | `/api/lending/euler` | Proposed vaults, deployment guide, protocol comparison |
+| **Overview API** | `/api/lending/overview` | Cross-protocol lending aggregation |
+
+#### Key Technical Features
+
+1. **Real-Time On-Chain Data**: All stats fetched directly from Arbitrum RPC
+2. **Data Quality Monitoring**: API surfaces RPC failures with `dataQuality` and `warnings` fields
+3. **Observation Window Awareness**: `OBSERVATION_END_DATE` (March 26, 2026) enforced in services
+4. **Multi-Variant Components**: UI components adapt to context (full detail, compact, widget)
+5. **Auto-Refresh**: Stats update every 60-120 seconds without page reload
+6. **Direct Euler Links**: One-click access to Euler app for deposits/borrows
+7. **Centralized Contract Registry**: All Euler contracts defined in `shared/contracts.ts`
+8. **Protocol Comparison**: API provides Morpho vs Euler feature comparison
+9. **Cross-Protocol Aggregation**: `/api/lending/overview` combines all lending opportunities
+
+#### Centralized Contract Configuration
+
+All Euler V2 contracts are defined in a single source of truth (`shared/contracts.ts`):
+
+```typescript
+export const EULER_LENDING_CONTRACTS = {
+  AXUSD_VAULT: '0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429',
+  VAULT_GOVERNOR: '0xE742Ee9b946043ecc75bFc71B47216C1f8248316',
+  PRICE_ORACLE: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15',
+  EVK_FACTORY: '0x78Df1CF5bf06a7f27f2ACc580B934238C1b80D50',
+  EVC: '0x6302ef0F34100CDDFb5489fbcB6eE1AA95CD1066',
+  COLLATERAL_USDC_VAULT: '0x0a1eCC5Fe8C9be3C809844fcBe615B46A869b899',
+  COLLATERAL_USDT_VAULT: '0x37512F45B4ba8808910632323b73783Ca938CD51',
+  COLLATERAL_WETH_VAULT: '0x78E3E051D32157AACD550fBB78458762d8f7edFF',
+  COLLATERAL_ARB_VAULT: '0x7eD866D2D66c3149FaFE854C30C68a8BA7ceE8B9'
+};
+```
+
+This centralized approach ensures:
+- Single source of truth for all integrations
+- Type-safe contract references across the codebase
+- Easy auditing of deployed infrastructure
+- Consistent addresses across frontend, backend, and scripts
 
 ### Collateral Risk Parameters
 
@@ -186,6 +280,40 @@ AXUSD Lending Stack
 - **Axiom Protocol Team**: Building decentralized land ownership and DeFi treasury infrastructure
 - **Technical Infrastructure**: 23 verified smart contracts on Arbitrum One
 - **Transparency**: Public Observer Dashboard for institutional-grade reporting
+
+### Governance Maturity
+
+We maintain institutional-grade governance documentation:
+
+| Document | Purpose | Status |
+|----------|---------|--------|
+| [AXM-GOV-002](../governance/AXM-GOV-002-euler-vault-fee-recipient.md) | Fee recipient configuration | EXECUTED |
+| [AXM-LEND-001](../lending/AXM-LEND-001-axusd-lending-markets.md) | Technical specification | Published |
+| [Executive Summary](../lending/EXECUTIVE-SUMMARY-euler-v2-axusd-lending.md) | Strategic overview | Published |
+| [Integration Plan](../integrations/arbitrum-2026-integration-plan.md) | Arbitrum roadmap | Active |
+
+All governance actions are:
+- Documented before execution
+- Executed via on-chain governor contract
+- Verified on Arbiscan with full calldata
+- Referenced in technical documentation
+
+### Institutional Transparency Infrastructure
+
+The Observer Dashboard (`/observer`) provides read-only access for institutional allocators and auditors:
+
+| Feature | Implementation | Benefit |
+|---------|----------------|---------|
+| **Lending Pause Monitoring** | `lendingPaused` status in governance overview | Real-time protocol health |
+| **Treasury Health Checks** | 15 invariant domains monitored | Risk assessment |
+| **On-Chain Verification** | All data fetched from Arbitrum RPC | Trust-minimized transparency |
+| **API Endpoints** | RESTful APIs for data integration | Programmatic access |
+
+This infrastructure is designed for:
+- Institutional due diligence
+- Regulatory compliance audits
+- Real-time protocol monitoring
+- Third-party integrations (DeFiLlama, portfolio trackers)
 
 ### Existing Arbitrum Presence
 
@@ -281,4 +409,5 @@ AXUSD creates lending markets that connect these protocols, enabling capital-eff
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-01-29 | Initial draft |
-| 1.1 | 2026-01-30 | Updated with live Euler V2 deployment, added contract addresses, governance TX, milestone progress |
+| 1.1 | 2026-01-30 | Major update: Euler V2 LIVE status, contract addresses, governance TX, milestone M2 complete |
+| 1.2 | 2026-01-30 | Added: Revenue flow architecture, full-stack integration depth, governance maturity section, comprehensive documentation links |
