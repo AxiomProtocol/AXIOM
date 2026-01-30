@@ -207,97 +207,54 @@ const REACTION_ROLES: Record<string, string> = {
 
 const AXIOM_CHANNEL_STRUCTURE: CategoryConfig[] = [
   {
-    name: '🌱 WELCOME & ONBOARDING',
+    name: '🌱 START HERE',
     channels: [
       { name: 'welcome', topic: "You're now part of a movement to build generational wealth together", type: 'text' },
       { name: 'get-roles', topic: 'React to get your roles and access more channels', type: 'text' },
       { name: 'our-story', topic: 'Why Axiom exists - the mission and vision', type: 'text' },
-      { name: 'how-it-works', topic: '$100/month → fractional land ownership → community wealth', type: 'text' }
+      { name: 'how-it-works', topic: 'From $100/month to fractional land ownership and DeFi tools', type: 'text' },
+      { name: 'announcements', topic: 'Official updates, news, and milestones', type: 'text' }
     ]
   },
   {
-    name: '📚 EDUCATION',
+    name: '💬 COMMUNITY',
     channels: [
-      { name: 'heir-property-101', topic: 'The basics of heir property and why it matters to our community', type: 'text' },
-      { name: 'genealogy-tips', topic: 'Research techniques and free resources for tracing your family history', type: 'text' },
-      { name: 'state-guides', topic: 'State-specific heir property laws and resources', type: 'text' },
-      { name: 'weekly-lessons', topic: 'New educational content every week - subscribe to notifications!', type: 'text' },
-      { name: 'daily-tips', topic: 'Quick tips and facts delivered daily to keep you motivated', type: 'text' },
-      { name: 'resource-library', topic: 'Guides, videos, articles, and templates pinned here', type: 'text' },
-      { name: 'ask-questions', topic: 'No question is too basic - we all learn together', type: 'text' }
+      { name: 'introductions', topic: 'Tell us your story - where are you from, why did you join?', type: 'text' },
+      { name: 'general-chat', topic: 'Casual conversation and community bonding', type: 'text' },
+      { name: 'ask-questions', topic: 'No question is too basic - we all learn together', type: 'text' },
+      { name: 'success-stories', topic: 'Share your wins - land found, documents discovered, progress made!', type: 'text' }
     ]
   },
   {
-    name: '🤝 COMMUNITY',
+    name: '📚 LEARN',
     channels: [
-      { name: 'introductions', topic: 'Tell us your story, where you are from, why you joined', type: 'text' },
-      { name: 'success-stories', topic: 'Share your wins - land found, documents discovered, progress made!', type: 'text' },
-      { name: 'member-spotlight', topic: 'Celebrating outstanding community members', type: 'text' },
-      { name: 'weekly-challenge', topic: 'Participate in weekly research challenges and earn XP', type: 'text' },
-      { name: 'mutual-support', topic: 'Help each other with questions and encouragement', type: 'text' },
-      { name: 'general-chat', topic: 'Off-topic conversations and community bonding', type: 'text' }
+      { name: 'heir-property-101', topic: 'The basics of heir property and why it matters', type: 'text' },
+      { name: 'defi-basics', topic: 'Understanding DeFi, stablecoins, lending, and yield', type: 'text' },
+      { name: 'resource-library', topic: 'Guides, videos, articles, and templates', type: 'text' }
     ]
   },
   {
-    name: '🌍 REGIONAL HUBS',
+    name: '🔷 AXUSD VAULT',
     channels: [
-      { name: 'southeast', topic: 'GA, AL, MS, LA, SC, NC, FL - connect with members in your region', type: 'text' },
-      { name: 'mid-atlantic', topic: 'VA, MD, DE, DC, WV - regional connections and resources', type: 'text' },
-      { name: 'midwest', topic: 'IL, OH, IN, MI, MO - regional connections and resources', type: 'text' },
-      { name: 'southwest', topic: 'TX, OK, AR, NM - regional connections and resources', type: 'text' },
-      { name: 'west-coast', topic: 'CA, OR, WA, AZ, NV - regional connections and resources', type: 'text' },
-      { name: 'northeast', topic: 'NY, NJ, PA, MA, CT - regional connections and resources', type: 'text' }
+      { name: 'vault-overview', topic: 'Technical overview of the AXUSD Euler V2 Lending Vault on Arbitrum One', type: 'text' },
+      { name: 'weekly-reports', topic: 'Weekly transparency reports on vault metrics: TVL, utilization, and protocol health', type: 'text' },
+      { name: 'feedback', topic: 'Share observations, report issues, suggest improvements', type: 'text' }
     ]
   },
   {
-    name: '🏡 THE LAND',
-    channels: [
-      { name: 'land-updates', topic: 'Progress on parcels - photos, videos, real updates', type: 'text' },
-      { name: 'steward-spotlights', topic: 'Meet the people managing the land', type: 'text' },
-      { name: 'from-the-field', topic: 'Raw, unfiltered content from properties', type: 'text' }
-    ]
-  },
-  {
-    name: '💰 UPGRADE YOUR JOURNEY',
-    channels: [
-      { name: 'workbook-previews', topic: 'See what the $20/mo Workbook offers - AI research assistance and more', type: 'text' },
-      { name: 'land-fund-updates', topic: 'Investment opportunities and fund progress - $100/mo', type: 'text' },
-      { name: 'member-testimonials', topic: 'Hear from paying members about their experience', type: 'text' },
-      { name: 'upgrade-questions', topic: 'Questions about paid tiers? Ask here!', type: 'text' }
-    ]
-  },
-  {
-    name: '📢 ANNOUNCEMENTS',
-    channels: [
-      { name: 'news', topic: 'Official updates - funding milestones, new parcels', type: 'text' },
-      { name: 'events', topic: 'Community calls, Q&As, workshops, live sessions', type: 'text' },
-      { name: 'milestones', topic: 'Celebrating community growth and achievements', type: 'text' }
-    ]
-  },
-  {
-    name: '🔷 AXUSD VAULT OBSERVERS',
-    channels: [
-      { name: 'vault-overview', topic: 'Technical overview of the AXUSD Euler V2 Lending Vault on Arbitrum One. Educational content only.', type: 'text' },
-      { name: 'technical-discussion', topic: 'Discuss vault mechanics, liquidation processes, collateral parameters, and Euler V2 architecture.', type: 'text' },
-      { name: 'weekly-reports', topic: 'Weekly transparency reports on vault metrics: TVL, utilization, borrowing activity, and protocol health.', type: 'text' },
-      { name: 'risk-mechanics', topic: 'Understanding LTV ratios, liquidation thresholds, oracle feeds, and risk parameters. Educational only.', type: 'text' },
-      { name: 'feedback-and-questions', topic: 'Share observations, report issues, suggest improvements. Your feedback shapes the protocol.', type: 'text' }
-    ]
-  },
-  {
-    name: '⚖️ GOVERNANCE',
+    name: '⚖️ GOVERNANCE & TRANSPARENCY',
     channels: [
       { name: 'proposals', topic: 'Active governance proposals and voting discussions', type: 'text' },
-      { name: 'treasury-transparency', topic: 'On-chain treasury data and protocol metrics', type: 'text' }
+      { name: 'treasury-transparency', topic: 'On-chain treasury data and protocol metrics', type: 'text' },
+      { name: 'audit-log', topic: 'Real-time on-chain transaction notifications and security events', type: 'text' }
     ]
   },
   {
     name: '🏛️ INSTITUTIONAL',
     channels: [
-      { name: 'data-room', topic: 'Due diligence documents, audits, legal disclosures, and protocol documentation for institutional observers.', type: 'text' },
-      { name: 'audit-log', topic: 'Real-time on-chain transaction notifications: deposits, borrows, governance actions, and security events.', type: 'text' },
-      { name: 'office-hours', topic: 'Scheduled Q&A sessions for institutional observers and allocators. Check pinned messages for schedule.', type: 'text' },
-      { name: 'compliance', topic: 'Regulatory disclosures, observation window status, and compliance documentation.', type: 'text' }
+      { name: 'data-room', topic: 'Due diligence documents, audits, legal disclosures for institutional observers', type: 'text' },
+      { name: 'office-hours', topic: 'Scheduled Q&A sessions for allocators and auditors', type: 'text' },
+      { name: 'compliance', topic: 'Regulatory disclosures and observation window status', type: 'text' }
     ]
   }
 ];
