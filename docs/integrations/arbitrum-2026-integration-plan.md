@@ -2,11 +2,12 @@
 ## Axiom Protocol Infrastructure Roadmap
 
 **Document ID:** AXM-INT-001  
-**Status:** Draft  
-**Version:** 1.0  
+**Status:** Active  
+**Version:** 1.1  
 **Created:** 2026-01-29  
+**Updated:** 2026-01-30  
 **Owner:** Axiom Protocol Engineering  
-**Related:** AXM-GOV-001 (Observation Window Rationale)
+**Related:** AXM-GOV-001 (Observation Window Rationale), AXM-GOV-002 (Euler Vault Fee Recipient)
 
 ---
 
@@ -245,34 +246,62 @@ Axiom's planned migration to Universe Blockchain (L3) can leverage Arbitrum Orbi
 
 ### B4. Institutional Lending Protocols
 
-**Priority:** MEDIUM  
-**Status:** Research Phase  
-**Partners:** Morpho, Euler, Maple Finance
+**Priority:** HIGH  
+**Status:** EULER V2 LIVE | Morpho/Maple Planned  
+**Partners:** Euler (LIVE), Morpho (Planned), Maple Finance (Planned)
 
 #### Overview
-New institutional lending protocols joined Arbitrum's DRIP program, providing opportunities for yield optimization and liquidity partnerships.
+New institutional lending protocols joined Arbitrum's DRIP program, providing opportunities for yield optimization and liquidity partnerships. **Euler V2 integration is now LIVE** with protocol fee routing configured.
 
-#### Integration Opportunities
+#### Euler V2 Integration (LIVE)
 
-1. **Morpho**
+**Status:** Fully operational with governance-controlled fee routing
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| **AXUSD Lending Vault** | LIVE | `0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429` |
+| **Vault Governor** | LIVE | `0xE742Ee9b946043ecc75bFc71B47216C1f8248316` |
+| **Fee Recipient** | CONFIGURED | Revenue Router (`0x39A9Ca593d350450d93aF7F24dC1A682df47F30a`) |
+| **Interest Fee** | 10% | Protocol captures 10% of borrower interest |
+
+**Collateral Support:**
+| Asset | Vault Address | Borrow LTV | Liquidation LTV |
+|-------|---------------|------------|-----------------|
+| USDC | `0x0a1eCC5Fe8C9be3C809844fcBe615B46A869b899` | 90% | 95% |
+| USDT | `0x37512F45B4ba8808910632323b73783Ca938CD51` | 90% | 95% |
+| WETH | `0x78E3E051D32157AACD550fBB78458762d8f7edFF` | 80% | 85% |
+| ARB | `0x7eD866D2D66c3149FaFE854C30C68a8BA7ceE8B9` | 70% | 75% |
+
+**Governance Transaction:** [AXM-GOV-002](../governance/AXM-GOV-002-euler-vault-fee-recipient.md) - Fee recipient set to Revenue Router ([TX](https://arbiscan.io/tx/0x2dba6cd2be8d3378974e51086ffb06f507f28df2381aa7265e0f90cf6f4e1a08))
+
+**Documentation:**
+- [Executive Summary](../lending/EXECUTIVE-SUMMARY-euler-v2-axusd-lending.md)
+- [Technical Specification](../lending/AXM-LEND-001-axusd-lending-markets.md)
+- [Governance Proposal](../governance/AXM-GOV-002-euler-vault-fee-recipient.md)
+
+**API Endpoint:** `/api/euler/vault-stats` - Real-time vault metrics with data quality indicators
+
+#### Future Integrations
+
+1. **Morpho** (Planned)
    - Deploy AXUSD lending markets
    - Leverage isolated risk pools
    - Integration with Bitget Earn products
 
-2. **Euler**
-   - Access modular lending infrastructure
-   - Custom risk parameters for real estate collateral
-
-3. **Maple Finance**
+2. **Maple Finance** (Planned)
    - Institutional undercollateralized lending
    - Credit delegation for verified borrowers
    - Partnership for DSCR loan syndication
 
 #### Action Items
-- [ ] Technical assessment of each protocol
+- [x] Technical assessment of Euler V2 protocol
+- [x] Deploy AXUSD market on Euler V2
+- [x] Configure fee routing to Revenue Router
+- [x] Execute governance transaction (AXM-GOV-002)
+- [ ] Technical assessment of Morpho and Maple
 - [ ] Legal review of integration structure
-- [ ] Proposal for AXUSD market creation
-- [ ] Risk parameter configuration
+- [ ] Proposal for additional AXUSD markets
+- [ ] Risk parameter optimization post-observation
 
 ---
 
@@ -352,12 +381,16 @@ Current (Arbitrum One)          Future (Universe L3)
 - [ ] 2+ contracts ported to Rust (testnet)
 - [ ] STEP 2.0 grant application submitted
 - [ ] RWA partnership discussions initiated
+- [x] Euler V2 AXUSD Lending Vault deployed
+- [x] Fee routing configured to Revenue Router
+- [x] Governance documentation complete
 
 ### Post-Observation
 - [ ] 30%+ gas savings on optimized contracts
 - [ ] Universe L3 testnet operational
 - [ ] Gasless transactions enabled
-- [ ] 2+ institutional protocol integrations live
+- [x] 1 institutional protocol integration live (Euler V2)
+- [ ] 2+ additional institutional protocol integrations
 
 ---
 
@@ -382,6 +415,7 @@ Current (Arbitrum One)          Future (Universe L3)
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-01-29 | Axiom Engineering | Initial draft |
+| 1.1 | 2026-01-30 | Axiom Engineering | Updated B4 with Euler V2 LIVE status, added governance TX reference, linked to executive summary and technical docs |
 
 ---
 
