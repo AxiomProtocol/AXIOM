@@ -56,7 +56,7 @@ Set the vault's fee recipient to the AXUSDRevenueRouter contract to begin collec
 
 | Contract | Address | Role |
 |----------|---------|------|
-| **AXUSD Lending Vault** | `0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429` | Target vault |
+| **AXUSD Lending Vault** | `0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059` | Target vault |
 | **AxiomVaultGovernorV2** | `0xE742Ee9b946043ecc75bFc71B47216C1f8248316` | Vault governor |
 | **AXUSDRevenueRouter** | `0x39A9Ca593d350450d93aF7F24dC1A682df47F30a` | Fee recipient |
 | **GovernanceHub** | `0x52Dc85fd653a75323b5307f4D2629ab9A070530E` | Governance timelock |
@@ -82,7 +82,7 @@ await governor.executeCall(VAULT_ADDRESS, vaultCalldata);
 
 **Addresses:**
 - Governor: `0xE742Ee9b946043ecc75bFc71B47216C1f8248316`
-- Vault: `0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429`
+- Vault: `0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059`
 - Revenue Router: `0x39A9Ca593d350450d93aF7F24dC1A682df47F30a`
 
 **Vault setFeeReceiver Calldata:**
@@ -202,4 +202,4 @@ Expected result:
 - [AXM-LEND-001: AXUSD Lending Markets Specification](../lending/AXM-LEND-001-axusd-lending-markets.md)
 - [AXM-GOV-001: Observation Window Rationale](./AXM-GOV-001-observation-window-rationale.md)
 - [Euler V2 EVK Documentation](https://docs.euler.finance/creator-tools/vaults/evk/)
-- [AXUSD Vault on Euler](https://app.euler.finance/vault/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429?network=arbitrumone)
+- [AXUSD Vault on Euler](https://app.euler.finance/vault/0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059?network=arbitrumone)

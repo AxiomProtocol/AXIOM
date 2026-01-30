@@ -15,9 +15,9 @@
 
 | Vault | Asset | Liquidity | Address | Status |
 |-------|-------|-----------|---------|--------|
-| **AXUSD Lending Vault V3** | AXUSD | 56.5 AXUSD | [`0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429`](https://arbiscan.io/address/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429) | ✅ FULLY LIVE |
+| **AXUSD Lending Vault V3** | AXUSD | 56.5 AXUSD | [`0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059`](https://arbiscan.io/address/0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059) | ✅ FULLY LIVE |
 
-**View on Euler:** [app.euler.finance/vault/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429?network=arbitrumone](https://app.euler.finance/vault/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429?network=arbitrumone)
+**View on Euler:** [app.euler.finance/vault/0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059?network=arbitrumone](https://app.euler.finance/vault/0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059?network=arbitrumone)
 
 **Current Status:**
 - ✅ Supply/Deposit: ENABLED - LPs can deposit AXUSD to earn yield

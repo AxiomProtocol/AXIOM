@@ -2,7 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 
 const EULER_LENDING_CONFIG = {
-  AXUSD_VAULT: '0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429',
+  // V4 Vault (eAXUSD-4) - Fixed hook configuration, fully operational
+  AXUSD_VAULT: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059',
   VAULT_GOVERNOR: '0xE742Ee9b946043ecc75bFc71B47216C1f8248316',
   PRICE_ORACLE: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15',
   AXUSD_TOKEN: '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c',

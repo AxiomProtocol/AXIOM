@@ -50,7 +50,8 @@ const COLLATERAL_VAULTS: CollateralVault[] = [
   }
 ];
 
-const AXUSD_VAULT_ADDRESS = '0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429';
+// V4 Vault (eAXUSD-4) - Fixed hook configuration, fully operational
+const AXUSD_VAULT_ADDRESS = '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059';
 const EULER_BORROW_LINK = `https://app.euler.finance/vault/${AXUSD_VAULT_ADDRESS}?network=arbitrumone`;
 
 export default function BorrowPage() {

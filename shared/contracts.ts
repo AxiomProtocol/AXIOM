@@ -307,12 +307,17 @@ export const GOVERNANCE_CONTRACTS = {
 } as const;
 
 // Euler V2 AXUSD Lending Markets
-// Status: DEPLOYED & LIVE | Arbitrum One | January 29, 2026
+// Status: DEPLOYED & LIVE | Arbitrum One | January 30, 2026
 // Features: Vault-to-vault collateral, external LP yield, supply/borrow enabled
+// V4 Upgrade: Fixed hook configuration issue, deposits/withdrawals fully operational
 export const EULER_LENDING_CONTRACTS = {
-  // AXUSD Lending Vault V3 - Main lending vault for AXUSD
+  // AXUSD Lending Vault V4 (eAXUSD-4) - Main lending vault for AXUSD
   // Users deposit AXUSD to earn yield, borrowers use vault shares as collateral
-  AXUSD_VAULT: '0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429',
+  // Supply/Borrow Cap: 1M AXUSD each | Fee Receiver: Revenue Router
+  AXUSD_VAULT: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059',
+  
+  // Deprecated V3 Vault (broken hook configuration - withdraw-only mode)
+  AXUSD_VAULT_V3_DEPRECATED: '0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429',
   
   // Vault Governor - Manages LTV, caps, and vault parameters
   VAULT_GOVERNOR: '0xE742Ee9b946043ecc75bFc71B47216C1f8248316',

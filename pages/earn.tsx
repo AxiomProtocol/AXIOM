@@ -26,7 +26,7 @@ const YIELD_OPPORTUNITIES: YieldOpportunity[] = [
     tvl: '$56.49',
     type: 'lending',
     risk: 'low',
-    link: 'https://app.euler.finance/vault/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429?network=arbitrumone',
+    link: 'https://app.euler.finance/vault/0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059?network=arbitrumone',
     description: 'Lend AXUSD to earn yield from borrowers. Backed by USDC, USDT, WETH, and ARB collateral.',
     featured: true
   },

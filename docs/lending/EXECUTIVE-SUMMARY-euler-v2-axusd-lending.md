@@ -163,7 +163,7 @@ The integration includes a comprehensive API layer for real-time vault monitorin
 
 | Contract | Address | Purpose | Verified |
 |----------|---------|---------|----------|
-| **AXUSD Lending Vault** | `0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429` | Core lending vault | Yes |
+| **AXUSD Lending Vault** | `0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059` | Core lending vault | Yes |
 | **AxiomVaultGovernorV2** | `0xE742Ee9b946043ecc75bFc71B47216C1f8248316` | Vault governance controller | Yes |
 | **Price Oracle** | `0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15` | Collateral price feeds | Yes |
 | **AXUSDRevenueRouter** | `0x39A9Ca593d350450d93aF7F24dC1A682df47F30a` | Fee routing & distribution | Yes |
@@ -528,8 +528,8 @@ function executeCall(address target, bytes calldata data) external returns (byte
 ### External Resources
 
 - [Euler V2 Documentation](https://docs.euler.finance/)
-- [Euler Vault on Arbitrum](https://app.euler.finance/vault/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429?network=arbitrumone)
-- [Arbiscan Contract](https://arbiscan.io/address/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429)
+- [Euler Vault on Arbitrum](https://app.euler.finance/vault/0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059?network=arbitrumone)
+- [Arbiscan Contract](https://arbiscan.io/address/0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059)
 - [Governance Transaction](https://arbiscan.io/tx/0x2dba6cd2be8d3378974e51086ffb06f507f28df2381aa7265e0f90cf6f4e1a08)
 
 ### Document History

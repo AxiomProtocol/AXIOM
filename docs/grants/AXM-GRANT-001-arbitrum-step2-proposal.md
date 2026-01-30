@@ -37,7 +37,7 @@ We have already deployed and configured our first institutional lending market o
 
 | Contract | Address | Status |
 |----------|---------|--------|
-| **AXUSD Lending Vault** | `0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429` | LIVE |
+| **AXUSD Lending Vault** | `0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059` | LIVE |
 | **Vault Governor** | `0xE742Ee9b946043ecc75bFc71B47216C1f8248316` | LIVE |
 | **Fee Recipient** | `0x39A9Ca593d350450d93aF7F24dC1A682df47F30a` | Configured |
 
@@ -176,7 +176,7 @@ All Euler V2 contracts are defined in a single source of truth (`shared/contract
 
 ```typescript
 export const EULER_LENDING_CONTRACTS = {
-  AXUSD_VAULT: '0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429',
+  AXUSD_VAULT: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059',
   VAULT_GOVERNOR: '0xE742Ee9b946043ecc75bFc71B47216C1f8248316',
   PRICE_ORACLE: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15',
   EVK_FACTORY: '0x78Df1CF5bf06a7f27f2ACc580B934238C1b80D50',
@@ -321,7 +321,7 @@ This infrastructure is designed for:
 |-----------|--------|---------------|
 | AXUSD Stablecoin | Deployed | `0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c` |
 | DEX V2 (10 contracts) | Live | Arbitrum One mainnet |
-| **Euler V2 AXUSD Vault** | **LIVE** | `0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429` |
+| **Euler V2 AXUSD Vault** | **LIVE** | `0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059` |
 | **4 Collateral Vaults** | **LIVE** | USDC/USDT/WETH/ARB |
 | **Fee Routing** | **Configured** | 10% to Revenue Router |
 | Observer Dashboard | Live | Read-only transparency |
@@ -380,12 +380,12 @@ This infrastructure is designed for:
 | Contract | Address |
 |----------|---------|
 | AXUSD Token | `0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c` |
-| AXUSD Lending Vault | `0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429` |
+| AXUSD Lending Vault | `0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059` |
 | Vault Governor | `0xE742Ee9b946043ecc75bFc71B47216C1f8248316` |
 | Revenue Router | `0x39A9Ca593d350450d93aF7F24dC1A682df47F30a` |
 | Axiom Deployer | `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` |
 
-**Euler V2 Direct Link:** [View on Euler](https://app.euler.finance/vault/0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429?network=arbitrumone)
+**Euler V2 Direct Link:** [View on Euler](https://app.euler.finance/vault/0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059?network=arbitrumone)
 
 **Governance Transaction:** [Arbiscan TX](https://arbiscan.io/tx/0x2dba6cd2be8d3378974e51086ffb06f507f28df2381aa7265e0f90cf6f4e1a08)
 
