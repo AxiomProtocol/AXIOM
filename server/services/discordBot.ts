@@ -653,7 +653,7 @@ export async function initializeDiscordBot(): Promise<Client | null> {
     
     if (newLevel.level > oldLevel.level) {
       const levelUpChannel = message.guild.channels.cache.find(
-        ch => ch.name === 'milestones' && ch.type === ChannelType.GuildText
+        ch => ch.name === 'announcements' && ch.type === ChannelType.GuildText
       ) as TextChannel | undefined;
       
       if (levelUpChannel) {
@@ -944,7 +944,7 @@ export async function postFundingUpdate(guildId: string, parcelName: string, fun
     embed.setDescription(`**${parcelName}** is now fully funded! Thank you to everyone who contributed to this historic moment!`);
   }
 
-  return await sendEmbed(guildId, 'land-updates', embed);
+  return await sendEmbed(guildId, 'announcements', embed);
 }
 
 export async function postNewMemberAnnouncement(guildId: string, memberCount: number, foundingSpotsRemaining: number): Promise<boolean> {
@@ -958,7 +958,7 @@ export async function postNewMemberAnnouncement(guildId: string, memberCount: nu
     .setFooter({ text: 'Join us: axiomprotocol.app/joincommunity' })
     .setTimestamp();
 
-  return await sendEmbed(guildId, 'news', embed);
+  return await sendEmbed(guildId, 'announcements', embed);
 }
 
 export async function getGuildList(): Promise<{ id: string; name: string; memberCount: number }[]> {
@@ -998,7 +998,7 @@ export async function postDailyTip(guildId: string): Promise<boolean> {
     .setFooter({ text: 'Axiom Community - Building Generational Wealth Together' })
     .setTimestamp();
 
-  return await sendEmbed(guildId, 'daily-tips', embed);
+  return await sendEmbed(guildId, 'general-chat', embed);
 }
 
 export async function postWeeklyChallenge(guildId: string, challenge: { title: string; description: string; reward: string }): Promise<boolean> {
@@ -1014,7 +1014,7 @@ export async function postWeeklyChallenge(guildId: string, challenge: { title: s
     .setFooter({ text: 'Complete challenges to earn XP and climb the leaderboard!' })
     .setTimestamp();
 
-  return await sendEmbed(guildId, 'weekly-challenge', embed);
+  return await sendEmbed(guildId, 'general-chat', embed);
 }
 
 export async function postWorkbookPreview(guildId: string, preview: { title: string; content: string; feature: string }): Promise<boolean> {
@@ -1029,7 +1029,7 @@ export async function postWorkbookPreview(guildId: string, preview: { title: str
     .setFooter({ text: 'AI-powered research to help you reclaim your family\'s land history' })
     .setTimestamp();
 
-  return await sendEmbed(guildId, 'workbook-previews', embed);
+  return await sendEmbed(guildId, 'resource-library', embed);
 }
 
 export async function postMemberSpotlight(guildId: string, member: { username: string; story: string; achievement: string; avatarUrl?: string }): Promise<boolean> {
@@ -1047,7 +1047,7 @@ export async function postMemberSpotlight(guildId: string, member: { username: s
     embed.setThumbnail(member.avatarUrl);
   }
 
-  return await sendEmbed(guildId, 'member-spotlight', embed);
+  return await sendEmbed(guildId, 'success-stories', embed);
 }
 
 export const WEEKLY_CHALLENGES = [
