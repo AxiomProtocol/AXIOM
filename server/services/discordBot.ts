@@ -222,7 +222,7 @@ const AXIOM_CHANNEL_STRUCTURE: CategoryConfig[] = [
       { name: 'introductions', topic: 'Tell us your story - where are you from, why did you join?', type: 'text' },
       { name: 'general-chat', topic: 'Casual conversation and community bonding', type: 'text' },
       { name: 'ask-questions', topic: 'No question is too basic - we all learn together', type: 'text' },
-      { name: 'success-stories', topic: 'Share your wins - land found, documents discovered, progress made!', type: 'text' }
+      { name: 'observations', topic: 'Share vault observations, market insights, and protocol feedback during the observation window', type: 'text' }
     ]
   },
   {
@@ -1047,7 +1047,7 @@ export async function postMemberSpotlight(guildId: string, member: { username: s
     embed.setThumbnail(member.avatarUrl);
   }
 
-  return await sendEmbed(guildId, 'success-stories', embed);
+  return await sendEmbed(guildId, 'observations', embed);
 }
 
 export const WEEKLY_CHALLENGES = [
