@@ -44,7 +44,9 @@ const AXIOM_ROLES = {
   level25: { name: 'Heritage Keeper', color: 0xf472b6, position: 7 },
   vaultObserver: { name: 'Vault Observer', color: 0x3b82f6, position: 8 },
   landResearcher: { name: 'Land Researcher', color: 0x22c55e, position: 9 },
-  communityBuilder: { name: 'Community Builder', color: 0xa855f7, position: 10 }
+  communityBuilder: { name: 'Community Builder', color: 0xa855f7, position: 10 },
+  institutional: { name: 'Institutional Observer', color: 0x14b8a6, position: 11 },
+  auditor: { name: 'Verified Auditor', color: 0x0ea5e9, position: 12 }
 };
 
 const XP_LEVELS = [
@@ -60,15 +62,17 @@ const XP_LEVELS = [
 
 const DAILY_TIPS = [
   { title: '🔍 Research Tip', tip: 'Start with what you know! Write down the oldest family member you can remember, their full name, and where they lived.' },
-  { title: '📜 Heir Property Fact', tip: 'Heir property occurs when land passes without a will. In the South, this affects an estimated $28 billion worth of Black-owned land.' },
-  { title: '🏛️ Document Source', tip: 'The Freedmen\'s Bureau records (1865-1872) contain labor contracts, marriage records, and land records for formerly enslaved people.' },
+  { title: '📜 Heir Property Fact', tip: 'Heir property occurs when land passes without a will. Across America, this affects billions of dollars worth of family-owned land.' },
+  { title: '🏛️ Document Source', tip: 'Historical archives contain valuable records including labor contracts, marriage records, and land patents from the 1800s onward.' },
   { title: '💡 Pro Tip', tip: 'County deed offices often have records going back to the 1800s. Many are now digitized and searchable online.' },
-  { title: '📚 Did You Know?', tip: 'Between 1910-1997, Black families lost 90% of their farmland—about 12 million acres. We\'re here to help reclaim what was taken.' },
+  { title: '📚 Did You Know?', tip: 'Millions of acres of family farmland have been lost over the past century due to unclear title. We help families protect and reclaim their heritage.' },
   { title: '🗂️ Organization Tip', tip: 'Create a family tree chart with dates and locations. This becomes your roadmap for property research.' },
   { title: '⚖️ Legal Insight', tip: 'The Uniform Partition of Heirs Property Act (UPHPA) provides protections against forced partition sales. Check if your state has adopted it.' },
-  { title: '🌱 Wealth Building', tip: 'Land is the foundation of generational wealth. Our ancestors knew this—and so do we.' },
+  { title: '🌱 Wealth Building', tip: 'Land is the foundation of generational wealth. Building a legacy starts with ownership.' },
   { title: '📍 Location Matters', tip: 'Focus your research on counties where your family lived longest. Local historical societies can be gold mines of information.' },
-  { title: '🤝 Community Power', tip: 'Collective ownership means collective strength. When we pool resources, we can acquire land that benefits everyone.' }
+  { title: '🤝 Community Power', tip: 'Collective ownership means collective strength. When we pool resources, we can acquire land that benefits everyone.' },
+  { title: '🔷 DeFi Tip', tip: 'The AXUSD vault uses overcollateralization to protect lenders. Higher LTV means more capital efficiency, but also more liquidation risk.' },
+  { title: '📊 Transparency', tip: 'All protocol transactions are on-chain and verifiable. Check Arbiscan for real-time activity.' }
 ];
 
 const HEIR_PROPERTY_CHECKLIST = [
@@ -78,7 +82,7 @@ const HEIR_PROPERTY_CHECKLIST = [
   '4. Search county deed records for family surnames',
   '5. Check census records (1870-1950) for land ownership clues',
   '6. Look for death certificates and wills in probate court',
-  '7. Search Freedmen\'s Bureau records if ancestors were enslaved',
+  '7. Search historical archives and land patent records',
   '8. Contact living relatives who might have documents',
   '9. Verify current property tax status and ownership',
   '10. Consult with an heir property attorney if needed'
@@ -103,7 +107,7 @@ const FAQ_RESPONSES: Record<string, { question: string; answer: string }> = {
   },
   'find-records': {
     question: 'Where can I find property records?',
-    answer: 'Start with: County deed offices, FamilySearch.org (free), Ancestry.com, National Archives (Freedmen\'s Bureau), state historical societies, and local libraries. Many Southern counties have digitized records online.'
+    answer: 'Start with: County deed offices, FamilySearch.org (free), Ancestry.com, National Archives, state historical societies, and local libraries. Many counties have digitized records online.'
   },
   'axusd-vault': {
     question: 'What is the AXUSD Vault?',
@@ -286,6 +290,15 @@ const AXIOM_CHANNEL_STRUCTURE: CategoryConfig[] = [
       { name: 'proposals', topic: 'Active governance proposals and voting discussions', type: 'text' },
       { name: 'treasury-transparency', topic: 'On-chain treasury data and protocol metrics', type: 'text' }
     ]
+  },
+  {
+    name: '🏛️ INSTITUTIONAL',
+    channels: [
+      { name: 'data-room', topic: 'Due diligence documents, audits, legal disclosures, and protocol documentation for institutional observers.', type: 'text' },
+      { name: 'audit-log', topic: 'Real-time on-chain transaction notifications: deposits, borrows, governance actions, and security events.', type: 'text' },
+      { name: 'office-hours', topic: 'Scheduled Q&A sessions for institutional observers and allocators. Check pinned messages for schedule.', type: 'text' },
+      { name: 'compliance', topic: 'Regulatory disclosures, observation window status, and compliance documentation.', type: 'text' }
+    ]
   }
 ];
 
@@ -387,7 +400,7 @@ function createInfoEmbed(): EmbedBuilder {
   return new EmbedBuilder()
     .setColor(0xfbbf24)
     .setTitle('What is Axiom?')
-    .setDescription('Axiom is infrastructure for truth, record-keeping, and reclamation. We help Black families research heir property and build generational wealth through collective land ownership.')
+    .setDescription('Axiom is infrastructure for truth, record-keeping, and reclamation. We help families research heir property and build generational wealth through collective land ownership and DeFi tools.')
     .addFields(
       { 
         name: '🌱 Our Mission', 
