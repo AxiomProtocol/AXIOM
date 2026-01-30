@@ -28,6 +28,7 @@ export default async function handler(
         tokenASymbol: pool.token0,
         tokenBSymbol: pool.token1,
         liquidity: pool.yourLiquidity.toString(),
+        lpTokenBalance: pool.yourLpTokenBalance,
         sharePercent: pool.yourShare,
         tvl: pool.tvl
       }));

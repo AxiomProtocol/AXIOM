@@ -45,6 +45,7 @@ export interface PoolData {
   fees24h: number;
   yourLiquidity: number;
   yourShare: number;
+  yourLpTokenBalance: string;
   totalSupply: string;
   feePercent: number;
   swapCount24h: number;
@@ -90,15 +91,19 @@ function formatBigIntWithDecimals(value: bigint, decimals: number): number {
   return parseFloat(`${integerPart}.${fractionalStr}`);
 }
 
-function calculateUserShare(userBalance: bigint, totalSupply: bigint, tvl: number): { share: number; liquidity: number } {
+function calculateUserShare(userBalance: bigint, totalSupply: bigint, tvl: number): { share: number; liquidity: number; lpTokenBalance: string } {
   if (totalSupply === 0n || userBalance === 0n) {
-    return { share: 0, liquidity: 0 };
+    return { share: 0, liquidity: 0, lpTokenBalance: '0' };
   }
   const precision = 10000n;
   const shareScaled = (userBalance * precision * 100n) / totalSupply;
   const share = Number(shareScaled) / Number(precision);
   const liquidity = tvl * (share / 100);
-  return { share: Math.round(share * 1000) / 1000, liquidity: Math.round(liquidity * 100) / 100 };
+  return { 
+    share: Math.round(share * 1000) / 1000, 
+    liquidity: Math.round(liquidity * 100) / 100,
+    lpTokenBalance: ethers.formatEther(userBalance)
+  };
 }
 
 class CamelotPoolService {
@@ -259,13 +264,15 @@ class CamelotPoolService {
 
       let yourLiquidity = 0;
       let yourShare = 0;
+      let yourLpTokenBalance = '0';
       
       if (userAddress && poolConfig.pairAddress) {
         try {
           const userLpBalance: bigint = await pairContract.balanceOf(userAddress);
-          const { share, liquidity } = calculateUserShare(userLpBalance, totalSupplyBN, tvl);
-          yourShare = share;
-          yourLiquidity = liquidity;
+          const result = calculateUserShare(userLpBalance, totalSupplyBN, tvl);
+          yourShare = result.share;
+          yourLiquidity = result.liquidity;
+          yourLpTokenBalance = result.lpTokenBalance;
         } catch (error) {
           console.error('Error fetching user LP balance:', error);
         }
@@ -287,6 +294,7 @@ class CamelotPoolService {
         fees24h: Math.round(fees24h * 100) / 100,
         yourLiquidity,
         yourShare,
+        yourLpTokenBalance,
         totalSupply: ethers.formatEther(totalSupplyBN),
         feePercent,
         swapCount24h

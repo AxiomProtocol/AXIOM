@@ -314,21 +314,24 @@ export default function LiquidityManager() {
                         </div>
                         <div className="text-right">
                           <div className="text-sm font-semibold text-teal-600">
-                            {parseFloat(pos.liquidity).toFixed(4)} LP
+                            ${parseFloat(pos.liquidity).toFixed(2)}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {parseFloat(pos.lpTokenBalance || '0').toFixed(8)} LP
                           </div>
                           {selectedPosition === pos.poolId ? (
                             <div className="flex items-center gap-2 mt-2">
                               <input
-                                type="number"
+                                type="text"
                                 value={removeAmount}
                                 onChange={(e) => setRemoveAmount(e.target.value)}
-                                placeholder="Amount"
-                                className="w-20 px-2 py-1 text-xs bg-gray-800 border border-gray-300 rounded text-gray-900"
+                                placeholder="LP Amount"
+                                className="w-24 px-2 py-1 text-xs bg-gray-100 border border-gray-300 rounded text-gray-900"
                               />
                               <button
-                                onClick={() => handleRemoveLiquidity(pos.poolId, removeAmount || pos.liquidity)}
+                                onClick={() => handleRemoveLiquidity(pos.poolId, removeAmount || pos.lpTokenBalance)}
                                 disabled={isLoading}
-                                className="text-xs px-2 py-1 bg-red-500 hover:bg-red-400 text-gray-900 rounded transition-colors disabled:opacity-50"
+                                className="text-xs px-2 py-1 bg-red-500 hover:bg-red-400 text-white rounded transition-colors disabled:opacity-50"
                               >
                                 {isLoading ? '...' : 'Remove'}
                               </button>
@@ -343,9 +346,9 @@ export default function LiquidityManager() {
                             <button
                               onClick={() => {
                                 setSelectedPosition(pos.poolId);
-                                setRemoveAmount(pos.liquidity);
+                                setRemoveAmount(pos.lpTokenBalance || '0');
                               }}
-                              className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                              className="text-xs text-blue-500 hover:text-blue-600 transition-colors"
                             >
                               Remove
                             </button>

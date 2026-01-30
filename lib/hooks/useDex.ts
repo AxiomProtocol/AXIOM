@@ -33,8 +33,15 @@ export interface SwapQuote {
 
 export interface UserLiquidity {
   poolId: number;
+  pairAddress?: string;
+  tokenA?: string;
+  tokenB?: string;
+  tokenASymbol?: string;
+  tokenBSymbol?: string;
   liquidity: string;
+  lpTokenBalance?: string;
   sharePercent: number;
+  tvl?: number;
 }
 
 export interface DexStats {
