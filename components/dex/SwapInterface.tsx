@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSwapQuote } from '../../lib/hooks/useDex';
 import { useWallet } from '../../lib/web3/useWallet';
+import { ethers } from 'ethers';
 
 const TOKENS = [
   { symbol: 'ETH', address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', decimals: 18, logo: '/eth.png', isNative: true },
@@ -10,19 +11,52 @@ const TOKENS = [
   { symbol: 'AXM', address: '0x0C00fA01729A8FFa7C0F31bC5e95195ed58ce946', decimals: 18, logo: '/axm-token.png' }
 ];
 
+const ERC20_ABI = ['function balanceOf(address) view returns (uint256)'];
+
 export default function SwapInterface() {
-  const { isConnected, address } = useWallet();
-  const [tokenIn, setTokenIn] = useState(TOKENS[0]);
-  const [tokenOut, setTokenOut] = useState(TOKENS[1]);
+  const { isConnected, address, provider } = useWallet();
+  const [tokenIn, setTokenIn] = useState(TOKENS[2]);
+  const [tokenOut, setTokenOut] = useState(TOKENS[3]);
   const [amountIn, setAmountIn] = useState('');
   const [slippage, setSlippage] = useState('0.5');
   const [showSettings, setShowSettings] = useState(false);
+  const [balanceIn, setBalanceIn] = useState('0.00');
+  const [balanceOut, setBalanceOut] = useState('0.00');
   
   const { quote, loading: quoteLoading, error: quoteError } = useSwapQuote(
     tokenIn.address,
     tokenOut.address,
     amountIn
   );
+
+  const fetchBalance = useCallback(async (token: typeof TOKENS[0], setBalance: (b: string) => void) => {
+    if (!address || !provider) {
+      setBalance('0.00');
+      return;
+    }
+    
+    try {
+      if (token.isNative) {
+        const balance = await provider.getBalance(address);
+        setBalance(parseFloat(ethers.formatEther(balance)).toFixed(4));
+      } else {
+        const contract = new ethers.Contract(token.address, ERC20_ABI, provider);
+        const balance = await contract.balanceOf(address);
+        setBalance(parseFloat(ethers.formatUnits(balance, token.decimals)).toFixed(token.decimals === 6 ? 2 : 4));
+      }
+    } catch (error) {
+      console.error('Error fetching balance:', error);
+      setBalance('0.00');
+    }
+  }, [address, provider]);
+
+  useEffect(() => {
+    fetchBalance(tokenIn, setBalanceIn);
+  }, [tokenIn, address, provider, fetchBalance]);
+
+  useEffect(() => {
+    fetchBalance(tokenOut, setBalanceOut);
+  }, [tokenOut, address, provider, fetchBalance]);
 
   const handleSwapTokens = () => {
     const temp = tokenIn;
@@ -99,7 +133,12 @@ export default function SwapInterface() {
         <div className="bg-gray-50/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-500">You pay</span>
-            <span className="text-sm text-gray-500">Balance: 0.00</span>
+            <button 
+              onClick={() => setAmountIn(balanceIn)}
+              className="text-sm text-gray-500 hover:text-teal-600 transition-colors"
+            >
+              Balance: {balanceIn}
+            </button>
           </div>
           <div className="flex items-center gap-3">
             <input
@@ -131,7 +170,7 @@ export default function SwapInterface() {
         <div className="bg-gray-50/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-500">You receive</span>
-            <span className="text-sm text-gray-500">Balance: 0.00</span>
+            <span className="text-sm text-gray-500">Balance: {balanceOut}</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex-1 text-2xl font-semibold text-gray-900">
