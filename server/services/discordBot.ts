@@ -1156,3 +1156,47 @@ export async function cleanupDuplicateCategories(guildId: string): Promise<{ suc
     return { success: false, message: error.message, deleted: [] };
   }
 }
+
+export async function reorderCategories(guildId: string): Promise<{ success: boolean; message: string; order: string[] }> {
+  const discordClient = await getDiscordClient();
+  if (!discordClient) {
+    return { success: false, message: 'Discord bot not initialized', order: [] };
+  }
+
+  const categoryOrder = AXIOM_CHANNEL_STRUCTURE.map(c => c.name);
+
+  try {
+    const guild = await discordClient.guilds.fetch(guildId);
+    const channels = await guild.channels.fetch();
+    const categories = channels.filter(ch => ch?.type === ChannelType.GuildCategory);
+    
+    const positionUpdates: { channel: string; position: number }[] = [];
+    
+    for (const [, category] of categories) {
+      if (!category) continue;
+      
+      const orderIndex = categoryOrder.indexOf(category.name);
+      if (orderIndex !== -1) {
+        positionUpdates.push({ channel: category.id, position: orderIndex });
+      }
+    }
+
+    positionUpdates.sort((a, b) => a.position - b.position);
+    
+    for (let i = 0; i < positionUpdates.length; i++) {
+      const category = channels.get(positionUpdates[i].channel);
+      if (category) {
+        await category.setPosition(i);
+      }
+    }
+
+    return { 
+      success: true, 
+      message: `Reordered ${positionUpdates.length} categories`, 
+      order: categoryOrder.filter(name => positionUpdates.some(p => channels.get(p.channel)?.name === name))
+    };
+  } catch (error: any) {
+    console.error('Error reordering categories:', error);
+    return { success: false, message: error.message, order: [] };
+  }
+}
