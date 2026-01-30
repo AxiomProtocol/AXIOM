@@ -1064,3 +1064,95 @@ export const WORKBOOK_PREVIEWS = [
   { title: 'State-Specific Guides', content: 'Each Southern state has different laws around heir property. Our guides break down what you need to know for your state.', feature: 'Get step-by-step instructions customized for your state\'s legal requirements.' },
   { title: 'Record Request Letters', content: 'Need to request records from courthouses or historical societies? We have letter templates ready for you.', feature: 'Professionally worded letters that get results - just fill in your details and send.' }
 ];
+
+export async function deleteCategory(guildId: string, categoryName: string): Promise<{ success: boolean; message: string; deleted: string[] }> {
+  const discordClient = await getDiscordClient();
+  if (!discordClient) {
+    return { success: false, message: 'Discord bot not initialized', deleted: [] };
+  }
+
+  try {
+    const guild = await discordClient.guilds.fetch(guildId);
+    const channels = await guild.channels.fetch();
+    const deleted: string[] = [];
+
+    const category = channels.find(
+      ch => ch?.name === categoryName && ch?.type === ChannelType.GuildCategory
+    );
+
+    if (!category) {
+      return { success: false, message: `Category "${categoryName}" not found`, deleted: [] };
+    }
+
+    const childChannels = channels.filter(ch => ch?.parentId === category.id);
+    
+    for (const [, channel] of childChannels) {
+      if (channel) {
+        await channel.delete('Cleanup duplicate channels');
+        deleted.push(`#${channel.name}`);
+      }
+    }
+
+    await category.delete('Cleanup duplicate category');
+    deleted.push(`Category: ${categoryName}`);
+
+    return { success: true, message: `Deleted category and ${deleted.length - 1} channels`, deleted };
+  } catch (error: any) {
+    console.error('Error deleting category:', error);
+    return { success: false, message: error.message, deleted: [] };
+  }
+}
+
+export async function cleanupDuplicateCategories(guildId: string): Promise<{ success: boolean; message: string; deleted: string[] }> {
+  const validCategoryNames = AXIOM_CHANNEL_STRUCTURE.map(c => c.name);
+  const discordClient = await getDiscordClient();
+  if (!discordClient) {
+    return { success: false, message: 'Discord bot not initialized', deleted: [] };
+  }
+
+  try {
+    const guild = await discordClient.guilds.fetch(guildId);
+    const channels = await guild.channels.fetch();
+    const deleted: string[] = [];
+
+    const categories = channels.filter(ch => ch?.type === ChannelType.GuildCategory);
+    const categoryCount: Map<string, number> = new Map();
+
+    for (const [, category] of categories) {
+      if (category) {
+        const count = categoryCount.get(category.name) || 0;
+        categoryCount.set(category.name, count + 1);
+      }
+    }
+
+    for (const [, category] of categories) {
+      if (!category) continue;
+      
+      const isValidName = validCategoryNames.includes(category.name);
+      const count = categoryCount.get(category.name) || 0;
+      
+      if (!isValidName || count > 1) {
+        const childChannels = channels.filter(ch => ch?.parentId === category.id);
+        
+        for (const [, channel] of childChannels) {
+          if (channel) {
+            await channel.delete('Cleanup old/duplicate channels');
+            deleted.push(`#${channel.name}`);
+          }
+        }
+
+        await category.delete('Cleanup old/duplicate category');
+        deleted.push(`Category: ${category.name}`);
+        
+        if (count > 1) {
+          categoryCount.set(category.name, count - 1);
+        }
+      }
+    }
+
+    return { success: true, message: `Cleaned up ${deleted.length} items`, deleted };
+  } catch (error: any) {
+    console.error('Error cleaning up categories:', error);
+    return { success: false, message: error.message, deleted: [] };
+  }
+}
