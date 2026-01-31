@@ -1,0 +1,47 @@
+{
+  "network": "Arbitrum One",
+  "chainId": 42161,
+  "deployedAt": "2026-01-31T10:45:00.000Z",
+  "deployer": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+  "contracts": {
+    "CapitalReadinessGate": {
+      "address": "0x670E28DA9B44046658A65fa67104e7C4F2f27ff1",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0x670E28DA9B44046658A65fa67104e7C4F2f27ff1",
+      "constructorArgs": {
+        "admin": "0x2bb2c2a7a1d82097488bf0b9c2a59c1910cd8d5d",
+        "observationStartTimestamp": 1758844800
+      },
+      "verified": false
+    },
+    "CapitalBridgeHub": {
+      "address": "0x81907eE658466Ee0c5da48428a29C3DfC5a91bE9",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0x81907eE658466Ee0c5da48428a29C3DfC5a91bE9",
+      "constructorArgs": {
+        "admin": "0x2bb2c2a7a1d82097488bf0b9c2a59c1910cd8d5d"
+      },
+      "verified": false,
+      "pendingConfiguration": {
+        "readinessGate": "0x670E28DA9B44046658A65fa67104e7C4F2f27ff1",
+        "note": "Admin must call setCapitalReadinessGate(0x670E28DA9B44046658A65fa67104e7C4F2f27ff1)"
+      }
+    }
+  },
+  "roles": {
+    "DEFAULT_ADMIN_ROLE": "0x2bb2c2a7a1d82097488bf0b9c2a59c1910cd8d5d",
+    "GUARDIAN_ROLE": "0x2bb2c2a7a1d82097488bf0b9c2a59c1910cd8d5d (granted by default)",
+    "RISK_COMMITTEE_ROLE": "Must be granted by admin",
+    "SETTLEMENT_AUTHORITY_ROLE": "Must be granted by admin",
+    "RESEARCH_ATTESTOR_A_ROLE": "Must be granted by admin",
+    "RESEARCH_ATTESTOR_B_ROLE": "Must be granted by admin",
+    "REPORTING_ORACLE_ROLE": "Must be granted by admin (for CapitalReadinessGate)"
+  },
+  "postDeploymentSteps": [
+    "1. Admin calls CapitalBridgeHub.setCapitalReadinessGate(0x670E28DA9B44046658A65fa67104e7C4F2f27ff1)",
+    "2. Grant RISK_COMMITTEE_ROLE to risk committee address",
+    "3. Grant SETTLEMENT_AUTHORITY_ROLE to settlement authority address",
+    "4. Grant RESEARCH_ATTESTOR_A_ROLE and RESEARCH_ATTESTOR_B_ROLE to distinct attestor addresses",
+    "5. Grant REPORTING_ORACLE_ROLE on CapitalReadinessGate to oracle address",
+    "6. Post initial readiness attestation via REPORTING_ORACLE",
+    "7. Verify contracts on Arbiscan"
+  ]
+}

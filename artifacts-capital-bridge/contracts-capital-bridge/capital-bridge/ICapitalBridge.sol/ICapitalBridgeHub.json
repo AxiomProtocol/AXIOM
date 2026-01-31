@@ -1,0 +1,787 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "ICapitalBridgeHub",
+  "sourceName": "contracts-capital-bridge/capital-bridge/ICapitalBridge.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "authId",
+          "type": "uint256"
+        }
+      ],
+      "name": "activateAuthorization",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "packetId",
+          "type": "uint256"
+        }
+      ],
+      "name": "approvePropertyPacket",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "packetId",
+          "type": "uint256"
+        }
+      ],
+      "name": "archivePropertyPacket",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "packetId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "underwritingModelHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "riskSummaryHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "denetCidHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "attestResearchPacketA",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "packetId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "underwritingModelHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "riskSummaryHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "denetCidHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "attestResearchPacketB",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "attestationMaxAgeSeconds",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "authId",
+          "type": "uint256"
+        }
+      ],
+      "name": "cancelAuthorization",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "packetId",
+          "type": "uint256"
+        }
+      ],
+      "name": "checkAttestationStatus",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "complete",
+          "type": "bool"
+        },
+        {
+          "internalType": "bool",
+          "name": "fresh",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "authId",
+          "type": "uint256"
+        }
+      ],
+      "name": "checkTimelockStatus",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "elapsed",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "remainingSeconds",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "packetId",
+          "type": "uint256"
+        }
+      ],
+      "name": "clearResearchAttestations",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "spvId",
+          "type": "uint256"
+        }
+      ],
+      "name": "deactivateSPV",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "authId",
+          "type": "uint256"
+        }
+      ],
+      "name": "expireAuthorization",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "packetId",
+          "type": "uint256"
+        }
+      ],
+      "name": "expirePropertyPacket",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "authId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getAuthorization",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "authId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "packetId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "spvId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "approvedAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint64",
+              "name": "proposedAt",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "activatedAt",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "expiresAt",
+              "type": "uint64"
+            },
+            {
+              "internalType": "enum CapitalBridgeTypes.AuthorizationState",
+              "name": "state",
+              "type": "uint8"
+            },
+            {
+              "internalType": "address",
+              "name": "proposer",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct CapitalBridgeTypes.AcquisitionAuthorization",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "packetId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getPacket",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "packetId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "submitter",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "propertyDataHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "dueDiligencePackageCid",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "underwritingModelHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "riskSummaryHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxApprovedCapital",
+              "type": "uint256"
+            },
+            {
+              "internalType": "enum CapitalBridgeTypes.PacketState",
+              "name": "state",
+              "type": "uint8"
+            },
+            {
+              "internalType": "enum CapitalBridgeTypes.RejectionReason",
+              "name": "rejectionReason",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint64",
+              "name": "submittedAt",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "approvedAt",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "expiresAt",
+              "type": "uint64"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "attestor",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "underwritingModelHash",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "riskSummaryHash",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "denetCidHash",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "uint64",
+                  "name": "timestamp",
+                  "type": "uint64"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "valid",
+                  "type": "bool"
+                }
+              ],
+              "internalType": "struct CapitalBridgeTypes.ResearchAttestation",
+              "name": "attestationA",
+              "type": "tuple"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "attestor",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "underwritingModelHash",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "riskSummaryHash",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "denetCidHash",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "uint64",
+                  "name": "timestamp",
+                  "type": "uint64"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "valid",
+                  "type": "bool"
+                }
+              ],
+              "internalType": "struct CapitalBridgeTypes.ResearchAttestation",
+              "name": "attestationB",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct CapitalBridgeTypes.PropertyPacket",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "spvId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getSPV",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "spvId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "legalEntityHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "operatingAgreementHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address",
+              "name": "paymentAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "uint64",
+              "name": "registeredAt",
+              "type": "uint64"
+            },
+            {
+              "internalType": "bool",
+              "name": "active",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct CapitalBridgeTypes.SPVEntity",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "settlementId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getSettlement",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "settlementId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "authId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "settledAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "proofHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "settlementCid",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint64",
+              "name": "timestamp",
+              "type": "uint64"
+            },
+            {
+              "internalType": "address",
+              "name": "settler",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct CapitalBridgeTypes.SettlementEvent",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nextAuthId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nextPacketId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nextSettlementId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nextSpvId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "packetId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "spvId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "approvedAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "proposeAuthorization",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "authId",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "readinessGate",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "authId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "settledAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "proofHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "settlementCid",
+          "type": "bytes32"
+        }
+      ],
+      "name": "recordSettlementEvent",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "settlementId",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "legalEntityHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "operatingAgreementHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "paymentAddress",
+          "type": "address"
+        }
+      ],
+      "name": "registerSPV",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "spvId",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "packetId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "enum CapitalBridgeTypes.RejectionReason",
+          "name": "reason",
+          "type": "uint8"
+        }
+      ],
+      "name": "rejectPropertyPacket",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "propertyDataHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "dueDiligencePackageCid",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "underwritingModelHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "riskSummaryHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxApprovedCapital",
+          "type": "uint256"
+        }
+      ],
+      "name": "submitPropertyPacket",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "packetId",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "timelockSeconds",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
