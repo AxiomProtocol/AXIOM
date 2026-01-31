@@ -28,21 +28,50 @@
     }
   },
   "roles": {
-    "DEFAULT_ADMIN_ROLE": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493",
-    "GUARDIAN_ROLE": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493 (granted by default)",
-    "RISK_COMMITTEE_ROLE": "Must be granted by admin",
-    "SETTLEMENT_AUTHORITY_ROLE": "Must be granted by admin",
-    "RESEARCH_ATTESTOR_A_ROLE": "Must be granted by admin",
-    "RESEARCH_ATTESTOR_B_ROLE": "Must be granted by admin",
-    "REPORTING_ORACLE_ROLE": "Must be granted by admin (for CapitalReadinessGate)"
+    "DEFAULT_ADMIN_ROLE": {
+      "holder": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493",
+      "wallet": "ADMIN_PRIVATE_KEY"
+    },
+    "GUARDIAN_ROLE": {
+      "holder": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493",
+      "wallet": "ADMIN_PRIVATE_KEY",
+      "note": "Granted by default to admin"
+    },
+    "RISK_COMMITTEE_ROLE": {
+      "holder": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+      "wallet": "DEPLOYER_PK",
+      "txHash": "0xb255e2711119afd39c8f7a2f9dbbab4a5036faa345be0512e170a2172a9c0a00"
+    },
+    "SETTLEMENT_AUTHORITY_ROLE": {
+      "holder": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+      "wallet": "DEPLOYER_PK",
+      "txHash": "0x9bd112173a843423b5b85b354cb0b1e5f3cecd6bce2c48261cb0e5faf1b657c8"
+    },
+    "RESEARCH_ATTESTOR_A_ROLE": {
+      "holder": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493",
+      "wallet": "ADMIN_PRIVATE_KEY",
+      "txHash": "0x140d98930162ee5bbcd9f839cbd5278b2a4a5453e5c59114c3ecc7436c54fa48"
+    },
+    "RESEARCH_ATTESTOR_B_ROLE": {
+      "holder": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+      "wallet": "DEPLOYER_PK",
+      "txHash": "0xb267f852e88e79fc92dbbe1ae73ee5f68e8099454c5deb887328c8a63424e109"
+    },
+    "REPORTING_ORACLE_ROLE": {
+      "contract": "CapitalReadinessGate",
+      "holder": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+      "wallet": "DEPLOYER_PK",
+      "txHash": "0x42dc677f9c882f2e2e9aa59e07f7a17a9a4cf1a39268bd2ae32cc6ae5c6a8ef8"
+    }
   },
   "postDeploymentSteps": [
     "1. [DONE] CapitalBridgeHub.setCapitalReadinessGate configured",
-    "2. Grant RISK_COMMITTEE_ROLE to risk committee address",
-    "3. Grant SETTLEMENT_AUTHORITY_ROLE to settlement authority address",
-    "4. Grant RESEARCH_ATTESTOR_A_ROLE and RESEARCH_ATTESTOR_B_ROLE to distinct attestor addresses",
-    "5. Grant REPORTING_ORACLE_ROLE on CapitalReadinessGate to oracle address",
-    "6. Post initial readiness attestation via REPORTING_ORACLE",
-    "7. Verify contracts on Arbiscan"
+    "2. [DONE] RISK_COMMITTEE_ROLE granted to DEPLOYER",
+    "3. [DONE] SETTLEMENT_AUTHORITY_ROLE granted to DEPLOYER",
+    "4. [DONE] RESEARCH_ATTESTOR_A_ROLE granted to ADMIN",
+    "5. [DONE] RESEARCH_ATTESTOR_B_ROLE granted to DEPLOYER",
+    "6. [DONE] REPORTING_ORACLE_ROLE granted to DEPLOYER",
+    "7. Post initial readiness attestation via REPORTING_ORACLE",
+    "8. Verify contracts on Arbiscan (optional)"
   ]
 }
