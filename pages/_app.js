@@ -83,6 +83,7 @@ function matchesRebuildNavPages(pathname) {
   if (pathname.startsWith('/land-funds')) return true;
   if (pathname.startsWith('/observer')) return true;
   if (pathname.startsWith('/builder-credit')) return true;
+  if (pathname.startsWith('/admin/capital-bridge')) return true;
   return false;
 }
 

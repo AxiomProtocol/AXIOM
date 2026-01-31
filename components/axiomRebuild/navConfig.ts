@@ -108,6 +108,7 @@ export const navItems: NavItem[] = [
       { label: "Reclaim Your Land", href: "/reclaim" },
       { label: "Land Reclamation Workbook", href: "/workbook" },
       { label: "Land Pipeline", href: "/admin/land-pipeline" },
+      { label: "Capital Bridge Admin", href: "/admin/capital-bridge" },
       { label: "Governance", href: "/governance" },
       { label: "Tokenomics", href: "/tokenomics" },
       { label: "Launchpad", href: "/launchpad" },
@@ -121,6 +122,8 @@ export const navItems: NavItem[] = [
     label: "Institutional",
     children: [
       { label: "Observer Dashboard", href: "/observer" },
+      { label: "Capital Bridge", href: "/observer/capital-bridge" },
+      { label: "Node Economy", href: "/observer/node-economy" },
       { label: "Treasury View", href: "/observer/treasury" },
       { label: "Governance View", href: "/observer/governance" },
       { label: "Risk View", href: "/observer/risk" },
