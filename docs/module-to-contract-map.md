@@ -312,3 +312,54 @@ After `lockForever()`:
 - LP add/remove
 - Loan requests
 - Score queries (view)
+
+---
+
+## TODO Contracts (Not Yet Deployed)
+
+### Capital Bridge (Layer 5E) - Priority 1
+
+| Module | Contract | Target Location | Status |
+|--------|----------|-----------------|--------|
+| Capital Bridge Hub | CapitalBridgeHub | contracts/capital-bridge/ | TODO |
+| Readiness Gate | CapitalReadinessGate | contracts/readiness/ | TODO |
+| Bridge Types | CapitalBridgeTypes | contracts/capital-bridge/ | TODO |
+
+### Securitization (Layer 5G) - Priority 1
+
+| Module | Contract | Target Location | Status |
+|--------|----------|-----------------|--------|
+| Instrument Registry | InstrumentRegistry | contracts/securitization/ | TODO |
+| Pool Registry | PoolRegistry | contracts/securitization/ | TODO |
+| Servicing Log | ServicingEventLog | contracts/securitization/ | TODO |
+
+### Node Economy - Priority 2
+
+| Module | Contract | Target Location | Status |
+|--------|----------|-----------------|--------|
+| Node Registry | NodeRegistry | contracts/node-economy/ | TODO |
+| Node Rewards | NodeRewardDistributor | contracts/node-economy/ | TODO |
+| Node Slashing | NodeSlashingEngine | contracts/node-economy/ | TODO |
+
+---
+
+## New Roles to Deploy
+
+### Capital Bridge Roles
+
+| Role | Purpose | Gating |
+|------|---------|--------|
+| RESEARCH_ATTESTOR_A_ROLE | First attestation signer | Timelocked grant |
+| RESEARCH_ATTESTOR_B_ROLE | Second attestation signer | Timelocked grant |
+| REPORTING_ORACLE_ROLE | Readiness data posting | Timelocked grant |
+
+---
+
+## Document Control
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | 2026-01-26 | Initial creation |
+| 1.1 | 2026-01-31 | Added TODO contracts, new roles |
+
+**Last Updated:** January 31, 2026

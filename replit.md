@@ -85,3 +85,29 @@ Key features include:
 - **Auth Provider:** Supabase
 - **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image)
 - **Property Data:** ATTOM Data, RentCast API, Walk Score API
+
+## Internal Development Documentation
+
+### Key Documentation Files
+- `docs/AXIOM_ECOSYSTEM_WHITEPAPER.md` - Complete ecosystem whitepaper (60+ contracts, all pages, APIs)
+- `docs/internal/CAPITAL-BRIDGE-MASTER-PROMPT-ANALYSIS.md` - 10-step implementation plan analysis
+- `docs/internal/DEVELOPMENT-ROADMAP-2026.md` - Internal development roadmap through Q4 2026
+- `docs/architecture/layer-5-sublayers.md` - Layer 5 sublayer architecture (5A-5G)
+- `docs/ops/property-research-sop.md` - Property research standard operating procedure
+- `docs/module-to-contract-map.md` - Module to contract address mapping
+
+### Future Development (Capital Bridge Infrastructure)
+- **CapitalBridgeHub** - SPV coordination, property packets, research attestations
+- **CapitalReadinessGate** - Institutional threshold enforcement
+- **Layer 5G Securitization** - Instrument registry, pool formation, servicing log
+- **Node Economy** - Registry, rewards, slashing engine
+
+### Observation Window
+- End Date: March 26, 2026
+- During window: No treasury capital deployment, external liquidity only (Euler)
+- Post window: Capital bridge activation, SPV coordination enabled
+
+### New Roles (TODO)
+- RESEARCH_ATTESTOR_A_ROLE - First attestation signer
+- RESEARCH_ATTESTOR_B_ROLE - Second attestation signer (must be different from A)
+- REPORTING_ORACLE_ROLE - Readiness attestation posting
