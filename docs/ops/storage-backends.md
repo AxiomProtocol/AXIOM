@@ -18,11 +18,40 @@ Axiom Protocol uses a multi-backend storage architecture designed for:
 
 ## Storage Backends
 
-### 1. Replit Object Storage (Primary)
+### 1. DeNet Decentralized Storage (Primary)
 
 **Type:** Primary  
+**Provider:** DeNet Network  
+**Purpose:** Decentralized, content-addressed storage for critical documents
+
+**Features:**
+- Content-addressed (CID-based)
+- Automatic 3x replication
+- Cryptographic verification
+- Permanent, immutable storage
+- Required for workflow approvals
+
+**Configuration:**
+| Variable | Purpose |
+|----------|---------|
+| `DENET_NODE_KEY` | Node license key (secret) |
+| `DENET_ENDPOINT` | API endpoint (optional) |
+| `DENET_TIMEOUT` | Request timeout in ms |
+| `DENET_ENFORCEMENT_ENABLED` | Enable CID enforcement |
+
+**Files:**
+- `packages/denet/denetClient.ts`
+- `packages/denet/denetUploader.ts`
+- `packages/denet/denetVerifier.ts`
+- `packages/denet/cidEnforcement.ts`
+
+---
+
+### 2. Replit Object Storage (Fallback)
+
+**Type:** Fallback  
 **Provider:** Replit / Google Cloud Storage  
-**Purpose:** Default storage for all application assets
+**Purpose:** Fallback storage when DeNet is unavailable
 
 **Features:**
 - Integrated with Replit infrastructure
@@ -43,31 +72,7 @@ Axiom Protocol uses a multi-backend storage architecture designed for:
 
 ---
 
-### 2. DeNet Decentralized Storage (Redundant)
-
-**Type:** Redundant  
-**Provider:** DeNet Network  
-**Purpose:** Decentralized backup and content-addressed storage
-
-**Features:**
-- Decentralized storage network
-- Content-addressed (CID-based)
-- Node license integration
-- Optional write redundancy
-
-**Configuration:**
-| Variable | Purpose |
-|----------|---------|
-| `DENET_NODE_KEY` | Node license key (secret) |
-| `DENET_ENDPOINT` | API endpoint (optional) |
-| `DENET_TIMEOUT` | Request timeout in ms |
-
-**Files:**
-- `packages/storage/providers/DeNetStore.ts`
-
----
-
-### 3. NFT.Storage / IPFS (Redundant)
+### 3. NFT.Storage / IPFS (Secondary)
 
 **Type:** Redundant  
 **Provider:** Protocol Labs / IPFS  
@@ -95,20 +100,20 @@ Application Write Request
          ▼
 ┌─────────────────────┐
 │  Primary Backend    │ ◄─── Synchronous (blocking)
-│  (Replit Storage)   │
+│  (DeNet Storage)    │
 └─────────┬───────────┘
           │
-          │ Success
+          │ Success + CID
           ▼
 ┌─────────────────────┐
-│  Return to Caller   │
+│  Return CID to App  │
 └─────────────────────┘
           │
-          │ Async (non-blocking)
+          │ If DeNet fails, fallback
           ▼
 ┌─────────────────────┐
-│  Redundant Backends │
-│  (DeNet, IPFS)      │
+│  Fallback Backend   │
+│  (Replit Storage)   │
 └─────────────────────┘
 ```
 
