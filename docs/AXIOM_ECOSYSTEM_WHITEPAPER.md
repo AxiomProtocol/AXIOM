@@ -2,11 +2,11 @@
 
 ## Complete Technical Architecture & Implementation Guide
 
-**Version:** 2.1  
+**Version:** 2.2  
 **Date:** January 31, 2026  
 **Network:** Arbitrum One (Chain ID: 42161)  
-**Total Deployed Contracts:** 60+ (8 additional planned)  
-**Status:** Production
+**Total Deployed Contracts:** 60+ (11 additional Capital Bridge contracts planned)  
+**Status:** Production (Capital Bridge in Testing)
 
 ---
 
@@ -1112,17 +1112,34 @@ Prevents authorization activation unless minimum institutional readiness thresho
 
 ### 18.7 Contracts To Deploy
 
-| Contract | Location | Priority |
-|----------|----------|----------|
-| CapitalBridgeTypes.sol | contracts/capital-bridge/ | P1 |
-| CapitalBridgeHub.sol | contracts/capital-bridge/ | P1 |
-| CapitalReadinessGate.sol | contracts/readiness/ | P1 |
-| InstrumentRegistry.sol | contracts/securitization/ | P1 |
-| PoolRegistry.sol | contracts/securitization/ | P1 |
-| ServicingEventLog.sol | contracts/securitization/ | P1 |
-| NodeRegistry.sol | contracts/node-economy/ | P2 |
-| NodeRewardDistributor.sol | contracts/node-economy/ | P2 |
-| NodeSlashingEngine.sol | contracts/node-economy/ | P2 |
+| Contract | Location | Priority | Status |
+|----------|----------|----------|--------|
+| CapitalBridgeTypes.sol | contracts/capital-bridge/ | P1 | Ready |
+| CapitalBridgeHub.sol | contracts/capital-bridge/ | P1 | Ready |
+| CapitalReadinessGate.sol | contracts/readiness/ | P1 | Ready |
+| InstrumentRegistry.sol | contracts/securitization/ | P1 | Ready |
+| PoolRegistry.sol | contracts/securitization/ | P1 | Ready |
+| ServicingEventLog.sol | contracts/securitization/ | P1 | Ready |
+| NodeRegistry.sol | contracts/node-economy/ | P2 | Ready |
+| NodeRewardDistributor.sol | contracts/node-economy/ | P2 | Ready |
+| NodeSlashingEngine.sol | contracts/node-economy/ | P2 | Ready |
+
+### 18.7.1 Deployment Scripts
+
+| Script | Purpose |
+|--------|---------|
+| deploy-all.ts | Master orchestration - deploys all layers sequentially |
+| 01-deploy-capital-bridge-hub.ts | Deploys CapitalBridgeHub with type library |
+| 02-deploy-readiness-gate.ts | Deploys CapitalReadinessGate |
+| 03-deploy-securitization.ts | Deploys Layer 5G contracts |
+| 04-configure-roles.ts | Configures RBAC roles (attestors, oracle) |
+| 05-start-observation.ts | Initializes observation window |
+| 06-verify-deployment.ts | Verifies all contracts on Arbiscan |
+
+**Network Configuration:**
+- Use `--network arbitrum` for deployer operations
+- Use `--network arbitrumAdmin` for admin role configuration
+- All scripts use dynamic address loading from `deployment-output.json`
 
 ### 18.8 Implementation Timeline
 
@@ -1158,30 +1175,83 @@ During this period:
 | November | Reward distribution, testnet |
 | December | Mainnet launch, first nodes active |
 
-### 18.9 Observer Dashboard Extensions
+### 18.9 Observer Dashboards
 
-Future metrics for institutional transparency:
+**Live Dashboards:**
+
+| Dashboard | Location | Status |
+|-----------|----------|--------|
+| Capital Bridge Observer | /observer/capital-bridge | Live |
+| Node Economy Observer | /observer/node-economy | Live |
+| Treasury Dashboard | /observer | Live |
+
+**Capital Bridge Metrics (Live):**
 
 | Section | Metrics |
 |---------|---------|
-| Capital Bridge | Packets count, attested, approved, authorized, settled |
+| Property Packets | Total count, status breakdown (Submitted/Attested/Approved) |
+| Authorizations | Active authorizations, timelock status, execution eligibility |
+| Capital Flow | Authorized amounts, settled amounts, pending settlements |
+
+**Node Economy Metrics (Live):**
+
+| Section | Metrics |
+|---------|---------|
+| Node Registry | Active nodes by class (Storage/Execution/Indexing/Research) |
+| Rewards | Total distributed, pending rewards, performance scores |
+| Slashing | Active penalties, appeal status, recovery timeline |
+
+**Future Metrics (Planned):**
+
+| Section | Metrics |
+|---------|---------|
 | Readiness Gate | Uptime, incidents, audit hash, days elapsed |
 | Securitization | Instruments count, pools count, servicing events |
 | Research | Attestation count, freshness, failure reasons |
-| Node Economy | Active nodes by class, uptime, rewards distributed |
 
-### 18.10 API Endpoints (Planned)
+### 18.10 API Endpoints
 
-| Endpoint | Purpose |
-|----------|---------|
-| GET /api/capital-bridge/packets | List property packets |
-| GET /api/capital-bridge/attestations | Attestation history |
-| GET /api/capital-bridge/authorizations | Authorization list |
-| GET /api/capital-bridge/settlements | Settlement records |
-| GET /api/readiness/status | Current readiness state |
-| GET /api/securitization/instruments | Instrument registry |
-| GET /api/securitization/pools | Pool registry |
-| GET /api/nodes/registry | Active node list |
+| Endpoint | Purpose | Status |
+|----------|---------|--------|
+| GET /api/observer/packets | List property packets | Live |
+| GET /api/observer/authorizations | Authorization list | Live |
+| POST /api/admin/capital-bridge/submit-packet | Submit property packet | Live |
+| GET /api/capital-bridge/attestations | Attestation history | Planned |
+| GET /api/capital-bridge/settlements | Settlement records | Planned |
+| GET /api/readiness/status | Current readiness state | Planned |
+| GET /api/securitization/instruments | Instrument registry | Planned |
+| GET /api/securitization/pools | Pool registry | Planned |
+| GET /api/nodes/registry | Active node list | Planned |
+
+### 18.10.1 Admin Testing Interface
+
+**Location:** `/admin/capital-bridge`
+
+The Capital Bridge Admin interface provides a complete testing environment for property packet submission and research attestation workflow.
+
+| Tab | Functionality |
+|-----|---------------|
+| Property Packets | View all submitted packets, status tracking, links to details |
+| Submit Property | Upload property data (address, acreage, value, type, risk score, notes) |
+| Research & Attestation | Dual attestation workflow, document upload, Attestor A/B signing |
+
+**Property Submission Flow:**
+1. Admin submits property data via form
+2. System generates keccak256 hashes for on-chain verification:
+   - `propertyDataHash` - Property details hash
+   - `dueDiligenceHash` - Due diligence notes hash
+   - `riskSummaryHash` - Risk assessment hash
+3. Admin connects wallet with RISK_COMMITTEE_ROLE
+4. Submits packet to CapitalBridgeHub.submitPacket()
+5. Research Attestor A reviews and signs
+6. Research Attestor B independently verifies and signs
+7. Risk Committee approves packet
+8. 24-hour timelock authorization begins
+
+**Security Constraints:**
+- Attestor A and Attestor B must be different addresses
+- System alerts if same address holds both roles
+- All attestations are on-chain and immutable
 
 ### 18.11 Reference Documentation
 
@@ -1238,11 +1308,11 @@ Future metrics for institutional transparency:
 
 | Attribute | Value |
 |-----------|-------|
-| Version | 2.1 |
+| Version | 2.2 |
 | Date | January 31, 2026 |
 | Author | Axiom Protocol |
 | Classification | Public |
-| Changes | Added Section 18: Future Development Roadmap with Capital Bridge, Securitization, and Node Economy specifications |
+| Changes | v2.2: Added Capital Bridge Admin interface, live API endpoints, deployment scripts documentation, observer dashboards. v2.1: Added Section 18: Future Development Roadmap with Capital Bridge, Securitization, and Node Economy specifications |
 
 ---
 
