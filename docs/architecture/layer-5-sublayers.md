@@ -440,15 +440,20 @@ enum ServicingEventType {
 | 5D | SEEDYieldDistributor | 0x5867e1a8c77530648edF61975CBB57a8913d159F |
 | 5D | AxiomFeeBurner | 0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94 |
 
-### To Deploy (Layer 5E, 5G)
+### Deployed (Layer 5E - Capital Bridge)
 
-| Sublayer | Contract | Status |
-|----------|----------|--------|
-| 5E | CapitalBridgeHub | TODO |
-| 5E | CapitalReadinessGate | TODO |
-| 5G | InstrumentRegistry | TODO |
-| 5G | PoolRegistry | TODO |
-| 5G | ServicingEventLog | TODO |
+| Sublayer | Contract | Address |
+|----------|----------|---------|
+| 5E | CapitalBridgeHub | 0x6a00455dC277C9430e5c45324B34F2425ba0408d |
+| 5E | CapitalReadinessGate | 0xc3f798066e1401aa30Da8703A4c0588A1076ff39 |
+
+### Deployed (Layer 5G - Securitization)
+
+| Sublayer | Contract | Address |
+|----------|----------|---------|
+| 5G | InstrumentRegistry | 0xcDE54ED7d19768be02Eb7C4799d7d8689310C7A5 |
+| 5G | PoolRegistry | 0x7D386357F0D461Be9DA5FBb90E1F194c5aeafcD9 |
+| 5G | ServicingEventLog | 0x4A152350e3df79CbE895453ee1B7d486E7338093 |
 
 ---
 
@@ -457,6 +462,8 @@ enum ServicingEventType {
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-01-31 | Initial creation |
+| 1.1 | 2026-01-31 | Layer 5E deployed - CapitalBridgeHub, CapitalReadinessGate |
+| 1.2 | 2026-01-31 | Layer 5G deployed - InstrumentRegistry, PoolRegistry, ServicingEventLog |
 
 **Last Updated:** January 31, 2026  
 **Classification:** Technical Architecture

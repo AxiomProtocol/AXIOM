@@ -37,7 +37,7 @@
       },
       "deployedAt": "2026-01-31T12:05:00.000Z",
       "configuredAt": "2026-01-31T12:10:00.000Z",
-      "verified": false,
+      "verified": true,
       "configuration": {
         "poolRegistry": "0x7D386357F0D461Be9DA5FBb90E1F194c5aeafcD9",
         "txHash": "0xc621fc0a2588024decbcf61c7a22b2d4f4566e91fe37e0cbb057bac2f262bfc0"
@@ -66,7 +66,7 @@
       },
       "deployedAt": "2026-01-31T12:05:00.000Z",
       "configuredAt": "2026-01-31T12:10:00.000Z",
-      "verified": false,
+      "verified": true,
       "configuration": {
         "instrumentRegistry": "0xcDE54ED7d19768be02Eb7C4799d7d8689310C7A5",
         "txHash": "0x7560c0d391b2115c7d48f408992a15c42d25bcf49f36546abf8970c0c51efa96"
@@ -91,7 +91,7 @@
       },
       "deployedAt": "2026-01-31T12:05:00.000Z",
       "configuredAt": "2026-01-31T12:10:00.000Z",
-      "verified": false,
+      "verified": true,
       "configuration": {
         "instrumentRegistry": "0xcDE54ED7d19768be02Eb7C4799d7d8689310C7A5",
         "txHash": "0x943d8b7a9661de5633b2cc0e414e38d79926252b0a9cef538b552aa10a833840"
@@ -174,6 +174,6 @@
     "10. [DONE] Layer 5G contracts deployed",
     "11. [DONE] Layer 5G cross-contract references configured",
     "12. [DONE] Layer 5G roles granted (ISSUER, SERVICER, POOL_MANAGER)",
-    "13. [PENDING] Verify Layer 5G contracts on Blockscout"
+    "13. [DONE] Verify Layer 5G contracts on Blockscout"
   ]
 }
