@@ -494,11 +494,21 @@ Once archived:
 
 ---
 
+## Related Documentation
+
+- [DeNet Enforcement Proof](../storage/denet-enforcement-proof.md) - Canonical evidence of DeNet CID enforcement
+- [DeNet Architecture](../storage/denet-architecture.md) - Technical storage implementation
+- [DeNet Operations SOP](./denet-sop.md) - Standard operating procedures for storage
+- [Capital Bridge Analysis](../internal/CAPITAL-BRIDGE-MASTER-PROMPT-ANALYSIS.md) - Implementation plan
+
+---
+
 ## Document Control
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-01-31 | Initial creation |
+| 1.1 | 2026-01-31 | Added DeNet enforcement cross-references |
 
 **Last Updated:** January 31, 2026  
 **Classification:** Operational Procedure

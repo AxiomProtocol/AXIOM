@@ -522,6 +522,14 @@ Post observation window:
 
 ---
 
-**Document Version:** 1.0  
+## Related Documentation
+
+- [DeNet Enforcement Proof](../storage/denet-enforcement-proof.md) - Canonical evidence of DeNet CID enforcement in Capital Bridge workflows
+- [Property Research SOP](../ops/property-research-sop.md) - Standard operating procedure with CID requirements
+- [DeNet Architecture](../storage/denet-architecture.md) - Technical storage implementation
+
+---
+
+**Document Version:** 1.1  
 **Last Updated:** January 31, 2026  
 **Classification:** Internal Development Reference

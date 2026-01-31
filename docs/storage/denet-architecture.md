@@ -323,10 +323,13 @@ bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi
 
 | Document | Location |
 |----------|----------|
+| Enforcement Proof | `docs/storage/denet-enforcement-proof.md` |
 | Activation Status | `docs/storage/denet-activation-status.md` |
 | Operations SOP | `docs/ops/denet-sop.md` |
 | Setup Guide | `docs/ops/denet-setup.md` |
 | Storage Backends | `docs/ops/storage-backends.md` |
+| Property Research SOP | `docs/ops/property-research-sop.md` |
+| Capital Bridge Analysis | `docs/internal/CAPITAL-BRIDGE-MASTER-PROMPT-ANALYSIS.md` |
 
 ---
 
