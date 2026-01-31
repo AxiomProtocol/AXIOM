@@ -1,0 +1,449 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://axiomprotocol.io/schemas/property-packet.schema.json",
+  "title": "PropertyPacket",
+  "description": "Schema for Capital Bridge property packet data structure",
+  "type": "object",
+  "required": [
+    "packetId",
+    "trackType",
+    "createdAt",
+    "createdBy",
+    "propertyAddress",
+    "propertyType",
+    "unpaidPrincipalBalance",
+    "interestRate",
+    "originalLoanAmount",
+    "originationDate",
+    "maturityDate",
+    "monthlyPayment",
+    "lienPosition",
+    "servicerName",
+    "status",
+    "artifactIndex"
+  ],
+  "properties": {
+    "packetId": {
+      "type": "string",
+      "pattern": "^PKT-[AB]-[0-9]{4}-[0-9]{3}$",
+      "description": "Unique packet identifier (PKT-A-YYYY-NNN or PKT-B-YYYY-NNN)"
+    },
+    "trackType": {
+      "type": "string",
+      "enum": ["PERFORMING", "LIGHT_NPL"],
+      "description": "Asset track classification"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO8601 packet creation timestamp"
+    },
+    "createdBy": {
+      "type": "string",
+      "pattern": "^0x[a-fA-F0-9]{40}$",
+      "description": "Ethereum address of packet creator"
+    },
+    "propertyAddress": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Full property street address"
+    },
+    "propertyType": {
+      "type": "string",
+      "enum": ["SFR", "MFR", "CONDO", "TOWNHOUSE", "LAND", "COMMERCIAL"],
+      "description": "Property type classification"
+    },
+    "unpaidPrincipalBalance": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Current unpaid principal balance (UPB)"
+    },
+    "interestRate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 30,
+      "description": "Annual interest rate as percentage"
+    },
+    "originalLoanAmount": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Original loan principal amount"
+    },
+    "originationDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Loan origination date"
+    },
+    "maturityDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Loan maturity date"
+    },
+    "monthlyPayment": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Monthly principal and interest payment"
+    },
+    "lienPosition": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3,
+      "description": "Lien priority position"
+    },
+    "servicerName": {
+      "type": "string",
+      "minLength": 2,
+      "description": "Current loan servicer name"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["DRAFT", "UNDERWRITING", "ARTIFACTS_PENDING", "READY", "SUBMITTED", "ATTESTED", "SETTLED", "REJECTED"],
+      "description": "Current packet workflow status"
+    },
+    "paymentHistoryMonths": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Months of payment history available (Track A)"
+    },
+    "lastPaymentDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of last payment received (Track A)"
+    },
+    "delinquencyStatus": {
+      "$ref": "#/$defs/DelinquencyStatus",
+      "description": "Delinquency details (Track B)"
+    },
+    "borrowerContactStatus": {
+      "type": "string",
+      "enum": ["RESPONSIVE", "UNRESPONSIVE", "UNKNOWN"],
+      "description": "Borrower contact status (Track B)"
+    },
+    "workoutOptionsAvailable": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/WorkoutOption"
+      },
+      "description": "Available workout strategies (Track B)"
+    },
+    "propertyOccupancy": {
+      "type": "string",
+      "enum": ["OWNER_OCCUPIED", "TENANT", "VACANT", "UNKNOWN"],
+      "description": "Current property occupancy status"
+    },
+    "propertyCondition": {
+      "type": "string",
+      "enum": ["EXCELLENT", "GOOD", "FAIR", "POOR", "UNKNOWN"],
+      "description": "Property condition assessment"
+    },
+    "propertyValue": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Estimated property value"
+    },
+    "borrowerCreditScore": {
+      "type": "integer",
+      "minimum": 300,
+      "maximum": 850,
+      "description": "Borrower credit score if available"
+    },
+    "ltv": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 200,
+      "description": "Loan-to-value ratio as percentage"
+    },
+    "underwriting": {
+      "$ref": "#/$defs/Underwriting",
+      "description": "Underwriting analysis results"
+    },
+    "artifactIndex": {
+      "$ref": "#/$defs/ArtifactIndex",
+      "description": "Settlement artifact references"
+    },
+    "riskFlags": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RiskFlag"
+      },
+      "description": "Identified risk flags"
+    },
+    "attestations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Attestation"
+      },
+      "description": "Dual attestation records"
+    },
+    "servicingEvents": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ServicingEvent"
+      },
+      "description": "Ongoing servicing event log (Track B)"
+    }
+  },
+  "$defs": {
+    "DelinquencyStatus": {
+      "type": "object",
+      "required": ["missedPaymentCount", "firstMissedDate", "totalAmountPastDue", "currentLegalStatus"],
+      "properties": {
+        "missedPaymentCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "firstMissedDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "lastMissedDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "totalAmountPastDue": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lateFeesAccrued": {
+          "type": "number",
+          "minimum": 0
+        },
+        "escrowShortage": {
+          "type": "number",
+          "minimum": 0
+        },
+        "currentLegalStatus": {
+          "type": "string",
+          "enum": ["CURRENT", "PRE_FORECLOSURE", "FORECLOSURE_FILED", "JUDGMENT", "SALE_SCHEDULED", "REO"]
+        },
+        "foreclosureFiledDate": {
+          "type": ["string", "null"],
+          "format": "date"
+        },
+        "redemptionPeriodEnd": {
+          "type": ["string", "null"],
+          "format": "date"
+        }
+      }
+    },
+    "WorkoutOption": {
+      "type": "object",
+      "required": ["type", "probability", "timeline"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["REINSTATEMENT", "MODIFICATION", "FORBEARANCE", "DISCOUNTED_PAYOFF", "SHORT_SALE", "DEED_IN_LIEU", "FORECLOSURE"]
+        },
+        "probability": {
+          "type": "string",
+          "enum": ["HIGH", "MEDIUM", "LOW"]
+        },
+        "requiredAmount": {
+          "type": "number",
+          "minimum": 0
+        },
+        "proposedTerms": {
+          "type": "string"
+        },
+        "proposedAmount": {
+          "type": "number",
+          "minimum": 0
+        },
+        "discount": {
+          "type": "string"
+        },
+        "timeline": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "Underwriting": {
+      "type": "object",
+      "properties": {
+        "purchasePrice": {
+          "type": "number",
+          "minimum": 0
+        },
+        "participationAmount": {
+          "type": "number",
+          "minimum": 0
+        },
+        "impliedYieldRange": {
+          "type": "string",
+          "pattern": "^[0-9.]+% - [0-9.]+%$"
+        },
+        "collateralValueEstimate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "collateralConfidence": {
+          "type": "string",
+          "enum": ["HIGH", "MEDIUM", "LOW"]
+        },
+        "ltvProxy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 200
+        },
+        "dscrProxy": {
+          "type": "number",
+          "minimum": 0
+        },
+        "recoveryEstimate": {
+          "type": "string"
+        },
+        "workoutProbability": {
+          "type": "string"
+        },
+        "timelineMonths": {
+          "type": "string"
+        },
+        "riskTier": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH"]
+        },
+        "riskReasonCodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "underwritingHash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "finalizedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finalizedBy": {
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]{40}$"
+        }
+      }
+    },
+    "ArtifactIndex": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/ArtifactReference"
+      }
+    },
+    "ArtifactReference": {
+      "type": "object",
+      "required": ["filename", "uploadedAt"],
+      "properties": {
+        "cid": {
+          "type": "string",
+          "pattern": "^bafy[a-z0-9]+$",
+          "description": "IPFS/DeNet Content Identifier"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA256 hash of file content"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "uploadedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "uploadedBy": {
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]{40}$"
+        },
+        "fileSize": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mimeType": {
+          "type": "string"
+        }
+      }
+    },
+    "RiskFlag": {
+      "type": "object",
+      "required": ["code", "severity", "description"],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["HIGH", "MEDIUM", "LOW"]
+        },
+        "description": {
+          "type": "string"
+        },
+        "reviewedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reviewedBy": {
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]{40}$"
+        },
+        "resolution": {
+          "type": "string"
+        }
+      }
+    },
+    "Attestation": {
+      "type": "object",
+      "required": ["role", "signer", "timestamp", "packetHash"],
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": ["ATTESTOR_A", "ATTESTOR_B"]
+        },
+        "signer": {
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]{40}$"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "packetHash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "signature": {
+          "type": "string"
+        }
+      }
+    },
+    "ServicingEvent": {
+      "type": "object",
+      "required": ["date", "type", "outcome"],
+      "properties": {
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["BORROWER_CONTACT", "PAYMENT_RECEIVED", "REINSTATEMENT_QUOTE_SENT", "MODIFICATION_OFFERED", "LEGAL_ACTION", "PROPERTY_INSPECTION", "OTHER"]
+        },
+        "outcome": {
+          "type": "string"
+        },
+        "nextAction": {
+          "type": "string"
+        },
+        "nextActionDue": {
+          "type": "string",
+          "format": "date"
+        },
+        "recordedBy": {
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]{40}$"
+        }
+      }
+    }
+  }
+}
