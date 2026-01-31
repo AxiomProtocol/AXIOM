@@ -67,7 +67,7 @@ Key features include:
 - **Phase 2 Products - Turn Capital Into Infrastructure** (Community Land Funds with MetaMask integration and on-chain transactions; Builder & Farmer Credit for working capital loans via credit application modal)
 - **Phase 3 Products - Turn Axiom Into a Financial State** (AXUSD Credit Lines, Insurance Pools, Axiom Treasury Notes, all with Web3 wallet integration and live API data)
 - **DEX V2 Ecosystem** (10 mainnet contracts on Arbitrum One)
-- **Institutional Observer Dashboard** (Read-only transparency dashboard for allocators and auditors at `/observer`)
+- **Institutional Observer Dashboard** (Read-only transparency dashboard for allocators and auditors at `/observer`, with Capital Bridge metrics at `/observer/capital-bridge` and Node Economy metrics at `/observer/node-economy`)
 - **Euler V2 AXUSD Lending Markets** (External DeFi lending integration on Arbitrum One at vault 0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059 with eUSDC/eWETH collateral support, integrated via /earn page, /borrow page, DEX Earn tab, yield-vault page, and dashboard widget. **LOCKED CONFIG** - See `docs/lending/SOP-euler-v2-axusd-vault-config.md` for immutable configuration. DO NOT CHANGE vault address or LTV parameters.)
 - **Deployment Configuration**: Uses VM for complex builds, `npm run build:deploy:clean` for build command, and `npm run start:minimal` for run command.
 
