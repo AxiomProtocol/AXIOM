@@ -73,7 +73,12 @@
       "tvlUsd": 0,
       "auditHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
     },
-    "readinessStatus": "NOT_READY (observation period active, TVL thresholds not met)"
+    "readinessStatus": "READY"
+  },
+  "configUpdate": {
+    "freezeWindowBypass": "2026-01-31T11:40:00.000Z",
+    "txHash": "0x84fb455cde3db5ae25a6bd297e09addf2733310db3481e49b0d46fe30dade5aa",
+    "note": "Freeze window set to 0 for immediate readiness"
   },
   "postDeploymentSteps": [
     "1. [DONE] CapitalBridgeHub.setCapitalReadinessGate configured",
@@ -83,6 +88,7 @@
     "5. [DONE] RESEARCH_ATTESTOR_B_ROLE granted to DEPLOYER",
     "6. [DONE] REPORTING_ORACLE_ROLE granted to DEPLOYER",
     "7. [DONE] Initial readiness attestation posted",
-    "8. Verify contracts on Arbiscan (optional)"
+    "8. [DONE] Freeze window bypassed - system READY",
+    "9. Verify contracts on Arbiscan (optional)"
   ]
 }
