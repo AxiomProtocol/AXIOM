@@ -2,10 +2,10 @@
 
 ## Complete Technical Architecture & Implementation Guide
 
-**Version:** 2.0  
+**Version:** 2.1  
 **Date:** January 31, 2026  
 **Network:** Arbitrum One (Chain ID: 42161)  
-**Total Deployed Contracts:** 56+  
+**Total Deployed Contracts:** 60+ (8 additional planned)  
 **Status:** Production
 
 ---
@@ -29,12 +29,13 @@
 15. [Security Architecture](#15-security-architecture)
 16. [Roadmap](#16-roadmap)
 17. [Contract Registry](#17-contract-registry)
+18. [Future Development Roadmap](#18-future-development-roadmap)
 
 ---
 
 ## 1. EXECUTIVE SUMMARY
 
-Axiom Protocol is a sovereign digital-physical economy designed to establish America's first 1,000-acre on-chain smart city. The platform operates as a community-governed DeFi protocol with a comprehensive treasury system, real estate tokenization, and institutional-grade financial infrastructure.
+Axiom Protocol is a decentralized real asset clearinghouse and financial infrastructure stack designed to coordinate real-world property, credit, and capital using verifiable data, governed execution, and on-chain settlement. The platform operates as a community-governed DeFi protocol with a comprehensive treasury system, real estate tokenization, and institutional-grade financial infrastructure built on Arbitrum One.
 
 ### Key Statistics
 
@@ -63,7 +64,7 @@ Axiom Protocol is a sovereign digital-physical economy designed to establish Ame
 ## 2. VISION & MISSION
 
 ### Vision
-Create a model for future sovereign digital-physical economies, emphasizing self-custody and non-custodial DeFi approach.
+Build a decentralized financial infrastructure that connects off-chain real assets with on-chain capital coordination, enabling transparent, community-governed wealth building through verifiable data and sovereign execution.
 
 ### Mission
 Reclaim what was taken. Build what was denied. Own what is ours.
@@ -973,6 +974,227 @@ Institutional transparency portal at `/observer`:
 
 ---
 
+## 18. FUTURE DEVELOPMENT ROADMAP
+
+This section outlines the institutional-grade infrastructure planned for implementation, designed to bridge on-chain capital with off-chain real estate acquisitions via SPVs with full transparency and governance controls.
+
+### 18.1 Layered Architecture Vision
+
+The complete Axiom Protocol stack integrates eight layers:
+
+| Layer | Name | Purpose |
+|-------|------|---------|
+| 1 | Physical Asset Layer | Non-on-chain inputs (properties, notes, rehab data) |
+| 2 | Data & Verification Layer | Convert off-chain to immutable records (DeNet, CID) |
+| 3 | Oracle & Metrics Layer | Risk signals (LTV, DSCR, utilization) |
+| 4 | Arbitrum Execution Layer | Sovereign transaction verification |
+| 5 | Core Protocol Layer | AXUSD, Euler, lending, settlement |
+| 6 | Governance & Compliance Layer | Observation windows, disclosures, dashboards |
+| 7 | Node Economy Layer | Storage, execution, indexing, research nodes |
+| 8 | Capital Deployment Layer | SPV acquisitions, mortgage notes, rehab financing |
+
+### 18.2 Layer 5 Sublayers (Core Protocol)
+
+| Sublayer | Name | Status |
+|----------|------|--------|
+| 5A | Settlement & Accounting | DEPLOYED |
+| 5B | Credit Origination Interfaces | DEPLOYED |
+| 5C | Risk Controls & Parameterization | DEPLOYED |
+| 5D | Revenue Routing | DEPLOYED |
+| 5E | Capital Bridge to SPV | PLANNED |
+| 5F | Transparency & Observer | DEPLOYED |
+| 5G | Securitization & Note Aggregation | PLANNED |
+
+### 18.3 Capital Bridge Infrastructure (Layer 5E)
+
+#### CapitalBridgeHub Contract
+
+Coordinates on-chain capital with off-chain SPV acquisitions through research attestation and timelocked authorization.
+
+**Core Components:**
+
+| Component | Description |
+|-----------|-------------|
+| PropertyPacket | Off-chain property data reference with due diligence hashes |
+| ResearchAttestation | Dual independent attestation requirement (A + B) |
+| AcquisitionAuthorization | Timelocked capital deployment approval |
+| SettlementEvent | On-chain settlement proof |
+| SPVEntity | Registered legal entity for property holding |
+
+**State Machine - PropertyPacket:**
+```
+Draft -> Submitted -> Attested -> Approved OR Rejected -> Archived OR Expired
+```
+
+**State Machine - Authorization:**
+```
+Proposed -> Timelocked (24h) -> Active -> Settled OR Canceled OR Expired
+```
+
+**Critical Invariants:**
+- Two independent research attestations required before approval
+- Attestors must hold different roles (A cannot satisfy B)
+- 24-hour timelock on authorization activation
+- Settled authorizations cannot be reused
+- All metadata references must be CID hash or content hash
+- Attestation freshness: 30 days default
+
+#### CapitalReadinessGate Contract
+
+Prevents authorization activation unless minimum institutional readiness thresholds are satisfied.
+
+**Readiness Parameters:**
+
+| Parameter | Type | Purpose |
+|-----------|------|---------|
+| requiredAuditHash | bytes32 | Required audit reference |
+| minimumUptimeBps | uint16 | Minimum uptime (basis points) |
+| minimumObservationDaysElapsed | uint16 | Days since observation start |
+| maxIncidentsAllowed | uint16 | Maximum security incidents |
+| minimumTVLUsd | uint256 | Minimum TVL (0 = disabled) |
+| freezeWindowSeconds | uint256 | Freeze period (0 = disabled) |
+
+### 18.4 Securitization Infrastructure (Layer 5G)
+
+#### Standardized Instruments
+
+| Instrument Type | Description | Use Case |
+|-----------------|-------------|----------|
+| Whole Loan | Full loan ownership | Direct acquisition |
+| Participation | Fractional loan share | Co-lending |
+| Note | Promissory note wrapper | Secondary market |
+| Revenue Share | Cashflow entitlement | Yield products |
+| Rent Stream | Rental income contract | Income securitization |
+
+#### Registry Contracts
+
+| Contract | Purpose |
+|----------|---------|
+| InstrumentRegistry | Track all standardized instruments |
+| PoolRegistry | Manage pool formation and composition |
+| ServicingEventLog | Record servicing activities |
+
+**Pathway Constraints:**
+- Internal treasury pathways (protocol-held)
+- Accredited investor pathways (SEC Reg D 506(c))
+- Institutional allocation (whitelisted)
+- No public token issuance required
+
+### 18.5 Node Economy (Layer 7)
+
+#### Node Classes
+
+| Class | Function | Reward Source |
+|-------|----------|---------------|
+| Storage | DeNet data hosting | Storage fees |
+| Execution | Arbitrum replicas | Query fees |
+| Indexing | Event indexing | API fees |
+| Research | Property research | Attestation fees |
+
+**Research Node Qualification:**
+- Qualify for RESEARCH_ATTESTOR_A_ROLE or RESEARCH_ATTESTOR_B_ROLE
+- Cannot hold both roles simultaneously
+- Must pass accreditation
+- Must maintain attestation quality metrics
+
+**Reward Model:**
+- Non-inflationary (no token emissions)
+- Funded from protocol revenue
+- Performance-based distribution
+
+### 18.6 New Roles (To Deploy)
+
+| Role | Purpose | Contract |
+|------|---------|----------|
+| RESEARCH_ATTESTOR_A_ROLE | First attestation signer | CapitalBridgeHub |
+| RESEARCH_ATTESTOR_B_ROLE | Second attestation signer | CapitalBridgeHub |
+| REPORTING_ORACLE_ROLE | Readiness data posting | CapitalReadinessGate |
+
+### 18.7 Contracts To Deploy
+
+| Contract | Location | Priority |
+|----------|----------|----------|
+| CapitalBridgeTypes.sol | contracts/capital-bridge/ | P1 |
+| CapitalBridgeHub.sol | contracts/capital-bridge/ | P1 |
+| CapitalReadinessGate.sol | contracts/readiness/ | P1 |
+| InstrumentRegistry.sol | contracts/securitization/ | P1 |
+| PoolRegistry.sol | contracts/securitization/ | P1 |
+| ServicingEventLog.sol | contracts/securitization/ | P1 |
+| NodeRegistry.sol | contracts/node-economy/ | P2 |
+| NodeRewardDistributor.sol | contracts/node-economy/ | P2 |
+| NodeSlashingEngine.sol | contracts/node-economy/ | P2 |
+
+### 18.8 Implementation Timeline
+
+#### Observation Window (Now - March 26, 2026)
+
+During this period:
+- No treasury capital deployment
+- External liquidity only via Euler V2
+- Contract development and documentation allowed
+- Testing and audit preparation
+
+#### Phase 2: Capital Bridge Activation (Q2 2026)
+
+| Month | Milestone |
+|-------|-----------|
+| April | Testnet deployment, integration testing |
+| May | Security audit, mainnet deployment prep |
+| June | First property packet, SPV registration |
+
+#### Phase 3: Securitization (Q3 2026)
+
+| Month | Milestone |
+|-------|-----------|
+| July | Layer 5G contract development |
+| August | Testnet deployment, pathway testing |
+| September | Mainnet deployment, first instrument |
+
+#### Phase 4: Node Economy (Q4 2026)
+
+| Month | Milestone |
+|-------|-----------|
+| October | Node registry development |
+| November | Reward distribution, testnet |
+| December | Mainnet launch, first nodes active |
+
+### 18.9 Observer Dashboard Extensions
+
+Future metrics for institutional transparency:
+
+| Section | Metrics |
+|---------|---------|
+| Capital Bridge | Packets count, attested, approved, authorized, settled |
+| Readiness Gate | Uptime, incidents, audit hash, days elapsed |
+| Securitization | Instruments count, pools count, servicing events |
+| Research | Attestation count, freshness, failure reasons |
+| Node Economy | Active nodes by class, uptime, rewards distributed |
+
+### 18.10 API Endpoints (Planned)
+
+| Endpoint | Purpose |
+|----------|---------|
+| GET /api/capital-bridge/packets | List property packets |
+| GET /api/capital-bridge/attestations | Attestation history |
+| GET /api/capital-bridge/authorizations | Authorization list |
+| GET /api/capital-bridge/settlements | Settlement records |
+| GET /api/readiness/status | Current readiness state |
+| GET /api/securitization/instruments | Instrument registry |
+| GET /api/securitization/pools | Pool registry |
+| GET /api/nodes/registry | Active node list |
+
+### 18.11 Reference Documentation
+
+| Document | Location |
+|----------|----------|
+| Master Prompt Analysis | docs/internal/CAPITAL-BRIDGE-MASTER-PROMPT-ANALYSIS.md |
+| Development Roadmap | docs/internal/DEVELOPMENT-ROADMAP-2026.md |
+| Layer 5 Sublayers | docs/architecture/layer-5-sublayers.md |
+| Property Research SOP | docs/ops/property-research-sop.md |
+| Module-to-Contract Map | docs/module-to-contract-map.md |
+
+---
+
 ## APPENDIX A: STABLECOINS ON ARBITRUM
 
 | Token | Address |
@@ -1016,10 +1238,11 @@ Institutional transparency portal at `/observer`:
 
 | Attribute | Value |
 |-----------|-------|
-| Version | 2.0 |
+| Version | 2.1 |
 | Date | January 31, 2026 |
 | Author | Axiom Protocol |
 | Classification | Public |
+| Changes | Added Section 18: Future Development Roadmap with Capital Bridge, Securitization, and Node Economy specifications |
 
 ---
 
