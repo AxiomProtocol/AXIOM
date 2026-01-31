@@ -9,6 +9,7 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createHash } from 'crypto';
+import jwt from 'jsonwebtoken';
 
 interface UploadRequest {
   data: string;
@@ -28,6 +29,12 @@ interface UploadResponse {
   verified: boolean;
 }
 
+interface JwtPayload {
+  id: string;
+  email: string;
+  role: string;
+}
+
 const ALLOWED_ROLES = [
   'admin',
   'risk_committee',
@@ -36,6 +43,36 @@ const ALLOWED_ROLES = [
   'underwriter',
   'steward',
 ];
+
+const JWT_SECRET = process.env.JWT_SECRET || '';
+
+function verifyTokenAndRole(authHeader: string | undefined): { valid: boolean; role?: string; error?: string } {
+  if (!authHeader) {
+    return { valid: false, error: 'Authorization header required' };
+  }
+
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+  
+  if (!JWT_SECRET) {
+    return { valid: false, error: 'Server authentication not configured' };
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    
+    if (!decoded.role) {
+      return { valid: false, error: 'Token missing role claim' };
+    }
+
+    if (!ALLOWED_ROLES.includes(decoded.role)) {
+      return { valid: false, error: 'Insufficient permissions' };
+    }
+
+    return { valid: true, role: decoded.role };
+  } catch (error) {
+    return { valid: false, error: 'Invalid or expired token' };
+  }
+}
 
 function computeContentHash(data: string): string {
   return createHash('sha256').update(Buffer.from(data, 'base64')).digest('hex');
@@ -76,11 +113,13 @@ export default async function handler(
     return res.status(503).json({ error: 'DeNet is not configured' });
   }
 
-  const authHeader = req.headers.authorization;
-  const apiKey = req.headers['x-api-key'];
+  const authHeader = req.headers.authorization as string | undefined;
   
-  if (!authHeader && !apiKey) {
-    return res.status(401).json({ error: 'Authentication required' });
+  const authResult = verifyTokenAndRole(authHeader);
+  if (!authResult.valid) {
+    return res.status(authResult.error === 'Insufficient permissions' ? 403 : 401).json({ 
+      error: authResult.error || 'Authentication required' 
+    });
   }
 
   try {
@@ -104,7 +143,7 @@ export default async function handler(
     const cid = generateCid(contentHash);
     const mimeType = detectMimeType(body.filename);
 
-    console.log(`[DeNet Upload] File: ${body.filename || 'unnamed'}, Size: ${buffer.length}, CID: ${cid}`);
+    console.log(`[DeNet Upload] Role: ${authResult.role}, File: ${body.filename || 'unnamed'}, Size: ${buffer.length}`);
 
     return res.status(201).json({
       success: true,

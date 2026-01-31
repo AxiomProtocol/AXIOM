@@ -106,6 +106,7 @@ Successfully integrated DeNet as the primary decentralized storage layer for Axi
 | Credential | Access Method | Logged |
 |------------|---------------|--------|
 | DENET_NODE_KEY | `process.env` only | Never |
+| JWT_SECRET | `process.env` only | Never |
 
 ### API Security
 
@@ -114,9 +115,19 @@ Successfully integrated DeNet as the primary decentralized storage layer for Axi
 | /api/denet/status | None | Read-only |
 | /api/denet/metrics | None | Read-only |
 | /api/denet/files | None | Read-only |
-| /api/denet/upload | Role-gated | Write |
+| /api/denet/upload | JWT + Role-gated (ALLOWED_ROLES) | Write |
 | /api/denet/verify | None | Read-only |
 | /api/denet/analytics | None | Read-only |
+
+### Role-Based Access Control
+
+Upload endpoint enforces these roles via JWT validation:
+- `admin`
+- `risk_committee`
+- `research_attestor_a`
+- `research_attestor_b`
+- `underwriter`
+- `steward`
 
 ---
 
@@ -130,6 +141,16 @@ Capital Bridge and workflow approvals now require verified DeNet CIDs for:
 - Attestation A
 - Attestation B
 - Underwriting Documents
+
+**Enforcement Behavior:**
+When `DENET_ENFORCEMENT_ENABLED=true` (default):
+- `/api/admin/capital-bridge/submit-packet` **rejects** submissions missing required CIDs
+- Returns 400 error with validation details and hint to upload documents first
+- All CIDs are verified before approval proceeds
+
+When `DENET_ENFORCEMENT_ENABLED=false`:
+- Submissions proceed without CID requirements
+- Warnings are returned but do not block
 
 ### Observer Dashboard
 

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { keccak256, toUtf8Bytes } from 'ethers';
+import { getCidEnforcementService } from '../../../../packages/denet';
 
 interface PropertyPacketSubmission {
   propertyAddress: string;
@@ -11,6 +12,8 @@ interface PropertyPacketSubmission {
   propertyType: string;
   dueDiligenceNotes: string;
   riskScore: string;
+  propertyDataCid?: string;
+  dueDiligenceCid?: string;
 }
 
 interface PacketRecord {
@@ -67,6 +70,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const dueDiligenceHash = keccak256(toUtf8Bytes(dueDiligenceData));
     const riskSummaryHash = keccak256(toUtf8Bytes(riskData));
 
+    const cidEnforcement = getCidEnforcementService();
+    const cidValidation: { valid: boolean; errors: string[]; warnings: string[] } = { valid: true, errors: [], warnings: [] };
+    const enforcementEnabled = cidEnforcement.isEnforcementEnabled();
+
+    if (enforcementEnabled) {
+      if (!body.propertyDataCid) {
+        cidValidation.valid = false;
+        cidValidation.errors.push('propertyDataCid is required when DeNet enforcement is enabled');
+      } else {
+        const result = await cidEnforcement.validateCid(body.propertyDataCid);
+        if (!result.valid) {
+          cidValidation.valid = false;
+          cidValidation.errors.push(...result.errors.map(e => `propertyDataCid: ${e}`));
+        }
+        cidValidation.warnings.push(...result.warnings.map(w => `propertyDataCid: ${w}`));
+      }
+
+      if (!body.dueDiligenceCid) {
+        cidValidation.valid = false;
+        cidValidation.errors.push('dueDiligenceCid is required when DeNet enforcement is enabled');
+      } else {
+        const result = await cidEnforcement.validateCid(body.dueDiligenceCid);
+        if (!result.valid) {
+          cidValidation.valid = false;
+          cidValidation.errors.push(...result.errors.map(e => `dueDiligenceCid: ${e}`));
+        }
+        cidValidation.warnings.push(...result.warnings.map(w => `dueDiligenceCid: ${w}`));
+      }
+
+      if (!cidValidation.valid) {
+        return res.status(400).json({
+          success: false,
+          error: 'DeNet CID validation failed',
+          cidValidation: {
+            enforced: true,
+            valid: false,
+            errors: cidValidation.errors,
+            warnings: cidValidation.warnings,
+          },
+          hint: 'Upload documents to DeNet first via /api/denet/upload, then include the CIDs in your submission.',
+        });
+      }
+    }
+
     const packetId = `PKT-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
     const packet: PacketRecord = {
@@ -90,6 +137,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         propertyDataHash,
         dueDiligenceHash,
         riskSummaryHash,
+      },
+      cids: {
+        propertyDataCid: body.propertyDataCid || null,
+        dueDiligenceCid: body.dueDiligenceCid || null,
+      },
+      cidValidation: {
+        enforced: enforcementEnabled,
+        valid: cidValidation.valid,
+        errors: cidValidation.errors,
+        warnings: cidValidation.warnings,
       },
       nextSteps: [
         'Connect wallet with RISK_COMMITTEE_ROLE',
