@@ -64,6 +64,17 @@
       "txHash": "0x42dc677f9c882f2e2e9aa59e07f7a17a9a4cf1a39268bd2ae32cc6ae5c6a8ef8"
     }
   },
+  "attestation": {
+    "initialPosted": "2026-01-31T11:33:20.000Z",
+    "txHash": "0x6d24705313d0d5512eca98a9b34262764c5960e7c24ae80a499361a98ae256db",
+    "values": {
+      "uptimeBps": 10000,
+      "incidentsCount": 0,
+      "tvlUsd": 0,
+      "auditHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "readinessStatus": "NOT_READY (observation period active, TVL thresholds not met)"
+  },
   "postDeploymentSteps": [
     "1. [DONE] CapitalBridgeHub.setCapitalReadinessGate configured",
     "2. [DONE] RISK_COMMITTEE_ROLE granted to DEPLOYER",
@@ -71,7 +82,7 @@
     "4. [DONE] RESEARCH_ATTESTOR_A_ROLE granted to ADMIN",
     "5. [DONE] RESEARCH_ATTESTOR_B_ROLE granted to DEPLOYER",
     "6. [DONE] REPORTING_ORACLE_ROLE granted to DEPLOYER",
-    "7. Post initial readiness attestation via REPORTING_ORACLE",
+    "7. [DONE] Initial readiness attestation posted",
     "8. Verify contracts on Arbiscan (optional)"
   ]
 }
