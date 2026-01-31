@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
 
-const ADMIN_ADDRESS = "0x2bb2c2a7a1d82097488bf0b9c2a59c1910cd8d5d";
+const ADMIN_ADDRESS = "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493";
 const OBSERVATION_START = Math.floor(new Date("2025-09-26").getTime() / 1000);
 
 // Use isolated artifacts path for capital-bridge config

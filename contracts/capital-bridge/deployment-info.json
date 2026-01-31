@@ -1,34 +1,35 @@
 {
   "network": "Arbitrum One",
   "chainId": 42161,
-  "deployedAt": "2026-01-31T10:45:00.000Z",
+  "deployedAt": "2026-01-31T11:30:00.000Z",
   "deployer": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
   "contracts": {
     "CapitalReadinessGate": {
-      "address": "0x670E28DA9B44046658A65fa67104e7C4F2f27ff1",
-      "explorerUrl": "https://arbitrum.blockscout.com/address/0x670E28DA9B44046658A65fa67104e7C4F2f27ff1",
+      "address": "0xc3f798066e1401aa30Da8703A4c0588A1076ff39",
+      "explorerUrl": "https://arbiscan.io/address/0xc3f798066e1401aa30Da8703A4c0588A1076ff39",
       "constructorArgs": {
-        "admin": "0x2bb2c2a7a1d82097488bf0b9c2a59c1910cd8d5d",
+        "admin": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493",
         "observationStartTimestamp": 1758844800
       },
       "verified": false
     },
     "CapitalBridgeHub": {
-      "address": "0x81907eE658466Ee0c5da48428a29C3DfC5a91bE9",
-      "explorerUrl": "https://arbitrum.blockscout.com/address/0x81907eE658466Ee0c5da48428a29C3DfC5a91bE9",
+      "address": "0x6a00455dC277C9430e5c45324B34F2425ba0408d",
+      "explorerUrl": "https://arbiscan.io/address/0x6a00455dC277C9430e5c45324B34F2425ba0408d",
       "constructorArgs": {
-        "admin": "0x2bb2c2a7a1d82097488bf0b9c2a59c1910cd8d5d"
+        "admin": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493"
       },
       "verified": false,
-      "pendingConfiguration": {
-        "readinessGate": "0x670E28DA9B44046658A65fa67104e7C4F2f27ff1",
-        "note": "Admin must call setCapitalReadinessGate(0x670E28DA9B44046658A65fa67104e7C4F2f27ff1)"
+      "configuration": {
+        "readinessGate": "0xc3f798066e1401aa30Da8703A4c0588A1076ff39",
+        "configuredAt": "2026-01-31T11:30:00.000Z",
+        "txHash": "0x7b76c0c2ea70767ce1c89a3f33463092c0edafdf6d870e218edcf79aedf5894e"
       }
     }
   },
   "roles": {
-    "DEFAULT_ADMIN_ROLE": "0x2bb2c2a7a1d82097488bf0b9c2a59c1910cd8d5d",
-    "GUARDIAN_ROLE": "0x2bb2c2a7a1d82097488bf0b9c2a59c1910cd8d5d (granted by default)",
+    "DEFAULT_ADMIN_ROLE": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493",
+    "GUARDIAN_ROLE": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493 (granted by default)",
     "RISK_COMMITTEE_ROLE": "Must be granted by admin",
     "SETTLEMENT_AUTHORITY_ROLE": "Must be granted by admin",
     "RESEARCH_ATTESTOR_A_ROLE": "Must be granted by admin",
@@ -36,7 +37,7 @@
     "REPORTING_ORACLE_ROLE": "Must be granted by admin (for CapitalReadinessGate)"
   },
   "postDeploymentSteps": [
-    "1. Admin calls CapitalBridgeHub.setCapitalReadinessGate(0x670E28DA9B44046658A65fa67104e7C4F2f27ff1)",
+    "1. [DONE] CapitalBridgeHub.setCapitalReadinessGate configured",
     "2. Grant RISK_COMMITTEE_ROLE to risk committee address",
     "3. Grant SETTLEMENT_AUTHORITY_ROLE to settlement authority address",
     "4. Grant RESEARCH_ATTESTOR_A_ROLE and RESEARCH_ATTESTOR_B_ROLE to distinct attestor addresses",
