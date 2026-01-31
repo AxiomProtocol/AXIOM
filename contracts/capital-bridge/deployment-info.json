@@ -6,20 +6,20 @@
   "contracts": {
     "CapitalReadinessGate": {
       "address": "0xc3f798066e1401aa30Da8703A4c0588A1076ff39",
-      "explorerUrl": "https://arbiscan.io/address/0xc3f798066e1401aa30Da8703A4c0588A1076ff39",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0xc3f798066e1401aa30Da8703A4c0588A1076ff39#code",
       "constructorArgs": {
         "admin": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493",
         "observationStartTimestamp": 1758844800
       },
-      "verified": false
+      "verified": true
     },
     "CapitalBridgeHub": {
       "address": "0x6a00455dC277C9430e5c45324B34F2425ba0408d",
-      "explorerUrl": "https://arbiscan.io/address/0x6a00455dC277C9430e5c45324B34F2425ba0408d",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0x6a00455dC277C9430e5c45324B34F2425ba0408d#code",
       "constructorArgs": {
         "admin": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493"
       },
-      "verified": false,
+      "verified": true,
       "configuration": {
         "readinessGate": "0xc3f798066e1401aa30Da8703A4c0588A1076ff39",
         "configuredAt": "2026-01-31T11:30:00.000Z",
@@ -89,6 +89,6 @@
     "6. [DONE] REPORTING_ORACLE_ROLE granted to DEPLOYER",
     "7. [DONE] Initial readiness attestation posted",
     "8. [DONE] Freeze window bypassed - system READY",
-    "9. Verify contracts on Arbiscan (optional)"
+    "9. [DONE] Contracts verified on Blockscout"
   ]
 }
