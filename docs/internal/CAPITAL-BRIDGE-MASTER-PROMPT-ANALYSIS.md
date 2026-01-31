@@ -20,7 +20,7 @@ This document analyzes the 10-step implementation plan for building institutiona
 | 3 | CapitalBridgeHub Contract | TODO | P1 | High |
 | 4 | CapitalReadinessGate Contract | TODO | P1 | Medium |
 | 5 | Property Research SOP | TODO | P2 | Medium |
-| 6 | Node Economy Spec | TODO | P2 | Medium |
+| 6 | Node Economy Spec | DONE | P2 | Medium |
 | 7 | Observer Dashboard Spec | TODO | P2 | Low |
 | 8 | Read-Only API Endpoints | TODO | P3 | Low |
 | 9 | Audit Harness | TODO | P1 | High |
