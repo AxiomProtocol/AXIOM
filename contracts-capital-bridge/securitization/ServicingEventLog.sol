@@ -151,6 +151,16 @@ contract ServicingEventLog is IServicingEventLog, AccessControl, Pausable {
         );
         require(length <= 50, "Batch too large");
         
+        // Critical: Validate all instruments exist before logging any events
+        if (address(instrumentRegistry) != address(0)) {
+            for (uint256 i = 0; i < length; i++) {
+                SecuritizationTypes.Instrument memory instrument = instrumentRegistry.getInstrument(instrumentIds[i]);
+                if (instrument.instrumentId == 0) {
+                    revert InstrumentNotFound(instrumentIds[i]);
+                }
+            }
+        }
+        
         eventIds = new uint256[](length);
         
         for (uint256 i = 0; i < length; i++) {

@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./SecuritizationTypes.sol";
 import "./ISecuritization.sol";
+import "./InstrumentRegistry.sol";
 
 /**
  * @title PoolRegistry
@@ -198,11 +199,17 @@ contract PoolRegistry is IPoolRegistry, AccessControl, Pausable, ReentrancyGuard
             revert InvalidState(pool.state, SecuritizationTypes.PoolState.Forming);
         }
         
+        // Critical: Verify instrument actually belongs to this pool before removal
+        SecuritizationTypes.Instrument memory instrument = instrumentRegistry.getInstrument(instrumentId);
+        if (instrument.poolId != poolId) {
+            revert InstrumentNotEligible(instrumentId, "not in this pool");
+        }
+        
         // Remove from pool list
         _removeFromPoolList(poolId, instrumentId);
         
-        // Update instrument registry
-        InstrumentRegistry(address(instrumentRegistry)).removeFromPool(instrumentId);
+        // Update instrument registry with pool verification
+        InstrumentRegistry(address(instrumentRegistry)).removeFromPool(instrumentId, poolId);
         
         emit InstrumentRemovedFromPool(poolId, instrumentId, uint64(block.timestamp));
     }

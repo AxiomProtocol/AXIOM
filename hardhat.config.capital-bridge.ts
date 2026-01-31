@@ -30,6 +30,11 @@ const config: HardhatUserConfig = {
       chainId: 42161,
       accounts: process.env.DEPLOYER_PK ? [process.env.DEPLOYER_PK] : (process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []),
     },
+    arbitrumAdmin: {
+      url: process.env.ARBITRUM_RPC_URL || `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+      chainId: 42161,
+      accounts: process.env.ADMIN_PRIVATE_KEY ? [process.env.ADMIN_PRIVATE_KEY] : [],
+    },
   },
   etherscan: {
     apiKey: {

@@ -53,6 +53,7 @@ contract InstrumentRegistry is IInstrumentRegistry, AccessControl, Pausable, Ree
     error AlreadyAssignedToPool(uint256 instrumentId, uint256 currentPool);
     error PoolRegistryNotSet();
     error OnlyPoolRegistry();
+    error PoolMismatch(uint256 instrumentId, uint256 expectedPool, uint256 actualPool);
     
     // ========================================================================
     // CONSTRUCTOR
@@ -232,12 +233,19 @@ contract InstrumentRegistry is IInstrumentRegistry, AccessControl, Pausable, Ree
     /**
      * @notice Remove instrument from pool (called by PoolRegistry)
      * @param instrumentId Instrument to remove
+     * @param expectedPoolId Pool ID that must match the instrument's current pool
      */
-    function removeFromPool(uint256 instrumentId) external instrumentExists(instrumentId) {
+    function removeFromPool(uint256 instrumentId, uint256 expectedPoolId) external instrumentExists(instrumentId) {
         if (poolRegistry == address(0)) revert PoolRegistryNotSet();
         if (msg.sender != poolRegistry) revert OnlyPoolRegistry();
         
         SecuritizationTypes.Instrument storage instrument = instruments[instrumentId];
+        
+        // Critical: Verify instrument belongs to the expected pool
+        if (instrument.poolId != expectedPoolId) {
+            revert PoolMismatch(instrumentId, expectedPoolId, instrument.poolId);
+        }
+        
         uint256 oldPoolId = instrument.poolId;
         instrument.poolId = 0;
         

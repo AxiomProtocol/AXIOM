@@ -426,6 +426,213 @@
         "ICapitalBridgeHub",
         "ICapitalReadinessGate"
       ]
+    },
+    "/home/runner/workspace/contracts-capital-bridge/securitization/PoolRegistry.sol": {
+      "lastModificationDate": 1769860840762,
+      "contentHash": "255d5a122e4b7577f93686211a52437d",
+      "sourceName": "contracts-capital-bridge/securitization/PoolRegistry.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/access/AccessControl.sol",
+        "@openzeppelin/contracts/utils/Pausable.sol",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+        "./SecuritizationTypes.sol",
+        "./ISecuritization.sol",
+        "./InstrumentRegistry.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "PoolRegistry"
+      ]
+    },
+    "/home/runner/workspace/contracts-capital-bridge/securitization/SecuritizationTypes.sol": {
+      "lastModificationDate": 1769860147068,
+      "contentHash": "e9e9f976951ce38323000c6636ed35f0",
+      "sourceName": "contracts-capital-bridge/securitization/SecuritizationTypes.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "SecuritizationTypes"
+      ]
+    },
+    "/home/runner/workspace/contracts-capital-bridge/securitization/ISecuritization.sol": {
+      "lastModificationDate": 1769860159731,
+      "contentHash": "500e5d3f5c156aa73624d90f3252ca69",
+      "sourceName": "contracts-capital-bridge/securitization/ISecuritization.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./SecuritizationTypes.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "IInstrumentRegistry",
+        "IPoolRegistry",
+        "IServicingEventLog"
+      ]
+    },
+    "/home/runner/workspace/contracts-capital-bridge/securitization/InstrumentRegistry.sol": {
+      "lastModificationDate": 1769860454956,
+      "contentHash": "b415391e0d2d93b150ee47b431dfd7b1",
+      "sourceName": "contracts-capital-bridge/securitization/InstrumentRegistry.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/access/AccessControl.sol",
+        "@openzeppelin/contracts/utils/Pausable.sol",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+        "./SecuritizationTypes.sol",
+        "./ISecuritization.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "InstrumentRegistry"
+      ]
+    },
+    "/home/runner/workspace/contracts-capital-bridge/securitization/ServicingEventLog.sol": {
+      "lastModificationDate": 1769860485473,
+      "contentHash": "b155ac4269d789fb6eec4096f63f285b",
+      "sourceName": "contracts-capital-bridge/securitization/ServicingEventLog.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/access/AccessControl.sol",
+        "@openzeppelin/contracts/utils/Pausable.sol",
+        "./SecuritizationTypes.sol",
+        "./ISecuritization.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "ServicingEventLog"
+      ]
     }
   }
 }
