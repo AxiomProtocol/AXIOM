@@ -2,7 +2,7 @@ import React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 
-type Tab = 'overview' | 'treasury' | 'governance' | 'risk' | 'assets' | 'controls' | 'reports';
+type Tab = 'overview' | 'treasury' | 'governance' | 'risk' | 'assets' | 'controls' | 'reports' | 'capital-bridge' | 'node-economy';
 
 interface ObserverLayoutProps {
   title: string;
@@ -81,6 +81,26 @@ function NavTabs({ current }: { current: Tab }) {
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'capital-bridge', 
+      label: 'Capital Bridge', 
+      href: '/observer/capital-bridge',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'node-economy', 
+      label: 'Node Economy', 
+      href: '/observer/node-economy',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
         </svg>
       )
     },
