@@ -174,6 +174,54 @@
     "10. [DONE] Layer 5G contracts deployed",
     "11. [DONE] Layer 5G cross-contract references configured",
     "12. [DONE] Layer 5G roles granted (ISSUER, SERVICER, POOL_MANAGER)",
-    "13. [DONE] Verify Layer 5G contracts on Blockscout"
-  ]
+    "13. [DONE] Verify Layer 5G contracts on Blockscout",
+    "14. [DONE] Node Economy contracts deployed (NodeRegistry, NodeRewards, SlashingEngine)",
+    "15. [DONE] Node Economy cross-contract references configured",
+    "16. [DONE] Node Economy roles granted",
+    "17. [DONE] Node Economy contracts verified on Blockscout"
+  ],
+  "nodeEconomy": {
+    "deployedAt": "2026-01-31T12:30:00.000Z",
+    "layer": "7 (Node Economy Layer)",
+    "contracts": {
+      "NodeRegistry": {
+        "address": "0x31bc6268155219B627FC3B2d8434d010F33DCb03",
+        "explorerUrl": "https://arbitrum.blockscout.com/address/0x31bc6268155219B627FC3B2d8434d010F33DCb03#code",
+        "verified": true,
+        "configuration": {
+          "rewardsContract": "0x0c1c96F38566d056877cEf4791c701C4F5AEf362",
+          "slashingContract": "0x1ae162B80cEfb82f9ccF25b5E7A45E5e133E6F87",
+          "txHash": "0x68f3fba6c08fdbf06e1e0aff44f398b26306090b06c27c45a20ac3d947b79f45"
+        },
+        "roles": {
+          "NODE_MANAGER_ROLE": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+          "SLASHER_ROLE": "0x1ae162B80cEfb82f9ccF25b5E7A45E5e133E6F87"
+        }
+      },
+      "NodeRewards": {
+        "address": "0x0c1c96F38566d056877cEf4791c701C4F5AEf362",
+        "explorerUrl": "https://arbitrum.blockscout.com/address/0x0c1c96F38566d056877cEf4791c701C4F5AEf362#code",
+        "verified": true,
+        "roles": {
+          "REWARDS_MANAGER_ROLE": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+          "ORACLE_ROLE": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96"
+        }
+      },
+      "SlashingEngine": {
+        "address": "0x1ae162B80cEfb82f9ccF25b5E7A45E5e133E6F87",
+        "explorerUrl": "https://arbitrum.blockscout.com/address/0x1ae162B80cEfb82f9ccF25b5E7A45E5e133E6F87#code",
+        "verified": true,
+        "roles": {
+          "SLASHER_ROLE": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+          "ARBITER_ROLE": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96"
+        }
+      }
+    },
+    "nodeClasses": {
+      "Storage": { "minStake": "0.1 ETH", "lockPeriod": "30 days", "slashPercent": "10%" },
+      "Execution": { "minStake": "0.5 ETH", "lockPeriod": "60 days", "slashPercent": "15%" },
+      "Indexing": { "minStake": "0.25 ETH", "lockPeriod": "30 days", "slashPercent": "10%" },
+      "Research": { "minStake": "1 ETH", "lockPeriod": "90 days", "slashPercent": "20%" }
+    }
+  }
 }

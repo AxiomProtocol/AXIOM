@@ -464,6 +464,21 @@ enum ServicingEventType {
 | 1.0 | 2026-01-31 | Initial creation |
 | 1.1 | 2026-01-31 | Layer 5E deployed - CapitalBridgeHub, CapitalReadinessGate |
 | 1.2 | 2026-01-31 | Layer 5G deployed - InstrumentRegistry, PoolRegistry, ServicingEventLog |
+| 1.3 | 2026-01-31 | Layer 7 Node Economy deployed - NodeRegistry, NodeRewards, SlashingEngine |
+
+### Deployed (Layer 7 - Node Economy)
+
+| Layer | Contract | Address |
+|-------|----------|---------|
+| 7 | NodeRegistry | 0x31bc6268155219B627FC3B2d8434d010F33DCb03 |
+| 7 | NodeRewards | 0x0c1c96F38566d056877cEf4791c701C4F5AEf362 |
+| 7 | SlashingEngine | 0x1ae162B80cEfb82f9ccF25b5E7A45E5e133E6F87 |
+
+**Node Classes:**
+- **Storage** - DeNet data hosting (0.1 ETH stake, 30-day lock)
+- **Execution** - Arbitrum replicas (0.5 ETH stake, 60-day lock)
+- **Indexing** - Event indexing (0.25 ETH stake, 30-day lock)
+- **Research** - Property research attestation (1 ETH stake, 90-day lock)
 
 **Last Updated:** January 31, 2026  
 **Classification:** Technical Architecture

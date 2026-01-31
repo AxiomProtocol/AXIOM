@@ -9,7 +9,7 @@ import "./INodeEconomy.sol";
 
 interface INodeRegistryForSlashing {
     function getNode(uint256 nodeId) external view returns (NodeEconomyTypes.NodeInfo memory);
-    function reduceStake(uint256 nodeId, uint256 amount) external;
+    function reduceStakeAndTransfer(uint256 nodeId, uint256 amount) external;
     function suspendNode(uint256 nodeId, string calldata reason) external;
 }
 
@@ -23,6 +23,7 @@ contract SlashingEngine is ISlashingEngine, AccessControl, ReentrancyGuard, Paus
     INodeRegistryForSlashing public nodeRegistry;
     
     uint256 private _nextSlashId = 1;
+    uint256 public constant MAX_SLASH_HISTORY_CHECK = 100;
     
     mapping(NodeEconomyTypes.NodeClass => NodeEconomyTypes.SlashingParams) private _slashingParams;
     mapping(uint256 => NodeEconomyTypes.SlashEvent) private _slashEvents;
@@ -30,11 +31,18 @@ contract SlashingEngine is ISlashingEngine, AccessControl, ReentrancyGuard, Paus
     mapping(uint256 => uint256) private _lastSlashTime;
     mapping(uint256 => bytes32) private _slashAppeals;
     mapping(uint256 => bool) private _appealResolved;
+    mapping(uint256 => uint256) private _slashEscrow;
     
     address public treasury;
     uint256 public totalSlashed;
+    uint256 public totalEscrowed;
+
+    event FundsReceived(uint256 indexed nodeId, uint256 amount);
+    event AppealRefunded(uint256 indexed slashId, address indexed operator, uint256 amount);
 
     constructor(address admin, address _nodeRegistry) {
+        require(_nodeRegistry != address(0), "Invalid registry");
+        
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(GUARDIAN_ROLE, admin);
         
@@ -124,9 +132,12 @@ contract SlashingEngine is ISlashingEngine, AccessControl, ReentrancyGuard, Paus
         
         _nodeSlashHistory[nodeId].push(slashId);
         _lastSlashTime[nodeId] = block.timestamp;
-        totalSlashed += slashAmount;
         
-        nodeRegistry.reduceStake(nodeId, slashAmount);
+        nodeRegistry.reduceStakeAndTransfer(nodeId, slashAmount);
+        
+        _slashEscrow[slashId] = slashAmount;
+        totalEscrowed += slashAmount;
+        totalSlashed += slashAmount;
         
         uint256 recentSlashes = _countRecentSlashes(nodeId, params.cooldownPeriod * params.maxSlashesBeforeSuspension);
         if (recentSlashes >= params.maxSlashesBeforeSuspension) {
@@ -141,7 +152,9 @@ contract SlashingEngine is ISlashingEngine, AccessControl, ReentrancyGuard, Paus
         uint256 count = 0;
         uint256 cutoff = block.timestamp - window;
         
-        for (uint256 i = history.length; i > 0; i--) {
+        uint256 startIdx = history.length > MAX_SLASH_HISTORY_CHECK ? history.length - MAX_SLASH_HISTORY_CHECK : 0;
+        
+        for (uint256 i = history.length; i > startIdx; i--) {
             NodeEconomyTypes.SlashEvent memory evt = _slashEvents[history[i - 1]];
             if (evt.timestamp < cutoff) break;
             count++;
@@ -171,25 +184,50 @@ contract SlashingEngine is ISlashingEngine, AccessControl, ReentrancyGuard, Paus
         
         _appealResolved[slashId] = true;
         
-        if (!upheld) {
+        uint256 escrowedAmount = _slashEscrow[slashId];
+        
+        if (!upheld && escrowedAmount > 0) {
             NodeEconomyTypes.SlashEvent memory evt = _slashEvents[slashId];
             NodeEconomyTypes.NodeInfo memory node = nodeRegistry.getNode(evt.nodeId);
             
-            if (address(this).balance >= evt.amount) {
-                (bool success, ) = node.operator.call{value: evt.amount}("");
-                require(success, "Refund failed");
-                totalSlashed -= evt.amount;
-            }
+            require(address(this).balance >= escrowedAmount, "Insufficient escrow balance");
+            
+            _slashEscrow[slashId] = 0;
+            totalEscrowed -= escrowedAmount;
+            totalSlashed -= escrowedAmount;
+            
+            (bool success, ) = node.operator.call{value: escrowedAmount}("");
+            require(success, "Refund failed");
+            
+            emit AppealRefunded(slashId, node.operator, escrowedAmount);
+        } else if (upheld && escrowedAmount > 0) {
+            _slashEscrow[slashId] = 0;
+            totalEscrowed -= escrowedAmount;
         }
         
         emit SlashAppealResolved(slashId, upheld);
     }
 
+    function finalizeExpiredEscrows(uint256[] calldata slashIds) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        for (uint256 i = 0; i < slashIds.length; i++) {
+            uint256 slashId = slashIds[i];
+            NodeEconomyTypes.SlashEvent memory evt = _slashEvents[slashId];
+            
+            if (evt.slashId == 0) continue;
+            if (_slashEscrow[slashId] == 0) continue;
+            if (block.timestamp <= evt.timestamp + 14 days) continue;
+            
+            uint256 amount = _slashEscrow[slashId];
+            _slashEscrow[slashId] = 0;
+            totalEscrowed -= amount;
+        }
+    }
+
     function withdrawToTreasury() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
-        uint256 balance = address(this).balance;
-        require(balance > 0, "No funds");
+        uint256 available = address(this).balance - totalEscrowed;
+        require(available > 0, "No funds available");
         
-        (bool success, ) = treasury.call{value: balance}("");
+        (bool success, ) = treasury.call{value: available}("");
         require(success, "Transfer failed");
     }
 
@@ -212,6 +250,15 @@ contract SlashingEngine is ISlashingEngine, AccessControl, ReentrancyGuard, Paus
         appealHash = _slashAppeals[slashId];
     }
 
+    function getEscrowedAmount(uint256 slashId) external view returns (uint256) {
+        return _slashEscrow[slashId];
+    }
+
+    function getAvailableForWithdrawal() external view returns (uint256) {
+        if (address(this).balance <= totalEscrowed) return 0;
+        return address(this).balance - totalEscrowed;
+    }
+
     function pause() external onlyRole(GUARDIAN_ROLE) {
         _pause();
     }
@@ -220,5 +267,7 @@ contract SlashingEngine is ISlashingEngine, AccessControl, ReentrancyGuard, Paus
         _unpause();
     }
 
-    receive() external payable {}
+    receive() external payable {
+        emit FundsReceived(0, msg.value);
+    }
 }

@@ -20,9 +20,13 @@ contract NodeRegistry is INodeRegistry, AccessControl, ReentrancyGuard, Pausable
     mapping(address => uint256[]) private _operatorNodes;
     mapping(NodeEconomyTypes.NodeClass => NodeEconomyTypes.StakeRequirement) private _stakeRequirements;
     mapping(NodeEconomyTypes.NodeClass => uint256) private _activeNodeCounts;
+    mapping(uint256 => uint256) private _lockExpiresAt;
     
     address public rewardsContract;
     address public slashingContract;
+    bool private _contractsConfigured;
+
+    event SlashedFundsTransferred(uint256 indexed nodeId, uint256 amount, address indexed slashingEngine);
 
     constructor(address admin) {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
@@ -51,8 +55,16 @@ contract NodeRegistry is INodeRegistry, AccessControl, ReentrancyGuard, Pausable
     }
 
     function setContracts(address _rewards, address _slashing) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(!_contractsConfigured, "Contracts already configured");
+        require(_rewards != address(0), "Invalid rewards address");
+        require(_slashing != address(0), "Invalid slashing address");
+        
         rewardsContract = _rewards;
         slashingContract = _slashing;
+        
+        _grantRole(SLASHER_ROLE, _slashing);
+        
+        _contractsConfigured = true;
     }
 
     function setStakeRequirement(
@@ -111,6 +123,8 @@ contract NodeRegistry is INodeRegistry, AccessControl, ReentrancyGuard, Pausable
         node.activatedAt = block.timestamp;
         node.lastActiveAt = block.timestamp;
         
+        _lockExpiresAt[nodeId] = block.timestamp + req.lockPeriod;
+        
         _activeNodeCounts[node.nodeClass]++;
         
         emit NodeActivated(nodeId, totalStake);
@@ -149,6 +163,9 @@ contract NodeRegistry is INodeRegistry, AccessControl, ReentrancyGuard, Pausable
         
         node.status = NodeEconomyTypes.NodeStatus.Active;
         node.lastActiveAt = block.timestamp;
+        node.activatedAt = block.timestamp;
+        _lockExpiresAt[nodeId] = block.timestamp + req.lockPeriod;
+        
         _activeNodeCounts[node.nodeClass]++;
         
         emit NodeActivated(nodeId, node.stakeAmount);
@@ -183,8 +200,7 @@ contract NodeRegistry is INodeRegistry, AccessControl, ReentrancyGuard, Pausable
         require(node.status == NodeEconomyTypes.NodeStatus.Inactive || 
                 node.status == NodeEconomyTypes.NodeStatus.Decommissioned, "Must be inactive");
         
-        NodeEconomyTypes.StakeRequirement memory req = _stakeRequirements[node.nodeClass];
-        require(block.timestamp >= node.activatedAt + req.lockPeriod, "Lock period active");
+        require(block.timestamp >= _lockExpiresAt[nodeId], "Lock period active");
         
         uint256 amount = node.stakeAmount;
         require(amount > 0, "No stake");
@@ -197,7 +213,10 @@ contract NodeRegistry is INodeRegistry, AccessControl, ReentrancyGuard, Pausable
         emit StakeUpdated(nodeId, amount, 0);
     }
 
-    function reduceStake(uint256 nodeId, uint256 amount) external onlyRole(SLASHER_ROLE) {
+    function reduceStakeAndTransfer(uint256 nodeId, uint256 amount) external onlyRole(SLASHER_ROLE) nonReentrant {
+        require(slashingContract != address(0), "Slashing not configured");
+        require(msg.sender == slashingContract, "Only slashing contract");
+        
         NodeEconomyTypes.NodeInfo storage node = _nodes[nodeId];
         require(node.nodeId != 0, "Node not found");
         require(node.stakeAmount >= amount, "Insufficient stake");
@@ -206,10 +225,19 @@ contract NodeRegistry is INodeRegistry, AccessControl, ReentrancyGuard, Pausable
         node.stakeAmount -= amount;
         node.slashCount++;
         
+        (bool success, ) = slashingContract.call{value: amount}("");
+        require(success, "Transfer to slashing failed");
+        
         emit StakeUpdated(nodeId, oldAmount, node.stakeAmount);
+        emit SlashedFundsTransferred(nodeId, amount, slashingContract);
+    }
+
+    function reduceStake(uint256 nodeId, uint256 amount) external onlyRole(SLASHER_ROLE) {
+        revert("Use reduceStakeAndTransfer instead");
     }
 
     function recordReward(uint256 nodeId, uint256 amount) external {
+        require(_contractsConfigured, "Contracts not configured");
         require(msg.sender == rewardsContract, "Not rewards contract");
         NodeEconomyTypes.NodeInfo storage node = _nodes[nodeId];
         require(node.nodeId != 0, "Node not found");
@@ -239,8 +267,16 @@ contract NodeRegistry is INodeRegistry, AccessControl, ReentrancyGuard, Pausable
         return _stakeRequirements[nodeClass];
     }
 
+    function getLockExpiry(uint256 nodeId) external view returns (uint256) {
+        return _lockExpiresAt[nodeId];
+    }
+
     function getTotalNodeCount() external view returns (uint256) {
         return _nextNodeId - 1;
+    }
+
+    function areContractsConfigured() external view returns (bool) {
+        return _contractsConfigured;
     }
 
     function pause() external onlyRole(GUARDIAN_ROLE) {

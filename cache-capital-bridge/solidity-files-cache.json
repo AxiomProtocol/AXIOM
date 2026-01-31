@@ -633,6 +633,215 @@
       "artifacts": [
         "ServicingEventLog"
       ]
+    },
+    "/home/runner/workspace/contracts-capital-bridge/node-economy/SlashingEngine.sol": {
+      "lastModificationDate": 1769877212770,
+      "contentHash": "8b23022e3c6c91c743468767fe204160",
+      "sourceName": "contracts-capital-bridge/node-economy/SlashingEngine.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/access/AccessControl.sol",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+        "@openzeppelin/contracts/utils/Pausable.sol",
+        "./NodeEconomyTypes.sol",
+        "./INodeEconomy.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "INodeRegistryForSlashing",
+        "SlashingEngine"
+      ]
+    },
+    "/home/runner/workspace/contracts-capital-bridge/node-economy/INodeEconomy.sol": {
+      "lastModificationDate": 1769876839625,
+      "contentHash": "07b0bb76a3880dff95657736e726121e",
+      "sourceName": "contracts-capital-bridge/node-economy/INodeEconomy.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./NodeEconomyTypes.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "INodeRegistry",
+        "INodeRewards",
+        "ISlashingEngine"
+      ]
+    },
+    "/home/runner/workspace/contracts-capital-bridge/node-economy/NodeEconomyTypes.sol": {
+      "lastModificationDate": 1769876827719,
+      "contentHash": "876d425c3568b22ed821fa6077e76bbd",
+      "sourceName": "contracts-capital-bridge/node-economy/NodeEconomyTypes.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "NodeEconomyTypes"
+      ]
+    },
+    "/home/runner/workspace/contracts-capital-bridge/node-economy/NodeRewards.sol": {
+      "lastModificationDate": 1769877179529,
+      "contentHash": "105b379ab475a556adeb8641a67fee1f",
+      "sourceName": "contracts-capital-bridge/node-economy/NodeRewards.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/access/AccessControl.sol",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+        "@openzeppelin/contracts/utils/Pausable.sol",
+        "./NodeEconomyTypes.sol",
+        "./INodeEconomy.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "INodeRegistryForRewards",
+        "NodeRewards"
+      ]
+    },
+    "/home/runner/workspace/contracts-capital-bridge/node-economy/NodeRegistry.sol": {
+      "lastModificationDate": 1769877268094,
+      "contentHash": "6000e01461d8ec0354dee3e3a705b382",
+      "sourceName": "contracts-capital-bridge/node-economy/NodeRegistry.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/access/AccessControl.sol",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+        "@openzeppelin/contracts/utils/Pausable.sol",
+        "./NodeEconomyTypes.sol",
+        "./INodeEconomy.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "NodeRegistry"
+      ]
     }
   }
 }
