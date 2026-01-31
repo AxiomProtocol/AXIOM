@@ -94,3 +94,11 @@ zitDykih
 artifacts-axusd/
 stablecoin-deploy/
 cache/
+
+# DeNet and node license files
+*.license
+*.key
+*node-license*
+*denet-key*
+*activation-key*
+*.cid
