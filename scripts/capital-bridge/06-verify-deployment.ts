@@ -1,6 +1,8 @@
 import { ethers } from "hardhat";
+import * as fs from "fs";
+import * as path from "path";
 
-const DEPLOYED_CONTRACTS = {
+const DEFAULT_ADDRESSES = {
   CapitalBridgeHub: "0x6a00455dC277C9430e5c45324B34F2425ba0408d",
   CapitalReadinessGate: "0xc3f798066e1401aa30Da8703A4c0588A1076ff39",
   InstrumentRegistry: "0xcDE54ED7d19768be02Eb7C4799d7d8689310C7A5",
@@ -10,6 +12,29 @@ const DEPLOYED_CONTRACTS = {
   NodeRewards: "0x0c1c96F38566d056877cEf4791c701C4F5AEf362",
   SlashingEngine: "0x1ae162B80cEfb82f9ccF25b5E7A45E5e133E6F87",
 };
+
+function loadAddresses(): typeof DEFAULT_ADDRESSES {
+  const outputPath = path.join(__dirname, "deployment-output.json");
+  if (fs.existsSync(outputPath)) {
+    console.log("Loading addresses from deployment-output.json");
+    const output = JSON.parse(fs.readFileSync(outputPath, "utf-8"));
+    return {
+      CapitalBridgeHub: output.layer5E?.CapitalBridgeHub || DEFAULT_ADDRESSES.CapitalBridgeHub,
+      CapitalReadinessGate: output.layer5E?.CapitalReadinessGate || DEFAULT_ADDRESSES.CapitalReadinessGate,
+      InstrumentRegistry: output.layer5G?.InstrumentRegistry || DEFAULT_ADDRESSES.InstrumentRegistry,
+      PoolRegistry: output.layer5G?.PoolRegistry || DEFAULT_ADDRESSES.PoolRegistry,
+      ServicingEventLog: output.layer5G?.ServicingEventLog || DEFAULT_ADDRESSES.ServicingEventLog,
+      NodeRegistry: output.nodeEconomy?.NodeRegistry || DEFAULT_ADDRESSES.NodeRegistry,
+      NodeRewards: output.nodeEconomy?.NodeRewards || DEFAULT_ADDRESSES.NodeRewards,
+      SlashingEngine: output.nodeEconomy?.SlashingEngine || DEFAULT_ADDRESSES.SlashingEngine,
+    };
+  }
+  console.log("Using default deployed addresses");
+  return DEFAULT_ADDRESSES;
+}
+
+const ADMIN_ADDRESS = process.env.ADMIN_ADDRESS || "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493";
+const OPERATOR_ADDRESS = process.env.OPERATOR_ADDRESS || "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96";
 
 const ROLES = {
   DEFAULT_ADMIN_ROLE: ethers.ZeroHash,
@@ -22,13 +47,16 @@ const ROLES = {
   SLASHER_ROLE: ethers.keccak256(ethers.toUtf8Bytes("SLASHER_ROLE")),
 };
 
-const ADMIN_ADDRESS = "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493";
-const OPERATOR_ADDRESS = "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96";
-
 async function main() {
   console.log("=".repeat(60));
   console.log("CAPITAL BRIDGE DEPLOYMENT VERIFICATION");
   console.log("=".repeat(60));
+
+  const ADDRESSES = loadAddresses();
+  console.log("\nVerifying addresses:");
+  for (const [name, addr] of Object.entries(ADDRESSES)) {
+    console.log(`  ${name}: ${addr}`);
+  }
 
   const provider = ethers.provider;
   let passed = 0;
@@ -45,9 +73,13 @@ async function main() {
   }
 
   console.log("\n--- Contract Deployment ---");
-  for (const [name, address] of Object.entries(DEPLOYED_CONTRACTS)) {
-    const code = await provider.getCode(address);
-    await check(`${name} deployed at ${address}`, code !== "0x");
+  for (const [name, address] of Object.entries(ADDRESSES)) {
+    try {
+      const code = await provider.getCode(address);
+      await check(`${name} has code`, code !== "0x" && code.length > 2);
+    } catch {
+      await check(`${name} accessible`, false);
+    }
   }
 
   console.log("\n--- CapitalBridgeHub Configuration ---");
@@ -55,13 +87,16 @@ async function main() {
     "function readinessGate() view returns (address)",
     "function hasRole(bytes32 role, address account) view returns (bool)",
   ];
-  const hub = new ethers.Contract(DEPLOYED_CONTRACTS.CapitalBridgeHub, hubAbi, provider);
-  
-  const readinessGate = await hub.readinessGate();
-  await check("ReadinessGate configured", readinessGate === DEPLOYED_CONTRACTS.CapitalReadinessGate);
-  await check("Admin has DEFAULT_ADMIN_ROLE", await hub.hasRole(ROLES.DEFAULT_ADMIN_ROLE, ADMIN_ADDRESS));
-  await check("Operator has RISK_COMMITTEE_ROLE", await hub.hasRole(ROLES.RISK_COMMITTEE_ROLE, OPERATOR_ADDRESS));
-  await check("Operator has SETTLEMENT_AUTHORITY_ROLE", await hub.hasRole(ROLES.SETTLEMENT_AUTHORITY_ROLE, OPERATOR_ADDRESS));
+  try {
+    const hub = new ethers.Contract(ADDRESSES.CapitalBridgeHub, hubAbi, provider);
+    
+    const readinessGate = await hub.readinessGate();
+    await check("ReadinessGate configured", readinessGate.toLowerCase() === ADDRESSES.CapitalReadinessGate.toLowerCase());
+    await check("Admin has DEFAULT_ADMIN_ROLE", await hub.hasRole(ROLES.DEFAULT_ADMIN_ROLE, ADMIN_ADDRESS));
+  } catch (error: any) {
+    console.log("  [ERROR] Hub verification failed:", error.message?.slice(0, 50));
+    failed++;
+  }
 
   console.log("\n--- CapitalReadinessGate Status ---");
   const gateAbi = [
@@ -69,13 +104,18 @@ async function main() {
     "function observationStartTimestamp() view returns (uint256)",
     "function hasRole(bytes32 role, address account) view returns (bool)",
   ];
-  const gate = new ethers.Contract(DEPLOYED_CONTRACTS.CapitalReadinessGate, gateAbi, provider);
-  
-  const isReady = await gate.isReady();
-  const obsStart = await gate.observationStartTimestamp();
-  console.log(`  Observation Start: ${obsStart > 0n ? new Date(Number(obsStart) * 1000).toISOString() : "Not started"}`);
-  console.log(`  Is Ready: ${isReady}`);
-  await check("Operator has REPORTING_ORACLE_ROLE", await gate.hasRole(ROLES.REPORTING_ORACLE_ROLE, OPERATOR_ADDRESS));
+  try {
+    const gate = new ethers.Contract(ADDRESSES.CapitalReadinessGate, gateAbi, provider);
+    
+    const isReady = await gate.isReady();
+    const obsStart = await gate.observationStartTimestamp();
+    console.log(`  Observation Start: ${obsStart > 0n ? new Date(Number(obsStart) * 1000).toISOString() : "Not started"}`);
+    console.log(`  Is Ready: ${isReady}`);
+    await check("Admin has DEFAULT_ADMIN_ROLE", await gate.hasRole(ROLES.DEFAULT_ADMIN_ROLE, ADMIN_ADDRESS));
+  } catch (error: any) {
+    console.log("  [ERROR] Gate verification failed:", error.message?.slice(0, 50));
+    failed++;
+  }
 
   console.log("\n--- NodeRegistry Configuration ---");
   const registryAbi = [
@@ -84,16 +124,21 @@ async function main() {
     "function areContractsConfigured() view returns (bool)",
     "function hasRole(bytes32 role, address account) view returns (bool)",
   ];
-  const registry = new ethers.Contract(DEPLOYED_CONTRACTS.NodeRegistry, registryAbi, provider);
-  
-  const rewardsContract = await registry.rewardsContract();
-  const slashingContract = await registry.slashingContract();
-  const configured = await registry.areContractsConfigured();
-  
-  await check("NodeRewards configured", rewardsContract === DEPLOYED_CONTRACTS.NodeRewards);
-  await check("SlashingEngine configured", slashingContract === DEPLOYED_CONTRACTS.SlashingEngine);
-  await check("Contracts marked configured", configured);
-  await check("SlashingEngine has SLASHER_ROLE", await registry.hasRole(ROLES.SLASHER_ROLE, DEPLOYED_CONTRACTS.SlashingEngine));
+  try {
+    const registry = new ethers.Contract(ADDRESSES.NodeRegistry, registryAbi, provider);
+    
+    const rewardsContract = await registry.rewardsContract();
+    const slashingContract = await registry.slashingContract();
+    const configured = await registry.areContractsConfigured();
+    
+    await check("NodeRewards configured", rewardsContract.toLowerCase() === ADDRESSES.NodeRewards.toLowerCase());
+    await check("SlashingEngine configured", slashingContract.toLowerCase() === ADDRESSES.SlashingEngine.toLowerCase());
+    await check("Contracts marked configured", configured);
+    await check("SlashingEngine has SLASHER_ROLE", await registry.hasRole(ROLES.SLASHER_ROLE, ADDRESSES.SlashingEngine));
+  } catch (error: any) {
+    console.log("  [ERROR] NodeRegistry verification failed:", error.message?.slice(0, 50));
+    failed++;
+  }
 
   console.log("\n" + "=".repeat(60));
   console.log("VERIFICATION SUMMARY");

@@ -27,6 +27,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (id) {
       const authId = Number(id);
+      if (isNaN(authId) || authId < 1) {
+        return res.status(400).json({ error: 'Invalid authorization ID. Must be a positive integer.' });
+      }
       const auth = await hub.authorizations(authId);
       
       if (auth.authId === 0n) {

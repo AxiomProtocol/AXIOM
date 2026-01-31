@@ -1,6 +1,8 @@
 import { ethers } from "hardhat";
+import * as fs from "fs";
+import * as path from "path";
 
-const DEPLOYED_CONTRACTS = {
+const DEFAULT_ADDRESSES = {
   CapitalBridgeHub: "0x6a00455dC277C9430e5c45324B34F2425ba0408d",
   CapitalReadinessGate: "0xc3f798066e1401aa30Da8703A4c0588A1076ff39",
   InstrumentRegistry: "0xcDE54ED7d19768be02Eb7C4799d7d8689310C7A5",
@@ -10,6 +12,26 @@ const DEPLOYED_CONTRACTS = {
   NodeRewards: "0x0c1c96F38566d056877cEf4791c701C4F5AEf362",
   SlashingEngine: "0x1ae162B80cEfb82f9ccF25b5E7A45E5e133E6F87",
 };
+
+function loadAddresses(): typeof DEFAULT_ADDRESSES {
+  const outputPath = path.join(__dirname, "deployment-output.json");
+  if (fs.existsSync(outputPath)) {
+    console.log("Loading addresses from deployment-output.json");
+    const output = JSON.parse(fs.readFileSync(outputPath, "utf-8"));
+    return {
+      CapitalBridgeHub: output.layer5E?.CapitalBridgeHub || DEFAULT_ADDRESSES.CapitalBridgeHub,
+      CapitalReadinessGate: output.layer5E?.CapitalReadinessGate || DEFAULT_ADDRESSES.CapitalReadinessGate,
+      InstrumentRegistry: output.layer5G?.InstrumentRegistry || DEFAULT_ADDRESSES.InstrumentRegistry,
+      PoolRegistry: output.layer5G?.PoolRegistry || DEFAULT_ADDRESSES.PoolRegistry,
+      ServicingEventLog: output.layer5G?.ServicingEventLog || DEFAULT_ADDRESSES.ServicingEventLog,
+      NodeRegistry: output.nodeEconomy?.NodeRegistry || DEFAULT_ADDRESSES.NodeRegistry,
+      NodeRewards: output.nodeEconomy?.NodeRewards || DEFAULT_ADDRESSES.NodeRewards,
+      SlashingEngine: output.nodeEconomy?.SlashingEngine || DEFAULT_ADDRESSES.SlashingEngine,
+    };
+  }
+  console.log("Using default deployed addresses (no deployment-output.json found)");
+  return DEFAULT_ADDRESSES;
+}
 
 const ROLES = {
   RISK_COMMITTEE_ROLE: ethers.keccak256(ethers.toUtf8Bytes("RISK_COMMITTEE_ROLE")),
@@ -34,21 +56,32 @@ const ABI = [
 ];
 
 async function grantRoleIfNeeded(contract: any, roleName: string, roleHash: string, account: string) {
-  const hasRole = await contract.hasRole(roleHash, account);
-  if (hasRole) {
-    console.log(`  [SKIP] ${roleName} already granted to ${account}`);
+  try {
+    const hasRole = await contract.hasRole(roleHash, account);
+    if (hasRole) {
+      console.log(`  [SKIP] ${roleName} already granted to ${account.slice(0, 10)}...`);
+      return false;
+    }
+    const tx = await contract.grantRole(roleHash, account);
+    await tx.wait();
+    console.log(`  [DONE] ${roleName} granted to ${account.slice(0, 10)}...`);
+    return true;
+  } catch (error: any) {
+    console.log(`  [ERROR] ${roleName}: ${error.message?.slice(0, 50) || "Unknown error"}`);
     return false;
   }
-  const tx = await contract.grantRole(roleHash, account);
-  await tx.wait();
-  console.log(`  [DONE] ${roleName} granted to ${account}`);
-  return true;
 }
 
 async function main() {
   console.log("=".repeat(60));
   console.log("CAPITAL BRIDGE ROLE CONFIGURATION");
   console.log("=".repeat(60));
+
+  const ADDRESSES = loadAddresses();
+  console.log("\nContract Addresses:");
+  for (const [name, addr] of Object.entries(ADDRESSES)) {
+    console.log(`  ${name}: ${addr}`);
+  }
 
   const [admin] = await ethers.getSigners();
   console.log("\nAdmin Signer:", admin.address);
@@ -58,6 +91,11 @@ async function main() {
   const attestorBAddress = process.env.ATTESTOR_B_ADDRESS || operatorAddress;
   const oracleAddress = process.env.ORACLE_ADDRESS || operatorAddress;
 
+  if (attestorAAddress === attestorBAddress) {
+    console.warn("\n[WARNING] ATTESTOR_A and ATTESTOR_B are the same address!");
+    console.warn("Dual attestation requires different signers for security.");
+  }
+
   console.log("\nRole Recipients:");
   console.log("  Operator:", operatorAddress);
   console.log("  Attestor A:", attestorAAddress);
@@ -65,45 +103,43 @@ async function main() {
   console.log("  Oracle:", oracleAddress);
 
   console.log("\n--- CapitalBridgeHub Roles ---");
-  const hub = new ethers.Contract(DEPLOYED_CONTRACTS.CapitalBridgeHub, ABI, admin);
+  const hub = new ethers.Contract(ADDRESSES.CapitalBridgeHub, ABI, admin);
   await grantRoleIfNeeded(hub, "RISK_COMMITTEE_ROLE", ROLES.RISK_COMMITTEE_ROLE, operatorAddress);
   await grantRoleIfNeeded(hub, "SETTLEMENT_AUTHORITY_ROLE", ROLES.SETTLEMENT_AUTHORITY_ROLE, operatorAddress);
   await grantRoleIfNeeded(hub, "RESEARCH_ATTESTOR_A_ROLE", ROLES.RESEARCH_ATTESTOR_A_ROLE, attestorAAddress);
   await grantRoleIfNeeded(hub, "RESEARCH_ATTESTOR_B_ROLE", ROLES.RESEARCH_ATTESTOR_B_ROLE, attestorBAddress);
 
   console.log("\n--- CapitalReadinessGate Roles ---");
-  const gate = new ethers.Contract(DEPLOYED_CONTRACTS.CapitalReadinessGate, ABI, admin);
+  const gate = new ethers.Contract(ADDRESSES.CapitalReadinessGate, ABI, admin);
   await grantRoleIfNeeded(gate, "REPORTING_ORACLE_ROLE", ROLES.REPORTING_ORACLE_ROLE, oracleAddress);
 
   console.log("\n--- InstrumentRegistry Roles ---");
-  const instrumentRegistry = new ethers.Contract(DEPLOYED_CONTRACTS.InstrumentRegistry, ABI, admin);
+  const instrumentRegistry = new ethers.Contract(ADDRESSES.InstrumentRegistry, ABI, admin);
   await grantRoleIfNeeded(instrumentRegistry, "ISSUER_ROLE", ROLES.ISSUER_ROLE, operatorAddress);
   await grantRoleIfNeeded(instrumentRegistry, "SERVICER_ROLE", ROLES.SERVICER_ROLE, operatorAddress);
 
   console.log("\n--- PoolRegistry Roles ---");
-  const poolRegistry = new ethers.Contract(DEPLOYED_CONTRACTS.PoolRegistry, ABI, admin);
+  const poolRegistry = new ethers.Contract(ADDRESSES.PoolRegistry, ABI, admin);
   await grantRoleIfNeeded(poolRegistry, "POOL_MANAGER_ROLE", ROLES.POOL_MANAGER_ROLE, operatorAddress);
 
   console.log("\n--- ServicingEventLog Roles ---");
-  const servicingLog = new ethers.Contract(DEPLOYED_CONTRACTS.ServicingEventLog, ABI, admin);
+  const servicingLog = new ethers.Contract(ADDRESSES.ServicingEventLog, ABI, admin);
   await grantRoleIfNeeded(servicingLog, "SERVICER_ROLE", ROLES.SERVICER_ROLE, operatorAddress);
   await grantRoleIfNeeded(servicingLog, "AUDITOR_ROLE", ROLES.AUDITOR_ROLE, operatorAddress);
 
   console.log("\n--- NodeRewards Roles ---");
-  const nodeRewards = new ethers.Contract(DEPLOYED_CONTRACTS.NodeRewards, ABI, admin);
+  const nodeRewards = new ethers.Contract(ADDRESSES.NodeRewards, ABI, admin);
   await grantRoleIfNeeded(nodeRewards, "REWARDS_MANAGER_ROLE", ROLES.REWARDS_MANAGER_ROLE, operatorAddress);
   await grantRoleIfNeeded(nodeRewards, "ORACLE_ROLE", ROLES.ORACLE_ROLE, oracleAddress);
 
   console.log("\n--- SlashingEngine Roles ---");
-  const slashingEngine = new ethers.Contract(DEPLOYED_CONTRACTS.SlashingEngine, ABI, admin);
+  const slashingEngine = new ethers.Contract(ADDRESSES.SlashingEngine, ABI, admin);
   await grantRoleIfNeeded(slashingEngine, "SLASHER_ROLE", ROLES.SLASHER_ROLE, operatorAddress);
   await grantRoleIfNeeded(slashingEngine, "ARBITER_ROLE", ROLES.ARBITER_ROLE, operatorAddress);
 
   console.log("\n" + "=".repeat(60));
   console.log("ROLE CONFIGURATION COMPLETE");
   console.log("=".repeat(60));
-  console.log("\nNext Steps:");
-  console.log("  1. Run 05-start-observation.ts to begin observation window");
 }
 
 main()

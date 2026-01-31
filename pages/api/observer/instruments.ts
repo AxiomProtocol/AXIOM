@@ -40,6 +40,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (id) {
       const instrumentId = Number(id);
+      if (isNaN(instrumentId) || instrumentId < 1) {
+        return res.status(400).json({ error: 'Invalid instrument ID. Must be a positive integer.' });
+      }
       const instrument = await instrumentRegistry.getInstrumentInfo(instrumentId);
       
       if (instrument.instrumentId === 0n) {

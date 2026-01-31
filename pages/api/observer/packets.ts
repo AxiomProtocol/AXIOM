@@ -24,6 +24,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (id) {
       const packetId = Number(id);
+      if (isNaN(packetId) || packetId < 1) {
+        return res.status(400).json({ error: 'Invalid packet ID. Must be a positive integer.' });
+      }
       const packet = await hub.packets(packetId);
       
       if (packet.packetId === 0n) {

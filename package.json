@@ -28,6 +28,7 @@
     "test:capital-bridge:nodes": "hardhat test test/capital-bridge/NodeEconomy.audit.test.ts --config hardhat.config.capital-bridge.ts",
     "test:capital-bridge:securitization": "hardhat test test/capital-bridge/Securitization.audit.test.ts --config hardhat.config.capital-bridge.ts",
     "audit:capital-bridge": "npm run test:capital-bridge",
+    "capital-bridge:deploy": "hardhat run scripts/capital-bridge/deploy-all.ts --config hardhat.config.capital-bridge.ts --network arbitrum",
     "capital-bridge:deploy:5e": "hardhat run scripts/capital-bridge/01-deploy-layer5e.ts --config hardhat.config.capital-bridge.ts --network arbitrum",
     "capital-bridge:deploy:5g": "hardhat run scripts/capital-bridge/02-deploy-layer5g.ts --config hardhat.config.capital-bridge.ts --network arbitrum",
     "capital-bridge:deploy:nodes": "hardhat run scripts/capital-bridge/03-deploy-node-economy.ts --config hardhat.config.capital-bridge.ts --network arbitrum",
