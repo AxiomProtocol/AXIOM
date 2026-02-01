@@ -1,0 +1,21 @@
+{
+  "postedAxiomUsdRate": 0.10,
+  "rateEffectiveDate": "2026-02-01",
+  "rateSource": "treasury_oracle",
+  "observationWindowEndDate": "2026-03-26",
+  "payoutThresholdUsd": 50,
+  "monthlyOperatorCap": 5000,
+  "monthlyProgramCap": 50000,
+  "dryRunPacketIds": [
+    "PKT-A-2026-689",
+    "PKT-B-2026-921"
+  ],
+  "slaTargets": {
+    "responseTimePercent": 95,
+    "availabilityPercent": 99,
+    "accuracyPercent": 98
+  },
+  "slashingEnabled": true,
+  "appealWindowDays": 7,
+  "supervisionSettlementCount": 10
+}
