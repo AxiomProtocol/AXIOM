@@ -47,20 +47,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const session = await getWalletSession(req);
     
+    if (!requireAuth(session)) {
+      return res.status(401).json({ 
+        message: 'Wallet authentication required. Please connect your wallet and sign in with Ethereum.' 
+      });
+    }
+    
     const body = req.body;
     if (!body || typeof body !== 'object') {
       return res.status(400).json({ message: 'Invalid request body' });
     }
 
-    let walletAddress = sanitizeString(body.walletAddress, 42).toLowerCase();
-    
-    if (session.authenticated && session.address) {
-      walletAddress = session.address.toLowerCase();
-    }
-
-    if (!walletAddress || !isValidWallet(walletAddress)) {
-      return res.status(400).json({ message: 'Valid Ethereum wallet address required (0x...)' });
-    }
+    const walletAddress = session.address!.toLowerCase();
 
     const displayName = sanitizeString(body.displayName);
     const email = sanitizeString(body.email);
