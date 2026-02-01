@@ -66,6 +66,7 @@ const nextConfig = {
     },
     outputFileTracingIncludes: {
       '*': [
+        './node_modules/@swc/helpers/**',
         './node_modules/pg/**', 
         './node_modules/@neondatabase/serverless/**',
         './node_modules/react-hot-toast/**',
