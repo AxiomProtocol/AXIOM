@@ -1,0 +1,178 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://axiom.city/schemas/node-rewards-ledger.schema.json",
+  "title": "Node Rewards Ledger",
+  "description": "Schema for Node Operator rewards ledger records",
+  "type": "object",
+  "required": [
+    "operatorId",
+    "usdAccrued",
+    "usdPaid",
+    "usdPending",
+    "conversionBucket",
+    "entries"
+  ],
+  "properties": {
+    "operatorId": {
+      "type": "string",
+      "description": "Operator ID",
+      "pattern": "^OP-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+    },
+    "usdAccrued": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total USD accrued (all time)"
+    },
+    "usdPaid": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total USD paid out"
+    },
+    "usdPending": {
+      "type": "number",
+      "minimum": 0,
+      "description": "USD awaiting payout"
+    },
+    "conversionBucket": {
+      "type": "number",
+      "minimum": 0,
+      "description": "USD deferred for AXUSD conversion window"
+    },
+    "slashedAmount": {
+      "type": "number",
+      "minimum": 0,
+      "default": 0,
+      "description": "Total USD slashed due to incidents"
+    },
+    "clawedBackAmount": {
+      "type": "number",
+      "minimum": 0,
+      "default": 0,
+      "description": "Total USD clawed back"
+    },
+    "lastAccrualAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of last accrual"
+    },
+    "lastPayoutAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of last payout"
+    },
+    "entries": {
+      "type": "array",
+      "description": "Detailed accrual entries",
+      "items": {
+        "type": "object",
+        "required": ["entryId", "packetId", "milestone", "role", "usdAmount", "timestamp"],
+        "properties": {
+          "entryId": {
+            "type": "string",
+            "description": "Unique entry identifier",
+            "pattern": "^RWD-[a-f0-9]{8}$"
+          },
+          "packetId": {
+            "type": "string",
+            "description": "Property packet ID"
+          },
+          "milestone": {
+            "type": "string",
+            "enum": [
+              "PACKET_ACCEPTED",
+              "UNDERWRITING_FINALIZED",
+              "ARTIFACTS_PREVALIDATED",
+              "DUAL_ATTESTATION_RECORDED",
+              "POST_SETTLEMENT_AUDIT"
+            ],
+            "description": "Reward milestone"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["OBSERVER", "VALIDATOR", "ATTESTOR"],
+            "description": "Role for which reward was earned"
+          },
+          "usdAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "USD amount accrued"
+          },
+          "sharePercent": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Share percentage applied"
+          },
+          "baseMilestoneValue": {
+            "type": "number",
+            "description": "Base milestone USD value before share"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Accrual timestamp"
+          },
+          "settled": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether this entry has been paid out"
+          },
+          "deferredToConversion": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether deferred to conversion bucket"
+          },
+          "slashed": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether this entry was slashed"
+          },
+          "slashReason": {
+            "type": "string",
+            "description": "Reason for slashing if applicable"
+          }
+        }
+      }
+    },
+    "payouts": {
+      "type": "array",
+      "description": "Payout transaction records",
+      "items": {
+        "type": "object",
+        "required": ["payoutId", "usdAmount", "axiomAmount", "rateUsed", "timestamp"],
+        "properties": {
+          "payoutId": {
+            "type": "string",
+            "pattern": "^PAY-[a-f0-9]{8}$"
+          },
+          "usdAmount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "axiomAmount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "rateUsed": {
+            "type": "number",
+            "minimum": 0,
+            "description": "AXIOM/USD rate used"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "txHash": {
+            "type": "string",
+            "pattern": "^0x[a-f0-9]{64}$"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "COMPLETED", "FAILED"]
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

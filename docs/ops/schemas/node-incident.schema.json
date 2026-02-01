@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://axiom.city/schemas/node-incident.schema.json",
+  "title": "Node Incident",
+  "description": "Schema for Node Operator incident records",
+  "type": "object",
+  "required": [
+    "incidentId",
+    "operatorId",
+    "severity",
+    "category",
+    "status",
+    "reportedAt",
+    "reportedBy"
+  ],
+  "properties": {
+    "incidentId": {
+      "type": "string",
+      "description": "Unique incident identifier",
+      "pattern": "^INC-[a-f0-9]{8}$"
+    },
+    "operatorId": {
+      "type": "string",
+      "description": "Operator involved in incident",
+      "pattern": "^OP-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+      "description": "Incident severity level"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "SLA_VIOLATION",
+        "ATTESTATION_MISCONDUCT",
+        "CONFLICT_OF_INTEREST",
+        "PROCESS_VIOLATION",
+        "INFORMATION_MISUSE",
+        "SYSTEM_ABUSE",
+        "DOCUMENTATION_ERROR",
+        "OTHER"
+      ],
+      "description": "Incident category"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "REPORTED",
+        "ACKNOWLEDGED",
+        "INVESTIGATING",
+        "PENDING_RESPONSE",
+        "UNDER_REVIEW",
+        "RESOLVED_NO_ACTION",
+        "RESOLVED_WARNING",
+        "RESOLVED_SUSPENSION",
+        "RESOLVED_REVOCATION",
+        "APPEALED",
+        "APPEAL_DENIED",
+        "APPEAL_GRANTED"
+      ],
+      "description": "Current incident status"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "Brief incident title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed incident description"
+    },
+    "evidenceHashes": {
+      "type": "array",
+      "description": "Hash references to evidence documents",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string" },
+          "hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "relatedPacketIds": {
+      "type": "array",
+      "description": "Property packets related to incident",
+      "items": { "type": "string" }
+    },
+    "relatedAttestationIds": {
+      "type": "array",
+      "description": "Attestations related to incident",
+      "items": { "type": "string" }
+    },
+    "reportedBy": {
+      "type": "string",
+      "description": "Who reported the incident (operator ID or SYSTEM)"
+    },
+    "reportedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When incident was reported"
+    },
+    "acknowledgedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When operator acknowledged incident"
+    },
+    "operatorResponse": {
+      "type": "string",
+      "description": "Operator's response to incident"
+    },
+    "investigation": {
+      "type": "object",
+      "description": "Investigation details",
+      "properties": {
+        "investigatorId": { "type": "string" },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "findings": { "type": "string" },
+        "findingsHash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+        "recommendation": {
+          "type": "string",
+          "enum": ["NO_ACTION", "WARNING", "SUSPENSION", "REVOCATION"]
+        }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "description": "Final outcome of incident",
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": ["NO_ACTION", "WARNING", "SUSPENSION", "REVOCATION"]
+        },
+        "decisionRationale": { "type": "string" },
+        "slashPercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "slashAmount": { "type": "number", "minimum": 0 },
+        "suspensionDays": { "type": "integer", "minimum": 0 },
+        "effectiveDate": { "type": "string", "format": "date-time" },
+        "decisionHash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+      }
+    },
+    "appeal": {
+      "type": "object",
+      "description": "Appeal details if applicable",
+      "properties": {
+        "filedAt": { "type": "string", "format": "date-time" },
+        "grounds": { "type": "string" },
+        "reviewedAt": { "type": "string", "format": "date-time" },
+        "decision": { "type": "string", "enum": ["GRANTED", "DENIED", "PARTIAL"] },
+        "decisionRationale": { "type": "string" }
+      }
+    },
+    "resolvedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When incident was resolved"
+    },
+    "publicSummary": {
+      "type": "string",
+      "description": "Public-facing summary (for transparency reports)"
+    },
+    "internalNotes": {
+      "type": "string",
+      "description": "Internal notes (not public)"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,144 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://axiom.city/schemas/node-operator.schema.json",
+  "title": "Node Operator",
+  "description": "Schema for Axiom Node Operator records",
+  "type": "object",
+  "required": [
+    "operatorId",
+    "walletAddress",
+    "role",
+    "status",
+    "verificationTier",
+    "createdAt"
+  ],
+  "properties": {
+    "operatorId": {
+      "type": "string",
+      "description": "Unique operator identifier",
+      "pattern": "^OP-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+    },
+    "walletAddress": {
+      "type": "string",
+      "description": "Arbitrum One wallet address",
+      "pattern": "^0x[a-fA-F0-9]{40}$"
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Optional display name",
+      "maxLength": 100
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Contact email address"
+    },
+    "role": {
+      "type": "string",
+      "enum": ["OBSERVER", "VALIDATOR", "ATTESTOR"],
+      "description": "Operator role determining capabilities"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["APPLIED", "VERIFIED", "PROVISIONED", "DRY_RUN_PASSED", "CERTIFIED", "ACTIVE"],
+      "description": "Current onboarding/operational status"
+    },
+    "suspended": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether operator is currently suspended"
+    },
+    "suspensionReason": {
+      "type": "string",
+      "description": "Reason for suspension if suspended"
+    },
+    "verificationTier": {
+      "type": "string",
+      "enum": ["LIGHT", "STANDARD", "STRONG"],
+      "description": "Verification tier completed"
+    },
+    "verificationArtifacts": {
+      "type": "object",
+      "description": "Hash references to verification documents",
+      "properties": {
+        "emailProofHash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "walletSignatureHash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "kycDocumentHash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "referenceCheckHash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "competencyTestHash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "bondingProofHash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "conflictDisclosure": {
+      "type": "string",
+      "description": "Any disclosed conflicts of interest"
+    },
+    "charterAcknowledgmentHash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "Hash of signed charter acknowledgment"
+    },
+    "certificationHash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "Hash of certification record"
+    },
+    "settlementsCompleted": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Number of settlements completed"
+    },
+    "attestationsProvided": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Number of attestations provided"
+    },
+    "incidentCount": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Number of incidents associated with operator"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Operator record creation timestamp"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp"
+    },
+    "activatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when operator reached ACTIVE status"
+    },
+    "lastActivityAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last recorded activity timestamp"
+    }
+  },
+  "additionalProperties": false
+}
