@@ -75,6 +75,7 @@ export const SITE_NAV: NavItem[] = [
       { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "Land Acquisition", href: "/land-acquisition" },
       { label: "Land Pipeline", href: "/admin/land-pipeline", visibility: 'admin' },
+      { label: "Note Acquisition", href: "/notes/pipeline" },
       { label: "Governance", href: "/governance" },
       { label: "Tokenomics", href: "/tokenomics" },
       { label: "Staking", href: "/staking" },
