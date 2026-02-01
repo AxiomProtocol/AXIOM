@@ -7971,3 +7971,168 @@ export type NoteCovenant = typeof noteCovenants.$inferSelect;
 export type InsertNoteCovenant = typeof noteCovenants.$inferInsert;
 export type NoteDocument = typeof noteDocuments.$inferSelect;
 export type InsertNoteDocument = typeof noteDocuments.$inferInsert;
+
+// ========================================
+// NOTE ACQUISITION PIPELINE
+// ========================================
+
+export const notePerformanceStatusEnum = pgEnum('note_performance_status', [
+  'PERFORMING',
+  'SUB_PERFORMING',
+  'NON_PERFORMING',
+  'REO'
+]);
+
+export const noteTypeEnum = pgEnum('note_type', [
+  'FIRST_LIEN',
+  'SECOND_LIEN',
+  'HELOC',
+  'LAND_CONTRACT',
+  'CFD'
+]);
+
+export const notePipelinePhaseEnum = pgEnum('note_pipeline_phase', [
+  'INTAKE',
+  'DUE_DILIGENCE',
+  'VALUATION',
+  'ATTESTATION',
+  'ACQUISITION',
+  'REJECTED'
+]);
+
+export const noteSubmissionStatusEnum = pgEnum('note_submission_status', [
+  'SUBMITTED',
+  'UNDER_REVIEW',
+  'APPROVED',
+  'REJECTED',
+  'WITHDRAWN'
+]);
+
+export const noteSubmissions = pgTable("note_submissions", {
+  id: serial("id").primaryKey(),
+  noteId: varchar("note_id", { length: 50 }).notNull().unique(),
+  submittedBy: varchar("submitted_by", { length: 42 }),
+  submitterEmail: varchar("submitter_email", { length: 200 }).notNull(),
+  sellerName: varchar("seller_name", { length: 200 }).notNull(),
+  sellerEmail: varchar("seller_email", { length: 200 }).notNull(),
+  sellerPhone: varchar("seller_phone", { length: 50 }),
+  sellerCompany: varchar("seller_company", { length: 200 }),
+  performanceStatus: notePerformanceStatusEnum("performance_status").default('PERFORMING'),
+  noteType: noteTypeEnum("note_type").default('FIRST_LIEN'),
+  unpaidPrincipalBalance: decimal("unpaid_principal_balance", { precision: 18, scale: 2 }).notNull(),
+  originalLoanAmount: decimal("original_loan_amount", { precision: 18, scale: 2 }),
+  interestRate: decimal("interest_rate", { precision: 5, scale: 3 }),
+  noteRate: decimal("note_rate", { precision: 5, scale: 3 }),
+  monthlyPayment: decimal("monthly_payment", { precision: 18, scale: 2 }),
+  paymentsRemaining: integer("payments_remaining"),
+  maturityDate: varchar("maturity_date", { length: 20 }),
+  originationDate: varchar("origination_date", { length: 20 }),
+  propertyAddress: varchar("property_address", { length: 500 }).notNull(),
+  propertyCity: varchar("property_city", { length: 100 }),
+  propertyState: varchar("property_state", { length: 50 }),
+  propertyZip: varchar("property_zip", { length: 20 }),
+  propertyType: varchar("property_type", { length: 50 }),
+  estimatedPropertyValue: decimal("estimated_property_value", { precision: 18, scale: 2 }),
+  ltv: decimal("ltv", { precision: 5, scale: 2 }),
+  borrowerPaymentHistory: text("borrower_payment_history"),
+  monthsDelinquent: integer("months_delinquent").default(0),
+  lastPaymentDate: varchar("last_payment_date", { length: 20 }),
+  askingPrice: decimal("asking_price", { precision: 18, scale: 2 }).notNull(),
+  discountFromUpb: decimal("discount_from_upb", { precision: 5, scale: 2 }),
+  hasTitle: boolean("has_title").default(false),
+  hasOriginalNote: boolean("has_original_note").default(false),
+  hasAllonge: boolean("has_allonge").default(false),
+  hasAssignment: boolean("has_assignment").default(false),
+  hasServicingRecords: boolean("has_servicing_records").default(false),
+  hasPaymentHistory: boolean("has_payment_history").default(false),
+  hasBorrowerInfo: boolean("has_borrower_info").default(false),
+  notes: text("notes"),
+  status: noteSubmissionStatusEnum("status").default('SUBMITTED'),
+  pipelinePhase: notePipelinePhaseEnum("pipeline_phase").default('INTAKE'),
+  assignedAttestorA: varchar("assigned_attestor_a", { length: 42 }),
+  assignedAttestorB: varchar("assigned_attestor_b", { length: 42 }),
+  attestationAAt: timestamp("attestation_a_at"),
+  attestationBAt: timestamp("attestation_b_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  noteIdIdx: index("note_submissions_note_id_idx").on(table.noteId),
+  statusIdx: index("note_submissions_status_idx").on(table.status),
+  phaseIdx: index("note_submissions_phase_idx").on(table.pipelinePhase),
+}));
+
+// ========================================
+// NODE OPERATOR PROGRAM
+// ========================================
+
+export const operatorRoleEnum = pgEnum('operator_role', [
+  'OBSERVER',
+  'VALIDATOR',
+  'ATTESTOR'
+]);
+
+export const operatorStatusEnum = pgEnum('operator_status', [
+  'PENDING',
+  'ONBOARDING',
+  'ACTIVE',
+  'SUSPENDED',
+  'INACTIVE'
+]);
+
+export const onboardingPhaseEnum = pgEnum('onboarding_phase', [
+  'APPLICATION',
+  'VERIFICATION',
+  'PROVISIONING',
+  'DRY_RUN',
+  'CERTIFICATION',
+  'ACTIVATION'
+]);
+
+export const nodeOperators = pgTable("node_operators", {
+  id: serial("id").primaryKey(),
+  operatorId: varchar("operator_id", { length: 50 }).notNull().unique(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull().unique(),
+  displayName: varchar("display_name", { length: 200 }).notNull(),
+  email: varchar("email", { length: 200 }),
+  role: operatorRoleEnum("role").default('OBSERVER'),
+  status: operatorStatusEnum("status").default('PENDING'),
+  onboardingPhase: onboardingPhaseEnum("onboarding_phase").default('APPLICATION'),
+  totalMilestonesCompleted: integer("total_milestones_completed").default(0),
+  totalEarnings: decimal("total_earnings", { precision: 18, scale: 2 }).default('0'),
+  pendingEarnings: decimal("pending_earnings", { precision: 18, scale: 2 }).default('0'),
+  attestationCount: integer("attestation_count").default(0),
+  lastActivityAt: timestamp("last_activity_at"),
+  activatedAt: timestamp("activated_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  walletIdx: index("node_operators_wallet_idx").on(table.walletAddress),
+  statusIdx: index("node_operators_status_idx").on(table.status),
+  roleIdx: index("node_operators_role_idx").on(table.role),
+}));
+
+export const nodeOnboarding = pgTable("node_onboarding", {
+  id: serial("id").primaryKey(),
+  onboardingId: varchar("onboarding_id", { length: 50 }).notNull().unique(),
+  operatorId: varchar("operator_id", { length: 50 }).references(() => nodeOperators.operatorId).notNull(),
+  currentPhase: onboardingPhaseEnum("current_phase").default('APPLICATION'),
+  applicationSubmittedAt: timestamp("application_submitted_at"),
+  verificationCompletedAt: timestamp("verification_completed_at"),
+  provisioningCompletedAt: timestamp("provisioning_completed_at"),
+  dryRunCompletedAt: timestamp("dry_run_completed_at"),
+  certificationCompletedAt: timestamp("certification_completed_at"),
+  activationCompletedAt: timestamp("activation_completed_at"),
+  expiresAt: timestamp("expires_at"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  operatorIdx: index("node_onboarding_operator_idx").on(table.operatorId),
+}));
+
+export type NoteSubmission = typeof noteSubmissions.$inferSelect;
+export type InsertNoteSubmission = typeof noteSubmissions.$inferInsert;
+export type NodeOperator = typeof nodeOperators.$inferSelect;
+export type InsertNodeOperator = typeof nodeOperators.$inferInsert;
+export type NodeOnboarding = typeof nodeOnboarding.$inferSelect;
+export type InsertNodeOnboarding = typeof nodeOnboarding.$inferInsert;

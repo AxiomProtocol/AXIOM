@@ -1,12 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import * as fs from 'fs';
-import * as path from 'path';
-import { createOnboarding } from '../../../src/nodes/onboarding';
-import { NodeOperator, NodeOnboarding, OperatorRole } from '../../../src/nodes/types';
-
-const DATA_DIR = path.join(process.cwd(), 'data/nodes');
-const OPERATORS_FILE = path.join(DATA_DIR, 'operators.json');
-const ONBOARDING_FILE = path.join(DATA_DIR, 'onboarding.json');
+import { pool } from '../../../server/db';
+import { getWalletSession, requireAuth } from '../../../lib/auth/wallet-session';
+import { OperatorRole } from '../../../src/nodes/types';
 
 const MAX_STRING_LENGTH = 200;
 const VALID_ROLES: OperatorRole[] = ['OBSERVER', 'VALIDATOR', 'ATTESTOR'];
@@ -24,27 +19,16 @@ function isValidWallet(address: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
 }
 
-function ensureDir(dir: string): void {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+function generateOperatorId(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 6);
+  return `OP-${timestamp}-${random}`.toUpperCase();
 }
 
-function loadJson<T>(filePath: string, defaultValue: T): T {
-  try {
-    if (fs.existsSync(filePath)) {
-      return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    }
-  } catch (e) {
-    console.warn(`Failed to load ${filePath}`);
-  }
-  return defaultValue;
-}
-
-function saveJson(filePath: string, data: any): void {
-  const tempFile = `${filePath}.tmp`;
-  fs.writeFileSync(tempFile, JSON.stringify(data, null, 2));
-  fs.renameSync(tempFile, filePath);
+function generateOnboardingId(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 6);
+  return `ONB-${timestamp}-${random}`.toUpperCase();
 }
 
 export const config = {
@@ -55,25 +39,32 @@ export const config = {
   },
 };
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
+    const session = await getWalletSession(req);
+    
     const body = req.body;
     if (!body || typeof body !== 'object') {
       return res.status(400).json({ message: 'Invalid request body' });
     }
 
-    const walletAddress = sanitizeString(body.walletAddress, 42);
-    const displayName = sanitizeString(body.displayName);
-    const email = sanitizeString(body.email);
-    const role = body.role;
+    let walletAddress = sanitizeString(body.walletAddress, 42).toLowerCase();
+    
+    if (session.authenticated && session.address) {
+      walletAddress = session.address.toLowerCase();
+    }
 
     if (!walletAddress || !isValidWallet(walletAddress)) {
       return res.status(400).json({ message: 'Valid Ethereum wallet address required (0x...)' });
     }
+
+    const displayName = sanitizeString(body.displayName);
+    const email = sanitizeString(body.email);
+    const role = body.role;
 
     if (!displayName || displayName.length < 2) {
       return res.status(400).json({ message: 'Display name is required (min 2 characters)' });
@@ -87,56 +78,68 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ message: 'Valid role is required: OBSERVER, VALIDATOR, or ATTESTOR' });
     }
 
-    ensureDir(DATA_DIR);
-    const operators = loadJson<NodeOperator[]>(OPERATORS_FILE, []);
-    const onboardings = loadJson<NodeOnboarding[]>(ONBOARDING_FILE, []);
+    const client = await pool.connect();
+    try {
+      const existingResult = await client.query(
+        'SELECT operator_id FROM node_operators WHERE wallet_address = $1',
+        [walletAddress]
+      );
 
-    if (operators.length > 10000) {
-      return res.status(503).json({ message: 'System capacity reached. Please try again later.' });
+      if (existingResult.rows.length > 0) {
+        return res.status(400).json({ message: 'This wallet address is already registered' });
+      }
+
+      const operatorId = generateOperatorId();
+      const onboardingId = generateOnboardingId();
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+      await client.query('BEGIN');
+
+      await client.query(
+        `INSERT INTO node_operators (
+          operator_id, wallet_address, display_name, email, role, status, onboarding_phase
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [operatorId, walletAddress, displayName, email, role, 'PENDING', 'APPLICATION']
+      );
+
+      await client.query(
+        `INSERT INTO node_onboarding (
+          onboarding_id, operator_id, current_phase, application_submitted_at, expires_at
+        ) VALUES ($1, $2, $3, NOW(), $4)`,
+        [onboardingId, operatorId, 'APPLICATION', expiresAt]
+      );
+
+      await client.query('COMMIT');
+
+      res.status(200).json({
+        success: true,
+        operator: {
+          operatorId,
+          walletAddress,
+          displayName,
+          role,
+          status: 'PENDING',
+        },
+        onboarding: {
+          onboardingId,
+          currentPhase: 'APPLICATION',
+          expiresAt: expiresAt.toISOString(),
+        },
+      });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
     }
-
-    const existing = operators.find(
-      (op) => op.walletAddress.toLowerCase() === walletAddress.toLowerCase()
-    );
-
-    if (existing) {
+  } catch (error: any) {
+    console.error('Error processing application:', error);
+    if (error.code === '42P01') {
+      return res.status(503).json({ message: 'Database tables not yet available. Please try again later.' });
+    }
+    if (error.code === '23505') {
       return res.status(400).json({ message: 'This wallet address is already registered' });
     }
-
-    const emailExists = operators.find(
-      (op) => op.displayName && (op as any).email?.toLowerCase() === email.toLowerCase()
-    );
-
-    const { operator, onboarding } = createOnboarding({
-      walletAddress: walletAddress.toLowerCase(),
-      displayName,
-      email,
-      requestedRole: role as OperatorRole,
-    });
-
-    operators.push(operator);
-    onboardings.push(onboarding);
-
-    saveJson(OPERATORS_FILE, operators);
-    saveJson(ONBOARDING_FILE, onboardings);
-
-    res.status(200).json({
-      success: true,
-      operator: {
-        operatorId: operator.operatorId,
-        walletAddress: operator.walletAddress,
-        displayName: operator.displayName,
-        role: operator.role,
-        status: operator.status,
-      },
-      onboarding: {
-        onboardingId: onboarding.onboardingId,
-        currentPhase: onboarding.currentPhase,
-        expiresAt: onboarding.expiresAt,
-      },
-    });
-  } catch (error) {
-    console.error('Error processing application:', error);
     res.status(500).json({ message: 'Failed to process application' });
   }
 }

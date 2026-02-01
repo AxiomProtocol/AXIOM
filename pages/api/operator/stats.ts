@@ -1,52 +1,74 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import * as fs from 'fs';
-import * as path from 'path';
+import { pool } from '../../../server/db';
 
-const DATA_DIR = path.join(process.cwd(), 'data/nodes');
-const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
-
-function loadJson<T>(filePath: string, defaultValue: T): T {
-  try {
-    if (fs.existsSync(filePath)) {
-      return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    }
-  } catch (e) {
-    console.warn(`Failed to load ${filePath}`);
-  }
-  return defaultValue;
-}
-
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
-    const operators = loadJson<any[]>(path.join(DATA_DIR, 'operators.json'), []);
-    const sampleOperators = loadJson<any[]>(path.join(DATA_DIR, 'operators.sample.json'), []);
-    const attestations = loadJson<any[]>(path.join(DATA_DIR, 'attestations.json'), []);
-    const sampleAttestations = loadJson<any[]>(path.join(DATA_DIR, 'attestations.sample.json'), []);
-    const ledgers = loadJson<any[]>(path.join(DATA_DIR, 'rewards-ledger.json'), []);
-    const sampleLedgers = loadJson<any[]>(path.join(DATA_DIR, 'rewards-ledger.sample.json'), []);
-    const config = loadJson<any>(CONFIG_FILE, { observationWindowEndDate: '2026-03-26' });
+    const client = await pool.connect();
+    try {
+      const operatorStatsResult = await client.query(`
+        SELECT 
+          COUNT(*) as total,
+          COUNT(*) FILTER (WHERE status = 'ACTIVE') as active,
+          SUM(attestation_count) as total_attestations,
+          SUM(total_earnings::numeric) as total_rewards
+        FROM node_operators
+      `);
 
-    const allOperators = operators.length > 0 ? operators : sampleOperators;
-    const allAttestations = attestations.length > 0 ? attestations : sampleAttestations;
-    const allLedgers = ledgers.length > 0 ? ledgers : sampleLedgers;
+      const stats = operatorStatsResult.rows[0];
 
-    const activeOperators = allOperators.filter((op: any) => op.status === 'ACTIVE' && !op.suspended).length;
-    const totalAttestations = allAttestations.length;
-    const totalRewardsUsd = allLedgers.reduce((sum: number, l: any) => sum + (l.usdPaid || 0), 0);
+      const roleBreakdownResult = await client.query(`
+        SELECT role, COUNT(*) as count
+        FROM node_operators
+        WHERE status = 'ACTIVE'
+        GROUP BY role
+      `);
 
-    res.status(200).json({
-      totalOperators: allOperators.length,
-      activeOperators,
-      totalAttestations,
-      totalRewardsUsd,
-      observationWindowEnd: config.observationWindowEndDate || '2026-03-26',
-    });
-  } catch (error) {
+      const roleBreakdown = roleBreakdownResult.rows.reduce((acc: any, row: any) => {
+        acc[row.role] = parseInt(row.count);
+        return acc;
+      }, {});
+
+      const phaseBreakdownResult = await client.query(`
+        SELECT onboarding_phase, COUNT(*) as count
+        FROM node_operators
+        WHERE status IN ('PENDING', 'ONBOARDING')
+        GROUP BY onboarding_phase
+      `);
+
+      const phaseBreakdown = phaseBreakdownResult.rows.reduce((acc: any, row: any) => {
+        acc[row.onboarding_phase] = parseInt(row.count);
+        return acc;
+      }, {});
+
+      res.status(200).json({
+        totalOperators: parseInt(stats.total) || 0,
+        activeOperators: parseInt(stats.active) || 0,
+        totalAttestations: parseInt(stats.total_attestations) || 0,
+        totalRewardsUsd: parseFloat(stats.total_rewards) || 0,
+        roleBreakdown,
+        phaseBreakdown,
+        observationWindowEnd: '2026-03-26',
+      });
+    } finally {
+      client.release();
+    }
+  } catch (error: any) {
     console.error('Error fetching stats:', error);
+    if (error.code === '42P01') {
+      return res.status(200).json({
+        totalOperators: 0,
+        activeOperators: 0,
+        totalAttestations: 0,
+        totalRewardsUsd: 0,
+        roleBreakdown: {},
+        phaseBreakdown: {},
+        observationWindowEnd: '2026-03-26',
+      });
+    }
     res.status(500).json({ message: 'Failed to fetch stats' });
   }
 }
