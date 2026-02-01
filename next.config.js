@@ -9,7 +9,9 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   productionBrowserSourceMaps: false,
+  generateSourceMaps: false,
   swcMinify: true,
+  cleanDistDir: true,
   poweredByHeader: false,
   compress: true,
   images: {
