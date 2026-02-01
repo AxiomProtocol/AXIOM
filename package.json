@@ -61,7 +61,12 @@
     "axiom:verify": "hardhat verify --network peaq --config hardhat.axiom.config.js",
     "axiom:verify:auto": "node scripts/automated-verification.js",
     "axiom:verify:browser": "node scripts/browser-automated-verification.js",
-    "axiom:verify:prepare": "node scripts/prepare-verification-data.js"
+    "axiom:verify:prepare": "node scripts/prepare-verification-data.js",
+    "packets:create": "npx ts-node scripts/property-packet/create-packets.ts",
+    "packets:underwrite": "npx ts-node scripts/property-packet/finalize-underwriting.ts",
+    "packets:clauses": "npx ts-node scripts/property-packet/draft-participation-clauses.ts",
+    "packets:prevalidate": "npx ts-node scripts/property-packet/prevalidate-settlement-artifacts.ts",
+    "packets:run": "npx ts-node scripts/property-packet/run-full-packet-flow.ts"
   },
   "keywords": [],
   "author": "",
