@@ -1,10 +1,47 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import * as fs from 'fs';
 import * as path from 'path';
-import { NoteSubmission, createNoteId } from '../../../src/notes/types';
+import { NoteSubmission, createNoteId, NotePerformanceStatus, NoteType, PropertyType } from '../../../src/notes/types';
 
 const DATA_DIR = path.join(process.cwd(), 'data/notes');
 const SUBMISSIONS_FILE = path.join(DATA_DIR, 'submissions.json');
+
+const MAX_PAYLOAD_SIZE = 50 * 1024;
+const MAX_STRING_LENGTH = 500;
+const MAX_NOTES_LENGTH = 2000;
+
+const VALID_PERFORMANCE_STATUS: NotePerformanceStatus[] = ['PERFORMING', 'SUB_PERFORMING', 'NON_PERFORMING', 'REO'];
+const VALID_NOTE_TYPES: NoteType[] = ['FIRST_LIEN', 'SECOND_LIEN', 'HELOC', 'LAND_CONTRACT', 'CFD'];
+const VALID_PROPERTY_TYPES: PropertyType[] = ['SFR', 'MULTI_FAMILY', 'CONDO', 'TOWNHOUSE', 'MANUFACTURED', 'COMMERCIAL', 'LAND'];
+
+function sanitizeString(value: any, maxLength: number = MAX_STRING_LENGTH): string {
+  if (typeof value !== 'string') return '';
+  return value.trim().slice(0, maxLength).replace(/<[^>]*>/g, '');
+}
+
+function sanitizeNumber(value: any, min: number = 0, max: number = 100000000): number {
+  const num = parseFloat(value);
+  if (isNaN(num) || !isFinite(num)) return 0;
+  return Math.max(min, Math.min(max, num));
+}
+
+function sanitizeBoolean(value: any): boolean {
+  return value === true || value === 'true';
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function calculateLTV(upb: number, propertyValue: number): number {
+  if (propertyValue <= 0) return 0;
+  return Math.round((upb / propertyValue) * 100 * 100) / 100;
+}
+
+function calculateDiscount(upb: number, askingPrice: number): number {
+  if (upb <= 0) return 0;
+  return Math.round(((upb - askingPrice) / upb) * 100 * 100) / 100;
+}
 
 function ensureDir(dir: string): void {
   if (!fs.existsSync(dir)) {
@@ -25,8 +62,18 @@ function loadSubmissions(): NoteSubmission[] {
 
 function saveSubmissions(submissions: NoteSubmission[]): void {
   ensureDir(DATA_DIR);
-  fs.writeFileSync(SUBMISSIONS_FILE, JSON.stringify(submissions, null, 2));
+  const tempFile = `${SUBMISSIONS_FILE}.tmp`;
+  fs.writeFileSync(tempFile, JSON.stringify(submissions, null, 2));
+  fs.renameSync(tempFile, SUBMISSIONS_FILE);
 }
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50kb',
+    },
+  },
+};
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -34,11 +81,96 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    const {
+    const contentLength = parseInt(req.headers['content-length'] || '0', 10);
+    if (contentLength > MAX_PAYLOAD_SIZE) {
+      return res.status(413).json({ message: 'Payload too large' });
+    }
+
+    const body = req.body;
+    if (!body || typeof body !== 'object') {
+      return res.status(400).json({ message: 'Invalid request body' });
+    }
+
+    const sellerName = sanitizeString(body.sellerName);
+    const sellerEmail = sanitizeString(body.sellerEmail);
+    const sellerPhone = sanitizeString(body.sellerPhone);
+    const sellerCompany = sanitizeString(body.sellerCompany);
+    const propertyAddress = sanitizeString(body.propertyAddress);
+    const propertyCity = sanitizeString(body.propertyCity);
+    const propertyState = sanitizeString(body.propertyState, 50);
+    const propertyZip = sanitizeString(body.propertyZip, 20);
+    const borrowerPaymentHistory = sanitizeString(body.borrowerPaymentHistory, MAX_NOTES_LENGTH);
+    const notes = sanitizeString(body.notes, MAX_NOTES_LENGTH);
+
+    if (!sellerName || sellerName.length < 2) {
+      return res.status(400).json({ message: 'Seller name is required (min 2 characters)' });
+    }
+    if (!sellerEmail || !isValidEmail(sellerEmail)) {
+      return res.status(400).json({ message: 'Valid email address is required' });
+    }
+    if (!propertyAddress || propertyAddress.length < 5) {
+      return res.status(400).json({ message: 'Property address is required (min 5 characters)' });
+    }
+    if (!propertyCity || propertyCity.length < 2) {
+      return res.status(400).json({ message: 'Property city is required' });
+    }
+    if (!propertyState) {
+      return res.status(400).json({ message: 'Property state is required' });
+    }
+
+    const unpaidPrincipalBalance = sanitizeNumber(body.unpaidPrincipalBalance, 1000);
+    const originalLoanAmount = sanitizeNumber(body.originalLoanAmount, 0) || unpaidPrincipalBalance;
+    const interestRate = sanitizeNumber(body.interestRate, 0, 50);
+    const noteRate = sanitizeNumber(body.noteRate, 0, 50) || interestRate;
+    const monthlyPayment = sanitizeNumber(body.monthlyPayment, 0);
+    const paymentsRemaining = Math.floor(sanitizeNumber(body.paymentsRemaining, 0, 600));
+    const estimatedPropertyValue = sanitizeNumber(body.estimatedPropertyValue, 0);
+    const monthsDelinquent = Math.floor(sanitizeNumber(body.monthsDelinquent, 0, 240));
+    const askingPrice = sanitizeNumber(body.askingPrice, 100);
+
+    if (unpaidPrincipalBalance < 1000) {
+      return res.status(400).json({ message: 'Unpaid principal balance must be at least $1,000' });
+    }
+    if (askingPrice < 100) {
+      return res.status(400).json({ message: 'Asking price must be at least $100' });
+    }
+    if (askingPrice > unpaidPrincipalBalance * 2) {
+      return res.status(400).json({ message: 'Asking price cannot exceed 2x UPB' });
+    }
+
+    const ltv = calculateLTV(unpaidPrincipalBalance, estimatedPropertyValue);
+    const discountFromUPB = calculateDiscount(unpaidPrincipalBalance, askingPrice);
+
+    let performanceStatus: NotePerformanceStatus = 'PERFORMING';
+    if (VALID_PERFORMANCE_STATUS.includes(body.performanceStatus)) {
+      performanceStatus = body.performanceStatus;
+    }
+
+    let noteType: NoteType = 'FIRST_LIEN';
+    if (VALID_NOTE_TYPES.includes(body.noteType)) {
+      noteType = body.noteType;
+    }
+
+    let propertyType: PropertyType = 'SFR';
+    if (VALID_PROPERTY_TYPES.includes(body.propertyType)) {
+      propertyType = body.propertyType;
+    }
+
+    const maturityDate = sanitizeString(body.maturityDate, 20);
+    const originationDate = sanitizeString(body.originationDate, 20);
+    const lastPaymentDate = sanitizeString(body.lastPaymentDate, 20);
+
+    const noteId = createNoteId();
+    const now = new Date().toISOString();
+
+    const submission: NoteSubmission = {
+      noteId,
+      submittedAt: now,
+      submittedBy: sellerEmail,
       sellerName,
       sellerEmail,
-      sellerPhone,
-      sellerCompany,
+      sellerPhone: sellerPhone || undefined,
+      sellerCompany: sellerCompany || undefined,
       performanceStatus,
       noteType,
       unpaidPrincipalBalance,
@@ -55,66 +187,19 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       propertyZip,
       propertyType,
       estimatedPropertyValue,
+      ltv,
       borrowerPaymentHistory,
       monthsDelinquent,
-      lastPaymentDate,
-      askingPrice,
-      ltv,
-      discountFromUPB,
-      hasTitle,
-      hasOriginalNote,
-      hasAllonge,
-      hasAssignment,
-      hasServicingRecords,
-      hasPaymentHistory,
-      hasBorrowerInfo,
-      notes
-    } = req.body;
-
-    if (!sellerName || !sellerEmail || !unpaidPrincipalBalance || !propertyAddress || !askingPrice) {
-      return res.status(400).json({ message: 'Missing required fields' });
-    }
-
-    const noteId = createNoteId();
-    const now = new Date().toISOString();
-
-    const submission: NoteSubmission = {
-      noteId,
-      submittedAt: now,
-      submittedBy: sellerEmail,
-      sellerName,
-      sellerEmail,
-      sellerPhone: sellerPhone || undefined,
-      sellerCompany: sellerCompany || undefined,
-      performanceStatus: performanceStatus || 'PERFORMING',
-      noteType: noteType || 'FIRST_LIEN',
-      unpaidPrincipalBalance,
-      originalLoanAmount: originalLoanAmount || unpaidPrincipalBalance,
-      interestRate: interestRate || 0,
-      noteRate: noteRate || interestRate || 0,
-      monthlyPayment: monthlyPayment || 0,
-      paymentsRemaining: paymentsRemaining || 0,
-      maturityDate: maturityDate || '',
-      originationDate: originationDate || '',
-      propertyAddress,
-      propertyCity,
-      propertyState,
-      propertyZip,
-      propertyType: propertyType || 'SFR',
-      estimatedPropertyValue: estimatedPropertyValue || 0,
-      ltv: ltv || 0,
-      borrowerPaymentHistory: borrowerPaymentHistory || '',
-      monthsDelinquent: monthsDelinquent || 0,
       lastPaymentDate: lastPaymentDate || undefined,
       askingPrice,
-      discountFromUPB: discountFromUPB || 0,
-      hasTitle: hasTitle || false,
-      hasOriginalNote: hasOriginalNote || false,
-      hasAllonge: hasAllonge || false,
-      hasAssignment: hasAssignment || false,
-      hasServicingRecords: hasServicingRecords || false,
-      hasPaymentHistory: hasPaymentHistory || false,
-      hasBorrowerInfo: hasBorrowerInfo || false,
+      discountFromUPB,
+      hasTitle: sanitizeBoolean(body.hasTitle),
+      hasOriginalNote: sanitizeBoolean(body.hasOriginalNote),
+      hasAllonge: sanitizeBoolean(body.hasAllonge),
+      hasAssignment: sanitizeBoolean(body.hasAssignment),
+      hasServicingRecords: sanitizeBoolean(body.hasServicingRecords),
+      hasPaymentHistory: sanitizeBoolean(body.hasPaymentHistory),
+      hasBorrowerInfo: sanitizeBoolean(body.hasBorrowerInfo),
       notes: notes || undefined,
       status: 'SUBMITTED',
       pipelinePhase: 'INTAKE',
@@ -123,6 +208,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     };
 
     const submissions = loadSubmissions();
+    
+    if (submissions.length > 10000) {
+      return res.status(503).json({ message: 'System capacity reached. Please try again later.' });
+    }
+
     submissions.push(submission);
     saveSubmissions(submissions);
 
