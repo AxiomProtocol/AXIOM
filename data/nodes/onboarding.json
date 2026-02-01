@@ -1,0 +1,148 @@
+[
+  {
+    "onboardingId": "ONB-2e53e9f7",
+    "operatorId": "OP-d3e71c3c-2b16-4ea7-888e-6455e6ad2544",
+    "requestedRole": "OBSERVER",
+    "currentPhase": "ACTIVE",
+    "requiredVerificationTier": "LIGHT",
+    "phases": {
+      "applied": {
+        "completedAt": "2026-02-01T01:42:45.027Z",
+        "hash": "sha256:2d0ab25567613aaef0103a3c2e6fcfc78290afc8e271c4fe7ed21a33c2f08131"
+      },
+      "verified": {
+        "completedAt": "2026-02-01T01:42:48.620Z",
+        "hash": "sha256:4c6dcd03373275f412805d7ca719d057aece04b5b4d55d9b0606770a0c067219"
+      },
+      "provisioned": {
+        "completedAt": "2026-02-01T01:42:52.122Z",
+        "hash": "sha256:6a0af85f08d10bf55fe2c8b60f950587c79ec4262c340d4dd12f6f134a3300f3"
+      },
+      "dryRunPassed": {
+        "completedAt": "2026-02-01T01:42:55.846Z",
+        "hash": "sha256:996c6461157e981fd34b88d1a468fcb370de8656868a9d6853b048901d061914",
+        "exercisesCompleted": 2,
+        "score": 91
+      },
+      "certified": {
+        "completedAt": "2026-02-01T01:42:59.375Z",
+        "hash": "sha256:25303852f161e944fa0b9decc1de10efa366b2418138208b0db83c2431bd2336"
+      },
+      "activated": {
+        "completedAt": "2026-02-01T01:43:02.910Z",
+        "hash": "sha256:df99e3249eb03bdf3308aa2b535565ac832358cca52c9c59060d6629c1b428c7"
+      }
+    },
+    "dryRunExercises": [
+      {
+        "exerciseId": "EX-41bc914f",
+        "type": "REPORT",
+        "status": "PASSED",
+        "score": 92,
+        "feedback": "Dry-run exercise completed successfully",
+        "completedAt": "2026-02-01T01:42:55.845Z"
+      },
+      {
+        "exerciseId": "EX-87f4f233",
+        "type": "REPORT",
+        "status": "PASSED",
+        "score": 90,
+        "feedback": "Dry-run exercise completed successfully",
+        "completedAt": "2026-02-01T01:42:55.846Z"
+      }
+    ],
+    "certificationChecklist": {
+      "verificationComplete": true,
+      "dryRunPassed": true,
+      "charterAcknowledged": true,
+      "emergencyContactProvided": true,
+      "slaCommitmentSigned": true
+    },
+    "expiresAt": "2026-03-03T01:42:45.027Z",
+    "startedAt": "2026-02-01T01:42:45.027Z",
+    "lastUpdatedAt": "2026-02-01T01:43:02.910Z",
+    "completedAt": "2026-02-01T01:43:02.910Z"
+  },
+  {
+    "onboardingId": "ONB-47ffcc06",
+    "operatorId": "OP-c56a8786-3079-4b33-b62b-fcbfc5fda0fe",
+    "requestedRole": "VALIDATOR",
+    "currentPhase": "ACTIVE",
+    "requiredVerificationTier": "STANDARD",
+    "phases": {
+      "applied": {
+        "completedAt": "2026-02-01T01:42:45.029Z",
+        "hash": "sha256:cefa348581c11ec8175c28bc9ab9ad0350b55c0c71156eb5848c81ad085f7894"
+      },
+      "verified": {
+        "completedAt": "2026-02-01T01:42:48.622Z",
+        "hash": "sha256:8d5b6eaf63940f13d98a8b9bf7006e9569b0e643c841bcc94ad737db7465e317"
+      },
+      "provisioned": {
+        "completedAt": "2026-02-01T01:42:52.124Z",
+        "hash": "sha256:f5a80c8faf7947df7fe8ae3418be62b346c7382d7b80cb07edf229e1b43d5c4e"
+      },
+      "dryRunPassed": {
+        "completedAt": "2026-02-01T01:42:55.849Z",
+        "hash": "sha256:a61adcdb8ea0d349f6941bf55a66e1703c2af8b23f6b9b84ea976854a327a37b",
+        "exercisesCompleted": 4,
+        "score": 92.25
+      },
+      "certified": {
+        "completedAt": "2026-02-01T01:42:59.379Z",
+        "hash": "sha256:b8b621f951d849cb92ee55cfcffd48c1421db209a1b893c04be63ef79ed245df"
+      },
+      "activated": {
+        "completedAt": "2026-02-01T01:43:02.914Z",
+        "hash": "sha256:0d6ceae1a01394b8f96584058b9034c6d99bec2524215fa6c714e68d6a38ab46"
+      }
+    },
+    "dryRunExercises": [
+      {
+        "exerciseId": "EX-432be8d3",
+        "type": "REPORT",
+        "status": "PASSED",
+        "score": 94,
+        "feedback": "Dry-run exercise completed successfully",
+        "completedAt": "2026-02-01T01:42:55.848Z"
+      },
+      {
+        "exerciseId": "EX-d1053a77",
+        "type": "REPORT",
+        "status": "PASSED",
+        "score": 94,
+        "feedback": "Dry-run exercise completed successfully",
+        "completedAt": "2026-02-01T01:42:55.848Z"
+      },
+      {
+        "exerciseId": "EX-47f34552",
+        "type": "VALIDATION",
+        "status": "PASSED",
+        "score": 90,
+        "feedback": "Dry-run exercise completed successfully",
+        "packetId": "PKT-A-2026-689",
+        "completedAt": "2026-02-01T01:42:55.848Z"
+      },
+      {
+        "exerciseId": "EX-53cc7b5a",
+        "type": "VALIDATION",
+        "status": "PASSED",
+        "score": 91,
+        "feedback": "Dry-run exercise completed successfully",
+        "packetId": "PKT-B-2026-921",
+        "completedAt": "2026-02-01T01:42:55.848Z"
+      }
+    ],
+    "certificationChecklist": {
+      "verificationComplete": true,
+      "dryRunPassed": true,
+      "charterAcknowledged": true,
+      "emergencyContactProvided": true,
+      "slaCommitmentSigned": true
+    },
+    "expiresAt": "2026-03-03T01:42:45.029Z",
+    "startedAt": "2026-02-01T01:42:45.029Z",
+    "lastUpdatedAt": "2026-02-01T01:43:02.914Z",
+    "completedAt": "2026-02-01T01:43:02.914Z"
+  }
+]

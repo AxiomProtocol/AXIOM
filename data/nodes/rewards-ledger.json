@@ -1,0 +1,132 @@
+[
+  {
+    "operatorId": "OP-d3e71c3c-2b16-4ea7-888e-6455e6ad2544",
+    "usdAccrued": 4,
+    "usdPaid": 0,
+    "usdPending": 4,
+    "conversionBucket": 0,
+    "slashedAmount": 0,
+    "clawedBackAmount": 0,
+    "entries": [
+      {
+        "entryId": "RWD-d8e34d7f",
+        "packetId": "PKT-A-2026-689",
+        "milestone": "PACKET_ACCEPTED",
+        "role": "OBSERVER",
+        "usdAmount": 2,
+        "sharePercent": 20,
+        "baseMilestoneValue": 10,
+        "timestamp": "2026-02-01T01:43:10.451Z",
+        "settled": false,
+        "deferredToConversion": false,
+        "slashed": false
+      },
+      {
+        "entryId": "RWD-f2ef9352",
+        "packetId": "PKT-B-2026-921",
+        "milestone": "PACKET_ACCEPTED",
+        "role": "OBSERVER",
+        "usdAmount": 2,
+        "sharePercent": 20,
+        "baseMilestoneValue": 10,
+        "timestamp": "2026-02-01T01:43:10.452Z",
+        "settled": false,
+        "deferredToConversion": false,
+        "slashed": false
+      }
+    ],
+    "payouts": [],
+    "lastAccrualAt": "2026-02-01T01:43:10.452Z"
+  },
+  {
+    "operatorId": "OP-c56a8786-3079-4b33-b62b-fcbfc5fda0fe",
+    "usdAccrued": 60,
+    "usdPaid": 0,
+    "usdPending": 60,
+    "conversionBucket": 0,
+    "slashedAmount": 0,
+    "clawedBackAmount": 0,
+    "entries": [
+      {
+        "entryId": "RWD-2c731b20",
+        "packetId": "PKT-A-2026-689",
+        "milestone": "PACKET_ACCEPTED",
+        "role": "VALIDATOR",
+        "usdAmount": 6,
+        "sharePercent": 60,
+        "baseMilestoneValue": 10,
+        "timestamp": "2026-02-01T01:43:10.453Z",
+        "settled": false,
+        "deferredToConversion": false,
+        "slashed": false
+      },
+      {
+        "entryId": "RWD-984d512c",
+        "packetId": "PKT-A-2026-689",
+        "milestone": "UNDERWRITING_FINALIZED",
+        "role": "VALIDATOR",
+        "usdAmount": 12,
+        "sharePercent": 60,
+        "baseMilestoneValue": 20,
+        "timestamp": "2026-02-01T01:43:10.453Z",
+        "settled": false,
+        "deferredToConversion": false,
+        "slashed": false
+      },
+      {
+        "entryId": "RWD-15692f01",
+        "packetId": "PKT-A-2026-689",
+        "milestone": "ARTIFACTS_PREVALIDATED",
+        "role": "VALIDATOR",
+        "usdAmount": 12,
+        "sharePercent": 60,
+        "baseMilestoneValue": 20,
+        "timestamp": "2026-02-01T01:43:10.453Z",
+        "settled": false,
+        "deferredToConversion": false,
+        "slashed": false
+      },
+      {
+        "entryId": "RWD-48cdd1d7",
+        "packetId": "PKT-B-2026-921",
+        "milestone": "PACKET_ACCEPTED",
+        "role": "VALIDATOR",
+        "usdAmount": 6,
+        "sharePercent": 60,
+        "baseMilestoneValue": 10,
+        "timestamp": "2026-02-01T01:43:10.453Z",
+        "settled": false,
+        "deferredToConversion": false,
+        "slashed": false
+      },
+      {
+        "entryId": "RWD-e3b2a06a",
+        "packetId": "PKT-B-2026-921",
+        "milestone": "UNDERWRITING_FINALIZED",
+        "role": "VALIDATOR",
+        "usdAmount": 12,
+        "sharePercent": 60,
+        "baseMilestoneValue": 20,
+        "timestamp": "2026-02-01T01:43:10.454Z",
+        "settled": false,
+        "deferredToConversion": false,
+        "slashed": false
+      },
+      {
+        "entryId": "RWD-3c96603e",
+        "packetId": "PKT-B-2026-921",
+        "milestone": "ARTIFACTS_PREVALIDATED",
+        "role": "VALIDATOR",
+        "usdAmount": 12,
+        "sharePercent": 60,
+        "baseMilestoneValue": 20,
+        "timestamp": "2026-02-01T01:43:10.454Z",
+        "settled": false,
+        "deferredToConversion": false,
+        "slashed": false
+      }
+    ],
+    "payouts": [],
+    "lastAccrualAt": "2026-02-01T01:43:10.454Z"
+  }
+]
