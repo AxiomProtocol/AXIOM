@@ -96,6 +96,7 @@ export const SITE_NAV: NavItem[] = [
       { label: "Rewards", href: "/rewards" },
       { label: "Referrals", href: "/referrals" },
       { label: "Buy AXM", href: "/buy-axm" },
+      { label: "Node Operator Portal", href: "/operator" },
       { label: "Admin Dashboard", href: "/admin/whitelist", visibility: 'admin' }
     ]
   }

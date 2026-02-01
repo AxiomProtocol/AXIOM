@@ -1,6 +1,6 @@
 [
   {
-    "operatorId": "OP-d3e71c3c-2b16-4ea7-888e-6455e6ad2544",
+    "operatorId": "OP-6f85cf46-2dcf-4f8b-a711-0c39316770fd",
     "walletAddress": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "displayName": "Gamma Observer",
     "email": "gamma.observer@example.com",
@@ -11,17 +11,17 @@
     "settlementsCompleted": 0,
     "attestationsProvided": 0,
     "incidentCount": 0,
-    "createdAt": "2026-02-01T01:42:45.025Z",
-    "updatedAt": "2026-02-01T01:43:02.911Z",
+    "createdAt": "2026-02-01T01:52:09.741Z",
+    "updatedAt": "2026-02-01T01:52:22.388Z",
     "verificationArtifacts": {
-      "emailProofHash": "sha256:f6cac86abc75537e48c6ca85ef84685a41b1e6f03a611717375fdeea61374c01",
-      "walletSignatureHash": "sha256:a116efea6e5d166687be05bcc883c272518dfce064eabd5ab9cd614f4cf23d01"
+      "emailProofHash": "sha256:4d2048cf4785712927fe891f9edd6df8c2f76e8a0edc5ea3a7102010f9e5c522",
+      "walletSignatureHash": "sha256:cf10ae7fcf76f4f93b7897ab6206ea928b78b86b986a7627156d393b995138e1"
     },
-    "certificationHash": "sha256:25303852f161e944fa0b9decc1de10efa366b2418138208b0db83c2431bd2336",
-    "activatedAt": "2026-02-01T01:43:02.911Z"
+    "certificationHash": "sha256:c27c06cb16dea9e9f4ccc794ac34ec8291b57e12d8ce708a7ce474478d986905",
+    "activatedAt": "2026-02-01T01:52:22.388Z"
   },
   {
-    "operatorId": "OP-c56a8786-3079-4b33-b62b-fcbfc5fda0fe",
+    "operatorId": "OP-2392338b-b234-4ffe-8273-ac27725e00ba",
     "walletAddress": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     "displayName": "Delta Validator",
     "email": "delta.validator@example.com",
@@ -32,15 +32,15 @@
     "settlementsCompleted": 0,
     "attestationsProvided": 0,
     "incidentCount": 0,
-    "createdAt": "2026-02-01T01:42:45.029Z",
-    "updatedAt": "2026-02-01T01:43:02.914Z",
+    "createdAt": "2026-02-01T01:52:09.742Z",
+    "updatedAt": "2026-02-01T01:52:22.389Z",
     "verificationArtifacts": {
-      "emailProofHash": "sha256:31ba7d7a5878dc8cb2257bbc0f6e5dcf4b792bb2251bfd2fe02bcab274f5d9c2",
-      "walletSignatureHash": "sha256:0ab55a585c7e9f98404b180f1ac12c6e6d272f0b4b34c2a449ba90517cfa2065",
-      "kycDocumentHash": "sha256:e675bc209a3493def4adffb134488cd3c374dabf70b2b2604f397a8c384b3a66",
-      "referenceCheckHash": "sha256:cfe0cbc52d8b778493f71015a22d6bc267689651740c58c677ca18a32793ab09"
+      "emailProofHash": "sha256:882440e0371c21532d7ba06f933e8a4f811dc8cd7b7f9dd38901070fe68d5b55",
+      "walletSignatureHash": "sha256:97af2ce94644710e7822f69b01bb72deb9210e781c1d101d396e7d7755f555b7",
+      "kycDocumentHash": "sha256:82d84128f51e3d2d4988dcd676ea5c7890ceadeebb336c8855e623fc553cf4c1",
+      "referenceCheckHash": "sha256:917d1a04970755362c55d36b15bb38f75178dae800c3f92c8649ee8e91fd3b11"
     },
-    "certificationHash": "sha256:b8b621f951d849cb92ee55cfcffd48c1421db209a1b893c04be63ef79ed245df",
-    "activatedAt": "2026-02-01T01:43:02.914Z"
+    "certificationHash": "sha256:baa7f42e0f4b687f3f9f8e11360250a33251f7a747a6425fbd54b1347145fe6a",
+    "activatedAt": "2026-02-01T01:52:22.389Z"
   }
 ]

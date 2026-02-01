@@ -124,6 +124,7 @@ export const navItems: NavItem[] = [
       { label: "Observer Dashboard", href: "/observer" },
       { label: "Capital Bridge", href: "/observer/capital-bridge" },
       { label: "Node Economy", href: "/observer/node-economy" },
+      { label: "Node Operator Portal", href: "/operator" },
       { label: "Treasury View", href: "/observer/treasury" },
       { label: "Governance View", href: "/observer/governance" },
       { label: "Risk View", href: "/observer/risk" },
