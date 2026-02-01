@@ -1,0 +1,152 @@
+[
+  {
+    "inputs": [
+      {"internalType": "address", "name": "_basketVault", "type": "address"},
+      {"internalType": "address", "name": "_stakingContract", "type": "address"}
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "adjustAPR",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "_lowThreshold", "type": "uint256"},
+      {"internalType": "uint256", "name": "_highThreshold", "type": "uint256"}
+    ],
+    "name": "updateThresholds",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "_minAPR", "type": "uint256"},
+      {"internalType": "uint256", "name": "_maxAPR", "type": "uint256"}
+    ],
+    "name": "updateAPRRange",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "_interval", "type": "uint256"}],
+    "name": "updateAdjustmentInterval",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "depositAmount", "type": "uint256"}],
+    "name": "simulateAPRForDeposit",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAPRInfo",
+    "outputs": [
+      {"internalType": "uint256", "name": "_currentAPR", "type": "uint256"},
+      {"internalType": "uint256", "name": "_nextAdjustmentTime", "type": "uint256"},
+      {"internalType": "uint256", "name": "_totalDeposited", "type": "uint256"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "canSetAPR",
+    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getStakingContractAPR",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "minAPR",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxAPR",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lowDepositThreshold",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "highDepositThreshold",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "currentAPR",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "basketVault",
+    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "stakingContract",
+    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": false, "internalType": "uint256", "name": "oldAPR", "type": "uint256"},
+      {"indexed": false, "internalType": "uint256", "name": "newAPR", "type": "uint256"}
+    ],
+    "name": "APRAdjusted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": false, "internalType": "uint256", "name": "lowThreshold", "type": "uint256"},
+      {"indexed": false, "internalType": "uint256", "name": "highThreshold", "type": "uint256"}
+    ],
+    "name": "ThresholdsUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": false, "internalType": "uint256", "name": "minAPR", "type": "uint256"},
+      {"indexed": false, "internalType": "uint256", "name": "maxAPR", "type": "uint256"}
+    ],
+    "name": "APRRangeUpdated",
+    "type": "event"
+  }
+]

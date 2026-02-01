@@ -1,0 +1,227 @@
+{
+  "network": "Arbitrum One",
+  "chainId": 42161,
+  "deployedAt": "2026-01-31T11:30:00.000Z",
+  "deployer": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+  "contracts": {
+    "CapitalReadinessGate": {
+      "address": "0xc3f798066e1401aa30Da8703A4c0588A1076ff39",
+      "sublayer": "5E",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0xc3f798066e1401aa30Da8703A4c0588A1076ff39#code",
+      "constructorArgs": {
+        "admin": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493",
+        "observationStartTimestamp": 1758844800
+      },
+      "verified": true
+    },
+    "CapitalBridgeHub": {
+      "address": "0x6a00455dC277C9430e5c45324B34F2425ba0408d",
+      "sublayer": "5E",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0x6a00455dC277C9430e5c45324B34F2425ba0408d#code",
+      "constructorArgs": {
+        "admin": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493"
+      },
+      "verified": true,
+      "configuration": {
+        "readinessGate": "0xc3f798066e1401aa30Da8703A4c0588A1076ff39",
+        "configuredAt": "2026-01-31T11:30:00.000Z",
+        "txHash": "0x7b76c0c2ea70767ce1c89a3f33463092c0edafdf6d870e218edcf79aedf5894e"
+      }
+    },
+    "InstrumentRegistry": {
+      "address": "0xcDE54ED7d19768be02Eb7C4799d7d8689310C7A5",
+      "sublayer": "5G",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0xcDE54ED7d19768be02Eb7C4799d7d8689310C7A5#code",
+      "constructorArgs": {
+        "admin": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493"
+      },
+      "deployedAt": "2026-01-31T12:05:00.000Z",
+      "configuredAt": "2026-01-31T12:10:00.000Z",
+      "verified": true,
+      "configuration": {
+        "poolRegistry": "0x7D386357F0D461Be9DA5FBb90E1F194c5aeafcD9",
+        "txHash": "0xc621fc0a2588024decbcf61c7a22b2d4f4566e91fe37e0cbb057bac2f262bfc0"
+      },
+      "roles": {
+        "ISSUER_ROLE": {
+          "holder": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+          "txHash": "0x7cd7f3a8466c343c98468633b25e26fb3702b0e31fb24c4332f2a837f9d774bf"
+        },
+        "SERVICER_ROLE": {
+          "holder": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+          "txHash": "0xf40b9d2f818580de5dbca36510bfc6884f63374bc7898dbdf83f65784a76f035"
+        },
+        "GUARDIAN_ROLE": {
+          "holder": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493",
+          "note": "Granted by default to admin"
+        }
+      }
+    },
+    "PoolRegistry": {
+      "address": "0x7D386357F0D461Be9DA5FBb90E1F194c5aeafcD9",
+      "sublayer": "5G",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0x7D386357F0D461Be9DA5FBb90E1F194c5aeafcD9#code",
+      "constructorArgs": {
+        "admin": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493"
+      },
+      "deployedAt": "2026-01-31T12:05:00.000Z",
+      "configuredAt": "2026-01-31T12:10:00.000Z",
+      "verified": true,
+      "configuration": {
+        "instrumentRegistry": "0xcDE54ED7d19768be02Eb7C4799d7d8689310C7A5",
+        "txHash": "0x7560c0d391b2115c7d48f408992a15c42d25bcf49f36546abf8970c0c51efa96"
+      },
+      "roles": {
+        "POOL_MANAGER_ROLE": {
+          "holder": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+          "txHash": "0xb49abf1cbd519961dd6a7925a4d47663c2ce15f999d3cb3c480cd179218683ec"
+        },
+        "GUARDIAN_ROLE": {
+          "holder": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493",
+          "note": "Granted by default to admin"
+        }
+      }
+    },
+    "ServicingEventLog": {
+      "address": "0x4A152350e3df79CbE895453ee1B7d486E7338093",
+      "sublayer": "5G",
+      "explorerUrl": "https://arbitrum.blockscout.com/address/0x4A152350e3df79CbE895453ee1B7d486E7338093#code",
+      "constructorArgs": {
+        "admin": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493"
+      },
+      "deployedAt": "2026-01-31T12:05:00.000Z",
+      "configuredAt": "2026-01-31T12:10:00.000Z",
+      "verified": true,
+      "configuration": {
+        "instrumentRegistry": "0xcDE54ED7d19768be02Eb7C4799d7d8689310C7A5",
+        "txHash": "0x943d8b7a9661de5633b2cc0e414e38d79926252b0a9cef538b552aa10a833840"
+      },
+      "roles": {
+        "SERVICER_ROLE": {
+          "holder": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+          "txHash": "0x930ddbcc3c4432502ce4e5ec93624a65014023135b2a05af6889eae00b032a8a"
+        },
+        "GUARDIAN_ROLE": {
+          "holder": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493",
+          "note": "Granted by default to admin"
+        }
+      }
+    }
+  },
+  "roles": {
+    "DEFAULT_ADMIN_ROLE": {
+      "holder": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493",
+      "wallet": "ADMIN_PRIVATE_KEY"
+    },
+    "GUARDIAN_ROLE": {
+      "holder": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493",
+      "wallet": "ADMIN_PRIVATE_KEY",
+      "note": "Granted by default to admin"
+    },
+    "RISK_COMMITTEE_ROLE": {
+      "holder": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+      "wallet": "DEPLOYER_PK",
+      "txHash": "0xb255e2711119afd39c8f7a2f9dbbab4a5036faa345be0512e170a2172a9c0a00"
+    },
+    "SETTLEMENT_AUTHORITY_ROLE": {
+      "holder": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+      "wallet": "DEPLOYER_PK",
+      "txHash": "0x9bd112173a843423b5b85b354cb0b1e5f3cecd6bce2c48261cb0e5faf1b657c8"
+    },
+    "RESEARCH_ATTESTOR_A_ROLE": {
+      "holder": "0xA6Ed10E752d5FACD989ee9CEd113b3a064b47493",
+      "wallet": "ADMIN_PRIVATE_KEY",
+      "txHash": "0x140d98930162ee5bbcd9f839cbd5278b2a4a5453e5c59114c3ecc7436c54fa48"
+    },
+    "RESEARCH_ATTESTOR_B_ROLE": {
+      "holder": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+      "wallet": "DEPLOYER_PK",
+      "txHash": "0xb267f852e88e79fc92dbbe1ae73ee5f68e8099454c5deb887328c8a63424e109"
+    },
+    "REPORTING_ORACLE_ROLE": {
+      "contract": "CapitalReadinessGate",
+      "holder": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+      "wallet": "DEPLOYER_PK",
+      "txHash": "0x42dc677f9c882f2e2e9aa59e07f7a17a9a4cf1a39268bd2ae32cc6ae5c6a8ef8"
+    }
+  },
+  "attestation": {
+    "initialPosted": "2026-01-31T11:33:20.000Z",
+    "txHash": "0x6d24705313d0d5512eca98a9b34262764c5960e7c24ae80a499361a98ae256db",
+    "values": {
+      "uptimeBps": 10000,
+      "incidentsCount": 0,
+      "tvlUsd": 0,
+      "auditHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "readinessStatus": "READY"
+  },
+  "configUpdate": {
+    "freezeWindowBypass": "2026-01-31T11:40:00.000Z",
+    "txHash": "0x84fb455cde3db5ae25a6bd297e09addf2733310db3481e49b0d46fe30dade5aa",
+    "note": "Freeze window set to 0 for immediate readiness"
+  },
+  "postDeploymentSteps": [
+    "1. [DONE] CapitalBridgeHub.setCapitalReadinessGate configured",
+    "2. [DONE] RISK_COMMITTEE_ROLE granted to DEPLOYER",
+    "3. [DONE] SETTLEMENT_AUTHORITY_ROLE granted to DEPLOYER",
+    "4. [DONE] RESEARCH_ATTESTOR_A_ROLE granted to ADMIN",
+    "5. [DONE] RESEARCH_ATTESTOR_B_ROLE granted to DEPLOYER",
+    "6. [DONE] REPORTING_ORACLE_ROLE granted to DEPLOYER",
+    "7. [DONE] Initial readiness attestation posted",
+    "8. [DONE] Freeze window bypassed - system READY",
+    "9. [DONE] Contracts verified on Blockscout (5E)",
+    "10. [DONE] Layer 5G contracts deployed",
+    "11. [DONE] Layer 5G cross-contract references configured",
+    "12. [DONE] Layer 5G roles granted (ISSUER, SERVICER, POOL_MANAGER)",
+    "13. [DONE] Verify Layer 5G contracts on Blockscout",
+    "14. [DONE] Node Economy contracts deployed (NodeRegistry, NodeRewards, SlashingEngine)",
+    "15. [DONE] Node Economy cross-contract references configured",
+    "16. [DONE] Node Economy roles granted",
+    "17. [DONE] Node Economy contracts verified on Blockscout"
+  ],
+  "nodeEconomy": {
+    "deployedAt": "2026-01-31T12:30:00.000Z",
+    "layer": "7 (Node Economy Layer)",
+    "contracts": {
+      "NodeRegistry": {
+        "address": "0x31bc6268155219B627FC3B2d8434d010F33DCb03",
+        "explorerUrl": "https://arbitrum.blockscout.com/address/0x31bc6268155219B627FC3B2d8434d010F33DCb03#code",
+        "verified": true,
+        "configuration": {
+          "rewardsContract": "0x0c1c96F38566d056877cEf4791c701C4F5AEf362",
+          "slashingContract": "0x1ae162B80cEfb82f9ccF25b5E7A45E5e133E6F87",
+          "txHash": "0x68f3fba6c08fdbf06e1e0aff44f398b26306090b06c27c45a20ac3d947b79f45"
+        },
+        "roles": {
+          "NODE_MANAGER_ROLE": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+          "SLASHER_ROLE": "0x1ae162B80cEfb82f9ccF25b5E7A45E5e133E6F87"
+        }
+      },
+      "NodeRewards": {
+        "address": "0x0c1c96F38566d056877cEf4791c701C4F5AEf362",
+        "explorerUrl": "https://arbitrum.blockscout.com/address/0x0c1c96F38566d056877cEf4791c701C4F5AEf362#code",
+        "verified": true,
+        "roles": {
+          "REWARDS_MANAGER_ROLE": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+          "ORACLE_ROLE": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96"
+        }
+      },
+      "SlashingEngine": {
+        "address": "0x1ae162B80cEfb82f9ccF25b5E7A45E5e133E6F87",
+        "explorerUrl": "https://arbitrum.blockscout.com/address/0x1ae162B80cEfb82f9ccF25b5E7A45E5e133E6F87#code",
+        "verified": true,
+        "roles": {
+          "SLASHER_ROLE": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+          "ARBITER_ROLE": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96"
+        }
+      }
+    },
+    "nodeClasses": {
+      "Storage": { "minStake": "0.1 ETH", "lockPeriod": "30 days", "slashPercent": "10%" },
+      "Execution": { "minStake": "0.5 ETH", "lockPeriod": "60 days", "slashPercent": "15%" },
+      "Indexing": { "minStake": "0.25 ETH", "lockPeriod": "30 days", "slashPercent": "10%" },
+      "Research": { "minStake": "1 ETH", "lockPeriod": "90 days", "slashPercent": "20%" }
+    }
+  }
+}

@@ -1,0 +1,243 @@
+{
+  "version": "1.0",
+  "generated": "2025-12-20",
+  "network": "Arbitrum One",
+  "chainId": 42161,
+  "features": [
+    {
+      "id": "axm-token",
+      "name": "AXM Token",
+      "category": "core",
+      "riskLevel": "high",
+      "contracts": ["AxiomV2"],
+      "pages": ["/tokenomics"],
+      "complianceRequirements": [
+        "Anti-whale limits disclosure",
+        "Fee structure transparency",
+        "Token economics disclosure"
+      ],
+      "disclosuresRequired": [
+        {
+          "type": "trading",
+          "content": "AXM token has maximum transaction limits to prevent market manipulation.",
+          "location": "token-purchase"
+        }
+      ]
+    },
+    {
+      "id": "keygrow",
+      "name": "KeyGrow Rent-to-Own",
+      "category": "real-estate",
+      "riskLevel": "high",
+      "contracts": ["LeaseAndRentEngine", "CapitalPoolsAndFunds", "AxiomLandAndAssetRegistry"],
+      "pages": ["/keygrow"],
+      "apis": ["/api/keygrow/*"],
+      "externalDependencies": ["ATTOM Data", "RentCast", "Walk Score"],
+      "complianceRequirements": [
+        "Real estate disclosures",
+        "Option consideration terms",
+        "Tenant rights disclosure",
+        "Property data accuracy",
+        "Equity accrual mechanics"
+      ],
+      "disclosuresRequired": [
+        {
+          "type": "real-estate",
+          "content": "KeyGrow is a rent-to-own program. The $500 option consideration is staked at 8% APR and grows toward your down payment. 20% of each rent payment converts to property equity tokens.",
+          "location": "enrollment"
+        },
+        {
+          "type": "financial",
+          "content": "Property valuations are estimates and may change. Past performance does not guarantee future results.",
+          "location": "property-view"
+        }
+      ]
+    },
+    {
+      "id": "susu",
+      "name": "SUSU Rotating Savings",
+      "category": "savings",
+      "riskLevel": "medium",
+      "contracts": ["AxiomSusuHub"],
+      "pages": ["/susu"],
+      "apis": ["/api/susu/*"],
+      "complianceRequirements": [
+        "Pool terms disclosure",
+        "Payout schedule transparency",
+        "Late payment penalties",
+        "Member ejection rules",
+        "Protocol fees"
+      ],
+      "disclosuresRequired": [
+        {
+          "type": "savings",
+          "content": "SUSU pools are rotating savings groups. Members contribute each cycle and receive the pooled funds on a scheduled basis. Late payments may result in penalties or ejection.",
+          "location": "pool-join"
+        }
+      ]
+    },
+    {
+      "id": "dex",
+      "name": "DEX Exchange",
+      "category": "trading",
+      "riskLevel": "high",
+      "contracts": ["AxiomExchangeHub", "OracleAndMetricsRelay"],
+      "pages": ["/dex"],
+      "apis": ["/api/dex/*"],
+      "complianceRequirements": [
+        "Trading risk disclosure",
+        "Slippage warnings",
+        "Liquidity risks",
+        "Price impact disclosure"
+      ],
+      "disclosuresRequired": [
+        {
+          "type": "trading",
+          "content": "Trading involves risk. Prices can be volatile. You may lose some or all of your investment.",
+          "location": "swap"
+        },
+        {
+          "type": "trading",
+          "content": "Liquidity provision involves impermanent loss risk. You may receive less value than deposited.",
+          "location": "add-liquidity"
+        }
+      ]
+    },
+    {
+      "id": "depin",
+      "name": "DePIN Nodes",
+      "category": "infrastructure",
+      "riskLevel": "medium",
+      "contracts": ["DePINNodeSuite", "DePINNodeSales"],
+      "pages": ["/axiom-nodes", "/nodes/marketplace"],
+      "apis": ["/api/depin/*", "/api/nodes/*"],
+      "complianceRequirements": [
+        "Node lease terms",
+        "Reward structure disclosure",
+        "Hardware requirements",
+        "Network participation terms"
+      ],
+      "disclosuresRequired": [
+        {
+          "type": "infrastructure",
+          "content": "DePIN node rewards are based on network performance and are not guaranteed. Node operators must meet uptime requirements.",
+          "location": "node-purchase"
+        }
+      ]
+    },
+    {
+      "id": "governance",
+      "name": "Governance",
+      "category": "dao",
+      "riskLevel": "medium",
+      "contracts": ["AxiomV2"],
+      "pages": ["/governance"],
+      "apis": ["/api/governance/*"],
+      "complianceRequirements": [
+        "Voting power disclosure",
+        "Proposal process",
+        "Delegation terms"
+      ],
+      "disclosuresRequired": [
+        {
+          "type": "governance",
+          "content": "Governance proposals require voting power from staked AXM tokens. Delegation transfers voting power but not token ownership.",
+          "location": "vote"
+        }
+      ]
+    },
+    {
+      "id": "tge",
+      "name": "Token Generation Event",
+      "category": "token-sale",
+      "riskLevel": "critical",
+      "contracts": ["CrossChainAndLaunchModule"],
+      "pages": ["/launchpad"],
+      "apis": ["/api/tge/*"],
+      "complianceRequirements": [
+        "Securities compliance",
+        "Geographic restrictions",
+        "Accredited investor verification",
+        "Token vesting schedules",
+        "Use of proceeds"
+      ],
+      "disclosuresRequired": [
+        {
+          "type": "securities",
+          "content": "Token sales may be restricted in certain jurisdictions. By participating, you confirm you are not a resident of a restricted region and meet all eligibility requirements.",
+          "location": "token-sale"
+        }
+      ],
+      "restrictedRegions": ["US", "CN", "KP", "IR", "CU", "SY"]
+    },
+    {
+      "id": "bank",
+      "name": "National Bank of Axiom",
+      "category": "financial",
+      "riskLevel": "high",
+      "contracts": ["AxiomTreasuryAndRevenueHub", "CapitalPoolsAndFunds"],
+      "pages": ["/bank"],
+      "complianceRequirements": [
+        "KYC/AML compliance",
+        "Financial regulations",
+        "FATF guidelines",
+        "Fund custody disclosure"
+      ],
+      "disclosuresRequired": [
+        {
+          "type": "financial",
+          "content": "Banking services require identity verification. Your funds are held in smart contract custody with multi-signature protection.",
+          "location": "account-open"
+        }
+      ]
+    },
+    {
+      "id": "pma",
+      "name": "PMA Trust",
+      "category": "membership",
+      "riskLevel": "low",
+      "contracts": [],
+      "pages": ["/pma"],
+      "apis": ["/api/pma/*"],
+      "complianceRequirements": [
+        "Membership agreement",
+        "PMA legal structure",
+        "Constitutional protections"
+      ],
+      "disclosuresRequired": [
+        {
+          "type": "membership",
+          "content": "Axiom operates as a Private Membership Association Trust. By joining, you agree to the membership terms and bylaws.",
+          "location": "pma-join"
+        }
+      ]
+    }
+  ],
+  "globalDisclosures": [
+    {
+      "id": "risk-general",
+      "content": "Cryptocurrency and blockchain investments involve significant risk. You may lose some or all of your investment.",
+      "displayOn": ["all-financial-actions"]
+    },
+    {
+      "id": "not-advice",
+      "content": "Nothing on this platform constitutes financial, legal, or investment advice. Consult a professional before making decisions.",
+      "displayOn": ["footer"]
+    },
+    {
+      "id": "kyc-required",
+      "content": "Certain features require identity verification (KYC). You may be asked to provide documentation.",
+      "displayOn": ["high-value-actions"]
+    }
+  ],
+  "securityFeatures": {
+    "multiSig": {
+      "address": "0x2bB2c2A7a1d82097488bf0b9c2a59c1910CD8D5d",
+      "threshold": "3/5",
+      "timelock": "48 hours"
+    },
+    "pauseCapability": true,
+    "reentrancyGuards": true,
+    "accessControl": true
+  }
+}

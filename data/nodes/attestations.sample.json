@@ -1,0 +1,46 @@
+[
+  {
+    "attestationId": "ATT-111111111111",
+    "packetId": "PKT-A-2026-689",
+    "trackType": "TRACK_A",
+    "operatorId": "OP-b2c3d4e5-f6a7-8901-bcde-f23456789012",
+    "role": "VALIDATOR",
+    "attestationType": "VALIDATION",
+    "artifactBundleHashOrCid": "sha256:aabbccdd11223344aabbccdd11223344aabbccdd11223344aabbccdd11223344",
+    "underwritingHashOrCid": "sha256:b0f63f5d66b185b89739ee3aabbccdd11223344aabbccdd11223344aabbccdd",
+    "conflictCheckPassed": true,
+    "signatureStub": "sig:sha256:validation111111aabbccdd11223344aabbccdd11223344aabbccdd11223344",
+    "validationFindings": {
+      "artifactsComplete": true,
+      "formatsValid": true,
+      "underwritingVerified": true,
+      "noPlaceholders": false,
+      "notes": "Placeholder artifacts detected. Blocking final attestation."
+    },
+    "status": "RECORDED",
+    "timestamp": "2026-01-29T10:00:00Z",
+    "recordedOnChain": false
+  },
+  {
+    "attestationId": "ATT-222222222222",
+    "packetId": "PKT-B-2026-921",
+    "trackType": "TRACK_B",
+    "operatorId": "OP-b2c3d4e5-f6a7-8901-bcde-f23456789012",
+    "role": "VALIDATOR",
+    "attestationType": "VALIDATION",
+    "artifactBundleHashOrCid": "sha256:eeff00112233445566778899aabbccddeeff00112233445566778899aabbccdd",
+    "underwritingHashOrCid": "sha256:9bfd6bf1592da74c3777e02aabbccdd11223344aabbccdd11223344aabbccdd",
+    "conflictCheckPassed": true,
+    "signatureStub": "sig:sha256:validation222222aabbccdd11223344aabbccdd11223344aabbccdd11223344",
+    "validationFindings": {
+      "artifactsComplete": true,
+      "formatsValid": true,
+      "underwritingVerified": true,
+      "noPlaceholders": false,
+      "notes": "Placeholder artifacts detected. Blocking final attestation."
+    },
+    "status": "RECORDED",
+    "timestamp": "2026-01-30T14:00:00Z",
+    "recordedOnChain": false
+  }
+]

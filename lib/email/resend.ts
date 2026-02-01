@@ -1,0 +1,198 @@
+import { Resend } from 'resend';
+
+let connectionSettings: any;
+
+async function getCredentials() {
+  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+  const xReplitToken = process.env.REPL_IDENTITY 
+    ? 'repl ' + process.env.REPL_IDENTITY 
+    : process.env.WEB_REPL_RENEWAL 
+    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
+    : null;
+
+  if (!xReplitToken) {
+    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+  }
+
+  connectionSettings = await fetch(
+    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
+    {
+      headers: {
+        'Accept': 'application/json',
+        'X_REPLIT_TOKEN': xReplitToken
+      }
+    }
+  ).then(res => res.json()).then(data => data.items?.[0]);
+
+  if (!connectionSettings || (!connectionSettings.settings.api_key)) {
+    throw new Error('Resend not connected');
+  }
+  return { apiKey: connectionSettings.settings.api_key, fromEmail: connectionSettings.settings.from_email };
+}
+
+export async function getResendClient() {
+  const { apiKey, fromEmail } = await getCredentials();
+  return {
+    client: new Resend(apiKey),
+    fromEmail: fromEmail || 'noreply@axiomprotocol.app'
+  };
+}
+
+export async function sendWorkbookWelcomeEmail(to: string, firstName: string) {
+  const { client, fromEmail } = await getResendClient();
+
+  const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">Land Reclamation Workbook</h1>
+              <p style="color: #fef3c7; margin: 10px 0 0 0; font-size: 16px;">Your Heir Property Research Checklist</p>
+            </td>
+          </tr>
+          
+          <!-- Welcome Message -->
+          <tr>
+            <td style="padding: 40px 30px 20px 30px;">
+              <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 22px;">Welcome, ${firstName}!</h2>
+              <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0;">
+                Thank you for joining our community of families working to reclaim their ancestral land. 
+                Below is your free Heir Property Research Checklist to help you get started.
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Checklist Section -->
+          <tr>
+            <td style="padding: 0 30px 30px 30px;">
+              <div style="background-color: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 25px;">
+                <h3 style="color: #92400e; margin: 0 0 20px 0; font-size: 18px;">📋 Your Heir Property Research Checklist</h3>
+                
+                <div style="margin-bottom: 15px;">
+                  <p style="color: #78350f; font-weight: 600; margin: 0 0 10px 0;">Step 1: Gather Family Information</p>
+                  <ul style="color: #4b5563; margin: 0; padding-left: 20px; line-height: 1.8;">
+                    <li>Names of ancestors who may have owned land</li>
+                    <li>Approximate birth/death dates</li>
+                    <li>States/counties where they lived</li>
+                    <li>Family stories about property ownership</li>
+                  </ul>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                  <p style="color: #78350f; font-weight: 600; margin: 0 0 10px 0;">Step 2: Search Census Records</p>
+                  <ul style="color: #4b5563; margin: 0; padding-left: 20px; line-height: 1.8;">
+                    <li>1870 Census (first census with freed persons)</li>
+                    <li>1880-1940 Census records</li>
+                    <li>Look for "O" (owns) or "R" (rents) columns</li>
+                    <li>Note property values listed</li>
+                  </ul>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                  <p style="color: #78350f; font-weight: 600; margin: 0 0 10px 0;">Step 3: Search Land Records</p>
+                  <ul style="color: #4b5563; margin: 0; padding-left: 20px; line-height: 1.8;">
+                    <li>County deed records</li>
+                    <li>BLM General Land Office (glorecords.blm.gov)</li>
+                    <li>Freedmen's Bureau records</li>
+                    <li>Tax records and property maps</li>
+                  </ul>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                  <p style="color: #78350f; font-weight: 600; margin: 0 0 10px 0;">Step 4: Document the Chain of Title</p>
+                  <ul style="color: #4b5563; margin: 0; padding-left: 20px; line-height: 1.8;">
+                    <li>Track property from original owner to present</li>
+                    <li>Note any probate or estate records</li>
+                    <li>Identify all potential heirs</li>
+                    <li>Check for partition sales or tax forfeitures</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <p style="color: #78350f; font-weight: 600; margin: 0 0 10px 0;">Step 5: Consult Legal Resources</p>
+                  <ul style="color: #4b5563; margin: 0; padding-left: 20px; line-height: 1.8;">
+                    <li>Check if your state has UPHPA protections</li>
+                    <li>Contact a real estate attorney</li>
+                    <li>Explore heirs' property legal clinics</li>
+                    <li>Consider an Affidavit of Heirship</li>
+                  </ul>
+                </div>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Stats Section -->
+          <tr>
+            <td style="padding: 0 30px 30px 30px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="33%" style="text-align: center; padding: 15px; background-color: #fef2f2; border-radius: 8px 0 0 8px;">
+                    <div style="color: #dc2626; font-size: 24px; font-weight: 700;">$28B</div>
+                    <div style="color: #7f1d1d; font-size: 12px;">Heir Property Value</div>
+                  </td>
+                  <td width="33%" style="text-align: center; padding: 15px; background-color: #fffbeb;">
+                    <div style="color: #d97706; font-size: 24px; font-weight: 700;">3.5M</div>
+                    <div style="color: #78350f; font-size: 12px;">Families Affected</div>
+                  </td>
+                  <td width="33%" style="text-align: center; padding: 15px; background-color: #eff6ff; border-radius: 0 8px 8px 0;">
+                    <div style="color: #2563eb; font-size: 24px; font-weight: 700;">18</div>
+                    <div style="color: #1e3a8a; font-size: 12px;">UPHPA States</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- CTA Button -->
+          <tr>
+            <td style="padding: 0 30px 40px 30px; text-align: center;">
+              <a href="https://axiomprotocol.app/workbook" style="display: inline-block; background-color: #f59e0b; color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                Start Using the Workbook →
+              </a>
+              <p style="color: #6b7280; font-size: 14px; margin: 15px 0 0 0;">
+                Get AI-powered research assistance, family tree building, and more.
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #1f2937; padding: 30px; text-align: center;">
+              <p style="color: #9ca3af; font-size: 14px; margin: 0 0 10px 0;">
+                <strong style="color: #ffffff;">Axiom Protocol</strong> | Building Generational Wealth On-Chain
+              </p>
+              <p style="color: #6b7280; font-size: 12px; margin: 0;">
+                You're receiving this because you signed up for the Land Reclamation Workbook checklist.<br>
+                <a href="https://axiomprotocol.app/unsubscribe" style="color: #9ca3af;">Unsubscribe</a>
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+  const result = await client.emails.send({
+    from: fromEmail,
+    to: [to],
+    subject: `${firstName}, here's your Heir Property Research Checklist`,
+    html: emailHtml,
+  });
+
+  return result;
+}

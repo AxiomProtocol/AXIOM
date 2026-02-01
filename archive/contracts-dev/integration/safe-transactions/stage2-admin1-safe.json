@@ -1,0 +1,127 @@
+{
+  "version": "1.0",
+  "chainId": "42161",
+  "createdAt": 1732305600000,
+  "meta": {
+    "name": "Axiom Stage 2: Financial & Real Estate Mesh",
+    "description": "5 role grants for treasury revenue collection and compliance",
+    "txBuilderVersion": "1.16.3"
+  },
+  "transactions": [
+    {
+      "to": "0x26a20dEa57F951571AD6e518DFb3dC60634D5297",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f",
+        "account": "0x3fD63728288546AC41dAe3bf25ca383061c3A929"
+      }
+    },
+    {
+      "to": "0x579EA6FC512E5f1b4FC77d5f4f03aA976fa40412",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b",
+        "account": "0x3fD63728288546AC41dAe3bf25ca383061c3A929"
+      }
+    },
+    {
+      "to": "0xFcCdC1E353b24936f9A8D08D21aF684c620fa701",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0xe4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5",
+        "account": "0x3fD63728288546AC41dAe3bf25ca383061c3A929"
+      }
+    },
+    {
+      "to": "0x26a20dEa57F951571AD6e518DFb3dC60634D5297",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a",
+        "account": "0xf88bb44511E5752Ee69953166C5d5dC0cfC8B3ED"
+      }
+    },
+    {
+      "to": "0x579EA6FC512E5f1b4FC77d5f4f03aA976fa40412",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0xb1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
+        "account": "0xf88bb44511E5752Ee69953166C5d5dC0cfC8B3ED"
+      }
+    }
+  ]
+}

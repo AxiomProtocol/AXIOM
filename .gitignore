@@ -1,0 +1,104 @@
+# Dependencies
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Temp and cache
+temp-compile-*/
+.cache/
+*.cache
+.temp/
+*.tmp
+
+# Environment files (keep secrets safe)
+.env
+.env.local
+.env.production
+.env*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE and editor
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Hardhat/Solidity
+cache/
+artifacts/
+typechain/
+typechain-types/
+coverage/
+coverage.json
+
+# Replit specific
+.replit
+replit.nix
+.upm/
+.config/
+
+# Test outputs
+*.lcov
+
+# Large binary files
+*.zip
+*.tar.gz
+*.rar
+
+# Database files
+*.sqlite
+*.db
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Sensitive data files - NEVER commit these
+*cookies*.txt
+*session*.txt
+*_cookies.txt
+*_session.txt
+browser_cookies.txt
+enhanced_session.txt
+early_access_signups.json
+*_signups.json
+
+# Private keys and credentials
+*private-keys*.txt
+*wallet*.json
+*.env.local
+
+# User data exports
+attached_assets/*.json
+attached_assets/*.txt
+
+# Temporary files
+*.tmp
+*.temp
+zitDykih
+
+# Large Hardhat/Solidity build artifacts - exclude from deployment
+artifacts-axusd/
+stablecoin-deploy/
+cache/
+
+# DeNet and node license files
+*.license
+*.key
+*node-license*
+*denet-key*
+*activation-key*
+*.cid

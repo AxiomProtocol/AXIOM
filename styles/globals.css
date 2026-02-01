@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Hide scrollbar for mobile navigation */
+.mobile-nav-scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mobile-nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe area for iPhone notch */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Mobile wallet button - allow shrinking */
+.mobile-wallet {
+  max-width: 100%;
+  flex-shrink: 1;
+}
+
+.mobile-wallet .wallet-info {
+  flex-wrap: nowrap;
+  max-width: 200px;
+}

@@ -1,0 +1,131 @@
+AXIOM TOKEN GENERATION EVENT - VIDEO SCRIPT FOR VISLA AI
+Duration: 2 Minutes (Approximately 300 Words)
+Style: Professional, Cinematic, Inspiring
+Music: Epic orchestral with modern electronic elements
+
+================================================================================
+SCENE 1: THE OPENING HOOK (0:00 - 0:15)
+================================================================================
+
+[VISUAL: Aerial drone shot of a futuristic smart city skyline at sunset, transitioning to blockchain network visualization]
+
+NARRATOR (V.O.):
+"What if a city could run entirely on blockchain? Where every building, every transaction, every citizen interaction is transparent, secure, and community-owned?"
+
+[TEXT ON SCREEN: "AXIOM"]
+
+================================================================================
+SCENE 2: INTRODUCING AXIOM (0:15 - 0:35)
+================================================================================
+
+[VISUAL: Sleek 3D render of the AXIOM token logo spinning, transitioning to map showing 1,000 acres of land]
+
+NARRATOR (V.O.):
+"Introducing AXIOM - America's first on-chain smart city. A revolutionary 1,000-acre development where blockchain powers everything. Real estate. Banking. Infrastructure. All governed by you."
+
+[TEXT ON SCREEN: "America's First On-Chain Smart City"]
+[TEXT ON SCREEN: "1,000 Acres | 22+ Smart Contracts | Built on Arbitrum"]
+
+================================================================================
+SCENE 3: THE TOKEN (0:35 - 0:55)
+================================================================================
+
+[VISUAL: Infographic showing token allocation pie chart with animated segments]
+
+NARRATOR (V.O.):
+"The AXM token is the backbone of this sovereign economy. Fifteen billion tokens. Fixed supply. No additional minting - ever. Early supporters get access at just point-zero-zero-zero-three-three dollars per token."
+
+[TEXT ON SCREEN: "15 Billion Total Supply"]
+[TEXT ON SCREEN: "$0.00033 per AXM"]
+[TEXT ON SCREEN: "$5 Million Hard Cap"]
+
+================================================================================
+SCENE 4: REAL UTILITY (0:55 - 1:20)
+================================================================================
+
+[VISUAL: Split screen showing DePIN nodes, tokenized real estate properties, DEX trading interface, and governance voting]
+
+NARRATOR (V.O.):
+"This isn't just another token. AXM powers real infrastructure. Run DePIN nodes and earn rewards. Own fractional shares of tokenized real estate. Trade on our built-in decentralized exchange. And vote on every major decision through our DAO governance."
+
+[TEXT ON SCREEN: "DePIN Infrastructure"]
+[TEXT ON SCREEN: "Tokenized Real Estate"]
+[TEXT ON SCREEN: "Built-In DEX Exchange"]
+[TEXT ON SCREEN: "DAO Governance"]
+
+================================================================================
+SCENE 5: TRANSPARENCY & SECURITY (1:20 - 1:40)
+================================================================================
+
+[VISUAL: Multi-signature wallet visualization, smart contract code snippets, security shields]
+
+NARRATOR (V.O.):
+"Every dollar raised goes into a multi-signature treasury - fully transparent, fully on-chain. Thirty-five percent builds smart city infrastructure. Twenty-five percent advances our technology. The rest fuels liquidity, real estate acquisition, and growth."
+
+[TEXT ON SCREEN: "35% Smart City Infrastructure"]
+[TEXT ON SCREEN: "25% Technology Development"]
+[TEXT ON SCREEN: "Transparent On-Chain Treasury"]
+
+================================================================================
+SCENE 6: THE CALL TO ACTION (1:40 - 2:00)
+================================================================================
+
+[VISUAL: Countdown timer, community of diverse people, futuristic city coming to life]
+
+NARRATOR (V.O.):
+"The future of cities is decentralized. The future is sovereign. The future is AXIOM. Join the Token Generation Event launching January first, twenty-twenty-six. Be early. Be part of history."
+
+[TEXT ON SCREEN: "LAUNCHING JANUARY 1, 2026"]
+[TEXT ON SCREEN: "axiom.city"]
+
+[VISUAL: AXIOM logo with tagline fades in]
+
+[TEXT ON SCREEN: "AXIOM - Building Tomorrow's City Today"]
+
+================================================================================
+END CARD (2:00)
+================================================================================
+
+[VISUAL: Logo lockup with social media handles and QR code]
+
+[TEXT ON SCREEN: 
+"Join the TGE
+axiom.city/launchpad
+Twitter: @AxiomCity
+Telegram: t.me/AxiomCity"]
+
+================================================================================
+PRODUCTION NOTES FOR VISLA AI
+================================================================================
+
+TONE: Confident, visionary, professional. Not hype-driven or scammy.
+
+COLOR PALETTE: 
+- Primary: Gold/Amber (#f59e0b)
+- Secondary: Deep blue (#1e3a8a)
+- Accent: Purple (#7c3aed)
+- Background: Dark gradients
+
+MUSIC SUGGESTIONS:
+- Epic, inspiring orchestral with modern synth elements
+- Build tension through scenes 1-4, crescendo at scene 6
+- Clean, professional - avoid overly dramatic crypto-style music
+
+VISUAL STYLE:
+- Clean, minimalist motion graphics
+- Smooth camera movements
+- Professional corporate feel with futuristic elements
+- Real footage mixed with high-quality 3D renders
+
+KEY MESSAGING PRIORITIES:
+1. First on-chain smart city in America
+2. Real utility - not just speculation
+3. Transparent, community-governed
+4. Early access opportunity
+5. Built on proven technology (Arbitrum, 22+ contracts deployed)
+
+AVOID:
+- Guarantees of returns or profit
+- Overly aggressive "buy now" pressure
+- Comparisons to get-rich-quick schemes
+- Unverifiable claims

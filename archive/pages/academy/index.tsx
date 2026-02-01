@@ -1,0 +1,608 @@
+import { useState, useEffect } from 'react';
+import Head from 'next/head';
+import Link from 'next/link';
+import toast, { Toaster } from 'react-hot-toast';
+import StepProgressBanner from '../../components/StepProgressBanner';
+
+interface Course {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string;
+  category: string;
+  difficulty: string;
+  durationMinutes: number;
+  lessonsCount: number;
+  requiredTier: string;
+  isFeatured: boolean;
+}
+
+const STARTER_COURSES: Course[] = [
+  {
+    id: 1,
+    slug: 'smart-city-101',
+    title: 'Financial Foundations 101',
+    description: 'Understand the fundamentals of building wealth through discipline, community, and structured savings.',
+    thumbnailUrl: '/images/courses/smart-city.jpg',
+    category: 'Finance',
+    difficulty: 'beginner',
+    durationMinutes: 45,
+    lessonsCount: 6,
+    requiredTier: 'free',
+    isFeatured: true
+  },
+  {
+    id: 2,
+    slug: 'keygrow-rent-to-own',
+    title: 'KeyGrow: Path to Homeownership',
+    description: 'Learn how rent-to-own works, how equity builds with each payment, and strategies to accelerate your path to ownership.',
+    thumbnailUrl: '/images/courses/keygrow.jpg',
+    category: 'Real Estate',
+    difficulty: 'beginner',
+    durationMinutes: 60,
+    lessonsCount: 8,
+    requiredTier: 'free',
+    isFeatured: true
+  },
+  {
+    id: 3,
+    slug: 'financial-literacy',
+    title: 'Financial Literacy Fundamentals',
+    description: 'Master budgeting, saving, credit management, and wealth building strategies for long-term financial health.',
+    thumbnailUrl: '/images/courses/finance.jpg',
+    category: 'Finance',
+    difficulty: 'beginner',
+    durationMinutes: 90,
+    lessonsCount: 8,
+    requiredTier: 'pro',
+    isFeatured: true
+  },
+  {
+    id: 4,
+    slug: 'depin-explained',
+    title: 'DePIN: Decentralized Infrastructure',
+    description: 'Discover how DePIN (Decentralized Physical Infrastructure Networks) works and how to participate in the network.',
+    thumbnailUrl: '/images/courses/depin.jpg',
+    category: 'Blockchain',
+    difficulty: 'intermediate',
+    durationMinutes: 75,
+    lessonsCount: 7,
+    requiredTier: 'pro',
+    isFeatured: false
+  },
+  {
+    id: 5,
+    slug: 'susu-community-savings',
+    title: 'SUSU: Community Savings Circles',
+    description: 'Learn the traditional rotating savings method modernized with blockchain for trust, transparency, and efficiency.',
+    thumbnailUrl: '/images/courses/susu.jpg',
+    category: 'Community',
+    difficulty: 'beginner',
+    durationMinutes: 30,
+    lessonsCount: 4,
+    requiredTier: 'pro',
+    isFeatured: false
+  },
+  {
+    id: 6,
+    slug: 'governance-dao-participation',
+    title: 'DAO Governance Participation',
+    description: 'Understand how to participate in community governance, vote on proposals, and shape the future of Axiom.',
+    thumbnailUrl: '/images/courses/governance.jpg',
+    category: 'Governance',
+    difficulty: 'intermediate',
+    durationMinutes: 45,
+    lessonsCount: 6,
+    requiredTier: 'pro',
+    isFeatured: false
+  },
+  {
+    id: 7,
+    slug: 'real-estate-investing',
+    title: 'Real Estate Investment Strategies',
+    description: 'Advanced strategies for building wealth through real estate, from traditional investing to tokenized property ownership.',
+    thumbnailUrl: '/images/courses/real-estate.jpg',
+    category: 'Finance',
+    difficulty: 'advanced',
+    durationMinutes: 60,
+    lessonsCount: 5,
+    requiredTier: 'pro',
+    isFeatured: false
+  },
+  {
+    id: 8,
+    slug: 'blockchain-security',
+    title: 'Blockchain Security & Privacy',
+    description: 'Protect your digital assets with advanced security practices, wallet management, and privacy protection strategies.',
+    thumbnailUrl: '/images/courses/security.jpg',
+    category: 'Blockchain',
+    difficulty: 'intermediate',
+    durationMinutes: 50,
+    lessonsCount: 5,
+    requiredTier: 'pro',
+    isFeatured: false
+  },
+  {
+    id: 9,
+    slug: 'web3-wealth-building',
+    title: 'Building Wealth in Web3',
+    description: 'Comprehensive strategies for generating income and building wealth in the blockchain economy.',
+    thumbnailUrl: '/images/courses/web3-wealth.jpg',
+    category: 'Finance',
+    difficulty: 'advanced',
+    durationMinutes: 55,
+    lessonsCount: 5,
+    requiredTier: 'pro',
+    isFeatured: false
+  },
+  {
+    id: 10,
+    slug: 'cryptocurrency-basics',
+    title: 'Cryptocurrency Basics',
+    description: 'Your first steps into the world of digital currencies. Learn what cryptocurrency is, how it works, and why it matters.',
+    thumbnailUrl: '/images/courses/crypto-basics.jpg',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 35,
+    lessonsCount: 4,
+    requiredTier: 'free',
+    isFeatured: false
+  },
+  {
+    id: 11,
+    slug: 'wallet-setup-guide',
+    title: 'Wallet Setup & Safety',
+    description: 'Learn how to set up your first cryptocurrency wallet, understand different wallet types, and keep your assets secure.',
+    thumbnailUrl: '/images/courses/wallet-setup.jpg',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 40,
+    lessonsCount: 4,
+    requiredTier: 'free',
+    isFeatured: false
+  },
+  {
+    id: 12,
+    slug: 'blockchain-fundamentals',
+    title: 'Blockchain Fundamentals',
+    description: 'Understand how blockchain technology works, from blocks and chains to consensus mechanisms and smart contracts.',
+    thumbnailUrl: '/images/courses/blockchain-fundamentals.jpg',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 45,
+    lessonsCount: 4,
+    requiredTier: 'free',
+    isFeatured: false
+  },
+  {
+    id: 13,
+    slug: 'intro-to-defi',
+    title: 'Introduction to DeFi',
+    description: 'Discover decentralized finance (DeFi) and how it provides financial services without traditional banks or intermediaries.',
+    thumbnailUrl: '/images/courses/intro-defi.jpg',
+    category: 'Finance',
+    difficulty: 'beginner',
+    durationMinutes: 40,
+    lessonsCount: 4,
+    requiredTier: 'free',
+    isFeatured: false
+  },
+  {
+    id: 14,
+    slug: 'nft-essentials',
+    title: 'NFT Essentials',
+    description: 'Learn what NFTs are, how they work, and their applications beyond digital art including gaming, membership, and real-world assets.',
+    thumbnailUrl: '/images/courses/nft-essentials.jpg',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 35,
+    lessonsCount: 4,
+    requiredTier: 'free',
+    isFeatured: false
+  },
+  {
+    id: 15,
+    slug: 'tokenomics-101',
+    title: 'Tokenomics 101',
+    description: 'Understand how token economics work, from supply and distribution to utility and value drivers.',
+    thumbnailUrl: '/images/courses/tokenomics.jpg',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 40,
+    lessonsCount: 4,
+    requiredTier: 'free',
+    isFeatured: false
+  },
+  {
+    id: 16,
+    slug: 'web3-community-guide',
+    title: 'Web3 Community Guide',
+    description: 'Learn how to participate in Web3 communities, join DAOs, and contribute to decentralized projects.',
+    thumbnailUrl: '/images/courses/web3-community.jpg',
+    category: 'Community',
+    difficulty: 'beginner',
+    durationMinutes: 35,
+    lessonsCount: 4,
+    requiredTier: 'free',
+    isFeatured: false
+  }
+];
+
+const MEMBERSHIP_TIERS = [
+  {
+    name: 'Free',
+    price: 0,
+    features: [
+      '9 complete courses (40+ lessons)',
+      'AI-powered learning assistant',
+      'Interactive quizzes & assessments',
+      'Progress tracking dashboard',
+      'Community forum access',
+      'Certificate of completion',
+      'Mobile-friendly learning',
+      'No credit card required'
+    ],
+    buttonText: 'Start Learning Now',
+    highlighted: false,
+    badge: 'FOREVER FREE',
+    href: '/academy/free'
+  },
+  {
+    name: 'Pro',
+    price: 25,
+    features: [
+      'All Free features',
+      'Access to ALL courses',
+      'Live weekly workshops',
+      'Priority support',
+      'Exclusive community channels',
+      'Early access to new features'
+    ],
+    buttonText: 'Start Pro Trial',
+    highlighted: true
+  },
+  {
+    name: 'Enterprise',
+    price: 99,
+    features: [
+      'All Pro features',
+      '1-on-1 mentorship sessions',
+      'Custom learning paths',
+      'Team training options',
+      'API access',
+      'White-label certificates'
+    ],
+    buttonText: 'Contact Sales',
+    highlighted: false
+  }
+];
+
+export default function Academy() {
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  const handleMembershipClick = async (tierName: string, href?: string) => {
+    if (tierName === 'Free' && href) {
+      window.location.href = href;
+      return;
+    }
+    
+    if (tierName === 'Enterprise') {
+      window.location.href = 'mailto:support@axiomprotocol.io?subject=Axiom Academy Enterprise';
+      return;
+    }
+
+    setCheckoutLoading(tierName);
+    try {
+      const response = await fetch('/api/academy/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tier: tierName.toLowerCase(),
+          email: email || undefined
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.message || 'Failed to start checkout');
+      }
+    } catch (error) {
+      toast.error('Failed to start checkout');
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
+
+  const categories = ['all', 'Real Estate', 'Finance', 'Blockchain', 'Community', 'Governance'];
+
+  const filteredCourses = selectedCategory === 'all' 
+    ? STARTER_COURSES 
+    : STARTER_COURSES.filter(c => c.category === selectedCategory);
+
+  const featuredCourses = STARTER_COURSES.filter(c => c.isFeatured);
+
+  const handleEnroll = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error('Please enter your email');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/leads/capture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          source: 'academy'
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Welcome to Axiom Academy! Check your email.');
+        setEmail('');
+      } else {
+        const data = await response.json();
+        if (data.isExisting) {
+          toast.success('Welcome back to the Academy!');
+        } else {
+          throw new Error(data.message);
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Something went wrong');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'beginner': return 'bg-green-100 text-green-700';
+      case 'intermediate': return 'bg-yellow-100 text-yellow-700';
+      case 'advanced': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const getTierBadge = (tier: string) => {
+    if (tier === 'free') return null;
+    return (
+      <span className="absolute top-4 right-4 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded">
+        PRO
+      </span>
+    );
+  };
+
+  return (
+    <>
+      <Head>
+        <title>Axiom Academy | Learn Financial Literacy</title>
+        <meta name="description" content="Master financial literacy, budgeting, wealth building, and blockchain fundamentals." />
+      </Head>
+      <StepProgressBanner currentStep={"learn" as any} />
+      <Toaster position="top-right" />
+      
+      <div className="min-h-screen bg-white">
+        
+        <div className="relative py-20 px-4 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-teal-50 via-white to-purple-50"></div>
+          <div className="max-w-6xl mx-auto relative z-10">
+            <p className="text-teal-600 text-sm mb-3 font-medium">Step 1: Learn — Build your financial foundation through education and discipline.</p>
+            <h1 className="text-5xl md:text-6xl font-bold mb-6">
+              <span className="bg-gradient-to-r from-teal-500 to-purple-600 bg-clip-text text-transparent">
+                Axiom Academy
+              </span>
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mb-8">
+              Master financial literacy, budgeting, wealth building, and blockchain fundamentals. 
+              Build real skills for long-term financial health.
+            </p>
+            
+            <form onSubmit={handleEnroll} className="flex flex-col sm:flex-row gap-4 max-w-md">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="flex-1 bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:border-teal-500 focus:outline-none shadow-sm"
+              />
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-bold py-3 px-6 rounded-lg transition-all disabled:opacity-50 shadow-sm"
+              >
+                {isSubmitting ? 'Joining...' : 'Start Learning'}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div className="py-16 px-4 bg-gray-50">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl font-bold text-gray-900 mb-8">Featured Courses</h2>
+            
+            <div className="grid md:grid-cols-3 gap-6">
+              {featuredCourses.map((course) => (
+                <Link
+                  href={`/academy/course/${course.slug}`}
+                  key={course.id}
+                  className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-yellow-400 hover:shadow-lg transition-all group block shadow-sm"
+                >
+                  <div className="h-40 bg-gradient-to-br from-yellow-100 to-gray-100 flex items-center justify-center relative">
+                    <span className="text-6xl">📚</span>
+                    {getTierBadge(course.requiredTier)}
+                  </div>
+                  <div className="p-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className={`text-xs px-2 py-1 rounded ${getDifficultyColor(course.difficulty)}`}>
+                        {course.difficulty}
+                      </span>
+                      <span className="text-xs text-gray-500">{course.category}</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-yellow-600 transition-colors">
+                      {course.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      {course.description}
+                    </p>
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <span>{course.lessonsCount} lessons</span>
+                      <span>{course.durationMinutes} min</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="py-16 px-4">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl font-bold text-gray-900 mb-8">All Courses</h2>
+            
+            <div className="flex flex-wrap gap-2 mb-8">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                    selectedCategory === cat
+                      ? 'bg-yellow-500 text-black'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {cat === 'all' ? 'All Categories' : cat}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredCourses.map((course) => (
+                <Link
+                  href={`/academy/course/${course.slug}`}
+                  key={course.id}
+                  className="bg-white border border-gray-200 rounded-xl p-6 hover:border-yellow-400 hover:shadow-md transition-all relative block shadow-sm"
+                >
+                  {getTierBadge(course.requiredTier)}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className={`text-xs px-2 py-1 rounded ${getDifficultyColor(course.difficulty)}`}>
+                      {course.difficulty}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 hover:text-yellow-600 transition-colors">{course.title}</h3>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{course.description}</p>
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <span>{course.lessonsCount} lessons</span>
+                    <span>{course.durationMinutes} min</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div id="membership" className="py-20 px-4 bg-gray-50">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">Membership Plans</h2>
+              <p className="text-gray-600 max-w-xl mx-auto">
+                Choose the plan that fits your learning goals. Upgrade anytime.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {MEMBERSHIP_TIERS.map((tier: any) => (
+                <div
+                  key={tier.name}
+                  className={`rounded-2xl p-8 shadow-sm relative overflow-hidden cursor-pointer transition-all hover:shadow-lg ${
+                    tier.name === 'Free'
+                      ? 'bg-gradient-to-b from-green-50 to-emerald-100 border-2 border-green-500 hover:border-green-600'
+                      : tier.highlighted
+                        ? 'bg-gradient-to-b from-yellow-50 to-yellow-100 border-2 border-yellow-500'
+                        : 'bg-white border border-gray-200'
+                  }`}
+                  onClick={() => handleMembershipClick(tier.name, tier.href)}
+                >
+                  {tier.badge && (
+                    <span className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-4 py-1 rounded-bl-lg">
+                      {tier.badge}
+                    </span>
+                  )}
+                  {tier.highlighted && (
+                    <span className="bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded-full mb-4 inline-block">
+                      MOST POPULAR
+                    </span>
+                  )}
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{tier.name}</h3>
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold text-gray-900">${tier.price}</span>
+                    {tier.price > 0 && <span className="text-gray-500">/month</span>}
+                  </div>
+                  <ul className="space-y-3 mb-8">
+                    {tier.features.map((feature: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2 text-gray-700">
+                        <span className={`mt-1 ${tier.name === 'Free' ? 'text-green-600' : 'text-yellow-600'}`}>✓</span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleMembershipClick(tier.name, tier.href); }}
+                    disabled={checkoutLoading === tier.name}
+                    className={`w-full py-3 px-6 rounded-lg font-bold transition-all disabled:opacity-50 ${
+                      tier.name === 'Free'
+                        ? 'bg-green-500 hover:bg-green-600 text-white'
+                        : tier.highlighted
+                          ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
+                          : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                    }`}
+                  >
+                    {checkoutLoading === tier.name ? 'Loading...' : tier.buttonText}
+                  </button>
+                  {tier.name === 'Free' && (
+                    <p className="text-center text-green-700 text-sm mt-3 font-medium">
+                      Start in 30 seconds - No signup required
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="py-16 px-4 bg-white">
+          <div className="max-w-4xl mx-auto">
+            <div className="grid md:grid-cols-4 gap-8 text-center">
+              <div>
+                <p className="text-4xl font-bold text-teal-600 mb-2">16+</p>
+                <p className="text-gray-600">Courses Available</p>
+              </div>
+              <div>
+                <p className="text-4xl font-bold text-teal-600 mb-2">70+</p>
+                <p className="text-gray-600">Video Lessons</p>
+              </div>
+              <div>
+                <p className="text-4xl font-bold text-teal-600 mb-2">1,000+</p>
+                <p className="text-gray-600">Students Enrolled</p>
+              </div>
+              <div>
+                <p className="text-4xl font-bold text-teal-600 mb-2">100%</p>
+                <p className="text-gray-600">Free to Start</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </>
+  );
+}

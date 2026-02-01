@@ -1,0 +1,144 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://axiom.city/schemas/node-onboarding.schema.json",
+  "title": "Node Onboarding",
+  "description": "Schema for Node Operator onboarding progress records",
+  "type": "object",
+  "required": [
+    "onboardingId",
+    "operatorId",
+    "requestedRole",
+    "currentPhase",
+    "startedAt"
+  ],
+  "properties": {
+    "onboardingId": {
+      "type": "string",
+      "description": "Unique onboarding record identifier",
+      "pattern": "^ONB-[a-f0-9]{8}$"
+    },
+    "operatorId": {
+      "type": "string",
+      "description": "Reference to operator ID",
+      "pattern": "^OP-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+    },
+    "requestedRole": {
+      "type": "string",
+      "enum": ["OBSERVER", "VALIDATOR", "ATTESTOR"],
+      "description": "Role requested by applicant"
+    },
+    "currentPhase": {
+      "type": "string",
+      "enum": ["APPLIED", "VERIFIED", "PROVISIONED", "DRY_RUN_PASSED", "CERTIFIED", "ACTIVE", "EXPIRED", "REJECTED"],
+      "description": "Current onboarding phase"
+    },
+    "requiredVerificationTier": {
+      "type": "string",
+      "enum": ["LIGHT", "STANDARD", "STRONG"],
+      "description": "Verification tier required for requested role"
+    },
+    "phases": {
+      "type": "object",
+      "description": "Timestamps for each phase completion",
+      "properties": {
+        "applied": {
+          "type": "object",
+          "properties": {
+            "completedAt": { "type": "string", "format": "date-time" },
+            "hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+          }
+        },
+        "verified": {
+          "type": "object",
+          "properties": {
+            "completedAt": { "type": "string", "format": "date-time" },
+            "hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+          }
+        },
+        "provisioned": {
+          "type": "object",
+          "properties": {
+            "completedAt": { "type": "string", "format": "date-time" },
+            "hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+          }
+        },
+        "dryRunPassed": {
+          "type": "object",
+          "properties": {
+            "completedAt": { "type": "string", "format": "date-time" },
+            "hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+            "exercisesCompleted": { "type": "integer" },
+            "score": { "type": "number", "minimum": 0, "maximum": 100 }
+          }
+        },
+        "certified": {
+          "type": "object",
+          "properties": {
+            "completedAt": { "type": "string", "format": "date-time" },
+            "hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+          }
+        },
+        "activated": {
+          "type": "object",
+          "properties": {
+            "completedAt": { "type": "string", "format": "date-time" },
+            "hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+          }
+        }
+      }
+    },
+    "dryRunExercises": {
+      "type": "array",
+      "description": "Dry-run exercise records",
+      "items": {
+        "type": "object",
+        "required": ["exerciseId", "type", "status"],
+        "properties": {
+          "exerciseId": { "type": "string" },
+          "type": { "type": "string", "enum": ["REPORT", "VALIDATION", "ATTESTATION", "DUAL_ATTESTATION_SIM"] },
+          "packetId": { "type": "string" },
+          "status": { "type": "string", "enum": ["PENDING", "PASSED", "FAILED"] },
+          "score": { "type": "number", "minimum": 0, "maximum": 100 },
+          "feedback": { "type": "string" },
+          "completedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "certificationChecklist": {
+      "type": "object",
+      "description": "Certification requirements checklist",
+      "properties": {
+        "verificationComplete": { "type": "boolean" },
+        "dryRunPassed": { "type": "boolean" },
+        "charterAcknowledged": { "type": "boolean" },
+        "emergencyContactProvided": { "type": "boolean" },
+        "slaCommitmentSigned": { "type": "boolean" }
+      }
+    },
+    "rejectionReason": {
+      "type": "string",
+      "description": "Reason for rejection if applicable"
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Application expiration timestamp (30 days from start)"
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Onboarding start timestamp"
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Onboarding completion timestamp"
+    },
+    "lastUpdatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp"
+    }
+  },
+  "additionalProperties": false
+}

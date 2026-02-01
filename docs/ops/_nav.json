@@ -1,0 +1,107 @@
+{
+  "title": "SOP Operations Manual",
+  "version": "1.0.0",
+  "sections": [
+    {
+      "id": "purpose-and-scope",
+      "title": "Purpose and Scope",
+      "anchor": "#purpose-and-scope"
+    },
+    {
+      "id": "system-status-baseline",
+      "title": "System Status Baseline",
+      "anchor": "#system-status-baseline"
+    },
+    {
+      "id": "execution-phases-overview",
+      "title": "Execution Phases Overview",
+      "anchor": "#execution-phases-overview"
+    },
+    {
+      "id": "phase-a",
+      "title": "Phase A: System Activation",
+      "anchor": "#phase-a-system-activation-0-30-days",
+      "subsections": [
+        {
+          "id": "a1-capital-bridge-dry-runs",
+          "title": "A1: Capital Bridge Dry Runs",
+          "anchor": "#a1-capital-bridge-dry-runs"
+        },
+        {
+          "id": "a2-observer-first-transparency",
+          "title": "A2: Observer-First Transparency",
+          "anchor": "#a2-observer-first-transparency"
+        }
+      ]
+    },
+    {
+      "id": "phase-b",
+      "title": "Phase B: Infrastructure Revenue",
+      "anchor": "#phase-b-infrastructure-revenue-30-90-days",
+      "subsections": [
+        {
+          "id": "b1-node-economy-soft-launch",
+          "title": "B1: Node Economy Soft Launch",
+          "anchor": "#b1-node-economy-soft-launch"
+        },
+        {
+          "id": "b2-research-monetization",
+          "title": "B2: Research Monetization",
+          "anchor": "#b2-research-monetization"
+        }
+      ]
+    },
+    {
+      "id": "phase-c",
+      "title": "Phase C: Capital Light Deployment",
+      "anchor": "#phase-c-capital-light-deployment-90-180-days",
+      "subsections": [
+        {
+          "id": "c1-mortgage-note-focus",
+          "title": "C1: Mortgage Note Focus",
+          "anchor": "#c1-mortgage-note-focus-first-asset-class"
+        },
+        {
+          "id": "c2-first-spv",
+          "title": "C2: First SPV",
+          "anchor": "#c2-first-spv-delayed-intentionally"
+        }
+      ]
+    },
+    {
+      "id": "phase-d",
+      "title": "Phase D: Scale and Institutionalization",
+      "anchor": "#phase-d-scale-and-institutionalization-6-24-months"
+    },
+    {
+      "id": "capital-discipline-principles",
+      "title": "Capital Discipline Principles",
+      "anchor": "#capital-discipline-principles"
+    },
+    {
+      "id": "recommended-next-steps",
+      "title": "Recommended Next Steps",
+      "anchor": "#recommended-next-steps-selector"
+    },
+    {
+      "id": "operating-cadence",
+      "title": "Operating Cadence",
+      "anchor": "#operating-cadence"
+    },
+    {
+      "id": "roles-and-responsibilities",
+      "title": "Roles and Responsibilities",
+      "anchor": "#roles-and-responsibilities"
+    },
+    {
+      "id": "artifact-list",
+      "title": "Artifact List",
+      "anchor": "#artifact-list"
+    },
+    {
+      "id": "change-control",
+      "title": "Change Control and Versioning",
+      "anchor": "#change-control-and-versioning"
+    }
+  ]
+}

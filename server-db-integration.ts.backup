@@ -1,0 +1,34 @@
+// Database integration module for server.js
+import { setupAuth } from './server/auth';
+import registrationRoutes from './server/registration-routes';
+import { Express } from 'express';
+
+// Function to set up database integration
+export function setupDatabaseIntegration(app: Express): void {
+  // Setup authentication
+  setupAuth(app);
+  
+  // Use registration routes
+  app.use(registrationRoutes);
+  
+  console.log('[Database] Integration initialized successfully');
+}
+
+// Function to initialize database if needed
+export async function initializeDatabase(): Promise<void> {
+  try {
+    // Check database connection
+    const { pool } = await import('./server/db');
+    await pool.query('SELECT NOW()');
+    console.log('[Database] Connected successfully');
+    
+    // Set up database schema if needed
+    // In a production environment, you might want to use a migration tool
+    // This is handled by Drizzle ORM when we create tables
+    
+    console.log('[Database] Initialization complete');
+  } catch (error) {
+    console.error('[Database] Initialization failed:', error);
+    throw error;
+  }
+}

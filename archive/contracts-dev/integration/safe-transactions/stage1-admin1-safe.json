@@ -1,0 +1,262 @@
+{
+  "version": "1.0",
+  "chainId": "42161",
+  "createdAt": 1732305600000,
+  "meta": {
+    "name": "Axiom Stage 1: Core Security & Token Plumbing",
+    "description": "11 role grants and configurations for core infrastructure",
+    "txBuilderVersion": "1.16.3"
+  },
+  "transactions": [
+    {
+      "to": "0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "role",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "account",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6",
+        "account": "0x3fD63728288546AC41dAe3bf25ca383061c3A929"
+      }
+    },
+    {
+      "to": "0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x8227712ef8ad39d0f26f06731ef0df8665eb7ada7f41b1ee089adf3c238862a2",
+        "account": "0x3fD63728288546AC41dAe3bf25ca383061c3A929"
+      }
+    },
+    {
+      "to": "0x8b99cDeefB3116cA87AF24A9E10D5580dA07B885",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c",
+        "account": "0x3fD63728288546AC41dAe3bf25ca383061c3A929"
+      }
+    },
+    {
+      "to": "0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x6e8b2c3b9e2b7e8d9d8a7f9c6d5e4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f",
+        "account": "0xf88bb44511E5752Ee69953166C5d5dC0cfC8B3ED"
+      }
+    },
+    {
+      "to": "0x8EF87e0ab34d5088fcBc4cD2E2943eAD9085C344",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a",
+        "account": "0xf88bb44511E5752Ee69953166C5d5dC0cfC8B3ED"
+      }
+    },
+    {
+      "to": "0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "_complianceModule",
+            "type": "address"
+          }
+        ],
+        "name": "setComplianceModule",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_complianceModule": "0xf88bb44511E5752Ee69953166C5d5dC0cfC8B3ED"
+      }
+    },
+    {
+      "to": "0x3fD63728288546AC41dAe3bf25ca383061c3A929",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "vaultType",
+            "type": "uint8"
+          },
+          {
+            "name": "vaultAddress",
+            "type": "address"
+          }
+        ],
+        "name": "setVault",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "vaultType": "0",
+        "vaultAddress": "0x0000000000000000000000000000000000000001"
+      }
+    },
+    {
+      "to": "0x3fD63728288546AC41dAe3bf25ca383061c3A929",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "vaultType",
+            "type": "uint8"
+          },
+          {
+            "name": "vaultAddress",
+            "type": "address"
+          }
+        ],
+        "name": "setVault",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "vaultType": "1",
+        "vaultAddress": "0x0000000000000000000000000000000000000002"
+      }
+    },
+    {
+      "to": "0x3fD63728288546AC41dAe3bf25ca383061c3A929",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "vaultType",
+            "type": "uint8"
+          },
+          {
+            "name": "vaultAddress",
+            "type": "address"
+          }
+        ],
+        "name": "setVault",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "vaultType": "2",
+        "vaultAddress": "0x0000000000000000000000000000000000000003"
+      }
+    },
+    {
+      "to": "0x3fD63728288546AC41dAe3bf25ca383061c3A929",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "vaultType",
+            "type": "uint8"
+          },
+          {
+            "name": "vaultAddress",
+            "type": "address"
+          }
+        ],
+        "name": "setVault",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "vaultType": "3",
+        "vaultAddress": "0x0000000000000000000000000000000000000004"
+      }
+    },
+    {
+      "to": "0x3fD63728288546AC41dAe3bf25ca383061c3A929",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "vaultType",
+            "type": "uint8"
+          },
+          {
+            "name": "vaultAddress",
+            "type": "address"
+          }
+        ],
+        "name": "setVault",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "vaultType": "4",
+        "vaultAddress": "0x0000000000000000000000000000000000000005"
+      }
+    }
+  ]
+}

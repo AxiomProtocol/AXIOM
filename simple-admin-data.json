@@ -1,0 +1,18 @@
+{
+  "incomes": [
+    {
+      "month": "April",
+      "amount": 65,
+      "notes": "Daily Pay",
+      "date": "2025-04-28T13:23:27.553Z"
+    }
+  ],
+  "bills": [
+    {
+      "month": "April",
+      "amount": 25,
+      "notes": "Uber",
+      "date": "2025-04-28T13:24:47.297Z"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "chainId": "42161",
+  "createdAt": 1732305600000,
+  "meta": {
+    "name": "Axiom Stage 3a: Utility Hub Oracle",
+    "description": "1 role grant for IoT Oracle on Utility Hub",
+    "txBuilderVersion": "1.16.3"
+  },
+  "transactions": [
+    {
+      "to": "0xac55BE7E1A6613c5DA66f7AC9520FfD24eF3212d",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0xa6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c",
+        "account": "0xe38B3443E17A07953d10F7841D5568a27A73ec1a"
+      }
+    }
+  ]
+}

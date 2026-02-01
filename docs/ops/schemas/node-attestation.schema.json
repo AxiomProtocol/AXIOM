@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://axiom.city/schemas/node-attestation.schema.json",
+  "title": "Node Attestation",
+  "description": "Schema for Node Operator attestation records",
+  "type": "object",
+  "required": [
+    "attestationId",
+    "packetId",
+    "trackType",
+    "operatorId",
+    "role",
+    "attestationType",
+    "artifactBundleHashOrCid",
+    "underwritingHashOrCid",
+    "conflictCheckPassed",
+    "timestamp"
+  ],
+  "properties": {
+    "attestationId": {
+      "type": "string",
+      "description": "Unique attestation identifier",
+      "pattern": "^ATT-[a-f0-9]{12}$"
+    },
+    "packetId": {
+      "type": "string",
+      "description": "Reference to property packet ID",
+      "pattern": "^PKT-[AB]-[0-9]{4}-[0-9]{3}$"
+    },
+    "trackType": {
+      "type": "string",
+      "enum": ["TRACK_A", "TRACK_B"],
+      "description": "Property packet track type"
+    },
+    "operatorId": {
+      "type": "string",
+      "description": "Operator providing attestation",
+      "pattern": "^OP-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+    },
+    "role": {
+      "type": "string",
+      "enum": ["VALIDATOR", "ATTESTOR"],
+      "description": "Role under which attestation is provided"
+    },
+    "attestationType": {
+      "type": "string",
+      "enum": ["VALIDATION", "FINAL_ATTESTATION"],
+      "description": "Type of attestation"
+    },
+    "artifactBundleHashOrCid": {
+      "type": "string",
+      "description": "Hash or CID of artifact bundle at attestation time",
+      "pattern": "^(sha256:[a-f0-9]{64}|bafy[a-zA-Z0-9]{50,})$"
+    },
+    "underwritingHashOrCid": {
+      "type": "string",
+      "description": "Hash of underwriting snapshot",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "conflictCheckPassed": {
+      "type": "boolean",
+      "description": "Whether conflict of interest check passed"
+    },
+    "conflictDisclosure": {
+      "type": "string",
+      "description": "Any conflict disclosure statement"
+    },
+    "signatureStub": {
+      "type": "string",
+      "description": "Signature reference",
+      "pattern": "^sig:sha256:[a-f0-9]{64}$"
+    },
+    "validationFindings": {
+      "type": "object",
+      "description": "Validation-specific findings (for VALIDATION type)",
+      "properties": {
+        "artifactsComplete": { "type": "boolean" },
+        "formatsValid": { "type": "boolean" },
+        "underwritingVerified": { "type": "boolean" },
+        "noPlaceholders": { "type": "boolean" },
+        "notes": { "type": "string" }
+      }
+    },
+    "attestationNotes": {
+      "type": "string",
+      "description": "Additional notes from attestor"
+    },
+    "dualAttestationPair": {
+      "type": "string",
+      "description": "Attestation ID of paired attestation for dual requirement",
+      "pattern": "^ATT-[a-f0-9]{12}$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["PENDING", "RECORDED", "REJECTED", "SUPERSEDED"],
+      "default": "RECORDED",
+      "description": "Attestation status"
+    },
+    "rejectionReason": {
+      "type": "string",
+      "description": "Reason if attestation was rejected"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Attestation timestamp"
+    },
+    "recordedOnChain": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether attestation has been recorded on-chain"
+    },
+    "onChainTxHash": {
+      "type": "string",
+      "pattern": "^0x[a-f0-9]{64}$",
+      "description": "Transaction hash if recorded on-chain"
+    }
+  },
+  "additionalProperties": false
+}
