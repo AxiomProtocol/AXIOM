@@ -84,3 +84,22 @@ replit.nix
 public/keygrow-proof/
 public/generated/
 attached_assets/
+
+# Additional large dependencies to exclude
+node_modules/puppeteer
+node_modules/chromium
+node_modules/@base-org
+node_modules/.cache
+node_modules/@napi-rs
+node_modules/esbuild
+node_modules/@swc
+*.tsbuildinfo
+
+# Build artifacts that shouldn't ship
+artifacts-land/
+.pnpm-debug.log
+pnpm-lock.yaml
+
+# Slither and security tools
+reports/
+slither-*
