@@ -69,17 +69,22 @@ venv/
 
 # === HARDHAT/SOLIDITY (VERY LARGE) ===
 cache/
+cache-*/
 artifacts/
-artifacts-axusd/
-artifacts-land/
+artifacts-*/
 stablecoin-deploy/
 typechain/
 typechain-types/
 universe-blockchain/
 hardhat.config.*
+hardhat.*.config.*
 contracts/
+contracts-*/
 integration/
 scripts/capital-bridge/
+
+# === ARCHIVE (Development artifacts moved here) ===
+archive/
 
 # === LARGE BINARY FILES ===
 *.zip
