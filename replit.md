@@ -68,6 +68,7 @@ Key features include:
 - **Phase 3 Products - Turn Axiom Into a Financial State** (AXUSD Credit Lines, Insurance Pools, Axiom Treasury Notes, all with Web3 wallet integration and live API data)
 - **DEX V2 Ecosystem** (10 mainnet contracts on Arbitrum One)
 - **Institutional Observer Dashboard** (Read-only transparency dashboard for allocators and auditors at `/observer`, with Capital Bridge metrics at `/observer/capital-bridge` and Node Economy metrics at `/observer/node-economy`)
+- **Node Operator Program** (Comprehensive operator lifecycle management with 6-phase onboarding: Application → Verification → Provisioning → Dry-Run → Certification → Activation; role-gated attestations for Observer/Validator/Attestor; USD-denominated AXIOM compensation with milestone-based accrual; dual attestation workflow requiring two independent Attestors; incident reporting with slashing schedule 0-100%; weekly transparency metrics. CLI: `npm run nodes:run` for end-to-end demo. Docs: `docs/nodes/`, Schemas: `docs/ops/schemas/node-*.schema.json`, Code: `src/nodes/`)
 - **Euler V2 AXUSD Lending Markets** (External DeFi lending integration on Arbitrum One at vault 0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059 with eUSDC/eWETH collateral support, integrated via /earn page, /borrow page, DEX Earn tab, yield-vault page, and dashboard widget. **LOCKED CONFIG** - See `docs/lending/SOP-euler-v2-axusd-vault-config.md` for immutable configuration. DO NOT CHANGE vault address or LTV parameters.)
 - **Deployment Configuration**: Uses VM for complex builds, `npm run build:deploy:clean` for build command, and `npm run start:minimal` for run command.
 
@@ -95,6 +96,10 @@ Key features include:
 - `docs/architecture/layer-5-sublayers.md` - Layer 5 sublayer architecture (5A-5G)
 - `docs/ops/property-research-sop.md` - Property research standard operating procedure
 - `docs/module-to-contract-map.md` - Module to contract address mapping
+- `docs/nodes/node-charter.md` - Node Operator Program Charter
+- `docs/nodes/node-operator-onboarding-sop.md` - Operator onboarding procedures
+- `docs/nodes/node-compensation-policy.md` - Milestone-based compensation policy
+- `docs/observer/node-program-overview.md` - Observer dashboard for node program metrics
 
 ### Future Development (Capital Bridge Infrastructure)
 - **CapitalBridgeHub** - SPV coordination, property packets, research attestations
