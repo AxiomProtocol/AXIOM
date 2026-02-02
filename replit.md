@@ -60,6 +60,13 @@ AXIOM Protocol is following a staged evolution strategy:
 See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 
 ## Recent Changes
+- Feb 2, 2026: **Step 1: Node Operator Blueprint Documentation Complete**
+  - Created docs/node-operator/ directory with comprehensive blueprint
+  - architecture.md - System architecture with component diagram
+  - workflow.md - Operator lifecycle state machine and transitions
+  - data-model.md - Database schema and API contracts
+  - on-chain-spec.md - Smart contract specifications for Step 2
+  - All specs derived from existing UI, APIs, and archived contract artifacts
 - Feb 2, 2026: **Step 0: Repo Discovery and Inventory Complete**
   - Created docs/deployments.md - canonical table of 43 deployed contracts
   - Created docs/contract-registry.md - tier classification (Core/Product/Utility/Legacy)
