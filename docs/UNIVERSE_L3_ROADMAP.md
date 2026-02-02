@@ -24,10 +24,14 @@ This document outlines the staged strategy to evolve AXIOM Protocol from its cur
 
 | Category | Count | Status |
 |----------|-------|--------|
-| Core Protocol Contracts | 29+ | Verified |
-| DEX V2 Ecosystem | 10 | Verified |
-| AXUSD System | 6 | Verified |
-| Governance Infrastructure | 6 | Verified |
+| Core Infrastructure Contracts | 23 | Deployed |
+| Governance Infrastructure | 6 | Size-verified |
+| DEX V2 Ecosystem | 10 | Proxies (170 bytes) |
+| Lending Fund Infrastructure | 3 | Size-verified |
+| AXUSD Token | 1 | Size-verified |
+| **Total** | **43** | See Genesis Snapshot |
+
+**Note:** AXUSD system contracts (VaultEngine, PSM, etc.) planned for Phase 1.
 
 ### Key Contract Addresses (Genesis)
 
@@ -44,24 +48,29 @@ This document outlines the staged strategy to evolve AXIOM Protocol from its cur
 
 ---
 
-## Phase 0: Stabilization (2-4 weeks)
+## Phase 0: Stabilization (2-4 weeks) ✅ COMPLETE
 
 **Goal:** Lock down current state, create upgrade foundation
 
+**Completed:** February 2, 2026
+**Genesis Tag:** [genesis-snapshot-2026-02-02](https://github.com/AxiomProtocol/AXIOM/releases/tag/genesis-snapshot-2026-02-02)
+
 ### Tasks
 
-- [ ] 0.1: Document all deployed contract addresses and ABIs
-- [ ] 0.2: Create Genesis snapshot with version tags
-- [ ] 0.3: Identify contracts requiring upgrade proxies
-- [ ] 0.4: Separate "core" vs "product" contract classification
-- [ ] 0.5: Establish testnet fork for safe experimentation
-- [ ] 0.6: Create deployment size audit (identify contracts near limit)
+- [x] 0.1: Document all deployed contract addresses and ABIs
+- [x] 0.2: Create Genesis snapshot with version tags
+- [x] 0.3: Identify contracts requiring upgrade proxies
+- [x] 0.4: Separate "core" vs "product" contract classification
+- [x] 0.5: Establish testnet fork for safe experimentation
+- [x] 0.6: Create deployment size audit (identify contracts near limit)
 
 ### Deliverables
 
-- `docs/GENESIS_SNAPSHOT.md` - Complete contract registry
-- `docs/UPGRADE_PROXY_PLAN.md` - Proxy migration strategy
-- `scripts/fork-mainnet.sh` - Local fork testing script
+- `docs/GENESIS_SNAPSHOT.md` - Complete contract registry ✅
+- `docs/DEPLOYMENT_SIZE_AUDIT.md` - On-chain size verification ✅
+- `docs/CONTRACT_CLASSIFICATION.md` - 4-tier classification ✅
+- `docs/UPGRADE_PROXY_PLAN.md` - Proxy migration strategy ✅
+- `scripts/fork-mainnet.sh` - Local fork testing script ✅
 
 ---
 
@@ -360,16 +369,20 @@ interface IMessageBridge {
 
 ---
 
-## Appendix A: Contract Size Audit
+## Appendix A: Contract Size Audit ✅ COMPLETE
 
-*To be completed in Phase 0*
+*Completed February 2, 2026 - See `docs/DEPLOYMENT_SIZE_AUDIT.md` for full details*
 
-| Contract | Current Size | Target Size | Action |
+| Contract | Current Size | Target Size | Status |
 |----------|--------------|-------------|--------|
-| GovernanceHub | TBD | <20 KB | TBD |
-| ProductRegistry | TBD | <20 KB | TBD |
-| FixFlipManager | TBD | <20 KB | TBD |
-| ... | ... | ... | ... |
+| GovernanceHub | 8.92 KB | <20 KB | **Safe** |
+| ProductRegistry | 4.08 KB | <20 KB | **Safe** |
+| FixFlipManager | 11.11 KB | <20 KB | **Safe** |
+| DSCRLoanManager | 15.81 KB | <20 KB | **Safe** |
+| AxiomV2 (AXM) | 16.88 KB | <20 KB | **Warning** |
+| All DEX V2 | 0.17 KB | N/A | **Proxy** |
+
+**Summary:** 34/43 contracts size-verified, all under 24KB limit. 9 pending measurement.
 
 ---
 

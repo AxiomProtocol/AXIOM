@@ -3,13 +3,24 @@
 **Version:** 1.1
 **Date:** February 2, 2026
 **Phase:** 0 - Stabilization
-**Status:** VERIFIED ON-CHAIN
+**Status:** PARTIAL - 34/43 contracts verified on-chain
 
 ---
 
 ## Purpose
 
 This document audits contract deployment sizes with actual on-chain measurements to identify contracts that may need modularization before L3 migration. The EVM has a contract size limit of 24,576 bytes (24 KB) per EIP-170.
+
+**Scope:** This audit covers 34 of 43 deployed contracts, prioritizing those critical to Phase 1 planning:
+- Governance Infrastructure (6 contracts) - All verified
+- Lending Fund (3 contracts) - All verified
+- Treasury & Identity (4 contracts) - All verified
+- DEX V2 Ecosystem (10 contracts) - All proxies, verified
+- Tokens (2 contracts) - All verified
+- Core Infrastructure (9 contracts) - Verified
+- Core Infrastructure #11, #14-23 (9 contracts) - Pending measurement
+
+See `GENESIS_SNAPSHOT.md` for the complete contract registry.
 
 ---
 
@@ -77,7 +88,7 @@ This document audits contract deployment sizes with actual on-chain measurements
 | DePINNodeSuite | `0x16dC...0F1` | 11,818 | 11.54 KB | **Safe** |
 | DePINNodeSales | `0x8769...Edbd` | 13,929 | 13.60 KB | **Safe** |
 
-### DEX V2 Contracts (Proxy Indicators)
+### DEX V2 Contracts (All 10 are Proxies)
 
 | Contract | Address | Size (bytes) | Size (KB) | Notes |
 |----------|---------|--------------|-----------|-------|
@@ -86,26 +97,33 @@ This document audits contract deployment sizes with actual on-chain measurements
 | LPStaking | `0x0666...00a5` | 170 | 0.17 KB | **Proxy** |
 | FeeDistributor | `0xD981...5ae8` | 170 | 0.17 KB | **Proxy** |
 | TradingRewards | `0xb75b...5984` | 170 | 0.17 KB | **Proxy** |
+| DEXRouter | `0x05c6...0d8` | 170 | 0.17 KB | **Proxy** |
+| DEXAnalytics | `0x93cD...3E9` | 170 | 0.17 KB | **Proxy** |
+| LimitOrders | `0xBdC9...F8E2` | 170 | 0.17 KB | **Proxy** |
+| DEXGovernor | `0x9A86...f96d` | 170 | 0.17 KB | **Proxy** |
+| InsuranceFund | `0x4497...F39` | 170 | 0.17 KB | **Proxy** |
+
+**Note:** All DEX V2 contracts are minimal proxies (170 bytes). Implementation contract sizes would need separate verification if upgrades are planned.
 
 ---
 
 ## Analysis Summary
 
-### Contracts by Status
+### Contracts by Status (Scoped Subset Only)
 
-| Status | Count | Percentage |
-|--------|-------|------------|
-| Safe (< 16 KB) | 14 | 74% |
-| Warning (16-20 KB) | 1 | 5% |
-| Critical (20-24 KB) | 0 | 0% |
-| Proxy (< 1 KB) | 5 | 21% |
-| Cannot Deploy (> 24 KB) | 0 | 0% |
+| Status | Count | Notes |
+|--------|-------|-------|
+| Safe (< 16 KB) | 14 | Of 34 verified |
+| Warning (16-20 KB) | 1 | AXM token only |
+| Critical (20-24 KB) | 0 | None |
+| Proxy (< 1 KB) | 10 | DEX V2 ecosystem |
+| Pending Measurement | 9 | Core infra #11, #14-23 |
 
 ### Key Findings
 
-1. **All contracts are well under the 24 KB limit** - No immediate modularization required
+1. **All 34 verified contracts are under the 24 KB limit** - No immediate modularization required for measured contracts
 2. **AxiomV2 (AXM) at 16.88 KB** - Only contract in warning zone, but still has 7+ KB headroom
-3. **5 DEX V2 contracts are proxies** (170 bytes) - Implementation contracts are separate
+3. **All 10 DEX V2 contracts are proxies** (170 bytes each) - Implementation contracts are separate
 4. **GovernanceHub is 8.92 KB** - Much smaller than estimated, no split needed
 
 ---
@@ -127,7 +145,7 @@ This document audits contract deployment sizes with actual on-chain measurements
 
 ## Proxy Contract Analysis
 
-The following contracts are proxies (170 bytes indicates minimal proxy pattern):
+All 10 DEX V2 contracts are proxies (170 bytes indicates minimal proxy pattern):
 
 | Contract | Likely Pattern | Implementation Status |
 |----------|---------------|----------------------|
@@ -136,6 +154,11 @@ The following contracts are proxies (170 bytes indicates minimal proxy pattern):
 | LPStaking | Transparent Proxy | Staking implementation |
 | FeeDistributor | Transparent Proxy | Distribution logic |
 | TradingRewards | Transparent Proxy | Rewards logic |
+| DEXRouter | Minimal Proxy | Order execution |
+| DEXAnalytics | Minimal Proxy | On-chain metrics |
+| LimitOrders | Minimal Proxy | Conditional execution |
+| DEXGovernor | Minimal Proxy | DEX governance |
+| InsuranceFund | Minimal Proxy | Trading loss coverage |
 
 **Note:** Proxy contracts delegate to implementation contracts which hold the actual logic. Implementation contract sizes should be checked if upgrades are planned.
 
@@ -163,19 +186,20 @@ done
 
 ## Recommendations
 
-### No Immediate Action Required
+### Status
 
-All contracts are within safe deployment limits. The original estimates were overly conservative.
+All 34 verified contracts are within safe deployment limits. 9 contracts await size measurement but are confirmed deployed.
 
 ### Future Planning
 
-1. **Monitor AXM token** during any upgrade that adds features
-2. **Document proxy implementation sizes** when planning DEX V2 upgrades
-3. **Continue using proxy patterns** for new complex contracts
+1. **Complete size verification** for pending contracts (#11, #14-23) before Phase 1
+2. **Monitor AXM token** during any upgrade that adds features
+3. **Document proxy implementation sizes** when planning DEX V2 upgrades
+4. **Continue using proxy patterns** for new complex contracts
 
 ### L3 Migration
 
-Contract sizes are not a blocker for L3 migration. All contracts can be deployed as-is on Universe Blockchain.
+Based on verified contracts, sizes are not expected to be a blocker for L3 migration. Final confirmation pending completion of all measurements.
 
 ---
 

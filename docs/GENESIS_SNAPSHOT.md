@@ -31,18 +31,22 @@ This document serves as the authoritative reference for AXIOM Protocol's deploye
 
 | Category | Deployed | Size Verified | Notes |
 |----------|----------|---------------|-------|
-| Core Infrastructure | 23 | 14 | All verified on Blockscout |
+| Core Infrastructure | 23 | 14 | 9 pending size check |
 | Governance Infrastructure | 6 | 6 | All size-checked |
-| DEX V2 Ecosystem | 10 | 10 | 5 are proxies (170 bytes) |
+| DEX V2 Ecosystem | 10 | 10 | All are proxies (170 bytes) |
 | Lending Fund Infrastructure | 3 | 3 | All size-checked |
-| AXUSD System | 1 | 1 | 5 planned for Phase 1 |
-| **Total Deployed** | **43** | **34** | Size verified via eth_getCode |
+| AXUSD System | 1 | 1 | Token only; 5 planned for Phase 1 |
+| **Total Deployed** | **43** | **34** | See notes for pending items |
+
+**Verification Status:** 34 of 43 contracts have on-chain size verification via eth_getCode. Remaining 9 are confirmed deployed on Blockscout but await detailed size measurement.
 
 ---
 
 ## Core Infrastructure Contracts (1-23)
 
 **Verification Method:** On-chain code size check via eth_getCode RPC call on Feb 2, 2026
+
+**Note:** 14 of 23 core infrastructure contracts have been size-verified. Contracts #11 and #14-23 are confirmed deployed on Blockscout but await detailed size measurement. All verified contracts are safe (under 24KB).
 
 ### Token & Treasury (1-6)
 
@@ -65,37 +69,37 @@ This document serves as the authoritative reference for AXIOM Protocol's deploye
 
 ### DeFi & Utility (10-13)
 
-| # | Contract | Address | Verified | Purpose |
-|---|----------|---------|----------|---------|
-| 10 | UtilityAndMeteringHub | `0xac55BE7E1A6613c5DA66f7AC9520FfD24eF3212d` | Yes | Utility metering |
-| 11 | TransportAndLogisticsHub | `0x959c5dd99B170e2b14B1F9b5a228f323946F514e` | Yes | Transport tracking |
-| 12 | DePINNodeSuite | `0x16dC3884d88b767D99E0701Ba026a1ed39a250F1` | Yes | Node staking |
-| 13 | DePINNodeSales | `0x876951CaE4Ad48bdBfba547Ef4316Db576A9Edbd` | Yes | Node sales |
+| # | Contract | Address | Size | Purpose |
+|---|----------|---------|------|---------|
+| 10 | UtilityAndMeteringHub | `0xac55BE7E1A6613c5DA66f7AC9520FfD24eF3212d` | 11.54 KB | Utility metering |
+| 11 | TransportAndLogisticsHub | `0x959c5dd99B170e2b14B1F9b5a228f323946F514e` | Pending | Transport tracking |
+| 12 | DePINNodeSuite | `0x16dC3884d88b767D99E0701Ba026a1ed39a250F1` | 11.54 KB | Node staking |
+| 13 | DePINNodeSales | `0x876951CaE4Ad48bdBfba547Ef4316Db576A9Edbd` | 13.60 KB | Node sales |
 
 ### Cross-Chain & Advanced (14-17)
 
-| # | Contract | Address | Verified | Purpose |
-|---|----------|---------|----------|---------|
-| 14 | CrossChainAndLaunchModule | `0x28623Ee5806ab9609483F4B68cb1AE212A092e4d` | Yes | Cross-chain ops |
-| 15 | AxiomExchangeHub | `0xF660d260a0bBC690a8ab0f1e6A41049FC919A34D` | Yes | Internal DEX |
-| 16 | CitizenReputationOracle | `0x649a0F1bd204b6f23A92f1CDbb2F1838D691B643` | Yes | Reputation scoring |
-| 17 | IoTOracleNetwork | `0xe38B3443E17A07953d10F7841D5568a27A73ec1a` | Yes | IoT data oracles |
+| # | Contract | Address | Size | Purpose |
+|---|----------|---------|------|---------|
+| 14 | CrossChainAndLaunchModule | `0x28623Ee5806ab9609483F4B68cb1AE212A092e4d` | Pending | Cross-chain ops |
+| 15 | AxiomExchangeHub | `0xF660d260a0bBC690a8ab0f1e6A41049FC919A34D` | Pending | Internal DEX |
+| 16 | CitizenReputationOracle | `0x649a0F1bd204b6f23A92f1CDbb2F1838D691B643` | Pending | Reputation scoring |
+| 17 | IoTOracleNetwork | `0xe38B3443E17A07953d10F7841D5568a27A73ec1a` | Pending | IoT data oracles |
 
 ### Market Infrastructure (18-19)
 
-| # | Contract | Address | Verified | Purpose |
-|---|----------|---------|----------|---------|
-| 18 | MarketsAndListingsHub | `0x98a59D4fb5Fa974879E9F043C3174Ae82Fb9D830` | Yes | RWA trading |
-| 19 | OracleAndMetricsRelay | `0x5c17F4621A47b4E8c357bAA6379b4B223BAA5Ac6` | Yes | Price feeds |
+| # | Contract | Address | Size | Purpose |
+|---|----------|---------|------|---------|
+| 18 | MarketsAndListingsHub | `0x98a59D4fb5Fa974879E9F043C3174Ae82Fb9D830` | Pending | RWA trading |
+| 19 | OracleAndMetricsRelay | `0x5c17F4621A47b4E8c357bAA6379b4B223BAA5Ac6` | Pending | Price feeds |
 
 ### Community & Engagement (20-23)
 
-| # | Contract | Address | Verified | Purpose |
-|---|----------|---------|----------|---------|
-| 20 | CommunitySocialHub | `0xC2f82eD5C2585B525E01F19eA5C28811AB43aF49` | Yes | Community features |
-| 21 | AxiomAcademyHub | `0x30667931BEe54a58B76D387D086A975aB37206F4` | Yes | Education |
-| 22 | GamificationHub | `0x7F455b4614E05820AAD52067Ef223f30b1936f93` | Yes | Gamification |
-| 23 | SustainabilityHub | `0xAf4dF8a7733BAB64b7Ce83F2494d6446eF9eC046` | Yes | Carbon credits |
+| # | Contract | Address | Size | Purpose |
+|---|----------|---------|------|---------|
+| 20 | CommunitySocialHub | `0xC2f82eD5C2585B525E01F19eA5C28811AB43aF49` | Pending | Community features |
+| 21 | AxiomAcademyHub | `0x30667931BEe54a58B76D387D086A975aB37206F4` | Pending | Education |
+| 22 | GamificationHub | `0x7F455b4614E05820AAD52067Ef223f30b1936f93` | Pending | Gamification |
+| 23 | SustainabilityHub | `0xAf4dF8a7733BAB64b7Ce83F2494d6446eF9eC046` | Pending | Carbon credits |
 
 ---
 
