@@ -166,4 +166,14 @@ This audit identifies existing treasury, settlement, investment, and credit surf
 
 ---
 
+---
+
+## Related Documents
+
+- **[Test Results](./test-results.md)** - Component & service verification status for institutional due diligence
+- **[Feature Flags](./feature-flags.md)** - Observation mode feature flag configuration
+- **[Module to Contract Map](./module-to-contract-map.md)** - UI module to contract mapping
+
+---
+
 *This document is part of the governance hardening observation window documentation.*
