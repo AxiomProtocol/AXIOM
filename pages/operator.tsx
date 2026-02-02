@@ -781,6 +781,177 @@ export default function OperatorPortal() {
                     </div>
                   )}
 
+                  {(operator.status === 'CERTIFIED' || operator.status === 'ACTIVE') && (
+                    <div className="space-y-6 mt-6">
+                      <div className="bg-gradient-to-br from-teal-600 to-teal-800 rounded-xl p-6 text-white relative overflow-hidden print:bg-teal-700">
+                        <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
+                          <svg viewBox="0 0 100 100" fill="currentColor">
+                            <path d="M50 5 L61 35 L95 35 L68 57 L79 90 L50 70 L21 90 L32 57 L5 35 L39 35 Z"/>
+                          </svg>
+                        </div>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="text-teal-200 text-sm font-medium mb-1">AXIOM Protocol</div>
+                            <h3 className="text-2xl font-bold mb-2">Node Operator Certificate</h3>
+                            <p className="text-teal-100 mb-4">This certifies that</p>
+                            <div className="text-xl font-semibold mb-1">{operator.displayName || 'Node Operator'}</div>
+                            <div className="text-sm text-teal-200 font-mono mb-4">{operator.operatorId}</div>
+                            <p className="text-teal-100 text-sm">
+                              has successfully completed all certification requirements and is authorized to operate as a{' '}
+                              <span className="font-semibold text-white">{ROLE_INFO[operator.role].title}</span> on the AXIOM network.
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
+                              operator.status === 'ACTIVE' ? 'bg-green-500/20 text-green-100' : 'bg-yellow-500/20 text-yellow-100'
+                            }`}>
+                              <span className={`w-2 h-2 rounded-full ${operator.status === 'ACTIVE' ? 'bg-green-400' : 'bg-yellow-400'}`}></span>
+                              {operator.status === 'ACTIVE' ? 'Active' : 'Pending Activation'}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-6 pt-4 border-t border-teal-500/30 flex items-center justify-between">
+                          <div className="text-sm text-teal-200">
+                            Issued: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                          </div>
+                          <button
+                            onClick={() => window.print()}
+                            className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors print:hidden"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            Print Certificate
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="bg-white rounded-xl border border-gray-200 p-6">
+                        <h3 className="font-semibold text-gray-900 mb-4">Your Certification Documents</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          You have completed all required certification documents. These are stored securely and can be referenced at any time.
+                        </p>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              <div>
+                                <div className="font-medium text-gray-900">Node Charter Agreement</div>
+                                <div className="text-sm text-gray-500">Signed and acknowledged</div>
+                              </div>
+                            </div>
+                            <span className="text-green-600 text-sm font-medium">Completed</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                              </svg>
+                              <div>
+                                <div className="font-medium text-gray-900">Dry-Run Training Certificate</div>
+                                <div className="text-sm text-gray-500">All exercises passed</div>
+                              </div>
+                            </div>
+                            <span className="text-green-600 text-sm font-medium">Completed</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                              </svg>
+                              <div>
+                                <div className="font-medium text-gray-900">Key Management Acknowledgment</div>
+                                <div className="text-sm text-gray-500">Security protocols confirmed</div>
+                              </div>
+                            </div>
+                            <span className="text-green-600 text-sm font-medium">Completed</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                              </svg>
+                              <div>
+                                <div className="font-medium text-gray-900">Communication Policy Agreement</div>
+                                <div className="text-sm text-gray-500">Response commitments accepted</div>
+                              </div>
+                            </div>
+                            <span className="text-green-600 text-sm font-medium">Completed</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-white rounded-xl border border-gray-200 p-6">
+                        <h3 className="font-semibold text-gray-900 mb-4">Operator Resources</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Access the dashboards and tools available to certified operators.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <Link href="/observer" className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                            <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
+                              <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900">Observer Dashboard</div>
+                              <div className="text-sm text-gray-500">View live metrics, gates, and settlement status</div>
+                            </div>
+                          </Link>
+                          <Link href="/governance/observation-window" className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900">Observation Window Policy</div>
+                              <div className="text-sm text-gray-500">Review governance controls and exit criteria</div>
+                            </div>
+                          </Link>
+                        </div>
+
+                        {operator.status === 'CERTIFIED' && (
+                          <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                            <div className="flex items-center gap-2 text-yellow-700 font-medium mb-1">
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Awaiting Activation
+                            </div>
+                            <p className="text-sm text-yellow-700">
+                              Your certification is complete. An admin will activate your operator status shortly. You'll receive an email notification when you're ready to participate in live settlements.
+                            </p>
+                          </div>
+                        )}
+
+                        {operator.status === 'ACTIVE' && (
+                          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="bg-gray-50 rounded-xl p-4 text-center">
+                              <div className="text-2xl font-bold text-teal-600">{operator.settlementsCompleted}</div>
+                              <div className="text-sm text-gray-500">Settlements</div>
+                            </div>
+                            <div className="bg-gray-50 rounded-xl p-4 text-center">
+                              <div className="text-2xl font-bold text-purple-600">{operator.attestationsProvided}</div>
+                              <div className="text-sm text-gray-500">Attestations</div>
+                            </div>
+                            <div className="bg-gray-50 rounded-xl p-4 text-center">
+                              <div className="text-2xl font-bold text-green-600">100%</div>
+                              <div className="text-sm text-gray-500">Uptime</div>
+                            </div>
+                            <div className="bg-gray-50 rounded-xl p-4 text-center">
+                              <div className="text-2xl font-bold text-blue-600">{operator.incidentCount}</div>
+                              <div className="text-sm text-gray-500">Incidents</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {operator.status === 'DRY_RUN_PASSED' && (
                     <div className="bg-white rounded-xl border border-gray-200 p-6 mt-6">
                       <h3 className="font-semibold text-gray-900 mb-4">Certification Checklist</h3>
