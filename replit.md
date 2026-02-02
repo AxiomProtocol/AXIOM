@@ -60,6 +60,10 @@ AXIOM Protocol is following a staged evolution strategy:
 See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 
 ## Recent Changes
+- Feb 2, 2026: **Wallet Connectivity SOP Documented**
+  - Fixed SIWE nonce 500 error by adding drizzle-orm to outputFileTracingIncludes
+  - Added comprehensive Wallet Connectivity section to DEPLOYMENT_SOP.md
+  - Documents critical build configuration, environment variables, connection flow, and troubleshooting
 - Feb 2, 2026: **Multi-Role Node Operator Support**
   - Operators can now select and hold all 3 roles simultaneously (Observer, Validator, Attestor)
   - Added `roles` jsonb column to node_operators table

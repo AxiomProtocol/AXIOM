@@ -74,6 +74,59 @@ The Resend integration must be connected via Replit's integration panel. The API
 
 ---
 
+## Wallet Connectivity (SIWE Authentication)
+
+### Critical Build Configuration
+
+The standalone build must include all drizzle-orm files for SIWE nonce generation to work. In `next.config.js`, ensure the following is present:
+
+```javascript
+experimental: {
+  outputFileTracingIncludes: {
+    '*': [
+      './node_modules/drizzle-orm/**',
+      './node_modules/pg/**',
+      // ... other packages
+    ],
+  },
+}
+```
+
+**Without this configuration, the `/api/auth/siwe/nonce` endpoint will return 500 errors with "Cannot find module '../cache/core/index.cjs'".**
+
+### Environment Variables for SIWE
+
+| Variable | Description | Value |
+|----------|-------------|-------|
+| `PUBLIC_DOMAIN` | Production domain for SIWE verification | `axiomprotocol.app` |
+
+### Required Database Tables
+
+| Table | Purpose |
+|-------|---------|
+| `siwe_nonces` | Stores SIWE nonces with expiration |
+| `wallet_sessions` | Manages authenticated wallet sessions |
+
+### Wallet Connection Flow
+
+1. User clicks "Connect Wallet" → MetaMask popup appears
+2. User approves connection → Address captured
+3. Frontend requests nonce from `/api/auth/siwe/nonce`
+4. User signs SIWE message in MetaMask
+5. Signature verified via `/api/auth/siwe/verify`
+6. Session created in `wallet_sessions` table
+
+### Troubleshooting Wallet Connection
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| "Failed to get nonce (500)" | drizzle-orm not bundled | Add drizzle-orm to outputFileTracingIncludes |
+| "Domain mismatch" | SIWE domain validation failed | Set PUBLIC_DOMAIN env var |
+| "Nonce expired" | User took too long to sign | Retry connection (5-minute expiry) |
+| "MetaMask not detected" | Extension not installed | Install MetaMask browser extension |
+
+---
+
 ## Database Tables (Auto-Created)
 
 The following tables must exist in production:
@@ -138,4 +191,4 @@ For deployment issues, refer to:
 ---
 
 *Last Updated: February 2, 2026*
-*Version: 1.0*
+*Version: 1.1 - Added Wallet Connectivity (SIWE) section*
