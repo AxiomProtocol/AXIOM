@@ -728,7 +728,7 @@ export async function sendOperatorCertificateEmail(
 }
 
 function getOperatorCertificateEmailHtml(name: string, operatorId: string, role: string, issueDate: string): string {
-  return \`
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -771,5 +771,5 @@ function getOperatorCertificateEmailHtml(name: string, operatorId: string, role:
   </div>
 </body>
 </html>
-  \`.trim();
+  `.trim();
 }
