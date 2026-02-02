@@ -60,6 +60,13 @@ AXIOM Protocol is following a staged evolution strategy:
 See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 
 ## Recent Changes
+- Feb 2, 2026: **Node Economy Dashboard & Operator Tools**
+  - Created NodeEconomyDashboard component (components/observer/NodeEconomyDashboard.tsx)
+  - Displays real-time on-chain data: node counts by class, epoch/rewards info, stake requirements, slashing parameters
+  - Auto-refresh every 30 seconds with live countdown timer for next epoch
+  - Added "Network" tab to operator portal (/operator) - accessible without wallet connection
+  - Integration tests for Node Economy ABIs (tests/node-economy-abi.test.ts, 25 tests passing)
+  - Contract addresses linked to Blockscout for transparency
 - Feb 2, 2026: **Technical Debt Resolution Complete**
   - Validated ABIs against actual contract artifacts in archive/
   - Replaced non-existent functions (operatorToNode → getNodesByOperator, getClaimedRewards → calculateNodeReward)
