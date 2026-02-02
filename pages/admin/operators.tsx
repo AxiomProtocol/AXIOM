@@ -42,6 +42,12 @@ export default function OperatorAdminPage() {
   const [operatorDetails, setOperatorDetails] = useState<any>(null);
   const [walletAddress, setWalletAddress] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [showAuditLogs, setShowAuditLogs] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'operators' | 'audit'>('operators');
 
   useEffect(() => {
     checkWalletConnection();
@@ -243,6 +249,100 @@ export default function OperatorAdminPage() {
     setShowEmailModal(true);
   };
 
+  const toggleSelect = (operatorId: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(operatorId)) {
+      newSelected.delete(operatorId);
+    } else {
+      newSelected.add(operatorId);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const selectAll = () => {
+    const advanceable = filteredOperators.filter(op => 
+      !['ACTIVE', 'REJECTED'].includes(op.status)
+    );
+    if (selectedIds.size === advanceable.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(advanceable.map(op => op.operatorId)));
+    }
+  };
+
+  const bulkAdvance = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkLoading(true);
+    try {
+      const res = await fetch('/api/admin/operators/bulk-advance', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-admin-wallet': walletAddress,
+        },
+        body: JSON.stringify({ operatorIds: Array.from(selectedIds) }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMessage({ type: 'success', text: data.message });
+        setSelectedIds(new Set());
+        fetchOperators();
+      } else {
+        const error = await res.json();
+        setMessage({ type: 'error', text: error.message || 'Bulk advance failed' });
+      }
+    } catch (e) {
+      setMessage({ type: 'error', text: 'Bulk advance failed' });
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const exportCSV = async () => {
+    try {
+      const res = await fetch(`/api/admin/operators/export?status=${filter}`, {
+        headers: { 'x-admin-wallet': walletAddress },
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `operators-${filter}-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        setMessage({ type: 'success', text: 'Export downloaded' });
+      }
+    } catch (e) {
+      setMessage({ type: 'error', text: 'Export failed' });
+    }
+  };
+
+  const fetchAuditLogs = async () => {
+    setAuditLoading(true);
+    try {
+      const res = await fetch('/api/admin/audit-logs?limit=100', {
+        headers: { 'x-admin-wallet': walletAddress },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAuditLogs(data.logs || []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch audit logs:', e);
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'audit' && isAdmin) {
+      fetchAuditLogs();
+    }
+  }, [activeTab, isAdmin]);
+
   const filteredOperators = operators.filter(op => {
     if (filter === 'all') return true;
     if (filter === 'pending') return op.status === 'APPLIED';
@@ -378,11 +478,55 @@ export default function OperatorAdminPage() {
             </div>
           )}
 
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setActiveTab('operators')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'operators' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                Operators
+              </button>
+              <button
+                onClick={() => setActiveTab('audit')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'audit' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                Audit Logs
+              </button>
+            </div>
+            {activeTab === 'operators' && (
+              <div className="flex items-center space-x-2">
+                {selectedIds.size > 0 && (
+                  <button
+                    onClick={bulkAdvance}
+                    disabled={bulkLoading}
+                    className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 disabled:opacity-50"
+                  >
+                    {bulkLoading ? 'Advancing...' : `Advance ${selectedIds.size} Selected`}
+                  </button>
+                )}
+                <button
+                  onClick={exportCSV}
+                  className="px-4 py-2 bg-white text-gray-600 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center space-x-1"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span>Export CSV</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {activeTab === 'operators' && (
           <div className="mb-6 flex items-center space-x-2">
             {['all', 'pending', 'onboarding', 'active'].map((f) => (
               <button
                 key={f}
-                onClick={() => setFilter(f)}
+                onClick={() => { setFilter(f); setSelectedIds(new Set()); }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filter === f ? 'bg-teal-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                 }`}
@@ -410,6 +554,14 @@ export default function OperatorAdminPage() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-4 py-3 text-left">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.size > 0 && selectedIds.size === filteredOperators.filter(op => !['ACTIVE', 'REJECTED'].includes(op.status)).length}
+                        onChange={selectAll}
+                        className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                      />
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operator</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -419,7 +571,17 @@ export default function OperatorAdminPage() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredOperators.map((op) => (
-                    <tr key={op.operatorId} className="hover:bg-gray-50">
+                    <tr key={op.operatorId} className={`hover:bg-gray-50 ${selectedIds.has(op.operatorId) ? 'bg-teal-50' : ''}`}>
+                      <td className="px-4 py-4">
+                        {!['ACTIVE', 'REJECTED'].includes(op.status) && (
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(op.operatorId)}
+                            onChange={() => toggleSelect(op.operatorId)}
+                            className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                          />
+                        )}
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center">
                           <div>
@@ -493,6 +655,78 @@ export default function OperatorAdminPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+        )}
+
+          {activeTab === 'audit' && (
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              {auditLoading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto"></div>
+                  <p className="mt-4 text-gray-500">Loading audit logs...</p>
+                </div>
+              ) : auditLogs.length === 0 ? (
+                <div className="p-12 text-center">
+                  <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <h3 className="text-lg font-medium text-gray-900">No audit logs yet</h3>
+                  <p className="text-gray-500 mt-1">Admin actions will appear here.</p>
+                </div>
+              ) : (
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admin</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operator</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {auditLogs.map((log) => (
+                      <tr key={log.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {new Date(log.createdAt).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-xs font-mono text-gray-600">
+                            {log.adminWallet.slice(0, 8)}...{log.adminWallet.slice(-4)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            log.action === 'OPERATOR_ADVANCED' ? 'bg-green-100 text-green-800' :
+                            log.action === 'OPERATOR_REJECTED' ? 'bg-red-100 text-red-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {log.action.replace('OPERATOR_', '').replace('_', ' ')}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm font-mono text-gray-600">
+                          {log.targetOperatorId}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {log.details?.fromPhase && log.details?.toPhase && (
+                            <span>{log.details.fromPhase} → {log.details.toPhase}</span>
+                          )}
+                          {log.details?.subject && (
+                            <span>Subject: {log.details.subject}</span>
+                          )}
+                          {log.details?.reason && (
+                            <span>Reason: {log.details.reason}</span>
+                          )}
+                          {log.details?.bulk && (
+                            <span className="ml-2 text-xs text-gray-400">(bulk)</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
         </div>
