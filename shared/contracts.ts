@@ -338,6 +338,16 @@ export const EULER_LENDING_CONTRACTS = {
   COLLATERAL_ARB_VAULT: '0x7eD866D2D66c3149FaFE854C30C68a8BA7ceE8B9'
 } as const;
 
+// Node Economy Contracts (Step 2 - Node Operator Program)
+// Status: DEPLOYED & VERIFIED | Arbitrum One | February 2026
+// Features: Node registration, rewards distribution, slashing engine
+// Reference: docs/node-operator/on-chain-spec.md
+export const NODE_ECONOMY_CONTRACTS = {
+  NODE_REGISTRY: '0x31bc6268155219B627FC3B2d8434d010F33DCb03',
+  NODE_REWARDS: '0x0c1c96F38566d056877cEf4791c701C4F5AEf362',
+  SLASHING_ENGINE: '0x1ae162B80cEfb82f9ccF25b5E7A45E5e133E6F87'
+} as const;
+
 // All contracts in a single object for easy access
 export const ALL_CONTRACTS = {
   ...CORE_CONTRACTS,
@@ -355,7 +365,8 @@ export const ALL_CONTRACTS = {
   ...REALESTATE_LENDING_CONTRACTS,
   ...LAND_ACQUISITION_CONTRACTS,
   ...GOVERNANCE_CONTRACTS,
-  ...EULER_LENDING_CONTRACTS
+  ...EULER_LENDING_CONTRACTS,
+  ...NODE_ECONOMY_CONTRACTS
 } as const;
 
 // Deployer Address
