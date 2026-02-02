@@ -6,8 +6,8 @@ export const NODE_REGISTRY_ABI = [
   'function getStakeRequirement(uint8 nodeClass) view returns (tuple(uint256 minStake, uint256 lockPeriod, bool active))',
   'function areContractsConfigured() view returns (bool)',
   'function getNode(uint256 nodeId) view returns (tuple(uint256 nodeId, address operator, uint8 nodeClass, uint8 status, uint256 stakeAmount, uint256 registeredAt, uint256 activatedAt, uint256 lastRewardAt, bytes32 metadataHash))',
-  'function operatorToNode(address operator) view returns (uint256)',
-  'function nextNodeId() view returns (uint256)',
+  'function getNodesByOperator(address operator) view returns (uint256[])',
+  'function isNodeActive(uint256 nodeId) view returns (bool)',
   'function paused() view returns (bool)',
   'event NodeRegistered(uint256 indexed nodeId, address indexed operator, uint8 nodeClass)',
   'event NodeActivated(uint256 indexed nodeId, uint256 stakeAmount)',
@@ -26,12 +26,11 @@ export const NODE_REWARDS_ABI = [
   'function getTimeUntilNextEpoch() view returns (uint256)',
   'function getEpochReward(uint256 epochId) view returns (tuple(uint256 epochId, uint256 totalRewards, uint256 nodesRewarded, uint256 timestamp))',
   'function getPendingRewards(uint256 nodeId) view returns (uint256)',
-  'function getClaimedRewards(uint256 nodeId) view returns (uint256)',
-  'function getTotalDistributed() view returns (uint256)',
+  'function calculateNodeReward(uint256 nodeId) view returns (uint256)',
   'function paused() view returns (bool)',
-  'event RewardsDistributed(uint256 indexed epochId, uint256 totalAmount, uint256 nodesRewarded)',
-  'event RewardsClaimed(uint256 indexed nodeId, address indexed operator, uint256 amount)',
-  'event EpochAdvanced(uint256 indexed newEpochId, uint256 timestamp)'
+  'event EpochCompleted(uint256 indexed epochId, uint256 totalRewards, uint256 nodesRewarded)',
+  'event RewardClaimed(uint256 indexed nodeId, address indexed operator, uint256 amount)',
+  'event PerformanceUpdated(uint256 indexed nodeId, uint256 uptimeBps, uint256 tasksCompleted, uint256 qualityScore)'
 ] as const;
 
 export const SLASHING_ENGINE_ABI = [
@@ -39,13 +38,11 @@ export const SLASHING_ENGINE_ABI = [
   'function totalEscrowed() view returns (uint256)',
   'function getAvailableForWithdrawal() view returns (uint256)',
   'function getSlashingParams(uint8 nodeClass) view returns (tuple(uint256 slashPercentBps, uint256 cooldownPeriod, uint256 maxSlashesBeforeSuspension, bool active))',
-  'function getNodeSlashCount(uint256 nodeId) view returns (uint256)',
-  'function getSlashProposal(uint256 proposalId) view returns (tuple(uint256 proposalId, uint256 nodeId, uint256 amount, uint8 status, address proposer, uint256 proposedAt, string reason))',
+  'function getEscrowedAmount(uint256 slashId) view returns (uint256)',
   'function paused() view returns (bool)',
-  'event SlashProposed(uint256 indexed proposalId, uint256 indexed nodeId, uint256 amount, address indexed proposer)',
-  'event SlashExecuted(uint256 indexed proposalId, uint256 indexed nodeId, uint256 amount)',
-  'event SlashCancelled(uint256 indexed proposalId, string reason)',
-  'event FundsRecovered(address indexed recipient, uint256 amount)'
+  'event NodeSlashed(uint256 indexed nodeId, uint256 indexed slashId, uint8 reason, uint256 amount)',
+  'event AppealRefunded(uint256 indexed slashId, address indexed operator, uint256 amount)',
+  'event FundsReceived(uint256 indexed nodeId, uint256 amount)'
 ] as const;
 
 export const ON_CHAIN_NODE_CLASSES = ['STORAGE', 'EXECUTION', 'INDEXING', 'RESEARCH'] as const;

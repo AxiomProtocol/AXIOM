@@ -8072,6 +8072,7 @@ export const nodeOperators = pgTable("node_operators", {
   roles: jsonb("roles").$type<string[]>().default(['OBSERVER']),
   status: operatorStatusEnum("status").default('PENDING'),
   onboardingPhase: onboardingPhaseEnum("onboarding_phase").default('APPLICATION'),
+  onChainNodeId: integer("on_chain_node_id"),
   totalMilestonesCompleted: integer("total_milestones_completed").default(0),
   totalEarnings: decimal("total_earnings", { precision: 18, scale: 2 }).default('0'),
   pendingEarnings: decimal("pending_earnings", { precision: 18, scale: 2 }).default('0'),
@@ -8084,6 +8085,7 @@ export const nodeOperators = pgTable("node_operators", {
   walletIdx: index("node_operators_wallet_idx").on(table.walletAddress),
   statusIdx: index("node_operators_status_idx").on(table.status),
   roleIdx: index("node_operators_role_idx").on(table.role),
+  onChainNodeIdx: index("node_operators_on_chain_node_idx").on(table.onChainNodeId),
 }));
 
 export const nodeOnboarding = pgTable("node_onboarding", {
@@ -8105,9 +8107,34 @@ export const nodeOnboarding = pgTable("node_onboarding", {
   operatorIdx: index("node_onboarding_operator_idx").on(table.operatorId),
 }));
 
+export const nodeChainSyncStatusEnum = pgEnum('node_chain_sync_status', [
+  'SYNCED',
+  'PENDING',
+  'FAILED'
+]);
+
+export const nodeChainSync = pgTable("node_chain_sync", {
+  id: serial("id").primaryKey(),
+  nodeId: integer("node_id").notNull(),
+  operatorAddress: varchar("operator_address", { length: 42 }).notNull(),
+  nodeClass: integer("node_class").notNull(),
+  blockNumber: integer("block_number").notNull(),
+  txHash: varchar("tx_hash", { length: 66 }).notNull(),
+  syncStatus: nodeChainSyncStatusEnum("sync_status").default('PENDING'),
+  linkedOperatorId: varchar("linked_operator_id", { length: 50 }),
+  syncedAt: timestamp("synced_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  nodeIdIdx: index("node_chain_sync_node_id_idx").on(table.nodeId),
+  operatorAddressIdx: index("node_chain_sync_operator_address_idx").on(table.operatorAddress),
+  syncStatusIdx: index("node_chain_sync_status_idx").on(table.syncStatus),
+}));
+
 export type NoteSubmission = typeof noteSubmissions.$inferSelect;
 export type InsertNoteSubmission = typeof noteSubmissions.$inferInsert;
 export type NodeOperator = typeof nodeOperators.$inferSelect;
 export type InsertNodeOperator = typeof nodeOperators.$inferInsert;
 export type NodeOnboarding = typeof nodeOnboarding.$inferSelect;
 export type InsertNodeOnboarding = typeof nodeOnboarding.$inferInsert;
+export type NodeChainSync = typeof nodeChainSync.$inferSelect;
+export type InsertNodeChainSync = typeof nodeChainSync.$inferInsert;

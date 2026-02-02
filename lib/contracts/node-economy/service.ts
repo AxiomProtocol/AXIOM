@@ -45,7 +45,6 @@ export interface RewardsInfo {
   epochDurationDays: number;
   maxRewardsPerEpoch: string;
   timeUntilNextEpochHours: number;
-  totalDistributed: string;
 }
 
 export interface NodeEconomyStats {
@@ -91,7 +90,6 @@ class NodeEconomyService {
       epochDuration,
       maxRewards,
       timeUntilNextEpoch,
-      totalDistributed,
       totalSlashed,
       totalEscrowed,
       availableWithdrawal,
@@ -109,7 +107,6 @@ class NodeEconomyService {
       this.nodeRewards.globalEpochDuration().catch(() => 604800n),
       this.nodeRewards.maxRewardsPerEpoch().catch(() => 0n),
       this.nodeRewards.getTimeUntilNextEpoch().catch(() => 0n),
-      this.nodeRewards.getTotalDistributed().catch(() => 0n),
       this.slashingEngine.totalSlashed().catch(() => 0n),
       this.slashingEngine.totalEscrowed().catch(() => 0n),
       this.slashingEngine.getAvailableForWithdrawal().catch(() => 0n),
@@ -142,8 +139,7 @@ class NodeEconomyService {
         epochStartTime: Number(epochStartTime) > 0 ? new Date(Number(epochStartTime) * 1000) : null,
         epochDurationDays: Number(epochDuration) / 86400,
         maxRewardsPerEpoch: ethers.formatEther(maxRewards),
-        timeUntilNextEpochHours: Number(timeUntilNextEpoch) / 3600,
-        totalDistributed: ethers.formatEther(totalDistributed)
+        timeUntilNextEpochHours: Number(timeUntilNextEpoch) / 3600
       },
       slashing: {
         totalSlashed: ethers.formatEther(totalSlashed),
@@ -194,7 +190,9 @@ class NodeEconomyService {
 
   async getNodeByOperator(operatorAddress: string): Promise<NodeInfo | null> {
     try {
-      const nodeId = await this.nodeRegistry.operatorToNode(operatorAddress);
+      const nodeIds = await this.nodeRegistry.getNodesByOperator(operatorAddress);
+      if (!nodeIds || nodeIds.length === 0) return null;
+      const nodeId = nodeIds[0];
       if (nodeId === 0n) return null;
       return this.getNode(Number(nodeId));
     } catch {
@@ -224,26 +222,27 @@ class NodeEconomyService {
     }
   }
 
-  async getNodeRewards(nodeId: number): Promise<{ pending: string; claimed: string }> {
+  async getNodeRewards(nodeId: number): Promise<{ pending: string; calculated: string }> {
     try {
-      const [pending, claimed] = await Promise.all([
+      const [pending, calculated] = await Promise.all([
         this.nodeRewards.getPendingRewards(nodeId).catch(() => 0n),
-        this.nodeRewards.getClaimedRewards(nodeId).catch(() => 0n)
+        this.nodeRewards.calculateNodeReward(nodeId).catch(() => 0n)
       ]);
       return {
         pending: ethers.formatEther(pending),
-        claimed: ethers.formatEther(claimed)
+        calculated: ethers.formatEther(calculated)
       };
     } catch {
-      return { pending: '0', claimed: '0' };
+      return { pending: '0', calculated: '0' };
     }
   }
 
-  async getNodeSlashCount(nodeId: number): Promise<number> {
+  async getSlashEscrowAmount(slashId: number): Promise<string> {
     try {
-      return Number(await this.slashingEngine.getNodeSlashCount(nodeId));
+      const amount = await this.slashingEngine.getEscrowedAmount(slashId);
+      return ethers.formatEther(amount);
     } catch {
-      return 0;
+      return '0';
     }
   }
 
