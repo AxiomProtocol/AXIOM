@@ -78,6 +78,14 @@ export default function OperatorPortal() {
   const [submitting, setSubmitting] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [certChecklist, setCertChecklist] = useState({
+    charter: false,
+    dryRun: false,
+    keyManagement: false,
+    communication: false,
+    bonding: false,
+  });
 
   useEffect(() => {
     fetchStats();
@@ -668,6 +676,22 @@ export default function OperatorPortal() {
 
           {isConnected && activeTab === 'status' && (
             <div className="space-y-6">
+              {message && (
+                <div className={`p-4 rounded-xl border ${message.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+                  <div className="flex items-center gap-2">
+                    {message.type === 'success' ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    )}
+                    <span>{message.text}</span>
+                  </div>
+                </div>
+              )}
               {operator ? (
                 <>
                   <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -751,9 +775,104 @@ export default function OperatorPortal() {
                         {operator.status === 'APPLIED' && 'Your application is being reviewed. You will receive an email once verification begins.'}
                         {operator.status === 'VERIFIED' && 'Verification complete! Your credentials are being provisioned.'}
                         {operator.status === 'PROVISIONED' && 'Complete your dry-run exercises to proceed to certification.'}
-                        {operator.status === 'DRY_RUN_PASSED' && 'Great work! Complete the certification checklist to proceed.'}
+                        {operator.status === 'DRY_RUN_PASSED' && 'Great work! Complete the certification checklist below to proceed.'}
                         {operator.status === 'CERTIFIED' && 'Congratulations! Your activation is being processed.'}
                       </p>
+                    </div>
+                  )}
+
+                  {operator.status === 'DRY_RUN_PASSED' && (
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 mt-6">
+                      <h3 className="font-semibold text-gray-900 mb-4">Certification Checklist</h3>
+                      <p className="text-sm text-gray-600 mb-6">
+                        Complete these items to finalize your certification. Once all items are acknowledged, 
+                        your application will be submitted for final review.
+                      </p>
+                      <div className="space-y-4">
+                        <label className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${certChecklist.charter ? 'border-teal-300 bg-teal-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                          <input 
+                            type="checkbox" 
+                            className="mt-1 w-5 h-5 text-teal-600 rounded"
+                            checked={certChecklist.charter}
+                            onChange={(e) => setCertChecklist(prev => ({ ...prev, charter: e.target.checked }))}
+                          />
+                          <div>
+                            <div className="font-medium text-gray-900">Acknowledge Node Charter</div>
+                            <div className="text-sm text-gray-500">I have read and agree to abide by the Node Charter principles and responsibilities.</div>
+                          </div>
+                        </label>
+                        <label className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${certChecklist.dryRun ? 'border-teal-300 bg-teal-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                          <input 
+                            type="checkbox" 
+                            className="mt-1 w-5 h-5 text-teal-600 rounded"
+                            checked={certChecklist.dryRun}
+                            onChange={(e) => setCertChecklist(prev => ({ ...prev, dryRun: e.target.checked }))}
+                          />
+                          <div>
+                            <div className="font-medium text-gray-900">Confirm Dry-Run Completion</div>
+                            <div className="text-sm text-gray-500">I have successfully completed all required dry-run exercises and understand the settlement process.</div>
+                          </div>
+                        </label>
+                        <label className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${certChecklist.keyManagement ? 'border-teal-300 bg-teal-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                          <input 
+                            type="checkbox" 
+                            className="mt-1 w-5 h-5 text-teal-600 rounded"
+                            checked={certChecklist.keyManagement}
+                            onChange={(e) => setCertChecklist(prev => ({ ...prev, keyManagement: e.target.checked }))}
+                          />
+                          <div>
+                            <div className="font-medium text-gray-900">Secure Key Management</div>
+                            <div className="text-sm text-gray-500">I have set up secure key storage and understand my responsibility to protect signing credentials.</div>
+                          </div>
+                        </label>
+                        <label className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${certChecklist.communication ? 'border-teal-300 bg-teal-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                          <input 
+                            type="checkbox" 
+                            className="mt-1 w-5 h-5 text-teal-600 rounded"
+                            checked={certChecklist.communication}
+                            onChange={(e) => setCertChecklist(prev => ({ ...prev, communication: e.target.checked }))}
+                          />
+                          <div>
+                            <div className="font-medium text-gray-900">Communication Commitment</div>
+                            <div className="text-sm text-gray-500">I commit to responding to settlement requests within the required timeframes and maintaining active communication.</div>
+                          </div>
+                        </label>
+                        {operator.role === 'ATTESTOR' && (
+                          <label className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${certChecklist.bonding ? 'border-teal-300 bg-teal-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                            <input 
+                              type="checkbox" 
+                              className="mt-1 w-5 h-5 text-teal-600 rounded"
+                              checked={certChecklist.bonding}
+                              onChange={(e) => setCertChecklist(prev => ({ ...prev, bonding: e.target.checked }))}
+                            />
+                            <div>
+                              <div className="font-medium text-gray-900">Bonding Proof (Attestors Only)</div>
+                              <div className="text-sm text-gray-500">I have provided proof of bonding or insurance as required for Attestor responsibilities.</div>
+                            </div>
+                          </label>
+                        )}
+                      </div>
+                      <div className="mt-6 pt-4 border-t border-gray-200">
+                        <p className="text-sm text-gray-500 mb-4">
+                          After completing all items, an admin will review your certification and activate your operator status.
+                        </p>
+                        {(() => {
+                          const requiredChecks = operator.role === 'ATTESTOR' 
+                            ? certChecklist.charter && certChecklist.dryRun && certChecklist.keyManagement && certChecklist.communication && certChecklist.bonding
+                            : certChecklist.charter && certChecklist.dryRun && certChecklist.keyManagement && certChecklist.communication;
+                          return (
+                            <button
+                              disabled={!requiredChecks}
+                              className={`w-full py-3 rounded-lg font-medium transition-colors ${requiredChecks ? 'bg-teal-600 text-white hover:bg-teal-700' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
+                              onClick={() => {
+                                setMessage({ type: 'success', text: 'Certification submitted for review. You will be notified via email once approved.' });
+                              }}
+                            >
+                              {requiredChecks ? 'Submit for Certification Review' : 'Complete all items to submit'}
+                            </button>
+                          );
+                        })()}
+                      </div>
                     </div>
                   )}
                 </>
