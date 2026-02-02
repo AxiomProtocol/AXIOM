@@ -35,5 +35,5 @@ channel = "stable-25_05"
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["bash", "-c", "HOSTNAME=0.0.0.0 PORT=5000 node .next/standalone/server.js"]
+run = ["bash", "-c", "HOST=0.0.0.0 PORT=5000 node .next/standalone/server.js"]
 build = ["npm", "run", "build:deploy:clean"]
