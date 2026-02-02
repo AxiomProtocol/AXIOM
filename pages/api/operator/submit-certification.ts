@@ -49,10 +49,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     await pool.query(
-      `INSERT INTO node_onboarding (operator_id, phase, completed_at, notes)
-       VALUES ($1, 'CERTIFIED', NOW(), $2)
-       ON CONFLICT (operator_id, phase) DO UPDATE SET completed_at = NOW(), notes = $2`,
-      [operator.operator_id, JSON.stringify(checklist)]
+      `UPDATE node_onboarding 
+       SET current_phase = 'CERTIFIED', 
+           certification_completed_at = NOW(),
+           updated_at = NOW()
+       WHERE operator_id = $1`,
+      [operator.operator_id]
     );
 
     res.status(200).json({ 
