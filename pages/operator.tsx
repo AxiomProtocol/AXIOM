@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { SiteLayout } from '../components/navigation';
+import NodeEconomyDashboard from '../components/observer/NodeEconomyDashboard';
 
 type OperatorStatus = 'NOT_APPLIED' | 'APPLIED' | 'VERIFIED' | 'PROVISIONED' | 'DRY_RUN_PASSED' | 'CERTIFIED' | 'ACTIVE';
 type OperatorRole = 'OBSERVER' | 'VALIDATOR' | 'ATTESTOR';
@@ -38,7 +39,7 @@ interface ProgramStats {
   observationWindowEnd: string;
 }
 
-type Tab = 'apply' | 'status' | 'rewards' | 'docs';
+type Tab = 'apply' | 'status' | 'rewards' | 'network' | 'docs';
 
 const STATUS_STEPS: { status: OperatorStatus; label: string; description: string }[] = [
   { status: 'APPLIED', label: 'Applied', description: 'Application submitted' },
@@ -218,6 +219,15 @@ export default function OperatorPortal() {
       ),
     },
     {
+      id: 'network',
+      label: 'Network',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+        </svg>
+      ),
+    },
+    {
       id: 'docs',
       label: 'Documentation',
       icon: (
@@ -280,7 +290,7 @@ export default function OperatorPortal() {
             ))}
           </div>
 
-          {!isConnected && activeTab !== 'docs' && (
+          {!isConnected && activeTab !== 'docs' && activeTab !== 'network' && (
             <div className="space-y-8">
               <div className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl border border-teal-100 p-8">
                 <div className="max-w-3xl mx-auto text-center mb-8">
@@ -1440,6 +1450,10 @@ export default function OperatorPortal() {
                 </div>
               )}
             </div>
+          )}
+
+          {activeTab === 'network' && (
+            <NodeEconomyDashboard />
           )}
 
           {activeTab === 'docs' && (
