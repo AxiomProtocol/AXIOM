@@ -6605,7 +6605,6 @@ export const userXpLevels = pgTable("user_xp_levels", {
 
 // Membership Subscriptions
 export const membershipTierEnum = pgEnum('membership_tier', ['free', 'basic', 'premium', 'enterprise']);
-export const subscriptionStatusEnum = pgEnum('subscription_status', ['active', 'canceled', 'past_due', 'trialing', 'expired']);
 
 export const membershipSubscriptions = pgTable("membership_subscriptions", {
   id: serial("id").primaryKey(),
@@ -6655,30 +6654,8 @@ export const referralEarnings = pgTable("referral_earnings", {
   statusIdx: index("earning_status_idx").on(table.status),
 }));
 
-// KYC/Compliance System
-export const kycStatusEnum = pgEnum('kyc_status', ['not_started', 'pending', 'verified', 'rejected', 'expired']);
+// AML Risk Level Enum (used with existing kycVerifications table)
 export const amlRiskLevelEnum = pgEnum('aml_risk_level', ['low', 'medium', 'high', 'blocked']);
-
-export const kycVerifications = pgTable("kyc_verifications", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  walletAddress: varchar("wallet_address", { length: 42 }),
-  status: kycStatusEnum("status").default('not_started'),
-  level: integer("level").default(1),
-  documents: jsonb("documents"),
-  amlScore: integer("aml_score").default(0),
-  riskLevel: amlRiskLevelEnum("risk_level").default('low'),
-  notes: text("notes"),
-  submittedAt: timestamp("submitted_at"),
-  verifiedAt: timestamp("verified_at"),
-  expiresAt: timestamp("expires_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => ({
-  userIdx: index("kyc_user_idx").on(table.userId),
-  walletIdx: index("kyc_wallet_idx").on(table.walletAddress),
-  statusIdx: index("kyc_status_idx").on(table.status),
-}));
 
 export const complianceAuditLogs = pgTable("compliance_audit_logs", {
   id: serial("id").primaryKey(),
@@ -6700,14 +6677,13 @@ export const complianceAuditLogs = pgTable("compliance_audit_logs", {
   timestampIdx: index("audit_timestamp_idx").on(table.createdAt),
 }));
 
-// DePIN & IoT System
-export const iotDeviceTypeEnum = pgEnum('iot_device_type', ['sensor', 'meter', 'camera', 'controller', 'gateway']);
+// DePIN & IoT Extended System
 export const iotDeviceStatusEnum = pgEnum('iot_device_status', ['online', 'offline', 'maintenance']);
 
 export const iotDevices = pgTable("iot_devices", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 200 }).notNull(),
-  deviceType: iotDeviceTypeEnum("device_type").notNull(),
+  deviceType: varchar("device_type", { length: 50 }).notNull(),
   landAssetId: varchar("land_asset_id", { length: 100 }),
   latitude: decimal("latitude", { precision: 10, scale: 7 }),
   longitude: decimal("longitude", { precision: 10, scale: 7 }),
@@ -6971,8 +6947,6 @@ export type ReferralCode = typeof referralCodes.$inferSelect;
 export type InsertReferralCode = typeof referralCodes.$inferInsert;
 export type ReferralEarning = typeof referralEarnings.$inferSelect;
 export type InsertReferralEarning = typeof referralEarnings.$inferInsert;
-export type KycVerification = typeof kycVerifications.$inferSelect;
-export type InsertKycVerification = typeof kycVerifications.$inferInsert;
 export type ComplianceAuditLog = typeof complianceAuditLogs.$inferSelect;
 export type InsertComplianceAuditLog = typeof complianceAuditLogs.$inferInsert;
 export type IotDevice = typeof iotDevices.$inferSelect;

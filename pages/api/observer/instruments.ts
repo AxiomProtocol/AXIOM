@@ -79,11 +79,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const [instrumentCount, poolCount, eventCount] = await Promise.all([
-      instrumentRegistry.getInstrumentCount(),
-      poolRegistry.getPoolCount(),
-      servicingLog.getEventCount(),
-    ]);
+    let instrumentCount = 0n;
+    let poolCount = 0n;
+    let eventCount = 0n;
+    
+    try {
+      [instrumentCount, poolCount, eventCount] = await Promise.all([
+        instrumentRegistry.getInstrumentCount().catch(() => 0n),
+        poolRegistry.getPoolCount().catch(() => 0n),
+        servicingLog.getEventCount().catch(() => 0n),
+      ]);
+    } catch {
+      // Contracts may revert if no items registered yet
+    }
 
     const instruments = [];
     const fetchLimit = Math.min(Number(instrumentCount), 50);
