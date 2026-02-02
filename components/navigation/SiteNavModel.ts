@@ -74,7 +74,7 @@ export const SITE_NAV: NavItem[] = [
       { label: "The Wealth Practice", href: "/wealth-practice" },
       { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "Land Acquisition", href: "/land-acquisition" },
-      { label: "Land Pipeline", href: "/admin/land-pipeline", visibility: 'admin' },
+      { label: "Land Pipeline", href: "/stewards/dashboard/land" },
       { label: "Note Acquisition", href: "/notes/pipeline" },
       { label: "Governance", href: "/governance" },
       { label: "Tokenomics", href: "/tokenomics" },
@@ -123,7 +123,7 @@ export const FOOTER_SECTIONS: FooterSection[] = [
       { label: "The Wealth Practice", href: "/wealth-practice" },
       { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "Land Acquisition", href: "/land-acquisition" },
-      { label: "Land Pipeline", href: "/admin/land-pipeline" },
+      { label: "Land Pipeline", href: "/stewards/dashboard/land" },
       { label: "Investor Admin", href: "/admin/investors" },
       { label: "Governance", href: "/governance" },
       { label: "Staking", href: "/staking" }
