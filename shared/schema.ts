@@ -8095,6 +8095,7 @@ export const nodeOperators = pgTable("node_operators", {
   displayName: varchar("display_name", { length: 200 }).notNull(),
   email: varchar("email", { length: 200 }),
   role: operatorRoleEnum("role").default('OBSERVER'),
+  roles: jsonb("roles").$type<string[]>().default(['OBSERVER']),
   status: operatorStatusEnum("status").default('PENDING'),
   onboardingPhase: onboardingPhaseEnum("onboarding_phase").default('APPLICATION'),
   totalMilestonesCompleted: integer("total_milestones_completed").default(0),

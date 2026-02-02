@@ -63,6 +63,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const displayName = sanitizeString(body.displayName);
     const email = sanitizeString(body.email);
     const role = body.role;
+    const roles: OperatorRole[] = Array.isArray(body.roles) 
+      ? body.roles.filter((r: string) => VALID_ROLES.includes(r as OperatorRole))
+      : [role];
 
     if (!displayName || displayName.length < 2) {
       return res.status(400).json({ message: 'Display name is required (min 2 characters)' });
@@ -74,6 +77,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!role || !VALID_ROLES.includes(role)) {
       return res.status(400).json({ message: 'Valid role is required: OBSERVER, VALIDATOR, or ATTESTOR' });
+    }
+
+    if (roles.length === 0) {
+      return res.status(400).json({ message: 'At least one role must be selected' });
     }
 
     const client = await pool.connect();
@@ -95,9 +102,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       await client.query(
         `INSERT INTO node_operators (
-          operator_id, wallet_address, display_name, email, role, status, onboarding_phase
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [operatorId, walletAddress, displayName, email, role, 'APPLIED', 'APPLIED']
+          operator_id, wallet_address, display_name, email, role, roles, status, onboarding_phase
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [operatorId, walletAddress, displayName, email, role, JSON.stringify(roles), 'APPLIED', 'APPLIED']
       );
 
       await client.query(
@@ -116,6 +123,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           walletAddress,
           displayName,
           role,
+          roles,
           status: 'APPLIED',
         },
         onboarding: {

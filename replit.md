@@ -60,6 +60,16 @@ AXIOM Protocol is following a staged evolution strategy:
 See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 
 ## Recent Changes
+- Feb 2, 2026: **Multi-Role Node Operator Support**
+  - Operators can now select and hold all 3 roles simultaneously (Observer, Validator, Attestor)
+  - Added `roles` jsonb column to node_operators table
+  - Updated application form with multi-select checkboxes for roles
+  - "Full Operator Mode" indicator when all 3 roles selected
+  - Certificate displays all assigned roles
+  - Certificate modal shows multiple roles properly formatted
+  - Print certificate function supports multi-role display
+  - Per Node Charter: Roles are hierarchical (Attestor includes Validator includes Observer capabilities)
+  - Dual attestation requirements still enforced (different Attestors required)
 - Feb 2, 2026: **Node Operator Admin System (Production Ready)**
   - Created comprehensive admin panel at /admin/operators with stats dashboard
   - Features: view all operators, filter by status, view details, advance through phases, reject, send custom emails

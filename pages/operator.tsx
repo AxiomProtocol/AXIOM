@@ -11,6 +11,7 @@ interface OperatorData {
   walletAddress: string;
   displayName?: string;
   role: OperatorRole;
+  roles?: OperatorRole[];
   status: OperatorStatus;
   suspended: boolean;
   verificationTier: string;
@@ -73,7 +74,7 @@ export default function OperatorPortal() {
   const [operator, setOperator] = useState<OperatorData | null>(null);
   const [rewards, setRewards] = useState<RewardsData | null>(null);
   const [stats, setStats] = useState<ProgramStats | null>(null);
-  const [selectedRole, setSelectedRole] = useState<OperatorRole>('OBSERVER');
+  const [selectedRoles, setSelectedRoles] = useState<OperatorRole[]>(['OBSERVER']);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [displayName, setDisplayName] = useState('');
@@ -161,7 +162,8 @@ export default function OperatorPortal() {
           walletAddress,
           displayName,
           email,
-          role: selectedRole,
+          role: selectedRoles.includes('ATTESTOR') ? 'ATTESTOR' : selectedRoles.includes('VALIDATOR') ? 'VALIDATOR' : 'OBSERVER',
+          roles: selectedRoles,
         }),
       });
 
@@ -620,31 +622,65 @@ export default function OperatorPortal() {
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">Select Role</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select Role(s)</label>
+                <p className="text-sm text-gray-500 mb-3">You may select multiple roles. Each role has different verification requirements.</p>
                 <div className="grid md:grid-cols-3 gap-4">
-                  {(Object.keys(ROLE_INFO) as OperatorRole[]).map((role) => (
-                    <button
-                      key={role}
-                      onClick={() => setSelectedRole(role)}
-                      className={`p-4 rounded-xl border-2 text-left transition-all ${
-                        selectedRole === role
-                          ? 'border-teal-500 bg-teal-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="font-semibold text-gray-900 mb-1">{ROLE_INFO[role].title}</div>
-                      <div className="text-sm text-gray-600 mb-3">{ROLE_INFO[role].description}</div>
-                      <div className="text-xs text-gray-500">
-                        <div className="font-medium mb-1">Requirements:</div>
-                        <ul className="list-disc list-inside space-y-0.5">
-                          {ROLE_INFO[role].requirements.map((req, i) => (
-                            <li key={i}>{req}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </button>
-                  ))}
+                  {(Object.keys(ROLE_INFO) as OperatorRole[]).map((role) => {
+                    const isSelected = selectedRoles.includes(role);
+                    return (
+                      <button
+                        key={role}
+                        onClick={() => {
+                          if (isSelected) {
+                            if (selectedRoles.length > 1) {
+                              setSelectedRoles(selectedRoles.filter(r => r !== role));
+                            }
+                          } else {
+                            setSelectedRoles([...selectedRoles, role]);
+                          }
+                        }}
+                        className={`p-4 rounded-xl border-2 text-left transition-all relative ${
+                          isSelected
+                            ? 'border-teal-500 bg-teal-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="absolute top-3 right-3">
+                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                            isSelected ? 'bg-teal-500 border-teal-500' : 'border-gray-300'
+                          }`}>
+                            {isSelected && (
+                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                        <div className="font-semibold text-gray-900 mb-1">{ROLE_INFO[role].title}</div>
+                        <div className="text-sm text-gray-600 mb-3">{ROLE_INFO[role].description}</div>
+                        <div className="text-xs text-gray-500">
+                          <div className="font-medium mb-1">Requirements:</div>
+                          <ul className="list-disc list-inside space-y-0.5">
+                            {ROLE_INFO[role].requirements.map((req, i) => (
+                              <li key={i}>{req}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
+                {selectedRoles.length === 3 && (
+                  <div className="mt-3 p-3 bg-teal-50 border border-teal-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-teal-800">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="font-medium">Full Operator Mode</span>
+                    </div>
+                    <p className="text-sm text-teal-700 mt-1">You have selected all 3 roles. You will need to complete all verification requirements for Attestor level.</p>
+                  </div>
+                )}
               </div>
 
               <button
@@ -714,8 +750,15 @@ export default function OperatorPortal() {
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                       <div>
-                        <div className="text-sm text-gray-500">Role</div>
-                        <div className="font-semibold text-gray-900">{operator.role}</div>
+                        <div className="text-sm text-gray-500">Role(s)</div>
+                        <div className="font-semibold text-gray-900">
+                          {(operator.roles && operator.roles.length > 0 ? operator.roles : [operator.role]).map((r, i) => (
+                            <span key={r} className="inline-flex items-center">
+                              {ROLE_INFO[r]?.title || r}
+                              {i < (operator.roles?.length || 1) - 1 && <span className="mx-1 text-gray-400">/</span>}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                       <div>
                         <div className="text-sm text-gray-500">Verification Tier</div>
@@ -798,8 +841,21 @@ export default function OperatorPortal() {
                             <div className="text-xl font-semibold mb-1">{operator.displayName || 'Node Operator'}</div>
                             <div className="text-sm text-teal-200 font-mono mb-4">{operator.operatorId}</div>
                             <p className="text-teal-100 text-sm">
-                              has successfully completed all certification requirements and is authorized to operate as a{' '}
-                              <span className="font-semibold text-white">{ROLE_INFO[operator.role].title}</span> on the AXIOM network.
+                              has successfully completed all certification requirements and is authorized to operate as{' '}
+                              {(operator.roles && operator.roles.length > 1) ? (
+                                <span>
+                                  {operator.roles.map((r, i) => (
+                                    <span key={r}>
+                                      <span className="font-semibold text-white">{ROLE_INFO[r]?.title || r}</span>
+                                      {i < operator.roles!.length - 2 && ', '}
+                                      {i === operator.roles!.length - 2 && ' & '}
+                                    </span>
+                                  ))}
+                                </span>
+                              ) : (
+                                <span className="font-semibold text-white">{ROLE_INFO[operator.role].title}</span>
+                              )}
+                              {' '}on the AXIOM network.
                             </p>
                           </div>
                           <div className="text-right">
@@ -1416,8 +1472,8 @@ export default function OperatorPortal() {
                                 <div class="cert-name">${operator.displayName || 'Node Operator'}</div>
                                 <div class="cert-id">${operator.operatorId}</div>
                                 <p style="color: #4b5563;">
-                                  has successfully completed all certification requirements and is authorized to operate as a 
-                                  <span class="cert-role">${ROLE_INFO[operator.role].title}</span> on the AXIOM network.
+                                  has successfully completed all certification requirements and is authorized to operate as 
+                                  <span class="cert-role">${(operator.roles && operator.roles.length > 0 ? operator.roles : [operator.role]).map((r: string) => ROLE_INFO[r as OperatorRole]?.title || r).join(', ')}</span> on the AXIOM network.
                                 </p>
                                 <div class="cert-items">
                                   <div class="cert-item"><div class="cert-item-label">NODE CHARTER</div><div class="cert-item-value">Acknowledged</div></div>
@@ -1465,8 +1521,21 @@ export default function OperatorPortal() {
                   <h2 className="text-2xl font-bold text-gray-900 mb-1">{operator.displayName || 'Node Operator'}</h2>
                   <p className="text-gray-400 font-mono text-sm mb-6">{operator.operatorId}</p>
                   <p className="text-gray-600 mb-8">
-                    has successfully completed all certification requirements and is authorized to operate as a{' '}
-                    <span className="font-bold text-teal-600">{ROLE_INFO[operator.role].title}</span> on the AXIOM network.
+                    has successfully completed all certification requirements and is authorized to operate as{' '}
+                    {(operator.roles && operator.roles.length > 1) ? (
+                      <span>
+                        {operator.roles.map((r, i) => (
+                          <span key={r}>
+                            <span className="font-bold text-teal-600">{ROLE_INFO[r]?.title || r}</span>
+                            {i < operator.roles!.length - 2 && ', '}
+                            {i === operator.roles!.length - 2 && ' & '}
+                          </span>
+                        ))}
+                      </span>
+                    ) : (
+                      <span className="font-bold text-teal-600">{ROLE_INFO[operator.role].title}</span>
+                    )}
+                    {' '}on the AXIOM network.
                   </p>
                   <div className="border-t border-b border-gray-200 py-6 my-6">
                     <div className="grid grid-cols-4 gap-4 text-center">
