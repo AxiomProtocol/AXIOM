@@ -60,6 +60,13 @@ AXIOM Protocol is following a staged evolution strategy:
 See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 
 ## Recent Changes
+- Feb 2, 2026: **Step 2: On-Chain Contracts Integration Complete**
+  - Integrated NodeRegistry, NodeRewards, SlashingEngine contracts at verified addresses
+  - Created lib/contracts/node-economy/ service layer with TypeScript clients
+  - Refactored API to use centralized config (getArbitrumRpcUrl, NODE_ECONOMY_CONTRACTS)
+  - Distinguished ON_CHAIN_NODE_CLASSES (Storage/Execution/Indexing/Research) from OPERATOR_ROLES (Observer/Validator/Attestor)
+  - Updated docs/deployments.md with Node Economy contracts section
+  - API tested with live on-chain data returning correct contract state
 - Feb 2, 2026: **Step 1: Node Operator Blueprint Documentation Complete**
   - Created docs/node-operator/ directory with comprehensive blueprint
   - architecture.md - System architecture with component diagram
