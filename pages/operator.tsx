@@ -270,20 +270,309 @@ export default function OperatorPortal() {
           </div>
 
           {!isConnected && activeTab !== 'docs' && (
-            <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-              <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
+            <div className="space-y-8">
+              <div className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl border border-teal-100 p-8">
+                <div className="max-w-3xl mx-auto text-center mb-8">
+                  <div className="w-20 h-20 bg-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-4">Become a Node Operator</h2>
+                  <p className="text-lg text-gray-600 mb-6">
+                    Join our decentralized network of validators and attestors who ensure the integrity, 
+                    transparency, and security of real estate settlements on Axiom Protocol.
+                  </p>
+                  <button
+                    onClick={connectWallet}
+                    className="bg-teal-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-teal-700 transition-colors shadow-md hover:shadow-lg"
+                  >
+                    Connect Wallet to Get Started
+                  </button>
+                </div>
               </div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Connect Your Wallet</h2>
-              <p className="text-gray-600 mb-6">Connect your wallet to apply or check your operator status</p>
-              <button
-                onClick={connectWallet}
-                className="bg-teal-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-teal-700 transition-colors"
-              >
-                Connect Wallet
-              </button>
+
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">What is the Node Operator Program?</h3>
+                <p className="text-gray-600 mb-4">
+                  The Node Operator Program is Axiom's decentralized verification layer for real estate transactions. 
+                  Node Operators are independent participants who review, validate, and attest to property acquisitions, 
+                  ensuring that every settlement meets our rigorous standards before funds are released.
+                </p>
+                <p className="text-gray-600 mb-4">
+                  Unlike traditional real estate where a single title company controls verification, Axiom uses a 
+                  network of distributed operators to provide transparency, reduce single points of failure, and 
+                  create an auditable record of every transaction on the blockchain.
+                </p>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-medium text-amber-800">Observation Window Active</p>
+                      <p className="text-sm text-amber-700 mt-1">
+                        We are currently in an observation period where new operators can join, complete training, 
+                        and participate in dry-run exercises before live settlements begin.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-6">Three Operator Roles</h3>
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div className="border border-gray-200 rounded-xl p-5 hover:border-teal-300 hover:bg-teal-50/50 transition-all">
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Observer</h4>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Entry-level role with read-only access to settlement pipelines and transparency dashboards. 
+                      Perfect for learning how the system works.
+                    </p>
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Requirements</div>
+                      <ul className="text-sm text-gray-600 space-y-1">
+                        <li className="flex items-center"><span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></span>Email verification</li>
+                        <li className="flex items-center"><span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></span>Wallet signature</li>
+                        <li className="flex items-center"><span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></span>Charter acknowledgment</li>
+                      </ul>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="text-xs text-gray-500">Earnings per settlement</div>
+                      <div className="text-lg font-bold text-blue-600">$7</div>
+                    </div>
+                  </div>
+
+                  <div className="border-2 border-teal-300 rounded-xl p-5 bg-teal-50/30 relative">
+                    <div className="absolute -top-3 left-4 bg-teal-600 text-white text-xs px-2 py-1 rounded-full font-medium">Most Popular</div>
+                    <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Validator</h4>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Review property artifacts, verify underwriting accuracy, and submit validation reports. 
+                      Active role in the settlement process.
+                    </p>
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Requirements</div>
+                      <ul className="text-sm text-gray-600 space-y-1">
+                        <li className="flex items-center"><span className="w-1.5 h-1.5 bg-teal-500 rounded-full mr-2"></span>KYC verification</li>
+                        <li className="flex items-center"><span className="w-1.5 h-1.5 bg-teal-500 rounded-full mr-2"></span>Reference check</li>
+                        <li className="flex items-center"><span className="w-1.5 h-1.5 bg-teal-500 rounded-full mr-2"></span>Dry-run exercises</li>
+                        <li className="flex items-center"><span className="w-1.5 h-1.5 bg-teal-500 rounded-full mr-2"></span>Charter acknowledgment</li>
+                      </ul>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-teal-200">
+                      <div className="text-xs text-gray-500">Earnings per settlement</div>
+                      <div className="text-lg font-bold text-teal-600">$45</div>
+                    </div>
+                  </div>
+
+                  <div className="border border-gray-200 rounded-xl p-5 hover:border-purple-300 hover:bg-purple-50/50 transition-all">
+                    <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Attestor</h4>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Highest responsibility role. Provide final attestations that authorize settlement execution. 
+                      Requires dual-attestation for all transactions.
+                    </p>
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Requirements</div>
+                      <ul className="text-sm text-gray-600 space-y-1">
+                        <li className="flex items-center"><span className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-2"></span>Full KYC verification</li>
+                        <li className="flex items-center"><span className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-2"></span>Competency test</li>
+                        <li className="flex items-center"><span className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-2"></span>Bonding proof</li>
+                        <li className="flex items-center"><span className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-2"></span>Dual attestation training</li>
+                      </ul>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="text-xs text-gray-500">Earnings per settlement</div>
+                      <div className="text-lg font-bold text-purple-600">$100</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-6">Onboarding Journey</h3>
+                <div className="relative">
+                  <div className="absolute left-8 top-8 bottom-8 w-0.5 bg-gray-200 hidden md:block"></div>
+                  <div className="space-y-6">
+                    {[
+                      { step: 1, title: 'Application', description: 'Submit your application with wallet verification. Select your desired role and provide contact information.', time: '5 minutes' },
+                      { step: 2, title: 'Identity Verification', description: 'Complete KYC verification (for Validator/Attestor roles). We use secure third-party verification to protect your identity.', time: '1-2 days' },
+                      { step: 3, title: 'Credential Provisioning', description: 'Receive your operator credentials and access to training materials. Set up your secure signing environment.', time: '1 day' },
+                      { step: 4, title: 'Dry-Run Training', description: 'Complete simulated settlement exercises to demonstrate competency. Learn the tools and processes.', time: '3-5 exercises' },
+                      { step: 5, title: 'Certification', description: 'Pass the certification checklist and acknowledge the Node Charter. Final review by the operations team.', time: '1-2 days' },
+                      { step: 6, title: 'Activation', description: 'Begin participating in live settlements and earning rewards. Welcome to the network!', time: 'Ongoing' }
+                    ].map((item, idx) => (
+                      <div key={item.step} className="flex items-start md:pl-4">
+                        <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center relative z-10 border-4 border-white">
+                          <span className="text-xl font-bold text-gray-600">{item.step}</span>
+                        </div>
+                        <div className="ml-4 flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-gray-900">{item.title}</h4>
+                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{item.time}</span>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-6">Rewards Structure</h3>
+                <p className="text-gray-600 mb-6">
+                  Operators earn rewards at each milestone of the settlement process. Rewards are denominated in USD 
+                  and can be converted to AXM tokens at a favorable rate or withdrawn directly.
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="text-left px-4 py-3 font-medium text-gray-600 rounded-tl-lg">Milestone</th>
+                        <th className="text-center px-4 py-3 font-medium text-gray-600">Description</th>
+                        <th className="text-right px-4 py-3 font-medium text-blue-600">Observer</th>
+                        <th className="text-right px-4 py-3 font-medium text-teal-600">Validator</th>
+                        <th className="text-right px-4 py-3 font-medium text-purple-600 rounded-tr-lg">Attestor</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3 font-medium text-gray-900">Packet Accepted</td>
+                        <td className="px-4 py-3 text-gray-600 text-center text-xs">Property documents reviewed and accepted</td>
+                        <td className="text-right px-4 py-3 text-blue-600">$2</td>
+                        <td className="text-right px-4 py-3 text-teal-600">$6</td>
+                        <td className="text-right px-4 py-3 text-purple-600">$10</td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3 font-medium text-gray-900">Underwriting Finalized</td>
+                        <td className="px-4 py-3 text-gray-600 text-center text-xs">Financial analysis verified</td>
+                        <td className="text-right px-4 py-3 text-gray-400">-</td>
+                        <td className="text-right px-4 py-3 text-teal-600">$12</td>
+                        <td className="text-right px-4 py-3 text-purple-600">$20</td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3 font-medium text-gray-900">Artifacts Prevalidated</td>
+                        <td className="px-4 py-3 text-gray-600 text-center text-xs">Title, survey, and legal docs verified</td>
+                        <td className="text-right px-4 py-3 text-gray-400">-</td>
+                        <td className="text-right px-4 py-3 text-teal-600">$12</td>
+                        <td className="text-right px-4 py-3 text-purple-600">$20</td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3 font-medium text-gray-900">Dual Attestation</td>
+                        <td className="px-4 py-3 text-gray-600 text-center text-xs">Two attestors sign off on settlement</td>
+                        <td className="text-right px-4 py-3 text-gray-400">-</td>
+                        <td className="text-right px-4 py-3 text-gray-400">-</td>
+                        <td className="text-right px-4 py-3 text-purple-600">$25</td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3 font-medium text-gray-900">Post-Settlement Audit</td>
+                        <td className="px-4 py-3 text-gray-600 text-center text-xs">Final verification after closing</td>
+                        <td className="text-right px-4 py-3 text-blue-600">$5</td>
+                        <td className="text-right px-4 py-3 text-teal-600">$15</td>
+                        <td className="text-right px-4 py-3 text-purple-600">$25</td>
+                      </tr>
+                    </tbody>
+                    <tfoot className="bg-gray-50 font-semibold">
+                      <tr>
+                        <td className="px-4 py-3 rounded-bl-lg">Total per Settlement</td>
+                        <td className="px-4 py-3 text-center"></td>
+                        <td className="text-right px-4 py-3 text-blue-600">$7</td>
+                        <td className="text-right px-4 py-3 text-teal-600">$45</td>
+                        <td className="text-right px-4 py-3 text-purple-600 rounded-br-lg">$100</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+                <div className="mt-4 grid md:grid-cols-3 gap-4">
+                  <div className="bg-blue-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-600">20%</div>
+                    <div className="text-sm text-blue-700">Bonus for AXM conversion</div>
+                  </div>
+                  <div className="bg-teal-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-teal-600">Weekly</div>
+                    <div className="text-sm text-teal-700">Payout frequency</div>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-purple-600">No Cap</div>
+                    <div className="text-sm text-purple-700">On settlement participation</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-6">Frequently Asked Questions</h3>
+                <div className="space-y-4">
+                  {[
+                    { 
+                      q: 'How much time does being an operator require?', 
+                      a: 'Time commitment varies by role. Observers can participate passively by reviewing dashboards. Validators typically spend 1-2 hours per settlement reviewing documents. Attestors need to be available for signing within 24-hour windows.' 
+                    },
+                    { 
+                      q: 'What happens if I make a mistake?', 
+                      a: 'The dual-attestation system provides safeguards. All settlements require two independent attestors to agree. Training and dry-runs help you learn the process before live settlements. Repeated errors may result in additional training or temporary suspension.' 
+                    },
+                    { 
+                      q: 'Can I upgrade my role later?', 
+                      a: 'Yes! Many operators start as Observers to learn the system, then upgrade to Validator or Attestor roles. Each upgrade requires completing the additional verification and training steps for that role.' 
+                    },
+                    { 
+                      q: 'What equipment or software do I need?', 
+                      a: 'You need a computer with internet access, a Web3 wallet (MetaMask recommended), and the ability to securely store your signing keys. We provide all training materials and tools through the operator dashboard.' 
+                    },
+                    { 
+                      q: 'Is there a bond or stake required?', 
+                      a: 'Observers and Validators do not require bonding. Attestors must demonstrate proof of bonding (insurance or collateral) as an additional accountability measure due to their signing authority.' 
+                    },
+                    { 
+                      q: 'How are operators selected for settlements?', 
+                      a: 'Settlements are assigned through a rotating queue system that considers operator availability, role qualifications, and past performance. Active operators with good track records receive more opportunities.' 
+                    }
+                  ].map((faq, idx) => (
+                    <details key={idx} className="group border border-gray-200 rounded-lg">
+                      <summary className="flex items-center justify-between cursor-pointer p-4 font-medium text-gray-900 hover:bg-gray-50">
+                        {faq.q}
+                        <svg className="w-5 h-5 text-gray-500 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </summary>
+                      <div className="px-4 pb-4 text-sm text-gray-600">{faq.a}</div>
+                    </details>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl p-8 text-white text-center">
+                <h3 className="text-2xl font-bold mb-3">Ready to Join the Network?</h3>
+                <p className="text-teal-100 mb-6 max-w-2xl mx-auto">
+                  Connect your wallet to begin the application process. Whether you're starting as an Observer 
+                  or aiming for Attestor status, there's a place for you in the Axiom operator network.
+                </p>
+                <button
+                  onClick={connectWallet}
+                  className="bg-white text-teal-700 px-8 py-4 rounded-xl font-semibold hover:bg-teal-50 transition-colors shadow-lg"
+                >
+                  Connect Wallet to Apply
+                </button>
+                <p className="text-teal-200 text-sm mt-4">
+                  Questions? Check the Documentation tab or reach out through our contact form.
+                </p>
+              </div>
             </div>
           )}
 

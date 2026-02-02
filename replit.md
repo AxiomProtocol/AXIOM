@@ -60,6 +60,12 @@ AXIOM Protocol is following a staged evolution strategy:
 See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 
 ## Recent Changes
+- Feb 2, 2026: **Operator Portal Enhancement**
+  - Added SiteLayout navigation to /operator page for consistent site-wide navigation
+  - Created comprehensive educational content for public visitors (no wallet required)
+  - Covers: Node Operator Program overview, three operator roles (Observer/Validator/Attestor), rewards structure, onboarding journey, FAQs
+  - Created node_operators and operator_rewards database tables
+  - Created siwe_nonces and wallet_sessions tables for SIWE authentication
 - Feb 2, 2026: **Phase 0 Stabilization Complete**
   - Genesis tag created: [genesis-snapshot-2026-02-02](https://github.com/AxiomProtocol/AXIOM/releases/tag/genesis-snapshot-2026-02-02)
   - 43 contracts documented, 34 size-verified via on-chain eth_getCode
