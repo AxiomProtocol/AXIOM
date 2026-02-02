@@ -288,7 +288,7 @@ export function EnhancedOnboarding({ onComplete, onDismiss }: EnhancedOnboarding
               🎯 What are your goals?
             </h3>
             <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>
-              Select all that apply to help us show you the most relevant features.
+              Select all that apply to help us show you the most relevant features. <span style={{ color: '#9CA3AF' }}>(Optional)</span>
             </p>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
@@ -321,7 +321,7 @@ export function EnhancedOnboarding({ onComplete, onDismiss }: EnhancedOnboarding
               🧭 What interests you most?
             </h3>
             <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>
-              Select the features you'd like to explore. We'll create a personalized starting point for you.
+              Select the features you'd like to explore. We'll create a personalized starting point for you. <span style={{ color: '#9CA3AF' }}>(Optional)</span>
             </p>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '340px', overflowY: 'auto' }}>
@@ -550,9 +550,9 @@ export function EnhancedOnboarding({ onComplete, onDismiss }: EnhancedOnboarding
       case 2:
         return !!formData.experienceLevel;
       case 3:
-        return formData.selectedGoals.length > 0;
+        return true; // Goals are optional
       case 4:
-        return formData.selectedInterests.length > 0;
+        return true; // Interests are optional
       case 5:
         return true;
       default:

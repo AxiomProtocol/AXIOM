@@ -878,12 +878,7 @@ export default function OperatorPortal() {
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Program Documentation</h2>
               
               <div className="grid md:grid-cols-2 gap-6">
-                <a
-                  href="https://github.com/axiomesh/docs/blob/main/nodes/node-charter.md"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block p-4 border border-gray-200 rounded-xl hover:border-teal-300 hover:bg-teal-50 transition-colors"
-                >
+                <div className="block p-4 border border-gray-200 rounded-xl bg-gray-50">
                   <div className="flex items-start">
                     <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center mr-4">
                       <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -893,16 +888,12 @@ export default function OperatorPortal() {
                     <div>
                       <h3 className="font-semibold text-gray-900">Node Charter</h3>
                       <p className="text-sm text-gray-600">Program governance, principles, and operator responsibilities</p>
+                      <p className="text-xs text-teal-600 mt-2">Available after onboarding begins</p>
                     </div>
                   </div>
-                </a>
+                </div>
 
-                <a
-                  href="https://github.com/axiomesh/docs/blob/main/nodes/node-operator-onboarding-sop.md"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block p-4 border border-gray-200 rounded-xl hover:border-teal-300 hover:bg-teal-50 transition-colors"
-                >
+                <div className="block p-4 border border-gray-200 rounded-xl bg-gray-50">
                   <div className="flex items-start">
                     <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
                       <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -912,16 +903,12 @@ export default function OperatorPortal() {
                     <div>
                       <h3 className="font-semibold text-gray-900">Onboarding SOP</h3>
                       <p className="text-sm text-gray-600">Step-by-step onboarding process and requirements</p>
+                      <p className="text-xs text-teal-600 mt-2">Available after onboarding begins</p>
                     </div>
                   </div>
-                </a>
+                </div>
 
-                <a
-                  href="https://github.com/axiomesh/docs/blob/main/nodes/node-compensation-policy.md"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block p-4 border border-gray-200 rounded-xl hover:border-teal-300 hover:bg-teal-50 transition-colors"
-                >
+                <div className="block p-4 border border-gray-200 rounded-xl bg-gray-50">
                   <div className="flex items-start">
                     <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">
                       <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -931,16 +918,12 @@ export default function OperatorPortal() {
                     <div>
                       <h3 className="font-semibold text-gray-900">Compensation Policy</h3>
                       <p className="text-sm text-gray-600">Milestone-based rewards, payouts, and slashing rules</p>
+                      <p className="text-xs text-teal-600 mt-2">Available after onboarding begins</p>
                     </div>
                   </div>
-                </a>
+                </div>
 
-                <a
-                  href="https://github.com/axiomesh/docs/blob/main/observer/node-program-overview.md"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block p-4 border border-gray-200 rounded-xl hover:border-teal-300 hover:bg-teal-50 transition-colors"
-                >
+                <div className="block p-4 border border-gray-200 rounded-xl bg-gray-50">
                   <div className="flex items-start">
                     <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
                       <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -948,14 +931,30 @@ export default function OperatorPortal() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">Observer Dashboard</h3>
+                      <h3 className="font-semibold text-gray-900">Observer Dashboard Guide</h3>
                       <p className="text-sm text-gray-600">Transparency metrics and weekly reporting</p>
+                      <p className="text-xs text-teal-600 mt-2">Available after onboarding begins</p>
                     </div>
                   </div>
-                </a>
+                </div>
               </div>
 
-              <div className="mt-8 p-4 bg-gray-50 rounded-xl">
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-blue-600 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <h3 className="font-medium text-blue-900 mb-1">Documentation Access</h3>
+                    <p className="text-sm text-blue-700">
+                      Full program documentation, including the Node Charter, training materials, and operational guides, 
+                      will be provided during the onboarding process after your application is approved.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-gray-50 rounded-xl">
                 <h3 className="font-medium text-gray-900 mb-2">Questions?</h3>
                 <p className="text-sm text-gray-600">
                   For questions about the Node Operator Program, please reach out through our 
