@@ -78,12 +78,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
     
     // Allow if domain matches any of the possible host sources
+    // Include custom domain from environment variable for production
+    const publicDomain = process.env.PUBLIC_DOMAIN;
     const validHosts = [
       Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost,
       originHost,
       refererHost,
-      req.headers.host
-    ].filter(Boolean);
+      req.headers.host,
+      publicDomain, // Custom domain (e.g., axiomprotocol.app)
+      publicDomain ? `www.${publicDomain}` : null // www variant
+    ].filter(Boolean) as string[];
     
     if (!validHosts.includes(messageDomain)) {
       console.warn('[SIWE Verify] Domain mismatch:', { messageDomain, validHosts });

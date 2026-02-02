@@ -44,3 +44,4 @@ build = ["npm", "run", "build:deploy:clean"]
 
 [userenv.production]
 ADMIN_WALLETS = "0xa6ed10e752d5facd989ee9ced113b3a064b47493"
+PUBLIC_DOMAIN = "axiomprotocol.app"
