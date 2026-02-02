@@ -97,14 +97,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         `INSERT INTO node_operators (
           operator_id, wallet_address, display_name, email, role, status, onboarding_phase
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [operatorId, walletAddress, displayName, email, role, 'PENDING', 'APPLICATION']
+        [operatorId, walletAddress, displayName, email, role, 'APPLIED', 'APPLIED']
       );
 
       await client.query(
         `INSERT INTO node_onboarding (
           onboarding_id, operator_id, current_phase, application_submitted_at, expires_at
         ) VALUES ($1, $2, $3, NOW(), $4)`,
-        [onboardingId, operatorId, 'APPLICATION', expiresAt]
+        [onboardingId, operatorId, 'APPLIED', expiresAt]
       );
 
       await client.query('COMMIT');
@@ -116,7 +116,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           walletAddress,
           displayName,
           role,
-          status: 'PENDING',
+          status: 'APPLIED',
         },
         onboarding: {
           onboardingId,
