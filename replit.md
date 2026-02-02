@@ -101,3 +101,11 @@ See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 - Internal-first approach before public launches
 - Revenue generation to fund expansion
 - Block format with copy buttons for external content
+- **Deployment settings are defined in `docs/DEPLOYMENT_SOP.md` - NEVER deviate from these settings**
+
+## Deployment Reference
+See `docs/DEPLOYMENT_SOP.md` for:
+- Required environment variables
+- Build and run commands
+- Admin wallet configuration
+- Pre/post deployment checklists
