@@ -69,7 +69,10 @@ See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
     - Centralized admin config (lib/admin/config.ts) with env var support
     - Audit logging (admin_audit_logs table) tracks all admin actions with details
     - Rate limiting (30 requests/minute per admin wallet)
-  - API endpoints: /api/admin/operators (list), /api/admin/operators/[id] (details), /api/admin/operators/advance, /api/admin/operators/reject, /api/admin/operators/send-email, /api/admin/check-access
+    - Audit log viewer tab displays complete admin action history
+    - Bulk operations: advance up to 20 operators at once with checkbox selection
+    - CSV export with filter support (all/pending/onboarding/active statuses)
+  - API endpoints: /api/admin/operators (list), /api/admin/operators/[id] (details), /api/admin/operators/advance, /api/admin/operators/reject, /api/admin/operators/send-email, /api/admin/check-access, /api/admin/operators/bulk-advance, /api/admin/operators/export, /api/admin/audit-logs
   - Operator onboarding phases: APPLIED → VERIFIED → PROVISIONED → DRY_RUN_PASSED → CERTIFIED → ACTIVE
   - Fixed operator database schema with missing columns (onboarding_phase, total_milestones_completed, etc.)
   - Created node_onboarding table for tracking onboarding progress
