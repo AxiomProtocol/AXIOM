@@ -60,6 +60,15 @@ AXIOM Protocol is following a staged evolution strategy:
 See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 
 ## Recent Changes
+- Feb 2, 2026: **Node Operator Admin System**
+  - Created comprehensive admin panel at /admin/operators with stats dashboard
+  - Features: view all operators, filter by status, view details, advance through phases, reject, send custom emails
+  - Wallet-based admin authentication (requires admin wallet from whitelist)
+  - Email notifications via Resend for status changes (advancement, rejection, custom)
+  - API endpoints: /api/admin/operators (list), /api/admin/operators/[id] (details), /api/admin/operators/advance, /api/admin/operators/reject, /api/admin/operators/send-email
+  - Operator onboarding phases: APPLIED → VERIFIED → PROVISIONED → DRY_RUN_PASSED → CERTIFIED → ACTIVE
+  - Fixed operator database schema with missing columns (onboarding_phase, total_milestones_completed, etc.)
+  - Created node_onboarding table for tracking onboarding progress
 - Feb 2, 2026: **Operator Portal Enhancement**
   - Added SiteLayout navigation to /operator page for consistent site-wide navigation
   - Created comprehensive educational content for public visitors (no wallet required)

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../server/db';
+import { sendOperatorAdvancedEmail } from '../../../../lib/email/operatorEmails';
 
 const PHASE_ORDER = ['APPLIED', 'VERIFIED', 'PROVISIONED', 'DRY_RUN_PASSED', 'CERTIFIED', 'ACTIVE'];
 const PHASE_TIMESTAMPS: Record<string, string> = {
@@ -10,9 +11,18 @@ const PHASE_TIMESTAMPS: Record<string, string> = {
   'ACTIVE': 'activation_completed_at',
 };
 
+const ADMIN_WALLETS = [
+  '0xa6ed10e752d5facd989ee9ced113b3a064b47493',
+].map(w => w.toLowerCase());
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
+  }
+
+  const adminWallet = req.headers['x-admin-wallet'] as string;
+  if (!adminWallet || !ADMIN_WALLETS.includes(adminWallet.toLowerCase())) {
+    return res.status(403).json({ message: 'Admin access required' });
   }
 
   const { operatorId, newPhase } = req.body;
@@ -31,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await client.query('BEGIN');
 
       const checkResult = await client.query(
-        'SELECT status FROM node_operators WHERE operator_id = $1',
+        'SELECT status, email, display_name FROM node_operators WHERE operator_id = $1',
         [operatorId]
       );
 
@@ -40,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(404).json({ message: 'Operator not found' });
       }
 
-      const currentPhase = checkResult.rows[0].status;
+      const { status: currentPhase, email, display_name } = checkResult.rows[0];
       const currentIndex = PHASE_ORDER.indexOf(currentPhase);
       const newIndex = PHASE_ORDER.indexOf(newPhase);
 
@@ -69,11 +79,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       await client.query('COMMIT');
 
+      let emailSent = false;
+      let emailError = null;
+      try {
+        await sendOperatorAdvancedEmail(email, display_name, operatorId, newPhase);
+        emailSent = true;
+      } catch (err: any) {
+        console.error('Failed to send advancement email:', err);
+        emailError = err.message || 'Email service unavailable';
+      }
+
       res.status(200).json({ 
         success: true, 
         message: `Operator advanced to ${newPhase}`,
         operatorId,
-        newPhase
+        newPhase,
+        emailSent,
+        emailError: emailSent ? null : emailError
       });
     } catch (err) {
       await client.query('ROLLBACK');
