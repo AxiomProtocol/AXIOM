@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { SiteLayout } from '../components/navigation';
 
 type OperatorStatus = 'NOT_APPLIED' | 'APPLIED' | 'VERIFIED' | 'PROVISIONED' | 'DRY_RUN_PASSED' | 'CERTIFIED' | 'ACTIVE';
 type OperatorRole = 'OBSERVER' | 'VALIDATOR' | 'ATTESTOR';
@@ -217,7 +218,7 @@ export default function OperatorPortal() {
   ];
 
   return (
-    <>
+    <SiteLayout>
       <Head>
         <title>Node Operator Portal | Axiom</title>
         <meta name="description" content="Apply to become a Node Operator and participate in the Capital Bridge settlement network" />
@@ -677,6 +678,6 @@ export default function OperatorPortal() {
           )}
         </div>
       </div>
-    </>
+    </SiteLayout>
   );
 }
