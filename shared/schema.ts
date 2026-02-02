@@ -8130,6 +8130,81 @@ export const nodeChainSync = pgTable("node_chain_sync", {
   syncStatusIdx: index("node_chain_sync_status_idx").on(table.syncStatus),
 }));
 
+export const creditTransactionTypeEnum = pgEnum('credit_transaction_type', [
+  'ACCRUAL',
+  'ADJUSTMENT',
+  'SLASH',
+  'REDEMPTION',
+  'ONCHAIN_SYNC'
+]);
+
+export const creditTransactionStatusEnum = pgEnum('credit_transaction_status', [
+  'PENDING',
+  'POSTED',
+  'REVERSED',
+  'FAILED'
+]);
+
+export const creditSourceEnum = pgEnum('credit_source', [
+  'WORK',
+  'NODE_REWARDS',
+  'ADMIN',
+  'SYSTEM'
+]);
+
+export const creditsLedger = pgTable("credits_ledger", {
+  id: serial("id").primaryKey(),
+  operatorId: varchar("operator_id", { length: 50 }).references(() => nodeOperators.operatorId).notNull().unique(),
+  availableBalance: decimal("available_balance", { precision: 18, scale: 6 }).default('0').notNull(),
+  pendingBalance: decimal("pending_balance", { precision: 18, scale: 6 }).default('0').notNull(),
+  totalEarned: decimal("total_earned", { precision: 18, scale: 6 }).default('0').notNull(),
+  totalRedeemed: decimal("total_redeemed", { precision: 18, scale: 6 }).default('0').notNull(),
+  totalSlashed: decimal("total_slashed", { precision: 18, scale: 6 }).default('0').notNull(),
+  lastSyncedAt: timestamp("last_synced_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  operatorIdx: index("credits_ledger_operator_idx").on(table.operatorId),
+}));
+
+export const creditsTransactions = pgTable("credits_transactions", {
+  id: serial("id").primaryKey(),
+  transactionId: varchar("transaction_id", { length: 50 }).notNull().unique(),
+  operatorId: varchar("operator_id", { length: 50 }).references(() => nodeOperators.operatorId).notNull(),
+  type: creditTransactionTypeEnum("type").notNull(),
+  amount: decimal("amount", { precision: 18, scale: 6 }).notNull(),
+  currency: varchar("currency", { length: 10 }).default('USD').notNull(),
+  source: creditSourceEnum("source").notNull(),
+  status: creditTransactionStatusEnum("status").default('PENDING').notNull(),
+  reference: varchar("reference", { length: 100 }),
+  txHash: varchar("tx_hash", { length: 66 }),
+  reason: text("reason"),
+  metadata: jsonb("metadata").$type<Record<string, any>>(),
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  operatorIdx: index("credits_transactions_operator_idx").on(table.operatorId),
+  typeIdx: index("credits_transactions_type_idx").on(table.type),
+  statusIdx: index("credits_transactions_status_idx").on(table.status),
+  createdAtIdx: index("credits_transactions_created_at_idx").on(table.createdAt),
+}));
+
+export const onchainRewardsSync = pgTable("onchain_rewards_sync", {
+  id: serial("id").primaryKey(),
+  nodeId: integer("node_id").notNull().unique(),
+  operatorId: varchar("operator_id", { length: 50 }).references(() => nodeOperators.operatorId),
+  lastBlockNumber: integer("last_block_number").default(0),
+  lastEventId: varchar("last_event_id", { length: 100 }),
+  lastRewardsTotal: decimal("last_rewards_total", { precision: 18, scale: 6 }).default('0'),
+  lastPendingBalance: decimal("last_pending_balance", { precision: 18, scale: 6 }).default('0'),
+  syncedAt: timestamp("synced_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  nodeIdIdx: index("onchain_rewards_sync_node_id_idx").on(table.nodeId),
+  operatorIdx: index("onchain_rewards_sync_operator_idx").on(table.operatorId),
+}));
+
 export type NoteSubmission = typeof noteSubmissions.$inferSelect;
 export type InsertNoteSubmission = typeof noteSubmissions.$inferInsert;
 export type NodeOperator = typeof nodeOperators.$inferSelect;
@@ -8138,3 +8213,9 @@ export type NodeOnboarding = typeof nodeOnboarding.$inferSelect;
 export type InsertNodeOnboarding = typeof nodeOnboarding.$inferInsert;
 export type NodeChainSync = typeof nodeChainSync.$inferSelect;
 export type InsertNodeChainSync = typeof nodeChainSync.$inferInsert;
+export type CreditsLedger = typeof creditsLedger.$inferSelect;
+export type InsertCreditsLedger = typeof creditsLedger.$inferInsert;
+export type CreditsTransaction = typeof creditsTransactions.$inferSelect;
+export type InsertCreditsTransaction = typeof creditsTransactions.$inferInsert;
+export type OnchainRewardsSync = typeof onchainRewardsSync.$inferSelect;
+export type InsertOnchainRewardsSync = typeof onchainRewardsSync.$inferInsert;
