@@ -20,7 +20,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const siweMessage = new SiweMessage(message);
     const { nonce } = siweMessage;
     
-    const expectedHost = req.headers.host;
+    // Handle proxy headers for production environments (Replit, Vercel, etc.)
+    // Priority: x-forwarded-host > host header
+    const forwardedHost = req.headers['x-forwarded-host'];
+    const expectedHost = Array.isArray(forwardedHost) 
+      ? forwardedHost[0] 
+      : forwardedHost || req.headers.host;
+    
     if (!expectedHost) {
       return res.status(400).json({ 
         error: 'Invalid request - missing host header',
@@ -29,10 +35,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     
     const messageDomain = siweMessage.domain;
+    
+    // Log for debugging in production
+    console.log('[SIWE Verify] Domain check:', {
+      messageDomain,
+      expectedHost,
+      forwardedHost: req.headers['x-forwarded-host'],
+      rawHost: req.headers.host
+    });
+    
     if (messageDomain !== expectedHost) {
+      console.warn('[SIWE Verify] Domain mismatch:', { messageDomain, expectedHost });
       return res.status(401).json({ 
         error: 'Domain mismatch. The signature was created for a different site.',
-        code: 'DOMAIN_MISMATCH'
+        code: 'DOMAIN_MISMATCH',
+        debug: { expected: expectedHost, received: messageDomain }
       });
     }
     
