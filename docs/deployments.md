@@ -34,9 +34,10 @@
 | Lending | 6 | 6 | All verified |
 | DEX V2 | 10 | 10 | Proxy contracts |
 | DePIN & Infrastructure | 6 | 3 | 3 pending |
+| Node Economy | 3 | 3 | Step 2 - Feb 2026 |
 | Community & Utility | 5 | 0 | All pending |
 | Legacy | 1 | 0 | Deprecated |
-| **TOTAL** | **43** | **32** | Per Genesis Snapshot |
+| **TOTAL** | **46** | **35** | Updated Feb 2026 |
 
 *Note: Counts derived from GENESIS_SNAPSHOT.md. Verification via eth_getCode RPC.*
 
@@ -164,6 +165,36 @@
 | GamificationHub | `0x7F455b4614E05820AAD52067Ef223f30b1936f93` | Pending | No | No |
 | SustainabilityHub | `0xAf4dF8a7733BAB64b7Ce83F2494d6446eF9eC046` | Pending | No | No |
 | CrossChainAndLaunchModule | `0x28623Ee5806ab9609483F4B68cb1AE212A092e4d` | Pending | No | No |
+
+---
+
+## Node Economy Contracts (Step 2)
+
+*Deployed: February 2026 | Node Operator Program*
+*Reference: [docs/node-operator/on-chain-spec.md](./node-operator/on-chain-spec.md)*
+
+| Contract | Address | Size | Verified | Proxy |
+|----------|---------|------|----------|-------|
+| NodeRegistry | `0x31bc6268155219B627FC3B2d8434d010F33DCb03` | TBD | Yes | No |
+| NodeRewards | `0x0c1c96F38566d056877cEf4791c701C4F5AEf362` | TBD | Yes | No |
+| SlashingEngine | `0x1ae162B80cEfb82f9ccF25b5E7A45E5e133E6F87` | TBD | Yes | No |
+
+### Node Economy Roles
+
+| Role | Contract | Holder | Purpose |
+|------|----------|--------|---------|
+| DEFAULT_ADMIN_ROLE | NodeRegistry | Gnosis Safe | Full admin control |
+| GUARDIAN_ROLE | NodeRegistry | Gnosis Safe | Emergency pause |
+| NODE_MANAGER_ROLE | NodeRegistry | Deployer | Node management |
+| SLASHER_ROLE | NodeRegistry | SlashingEngine | Execute slashing |
+
+### Integration Points
+
+| Service | API Endpoint | Description |
+|---------|-------------|-------------|
+| Node Economy Stats | `/api/observer/node-economy` | Live on-chain statistics |
+| Operator Status | `/api/operator/status` | Off-chain operator status |
+| Node Economy Service | `lib/contracts/node-economy/` | TypeScript service layer |
 
 ---
 
