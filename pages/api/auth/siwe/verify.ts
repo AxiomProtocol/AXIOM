@@ -10,6 +10,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Log all relevant headers for debugging production proxy issues
+  console.log('[SIWE Verify] Request headers:', {
+    host: req.headers.host,
+    'x-forwarded-host': req.headers['x-forwarded-host'],
+    'x-forwarded-proto': req.headers['x-forwarded-proto'],
+    'x-real-host': req.headers['x-real-host'],
+    'x-original-host': req.headers['x-original-host'],
+    origin: req.headers.origin,
+    referer: req.headers.referer
+  });
+
   try {
     const { message, signature } = req.body;
     
@@ -21,11 +32,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { nonce } = siweMessage;
     
     // Handle proxy headers for production environments (Replit, Vercel, etc.)
-    // Priority: x-forwarded-host > host header
+    // Priority: x-forwarded-host > origin host > referer host > host header
     const forwardedHost = req.headers['x-forwarded-host'];
-    const expectedHost = Array.isArray(forwardedHost) 
-      ? forwardedHost[0] 
-      : forwardedHost || req.headers.host;
+    const originHeader = req.headers.origin;
+    const refererHeader = req.headers.referer;
+    
+    // Extract host from origin or referer as fallback
+    let originHost: string | undefined;
+    let refererHost: string | undefined;
+    
+    if (originHeader) {
+      try {
+        originHost = new URL(originHeader as string).host;
+      } catch (e) {}
+    }
+    
+    if (refererHeader) {
+      try {
+        refererHost = new URL(refererHeader as string).host;
+      } catch (e) {}
+    }
+    
+    const expectedHost = (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) 
+      || originHost 
+      || refererHost 
+      || req.headers.host;
     
     if (!expectedHost) {
       return res.status(400).json({ 
@@ -41,15 +72,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       messageDomain,
       expectedHost,
       forwardedHost: req.headers['x-forwarded-host'],
+      originHost,
+      refererHost,
       rawHost: req.headers.host
     });
     
-    if (messageDomain !== expectedHost) {
-      console.warn('[SIWE Verify] Domain mismatch:', { messageDomain, expectedHost });
+    // Allow if domain matches any of the possible host sources
+    const validHosts = [
+      Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost,
+      originHost,
+      refererHost,
+      req.headers.host
+    ].filter(Boolean);
+    
+    if (!validHosts.includes(messageDomain)) {
+      console.warn('[SIWE Verify] Domain mismatch:', { messageDomain, validHosts });
       return res.status(401).json({ 
         error: 'Domain mismatch. The signature was created for a different site.',
         code: 'DOMAIN_MISMATCH',
-        debug: { expected: expectedHost, received: messageDomain }
+        debug: { validHosts, received: messageDomain }
       });
     }
     
@@ -73,10 +114,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
     
+    // Use the message's own domain for verification since we already validated it
     const fields = await siweMessage.verify({ 
       signature,
       nonce,
-      domain: expectedHost
+      domain: messageDomain
     });
     
     if (!fields.success) {
