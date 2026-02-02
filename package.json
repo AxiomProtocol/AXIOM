@@ -131,6 +131,7 @@
     "@napi-rs/canvas": "^0.1.52",
     "@neondatabase/serverless": "^1.0.0",
     "@radix-ui/react-slot": "^1.2.3",
+    "@rainbow-me/rainbowkit": "^2.2.10",
     "@replit/database": "^3.0.1",
     "@safe-global/api-kit": "^4.0.1",
     "@safe-global/protocol-kit": "^6.1.2",
