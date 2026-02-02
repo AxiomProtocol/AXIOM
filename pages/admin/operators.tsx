@@ -522,6 +522,7 @@ export default function OperatorAdminPage() {
           </div>
 
           {activeTab === 'operators' && (
+          <>
           <div className="mb-6 flex items-center space-x-2">
             {['all', 'pending', 'onboarding', 'active'].map((f) => (
               <button
@@ -657,9 +658,10 @@ export default function OperatorAdminPage() {
               </table>
             </div>
           )}
+        </>
         )}
 
-          {activeTab === 'audit' && (
+        {activeTab === 'audit' && (
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               {auditLoading ? (
                 <div className="text-center py-12">
