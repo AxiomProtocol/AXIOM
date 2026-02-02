@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "unified-platform.js",
   "scripts": {
-    "preinstall": "rm -rf node_modules 2>/dev/null; sync 2>/dev/null || true; sleep 1",
+    "preinstall": "rm -rf node_modules/wagmi node_modules/.cache 2>/dev/null || true",
     "dev": "next dev -p 5000",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
