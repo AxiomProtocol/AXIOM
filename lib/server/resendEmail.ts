@@ -694,3 +694,82 @@ function getLendingFundYieldHtml(params: {
 </html>
   `.trim();
 }
+
+export async function sendOperatorCertificateEmail(
+  to: string,
+  operatorName: string,
+  operatorId: string,
+  role: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    
+    const roleTitle = role === 'OBSERVER' ? 'Observer' : role === 'VALIDATOR' ? 'Validator' : 'Attestor';
+    const issueDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    
+    const { data, error } = await client.emails.send({
+      from: fromEmail || 'Axiom <noreply@axiom.money>',
+      to: [to],
+      subject: 'Your AXIOM Node Operator Certificate',
+      html: getOperatorCertificateEmailHtml(operatorName, operatorId, roleTitle, issueDate)
+    });
+
+    if (error) {
+      console.error('Resend error:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('Certificate email sent:', data?.id);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Failed to send certificate email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+function getOperatorCertificateEmailHtml(name: string, operatorId: string, role: string, issueDate: string): string {
+  return \`
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node Operator Certificate</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f9fafb;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #115e59 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+      <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 8px; letter-spacing: 1px;">AXIOM PROTOCOL</div>
+      <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">Node Operator Certificate</h1>
+    </div>
+    <div style="background: #ffffff; padding: 40px 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+      <p style="color: #6b7280; font-size: 16px; line-height: 1.6; margin: 0 0 10px; text-align: center;">This certifies that</p>
+      <h2 style="color: #1f2937; margin: 0 0 5px; font-size: 28px; text-align: center; font-weight: bold;">\${name}</h2>
+      <p style="color: #9ca3af; font-size: 14px; margin: 0 0 20px; text-align: center; font-family: monospace;">\${operatorId}</p>
+      <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 30px; text-align: center;">
+        has successfully completed all certification requirements and is authorized to operate as a <strong style="color: #0d9488;">\${role}</strong> on the AXIOM network.
+      </p>
+      <div style="background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%); border-radius: 12px; padding: 25px; margin: 25px 0; border: 1px solid #99f6e4;">
+        <h3 style="color: #0f766e; margin: 0 0 15px; font-size: 16px; text-align: center;">Certification Completed</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="text-align: center; padding: 8px;"><div style="color: #0d9488; font-size: 12px; margin-bottom: 4px;">NODE CHARTER</div><div style="color: #0f766e; font-size: 14px; font-weight: bold;">Acknowledged</div></td>
+            <td style="text-align: center; padding: 8px;"><div style="color: #0d9488; font-size: 12px; margin-bottom: 4px;">DRY-RUN</div><div style="color: #0f766e; font-size: 14px; font-weight: bold;">Completed</div></td>
+            <td style="text-align: center; padding: 8px;"><div style="color: #0d9488; font-size: 12px; margin-bottom: 4px;">KEY SECURITY</div><div style="color: #0f766e; font-size: 14px; font-weight: bold;">Confirmed</div></td>
+          </tr>
+        </table>
+      </div>
+      <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 20px;">
+        <p style="color: #6b7280; font-size: 14px; margin: 0 0 20px; text-align: center;">Issued on \${issueDate}</p>
+        <div style="text-align: center;">
+          <a href="https://axiom.money/operator" style="display: inline-block; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: white; padding: 14px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">View Operator Portal</a>
+        </div>
+      </div>
+      <p style="color: #9ca3af; font-size: 12px; margin-top: 30px; text-align: center;">This certificate serves as official documentation of your Node Operator certification.<br>Keep this email for your records.</p>
+    </div>
+    <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 11px;"><p style="margin: 0;">AXIOM Protocol - Decentralized Land Settlement Network</p></div>
+  </div>
+</body>
+</html>
+  \`.trim();
+}

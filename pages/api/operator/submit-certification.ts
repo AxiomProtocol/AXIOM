@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
+import { sendOperatorCertificateEmail } from '../../../lib/server/resendEmail';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -14,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const operatorResult = await pool.query(
-      'SELECT operator_id, status, role FROM node_operators WHERE wallet_address = $1',
+      'SELECT operator_id, status, role, email, display_name FROM node_operators WHERE wallet_address = $1',
       [walletAddress.toLowerCase()]
     );
 
@@ -57,9 +58,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       [operator.operator_id]
     );
 
+    if (operator.email) {
+      try {
+        await sendOperatorCertificateEmail(
+          operator.email,
+          operator.display_name || 'Node Operator',
+          operator.operator_id,
+          operator.role
+        );
+        console.log('Certificate email sent to:', operator.email);
+      } catch (emailError) {
+        console.error('Failed to send certificate email:', emailError);
+      }
+    }
+
     res.status(200).json({ 
       success: true, 
-      message: 'Certification submitted successfully. Your status has been updated to CERTIFIED.',
+      message: 'Certification submitted successfully! Your certificate has been emailed to you.',
       newStatus: 'CERTIFIED'
     });
   } catch (error: any) {
