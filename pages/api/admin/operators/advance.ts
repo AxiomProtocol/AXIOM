@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../server/db';
 import { sendOperatorAdvancedEmail } from '../../../../lib/email/operatorEmails';
+import { isAdminWallet } from '../../../../lib/admin/config';
+import { checkRateLimit } from '../../../../lib/admin/rateLimit';
+import { logAdminAction } from '../../../../lib/admin/auditLog';
 
 const PHASE_ORDER = ['APPLIED', 'VERIFIED', 'PROVISIONED', 'DRY_RUN_PASSED', 'CERTIFIED', 'ACTIVE'];
 const PHASE_TIMESTAMPS: Record<string, string> = {
@@ -11,18 +14,22 @@ const PHASE_TIMESTAMPS: Record<string, string> = {
   'ACTIVE': 'activation_completed_at',
 };
 
-const ADMIN_WALLETS = [
-  '0xa6ed10e752d5facd989ee9ced113b3a064b47493',
-].map(w => w.toLowerCase());
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   const adminWallet = req.headers['x-admin-wallet'] as string;
-  if (!adminWallet || !ADMIN_WALLETS.includes(adminWallet.toLowerCase())) {
+  if (!isAdminWallet(adminWallet)) {
     return res.status(403).json({ message: 'Admin access required' });
+  }
+
+  const rateLimit = checkRateLimit(adminWallet.toLowerCase());
+  if (!rateLimit.allowed) {
+    return res.status(429).json({ 
+      message: 'Rate limit exceeded', 
+      retryAfter: Math.ceil(rateLimit.resetIn / 1000) 
+    });
   }
 
   const { operatorId, newPhase } = req.body;
@@ -78,6 +85,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       await client.query('COMMIT');
+
+      await logAdminAction({
+        adminWallet: adminWallet.toLowerCase(),
+        action: 'OPERATOR_ADVANCED',
+        targetOperatorId: operatorId,
+        details: { fromPhase: currentPhase, toPhase: newPhase }
+      });
 
       let emailSent = false;
       let emailError = null;

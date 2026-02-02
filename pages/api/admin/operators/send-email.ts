@@ -1,10 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../server/db';
 import { sendCustomOperatorEmail } from '../../../../lib/email/operatorEmails';
-
-const ADMIN_WALLETS = [
-  '0xa6ed10e752d5facd989ee9ced113b3a064b47493',
-].map(w => w.toLowerCase());
+import { isAdminWallet } from '../../../../lib/admin/config';
+import { checkRateLimit } from '../../../../lib/admin/rateLimit';
+import { logAdminAction } from '../../../../lib/admin/auditLog';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -12,8 +11,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const adminWallet = req.headers['x-admin-wallet'] as string;
-  if (!adminWallet || !ADMIN_WALLETS.includes(adminWallet.toLowerCase())) {
+  if (!isAdminWallet(adminWallet)) {
     return res.status(403).json({ message: 'Admin access required' });
+  }
+
+  const rateLimit = checkRateLimit(adminWallet.toLowerCase());
+  if (!rateLimit.allowed) {
+    return res.status(429).json({ 
+      message: 'Rate limit exceeded', 
+      retryAfter: Math.ceil(rateLimit.resetIn / 1000) 
+    });
   }
 
   const { operatorId, subject, message } = req.body;
@@ -45,6 +52,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { email, display_name } = result.rows[0];
 
       await sendCustomOperatorEmail(email, display_name, subject, message);
+
+      await logAdminAction({
+        adminWallet: adminWallet.toLowerCase(),
+        action: 'OPERATOR_EMAIL_SENT',
+        targetOperatorId: operatorId,
+        details: { subject, to: email }
+      });
 
       res.status(200).json({ 
         success: true, 

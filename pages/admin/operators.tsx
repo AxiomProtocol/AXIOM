@@ -27,10 +27,6 @@ const PHASE_LABELS: Record<string, string> = {
   'REJECTED': 'Rejected',
 };
 
-const ADMIN_WALLETS = [
-  '0xa6ed10e752d5facd989ee9ced113b3a064b47493',
-].map(w => w.toLowerCase());
-
 export default function OperatorAdminPage() {
   const [operators, setOperators] = useState<Operator[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +53,23 @@ export default function OperatorAdminPage() {
     }
   }, [isAdmin]);
 
+  const checkAdminStatus = async (wallet: string) => {
+    try {
+      const res = await fetch('/api/admin/check-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.isAdmin;
+      }
+    } catch (e) {
+      console.error('Admin check failed:', e);
+    }
+    return false;
+  };
+
   const checkWalletConnection = async () => {
     if (typeof window !== 'undefined' && (window as any).ethereum) {
       try {
@@ -64,8 +77,9 @@ export default function OperatorAdminPage() {
         if (accounts[0]) {
           const addr = accounts[0].toLowerCase();
           setWalletAddress(addr);
-          setIsAdmin(ADMIN_WALLETS.includes(addr));
-          if (!ADMIN_WALLETS.includes(addr)) {
+          const adminStatus = await checkAdminStatus(addr);
+          setIsAdmin(adminStatus);
+          if (!adminStatus) {
             setLoading(false);
           }
         } else {
@@ -87,7 +101,8 @@ export default function OperatorAdminPage() {
         if (accounts[0]) {
           const addr = accounts[0].toLowerCase();
           setWalletAddress(addr);
-          setIsAdmin(ADMIN_WALLETS.includes(addr));
+          const adminStatus = await checkAdminStatus(addr);
+          setIsAdmin(adminStatus);
         }
       } catch (e) {
         console.error('Wallet connection failed:', e);
