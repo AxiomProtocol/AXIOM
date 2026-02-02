@@ -42,6 +42,10 @@ AXIOM Protocol is a comprehensive land-first community ownership platform built 
 Uses PostgreSQL with Drizzle ORM. Schema defined in `shared/schema.ts`.
 
 ## Recent Changes
+- Feb 2, 2026: Database repairs and API endpoint creation
+  - Created missing database tables: dao_grants, treasuries, treasury_transactions, governance_proposals, dscr_applications, insurance_claims, insurance_policies
+  - Created missing API endpoints: /api/lending-fund/stats, /api/dscr/stats, /api/staking/stats, /api/insurance/stats
+  - Fixed treasury/stats endpoint with correct table references
 - Feb 1, 2026: Initial setup from GitHub repository
 - Database schema synced with PostgreSQL
 - Development server configured on port 5000
