@@ -60,6 +60,11 @@ AXIOM Protocol is following a staged evolution strategy:
 See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 
 ## Recent Changes
+- Feb 2, 2026: **Step 0: Repo Discovery and Inventory Complete**
+  - Created docs/deployments.md - canonical table of 43 deployed contracts
+  - Created docs/contract-registry.md - tier classification (Core/Product/Utility/Legacy)
+  - Created docs/current-roles-and-permissions.md - role holders and permissions
+  - All docs sourced from GENESIS_SNAPSHOT.md and CONTRACT_CLASSIFICATION.md
 - Feb 2, 2026: **Wallet Connectivity SOP Documented**
   - Fixed SIWE nonce 500 error by adding drizzle-orm to outputFileTracingIncludes
   - Added comprehensive Wallet Connectivity section to DEPLOYMENT_SOP.md
