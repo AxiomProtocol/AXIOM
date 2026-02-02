@@ -171,19 +171,26 @@ export class WalletService {
 
   /**
    * Connect wallet using MetaMask
+   * Prefers injected provider (window.ethereum) for better production compatibility
    */
   async connectMetaMask(): Promise<string> {
     try {
       console.log('🦊 Connecting MetaMask...');
       
-      if (!this.metamaskSDK) {
-        throw new Error('MetaMask SDK not initialized');
+      // Prefer injected provider for better production compatibility
+      // MetaMask SDK can have issues with popups in iframe/production contexts
+      let provider: any = null;
+      
+      if (typeof window !== 'undefined' && window.ethereum) {
+        console.log('📦 Using injected provider (window.ethereum)');
+        provider = window.ethereum;
+      } else if (this.metamaskSDK) {
+        console.log('📦 Using MetaMask SDK provider');
+        provider = this.metamaskSDK.getProvider();
       }
-
-      const provider = this.metamaskSDK.getProvider();
       
       if (!provider) {
-        throw new Error('MetaMask provider not available');
+        throw new Error('MetaMask provider not available. Please install MetaMask.');
       }
 
       // Request account access
