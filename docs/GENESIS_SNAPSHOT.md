@@ -301,12 +301,7 @@ cast call 0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D "totalSupply()(uint256)" --
 
 ## Git Tag Requirement
 
-**Action Required:** Create genesis tag manually:
-
-```bash
-git tag -a genesis-snapshot-2026-02-02 -m "Genesis Snapshot: Phase 0 stabilization baseline for Universe L3 roadmap"
-git push origin genesis-snapshot-2026-02-02
-```
+**Tag Created:** [genesis-snapshot-2026-02-02](https://github.com/AxiomProtocol/AXIOM/releases/tag/genesis-snapshot-2026-02-02)
 
 This tag marks the baseline for all future upgrades and L3 migrations.
 

@@ -60,9 +60,14 @@ AXIOM Protocol is following a staged evolution strategy:
 See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 
 ## Recent Changes
+- Feb 2, 2026: **Phase 0 Stabilization Complete**
+  - Genesis tag created: [genesis-snapshot-2026-02-02](https://github.com/AxiomProtocol/AXIOM/releases/tag/genesis-snapshot-2026-02-02)
+  - 43 contracts documented, 34 size-verified via on-chain eth_getCode
+  - All contracts confirmed safe (under 24KB limit)
+  - Created: GENESIS_SNAPSHOT.md, DEPLOYMENT_SIZE_AUDIT.md, CONTRACT_CLASSIFICATION.md, UPGRADE_PROXY_PLAN.md
+  - Fork script ready for testnet experimentation
 - Feb 2, 2026: Strategic roadmap created for Universe L3 launch
   - Created `docs/UNIVERSE_L3_ROADMAP.md` with staged deployment strategy
-  - Created `docs/GENESIS_SNAPSHOT.md` to document current contract state
   - Fixed deployment configuration for production
 - Feb 2, 2026: Database repairs and API endpoint creation
   - Created missing database tables: dao_grants, treasuries, treasury_transactions, governance_proposals, dscr_applications, insurance_claims, insurance_policies
