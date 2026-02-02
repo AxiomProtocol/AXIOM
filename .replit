@@ -39,3 +39,8 @@ packages = ["jq"]
 deploymentTarget = "autoscale"
 run = ["bash", "-c", "export HOST=0.0.0.0 && export HOSTNAME=0.0.0.0 && export PORT=5000 && node .next/standalone/server.js"]
 build = ["npm", "run", "build:deploy:clean"]
+
+[userenv]
+
+[userenv.production]
+ADMIN_WALLETS = "0xa6ed10e752d5facd989ee9ced113b3a064b47493"
