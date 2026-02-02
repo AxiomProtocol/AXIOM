@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { getArbitrumRpcUrl } from '../../../lib/config';
 
 import ExchangeHubABI from '../../abis/dex/AxiomExchangeHubV2.json';
 import OracleAdapterABI from '../../abis/dex/AxiomOracleAdapter.json';
@@ -24,7 +25,7 @@ export const DEX_ADDRESSES = {
   INSURANCE_FUND: '0x449769453e5bc43345092EeD31780bbbfc400F39'
 } as const;
 
-const RPC_URL = process.env.ARBITRUM_RPC_URL || 'https://arb1.arbitrum.io/rpc';
+const RPC_URL = getArbitrumRpcUrl();
 
 export interface Pool {
   id: number;

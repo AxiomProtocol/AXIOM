@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
+import { getArbitrumRpcUrl } from '../../../lib/config';
 
-const RPC_URL = process.env.ARBITRUM_RPC_URL || 'https://arb1.arbitrum.io/rpc';
+const RPC_URL = getArbitrumRpcUrl();
 
 export const TREASURY_PRODUCTS = {
   BUIDL: {
