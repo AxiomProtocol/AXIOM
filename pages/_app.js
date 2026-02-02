@@ -5,6 +5,7 @@ import '../styles/mobile.css'
 import { useEffect, useState, createContext, useContext } from 'react'
 import { useRouter } from 'next/router'
 import { WalletProvider } from '../components/WalletConnect/WalletContext'
+import { WagmiProvider } from '../lib/wagmi/WagmiProvider'
 import ErrorBoundary from '../components/ErrorBoundary'
 import { RebuildNav, RebuildFooter } from '../components/axiomRebuild'
 import { ThemeProvider } from '../lib/theme'
@@ -133,24 +134,26 @@ export default function App({ Component, pageProps }) {
 
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <OnboardingContext.Provider value={{ triggerOnboarding }}>
-          <WalletProvider>
-            {showRebuildNav && <RebuildNav />}
-            <Component {...pageProps} />
-            {showRebuildNav && <RebuildFooter />}
-            <SettingsButton />
-            <PersonalizedNavigation />
-            <MobileBottomNav />
-            {showOnboarding && (
-              <EnhancedOnboarding
-                onComplete={handleOnboardingComplete}
-                onDismiss={() => setShowOnboarding(false)}
-              />
-            )}
-          </WalletProvider>
-        </OnboardingContext.Provider>
-      </ThemeProvider>
+      <WagmiProvider>
+        <ThemeProvider>
+          <OnboardingContext.Provider value={{ triggerOnboarding }}>
+            <WalletProvider>
+              {showRebuildNav && <RebuildNav />}
+              <Component {...pageProps} />
+              {showRebuildNav && <RebuildFooter />}
+              <SettingsButton />
+              <PersonalizedNavigation />
+              <MobileBottomNav />
+              {showOnboarding && (
+                <EnhancedOnboarding
+                  onComplete={handleOnboardingComplete}
+                  onDismiss={() => setShowOnboarding(false)}
+                />
+              )}
+            </WalletProvider>
+          </OnboardingContext.Provider>
+        </ThemeProvider>
+      </WagmiProvider>
     </ErrorBoundary>
   )
 }
