@@ -1,11 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-
-const CONTRACTS = {
-  NodeRegistry: '0x31bc6268155219B627FC3B2d8434d010F33DCb03',
-  NodeRewards: '0x0c1c96F38566d056877cEf4791c701C4F5AEf362',
-  SlashingEngine: '0x1ae162B80cEfb82f9ccF25b5E7A45E5e133E6F87',
-};
+import { getArbitrumRpcUrl } from '../../../lib/config';
+import { NODE_ECONOMY_CONTRACTS } from '../../../shared/contracts';
 
 const NODE_REGISTRY_ABI = [
   'function getTotalNodeCount() view returns (uint256)',
@@ -38,12 +34,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const rpcUrl = process.env.ARBITRUM_RPC_URL || `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+    const rpcUrl = getArbitrumRpcUrl();
     const provider = new ethers.JsonRpcProvider(rpcUrl);
 
-    const nodeRegistry = new ethers.Contract(CONTRACTS.NodeRegistry, NODE_REGISTRY_ABI, provider);
-    const nodeRewards = new ethers.Contract(CONTRACTS.NodeRewards, NODE_REWARDS_ABI, provider);
-    const slashingEngine = new ethers.Contract(CONTRACTS.SlashingEngine, SLASHING_ENGINE_ABI, provider);
+    const nodeRegistry = new ethers.Contract(NODE_ECONOMY_CONTRACTS.NODE_REGISTRY, NODE_REGISTRY_ABI, provider);
+    const nodeRewards = new ethers.Contract(NODE_ECONOMY_CONTRACTS.NODE_REWARDS, NODE_REWARDS_ABI, provider);
+    const slashingEngine = new ethers.Contract(NODE_ECONOMY_CONTRACTS.SLASHING_ENGINE, SLASHING_ENGINE_ABI, provider);
 
     const [
       totalNodes,
@@ -140,11 +136,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       stakeRequirements,
       slashingParams,
-      contracts: CONTRACTS,
+      contracts: NODE_ECONOMY_CONTRACTS,
       proofLinks: [
-        { label: 'NodeRegistry', url: `https://arbitrum.blockscout.com/address/${CONTRACTS.NodeRegistry}` },
-        { label: 'NodeRewards', url: `https://arbitrum.blockscout.com/address/${CONTRACTS.NodeRewards}` },
-        { label: 'SlashingEngine', url: `https://arbitrum.blockscout.com/address/${CONTRACTS.SlashingEngine}` },
+        { label: 'NodeRegistry', url: `https://arbitrum.blockscout.com/address/${NODE_ECONOMY_CONTRACTS.NODE_REGISTRY}` },
+        { label: 'NodeRewards', url: `https://arbitrum.blockscout.com/address/${NODE_ECONOMY_CONTRACTS.NODE_REWARDS}` },
+        { label: 'SlashingEngine', url: `https://arbitrum.blockscout.com/address/${NODE_ECONOMY_CONTRACTS.SLASHING_ENGINE}` },
       ],
     };
 

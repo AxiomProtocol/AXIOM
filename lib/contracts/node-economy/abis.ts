@@ -48,8 +48,11 @@ export const SLASHING_ENGINE_ABI = [
   'event FundsRecovered(address indexed recipient, uint256 amount)'
 ] as const;
 
-export const NODE_CLASSES = ['OBSERVER', 'VALIDATOR', 'ATTESTOR'] as const;
-export type NodeClass = typeof NODE_CLASSES[number];
+export const ON_CHAIN_NODE_CLASSES = ['STORAGE', 'EXECUTION', 'INDEXING', 'RESEARCH'] as const;
+export type OnChainNodeClass = typeof ON_CHAIN_NODE_CLASSES[number];
+
+export const OPERATOR_ROLES = ['OBSERVER', 'VALIDATOR', 'ATTESTOR'] as const;
+export type OperatorRole = typeof OPERATOR_ROLES[number];
 
 export const NODE_STATUS = {
   REGISTERED: 0,

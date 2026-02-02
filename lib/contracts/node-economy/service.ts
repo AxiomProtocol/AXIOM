@@ -5,7 +5,8 @@ import {
   NODE_REGISTRY_ABI,
   NODE_REWARDS_ABI,
   SLASHING_ENGINE_ABI,
-  NODE_CLASSES,
+  ON_CHAIN_NODE_CLASSES,
+  OPERATOR_ROLES,
   NODE_STATUS
 } from './abis';
 
@@ -81,9 +82,10 @@ class NodeEconomyService {
   async getSystemStats(): Promise<NodeEconomyStats> {
     const [
       totalNodes,
-      observerActive,
-      validatorActive,
-      attestorActive,
+      storageActive,
+      executionActive,
+      indexingActive,
+      researchActive,
       currentEpoch,
       epochStartTime,
       epochDuration,
@@ -101,6 +103,7 @@ class NodeEconomyService {
       this.nodeRegistry.getActiveNodeCount(0).catch(() => 0n),
       this.nodeRegistry.getActiveNodeCount(1).catch(() => 0n),
       this.nodeRegistry.getActiveNodeCount(2).catch(() => 0n),
+      this.nodeRegistry.getActiveNodeCount(3).catch(() => 0n),
       this.nodeRewards.getCurrentEpoch().catch(() => 1n),
       this.nodeRewards.epochStartTime().catch(() => 0n),
       this.nodeRewards.globalEpochDuration().catch(() => 604800n),
@@ -126,11 +129,12 @@ class NodeEconomyService {
       systemStatus,
       nodes: {
         total: Number(totalNodes),
-        active: Number(observerActive) + Number(validatorActive) + Number(attestorActive),
+        active: Number(storageActive) + Number(executionActive) + Number(indexingActive) + Number(researchActive),
         byClass: {
-          observer: Number(observerActive),
-          validator: Number(validatorActive),
-          attestor: Number(attestorActive)
+          storage: Number(storageActive),
+          execution: Number(executionActive),
+          indexing: Number(indexingActive),
+          research: Number(researchActive)
         }
       },
       rewards: {
@@ -153,17 +157,17 @@ class NodeEconomyService {
 
   async getStakeRequirements(): Promise<StakeRequirement[]> {
     return Promise.all(
-      [0, 1, 2].map(async (i) => {
+      [0, 1, 2, 3].map(async (i) => {
         try {
           const req = await this.nodeRegistry.getStakeRequirement(i);
           return {
-            nodeClass: NODE_CLASSES[i],
+            nodeClass: ON_CHAIN_NODE_CLASSES[i],
             minStake: ethers.formatEther(req.minStake || req[0] || 0n),
             lockPeriodDays: Number(req.lockPeriod || req[1] || 0n) / 86400,
             active: req.active ?? req[2] ?? true
           };
         } catch {
-          return { nodeClass: NODE_CLASSES[i], minStake: '0', lockPeriodDays: 0, active: false };
+          return { nodeClass: ON_CHAIN_NODE_CLASSES[i], minStake: '0', lockPeriodDays: 0, active: false };
         }
       })
     );
@@ -171,18 +175,18 @@ class NodeEconomyService {
 
   async getSlashingParams(): Promise<SlashingParams[]> {
     return Promise.all(
-      [0, 1, 2].map(async (i) => {
+      [0, 1, 2, 3].map(async (i) => {
         try {
           const params = await this.slashingEngine.getSlashingParams(i);
           return {
-            nodeClass: NODE_CLASSES[i],
+            nodeClass: ON_CHAIN_NODE_CLASSES[i],
             slashPercent: Number(params.slashPercentBps || params[0] || 0n) / 100,
             cooldownHours: Number(params.cooldownPeriod || params[1] || 0n) / 3600,
             maxSlashes: Number(params.maxSlashesBeforeSuspension || params[2] || 0n),
             active: params.active ?? params[3] ?? true
           };
         } catch {
-          return { nodeClass: NODE_CLASSES[i], slashPercent: 0, cooldownHours: 0, maxSlashes: 0, active: false };
+          return { nodeClass: ON_CHAIN_NODE_CLASSES[i], slashPercent: 0, cooldownHours: 0, maxSlashes: 0, active: false };
         }
       })
     );
@@ -206,7 +210,7 @@ class NodeEconomyService {
         nodeId: Number(node.nodeId),
         operator: node.operator,
         nodeClass: Number(node.nodeClass),
-        nodeClassName: NODE_CLASSES[Number(node.nodeClass)] || 'UNKNOWN',
+        nodeClassName: ON_CHAIN_NODE_CLASSES[Number(node.nodeClass)] || 'UNKNOWN',
         status: Number(node.status),
         statusName: statusNames[Number(node.status)] || 'UNKNOWN',
         stakeAmount: ethers.formatEther(node.stakeAmount),
@@ -265,4 +269,4 @@ export function getNodeEconomyService(): NodeEconomyService {
   return serviceInstance;
 }
 
-export { NODE_ECONOMY_CONTRACTS, NODE_CLASSES, NODE_STATUS };
+export { NODE_ECONOMY_CONTRACTS, ON_CHAIN_NODE_CLASSES, OPERATOR_ROLES, NODE_STATUS };

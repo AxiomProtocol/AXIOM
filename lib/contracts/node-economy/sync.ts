@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { pool } from '../../../server/db';
 import { getArbitrumRpcUrl } from '../../config';
-import { NODE_ECONOMY_CONTRACTS, NODE_REGISTRY_ABI, NODE_CLASSES } from './abis';
+import { NODE_ECONOMY_CONTRACTS, NODE_REGISTRY_ABI, ON_CHAIN_NODE_CLASSES } from './abis';
 
 interface SyncResult {
   success: boolean;
@@ -35,7 +35,7 @@ export async function syncNodeRegistryEvents(fromBlock: number = 0): Promise<Syn
         const nodeId = Number(args.nodeId);
         const operator = args.operator.toLowerCase();
         const nodeClass = Number(args.nodeClass);
-        const nodeClassName = NODE_CLASSES[nodeClass] || 'UNKNOWN';
+        const nodeClassName = ON_CHAIN_NODE_CLASSES[nodeClass] || 'UNKNOWN';
 
         await client.query(
           `INSERT INTO node_chain_sync (
