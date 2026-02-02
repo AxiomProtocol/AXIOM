@@ -71,6 +71,7 @@ const nextConfig = {
         './node_modules/@neondatabase/serverless/**',
         './node_modules/react-hot-toast/**',
         './node_modules/goober/**',
+        './node_modules/drizzle-orm/**',
       ],
     },
   },
