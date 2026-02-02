@@ -86,6 +86,7 @@ export default function OperatorPortal() {
     communication: false,
     bonding: false,
   });
+  const [showCertModal, setShowCertModal] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -814,16 +815,15 @@ export default function OperatorPortal() {
                           <div className="text-sm text-teal-200">
                             Issued: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                           </div>
-                          <Link
-                            href="/operator/certificate"
-                            target="_blank"
+                          <button
+                            onClick={() => setShowCertModal(true)}
                             className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                             </svg>
-                            Print Certificate
-                          </Link>
+                            View / Print Certificate
+                          </button>
                         </div>
                       </div>
 
@@ -1372,6 +1372,143 @@ export default function OperatorPortal() {
           )}
         </div>
       </div>
+
+      {showCertModal && operator && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-auto">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center">
+              <h2 className="text-lg font-semibold text-gray-900">Node Operator Certificate</h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    const printContent = document.getElementById('certificate-content');
+                    if (printContent) {
+                      const printWindow = window.open('', '_blank');
+                      if (printWindow) {
+                        printWindow.document.write(`
+                          <!DOCTYPE html>
+                          <html>
+                          <head>
+                            <title>Node Operator Certificate - AXIOM Protocol</title>
+                            <style>
+                              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
+                              .cert-container { max-width: 600px; margin: 0 auto; border: 8px solid #0d9488; border-radius: 12px; overflow: hidden; }
+                              .cert-header { background: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #115e59 100%); padding: 40px; text-align: center; color: white; }
+                              .cert-body { padding: 40px; text-align: center; }
+                              .cert-footer { background: #f9fafb; padding: 20px; text-align: center; color: #9ca3af; font-size: 12px; }
+                              .cert-name { font-size: 28px; font-weight: bold; margin: 10px 0; }
+                              .cert-id { font-family: monospace; color: #9ca3af; margin-bottom: 20px; }
+                              .cert-role { color: #0d9488; font-weight: bold; }
+                              .cert-items { display: flex; justify-content: center; gap: 30px; margin: 30px 0; padding: 20px; background: #f0fdfa; border-radius: 8px; }
+                              .cert-item { text-align: center; }
+                              .cert-item-label { color: #0d9488; font-size: 11px; margin-bottom: 4px; }
+                              .cert-item-value { color: #0f766e; font-weight: bold; font-size: 13px; }
+                            </style>
+                          </head>
+                          <body>
+                            <div class="cert-container">
+                              <div class="cert-header">
+                                <div style="font-size: 12px; opacity: 0.7; letter-spacing: 2px; margin-bottom: 8px;">AXIOM PROTOCOL</div>
+                                <div style="font-size: 24px; font-weight: bold;">Node Operator Certificate</div>
+                              </div>
+                              <div class="cert-body">
+                                <p style="color: #6b7280;">This certifies that</p>
+                                <div class="cert-name">${operator.displayName || 'Node Operator'}</div>
+                                <div class="cert-id">${operator.operatorId}</div>
+                                <p style="color: #4b5563;">
+                                  has successfully completed all certification requirements and is authorized to operate as a 
+                                  <span class="cert-role">${ROLE_INFO[operator.role].title}</span> on the AXIOM network.
+                                </p>
+                                <div class="cert-items">
+                                  <div class="cert-item"><div class="cert-item-label">NODE CHARTER</div><div class="cert-item-value">Acknowledged</div></div>
+                                  <div class="cert-item"><div class="cert-item-label">DRY-RUN</div><div class="cert-item-value">Completed</div></div>
+                                  <div class="cert-item"><div class="cert-item-label">KEY SECURITY</div><div class="cert-item-value">Confirmed</div></div>
+                                  <div class="cert-item"><div class="cert-item-label">COMMUNICATION</div><div class="cert-item-value">Committed</div></div>
+                                </div>
+                                <p style="color: #6b7280; font-size: 14px;">Issued: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                              </div>
+                              <div class="cert-footer">AXIOM Protocol - Decentralized Land Settlement Network</div>
+                            </div>
+                          </body>
+                          </html>
+                        `);
+                        printWindow.document.close();
+                        printWindow.print();
+                      }
+                    }
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 text-sm font-medium"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  Print / Save PDF
+                </button>
+                <button
+                  onClick={() => setShowCertModal(false)}
+                  className="p-2 text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div id="certificate-content" className="p-6">
+              <div className="border-8 border-teal-700 rounded-lg overflow-hidden">
+                <div className="bg-gradient-to-br from-teal-600 to-teal-800 p-8 text-white text-center">
+                  <div className="text-teal-200 text-sm font-medium mb-2 tracking-widest">AXIOM PROTOCOL</div>
+                  <h1 className="text-2xl font-bold">Node Operator Certificate</h1>
+                </div>
+                <div className="bg-white p-8 text-center">
+                  <p className="text-gray-500 mb-2">This certifies that</p>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-1">{operator.displayName || 'Node Operator'}</h2>
+                  <p className="text-gray-400 font-mono text-sm mb-6">{operator.operatorId}</p>
+                  <p className="text-gray-600 mb-8">
+                    has successfully completed all certification requirements and is authorized to operate as a{' '}
+                    <span className="font-bold text-teal-600">{ROLE_INFO[operator.role].title}</span> on the AXIOM network.
+                  </p>
+                  <div className="border-t border-b border-gray-200 py-6 my-6">
+                    <div className="grid grid-cols-4 gap-4 text-center">
+                      <div>
+                        <div className="text-teal-600 text-xs font-medium mb-1">NODE CHARTER</div>
+                        <div className="text-gray-900 font-semibold text-sm">Acknowledged</div>
+                      </div>
+                      <div>
+                        <div className="text-teal-600 text-xs font-medium mb-1">DRY-RUN</div>
+                        <div className="text-gray-900 font-semibold text-sm">Completed</div>
+                      </div>
+                      <div>
+                        <div className="text-teal-600 text-xs font-medium mb-1">KEY SECURITY</div>
+                        <div className="text-gray-900 font-semibold text-sm">Confirmed</div>
+                      </div>
+                      <div>
+                        <div className="text-teal-600 text-xs font-medium mb-1">COMMUNICATION</div>
+                        <div className="text-gray-900 font-semibold text-sm">Committed</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-end">
+                    <div className="text-left">
+                      <div className="text-gray-400 text-sm">Issued</div>
+                      <div className="text-gray-700 font-medium">{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-gray-400 text-sm">Status</div>
+                      <div className={`font-bold ${operator.status === 'ACTIVE' ? 'text-green-600' : 'text-yellow-600'}`}>
+                        {operator.status === 'ACTIVE' ? 'ACTIVE' : 'CERTIFIED'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gray-50 px-8 py-4 text-center text-gray-400 text-xs">
+                  AXIOM Protocol - Decentralized Land Settlement Network
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </SiteLayout>
   );
 }
