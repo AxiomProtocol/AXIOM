@@ -46,6 +46,15 @@ export interface OverviewMetrics {
     currentExposure: string;
     utilizationPercent: number;
   };
+  operatorNetwork?: {
+    totalOperators: number;
+    activeOperators: number;
+    certifiedOperators: number;
+    pendingOperators: number;
+    observerCount: number;
+    validatorCount: number;
+    attestorCount: number;
+  };
   latestActions: GovernanceAction[];
   lastUpdated: string;
 }

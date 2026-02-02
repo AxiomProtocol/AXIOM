@@ -6,6 +6,7 @@
  */
 
 import { ethers, Contract } from 'ethers';
+import { pool } from '../../db';
 import {
   OBSERVER_CONTRACTS,
   OverviewMetrics,
@@ -214,6 +215,7 @@ export class ObserverService {
           currentExposure: this.formatUSD(totalOutstanding),
           utilizationPercent: utilizationPercent
         },
+        operatorNetwork: await this.getOperatorNetworkStats(),
         latestActions: latestActions,
         lastUpdated: new Date().toISOString()
       };
@@ -238,6 +240,52 @@ export class ObserverService {
         error: error instanceof Error ? error.message : 'Unknown error',
         cached: false,
         proofLinks: []
+      };
+    }
+  }
+
+  private async getOperatorNetworkStats(): Promise<{
+    totalOperators: number;
+    activeOperators: number;
+    certifiedOperators: number;
+    pendingOperators: number;
+    observerCount: number;
+    validatorCount: number;
+    attestorCount: number;
+  }> {
+    try {
+      const result = await pool.query(`
+        SELECT 
+          COUNT(*) as total,
+          COUNT(*) FILTER (WHERE status = 'ACTIVE') as active,
+          COUNT(*) FILTER (WHERE status = 'CERTIFIED') as certified,
+          COUNT(*) FILTER (WHERE status IN ('APPLIED', 'VERIFIED', 'PROVISIONED', 'DRY_RUN_PASSED')) as pending,
+          COUNT(*) FILTER (WHERE role = 'OBSERVER') as observers,
+          COUNT(*) FILTER (WHERE role = 'VALIDATOR') as validators,
+          COUNT(*) FILTER (WHERE role = 'ATTESTOR') as attestors
+        FROM node_operators
+      `);
+      
+      const row = result.rows[0];
+      return {
+        totalOperators: parseInt(row.total) || 0,
+        activeOperators: parseInt(row.active) || 0,
+        certifiedOperators: parseInt(row.certified) || 0,
+        pendingOperators: parseInt(row.pending) || 0,
+        observerCount: parseInt(row.observers) || 0,
+        validatorCount: parseInt(row.validators) || 0,
+        attestorCount: parseInt(row.attestors) || 0,
+      };
+    } catch (error) {
+      console.error('Failed to fetch operator network stats:', error);
+      return {
+        totalOperators: 0,
+        activeOperators: 0,
+        certifiedOperators: 0,
+        pendingOperators: 0,
+        observerCount: 0,
+        validatorCount: 0,
+        attestorCount: 0,
       };
     }
   }

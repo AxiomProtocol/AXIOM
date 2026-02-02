@@ -231,6 +231,57 @@ export default function ObserverOverview() {
             />
           </div>
 
+          {data.operatorNetwork && (
+            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Node Operator Network</h2>
+                  <p className="text-sm text-gray-500">Settlement operators and attestors</p>
+                </div>
+                <Link href="/operator" className="text-sm text-teal-600 hover:text-teal-700 flex items-center">
+                  View Portal
+                  <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-gray-900">{data.operatorNetwork.totalOperators}</div>
+                  <div className="text-xs text-gray-500">Total Operators</div>
+                </div>
+                <div className="bg-teal-50 rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-teal-600">{data.operatorNetwork.activeOperators}</div>
+                  <div className="text-xs text-gray-500">Active</div>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-purple-600">{data.operatorNetwork.certifiedOperators}</div>
+                  <div className="text-xs text-gray-500">Certified</div>
+                </div>
+                <div className="bg-amber-50 rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-amber-600">{data.operatorNetwork.pendingOperators}</div>
+                  <div className="text-xs text-gray-500">Pending</div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-sm border-t border-gray-100 pt-3">
+                <div className="flex items-center gap-4 text-gray-600">
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                    Observers: {data.operatorNetwork.observerCount}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-purple-400"></span>
+                    Validators: {data.operatorNetwork.validatorCount}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-teal-400"></span>
+                    Attestors: {data.operatorNetwork.attestorCount}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <ObserverCard title="Bucket Totals">
               <div className="space-y-3">
