@@ -79,7 +79,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-<<<<<<< HEAD
     let instrumentCount = 0n;
     let poolCount = 0n;
     let eventCount = 0n;
@@ -93,13 +92,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } catch {
       // Contracts may revert if no items registered yet
     }
-=======
-    const [instrumentCount, poolCount, eventCount] = await Promise.all([
-      instrumentRegistry.getInstrumentCount(),
-      poolRegistry.getPoolCount(),
-      servicingLog.getEventCount(),
-    ]);
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 
     const instruments = [];
     const fetchLimit = Math.min(Number(instrumentCount), 50);

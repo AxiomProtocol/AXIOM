@@ -19,7 +19,6 @@ interface LandLead {
   createdBy?: string;
 }
 
-<<<<<<< HEAD
 const PIPELINE_STAGES = [
   { id: 'new', label: 'New Leads', icon: '📥', description: 'Newly submitted land opportunities awaiting initial review' },
   { id: 'needsData', label: 'Needs Data', icon: '📋', description: 'Properties requiring additional information or documentation' },
@@ -164,8 +163,6 @@ function PublicLandPipelineView() {
   );
 }
 
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 export default function StewardLandPage() {
   const router = useRouter();
   const { action } = router.query;
@@ -204,7 +201,6 @@ export default function StewardLandPage() {
     fetchLeads();
   }, [address]);
 
-<<<<<<< HEAD
   if (!address) {
     return (
       <>
@@ -217,8 +213,6 @@ export default function StewardLandPage() {
     );
   }
 
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
   const handleStageChange = async (id: number, newStage: LandLeadStage) => {
     if (!address) return;
     try {

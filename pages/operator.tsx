@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-<<<<<<< HEAD
 import { SiteLayout } from '../components/navigation';
 import NodeEconomyDashboard from '../components/observer/NodeEconomyDashboard';
 import ReadinessGateDashboard from '../components/observer/ReadinessGateDashboard';
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 
 type OperatorStatus = 'NOT_APPLIED' | 'APPLIED' | 'VERIFIED' | 'PROVISIONED' | 'DRY_RUN_PASSED' | 'CERTIFIED' | 'ACTIVE';
 type OperatorRole = 'OBSERVER' | 'VALIDATOR' | 'ATTESTOR';
@@ -16,10 +13,7 @@ interface OperatorData {
   walletAddress: string;
   displayName?: string;
   role: OperatorRole;
-<<<<<<< HEAD
   roles?: OperatorRole[];
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
   status: OperatorStatus;
   suspended: boolean;
   verificationTier: string;
@@ -46,7 +40,6 @@ interface ProgramStats {
   observationWindowEnd: string;
 }
 
-<<<<<<< HEAD
 type Tab = 'apply' | 'status' | 'rewards' | 'credits' | 'network' | 'docs';
 
 interface CreditsLedger {
@@ -69,9 +62,6 @@ interface CreditsTransaction {
   txHash: string | null;
   createdAt: string;
 }
-=======
-type Tab = 'apply' | 'status' | 'rewards' | 'docs';
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 
 const STATUS_STEPS: { status: OperatorStatus; label: string; description: string }[] = [
   { status: 'APPLIED', label: 'Applied', description: 'Application submitted' },
@@ -107,16 +97,11 @@ export default function OperatorPortal() {
   const [operator, setOperator] = useState<OperatorData | null>(null);
   const [rewards, setRewards] = useState<RewardsData | null>(null);
   const [stats, setStats] = useState<ProgramStats | null>(null);
-<<<<<<< HEAD
   const [selectedRoles, setSelectedRoles] = useState<OperatorRole[]>(['OBSERVER']);
-=======
-  const [selectedRole, setSelectedRole] = useState<OperatorRole>('OBSERVER');
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
-<<<<<<< HEAD
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [certChecklist, setCertChecklist] = useState({
     charter: false,
@@ -130,8 +115,6 @@ export default function OperatorPortal() {
   const [creditsTransactions, setCreditsTransactions] = useState<CreditsTransaction[]>([]);
   const [claimAmount, setClaimAmount] = useState('');
   const [claiming, setClaiming] = useState(false);
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 
   useEffect(() => {
     fetchStats();
@@ -175,7 +158,6 @@ export default function OperatorPortal() {
     }
   };
 
-<<<<<<< HEAD
   const fetchCredits = async () => {
     if (!walletAddress) return;
     try {
@@ -222,8 +204,6 @@ export default function OperatorPortal() {
     }
   }, [walletAddress, activeTab]);
 
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
   const connectWallet = async () => {
     if (typeof window !== 'undefined' && (window as any).ethereum) {
       try {
@@ -255,12 +235,8 @@ export default function OperatorPortal() {
           walletAddress,
           displayName,
           email,
-<<<<<<< HEAD
           role: selectedRoles.includes('ATTESTOR') ? 'ATTESTOR' : selectedRoles.includes('VALIDATOR') ? 'VALIDATOR' : 'OBSERVER',
           roles: selectedRoles,
-=======
-          role: selectedRole,
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
         }),
       });
 
@@ -315,7 +291,6 @@ export default function OperatorPortal() {
       ),
     },
     {
-<<<<<<< HEAD
       id: 'credits',
       label: 'Credits',
       icon: (
@@ -334,8 +309,6 @@ export default function OperatorPortal() {
       ),
     },
     {
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
       id: 'docs',
       label: 'Documentation',
       icon: (
@@ -347,11 +320,7 @@ export default function OperatorPortal() {
   ];
 
   return (
-<<<<<<< HEAD
     <SiteLayout>
-=======
-    <>
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
       <Head>
         <title>Node Operator Portal | Axiom</title>
         <meta name="description" content="Apply to become a Node Operator and participate in the Capital Bridge settlement network" />
@@ -402,7 +371,6 @@ export default function OperatorPortal() {
             ))}
           </div>
 
-<<<<<<< HEAD
           {!isConnected && activeTab !== 'docs' && activeTab !== 'network' && (
             <div className="space-y-8">
               <div className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl border border-teal-100 p-8">
@@ -707,23 +675,6 @@ export default function OperatorPortal() {
                   Questions? Check the Documentation tab or reach out through our contact form.
                 </p>
               </div>
-=======
-          {!isConnected && activeTab !== 'docs' && (
-            <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-              <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Connect Your Wallet</h2>
-              <p className="text-gray-600 mb-6">Connect your wallet to apply or check your operator status</p>
-              <button
-                onClick={connectWallet}
-                className="bg-teal-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-teal-700 transition-colors"
-              >
-                Connect Wallet
-              </button>
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
             </div>
           )}
 
@@ -762,7 +713,6 @@ export default function OperatorPortal() {
               </div>
 
               <div className="mb-6">
-<<<<<<< HEAD
                 <label className="block text-sm font-medium text-gray-700 mb-2">Select Role(s)</label>
                 <p className="text-sm text-gray-500 mb-3">You may select multiple roles. Each role has different verification requirements.</p>
                 <div className="grid md:grid-cols-3 gap-4">
@@ -822,33 +772,6 @@ export default function OperatorPortal() {
                     <p className="text-sm text-teal-700 mt-1">You have selected all 3 roles. You will need to complete all verification requirements for Attestor level.</p>
                   </div>
                 )}
-=======
-                <label className="block text-sm font-medium text-gray-700 mb-3">Select Role</label>
-                <div className="grid md:grid-cols-3 gap-4">
-                  {(Object.keys(ROLE_INFO) as OperatorRole[]).map((role) => (
-                    <button
-                      key={role}
-                      onClick={() => setSelectedRole(role)}
-                      className={`p-4 rounded-xl border-2 text-left transition-all ${
-                        selectedRole === role
-                          ? 'border-teal-500 bg-teal-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="font-semibold text-gray-900 mb-1">{ROLE_INFO[role].title}</div>
-                      <div className="text-sm text-gray-600 mb-3">{ROLE_INFO[role].description}</div>
-                      <div className="text-xs text-gray-500">
-                        <div className="font-medium mb-1">Requirements:</div>
-                        <ul className="list-disc list-inside space-y-0.5">
-                          {ROLE_INFO[role].requirements.map((req, i) => (
-                            <li key={i}>{req}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </button>
-                  ))}
-                </div>
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
               </div>
 
               <button
@@ -881,7 +804,6 @@ export default function OperatorPortal() {
 
           {isConnected && activeTab === 'status' && (
             <div className="space-y-6">
-<<<<<<< HEAD
               {message && (
                 <div className={`p-4 rounded-xl border ${message.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
                   <div className="flex items-center gap-2">
@@ -898,8 +820,6 @@ export default function OperatorPortal() {
                   </div>
                 </div>
               )}
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
               {operator ? (
                 <>
                   <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -921,7 +841,6 @@ export default function OperatorPortal() {
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                       <div>
-<<<<<<< HEAD
                         <div className="text-sm text-gray-500">Role(s)</div>
                         <div className="font-semibold text-gray-900">
                           {(operator.roles && operator.roles.length > 0 ? operator.roles : [operator.role]).map((r, i) => (
@@ -931,10 +850,6 @@ export default function OperatorPortal() {
                             </span>
                           ))}
                         </div>
-=======
-                        <div className="text-sm text-gray-500">Role</div>
-                        <div className="font-semibold text-gray-900">{operator.role}</div>
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
                       </div>
                       <div>
                         <div className="text-sm text-gray-500">Verification Tier</div>
@@ -995,16 +910,11 @@ export default function OperatorPortal() {
                         {operator.status === 'APPLIED' && 'Your application is being reviewed. You will receive an email once verification begins.'}
                         {operator.status === 'VERIFIED' && 'Verification complete! Your credentials are being provisioned.'}
                         {operator.status === 'PROVISIONED' && 'Complete your dry-run exercises to proceed to certification.'}
-<<<<<<< HEAD
                         {operator.status === 'DRY_RUN_PASSED' && 'Great work! Complete the certification checklist below to proceed.'}
-=======
-                        {operator.status === 'DRY_RUN_PASSED' && 'Great work! Complete the certification checklist to proceed.'}
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
                         {operator.status === 'CERTIFIED' && 'Congratulations! Your activation is being processed.'}
                       </p>
                     </div>
                   )}
-<<<<<<< HEAD
 
                   <div className="bg-white rounded-xl border border-gray-200 p-6 mt-6">
                     <div className="flex items-center justify-between mb-4">
@@ -1506,8 +1416,6 @@ export default function OperatorPortal() {
                       </div>
                     </div>
                   )}
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
                 </>
               ) : (
                 <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
@@ -1625,7 +1533,6 @@ export default function OperatorPortal() {
             </div>
           )}
 
-<<<<<<< HEAD
           {isConnected && activeTab === 'credits' && (
             <div className="space-y-6">
               {credits ? (
@@ -1769,23 +1676,12 @@ export default function OperatorPortal() {
             </>
           )}
 
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
           {activeTab === 'docs' && (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Program Documentation</h2>
               
               <div className="grid md:grid-cols-2 gap-6">
-<<<<<<< HEAD
                 <div className="block p-4 border border-gray-200 rounded-xl bg-gray-50">
-=======
-                <a
-                  href="https://github.com/axiomesh/docs/blob/main/nodes/node-charter.md"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block p-4 border border-gray-200 rounded-xl hover:border-teal-300 hover:bg-teal-50 transition-colors"
-                >
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
                   <div className="flex items-start">
                     <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center mr-4">
                       <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1795,25 +1691,12 @@ export default function OperatorPortal() {
                     <div>
                       <h3 className="font-semibold text-gray-900">Node Charter</h3>
                       <p className="text-sm text-gray-600">Program governance, principles, and operator responsibilities</p>
-<<<<<<< HEAD
                       <p className="text-xs text-teal-600 mt-2">Available after onboarding begins</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="block p-4 border border-gray-200 rounded-xl bg-gray-50">
-=======
-                    </div>
-                  </div>
-                </a>
-
-                <a
-                  href="https://github.com/axiomesh/docs/blob/main/nodes/node-operator-onboarding-sop.md"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block p-4 border border-gray-200 rounded-xl hover:border-teal-300 hover:bg-teal-50 transition-colors"
-                >
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
                   <div className="flex items-start">
                     <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
                       <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1823,25 +1706,12 @@ export default function OperatorPortal() {
                     <div>
                       <h3 className="font-semibold text-gray-900">Onboarding SOP</h3>
                       <p className="text-sm text-gray-600">Step-by-step onboarding process and requirements</p>
-<<<<<<< HEAD
                       <p className="text-xs text-teal-600 mt-2">Available after onboarding begins</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="block p-4 border border-gray-200 rounded-xl bg-gray-50">
-=======
-                    </div>
-                  </div>
-                </a>
-
-                <a
-                  href="https://github.com/axiomesh/docs/blob/main/nodes/node-compensation-policy.md"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block p-4 border border-gray-200 rounded-xl hover:border-teal-300 hover:bg-teal-50 transition-colors"
-                >
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
                   <div className="flex items-start">
                     <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">
                       <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1851,25 +1721,12 @@ export default function OperatorPortal() {
                     <div>
                       <h3 className="font-semibold text-gray-900">Compensation Policy</h3>
                       <p className="text-sm text-gray-600">Milestone-based rewards, payouts, and slashing rules</p>
-<<<<<<< HEAD
                       <p className="text-xs text-teal-600 mt-2">Available after onboarding begins</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="block p-4 border border-gray-200 rounded-xl bg-gray-50">
-=======
-                    </div>
-                  </div>
-                </a>
-
-                <a
-                  href="https://github.com/axiomesh/docs/blob/main/observer/node-program-overview.md"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block p-4 border border-gray-200 rounded-xl hover:border-teal-300 hover:bg-teal-50 transition-colors"
-                >
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
                   <div className="flex items-start">
                     <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
                       <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1877,7 +1734,6 @@ export default function OperatorPortal() {
                       </svg>
                     </div>
                     <div>
-<<<<<<< HEAD
                       <h3 className="font-semibold text-gray-900">Observer Dashboard Guide</h3>
                       <p className="text-sm text-gray-600">Transparency metrics and weekly reporting</p>
                       <p className="text-xs text-teal-600 mt-2">Available after onboarding begins</p>
@@ -1902,16 +1758,6 @@ export default function OperatorPortal() {
               </div>
 
               <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-=======
-                      <h3 className="font-semibold text-gray-900">Observer Dashboard</h3>
-                      <p className="text-sm text-gray-600">Transparency metrics and weekly reporting</p>
-                    </div>
-                  </div>
-                </a>
-              </div>
-
-              <div className="mt-8 p-4 bg-gray-50 rounded-xl">
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
                 <h3 className="font-medium text-gray-900 mb-2">Questions?</h3>
                 <p className="text-sm text-gray-600">
                   For questions about the Node Operator Program, please reach out through our 
@@ -1923,7 +1769,6 @@ export default function OperatorPortal() {
           )}
         </div>
       </div>
-<<<<<<< HEAD
 
       {showCertModal && operator && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-auto">
@@ -2075,8 +1920,5 @@ export default function OperatorPortal() {
         </div>
       )}
     </SiteLayout>
-=======
-    </>
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
   );
 }

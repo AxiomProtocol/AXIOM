@@ -231,7 +231,6 @@ export default function ObserverOverview() {
             />
           </div>
 
-<<<<<<< HEAD
           {data.operatorNetwork && (
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-6">
               <div className="flex items-center justify-between mb-4">
@@ -283,8 +282,6 @@ export default function ObserverOverview() {
             </div>
           )}
 
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <ObserverCard title="Bucket Totals">
               <div className="space-y-3">

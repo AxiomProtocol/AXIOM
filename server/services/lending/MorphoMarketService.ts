@@ -1,12 +1,7 @@
 import { ethers } from 'ethers';
-<<<<<<< HEAD
 import { getArbitrumRpcUrl } from '../../../lib/config';
 
 const RPC_URL = getArbitrumRpcUrl();
-=======
-
-const RPC_URL = process.env.ARBITRUM_RPC_URL || 'https://arb1.arbitrum.io/rpc';
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 
 export const MORPHO_CONFIG = {
   MORPHO_CORE: '0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb',

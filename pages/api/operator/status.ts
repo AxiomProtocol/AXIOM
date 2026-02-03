@@ -27,11 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const operatorResult = await client.query(
         `SELECT 
-<<<<<<< HEAD
           o.operator_id, o.wallet_address, o.display_name, o.email, o.role, o.roles, o.status,
-=======
-          o.operator_id, o.wallet_address, o.display_name, o.email, o.role, o.status,
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
           o.onboarding_phase, o.total_milestones_completed, o.total_earnings, o.pending_earnings,
           o.attestation_count, o.last_activity_at, o.activated_at, o.created_at,
           ob.onboarding_id, ob.current_phase, ob.application_submitted_at, ob.verification_completed_at,
@@ -55,10 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         displayName: row.display_name,
         email: row.email,
         role: row.role,
-<<<<<<< HEAD
         roles: row.roles || [row.role],
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
         status: row.status,
         onboardingPhase: row.onboarding_phase,
         totalMilestonesCompleted: row.total_milestones_completed || 0,

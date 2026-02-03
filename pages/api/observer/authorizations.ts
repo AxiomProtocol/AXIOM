@@ -23,16 +23,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { id, status } = req.query;
 
-<<<<<<< HEAD
     let timelockSeconds = 0n;
     try {
       timelockSeconds = await hub.timelockSeconds();
     } catch {
       // Contract may not be initialized
     }
-=======
-    const timelockSeconds = await hub.timelockSeconds();
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 
     if (id) {
       const authId = Number(id);
@@ -69,16 +65,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-<<<<<<< HEAD
     let count = 0n;
     try {
       count = await hub.getAuthorizationCount();
     } catch {
       // Contract may revert if no authorizations exist
     }
-=======
-    const count = await hub.getAuthorizationCount();
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
     const authorizations = [];
 
     const fetchLimit = Math.min(Number(count), 50);

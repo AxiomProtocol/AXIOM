@@ -694,7 +694,6 @@ function getLendingFundYieldHtml(params: {
 </html>
   `.trim();
 }
-<<<<<<< HEAD
 
 export async function sendOperatorCertificateEmail(
   to: string,
@@ -774,5 +773,3 @@ function getOperatorCertificateEmailHtml(name: string, operatorId: string, role:
 </html>
   `.trim();
 }
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26

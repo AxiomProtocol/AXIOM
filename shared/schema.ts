@@ -6605,10 +6605,6 @@ export const userXpLevels = pgTable("user_xp_levels", {
 
 // Membership Subscriptions
 export const membershipTierEnum = pgEnum('membership_tier', ['free', 'basic', 'premium', 'enterprise']);
-<<<<<<< HEAD
-=======
-export const subscriptionStatusEnum = pgEnum('subscription_status', ['active', 'canceled', 'past_due', 'trialing', 'expired']);
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 
 export const membershipSubscriptions = pgTable("membership_subscriptions", {
   id: serial("id").primaryKey(),
@@ -6658,37 +6654,9 @@ export const referralEarnings = pgTable("referral_earnings", {
   statusIdx: index("earning_status_idx").on(table.status),
 }));
 
-<<<<<<< HEAD
 // AML Risk Level Enum (used with existing kycVerifications table)
 export const amlRiskLevelEnum = pgEnum('aml_risk_level', ['low', 'medium', 'high', 'blocked']);
 
-=======
-// KYC/Compliance System
-export const kycStatusEnum = pgEnum('kyc_status', ['not_started', 'pending', 'verified', 'rejected', 'expired']);
-export const amlRiskLevelEnum = pgEnum('aml_risk_level', ['low', 'medium', 'high', 'blocked']);
-
-export const kycVerifications = pgTable("kyc_verifications", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  walletAddress: varchar("wallet_address", { length: 42 }),
-  status: kycStatusEnum("status").default('not_started'),
-  level: integer("level").default(1),
-  documents: jsonb("documents"),
-  amlScore: integer("aml_score").default(0),
-  riskLevel: amlRiskLevelEnum("risk_level").default('low'),
-  notes: text("notes"),
-  submittedAt: timestamp("submitted_at"),
-  verifiedAt: timestamp("verified_at"),
-  expiresAt: timestamp("expires_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => ({
-  userIdx: index("kyc_user_idx").on(table.userId),
-  walletIdx: index("kyc_wallet_idx").on(table.walletAddress),
-  statusIdx: index("kyc_status_idx").on(table.status),
-}));
-
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 export const complianceAuditLogs = pgTable("compliance_audit_logs", {
   id: serial("id").primaryKey(),
   action: varchar("action", { length: 200 }).notNull(),
@@ -6709,22 +6677,13 @@ export const complianceAuditLogs = pgTable("compliance_audit_logs", {
   timestampIdx: index("audit_timestamp_idx").on(table.createdAt),
 }));
 
-<<<<<<< HEAD
 // DePIN & IoT Extended System
-=======
-// DePIN & IoT System
-export const iotDeviceTypeEnum = pgEnum('iot_device_type', ['sensor', 'meter', 'camera', 'controller', 'gateway']);
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 export const iotDeviceStatusEnum = pgEnum('iot_device_status', ['online', 'offline', 'maintenance']);
 
 export const iotDevices = pgTable("iot_devices", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 200 }).notNull(),
-<<<<<<< HEAD
   deviceType: varchar("device_type", { length: 50 }).notNull(),
-=======
-  deviceType: iotDeviceTypeEnum("device_type").notNull(),
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
   landAssetId: varchar("land_asset_id", { length: 100 }),
   latitude: decimal("latitude", { precision: 10, scale: 7 }),
   longitude: decimal("longitude", { precision: 10, scale: 7 }),
@@ -6988,11 +6947,6 @@ export type ReferralCode = typeof referralCodes.$inferSelect;
 export type InsertReferralCode = typeof referralCodes.$inferInsert;
 export type ReferralEarning = typeof referralEarnings.$inferSelect;
 export type InsertReferralEarning = typeof referralEarnings.$inferInsert;
-<<<<<<< HEAD
-=======
-export type KycVerification = typeof kycVerifications.$inferSelect;
-export type InsertKycVerification = typeof kycVerifications.$inferInsert;
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 export type ComplianceAuditLog = typeof complianceAuditLogs.$inferSelect;
 export type InsertComplianceAuditLog = typeof complianceAuditLogs.$inferInsert;
 export type IotDevice = typeof iotDevices.$inferSelect;
@@ -8115,15 +8069,10 @@ export const nodeOperators = pgTable("node_operators", {
   displayName: varchar("display_name", { length: 200 }).notNull(),
   email: varchar("email", { length: 200 }),
   role: operatorRoleEnum("role").default('OBSERVER'),
-<<<<<<< HEAD
   roles: jsonb("roles").$type<string[]>().default(['OBSERVER']),
   status: operatorStatusEnum("status").default('PENDING'),
   onboardingPhase: onboardingPhaseEnum("onboarding_phase").default('APPLICATION'),
   onChainNodeId: integer("on_chain_node_id"),
-=======
-  status: operatorStatusEnum("status").default('PENDING'),
-  onboardingPhase: onboardingPhaseEnum("onboarding_phase").default('APPLICATION'),
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
   totalMilestonesCompleted: integer("total_milestones_completed").default(0),
   totalEarnings: decimal("total_earnings", { precision: 18, scale: 2 }).default('0'),
   pendingEarnings: decimal("pending_earnings", { precision: 18, scale: 2 }).default('0'),
@@ -8136,10 +8085,7 @@ export const nodeOperators = pgTable("node_operators", {
   walletIdx: index("node_operators_wallet_idx").on(table.walletAddress),
   statusIdx: index("node_operators_status_idx").on(table.status),
   roleIdx: index("node_operators_role_idx").on(table.role),
-<<<<<<< HEAD
   onChainNodeIdx: index("node_operators_on_chain_node_idx").on(table.onChainNodeId),
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 }));
 
 export const nodeOnboarding = pgTable("node_onboarding", {
@@ -8161,7 +8107,6 @@ export const nodeOnboarding = pgTable("node_onboarding", {
   operatorIdx: index("node_onboarding_operator_idx").on(table.operatorId),
 }));
 
-<<<<<<< HEAD
 export const nodeChainSyncStatusEnum = pgEnum('node_chain_sync_status', [
   'SYNCED',
   'PENDING',
@@ -8260,15 +8205,12 @@ export const onchainRewardsSync = pgTable("onchain_rewards_sync", {
   operatorIdx: index("onchain_rewards_sync_operator_idx").on(table.operatorId),
 }));
 
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 export type NoteSubmission = typeof noteSubmissions.$inferSelect;
 export type InsertNoteSubmission = typeof noteSubmissions.$inferInsert;
 export type NodeOperator = typeof nodeOperators.$inferSelect;
 export type InsertNodeOperator = typeof nodeOperators.$inferInsert;
 export type NodeOnboarding = typeof nodeOnboarding.$inferSelect;
 export type InsertNodeOnboarding = typeof nodeOnboarding.$inferInsert;
-<<<<<<< HEAD
 export type NodeChainSync = typeof nodeChainSync.$inferSelect;
 export type InsertNodeChainSync = typeof nodeChainSync.$inferInsert;
 export type CreditsLedger = typeof creditsLedger.$inferSelect;
@@ -8277,5 +8219,3 @@ export type CreditsTransaction = typeof creditsTransactions.$inferSelect;
 export type InsertCreditsTransaction = typeof creditsTransactions.$inferInsert;
 export type OnchainRewardsSync = typeof onchainRewardsSync.$inferSelect;
 export type InsertOnchainRewardsSync = typeof onchainRewardsSync.$inferInsert;
-=======
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26

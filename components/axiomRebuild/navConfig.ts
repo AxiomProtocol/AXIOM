@@ -110,11 +110,7 @@ export const navItems: NavItem[] = [
       { label: "Land Marketplace", href: "/land" },
       { label: "Reclaim Your Land", href: "/reclaim" },
       { label: "Land Reclamation Workbook", href: "/workbook" },
-<<<<<<< HEAD
       { label: "Land Pipeline", href: "/stewards/dashboard/land" },
-=======
-      { label: "Land Pipeline", href: "/admin/land-pipeline" },
->>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
       { label: "Capital Bridge Admin", href: "/admin/capital-bridge" },
       { label: "Governance", href: "/governance" },
       { label: "Tokenomics", href: "/tokenomics" },
