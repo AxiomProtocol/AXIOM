@@ -14,6 +14,7 @@ This document provides institutional partners visibility into which components a
 |----------|---------------|----------|
 | Node Economy Contracts | 25/25 | 100% |
 | Credits Ledger System | 28/28 | 100% |
+| Readiness Gate System | 17/17 | 100% |
 | API Endpoints | 5/5 | 100% |
 | Contract ABIs | 20/20 | 100% |
 
@@ -116,7 +117,26 @@ See `docs/deployments.md` for complete contract registry (43 contracts documente
 | Auto-refresh | FUNCTIONAL | 30-second refresh interval |
 | Public Access | FUNCTIONAL | No wallet required |
 
-### 3.2 Operator Portal
+### 3.2 Readiness Gate Dashboard
+
+**Component:** `components/observer/ReadinessGateDashboard.tsx`  
+**Location:** `/operator` → Network tab  
+**Status:** IMPLEMENTED & FUNCTIONAL
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| Readiness Status | FUNCTIONAL | Overall ready/not ready indicator |
+| Observation Period Check | FUNCTIONAL | Days elapsed vs required |
+| System Uptime Check | FUNCTIONAL | Uptime percentage vs minimum |
+| Incident Count Check | FUNCTIONAL | Current incidents vs max allowed |
+| TVL Threshold Check | FUNCTIONAL | Current TVL vs minimum required |
+| Freeze Status Display | FUNCTIONAL | Shows if freeze window is active |
+| Attestation Freshness | FUNCTIONAL | Time remaining on attestation validity |
+| Progress Bar | FUNCTIONAL | Visual indicator of passed checks |
+| Contract Link | FUNCTIONAL | Direct link to Blockscout |
+| Auto-refresh | FUNCTIONAL | 30-second refresh interval |
+
+### 3.3 Operator Portal
 
 **Page:** `pages/operator.tsx`  
 **Status:** IMPLEMENTED & FUNCTIONAL
@@ -272,7 +292,56 @@ All contracts can be independently verified on Blockscout:
 
 ---
 
-## 9. Institutional Contact
+## 9. Readiness Gate System
+
+### 9.1 Readiness Gate Contract Tests
+
+**Test Suite:** `tests/readiness-gate.test.ts`  
+**Run Command:** `npm run test:readiness-gate`  
+**Last Run:** 2026-02-03  
+**Result:** 17/17 PASSING
+
+#### Contract Tests
+
+| Test | Status | Description |
+|------|--------|-------------|
+| Contract address valid | PASS | CapitalReadinessGate at 0xc3f798066e1401aa30Da8703A4c0588A1076ff39 |
+| checkReadiness() | PASS | Returns boolean and message string |
+| getObservationDaysElapsed() | PASS | Returns observation period progress |
+| getConfig() | PASS | Returns configuration struct |
+| checkFreezeStatus() | PASS | Returns freeze window state |
+| maxAttestationStaleness() | PASS | Returns max staleness duration |
+| paused() | PASS | Returns pause state |
+
+#### API Endpoint Tests
+
+| Test | Status | Description |
+|------|--------|-------------|
+| isReady property | PASS | Overall readiness status |
+| observationDaysElapsed | PASS | Days in observation period |
+| freezeStatus | PASS | Freeze window information |
+| attestationFreshness | PASS | Attestation validity time |
+| config object | PASS | Gate configuration data |
+| paused boolean | PASS | Contract pause state |
+| GET returns 200 | PASS | Endpoint accessible |
+
+#### Service Integration Tests
+
+| Test | Status | Description |
+|------|--------|-------------|
+| Contract in config | PASS | CAPITAL_READINESS_GATE in NODE_ECONOMY_CONTRACTS |
+| Service instance | PASS | getNodeEconomyService returns singleton |
+| getReadinessStatus() | PASS | Returns valid readiness data |
+
+### 9.2 Readiness Gate Contract
+
+| Contract | Address | Verified |
+|----------|---------|----------|
+| CapitalReadinessGate | [0xc3f798066e1401aa30Da8703A4c0588A1076ff39](https://arbitrum.blockscout.com/address/0xc3f798066e1401aa30Da8703A4c0588A1076ff39) | Yes |
+
+---
+
+## 10. Institutional Contact
 
 For technical due diligence inquiries regarding test results or system verification, please contact the AXIOM Protocol technical team.
 

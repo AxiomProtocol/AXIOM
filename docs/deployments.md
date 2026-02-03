@@ -34,10 +34,10 @@
 | Lending | 6 | 6 | All verified |
 | DEX V2 | 10 | 10 | Proxy contracts |
 | DePIN & Infrastructure | 6 | 3 | 3 pending |
-| Node Economy | 3 | 3 | Step 2 - Feb 2026 |
+| Node Economy | 4 | 4 | Step 2-4 - Feb 2026 |
 | Community & Utility | 5 | 0 | All pending |
 | Legacy | 1 | 0 | Deprecated |
-| **TOTAL** | **46** | **35** | Updated Feb 2026 |
+| **TOTAL** | **47** | **36** | Updated Feb 2026 |
 
 *Note: Counts derived from GENESIS_SNAPSHOT.md. Verification via eth_getCode RPC.*
 
@@ -168,7 +168,7 @@
 
 ---
 
-## Node Economy Contracts (Step 2)
+## Node Economy Contracts (Step 2-4)
 
 *Deployed: February 2026 | Node Operator Program*
 *Reference: [docs/node-operator/on-chain-spec.md](./node-operator/on-chain-spec.md)*
@@ -178,6 +178,7 @@
 | NodeRegistry | `0x31bc6268155219B627FC3B2d8434d010F33DCb03` | TBD | Yes | No |
 | NodeRewards | `0x0c1c96F38566d056877cEf4791c701C4F5AEf362` | TBD | Yes | No |
 | SlashingEngine | `0x1ae162B80cEfb82f9ccF25b5E7A45E5e133E6F87` | TBD | Yes | No |
+| CapitalReadinessGate | `0xc3f798066e1401aa30Da8703A4c0588A1076ff39` | TBD | Yes | No |
 
 ### Node Economy Roles
 
@@ -194,6 +195,7 @@
 |---------|-------------|-------------|
 | Node Economy Stats | `/api/observer/node-economy` | Live on-chain statistics |
 | Operator Status | `/api/operator/status` | Off-chain operator status |
+| Readiness Status | `/api/operator/readiness` | Capital readiness gate status |
 | Node Economy Service | `lib/contracts/node-economy/` | TypeScript service layer |
 
 ---

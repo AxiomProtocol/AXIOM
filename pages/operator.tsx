@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { SiteLayout } from '../components/navigation';
 import NodeEconomyDashboard from '../components/observer/NodeEconomyDashboard';
+import ReadinessGateDashboard from '../components/observer/ReadinessGateDashboard';
 
 type OperatorStatus = 'NOT_APPLIED' | 'APPLIED' | 'VERIFIED' | 'PROVISIONED' | 'DRY_RUN_PASSED' | 'CERTIFIED' | 'ACTIVE';
 type OperatorRole = 'OBSERVER' | 'VALIDATOR' | 'ATTESTOR';
@@ -1669,7 +1670,10 @@ export default function OperatorPortal() {
           )}
 
           {activeTab === 'network' && (
-            <NodeEconomyDashboard />
+            <>
+              <ReadinessGateDashboard />
+              <NodeEconomyDashboard />
+            </>
           )}
 
           {activeTab === 'docs' && (

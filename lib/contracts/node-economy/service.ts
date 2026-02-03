@@ -5,6 +5,7 @@ import {
   NODE_REGISTRY_ABI,
   NODE_REWARDS_ABI,
   SLASHING_ENGINE_ABI,
+  CAPITAL_READINESS_GATE_ABI,
   ON_CHAIN_NODE_CLASSES,
   OPERATOR_ROLES,
   NODE_STATUS
@@ -64,11 +65,47 @@ export interface NodeEconomyStats {
   slashingParams: SlashingParams[];
 }
 
+export interface ReadinessAttestation {
+  uptimeBps: number;
+  uptimePercent: number;
+  incidentsCount: number;
+  tvlUsd: string;
+  lastUpdated: Date | null;
+  observationStartTimestamp: Date | null;
+  auditHash: string;
+}
+
+export interface ReadinessConfig {
+  requiredAuditHash: string;
+  minimumUptimeBps: number;
+  minimumUptimePercent: number;
+  minimumObservationDaysElapsed: number;
+  maxIncidentsAllowed: number;
+  minimumTVLUsd: string;
+  freezeWindowSeconds: number;
+}
+
+export interface ReadinessStatus {
+  isReady: boolean;
+  failureReason: string;
+  observationDaysElapsed: number;
+  attestation: ReadinessAttestation | null;
+  config: ReadinessConfig | null;
+  freezeStatus: {
+    inFreeze: boolean;
+    unfreezeAt: Date | null;
+  };
+  attestationFreshness: number;
+  maxStaleness: number;
+  paused: boolean;
+}
+
 class NodeEconomyService {
   private provider: ethers.JsonRpcProvider;
   private nodeRegistry: ethers.Contract;
   private nodeRewards: ethers.Contract;
   private slashingEngine: ethers.Contract;
+  private readinessGate: ethers.Contract;
 
   constructor() {
     const rpcUrl = getArbitrumRpcUrl();
@@ -76,6 +113,7 @@ class NodeEconomyService {
     this.nodeRegistry = new ethers.Contract(NODE_ECONOMY_CONTRACTS.NODE_REGISTRY, NODE_REGISTRY_ABI, this.provider);
     this.nodeRewards = new ethers.Contract(NODE_ECONOMY_CONTRACTS.NODE_REWARDS, NODE_REWARDS_ABI, this.provider);
     this.slashingEngine = new ethers.Contract(NODE_ECONOMY_CONTRACTS.SLASHING_ENGINE, SLASHING_ENGINE_ABI, this.provider);
+    this.readinessGate = new ethers.Contract(NODE_ECONOMY_CONTRACTS.CAPITAL_READINESS_GATE, CAPITAL_READINESS_GATE_ABI, this.provider);
   }
 
   async getSystemStats(): Promise<NodeEconomyStats> {
@@ -246,6 +284,90 @@ class NodeEconomyService {
     }
   }
 
+  async getReadinessStatus(): Promise<ReadinessStatus> {
+    try {
+      const [
+        readinessResult,
+        observationDays,
+        attestation,
+        config,
+        freezeStatus,
+        freshness,
+        maxStaleness,
+        paused
+      ] = await Promise.all([
+        this.readinessGate.checkReadiness().catch(() => ({ isReady: false, failureReason: 'Contract call failed' })),
+        this.readinessGate.getObservationDaysElapsed().catch(() => 0n),
+        this.readinessGate.getAttestation().catch(() => null),
+        this.readinessGate.getConfig().catch(() => null),
+        this.readinessGate.checkFreezeStatus().catch(() => ({ inFreeze: false, unfreezeAt: 0n })),
+        this.readinessGate.getAttestationFreshness().catch(() => 0n),
+        this.readinessGate.maxAttestationStaleness().catch(() => 0n),
+        this.readinessGate.paused().catch(() => false)
+      ]);
+
+      let parsedAttestation: ReadinessAttestation | null = null;
+      if (attestation) {
+        parsedAttestation = {
+          uptimeBps: Number(attestation.uptimeBps || attestation[0] || 0n),
+          uptimePercent: Number(attestation.uptimeBps || attestation[0] || 0n) / 100,
+          incidentsCount: Number(attestation.incidentsCount || attestation[1] || 0n),
+          tvlUsd: ethers.formatUnits(attestation.tvlUsd || attestation[2] || 0n, 6),
+          lastUpdated: Number(attestation.lastUpdated || attestation[3] || 0n) > 0 
+            ? new Date(Number(attestation.lastUpdated || attestation[3]) * 1000) 
+            : null,
+          observationStartTimestamp: Number(attestation.observationStartTimestamp || attestation[4] || 0n) > 0 
+            ? new Date(Number(attestation.observationStartTimestamp || attestation[4]) * 1000) 
+            : null,
+          auditHash: attestation.auditHash || attestation[5] || '0x0'
+        };
+      }
+
+      let parsedConfig: ReadinessConfig | null = null;
+      if (config) {
+        parsedConfig = {
+          requiredAuditHash: config.requiredAuditHash || config[0] || '0x0',
+          minimumUptimeBps: Number(config.minimumUptimeBps || config[1] || 0),
+          minimumUptimePercent: Number(config.minimumUptimeBps || config[1] || 0) / 100,
+          minimumObservationDaysElapsed: Number(config.minimumObservationDaysElapsed || config[2] || 0),
+          maxIncidentsAllowed: Number(config.maxIncidentsAllowed || config[3] || 0),
+          minimumTVLUsd: ethers.formatUnits(config.minimumTVLUsd || config[4] || 0n, 6),
+          freezeWindowSeconds: Number(config.freezeWindowSeconds || config[5] || 0n)
+        };
+      }
+
+      return {
+        isReady: readinessResult.isReady ?? readinessResult[0] ?? false,
+        failureReason: readinessResult.failureReason ?? readinessResult[1] ?? '',
+        observationDaysElapsed: Number(observationDays),
+        attestation: parsedAttestation,
+        config: parsedConfig,
+        freezeStatus: {
+          inFreeze: freezeStatus.inFreeze ?? freezeStatus[0] ?? false,
+          unfreezeAt: Number(freezeStatus.unfreezeAt || freezeStatus[1] || 0n) > 0
+            ? new Date(Number(freezeStatus.unfreezeAt || freezeStatus[1]) * 1000)
+            : null
+        },
+        attestationFreshness: Number(freshness),
+        maxStaleness: Number(maxStaleness),
+        paused: Boolean(paused)
+      };
+    } catch (error) {
+      console.error('Error fetching readiness status:', error);
+      return {
+        isReady: false,
+        failureReason: 'Failed to fetch readiness status from contract',
+        observationDaysElapsed: 0,
+        attestation: null,
+        config: null,
+        freezeStatus: { inFreeze: false, unfreezeAt: null },
+        attestationFreshness: 0,
+        maxStaleness: 0,
+        paused: false
+      };
+    }
+  }
+
   getContracts() {
     return NODE_ECONOMY_CONTRACTS;
   }
@@ -254,7 +376,8 @@ class NodeEconomyService {
     return {
       nodeRegistry: `https://arbitrum.blockscout.com/address/${NODE_ECONOMY_CONTRACTS.NODE_REGISTRY}`,
       nodeRewards: `https://arbitrum.blockscout.com/address/${NODE_ECONOMY_CONTRACTS.NODE_REWARDS}`,
-      slashingEngine: `https://arbitrum.blockscout.com/address/${NODE_ECONOMY_CONTRACTS.SLASHING_ENGINE}`
+      slashingEngine: `https://arbitrum.blockscout.com/address/${NODE_ECONOMY_CONTRACTS.SLASHING_ENGINE}`,
+      capitalReadinessGate: `https://arbitrum.blockscout.com/address/${NODE_ECONOMY_CONTRACTS.CAPITAL_READINESS_GATE}`
     };
   }
 }
@@ -269,3 +392,4 @@ export function getNodeEconomyService(): NodeEconomyService {
 }
 
 export { NODE_ECONOMY_CONTRACTS, ON_CHAIN_NODE_CLASSES, OPERATOR_ROLES, NODE_STATUS };
+export type { ReadinessStatus, ReadinessAttestation, ReadinessConfig };

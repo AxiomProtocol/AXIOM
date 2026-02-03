@@ -60,6 +60,14 @@ AXIOM Protocol is following a staged evolution strategy:
 See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 
 ## Recent Changes
+- Feb 3, 2026: **Step 4: Readiness Gate System Complete**
+  - CapitalReadinessGate contract integration at 0xc3f798066e1401aa30Da8703A4c0588A1076ff39
+  - Created ReadinessGateDashboard UI component (components/observer/ReadinessGateDashboard.tsx)
+  - 4 readiness checks: observation period, uptime, incidents, TVL threshold
+  - API endpoint: GET /api/operator/readiness
+  - Node Economy service extended with getReadinessStatus() method
+  - Integration tests: 17/17 passing in tests/readiness-gate.test.ts
+  - Documentation updated: deployments.md, test-results.md, node-operator README
 - Feb 3, 2026: **Deployment Fix: MODULE_NOT_FOUND Resolution**
   - Removed `output: 'standalone'` from next.config.js
   - Removed legacy build scripts (build:deploy, build:deploy:clean, prebuild:deploy) that deleted .next/server

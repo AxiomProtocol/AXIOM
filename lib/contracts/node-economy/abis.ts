@@ -45,6 +45,20 @@ export const SLASHING_ENGINE_ABI = [
   'event FundsReceived(uint256 indexed nodeId, uint256 amount)'
 ] as const;
 
+export const CAPITAL_READINESS_GATE_ABI = [
+  'function checkReadiness() view returns (bool isReady, string failureReason)',
+  'function assertReady() view returns (bool ready)',
+  'function getObservationDaysElapsed() view returns (uint256)',
+  'function getAttestation() view returns (tuple(uint256 uptimeBps, uint256 incidentsCount, uint256 tvlUsd, uint64 lastUpdated, uint64 observationStartTimestamp, bytes32 auditHash))',
+  'function getConfig() view returns (tuple(bytes32 requiredAuditHash, uint16 minimumUptimeBps, uint16 minimumObservationDaysElapsed, uint16 maxIncidentsAllowed, uint256 minimumTVLUsd, uint256 freezeWindowSeconds))',
+  'function checkFreezeStatus() view returns (bool inFreeze, uint64 unfreezeAt)',
+  'function getAttestationFreshness() view returns (uint256 secondsRemaining)',
+  'function maxAttestationStaleness() view returns (uint256)',
+  'function paused() view returns (bool)',
+  'event AttestationPosted(uint256 uptimeBps, uint256 incidentsCount, uint256 tvlUsd, bytes32 auditHash, address indexed postedBy, uint64 timestamp)',
+  'event ConfigUpdated(bytes32 requiredAuditHash, uint16 minimumUptimeBps, uint16 minimumObservationDaysElapsed, uint16 maxIncidentsAllowed, uint256 minimumTVLUsd, uint256 freezeWindowSeconds, address indexed updatedBy, uint64 timestamp)'
+] as const;
+
 export const ON_CHAIN_NODE_CLASSES = ['STORAGE', 'EXECUTION', 'INDEXING', 'RESEARCH'] as const;
 export type OnChainNodeClass = typeof ON_CHAIN_NODE_CLASSES[number];
 
