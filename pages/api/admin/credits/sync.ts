@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../server/db';
 import { isAdminWallet } from '../../../../lib/admin/config';
 import { nanoid } from 'nanoid';
-import { NodeEconomyService } from '../../../../lib/contracts/node-economy/service';
+import { getNodeEconomyService } from '../../../../lib/contracts/node-economy/service';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       operatorsToSync = opResult.rows;
     }
 
-    const nodeService = new NodeEconomyService();
+    const nodeService = getNodeEconomyService();
 
     for (const operator of operatorsToSync) {
       try {
