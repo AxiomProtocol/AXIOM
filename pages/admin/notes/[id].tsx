@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useAccount } from 'wagmi';
-import SiteLayout from '../../../components/SiteLayout';
+import SiteLayout from '../../../components/navigation/SiteLayout';
 
 interface Note {
   id: number;
