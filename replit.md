@@ -60,6 +60,12 @@ AXIOM Protocol is following a staged evolution strategy:
 See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 
 ## Recent Changes
+- Feb 3, 2026: **Steps 8-9: Tests & Shell Commands Complete**
+  - Created unified smoke test: `npm run test:smoke` (17 tests covering all API endpoints)
+  - Added test:all script to run all 4 test suites (87 tests total)
+  - Added missing npm scripts: test:credits-ledger
+  - Created admin CLI shell script with 5 commands (list-operators, list-notes, credits-summary, db-stats, audit-logs)
+  - All tests passing: Node Economy (25), Credits Ledger (28), Readiness Gate (17), Note Portal (17)
 - Feb 3, 2026: **Step 7: Note Portal Complete**
   - Database tables: private_credit_notes, note_payment_events, note_covenants, note_documents
   - Admin API: GET/POST /api/admin/notes, GET/PUT /api/admin/notes/[id]
