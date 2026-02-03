@@ -60,6 +60,15 @@ AXIOM Protocol is following a staged evolution strategy:
 See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 
 ## Recent Changes
+- Feb 3, 2026: **Step 3: Credits Ledger System Complete**
+  - Database tables: credits_ledger, credits_transactions, onchain_rewards_sync (schema in shared/schema.ts)
+  - Operator API: GET /api/operator/credits, POST /api/operator/credits (claim credits)
+  - Admin API: GET /api/admin/credits, POST accrue/adjust/sync endpoints
+  - All endpoints use raw SQL via pool connection for consistency with existing codebase patterns
+  - Admin authentication via x-admin-wallet header with isAdminWallet() validation
+  - Credits tab UI added to operator portal (between "rewards" and "network" tabs)
+  - Integration tests: 28/28 passing in tests/credits-ledger.test.ts
+  - Documentation updated: docs/observation-mode/test-results.md
 - Feb 2, 2026: **Node Economy Dashboard & Operator Tools**
   - Created NodeEconomyDashboard component (components/observer/NodeEconomyDashboard.tsx)
   - Displays real-time on-chain data: node counts by class, epoch/rewards info, stake requirements, slashing parameters
