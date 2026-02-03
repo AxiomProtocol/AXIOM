@@ -60,6 +60,11 @@ AXIOM Protocol is following a staged evolution strategy:
 See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 
 ## Recent Changes
+- Feb 3, 2026: **Institutional Whitepaper Created**
+  - Created comprehensive 19-section whitepaper: `docs/AXIOM_WHITEPAPER.md`
+  - Covers: Protocol architecture, tokenomics, governance, Capital Bridge, Node Operators, SUSU, Lending, Land Acquisition, AXUSD, Treasury, Compliance, Technology, Security, Roadmap
+  - Institutional-grade documentation with contract registry, API endpoints, testing coverage, glossary
+  - Designed for allocators, auditors, and institutional partners
 - Feb 3, 2026: **Steps 8-9: Tests & Shell Commands Complete**
   - Created unified smoke test: `npm run test:smoke` (17 tests covering all API endpoints)
   - Added test:all script to run all 4 test suites (87 tests total)
