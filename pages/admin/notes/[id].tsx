@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import { useAccount } from 'wagmi';
 import SiteLayout from '../../../components/navigation/SiteLayout';
 
 interface Note {
@@ -88,7 +87,8 @@ function StatusBadge({ status }: { status: string }) {
 export default function NoteDetailPage() {
   const router = useRouter();
   const { id } = router.query;
-  const { address, isConnected } = useAccount();
+  const [walletAddress, setWalletAddress] = useState<string>('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [note, setNote] = useState<Note | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [covenants, setCovenants] = useState<Covenant[]>([]);
@@ -100,13 +100,74 @@ export default function NoteDetailPage() {
   const [editForm, setEditForm] = useState<Partial<Note>>({});
   const [saving, setSaving] = useState(false);
 
+  const checkAdminStatus = async (wallet: string) => {
+    try {
+      const res = await fetch('/api/admin/check-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.isAdmin;
+      }
+    } catch (e) {
+      console.error('Admin check failed:', e);
+    }
+    return false;
+  };
+
+  const checkWalletConnection = async () => {
+    if (typeof window !== 'undefined' && (window as any).ethereum) {
+      try {
+        const accounts = await (window as any).ethereum.request({ method: 'eth_accounts' });
+        if (accounts[0]) {
+          const addr = accounts[0].toLowerCase();
+          setWalletAddress(addr);
+          const adminStatus = await checkAdminStatus(addr);
+          setIsAdmin(adminStatus);
+          if (!adminStatus) {
+            setLoading(false);
+          }
+        } else {
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error('Wallet check failed:', e);
+        setLoading(false);
+      }
+    } else {
+      setLoading(false);
+    }
+  };
+
+  const connectWallet = async () => {
+    if (typeof window !== 'undefined' && (window as any).ethereum) {
+      try {
+        const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts[0]) {
+          const addr = accounts[0].toLowerCase();
+          setWalletAddress(addr);
+          const adminStatus = await checkAdminStatus(addr);
+          setIsAdmin(adminStatus);
+        }
+      } catch (e) {
+        console.error('Wallet connection failed:', e);
+      }
+    }
+  };
+
+  useEffect(() => {
+    checkWalletConnection();
+  }, []);
+
   const fetchNote = useCallback(async () => {
-    if (!address || !id) return;
+    if (!walletAddress || !id) return;
     
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/notes/${id}`, {
-        headers: { 'x-admin-wallet': address },
+        headers: { 'x-admin-wallet': walletAddress },
       });
       if (res.status === 401) {
         setError('Admin access required');
@@ -129,23 +190,23 @@ export default function NoteDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [address, id]);
+  }, [walletAddress, id]);
 
   useEffect(() => {
-    if (isConnected && address && id) {
+    if (isAdmin && walletAddress && id) {
       fetchNote();
     }
-  }, [isConnected, address, id, fetchNote]);
+  }, [isAdmin, walletAddress, id, fetchNote]);
 
   const handleSave = async () => {
-    if (!address || !id) return;
+    if (!walletAddress || !id) return;
     setSaving(true);
     try {
       const res = await fetch(`/api/admin/notes/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-wallet': address,
+          'x-admin-wallet': walletAddress,
         },
         body: JSON.stringify({
           status: editForm.status,
@@ -166,13 +227,34 @@ export default function NoteDetailPage() {
     }
   };
 
-  if (!isConnected) {
+  if (!walletAddress) {
     return (
       <SiteLayout>
         <div className="min-h-screen bg-gray-50 py-12">
           <div className="max-w-4xl mx-auto px-4">
             <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-              <p className="text-gray-600">Please connect your wallet to access this page.</p>
+              <p className="text-gray-600 mb-4">Please connect your wallet to access this page.</p>
+              <button
+                onClick={connectWallet}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+              >
+                Connect Wallet
+              </button>
+            </div>
+          </div>
+        </div>
+      </SiteLayout>
+    );
+  }
+
+  if (!isAdmin && !loading) {
+    return (
+      <SiteLayout>
+        <div className="min-h-screen bg-gray-50 py-12">
+          <div className="max-w-4xl mx-auto px-4">
+            <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+              <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+              <p className="text-gray-600">Your wallet is not authorized for admin access.</p>
             </div>
           </div>
         </div>

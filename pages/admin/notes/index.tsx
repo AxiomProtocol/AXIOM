@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAccount } from 'wagmi';
 import SiteLayout from '../../../components/navigation/SiteLayout';
 
 interface Note {
@@ -74,20 +73,82 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function AdminNotesPage() {
-  const { address, isConnected } = useAccount();
+  const [walletAddress, setWalletAddress] = useState<string>('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [data, setData] = useState<NotesData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  const checkAdminStatus = async (wallet: string) => {
+    try {
+      const res = await fetch('/api/admin/check-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.isAdmin;
+      }
+    } catch (e) {
+      console.error('Admin check failed:', e);
+    }
+    return false;
+  };
+
+  const checkWalletConnection = async () => {
+    if (typeof window !== 'undefined' && (window as any).ethereum) {
+      try {
+        const accounts = await (window as any).ethereum.request({ method: 'eth_accounts' });
+        if (accounts[0]) {
+          const addr = accounts[0].toLowerCase();
+          setWalletAddress(addr);
+          const adminStatus = await checkAdminStatus(addr);
+          setIsAdmin(adminStatus);
+          if (!adminStatus) {
+            setLoading(false);
+          }
+        } else {
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error('Wallet check failed:', e);
+        setLoading(false);
+      }
+    } else {
+      setLoading(false);
+    }
+  };
+
+  const connectWallet = async () => {
+    if (typeof window !== 'undefined' && (window as any).ethereum) {
+      try {
+        const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts[0]) {
+          const addr = accounts[0].toLowerCase();
+          setWalletAddress(addr);
+          const adminStatus = await checkAdminStatus(addr);
+          setIsAdmin(adminStatus);
+        }
+      } catch (e) {
+        console.error('Wallet connection failed:', e);
+      }
+    }
+  };
+
+  useEffect(() => {
+    checkWalletConnection();
+  }, []);
+
   const fetchNotes = useCallback(async () => {
-    if (!address) return;
+    if (!walletAddress) return;
     
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/notes?status=${statusFilter}`, {
-        headers: { 'x-admin-wallet': address },
+        headers: { 'x-admin-wallet': walletAddress },
       });
       if (res.status === 401) {
         setError('Admin access required');
@@ -102,22 +163,28 @@ export default function AdminNotesPage() {
     } finally {
       setLoading(false);
     }
-  }, [address, statusFilter]);
+  }, [walletAddress, statusFilter]);
 
   useEffect(() => {
-    if (isConnected && address) {
+    if (isAdmin && walletAddress) {
       fetchNotes();
     }
-  }, [isConnected, address, fetchNotes]);
+  }, [isAdmin, walletAddress, fetchNotes]);
 
-  if (!isConnected) {
+  if (!walletAddress) {
     return (
       <SiteLayout>
         <div className="min-h-screen bg-gray-50 py-12">
           <div className="max-w-7xl mx-auto px-4">
             <div className="bg-white rounded-xl shadow-sm p-8 text-center">
               <h1 className="text-2xl font-bold text-gray-900 mb-4">Note Portal - Admin</h1>
-              <p className="text-gray-600">Please connect your wallet to access the admin panel.</p>
+              <p className="text-gray-600 mb-4">Please connect your wallet to access the admin panel.</p>
+              <button
+                onClick={connectWallet}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+              >
+                Connect Wallet
+              </button>
             </div>
           </div>
         </div>
@@ -125,7 +192,7 @@ export default function AdminNotesPage() {
     );
   }
 
-  if (error === 'Admin access required') {
+  if (!isAdmin) {
     return (
       <SiteLayout>
         <div className="min-h-screen bg-gray-50 py-12">
@@ -279,7 +346,7 @@ export default function AdminNotesPage() {
                 setShowCreateModal(false);
                 fetchNotes();
               }}
-              adminWallet={address!}
+              adminWallet={walletAddress}
             />
           )}
         </div>
