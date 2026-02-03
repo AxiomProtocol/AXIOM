@@ -15,6 +15,7 @@ This document provides institutional partners visibility into which components a
 | Node Economy Contracts | 25/25 | 100% |
 | Credits Ledger System | 28/28 | 100% |
 | Readiness Gate System | 17/17 | 100% |
+| Note Portal System | 17/17 | 100% |
 | API Endpoints | 5/5 | 100% |
 | Contract ABIs | 20/20 | 100% |
 
@@ -341,7 +342,77 @@ All contracts can be independently verified on Blockscout:
 
 ---
 
-## 10. Institutional Contact
+## 10. Note Portal System
+
+### 10.1 Note Portal API Tests
+
+**Test Suite:** `tests/note-portal.test.ts`  
+**Run Command:** `npm run test:note-portal`  
+**Last Run:** 2026-02-03  
+**Result:** 17/17 PASSING
+
+#### Observer Endpoint Tests
+
+| Test | Status | Description |
+|------|--------|-------------|
+| GET returns 200 | PASS | /api/observer/notes accessible |
+| success property | PASS | Response has success: true |
+| notePortal object | PASS | Contains notePortal metrics |
+| summary.byStatus | PASS | Status breakdown included |
+| financials data | PASS | Financial summary present |
+| recentNotes array | PASS | Recent notes list returned |
+
+#### Admin Endpoint Tests
+
+| Test | Status | Description |
+|------|--------|-------------|
+| GET without auth | PASS | Returns 401 unauthorized |
+| GET with admin wallet | PASS | Returns 200 with data |
+| notes array | PASS | Response contains notes list |
+| summary object | PASS | Includes summary stats |
+| pagination object | PASS | Pagination metadata present |
+| POST without auth | PASS | Returns 401 unauthorized |
+| POST missing fields | PASS | Returns 400 validation error |
+
+#### Capital Bridge Integration Tests
+
+| Test | Status | Description |
+|------|--------|-------------|
+| GET returns 200 | PASS | /api/observer/capital-bridge accessible |
+| notePortal section | PASS | Notes metrics included |
+| notePortal structure | PASS | Has totalNotes, activeNotes, status |
+
+#### Database Tests
+
+| Test | Status | Description |
+|------|--------|-------------|
+| private_credit_notes | PASS | Table returns valid data |
+
+### 10.2 Database Tables
+
+| Table | Status | Description |
+|-------|--------|-------------|
+| `private_credit_notes` | CREATED | Main notes table |
+| `note_payment_events` | CREATED | Payment tracking |
+| `note_covenants` | CREATED | Covenant compliance |
+| `note_documents` | CREATED | Document metadata |
+
+### 10.3 API Endpoints
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/observer/notes` | GET | None | Public notes metrics |
+| `/api/admin/notes` | GET | Admin | List notes with filters |
+| `/api/admin/notes` | POST | Admin | Create new note |
+| `/api/admin/notes/[id]` | GET | Admin | Note details |
+| `/api/admin/notes/[id]` | PUT | Admin | Update note |
+| `/api/admin/notes/[id]/payments` | GET/POST | Admin | Payment events |
+| `/api/admin/notes/[id]/covenants` | GET/POST/PUT | Admin | Covenant management |
+| `/api/admin/notes/[id]/documents` | GET/POST | Admin | Document uploads |
+
+---
+
+## 11. Institutional Contact
 
 For technical due diligence inquiries regarding test results or system verification, please contact the AXIOM Protocol technical team.
 
