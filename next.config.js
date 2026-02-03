@@ -121,7 +121,6 @@ const nextConfig = {
         '@safe-global/api-kit': 'commonjs @safe-global/api-kit',
         'ethers': 'commonjs ethers',
         'viem': 'commonjs viem',
-        'wagmi': 'commonjs wagmi',
         '@google-cloud/storage': 'commonjs @google-cloud/storage',
         'googleapis': 'commonjs googleapis',
         'google-auth-library': 'commonjs google-auth-library',
