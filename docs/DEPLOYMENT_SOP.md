@@ -17,10 +17,10 @@ This document defines the deployment configuration settings and environment vari
 ## Build Configuration
 
 ```bash
-build = ["npm", "run", "build:production"]
+build = ["npm", "run", "build"]
 ```
 
-**Note:** Uses standard Next.js build without standalone output for compatibility.
+**Note:** Uses standard Next.js build. Legacy standalone/deploy scripts have been removed to prevent incomplete builds.
 
 ---
 
