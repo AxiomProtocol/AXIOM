@@ -60,6 +60,14 @@ AXIOM Protocol is following a staged evolution strategy:
 See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 
 ## Recent Changes
+- Feb 3, 2026: **Multi-Chain Gold Integration Strategy**
+  - Created strategic document: `docs/strategy/MULTICHAIN_GOLD_INTEGRATION_STRATEGY.md`
+  - Arbitrum One = Primary financial brain (AXUSD, lending, Capital Bridge, governance)
+  - Other chains = Collateral & liquidity satellites (risk-translated values only)
+  - Gold tokens: PAXG (primary), XAUT (secondary) - NO redemption promises
+  - Critical framing: "AXUSD is risk-governed USD-stable with hard-asset buffers, NOT gold-backed"
+  - Implementation phases: Policy → Observer metrics → Euler/Morpho market → Expansion
+  - Node operator tie-in with 4-layer benefit stack
 - Feb 3, 2026: **Institutional Whitepaper Created**
   - Created comprehensive 19-section whitepaper: `docs/AXIOM_WHITEPAPER.md`
   - Covers: Protocol architecture, tokenomics, governance, Capital Bridge, Node Operators, SUSU, Lending, Land Acquisition, AXUSD, Treasury, Compliance, Technology, Security, Roadmap
