@@ -17,10 +17,10 @@ This document defines the deployment configuration settings and environment vari
 ## Build Configuration
 
 ```bash
-build = ["npm", "run", "build"]
+build = ["npm", "run", "build:production"]
 ```
 
-**Note:** Uses standard Next.js build which creates complete standalone output with all required modules.
+**Note:** Uses standard Next.js build without standalone output for compatibility.
 
 ---
 
@@ -30,7 +30,7 @@ build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
 ```
 
-**Note:** The `start` script handles environment variables internally: `HOSTNAME=0.0.0.0 PORT=5000 node .next/standalone/server.js`
+**Note:** The `start` script uses `next start -p 5000` which runs the production server directly.
 
 ---
 

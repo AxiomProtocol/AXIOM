@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
   transpilePackages: ['react-hot-toast', 'goober'],
   eslint: {
     ignoreDuringBuilds: true,
@@ -10,7 +9,7 @@ const nextConfig = {
   },
   productionBrowserSourceMaps: false,
   swcMinify: true,
-  cleanDistDir: true,
+  cleanDistDir: false,
   poweredByHeader: false,
   compress: true,
   images: {
