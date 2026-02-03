@@ -63,9 +63,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const displayName = sanitizeString(body.displayName);
     const email = sanitizeString(body.email);
     const role = body.role;
+<<<<<<< HEAD
     const roles: OperatorRole[] = Array.isArray(body.roles) 
       ? body.roles.filter((r: string) => VALID_ROLES.includes(r as OperatorRole))
       : [role];
+=======
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 
     if (!displayName || displayName.length < 2) {
       return res.status(400).json({ message: 'Display name is required (min 2 characters)' });
@@ -79,10 +82,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: 'Valid role is required: OBSERVER, VALIDATOR, or ATTESTOR' });
     }
 
+<<<<<<< HEAD
     if (roles.length === 0) {
       return res.status(400).json({ message: 'At least one role must be selected' });
     }
 
+=======
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
     const client = await pool.connect();
     try {
       const existingResult = await client.query(
@@ -102,16 +108,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       await client.query(
         `INSERT INTO node_operators (
+<<<<<<< HEAD
           operator_id, wallet_address, display_name, email, role, roles, status, onboarding_phase
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         [operatorId, walletAddress, displayName, email, role, JSON.stringify(roles), 'APPLIED', 'APPLIED']
+=======
+          operator_id, wallet_address, display_name, email, role, status, onboarding_phase
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [operatorId, walletAddress, displayName, email, role, 'PENDING', 'APPLICATION']
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
       );
 
       await client.query(
         `INSERT INTO node_onboarding (
           onboarding_id, operator_id, current_phase, application_submitted_at, expires_at
         ) VALUES ($1, $2, $3, NOW(), $4)`,
+<<<<<<< HEAD
         [onboardingId, operatorId, 'APPLIED', expiresAt]
+=======
+        [onboardingId, operatorId, 'APPLICATION', expiresAt]
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
       );
 
       await client.query('COMMIT');
@@ -123,8 +139,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           walletAddress,
           displayName,
           role,
+<<<<<<< HEAD
           roles,
           status: 'APPLIED',
+=======
+          status: 'PENDING',
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
         },
         onboarding: {
           onboardingId,

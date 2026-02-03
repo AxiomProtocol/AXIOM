@@ -46,6 +46,7 @@ export interface OverviewMetrics {
     currentExposure: string;
     utilizationPercent: number;
   };
+<<<<<<< HEAD
   operatorNetwork?: {
     totalOperators: number;
     activeOperators: number;
@@ -55,6 +56,8 @@ export interface OverviewMetrics {
     validatorCount: number;
     attestorCount: number;
   };
+=======
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
   latestActions: GovernanceAction[];
   lastUpdated: string;
 }

@@ -74,7 +74,11 @@ export const SITE_NAV: NavItem[] = [
       { label: "The Wealth Practice", href: "/wealth-practice" },
       { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "Land Acquisition", href: "/land-acquisition" },
+<<<<<<< HEAD
       { label: "Land Pipeline", href: "/stewards/dashboard/land" },
+=======
+      { label: "Land Pipeline", href: "/admin/land-pipeline", visibility: 'admin' },
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
       { label: "Note Acquisition", href: "/notes/pipeline" },
       { label: "Governance", href: "/governance" },
       { label: "Tokenomics", href: "/tokenomics" },
@@ -123,7 +127,11 @@ export const FOOTER_SECTIONS: FooterSection[] = [
       { label: "The Wealth Practice", href: "/wealth-practice" },
       { label: "AXUSD Stablecoin", href: "/axusd" },
       { label: "Land Acquisition", href: "/land-acquisition" },
+<<<<<<< HEAD
       { label: "Land Pipeline", href: "/stewards/dashboard/land" },
+=======
+      { label: "Land Pipeline", href: "/admin/land-pipeline" },
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
       { label: "Investor Admin", href: "/admin/investors" },
       { label: "Governance", href: "/governance" },
       { label: "Staking", href: "/staking" }

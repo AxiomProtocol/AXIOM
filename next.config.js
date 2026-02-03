@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+<<<<<<< HEAD
+=======
+  output: 'standalone',
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
   transpilePackages: ['react-hot-toast', 'goober'],
   eslint: {
     ignoreDuringBuilds: true,
@@ -9,7 +13,11 @@ const nextConfig = {
   },
   productionBrowserSourceMaps: false,
   swcMinify: true,
+<<<<<<< HEAD
   cleanDistDir: false,
+=======
+  cleanDistDir: true,
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
   poweredByHeader: false,
   compress: true,
   images: {
@@ -70,7 +78,10 @@ const nextConfig = {
         './node_modules/@neondatabase/serverless/**',
         './node_modules/react-hot-toast/**',
         './node_modules/goober/**',
+<<<<<<< HEAD
         './node_modules/drizzle-orm/**',
+=======
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
       ],
     },
   },
@@ -120,6 +131,10 @@ const nextConfig = {
         '@safe-global/api-kit': 'commonjs @safe-global/api-kit',
         'ethers': 'commonjs ethers',
         'viem': 'commonjs viem',
+<<<<<<< HEAD
+=======
+        'wagmi': 'commonjs wagmi',
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
         '@google-cloud/storage': 'commonjs @google-cloud/storage',
         'googleapis': 'commonjs googleapis',
         'google-auth-library': 'commonjs google-auth-library',

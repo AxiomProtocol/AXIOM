@@ -1,8 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
+<<<<<<< HEAD
 import { Pool } from 'pg';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+=======
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 
 const CONTRACTS = {
   CapitalBridgeHub: '0x6a00455dC277C9430e5c45324B34F2425ba0408d',
@@ -57,6 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const poolRegistry = new ethers.Contract(CONTRACTS.PoolRegistry, POOL_REGISTRY_ABI, provider);
     const servicingLog = new ethers.Contract(CONTRACTS.ServicingEventLog, SERVICING_LOG_ABI, provider);
 
+<<<<<<< HEAD
     const notesSummaryQuery = pool.query(`
       SELECT 
         COUNT(*) as total_notes,
@@ -66,6 +70,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       FROM private_credit_notes
     `).catch(() => ({ rows: [{ total_notes: 0, active_notes: 0, delinquent_notes: 0, total_outstanding: 0 }] }));
 
+=======
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
     const [
       packetCount,
       spvCount,
@@ -78,7 +84,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       instrumentCount,
       poolCount,
       eventCount,
+<<<<<<< HEAD
       notesSummaryResult,
+=======
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
     ] = await Promise.all([
       capitalBridgeHub.getPacketCount().catch(() => 0n),
       capitalBridgeHub.getSPVCount().catch(() => 0n),
@@ -91,10 +100,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       instrumentRegistry.getInstrumentCount().catch(() => 0n),
       poolRegistry.getPoolCount().catch(() => 0n),
       servicingLog.getEventCount().catch(() => 0n),
+<<<<<<< HEAD
       notesSummaryQuery,
     ]);
     
     const notesSummary = notesSummaryResult.rows[0];
+=======
+    ]);
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 
     const now = Math.floor(Date.now() / 1000);
     const observationStartNum = Number(observationStart);
@@ -151,6 +164,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           label: 'Servicing Events',
         },
       },
+<<<<<<< HEAD
       notePortal: {
         totalNotes: parseInt(notesSummary.total_notes) || 0,
         activeNotes: parseInt(notesSummary.active_notes) || 0,
@@ -158,6 +172,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         totalOutstanding: parseFloat(notesSummary.total_outstanding) || 0,
         status: parseInt(notesSummary.delinquent_notes) > 0 ? 'ATTENTION' : 'HEALTHY',
       },
+=======
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
       contracts: CONTRACTS,
       proofLinks: [
         { label: 'CapitalBridgeHub', url: `https://arbitrum.blockscout.com/address/${CONTRACTS.CapitalBridgeHub}` },

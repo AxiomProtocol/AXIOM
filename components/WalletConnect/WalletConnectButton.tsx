@@ -109,6 +109,7 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
     setError(null);
     
     try {
+<<<<<<< HEAD
       // Direct approach using window.ethereum for better production compatibility
       if (!window.ethereum) {
         throw new Error('MetaMask not detected. Please install MetaMask extension.');
@@ -172,6 +173,60 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
       } else {
         setError(err.message || 'Failed to connect MetaMask');
       }
+=======
+      const { WalletService } = await import('../../lib/services/WalletService');
+      const walletInstance = WalletService.getInstance();
+      const address = await walletInstance.connectMetaMask();
+      
+      if (address) {
+        console.log('✅ MetaMask wallet connected:', address);
+        
+        // Trigger SIWE signature request
+        try {
+          console.log('🔑 [MetaMask] Getting signer and state...');
+          const { siweService } = await import('../../lib/services/SIWEService');
+          const signer = walletInstance.getSigner();
+          const state = walletInstance.getState();
+          
+          console.log('🔑 [MetaMask] Signer:', !!signer, 'signMessage:', typeof signer?.signMessage, 'State:', JSON.stringify(state));
+          
+          if (signer && typeof signer.signMessage === 'function') {
+            console.log('📝 [MetaMask] Calling siweService.signIn...');
+            setSIWEState(prev => ({ ...prev, isAuthenticating: true, authError: null }));
+            
+            // Reset any stale signing state before attempting
+            siweService.resetSigningState();
+            
+            const result = await siweService.signIn(
+              signer,
+              address,
+              state.chainId || 42161
+            );
+            
+            if (result.success) {
+              console.log('✅ [MetaMask] SIWE authentication successful');
+              setSIWEState({ isAuthenticated: true, isAuthenticating: false, authError: null });
+            } else {
+              console.warn('⚠️ [MetaMask] SIWE authentication failed:', result.error);
+              setSIWEState(prev => ({ ...prev, isAuthenticating: false, authError: result.error || 'Authentication failed' }));
+            }
+          } else {
+            console.error('❌ [MetaMask] Signer not valid or signMessage not a function');
+          }
+        } catch (siweErr) {
+          console.error('SIWE error:', siweErr);
+          // Don't block wallet connection if SIWE fails
+        }
+        
+        setShowModal(false);
+        if (onConnect) {
+          onConnect(address);
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to connect MetaMask');
+      console.error('MetaMask connection error:', err);
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
     } finally {
       setIsConnecting(false);
     }
@@ -183,6 +238,7 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
     setError(null);
     
     try {
+<<<<<<< HEAD
       if (!window.ethereum) {
         throw new Error('No wallet detected. Please install MetaMask or another Web3 wallet.');
       }
@@ -240,6 +296,55 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
       } else {
         setError(err.message || 'Failed to connect wallet');
       }
+=======
+      const { WalletService } = await import('../../lib/services/WalletService');
+      const walletInstance = WalletService.getInstance();
+      const address = await walletInstance.connectInjected();
+      
+      if (address) {
+        console.log('✅ Wallet connected (injected):', address);
+        
+        // Trigger SIWE signature request
+        try {
+          const { siweService } = await import('../../lib/services/SIWEService');
+          const signer = walletInstance.getSigner();
+          const state = walletInstance.getState();
+          
+          if (signer) {
+            console.log('📝 Requesting SIWE signature...');
+            setSIWEState(prev => ({ ...prev, isAuthenticating: true, authError: null }));
+            
+            // Reset any stale signing state before attempting
+            siweService.resetSigningState();
+            
+            const result = await siweService.signIn(
+              signer,
+              address,
+              state.chainId || 42161
+            );
+            
+            if (result.success) {
+              console.log('✅ SIWE authentication successful');
+              setSIWEState({ isAuthenticated: true, isAuthenticating: false, authError: null });
+            } else {
+              console.warn('⚠️ SIWE authentication failed:', result.error);
+              setSIWEState(prev => ({ ...prev, isAuthenticating: false, authError: result.error || 'Authentication failed' }));
+            }
+          }
+        } catch (siweErr: any) {
+          console.error('SIWE error:', siweErr);
+          setSIWEState(prev => ({ ...prev, isAuthenticating: false, authError: siweErr.message || 'Sign-in failed' }));
+        }
+        
+        setShowModal(false);
+        if (onConnect) {
+          onConnect(address);
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to connect wallet');
+      console.error('Wallet connection error:', err);
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
     } finally {
       setIsConnecting(false);
     }

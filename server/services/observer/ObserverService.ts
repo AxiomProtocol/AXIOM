@@ -6,7 +6,10 @@
  */
 
 import { ethers, Contract } from 'ethers';
+<<<<<<< HEAD
 import { pool } from '../../db';
+=======
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 import {
   OBSERVER_CONTRACTS,
   OverviewMetrics,
@@ -215,7 +218,10 @@ export class ObserverService {
           currentExposure: this.formatUSD(totalOutstanding),
           utilizationPercent: utilizationPercent
         },
+<<<<<<< HEAD
         operatorNetwork: await this.getOperatorNetworkStats(),
+=======
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
         latestActions: latestActions,
         lastUpdated: new Date().toISOString()
       };
@@ -244,6 +250,7 @@ export class ObserverService {
     }
   }
 
+<<<<<<< HEAD
   private async getOperatorNetworkStats(): Promise<{
     totalOperators: number;
     activeOperators: number;
@@ -290,6 +297,8 @@ export class ObserverService {
     }
   }
 
+=======
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
   async getTreasury(): Promise<ObserverResponse<TreasuryData>> {
     const cacheKey = 'treasury';
     const cached = this.getCached<TreasuryData>(cacheKey);

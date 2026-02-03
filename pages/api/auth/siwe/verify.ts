@@ -10,6 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+<<<<<<< HEAD
   // Log all relevant headers for debugging production proxy issues
   console.log('[SIWE Verify] Request headers:', {
     host: req.headers.host,
@@ -21,6 +22,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     referer: req.headers.referer
   });
 
+=======
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
   try {
     const { message, signature } = req.body;
     
@@ -31,6 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const siweMessage = new SiweMessage(message);
     const { nonce } = siweMessage;
     
+<<<<<<< HEAD
     // Handle proxy headers for production environments (Replit, Vercel, etc.)
     // Priority: x-forwarded-host > origin host > referer host > host header
     const forwardedHost = req.headers['x-forwarded-host'];
@@ -58,6 +62,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       || refererHost 
       || req.headers.host;
     
+=======
+    const expectedHost = req.headers.host;
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
     if (!expectedHost) {
       return res.status(400).json({ 
         error: 'Invalid request - missing host header',
@@ -66,6 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     
     const messageDomain = siweMessage.domain;
+<<<<<<< HEAD
     
     // Log for debugging in production
     console.log('[SIWE Verify] Domain check:', {
@@ -95,6 +103,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         error: 'Domain mismatch. The signature was created for a different site.',
         code: 'DOMAIN_MISMATCH',
         debug: { validHosts, received: messageDomain }
+=======
+    if (messageDomain !== expectedHost) {
+      return res.status(401).json({ 
+        error: 'Domain mismatch. The signature was created for a different site.',
+        code: 'DOMAIN_MISMATCH'
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
       });
     }
     
@@ -118,11 +132,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
     
+<<<<<<< HEAD
     // Use the message's own domain for verification since we already validated it
     const fields = await siweMessage.verify({ 
       signature,
       nonce,
       domain: messageDomain
+=======
+    const fields = await siweMessage.verify({ 
+      signature,
+      nonce,
+      domain: expectedHost
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
     });
     
     if (!fields.success) {

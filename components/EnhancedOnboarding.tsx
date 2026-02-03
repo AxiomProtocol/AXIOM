@@ -288,7 +288,11 @@ export function EnhancedOnboarding({ onComplete, onDismiss }: EnhancedOnboarding
               🎯 What are your goals?
             </h3>
             <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>
+<<<<<<< HEAD
               Select all that apply to help us show you the most relevant features. <span style={{ color: '#9CA3AF' }}>(Optional)</span>
+=======
+              Select all that apply to help us show you the most relevant features.
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
             </p>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
@@ -321,7 +325,11 @@ export function EnhancedOnboarding({ onComplete, onDismiss }: EnhancedOnboarding
               🧭 What interests you most?
             </h3>
             <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>
+<<<<<<< HEAD
               Select the features you'd like to explore. We'll create a personalized starting point for you. <span style={{ color: '#9CA3AF' }}>(Optional)</span>
+=======
+              Select the features you'd like to explore. We'll create a personalized starting point for you.
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
             </p>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '340px', overflowY: 'auto' }}>
@@ -550,9 +558,15 @@ export function EnhancedOnboarding({ onComplete, onDismiss }: EnhancedOnboarding
       case 2:
         return !!formData.experienceLevel;
       case 3:
+<<<<<<< HEAD
         return true; // Goals are optional
       case 4:
         return true; // Interests are optional
+=======
+        return formData.selectedGoals.length > 0;
+      case 4:
+        return formData.selectedInterests.length > 0;
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
       case 5:
         return true;
       default:

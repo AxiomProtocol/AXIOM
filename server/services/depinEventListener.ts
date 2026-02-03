@@ -3,6 +3,7 @@ import { db } from '../db';
 import { depinEvents, depinNodes, depinRevenueDistributions, depinSyncState } from '../../shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { DEFI_UTILITY_CONTRACTS, NETWORK_CONFIG } from '../../shared/contracts';
+<<<<<<< HEAD
 import { getArbitrumRpcUrl } from '../../lib/config';
 
 const DEPIN_CONTRACT_ADDRESS = DEFI_UTILITY_CONTRACTS.DEPIN_NODES;
@@ -10,6 +11,12 @@ const ARBITRUM_RPC = getArbitrumRpcUrl();
 const ALCHEMY_WSS = process.env.ALCHEMY_API_KEY 
   ? `wss://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
   : 'wss://arb-mainnet.g.alchemy.com/v2/demo';
+=======
+
+const DEPIN_CONTRACT_ADDRESS = DEFI_UTILITY_CONTRACTS.DEPIN_NODES;
+const ARBITRUM_RPC = 'https://arb1.arbitrum.io/rpc';
+const ALCHEMY_WSS = process.env.ALCHEMY_ARBITRUM_WSS || 'wss://arb-mainnet.g.alchemy.com/v2/demo';
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 
 const DEPIN_ABI = [
   "event NodeMinted(uint256 indexed tokenId, address indexed owner, uint256 nodeType, uint256 tier, uint256 price)",

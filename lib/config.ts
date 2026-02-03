@@ -21,6 +21,7 @@ export interface AppConfig {
 
 let cachedConfig: AppConfig | null = null;
 
+<<<<<<< HEAD
 export function getArbitrumRpcUrl(): string {
   if (process.env.ALCHEMY_API_KEY) {
     return `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
@@ -28,12 +29,18 @@ export function getArbitrumRpcUrl(): string {
   return process.env.ARBITRUM_RPC_URL || NETWORK_CONFIG.rpcUrl;
 }
 
+=======
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 export function getConfig(): AppConfig {
   if (cachedConfig) {
     return cachedConfig;
   }
 
+<<<<<<< HEAD
   const rpcUrl = getArbitrumRpcUrl();
+=======
+  const rpcUrl = process.env.ARBITRUM_RPC_URL || NETWORK_CONFIG.rpcUrl;
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
   
   cachedConfig = {
     rpcUrl,

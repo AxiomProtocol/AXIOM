@@ -86,7 +86,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         SELECT 
           COUNT(*)::integer as total,
           COUNT(*) FILTER (WHERE status = 'draft')::integer as draft,
+<<<<<<< HEAD
           COUNT(*) FILTER (WHERE status = 'active')::integer as active,
+=======
+          COUNT(*) FILTER (WHERE status = 'live' OR status = 'active')::integer as active,
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
           COUNT(*) FILTER (WHERE status = 'funded')::integer as funded,
           COUNT(*) FILTER (WHERE status = 'closed')::integer as closed,
           COALESCE(SUM(amount_raised), 0)::text as total_raised,

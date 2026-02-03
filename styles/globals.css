@@ -27,6 +27,7 @@
 .mobile-wallet .wallet-info {
   flex-wrap: nowrap;
   max-width: 200px;
+<<<<<<< HEAD
 }
 
 /* Print styles for operator certificate */
@@ -58,4 +59,6 @@
   .shadow-sm, .shadow-md, .shadow-lg {
     box-shadow: none !important;
   }
+=======
+>>>>>>> a71dd51e2ca25c5fb2013ac140a4390f21404a26
 }
