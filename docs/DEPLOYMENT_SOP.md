@@ -186,6 +186,49 @@ If deployment fails:
 
 ---
 
+## Troubleshooting
+
+### MODULE_NOT_FOUND: response-cache Error
+
+**Symptom:** Deployment fails with error:
+```
+Next.js standalone build is missing the 'response-cache' module and other dependencies
+MODULE_NOT_FOUND errors at runtime
+```
+
+**Root Cause:** Legacy build scripts that:
+1. Use `output: 'standalone'` in next.config.js
+2. Copy files to `.next/standalone/` directory
+3. Delete `.next/server` or `.next/static` after building
+
+These operations remove critical Next.js internal modules like `response-cache`.
+
+**Resolution (Applied Feb 3, 2026):**
+1. Remove `output: 'standalone'` from `next.config.js`
+2. Remove legacy build scripts from `package.json`:
+   - `build:deploy`
+   - `build:deploy:clean`
+   - `prebuild:deploy`
+3. Use simple build commands:
+   - Build: `npm run build` → `next build`
+   - Start: `npm run start` → `next start -p 5000`
+4. Do NOT delete `.next/server` or copy to `.next/standalone/`
+
+**Prevention:**
+- Never add scripts that modify or delete `.next/server` contents
+- Never use `output: 'standalone'` without proper file tracing configuration
+- Always use standard `next build` followed by `next start`
+
+### Build Command Caching
+
+If deployment uses an old build command despite config changes:
+1. Verify `package.json` scripts are updated
+2. Re-apply deployment config via Replit tools
+3. Check for any `.replit` overrides
+4. Clear deployment cache by making a new commit
+
+---
+
 ## Contact
 
 For deployment issues, refer to:
@@ -194,5 +237,5 @@ For deployment issues, refer to:
 
 ---
 
-*Last Updated: February 2, 2026*
-*Version: 1.1 - Added Wallet Connectivity (SIWE) section*
+*Last Updated: February 3, 2026*
+*Version: 1.2 - Added Troubleshooting section for MODULE_NOT_FOUND resolution*

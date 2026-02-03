@@ -60,6 +60,12 @@ AXIOM Protocol is following a staged evolution strategy:
 See `docs/UNIVERSE_L3_ROADMAP.md` for complete strategy.
 
 ## Recent Changes
+- Feb 3, 2026: **Deployment Fix: MODULE_NOT_FOUND Resolution**
+  - Removed `output: 'standalone'` from next.config.js
+  - Removed legacy build scripts (build:deploy, build:deploy:clean, prebuild:deploy) that deleted .next/server
+  - Simplified to standard `next build` and `next start -p 5000`
+  - Root cause: Legacy scripts were deleting critical Next.js modules like response-cache
+  - See docs/DEPLOYMENT_SOP.md Troubleshooting section for full details
 - Feb 3, 2026: **Step 3: Credits Ledger System Complete**
   - Database tables: credits_ledger, credits_transactions, onchain_rewards_sync (schema in shared/schema.ts)
   - Operator API: GET /api/operator/credits, POST /api/operator/credits (claim credits)
