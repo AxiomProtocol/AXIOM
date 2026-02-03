@@ -1,6 +1,6 @@
 # Axiom Protocol - Component & Service Test Results
 
-**Last Updated:** 2026-02-02  
+**Last Updated:** 2026-02-03  
 **Status:** OBSERVATION WINDOW ACTIVE  
 **Purpose:** Institutional transparency on implemented and verified components
 
@@ -13,6 +13,7 @@ This document provides institutional partners visibility into which components a
 | Category | Tests Passing | Coverage |
 |----------|---------------|----------|
 | Node Economy Contracts | 25/25 | 100% |
+| Credits Ledger System | 28/28 | 100% |
 | API Endpoints | 5/5 | 100% |
 | Contract ABIs | 20/20 | 100% |
 
@@ -220,7 +221,58 @@ All contracts can be independently verified on Blockscout:
 
 ---
 
-## 8. Institutional Contact
+## 8. Credits Ledger System
+
+### 8.1 Credits Ledger API Tests
+
+**Test Suite:** `tests/credits-ledger.test.ts`  
+**Run Command:** `npx tsx tests/credits-ledger.test.ts`  
+**Last Run:** 2026-02-03  
+**Result:** 28/28 PASSING
+
+#### Operator Credits Endpoints
+
+| Endpoint | Method | Test Status | Description |
+|----------|--------|-------------|-------------|
+| `/api/operator/credits` | GET | PASS | Returns 400 without wallet parameter |
+| `/api/operator/credits` | GET | PASS | Returns 404 for non-existent operator |
+| `/api/operator/credits` | POST | PASS | Wallet and amount validation |
+
+#### Admin Credits Endpoints
+
+| Endpoint | Method | Test Status | Description |
+|----------|--------|-------------|-------------|
+| `/api/admin/credits` | GET | PASS | Admin authentication required |
+| `/api/admin/credits` | GET | PASS | Returns ledgers with summary |
+| `/api/admin/credits/accrue` | POST | PASS | Admin auth + operatorId validation |
+| `/api/admin/credits/adjust` | POST | PASS | Admin auth + reason validation |
+| `/api/admin/credits/sync` | POST | PASS | Admin auth + operatorId/syncAll validation |
+
+#### Schema Validation
+
+| Field | Test Status | Description |
+|-------|-------------|-------------|
+| `summary.totalAvailable` | PASS | Aggregate available balance |
+| `summary.totalPending` | PASS | Aggregate pending balance |
+| `summary.totalEarned` | PASS | Aggregate total earned |
+| `summary.totalRedeemed` | PASS | Aggregate total redeemed |
+| `summary.totalSlashed` | PASS | Aggregate total slashed |
+| `summary.operatorCount` | PASS | Total operators with ledgers |
+| `pagination.limit` | PASS | Limit parameter respected |
+| `pagination.offset` | PASS | Offset parameter respected |
+| `pagination.hasMore` | PASS | Pagination continuation flag |
+
+### 8.2 Database Tables
+
+| Table | Status | Description |
+|-------|--------|-------------|
+| `credits_ledger` | CREATED | Operator credit balances |
+| `credits_transactions` | CREATED | Transaction history |
+| `onchain_rewards_sync` | CREATED | On-chain sync tracking |
+
+---
+
+## 9. Institutional Contact
 
 For technical due diligence inquiries regarding test results or system verification, please contact the AXIOM Protocol technical team.
 

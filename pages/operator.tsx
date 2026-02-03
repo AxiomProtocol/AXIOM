@@ -39,7 +39,28 @@ interface ProgramStats {
   observationWindowEnd: string;
 }
 
-type Tab = 'apply' | 'status' | 'rewards' | 'network' | 'docs';
+type Tab = 'apply' | 'status' | 'rewards' | 'credits' | 'network' | 'docs';
+
+interface CreditsLedger {
+  availableBalance: string;
+  pendingBalance: string;
+  totalEarned: string;
+  totalRedeemed: string;
+  totalSlashed: string;
+  lastSyncedAt: string | null;
+}
+
+interface CreditsTransaction {
+  id: string;
+  type: string;
+  amount: string;
+  currency: string;
+  source: string;
+  status: string;
+  reason: string;
+  txHash: string | null;
+  createdAt: string;
+}
 
 const STATUS_STEPS: { status: OperatorStatus; label: string; description: string }[] = [
   { status: 'APPLIED', label: 'Applied', description: 'Application submitted' },
@@ -89,6 +110,10 @@ export default function OperatorPortal() {
     bonding: false,
   });
   const [showCertModal, setShowCertModal] = useState(false);
+  const [credits, setCredits] = useState<CreditsLedger | null>(null);
+  const [creditsTransactions, setCreditsTransactions] = useState<CreditsTransaction[]>([]);
+  const [claimAmount, setClaimAmount] = useState('');
+  const [claiming, setClaiming] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -131,6 +156,52 @@ export default function OperatorPortal() {
       setLoading(false);
     }
   };
+
+  const fetchCredits = async () => {
+    if (!walletAddress) return;
+    try {
+      const res = await fetch(`/api/operator/credits?wallet=${walletAddress}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setCredits(data.ledger);
+          setCreditsTransactions(data.transactions || []);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch credits:', e);
+    }
+  };
+
+  const handleClaimCredits = async () => {
+    if (!walletAddress || !claimAmount) return;
+    setClaiming(true);
+    try {
+      const res = await fetch('/api/operator/credits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet: walletAddress, amount: claimAmount }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessage({ type: 'success', text: `Claim request submitted for $${claimAmount}` });
+        setClaimAmount('');
+        fetchCredits();
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to submit claim' });
+      }
+    } catch (e) {
+      setMessage({ type: 'error', text: 'Failed to submit claim request' });
+    } finally {
+      setClaiming(false);
+    }
+  };
+
+  useEffect(() => {
+    if (walletAddress && activeTab === 'credits') {
+      fetchCredits();
+    }
+  }, [walletAddress, activeTab]);
 
   const connectWallet = async () => {
     if (typeof window !== 'undefined' && (window as any).ethereum) {
@@ -215,6 +286,15 @@ export default function OperatorPortal() {
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    },
+    {
+      id: 'credits',
+      label: 'Credits',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
         </svg>
       ),
     },
@@ -1447,6 +1527,142 @@ export default function OperatorPortal() {
                 <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
                   <h2 className="text-xl font-semibold text-gray-900 mb-2">No Rewards Yet</h2>
                   <p className="text-gray-600">You will start earning rewards once you become an active operator and participate in settlements.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {isConnected && activeTab === 'credits' && (
+            <div className="space-y-6">
+              {credits ? (
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">Credits Ledger</h2>
+                    <button
+                      onClick={fetchCredits}
+                      className="text-sm text-teal-600 hover:text-teal-700 flex items-center gap-1"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Refresh
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                    <div className="bg-teal-50 rounded-xl p-4 border border-teal-100">
+                      <div className="text-2xl font-bold text-teal-600">${parseFloat(credits.availableBalance || '0').toFixed(2)}</div>
+                      <div className="text-sm text-gray-600">Available</div>
+                    </div>
+                    <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-100">
+                      <div className="text-2xl font-bold text-yellow-600">${parseFloat(credits.pendingBalance || '0').toFixed(2)}</div>
+                      <div className="text-sm text-gray-600">Pending</div>
+                    </div>
+                    <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+                      <div className="text-2xl font-bold text-green-600">${parseFloat(credits.totalEarned || '0').toFixed(2)}</div>
+                      <div className="text-sm text-gray-600">Total Earned</div>
+                    </div>
+                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                      <div className="text-2xl font-bold text-blue-600">${parseFloat(credits.totalRedeemed || '0').toFixed(2)}</div>
+                      <div className="text-sm text-gray-600">Redeemed</div>
+                    </div>
+                    <div className="bg-red-50 rounded-xl p-4 border border-red-100">
+                      <div className="text-2xl font-bold text-red-600">${parseFloat(credits.totalSlashed || '0').toFixed(2)}</div>
+                      <div className="text-sm text-gray-600">Slashed</div>
+                    </div>
+                  </div>
+
+                  {parseFloat(credits.availableBalance || '0') > 0 && (
+                    <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200">
+                      <h3 className="font-medium text-gray-900 mb-3">Claim Credits</h3>
+                      <div className="flex gap-3">
+                        <div className="relative flex-1">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                          <input
+                            type="number"
+                            value={claimAmount}
+                            onChange={(e) => setClaimAmount(e.target.value)}
+                            placeholder="0.00"
+                            max={credits.availableBalance}
+                            className="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                          />
+                        </div>
+                        <button
+                          onClick={handleClaimCredits}
+                          disabled={claiming || !claimAmount || parseFloat(claimAmount) <= 0}
+                          className="px-6 py-2 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {claiming ? 'Processing...' : 'Claim'}
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">Maximum: ${parseFloat(credits.availableBalance || '0').toFixed(2)}</p>
+                    </div>
+                  )}
+
+                  {credits.lastSyncedAt && (
+                    <p className="text-xs text-gray-500 mb-4">
+                      Last synced: {new Date(credits.lastSyncedAt).toLocaleString()}
+                    </p>
+                  )}
+
+                  <div className="border-t border-gray-200 pt-6">
+                    <h3 className="font-medium text-gray-900 mb-4">Transaction History</h3>
+                    {creditsTransactions.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="text-left px-4 py-2 font-medium text-gray-600">Date</th>
+                              <th className="text-left px-4 py-2 font-medium text-gray-600">Type</th>
+                              <th className="text-right px-4 py-2 font-medium text-gray-600">Amount</th>
+                              <th className="text-left px-4 py-2 font-medium text-gray-600">Source</th>
+                              <th className="text-left px-4 py-2 font-medium text-gray-600">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200">
+                            {creditsTransactions.map((tx) => (
+                              <tr key={tx.id}>
+                                <td className="px-4 py-3 text-gray-500">{new Date(tx.createdAt).toLocaleDateString()}</td>
+                                <td className="px-4 py-3">
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                    tx.type === 'ACCRUAL' ? 'bg-green-100 text-green-700' :
+                                    tx.type === 'REDEMPTION' ? 'bg-blue-100 text-blue-700' :
+                                    tx.type === 'ADJUSTMENT' ? 'bg-yellow-100 text-yellow-700' :
+                                    tx.type === 'SLASHING' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
+                                  }`}>
+                                    {tx.type}
+                                  </span>
+                                </td>
+                                <td className={`text-right px-4 py-3 font-medium ${
+                                  tx.type === 'ACCRUAL' || tx.type === 'ADJUSTMENT' ? 'text-green-600' : 
+                                  tx.type === 'SLASHING' ? 'text-red-600' : 'text-gray-900'
+                                }`}>
+                                  {tx.type === 'SLASHING' || tx.type === 'REDEMPTION' ? '-' : '+'}${parseFloat(tx.amount).toFixed(2)}
+                                </td>
+                                <td className="px-4 py-3 text-gray-600">{tx.source.replace(/_/g, ' ')}</td>
+                                <td className="px-4 py-3">
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                    tx.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
+                                    tx.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                                    tx.status === 'FAILED' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
+                                  }`}>
+                                    {tx.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">No transactions yet</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">Credits Ledger</h2>
+                  <p className="text-gray-600">Your credits ledger will be created when you earn your first credits.</p>
                 </div>
               )}
             </div>

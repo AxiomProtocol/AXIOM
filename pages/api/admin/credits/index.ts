@@ -1,7 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../../lib/db';
-import { creditsLedger, creditsTransactions, nodeOperators } from '../../../../shared/schema';
-import { eq, desc, sql } from 'drizzle-orm';
+import { pool } from '../../../../server/db';
 import { isAdminWallet } from '../../../../lib/admin/config';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -19,75 +17,81 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 }
 
 async function getCreditsLedgers(req: NextApiRequest, res: NextApiResponse) {
+  const client = await pool.connect();
   try {
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = parseInt(req.query.offset as string) || 0;
     const operatorId = req.query.operatorId as string;
 
-    let query = db
-      .select({
-        ledger: creditsLedger,
-        operator: {
-          operatorId: nodeOperators.operatorId,
-          walletAddress: nodeOperators.walletAddress,
-          displayName: nodeOperators.displayName,
-          status: nodeOperators.status,
-        },
-      })
-      .from(creditsLedger)
-      .innerJoin(nodeOperators, eq(creditsLedger.operatorId, nodeOperators.operatorId))
-      .orderBy(desc(creditsLedger.updatedAt))
-      .limit(limit)
-      .offset(offset);
+    let query = `
+      SELECT 
+        cl.*, 
+        no.operator_id as op_id,
+        no.wallet_address,
+        no.display_name,
+        no.status as operator_status
+      FROM credits_ledger cl
+      INNER JOIN node_operators no ON cl.operator_id = no.operator_id
+    `;
+    const params: any[] = [];
 
     if (operatorId) {
-      query = query.where(eq(creditsLedger.operatorId, operatorId)) as any;
+      query += ' WHERE cl.operator_id = $1';
+      params.push(operatorId);
     }
 
-    const ledgers = await query;
+    query += ' ORDER BY cl.updated_at DESC NULLS LAST';
+    query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
 
-    const totals = await db
-      .select({
-        totalAvailable: sql<string>`COALESCE(SUM(available_balance), 0)`,
-        totalPending: sql<string>`COALESCE(SUM(pending_balance), 0)`,
-        totalEarned: sql<string>`COALESCE(SUM(total_earned), 0)`,
-        totalRedeemed: sql<string>`COALESCE(SUM(total_redeemed), 0)`,
-        totalSlashed: sql<string>`COALESCE(SUM(total_slashed), 0)`,
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(creditsLedger);
+    const ledgersResult = await client.query(query, params);
+
+    const totalsResult = await client.query(`
+      SELECT 
+        COALESCE(SUM(available_balance::numeric), 0) as total_available,
+        COALESCE(SUM(pending_balance::numeric), 0) as total_pending,
+        COALESCE(SUM(total_earned::numeric), 0) as total_earned,
+        COALESCE(SUM(total_redeemed::numeric), 0) as total_redeemed,
+        COALESCE(SUM(total_slashed::numeric), 0) as total_slashed,
+        COUNT(*) as count
+      FROM credits_ledger
+    `);
+
+    const totals = totalsResult.rows[0];
 
     return res.status(200).json({
       success: true,
-      ledgers: ledgers.map(l => ({
-        operatorId: l.operator.operatorId,
-        walletAddress: l.operator.walletAddress,
-        displayName: l.operator.displayName,
-        operatorStatus: l.operator.status,
-        availableBalance: l.ledger.availableBalance,
-        pendingBalance: l.ledger.pendingBalance,
-        totalEarned: l.ledger.totalEarned,
-        totalRedeemed: l.ledger.totalRedeemed,
-        totalSlashed: l.ledger.totalSlashed,
-        lastSyncedAt: l.ledger.lastSyncedAt,
-        updatedAt: l.ledger.updatedAt,
+      ledgers: ledgersResult.rows.map(l => ({
+        operatorId: l.operator_id,
+        walletAddress: l.wallet_address,
+        displayName: l.display_name,
+        operatorStatus: l.operator_status,
+        availableBalance: l.available_balance,
+        pendingBalance: l.pending_balance,
+        totalEarned: l.total_earned,
+        totalRedeemed: l.total_redeemed,
+        totalSlashed: l.total_slashed,
+        lastSyncedAt: l.last_synced_at,
+        updatedAt: l.updated_at,
       })),
       summary: {
-        totalAvailable: totals[0]?.totalAvailable || '0',
-        totalPending: totals[0]?.totalPending || '0',
-        totalEarned: totals[0]?.totalEarned || '0',
-        totalRedeemed: totals[0]?.totalRedeemed || '0',
-        totalSlashed: totals[0]?.totalSlashed || '0',
-        operatorCount: totals[0]?.count || 0,
+        totalAvailable: totals.total_available?.toString() || '0',
+        totalPending: totals.total_pending?.toString() || '0',
+        totalEarned: totals.total_earned?.toString() || '0',
+        totalRedeemed: totals.total_redeemed?.toString() || '0',
+        totalSlashed: totals.total_slashed?.toString() || '0',
+        operatorCount: parseInt(totals.count) || 0,
       },
       pagination: {
         limit,
         offset,
-        hasMore: ledgers.length === limit,
+        hasMore: ledgersResult.rows.length === limit,
       },
     });
   } catch (error) {
     console.error('Error fetching credits ledgers:', error);
     return res.status(500).json({ error: 'Failed to fetch credits ledgers' });
+  } finally {
+    client.release();
   }
 }

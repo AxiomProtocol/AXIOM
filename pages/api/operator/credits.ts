@@ -1,7 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../lib/db';
-import { creditsLedger, creditsTransactions, nodeOperators } from '../../../shared/schema';
-import { eq, desc } from 'drizzle-orm';
+import { pool } from '../../../server/db';
 import { nanoid } from 'nanoid';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -14,6 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 }
 
 async function getCredits(req: NextApiRequest, res: NextApiResponse) {
+  const client = await pool.connect();
   try {
     const { wallet } = req.query;
     
@@ -21,86 +20,84 @@ async function getCredits(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ error: 'Wallet address required' });
     }
 
-    const operator = await db
-      .select()
-      .from(nodeOperators)
-      .where(eq(nodeOperators.walletAddress, wallet.toLowerCase()))
-      .limit(1);
+    const operatorResult = await client.query(
+      'SELECT operator_id FROM node_operators WHERE LOWER(wallet_address) = LOWER($1) LIMIT 1',
+      [wallet]
+    );
 
-    if (operator.length === 0) {
+    if (operatorResult.rows.length === 0) {
       return res.status(404).json({ error: 'Operator not found' });
     }
 
-    const operatorId = operator[0].operatorId;
+    const operatorId = operatorResult.rows[0].operator_id;
 
-    let ledger = await db
-      .select()
-      .from(creditsLedger)
-      .where(eq(creditsLedger.operatorId, operatorId))
-      .limit(1);
+    let ledgerResult = await client.query(
+      'SELECT * FROM credits_ledger WHERE operator_id = $1 LIMIT 1',
+      [operatorId]
+    );
 
-    if (ledger.length === 0) {
-      await db.insert(creditsLedger).values({
-        operatorId,
-        availableBalance: '0',
-        pendingBalance: '0',
-        totalEarned: '0',
-        totalRedeemed: '0',
-        totalSlashed: '0',
-      });
+    if (ledgerResult.rows.length === 0) {
+      await client.query(
+        `INSERT INTO credits_ledger (operator_id, available_balance, pending_balance, total_earned, total_redeemed, total_slashed)
+         VALUES ($1, '0', '0', '0', '0', '0')`,
+        [operatorId]
+      );
       
-      ledger = await db
-        .select()
-        .from(creditsLedger)
-        .where(eq(creditsLedger.operatorId, operatorId))
-        .limit(1);
+      ledgerResult = await client.query(
+        'SELECT * FROM credits_ledger WHERE operator_id = $1 LIMIT 1',
+        [operatorId]
+      );
     }
 
+    const ledger = ledgerResult.rows[0];
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = parseInt(req.query.offset as string) || 0;
 
-    const transactions = await db
-      .select()
-      .from(creditsTransactions)
-      .where(eq(creditsTransactions.operatorId, operatorId))
-      .orderBy(desc(creditsTransactions.createdAt))
-      .limit(limit)
-      .offset(offset);
+    const txResult = await client.query(
+      `SELECT * FROM credits_transactions 
+       WHERE operator_id = $1 
+       ORDER BY created_at DESC 
+       LIMIT $2 OFFSET $3`,
+      [operatorId, limit, offset]
+    );
 
     return res.status(200).json({
       success: true,
       ledger: {
-        availableBalance: ledger[0].availableBalance,
-        pendingBalance: ledger[0].pendingBalance,
-        totalEarned: ledger[0].totalEarned,
-        totalRedeemed: ledger[0].totalRedeemed,
-        totalSlashed: ledger[0].totalSlashed,
-        lastSyncedAt: ledger[0].lastSyncedAt,
+        availableBalance: ledger.available_balance,
+        pendingBalance: ledger.pending_balance,
+        totalEarned: ledger.total_earned,
+        totalRedeemed: ledger.total_redeemed,
+        totalSlashed: ledger.total_slashed,
+        lastSyncedAt: ledger.last_synced_at,
       },
-      transactions: transactions.map(tx => ({
-        id: tx.transactionId,
+      transactions: txResult.rows.map(tx => ({
+        id: tx.transaction_id,
         type: tx.type,
         amount: tx.amount,
         currency: tx.currency,
         source: tx.source,
         status: tx.status,
         reason: tx.reason,
-        txHash: tx.txHash,
-        createdAt: tx.createdAt,
+        txHash: tx.tx_hash,
+        createdAt: tx.created_at,
       })),
       pagination: {
         limit,
         offset,
-        hasMore: transactions.length === limit,
+        hasMore: txResult.rows.length === limit,
       },
     });
   } catch (error) {
     console.error('Error fetching credits:', error);
     return res.status(500).json({ error: 'Failed to fetch credits' });
+  } finally {
+    client.release();
   }
 }
 
 async function claimCredits(req: NextApiRequest, res: NextApiResponse) {
+  const client = await pool.connect();
   try {
     const { wallet, amount, currency = 'USD' } = req.body;
 
@@ -108,29 +105,28 @@ async function claimCredits(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ error: 'Wallet and amount required' });
     }
 
-    const operator = await db
-      .select()
-      .from(nodeOperators)
-      .where(eq(nodeOperators.walletAddress, wallet.toLowerCase()))
-      .limit(1);
+    const operatorResult = await client.query(
+      'SELECT operator_id FROM node_operators WHERE LOWER(wallet_address) = LOWER($1) LIMIT 1',
+      [wallet]
+    );
 
-    if (operator.length === 0) {
+    if (operatorResult.rows.length === 0) {
       return res.status(404).json({ error: 'Operator not found' });
     }
 
-    const operatorId = operator[0].operatorId;
+    const operatorId = operatorResult.rows[0].operator_id;
 
-    const ledger = await db
-      .select()
-      .from(creditsLedger)
-      .where(eq(creditsLedger.operatorId, operatorId))
-      .limit(1);
+    const ledgerResult = await client.query(
+      'SELECT * FROM credits_ledger WHERE operator_id = $1 LIMIT 1',
+      [operatorId]
+    );
 
-    if (ledger.length === 0) {
+    if (ledgerResult.rows.length === 0) {
       return res.status(400).json({ error: 'No credits ledger found' });
     }
 
-    const availableBalance = parseFloat(ledger[0].availableBalance || '0');
+    const ledger = ledgerResult.rows[0];
+    const availableBalance = parseFloat(ledger.available_balance || '0');
     const requestedAmount = parseFloat(amount);
 
     if (requestedAmount <= 0) {
@@ -143,28 +139,21 @@ async function claimCredits(req: NextApiRequest, res: NextApiResponse) {
 
     const transactionId = `CLM-${nanoid(12)}`;
 
-    await db.insert(creditsTransactions).values({
-      transactionId,
-      operatorId,
-      type: 'REDEMPTION',
-      amount: requestedAmount.toString(),
-      currency,
-      source: 'SYSTEM',
-      status: 'PENDING',
-      reason: 'Operator-initiated claim request',
-    });
+    await client.query(
+      `INSERT INTO credits_transactions (transaction_id, operator_id, type, amount, currency, source, status, reason)
+       VALUES ($1, $2, 'REDEMPTION', $3, $4, 'SYSTEM', 'PENDING', 'Operator-initiated claim request')`,
+      [transactionId, operatorId, requestedAmount.toString(), currency]
+    );
 
-    const newPending = parseFloat(ledger[0].pendingBalance || '0') + requestedAmount;
+    const newPending = parseFloat(ledger.pending_balance || '0') + requestedAmount;
     const newAvailable = availableBalance - requestedAmount;
 
-    await db
-      .update(creditsLedger)
-      .set({
-        availableBalance: newAvailable.toString(),
-        pendingBalance: newPending.toString(),
-        updatedAt: new Date(),
-      })
-      .where(eq(creditsLedger.operatorId, operatorId));
+    await client.query(
+      `UPDATE credits_ledger 
+       SET available_balance = $1, pending_balance = $2, updated_at = NOW()
+       WHERE operator_id = $3`,
+      [newAvailable.toString(), newPending.toString(), operatorId]
+    );
 
     return res.status(200).json({
       success: true,
@@ -176,5 +165,7 @@ async function claimCredits(req: NextApiRequest, res: NextApiResponse) {
   } catch (error) {
     console.error('Error claiming credits:', error);
     return res.status(500).json({ error: 'Failed to process claim' });
+  } finally {
+    client.release();
   }
 }
