@@ -12,15 +12,10 @@ permissions:
 
 env:
   PROJECT_ID: axiom-protocol-prod
-  PROJECT_NUMBER: "107966396865"
-  WIF_POOL_ID: github-pool
-  WIF_PROVIDER_ID: github-pool
-  SERVICE_ACCOUNT: axiom-github-deployer@axiom-protocol-prod.iam.gserviceaccount.com
-
   REGION: us-central1
-  CLOUD_RUN_SERVICE: axiom-protocol
-  ARTIFACT_REPOSITORY: axiom
-  IMAGE_NAME: axiom-protocol
+  SERVICE_NAME: axiom-protocol
+  REPOSITORY: axiom
+  IMAGE: axiom-protocol
 
 jobs:
   deploy:
@@ -31,48 +26,39 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Authenticate to Google Cloud
-        id: auth
         uses: google-github-actions/auth@v2
         with:
-          token_format: access_token
-          workload_identity_provider: projects/${{ env.PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.WIF_POOL_ID }}/providers/${{ env.WIF_PROVIDER_ID }}
-          service_account: ${{ env.SERVICE_ACCOUNT }}
+          workload_identity_provider: projects/107966396865/locations/global/workloadIdentityPools/github-pool/providers/github-pool
+          service_account: axiom-github-deployer@axiom-protocol-prod.iam.gserviceaccount.com
 
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Confirm auth context
-        run: |
-          gcloud config set project "${PROJECT_ID}"
-          gcloud auth list
-          gcloud config list
-
       - name: Configure Docker auth for Artifact Registry
-        run: |
-          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
 
-      - name: Build and push image
-        env:
-          IMAGE_URI: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+      - name: Build and push container
         run: |
-          echo "IMAGE_URI=${IMAGE_URI}" >> $GITHUB_ENV
+          IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:latest"
           docker build -t "${IMAGE_URI}" .
           docker push "${IMAGE_URI}"
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy "${CLOUD_RUN_SERVICE}" \
+          IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:latest"
+          gcloud run deploy "${SERVICE_NAME}" \
             --image "${IMAGE_URI}" \
             --region "${REGION}" \
             --project "${PROJECT_ID}" \
             --platform managed \
+            --allow-unauthenticated \
             --quiet
 
       - name: Show service URL
         run: |
-          gcloud run services describe "${CLOUD_RUN_SERVICE}" \
+          gcloud run services describe "${SERVICE_NAME}" \
             --region "${REGION}" \
             --project "${PROJECT_ID}" \
             --format="value(status.url)"
