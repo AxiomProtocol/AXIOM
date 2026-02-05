@@ -2,7 +2,7 @@ name: Deploy Axiom Protocol to Cloud Run
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -27,27 +27,28 @@ jobs:
       - name: Authenticate to Google Cloud (Workload Identity)
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          workload_identity_provider: projects/107966396865/locations/global/workloadIdentityPools/github-pool/providers/github
+          service_account: axiom-github-deployer@axiom-protocol-prod.iam.gserviceaccount.com
+          project_id: axiom-protocol-prod
 
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker auth
-        run: gcloud auth configure-docker "${{ env.REGION }}-docker.pkg.dev" --quiet
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
       - name: Build and push container image
         run: |
-          IMAGE_URI="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}"
+          IMAGE_URI="us-central1-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:${GITHUB_SHA}"
           docker build -t "$IMAGE_URI" .
           docker push "$IMAGE_URI"
           echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy "${{ env.SERVICE }}" \
+          gcloud run deploy "$SERVICE" \
             --image "$IMAGE_URI" \
-            --region "${{ env.REGION }}" \
-            --project "${{ env.PROJECT_ID }}" \
+            --region "$REGION" \
+            --project "$PROJECT_ID" \
             --platform managed \
             --allow-unauthenticated
