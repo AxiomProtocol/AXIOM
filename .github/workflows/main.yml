@@ -1,54 +1,42 @@
-name: Deploy Axiom Protocol to Cloud Run
+name: Deploy to Cloud Run
 
 on:
   push:
-    branches: ["main"]
-  workflow_dispatch:
+    branches: [ "main" ]
 
 permissions:
   contents: read
   id-token: write
-
-env:
-  PROJECT_ID: axiom-protocol-prod
-  REGION: us-central1
-  SERVICE: axiom-github-deployer
-  REPOSITORY: axiom
-  IMAGE: axiom
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud (Workload Identity)
+      - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: projects/107966396865/locations/global/workloadIdentityPools/github-pool/providers/github
           service_account: axiom-github-deployer@axiom-protocol-prod.iam.gserviceaccount.com
-          project_id: axiom-protocol-prod
 
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker auth
+      - name: Configure Docker
         run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
-      - name: Build and push container image
+      - name: Build and Push Image
         run: |
-          IMAGE_URI="us-central1-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:${GITHUB_SHA}"
-          docker build -t "$IMAGE_URI" .
-          docker push "$IMAGE_URI"
-          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+          docker build -t us-central1-docker.pkg.dev/axiom-protocol-prod/axiom/axiom:latest .
+          docker push us-central1-docker.pkg.dev/axiom-protocol-prod/axiom/axiom:latest
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy "$SERVICE" \
-            --image "$IMAGE_URI" \
-            --region "$REGION" \
-            --project "$PROJECT_ID" \
+          gcloud run deploy axiom \
+            --image us-central1-docker.pkg.dev/axiom-protocol-prod/axiom/axiom:latest \
+            --region us-central1 \
             --platform managed \
             --allow-unauthenticated
