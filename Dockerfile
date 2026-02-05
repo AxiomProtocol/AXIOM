@@ -1,27 +1,27 @@
-# --- Build stage ---
 FROM node:20-bookworm-slim AS build
 WORKDIR /app
 
-RUN corepack enable
+# Copy manifests first
+COPY package.json package-lock.json ./
 
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+# Install deps (reproducible)
+RUN npm ci
 
+# Copy rest of repo
 COPY . .
 
-# DO NOT swallow build errors. If build fails, we want to know.
-RUN pnpm -s build
+# Build (fail if build fails)
+RUN npm run build
 
-# --- Runtime stage ---
+# Runtime image
 FROM node:20-bookworm-slim
 WORKDIR /app
-
 ENV NODE_ENV=production
 ENV PORT=8080
 EXPOSE 8080
 
-# Runtime deps only is optional; keep simple for now by copying built app.
+# Copy built app
 COPY --from=build /app /app
 
-# Cloud Run entrypoint (your server binds 0.0.0.0 and uses PORT)
+# Start
 CMD ["node","server.js"]
