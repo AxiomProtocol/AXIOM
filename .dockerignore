@@ -121,7 +121,6 @@ attached_assets/
 # === BUILD ARTIFACTS ===
 .pnpm-store/
 .pnpm-debug.log
-pnpm-lock.yaml
 *.tsbuildinfo
 tsconfig.tsbuildinfo
 
