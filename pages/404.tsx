@@ -11,8 +11,7 @@ export default function Custom404() {
       background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
       padding: 20,
       textAlign: 'center'
-    }}>
-      <div style={{ fontSize: 80, marginBottom: 20 }}>🌾</div>
+    }}>      
       <h1 style={{ fontSize: 48, fontWeight: 700, color: '#1a1a2e', margin: '0 0 16px 0' }}>
         404
       </h1>

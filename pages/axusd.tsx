@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useWallet } from "../components/WalletConnect/WalletContext";
 import { getAXUSDTransactionService, AXUSD_CONTRACTS } from "../lib/services/AXUSDTransactionService";
 import { 
-  LayoutDashboard, Coins, ArrowLeftRight, Droplets, CircleDot, 
+  LayoutDashboard, Coins, ArrowLeftRight, Droplets, CircleDot,
   BarChart3, Vault, Gift, Waypoints, History, Bell, HelpCircle,
   Shield, CheckCircle, Globe, Lock, DollarSign, Wallet, TrendingUp,
   Zap, ExternalLink, AlertTriangle, Settings, ChevronDown, ChevronUp,
@@ -669,7 +669,7 @@ export default function AXUSDStablecoinPage() {
 
                 <Card className="p-8">
                   <h3 className="text-gray-900 font-bold mb-8 text-2xl flex items-center gap-3">
-                    <Zap className="w-6 h-6 text-amber-600" /> How AXUSD Works
+                    How AXUSD Works
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     {[
@@ -693,7 +693,7 @@ export default function AXUSDStablecoinPage() {
                   <Card className="p-6">
                     <h3 className="text-emerald-700 font-bold mb-4 text-xl flex items-center gap-2">
                       <Shield className="w-5 h-5" /> GENIUS Act Compliance
-                    </h3>
+                    </h3> 
                     <div className="space-y-3">
                       {[
                         { text: '100% Reserve Backing Required', icon: <CheckCircle className="w-4 h-4" /> },
@@ -712,7 +712,7 @@ export default function AXUSDStablecoinPage() {
 
                   <Card className="p-6">
                     <h3 className="text-blue-700 font-bold mb-4 text-xl flex items-center gap-2">
-                      <PiggyBank className="w-5 h-5" /> Revenue Distribution
+                      Revenue Distribution
                     </h3>
                     <div className="space-y-4">
                       {[
@@ -798,7 +798,7 @@ export default function AXUSDStablecoinPage() {
               <div className="space-y-6">
                 <Card className="p-8">
                   <h3 className="text-amber-700 font-bold mb-6 text-2xl flex items-center gap-3">
-                    <Award className="w-7 h-7 text-amber-600" /> LP Incentive Programs
+                    LP Incentive Programs
                   </h3>
                   <p className="text-gray-600 mb-8">
                     Early liquidity providers receive bonus AXM rewards based on their contribution timing and lock duration.
@@ -871,7 +871,7 @@ export default function AXUSDStablecoinPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                   <div className="lg:col-span-2">
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3">                        
                         <AlertTriangle className="w-6 h-6 text-amber-600" />
                         <p className="text-amber-700">Bridge transactions are irreversible. Please verify destination addresses carefully before proceeding.</p>
                       </div>
@@ -894,7 +894,7 @@ export default function AXUSDStablecoinPage() {
 
                 <Card className="p-6">
                   <h3 className="text-teal-700 font-bold mb-6 text-xl flex items-center gap-2">
-                    <Waypoints className="w-5 h-5" /> Available Bridge Routes
+                    Available Bridge Routes
                   </h3>
                   <div className="space-y-4">
                     {bridgeData?.routes?.map((route) => (
@@ -998,7 +998,7 @@ export default function AXUSDStablecoinPage() {
               <div className="space-y-6">
                 <Card className="p-8">
                   <h3 className="text-red-700 font-bold mb-6 text-2xl flex items-center gap-3">
-                    <Bell className="w-7 h-7 text-red-600" /> Alert Configuration
+                    Alert Configuration
                   </h3>
                   <p className="text-gray-600 mb-8">
                     Set up notifications to stay informed about important AXUSD protocol events and thresholds.
@@ -1452,7 +1452,7 @@ export default function AXUSDStablecoinPage() {
               <Card className="p-8 text-center">
                 <div className="w-16 h-16 mx-auto bg-purple-100 rounded-2xl flex items-center justify-center text-3xl text-purple-600">$</div>
                 <h3 className="text-2xl font-bold text-gray-900 mt-6 mb-2">My Vaults</h3>
-                <p className="text-gray-500 mb-6">Connect your wallet to view and manage your AXUSD vaults</p>
+                  <p className="text-gray-500 mb-6">Connect wallet to view and manage AXUSD vaults</p>
                 <button 
                   onClick={() => setActiveTab('mint')}
                   className="bg-purple-600 text-white font-bold px-8 py-4 rounded-xl hover:bg-purple-700 transition-colors"
@@ -1516,9 +1516,9 @@ export default function AXUSDStablecoinPage() {
                   <h3 className="text-emerald-700 font-bold mb-6 text-xl">AXUSD Use Cases</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {[
-                      { icon: 'O', title: 'SUSU Circles', desc: 'Join savings circles denominated in AXUSD for stable, predictable savings', color: 'blue' },
-                      { icon: 'K', title: 'KeyGrow Housing', desc: 'Pay rent in AXUSD and build equity toward home ownership', color: 'purple' },
-                      { icon: '$', title: 'DeFi Liquidity', desc: 'Provide liquidity in AXUSD pools on Camelot DEX', color: 'amber' },
+                      { icon: 'S', title: 'SUSU Circles', desc: 'Join savings circles denominated in AXUSD for stable, predictable savings', color: 'blue' },
+                      { icon: 'H', title: 'KeyGrow Housing', desc: 'Pay rent in AXUSD and build equity toward home ownership', color: 'purple' },
+                      { icon: 'L', title: 'DeFi Liquidity', desc: 'Provide liquidity in AXUSD pools on Camelot DEX', color: 'amber' },
                     ].map((item, i) => (
                       <div key={i} className={`text-center p-6 bg-${item.color}-50 rounded-xl border border-${item.color}-200`}>
                         <div className={`w-12 h-12 mx-auto bg-${item.color}-100 rounded-xl flex items-center justify-center text-2xl text-${item.color}-600`}>{item.icon}</div>

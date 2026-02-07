@@ -109,7 +109,7 @@ export default function AboutUsPage() {
                     textAlign: 'center'
                   }}
                 >
-                  <div style={{ fontSize: 48, marginBottom: 16 }}>{value.icon}</div>
+                  <div style={{ fontSize: 24, marginBottom: 16, color: '#1a1a2e', fontWeight: 600 }}>{value.icon}</div>
                   <h3 style={{ fontSize: 22, fontWeight: 600, margin: '0 0 12px 0', color: '#1a1a2e' }}>{value.title}</h3>
                   <p style={{ fontSize: 15, color: 'rgba(26,26,46,0.7)', margin: 0, lineHeight: 1.6 }}>{value.description}</p>
                 </div>

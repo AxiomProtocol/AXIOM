@@ -14,6 +14,7 @@ interface CreditAction {
   impact: string;
   points: string;
   icon: string;
+  
   status: 'available' | 'completed' | 'locked';
 }
 
@@ -21,9 +22,11 @@ const CREDIT_ACTIONS: CreditAction[] = [
   {
     id: '1',
     action: 'Complete your first SUSU cycle',
+    action: 'Complete first SUSU cycle',
     impact: 'Major positive',
     points: '+50-100',
     icon: '🔄',
+    
     status: 'available'
   },
   {
@@ -32,6 +35,7 @@ const CREDIT_ACTIONS: CreditAction[] = [
     impact: 'Moderate positive',
     points: '+20-40',
     icon: '✅',
+    
     status: 'available'
   },
   {
@@ -40,6 +44,7 @@ const CREDIT_ACTIONS: CreditAction[] = [
     impact: 'Minor positive',
     points: '+10-20',
     icon: '👥',
+    
     status: 'completed'
   },
   {
@@ -48,6 +53,7 @@ const CREDIT_ACTIONS: CreditAction[] = [
     impact: 'Moderate positive',
     points: '+15-30',
     icon: '🔐',
+    
     status: 'available'
   },
   {
@@ -56,6 +62,7 @@ const CREDIT_ACTIONS: CreditAction[] = [
     impact: 'Minor positive',
     points: '+5-15',
     icon: '📚',
+    
     status: 'available'
   },
   {
@@ -64,6 +71,7 @@ const CREDIT_ACTIONS: CreditAction[] = [
     impact: 'Major positive',
     points: '+40-80',
     icon: '🏆',
+    
     status: 'locked'
   },
   {
@@ -72,6 +80,7 @@ const CREDIT_ACTIONS: CreditAction[] = [
     impact: 'Major positive',
     points: '+60-100',
     icon: '⭐',
+    
     status: 'locked'
   },
   {
@@ -80,6 +89,7 @@ const CREDIT_ACTIONS: CreditAction[] = [
     impact: 'Major positive',
     points: '+80-150',
     icon: '🎓',
+    
     status: 'locked'
   }
 ];
@@ -137,6 +147,7 @@ export default function CreditBuilderPage() {
             <div className="bg-gray-800 border border-blue-500/30 rounded-xl p-6 mb-8">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <span>📈</span> Actions to Improve Your Score
+                Actions to Improve Your Score
               </h3>
               <div className="grid md:grid-cols-2 gap-4">
                 {actions.map((action) => (
@@ -152,6 +163,7 @@ export default function CreditBuilderPage() {
                   >
                     <div className="flex items-start gap-3">
                       <div className="text-2xl">{action.icon}</div>
+                      
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h4 className="font-medium text-white">{action.action}</h4>
@@ -160,6 +172,7 @@ export default function CreditBuilderPage() {
                           )}
                           {action.status === 'locked' && (
                             <span className="text-xs bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded">🔒</span>
+                            <span className="text-xs bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded">Locked</span>
                           )}
                         </div>
                         <div className="flex justify-between mt-2">
@@ -176,6 +189,7 @@ export default function CreditBuilderPage() {
             <div className="bg-gray-800 border border-purple-500/30 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <span>🎯</span> Score Tiers & Benefits
+                Score Tiers & Benefits
               </h3>
               <div className="grid md:grid-cols-5 gap-3 mb-6">
                 {tiers.map((tier) => (
@@ -203,6 +217,8 @@ export default function CreditBuilderPage() {
                     {tierBenefits[selectedTier]?.map((benefit, i) => (
                       <li key={i} className="flex items-center gap-2 text-sm text-gray-300">
                         <span className="text-green-400">✓</span> {benefit}
+                      <li key={i} className="flex items-center gap-2 text-sm text-gray-300">                        
+                        {benefit}
                       </li>
                     ))}
                   </ul>

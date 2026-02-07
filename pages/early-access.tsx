@@ -172,14 +172,17 @@ export default function EarlyAccessPage() {
               <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-12">
                 <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
                   <div className="text-3xl mb-3">⚡</div>
+                  
                   <div className="text-amber-400 font-semibold mb-1">Early access pricing and alerts</div>
                 </div>
                 <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
                   <div className="text-3xl mb-3">🎯</div>
+                  
                   <div className="text-amber-400 font-semibold mb-1">Priority position for future AXM reward campaigns</div>
                 </div>
                 <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
                   <div className="text-3xl mb-3">🏙️</div>
+                  
                   <div className="text-amber-400 font-semibold mb-1">Insider updates on DeFi, DePIN, and smart city rollout</div>
                 </div>
               </div>
@@ -219,6 +222,7 @@ export default function EarlyAccessPage() {
               ) : (
                 <div className="max-w-lg mx-auto bg-gray-800/50 border border-green-500/50 rounded-2xl p-8">
                   <div className="text-4xl mb-4">🎉</div>
+                  
                   <h3 className="text-2xl font-bold text-green-400 mb-4">You're on the list!</h3>
                   <p className="text-gray-300 mb-6">
                     {baseReward > 0 
@@ -264,16 +268,19 @@ export default function EarlyAccessPage() {
               <div className="grid md:grid-cols-3 gap-6">
                 <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
                   <div className="text-3xl mb-4">📧</div>
+                  
                   <h3 className="text-xl font-semibold text-amber-400 mb-2">Early alerts</h3>
                   <p className="text-gray-400">Receive direct TGE timeline updates and launch notifications.</p>
                 </div>
                 <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
                   <div className="text-3xl mb-4">🎁</div>
+                  
                   <h3 className="text-xl font-semibold text-amber-400 mb-2">Potential rewards</h3>
                   <p className="text-gray-400">Stay eligible for future AXM reward campaigns and incentives.</p>
                 </div>
                 <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
                   <div className="text-3xl mb-4">🏗️</div>
+                  
                   <h3 className="text-xl font-semibold text-amber-400 mb-2">Smart city progress</h3>
                   <p className="text-gray-400">Follow Axiom's DeFi, DePIN, and governance buildout.</p>
                 </div>
