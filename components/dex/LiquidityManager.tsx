@@ -33,7 +33,7 @@ const CAMELOT_PAIR_ABI = [
 
 export default function LiquidityManager() {
   const { isConnected, address, signer } = useWallet();
-  const { positions, loading: positionsLoading, refetch } = useUserLiquidity(address);
+  const { positions, loading: positionsLoading, refetch } = useUserLiquidity(address ?? undefined);
   const { pools, refetch: refetchPools } = useDexPools();
   const [activeTab, setActiveTab] = useState<'positions' | 'add' | 'create'>('positions');
   const [selectedPool, setSelectedPool] = useState<number | null>(null);
