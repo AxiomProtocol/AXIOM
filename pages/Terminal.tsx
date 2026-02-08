@@ -11,7 +11,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { MarketSetup } from '../../lib/mirdt';
+import { MarketSetup } from '../lib/mirdt';
 
 export const Terminal = () => {
   const [setups, setSetups] = useState<MarketSetup[]>([]);

@@ -7,7 +7,7 @@
  * It serves as a container for the data-centric Terminal component.
  */
 
-import { Terminal } from '../components/mirdt/Terminal';
+import { Terminal } from './Terminal';
 
 const MIRDTPage = () => {
   return (

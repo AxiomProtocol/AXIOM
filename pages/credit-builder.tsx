@@ -21,7 +21,6 @@ interface CreditAction {
 const CREDIT_ACTIONS: CreditAction[] = [
   {
     id: '1',
-    action: 'Complete your first SUSU cycle',
     action: 'Complete first SUSU cycle',
     impact: 'Major positive',
     points: '+50-100',
@@ -171,8 +170,10 @@ export default function CreditBuilderPage() {
                             <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded">Done</span>
                           )}
                           {action.status === 'locked' && (
-                            <span className="text-xs bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded">🔒</span>
-                            <span className="text-xs bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded">Locked</span>
+                            <>
+                              <span className="text-xs bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded">🔒</span>
+                              <span className="text-xs bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded">Locked</span>
+                            </>
                           )}
                         </div>
                         <div className="flex justify-between mt-2">
@@ -217,8 +218,6 @@ export default function CreditBuilderPage() {
                     {tierBenefits[selectedTier]?.map((benefit, i) => (
                       <li key={i} className="flex items-center gap-2 text-sm text-gray-300">
                         <span className="text-green-400">✓</span> {benefit}
-                      <li key={i} className="flex items-center gap-2 text-sm text-gray-300">                        
-                        {benefit}
                       </li>
                     ))}
                   </ul>

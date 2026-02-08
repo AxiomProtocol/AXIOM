@@ -148,14 +148,14 @@ export default function LiquidityManager() {
       setTxStatus({ type: null, message: '' });
 
       const pool = pools.find(p => p.id === poolId);
-      if (!pool || !pool.address) {
+      if (!pool || !pool.pairAddress) {
         throw new Error('Pool not found');
       }
 
       const liquidityWei = ethers.parseEther(liquidity);
 
       // Approve LP tokens to Camelot Router
-      const pairContract = new ethers.Contract(pool.address, CAMELOT_PAIR_ABI, signer);
+      const pairContract = new ethers.Contract(pool.pairAddress, CAMELOT_PAIR_ABI, signer);
       
       setTxStatus({ type: null, message: 'Approving LP tokens...' });
       const allowance = await pairContract.allowance(address, CAMELOT_ROUTER);

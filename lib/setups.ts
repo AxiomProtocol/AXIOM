@@ -6,7 +6,7 @@
  */
 
 import { NextApiRequest, NextApiResponse } from 'next';
-import { MarketSetup } from '../../../lib/mirdt';
+import { MarketSetup } from './mirdt';
 
 // This would be a real database in production.
 const MOCK_DB: { setups: MarketSetup[] } = {

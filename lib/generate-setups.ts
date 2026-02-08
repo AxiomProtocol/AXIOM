@@ -13,7 +13,7 @@
  */
 
 import { NextApiRequest, NextApiResponse } from 'next';
-import { MarketSetup, AssetClass } from '../../../lib/mirdt';
+import { MarketSetup, AssetClass } from './mirdt';
 
 // In a real implementation, this would be a secure database client.
 // For this V1 example, we'll use an in-memory store.
