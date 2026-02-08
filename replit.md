@@ -58,6 +58,10 @@ The project has been streamlined to 40 active pages (35 core + 5 observer subpag
 - `/roadmap` - Product Roadmap
 - `/dashboard` - User Dashboard
 
+### Intelligence Terminal (2 pages)
+- `/mirdt` - Market Intelligence & Risk Disclosure Terminal (probabilistic trend-following analysis, data-grid table, pagination, audit trail)
+- `/mirdt/[id]` - Setup Detail (audit fields, rationale trace, paper-trade ledger)
+
 ### Community & Trust (4 pages)
 - `/community` - Community
 - `/transparency` - Transparency
@@ -91,6 +95,7 @@ The architecture employs a "Product Factory Approach" for scalability. Arbitrum 
 - Lending Fund (SEC Reg D 506(c) compliant bridge loan fund)
 - National Economic Pilot ($1M dual-asset investment tracking system at `/pilot` with 8 subpages, 14 PostgreSQL tables, 17 API endpoints, NotificationService with Resend email integration. Two SPVs: Cash Flow Anchor ($600K multifamily) and Appreciation Asset ($350K commercial/industrial). 35/35/20/10 treasury allocation policy. Phase 2 expansion gate scoring. Uses raw SQL via pg.Pool for API routes.)
 - Euler V2 AXUSD Lending Markets (External DeFi lending integration on Arbitrum One at vault 0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059. **LOCKED CONFIG** - DO NOT CHANGE vault address or LTV parameters.)
+- MIRDT - Market Intelligence & Risk Disclosure Terminal (Probabilistic trend-following analysis for crypto + US equities. 3 PostgreSQL tables: mirdt_setups, mirdt_paper_trades, mirdt_data_snapshots. 5 API endpoints. Data providers: CoinGecko (crypto, free) + Alpha Vantage (equities, API key). Signal engine: 20/50 MA crossover + ATR volatility filter. Paper-trade tracking with P&L calculation. Lexicon guard enforces institutional terminology. Model version: MIRDT-TF-v1.0.)
 - Deployment Configuration: Uses VM with standalone output. Build: `npm run build:deploy:clean` (8GB memory, ~144 routes). Run: `npm run start:minimal`. Build reduced from 460+ routes to ~144 by archiving unused API routes to `_archive/api/`.
 
 ## External Dependencies
@@ -107,3 +112,37 @@ The architecture employs a "Product Factory Approach" for scalability. Arbitrum 
 - **Auth Provider:** Supabase
 - **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image)
 - **Property Data:** ATTOM Data, RentCast API, Walk Score API
+- **Market Data:** Alpha Vantage (US equities OHLCV), CoinGecko (digital asset OHLCV, free tier)
+
+## MIRDT v1 — Market Intelligence & Risk Disclosure Terminal
+
+### How to Run Scan Locally
+```bash
+# Scan digital assets only (CoinGecko, ~2.5 min for 20 assets)
+curl -X POST "http://localhost:5000/api/mirdt/run-scan?type=crypto" -H "x-scan-key: $MIRDT_SCAN_KEY"
+
+# Scan equities only (Alpha Vantage, ~8 min for 40 assets)
+curl -X POST "http://localhost:5000/api/mirdt/run-scan?type=equity" -H "x-scan-key: $MIRDT_SCAN_KEY"
+
+# Scan all assets
+curl -X POST "http://localhost:5000/api/mirdt/run-scan?type=all" -H "x-scan-key: $MIRDT_SCAN_KEY"
+
+# Expire old setups
+curl -X POST "http://localhost:5000/api/mirdt/mark-expired" -H "x-scan-key: $MIRDT_SCAN_KEY"
+```
+
+### Architecture
+- **Signal Engine:** `server/services/mirdt/SignalEngine.ts` — 20/50 SMA crossover + ATR14 volatility filter. Model version: MIRDT-TF-v1.0
+- **Data Providers:** `server/services/mirdt/CoinGeckoProvider.ts` (7s delay between calls), `server/services/mirdt/AlphaVantageProvider.ts` (12s delay)
+- **Lexicon Guard:** `lib/mirdt/lexiconGuard.ts` — Enforces prohibited terminology list per Design Law
+- **Database:** 3 tables (mirdt_setups, mirdt_paper_trades, mirdt_data_snapshots), all UUID primary keys
+- **API Routes:** pages/api/mirdt/ (run-scan, mark-expired, setups, [id], paper-trades)
+- **UI:** pages/mirdt/ (index.tsx, [id].tsx) — Institutional design: serif headings, monospace data, navy palette, no animations
+
+## Axiom Protocol Design Law (BINDING)
+All new pages must comply with the Design Law. Key rules:
+- **Prohibited terms:** wallet, gas, smart contract, dapp, staking, farming, airdrop, token, mint, burn, swap, slippage, max, trending, hot, moon, ape, yield farming, TVL, DAO, whitepaper, testnet, finality, slashing, bridge, hash, txid, block explorer
+- **Required style:** Serif headings, monospace data, navy/forest green/muted gold palette, light mode only, no gradients/shadows/animations
+- **Required patterns:** Pagination (no infinite scroll), static values with timestamps (no live tickers), flat solid buttons, inline status (no toast notifications)
+- **Component test:** Must look like a legal document, function without animation, be explainable to a regulator, be printable for audits
+- **MIRDT pages are the reference implementation** for Design Law compliance

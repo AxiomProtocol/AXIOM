@@ -8598,3 +8598,77 @@ export type InsertPilotBenchmark = typeof pilotBenchmarks.$inferInsert;
 export type PilotExpansionGateCheck = typeof pilotExpansionGate.$inferSelect;
 export type InsertPilotExpansionGateCheck = typeof pilotExpansionGate.$inferInsert;
 export type InsertOnchainRewardsSync = typeof onchainRewardsSync.$inferInsert;
+
+// ============================================================
+// MIRDT — Market Intelligence and Risk Disclosure Terminal
+// ============================================================
+
+export const mirdtAssetTypeEnum = pgEnum('mirdt_asset_type', ['CRYPTO', 'EQUITY']);
+
+export const mirdtSetupStatusEnum = pgEnum('mirdt_setup_status', ['ACTIVE', 'EXPIRED', 'INVALIDATED']);
+
+export const mirdtTradeOutcomeEnum = pgEnum('mirdt_trade_outcome', ['WIN', 'LOSS', 'FLAT']);
+
+export const mirdtSetups = pgTable("mirdt_setups", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  assetType: mirdtAssetTypeEnum("asset_type").notNull(),
+  symbol: varchar("symbol", { length: 20 }).notNull(),
+  venue: varchar("venue", { length: 100 }),
+  horizonDays: integer("horizon_days").notNull(),
+  entryZoneLow: decimal("entry_zone_low", { precision: 18, scale: 8 }).notNull(),
+  entryZoneHigh: decimal("entry_zone_high", { precision: 18, scale: 8 }).notNull(),
+  invalidationPrice: decimal("invalidation_price", { precision: 18, scale: 8 }).notNull(),
+  thesisSummary: text("thesis_summary").notNull(),
+  confidenceScore: integer("confidence_score").notNull(),
+  signalZ: decimal("signal_z", { precision: 8, scale: 4 }).notNull(),
+  expectedP5: decimal("expected_p5", { precision: 18, scale: 8 }),
+  expectedP50: decimal("expected_p50", { precision: 18, scale: 8 }),
+  expectedP95: decimal("expected_p95", { precision: 18, scale: 8 }),
+  volatilityEstimate: decimal("volatility_estimate", { precision: 8, scale: 4 }),
+  liquidityNotes: text("liquidity_notes"),
+  modelVersion: varchar("model_version", { length: 50 }).notNull(),
+  dataSnapshotRef: uuid("data_snapshot_ref"),
+  rationaleTraceJson: jsonb("rationale_trace_json"),
+  status: mirdtSetupStatusEnum("status").default('ACTIVE').notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+}, (table) => ({
+  symbolIdx: index("mirdt_setup_symbol_idx").on(table.symbol),
+  statusIdx: index("mirdt_setup_status_idx").on(table.status),
+  createdIdx: index("mirdt_setup_created_idx").on(table.createdAt),
+  assetTypeIdx: index("mirdt_setup_asset_type_idx").on(table.assetType),
+}));
+
+export const mirdtPaperTrades = pgTable("mirdt_paper_trades", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  setupId: uuid("setup_id").notNull(),
+  openedAt: timestamp("opened_at").defaultNow().notNull(),
+  closedAt: timestamp("closed_at"),
+  entryPrice: decimal("entry_price", { precision: 18, scale: 8 }).notNull(),
+  quantity: decimal("quantity", { precision: 18, scale: 8 }).notNull(),
+  exitPrice: decimal("exit_price", { precision: 18, scale: 8 }),
+  pnl: decimal("pnl", { precision: 18, scale: 8 }),
+  pnlPct: decimal("pnl_pct", { precision: 8, scale: 4 }),
+  maxAdverseExcursion: decimal("max_adverse_excursion", { precision: 18, scale: 8 }),
+  maxFavorableExcursion: decimal("max_favorable_excursion", { precision: 18, scale: 8 }),
+  outcome: mirdtTradeOutcomeEnum("outcome"),
+  notes: text("notes"),
+}, (table) => ({
+  setupIdx: index("mirdt_paper_trade_setup_idx").on(table.setupId),
+}));
+
+export const mirdtDataSnapshots = pgTable("mirdt_data_snapshots", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  provider: varchar("provider", { length: 100 }).notNull(),
+  rawRef: text("raw_ref"),
+  checksum: varchar("checksum", { length: 128 }),
+});
+
+// MIRDT Type Exports
+export type MirdtSetup = typeof mirdtSetups.$inferSelect;
+export type InsertMirdtSetup = typeof mirdtSetups.$inferInsert;
+export type MirdtPaperTrade = typeof mirdtPaperTrades.$inferSelect;
+export type InsertMirdtPaperTrade = typeof mirdtPaperTrades.$inferInsert;
+export type MirdtDataSnapshot = typeof mirdtDataSnapshots.$inferSelect;
+export type InsertMirdtDataSnapshot = typeof mirdtDataSnapshots.$inferInsert;

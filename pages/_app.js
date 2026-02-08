@@ -40,7 +40,8 @@ const REBUILD_NAV_PAGES = [
   '/institutional',
   '/pilot',
   '/faq',
-  '/terms-and-conditions'
+  '/terms-and-conditions',
+  '/mirdt'
 ]
 
 function matchesRebuildNavPages(pathname) {

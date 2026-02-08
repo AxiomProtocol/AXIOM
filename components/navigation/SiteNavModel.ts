@@ -57,6 +57,10 @@ export const SITE_NAV: NavItem[] = [
     ]
   },
   {
+    label: "Intelligence Terminal",
+    href: "/mirdt"
+  },
+  {
     label: "Institutional",
     children: [
       { label: "Observer Dashboard", href: "/observer" },
