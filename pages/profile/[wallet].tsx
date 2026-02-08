@@ -408,7 +408,7 @@ export default function ProfilePage() {
                         <div className="text-sm text-gray-600">Courses</div>
                       </div>
                       <div className="bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-xl p-4 text-center">
-                        <div className="text-2xl font-bold text-purple-600">{formatDate(profile.member_since || profile.created_at)}</div>
+                        <div className="text-2xl font-bold text-purple-600">{formatDate(profile.member_since)}</div>
                         <div className="text-sm text-gray-600">Member Since</div>
                       </div>
                     </div>

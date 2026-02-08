@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { db } from '../../../server/db';
-import { kycVerifications } from '../../../shared/schema';
+import { kycVerifications, users } from '../../../shared/schema';
 import { eq } from 'drizzle-orm';
 
 const CREDIT_LINE_VAULT_ADDRESS = '0xc997416666686A22EBAE8Eb7cc9224c10B08a35c';
@@ -45,12 +45,19 @@ interface UserPosition {
 
 async function verifyKYC(address: string): Promise<boolean> {
   try {
+    const user = await db.select()
+      .from(users)
+      .where(eq(users.walletAddress, address.toLowerCase()))
+      .limit(1);
+
+    if (user.length === 0) return false;
+
     const result = await db.select()
       .from(kycVerifications)
-      .where(eq(kycVerifications.walletAddress, address.toLowerCase()))
+      .where(eq(kycVerifications.userId, user[0].id))
       .limit(1);
     
-    if (result.length > 0 && result[0].verificationStatus === 'verified') {
+    if (result.length > 0 && result[0].verificationStatus === 'approved') {
       return true;
     }
     return false;

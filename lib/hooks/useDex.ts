@@ -22,6 +22,7 @@ export interface Pool {
   totalLiquidity: string;
   swapFee: number;
   isActive: boolean;
+  pairAddress?: string;
 }
 
 export interface SwapQuote {

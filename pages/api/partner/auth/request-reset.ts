@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ORDER BY created_at DESC LIMIT 1
     `);
 
-    const name = dealResult.rows[0]?.name || 'Partner';
+    const name = (dealResult.rows[0] as Record<string, string> | undefined)?.name || 'Partner';
 
     try {
       await sendPasswordResetEmail(normalizedEmail, name, resetToken);

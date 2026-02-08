@@ -67,7 +67,7 @@ export default async function handler(
       RETURNING id
     `);
 
-    const dealId = result.rows[0]?.id;
+    const dealId = Number((result.rows[0] as Record<string, unknown> | undefined)?.id ?? 0);
 
     const existingAuth = await db.execute(sql`
       SELECT id, password_hash FROM partner_auth WHERE email = ${normalizedEmail}

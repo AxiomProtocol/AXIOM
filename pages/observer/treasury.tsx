@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ObserverLayout, ObserverCard, ObserverLoading, ProofLink } from '../../components/observer/ObserverLayout';
-import { TreasuryData } from '../../server/services/observer/types';
+import { TreasuryData, RoutingRule, DrawSchedule, TreasuryEvent } from '../../server/services/observer/types';
 
 export default function ObserverTreasury() {
   const [data, setData] = useState<TreasuryData | null>(null);
@@ -34,7 +34,7 @@ export default function ObserverTreasury() {
       ) : data ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {data.buckets && Object.entries(data.buckets).map(([bucket, value]) => (
+            {data.buckets && Object.entries(data.buckets).map(([bucket, value]: [string, string]) => (
               <div key={bucket} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
                 <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide capitalize">{bucket}</h3>
                 <p className="mt-2 text-2xl font-bold text-amber-600">{value}</p>
@@ -45,14 +45,14 @@ export default function ObserverTreasury() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <ObserverCard title="Routing Rules">
               <div className="space-y-4">
-                {(data.routingRules || []).map((rule) => (
+                {(data.routingRules || []).map((rule: RoutingRule) => (
                   <div key={rule.bucket} className="flex justify-between items-center border-b border-gray-100 pb-3">
                     <div>
                       <p className="font-medium capitalize">{rule.bucket}</p>
                       <p className="text-sm text-gray-500">Min Reserve: {rule.minReserve}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-amber-600">{rule.allocation}%</p>
+                      <p className="font-medium text-amber-600">{rule.allocationPercent}%</p>
                       <p className="text-sm text-gray-500">Allocation</p>
                     </div>
                   </div>
@@ -62,15 +62,15 @@ export default function ObserverTreasury() {
 
             <ObserverCard title="Draw Schedule">
               <div className="space-y-3">
-                {(data.drawSchedule || []).map((draw, idx) => (
+                {(data.drawSchedule || []).map((draw: DrawSchedule, idx: number) => (
                   <div key={idx} className="flex justify-between items-center border-b border-gray-100 pb-3">
                     <div>
                       <p className="font-medium">{draw.purpose}</p>
-                      <p className="text-sm text-gray-500">{draw.nextDraw}</p>
+                      <p className="text-sm text-gray-500">{draw.date}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-teal-600">{draw.amount}</p>
-                      <p className="text-sm text-gray-500">{draw.frequency}</p>
+                      <p className="text-sm text-gray-500">{draw.status}</p>
                     </div>
                   </div>
                 ))}
@@ -79,7 +79,7 @@ export default function ObserverTreasury() {
           </div>
 
           <ObserverCard title="Recent Transactions">
-            {!data.recentTx || data.recentTx.length === 0 ? (
+            {!data.events || data.events.length === 0 ? (
               <p className="text-gray-500">No recent transactions</p>
             ) : (
               <div className="overflow-x-auto">
@@ -94,20 +94,20 @@ export default function ObserverTreasury() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {(data.recentTx || []).map((tx) => (
-                      <tr key={tx.hash}>
+                    {(data.events || []).map((tx: TreasuryEvent) => (
+                      <tr key={tx.txHash}>
                         <td className="px-4 py-3 text-sm">
                           <span className={`px-2 py-1 text-xs rounded ${
-                            tx.type === 'inflow' ? 'bg-teal-100 text-teal-800' : 'bg-red-100 text-red-800'
+                            tx.type === 'deposit' ? 'bg-teal-100 text-teal-800' : 'bg-red-100 text-red-800'
                           }`}>
                             {tx.type.toUpperCase()}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm font-medium">{tx.amount}</td>
-                        <td className="px-4 py-3 text-sm capitalize">{tx.bucket}</td>
+                        <td className="px-4 py-3 text-sm capitalize">{tx.bucket || '-'}</td>
                         <td className="px-4 py-3 text-sm text-gray-500">{tx.timestamp}</td>
                         <td className="px-4 py-3 text-sm">
-                          <ProofLink type="tx" value={tx.hash} />
+                          <ProofLink type="tx" value={tx.txHash} />
                         </td>
                       </tr>
                     ))}

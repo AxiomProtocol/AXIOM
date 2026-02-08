@@ -50,7 +50,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       action: 'liquidity_data_error',
       ipAddress: clientId,
       details: { error: errorMessage },
-      severity: 'error',
+      severity: 'critical',
       success: false
     });
 

@@ -66,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const lastSyncedEpoch = syncResult.rows.length > 0 ? syncResult.rows[0].last_synced_epoch : 0;
 
         const stats = await nodeService.getSystemStats();
-        const currentEpoch = stats.rewardsInfo.currentEpoch;
+        const currentEpoch = stats.rewards.currentEpoch;
         
         if (currentEpoch <= lastSyncedEpoch) {
           results.push({

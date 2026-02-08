@@ -329,7 +329,7 @@ export default function LiquidityManager() {
                                 className="w-24 px-2 py-1 text-xs bg-gray-100 border border-gray-300 rounded text-gray-900"
                               />
                               <button
-                                onClick={() => handleRemoveLiquidity(pos.poolId, removeAmount || pos.lpTokenBalance)}
+                                onClick={() => handleRemoveLiquidity(pos.poolId, removeAmount || pos.lpTokenBalance || '')}
                                 disabled={isLoading}
                                 className="text-xs px-2 py-1 bg-red-500 hover:bg-red-400 text-white rounded transition-colors disabled:opacity-50"
                               >

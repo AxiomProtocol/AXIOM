@@ -369,7 +369,7 @@ export default function StewardLandPage() {
                 <button onClick={() => setShowAddForm(false)} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#fff', color: '#666', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}>
                   Cancel
                 </button>
-                <button onClick={handleSubmitLead} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', background: '#00D4AA', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
+                <button onClick={() => handleSubmitLead({ parcelAddress: '' })} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', background: '#00D4AA', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
                   Submit Lead
                 </button>
               </div>

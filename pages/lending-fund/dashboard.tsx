@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, PieLabelRenderProps } from 'recharts';
 import MobileBottomNav from '../../components/lending-fund/MobileBottomNav';
 
 interface InvestorPosition {
@@ -301,7 +301,7 @@ export default function InvestorDashboard() {
                     <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} tickFormatter={(v) => `${v}%`} />
                     <Tooltip 
                       contentStyle={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8 }}
-                      formatter={(value: number) => [`${value.toFixed(2)}%`, 'APY']}
+                      formatter={(value) => [`${Number(value).toFixed(2)}%`, 'APY']}
                     />
                     <Line type="monotone" dataKey="apy" stroke="#00D4AA" strokeWidth={2} dot={{ fill: '#00D4AA' }} />
                   </LineChart>
@@ -322,7 +322,7 @@ export default function InvestorDashboard() {
                       outerRadius={90}
                       paddingAngle={3}
                       dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }: PieLabelRenderProps) => `${name}: ${(Number(percent) * 100).toFixed(0)}%`}
                       labelLine={false}
                     >
                       {generatePortfolioData(overview).map((entry, index) => (
@@ -330,7 +330,7 @@ export default function InvestorDashboard() {
                       ))}
                     </Pie>
                     <Legend verticalAlign="bottom" height={36} />
-                    <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, '']} />
+                    <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, '']} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

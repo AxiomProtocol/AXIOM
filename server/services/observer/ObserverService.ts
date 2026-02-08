@@ -5,7 +5,7 @@
  * No transaction signing or admin actions.
  */
 
-import { ethers, Contract } from 'ethers';
+import { ethers, Contract, EventLog, Log } from 'ethers';
 import { pool } from '../../db';
 import {
   OBSERVER_CONTRACTS,
@@ -23,6 +23,7 @@ import {
   ExposureMetric,
   RedFlag,
   LockGate,
+  LockCriterion,
   LockReadinessData,
 } from './types';
 import {
@@ -815,12 +816,13 @@ export class ObserverService {
       
       for (const event of events.slice(-limit)) {
         const block = await event.getBlock();
+        const eventArgs = event instanceof EventLog ? event.args : undefined;
         actions.push({
           id: event.transactionHash,
           type: 'timelock_schedule',
           description: 'Operation scheduled in timelock',
           actor: event.address,
-          target: event.args?.target,
+          target: eventArgs?.target as string | undefined,
           timestamp: new Date(block.timestamp * 1000).toISOString(),
           txHash: event.transactionHash,
           blockNumber: event.blockNumber
@@ -880,7 +882,7 @@ export class ObserverService {
       { id: 'ops-3', name: 'Public notice of intent issued', status: 'pending' as const },
     ];
 
-    const createGate = (name: string, criteria: typeof governanceCriteria): LockGate => {
+    const createGate = (name: string, criteria: LockCriterion[]): LockGate => {
       const passingCount = criteria.filter(c => c.status === 'passing').length;
       const failingCount = criteria.filter(c => c.status === 'failing').length;
       return {

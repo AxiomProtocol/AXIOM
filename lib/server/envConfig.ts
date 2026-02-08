@@ -150,4 +150,4 @@ export function getBaseUrl(): string {
     : 'http://localhost:5000';
 }
 
-export { AxiomEnvironment, AiAgentMode, AuditLogSink, EnvConfig };
+export type { AxiomEnvironment, AiAgentMode, AuditLogSink, EnvConfig };

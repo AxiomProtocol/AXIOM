@@ -392,4 +392,3 @@ export function getNodeEconomyService(): NodeEconomyService {
 }
 
 export { NODE_ECONOMY_CONTRACTS, ON_CHAIN_NODE_CLASSES, OPERATOR_ROLES, NODE_STATUS };
-export type { ReadinessStatus, ReadinessAttestation, ReadinessConfig };

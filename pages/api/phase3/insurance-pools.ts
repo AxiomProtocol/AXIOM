@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { db } from '../../../server/db';
-import { kycVerifications } from '../../../shared/schema';
+import { kycVerifications, users } from '../../../shared/schema';
 import { eq } from 'drizzle-orm';
 
 const INSURANCE_POOL_HUB_ADDRESS = '0x1553b9B1Ebad0Cb52c6D457bEB2Ee6270A3b5d98';
@@ -51,12 +51,19 @@ interface UserPolicy {
 
 async function verifyKYC(address: string): Promise<boolean> {
   try {
+    const user = await db.select()
+      .from(users)
+      .where(eq(users.walletAddress, address.toLowerCase()))
+      .limit(1);
+
+    if (user.length === 0) return false;
+
     const result = await db.select()
       .from(kycVerifications)
-      .where(eq(kycVerifications.walletAddress, address.toLowerCase()))
+      .where(eq(kycVerifications.userId, user[0].id))
       .limit(1);
     
-    if (result.length > 0 && result[0].verificationStatus === 'verified') {
+    if (result.length > 0 && result[0].verificationStatus === 'approved') {
       return true;
     }
     return false;
@@ -66,7 +73,7 @@ async function verifyKYC(address: string): Promise<boolean> {
   }
 }
 
-async function getOnChainPoolData(): Promise<{ pools: InsurancePool[], stats: any }> {
+async function getOnChainPoolData(): Promise<{ pools: InsurancePool[], stats: Record<string, string | number> }> {
   try {
     const provider = new ethers.JsonRpcProvider(RPC_URL);
     const contract = new ethers.Contract(INSURANCE_POOL_HUB_ADDRESS, INSURANCE_POOL_HUB_ABI, provider);
@@ -211,8 +218,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const totalCoverage = onChainData.pools.reduce((sum, p) => sum + parseFloat(p.totalCoverage), 0);
     const totalReserves = onChainData.pools.reduce((sum, p) => sum + parseFloat(p.reserves), 0);
-    const totalPremiums = parseFloat(onChainData.stats.totalPremiums);
-    const totalClaims = parseFloat(onChainData.stats.totalClaims);
+    const totalPremiums = parseFloat(String(onChainData.stats.totalPremiums));
+    const totalClaims = parseFloat(String(onChainData.stats.totalClaims));
     
     return res.status(200).json({
       success: true,

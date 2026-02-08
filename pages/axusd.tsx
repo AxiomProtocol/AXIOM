@@ -302,7 +302,7 @@ const FAQ_DATA = [
 ];
 
 export default function AXUSDStablecoinPage() {
-  const { walletState, connectWallet, switchToArbitrum } = useWallet();
+  const { walletState, connectMetaMask, switchToArbitrum } = useWallet();
   const isWalletConnected = walletState?.isConnected && walletState?.address;
   const isCorrectNetwork = walletState?.chainId === 42161;
   const [networkSwitching, setNetworkSwitching] = useState(false);
@@ -1137,7 +1137,7 @@ export default function AXUSDStablecoinPage() {
                   ) : (
                     <button 
                       className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl hover:bg-emerald-700 transition-colors"
-                      onClick={connectWallet}
+                      onClick={connectMetaMask}
                     >
                       Connect Wallet to Mint
                     </button>
@@ -1240,7 +1240,7 @@ export default function AXUSDStablecoinPage() {
                   ) : (
                     <button 
                       className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors"
-                      onClick={connectWallet}
+                      onClick={connectMetaMask}
                     >
                       Connect Wallet to Swap
                     </button>
@@ -1278,7 +1278,7 @@ export default function AXUSDStablecoinPage() {
                     </h4>
                     <div className="space-y-4">
                       <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
-                        <div className="text-2xl font-bold text-purple-600">${formatNumber(lpData?.totalValueUsd || lpAnalytics?.pool?.tvl || '0')}</div>
+                        <div className="text-2xl font-bold text-purple-600">${formatNumber(lpData?.totalLiquidity || lpAnalytics?.pool?.tvl || '0')}</div>
                         <div className="text-gray-500 text-sm">Total Liquidity</div>
                       </div>
                       <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
@@ -1334,7 +1334,7 @@ export default function AXUSDStablecoinPage() {
                     ) : (
                       <button 
                         className="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition-colors"
-                        onClick={connectWallet}
+                        onClick={connectMetaMask}
                       >
                         Connect Wallet to Add Liquidity
                       </button>

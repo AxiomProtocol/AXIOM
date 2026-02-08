@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (result.length > 0) {
         const verification = result[0];
         return res.status(200).json({
-          verified: verification.verificationStatus === 'verified',
+          verified: verification.verificationStatus === 'approved',
           pending: verification.verificationStatus === 'pending',
           status: verification.verificationStatus,
           riskLevel: verification.riskLevel

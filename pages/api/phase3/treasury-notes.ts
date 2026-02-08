@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { db } from '../../../server/db';
-import { kycVerifications } from '../../../shared/schema';
+import { kycVerifications, users } from '../../../shared/schema';
 import { eq } from 'drizzle-orm';
 
 const TREASURY_NOTE_TOKEN_ADDRESS = '0x712640Fde009a7FB0c3668e9eFb9AD5Bf67bEAbd';
@@ -47,16 +47,23 @@ interface UserHolding {
 
 async function verifyKYCAndAccreditation(address: string): Promise<{ kyc: boolean, accredited: boolean }> {
   try {
+    const user = await db.select()
+      .from(users)
+      .where(eq(users.walletAddress, address.toLowerCase()))
+      .limit(1);
+
+    if (user.length === 0) return { kyc: false, accredited: false };
+
     const result = await db.select()
       .from(kycVerifications)
-      .where(eq(kycVerifications.walletAddress, address.toLowerCase()))
+      .where(eq(kycVerifications.userId, user[0].id))
       .limit(1);
     
     if (result.length > 0) {
       const verification = result[0];
       return {
-        kyc: verification.verificationStatus === 'verified',
-        accredited: verification.riskLevel === 'accredited' || verification.investorType === 'accredited'
+        kyc: verification.verificationStatus === 'approved',
+        accredited: verification.riskLevel === 'low'
       };
     }
     return { kyc: false, accredited: false };
@@ -114,7 +121,7 @@ const NOTE_CONFIGS: Record<number, { id: string, minInvestment: number, maxInves
   }
 };
 
-async function getOnChainNoteData(): Promise<{ notes: TreasuryNote[], stats: any }> {
+async function getOnChainNoteData(): Promise<{ notes: TreasuryNote[], stats: Record<string, string | number> }> {
   try {
     const provider = new ethers.JsonRpcProvider(RPC_URL);
     const contract = new ethers.Contract(TREASURY_NOTE_TOKEN_ADDRESS, TREASURY_NOTE_TOKEN_ABI, provider);
@@ -245,8 +252,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    const totalOutstanding = parseFloat(onChainData.stats.totalOutstanding);
-    const totalInvested = parseFloat(onChainData.stats.totalInvested);
+    const totalOutstanding = parseFloat(String(onChainData.stats.totalOutstanding));
+    const totalInvested = parseFloat(String(onChainData.stats.totalInvested));
     const avgCouponRate = onChainData.notes.length > 0 
       ? onChainData.notes.reduce((sum, n) => sum + n.couponRate, 0) / onChainData.notes.length 
       : 0;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ObserverLayout, ObserverCard, ObserverLoading, ProofLink } from '../../components/observer/ObserverLayout';
-import { AssetsData } from '../../server/services/observer/types';
+import { AssetsData, AssetEntry, RevenueStream, LifecycleAction } from '../../server/services/observer/types';
 
 export default function ObserverAssets() {
   const [data, setData] = useState<AssetsData | null>(null);
@@ -48,7 +48,7 @@ export default function ObserverAssets() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {(data.registry || []).map((asset) => (
+                    {(data.registry || []).map((asset: AssetEntry) => (
                       <tr key={asset.id}>
                         <td className="px-4 py-3 text-sm font-mono">{asset.id}</td>
                         <td className="px-4 py-3 text-sm font-medium">{asset.name}</td>
@@ -62,7 +62,7 @@ export default function ObserverAssets() {
                             {asset.status.toUpperCase()}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm font-medium text-amber-600">{asset.revenue}</td>
+                        <td className="px-4 py-3 text-sm font-medium text-amber-600">{asset.monthlyRevenue || '$0'}</td>
                         <td className="px-4 py-3 text-sm text-gray-500">{asset.registeredAt}</td>
                       </tr>
                     ))}
@@ -73,17 +73,17 @@ export default function ObserverAssets() {
           </ObserverCard>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <ObserverCard title="Revenue Attribution">
+            <ObserverCard title="Revenue Streams">
               <div className="space-y-3">
-                {(data.revenueAttribution || []).map((item) => (
+                {(data.revenueStreams || []).map((item: RevenueStream) => (
                   <div key={item.source} className="flex justify-between items-center border-b border-gray-100 pb-3">
                     <div>
                       <p className="font-medium">{item.source}</p>
-                      <p className="text-sm text-gray-500">{item.assetCount} assets</p>
+                      <p className="text-sm text-gray-500">Last payment: {item.lastPayment}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-amber-600">{item.revenue}</p>
-                      <p className="text-sm text-gray-500">{item.percentage}%</p>
+                      <p className="font-bold text-amber-600">{item.mtd}</p>
+                      <p className="text-sm text-gray-500">YTD: {item.ytd}</p>
                     </div>
                   </div>
                 ))}
@@ -94,35 +94,35 @@ export default function ObserverAssets() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-amber-50 rounded-xl p-4">
                   <p className="text-sm text-gray-600">Total Assets</p>
-                  <p className="text-2xl font-bold text-amber-600">{data.summary?.totalAssets || 0}</p>
+                  <p className="text-2xl font-bold text-amber-600">{data.registry?.length || 0}</p>
                 </div>
                 <div className="bg-teal-50 rounded-xl p-4">
                   <p className="text-sm text-gray-600">Active</p>
-                  <p className="text-2xl font-bold text-teal-600">{data.summary?.activeAssets || 0}</p>
+                  <p className="text-2xl font-bold text-teal-600">{data.registry?.filter((a: AssetEntry) => a.status === 'active').length || 0}</p>
                 </div>
                 <div className="bg-purple-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-600">Total Value</p>
-                  <p className="text-2xl font-bold text-purple-600">{data.summary?.totalValue || '$0'}</p>
+                  <p className="text-sm text-gray-600">Revenue Streams</p>
+                  <p className="text-2xl font-bold text-purple-600">{data.revenueStreams?.length || 0}</p>
                 </div>
                 <div className="bg-blue-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-600">Monthly Revenue</p>
-                  <p className="text-2xl font-bold text-blue-600">{data.summary?.monthlyRevenue || '$0'}</p>
+                  <p className="text-sm text-gray-600">Lifecycle Events</p>
+                  <p className="text-2xl font-bold text-blue-600">{data.lifecycleActions?.length || 0}</p>
                 </div>
               </div>
             </ObserverCard>
           </div>
 
           <ObserverCard title="Lifecycle Events">
-            {!data.lifecycleEvents || data.lifecycleEvents.length === 0 ? (
+            {!data.lifecycleActions || data.lifecycleActions.length === 0 ? (
               <p className="text-gray-500">No recent lifecycle events</p>
             ) : (
               <div className="space-y-3">
-                {(data.lifecycleEvents || []).map((event, idx) => (
+                {(data.lifecycleActions || []).map((event: LifecycleAction, idx: number) => (
                   <div key={idx} className="flex items-start border-b border-gray-100 pb-3">
                     <div className={`p-2 rounded-lg ${
-                      event.type === 'registration' ? 'bg-teal-100 text-teal-600' :
-                      event.type === 'update' ? 'bg-amber-100 text-amber-600' :
-                      event.type === 'deregistration' ? 'bg-red-100 text-red-600' :
+                      event.action === 'acquire' ? 'bg-teal-100 text-teal-600' :
+                      event.action === 'maintain' ? 'bg-amber-100 text-amber-600' :
+                      event.action === 'deprecate' ? 'bg-red-100 text-red-600' :
                       'bg-gray-100 text-gray-600'
                     }`}>
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,9 +133,9 @@ export default function ObserverAssets() {
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="font-medium">{event.assetName}</p>
-                          <p className="text-sm text-gray-600">{event.description}</p>
+                          <p className="text-sm text-gray-600">{event.action}</p>
                         </div>
-                        <span className="text-xs text-gray-500">{event.timestamp}</span>
+                        <span className="text-xs text-gray-500">{event.date}</span>
                       </div>
                       {event.txHash && (
                         <div className="mt-1">

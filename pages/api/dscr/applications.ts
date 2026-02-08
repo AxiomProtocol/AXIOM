@@ -1,5 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Pool } from 'pg';
+import { db } from '../../../server/db';
+import { dscrApplications, dscrBorrowers, dscrProperties, dscrDocuments } from '../../../shared/schema';
+import { eq, and, desc } from 'drizzle-orm';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 

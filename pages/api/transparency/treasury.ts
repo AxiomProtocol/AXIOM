@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Pool } from 'pg';
 import { ethers } from 'ethers';
-import { REALESTATE_LENDING_CONTRACTS, STABLECOIN_CONTRACTS } from '../../../shared/contracts';
+import { REALESTATE_LENDING_CONTRACTS, AXUSD_STABLECOIN_CONTRACTS } from '../../../shared/contracts';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,

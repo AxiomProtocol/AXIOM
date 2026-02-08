@@ -238,17 +238,24 @@ export class DelegationService {
       
       const delegations: Delegation[] = [];
       
+      const delegateChangedFragment = axmContract.interface.getEvent('DelegateChanged');
       for (const event of events) {
         const block = await event.getBlock();
-        const args = event.args as any;
-        
-        delegations.push({
-          delegator: args.delegator,
-          delegatee: args.toDelegate,
-          tokenAmount: '0', // Amount not directly available from event
-          timestamp: block.timestamp,
-          transactionHash: event.transactionHash
-        });
+        if ('args' in event && delegateChangedFragment) {
+          const parsed = axmContract.interface.decodeEventLog(
+            delegateChangedFragment,
+            event.data,
+            event.topics
+          );
+          
+          delegations.push({
+            delegator: String(parsed[0]),
+            delegatee: String(parsed[2]),
+            tokenAmount: '0',
+            timestamp: block.timestamp,
+            transactionHash: event.transactionHash
+          });
+        }
       }
       
       return delegations.sort((a, b) => b.timestamp - a.timestamp);

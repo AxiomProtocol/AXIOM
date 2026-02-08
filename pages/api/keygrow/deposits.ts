@@ -200,7 +200,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     
     if (req.method === 'POST') {
-      const session = await getSIWESession(req, res);
+      const session = await getSIWESession(req);
       
       if (!session || !session.address) {
         return res.status(401).json({ success: false, error: 'Authentication required' });
@@ -243,7 +243,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     
     if (req.method === 'PATCH') {
-      const session = await getSIWESession(req, res);
+      const session = await getSIWESession(req);
       
       if (!session || !session.address) {
         return res.status(401).json({ success: false, error: 'Authentication required' });

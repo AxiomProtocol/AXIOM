@@ -319,7 +319,7 @@ export default function StewardDropsPage() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleCreateDrop({})}
+                  onClick={() => handleCreateDrop({ date: '', location: '', capacity: 0 })}
                   style={{
                     flex: 1,
                     padding: '12px',

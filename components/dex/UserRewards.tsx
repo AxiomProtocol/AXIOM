@@ -3,8 +3,8 @@ import { useWallet } from '../../lib/web3/useWallet';
 
 export default function UserRewards() {
   const { isConnected, address } = useWallet();
-  const { tradingRewards, loading: rewardsLoading, refetch: refetchRewards } = useUserRewards(address);
-  const { orders, loading: ordersLoading, refetch: refetchOrders } = useUserLimitOrders(address);
+  const { tradingRewards, loading: rewardsLoading, refetch: refetchRewards } = useUserRewards(address ?? undefined);
+  const { orders, loading: ordersLoading, refetch: refetchOrders } = useUserLimitOrders(address ?? undefined);
 
   if (!isConnected) {
     return (

@@ -12,6 +12,7 @@ import {
   pgEnum,
   serial,
   unique,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 // User roles enum
@@ -8204,6 +8205,89 @@ export const onchainRewardsSync = pgTable("onchain_rewards_sync", {
   nodeIdIdx: index("onchain_rewards_sync_node_id_idx").on(table.nodeId),
   operatorIdx: index("onchain_rewards_sync_operator_idx").on(table.operatorId),
 }));
+
+export const userRoles = pgTable("user_roles", {
+  userId: uuid("user_id").notNull().primaryKey(),
+  role: text("role").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdByAdminId: uuid("created_by_admin_id"),
+});
+
+export const adminAuditLog = pgTable("admin_audit_log", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  actorUserId: uuid("actor_user_id").notNull(),
+  actorRole: text("actor_role").notNull(),
+  action: text("action").notNull(),
+  targetType: text("target_type").notNull(),
+  targetId: text("target_id").notNull(),
+  requestId: text("request_id").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  beforeState: jsonb("before_state"),
+  afterState: jsonb("after_state"),
+  reason: text("reason"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const adminProposals = pgTable("admin_proposals", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  actionType: text("action_type").notNull(),
+  targetType: text("target_type").notNull(),
+  targetId: text("target_id").notNull(),
+  amount: decimal("amount", { precision: 20, scale: 6 }),
+  payload: jsonb("payload").notNull(),
+  status: text("status").notNull().default('pending'),
+  reason: text("reason").notNull(),
+  approvalReason: text("approval_reason"),
+  createdBy: uuid("created_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at"),
+  approvedBy: uuid("approved_by"),
+  approvedAt: timestamp("approved_at"),
+  executedBy: uuid("executed_by"),
+  executedAt: timestamp("executed_at"),
+  rejectedBy: uuid("rejected_by"),
+  rejectedAt: timestamp("rejected_at"),
+  cancelledBy: uuid("cancelled_by"),
+  cancelledAt: timestamp("cancelled_at"),
+  requestId: text("request_id").notNull(),
+  uniqueKey: text("unique_key").notNull(),
+  executionResult: jsonb("execution_result"),
+});
+
+export const adminProposalEvents = pgTable("admin_proposal_events", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  proposalId: uuid("proposal_id").notNull(),
+  eventType: text("event_type").notNull(),
+  actorUserId: uuid("actor_user_id").notNull(),
+  actorRole: text("actor_role").notNull(),
+  requestId: text("request_id").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  eventPayload: jsonb("event_payload"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const payoutStateHistory = pgTable("payout_state_history", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  payoutId: text("payout_id").notNull(),
+  fromStatus: text("from_status").notNull(),
+  toStatus: text("to_status").notNull(),
+  changedBy: uuid("changed_by").notNull(),
+  proposalId: uuid("proposal_id"),
+  reason: text("reason").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const transactionReversals = pgTable("transaction_reversals", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  originalTransactionId: text("original_transaction_id").notNull(),
+  reversalTransactionId: text("reversal_transaction_id").notNull(),
+  createdBy: uuid("created_by").notNull(),
+  proposalId: uuid("proposal_id"),
+  reason: text("reason").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 export type NoteSubmission = typeof noteSubmissions.$inferSelect;
 export type InsertNoteSubmission = typeof noteSubmissions.$inferInsert;

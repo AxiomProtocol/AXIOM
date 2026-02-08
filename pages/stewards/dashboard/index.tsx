@@ -68,7 +68,6 @@ export default function StewardDashboardOverview() {
   }, [isConnected, address]);
 
   const defaultMetrics = {
-    nextDrop: undefined,
     openTasks: { due: 0, overdue: 0 },
     participants: { total: 0, newThisWeek: 0 },
     landLeads: { total: 0, qualified: 0 }
@@ -87,7 +86,7 @@ export default function StewardDashboardOverview() {
           </div>
         ) : (
           <>
-            <OverviewCards metrics={data?.metrics || defaultMetrics} />
+            <OverviewCards metrics={data?.metrics ? { ...data.metrics, nextDrop: data.metrics.nextDrop ?? undefined } : defaultMetrics} />
             
             <div style={{
               display: 'grid',

@@ -175,7 +175,7 @@ export default function FamilyTreeSection({ caseId }: FamilyTreeSectionProps) {
       spouse: { to: 'Spouse of', from: 'Spouse of' },
       sibling: { to: 'Sibling of', from: 'Sibling of' },
     };
-    return labels[type]?.[direction] || type;
+    return labels[type]?.[direction as keyof (typeof labels)[string]] || type;
   };
 
   if (loading) {

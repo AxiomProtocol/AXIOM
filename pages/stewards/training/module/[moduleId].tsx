@@ -7,6 +7,17 @@ import { getModulesByPhase, trainingPhases, TrainingModule } from '../../../../l
 
 type PhaseId = 'online' | 'classroom' | 'field';
 
+function getPhaseFromType(moduleType: TrainingModule['type']): PhaseId {
+  const typeToPhase: Record<TrainingModule['type'], PhaseId> = {
+    lesson: 'online',
+    workshop: 'classroom',
+    assessment: 'classroom',
+    capstone: 'classroom',
+    field: 'field',
+  };
+  return typeToPhase[moduleType];
+}
+
 export default function ModuleViewer() {
   const router = useRouter();
   const { moduleId } = router.query;
@@ -63,12 +74,13 @@ export default function ModuleViewer() {
 
   const getNextModule = (): TrainingModule | null => {
     if (!module) return null;
-    const modules = getModulesByPhase(module.phase);
+    const modulePhase = getPhaseFromType(module.type);
+    const modules = getModulesByPhase(modulePhase);
     const currentIndex = modules.findIndex(m => m.id === module.id);
     return currentIndex < modules.length - 1 ? modules[currentIndex + 1] : null;
   };
 
-  const phase = module ? trainingPhases.find(p => p.id === module.phase) : null;
+  const phase = module ? trainingPhases.find(p => p.id === getPhaseFromType(module.type)) : null;
 
   if (loading) {
     return (
@@ -135,7 +147,7 @@ export default function ModuleViewer() {
               {phase?.icon} {phase?.name}
             </span>
             <span style={{ color: '#6B7280', fontSize: '14px' }}>
-              Module {module.order}
+              Module {module.week}
             </span>
           </div>
 
@@ -153,8 +165,8 @@ export default function ModuleViewer() {
               {module.subtitle}
             </p>
             <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>
-              <span>⏱️ {module.duration} minutes</span>
-              <span>📖 {module.type === 'quiz' ? 'Quiz' : module.type === 'practical' ? 'Practical' : 'Lesson'}</span>
+              <span>⏱️ {module.estimatedMinutes} minutes</span>
+              <span>📖 {module.type === 'assessment' ? 'Quiz' : module.type === 'field' ? 'Practical' : 'Lesson'}</span>
               {module.isRequired && <span style={{ color: '#DC2626' }}>Required</span>}
             </div>
 
