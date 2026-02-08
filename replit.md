@@ -65,13 +65,14 @@ The project has been streamlined to 40 active pages (35 core + 5 observer subpag
 - `/join` - Join / Onboarding
 
 ## Archive Structure (Roadmap Phases)
-Archived pages are in `_archive/` organized by future release phase:
+Archived pages are in `_archive/` organized by future release phase. Archived API routes are in `_archive/api/` (moved out of `pages/api/` to reduce build compilation from 460+ routes to ~144).
 
 - **`_archive/phase2-defi-advanced/`** - DeFi advanced features: bank, tokenomics, staking, axiom-nodes, launchpad, analytics, yield-vault, DSCR loans, note pipeline, mortgage notes, savings, rent streams, credit lines, insurance pools, treasury notes, treasury ops, intelligence, DePIN, compliance
 - **`_archive/phase3-land-stewards/`** - Land & Stewards: KeyGrow, land marketplace, land acquisition, land funds, landowners, stewards system, builder credit, land lifecycle, reclaim
 - **`_archive/phase4-governance-community/`** - Governance & Community Tools: governance voting, SUSU, badges, holders, credit builder, group analytics, journey, learn, PMA, rewards, referrals, membership
 - **`_archive/phase5-workbook-legacy/`** - Workbook & Legacy: workbook system, wallet demo, wealth dashboard, wealth practice, analytics dashboard, graduation dashboard, transparency dashboard, contact, origin, philosophy, whitepaper, terminal, system
 - **`_archive/phase6-admin-tools/`** - Admin Tools: admin pages, investor management, operator portal, partner management
+- **`_archive/api/`** - Archived API routes (65+ directories, 300+ files) for features not in active pages. Includes: admin, ai, compliance, cron, denet, discord, dscr, governance, groups, hubs, insurance, investor, keygrow, kyc, land, land-acquisition, land-funds, landowners, leads, lending, membership, mortgage-notes, notes, notifications, onboarding, operator, partner, phase2, phase3, pools, referrals, rewards, savings, social, staking, stewards, treasury, v2, wealth, workbook, yield-vault, and more.
 
 ## System Architecture
 
@@ -90,7 +91,7 @@ The architecture employs a "Product Factory Approach" for scalability. Arbitrum 
 - Lending Fund (SEC Reg D 506(c) compliant bridge loan fund)
 - National Economic Pilot ($1M dual-asset investment tracking system at `/pilot` with 8 subpages, 14 PostgreSQL tables, 17 API endpoints, NotificationService with Resend email integration. Two SPVs: Cash Flow Anchor ($600K multifamily) and Appreciation Asset ($350K commercial/industrial). 35/35/20/10 treasury allocation policy. Phase 2 expansion gate scoring. Uses raw SQL via pg.Pool for API routes.)
 - Euler V2 AXUSD Lending Markets (External DeFi lending integration on Arbitrum One at vault 0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059. **LOCKED CONFIG** - DO NOT CHANGE vault address or LTV parameters.)
-- Deployment Configuration: Uses VM for complex builds, `npm run build:deploy:clean` for build command, and `npm run start:minimal` for run command.
+- Deployment Configuration: Uses VM with standalone output. Build: `npm run build:deploy:clean` (8GB memory, ~144 routes). Run: `npm run start:minimal`. Build reduced from 460+ routes to ~144 by archiving unused API routes to `_archive/api/`.
 
 ## External Dependencies
 - **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
