@@ -20,73 +20,35 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_ID
 
 const REBUILD_NAV_PAGES = [
   '/',
-  '/origin',
   '/how-it-works',
-  '/infrastructure',
-  '/learn',
   '/about-us',
   '/community',
   '/impact',
   '/transparency',
   '/team',
-  '/land-acquisition',
-  '/land',
-  '/liquidity',
   '/axusd',
-  '/workbook',
-  '/reclaim',
   '/join',
   '/dashboard',
   '/lending-fund',
-  '/stewards',
-  '/holders',
-  '/susu',
   '/buy-axm',
-  '/academy',
   '/roadmap',
-  '/mortgage-notes',
-  '/savings',
-  '/rent-streams',
   '/products',
-  '/land-funds',
-  '/builder-credit',
-  '/credit-lines',
-  '/insurance-pools',
-  '/treasury-notes',
-  '/joincommunity',
   '/dex',
-  '/treasury-ops',
   '/observer',
   '/earn',
-  '/yield-vault',
   '/borrow',
   '/institutional',
-  '/pilot'
+  '/pilot',
+  '/faq',
+  '/terms-and-conditions'
 ]
 
 function matchesRebuildNavPages(pathname) {
   if (REBUILD_NAV_PAGES.includes(pathname)) return true;
-  if (pathname.startsWith('/workbook/')) return true;
-  if (pathname.startsWith('/land-acquisition/')) return true;
-  if (pathname.startsWith('/land/')) return true;
   if (pathname.startsWith('/lending-fund/')) return true;
-  if (pathname.startsWith('/stewards/')) return true;
-  if (pathname.startsWith('/susu/')) return true;
-  if (pathname.startsWith('/academy/')) return true;
-  if (pathname.startsWith('/dscr/')) return true;
-  if (pathname.startsWith('/admin/loan-tape')) return true;
-  if (pathname.startsWith('/dex/')) return true;
-  if (pathname.startsWith('/axiom-nexus')) return true;
-  if (pathname.startsWith('/transparency')) return true;
-  if (pathname.startsWith('/treasury')) return true;
-  if (pathname.startsWith('/governance')) return true;
-  if (pathname.startsWith('/nodes')) return true;
-  if (pathname.startsWith('/axiom-nodes')) return true;
-  if (pathname.startsWith('/land-funds')) return true;
-  if (pathname.startsWith('/observer')) return true;
-  if (pathname.startsWith('/builder-credit')) return true;
-  if (pathname.startsWith('/admin/capital-bridge')) return true;
-  if (pathname.startsWith('/pilot')) return true;
+  if (pathname.startsWith('/observer/')) return true;
+  if (pathname.startsWith('/pilot/')) return true;
+  if (pathname.startsWith('/products/')) return true;
   return false;
 }
 
@@ -114,7 +76,7 @@ export default function App({ Component, pageProps }) {
   useEffect(() => {
     if (typeof window !== 'undefined' && !onboardingChecked) {
       const completed = localStorage.getItem('axiom_onboarding_complete')
-      const isPublicPage = ['/origin', '/how-it-works', '/about-us', '/team', '/axiom-nexus', '/transparency', '/governance', '/treasury', '/roadmap', '/mortgage-notes', '/savings', '/rent-streams', '/products', '/reclaim', '/workbook', '/land-funds', '/joincommunity', '/partner', '/faq'].includes(router.pathname) || router.pathname.startsWith('/dscr/investor') || router.pathname.startsWith('/reclaim') || router.pathname.startsWith('/workbook') || router.pathname.startsWith('/workbook/search') || router.pathname.startsWith('/land-funds') || router.pathname.startsWith('/partner') || router.pathname.startsWith('/governance/')
+      const isPublicPage = ['/', '/how-it-works', '/about-us', '/team', '/transparency', '/roadmap', '/products', '/faq', '/terms-and-conditions', '/community', '/impact', '/axusd', '/dex', '/earn', '/borrow', '/buy-axm', '/institutional', '/lending-fund', '/observer'].includes(router.pathname) || router.pathname.startsWith('/pilot') || router.pathname.startsWith('/observer/') || router.pathname.startsWith('/lending-fund/') || router.pathname.startsWith('/products/')
       const isAdminPage = router.pathname.startsWith('/admin')
       const isCustomOnboardingPage = router.pathname === '/join'
       if (!completed && !isPublicPage && !isAdminPage && !isCustomOnboardingPage) {
