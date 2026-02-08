@@ -116,17 +116,21 @@ export default function ProjectionsPage() {
   return (
     <>
       <Head>
-        <title>National Economic Pilot — Return Projections</title>
+        <title>Axiom Economic Pilot — Return Projections</title>
       </Head>
 
       <div className="min-h-screen bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">National Economic Pilot</h1>
-            <p className="text-gray-500 mt-1">Return Projections</p>
+            <h1 className="text-3xl font-bold text-gray-900">Return Projections</h1>
+            <p className="text-gray-500 mt-1">Model your potential returns across different market scenarios</p>
           </div>
 
           <PilotNav currentTab="projections" />
+
+          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100 rounded-xl p-5 mb-8">
+            <p className="text-sm text-teal-800 leading-relaxed">Use this calculator to explore potential returns based on your investment amount and hold period. Three scenarios — Conservative, Base Case, and Optimistic — model different occupancy rates, rent growth, and property appreciation to give you a realistic range of outcomes.</p>
+          </div>
 
           <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Projection Parameters</h2>

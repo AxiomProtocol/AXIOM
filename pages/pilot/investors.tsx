@@ -184,17 +184,21 @@ export default function PilotInvestors() {
   return (
     <>
       <Head>
-        <title>National Economic Pilot — Investors</title>
+        <title>Axiom Economic Pilot — Investor Portal</title>
       </Head>
 
       <div className="min-h-screen bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">National Economic Pilot</h1>
-            <p className="text-gray-500 mt-1">Investor Management Portal</p>
+            <h1 className="text-3xl font-bold text-gray-900">Axiom Economic Pilot</h1>
+            <p className="text-gray-500 mt-1">Manage investors, track commitments, and issue capital calls</p>
           </div>
 
           <PilotNav currentTab="investors" />
+
+          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100 rounded-xl p-5 mb-8">
+            <p className="text-sm text-teal-800 leading-relaxed">This portal tracks every investor in the pilot program — from initial commitment through funding and ongoing participation. Check sizes range from $25,000 to $75,000, supporting 20-30 qualified investors.</p>
+          </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-20">

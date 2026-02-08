@@ -194,17 +194,21 @@ export default function DistributionsPage() {
   return (
     <>
       <Head>
-        <title>National Economic Pilot — Distributions</title>
+        <title>Axiom Economic Pilot — Income & Distributions</title>
       </Head>
 
       <div className="min-h-screen bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Distribution Engine</h1>
-            <p className="text-gray-500 mt-1">Calculate and track income distributions</p>
+            <h1 className="text-3xl font-bold text-gray-900">Income & Distributions</h1>
+            <p className="text-gray-500 mt-1">Calculate and track how property income flows to investors</p>
           </div>
 
           <PilotNav currentTab="distributions" />
+
+          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100 rounded-xl p-5 mb-8">
+            <p className="text-sm text-teal-800 leading-relaxed">Every dollar of property income follows our 35/35/20/10 treasury policy: 35% distributed to investors, 35% held in reserves, 20% allocated for growth, and 10% kept as an operating buffer. This disciplined approach protects capital while delivering consistent returns.</p>
+          </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-20">

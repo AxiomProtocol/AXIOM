@@ -36,13 +36,25 @@ export const navItems: NavItem[] = [
     ]
   },
   {
+    label: "Economic Pilot",
+    children: [
+      { label: "Overview", href: "/pilot" },
+      { label: "Investors", href: "/pilot/investors" },
+      { label: "Distributions", href: "/pilot/distributions" },
+      { label: "Reports", href: "/pilot/reports" },
+      { label: "Data Room", href: "/pilot/documents" },
+      { label: "Projections", href: "/pilot/projections" },
+      { label: "Performance", href: "/pilot/performance" },
+      { label: "Audit Trail", href: "/pilot/audit" }
+    ]
+  },
+  {
     label: "Institutional",
     children: [
       { label: "Observer Dashboard", href: "/observer" },
       { label: "Capital Bridge", href: "/observer/capital-bridge" },
       { label: "Node Economy", href: "/observer/node-economy" },
-      { label: "Institutional Overview", href: "/institutional" },
-      { label: "Economic Pilot", href: "/pilot" }
+      { label: "Institutional Overview", href: "/institutional" }
     ]
   },
   {

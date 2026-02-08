@@ -170,17 +170,21 @@ export default function AuditPage() {
   return (
     <>
       <Head>
-        <title>National Economic Pilot — Audit Trail</title>
+        <title>Axiom Economic Pilot — Compliance Audit Trail</title>
       </Head>
 
       <div className="min-h-screen bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">National Economic Pilot</h1>
-            <p className="text-gray-500 mt-1">Audit Trail</p>
+            <h1 className="text-3xl font-bold text-gray-900">Compliance Audit Trail</h1>
+            <p className="text-gray-500 mt-1">Complete, immutable record of every financial action in the pilot program</p>
           </div>
 
           <PilotNav currentTab="audit" />
+
+          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100 rounded-xl p-5 mb-8">
+            <p className="text-sm text-teal-800 leading-relaxed">Every contribution, distribution, capital call, valuation update, and configuration change is logged with timestamps, actors, and amounts. This audit trail provides the institutional-grade transparency that investors and regulators expect.</p>
+          </div>
 
           <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm mb-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">

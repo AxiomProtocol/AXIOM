@@ -307,17 +307,21 @@ export default function ReportsPage() {
   return (
     <>
       <Head>
-        <title>National Economic Pilot — Reports</title>
+        <title>Axiom Economic Pilot — Financial Reports</title>
       </Head>
 
       <div className="min-h-screen bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Reporting Suite</h1>
-            <p className="text-gray-500 mt-1">Generate and review financial reports</p>
+            <h1 className="text-3xl font-bold text-gray-900">Financial Reports</h1>
+            <p className="text-gray-500 mt-1">Generate and review institutional-grade financial statements</p>
           </div>
 
           <PilotNav currentTab="reports" />
+
+          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100 rounded-xl p-5 mb-8">
+            <p className="text-sm text-teal-800 leading-relaxed">Transparent reporting is the backbone of investor trust. Generate balance sheets, income statements, reserve reports, valuations, and risk assessments — all exportable for your records and compliance needs.</p>
+          </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-20">

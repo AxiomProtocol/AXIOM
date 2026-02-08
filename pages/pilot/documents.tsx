@@ -184,17 +184,21 @@ export default function DocumentsPage() {
   return (
     <>
       <Head>
-        <title>National Economic Pilot — Data Room</title>
+        <title>Axiom Economic Pilot — Investor Data Room</title>
       </Head>
 
       <div className="min-h-screen bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900">Investor Data Room</h1>
-            <p className="text-gray-500 mt-1">Secure document repository for investors and administrators</p>
+            <p className="text-gray-500 mt-1">Secure document repository for offering materials, agreements, and reports</p>
           </div>
 
           <PilotNav currentTab="documents" />
+
+          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100 rounded-xl p-5 mb-8">
+            <p className="text-sm text-teal-800 leading-relaxed">Access all critical investment documents in one place — from offering memorandums and operating agreements to inspection reports, appraisals, and tax documents. Every document is organized by category and SPV for easy reference.</p>
+          </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-20">

@@ -123,17 +123,21 @@ export default function PerformancePage() {
   return (
     <>
       <Head>
-        <title>National Economic Pilot — Performance & Expansion Gate</title>
+        <title>Axiom Economic Pilot — Performance & Growth</title>
       </Head>
 
       <div className="min-h-screen bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">National Economic Pilot</h1>
-            <p className="text-gray-500 mt-1">Performance & Expansion Gate</p>
+            <h1 className="text-3xl font-bold text-gray-900">Performance & Growth</h1>
+            <p className="text-gray-500 mt-1">Track pilot returns against market benchmarks and Phase 2 expansion readiness</p>
           </div>
 
           <PilotNav currentTab="performance" />
+
+          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100 rounded-xl p-5 mb-8">
+            <p className="text-sm text-teal-800 leading-relaxed">How does the pilot stack up against traditional benchmarks? This page compares our returns to local cap rates, 10-year Treasury yields, and the S&P 500. It also tracks our Phase 2 expansion scorecard — the criteria we must meet before scaling from $1M to $3-5M.</p>
+          </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-20">
