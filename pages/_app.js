@@ -60,7 +60,8 @@ const REBUILD_NAV_PAGES = [
   '/earn',
   '/yield-vault',
   '/borrow',
-  '/institutional'
+  '/institutional',
+  '/pilot'
 ]
 
 function matchesRebuildNavPages(pathname) {
@@ -85,6 +86,7 @@ function matchesRebuildNavPages(pathname) {
   if (pathname.startsWith('/observer')) return true;
   if (pathname.startsWith('/builder-credit')) return true;
   if (pathname.startsWith('/admin/capital-bridge')) return true;
+  if (pathname.startsWith('/pilot')) return true;
   return false;
 }
 

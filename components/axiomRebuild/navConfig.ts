@@ -79,7 +79,8 @@ export const navItems: NavItem[] = [
       { label: "Assets View", href: "/observer/assets" },
       { label: "Reports", href: "/observer/reports" },
       { label: "Operator Portal", href: "/operator" },
-      { label: "Institutional Overview", href: "/institutional" }
+      { label: "Institutional Overview", href: "/institutional" },
+      { label: "Economic Pilot", href: "/pilot" }
     ]
   },
   {

@@ -8302,4 +8302,299 @@ export type InsertCreditsLedger = typeof creditsLedger.$inferInsert;
 export type CreditsTransaction = typeof creditsTransactions.$inferSelect;
 export type InsertCreditsTransaction = typeof creditsTransactions.$inferInsert;
 export type OnchainRewardsSync = typeof onchainRewardsSync.$inferSelect;
+
+// ============================================================
+// NATIONAL ECONOMIC PILOT - $1M Dual-Asset Barbell Strategy
+// ============================================================
+
+export const pilotSpvStatusEnum = pgEnum('pilot_spv_status', [
+  'formation', 'active', 'distributing', 'winding_down', 'closed'
+]);
+
+export const pilotAssetTypeEnum = pgEnum('pilot_asset_type', [
+  'multifamily', 'mixed_use', 'commercial', 'industrial', 'warehouse', 'farmland'
+]);
+
+export const pilotSpvs = pgTable("pilot_spvs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  label: text("label").notNull(),
+  assetType: pilotAssetTypeEnum("asset_type").notNull(),
+  status: pilotSpvStatusEnum("status").notNull().default('formation'),
+  targetPurchasePrice: decimal("target_purchase_price", { precision: 14, scale: 2 }).notNull(),
+  equityAllocated: decimal("equity_allocated", { precision: 14, scale: 2 }).notNull(),
+  debtAmount: decimal("debt_amount", { precision: 14, scale: 2 }).default('0'),
+  currentValuation: decimal("current_valuation", { precision: 14, scale: 2 }),
+  occupancyRate: decimal("occupancy_rate", { precision: 5, scale: 2 }),
+  targetYield: decimal("target_yield", { precision: 5, scale: 2 }),
+  targetAppreciation: decimal("target_appreciation", { precision: 5, scale: 2 }),
+  monthlyNetCashFlow: decimal("monthly_net_cash_flow", { precision: 10, scale: 2 }),
+  unitCount: integer("unit_count"),
+  location: text("location"),
+  marketType: text("market_type"),
+  description: text("description"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const pilotInvestorStatusEnum = pgEnum('pilot_investor_status', [
+  'invited', 'onboarding', 'committed', 'funded', 'active', 'exited'
+]);
+
+export const pilotInvestors = pgTable("pilot_investors", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  status: pilotInvestorStatusEnum("status").notNull().default('invited'),
+  commitmentAmount: decimal("commitment_amount", { precision: 14, scale: 2 }).notNull(),
+  fundedAmount: decimal("funded_amount", { precision: 14, scale: 2 }).notNull().default('0'),
+  proRataShare: decimal("pro_rata_share", { precision: 8, scale: 6 }),
+  accreditationVerified: boolean("accreditation_verified").notNull().default(false),
+  kycCompleted: boolean("kyc_completed").notNull().default(false),
+  passwordHash: text("password_hash"),
+  lastLoginAt: timestamp("last_login_at"),
+  notes: text("notes"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const pilotContributionStatusEnum = pgEnum('pilot_contribution_status', [
+  'pledged', 'called', 'received', 'confirmed', 'returned'
+]);
+
+export const pilotContributions = pgTable("pilot_contributions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  investorId: uuid("investor_id").notNull(),
+  spvId: uuid("spv_id"),
+  amount: decimal("amount", { precision: 14, scale: 2 }).notNull(),
+  status: pilotContributionStatusEnum("status").notNull().default('pledged'),
+  capitalCallId: uuid("capital_call_id"),
+  paymentMethod: text("payment_method"),
+  referenceNumber: text("reference_number"),
+  receivedAt: timestamp("received_at"),
+  confirmedAt: timestamp("confirmed_at"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const pilotCapitalCallStatusEnum = pgEnum('pilot_capital_call_status', [
+  'draft', 'issued', 'partially_funded', 'fully_funded', 'closed'
+]);
+
+export const pilotCapitalCalls = pgTable("pilot_capital_calls", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  spvId: uuid("spv_id"),
+  callNumber: integer("call_number").notNull(),
+  totalAmount: decimal("total_amount", { precision: 14, scale: 2 }).notNull(),
+  fundedAmount: decimal("funded_amount", { precision: 14, scale: 2 }).notNull().default('0'),
+  status: pilotCapitalCallStatusEnum("status").notNull().default('draft'),
+  purpose: text("purpose").notNull(),
+  dueDate: timestamp("due_date").notNull(),
+  issuedAt: timestamp("issued_at"),
+  closedAt: timestamp("closed_at"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const pilotDistributionTypeEnum = pgEnum('pilot_distribution_type', [
+  'cash_flow', 'appreciation', 'return_of_capital', 'special'
+]);
+
+export const pilotDistributions = pgTable("pilot_distributions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  spvId: uuid("spv_id"),
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  grossRevenue: decimal("gross_revenue", { precision: 14, scale: 2 }).notNull(),
+  operatingExpenses: decimal("operating_expenses", { precision: 14, scale: 2 }).notNull(),
+  netIncome: decimal("net_income", { precision: 14, scale: 2 }).notNull(),
+  distributionAmount: decimal("distribution_amount", { precision: 14, scale: 2 }).notNull(),
+  reserveAmount: decimal("reserve_amount", { precision: 14, scale: 2 }).notNull(),
+  growthAmount: decimal("growth_amount", { precision: 14, scale: 2 }).notNull(),
+  operatingBufferAmount: decimal("operating_buffer_amount", { precision: 14, scale: 2 }).notNull(),
+  distributionType: pilotDistributionTypeEnum("distribution_type").notNull().default('cash_flow'),
+  status: text("status").notNull().default('pending'),
+  approvedAt: timestamp("approved_at"),
+  paidAt: timestamp("paid_at"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const pilotInvestorDistributions = pgTable("pilot_investor_distributions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  distributionId: uuid("distribution_id").notNull(),
+  investorId: uuid("investor_id").notNull(),
+  amount: decimal("amount", { precision: 14, scale: 2 }).notNull(),
+  proRataShare: decimal("pro_rata_share", { precision: 8, scale: 6 }).notNull(),
+  status: text("status").notNull().default('pending'),
+  paidAt: timestamp("paid_at"),
+  paymentMethod: text("payment_method"),
+  referenceNumber: text("reference_number"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const pilotTreasuryBuckets = pgTable("pilot_treasury_buckets", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  spvId: uuid("spv_id"),
+  bucketName: text("bucket_name").notNull(),
+  allocationPercent: decimal("allocation_percent", { precision: 5, scale: 2 }).notNull(),
+  currentBalance: decimal("current_balance", { precision: 14, scale: 2 }).notNull().default('0'),
+  minReserve: decimal("min_reserve", { precision: 14, scale: 2 }).notNull().default('0'),
+  description: text("description"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const pilotDocCategoryEnum = pgEnum('pilot_doc_category', [
+  'offering', 'operating_agreement', 'spv_formation', 'inspection', 'appraisal',
+  'title', 'insurance', 'financial_report', 'tax', 'legal', 'other'
+]);
+
+export const pilotDocuments = pgTable("pilot_documents", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  spvId: uuid("spv_id"),
+  title: text("title").notNull(),
+  category: pilotDocCategoryEnum("category").notNull(),
+  fileName: text("file_name").notNull(),
+  fileUrl: text("file_url").notNull(),
+  fileSize: integer("file_size"),
+  mimeType: text("mime_type"),
+  uploadedBy: text("uploaded_by").notNull(),
+  description: text("description"),
+  isPublic: boolean("is_public").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const pilotAuditActionEnum = pgEnum('pilot_audit_action', [
+  'contribution_received', 'contribution_confirmed', 'distribution_calculated',
+  'distribution_approved', 'distribution_paid', 'reserve_allocation',
+  'capital_call_issued', 'capital_call_funded', 'asset_purchased',
+  'valuation_updated', 'document_uploaded', 'investor_onboarded',
+  'report_generated', 'configuration_changed'
+]);
+
+export const pilotAuditTrail = pgTable("pilot_audit_trail", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  action: pilotAuditActionEnum("action").notNull(),
+  actorId: text("actor_id").notNull(),
+  actorRole: text("actor_role").notNull(),
+  spvId: uuid("spv_id"),
+  investorId: uuid("investor_id"),
+  entityType: text("entity_type"),
+  entityId: text("entity_id"),
+  amount: decimal("amount", { precision: 14, scale: 2 }),
+  description: text("description").notNull(),
+  beforeState: jsonb("before_state"),
+  afterState: jsonb("after_state"),
+  ipAddress: text("ip_address"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const pilotAssetMetrics = pgTable("pilot_asset_metrics", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  spvId: uuid("spv_id").notNull(),
+  recordDate: timestamp("record_date").notNull(),
+  occupancyRate: decimal("occupancy_rate", { precision: 5, scale: 2 }),
+  grossRent: decimal("gross_rent", { precision: 10, scale: 2 }),
+  operatingExpenses: decimal("operating_expenses", { precision: 10, scale: 2 }),
+  netOperatingIncome: decimal("net_operating_income", { precision: 10, scale: 2 }),
+  capRate: decimal("cap_rate", { precision: 5, scale: 2 }),
+  currentValuation: decimal("current_valuation", { precision: 14, scale: 2 }),
+  reserveBalance: decimal("reserve_balance", { precision: 14, scale: 2 }),
+  debtServicePayment: decimal("debt_service_payment", { precision: 10, scale: 2 }),
+  maintenanceCosts: decimal("maintenance_costs", { precision: 10, scale: 2 }),
+  vacancyLoss: decimal("vacancy_loss", { precision: 10, scale: 2 }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const pilotReportTypeEnum = pgEnum('pilot_report_type', [
+  'monthly_balance_sheet', 'monthly_income', 'monthly_reserves',
+  'quarterly_valuation', 'quarterly_risk', 'annual_summary'
+]);
+
+export const pilotReports = pgTable("pilot_reports", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  spvId: uuid("spv_id"),
+  reportType: pilotReportTypeEnum("report_type").notNull(),
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  data: jsonb("data").notNull(),
+  generatedBy: text("generated_by").notNull(),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const pilotNotificationTypeEnum = pgEnum('pilot_notification_type', [
+  'report_published', 'distribution_processed', 'capital_call_issued',
+  'valuation_updated', 'document_added', 'general_update'
+]);
+
+export const pilotNotifications = pgTable("pilot_notifications", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  investorId: uuid("investor_id"),
+  notificationType: pilotNotificationTypeEnum("notification_type").notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  emailSent: boolean("email_sent").notNull().default(false),
+  emailSentAt: timestamp("email_sent_at"),
+  readAt: timestamp("read_at"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const pilotBenchmarks = pgTable("pilot_benchmarks", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  spvId: uuid("spv_id"),
+  recordDate: timestamp("record_date").notNull(),
+  localCapRate: decimal("local_cap_rate", { precision: 5, scale: 2 }),
+  treasuryYield10yr: decimal("treasury_yield_10yr", { precision: 5, scale: 2 }),
+  sp500Return: decimal("sp500_return", { precision: 7, scale: 2 }),
+  pilotReturn: decimal("pilot_return", { precision: 7, scale: 2 }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const pilotExpansionGate = pgTable("pilot_expansion_gate", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  checkDate: timestamp("check_date").notNull(),
+  occupancyAbove90: boolean("occupancy_above_90").notNull().default(false),
+  reservesFullyFunded: boolean("reserves_fully_funded").notNull().default(false),
+  consecutivePositiveMonths: integer("consecutive_positive_months").notNull().default(0),
+  investorSatisfactionScore: decimal("investor_satisfaction_score", { precision: 5, scale: 2 }),
+  totalAssetsUnderManagement: decimal("total_aum", { precision: 14, scale: 2 }),
+  isReadyForExpansion: boolean("is_ready_for_expansion").notNull().default(false),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Pilot Type Exports
+export type PilotSpv = typeof pilotSpvs.$inferSelect;
+export type InsertPilotSpv = typeof pilotSpvs.$inferInsert;
+export type PilotInvestor = typeof pilotInvestors.$inferSelect;
+export type InsertPilotInvestor = typeof pilotInvestors.$inferInsert;
+export type PilotContribution = typeof pilotContributions.$inferSelect;
+export type InsertPilotContribution = typeof pilotContributions.$inferInsert;
+export type PilotCapitalCall = typeof pilotCapitalCalls.$inferSelect;
+export type InsertPilotCapitalCall = typeof pilotCapitalCalls.$inferInsert;
+export type PilotDistribution = typeof pilotDistributions.$inferSelect;
+export type InsertPilotDistribution = typeof pilotDistributions.$inferInsert;
+export type PilotInvestorDistribution = typeof pilotInvestorDistributions.$inferSelect;
+export type InsertPilotInvestorDistribution = typeof pilotInvestorDistributions.$inferInsert;
+export type PilotDocument = typeof pilotDocuments.$inferSelect;
+export type InsertPilotDocument = typeof pilotDocuments.$inferInsert;
+export type PilotAuditEntry = typeof pilotAuditTrail.$inferSelect;
+export type InsertPilotAuditEntry = typeof pilotAuditTrail.$inferInsert;
+export type PilotAssetMetric = typeof pilotAssetMetrics.$inferSelect;
+export type InsertPilotAssetMetric = typeof pilotAssetMetrics.$inferInsert;
+export type PilotReport = typeof pilotReports.$inferSelect;
+export type InsertPilotReport = typeof pilotReports.$inferInsert;
+export type PilotNotification = typeof pilotNotifications.$inferSelect;
+export type InsertPilotNotification = typeof pilotNotifications.$inferInsert;
+export type PilotBenchmark = typeof pilotBenchmarks.$inferSelect;
+export type InsertPilotBenchmark = typeof pilotBenchmarks.$inferInsert;
+export type PilotExpansionGateCheck = typeof pilotExpansionGate.$inferSelect;
+export type InsertPilotExpansionGateCheck = typeof pilotExpansionGate.$inferInsert;
 export type InsertOnchainRewardsSync = typeof onchainRewardsSync.$inferInsert;
