@@ -134,15 +134,16 @@ export function DesignLawHome() {
           <div className="border-b border-dl-border pb-10 mb-10">
             <p className="text-xs text-dl-gray uppercase tracking-widest mb-4 font-dl-mono">Axiom Protocol</p>
             <h1 className="font-dl-serif text-4xl md:text-5xl text-dl-navy leading-tight mb-4">
-              Coordination-First Economic Infrastructure
+              Community Ownership Infrastructure for Real Assets
             </h1>
             <h2 className="font-dl-serif text-xl md:text-2xl text-dl-gray mb-6">
-              Structure, Transparency, and Community-Led Participation
+              A $1M Capital Program Backing Real Property, On-Chain
             </h2>
             <p className="text-sm text-dl-gray max-w-3xl leading-relaxed mb-8">
-              Axiom Protocol is inspired by long-term group economics and disciplined resource stewardship.
-              We prioritize structure, transparency, and community-led participation over speculation and hype.
-              Built from real execution: a community farmland purchase, development work, and a founder-led infrastructure roadmap.
+              Axiom is building the economic infrastructure for community-led real asset ownership.
+              Our Capital Program deploys capital into two real properties through structured SPVs,
+              with transparent treasury allocation, institutional-grade reporting, and full audit trails.
+              No speculation. No hype. Just disciplined execution backed by land already acquired.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/pilot">
