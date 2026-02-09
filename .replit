@@ -49,6 +49,9 @@ build = ["npm", "run", "build"]
 [userenv.production]
 ADMIN_WALLETS = "0xa6ed10e752d5facd989ee9ced113b3a064b47493"
 PUBLIC_DOMAIN = "axiomprotocol.app"
+MIRDT_SCAN_KEY = "aS0hcvK9a0mTvKa9Vyb4G/T44+iM/DW10p3C+kFrYmQ="
 
 [userenv.shared]
+
+[userenv.development]
 MIRDT_SCAN_KEY = "mirdt-dev-scan-2026"
