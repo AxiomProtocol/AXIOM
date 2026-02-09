@@ -15,17 +15,31 @@ author = "agent"
 task = "workflow.run"
 args = "AXIOM Dev Server"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Build Test"
+
 [[workflows.workflow]]
 name = "AXIOM Dev Server"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Dev server paused for build test\""
+
+[[workflows.workflow]]
+name = "Build Test"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd /home/runner/workspace && NODE_ENV=production NODE_OPTIONS='--max-old-space-size=8192' npx next build 2>&1 && echo \"===BUILD_SUCCESS===\" && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public && echo \"===ASSETS_COPIED===\" || echo \"===BUILD_FAILED===\""
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [[ports]]
 localPort = 5000
