@@ -194,7 +194,7 @@ export default function DistributionsPage() {
   return (
     <>
       <Head>
-        <title>Axiom Economic Pilot — Income & Distributions</title>
+        <title>Axiom Capital Program — Income & Distributions</title>
       </Head>
 
       <div className="min-h-screen bg-white">

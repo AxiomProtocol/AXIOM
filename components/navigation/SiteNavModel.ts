@@ -44,7 +44,7 @@ export const SITE_NAV: NavItem[] = [
     ]
   },
   {
-    label: "Economic Pilot",
+    label: "Capital Program",
     children: [
       { label: "Overview", href: "/pilot" },
       { label: "Investors", href: "/pilot/investors" },

@@ -143,7 +143,7 @@ function buildEmailHtml(name: string, subject: string, body: string): string {
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1a1a1a;">
       <div style="border-bottom: 3px solid #0d9488; padding-bottom: 16px; margin-bottom: 24px;">
         <h1 style="font-size: 20px; font-weight: 700; color: #0d9488; margin: 0;">AXIOM</h1>
-        <p style="font-size: 12px; color: #6b7280; margin: 4px 0 0;">National Economic Pilot</p>
+        <p style="font-size: 12px; color: #6b7280; margin: 4px 0 0;">Axiom Capital Program</p>
       </div>
       <p style="font-size: 15px; color: #374151;">Dear ${name},</p>
       <h2 style="font-size: 18px; color: #111827; margin: 24px 0 12px;">${subject}</h2>
@@ -154,7 +154,7 @@ function buildEmailHtml(name: string, subject: string, body: string): string {
         </p>
       </div>
       <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
-        <p style="font-size: 12px; color: #9ca3af;">This is an automated notification from the Axiom National Economic Pilot. Do not reply to this email.</p>
+        <p style="font-size: 12px; color: #9ca3af;">This is an automated notification from the Axiom Capital Program. Do not reply to this email.</p>
       </div>
     </body>
     </html>

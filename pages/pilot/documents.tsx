@@ -184,7 +184,7 @@ export default function DocumentsPage() {
   return (
     <>
       <Head>
-        <title>Axiom Economic Pilot — Investor Data Room</title>
+        <title>Axiom Capital Program — Investor Data Room</title>
       </Head>
 
       <div className="min-h-screen bg-white">

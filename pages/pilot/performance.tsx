@@ -123,7 +123,7 @@ export default function PerformancePage() {
   return (
     <>
       <Head>
-        <title>Axiom Economic Pilot — Performance & Growth</title>
+        <title>Axiom Capital Program — Performance & Growth</title>
       </Head>
 
       <div className="min-h-screen bg-white">

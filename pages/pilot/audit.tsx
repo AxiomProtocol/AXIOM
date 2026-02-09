@@ -170,7 +170,7 @@ export default function AuditPage() {
   return (
     <>
       <Head>
-        <title>Axiom Economic Pilot — Compliance Audit Trail</title>
+        <title>Axiom Capital Program — Compliance Audit Trail</title>
       </Head>
 
       <div className="min-h-screen bg-white">

@@ -27,7 +27,7 @@ The project has been streamlined to 40 active pages (35 core + 5 observer subpag
 - `/faq` - FAQ
 - `/terms-and-conditions` - Terms
 
-### National Economic Pilot (8 pages)
+### Axiom Capital Program (8 pages)
 - `/pilot` - Dashboard
 - `/pilot/investors` - Investor Portal
 - `/pilot/distributions` - Distribution Engine
@@ -93,7 +93,7 @@ The architecture employs a "Product Factory Approach" for scalability. Arbitrum 
 - DEX V2 Ecosystem (10 mainnet contracts on Arbitrum One)
 - Institutional Observer Dashboard (Read-only transparency dashboard at `/observer`)
 - Lending Fund (SEC Reg D 506(c) compliant bridge loan fund)
-- National Economic Pilot ($1M dual-asset investment tracking system at `/pilot` with 8 subpages, 14 PostgreSQL tables, 17 API endpoints, NotificationService with Resend email integration. Two SPVs: Cash Flow Anchor ($600K multifamily) and Appreciation Asset ($350K commercial/industrial). 35/35/20/10 treasury allocation policy. Phase 2 expansion gate scoring. Uses raw SQL via pg.Pool for API routes.)
+- Axiom Capital Program ($1M dual-asset program at `/pilot` with 8 subpages, 14 PostgreSQL tables, 17 API endpoints, NotificationService with Resend email integration. Two SPVs: Cash Flow Anchor ($600K multifamily) and Appreciation Asset ($350K commercial/industrial). 35/35/20/10 treasury allocation policy. Phase 2 expansion gate scoring. Uses raw SQL via pg.Pool for API routes.)
 - Euler V2 AXUSD Lending Markets (External DeFi lending integration on Arbitrum One at vault 0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059. **LOCKED CONFIG** - DO NOT CHANGE vault address or LTV parameters.)
 - MIRDT - Market Intelligence & Risk Disclosure Terminal (Probabilistic trend-following analysis for crypto + US equities. 3 PostgreSQL tables: mirdt_setups, mirdt_paper_trades, mirdt_data_snapshots. 5 API endpoints. Data providers: CoinGecko (crypto, free) + Alpha Vantage (equities, API key). Signal engine: 20/50 MA crossover + ATR volatility filter. Paper-trade tracking with P&L calculation. Lexicon guard enforces institutional terminology. Model version: MIRDT-TF-v1.0.)
 - Deployment Configuration: Uses VM with standalone output. Build: `npm run build:deploy:clean` (8GB memory, ~144 routes). Run: `npm run start:minimal`. Build reduced from 460+ routes to ~144 by archiving unused API routes to `_archive/api/`.

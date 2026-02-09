@@ -307,7 +307,7 @@ export default function ReportsPage() {
   return (
     <>
       <Head>
-        <title>Axiom Economic Pilot — Financial Reports</title>
+        <title>Axiom Capital Program — Financial Reports</title>
       </Head>
 
       <div className="min-h-screen bg-white">

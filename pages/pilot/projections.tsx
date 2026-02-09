@@ -116,7 +116,7 @@ export default function ProjectionsPage() {
   return (
     <>
       <Head>
-        <title>Axiom Economic Pilot — Return Projections</title>
+        <title>Axiom Capital Program — Return Projections</title>
       </Head>
 
       <div className="min-h-screen bg-white">

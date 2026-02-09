@@ -14,10 +14,10 @@ const PLATFORM_STATS = [
 
 const PRODUCT_SECTIONS = [
   {
-    title: 'National Economic Pilot',
-    description: 'A $1M dual-asset investment tracking system with two SPVs, 35/35/20/10 treasury allocation policy, and institutional-grade reporting for 20-30 qualified participants.',
+    title: 'Axiom Capital Program',
+    description: 'A $1M dual-asset program with two SPVs, 35/35/20/10 treasury allocation policy, and institutional-grade reporting for 20-30 qualified participants.',
     href: '/pilot',
-    linkLabel: 'View Pilot Dashboard',
+    linkLabel: 'View Capital Program',
   },
   {
     title: 'Lending Fund',
@@ -48,7 +48,7 @@ const PRODUCT_SECTIONS = [
 const PARTICIPATION_STEPS = [
   { step: '1', title: 'Review', description: 'Read the transparency reports, audit trails, and risk disclosures to understand the protocol structure.' },
   { step: '2', title: 'Connect', description: 'Access the platform with your custody account on Arbitrum One to view live data and governance tools.' },
-  { step: '3', title: 'Participate', description: 'Engage with the Economic Pilot, Lending Fund, or DEX based on your qualification and intent.' },
+  { step: '3', title: 'Participate', description: 'Engage with the Capital Program, Lending Fund, or Exchange based on your qualification and intent.' },
 ];
 
 export function DesignLawHome() {
@@ -70,7 +70,7 @@ export function DesignLawHome() {
               AXIOM
             </Link>
             <div className="hidden md:flex items-center gap-6 text-sm text-dl-navy">
-              <Link href="/pilot" className="hover:underline">Economic Pilot</Link>
+              <Link href="/pilot" className="hover:underline">Capital Program</Link>
               <Link href="/lending-fund" className="hover:underline">Lending Fund</Link>
               <Link href="/dex" className="hover:underline">Exchange</Link>
               <Link href="/mirdt" className="hover:underline">Intelligence</Link>
@@ -98,7 +98,7 @@ export function DesignLawHome() {
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/pilot">
-                <SolidButton>View Economic Pilot</SolidButton>
+                <SolidButton>View Capital Program</SolidButton>
               </Link>
               <Link href="/how-it-works">
                 <SolidButton variant="secondary">How It Works</SolidButton>

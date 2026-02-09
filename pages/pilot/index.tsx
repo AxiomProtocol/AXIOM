@@ -211,20 +211,20 @@ export default function PilotDashboard() {
   return (
     <>
       <Head>
-        <title>Axiom Economic Pilot — Overview</title>
+        <title>Axiom Capital Program — Overview</title>
       </Head>
 
       <div className="min-h-screen bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Axiom Economic Pilot</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Axiom Capital Program</h1>
             <p className="text-gray-500 mt-1">Your real-time window into our $1M dual-asset investment program</p>
           </div>
 
           <PilotNav currentTab="dashboard" />
 
           <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100 rounded-xl p-5 mb-8">
-            <p className="text-sm text-teal-800 leading-relaxed">The Axiom Economic Pilot is a $1M dual-asset investment program designed to prove community-driven real estate investing at scale. Two carefully selected properties — a multifamily cash-flow asset and a commercial appreciation play — form the foundation of a model that can expand nationwide.</p>
+            <p className="text-sm text-teal-800 leading-relaxed">The Axiom Capital Program is a $1M dual-asset program designed to prove community-driven real estate participation at scale. Two carefully selected properties — a multifamily cash-flow asset and a commercial appreciation play — form the foundation of a model that can expand nationwide.</p>
           </div>
 
           {loading ? (
