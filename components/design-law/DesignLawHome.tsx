@@ -174,6 +174,81 @@ export function DesignLawHome() {
           </div>
 
           <div className="mb-12">
+            <SectionHeading>Capital Program Structure</SectionHeading>
+            <div className="border border-dl-border mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+                <div className="p-6 border-b md:border-b-0 md:border-r border-dl-border bg-dl-bg">
+                  <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">SPV-1</p>
+                  <h3 className="font-dl-serif text-lg text-dl-navy mb-1">Cash Flow Anchor</h3>
+                  <p className="text-sm text-dl-gray mb-4">Multifamily residential property generating recurring income through occupancy-driven cash flow.</p>
+                  <div className="grid grid-cols-2 gap-y-3 gap-x-6">
+                    <div>
+                      <p className="text-xs text-dl-gray">Acquisition Target</p>
+                      <p className="font-dl-mono text-sm text-dl-navy font-semibold">$600,000</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-dl-gray">Asset Class</p>
+                      <p className="font-dl-mono text-sm text-dl-navy font-semibold">Multifamily</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-dl-gray">Strategy</p>
+                      <p className="font-dl-mono text-sm text-dl-navy font-semibold">Cash Flow</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-dl-gray">Status</p>
+                      <p className="font-dl-mono text-sm text-dl-forest font-semibold">Formation</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-6 bg-dl-bg-alt">
+                  <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">SPV-2</p>
+                  <h3 className="font-dl-serif text-lg text-dl-navy mb-1">Appreciation Asset</h3>
+                  <p className="text-sm text-dl-gray mb-4">Commercial or industrial property positioned for long-term value growth through development and repositioning.</p>
+                  <div className="grid grid-cols-2 gap-y-3 gap-x-6">
+                    <div>
+                      <p className="text-xs text-dl-gray">Acquisition Target</p>
+                      <p className="font-dl-mono text-sm text-dl-navy font-semibold">$350,000</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-dl-gray">Asset Class</p>
+                      <p className="font-dl-mono text-sm text-dl-navy font-semibold">Commercial</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-dl-gray">Strategy</p>
+                      <p className="font-dl-mono text-sm text-dl-navy font-semibold">Appreciation</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-dl-gray">Status</p>
+                      <p className="font-dl-mono text-sm text-dl-forest font-semibold">Formation</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="border border-dl-border p-5 bg-dl-bg-alt mb-1">
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-3">Treasury Allocation Policy</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <p className="font-dl-mono text-xl text-dl-navy font-bold">35%</p>
+                  <p className="text-xs text-dl-gray mt-1">Property Equity</p>
+                </div>
+                <div>
+                  <p className="font-dl-mono text-xl text-dl-navy font-bold">35%</p>
+                  <p className="text-xs text-dl-gray mt-1">Debt Service</p>
+                </div>
+                <div>
+                  <p className="font-dl-mono text-xl text-dl-navy font-bold">20%</p>
+                  <p className="text-xs text-dl-gray mt-1">Operating Reserve</p>
+                </div>
+                <div>
+                  <p className="font-dl-mono text-xl text-dl-navy font-bold">10%</p>
+                  <p className="text-xs text-dl-gray mt-1">Protocol Development</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-12">
             <SectionHeading>Protocol Products</SectionHeading>
             <div className="border border-dl-border">
               {PRODUCT_SECTIONS.map((product, i) => (
@@ -247,6 +322,21 @@ export function DesignLawHome() {
                   {link.label}
                 </Link>
               ))}
+            </div>
+          </div>
+
+          <div className="mb-12">
+            <SectionHeading>Risk Disclosure</SectionHeading>
+            <div className="border border-dl-border p-6 bg-dl-bg-alt">
+              <p className="text-xs text-dl-gray leading-relaxed mb-3">
+                Axiom Protocol and its associated programs involve the acquisition, management, and disposition of real property and digital assets. All participation carries material risk, including but not limited to: total loss of capital, illiquidity of assets, regulatory changes, property depreciation, vacancy risk, and market volatility.
+              </p>
+              <p className="text-xs text-dl-gray leading-relaxed mb-3">
+                Past performance of any asset, strategy, or model does not guarantee future results. Projections and estimates are forward-looking statements subject to change. Nothing on this platform constitutes legal, financial, or tax advice.
+              </p>
+              <p className="text-xs text-dl-gray leading-relaxed">
+                Participation in the Capital Program is limited to qualified individuals under applicable exemptions. All participants should consult independent legal and financial advisors before committing capital.
+              </p>
             </div>
           </div>
 
