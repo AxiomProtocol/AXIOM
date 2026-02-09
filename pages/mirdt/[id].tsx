@@ -64,13 +64,13 @@ function formatPrice(value: string | number | null | undefined, assetType: strin
   if (value === null || value === undefined) return '—';
   const num = typeof value === 'string' ? parseFloat(value) : value;
   if (isNaN(num)) return '—';
-  const decimals = assetType === 'crypto' ? (num < 1 ? 8 : num < 100 ? 4 : 2) : 2;
+  const decimals = assetType === 'CRYPTO' ? (num < 1 ? 8 : num < 100 ? 4 : 2) : 2;
   return num.toFixed(decimals);
 }
 
 function formatAssetType(type: string): string {
-  if (type === 'crypto') return 'Digital Assets';
-  if (type === 'equity') return 'Equities';
+  if (type === 'CRYPTO') return 'Digital Assets';
+  if (type === 'EQUITY') return 'Equities';
   return type;
 }
 
@@ -179,7 +179,7 @@ export default function MIRDTDetail() {
     }
   }
 
-  const assetType = setup?.asset_type || 'crypto';
+  const assetType = setup?.asset_type || 'CRYPTO';
 
   const tradeColumns: Column<PaperTrade>[] = [
     {

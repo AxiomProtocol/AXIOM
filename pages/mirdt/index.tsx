@@ -60,13 +60,13 @@ function formatPrice(value: string | number | null | undefined, assetType: strin
   if (value === null || value === undefined) return '—';
   const num = typeof value === 'string' ? parseFloat(value) : value;
   if (isNaN(num)) return '—';
-  const decimals = assetType === 'crypto' ? (num < 1 ? 8 : num < 100 ? 4 : 2) : 2;
+  const decimals = assetType === 'CRYPTO' ? (num < 1 ? 8 : num < 100 ? 4 : 2) : 2;
   return num.toFixed(decimals);
 }
 
 function formatAssetType(type: string): string {
-  if (type === 'crypto') return 'Digital Assets';
-  if (type === 'equity') return 'Equities';
+  if (type === 'CRYPTO') return 'Digital Assets';
+  if (type === 'EQUITY') return 'Equities';
   return type;
 }
 
@@ -211,8 +211,8 @@ export default function MIRDTIndex() {
         <FormField label="Asset Class">
           <DLSelect value={assetType} onChange={(e) => setAssetType(e.target.value)}>
             <option value="">All</option>
-            <option value="crypto">Digital Assets</option>
-            <option value="equity">Equities</option>
+            <option value="CRYPTO">Digital Assets</option>
+            <option value="EQUITY">Equities</option>
           </DLSelect>
         </FormField>
         <div className="ml-auto">
