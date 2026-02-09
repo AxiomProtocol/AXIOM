@@ -50,6 +50,7 @@ function matchesRebuildNavPages(pathname) {
   if (pathname.startsWith('/observer/')) return true;
   if (pathname.startsWith('/pilot/')) return true;
   if (pathname.startsWith('/products/')) return true;
+  if (pathname.startsWith('/mirdt/')) return true;
   return false;
 }
 

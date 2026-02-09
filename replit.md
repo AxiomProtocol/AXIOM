@@ -146,3 +146,31 @@ All new pages must comply with the Design Law. Key rules:
 - **Required patterns:** Pagination (no infinite scroll), static values with timestamps (no live tickers), flat solid buttons, inline status (no toast notifications)
 - **Component test:** Must look like a legal document, function without animation, be explainable to a regulator, be printable for audits
 - **MIRDT pages are the reference implementation** for Design Law compliance
+
+### Design Law Implementation (components/design-law/)
+Reusable React component library enforcing the Design Law. All new compliant pages should import from `components/design-law`:
+
+- **PageShell** — Full-page wrapper with serif title, subtitle, timestamp, footer disclosure, `.design-law-root` class
+- **DataTable** — Generic typed table with alternating rows, border grid, column alignment, row click handler
+- **StatusBadge** — Semantic status text with color mapping (ACTIVE=forest, EXPIRED=gray, ERROR=red, etc.)
+- **PaginationControls** — Page navigation with "Showing X–Y of Z" counter
+- **DisclosureBlock** — Collapsible risk disclosure panel
+- **AuditHeader** — Grid of labeled audit metadata fields (ID, timestamp, model version, etc.)
+- **DetailGrid** — Two-column labeled detail layout for setup parameters
+- **SectionHeading** — Serif h2 with bottom border
+- **FormField / DLInput / DLTextarea / DLSelect** — Form primitives with Design Law styling
+- **SolidButton** — Flat solid button (primary/secondary/danger variants, sm/md sizes)
+
+### Design Law CSS (styles/globals.css)
+- `.design-law-root` class: forces white bg, disables all animations/transitions/shadows/gradients/border-radius
+- Print stylesheet: 10pt, black on white, header group repeat, no-print class support
+
+### Design Law Tailwind Tokens (tailwind.config.js)
+- Colors: `dl-navy`, `dl-forest`, `dl-gold`, `dl-gray`, `dl-bg`, `dl-bg-alt`, `dl-border`, `dl-error`
+- Fonts: `font-dl-serif` (Georgia stack), `font-dl-mono` (Courier New stack)
+
+### Lexicon Guard (lib/designLaw/lexiconGuard.ts)
+- Canonical location: `lib/designLaw/lexiconGuard.ts`
+- Re-exported from `lib/mirdt/lexiconGuard.ts` for backward compatibility
+- `checkLexicon(text)` returns violations; `isLexiconClean(text)` returns boolean
+- `APPROVED_REPLACEMENTS` maps prohibited terms to compliant alternatives
