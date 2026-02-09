@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
+import { DesignLawLayout, SectionHeading } from '../../components/design-law';
 import PilotNav from '../../components/pilot/PilotNav';
 
 interface SpvData {
@@ -72,94 +74,6 @@ function formatPercent(value: string | number | null | undefined): string {
   return num.toFixed(1) + '%';
 }
 
-function StatCard({ label, value, subtitle }: { label: string; value: string; subtitle?: string }) {
-  return (
-    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-      <p className="text-sm text-gray-500 mb-1">{label}</p>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-      {subtitle && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
-    </div>
-  );
-}
-
-function SpvCard({ spv }: { spv: SpvData }) {
-  const statusColors: Record<string, string> = {
-    active: 'bg-teal-100 text-teal-800',
-    pending: 'bg-amber-100 text-amber-800',
-    closed: 'bg-gray-100 text-gray-800',
-    under_contract: 'bg-blue-100 text-blue-800',
-    due_diligence: 'bg-purple-100 text-purple-800',
-  };
-
-  return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">{spv.name}</h3>
-        <div className="flex gap-2">
-          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-            {formatStatus(spv.assetType)}
-          </span>
-          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[spv.status] || 'bg-gray-100 text-gray-700'}`}>
-            {formatStatus(spv.status)}
-          </span>
-        </div>
-      </div>
-      {spv.label && <p className="text-sm text-gray-500 mb-4">{spv.label}</p>}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <div>
-          <p className="text-xs text-gray-400">Purchase Price</p>
-          <p className="text-sm font-semibold text-gray-900">{spv.targetPurchasePrice ? formatMoney(spv.targetPurchasePrice) : 'TBD'}</p>
-        </div>
-        <div>
-          <p className="text-xs text-gray-400">Equity Allocated</p>
-          <p className="text-sm font-semibold text-gray-900">{formatMoney(spv.equityAllocated)}</p>
-        </div>
-        <div>
-          <p className="text-xs text-gray-400">Debt</p>
-          <p className="text-sm font-semibold text-gray-900">{spv.debtAmount ? formatMoney(spv.debtAmount) : 'None'}</p>
-        </div>
-        <div>
-          <p className="text-xs text-gray-400">Current Valuation</p>
-          <p className="text-sm font-semibold text-gray-900">{spv.currentValuation ? formatMoney(spv.currentValuation) : 'Pending'}</p>
-        </div>
-        <div>
-          <p className="text-xs text-gray-400">Occupancy Rate</p>
-          <p className="text-sm font-semibold text-gray-900">{spv.occupancyRate ? formatPercent(spv.occupancyRate) : 'N/A'}</p>
-        </div>
-        <div>
-          <p className="text-xs text-gray-400">Target Yield</p>
-          <p className="text-sm font-semibold text-gray-900">{spv.targetYield ? formatPercent(spv.targetYield) : 'N/A'}</p>
-        </div>
-      </div>
-      <div className="mt-4 pt-3 border-t border-gray-100">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-400">Monthly Net Cash Flow</p>
-          <p className="text-sm font-bold text-teal-700">{spv.monthlyNetCashFlow ? formatMoney(spv.monthlyNetCashFlow) : 'N/A'}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TreasuryBar({ name, balance, percent }: { name: string; balance: string; percent: string }) {
-  const pct = parseFloat(percent) || 0;
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-sm text-gray-600 capitalize">{name.replace(/_/g, ' ')}</span>
-        <span className="text-sm font-medium text-gray-900">{formatMoney(balance)}</span>
-      </div>
-      <div className="w-full bg-gray-100 rounded-full h-2">
-        <div
-          className="bg-teal-500 h-2 rounded-full transition-all"
-          style={{ width: `${Math.min(pct, 100)}%` }}
-        />
-      </div>
-      <p className="text-xs text-gray-400 mt-0.5">{formatPercent(percent)} allocation</p>
-    </div>
-  );
-}
-
 export default function PilotDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
@@ -209,124 +123,162 @@ export default function PilotDashboard() {
   ) || 0;
 
   return (
-    <>
+    <DesignLawLayout>
       <Head>
         <title>Axiom Capital Program — Overview</title>
       </Head>
 
-      <div className="min-h-screen bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Axiom Capital Program</h1>
-            <p className="text-gray-500 mt-1">Your real-time window into our $1M dual-asset investment program</p>
-          </div>
-
-          <PilotNav currentTab="dashboard" />
-
-          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100 rounded-xl p-5 mb-8">
-            <p className="text-sm text-teal-800 leading-relaxed">The Axiom Capital Program is a $1M dual-asset program designed to prove community-driven real estate participation at scale. Two carefully selected properties — a multifamily cash-flow asset and a commercial appreciation play — form the foundation of a model that can expand nationwide.</p>
-          </div>
-
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
-              <span className="ml-3 text-gray-500">Loading dashboard...</span>
-            </div>
-          ) : error ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6">
-              <p className="text-red-800 font-medium">Error</p>
-              <p className="text-red-600 text-sm mt-1">{error}</p>
-            </div>
-          ) : data ? (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <StatCard
-                  label="Total Capital Raised"
-                  value={formatMoney(data.totalCapitalCommitted)}
-                  subtitle={`${data.investorCount} investor${data.investorCount !== 1 ? 's' : ''}`}
-                />
-                <StatCard
-                  label="Total Deployed"
-                  value={formatMoney(data.totalCapitalFunded)}
-                />
-                <StatCard
-                  label="Reserve Balance"
-                  value={formatMoney(totalReserveBalance)}
-                />
-                <StatCard
-                  label="Net Cash Flow (YTD)"
-                  value={formatMoney(totalNetCashFlow)}
-                  subtitle={`${data.distributionHistory.count} distribution${data.distributionHistory.count !== 1 ? 's' : ''} to date`}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                {data.spvs.length > 0 ? (
-                  data.spvs.map((spv) => <SpvCard key={spv.id} spv={spv} />)
-                ) : (
-                  <div className="col-span-2 bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
-                    <p className="text-gray-500">No SPVs configured yet</p>
-                  </div>
-                )}
-              </div>
-
-              {aggregatedBuckets && Object.keys(aggregatedBuckets).length > 0 && (
-                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-8">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Treasury Health</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {Object.entries(aggregatedBuckets).map(([name, bucket]) => (
-                      <TreasuryBar
-                        key={name}
-                        name={name}
-                        balance={bucket.balance.toFixed(2)}
-                        percent={bucket.percent.toFixed(1)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
-                {auditEntries.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead>
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actor</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {auditEntries.map((entry) => (
-                          <tr key={entry.id}>
-                            <td className="px-4 py-3 text-sm">
-                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                                {formatStatus(entry.action)}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-700">{entry.description || '-'}</td>
-                            <td className="px-4 py-3 text-sm text-gray-500">{entry.actor_role || entry.actor_id || '-'}</td>
-                            <td className="px-4 py-3 text-sm text-gray-700">{entry.amount ? formatMoney(entry.amount) : '-'}</td>
-                            <td className="px-4 py-3 text-sm text-gray-400">
-                              {entry.created_at ? new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="text-gray-400 text-sm text-center py-4">No recent activity</p>
-                )}
-              </div>
-            </>
-          ) : null}
-        </div>
+      <div className="mb-6">
+        <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Axiom Capital Program</h1>
+        <p className="text-sm text-dl-gray">$1M dual-asset program with institutional-grade reporting and full audit trails</p>
       </div>
-    </>
+
+      <PilotNav currentTab="dashboard" />
+
+      <div className="border border-dl-border bg-dl-bg-alt p-5 mb-8">
+        <p className="text-sm text-dl-gray leading-relaxed">The Axiom Capital Program is a $1M dual-asset program designed to prove community-driven real estate participation at scale. Two carefully selected properties — a multifamily cash-flow asset and a commercial appreciation play — form the foundation of a model that can expand nationwide.</p>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-20">
+          <p className="text-sm text-dl-gray font-dl-mono">Loading dashboard data...</p>
+        </div>
+      ) : error ? (
+        <div className="border border-dl-error bg-dl-bg p-6">
+          <p className="text-sm text-dl-error font-medium">Error</p>
+          <p className="text-sm text-dl-gray mt-1">{error}</p>
+        </div>
+      ) : data ? (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-8">
+            <div className="px-4 py-4 bg-dl-bg border-r border-b md:border-b-0 border-dl-border">
+              <p className="text-xs text-dl-gray mb-1">Total Capital Raised</p>
+              <p className="font-dl-mono text-lg font-semibold text-dl-navy">{formatMoney(data.totalCapitalCommitted)}</p>
+              <p className="text-xs text-dl-gray mt-1">{data.investorCount} participant{data.investorCount !== 1 ? 's' : ''}</p>
+            </div>
+            <div className="px-4 py-4 bg-dl-bg-alt border-r border-b md:border-b-0 border-dl-border">
+              <p className="text-xs text-dl-gray mb-1">Total Deployed</p>
+              <p className="font-dl-mono text-lg font-semibold text-dl-navy">{formatMoney(data.totalCapitalFunded)}</p>
+            </div>
+            <div className="px-4 py-4 bg-dl-bg border-r border-dl-border">
+              <p className="text-xs text-dl-gray mb-1">Reserve Balance</p>
+              <p className="font-dl-mono text-lg font-semibold text-dl-navy">{formatMoney(totalReserveBalance)}</p>
+            </div>
+            <div className="px-4 py-4 bg-dl-bg-alt">
+              <p className="text-xs text-dl-gray mb-1">Net Cash Flow (YTD)</p>
+              <p className="font-dl-mono text-lg font-semibold text-dl-navy">{formatMoney(totalNetCashFlow)}</p>
+              <p className="text-xs text-dl-gray mt-1">{data.distributionHistory.count} distribution{data.distributionHistory.count !== 1 ? 's' : ''} to date</p>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <SectionHeading>SPV Positions</SectionHeading>
+            {data.spvs.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
+                {data.spvs.map((spv, i) => (
+                  <div key={spv.id} className={`p-6 ${i === 0 ? 'border-b md:border-b-0 md:border-r border-dl-border bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="font-dl-serif text-base text-dl-navy font-medium">{spv.name}</h3>
+                        {spv.label && <p className="text-xs text-dl-gray mt-0.5">{spv.label}</p>}
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-xs font-dl-mono text-dl-gray">{formatStatus(spv.assetType)}</span>
+                        <span className="text-xs font-dl-mono text-dl-forest">{formatStatus(spv.status)}</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-4">
+                      <div>
+                        <p className="text-xs text-dl-gray">Purchase Price</p>
+                        <p className="font-dl-mono text-sm text-dl-navy font-semibold">{spv.targetPurchasePrice ? formatMoney(spv.targetPurchasePrice) : 'TBD'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-dl-gray">Equity Allocated</p>
+                        <p className="font-dl-mono text-sm text-dl-navy font-semibold">{formatMoney(spv.equityAllocated)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-dl-gray">Debt</p>
+                        <p className="font-dl-mono text-sm text-dl-navy font-semibold">{spv.debtAmount ? formatMoney(spv.debtAmount) : 'None'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-dl-gray">Current Valuation</p>
+                        <p className="font-dl-mono text-sm text-dl-navy font-semibold">{spv.currentValuation ? formatMoney(spv.currentValuation) : 'Pending'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-dl-gray">Occupancy Rate</p>
+                        <p className="font-dl-mono text-sm text-dl-navy font-semibold">{spv.occupancyRate ? formatPercent(spv.occupancyRate) : 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-dl-gray">Target Yield</p>
+                        <p className="font-dl-mono text-sm text-dl-navy font-semibold">{spv.targetYield ? formatPercent(spv.targetYield) : 'N/A'}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-dl-border flex items-center justify-between">
+                      <p className="text-xs text-dl-gray">Monthly Net Cash Flow</p>
+                      <p className="font-dl-mono text-sm text-dl-forest font-semibold">{spv.monthlyNetCashFlow ? formatMoney(spv.monthlyNetCashFlow) : 'N/A'}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="border border-dl-border p-8 text-center bg-dl-bg-alt">
+                <p className="text-sm text-dl-gray">No SPVs configured yet</p>
+              </div>
+            )}
+          </div>
+
+          {aggregatedBuckets && Object.keys(aggregatedBuckets).length > 0 && (
+            <div className="mb-8">
+              <SectionHeading>Treasury Health</SectionHeading>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border">
+                {Object.entries(aggregatedBuckets).map(([name, bucket], i) => (
+                  <div key={name} className={`px-4 py-4 ${i < Object.keys(aggregatedBuckets).length - 1 ? 'border-r border-b md:border-b-0 border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                    <p className="text-xs text-dl-gray capitalize mb-1">{name.replace(/_/g, ' ')}</p>
+                    <p className="font-dl-mono text-sm text-dl-navy font-semibold">{formatMoney(bucket.balance.toFixed(2))}</p>
+                    <p className="text-xs text-dl-gray mt-1">{formatPercent(bucket.percent.toFixed(1))} allocation</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mb-8">
+            <SectionHeading>Recent Activity</SectionHeading>
+            {auditEntries.length > 0 ? (
+              <div className="border border-dl-border overflow-x-auto">
+                <table className="min-w-full">
+                  <thead>
+                    <tr className="bg-dl-bg-alt">
+                      <th className="px-4 py-3 text-left text-xs font-dl-mono text-dl-gray uppercase">Action</th>
+                      <th className="px-4 py-3 text-left text-xs font-dl-mono text-dl-gray uppercase">Description</th>
+                      <th className="px-4 py-3 text-left text-xs font-dl-mono text-dl-gray uppercase">Actor</th>
+                      <th className="px-4 py-3 text-left text-xs font-dl-mono text-dl-gray uppercase">Amount</th>
+                      <th className="px-4 py-3 text-left text-xs font-dl-mono text-dl-gray uppercase">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditEntries.map((entry, i) => (
+                      <tr key={entry.id} className={i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}>
+                        <td className="px-4 py-3 text-xs font-dl-mono text-dl-navy">{formatStatus(entry.action)}</td>
+                        <td className="px-4 py-3 text-sm text-dl-gray">{entry.description || '—'}</td>
+                        <td className="px-4 py-3 text-xs text-dl-gray">{entry.actor_role || entry.actor_id || '—'}</td>
+                        <td className="px-4 py-3 text-sm font-dl-mono text-dl-navy">{entry.amount ? formatMoney(entry.amount) : '—'}</td>
+                        <td className="px-4 py-3 text-xs font-dl-mono text-dl-gray">
+                          {entry.created_at ? new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="border border-dl-border p-6 text-center bg-dl-bg-alt">
+                <p className="text-sm text-dl-gray">No recent activity</p>
+              </div>
+            )}
+          </div>
+        </>
+      ) : null}
+    </DesignLawLayout>
   );
 }

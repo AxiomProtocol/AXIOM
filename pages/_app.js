@@ -18,11 +18,13 @@ export const useOnboarding = () => useContext(OnboardingContext)
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID
 
-const DESIGN_LAW_PAGES = ['/', '/mirdt']
+const DESIGN_LAW_PAGES = ['/', '/mirdt', '/pilot', '/how-it-works', '/about-us', '/lending-fund']
 
 function isDesignLawPage(pathname) {
   if (DESIGN_LAW_PAGES.includes(pathname)) return true;
   if (pathname.startsWith('/mirdt/')) return true;
+  if (pathname.startsWith('/pilot/')) return true;
+  if (pathname.startsWith('/lending-fund/')) return true;
   return false;
 }
 
