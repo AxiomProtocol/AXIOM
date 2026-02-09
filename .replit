@@ -45,7 +45,7 @@ packages = ["jq"]
 
 [deployment]
 deploymentTarget = "vm"
-run = ["npm", "run", "start"]
+run = ["node", "server-production.js"]
 build = ["npm", "run", "build:replit"]
 
 [userenv]
