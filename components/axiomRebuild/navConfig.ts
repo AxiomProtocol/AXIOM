@@ -53,6 +53,13 @@ export const navItems: NavItem[] = [
     href: "/mirdt"
   },
   {
+    label: "Sentinel",
+    children: [
+      { label: "Dashboard", href: "/sentinel" },
+      { label: "Audit Trail", href: "/sentinel/audit" }
+    ]
+  },
+  {
     label: "Institutional",
     children: [
       { label: "Observer Dashboard", href: "/observer" },

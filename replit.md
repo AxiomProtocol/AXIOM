@@ -23,7 +23,41 @@ The frontend features a modular, responsive design with white backgrounds and te
 The core Axiom Protocol Token (AXM) is an ERC20 governance and fee-routing token on Arbitrum One, with a planned migration to Universe Blockchain (L3). The multi-phase Smart Contract Architecture on Arbitrum One covers identity, treasury, staking, emissions, and asset registries, supported by 23 verified smart contracts. The platform offers a Complete DeFi Treasury Suite with self-custody vaults, savings circles, staking, and investment pools, utilizing a HYBRID CUSTODY model.
 
 ### System Design Choices
-The architecture employs a "Product Factory Approach" for scalability. Arbitrum One is the current blockchain network, with a planned migration to Universe Blockchain (L3). Data management uses PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend includes centralized contract configuration, a dedicated contract service, and chain validation middleware. Key active features include the DEX V2 Ecosystem, an Institutional Observer Dashboard, a Lending Fund (SEC Reg D 506(c) compliant), the Axiom Capital Program, Euler V2 AXUSD Lending Markets, and the MIRDT (Market Intelligence & Risk Disclosure Terminal) for probabilistic trend-following analysis.
+The architecture employs a "Product Factory Approach" for scalability. Arbitrum One is the current blockchain network, with a planned migration to Universe Blockchain (L3). Data management uses PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend includes centralized contract configuration, a dedicated contract service, and chain validation middleware. Key active features include the DEX V2 Ecosystem, an Institutional Observer Dashboard, a Lending Fund (SEC Reg D 506(c) compliant), the Axiom Capital Program, Euler V2 AXUSD Lending Markets, the MIRDT (Market Intelligence & Risk Disclosure Terminal) for probabilistic trend-following analysis, and **Axiom Sentinel** — the unified capital decision and risk authorization layer.
+
+### Axiom Sentinel (NEW — Feb 2026)
+**"Strategy proposes. Sentinel decides. Execution obeys."**
+
+Sentinel is the unified capital decision and risk authorization layer across all Axiom products. It converts MIRDT market intelligence signals into authorized capital actions with cryptographic audit trails.
+
+**Architecture decisions:**
+- Control plane: In-app Next.js service (Decision 1: A)
+- Job scheduling: Manual API trigger, automate later (Decision 2: C)
+- Database: Drizzle + PostgreSQL, existing stack (Decision 3: A)
+- Onchain gating: Mixed — onchain for treasury/token, offchain for UI (Decision 4: C)
+- Audit: Append-only DB + hash chain, optional onchain anchoring (Decision 5: A)
+
+**Core engines** (`server/services/sentinel/`):
+- `RegimeEngine.ts` — Classifies market into TREND_UP, TREND_DOWN, RANGE_LOW_VOL, HIGH_VOL_DISLOCATION
+- `ConfidenceCalibrator.ts` — Platt scaling to convert raw confidence to calibrated probability
+- `ConfirmationEngine.ts` — Multi-factor confirmation (timeframe alignment, persistence, volume, risk/reward, liquidity)
+- `PortfolioEngine.ts` — Vol-targeting position sizing with exposure caps and correlation penalty
+- `AuthorizationService.ts` — Issues signed authorization decisions with hash chain
+- `AuditLogger.ts` — Append-only audit log with SHA-256 hash chain for integrity verification
+
+**Database tables:** sentinel_signals, sentinel_decisions, sentinel_trades, sentinel_calibration_runs, sentinel_regime_snapshots, sentinel_audit_log
+
+**API routes** (`pages/api/sentinel/`):
+- GET: health, overview, signals, decisions, regimes, audit
+- POST: run-signals, qualify, allocate, authorize (require x-scan-key auth)
+
+**Dashboard pages:**
+- `/sentinel` — Main dashboard (regime, stance, signals, decisions)
+- `/sentinel/audit` — Audit trail with hash chain verification
+
+**Signal pipeline:** MIRDT setups → run-signals → qualify → allocate → authorize
+
+**Future phases:** PermissionManager.sol onchain contract, EIP-712 signed decisions, automated scheduling
 
 ### Deployment SOP (Standard Operating Procedure)
 **Last successful deployment: Feb 9, 2026 (commit e6834e30)**

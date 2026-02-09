@@ -8672,3 +8672,127 @@ export type MirdtPaperTrade = typeof mirdtPaperTrades.$inferSelect;
 export type InsertMirdtPaperTrade = typeof mirdtPaperTrades.$inferInsert;
 export type MirdtDataSnapshot = typeof mirdtDataSnapshots.$inferSelect;
 export type InsertMirdtDataSnapshot = typeof mirdtDataSnapshots.$inferInsert;
+
+export const sentinelRegimeEnum = pgEnum('sentinel_regime', ['TREND_UP', 'TREND_DOWN', 'RANGE_LOW_VOL', 'HIGH_VOL_DISLOCATION']);
+export const sentinelDecisionEnum = pgEnum('sentinel_decision', ['APPROVED', 'DENIED']);
+export const sentinelActionTypeEnum = pgEnum('sentinel_action_type', ['TREASURY_DEPLOY', 'LEND_ISSUE', 'MINT', 'BURN', 'PARAMETER_CHANGE', 'SWAP', 'LP_ACTION', 'BRIDGE']);
+export const sentinelSignalDirectionEnum = pgEnum('sentinel_signal_direction', ['LONG', 'SHORT', 'NEUTRAL']);
+
+export const sentinelSignals = pgTable("sentinel_signals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  symbol: varchar("symbol", { length: 20 }).notNull(),
+  assetType: varchar("asset_type", { length: 20 }).notNull(),
+  timeframe: varchar("timeframe", { length: 10 }).notNull(),
+  horizonDays: integer("horizon_days").notNull(),
+  direction: sentinelSignalDirectionEnum("direction").notNull(),
+  entryZoneLow: decimal("entry_zone_low", { precision: 24, scale: 8 }).notNull(),
+  entryZoneHigh: decimal("entry_zone_high", { precision: 24, scale: 8 }).notNull(),
+  entryMid: decimal("entry_mid", { precision: 24, scale: 8 }).notNull(),
+  invalidationLevel: decimal("invalidation_level", { precision: 24, scale: 8 }).notNull(),
+  pRaw: decimal("p_raw", { precision: 8, scale: 4 }).notNull(),
+  pCalibrated: decimal("p_calibrated", { precision: 8, scale: 4 }),
+  regimeState: sentinelRegimeEnum("regime_state").notNull(),
+  confirmationScore: decimal("confirmation_score", { precision: 8, scale: 4 }),
+  finalScore: decimal("final_score", { precision: 8, scale: 4 }),
+  volEstimate: decimal("vol_estimate", { precision: 8, scale: 4 }).notNull(),
+  liquidityScore: decimal("liquidity_score", { precision: 8, scale: 4 }),
+  modelVersion: varchar("model_version", { length: 32 }).notNull(),
+  dataSnapshotRef: varchar("data_snapshot_ref", { length: 64 }),
+  sourceSetupId: varchar("source_setup_id"),
+  rationaleJson: jsonb("rationale_json"),
+  qualified: boolean("qualified").default(false),
+  qualifiedAt: timestamp("qualified_at"),
+});
+
+export const sentinelRegimeSnapshots = pgTable("sentinel_regime_snapshots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  regime: sentinelRegimeEnum("regime").notNull(),
+  confidence: decimal("confidence", { precision: 8, scale: 4 }).notNull(),
+  sma20Slope: decimal("sma20_slope", { precision: 12, scale: 6 }),
+  sma50Slope: decimal("sma50_slope", { precision: 12, scale: 6 }),
+  volatility20d: decimal("volatility_20d", { precision: 8, scale: 4 }),
+  volatilityRatio: decimal("volatility_ratio", { precision: 8, scale: 4 }),
+  breadthScore: decimal("breadth_score", { precision: 8, scale: 4 }),
+  notes: text("notes"),
+  snapshotJson: jsonb("snapshot_json"),
+});
+
+export const sentinelDecisions = pgTable("sentinel_decisions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  scope: varchar("scope", { length: 64 }).notNull(),
+  actionType: sentinelActionTypeEnum("action_type").notNull(),
+  subject: varchar("subject", { length: 128 }).notNull(),
+  maxNotional: decimal("max_notional", { precision: 24, scale: 8 }).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  decision: sentinelDecisionEnum("decision").notNull(),
+  reasonCode: varchar("reason_code", { length: 64 }).notNull(),
+  plainLanguage: text("plain_language").notNull(),
+  signalId: varchar("signal_id"),
+  logHash: varchar("log_hash", { length: 128 }).notNull(),
+  prevHash: varchar("prev_hash", { length: 128 }).notNull(),
+  signature: text("signature"),
+  nonce: integer("nonce").notNull(),
+  consumed: boolean("consumed").default(false),
+  consumedAt: timestamp("consumed_at"),
+  consumedTxHash: varchar("consumed_tx_hash", { length: 128 }),
+});
+
+export const sentinelTrades = pgTable("sentinel_trades", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  signalId: varchar("signal_id").notNull(),
+  decisionId: varchar("decision_id"),
+  symbol: varchar("symbol", { length: 20 }).notNull(),
+  direction: sentinelSignalDirectionEnum("direction").notNull(),
+  entryPrice: decimal("entry_price", { precision: 24, scale: 8 }).notNull(),
+  quantity: decimal("quantity", { precision: 24, scale: 8 }).notNull(),
+  targetPrice: decimal("target_price", { precision: 24, scale: 8 }),
+  stopPrice: decimal("stop_price", { precision: 24, scale: 8 }),
+  exitPrice: decimal("exit_price", { precision: 24, scale: 8 }),
+  exitAt: timestamp("exit_at"),
+  pnl: decimal("pnl", { precision: 24, scale: 8 }),
+  pnlPct: decimal("pnl_pct", { precision: 8, scale: 4 }),
+  status: varchar("status", { length: 20 }).notNull().default('OPEN'),
+  notes: text("notes"),
+});
+
+export const sentinelCalibrationRuns = pgTable("sentinel_calibration_runs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  modelVersion: varchar("model_version", { length: 32 }).notNull(),
+  totalSignals: integer("total_signals").notNull(),
+  calibrationMethod: varchar("calibration_method", { length: 32 }).notNull(),
+  brierScore: decimal("brier_score", { precision: 8, scale: 6 }),
+  ece: decimal("ece", { precision: 8, scale: 6 }),
+  reliabilityJson: jsonb("reliability_json"),
+  regimeSplitJson: jsonb("regime_split_json"),
+  notes: text("notes"),
+});
+
+export const sentinelAuditLog = pgTable("sentinel_audit_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  actor: varchar("actor", { length: 64 }).notNull(),
+  action: varchar("action", { length: 64 }).notNull(),
+  resourceType: varchar("resource_type", { length: 64 }).notNull(),
+  resourceId: varchar("resource_id", { length: 128 }),
+  payloadJson: jsonb("payload_json").notNull(),
+  prevHash: varchar("prev_hash", { length: 128 }).notNull(),
+  rowHash: varchar("row_hash", { length: 128 }).notNull(),
+});
+
+export type SentinelSignal = typeof sentinelSignals.$inferSelect;
+export type InsertSentinelSignal = typeof sentinelSignals.$inferInsert;
+export type SentinelRegimeSnapshot = typeof sentinelRegimeSnapshots.$inferSelect;
+export type InsertSentinelRegimeSnapshot = typeof sentinelRegimeSnapshots.$inferInsert;
+export type SentinelDecision = typeof sentinelDecisions.$inferSelect;
+export type InsertSentinelDecision = typeof sentinelDecisions.$inferInsert;
+export type SentinelTrade = typeof sentinelTrades.$inferSelect;
+export type InsertSentinelTrade = typeof sentinelTrades.$inferInsert;
+export type SentinelCalibrationRun = typeof sentinelCalibrationRuns.$inferSelect;
+export type InsertSentinelCalibrationRun = typeof sentinelCalibrationRuns.$inferInsert;
+export type SentinelAuditLog = typeof sentinelAuditLog.$inferSelect;
+export type InsertSentinelAuditLog = typeof sentinelAuditLog.$inferInsert;
