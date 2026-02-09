@@ -1,0 +1,168 @@
+=== Dev Server Log ===
+<workflow>
+<workflow_name>AXIOM Dev Server</workflow_name>
+<status>RUNNING</status><run_id>FvmTJMAovwk7BWteAwW9B</run_id><timestamp>2026-02-09T03:57:22.626746+00:00</timestamp>
+<logs>> workspace@1.0.0 dev
+> next dev -p 5000
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:5000
+ ✓ Starting...
+ ✓ Ready in 2.4s
+ ○ Compiling / ...
+ ✓ Compiled / in 774ms (755 modules)
+ GET / 200 in 23ms</logs>
+</workflow>
+
+
+=== Build Output ===
+
+> workspace@1.0.0 build:replit
+> NODE_ENV=production NODE_OPTIONS='--max-old-space-size=4096' next build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public
+
+  ▲ Next.js 14.2.35
+
+   Skipping validation of types
+   Skipping linting
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Collecting page data ...
+   Generating static pages (0/40) ...
+   Generating static pages (10/40) 
+   Generating static pages (20/40) 
+   Generating static pages (30/40) 
+ ✓ Generating static pages (40/40)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (pages)                             Size     First Load JS
+┌ ○ /                                     5.96 kB        92.6 kB
+├   /_app                                 0 B            86.7 kB
+├ ○ /404                                  542 B          91.7 kB
+├ ○ /about-us                             2.35 kB        93.5 kB
+├ ƒ /api/auth/siwe/logout                 0 B            86.7 kB
+├ ƒ /api/auth/siwe/nonce                  0 B            86.7 kB
+├ ƒ /api/auth/siwe/session                0 B            86.7 kB
+├ ƒ /api/auth/siwe/verify                 0 B            86.7 kB
+├ ƒ /api/axusd/alerts                     0 B            86.7 kB
+├ ƒ /api/axusd/bridge                     0 B            86.7 kB
+├ ƒ /api/axusd/history                    0 B            86.7 kB
+├ ƒ /api/axusd/incentives                 0 B            86.7 kB
+├ ƒ /api/axusd/liquidity                  0 B            86.7 kB
+├ ƒ /api/axusd/lp-analytics               0 B            86.7 kB
+├ ƒ /api/axusd/peg-status                 0 B            86.7 kB
+├ ƒ /api/axusd/pools                      0 B            86.7 kB
+├ ƒ /api/axusd/psm                        0 B            86.7 kB
+├ ƒ /api/axusd/supply                     0 B            86.7 kB
+├ ƒ /api/axusd/treasury-health            0 B            86.7 kB
+├ ƒ /api/contact                          0 B            86.7 kB
+├ ƒ /api/early-access                     0 B            86.7 kB
+├ ƒ /api/euler/vault-stats                0 B            86.7 kB
+├ ƒ /api/health                           0 B            86.7 kB
+├ ƒ /api/hello                            0 B            86.7 kB
+├ ƒ /api/impact/metrics                   0 B            86.7 kB
+├ ƒ /api/mirdt/[id]                       0 B            86.7 kB
+├ ƒ /api/mirdt/mark-expired               0 B            86.7 kB
+├ ƒ /api/mirdt/paper-trades               0 B            86.7 kB
+├ ƒ /api/mirdt/run-scan                   0 B            86.7 kB
+├ ƒ /api/mirdt/setups                     0 B            86.7 kB
+├ ƒ /api/observer/assets                  0 B            86.7 kB
+├ ƒ /api/observer/capital-bridge          0 B            86.7 kB
+├ ƒ /api/observer/export                  0 B            86.7 kB
+├ ƒ /api/observer/governance              0 B            86.7 kB
+├ ƒ /api/observer/lock-readiness          0 B            86.7 kB
+├ ƒ /api/observer/node-economy            0 B            86.7 kB
+├ ƒ /api/observer/nodes/[id]              0 B            86.7 kB
+├ ƒ /api/observer/overview                0 B            86.7 kB
+├ ƒ /api/observer/reports                 0 B            86.7 kB
+├ ƒ /api/observer/risk                    0 B            86.7 kB
+├ ƒ /api/observer/treasury                0 B            86.7 kB
+├ ƒ /api/pilot                            0 B            86.7 kB
+├ ƒ /api/pilot/audit                      0 B            86.7 kB
+├ ƒ /api/pilot/benchmarks                 0 B            86.7 kB
+├ ƒ /api/pilot/capital-calls              0 B            86.7 kB
+├ ƒ /api/pilot/capital-calls/[id]         0 B            86.7 kB
+├ ƒ /api/pilot/distributions              0 B            86.7 kB
+├ ƒ /api/pilot/distributions/[id]         0 B            86.7 kB
+├ ƒ /api/pilot/documents                  0 B            86.7 kB
+├ ƒ /api/pilot/expansion-gate             0 B            86.7 kB
+├ ƒ /api/pilot/investors                  0 B            86.7 kB
+├ ƒ /api/pilot/investors/[id]             0 B            86.7 kB
+├ ƒ /api/pilot/notifications              0 B            86.7 kB
+├ ƒ /api/pilot/projections                0 B            86.7 kB
+├ ƒ /api/pilot/reports                    0 B            86.7 kB
+├ ƒ /api/pilot/spvs                       0 B            86.7 kB
+├ ƒ /api/realestate/documents/[filename]  0 B            86.7 kB
+├ ƒ /api/realestate/fund-stats            0 B            86.7 kB
+├ ƒ /api/realestate/loan-application      0 B            86.7 kB
+├ ƒ /api/realestate/risk-params           0 B            86.7 kB
+├ ƒ /api/roadmap                          0 B            86.7 kB
+├ ƒ /api/sms-subscribe                    0 B            86.7 kB
+├ ƒ /api/transparency/treasury            0 B            86.7 kB
+├ ○ /axusd                                20.2 kB         141 kB
+├ ○ /borrow                               2.33 kB        93.5 kB
+├ ○ /buy-axm                              2.98 kB        94.2 kB
+├ ○ /community                            1.75 kB        92.9 kB
+├ ○ /dashboard                            1.95 kB        93.1 kB
+├ ○ /dex                                  11 kB           203 kB
+├ ○ /earn                                 2.14 kB          95 kB
+├ ○ /faq                                  3.25 kB        94.4 kB
+├ ○ /how-it-works                         2.17 kB        93.4 kB
+├ ○ /impact                               1.42 kB        92.6 kB
+├ ○ /institutional                        6.53 kB        97.7 kB
+├ ○ /join                                 6.68 kB        97.9 kB
+├ ○ /lending-fund                         2.42 kB        93.6 kB
+├ ○ /lending-fund/apply                   3.46 kB        94.7 kB
+├ ○ /lending-fund/invest                  6.65 kB         197 kB
+├ ○ /mirdt                                2.13 kB        93.3 kB
+├ ○ /mirdt/[id]                           2.89 kB        94.1 kB
+├ ○ /observer                             4.18 kB        95.4 kB
+├ ○ /observer/assets                      2.39 kB        93.6 kB
+├ ○ /observer/capital-bridge              1.94 kB        93.1 kB
+├ ○ /observer/controls                    2.5 kB         93.7 kB
+├ ○ /observer/governance                  2.5 kB         93.7 kB
+├ ○ /observer/node-economy                2.45 kB        93.6 kB
+├ ○ /observer/reports                     2.44 kB        93.6 kB
+├ ○ /observer/risk                        2.31 kB        93.5 kB
+├ ○ /observer/treasury                    2.1 kB         93.3 kB
+├ ○ /pilot                                3.65 kB        94.8 kB
+├ ○ /pilot/audit                          4.06 kB        95.3 kB
+├ ○ /pilot/distributions                  4.52 kB        95.7 kB
+├ ○ /pilot/documents                      4.04 kB        95.2 kB
+├ ○ /pilot/investors                      4.3 kB         95.5 kB
+├ ○ /pilot/performance                    3.73 kB        94.9 kB
+├ ○ /pilot/projections                    3.83 kB          95 kB
+├ ○ /pilot/reports                        4.62 kB        95.8 kB
+├ ○ /products                             2.79 kB          94 kB
+├ ○ /roadmap                              2.54 kB        93.7 kB
+├ ƒ /team                                 1.89 kB        93.1 kB
+├ ƒ /terms-and-conditions                 2.02 kB        93.2 kB
+└ ○ /transparency                         3.25 kB        94.4 kB
++ First Load JS shared by all             98.6 kB
+  ├ chunks/framework-945b357d4a851f4b.js  44.9 kB
+  ├ chunks/main-f4356971d9eccb4d.js       34.1 kB
+  ├ css/bafcaa2168cf76df.css              11.9 kB
+  └ other shared chunks (total)           7.72 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+
+=== Browser Console ===
+<browser_console_logs>
+Method -log:
+1770604432041.0 - ["🔍 Auto-SIWE check:",{"mounted":false,"isConnected":false,"address":null,"isAuthenticated":false,"isAuthenticating":false,"authError":null}]
+1770604432041.0 - ["🔍 Auto-SIWE check:",{"mounted":true,"isConnected":false,"address":null,"isAuthenticated":false,"isAuthenticating":false,"authError":null}]
+1770604434634.0 - ["[HMR] connected"]
+1770604463345.0 - ["✅ MetaMask SDK initialized"]
+1770604463345.0 - ["🔍 Checking for existing wallet connection..."]
+1770604463345.0 - ["ℹ️ No wallet connection available (SDK not authorized)"]
+1770604474678.0 - ["[Fast Refresh] rebuilding"]
+1770604494578.0 - ["[Fast Refresh] rebuilding"]
+1770604503847.0 - ["[Fast Refresh] rebuilding"]
+1770604520877.0 - ["[Fast Refresh] rebuilding"]
+
+Method -error:
+1770604511802.0 - ["Error checking connection:",{}]
+<timestamp>2026-02-09T02:59:02.724177+00:00</timestamp>
+</browser_console_logs>
