@@ -3,8 +3,6 @@ const webpack = require('webpack');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
-
   eslint: {
     ignoreDuringBuilds: true,
   },
