@@ -12,6 +12,8 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
+  serverExternalPackages: ['ws', '@neondatabase/serverless'],
+
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
