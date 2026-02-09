@@ -23,7 +23,52 @@ The frontend features a modular, responsive design with white backgrounds and te
 The core Axiom Protocol Token (AXM) is an ERC20 governance and fee-routing token on Arbitrum One, with a planned migration to Universe Blockchain (L3). The multi-phase Smart Contract Architecture on Arbitrum One covers identity, treasury, staking, emissions, and asset registries, supported by 23 verified smart contracts. The platform offers a Complete DeFi Treasury Suite with self-custody vaults, savings circles, staking, and investment pools, utilizing a HYBRID CUSTODY model.
 
 ### System Design Choices
-The architecture employs a "Product Factory Approach" for scalability. Arbitrum One is the current blockchain network, with a planned migration to Universe Blockchain (L3). Data management uses PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend includes centralized contract configuration, a dedicated contract service, and chain validation middleware. Key active features include the DEX V2 Ecosystem, an Institutional Observer Dashboard, a Lending Fund (SEC Reg D 506(c) compliant), the Axiom Capital Program, Euler V2 AXUSD Lending Markets, and the MIRDT (Market Intelligence & Risk Disclosure Terminal) for probabilistic trend-following analysis. The deployment configuration uses a VM with standalone output, optimized for minimal build and fast startup.
+The architecture employs a "Product Factory Approach" for scalability. Arbitrum One is the current blockchain network, with a planned migration to Universe Blockchain (L3). Data management uses PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend includes centralized contract configuration, a dedicated contract service, and chain validation middleware. Key active features include the DEX V2 Ecosystem, an Institutional Observer Dashboard, a Lending Fund (SEC Reg D 506(c) compliant), the Axiom Capital Program, Euler V2 AXUSD Lending Markets, and the MIRDT (Market Intelligence & Risk Disclosure Terminal) for probabilistic trend-following analysis.
+
+### Deployment SOP (Standard Operating Procedure)
+**Last successful deployment: Feb 9, 2026 (commit e6834e30)**
+
+DO NOT deviate from this configuration. It is the only proven working deployment setup.
+
+**Deployment target:** `autoscale`
+- NOT `vm` — autoscale is what works for this project
+
+**next.config.js must include:**
+```js
+output: 'standalone',
+```
+
+**package.json scripts (exact):**
+```json
+"build": "NODE_ENV=production NODE_OPTIONS='--max-old-space-size=8192' next build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public",
+"start": "HOSTNAME=0.0.0.0 PORT=5000 node .next/standalone/server.js",
+```
+
+**.replit deployment section (exact):**
+```toml
+[deployment]
+deploymentTarget = "autoscale"
+run = ["npm", "run", "start"]
+build = ["npm", "run", "build"]
+```
+
+**Port configuration:**
+- Next.js standalone listens on `0.0.0.0:5000`
+- `.replit` maps internal port 5000 → external port 80
+- Port 3000 mapping exists but is unused (do not remove, does not affect deployment)
+
+**Health check endpoints:**
+- `/api/health` — lightweight Pages Router endpoint at `pages/api/health.js`, returns `"ok"` HTTP 200
+- `/healthz` — Pages Router page at `pages/healthz.js` with `getStaticProps`
+- Home page (`/`) uses `getStaticProps` with dynamic import for fast loading
+
+**Critical rules:**
+1. NEVER change `deploymentTarget` from `autoscale` to `vm`
+2. NEVER remove `output: 'standalone'` from next.config.js
+3. NEVER change the `start` script away from `node .next/standalone/server.js`
+4. The build script MUST copy `.next/static` and `public` into the standalone directory
+5. HOSTNAME must be `0.0.0.0` and PORT must be `5000` in the start command
+6. `server-production.js` exists but is NOT used — the standalone server.js is the production entry point
 
 ## External Dependencies
 - **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
