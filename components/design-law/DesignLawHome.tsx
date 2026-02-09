@@ -56,6 +56,7 @@ const NAV_LINKS = [
   { href: '/lending-fund', label: 'Lending Fund' },
   { href: '/dex', label: 'Exchange' },
   { href: '/mirdt', label: 'Intelligence' },
+  { href: '/sentinel', label: 'Sentinel' },
   { href: '/observer', label: 'Observer' },
   { href: '/products', label: 'Products' },
   { href: '/about-us', label: 'About' },
