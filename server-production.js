@@ -8,13 +8,19 @@ const internalPort = port + 1;
 
 let appReady = false;
 
+const HEALTH_PATHS = new Set(['/api/health', '/api/healthz', '/healthz', '/_health', '/health']);
+
 console.log(`[Production] Starting with health check on port ${port}...`);
 
 const proxy = createServer((req, res) => {
   const url = (req.url || '').split('?')[0];
-  if (url === '/api/health' || url === '/_health' || url === '/health') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', ready: appReady, timestamp: Date.now() }));
+
+  if (HEALTH_PATHS.has(url)) {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+    });
+    res.end('ok');
     return;
   }
 

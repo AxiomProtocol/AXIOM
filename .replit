@@ -24,7 +24,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd /home/runner/workspace && npm run dev"
+args = "cd /home/runner/workspace && HOSTNAME=0.0.0.0 npm run dev"
 waitForPort = 5000
 
 [[ports]]
@@ -35,17 +35,13 @@ externalPort = 3000
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 5001
-externalPort = 3001
-
 [nix]
 channel = "stable-25_05"
 packages = ["jq"]
 
 [deployment]
 deploymentTarget = "vm"
-run = ["npm", "run", "start:minimal"]
+run = ["npm", "run", "start"]
 build = ["npm", "run", "build:replit"]
 
 [userenv]
