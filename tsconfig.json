@@ -22,18 +22,25 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
-    }
+      "@/*": [
+        "./*"
+      ]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
     "next-env.d.ts",
     "pages/**/*.ts",
-    "pages/**/*.tsx", 
+    "pages/**/*.tsx",
     "pages/**/*.js",
     "pages/**/*.jsx",
     "components/**/*.ts",
     "components/**/*.tsx",
-    "components/**/*.js", 
+    "components/**/*.js",
     "components/**/*.jsx",
     "utils/**/*.ts",
     "utils/**/*.tsx",
