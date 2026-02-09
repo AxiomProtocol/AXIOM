@@ -285,8 +285,7 @@ export default function InvestPage() {
 
               <div className="space-y-4 mb-6">
                 <Link
-                  href="/lending-fund/docs"
-                  target="_blank"
+                  href="/lending-fund"
                   className="block p-4 bg-dl-bg border border-dl-border"
                 >
                   <div className="flex items-center justify-between">
@@ -299,8 +298,7 @@ export default function InvestPage() {
                 </Link>
 
                 <Link
-                  href="/api/realestate/documents/Risk_Disclosure_Supplement.md?view=true"
-                  target="_blank"
+                  href="/lending-fund"
                   className="block p-4 bg-dl-bg border border-dl-border"
                 >
                   <div className="flex items-center justify-between">
@@ -364,8 +362,7 @@ export default function InvestPage() {
               </div>
 
               <Link
-                href="/api/realestate/documents/Accredited_Investor_Questionnaire.md?view=true"
-                target="_blank"
+                href="/lending-fund"
                 className="block p-4 bg-dl-bg border border-dl-border mb-6"
               >
                 <div className="flex items-center justify-between">

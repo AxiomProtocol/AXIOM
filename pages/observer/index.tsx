@@ -139,7 +139,7 @@ function LockReadinessBadge({ data }: LockReadinessBadgeProps) {
           <span className="text-dl-gray">|</span>
           <span>{data.daysRemaining} days until latest review</span>
         </div>
-        <Link href="/docs/governance-hardening.md" className="text-dl-navy flex items-center">
+        <Link href="/observer/governance" className="text-dl-navy flex items-center">
           View Full Checklist
           <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -272,7 +272,7 @@ export default function ObserverOverview() {
                   <h2 className="font-dl-serif text-lg text-dl-navy">Node Operator Network</h2>
                   <p className="text-sm text-dl-gray">Settlement operators and attestors</p>
                 </div>
-                <Link href="/operator" className="text-sm text-dl-navy flex items-center">
+                <Link href="/observer/node-economy" className="text-sm text-dl-navy flex items-center">
                   View Portal
                   <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

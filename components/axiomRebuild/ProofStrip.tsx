@@ -288,8 +288,8 @@ export function ProofStrip({ page = 'home' }: ProofStripProps) {
         
         <div className="proof-cta-container" style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
           <Link
-            href="/origin"
-            onClick={() => handleCtaClick("See Our Origin Story", "/origin")}
+            href="/about-us"
+            onClick={() => handleCtaClick("See Our Origin Story", "/about-us")}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -310,8 +310,8 @@ export function ProofStrip({ page = 'home' }: ProofStripProps) {
             🏛️ Origin Story
           </Link>
           <Link
-            href="/keygrow"
-            onClick={() => handleCtaClick("Explore KeyGrow", "/keygrow")}
+            href="/products"
+            onClick={() => handleCtaClick("Explore KeyGrow", "/products")}
             style={{
               display: "inline-flex",
               alignItems: "center",

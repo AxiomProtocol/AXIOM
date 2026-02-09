@@ -21,17 +21,17 @@ export default function MobileBottomNav() {
           <span className="text-xl">🏠</span>
           <span className="text-xs font-medium mt-1">Fund</span>
         </Link>
-        <Link href="/lending-fund/onboarding" className="flex flex-col items-center p-2 min-w-[64px] min-h-[48px] touch-manipulation active:opacity-70" style={{ color: getColor('/lending-fund/onboarding') }}>
+        <Link href="/lending-fund/invest" className="flex flex-col items-center p-2 min-w-[64px] min-h-[48px] touch-manipulation active:opacity-70" style={{ color: getColor('/lending-fund/invest') }}>
           <span className="text-xl">💵</span>
           <span className="text-xs font-medium mt-1">Invest</span>
         </Link>
-        <Link href="/lending-fund/dashboard" className="flex flex-col items-center p-2 min-w-[64px] min-h-[48px] touch-manipulation active:opacity-70" style={{ color: getColor('/lending-fund/dashboard') }}>
+        <Link href="/lending-fund/apply" className="flex flex-col items-center p-2 min-w-[64px] min-h-[48px] touch-manipulation active:opacity-70" style={{ color: getColor('/lending-fund/apply') }}>
           <span className="text-xl">📊</span>
-          <span className="text-xs font-medium mt-1">Dashboard</span>
+          <span className="text-xs font-medium mt-1">Apply</span>
         </Link>
-        <Link href="/lending-fund/docs" className="flex flex-col items-center p-2 min-w-[64px] min-h-[48px] touch-manipulation active:opacity-70" style={{ color: getColor('/lending-fund/docs') }}>
+        <Link href="/lending-fund" className="flex flex-col items-center p-2 min-w-[64px] min-h-[48px] touch-manipulation active:opacity-70" style={{ color: getColor('/lending-fund') }}>
           <span className="text-xl">📄</span>
-          <span className="text-xs font-medium mt-1">Docs</span>
+          <span className="text-xs font-medium mt-1">Overview</span>
         </Link>
       </div>
     </div>

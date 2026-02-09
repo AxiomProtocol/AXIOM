@@ -79,7 +79,7 @@ export function SiteFooter() {
               <Link href="/terms-and-conditions" className="hover:text-teal-600 transition-colors">
                 Terms
               </Link>
-              <Link href="/privacy-policy" className="hover:text-teal-600 transition-colors">
+              <Link href="/terms-and-conditions" className="hover:text-teal-600 transition-colors">
                 Privacy
               </Link>
               <Link href="/transparency" className="hover:text-teal-600 transition-colors">

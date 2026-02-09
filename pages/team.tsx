@@ -128,7 +128,7 @@ export default function TeamPage() {
           We're always looking for talented individuals passionate about blockchain, smart cities, and financial innovation.
         </p>
         <Link 
-          href="/contact"
+          href="/join"
           className="inline-block px-8 py-3 bg-dl-navy text-white text-sm font-medium"
         >
           Get in Touch

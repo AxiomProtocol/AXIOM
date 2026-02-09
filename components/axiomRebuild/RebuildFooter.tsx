@@ -22,13 +22,12 @@ export function RebuildFooter() {
             <div style={{ fontSize: 12, color: "rgba(18,18,18,0.6)", marginTop: 4 }}>Axiom Nexus, LLC</div>
           </div>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap", color: "rgba(18,18,18,0.74)", fontSize: 14 }}>
-            <Link href="/privacy-policy">Privacy</Link>
+            <Link href="/terms-and-conditions">Privacy</Link>
             <Link href="/terms-and-conditions">Terms</Link>
             <Link href="/transparency">Transparency</Link>
-            <Link href="/contact">Contact</Link>
+            <Link href="/join">Contact</Link>
             <Link href="/about-us">About</Link>
             <Link href="/team">Team</Link>
-            <Link href="/admin/investors">Investor Admin</Link>
           </div>
         </div>
 

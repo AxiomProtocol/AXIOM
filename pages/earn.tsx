@@ -210,7 +210,7 @@ export default function EarnPage() {
             </p>
           </div>
           <a 
-            href="/learn"
+            href="/how-it-works"
             className="px-6 py-3 bg-dl-navy text-white font-medium whitespace-nowrap"
           >
             Learn More

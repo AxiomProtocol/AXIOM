@@ -5,8 +5,8 @@ export const homeSectionsCopy = {
     secondary: "Shared Ownership Built on Structure, Not Trust",
     subheadline:
       "Built from completed land projects and an active produce community. Designed to scale future land acquisition.",
-    primaryCta: { label: "Explore KeyGrow", href: "/keygrow" },
-    secondaryCta: { label: "See Our Origin Story", href: "/origin" },
+    primaryCta: { label: "Explore KeyGrow", href: "/products" },
+    secondaryCta: { label: "See Our Origin Story", href: "/about-us" },
     microcopy:
       "Built from real execution: a community farmland purchase, development work, and a founder-led infrastructure roadmap."
   },
@@ -20,7 +20,7 @@ export const homeSectionsCopy = {
     title: "Executed Projects. Ongoing Community. Scalable Model.",
     body: "Completed land stewardship cycles executed 3 to 8 years ago demonstrate capability, not current inventory. Before Axiom existed as software, a real community came together, pooled funds, acquired six acres of farmland, and developed it into a working farm with USDA support. Real people. Real land. Real outcomes.\n\nThat experience proved shared ownership works. It also proved most groups fail because coordination breaks down.\n\nAxiom exists to turn what already worked into a repeatable system that can scale responsibly.",
     primaryCta: { label: "View the Farmland Proof", href: "/proof" },
-    secondaryCta: { label: "Read the Origin Story", href: "/origin" }
+    secondaryCta: { label: "Read the Origin Story", href: "/about-us" }
   },
   founderCapability: {
     title: "Built by Experience",
@@ -29,7 +29,7 @@ export const homeSectionsCopy = {
   keygrow: {
     title: "KeyGrow: A Practical Path to Shared Farmland Ownership",
     body: "KeyGrow is the primary way people participate in Axiom.\n\nIt is designed to coordinate shared farmland acquisition and development through clear structure and long-term intent. This is where participants start, learn the model, and engage with real asset ownership mechanics.\n\nKeyGrow is not about hype. It is about coordinated ownership, stewardship, and outcomes.",
-    primaryCta: { label: "Explore KeyGrow", href: "/keygrow" },
+    primaryCta: { label: "Explore KeyGrow", href: "/products" },
     secondaryCta: { label: "How Participation Works", href: "/how-it-works" },
     bullets: [
       "Shared ownership pathways",
@@ -163,7 +163,7 @@ export const keygrowCopy = {
         { step: 4, title: "Participate", description: "Contribute and start building your participation record" }
       ],
       primaryCta: { label: "Connect Wallet", href: "/platform" },
-      secondaryCta: { label: "Learn More", href: "/learn" }
+      secondaryCta: { label: "Learn More", href: "/how-it-works" }
     }
   }
 };

@@ -113,7 +113,7 @@ export default function FAQPage() {
                 </p>
                 <p className="mt-2">
                   See the{' '}
-                  <Link href="/governance/observation-window" className="text-dl-navy underline">
+                  <Link href="/observer/governance" className="text-dl-navy underline">
                     Observation Window Rationale
                   </Link>
                   {' '}for the full governance memorandum.
@@ -131,7 +131,7 @@ export default function FAQPage() {
                 </p>
                 <p className="mt-2">
                   See the{' '}
-                  <Link href="/governance/observation-window" className="text-dl-navy underline">
+                  <Link href="/observer/governance" className="text-dl-navy underline">
                     Observation Window Rationale
                   </Link>
                   {' '}for details on why external capital intake is disabled and the criteria for exiting observation mode.

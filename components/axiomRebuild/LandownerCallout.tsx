@@ -167,7 +167,7 @@ export function LandownerCallout({ page = 'home' }: LandownerCalloutProps) {
 
         <div style={{ textAlign: "center" }}>
           <a
-            href="/landowners/submit"
+            href="/join"
             style={{
               display: "inline-flex",
               alignItems: "center",

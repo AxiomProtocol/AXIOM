@@ -75,7 +75,7 @@ export const pagesCopy: Record<string, PageCopy> = {
       headline: "From Six Acres to a Movement",
       secondary: "Real Land. Real People. Real Proof.",
       subheadline: "Before Axiom was software, it was a community of people who pooled resources, bought farmland, and built something real together.",
-      primaryCta: { label: "Explore KeyGrow", href: "/keygrow" },
+      primaryCta: { label: "Explore KeyGrow", href: "/products" },
       secondaryCta: { label: "How It Works", href: "/how-it-works" },
       microcopy: "The origin of Axiom is not a pitch deck. It's a story of execution."
     },
@@ -87,7 +87,7 @@ export const pagesCopy: Record<string, PageCopy> = {
           "Before Axiom existed as software, a real community came together, pooled funds, acquired six acres of farmland, and developed it into a working farm with USDA support. Real people. Real land. Real outcomes.\n\nThat experience proved shared ownership works. It also proved most groups fail because coordination breaks down. Axiom exists to turn what already worked into a repeatable system that can scale responsibly.",
         image: "/generated/origin_story_farmland_sunrise.png",
         imageAlt: "Sunrise over farmland representing the origin of Axiom",
-        primaryCta: { label: "See KeyGrow", href: "/keygrow" }
+        primaryCta: { label: "See KeyGrow", href: "/products" }
       },
       {
         id: "why",
@@ -113,8 +113,8 @@ export const pagesCopy: Record<string, PageCopy> = {
       headline: "Structure That Scales",
       secondary: "From Confusion to Coordination",
       subheadline: "Axiom provides the framework for communities to own real assets together without the chaos that usually destroys shared projects.",
-      primaryCta: { label: "Start with KeyGrow", href: "/keygrow" },
-      secondaryCta: { label: "Read Origin Story", href: "/origin" },
+      primaryCta: { label: "Start with KeyGrow", href: "/products" },
+      secondaryCta: { label: "Read Origin Story", href: "/about-us" },
       microcopy: "Built from real experience, not theoretical frameworks."
     },
     sections: [
@@ -158,7 +158,7 @@ export const pagesCopy: Record<string, PageCopy> = {
         title: "Frequently Asked Questions",
         body:
           "Q: Do I need to understand blockchain to participate?\nA: No. The technology exists to make coordination stronger, not more complicated.\n\nQ: How do I get started?\nA: Start by reading the Origin Story, then explore KeyGrow to understand participation paths.\n\nQ: Is this an investment?\nA: Axiom is a coordination platform for shared ownership. Review all disclosures and make informed decisions.",
-        primaryCta: { label: "Explore KeyGrow", href: "/keygrow" },
+        primaryCta: { label: "Explore KeyGrow", href: "/products" },
         secondaryCta: { label: "View Transparency", href: "/transparency" }
       }
     ]
@@ -203,8 +203,8 @@ export const pagesCopy: Record<string, PageCopy> = {
         title: "Future Authority Plan",
         body:
           "Operating authority means independence. It means Axiom can support its own farmland development without relying on third-party transportation. This is a commitment to building the full stack of real asset ownership: acquisition, development, and movement.",
-        primaryCta: { label: "Join the Journey", href: "/contact" },
-        secondaryCta: { label: "Read Origin Story", href: "/origin" }
+        primaryCta: { label: "Join the Journey", href: "/join" },
+        secondaryCta: { label: "Read Origin Story", href: "/about-us" }
       }
     ]
   },
@@ -298,7 +298,7 @@ export const pagesCopy: Record<string, PageCopy> = {
           "Our flagship course on the path to homeownership through shared ownership. Learn how KeyGrow works, what participation means, and how to build toward property ownership.",
         image: "/generated/floating_farmland_island_3d.png",
         imageAlt: "Farmland visualization representing property ownership",
-        primaryCta: { label: "Explore KeyGrow", href: "/keygrow" }
+        primaryCta: { label: "Explore KeyGrow", href: "/products" }
       }
     ]
   },
@@ -312,7 +312,7 @@ export const pagesCopy: Record<string, PageCopy> = {
       secondary: "Structure Over Speculation",
       subheadline: "Axiom is inspired by principles of group economics, resource stewardship, and long-term structural durability. We prioritize discipline over impulse and coordination over hype.",
       primaryCta: { label: "Read Our Philosophy", href: "/philosophy" },
-      secondaryCta: { label: "See Our Origin", href: "/origin" },
+      secondaryCta: { label: "See Our Origin", href: "/about-us" },
       microcopy: "Built on structure, transparency, and community-led participation."
     },
     sections: [

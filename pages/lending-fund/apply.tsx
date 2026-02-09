@@ -124,8 +124,8 @@ export default function LoanApplication() {
           <Link href="/lending-fund" className="text-sm text-dl-navy">
             ← Back to Fund
           </Link>
-          <Link href="/lending-fund/borrower-guide" className="text-sm text-dl-navy border border-dl-border bg-dl-bg-alt px-3 py-1">
-            Read Borrower Guide
+          <Link href="/lending-fund" className="text-sm text-dl-navy border border-dl-border bg-dl-bg-alt px-3 py-1">
+            Read Fund Overview
           </Link>
         </div>
         <h1 className="font-dl-serif text-3xl text-dl-navy">

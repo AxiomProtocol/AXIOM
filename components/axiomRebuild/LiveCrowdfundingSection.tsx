@@ -488,7 +488,7 @@ export function LiveCrowdfundingSection({ page = 'home' }: LiveCrowdfundingSecti
 
         <div style={{ textAlign: "center", marginTop: 48 }}>
           <a
-            href="/land"
+            href="/products"
             style={{
               display: "inline-flex",
               alignItems: "center",

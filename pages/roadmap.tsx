@@ -313,8 +313,8 @@ export default function RoadmapPage() {
           <Link href="/axusd" className="px-7 py-3 bg-white/10 text-white text-sm font-medium border border-white/20 no-underline">
             Learn About AXUSD
           </Link>
-          <Link href="/axiom-nexus" className="px-7 py-3 border border-white/30 text-white text-sm font-medium no-underline">
-            Explore Axiom Nexus
+          <Link href="/products" className="px-7 py-3 border border-white/30 text-white text-sm font-medium no-underline">
+            Explore Products
           </Link>
         </div>
       </div>

@@ -253,7 +253,7 @@ export default function ProductsPage() {
           All products are available to accredited investors under SEC Reg D 506(c) compliance.
         </p>
         <div className="flex gap-4 justify-center flex-wrap">
-          <Link href="/lending-fund/onboarding" className="px-8 py-3 bg-dl-navy text-white text-sm font-medium no-underline">
+          <Link href="/lending-fund/invest" className="px-8 py-3 bg-dl-navy text-white text-sm font-medium no-underline">
             Start Investing
           </Link>
           <Link href="/roadmap" className="px-8 py-3 border border-dl-border text-dl-navy bg-dl-bg text-sm font-medium no-underline">
