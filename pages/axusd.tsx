@@ -1230,7 +1230,7 @@ export default function AXUSDStablecoinPage() {
                   className="w-full h-48 object-cover"
                   style={{ width: '100%', height: 'auto' }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                <div className="absolute inset-0 bg-dl-navy opacity-50" />
                 <div className="absolute bottom-4 left-4 text-white">
                   <h3 className="text-2xl font-dl-serif flex items-center gap-2">
                     <Droplets className="w-6 h-6" /> AXUSD/USDC Pool
