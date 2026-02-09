@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
+import { DesignLawLayout, SectionHeading } from '../../components/design-law';
 import PilotNav from '../../components/pilot/PilotNav';
 
 interface AuditEntry {
@@ -42,22 +43,18 @@ const actionTypes = [
   { value: 'configuration_changed', label: 'Configuration Changed' },
 ];
 
-const actionBadgeColors: Record<string, string> = {
-  contribution_received: 'bg-green-100 text-green-800',
-  contribution_confirmed: 'bg-green-100 text-green-800',
-  distribution_calculated: 'bg-blue-100 text-blue-800',
-  distribution_approved: 'bg-blue-100 text-blue-800',
-  distribution_paid: 'bg-blue-100 text-blue-800',
-  reserve_allocation: 'bg-indigo-100 text-indigo-800',
-  capital_call_issued: 'bg-amber-100 text-amber-800',
-  capital_call_funded: 'bg-amber-100 text-amber-800',
-  asset_purchased: 'bg-teal-100 text-teal-800',
-  valuation_updated: 'bg-purple-100 text-purple-800',
-  document_uploaded: 'bg-gray-100 text-gray-800',
-  investor_onboarded: 'bg-emerald-100 text-emerald-800',
-  report_generated: 'bg-sky-100 text-sky-800',
-  configuration_changed: 'bg-red-100 text-red-800',
-};
+function getActionStyle(action: string): string {
+  switch (action) {
+    case 'contribution_received':
+    case 'contribution_confirmed':
+    case 'investor_onboarded':
+      return 'text-xs font-dl-mono text-dl-forest';
+    case 'configuration_changed':
+      return 'text-xs font-dl-mono text-dl-error';
+    default:
+      return 'text-xs font-dl-mono text-dl-gray';
+  }
+}
 
 function formatMoney(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return '-';
@@ -168,176 +165,169 @@ export default function AuditPage() {
     : entries;
 
   return (
-    <>
+    <DesignLawLayout>
       <Head>
         <title>Axiom Capital Program — Compliance Audit Trail</title>
       </Head>
 
-      <div className="min-h-screen bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Compliance Audit Trail</h1>
-            <p className="text-gray-500 mt-1">Complete, immutable record of every financial action in the pilot program</p>
+      <div className="mb-6">
+        <h1 className="font-dl-serif text-3xl text-dl-navy">Compliance Audit Trail</h1>
+        <p className="text-sm text-dl-gray mt-1">Complete, immutable record of every financial action in the pilot program</p>
+      </div>
+
+      <PilotNav currentTab="audit" />
+
+      <div className="border border-dl-border bg-dl-bg-alt p-5 mb-8">
+        <p className="text-sm text-dl-gray leading-relaxed">Every contribution, distribution, capital call, valuation update, and configuration change is logged with timestamps, actors, and amounts. This audit trail provides the institutional-grade transparency that investors and regulators expect.</p>
+      </div>
+
+      <div className="border border-dl-border p-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-dl-gray mb-1">Action Type</label>
+            <select
+              value={filters.action}
+              onChange={(e) => updateFilter('action', e.target.value)}
+              className="w-full px-3 py-2 border border-dl-border text-sm text-dl-navy bg-dl-bg"
+            >
+              {actionTypes.map((at) => (
+                <option key={at.value} value={at.value}>{at.label}</option>
+              ))}
+            </select>
           </div>
-
-          <PilotNav currentTab="audit" />
-
-          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100 rounded-xl p-5 mb-8">
-            <p className="text-sm text-teal-800 leading-relaxed">Every contribution, distribution, capital call, valuation update, and configuration change is logged with timestamps, actors, and amounts. This audit trail provides the institutional-grade transparency that investors and regulators expect.</p>
+          <div>
+            <label className="block text-xs font-medium text-dl-gray mb-1">From Date</label>
+            <input
+              type="date"
+              value={filters.from}
+              onChange={(e) => updateFilter('from', e.target.value)}
+              className="w-full px-3 py-2 border border-dl-border text-sm text-dl-navy bg-dl-bg"
+            />
           </div>
+          <div>
+            <label className="block text-xs font-medium text-dl-gray mb-1">To Date</label>
+            <input
+              type="date"
+              value={filters.to}
+              onChange={(e) => updateFilter('to', e.target.value)}
+              className="w-full px-3 py-2 border border-dl-border text-sm text-dl-navy bg-dl-bg"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-dl-gray mb-1">SPV Filter</label>
+            <input
+              type="text"
+              value={filters.spvId}
+              onChange={(e) => updateFilter('spvId', e.target.value)}
+              placeholder="SPV ID"
+              className="w-full px-3 py-2 border border-dl-border text-sm text-dl-navy bg-dl-bg"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-dl-gray mb-1">Search</label>
+            <input
+              type="text"
+              value={filters.search}
+              onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
+              placeholder="Search description..."
+              className="w-full px-3 py-2 border border-dl-border text-sm text-dl-navy bg-dl-bg"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end mt-3">
+          <button
+            onClick={exportCSV}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-dl-navy text-white text-sm font-medium"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
 
-          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm mb-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Action Type</label>
-                <select
-                  value={filters.action}
-                  onChange={(e) => updateFilter('action', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                >
-                  {actionTypes.map((at) => (
-                    <option key={at.value} value={at.value}>{at.label}</option>
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <p className="text-sm text-dl-gray font-dl-mono">Loading audit trail...</p>
+        </div>
+      ) : error ? (
+        <div className="border border-dl-error p-6">
+          <p className="text-dl-error font-medium">Error</p>
+          <p className="text-dl-gray text-sm mt-1">{error}</p>
+        </div>
+      ) : displayedEntries.length === 0 ? (
+        <div className="border border-dl-border p-8 bg-dl-bg-alt text-center">
+          <p className="text-dl-gray">No audit entries found matching your filters</p>
+        </div>
+      ) : (
+        <>
+          <div className="border border-dl-border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full border border-dl-border">
+                <thead className="bg-dl-bg-alt">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-dl-mono text-dl-gray uppercase">Timestamp</th>
+                    <th className="px-4 py-3 text-left text-xs font-dl-mono text-dl-gray uppercase">Action</th>
+                    <th className="px-4 py-3 text-left text-xs font-dl-mono text-dl-gray uppercase">Actor</th>
+                    <th className="px-4 py-3 text-left text-xs font-dl-mono text-dl-gray uppercase">SPV</th>
+                    <th className="px-4 py-3 text-left text-xs font-dl-mono text-dl-gray uppercase">Amount</th>
+                    <th className="px-4 py-3 text-left text-xs font-dl-mono text-dl-gray uppercase">Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayedEntries.map((entry, i) => (
+                    <tr key={entry.id} className={i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}>
+                      <td className="px-4 py-3 text-sm text-dl-gray whitespace-nowrap">
+                        {entry.created_at ? formatTimestamp(entry.created_at) : '-'}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className={getActionStyle(entry.action)}>
+                          {formatAction(entry.action)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-dl-navy">
+                        {entry.actor_role || entry.actor_id || '-'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-dl-gray">
+                        {entry.spv_id || '-'}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-dl-mono text-dl-navy whitespace-nowrap">
+                        {entry.amount ? formatMoney(entry.amount) : '-'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-dl-gray max-w-xs truncate">
+                        {entry.description || '-'}
+                      </td>
+                    </tr>
                   ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">From Date</label>
-                <input
-                  type="date"
-                  value={filters.from}
-                  onChange={(e) => updateFilter('from', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">To Date</label>
-                <input
-                  type="date"
-                  value={filters.to}
-                  onChange={(e) => updateFilter('to', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">SPV Filter</label>
-                <input
-                  type="text"
-                  value={filters.spvId}
-                  onChange={(e) => updateFilter('spvId', e.target.value)}
-                  placeholder="SPV ID"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
-                <input
-                  type="text"
-                  value={filters.search}
-                  onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
-                  placeholder="Search description..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                />
-              </div>
+                </tbody>
+              </table>
             </div>
-            <div className="flex justify-end mt-3">
+          </div>
+
+          <div className="flex items-center justify-between mt-4">
+            <p className="text-sm text-dl-gray">
+              Page {filters.page} of {totalPages} &middot; Total {totalCount} entries
+            </p>
+            <div className="flex gap-2">
               <button
-                onClick={exportCSV}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors"
+                onClick={() => updateFilter('page', Math.max(1, filters.page - 1))}
+                disabled={filters.page <= 1}
+                className="px-4 py-2 border border-dl-border text-sm font-medium text-dl-navy bg-dl-bg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Export CSV
+                Previous
+              </button>
+              <button
+                onClick={() => updateFilter('page', Math.min(totalPages, filters.page + 1))}
+                disabled={filters.page >= totalPages}
+                className="px-4 py-2 border border-dl-border text-sm font-medium text-dl-navy bg-dl-bg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
               </button>
             </div>
           </div>
-
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
-              <span className="ml-3 text-gray-500">Loading audit trail...</span>
-            </div>
-          ) : error ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6">
-              <p className="text-red-800 font-medium">Error</p>
-              <p className="text-red-600 text-sm mt-1">{error}</p>
-            </div>
-          ) : displayedEntries.length === 0 ? (
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-12 text-center">
-              <p className="text-gray-500">No audit entries found matching your filters</p>
-            </div>
-          ) : (
-            <>
-              <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actor</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">SPV</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {displayedEntries.map((entry) => (
-                        <tr key={entry.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
-                            {entry.created_at ? formatTimestamp(entry.created_at) : '-'}
-                          </td>
-                          <td className="px-4 py-3 text-sm">
-                            <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
-                              actionBadgeColors[entry.action] || 'bg-gray-100 text-gray-700'
-                            }`}>
-                              {formatAction(entry.action)}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700">
-                            {entry.actor_role || entry.actor_id || '-'}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-500">
-                            {entry.spv_id || '-'}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                            {entry.amount ? formatMoney(entry.amount) : '-'}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
-                            {entry.description || '-'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between mt-4">
-                <p className="text-sm text-gray-500">
-                  Page {filters.page} of {totalPages} &middot; Total {totalCount} entries
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => updateFilter('page', Math.max(1, filters.page - 1))}
-                    disabled={filters.page <= 1}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => updateFilter('page', Math.min(totalPages, filters.page + 1))}
-                    disabled={filters.page >= totalPages}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </>
+        </>
+      )}
+    </DesignLawLayout>
   );
 }
