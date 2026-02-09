@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
+  DesignLawLayout,
   PageShell,
   DataTable,
   StatusBadge,
@@ -178,11 +179,12 @@ export default function SentinelAudit() {
   ];
 
   return (
-    <PageShell
-      title="Sentinel Audit Trail"
-      subtitle="Immutable decision log with cryptographic hash chain verification."
-      disclosure={FOOTER_DISCLOSURE}
-    >
+    <DesignLawLayout>
+      <PageShell
+        title="Sentinel Audit Trail"
+        subtitle="Immutable decision log with cryptographic hash chain verification."
+        disclosure={FOOTER_DISCLOSURE}
+      >
       <Link href="/sentinel" className="text-sm text-dl-navy mb-6 inline-block">
         ← Back to Sentinel Dashboard
       </Link>
@@ -248,6 +250,7 @@ export default function SentinelAudit() {
       <div className="mb-8">
         <DisclosureBlock text={AUDIT_METHODOLOGY} />
       </div>
-    </PageShell>
+      </PageShell>
+    </DesignLawLayout>
   );
 }

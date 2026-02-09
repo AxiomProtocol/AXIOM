@@ -12,7 +12,9 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
-  serverExternalPackages: ['ws', '@neondatabase/serverless'],
+  experimental: {
+    serverComponentsExternalPackages: ['ws', '@neondatabase/serverless'],
+  },
 
   webpack: (config, { isServer }) => {
     if (!isServer) {

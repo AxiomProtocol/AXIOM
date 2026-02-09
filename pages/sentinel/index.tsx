@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
+  DesignLawLayout,
   PageShell,
   DataTable,
   StatusBadge,
@@ -216,11 +217,12 @@ export default function SentinelIndex() {
   ];
 
   return (
-    <PageShell
-      title="Axiom Sentinel"
-      subtitle="Unified Capital Decision & Risk Authorization Layer. Strategy proposes. Sentinel decides. Execution obeys."
-      disclosure={FOOTER_DISCLOSURE}
-    >
+    <DesignLawLayout>
+      <PageShell
+        title="Axiom Sentinel"
+        subtitle="Unified Capital Decision & Risk Authorization Layer. Strategy proposes. Sentinel decides. Execution obeys."
+        disclosure={FOOTER_DISCLOSURE}
+      >
       {loading ? (
         <p className="text-sm text-dl-gray py-12 text-center">Loading data...</p>
       ) : error ? (
@@ -286,6 +288,7 @@ export default function SentinelIndex() {
           </div>
         </>
       )}
-    </PageShell>
+      </PageShell>
+    </DesignLawLayout>
   );
 }

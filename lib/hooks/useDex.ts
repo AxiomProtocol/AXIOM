@@ -61,6 +61,7 @@ export function useDexPools() {
     try {
       setLoading(true);
       const response = await fetch('/api/dex/pools');
+      if (!response.ok) throw new Error(`Pool data unavailable (${response.status})`);
       const data = await response.json();
       
       if (data.error) {
@@ -92,6 +93,7 @@ export function useDexStats() {
     try {
       setLoading(true);
       const response = await fetch('/api/dex/stats');
+      if (!response.ok) throw new Error(`Stats unavailable (${response.status})`);
       const data = await response.json();
       
       if (data.error && !data.totalPools) {
@@ -134,6 +136,7 @@ export function useSwapQuote(tokenIn: string, tokenOut: string, amountIn: string
       setLoading(true);
       const params = new URLSearchParams({ tokenIn, tokenOut, amountIn });
       const response = await fetch(`/api/dex/quote?${params}`);
+      if (!response.ok) throw new Error(`Quote unavailable (${response.status})`);
       const data = await response.json();
       
       if (data.error) {
@@ -173,6 +176,7 @@ export function useUserLiquidity(address: string | undefined) {
     try {
       setLoading(true);
       const response = await fetch(`/api/dex/user/liquidity?address=${address}`);
+      if (!response.ok) throw new Error(`Liquidity data unavailable (${response.status})`);
       const data = await response.json();
       
       if (data.error) {
@@ -210,6 +214,7 @@ export function useUserRewards(address: string | undefined) {
     try {
       setLoading(true);
       const response = await fetch(`/api/dex/user/rewards?address=${address}`);
+      if (!response.ok) throw new Error(`Rewards data unavailable (${response.status})`);
       const data = await response.json();
       
       if (data.error) {
@@ -247,6 +252,7 @@ export function useUserLimitOrders(address: string | undefined) {
     try {
       setLoading(true);
       const response = await fetch(`/api/dex/user/orders?address=${address}`);
+      if (!response.ok) throw new Error(`Orders data unavailable (${response.status})`);
       const data = await response.json();
       
       if (data.error) {
@@ -284,6 +290,7 @@ export function useTokenPrice(tokenAddress: string | undefined) {
     try {
       setLoading(true);
       const response = await fetch(`/api/dex/price?token=${tokenAddress}`);
+      if (!response.ok) throw new Error(`Price data unavailable (${response.status})`);
       const data = await response.json();
       
       if (data.error) {
