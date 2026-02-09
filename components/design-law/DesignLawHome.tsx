@@ -51,8 +51,19 @@ const PARTICIPATION_STEPS = [
   { step: '3', title: 'Participate', description: 'Engage with the Capital Program, Lending Fund, or Exchange based on your qualification and intent.' },
 ];
 
+const NAV_LINKS = [
+  { href: '/pilot', label: 'Capital Program' },
+  { href: '/lending-fund', label: 'Lending Fund' },
+  { href: '/dex', label: 'Exchange' },
+  { href: '/mirdt', label: 'Intelligence' },
+  { href: '/observer', label: 'Observer' },
+  { href: '/products', label: 'Products' },
+  { href: '/about-us', label: 'About' },
+];
+
 export function DesignLawHome() {
   const [timestamp, setTimestamp] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     setTimestamp(new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC'));
@@ -70,16 +81,53 @@ export function DesignLawHome() {
               AXIOM
             </Link>
             <div className="hidden md:flex items-center gap-6 text-sm text-dl-navy">
-              <Link href="/pilot" className="hover:underline">Capital Program</Link>
-              <Link href="/lending-fund" className="hover:underline">Lending Fund</Link>
-              <Link href="/dex" className="hover:underline">Exchange</Link>
-              <Link href="/mirdt" className="hover:underline">Intelligence</Link>
-              <Link href="/observer" className="hover:underline">Observer</Link>
-              <Link href="/products" className="hover:underline">Products</Link>
-              <Link href="/about-us" className="hover:underline">About</Link>
+              {NAV_LINKS.map((link) => (
+                <Link key={link.href} href={link.href} className="hover:underline">{link.label}</Link>
+              ))}
             </div>
-            <ConnectWalletButton />
+            <div className="flex items-center gap-3">
+              <div className="hidden md:block">
+                <ConnectWalletButton />
+              </div>
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="md:hidden p-2 text-dl-navy border border-dl-border bg-dl-bg"
+                aria-label="Menu"
+              >
+                {menuOpen ? (
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="4" y1="4" x2="16" y2="16" />
+                    <line x1="16" y1="4" x2="4" y2="16" />
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="3" y1="5" x2="17" y2="5" />
+                    <line x1="3" y1="10" x2="17" y2="10" />
+                    <line x1="3" y1="15" x2="17" y2="15" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
+          {menuOpen && (
+            <div className="md:hidden border-t border-dl-border bg-dl-bg">
+              <div className="max-w-7xl mx-auto px-6 py-3">
+                {NAV_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="block py-2 text-sm text-dl-navy border-b border-dl-border last:border-b-0 hover:underline"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <div className="pt-3">
+                  <ConnectWalletButton />
+                </div>
+              </div>
+            </div>
+          )}
         </nav>
 
         <div className="max-w-7xl mx-auto px-6 py-12">
