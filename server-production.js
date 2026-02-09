@@ -1,67 +1,92 @@
 const { createServer } = require('http');
-const { parse } = require('url');
+const { spawn } = require('child_process');
 const path = require('path');
 
 const hostname = process.env.HOSTNAME || '0.0.0.0';
 const port = parseInt(process.env.PORT || '5000', 10);
+const internalPort = port + 1;
 
 let appReady = false;
-let nextHandler = null;
 
-console.log(`[Production] Starting server on ${hostname}:${port}...`);
+console.log(`[Production] Starting with health check on port ${port}...`);
 
-const server = createServer(async (req, res) => {
-  if (req.url === '/api/health' || req.url === '/_health' || req.url === '/health') {
+const proxy = createServer((req, res) => {
+  const url = (req.url || '').split('?')[0];
+  if (url === '/api/health' || url === '/_health' || url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'ok', ready: appReady, timestamp: Date.now() }));
     return;
   }
 
   if (!appReady) {
-    res.writeHead(503, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'starting', message: 'Application is warming up' }));
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end('<html><body><h1>Starting up...</h1><meta http-equiv="refresh" content="3"></body></html>');
     return;
   }
 
-  try {
-    const parsedUrl = parse(req.url, true);
-    await nextHandler(req, res, parsedUrl);
-  } catch (err) {
-    console.error('[Production] Error:', req.url, err.message);
-    res.writeHead(500, { 'Content-Type': 'text/plain' });
-    res.end('Internal server error');
-  }
+  const options = {
+    hostname: '127.0.0.1',
+    port: internalPort,
+    path: req.url,
+    method: req.method,
+    headers: req.headers,
+  };
+
+  const proxyReq = require('http').request(options, (proxyRes) => {
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res, { end: true });
+  });
+
+  proxyReq.on('error', (err) => {
+    console.error('[Production] Proxy error:', err.message);
+    res.writeHead(502, { 'Content-Type': 'text/plain' });
+    res.end('Bad gateway');
+  });
+
+  req.pipe(proxyReq, { end: true });
 });
 
-server.listen(port, hostname, () => {
-  console.log(`[Production] Health check live at http://${hostname}:${port}/api/health`);
+proxy.listen(port, hostname, () => {
+  console.log(`[Production] Health check live on http://${hostname}:${port}/api/health`);
 
-  try {
-    process.env.HOSTNAME = hostname;
-    process.env.PORT = String(port);
+  const standaloneServer = path.join(__dirname, '.next', 'standalone', 'server.js');
+  const child = spawn('node', [standaloneServer], {
+    env: {
+      ...process.env,
+      PORT: String(internalPort),
+      HOSTNAME: '127.0.0.1',
+      NODE_ENV: 'production',
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
 
-    const NextServer = require('next/dist/server/next-server').default;
-    const conf = require('./.next/required-server-files.json');
+  child.stdout.on('data', (data) => {
+    const msg = data.toString();
+    process.stdout.write(`[Next.js] ${msg}`);
+    if (msg.includes('Ready') || msg.includes('started') || msg.includes('Listening')) {
+      appReady = true;
+      console.log(`[Production] Next.js ready on internal port ${internalPort}`);
+    }
+  });
 
-    const app = new NextServer({
-      hostname,
-      port,
-      dir: __dirname,
-      dev: false,
-      customServer: true,
-      conf: conf.config,
-    });
+  child.stderr.on('data', (data) => {
+    process.stderr.write(`[Next.js] ${data.toString()}`);
+  });
 
-    nextHandler = app.getRequestHandler();
-    appReady = true;
-    console.log(`[Production] Next.js ready — all routes active`);
-  } catch (err) {
-    console.error('[Production] Failed to initialize Next.js:', err);
-    process.exit(1);
-  }
+  child.on('exit', (code) => {
+    console.error(`[Production] Next.js process exited with code ${code}`);
+    process.exit(code || 1);
+  });
+
+  setTimeout(() => {
+    if (!appReady) {
+      appReady = true;
+      console.log(`[Production] Marking ready after timeout`);
+    }
+  }, 15000);
 });
 
-server.once('error', (err) => {
+proxy.once('error', (err) => {
   console.error('[Production] Failed to bind port:', err);
   process.exit(1);
 });
