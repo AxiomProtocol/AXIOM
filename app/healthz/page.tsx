@@ -1,3 +1,3 @@
 export default function HealthzPage() {
-  return <>ok</>
+  return <pre>ok</pre>;
 }
