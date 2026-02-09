@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useUserLiquidity, useDexPools } from '../../lib/hooks/useDex';
 import { useWallet } from '../../lib/web3/useWallet';
-import { ethers } from 'ethers';
+
 
 const CAMELOT_ROUTER = '0xc873fEcbd354f5A56E00E710B90EF4201db2448d';
 
@@ -66,6 +66,7 @@ export default function LiquidityManager() {
     try {
       setIsLoading(true);
       setTxStatus({ type: null, message: '' });
+      const { ethers } = await import('ethers');
 
       const pool = pools.find(p => p.id === selectedPool);
       if (!pool) throw new Error('Pool not found');
@@ -146,6 +147,7 @@ export default function LiquidityManager() {
     try {
       setIsLoading(true);
       setTxStatus({ type: null, message: '' });
+      const { ethers } = await import('ethers');
 
       const pool = pools.find(p => p.id === poolId);
       if (!pool || !pool.pairAddress) {

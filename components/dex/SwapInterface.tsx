@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSwapQuote } from '../../lib/hooks/useDex';
 import { useWallet } from '../../lib/web3/useWallet';
-import { ethers } from 'ethers';
+
 
 const TOKENS = [
   { symbol: 'ETH', address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', decimals: 18, logo: '/eth.png', isNative: true },
@@ -36,6 +36,7 @@ export default function SwapInterface() {
     }
     
     try {
+      const { ethers } = await import('ethers');
       if (token.isNative) {
         const balance = await provider.getBalance(address);
         setBalance(parseFloat(ethers.formatEther(balance)).toFixed(4));
