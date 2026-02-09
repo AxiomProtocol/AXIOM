@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ObserverLayout, ObserverCard, ObserverLoading } from '../../components/observer/ObserverLayout';
+import Head from 'next/head';
+import Link from 'next/link';
+import { DesignLawLayout, SectionHeading } from '../../components/design-law';
 
 interface CapitalBridgeData {
   success: boolean;
@@ -33,12 +35,40 @@ interface CapitalBridgeData {
   proofLinks: Array<{ label: string; url: string }>;
 }
 
-function MetricCard({ label, value, subtitle, color }: { label: string; value: string | number; subtitle?: string; color: string }) {
+const OBSERVER_TABS = [
+  { id: 'overview', label: 'Overview', href: '/observer' },
+  { id: 'treasury', label: 'Treasury', href: '/observer/treasury' },
+  { id: 'governance', label: 'Governance', href: '/observer/governance' },
+  { id: 'risk', label: 'Risk', href: '/observer/risk' },
+  { id: 'assets', label: 'Assets', href: '/observer/assets' },
+  { id: 'controls', label: 'Controls', href: '/observer/controls' },
+  { id: 'reports', label: 'Reports', href: '/observer/reports' },
+  { id: 'capital-bridge', label: 'Capital Bridge', href: '/observer/capital-bridge' },
+  { id: 'node-economy', label: 'Node Economy', href: '/observer/node-economy' },
+];
+
+function ObserverNav({ current }: { current: string }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-      <div className="text-sm text-gray-600 mb-1">{label}</div>
-      <div className={`text-2xl font-bold ${color}`}>{value}</div>
-      {subtitle && <div className="text-xs text-gray-500 mt-1">{subtitle}</div>}
+    <nav className="flex flex-wrap gap-0 border-b border-dl-border mb-8">
+      {OBSERVER_TABS.map(tab => (
+        <Link
+          key={tab.id}
+          href={tab.href}
+          className={`px-4 py-2 text-sm ${tab.id === current ? 'border-b-2 border-dl-navy text-dl-navy font-medium' : 'text-dl-gray'}`}
+        >
+          {tab.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+function MetricCard({ label, value, subtitle }: { label: string; value: string | number; subtitle?: string; color?: string }) {
+  return (
+    <div className="border border-dl-border p-4">
+      <div className="text-sm text-dl-gray mb-1">{label}</div>
+      <div className="text-2xl font-dl-mono text-dl-navy">{value}</div>
+      {subtitle && <div className="text-xs text-dl-gray mt-1">{subtitle}</div>}
     </div>
   );
 }
@@ -46,7 +76,7 @@ function MetricCard({ label, value, subtitle, color }: { label: string; value: s
 function StatusBadge({ status }: { status: string }) {
   const isReady = status === 'READY';
   return (
-    <span className={`px-3 py-1 rounded-full text-sm font-medium ${isReady ? 'bg-teal-100 text-teal-800' : 'bg-amber-100 text-amber-800'}`}>
+    <span className={`px-3 py-1 text-sm font-dl-mono ${isReady ? 'bg-dl-bg-alt text-dl-forest' : 'bg-dl-bg-alt text-dl-gold'}`}>
       {status}
     </span>
   );
@@ -73,124 +103,127 @@ export default function CapitalBridgeObserver() {
     fetchData();
   }, []);
 
-  if (loading) return <ObserverLayout title="Capital Bridge" description="SPV coordination and institutional capital deployment" currentTab="capital-bridge"><ObserverLoading /></ObserverLayout>;
-  if (error) return <ObserverLayout title="Capital Bridge" description="SPV coordination and institutional capital deployment" currentTab="capital-bridge"><div className="text-red-600">Error: {error}</div></ObserverLayout>;
-  if (!data) return null;
-
   return (
-    <ObserverLayout 
-      title="Capital Bridge" 
-      description="SPV coordination, property packets, and institutional capital deployment"
-      currentTab="capital-bridge"
-    >
-      <div className="space-y-6">
-        <ObserverCard title="System Status">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Capital Readiness Gate</h3>
-              <p className="text-sm text-gray-500">Observation window status</p>
+    <DesignLawLayout>
+      <Head>
+        <title>Capital Bridge | Institutional Observer | Axiom Protocol</title>
+        <meta name="description" content="SPV coordination and institutional capital deployment" />
+      </Head>
+
+      <h1 className="font-dl-serif text-3xl text-dl-navy">Capital Bridge</h1>
+      <p className="text-dl-gray mt-1 mb-6">SPV coordination, property packets, and institutional capital deployment</p>
+
+      <ObserverNav current="capital-bridge" />
+
+      {loading ? (
+        <p className="text-sm text-dl-gray font-dl-mono">Loading data...</p>
+      ) : error ? (
+        <div className="border border-dl-error p-4">
+          <p className="text-sm text-dl-error">Error: {error}</p>
+        </div>
+      ) : data ? (
+        <div className="space-y-6">
+          <div className="border border-dl-border p-6">
+            <SectionHeading>System Status</SectionHeading>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="font-dl-serif text-lg text-dl-navy">Capital Readiness Gate</h3>
+                <p className="text-sm text-dl-gray">Observation window status</p>
+              </div>
+              <StatusBadge status={data.capitalBridge.status} />
             </div>
-            <StatusBadge status={data.capitalBridge.status} />
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <MetricCard
+                label="Uptime"
+                value={`${(data.readinessGate.attestation.uptimeBps / 100).toFixed(1)}%`}
+              />
+              <MetricCard
+                label="Incidents"
+                value={data.readinessGate.attestation.incidentsCount}
+              />
+              <MetricCard
+                label="Days Elapsed"
+                value={data.readinessGate.daysElapsed}
+                subtitle="Observation window"
+              />
+              <MetricCard
+                label="TVL (USD)"
+                value={`$${data.readinessGate.attestation.tvlUsd.toLocaleString()}`}
+              />
+            </div>
+
+            {data.readinessGate.attestation.lastUpdated && (
+              <p className="text-xs text-dl-gray font-dl-mono">
+                Last attestation: {new Date(data.readinessGate.attestation.lastUpdated).toLocaleString()}
+              </p>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <MetricCard 
-              label="Uptime" 
-              value={`${(data.readinessGate.attestation.uptimeBps / 100).toFixed(1)}%`}
-              color="text-teal-600"
-            />
-            <MetricCard 
-              label="Incidents" 
-              value={data.readinessGate.attestation.incidentsCount}
-              color={data.readinessGate.attestation.incidentsCount === 0 ? 'text-teal-600' : 'text-amber-600'}
-            />
-            <MetricCard 
-              label="Days Elapsed" 
-              value={data.readinessGate.daysElapsed}
-              subtitle="Observation window"
-              color="text-blue-600"
-            />
-            <MetricCard 
-              label="TVL (USD)" 
-              value={`$${data.readinessGate.attestation.tvlUsd.toLocaleString()}`}
-              color="text-purple-600"
-            />
+          <div className="border border-dl-border p-6">
+            <SectionHeading>Capital Bridge Operations</SectionHeading>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <MetricCard
+                label={data.capitalBridge.packets.label}
+                value={data.capitalBridge.packets.total}
+              />
+              <MetricCard
+                label={data.capitalBridge.spvs.label}
+                value={data.capitalBridge.spvs.total}
+              />
+              <MetricCard
+                label={data.capitalBridge.authorizations.label}
+                value={data.capitalBridge.authorizations.total}
+              />
+              <MetricCard
+                label={data.capitalBridge.settlements.label}
+                value={data.capitalBridge.settlements.total}
+              />
+            </div>
           </div>
 
-          {data.readinessGate.attestation.lastUpdated && (
-            <p className="text-xs text-gray-500">
-              Last attestation: {new Date(data.readinessGate.attestation.lastUpdated).toLocaleString()}
-            </p>
-          )}
-        </ObserverCard>
-
-        <ObserverCard title="Capital Bridge Operations">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <MetricCard 
-              label={data.capitalBridge.packets.label}
-              value={data.capitalBridge.packets.total}
-              color="text-amber-600"
-            />
-            <MetricCard 
-              label={data.capitalBridge.spvs.label}
-              value={data.capitalBridge.spvs.total}
-              color="text-blue-600"
-            />
-            <MetricCard 
-              label={data.capitalBridge.authorizations.label}
-              value={data.capitalBridge.authorizations.total}
-              color="text-purple-600"
-            />
-            <MetricCard 
-              label={data.capitalBridge.settlements.label}
-              value={data.capitalBridge.settlements.total}
-              color="text-teal-600"
-            />
+          <div className="border border-dl-border p-6">
+            <SectionHeading>Layer 5G Securitization</SectionHeading>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <MetricCard
+                label={data.securitization.instruments.label}
+                value={data.securitization.instruments.total}
+                subtitle="WholeLoan, Participation, Note, etc."
+              />
+              <MetricCard
+                label={data.securitization.pools.label}
+                value={data.securitization.pools.total}
+                subtitle="Instrument groupings"
+              />
+              <MetricCard
+                label={data.securitization.servicingEvents.label}
+                value={data.securitization.servicingEvents.total}
+                subtitle="Immutable audit trail"
+              />
+            </div>
           </div>
-        </ObserverCard>
 
-        <ObserverCard title="Layer 5G Securitization">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <MetricCard 
-              label={data.securitization.instruments.label}
-              value={data.securitization.instruments.total}
-              subtitle="WholeLoan, Participation, Note, etc."
-              color="text-amber-600"
-            />
-            <MetricCard 
-              label={data.securitization.pools.label}
-              value={data.securitization.pools.total}
-              subtitle="Instrument groupings"
-              color="text-blue-600"
-            />
-            <MetricCard 
-              label={data.securitization.servicingEvents.label}
-              value={data.securitization.servicingEvents.total}
-              subtitle="Immutable audit trail"
-              color="text-purple-600"
-            />
+          <div className="border border-dl-border p-6">
+            <SectionHeading>Verified Contracts</SectionHeading>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {data.proofLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-3 bg-dl-bg-alt text-dl-navy"
+                >
+                  <span className="font-medium">{link.label}</span>
+                  <span className="text-xs text-dl-gray font-dl-mono truncate max-w-[200px]">
+                    {data.contracts[link.label as keyof typeof data.contracts]?.slice(0, 10)}...
+                  </span>
+                </a>
+              ))}
+            </div>
           </div>
-        </ObserverCard>
-
-        <ObserverCard title="Verified Contracts">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {data.proofLinks.map((link) => (
-              <a 
-                key={link.label}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <span className="font-medium text-gray-900">{link.label}</span>
-                <span className="text-xs text-gray-500 font-mono truncate max-w-[200px]">
-                  {data.contracts[link.label as keyof typeof data.contracts]?.slice(0, 10)}...
-                </span>
-              </a>
-            ))}
-          </div>
-        </ObserverCard>
-      </div>
-    </ObserverLayout>
+        </div>
+      ) : null}
+    </DesignLawLayout>
   );
 }

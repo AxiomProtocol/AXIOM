@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import { useState } from 'react';
 import EulerVaultCard from '../components/EulerVaultCard';
+import { DesignLawLayout, SectionHeading } from '../components/design-law';
 
 interface YieldOpportunity {
   id: string;
@@ -97,10 +98,10 @@ export default function EarnPage() {
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
-      case 'low': return 'text-green-600 bg-green-50 border-green-200';
-      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'high': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'low': return 'text-dl-forest bg-dl-bg-alt border-dl-border';
+      case 'medium': return 'text-dl-navy bg-dl-bg-alt border-dl-border';
+      case 'high': return 'text-dl-error bg-dl-bg-alt border-dl-error';
+      default: return 'text-dl-gray bg-dl-bg-alt border-dl-border';
     }
   };
 
@@ -115,116 +116,112 @@ export default function EarnPage() {
   };
 
   return (
-    <>
+    <DesignLawLayout>
       <Head>
         <title>Earn Yield | Axiom Protocol</title>
         <meta name="description" content="Earn yield on your AXUSD and AXM tokens through lending, staking, and savings programs." />
       </Head>
 
-      <div className="min-h-screen bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Earn Yield</h1>
-            <p className="text-gray-600 mt-1">
-              Put your AXUSD and AXM to work with lending, staking, and savings programs
+      <div className="mb-8">
+        <h1 className="font-dl-serif text-3xl text-dl-navy">Earn Yield</h1>
+        <p className="text-dl-gray mt-1">
+          Put your AXUSD and AXM to work with lending, staking, and savings programs
+        </p>
+      </div>
+
+      <div className="mb-8">
+        <h2 className="font-dl-serif text-xl text-dl-navy mb-4 flex items-center gap-2">
+          <span>⭐</span> Featured: AXUSD Lending on Euler
+        </h2>
+        <EulerVaultCard variant="full" showCollateral={true} />
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-6">
+        {types.map((type) => (
+          <button
+            key={type.id}
+            onClick={() => setSelectedType(type.id)}
+            className={`px-4 py-2 text-sm font-medium border ${
+              selectedType === type.id
+                ? 'bg-dl-bg-alt text-dl-navy border-dl-navy'
+                : 'bg-dl-bg text-dl-gray border-dl-border'
+            }`}
+          >
+            <span className="mr-1">{type.icon}</span>
+            {type.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {filteredOpportunities.filter(o => !o.featured).map((opportunity) => (
+          <div 
+            key={opportunity.id}
+            className="bg-dl-bg p-5 border border-dl-border"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{getTypeIcon(opportunity.type)}</span>
+                <div>
+                  <h3 className="text-dl-navy font-dl-serif">{opportunity.name}</h3>
+                  <p className="text-dl-gray text-sm">{opportunity.protocol}</p>
+                </div>
+              </div>
+              <span className={`px-2 py-1 text-xs font-dl-mono border ${getRiskColor(opportunity.risk)}`}>
+                {opportunity.risk}
+              </span>
+            </div>
+
+            <p className="text-dl-gray text-sm mb-4">{opportunity.description}</p>
+
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-dl-gray text-xs">APY</p>
+                <p className="text-dl-forest font-dl-mono font-medium">{opportunity.apy}</p>
+              </div>
+              <div>
+                <p className="text-dl-gray text-xs">Asset</p>
+                <p className="text-dl-navy font-medium">{opportunity.asset}</p>
+              </div>
+              <div>
+                <p className="text-dl-gray text-xs">TVL</p>
+                <p className="text-dl-navy font-dl-mono font-medium">{opportunity.tvl}</p>
+              </div>
+            </div>
+
+            <a
+              href={opportunity.link}
+              target={opportunity.link.startsWith('http') ? '_blank' : undefined}
+              rel={opportunity.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+              className="block w-full py-2 bg-dl-bg-alt text-dl-navy text-center font-medium border border-dl-border"
+            >
+              {opportunity.link.startsWith('http') ? 'Open App' : 'View Details'}
+            </a>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-12 bg-dl-bg-alt border border-dl-border p-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 className="text-dl-navy font-dl-serif text-xl mb-2">New to DeFi Yield?</h3>
+            <p className="text-dl-gray">
+              Learn how to earn yield safely with our beginner guides and risk management tips.
             </p>
           </div>
-
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="text-yellow-500">⭐</span> Featured: AXUSD Lending on Euler
-            </h2>
-            <EulerVaultCard variant="full" showCollateral={true} />
-          </div>
-
-          <div className="flex flex-wrap gap-2 mb-6">
-            {types.map((type) => (
-              <button
-                key={type.id}
-                onClick={() => setSelectedType(type.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
-                  selectedType === type.id
-                    ? 'bg-teal-50 text-teal-700 border-teal-200'
-                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                <span className="mr-1">{type.icon}</span>
-                {type.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredOpportunities.filter(o => !o.featured).map((opportunity) => (
-              <div 
-                key={opportunity.id}
-                className="bg-white rounded-xl p-5 border border-gray-200 hover:border-teal-300 hover:shadow-md transition-all"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{getTypeIcon(opportunity.type)}</span>
-                    <div>
-                      <h3 className="text-gray-900 font-semibold">{opportunity.name}</h3>
-                      <p className="text-gray-500 text-sm">{opportunity.protocol}</p>
-                    </div>
-                  </div>
-                  <span className={`px-2 py-1 rounded text-xs font-medium border ${getRiskColor(opportunity.risk)}`}>
-                    {opportunity.risk}
-                  </span>
-                </div>
-
-                <p className="text-gray-600 text-sm mb-4">{opportunity.description}</p>
-
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-gray-500 text-xs">APY</p>
-                    <p className="text-green-600 font-bold">{opportunity.apy}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 text-xs">Asset</p>
-                    <p className="text-gray-900 font-medium">{opportunity.asset}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 text-xs">TVL</p>
-                    <p className="text-gray-900 font-medium">{opportunity.tvl}</p>
-                  </div>
-                </div>
-
-                <a
-                  href={opportunity.link}
-                  target={opportunity.link.startsWith('http') ? '_blank' : undefined}
-                  rel={opportunity.link.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  className="block w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 text-center rounded-lg font-medium transition-colors"
-                >
-                  {opportunity.link.startsWith('http') ? 'Open App' : 'View Details'}
-                </a>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-12 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-2xl p-6 border border-teal-100">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div>
-                <h3 className="text-gray-900 text-xl font-bold mb-2">New to DeFi Yield?</h3>
-                <p className="text-gray-600">
-                  Learn how to earn yield safely with our beginner guides and risk management tips.
-                </p>
-              </div>
-              <a 
-                href="/learn"
-                className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-semibold transition-colors whitespace-nowrap"
-              >
-                Learn More
-              </a>
-            </div>
-          </div>
-
-          <div className="mt-8 text-center text-gray-500 text-sm">
-            <p>APY rates are variable and subject to change based on market conditions.</p>
-            <p className="mt-1">Always do your own research before investing.</p>
-          </div>
+          <a 
+            href="/learn"
+            className="px-6 py-3 bg-dl-navy text-white font-medium whitespace-nowrap"
+          >
+            Learn More
+          </a>
         </div>
       </div>
-    </>
+
+      <div className="mt-8 text-center text-dl-gray text-sm">
+        <p>APY rates are variable and subject to change based on market conditions.</p>
+        <p className="mt-1">Always do your own research before investing.</p>
+      </div>
+    </DesignLawLayout>
   );
 }

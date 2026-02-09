@@ -18,13 +18,22 @@ export const useOnboarding = () => useContext(OnboardingContext)
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID
 
-const DESIGN_LAW_PAGES = ['/', '/mirdt', '/pilot', '/how-it-works', '/about-us', '/lending-fund']
+const DESIGN_LAW_PAGES = [
+  '/', '/mirdt', '/pilot', '/how-it-works', '/about-us', '/lending-fund',
+  '/dex', '/earn', '/borrow', '/axusd', '/buy-axm',
+  '/community', '/transparency', '/impact', '/join',
+  '/team', '/faq', '/404', '/terms-and-conditions',
+  '/dashboard', '/products', '/roadmap', '/institutional',
+  '/observer'
+]
 
 function isDesignLawPage(pathname) {
   if (DESIGN_LAW_PAGES.includes(pathname)) return true;
   if (pathname.startsWith('/mirdt/')) return true;
   if (pathname.startsWith('/pilot/')) return true;
   if (pathname.startsWith('/lending-fund/')) return true;
+  if (pathname.startsWith('/observer/')) return true;
+  if (pathname.startsWith('/products/')) return true;
   return false;
 }
 

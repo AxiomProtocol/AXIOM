@@ -3,12 +3,13 @@ import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { SwapInterface, PoolList, LiquidityManager, DexStats, UserRewards } from '../components/dex';
 import EulerVaultCard from '../components/EulerVaultCard';
+import { DesignLawLayout, SectionHeading } from '../components/design-law';
 
 const TradingViewChart = dynamic(() => import('../components/dex/TradingViewChart'), { 
   ssr: false,
   loading: () => (
-    <div className="bg-white rounded-xl border border-gray-200 h-[500px] flex items-center justify-center">
-      <div className="text-gray-500">Loading chart...</div>
+    <div className="bg-dl-bg border border-dl-border h-[500px] flex items-center justify-center">
+      <p className="text-sm text-dl-gray font-dl-mono">Loading chart...</p>
     </div>
   )
 });
@@ -67,98 +68,93 @@ export default function DexPage() {
   ];
 
   return (
-    <>
+    <DesignLawLayout>
       <Head>
         <title>Axiom DEX | Decentralized Exchange</title>
         <meta name="description" content="Trade tokens, provide liquidity, and earn rewards on Axiom DEX" />
       </Head>
 
-      <div className="min-h-screen bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Axiom DEX</h1>
-            <p className="text-gray-600 mt-1">Decentralized Exchange on Arbitrum</p>
-          </div>
-          <DexStats />
+      <div className="mb-8">
+        <h1 className="font-dl-serif text-3xl text-dl-navy">Axiom DEX</h1>
+        <p className="text-dl-gray mt-1">Decentralized Exchange on Arbitrum</p>
+      </div>
+      <DexStats />
 
-          <div className="mt-8 flex flex-col lg:flex-row gap-6">
-            <nav className="lg:w-48 flex lg:flex-col gap-2 overflow-x-auto pb-2 lg:pb-0">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'bg-teal-50 text-teal-700 border border-teal-200'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                >
-                  {tab.icon}
-                  <span>{tab.label}</span>
-                </button>
-              ))}
-            </nav>
+      <div className="mt-8 flex flex-col lg:flex-row gap-6">
+        <nav className="lg:w-48 flex lg:flex-col gap-2 overflow-x-auto pb-2 lg:pb-0">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-3 px-4 py-3 font-medium whitespace-nowrap ${
+                activeTab === tab.id
+                  ? 'bg-dl-bg-alt text-dl-navy border-b-2 border-dl-navy'
+                  : 'text-dl-gray'
+              }`}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </nav>
 
-            <main className="flex-1">
-              {activeTab === 'swap' && (
-                <div className="space-y-6">
-                  <TradingViewChart />
-                  <div className="flex justify-center">
-                    <SwapInterface />
-                  </div>
-                </div>
-              )}
-              {activeTab === 'pools' && <PoolList />}
-              {activeTab === 'liquidity' && <LiquidityManager />}
-              {activeTab === 'rewards' && <UserRewards />}
-              {activeTab === 'earn' && (
-                <div className="space-y-6">
-                  <div className="text-center mb-4">
-                    <h2 className="text-xl font-semibold text-gray-900">Earn Yield on AXUSD</h2>
-                    <p className="text-gray-600 text-sm mt-1">Deposit AXUSD to earn interest from borrowers via Euler Finance</p>
-                  </div>
-                  <EulerVaultCard variant="full" showCollateral={true} />
-                  <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                    <h3 className="text-gray-900 font-semibold mb-3">How It Works</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 text-sm font-bold">1</div>
-                        <div>
-                          <p className="text-gray-900 text-sm">Deposit AXUSD into the Euler vault</p>
-                          <p className="text-gray-500 text-xs">Your AXUSD is pooled with other lenders</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 text-sm font-bold">2</div>
-                        <div>
-                          <p className="text-gray-900 text-sm">Borrowers use collateral to borrow AXUSD</p>
-                          <p className="text-gray-500 text-xs">Collateral: USDC, USDT, WETH, ARB vault shares</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 text-sm font-bold">3</div>
-                        <div>
-                          <p className="text-gray-900 text-sm">Earn interest from borrowers</p>
-                          <p className="text-gray-500 text-xs">Interest accrues automatically to your position</p>
-                        </div>
-                      </div>
+        <main className="flex-1">
+          {activeTab === 'swap' && (
+            <div className="space-y-6">
+              <TradingViewChart />
+              <div className="flex justify-center">
+                <SwapInterface />
+              </div>
+            </div>
+          )}
+          {activeTab === 'pools' && <PoolList />}
+          {activeTab === 'liquidity' && <LiquidityManager />}
+          {activeTab === 'rewards' && <UserRewards />}
+          {activeTab === 'earn' && (
+            <div className="space-y-6">
+              <div className="text-center mb-4">
+                <h2 className="font-dl-serif text-xl text-dl-navy">Earn Yield on AXUSD</h2>
+                <p className="text-dl-gray text-sm mt-1">Deposit AXUSD to earn interest from borrowers via Euler Finance</p>
+              </div>
+              <EulerVaultCard variant="full" showCollateral={true} />
+              <div className="bg-dl-bg-alt p-5 border border-dl-border">
+                <h3 className="text-dl-navy font-dl-serif mb-3">How It Works</h3>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 bg-dl-navy flex items-center justify-center text-white text-sm font-medium">1</div>
+                    <div>
+                      <p className="text-dl-navy text-sm">Deposit AXUSD into the Euler vault</p>
+                      <p className="text-dl-gray text-xs">Your AXUSD is pooled with other lenders</p>
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <a href="/earn" className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 text-center rounded-xl font-medium transition-colors">
-                      View All Yield Opportunities
-                    </a>
-                    <a href="/borrow" className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 text-center rounded-xl font-medium transition-colors">
-                      Borrow AXUSD
-                    </a>
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 bg-dl-navy flex items-center justify-center text-white text-sm font-medium">2</div>
+                    <div>
+                      <p className="text-dl-navy text-sm">Borrowers use collateral to borrow AXUSD</p>
+                      <p className="text-dl-gray text-xs">Collateral: USDC, USDT, WETH, ARB vault shares</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 bg-dl-navy flex items-center justify-center text-white text-sm font-medium">3</div>
+                    <div>
+                      <p className="text-dl-navy text-sm">Earn interest from borrowers</p>
+                      <p className="text-dl-gray text-xs">Interest accrues automatically to your position</p>
+                    </div>
                   </div>
                 </div>
-              )}
-            </main>
-          </div>
-        </div>
-
+              </div>
+              <div className="flex gap-3">
+                <a href="/earn" className="flex-1 py-3 bg-dl-bg-alt text-dl-navy text-center font-medium border border-dl-border">
+                  View All Yield Opportunities
+                </a>
+                <a href="/borrow" className="flex-1 py-3 bg-dl-bg-alt text-dl-navy text-center font-medium border border-dl-border">
+                  Borrow AXUSD
+                </a>
+              </div>
+            </div>
+          )}
+        </main>
       </div>
-    </>
+    </DesignLawLayout>
   );
 }

@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
-import { pagesCopy } from '../components/axiomRebuild/copy/pagesCopy';
-import { Web3Hero } from '../components/axiomRebuild/Web3Hero';
-import { Web3Section } from '../components/axiomRebuild/Web3Section';
-import { useScrollToSection } from '../components/axiomRebuild/useScrollToSection';
+import { DesignLawLayout, SectionHeading } from '../components/design-law';
 
 interface ImpactMetrics {
   totalMembers: number;
@@ -81,13 +78,6 @@ const METRIC_CARDS = [
 
 export default function ImpactPage() {
   const [metrics, setMetrics] = useState<ImpactMetrics>(INITIAL_METRICS);
-  
-  const getSearch = useCallback(() => {
-    if (typeof window === 'undefined') return '';
-    return window.location.search;
-  }, []);
-  
-  useScrollToSection(getSearch);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -104,114 +94,43 @@ export default function ImpactPage() {
     fetchMetrics();
   }, []);
 
-  const copy = pagesCopy.impact;
-
   return (
-    <>
+    <DesignLawLayout>
       <Head>
         <title>Impact Dashboard | Axiom</title>
         <meta name="description" content="Real-time metrics showing the measurable impact of the Axiom community." />
       </Head>
-      <div style={{ minHeight: '100vh', background: 'white' }}>
-        {copy.hero && (
-          <Web3Hero
-            kicker={copy.hero.kicker}
-            headline={copy.hero.headline}
-            secondary={copy.hero.secondary}
-            subheadline={copy.hero.subheadline}
-            primaryCta={copy.hero.primaryCta}
-            secondaryCta={copy.hero.secondaryCta}
-            microcopy={copy.hero.microcopy || ''}
-          />
-        )}
 
-        <section id="metrics" style={{ padding: '80px 20px', background: 'linear-gradient(180deg, rgba(0,212,170,0.08) 0%, white 100%)' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 48 }}>
-              <span style={{ color: '#00D4AA', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, fontSize: 14 }}>Live Metrics</span>
-              <h2 style={{ fontSize: 40, fontWeight: 700, margin: '8px 0 0 0', color: '#1a1a2e' }}>Real-Time Impact</h2>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
-              {METRIC_CARDS.map((card, i) => (
-                <div 
-                  key={card.key}
-                  style={{
-                    background: 'rgba(255,255,255,0.95)',
-                    backdropFilter: 'blur(20px)',
-                    borderRadius: 20,
-                    padding: 32,
-                    textAlign: 'center',
-                    border: '1px solid rgba(0,212,170,0.2)',
-                    boxShadow: '0 12px 40px rgba(0,0,0,0.08)',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 20px 60px rgba(0,212,170,0.15)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.08)';
-                  }}
-                >
-                  <div style={{ fontSize: 40, marginBottom: 12 }}>{card.icon}</div>
-                  <div style={{ 
-                    fontSize: 42, 
-                    fontWeight: 700, 
-                    background: 'linear-gradient(135deg, #00D4AA 0%, #7B68EE 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    marginBottom: 8
-                  }}>
-                    <AnimatedCounter 
-                      value={metrics[card.key as keyof ImpactMetrics] as number} 
-                      prefix={card.prefix || ''} 
-                    />
-                  </div>
-                  <div style={{ fontSize: 15, color: 'rgba(26,26,46,0.6)', fontWeight: 500 }}>{card.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+      <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Impact Dashboard</h1>
+      <p className="text-sm text-dl-gray mb-8">Real-time metrics showing the measurable impact of the Axiom community.</p>
 
-        {copy.sections.map((s, i) => (
-          <Web3Section
-            key={s.id}
-            id={s.id}
-            title={s.title}
-            body={s.body}
-            bullets={s.bullets}
-            primaryCta={s.primaryCta}
-            secondaryCta={s.secondaryCta}
-            image={s.image}
-            imageAlt={s.imageAlt}
-            index={i}
-            variant={s.id === "growth" ? "dark" : "default"}
-          />
-        ))}
+      <section id="metrics" className="mb-10">
+        <SectionHeading>Live Metrics</SectionHeading>
 
-        <section style={{ padding: '60px 20px', background: 'rgba(0,212,170,0.05)', textAlign: 'center' }}>
-          <div style={{ maxWidth: 800, margin: '0 auto' }}>
-            <div style={{ 
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '8px 16px',
-              background: 'rgba(0,212,170,0.1)',
-              borderRadius: 30,
-              marginBottom: 12
-            }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00D4AA', animation: 'pulse 2s infinite' }} />
-              <span style={{ fontSize: 14, color: '#00D4AA', fontWeight: 500 }}>Live Data</span>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border">
+          {METRIC_CARDS.map((card) => (
+            <div
+              key={card.key}
+              className="px-4 py-4 bg-dl-bg border-r border-b border-dl-border text-center"
+            >
+              <div className="text-2xl mb-2">{card.icon}</div>
+              <div className="font-dl-mono text-lg font-semibold text-dl-navy mb-1">
+                <AnimatedCounter
+                  value={metrics[card.key as keyof ImpactMetrics] as number}
+                  prefix={card.prefix || ''}
+                />
+              </div>
+              <div className="text-xs text-dl-gray">{card.label}</div>
             </div>
-            <p style={{ fontSize: 16, color: 'rgba(26,26,46,0.6)', margin: 0 }}>
-              All metrics are updated in real-time and verifiable on-chain. Last updated: {new Date().toLocaleString()}
-            </p>
-          </div>
-        </section>
-      </div>
-    </>
+          ))}
+        </div>
+      </section>
+
+      <section className="border border-dl-border bg-dl-bg-alt p-4 mb-10">
+        <p className="text-xs text-dl-gray font-dl-mono text-center">
+          All metrics are updated in real-time and verifiable on-chain. Last updated: {new Date().toLocaleString()}
+        </p>
+      </section>
+    </DesignLawLayout>
   );
 }

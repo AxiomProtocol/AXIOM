@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
+import { DesignLawLayout, SectionHeading } from '../components/design-law';
 
 function cleanAIContent(text) {
   if (!text) return '';
@@ -203,14 +205,10 @@ export default function PurposeGroupOnboarding() {
         throw new Error(data.error || 'Failed to join Purpose Group');
       }
       
-      // Save onboarding completion flags
       localStorage.setItem('axiom_onboarding_completed', 'true');
       localStorage.setItem('axiom_onboarding_complete', 'true');
-      
-      // Save user preferences for personalized dashboard
       localStorage.setItem('axiom_user_name', formData.name);
       
-      // Map purpose to interests for personalized dashboard
       const purposeToInterests = {
         'emergency_fund': ['susu'],
         'land_acquisition': ['land', 'susu'],
@@ -238,25 +236,24 @@ export default function PurposeGroupOnboarding() {
       case 0:
         return (
           <div className="text-center">
-            <div className="text-6xl mb-6">✨</div>
+            <div className="text-4xl mb-4">✨</div>
             
-            <h2 className="text-3xl font-bold text-yellow-500 mb-4">Welcome to The Wealth Practice</h2>
-            <p className="text-gray-300 text-lg mb-8 max-w-xl mx-auto">
+            <h2 className="font-dl-serif text-2xl text-dl-navy mb-3">Welcome to The Wealth Practice</h2>
+            <p className="text-sm text-dl-gray mb-6 max-w-xl mx-auto">
               You're about to discover a proven system for building wealth together through Group Economics.
             </p>
 
-            {/* VIDEO PLACEHOLDER - Ready for new Discord-focused video */}
-            <div className="max-w-2xl mx-auto mb-8 bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-8 border border-yellow-500/30">
-              <div className="text-5xl mb-4">🌱</div>
-              <h3 className="text-xl font-bold text-white mb-3">Join 5,000+ Builders</h3>
-              <p className="text-gray-400 mb-6">
+            <div className="max-w-2xl mx-auto mb-6 border border-dl-border bg-dl-bg-alt p-6">
+              <div className="text-3xl mb-3">🌱</div>
+              <h3 className="font-dl-serif text-lg text-dl-navy mb-2">Join 5,000+ Builders</h3>
+              <p className="text-sm text-dl-gray mb-4">
                 Connect with a community of people committed to building generational wealth through collective land ownership.
               </p>
               <a 
                 href="https://discord.gg/mKYFjSeR4" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold py-3 px-6 rounded-xl transition-all"
+                className="inline-flex items-center gap-2 bg-dl-navy text-white text-sm font-medium py-2 px-4"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
@@ -265,21 +262,21 @@ export default function PurposeGroupOnboarding() {
               </a>
             </div>
             
-            <div className="grid md:grid-cols-3 gap-6 mt-8">
-              <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
-                <div className="text-3xl mb-3">🤝</div>
-                <h3 className="font-semibold text-white mb-2">Step 1: Join Discord</h3>
-                <p className="text-gray-400 text-sm">Connect with the community and learn the basics</p>
+            <div className="grid md:grid-cols-3 gap-4 mt-6">
+              <div className="border border-dl-border p-4">
+                <div className="text-2xl mb-2">🤝</div>
+                <h3 className="text-sm font-medium text-dl-navy mb-1">Step 1: Join Discord</h3>
+                <p className="text-xs text-dl-gray">Connect with the community and learn the basics</p>
               </div>
-              <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
-                <div className="text-3xl mb-3">📚</div>
-                <h3 className="font-semibold text-white mb-2">Step 2: Get Educated</h3>
-                <p className="text-gray-400 text-sm">Learn about land ownership and wealth building</p>
+              <div className="border border-dl-border p-4">
+                <div className="text-2xl mb-2">📚</div>
+                <h3 className="text-sm font-medium text-dl-navy mb-1">Step 2: Get Educated</h3>
+                <p className="text-xs text-dl-gray">Learn about land ownership and wealth building</p>
               </div>
-              <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
-                <div className="text-3xl mb-3">🏡</div>
-                <h3 className="font-semibold text-white mb-2">Step 3: Own Land</h3>
-                <p className="text-gray-400 text-sm">Pool resources to acquire land together</p>
+              <div className="border border-dl-border p-4">
+                <div className="text-2xl mb-2">🏡</div>
+                <h3 className="text-sm font-medium text-dl-navy mb-1">Step 3: Own Land</h3>
+                <p className="text-xs text-dl-gray">Pool resources to acquire land together</p>
               </div>
             </div>
           </div>
@@ -288,26 +285,26 @@ export default function PurposeGroupOnboarding() {
       case 1:
         return (
           <div>
-            <h2 className="text-2xl font-bold text-white mb-2 text-center">Where are you located?</h2>
-            <p className="text-gray-400 mb-8 text-center">Join members in your region for local connections and meetups</p>
+            <h2 className="font-dl-serif text-xl text-dl-navy mb-1 text-center">Where are you located?</h2>
+            <p className="text-sm text-dl-gray mb-6 text-center">Join members in your region for local connections and meetups</p>
             
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-3">
               {regions.map((region) => (
                 <button
                   key={region.id}
                   onClick={() => setFormData({ ...formData, region: region.id })}
-                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                  className={`p-3 border text-left ${
                     formData.region === region.id
-                      ? 'border-yellow-500 bg-yellow-500/10'
-                      : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
+                      ? 'border-dl-navy bg-dl-bg-alt'
+                      : 'border-dl-border bg-dl-bg'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{region.icon}</span>
+                    <span className="text-xl">{region.icon}</span>
                     <div>
-                      <div className="font-semibold text-white">{region.name}</div>
+                      <div className="text-sm font-medium text-dl-navy">{region.name}</div>
                       {region.members > 0 && (
-                        <div className="text-sm text-gray-400">{region.members} members</div>
+                        <div className="text-xs text-dl-gray font-dl-mono">{region.members} members</div>
                       )}
                     </div>
                   </div>
@@ -320,26 +317,26 @@ export default function PurposeGroupOnboarding() {
       case 2:
         return (
           <div>
-            <h2 className="text-2xl font-bold text-white mb-2 text-center">What's your purpose?</h2>
-            <p className="text-gray-400 mb-8 text-center">Choose a goal that matches your wealth-building journey</p>
+            <h2 className="font-dl-serif text-xl text-dl-navy mb-1 text-center">What's your purpose?</h2>
+            <p className="text-sm text-dl-gray mb-6 text-center">Choose a goal that matches your wealth-building journey</p>
             
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-3">
               {purposes.map((purpose) => (
                 <button
                   key={purpose.id}
                   onClick={() => setFormData({ ...formData, purpose: purpose.id })}
-                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                  className={`p-3 border text-left ${
                     formData.purpose === purpose.id
-                      ? 'border-yellow-500 bg-yellow-500/10'
-                      : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
+                      ? 'border-dl-navy bg-dl-bg-alt'
+                      : 'border-dl-border bg-dl-bg'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{purpose.icon}</span>
+                    <span className="text-xl">{purpose.icon}</span>
                     <div>
-                      <div className="font-semibold text-white">{purpose.name}</div>
-                      <div className="text-sm text-gray-400">{purpose.description}</div>
-                      <div className="text-xs text-yellow-500 mt-1">From ${purpose.monthlyMin}/month</div>
+                      <div className="text-sm font-medium text-dl-navy">{purpose.name}</div>
+                      <div className="text-xs text-dl-gray">{purpose.description}</div>
+                      <div className="text-xs text-dl-navy font-dl-mono mt-1">From ${purpose.monthlyMin}/month</div>
                     </div>
                   </div>
                 </button>
@@ -351,10 +348,10 @@ export default function PurposeGroupOnboarding() {
       case 3:
         return (
           <div>
-            <h2 className="text-2xl font-bold text-white mb-2 text-center">Set your commitment</h2>
-            <p className="text-gray-400 mb-8 text-center">How much can you consistently contribute each month?</p>
+            <h2 className="font-dl-serif text-xl text-dl-navy mb-1 text-center">Set your commitment</h2>
+            <p className="text-sm text-dl-gray mb-6 text-center">How much can you consistently contribute each month?</p>
             
-            <div className="grid md:grid-cols-2 gap-4 mb-8">
+            <div className="grid md:grid-cols-2 gap-3 mb-6">
               {commitmentLevels.map((level) => (
                 <button
                   key={level.id}
@@ -362,19 +359,19 @@ export default function PurposeGroupOnboarding() {
                     ...formData, 
                     commitmentAmount: level.amount || formData.commitmentAmount 
                   })}
-                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                  className={`p-3 border text-left ${
                     formData.commitmentAmount === level.amount
-                      ? 'border-yellow-500 bg-yellow-500/10'
-                      : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
+                      ? 'border-dl-navy bg-dl-bg-alt'
+                      : 'border-dl-border bg-dl-bg'
                   }`}
                 >
                   <div className="flex justify-between items-center">
                     <div>
-                      <div className="font-semibold text-white">{level.label}</div>
-                      <div className="text-sm text-gray-400">{level.description}</div>
+                      <div className="text-sm font-medium text-dl-navy">{level.label}</div>
+                      <div className="text-xs text-dl-gray">{level.description}</div>
                     </div>
                     {level.amount > 0 && (
-                      <div className="text-xl font-bold text-yellow-500">${level.amount}</div>
+                      <div className="text-lg font-dl-mono font-semibold text-dl-navy">${level.amount}</div>
                     )}
                   </div>
                 </button>
@@ -382,116 +379,92 @@ export default function PurposeGroupOnboarding() {
             </div>
 
             {formData.commitmentAmount === 0 && (
-              <div className="mb-8">
-                <label className="block text-sm text-gray-400 mb-2">Custom amount</label>
+              <div className="mb-6">
+                <label className="block text-xs text-dl-gray mb-1">Custom amount</label>
                 <input
                   type="number"
                   min="25"
                   placeholder="Enter amount"
                   onChange={(e) => setFormData({ ...formData, commitmentAmount: parseInt(e.target.value) || 0 })}
-                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                  className="w-full px-3 py-2 border border-dl-border bg-dl-bg text-dl-navy text-sm font-dl-mono"
                 />
               </div>
             )}
 
-            <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
-              <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-                <span className="text-yellow-500">✨</span> Your 6-Month Projection
-              </h3>
+            <div className="border border-dl-border p-4 mb-6">
+              <h3 className="text-sm font-medium text-dl-navy mb-3">Your 6-Month Projection</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-gray-400 text-sm">Monthly contribution</div>
-                  <div className="text-xl font-bold text-white">${formData.commitmentAmount}</div>
+                  <div className="text-xs text-dl-gray">Monthly contribution</div>
+                  <div className="text-lg font-dl-mono font-semibold text-dl-navy">${formData.commitmentAmount}</div>
                 </div>
                 <div>
-                  <div className="text-gray-400 text-sm">6-month savings</div>
-                  <div className="text-xl font-bold text-yellow-500">${formData.commitmentAmount * 6}</div>
+                  <div className="text-xs text-dl-gray">6-month savings</div>
+                  <div className="text-lg font-dl-mono font-semibold text-dl-navy">${formData.commitmentAmount * 6}</div>
                 </div>
               </div>
             </div>
 
             {aiInsights && (
-              <div className="mt-6 bg-purple-900/20 rounded-xl p-6 border border-purple-500/30">
-                <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
-                  <span>🤖</span> AI Insights for Your Journey
-                </h3>
-                <p className="text-gray-300 text-sm whitespace-pre-wrap">{cleanAIContent(aiInsights).slice(0, 500)}...</p>
+              <div className="border border-dl-border bg-dl-bg-alt p-4 mb-6">
+                <h3 className="text-sm font-medium text-dl-navy mb-2">AI Insights for Your Journey</h3>
+                <p className="text-xs text-dl-gray whitespace-pre-wrap">{cleanAIContent(aiInsights).slice(0, 500)}...</p>
               </div>
             )}
 
             {(matchedGroups.length > 0 || matchLoading) && (
-              <div className="mt-6 bg-green-900/20 rounded-xl p-6 border border-green-500/30">
-                <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-                  <span>⚡</span> Top Matched Groups for You
-                  <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full">AI-Powered</span>
+              <div className="border border-dl-border bg-dl-bg-alt p-4">
+                <h3 className="text-sm font-medium text-dl-navy mb-3">
+                  Top Matched Groups for You
                 </h3>
                 
                 {matchLoading ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="h-20 bg-gray-800 rounded-lg animate-pulse" />
-                    ))}
-                  </div>
+                  <p className="text-sm text-dl-gray font-dl-mono">Finding matches...</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {matchedGroups.map((group, idx) => {
                       const spotsLeft = (group.maxMembers || 12) - (group.memberCount || 0);
-                      const urgencyHours = spotsLeft <= 3 ? Math.floor(Math.random() * 24) + 6 : Math.floor(Math.random() * 72) + 24;
                       
                       return (
                         <div 
                           key={group.groupId || idx}
-                          className={`bg-gray-800/80 rounded-lg p-4 border ${
-                            idx === 0 ? 'border-yellow-500/50 ring-1 ring-yellow-500/20' : 'border-gray-700'
+                          className={`border p-3 ${
+                            idx === 0 ? 'border-dl-navy bg-dl-bg' : 'border-dl-border bg-dl-bg'
                           }`}
                         >
-                          <div className="flex justify-between items-start mb-2">
+                          <div className="flex justify-between items-start mb-1">
                             <div className="flex items-center gap-2">
                               {idx === 0 && (
-                                <span className="text-xs bg-yellow-500 text-black px-2 py-0.5 rounded-full font-semibold">
+                                <span className="text-xs bg-dl-navy text-white px-2 py-0.5 font-medium">
                                   Best Match
                                 </span>
                               )}
-                              <span className="font-semibold text-white">{group.groupName}</span>
+                              <span className="text-sm font-medium text-dl-navy">{group.groupName}</span>
                             </div>
                             <div className="text-right">
-                              <div className="text-sm font-bold text-green-400">{group.matchScore}% Match</div>
+                              <div className="text-xs font-dl-mono text-dl-navy">{group.matchScore}% Match</div>
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-4 text-xs text-gray-400 mb-3">
-                            <span className="flex items-center gap-1">
-                              <span>📍</span> {group.region || 'National'}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <span>💰</span> ${group.avgContribution || 100}/mo
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <span>⭐</span> {group.trustScore || 70} trust
-                            </span>
+                          <div className="flex items-center gap-3 text-xs text-dl-gray mb-2">
+                            <span>📍 {group.region || 'National'}</span>
+                            <span>💰 ${group.avgContribution || 100}/mo</span>
+                            <span>⭐ {group.trustScore || 70} trust</span>
                           </div>
                           
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
-                              <div className={`text-xs px-2 py-1 rounded-full ${
+                              <span className={`text-xs border px-2 py-0.5 ${
                                 spotsLeft <= 3 
-                                  ? 'bg-red-500/20 text-red-300' 
-                                  : 'bg-gray-700 text-gray-300'
+                                  ? 'border-dl-error text-dl-error' 
+                                  : 'border-dl-border text-dl-gray'
                               }`}>
                                 {spotsLeft} spots left
-                              </div>
-                              <div className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${
-                                urgencyHours <= 24 
-                                  ? 'bg-orange-500/20 text-orange-300' 
-                                  : 'bg-gray-700/50 text-gray-400'
-                              }`}>
-                                <span className={urgencyHours <= 24 ? 'animate-pulse' : ''}>⏱️</span>
-                                <span>~{urgencyHours}h to fill</span>
-                              </div>
+                              </span>
                             </div>
                             {group.matchReasons && group.matchReasons.length > 0 && (
-                              <div className="text-xs text-gray-500">
-                                {group.matchReasons.slice(0, 2).join(' • ')}
+                              <div className="text-xs text-dl-gray">
+                                {group.matchReasons.slice(0, 2).join(' · ')}
                               </div>
                             )}
                           </div>
@@ -502,7 +475,7 @@ export default function PurposeGroupOnboarding() {
                 )}
                 
                 {matchedGroups.length > 0 && (
-                  <p className="text-center text-gray-400 text-xs mt-4">
+                  <p className="text-center text-xs text-dl-gray mt-3">
                     Groups matched based on your region, purpose, and contribution level
                   </p>
                 )}
@@ -514,12 +487,12 @@ export default function PurposeGroupOnboarding() {
       case 4:
         return (
           <div>
-            <h2 className="text-2xl font-bold text-white mb-2 text-center">Let's connect</h2>
-            <p className="text-gray-400 mb-8 text-center">Enter your details to join the Purpose Group</p>
+            <h2 className="font-dl-serif text-xl text-dl-navy mb-1 text-center">Let's connect</h2>
+            <p className="text-sm text-dl-gray mb-6 text-center">Enter your details to join the Purpose Group</p>
             
             <div className="max-w-md mx-auto space-y-4">
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Your name *</label>
+                <label className="block text-xs text-dl-gray mb-1">Your name *</label>
                 <input
                   type="text"
                   value={formData.name}
@@ -528,15 +501,15 @@ export default function PurposeGroupOnboarding() {
                     if (errors.name) setErrors({ ...errors, name: null });
                   }}
                   placeholder="Enter your full name"
-                  className={`w-full p-3 bg-gray-800 border rounded-lg text-white ${
-                    errors.name ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full px-3 py-2 border bg-dl-bg text-dl-navy text-sm font-dl-mono ${
+                    errors.name ? 'border-dl-error' : 'border-dl-border'
                   }`}
                 />
-                {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
+                {errors.name && <p className="text-dl-error text-xs mt-1">{errors.name}</p>}
               </div>
               
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Email address *</label>
+                <label className="block text-xs text-dl-gray mb-1">Email address *</label>
                 <input
                   type="email"
                   value={formData.email}
@@ -545,45 +518,45 @@ export default function PurposeGroupOnboarding() {
                     if (errors.email) setErrors({ ...errors, email: null });
                   }}
                   placeholder="your@email.com"
-                  className={`w-full p-3 bg-gray-800 border rounded-lg text-white ${
-                    errors.email ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full px-3 py-2 border bg-dl-bg text-dl-navy text-sm font-dl-mono ${
+                    errors.email ? 'border-dl-error' : 'border-dl-border'
                   }`}
                 />
-                {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
+                {errors.email && <p className="text-dl-error text-xs mt-1">{errors.email}</p>}
               </div>
               
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Phone (optional)</label>
+                <label className="block text-xs text-dl-gray mb-1">Phone (optional)</label>
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="(555) 123-4567"
-                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                  className="w-full px-3 py-2 border border-dl-border bg-dl-bg text-dl-navy text-sm font-dl-mono"
                 />
               </div>
               
               {submitError && (
-                <div className="p-4 bg-red-900/30 border border-red-500/50 rounded-lg">
-                  <p className="text-red-400 text-sm">{submitError}</p>
+                <div className="border border-dl-error bg-dl-bg p-3">
+                  <p className="text-dl-error text-xs">{submitError}</p>
                 </div>
               )}
             </div>
 
-            <div className="mt-8 bg-gray-800/50 rounded-xl p-6 border border-gray-700 max-w-md mx-auto">
-              <h3 className="font-semibold text-white mb-4">Your Journey Summary</h3>
-              <div className="space-y-3 text-sm">
+            <div className="mt-6 border border-dl-border p-4 max-w-md mx-auto">
+              <h3 className="text-sm font-medium text-dl-navy mb-3">Your Journey Summary</h3>
+              <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Region:</span>
-                  <span className="text-white">{regions.find(r => r.id === formData.region)?.name}</span>
+                  <span className="text-dl-gray">Region:</span>
+                  <span className="text-dl-navy">{regions.find(r => r.id === formData.region)?.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Purpose:</span>
-                  <span className="text-white">{purposes.find(p => p.id === formData.purpose)?.name}</span>
+                  <span className="text-dl-gray">Purpose:</span>
+                  <span className="text-dl-navy">{purposes.find(p => p.id === formData.purpose)?.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Monthly commitment:</span>
-                  <span className="text-yellow-500 font-bold">${formData.commitmentAmount}</span>
+                  <span className="text-dl-gray">Monthly commitment:</span>
+                  <span className="text-dl-navy font-dl-mono font-semibold">${formData.commitmentAmount}</span>
                 </div>
               </div>
             </div>
@@ -593,48 +566,42 @@ export default function PurposeGroupOnboarding() {
       default:
         return (
           <div className="text-center">
-            <div className="text-6xl mb-6">🎉</div>
-            <h2 className="text-3xl font-bold text-yellow-500 mb-4">Welcome to the Family!</h2>
-            <p className="text-gray-300 text-lg mb-8 max-w-xl mx-auto">
+            <div className="text-4xl mb-4">🎉</div>
+            <h2 className="font-dl-serif text-2xl text-dl-navy mb-3">Welcome to the Family!</h2>
+            <p className="text-sm text-dl-gray mb-6 max-w-xl mx-auto">
               You've successfully joined a Purpose Group. Your journey toward building wealth 
               together starts now.
             </p>
             
-            <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700 max-w-md mx-auto mb-8">
-              <h3 className="font-semibold text-white mb-4">What's Next?</h3>
-              <ul className="text-left space-y-3 text-gray-300">
+            <div className="border border-dl-border p-4 max-w-md mx-auto mb-6">
+              <h3 className="text-sm font-medium text-dl-navy mb-3">What's Next?</h3>
+              <ul className="text-left space-y-2 text-sm text-dl-navy">
                 <li className="flex gap-2">
-                  <span className="text-yellow-500">✓</span>
+                  <span className="text-dl-forest">✓</span>
                   Check your email for welcome instructions
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-yellow-500">✓</span>
+                  <span className="text-dl-forest">✓</span>
                   Join your regional Interest Hub
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-yellow-500">✓</span>
+                  <span className="text-dl-forest">✓</span>
                   Meet your fellow Purpose Group members
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-yellow-500">✓</span>
+                  <span className="text-dl-forest">✓</span>
                   Make your first contribution
                 </li>
               </ul>
             </div>
             
-            <div className="flex gap-4 justify-center flex-wrap">
-              <button 
-                onClick={() => router.push('/dashboard')}
-                className="px-6 py-3 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 transition-colors cursor-pointer"
-              >
+            <div className="flex gap-3 justify-center flex-wrap">
+              <Link href="/dashboard" className="px-4 py-2 bg-dl-navy text-white text-sm font-medium">
                 Go to Your Dashboard
-              </button>
-              <button 
-                onClick={() => router.push('/')}
-                className="px-6 py-3 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors cursor-pointer"
-              >
+              </Link>
+              <Link href="/" className="px-4 py-2 border border-dl-border text-dl-navy bg-dl-bg text-sm">
                 Explore Homepage
-              </button>
+              </Link>
             </div>
           </div>
         );
@@ -661,25 +628,26 @@ export default function PurposeGroupOnboarding() {
 
   if (showVideo) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-900 flex flex-col items-center justify-start px-4 py-8 pt-24">
-        <div className="w-full max-w-4xl">
-          <div className="text-center mb-8">
-            <div className="inline-block mb-4">
-              <span className="text-5xl">🌱</span>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
-              Reclaim What Was Taken.<br />
-              <span className="text-yellow-500">Build What Was Denied.</span>
+      <DesignLawLayout>
+        <Head>
+          <title>Join Axiom | Purpose Group Onboarding</title>
+        </Head>
+
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-6">
+            <div className="text-3xl mb-3">🌱</div>
+            <h1 className="font-dl-serif text-3xl text-dl-navy mb-2">
+              Reclaim What Was Taken. Build What Was Denied.
             </h1>
-            <p className="text-gray-300 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mt-4">
+            <p className="text-sm text-dl-gray max-w-2xl mx-auto leading-relaxed mt-3">
               For generations, land was taken quietly. Not through force, but through paperwork. Through missing wills. Through laws that families were never taught to navigate.
             </p>
           </div>
 
-          <div className="max-w-3xl mx-auto mb-8">
+          <div className="max-w-3xl mx-auto mb-6">
             <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
               <iframe
-                className="absolute top-0 left-0 w-full h-full rounded-2xl shadow-2xl border border-gray-700"
+                className="absolute top-0 left-0 w-full h-full border border-dl-border"
                 src="https://www.youtube.com/embed/SeU1i0h9o_Y?rel=0"
                 title="Axiom - Reclaim What Was Taken"
                 frameBorder="0"
@@ -689,44 +657,44 @@ export default function PurposeGroupOnboarding() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl p-8 border border-yellow-500/30 mb-8">
-            <h2 className="text-2xl font-bold text-white mb-4 text-center">Axiom exists to change that.</h2>
-            <p className="text-gray-300 text-center mb-6">
+          <div className="border border-dl-border bg-dl-bg-alt p-6 mb-6">
+            <h2 className="font-dl-serif text-xl text-dl-navy mb-3 text-center">Axiom exists to change that.</h2>
+            <p className="text-sm text-dl-gray text-center mb-4">
               Axiom is infrastructure — for truth, for record-keeping, and for reclamation.
             </p>
             
-            <div className="grid md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-gray-800/50 rounded-xl p-4 text-center">
-                <div className="text-3xl mb-2">📜</div>
-                <h3 className="font-semibold text-white text-sm">Land Reclamation Workbook</h3>
-                <p className="text-gray-400 text-xs mt-1">Trace ancestry, identify records, rebuild chains of title</p>
+            <div className="grid md:grid-cols-3 gap-3 mb-4">
+              <div className="border border-dl-border p-3 text-center">
+                <div className="text-2xl mb-1">📜</div>
+                <h3 className="text-xs font-medium text-dl-navy">Land Reclamation Workbook</h3>
+                <p className="text-xs text-dl-gray mt-1">Trace ancestry, identify records, rebuild chains of title</p>
               </div>
-              <div className="bg-gray-800/50 rounded-xl p-4 text-center">
-                <div className="text-3xl mb-2">🏡</div>
-                <h3 className="font-semibold text-white text-sm">Community Land Fund</h3>
-                <p className="text-gray-400 text-xs mt-1">Hold, protect, and steward land collectively</p>
+              <div className="border border-dl-border p-3 text-center">
+                <div className="text-2xl mb-1">🏡</div>
+                <h3 className="text-xs font-medium text-dl-navy">Community Land Fund</h3>
+                <p className="text-xs text-dl-gray mt-1">Hold, protect, and steward land collectively</p>
               </div>
-              <div className="bg-gray-800/50 rounded-xl p-4 text-center">
-                <div className="text-3xl mb-2">🚛</div>
-                <h3 className="font-semibold text-white text-sm">Sovran Logistics</h3>
-                <p className="text-gray-400 text-xs mt-1">From land, to harvest, to movement</p>
+              <div className="border border-dl-border p-3 text-center">
+                <div className="text-2xl mb-1">🚛</div>
+                <h3 className="text-xs font-medium text-dl-navy">Sovran Logistics</h3>
+                <p className="text-xs text-dl-gray mt-1">From land, to harvest, to movement</p>
               </div>
             </div>
 
-            <div className="bg-green-900/30 rounded-xl p-6 border border-green-500/30 text-center">
-              <h3 className="text-xl font-bold text-white mb-2">The Journey Begins in Discord</h3>
-              <p className="text-gray-300 mb-4">
-                Join as a participant, not a customer. Get a <span className="text-yellow-500 font-semibold">free research checklist</span> that shows exactly how heir property research works.
+            <div className="border border-dl-border bg-dl-bg p-4 text-center">
+              <h3 className="font-dl-serif text-lg text-dl-navy mb-2">The Journey Begins in Discord</h3>
+              <p className="text-sm text-dl-gray mb-3">
+                Join as a participant, not a customer. Get a free research checklist that shows exactly how heir property research works.
               </p>
-              <p className="text-gray-400 text-sm mb-6">No pressure. No cost. Just clarity.</p>
+              <p className="text-xs text-dl-gray mb-4">No pressure. No cost. Just clarity.</p>
               
               <a 
                 href="https://discord.gg/mKYFjSeR4" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-3 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold py-4 px-8 rounded-xl transition-all text-lg shadow-lg hover:scale-105 transform duration-200"
+                className="inline-flex items-center gap-2 bg-dl-navy text-white text-sm font-medium py-2 px-4"
               >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
                 </svg>
                 Join the Axiom Community
@@ -735,101 +703,104 @@ export default function PurposeGroupOnboarding() {
           </div>
 
           <div className="text-center">
-            <p className="text-gray-400 text-sm mb-4">Already a member? Continue to explore:</p>
+            <p className="text-xs text-dl-gray mb-3">Already a member? Continue to explore:</p>
             <button
               onClick={skipVideo}
-              className="px-6 py-3 bg-gray-700 text-white rounded-xl font-semibold hover:bg-gray-600 transition-colors"
+              className="px-4 py-2 border border-dl-border text-dl-navy bg-dl-bg text-sm font-medium"
             >
               Continue to Purpose Groups
             </button>
           </div>
 
-          <div className="mt-12 text-center">
-            <p className="text-gray-500 text-sm italic max-w-xl mx-auto">
+          <div className="mt-8 text-center">
+            <p className="text-xs text-dl-gray italic max-w-xl mx-auto">
               "Axiom is not asking people to believe. It is giving them tools. And for the first time in a long time — the record can speak for itself."
             </p>
           </div>
         </div>
-      </div>
+      </DesignLawLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 py-12 px-4 pb-24">
-        <div className="max-w-3xl mx-auto">
-          {currentStep < steps.length && currentStep > 0 && (
-            <div className="mb-12">
-              <div className="flex items-center justify-between mb-4">
-                {steps.slice(1).map((step, idx) => (
-                  <div 
-                    key={step.id}
-                    className={`flex items-center ${idx < steps.length - 2 ? 'flex-1' : ''}`}
-                  >
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg
-                      ${idx + 1 <= currentStep 
-                        ? 'bg-yellow-500 text-black' 
-                        : 'bg-gray-700 text-gray-400'
-                      }`}
-                    >
-                      {step.icon}
-                    </div>
-                    {idx < steps.length - 2 && (
-                      <div className={`flex-1 h-1 mx-2 rounded ${
-                        idx + 1 < currentStep ? 'bg-yellow-500' : 'bg-gray-700'
-                      }`} />
-                    )}
+    <DesignLawLayout>
+      <Head>
+        <title>Join Axiom | Purpose Group Onboarding</title>
+      </Head>
+
+      <div className="max-w-3xl mx-auto">
+        {currentStep < steps.length && currentStep > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-3">
+              {steps.slice(1).map((step, idx) => (
+                <div 
+                  key={step.id}
+                  className={`flex items-center ${idx < steps.length - 2 ? 'flex-1' : ''}`}
+                >
+                  <div className={`w-8 h-8 flex items-center justify-center text-sm ${
+                    idx + 1 <= currentStep 
+                      ? 'bg-dl-navy text-white' 
+                      : 'bg-dl-bg-alt border border-dl-border text-dl-gray'
+                  }`}>
+                    {step.icon}
                   </div>
-                ))}
-              </div>
-              <div className="text-center">
-                <span className="text-sm text-gray-400">
-                  Step {currentStep} of {steps.length - 1}: {steps[currentStep].title}
-                </span>
-              </div>
+                  {idx < steps.length - 2 && (
+                    <div className={`flex-1 h-px mx-2 ${
+                      idx + 1 < currentStep ? 'bg-dl-navy' : 'bg-dl-border'
+                    }`} />
+                  )}
+                </div>
+              ))}
             </div>
-          )}
-
-          <div className="bg-gray-900/80 rounded-2xl border border-gray-700 p-8">
-            {renderStep()}
+            <div className="text-center">
+              <span className="text-xs text-dl-gray font-dl-mono">
+                Step {currentStep} of {steps.length - 1}: {steps[currentStep].title}
+              </span>
+            </div>
           </div>
+        )}
 
-          {currentStep < steps.length && currentStep > 0 && (
-            <div className="flex justify-between mt-8">
-              <button
-                onClick={handleBackWithVideo}
-                className="px-6 py-3 rounded-lg font-semibold transition-colors bg-gray-700 text-white hover:bg-gray-600"
-              >
-                Back
-              </button>
-              
-              {currentStep < steps.length - 1 ? (
-                <button
-                  onClick={handleNext}
-                  disabled={!canProceed()}
-                  className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-                    canProceed()
-                      ? 'bg-yellow-500 text-black hover:bg-yellow-400'
-                      : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  Continue
-                </button>
-              ) : (
-                <button
-                  onClick={handleSubmit}
-                  disabled={!canProceed() || loading}
-                  className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-                    canProceed() && !loading
-                      ? 'bg-yellow-500 text-black hover:bg-yellow-400'
-                      : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  {loading ? 'Joining...' : 'Join Purpose Group'}
-                </button>
-              )}
-            </div>
-          )}
+        <div className="border border-dl-border bg-dl-bg p-6">
+          {renderStep()}
         </div>
-    </div>
+
+        {currentStep < steps.length && currentStep > 0 && (
+          <div className="flex justify-between mt-6">
+            <button
+              onClick={handleBackWithVideo}
+              className="px-4 py-2 border border-dl-border text-dl-navy bg-dl-bg text-sm font-medium"
+            >
+              Back
+            </button>
+            
+            {currentStep < steps.length - 1 ? (
+              <button
+                onClick={handleNext}
+                disabled={!canProceed()}
+                className={`px-4 py-2 text-sm font-medium ${
+                  canProceed()
+                    ? 'bg-dl-navy text-white'
+                    : 'bg-dl-bg-alt border border-dl-border text-dl-gray cursor-not-allowed'
+                }`}
+              >
+                Continue
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={!canProceed() || loading}
+                className={`px-4 py-2 text-sm font-medium ${
+                  canProceed() && !loading
+                    ? 'bg-dl-navy text-white'
+                    : 'bg-dl-bg-alt border border-dl-border text-dl-gray cursor-not-allowed'
+                }`}
+              >
+                {loading ? 'Joining...' : 'Join Purpose Group'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </DesignLawLayout>
   );
 }

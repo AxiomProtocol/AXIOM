@@ -1,6 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { ObserverLayout, ObserverCard, ObserverLoading, ProofLink } from '../../components/observer/ObserverLayout';
+import Head from 'next/head';
+import Link from 'next/link';
+import { DesignLawLayout, SectionHeading } from '../../components/design-law';
+import { ProofLink } from '../../components/observer/ObserverLayout';
 import { TreasuryData, RoutingRule, DrawSchedule, TreasuryEvent } from '../../server/services/observer/types';
+
+const OBSERVER_TABS = [
+  { id: 'overview', label: 'Overview', href: '/observer' },
+  { id: 'treasury', label: 'Treasury', href: '/observer/treasury' },
+  { id: 'governance', label: 'Governance', href: '/observer/governance' },
+  { id: 'risk', label: 'Risk', href: '/observer/risk' },
+  { id: 'assets', label: 'Assets', href: '/observer/assets' },
+  { id: 'controls', label: 'Controls', href: '/observer/controls' },
+  { id: 'reports', label: 'Reports', href: '/observer/reports' },
+  { id: 'capital-bridge', label: 'Capital Bridge', href: '/observer/capital-bridge' },
+  { id: 'node-economy', label: 'Node Economy', href: '/observer/node-economy' },
+];
+
+function ObserverNav({ current }: { current: string }) {
+  return (
+    <nav className="flex flex-wrap gap-0 border-b border-dl-border mb-8">
+      {OBSERVER_TABS.map(tab => (
+        <Link
+          key={tab.id}
+          href={tab.href}
+          className={`px-4 py-2 text-sm ${tab.id === current ? 'border-b-2 border-dl-navy text-dl-navy font-medium' : 'text-dl-gray'}`}
+        >
+          {tab.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
 
 export default function ObserverTreasury() {
   const [data, setData] = useState<TreasuryData | null>(null);
@@ -24,88 +55,97 @@ export default function ObserverTreasury() {
   }, []);
 
   return (
-    <ObserverLayout
-      title="Treasury"
-      description="Bucket balances, routing rules, and draw schedules"
-      currentTab="treasury"
-    >
+    <DesignLawLayout>
+      <Head>
+        <title>Treasury | Institutional Observer | Axiom Protocol</title>
+        <meta name="description" content="Bucket balances, routing rules, and draw schedules" />
+      </Head>
+
+      <h1 className="font-dl-serif text-3xl text-dl-navy">Treasury</h1>
+      <p className="text-dl-gray mt-1 mb-6">Bucket balances, routing rules, and draw schedules</p>
+
+      <ObserverNav current="treasury" />
+
       {loading ? (
-        <ObserverLoading />
+        <p className="text-sm text-dl-gray font-dl-mono">Loading data...</p>
       ) : data ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {data.buckets && Object.entries(data.buckets).map(([bucket, value]: [string, string]) => (
-              <div key={bucket} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide capitalize">{bucket}</h3>
-                <p className="mt-2 text-2xl font-bold text-amber-600">{value}</p>
+              <div key={bucket} className="border border-dl-border p-4">
+                <h3 className="text-sm font-dl-mono text-dl-gray uppercase tracking-wide capitalize">{bucket}</h3>
+                <p className="mt-2 text-2xl font-dl-mono text-dl-gold">{value}</p>
               </div>
             ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <ObserverCard title="Routing Rules">
+            <div className="border border-dl-border p-6">
+              <SectionHeading>Routing Rules</SectionHeading>
               <div className="space-y-4">
                 {(data.routingRules || []).map((rule: RoutingRule) => (
-                  <div key={rule.bucket} className="flex justify-between items-center border-b border-gray-100 pb-3">
+                  <div key={rule.bucket} className="flex justify-between items-center border-b border-dl-border pb-3">
                     <div>
                       <p className="font-medium capitalize">{rule.bucket}</p>
-                      <p className="text-sm text-gray-500">Min Reserve: {rule.minReserve}</p>
+                      <p className="text-sm text-dl-gray">Min Reserve: {rule.minReserve}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-amber-600">{rule.allocationPercent}%</p>
-                      <p className="text-sm text-gray-500">Allocation</p>
+                      <p className="font-dl-mono font-medium text-dl-gold">{rule.allocationPercent}%</p>
+                      <p className="text-sm text-dl-gray">Allocation</p>
                     </div>
                   </div>
                 ))}
               </div>
-            </ObserverCard>
+            </div>
 
-            <ObserverCard title="Draw Schedule">
+            <div className="border border-dl-border p-6">
+              <SectionHeading>Draw Schedule</SectionHeading>
               <div className="space-y-3">
                 {(data.drawSchedule || []).map((draw: DrawSchedule, idx: number) => (
-                  <div key={idx} className="flex justify-between items-center border-b border-gray-100 pb-3">
+                  <div key={idx} className="flex justify-between items-center border-b border-dl-border pb-3">
                     <div>
                       <p className="font-medium">{draw.purpose}</p>
-                      <p className="text-sm text-gray-500">{draw.date}</p>
+                      <p className="text-sm text-dl-gray">{draw.date}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-teal-600">{draw.amount}</p>
-                      <p className="text-sm text-gray-500">{draw.status}</p>
+                      <p className="font-dl-mono font-medium text-dl-navy">{draw.amount}</p>
+                      <p className="text-sm text-dl-gray">{draw.status}</p>
                     </div>
                   </div>
                 ))}
               </div>
-            </ObserverCard>
+            </div>
           </div>
 
-          <ObserverCard title="Recent Transactions">
+          <div className="border border-dl-border p-6">
+            <SectionHeading>Recent Transactions</SectionHeading>
             {!data.events || data.events.length === 0 ? (
-              <p className="text-gray-500">No recent transactions</p>
+              <p className="text-dl-gray">No recent transactions</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="min-w-full divide-y divide-dl-border">
                   <thead>
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bucket</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tx</th>
+                    <tr className="bg-dl-bg-alt">
+                      <th className="px-4 py-3 text-left font-dl-mono text-xs text-dl-gray uppercase">Type</th>
+                      <th className="px-4 py-3 text-left font-dl-mono text-xs text-dl-gray uppercase">Amount</th>
+                      <th className="px-4 py-3 text-left font-dl-mono text-xs text-dl-gray uppercase">Bucket</th>
+                      <th className="px-4 py-3 text-left font-dl-mono text-xs text-dl-gray uppercase">Time</th>
+                      <th className="px-4 py-3 text-left font-dl-mono text-xs text-dl-gray uppercase">Tx</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-dl-border">
                     {(data.events || []).map((tx: TreasuryEvent) => (
                       <tr key={tx.txHash}>
                         <td className="px-4 py-3 text-sm">
-                          <span className={`px-2 py-1 text-xs rounded ${
-                            tx.type === 'deposit' ? 'bg-teal-100 text-teal-800' : 'bg-red-100 text-red-800'
+                          <span className={`px-2 py-1 text-xs font-dl-mono ${
+                            tx.type === 'deposit' ? 'bg-dl-bg-alt text-dl-forest' : 'bg-dl-bg-alt text-dl-error'
                           }`}>
                             {tx.type.toUpperCase()}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm font-medium">{tx.amount}</td>
+                        <td className="px-4 py-3 text-sm font-dl-mono font-medium">{tx.amount}</td>
                         <td className="px-4 py-3 text-sm capitalize">{tx.bucket || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-500">{tx.timestamp}</td>
+                        <td className="px-4 py-3 text-sm text-dl-gray">{tx.timestamp}</td>
                         <td className="px-4 py-3 text-sm">
                           <ProofLink type="tx" value={tx.txHash} />
                         </td>
@@ -115,11 +155,11 @@ export default function ObserverTreasury() {
                 </table>
               </div>
             )}
-          </ObserverCard>
+          </div>
         </>
       ) : (
-        <p className="text-gray-500">Failed to load treasury data</p>
+        <p className="text-dl-gray">Failed to load treasury data</p>
       )}
-    </ObserverLayout>
+    </DesignLawLayout>
   );
 }

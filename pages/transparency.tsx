@@ -1,10 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { pagesCopy } from '../components/axiomRebuild/copy/pagesCopy';
-import { Web3Hero } from '../components/axiomRebuild/Web3Hero';
-import { Web3Section } from '../components/axiomRebuild/Web3Section';
-import { useScrollToSection } from '../components/axiomRebuild/useScrollToSection';
+import { DesignLawLayout, SectionHeading } from '../components/design-law';
 
 interface TreasuryMetrics {
   totalAUM: string;
@@ -75,13 +72,6 @@ export default function TransparencyPage() {
   const [activities, setActivities] = useState<RecentActivity[]>([]);
   const [treasuryLoading, setTreasuryLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  
-  const getSearch = useCallback(() => {
-    if (typeof window === 'undefined') return '';
-    return window.location.search;
-  }, []);
-  
-  useScrollToSection(getSearch);
 
   useEffect(() => {
     fetchTreasuryData();
@@ -105,307 +95,177 @@ export default function TransparencyPage() {
     }
   }
 
-  const copy = pagesCopy.transparency;
-
   return (
-    <>
+    <DesignLawLayout>
       <Head>
         <title>Transparency Dashboard | Axiom</title>
         <meta name="description" content="Complete visibility into Axiom's smart contracts, security, and governance." />
       </Head>
-      <div style={{ minHeight: '100vh', background: 'white' }}>
-        {copy.hero && (
-          <Web3Hero
-            kicker={copy.hero.kicker}
-            headline={copy.hero.headline}
-            secondary={copy.hero.secondary}
-            subheadline={copy.hero.subheadline}
-            primaryCta={copy.hero.primaryCta}
-            secondaryCta={copy.hero.secondaryCta}
-            microcopy={copy.hero.microcopy || ''}
-          />
+
+      <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Transparency Dashboard</h1>
+      <p className="text-sm text-dl-gray mb-8">Complete visibility into Axiom's smart contracts, treasury, and security infrastructure.</p>
+
+      <section id="treasury" className="mb-10">
+        <SectionHeading>Treasury Dashboard</SectionHeading>
+        <p className="text-sm text-dl-gray mb-4">Real-time visibility into Axiom Nexus lending pools and reserves</p>
+        {lastUpdated && (
+          <p className="text-xs text-dl-gray font-dl-mono mb-4">Last updated: {lastUpdated.toLocaleTimeString()}</p>
         )}
 
-        {/* Treasury Dashboard Section */}
-        <section id="treasury" style={{ padding: '80px 20px', background: 'linear-gradient(180deg, #1a1a2e 0%, #0a0a1a 100%)' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 48 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: 'rgba(0,212,170,0.1)', borderRadius: 24, marginBottom: 16 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00D4AA', animation: 'pulse 2s infinite' }} />
-                <span style={{ color: '#00D4AA', fontSize: 14, fontWeight: 500 }}>Live Data</span>
+        {treasuryLoading ? (
+          <p className="text-sm text-dl-gray font-dl-mono py-10 text-center">Loading treasury data...</p>
+        ) : (
+          <>
+            {parseFloat(metrics?.totalAUM || '0') === 0 && (
+              <div className="border border-dl-border bg-dl-bg-alt p-4 mb-6">
+                <p className="text-sm font-medium text-dl-navy">Pre-Launch Phase</p>
+                <p className="text-xs text-dl-gray mt-1">Lending fund is accepting investor commitments. Values will update as capital is deployed.</p>
               </div>
-              <h2 style={{ fontSize: 40, fontWeight: 700, margin: '8px 0 0 0', color: 'white' }}>Treasury Dashboard</h2>
-              <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.6)', marginTop: 12 }}>
-                Real-time visibility into Axiom Nexus lending pools and reserves
-              </p>
-              {lastUpdated && (
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 8 }}>
-                  Last updated: {lastUpdated.toLocaleTimeString()}
-                </p>
-              )}
-            </div>
-
-            {treasuryLoading ? (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
-                <div style={{ width: 48, height: 48, border: '3px solid rgba(0,212,170,0.3)', borderTopColor: '#00D4AA', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-              </div>
-            ) : (
-              <>
-                {parseFloat(metrics?.totalAUM || '0') === 0 && (
-                  <div style={{ 
-                    background: 'rgba(245,158,11,0.1)', 
-                    border: '1px solid rgba(245,158,11,0.3)', 
-                    borderRadius: 12, 
-                    padding: '16px 24px', 
-                    marginBottom: 24,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12
-                  }}>
-                    <span style={{ fontSize: 24 }}>🚀</span>
-                    <div>
-                      <p style={{ color: 'white', fontWeight: 600, margin: 0 }}>Pre-Launch Phase</p>
-                      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, margin: '4px 0 0 0' }}>
-                        Lending fund is accepting investor commitments. Values will update as capital is deployed.
-                      </p>
-                    </div>
-                  </div>
-                )}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 24, marginBottom: 48 }}>
-                  <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.2) 0%, rgba(59,130,246,0.2) 100%)', backdropFilter: 'blur(20px)', borderRadius: 20, padding: 28, border: '1px solid rgba(124,58,237,0.3)' }}>
-                    <span style={{ fontSize: 32, marginBottom: 12, display: 'block' }}>💎</span>
-                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 4 }}>Total AUM</p>
-                    <p style={{ color: 'white', fontSize: 32, fontWeight: 700, margin: 0 }}>{formatCurrency(metrics?.totalAUM || 0)}</p>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 4 }}>Assets Under Management</p>
-                  </div>
-                  <div style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.2) 0%, rgba(6,182,212,0.2) 100%)', backdropFilter: 'blur(20px)', borderRadius: 20, padding: 28, border: '1px solid rgba(59,130,246,0.3)' }}>
-                    <span style={{ fontSize: 32, marginBottom: 12, display: 'block' }}>📄</span>
-                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 4 }}>Active Loans</p>
-                    <p style={{ color: 'white', fontSize: 32, fontWeight: 700, margin: 0 }}>{formatNumber(metrics?.activeLoansCount || 0)}</p>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 4 }}>Currently outstanding</p>
-                  </div>
-                  <div style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(5,150,105,0.2) 100%)', backdropFilter: 'blur(20px)', borderRadius: 20, padding: 28, border: '1px solid rgba(16,185,129,0.3)' }}>
-                    <span style={{ fontSize: 32, marginBottom: 12, display: 'block' }}>🏠</span>
-                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 4 }}>Total Originated</p>
-                    <p style={{ color: 'white', fontSize: 32, fontWeight: 700, margin: 0 }}>{formatCurrency(metrics?.totalLoansOriginated || 0)}</p>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 4 }}>Lifetime loan volume</p>
-                  </div>
-                  <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(249,115,22,0.2) 100%)', backdropFilter: 'blur(20px)', borderRadius: 20, padding: 28, border: '1px solid rgba(245,158,11,0.3)' }}>
-                    <span style={{ fontSize: 32, marginBottom: 12, display: 'block' }}>📈</span>
-                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 4 }}>Interest Earned</p>
-                    <p style={{ color: 'white', fontSize: 32, fontWeight: 700, margin: 0 }}>{formatCurrency(metrics?.totalInterestEarned || 0)}</p>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 4 }}>Revenue generated</p>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 24 }}>
-                  <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)', borderRadius: 20, padding: 28, border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <h3 style={{ color: 'white', fontSize: 20, fontWeight: 600, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span>🏦</span> Fund Allocation
-                    </h3>
-                    <div style={{ marginBottom: 24 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <span style={{ color: 'white' }}>Series A: Fix & Flip</span>
-                        <span style={{ color: 'rgba(255,255,255,0.6)' }}>{formatCurrency(metrics?.seriesABalance || 0)}</span>
-                      </div>
-                      <div style={{ height: 8, background: 'rgba(255,255,255,0.1)', borderRadius: 4, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: '35%', background: 'linear-gradient(90deg, #7C3AED, #3B82F6)', borderRadius: 4 }} />
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <span style={{ color: 'white' }}>Series B: DSCR Rental</span>
-                        <span style={{ color: 'rgba(255,255,255,0.6)' }}>{formatCurrency(metrics?.seriesBBalance || 0)}</span>
-                      </div>
-                      <div style={{ height: 8, background: 'rgba(255,255,255,0.1)', borderRadius: 4, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: '65%', background: 'linear-gradient(90deg, #10B981, #14B8A6)', borderRadius: 4 }} />
-                      </div>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginTop: 24, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                      <div style={{ textAlign: 'center' }}>
-                        <p style={{ color: 'white', fontSize: 24, fontWeight: 700, margin: 0 }}>{metrics?.utilizationRate?.toFixed(1) || 0}%</p>
-                        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Utilization Rate</p>
-                      </div>
-                      <div style={{ textAlign: 'center' }}>
-                        <p style={{ color: 'white', fontSize: 24, fontWeight: 700, margin: 0 }}>{formatNumber(metrics?.investorCount || 0)}</p>
-                        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Investors</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)', borderRadius: 20, padding: 28, border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <h3 style={{ color: 'white', fontSize: 20, fontWeight: 600, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span>📊</span> Recent Activity
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      {activities.length > 0 ? activities.slice(0, 5).map((activity) => (
-                        <div key={activity.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, background: 'rgba(255,255,255,0.05)', borderRadius: 12 }}>
-                          <div>
-                            <p style={{ color: 'white', fontSize: 14, margin: 0 }}>{activity.description}</p>
-                            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, margin: '4px 0 0 0' }}>{new Date(activity.timestamp).toLocaleString()}</p>
-                          </div>
-                          <span style={{ color: '#00D4AA', fontWeight: 600 }}>{formatCurrency(activity.amount)}</span>
-                        </div>
-                      )) : (
-                        <p style={{ color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: 24 }}>No recent activity</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </>
             )}
-          </div>
-        </section>
 
-        <section id="contracts" style={{ padding: '80px 20px', background: 'linear-gradient(180deg, rgba(0,212,170,0.05) 0%, white 100%)' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 48 }}>
-              <span style={{ color: '#00D4AA', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, fontSize: 14 }}>Verified On-Chain</span>
-              <h2 style={{ fontSize: 40, fontWeight: 700, margin: '8px 0 0 0', color: '#1a1a2e' }}>Smart Contracts</h2>
-              <p style={{ fontSize: 18, color: 'rgba(26,26,46,0.6)', marginTop: 12 }}>29 contracts verified on Arbitrum One</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-6">
+              <div className="px-4 py-4 bg-dl-bg border-r border-b md:border-b-0 border-dl-border">
+                <p className="text-xs text-dl-gray mb-1">Total AUM</p>
+                <p className="font-dl-mono text-lg font-semibold text-dl-navy">{formatCurrency(metrics?.totalAUM || 0)}</p>
+                <p className="text-xs text-dl-gray mt-1">Assets Under Management</p>
+              </div>
+              <div className="px-4 py-4 bg-dl-bg-alt border-r border-b md:border-b-0 border-dl-border">
+                <p className="text-xs text-dl-gray mb-1">Active Loans</p>
+                <p className="font-dl-mono text-lg font-semibold text-dl-navy">{formatNumber(metrics?.activeLoansCount || 0)}</p>
+                <p className="text-xs text-dl-gray mt-1">Currently outstanding</p>
+              </div>
+              <div className="px-4 py-4 bg-dl-bg border-r border-dl-border">
+                <p className="text-xs text-dl-gray mb-1">Total Originated</p>
+                <p className="font-dl-mono text-lg font-semibold text-dl-navy">{formatCurrency(metrics?.totalLoansOriginated || 0)}</p>
+                <p className="text-xs text-dl-gray mt-1">Lifetime loan volume</p>
+              </div>
+              <div className="px-4 py-4 bg-dl-bg-alt">
+                <p className="text-xs text-dl-gray mb-1">Interest Earned</p>
+                <p className="font-dl-mono text-lg font-semibold text-dl-navy">{formatCurrency(metrics?.totalInterestEarned || 0)}</p>
+                <p className="text-xs text-dl-gray mt-1">Revenue generated</p>
+              </div>
             </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {CONTRACTS.map((contract, i) => (
-                <div 
-                  key={i}
-                  style={{
-                    background: 'rgba(255,255,255,0.95)',
-                    backdropFilter: 'blur(20px)',
-                    borderRadius: 16,
-                    padding: expandedContract === i ? '24px' : '20px 24px',
-                    border: '1px solid rgba(0,212,170,0.15)',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onClick={() => setExpandedContract(expandedContract === i ? null : i)}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                      <div style={{ 
-                        width: 10, 
-                        height: 10, 
-                        borderRadius: '50%', 
-                        background: contract.verified ? '#00D4AA' : '#FFD700'
-                      }} />
-                      <div>
-                        <h3 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: '#1a1a2e' }}>{contract.name}</h3>
-                        {expandedContract === i && (
-                          <p style={{ margin: '8px 0 0 0', fontSize: 14, color: 'rgba(26,26,46,0.6)' }}>{contract.description}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                      <span style={{ 
-                        fontSize: 13, 
-                        padding: '4px 12px',
-                        background: 'rgba(0,212,170,0.1)',
-                        borderRadius: 20,
-                        color: '#00D4AA',
-                        fontWeight: 500
-                      }}>
-                        {contract.network}
-                      </span>
-                      <span style={{ color: 'rgba(26,26,46,0.4)', transform: expandedContract === i ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s' }}>▼</span>
-                    </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div className="border border-dl-border p-5">
+                <h3 className="font-dl-serif text-base text-dl-navy mb-4">Fund Allocation</h3>
+                <div className="mb-4">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm text-dl-navy">Series A: Fix & Flip</span>
+                    <span className="text-sm text-dl-gray font-dl-mono">{formatCurrency(metrics?.seriesABalance || 0)}</span>
                   </div>
-                  {expandedContract === i && (
-                    <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(0,212,170,0.1)' }}>
-                      <code style={{ 
-                        display: 'block',
-                        fontSize: 13, 
-                        color: 'rgba(26,26,46,0.7)', 
-                        fontFamily: 'monospace',
-                        wordBreak: 'break-all'
-                      }}>
-                        {contract.address}
-                      </code>
-                      <a 
-                        href={`https://arbiscan.io/address/${contract.address}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          display: 'inline-block',
-                          marginTop: 12,
-                          fontSize: 14,
-                          color: '#00D4AA',
-                          textDecoration: 'none',
-                          fontWeight: 500
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        View on Arbiscan →
-                      </a>
+                  <div className="h-1 bg-dl-bg-alt border border-dl-border overflow-hidden">
+                    <div className="h-full bg-dl-navy" style={{ width: '35%' }} />
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm text-dl-navy">Series B: DSCR Rental</span>
+                    <span className="text-sm text-dl-gray font-dl-mono">{formatCurrency(metrics?.seriesBBalance || 0)}</span>
+                  </div>
+                  <div className="h-1 bg-dl-bg-alt border border-dl-border overflow-hidden">
+                    <div className="h-full bg-dl-navy" style={{ width: '65%' }} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-dl-border">
+                  <div className="text-center">
+                    <p className="font-dl-mono text-lg font-semibold text-dl-navy">{metrics?.utilizationRate?.toFixed(1) || 0}%</p>
+                    <p className="text-xs text-dl-gray">Utilization Rate</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="font-dl-mono text-lg font-semibold text-dl-navy">{formatNumber(metrics?.investorCount || 0)}</p>
+                    <p className="text-xs text-dl-gray">Investors</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-dl-border p-5">
+                <h3 className="font-dl-serif text-base text-dl-navy mb-4">Recent Activity</h3>
+                <div className="flex flex-col gap-3">
+                  {activities.length > 0 ? activities.slice(0, 5).map((activity) => (
+                    <div key={activity.id} className="flex justify-between items-center border-b border-dl-border pb-3 last:border-b-0 last:pb-0">
+                      <div>
+                        <p className="text-sm text-dl-navy">{activity.description}</p>
+                        <p className="text-xs text-dl-gray font-dl-mono mt-1">{new Date(activity.timestamp).toLocaleString()}</p>
+                      </div>
+                      <span className="text-sm text-dl-navy font-dl-mono font-medium">{formatCurrency(activity.amount)}</span>
                     </div>
+                  )) : (
+                    <p className="text-sm text-dl-gray text-center py-6">No recent activity</p>
                   )}
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </>
+        )}
+      </section>
 
-        <section id="security" style={{ padding: '80px 20px', background: '#1a1a2e' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 48 }}>
-              <span style={{ color: '#00D4AA', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, fontSize: 14 }}>Built Secure</span>
-              <h2 style={{ fontSize: 40, fontWeight: 700, margin: '8px 0 0 0', color: 'white' }}>Security Infrastructure</h2>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
-              {SECURITY_FEATURES.map((feature, i) => (
-                <div 
-                  key={i}
-                  style={{
-                    background: 'rgba(255,255,255,0.05)',
-                    backdropFilter: 'blur(20px)',
-                    borderRadius: 16,
-                    padding: 28,
-                    border: '1px solid rgba(255,255,255,0.1)'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                    <span style={{ fontSize: 28 }}>{feature.icon}</span>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'white' }}>{feature.name}</h3>
-                  </div>
-                  <p style={{ margin: 0, fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{feature.description}</p>
-                  <div style={{ 
-                    marginTop: 16,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '4px 12px',
-                    background: 'rgba(0,212,170,0.2)',
-                    borderRadius: 20,
-                    color: '#00D4AA',
-                    fontSize: 13,
-                    fontWeight: 500
-                  }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00D4AA' }} />
-                    Active
+      <section id="contracts" className="mb-10">
+        <SectionHeading>Smart Contracts</SectionHeading>
+        <p className="text-sm text-dl-gray mb-4">29 contracts verified on Arbitrum One</p>
+
+        <div className="flex flex-col gap-0 border border-dl-border">
+          {CONTRACTS.map((contract, i) => (
+            <div
+              key={i}
+              className={`p-4 border-b border-dl-border last:border-b-0 cursor-pointer ${expandedContract === i ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}
+              onClick={() => setExpandedContract(expandedContract === i ? null : i)}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-2 h-2 ${contract.verified ? 'bg-dl-forest' : 'bg-dl-navy'}`} />
+                  <div>
+                    <h3 className="text-sm font-medium text-dl-navy">{contract.name}</h3>
+                    {expandedContract === i && (
+                      <p className="text-xs text-dl-gray mt-1">{contract.description}</p>
+                    )}
                   </div>
                 </div>
-              ))}
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-dl-gray border border-dl-border px-2 py-1">{contract.network}</span>
+                  <span className="text-dl-gray text-xs">{expandedContract === i ? '▲' : '▼'}</span>
+                </div>
+              </div>
+              {expandedContract === i && (
+                <div className="mt-3 pt-3 border-t border-dl-border">
+                  <code className="text-xs text-dl-gray font-dl-mono break-all">{contract.address}</code>
+                  <a
+                    href={`https://arbiscan.io/address/${contract.address}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block mt-2 text-xs text-dl-navy font-medium underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    View on Arbiscan →
+                  </a>
+                </div>
+              )}
             </div>
-          </div>
-        </section>
+          ))}
+        </div>
+      </section>
 
-        {copy.sections.map((s, i) => (
-          <Web3Section
-            key={s.id}
-            id={s.id}
-            title={s.title}
-            body={s.body}
-            bullets={s.bullets}
-            primaryCta={s.primaryCta}
-            secondaryCta={s.secondaryCta}
-            image={s.image}
-            imageAlt={s.imageAlt}
-            index={i}
-            variant="default"
-          />
-        ))}
-      </div>
-    </>
+      <section id="security" className="mb-10">
+        <SectionHeading>Security Infrastructure</SectionHeading>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-0 border border-dl-border">
+          {SECURITY_FEATURES.map((feature, i) => (
+            <div
+              key={i}
+              className="p-4 border-r border-b border-dl-border last:border-r-0"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg">{feature.icon}</span>
+                <h3 className="text-sm font-medium text-dl-navy">{feature.name}</h3>
+              </div>
+              <p className="text-xs text-dl-gray leading-relaxed">{feature.description}</p>
+              <div className="mt-3 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-dl-forest" />
+                <span className="text-xs text-dl-forest font-dl-mono">Active</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </DesignLawLayout>
   );
 }

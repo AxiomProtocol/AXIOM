@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useWallet } from "../components/WalletConnect/WalletContext";
 import { getAXUSDTransactionService, AXUSD_CONTRACTS } from "../lib/services/AXUSDTransactionService";
+import { DesignLawLayout } from "../components/design-law";
 import { 
   LayoutDashboard, Coins, ArrowLeftRight, Droplets, CircleDot,
   BarChart3, Vault, Gift, Waypoints, History, Bell, HelpCircle,
@@ -392,7 +393,6 @@ export default function AXUSDStablecoinPage() {
       return;
     }
 
-    // Check if user is on wrong network
     if (walletState?.chainId !== 42161) {
       setTxStatus({ type: 'error', message: 'Please switch to Arbitrum One to swap. Use the "Switch to Arbitrum" button above.' });
       return;
@@ -409,7 +409,6 @@ export default function AXUSDStablecoinPage() {
         return;
       }
       
-      // Use PSM for direct 1:1 mint/redeem (bypasses DEX pool liquidity constraints)
       const result = psmDirection === 'usdcToAxusd' 
         ? await service.psmMint(psmAmount)
         : await service.psmRedeem(psmAmount);
@@ -494,1045 +493,1007 @@ export default function AXUSDStablecoinPage() {
 
   const truncateAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
-  const Card = ({ children, className = "", accent = "emerald" }: { children: React.ReactNode; className?: string; accent?: string }) => (
-    <div className={`bg-white rounded-2xl border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${className}`}>
+  const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+    <div className={`bg-dl-bg border border-dl-border ${className}`}>
       {children}
     </div>
   );
 
-  const GlassCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-    <div className={`bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-xl hover:shadow-2xl transition-all duration-300 ${className}`}>
-      {children}
-    </div>
-  );
-
-  const StatCard = ({ label, value, suffix, icon, color }: { label: string; value: string; suffix: string; icon: React.ReactNode; color: string }) => {
-    const colorClasses: Record<string, string> = {
-      emerald: 'bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-600 border-emerald-200 shadow-emerald-100',
-      teal: 'bg-gradient-to-br from-teal-50 to-teal-100 text-teal-600 border-teal-200 shadow-teal-100',
-      blue: 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600 border-blue-200 shadow-blue-100',
-      purple: 'bg-gradient-to-br from-purple-50 to-purple-100 text-purple-600 border-purple-200 shadow-purple-100',
-      amber: 'bg-gradient-to-br from-amber-50 to-amber-100 text-amber-600 border-amber-200 shadow-amber-100',
-    };
+  const StatCard = ({ label, value, suffix, icon }: { label: string; value: string; suffix: string; icon: React.ReactNode; color?: string }) => {
     return (
-      <Card className="p-6 group">
+      <Card className="p-6">
         <div className="flex items-center gap-3 mb-3">
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center border shadow-md group-hover:scale-110 transition-transform duration-300 ${colorClasses[color] || colorClasses.emerald}`}>
+          <div className="w-12 h-12 flex items-center justify-center border border-dl-border bg-dl-bg-alt text-dl-navy">
             {icon}
           </div>
-          <span className="text-gray-600 font-medium">{label}</span>
+          <span className="text-dl-gray font-medium">{label}</span>
         </div>
-        <div className="text-2xl font-bold text-gray-900">
-          {loading ? <span className="animate-pulse text-gray-400">Loading...</span> : `${formatNumber(value)} ${suffix}`}
+        <div className="font-dl-mono text-2xl text-dl-navy">
+          {loading ? <span className="text-dl-gray text-sm font-dl-mono">Loading...</span> : `${formatNumber(value)} ${suffix}`}
         </div>
       </Card>
     );
   };
 
   return (
-    <>
+    <DesignLawLayout>
       <Head>
         <title>AXUSD Stablecoin | Axiom Protocol</title>
         <meta name="description" content="AXUSD - The GENIUS Act compliant hybrid CDP stablecoin. 100% backed, segregated custody, cross-chain enabled. The settlement layer of Axiom Protocol." />
       </Head>
       
-      <div className="bg-white min-h-screen">
-        {/* Network Warning Banner */}
-        {isWalletConnected && !isCorrectNetwork && (
-          <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-4 shadow-lg">
-            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-6 h-6 flex-shrink-0 animate-pulse" />
-                <div>
-                  <p className="font-bold text-lg">Wrong Network Detected</p>
-                  <p className="text-sm opacity-90">
-                    You're on {walletState?.chainId === 1 ? 'Ethereum Mainnet' : `Chain ${walletState?.chainId}`}. 
-                    AXUSD operates on Arbitrum One.
-                  </p>
-                </div>
+      {isWalletConnected && !isCorrectNetwork && (
+        <div className="bg-dl-navy text-white px-4 py-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-6 h-6 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-lg">Wrong Network Detected</p>
+                <p className="text-sm opacity-90">
+                  You're on {walletState?.chainId === 1 ? 'Ethereum Mainnet' : `Chain ${walletState?.chainId}`}. 
+                  AXUSD operates on Arbitrum One.
+                </p>
               </div>
-              <button
-                onClick={handleSwitchNetwork}
-                disabled={networkSwitching}
-                className="bg-white text-orange-600 px-6 py-3 rounded-xl font-bold hover:bg-orange-50 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
-              >
-                {networkSwitching ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-orange-600 border-t-transparent rounded-full animate-spin" />
-                    Switching...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-5 h-5" />
-                    Switch to Arbitrum One
-                  </>
-                )}
-              </button>
             </div>
+            <button
+              onClick={handleSwitchNetwork}
+              disabled={networkSwitching}
+              className="bg-white text-dl-navy px-6 py-3 font-medium flex items-center gap-2 disabled:opacity-50"
+            >
+              {networkSwitching ? (
+                <>Switching...</>
+              ) : (
+                <>
+                  <Zap className="w-5 h-5" />
+                  Switch to Arbitrum One
+                </>
+              )}
+            </button>
           </div>
-        )}
-        
-        <section className="relative py-16 px-4 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-teal-50" />
-          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-emerald-100/40 to-transparent rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-teal-100/40 to-transparent rounded-full blur-3xl" />
-          
-          <div className="relative z-10 max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-12">
-              <div className="text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-5 py-2 mb-6 shadow-sm">
-                  <Shield className="w-4 h-4 text-emerald-600" />
-                  <span className="text-emerald-700 font-semibold text-sm tracking-wide">GENIUS ACT COMPLIANT STABLECOIN</span>
-                </div>
-                
-                <h1 className="text-5xl md:text-6xl font-bold mb-4 text-gray-900">
-                  AXUSD
-                </h1>
-                
-                <p className="text-xl md:text-2xl text-gray-600 font-light mb-6">
-                  The Settlement Layer of <span className="text-emerald-600 font-semibold">Axiom Protocol</span>
-                </p>
-                
-                <p className="text-lg text-gray-500 max-w-xl mb-8 leading-relaxed">
-                  A <span className="text-emerald-600 font-medium">100% backed hybrid stablecoin</span> with segregated custody, 
-                  cross-chain bridging, and full GENIUS Act compliance.
-                </p>
-
-                <div className="flex flex-wrap justify-center lg:justify-start gap-3 text-sm mb-8">
-                  {[
-                    { icon: <CheckCircle className="w-4 h-4" />, text: '100% Reserve Backed' },
-                    { icon: <Shield className="w-4 h-4" />, text: 'GENIUS Act Compliant' },
-                    { icon: <Globe className="w-4 h-4" />, text: 'Cross-Chain Enabled' },
-                    { icon: <Lock className="w-4 h-4" />, text: 'Segregated Custody' },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2 shadow-md hover:shadow-lg transition-shadow">
-                      <span className="text-emerald-600">{item.icon}</span>
-                      <span className="text-gray-700 font-medium">{item.text}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="relative flex justify-center lg:justify-end">
-                <div className="relative group">
-                  <div className="absolute -inset-4 bg-gradient-to-r from-emerald-200 via-teal-200 to-emerald-200 rounded-3xl blur-2xl opacity-40 group-hover:opacity-60 transition-opacity duration-500" />
-                  <div className="relative transform group-hover:scale-105 transition-transform duration-500">
-                    <Image
-                      src={axusdHeroImage}
-                      alt="AXUSD Stablecoin"
-                      width={500}
-                      height={500}
-                      className="rounded-3xl shadow-2xl w-auto h-auto"
-                      priority
-                    />
-                  </div>
-                  <div className="absolute -bottom-4 -right-4 bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center">
-                        <DollarSign className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Current Price</p>
-                        <p className="text-lg font-bold text-gray-900">${parseFloat(pegStatus?.currentPrice || '1').toFixed(2)}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+        </div>
+      )}
+      
+      <section className="py-16 px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-12">
+          <div className="text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 bg-dl-bg-alt border border-dl-border px-5 py-2 mb-6">
+              <Shield className="w-4 h-4 text-dl-navy" />
+              <span className="text-dl-navy font-medium text-sm tracking-wide">GENIUS ACT COMPLIANT STABLECOIN</span>
             </div>
+            
+            <h1 className="font-dl-serif text-5xl md:text-6xl mb-4 text-dl-navy">
+              AXUSD
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-dl-gray font-light mb-6">
+              The Settlement Layer of <span className="text-dl-forest font-medium">Axiom Protocol</span>
+            </p>
+            
+            <p className="text-lg text-dl-gray max-w-xl mb-8 leading-relaxed">
+              A <span className="text-dl-forest font-medium">100% backed hybrid stablecoin</span> with segregated custody, 
+              cross-chain bridging, and full GENIUS Act compliance.
+            </p>
 
-            <div className="flex flex-wrap justify-center gap-2 mb-10 px-2">
-              {TAB_CONFIG.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2.5 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
-                    activeTab === tab.id
-                      ? 'bg-emerald-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-                  }`}
-                >
-                  <span>{tab.icon}</span>
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </button>
+            <div className="flex flex-wrap justify-center lg:justify-start gap-3 text-sm mb-8">
+              {[
+                { icon: <CheckCircle className="w-4 h-4" />, text: '100% Reserve Backed' },
+                { icon: <Shield className="w-4 h-4" />, text: 'GENIUS Act Compliant' },
+                { icon: <Globe className="w-4 h-4" />, text: 'Cross-Chain Enabled' },
+                { icon: <Lock className="w-4 h-4" />, text: 'Segregated Custody' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 bg-dl-bg border border-dl-border px-4 py-2">
+                  <span className="text-dl-navy">{item.icon}</span>
+                  <span className="text-dl-navy font-medium">{item.text}</span>
+                </div>
               ))}
             </div>
-
-            {activeTab === 'overview' && (
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <StatCard label="Total Supply" value={supplyData?.totalSupply || '0'} suffix="AXUSD" icon={<DollarSign className="w-5 h-5" />} color="emerald" />
-                  <StatCard label="Circulating" value={supplyData?.circulatingSupply || '0'} suffix="AXUSD" icon={<Coins className="w-5 h-5" />} color="teal" />
-                  <StatCard label="Reserve Ratio" value={treasuryHealth?.overview?.reserveRatio || '100'} suffix="%" icon={<Shield className="w-5 h-5" />} color="blue" />
-                  <StatCard label="PSM Reserve" value={psmData?.usdcReserve || '0'} suffix="USDC" icon={<Wallet className="w-5 h-5" />} color="purple" />
-                </div>
-
-                <Card className="p-8">
-                  <h3 className="text-gray-900 font-bold mb-8 text-2xl flex items-center gap-3">
-                    How AXUSD Works
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    {[
-                      { step: 1, title: 'Deposit Collateral', desc: 'Lock WETH or WBTC at 150% ratio', color: 'emerald' },
-                      { step: 2, title: 'Mint AXUSD', desc: 'Create stablecoin against your collateral', color: 'blue' },
-                      { step: 3, title: 'Use Anywhere', desc: 'SUSU circles, KeyGrow rent, DeFi', color: 'purple' },
-                      { step: 4, title: 'Earn Yield', desc: 'Lock SEED for protocol revenue share', color: 'amber' },
-                    ].map((item) => (
-                      <div key={item.step} className="text-center group">
-                        <div className={`w-16 h-16 mx-auto bg-${item.color}-50 rounded-2xl flex items-center justify-center mb-4 border border-${item.color}-200 group-hover:scale-105 transition-transform`}>
-                          <span className={`text-3xl font-bold text-${item.color}-600`}>{item.step}</span>
-                        </div>
-                        <h4 className="font-bold text-gray-900 mb-2">{item.title}</h4>
-                        <p className="text-gray-500 text-sm">{item.desc}</p>
-                      </div>
-                    ))}
+          </div>
+          
+          <div className="relative flex justify-center lg:justify-end">
+            <div className="relative">
+              <Image
+                src={axusdHeroImage}
+                alt="AXUSD Stablecoin"
+                width={500}
+                height={500}
+                className="w-auto h-auto"
+                priority
+              />
+              <div className="absolute -bottom-4 -right-4 bg-dl-bg p-4 border border-dl-border">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-dl-navy flex items-center justify-center">
+                    <DollarSign className="w-5 h-5 text-white" />
                   </div>
-                </Card>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="p-6">
-                    <h3 className="text-emerald-700 font-bold mb-4 text-xl flex items-center gap-2">
-                      <Shield className="w-5 h-5" /> GENIUS Act Compliance
-                    </h3> 
-                    <div className="space-y-3">
-                      {[
-                        { text: '100% Reserve Backing Required', icon: <CheckCircle className="w-4 h-4" /> },
-                        { text: 'Segregated Custody Accounts', icon: <Lock className="w-4 h-4" /> },
-                        { text: '93-Day Maximum T-Bill Maturity', icon: <Building className="w-4 h-4" /> },
-                        { text: 'Anti-Rehypothecation Controls', icon: <Shield className="w-4 h-4" /> },
-                        { text: 'Real-Time On-Chain Verification', icon: <Zap className="w-4 h-4" /> },
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100 hover:bg-emerald-100 transition-colors">
-                          <span className="text-emerald-600">{item.icon}</span>
-                          <span className="text-gray-700">{item.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-
-                  <Card className="p-6">
-                    <h3 className="text-blue-700 font-bold mb-4 text-xl flex items-center gap-2">
-                      Revenue Distribution
-                    </h3>
-                    <div className="space-y-4">
-                      {[
-                        { label: 'SEED Holders', value: '50%', color: 'emerald' },
-                        { label: 'Treasury', value: '30%', color: 'amber' },
-                        { label: 'Backstop Vault', value: '20%', color: 'blue' },
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-                          <span className="text-gray-700">{item.label}</span>
-                          <span className={`text-${item.color}-600 font-bold text-lg`}>{item.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                </div>
-
-                <Card className="p-6">
-                  <h3 className="text-gray-900 font-bold mb-4 text-xl">Deployed Contracts</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {Object.entries(AXUSD_CONTRACT_LIST).map(([name, addr]) => (
-                      <a
-                        key={name}
-                        href={`https://arbiscan.io/address/${addr}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200 group"
-                      >
-                        <span className="text-gray-700 text-sm">{name}</span>
-                        <span className="text-emerald-600 text-xs font-mono group-hover:underline">{truncateAddress(addr)}</span>
-                      </a>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'pools' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <Card className="p-6 text-center">
-                    <div className="text-3xl font-bold text-emerald-600">{poolData?.summary?.totalPools || 0}</div>
-                    <div className="text-gray-500">Total Pools</div>
-                  </Card>
-                  <Card className="p-6 text-center">
-                    <div className="text-3xl font-bold text-teal-600">{poolData?.summary?.activePools || 0}</div>
-                    <div className="text-gray-500">Active Pools</div>
-                  </Card>
-                  <Card className="p-6 text-center">
-                    <div className="text-3xl font-bold text-blue-600">${poolData?.summary?.totalTvl || '0'}</div>
-                    <div className="text-gray-500">Total TVL</div>
-                  </Card>
-                </div>
-
-                <Card className="p-6">
-                  <h3 className="text-gray-900 font-bold mb-6 text-xl">Available Pools</h3>
-                  <div className="space-y-4">
-                    {poolData?.pools?.map((pool) => (
-                      <div key={pool.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-emerald-300 transition-colors">
-                        <div className="flex items-center gap-4">
-                          <div className="flex -space-x-2">
-                            <div className="w-10 h-10 rounded-full bg-emerald-100 border-2 border-white flex items-center justify-center text-emerald-600 font-bold">$</div>
-                            <div className="w-10 h-10 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-blue-600 font-bold">{pool.token1Symbol?.charAt(0)}</div>
-                          </div>
-                          <div>
-                            <div className="font-bold text-gray-900">{pool.name}</div>
-                            <div className="text-sm text-gray-500">{pool.dex}</div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-bold text-gray-900">${formatNumber(pool.tvl)}</div>
-                          <div className={`text-sm flex items-center justify-end gap-1 ${pool.status === 'active' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                            {pool.status === 'active' ? <><CheckCircle className="w-3 h-3" /> Live</> : <><CircleDot className="w-3 h-3" /> Pending</>}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'incentives' && (
-              <div className="space-y-6">
-                <Card className="p-8">
-                  <h3 className="text-amber-700 font-bold mb-6 text-2xl flex items-center gap-3">
-                    LP Incentive Programs
-                  </h3>
-                  <p className="text-gray-600 mb-8">
-                    Early liquidity providers receive bonus AXM rewards based on their contribution timing and lock duration.
-                  </p>
-
-                  {incentiveData?.activePrograms?.map((program) => (
-                    <div key={program.id} className="bg-amber-50 rounded-xl p-6 border border-amber-200 mb-6">
-                      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                        <div>
-                          <h4 className="text-xl font-bold text-gray-900">{program.name}</h4>
-                          <p className="text-gray-500">Reward Token: {program.rewardToken}</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-amber-600">{program.bonusMultiplier}x</div>
-                          <div className="text-gray-500">Multiplier</div>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-white rounded-lg p-4 text-center border border-gray-200">
-                          <div className="text-lg font-bold text-emerald-600">{formatNumber(program.rewards.total)}</div>
-                          <div className="text-gray-500 text-sm">Total Rewards</div>
-                        </div>
-                        <div className="bg-white rounded-lg p-4 text-center border border-gray-200">
-                          <div className="text-lg font-bold text-teal-600">{formatNumber(program.rewards.remaining)}</div>
-                          <div className="text-gray-500 text-sm">Remaining</div>
-                        </div>
-                        <div className="bg-white rounded-lg p-4 text-center border border-gray-200">
-                          <div className="text-lg font-bold text-blue-600">{program.rewards.daily}</div>
-                          <div className="text-gray-500 text-sm">Daily Rate</div>
-                        </div>
-                        <div className="bg-white rounded-lg p-4 text-center border border-gray-200">
-                          <div className="text-lg font-bold text-purple-600">{program.duration.remainingDays}</div>
-                          <div className="text-gray-500 text-sm">Days Left</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  <h4 className="text-gray-900 font-bold mb-4 text-lg">Bonus Tiers</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {incentiveData?.bonusTiers?.map((tier) => (
-                      <div key={tier.tier} className={`rounded-xl p-4 text-center ${tier.tier === 1 ? 'bg-amber-100 border border-amber-300' : 'bg-gray-50 border border-gray-200'}`}>
-                        <div className={`text-2xl font-bold ${tier.tier === 1 ? 'text-amber-600' : 'text-gray-700'}`}>{tier.multiplier}x</div>
-                        <div className="text-gray-500 text-sm">{tier.description}</div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-
-                <Card className="p-6">
-                  <h3 className="text-emerald-700 font-bold mb-4 text-xl">Lock Duration Benefits</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[
-                      { days: '30 days', multiplier: '1.25x', color: 'emerald' },
-                      { days: '90 days', multiplier: '1.5x', color: 'teal' },
-                      { days: '180 days', multiplier: '2.0x', color: 'amber' },
-                    ].map((lock, i) => (
-                      <div key={i} className={`rounded-xl p-6 text-center bg-${lock.color}-50 border border-${lock.color}-200`}>
-                        <div className={`text-3xl font-bold text-${lock.color}-600 mb-2`}>{lock.multiplier}</div>
-                        <div className="text-gray-600">{lock.days} lock</div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'bridge' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                  <div className="lg:col-span-2">
-                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                      <div className="flex items-center gap-3">                        
-                        <AlertTriangle className="w-6 h-6 text-amber-600" />
-                        <p className="text-amber-700">Bridge transactions are irreversible. Please verify destination addresses carefully before proceeding.</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="relative group">
-                    <div className="absolute -inset-2 bg-gradient-to-r from-teal-200 to-blue-200 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
-                    <div className="relative overflow-hidden rounded-2xl shadow-xl">
-                      <Image
-                        src={bridgeImage}
-                        alt="Cross-Chain Bridge"
-                        width={400}
-                        height={200}
-                        className="w-full h-40 object-cover transform group-hover:scale-105 transition-transform duration-500"
-                        style={{ width: '100%', height: 'auto' }}
-                      />
-                    </div>
+                  <div>
+                    <p className="text-xs text-dl-gray">Current Price</p>
+                    <p className="text-lg font-dl-mono text-dl-navy">${parseFloat(pegStatus?.currentPrice || '1').toFixed(2)}</p>
                   </div>
                 </div>
-
-                <Card className="p-6">
-                  <h3 className="text-teal-700 font-bold mb-6 text-xl flex items-center gap-2">
-                    Available Bridge Routes
-                  </h3>
-                  <div className="space-y-4">
-                    {bridgeData?.routes?.map((route) => (
-                      <div key={route.id} className="flex flex-wrap items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-teal-300 transition-colors gap-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">A</div>
-                            <span className="text-gray-400">→</span>
-                            <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">{route.destination.chain.charAt(0)}</div>
-                          </div>
-                          <div>
-                            <div className="font-bold text-gray-900">{route.name}</div>
-                            <div className="text-sm text-gray-500">via {route.provider}</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-6">
-                          <div className="text-center">
-                            <div className="text-gray-900 font-bold">{route.fees.percent}% + ${route.fees.flat}</div>
-                            <div className="text-gray-500 text-sm">Fee</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-gray-900 font-bold">~{route.estimatedTime} min</div>
-                            <div className="text-gray-500 text-sm">Est. Time</div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-
-                <Card className="p-6">
-                  <h3 className="text-gray-900 font-bold mb-4 text-xl">Supported Networks</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    {Object.entries(bridgeData?.supportedChains || {}).map(([id, chain]) => (
-                      <div key={id} className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
-                        <div className="w-12 h-12 mx-auto rounded-full mb-2 bg-gray-100 flex items-center justify-center">
-                          <span className="text-gray-700 font-bold">{chain.name.charAt(0)}</span>
-                        </div>
-                        <div className="text-gray-700 text-sm">{chain.name}</div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
               </div>
-            )}
+            </div>
+          </div>
+        </div>
 
-            {activeTab === 'history' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                  <Card className="p-6 text-center">
-                    <div className="text-2xl font-bold text-emerald-600">{historyData?.growthMetrics?.supplyGrowthPercent || '0'}%</div>
-                    <div className="text-gray-500">Supply Growth ({historyData?.growthMetrics?.periodDays || 30}d)</div>
-                  </Card>
-                  <Card className="p-6 text-center">
-                    <div className="text-2xl font-bold text-teal-600">{historyData?.growthMetrics?.tvlGrowthPercent || '0'}%</div>
-                    <div className="text-gray-500">TVL Growth ({historyData?.growthMetrics?.periodDays || 30}d)</div>
-                  </Card>
-                  <Card className="p-6 text-center">
-                    <div className="text-2xl font-bold text-blue-600">${formatNumber(historyData?.latestSnapshot?.totalSupply || '0')}</div>
-                    <div className="text-gray-500">Current Supply</div>
-                  </Card>
-                  <Card className="p-6 text-center">
-                    <div className="text-2xl font-bold text-purple-600">${formatNumber(historyData?.latestSnapshot?.tvl || '0')}</div>
-                    <div className="text-gray-500">Current TVL</div>
-                  </Card>
-                </div>
+        <div className="flex flex-wrap justify-center gap-2 mb-10 px-2">
+          {TAB_CONFIG.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2.5 font-medium flex items-center gap-2 ${
+                activeTab === tab.id
+                  ? 'bg-dl-navy text-white'
+                  : 'bg-dl-bg-alt text-dl-gray border border-dl-border'
+              }`}
+            >
+              <span>{tab.icon}</span>
+              <span className="hidden sm:inline">{tab.label}</span>
+            </button>
+          ))}
+        </div>
 
-                <Card className="p-6">
-                  <h3 className="text-gray-900 font-bold mb-6 text-xl">Historical Snapshots</h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="text-gray-500 text-sm border-b border-gray-200">
-                          <th className="text-left py-3 px-4">Date</th>
-                          <th className="text-right py-3 px-4">Supply</th>
-                          <th className="text-right py-3 px-4">Reserves</th>
-                          <th className="text-right py-3 px-4">Ratio</th>
-                          <th className="text-right py-3 px-4">Peg</th>
-                          <th className="text-right py-3 px-4">TVL</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {historyData?.snapshots?.map((snapshot, i) => (
-                          <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-3 px-4 text-gray-700">{snapshot.date}</td>
-                            <td className="py-3 px-4 text-right text-gray-900">${formatNumber(snapshot.totalSupply)}</td>
-                            <td className="py-3 px-4 text-right text-emerald-600">${formatNumber(snapshot.reserves)}</td>
-                            <td className="py-3 px-4 text-right text-teal-600">{snapshot.reserveRatio.toFixed(1)}%</td>
-                            <td className="py-3 px-4 text-right text-blue-600">${snapshot.pegPrice.toFixed(4)}</td>
-                            <td className="py-3 px-4 text-right text-purple-600">${formatNumber(snapshot.tvl)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </Card>
-              </div>
-            )}
+        {activeTab === 'overview' && (
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <StatCard label="Total Supply" value={supplyData?.totalSupply || '0'} suffix="AXUSD" icon={<DollarSign className="w-5 h-5" />} />
+              <StatCard label="Circulating" value={supplyData?.circulatingSupply || '0'} suffix="AXUSD" icon={<Coins className="w-5 h-5" />} />
+              <StatCard label="Reserve Ratio" value={treasuryHealth?.overview?.reserveRatio || '100'} suffix="%" icon={<Shield className="w-5 h-5" />} />
+              <StatCard label="PSM Reserve" value={psmData?.usdcReserve || '0'} suffix="USDC" icon={<Wallet className="w-5 h-5" />} />
+            </div>
 
-            {activeTab === 'alerts' && (
-              <div className="space-y-6">
-                <Card className="p-8">
-                  <h3 className="text-red-700 font-bold mb-6 text-2xl flex items-center gap-3">
-                    Alert Configuration
-                  </h3>
-                  <p className="text-gray-600 mb-8">
-                    Set up notifications to stay informed about important AXUSD protocol events and thresholds.
-                  </p>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {alertTypes.map((alert) => (
-                      <div key={alert.type} className="bg-gray-50 rounded-xl p-5 border border-gray-200 hover:border-red-300 transition-colors">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center text-red-600">
-                            {alert.type === 'peg_deviation' && <TrendingUp className="w-5 h-5" />}
-                            {alert.type === 'reserve_low' && <Shield className="w-5 h-5" />}
-                            {alert.type === 'high_utilization' && <BarChart3 className="w-5 h-5" />}
-                            {alert.type === 'large_mint' && <Coins className="w-5 h-5" />}
-                            {alert.type === 'large_redeem' && <ArrowLeftRight className="w-5 h-5" />}
-                            {alert.type === 'liquidity_change' && <Droplets className="w-5 h-5" />}
-                          </div>
-                          <h4 className="font-bold text-gray-900 capitalize">{alert.type.replace(/_/g, ' ')}</h4>
-                        </div>
-                        <p className="text-gray-500 text-sm mb-4">{alert.description}</p>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-400">Default: {alert.defaultThreshold} {alert.unit}</span>
-                          <button className="text-emerald-600 hover:text-emerald-700 font-medium">Configure</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-
-                <Card className="p-6">
-                  <h3 className="text-gray-900 font-bold mb-4 text-xl">How Alerts Work</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {[
-                      { step: 1, title: 'Choose Alert Type', desc: 'Select from peg deviation, reserve, utilization, or transaction alerts' },
-                      { step: 2, title: 'Set Threshold', desc: 'Define your personal threshold values for each alert type' },
-                      { step: 3, title: 'Get Notified', desc: 'Receive email or webhook notifications when thresholds are breached' },
-                    ].map((item) => (
-                      <div key={item.step} className="text-center p-4">
-                        <div className="w-12 h-12 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3 text-emerald-600 font-bold text-lg">{item.step}</div>
-                        <h4 className="font-bold text-gray-900 mb-2">{item.title}</h4>
-                        <p className="text-gray-500 text-sm">{item.desc}</p>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'faq' && (
-              <div className="space-y-8">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
-                  <p className="text-gray-500 max-w-2xl mx-auto">
-                    Everything you need to know about AXUSD, from getting started to advanced features
-                  </p>
-                </div>
-
-                {FAQ_DATA.map((category, catIndex) => (
-                  <Card key={catIndex} className="p-6">
-                    <h3 className="text-emerald-700 font-bold mb-6 text-xl">{category.category}</h3>
-                    <div className="space-y-4">
-                      {category.questions.map((faq, faqIndex) => {
-                        const faqId = `${catIndex}-${faqIndex}`;
-                        const isExpanded = expandedFaq === faqId;
-                        return (
-                          <div key={faqIndex} className="border border-gray-200 rounded-xl overflow-hidden">
-                            <button
-                              onClick={() => setExpandedFaq(isExpanded ? null : faqId)}
-                              className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
-                            >
-                              <span className="font-medium text-gray-900">{faq.q}</span>
-                              <span className={`text-emerald-600 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
-                            </button>
-                            {isExpanded && (
-                              <div className="px-4 pb-4">
-                                <p className="text-gray-600 leading-relaxed">{faq.a}</p>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+            <Card className="p-8">
+              <h3 className="font-dl-serif text-dl-navy mb-8 text-2xl flex items-center gap-3">
+                How AXUSD Works
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                {[
+                  { step: 1, title: 'Deposit Collateral', desc: 'Lock WETH or WBTC at 150% ratio' },
+                  { step: 2, title: 'Mint AXUSD', desc: 'Create stablecoin against your collateral' },
+                  { step: 3, title: 'Use Anywhere', desc: 'SUSU circles, KeyGrow rent, DeFi' },
+                  { step: 4, title: 'Earn Yield', desc: 'Lock SEED for protocol revenue share' },
+                ].map((item) => (
+                  <div key={item.step} className="text-center">
+                    <div className="w-16 h-16 mx-auto bg-dl-bg-alt flex items-center justify-center mb-4 border border-dl-border">
+                      <span className="font-dl-mono text-3xl text-dl-navy">{item.step}</span>
                     </div>
-                  </Card>
+                    <h4 className="font-dl-serif text-dl-navy mb-2">{item.title}</h4>
+                    <p className="text-dl-gray text-sm">{item.desc}</p>
+                  </div>
                 ))}
               </div>
-            )}
+            </Card>
 
-            {activeTab === 'mint' && (
-              <Card className="p-8">
-                <h3 className="text-emerald-700 font-bold mb-6 text-2xl">Mint AXUSD</h3>
-                <div className="max-w-xl mx-auto space-y-6">
-                  <div>
-                    <label className="text-gray-700 block mb-2">Collateral Type</label>
-                    <select 
-                      value={collateralType}
-                      onChange={(e) => setCollateralType(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
-                    >
-                      <option value="WETH">WETH - Wrapped Ether</option>
-                      <option value="WBTC">WBTC - Wrapped Bitcoin</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-gray-700 block mb-2">Collateral Amount</label>
-                    <input
-                      type="number"
-                      value={mintAmount}
-                      onChange={(e) => setMintAmount(e.target.value)}
-                      placeholder="0.00"
-                      className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
-                    />
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                    <div className="flex justify-between text-gray-600 mb-2">
-                      <span>Collateral Ratio</span>
-                      <span className="text-emerald-600 font-medium">150% (min)</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="p-6">
+                <h3 className="text-dl-navy font-dl-serif mb-4 text-xl flex items-center gap-2">
+                  <Shield className="w-5 h-5" /> GENIUS Act Compliance
+                </h3> 
+                <div className="space-y-3">
+                  {[
+                    { text: '100% Reserve Backing Required', icon: <CheckCircle className="w-4 h-4" /> },
+                    { text: 'Segregated Custody Accounts', icon: <Lock className="w-4 h-4" /> },
+                    { text: '93-Day Maximum T-Bill Maturity', icon: <Building className="w-4 h-4" /> },
+                    { text: 'Anti-Rehypothecation Controls', icon: <Shield className="w-4 h-4" /> },
+                    { text: 'Real-Time On-Chain Verification', icon: <Zap className="w-4 h-4" /> },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 bg-dl-bg-alt border border-dl-border">
+                      <span className="text-dl-forest">{item.icon}</span>
+                      <span className="text-dl-navy">{item.text}</span>
                     </div>
-                    <div className="flex justify-between text-gray-600">
-                      <span>AXUSD to Receive</span>
-                      <span className="text-gray-900 font-bold">{mintAmount ? (parseFloat(mintAmount) * 2000 / 1.5).toFixed(2) : '0.00'} AXUSD</span>
-                    </div>
-                  </div>
-                  {txStatus.message && activeTab === 'mint' && (
-                    <div className={`p-4 rounded-xl mb-4 ${txStatus.type === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
-                      {txStatus.message}
-                    </div>
-                  )}
-                  {isWalletConnected ? (
-                    <button 
-                      className={`w-full font-bold py-4 rounded-xl transition-colors ${txPending ? 'bg-gray-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'} text-white`}
-                      onClick={handleMint}
-                      disabled={txPending}
-                    >
-                      {txPending ? 'Processing...' : 'Mint AXUSD'}
-                    </button>
-                  ) : (
-                    <button 
-                      className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl hover:bg-emerald-700 transition-colors"
-                      onClick={connectMetaMask}
-                    >
-                      Connect Wallet to Mint
-                    </button>
-                  )}
+                  ))}
                 </div>
               </Card>
-            )}
 
-            {activeTab === 'psm' && (
-              <Card className="p-8">
-                <h3 className="text-blue-700 font-bold mb-6 text-2xl">Peg Stability Module</h3>
-                <div className="max-w-xl mx-auto space-y-6">
-                  {/* Bridge Helper - Shows when user is on Ethereum */}
-                  {isWalletConnected && walletState?.chainId === 1 && (
-                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-5 border border-purple-200 mb-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                          <Waypoints className="w-5 h-5 text-purple-600" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-bold text-purple-800 mb-1">You're on Ethereum Mainnet</h4>
-                          <p className="text-purple-700 text-sm mb-3">
-                            AXUSD operates on Arbitrum One. Bridge your USDC to Arbitrum first, then return here to swap.
-                          </p>
-                          <div className="flex flex-wrap gap-3">
-                            <a
-                              href="https://bridge.arbitrum.io/?destinationChain=arbitrum-one&sourceChain=ethereum"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
-                            >
-                              <ExternalLink className="w-4 h-4" />
-                              Bridge USDC to Arbitrum
-                            </a>
-                            <button
-                              onClick={handleSwitchNetwork}
-                              disabled={networkSwitching}
-                              className="inline-flex items-center gap-2 bg-white text-purple-600 px-4 py-2 rounded-lg font-medium border border-purple-300 hover:bg-purple-50 transition-colors"
-                            >
-                              <Zap className="w-4 h-4" />
-                              {networkSwitching ? 'Switching...' : 'Switch to Arbitrum'}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+              <Card className="p-6">
+                <h3 className="text-dl-navy font-dl-serif mb-4 text-xl flex items-center gap-2">
+                  Revenue Distribution
+                </h3>
+                <div className="space-y-4">
+                  {[
+                    { label: 'SEED Holders', value: '50%' },
+                    { label: 'Treasury', value: '30%' },
+                    { label: 'Backstop Vault', value: '20%' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 bg-dl-bg-alt border border-dl-border">
+                      <span className="text-dl-navy">{item.label}</span>
+                      <span className="text-dl-navy font-dl-mono text-lg">{item.value}</span>
                     </div>
-                  )}
-
-                  <div className="flex gap-4 justify-center mb-6">
-                    <button
-                      onClick={() => setPsmDirection('usdcToAxusd')}
-                      className={`px-6 py-3 rounded-xl font-medium transition-all ${psmDirection === 'usdcToAxusd' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-                    >
-                      USDC → AXUSD
-                    </button>
-                    <button
-                      onClick={() => setPsmDirection('axusdToUsdc')}
-                      className={`px-6 py-3 rounded-xl font-medium transition-all ${psmDirection === 'axusdToUsdc' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-                    >
-                      AXUSD → USDC
-                    </button>
-                  </div>
-                  <div>
-                    <label className="text-gray-700 block mb-2">{psmDirection === 'usdcToAxusd' ? 'USDC Amount' : 'AXUSD Amount'}</label>
-                    <input
-                      type="number"
-                      value={psmAmount}
-                      onChange={(e) => setPsmAmount(e.target.value)}
-                      placeholder="0.00"
-                      className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
-                    />
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                    <div className="flex justify-between text-gray-600 mb-2">
-                      <span>Exchange Rate</span>
-                      <span className="text-gray-900">1:1</span>
-                    </div>
-                    <div className="flex justify-between text-gray-600 mb-2">
-                      <span>Fee (0.1%)</span>
-                      <span className="text-amber-600">{psmAmount ? (parseFloat(psmAmount) * 0.001).toFixed(4) : '0.00'}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-600">
-                      <span>You Receive</span>
-                      <span className="text-gray-900 font-bold">{psmAmount ? (parseFloat(psmAmount) * 0.999).toFixed(4) : '0.00'} {psmDirection === 'usdcToAxusd' ? 'AXUSD' : 'USDC'}</span>
-                    </div>
-                  </div>
-                  {txStatus.message && activeTab === 'psm' && (
-                    <div className={`p-4 rounded-xl mb-4 ${txStatus.type === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
-                      {txStatus.message}
-                    </div>
-                  )}
-                  {isWalletConnected ? (
-                    <button 
-                      className={`w-full font-bold py-4 rounded-xl transition-colors ${txPending ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
-                      onClick={handleSwap}
-                      disabled={txPending}
-                    >
-                      {txPending ? 'Processing...' : `Swap ${psmDirection === 'usdcToAxusd' ? 'USDC → AXUSD' : 'AXUSD → USDC'}`}
-                    </button>
-                  ) : (
-                    <button 
-                      className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors"
-                      onClick={connectMetaMask}
-                    >
-                      Connect Wallet to Swap
-                    </button>
-                  )}
+                  ))}
                 </div>
               </Card>
-            )}
+            </div>
 
-            {activeTab === 'liquidity' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-2 relative group">
-                    <div className="absolute -inset-2 bg-gradient-to-r from-purple-200 to-blue-200 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
-                    <div className="relative overflow-hidden rounded-2xl shadow-xl">
-                      <Image
-                        src={liquidityPoolImage}
-                        alt="Liquidity Pool"
-                        width={600}
-                        height={300}
-                        className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-500"
-                        style={{ width: '100%', height: 'auto' }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                      <div className="absolute bottom-4 left-4 text-white">
-                        <h3 className="text-2xl font-bold flex items-center gap-2">
-                          <Droplets className="w-6 h-6" /> AXUSD/USDC Pool
-                        </h3>
-                        <p className="text-white/80">Provide liquidity and earn rewards</p>
-                      </div>
-                    </div>
-                  </div>
-                  <Card className="p-6">
-                    <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-emerald-600" /> Pool Stats
-                    </h4>
-                    <div className="space-y-4">
-                      <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
-                        <div className="text-2xl font-bold text-purple-600">${formatNumber(lpData?.totalLiquidity || lpAnalytics?.pool?.tvl || '0')}</div>
-                        <div className="text-gray-500 text-sm">Total Liquidity</div>
-                      </div>
-                      <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
-                        <div className="text-2xl font-bold text-emerald-600">{lpAnalytics?.metrics?.apr || '0'}%</div>
-                        <div className="text-gray-500 text-sm">Current APR</div>
-                      </div>
-                      <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-                        <div className="text-2xl font-bold text-amber-600">${lpAnalytics?.metrics?.dailyFees || '0'}</div>
-                        <div className="text-gray-500 text-sm">Daily Fees</div>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-                
-                <Card className="p-8">
-                  <h3 className="text-purple-700 font-bold mb-6 text-2xl flex items-center gap-2">
-                    <Layers className="w-6 h-6" /> Add Liquidity
-                  </h3>
-                  <div className="max-w-xl mx-auto space-y-4">
-                    <div>
-                      <label className="text-gray-700 block mb-2">AXUSD Amount</label>
-                      <input
-                        type="number"
-                        value={lpAxusdAmount}
-                        onChange={(e) => { setLpAxusdAmount(e.target.value); setLpUsdcAmount(e.target.value); }}
-                        placeholder="0.00"
-                        className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-gray-700 block mb-2">USDC Amount</label>
-                      <input
-                        type="number"
-                        value={lpUsdcAmount}
-                        onChange={(e) => { setLpUsdcAmount(e.target.value); setLpAxusdAmount(e.target.value); }}
-                        placeholder="0.00"
-                        className="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-gray-900"
-                      />
-                    </div>
-                    {txStatus.message && activeTab === 'liquidity' && (
-                      <div className={`p-4 rounded-xl mb-4 ${txStatus.type === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
-                        {txStatus.message}
-                      </div>
-                    )}
-                    {isWalletConnected ? (
-                      <button 
-                        className={`w-full font-bold py-4 rounded-xl transition-colors ${txPending ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'} text-white`}
-                        onClick={handleAddLiquidity}
-                        disabled={txPending}
-                      >
-                        {txPending ? 'Processing...' : 'Add Liquidity'}
-                      </button>
-                    ) : (
-                      <button 
-                        className="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition-colors"
-                        onClick={connectMetaMask}
-                      >
-                        Connect Wallet to Add Liquidity
-                      </button>
-                    )}
-                  </div>
-                </Card>
+            <Card className="p-6">
+              <h3 className="text-dl-navy font-dl-serif mb-4 text-xl">Deployed Contracts</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {Object.entries(AXUSD_CONTRACT_LIST).map(([name, addr]) => (
+                  <a
+                    key={name}
+                    href={`https://arbiscan.io/address/${addr}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-3 bg-dl-bg-alt border border-dl-border"
+                  >
+                    <span className="text-dl-navy text-sm">{name}</span>
+                    <span className="text-dl-forest text-xs font-dl-mono">{truncateAddress(addr)}</span>
+                  </a>
+                ))}
               </div>
-            )}
-
-            {activeTab === 'analytics' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <Card className="p-6 text-center">
-                    <div className="text-2xl font-bold text-emerald-600">${formatNumber(lpAnalytics?.pool?.tvl || '0')}</div>
-                    <div className="text-gray-500">Pool TVL</div>
-                  </Card>
-                  <Card className="p-6 text-center">
-                    <div className="text-2xl font-bold text-teal-600">{lpAnalytics?.metrics?.apr || '0'}%</div>
-                    <div className="text-gray-500">APR</div>
-                  </Card>
-                  <Card className="p-6 text-center">
-                    <div className="text-2xl font-bold text-blue-600">${lpAnalytics?.metrics?.dailyFees || '0'}</div>
-                    <div className="text-gray-500">Daily Fees</div>
-                  </Card>
-                  <Card className="p-6 text-center">
-                    <div className="text-2xl font-bold text-purple-600">${formatNumber(lpAnalytics?.metrics?.annualFees || '0')}</div>
-                    <div className="text-gray-500">Annual Fees</div>
-                  </Card>
-                </div>
-                <Card className="p-6">
-                  <h3 className="text-gray-900 font-bold mb-4 text-xl">Pool Reserves</h3>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="text-center p-6 bg-emerald-50 rounded-xl border border-emerald-200">
-                      <div className="text-3xl font-bold text-emerald-600">{formatNumber(lpAnalytics?.pool?.axusdReserve || '0')}</div>
-                      <div className="text-gray-500">AXUSD Reserve</div>
-                    </div>
-                    <div className="text-center p-6 bg-blue-50 rounded-xl border border-blue-200">
-                      <div className="text-3xl font-bold text-blue-600">{formatNumber(lpAnalytics?.pool?.usdcReserve || '0')}</div>
-                      <div className="text-gray-500">USDC Reserve</div>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'treasury' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                  <div className="lg:col-span-2">
-                    <Card className="p-6 h-full">
-                      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                        <div>
-                          <h2 className="text-2xl font-bold text-gray-900 mb-1 flex items-center gap-3">
-                            <Vault className="w-7 h-7 text-emerald-600" /> Treasury Health
-                          </h2>
-                          <p className="text-gray-500">Real-time reserve backing and protocol health metrics</p>
-                        </div>
-                        <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${treasuryHealth?.overview?.geniusCompliant ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                          {treasuryHealth?.overview?.geniusCompliant ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
-                          GENIUS Act {treasuryHealth?.overview?.geniusCompliant ? 'Compliant' : 'Non-Compliant'}
-                        </span>
-                      </div>
-                    </Card>
-                  </div>
-                  <div className="relative group">
-                    <div className="absolute -inset-2 bg-gradient-to-r from-emerald-200 to-teal-200 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
-                    <div className="relative overflow-hidden rounded-2xl shadow-xl">
-                      <Image
-                        src={treasuryVaultImage}
-                        alt="Treasury Vault"
-                        width={400}
-                        height={300}
-                        className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-500"
-                        style={{ width: '100%', height: 'auto' }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <Card className="p-6 text-center">
-                    <div className="text-3xl font-bold text-emerald-600">{treasuryHealth?.overview?.reserveRatio || '100'}%</div>
-                    <div className="text-gray-500">Reserve Ratio</div>
-                  </Card>
-                  <Card className="p-6 text-center">
-                    <div className="text-2xl font-bold text-teal-600">${formatNumber(treasuryHealth?.reserves?.psmUsdc || '0')}</div>
-                    <div className="text-gray-500">PSM USDC</div>
-                  </Card>
-                  <Card className="p-6 text-center">
-                    <div className="text-2xl font-bold text-blue-600">${formatNumber(treasuryHealth?.reserves?.backstopUsdc || '0')}</div>
-                    <div className="text-gray-500">Backstop USDC</div>
-                  </Card>
-                  <Card className="p-6 text-center">
-                    <div className="text-2xl font-bold text-amber-600">{treasuryHealth?.overview?.healthScore || 0}/100</div>
-                    <div className="text-gray-500">Health Score</div>
-                  </Card>
-                </div>
-
-                <Card className="p-6">
-                  <h3 className="text-amber-700 font-bold mb-4 text-xl">Stress Test Scenarios</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {treasuryHealth?.stressTests && Object.entries(treasuryHealth.stressTests).map(([key, test]) => (
-                      <div key={key} className={`rounded-xl p-4 ${test.canHandle ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}>
-                        <h4 className={`font-bold mb-2 ${test.canHandle ? 'text-emerald-700' : 'text-red-700'}`}>{test.name}</h4>
-                        <p className="text-gray-500 text-sm mb-2">Status: {test.canHandle ? 'Can Handle' : 'At Risk'}</p>
-                        <p className="text-gray-900 font-bold">New Ratio: {test.newReserveRatio.toFixed(1)}%</p>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'vaults' && (
-              <Card className="p-8 text-center">
-                <div className="w-16 h-16 mx-auto bg-purple-100 rounded-2xl flex items-center justify-center text-3xl text-purple-600">$</div>
-                <h3 className="text-2xl font-bold text-gray-900 mt-6 mb-2">My Vaults</h3>
-                  <p className="text-gray-500 mb-6">Connect wallet to view and manage AXUSD vaults</p>
-                <button 
-                  onClick={() => setActiveTab('mint')}
-                  className="bg-purple-600 text-white font-bold px-8 py-4 rounded-xl hover:bg-purple-700 transition-colors"
-                >
-                  Create Your First Vault
-                </button>
-              </Card>
-            )}
-
-            {activeTab === 'earn' && (
-              <div className="space-y-6">
-                <Card className="p-8">
-                  <h3 className="text-amber-700 font-bold mb-6 text-2xl">SEED Yield Distribution</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-amber-50 rounded-xl p-6 border border-amber-200">
-                      <h4 className="font-bold text-gray-900 mb-4 text-lg">How to Earn</h4>
-                      <ol className="space-y-3 text-gray-700">
-                        <li className="flex items-start gap-3">
-                          <span className="text-emerald-600 font-bold">1.</span>
-                          Lock AXM tokens in SEED contract
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <span className="text-emerald-600 font-bold">2.</span>
-                          Receive voting power proportional to lock duration
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <span className="text-emerald-600 font-bold">3.</span>
-                          Claim AXUSD yield every week
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <span className="text-emerald-600 font-bold">4.</span>
-                          50% of all protocol revenue goes to SEED holders
-                        </li>
-                      </ol>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                      <h4 className="font-bold text-gray-900 mb-4 text-lg">Current Epoch</h4>
-                      <div className="space-y-3">
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Epoch</span>
-                          <span className="text-gray-900 font-bold">1</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Total Revenue</span>
-                          <span className="text-emerald-600 font-bold">0 AXUSD</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Your SEED Balance</span>
-                          <span className="text-gray-900">0 SEED</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Estimated Yield</span>
-                          <span className="text-amber-600 font-bold">0 AXUSD</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="p-6">
-                  <h3 className="text-emerald-700 font-bold mb-6 text-xl">AXUSD Use Cases</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {[
-                      { icon: 'S', title: 'SUSU Circles', desc: 'Join savings circles denominated in AXUSD for stable, predictable savings', color: 'blue' },
-                      { icon: 'H', title: 'KeyGrow Housing', desc: 'Pay rent in AXUSD and build equity toward home ownership', color: 'purple' },
-                      { icon: 'L', title: 'DeFi Liquidity', desc: 'Provide liquidity in AXUSD pools on Camelot DEX', color: 'amber' },
-                    ].map((item, i) => (
-                      <div key={i} className={`text-center p-6 bg-${item.color}-50 rounded-xl border border-${item.color}-200`}>
-                        <div className={`w-12 h-12 mx-auto bg-${item.color}-100 rounded-xl flex items-center justify-center text-2xl text-${item.color}-600`}>{item.icon}</div>
-                        <h4 className="font-bold text-gray-900 mt-4 mb-2">{item.title}</h4>
-                        <p className="text-gray-500 text-sm">{item.desc}</p>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
+            </Card>
           </div>
-        </section>
-      </div>
-    </>
+        )}
+
+        {activeTab === 'pools' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card className="p-6 text-center">
+                <div className="font-dl-mono text-3xl text-dl-navy">{poolData?.summary?.totalPools || 0}</div>
+                <div className="text-dl-gray">Total Pools</div>
+              </Card>
+              <Card className="p-6 text-center">
+                <div className="font-dl-mono text-3xl text-dl-forest">{poolData?.summary?.activePools || 0}</div>
+                <div className="text-dl-gray">Active Pools</div>
+              </Card>
+              <Card className="p-6 text-center">
+                <div className="font-dl-mono text-3xl text-dl-navy">${poolData?.summary?.totalTvl || '0'}</div>
+                <div className="text-dl-gray">Total TVL</div>
+              </Card>
+            </div>
+
+            <Card className="p-6">
+              <h3 className="text-dl-navy font-dl-serif mb-6 text-xl">Available Pools</h3>
+              <div className="space-y-4">
+                {poolData?.pools?.map((pool) => (
+                  <div key={pool.id} className="flex items-center justify-between p-4 bg-dl-bg-alt border border-dl-border">
+                    <div className="flex items-center gap-4">
+                      <div className="flex -space-x-2">
+                        <div className="w-10 h-10 bg-dl-bg-alt border-2 border-dl-bg flex items-center justify-center text-dl-navy font-dl-mono">$</div>
+                        <div className="w-10 h-10 bg-dl-bg-alt border-2 border-dl-bg flex items-center justify-center text-dl-navy font-dl-mono">{pool.token1Symbol?.charAt(0)}</div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-dl-navy">{pool.name}</div>
+                        <div className="text-sm text-dl-gray">{pool.dex}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-dl-mono text-dl-navy">${formatNumber(pool.tvl)}</div>
+                      <div className={`text-sm flex items-center justify-end gap-1 ${pool.status === 'active' ? 'text-dl-forest' : 'text-dl-gray'}`}>
+                        {pool.status === 'active' ? <><CheckCircle className="w-3 h-3" /> Live</> : <><CircleDot className="w-3 h-3" /> Pending</>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'incentives' && (
+          <div className="space-y-6">
+            <Card className="p-8">
+              <h3 className="text-dl-navy font-dl-serif mb-6 text-2xl flex items-center gap-3">
+                LP Incentive Programs
+              </h3>
+              <p className="text-dl-gray mb-8">
+                Early liquidity providers receive bonus AXM rewards based on their contribution timing and lock duration.
+              </p>
+
+              {incentiveData?.activePrograms?.map((program) => (
+                <div key={program.id} className="bg-dl-bg-alt p-6 border border-dl-border mb-6">
+                  <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div>
+                      <h4 className="text-xl font-dl-serif text-dl-navy">{program.name}</h4>
+                      <p className="text-dl-gray">Reward Token: {program.rewardToken}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-dl-mono text-dl-navy">{program.bonusMultiplier}x</div>
+                      <div className="text-dl-gray">Multiplier</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-dl-bg p-4 text-center border border-dl-border">
+                      <div className="text-lg font-dl-mono text-dl-forest">{formatNumber(program.rewards.total)}</div>
+                      <div className="text-dl-gray text-sm">Total Rewards</div>
+                    </div>
+                    <div className="bg-dl-bg p-4 text-center border border-dl-border">
+                      <div className="text-lg font-dl-mono text-dl-navy">{formatNumber(program.rewards.remaining)}</div>
+                      <div className="text-dl-gray text-sm">Remaining</div>
+                    </div>
+                    <div className="bg-dl-bg p-4 text-center border border-dl-border">
+                      <div className="text-lg font-dl-mono text-dl-navy">{program.rewards.daily}</div>
+                      <div className="text-dl-gray text-sm">Daily Rate</div>
+                    </div>
+                    <div className="bg-dl-bg p-4 text-center border border-dl-border">
+                      <div className="text-lg font-dl-mono text-dl-navy">{program.duration.remainingDays}</div>
+                      <div className="text-dl-gray text-sm">Days Left</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <h4 className="text-dl-navy font-dl-serif mb-4 text-lg">Bonus Tiers</h4>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {incentiveData?.bonusTiers?.map((tier) => (
+                  <div key={tier.tier} className={`p-4 text-center ${tier.tier === 1 ? 'bg-dl-bg-alt border-2 border-dl-navy' : 'bg-dl-bg-alt border border-dl-border'}`}>
+                    <div className="text-2xl font-dl-mono text-dl-navy">{tier.multiplier}x</div>
+                    <div className="text-dl-gray text-sm">{tier.description}</div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <h3 className="text-dl-navy font-dl-serif mb-4 text-xl">Lock Duration Benefits</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[
+                  { days: '30 days', multiplier: '1.25x' },
+                  { days: '90 days', multiplier: '1.5x' },
+                  { days: '180 days', multiplier: '2.0x' },
+                ].map((lock, i) => (
+                  <div key={i} className="p-6 text-center bg-dl-bg-alt border border-dl-border">
+                    <div className="text-3xl font-dl-mono text-dl-navy mb-2">{lock.multiplier}</div>
+                    <div className="text-dl-gray">{lock.days} lock</div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'bridge' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              <div className="lg:col-span-2">
+                <div className="bg-dl-bg-alt border border-dl-border p-4">
+                  <div className="flex items-center gap-3">                        
+                    <AlertTriangle className="w-6 h-6 text-dl-navy" />
+                    <p className="text-dl-navy">Bridge transactions are irreversible. Please verify destination addresses carefully before proceeding.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="relative">
+                <Image
+                  src={bridgeImage}
+                  alt="Cross-Chain Bridge"
+                  width={400}
+                  height={200}
+                  className="w-full h-40 object-cover"
+                  style={{ width: '100%', height: 'auto' }}
+                />
+              </div>
+            </div>
+
+            <Card className="p-6">
+              <h3 className="text-dl-navy font-dl-serif mb-6 text-xl flex items-center gap-2">
+                Available Bridge Routes
+              </h3>
+              <div className="space-y-4">
+                {bridgeData?.routes?.map((route) => (
+                  <div key={route.id} className="flex flex-wrap items-center justify-between p-4 bg-dl-bg-alt border border-dl-border gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-dl-bg-alt flex items-center justify-center text-dl-navy font-dl-mono border border-dl-border">A</div>
+                        <span className="text-dl-gray">→</span>
+                        <div className="w-10 h-10 bg-dl-bg-alt flex items-center justify-center text-dl-navy font-dl-mono border border-dl-border">{route.destination.chain.charAt(0)}</div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-dl-navy">{route.name}</div>
+                        <div className="text-sm text-dl-gray">via {route.provider}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <div className="text-center">
+                        <div className="text-dl-navy font-dl-mono">{route.fees.percent}% + ${route.fees.flat}</div>
+                        <div className="text-dl-gray text-sm">Fee</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-dl-navy font-dl-mono">~{route.estimatedTime} min</div>
+                        <div className="text-dl-gray text-sm">Est. Time</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <h3 className="text-dl-navy font-dl-serif mb-4 text-xl">Supported Networks</h3>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {Object.entries(bridgeData?.supportedChains || {}).map(([id, chain]) => (
+                  <div key={id} className="text-center p-4 bg-dl-bg-alt border border-dl-border">
+                    <div className="w-12 h-12 mx-auto mb-2 bg-dl-bg-alt flex items-center justify-center border border-dl-border">
+                      <span className="text-dl-navy font-dl-mono">{chain.name.charAt(0)}</span>
+                    </div>
+                    <div className="text-dl-navy text-sm">{chain.name}</div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'history' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <Card className="p-6 text-center">
+                <div className="font-dl-mono text-2xl text-dl-forest">{historyData?.growthMetrics?.supplyGrowthPercent || '0'}%</div>
+                <div className="text-dl-gray">Supply Growth ({historyData?.growthMetrics?.periodDays || 30}d)</div>
+              </Card>
+              <Card className="p-6 text-center">
+                <div className="font-dl-mono text-2xl text-dl-navy">{historyData?.growthMetrics?.tvlGrowthPercent || '0'}%</div>
+                <div className="text-dl-gray">TVL Growth ({historyData?.growthMetrics?.periodDays || 30}d)</div>
+              </Card>
+              <Card className="p-6 text-center">
+                <div className="font-dl-mono text-2xl text-dl-navy">${formatNumber(historyData?.latestSnapshot?.totalSupply || '0')}</div>
+                <div className="text-dl-gray">Current Supply</div>
+              </Card>
+              <Card className="p-6 text-center">
+                <div className="font-dl-mono text-2xl text-dl-navy">${formatNumber(historyData?.latestSnapshot?.tvl || '0')}</div>
+                <div className="text-dl-gray">Current TVL</div>
+              </Card>
+            </div>
+
+            <Card className="p-6">
+              <h3 className="text-dl-navy font-dl-serif mb-6 text-xl">Historical Snapshots</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-dl-bg-alt font-dl-mono text-xs text-dl-gray uppercase border-b border-dl-border">
+                      <th className="text-left py-3 px-4">Date</th>
+                      <th className="text-right py-3 px-4">Supply</th>
+                      <th className="text-right py-3 px-4">Reserves</th>
+                      <th className="text-right py-3 px-4">Ratio</th>
+                      <th className="text-right py-3 px-4">Peg</th>
+                      <th className="text-right py-3 px-4">TVL</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historyData?.snapshots?.map((snapshot, i) => (
+                      <tr key={i} className={`border-b border-dl-border ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                        <td className="py-3 px-4 text-dl-navy">{snapshot.date}</td>
+                        <td className="py-3 px-4 text-right font-dl-mono text-dl-navy">${formatNumber(snapshot.totalSupply)}</td>
+                        <td className="py-3 px-4 text-right font-dl-mono text-dl-forest">${formatNumber(snapshot.reserves)}</td>
+                        <td className="py-3 px-4 text-right font-dl-mono text-dl-navy">{snapshot.reserveRatio.toFixed(1)}%</td>
+                        <td className="py-3 px-4 text-right font-dl-mono text-dl-navy">${snapshot.pegPrice.toFixed(4)}</td>
+                        <td className="py-3 px-4 text-right font-dl-mono text-dl-navy">${formatNumber(snapshot.tvl)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'alerts' && (
+          <div className="space-y-6">
+            <Card className="p-8">
+              <h3 className="text-dl-navy font-dl-serif mb-6 text-2xl flex items-center gap-3">
+                Alert Configuration
+              </h3>
+              <p className="text-dl-gray mb-8">
+                Set up notifications to stay informed about important AXUSD protocol events and thresholds.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {alertTypes.map((alert) => (
+                  <div key={alert.type} className="bg-dl-bg-alt p-5 border border-dl-border">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-dl-bg-alt flex items-center justify-center text-dl-navy border border-dl-border">
+                        {alert.type === 'peg_deviation' && <TrendingUp className="w-5 h-5" />}
+                        {alert.type === 'reserve_low' && <Shield className="w-5 h-5" />}
+                        {alert.type === 'high_utilization' && <BarChart3 className="w-5 h-5" />}
+                        {alert.type === 'large_mint' && <Coins className="w-5 h-5" />}
+                        {alert.type === 'large_redeem' && <ArrowLeftRight className="w-5 h-5" />}
+                        {alert.type === 'liquidity_change' && <Droplets className="w-5 h-5" />}
+                      </div>
+                      <h4 className="font-dl-serif text-dl-navy capitalize">{alert.type.replace(/_/g, ' ')}</h4>
+                    </div>
+                    <p className="text-dl-gray text-sm mb-4">{alert.description}</p>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-dl-gray">Default: {alert.defaultThreshold} {alert.unit}</span>
+                      <button className="text-dl-navy font-medium">Configure</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <h3 className="text-dl-navy font-dl-serif mb-4 text-xl">How Alerts Work</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  { step: 1, title: 'Choose Alert Type', desc: 'Select from peg deviation, reserve, utilization, or transaction alerts' },
+                  { step: 2, title: 'Set Threshold', desc: 'Define your personal threshold values for each alert type' },
+                  { step: 3, title: 'Get Notified', desc: 'Receive email or webhook notifications when thresholds are breached' },
+                ].map((item) => (
+                  <div key={item.step} className="text-center p-4">
+                    <div className="w-12 h-12 mx-auto bg-dl-bg-alt flex items-center justify-center mb-3 text-dl-navy font-dl-mono text-lg border border-dl-border">{item.step}</div>
+                    <h4 className="font-dl-serif text-dl-navy mb-2">{item.title}</h4>
+                    <p className="text-dl-gray text-sm">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'faq' && (
+          <div className="space-y-8">
+            <div className="text-center mb-8">
+              <h2 className="font-dl-serif text-3xl text-dl-navy mb-4">Frequently Asked Questions</h2>
+              <p className="text-dl-gray max-w-2xl mx-auto">
+                Everything you need to know about AXUSD, from getting started to advanced features
+              </p>
+            </div>
+
+            {FAQ_DATA.map((category, catIndex) => (
+              <Card key={catIndex} className="p-6">
+                <h3 className="text-dl-navy font-dl-serif mb-6 text-xl">{category.category}</h3>
+                <div className="space-y-4">
+                  {category.questions.map((faq, faqIndex) => {
+                    const faqId = `${catIndex}-${faqIndex}`;
+                    const isExpanded = expandedFaq === faqId;
+                    return (
+                      <div key={faqIndex} className="border border-dl-border overflow-hidden">
+                        <button
+                          onClick={() => setExpandedFaq(isExpanded ? null : faqId)}
+                          className="w-full flex items-center justify-between p-4 text-left"
+                        >
+                          <span className="font-medium text-dl-navy">{faq.q}</span>
+                          <span className={`text-dl-navy ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
+                        </button>
+                        {isExpanded && (
+                          <div className="px-4 pb-4">
+                            <p className="text-dl-gray leading-relaxed">{faq.a}</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'mint' && (
+          <Card className="p-8">
+            <h3 className="text-dl-navy font-dl-serif mb-6 text-2xl">Mint AXUSD</h3>
+            <div className="max-w-xl mx-auto space-y-6">
+              <div>
+                <label className="text-dl-navy block mb-2">Collateral Type</label>
+                <select 
+                  value={collateralType}
+                  onChange={(e) => setCollateralType(e.target.value)}
+                  className="w-full bg-dl-bg-alt border border-dl-border p-4 text-dl-navy focus:outline-none"
+                >
+                  <option value="WETH">WETH - Wrapped Ether</option>
+                  <option value="WBTC">WBTC - Wrapped Bitcoin</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-dl-navy block mb-2">Collateral Amount</label>
+                <input
+                  type="number"
+                  value={mintAmount}
+                  onChange={(e) => setMintAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full bg-dl-bg-alt border border-dl-border p-4 text-dl-navy focus:outline-none"
+                />
+              </div>
+              <div className="bg-dl-bg-alt p-4 border border-dl-border">
+                <div className="flex justify-between text-dl-gray mb-2">
+                  <span>Collateral Ratio</span>
+                  <span className="text-dl-forest font-medium font-dl-mono">150% (min)</span>
+                </div>
+                <div className="flex justify-between text-dl-gray">
+                  <span>AXUSD to Receive</span>
+                  <span className="text-dl-navy font-dl-mono">{mintAmount ? (parseFloat(mintAmount) * 2000 / 1.5).toFixed(2) : '0.00'} AXUSD</span>
+                </div>
+              </div>
+              {txStatus.message && activeTab === 'mint' && (
+                <div className={`p-4 mb-4 border ${txStatus.type === 'success' ? 'bg-dl-bg-alt border-dl-border text-dl-forest' : 'border-dl-error text-dl-error'}`}>
+                  {txStatus.message}
+                </div>
+              )}
+              {isWalletConnected ? (
+                <button 
+                  className={`w-full py-4 font-medium ${txPending ? 'bg-dl-bg-alt text-dl-gray border border-dl-border cursor-not-allowed' : 'bg-dl-navy text-white'}`}
+                  onClick={handleMint}
+                  disabled={txPending}
+                >
+                  {txPending ? 'Processing...' : 'Mint AXUSD'}
+                </button>
+              ) : (
+                <button 
+                  className="w-full bg-dl-navy text-white py-4 font-medium"
+                  onClick={connectMetaMask}
+                >
+                  Connect Wallet to Mint
+                </button>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {activeTab === 'psm' && (
+          <Card className="p-8">
+            <h3 className="text-dl-navy font-dl-serif mb-6 text-2xl">Peg Stability Module</h3>
+            <div className="max-w-xl mx-auto space-y-6">
+              {isWalletConnected && walletState?.chainId === 1 && (
+                <div className="bg-dl-bg-alt p-5 border border-dl-border mb-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-dl-bg-alt flex items-center justify-center flex-shrink-0 border border-dl-border">
+                      <Waypoints className="w-5 h-5 text-dl-navy" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-dl-navy mb-1">You're on Ethereum Mainnet</h4>
+                      <p className="text-dl-gray text-sm mb-3">
+                        AXUSD operates on Arbitrum One. Bridge your USDC to Arbitrum first, then return here to swap.
+                      </p>
+                      <div className="flex flex-wrap gap-3">
+                        <a
+                          href="https://bridge.arbitrum.io/?destinationChain=arbitrum-one&sourceChain=ethereum"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-dl-navy text-white px-4 py-2 font-medium"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Bridge USDC to Arbitrum
+                        </a>
+                        <button
+                          onClick={handleSwitchNetwork}
+                          disabled={networkSwitching}
+                          className="inline-flex items-center gap-2 bg-dl-bg text-dl-navy px-4 py-2 font-medium border border-dl-border"
+                        >
+                          <Zap className="w-4 h-4" />
+                          {networkSwitching ? 'Switching...' : 'Switch to Arbitrum'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-4 justify-center mb-6">
+                <button
+                  onClick={() => setPsmDirection('usdcToAxusd')}
+                  className={`px-6 py-3 font-medium ${psmDirection === 'usdcToAxusd' ? 'bg-dl-navy text-white' : 'bg-dl-bg-alt text-dl-navy border border-dl-border'}`}
+                >
+                  USDC → AXUSD
+                </button>
+                <button
+                  onClick={() => setPsmDirection('axusdToUsdc')}
+                  className={`px-6 py-3 font-medium ${psmDirection === 'axusdToUsdc' ? 'bg-dl-navy text-white' : 'bg-dl-bg-alt text-dl-navy border border-dl-border'}`}
+                >
+                  AXUSD → USDC
+                </button>
+              </div>
+              <div>
+                <label className="text-dl-navy block mb-2">{psmDirection === 'usdcToAxusd' ? 'USDC Amount' : 'AXUSD Amount'}</label>
+                <input
+                  type="number"
+                  value={psmAmount}
+                  onChange={(e) => setPsmAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full bg-dl-bg-alt border border-dl-border p-4 text-dl-navy focus:outline-none"
+                />
+              </div>
+              <div className="bg-dl-bg-alt p-4 border border-dl-border">
+                <div className="flex justify-between text-dl-gray mb-2">
+                  <span>Exchange Rate</span>
+                  <span className="text-dl-navy font-dl-mono">1:1</span>
+                </div>
+                <div className="flex justify-between text-dl-gray mb-2">
+                  <span>Fee (0.1%)</span>
+                  <span className="text-dl-navy font-dl-mono">{psmAmount ? (parseFloat(psmAmount) * 0.001).toFixed(4) : '0.00'}</span>
+                </div>
+                <div className="flex justify-between text-dl-gray">
+                  <span>You Receive</span>
+                  <span className="text-dl-navy font-dl-mono">{psmAmount ? (parseFloat(psmAmount) * 0.999).toFixed(4) : '0.00'} {psmDirection === 'usdcToAxusd' ? 'AXUSD' : 'USDC'}</span>
+                </div>
+              </div>
+              {txStatus.message && activeTab === 'psm' && (
+                <div className={`p-4 mb-4 border ${txStatus.type === 'success' ? 'bg-dl-bg-alt border-dl-border text-dl-forest' : 'border-dl-error text-dl-error'}`}>
+                  {txStatus.message}
+                </div>
+              )}
+              {isWalletConnected ? (
+                <button 
+                  className={`w-full py-4 font-medium ${txPending ? 'bg-dl-bg-alt text-dl-gray border border-dl-border cursor-not-allowed' : 'bg-dl-navy text-white'}`}
+                  onClick={handleSwap}
+                  disabled={txPending}
+                >
+                  {txPending ? 'Processing...' : `Swap ${psmDirection === 'usdcToAxusd' ? 'USDC → AXUSD' : 'AXUSD → USDC'}`}
+                </button>
+              ) : (
+                <button 
+                  className="w-full bg-dl-navy text-white py-4 font-medium"
+                  onClick={connectMetaMask}
+                >
+                  Connect Wallet to Swap
+                </button>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {activeTab === 'liquidity' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 relative">
+                <Image
+                  src={liquidityPoolImage}
+                  alt="Liquidity Pool"
+                  width={600}
+                  height={300}
+                  className="w-full h-48 object-cover"
+                  style={{ width: '100%', height: 'auto' }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                <div className="absolute bottom-4 left-4 text-white">
+                  <h3 className="text-2xl font-dl-serif flex items-center gap-2">
+                    <Droplets className="w-6 h-6" /> AXUSD/USDC Pool
+                  </h3>
+                  <p className="text-white/80">Provide liquidity and earn rewards</p>
+                </div>
+              </div>
+              <Card className="p-6">
+                <h4 className="font-dl-serif text-dl-navy mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-dl-forest" /> Pool Stats
+                </h4>
+                <div className="space-y-4">
+                  <div className="p-4 bg-dl-bg-alt border border-dl-border">
+                    <div className="font-dl-mono text-2xl text-dl-navy">${formatNumber(lpData?.totalLiquidity || lpAnalytics?.pool?.tvl || '0')}</div>
+                    <div className="text-dl-gray text-sm">Total Liquidity</div>
+                  </div>
+                  <div className="p-4 bg-dl-bg-alt border border-dl-border">
+                    <div className="font-dl-mono text-2xl text-dl-forest">{lpAnalytics?.metrics?.apr || '0'}%</div>
+                    <div className="text-dl-gray text-sm">Current APR</div>
+                  </div>
+                  <div className="p-4 bg-dl-bg-alt border border-dl-border">
+                    <div className="font-dl-mono text-2xl text-dl-navy">${lpAnalytics?.metrics?.dailyFees || '0'}</div>
+                    <div className="text-dl-gray text-sm">Daily Fees</div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+            
+            <Card className="p-8">
+              <h3 className="text-dl-navy font-dl-serif mb-6 text-2xl flex items-center gap-2">
+                <Layers className="w-6 h-6" /> Add Liquidity
+              </h3>
+              <div className="max-w-xl mx-auto space-y-4">
+                <div>
+                  <label className="text-dl-navy block mb-2">AXUSD Amount</label>
+                  <input
+                    type="number"
+                    value={lpAxusdAmount}
+                    onChange={(e) => { setLpAxusdAmount(e.target.value); setLpUsdcAmount(e.target.value); }}
+                    placeholder="0.00"
+                    className="w-full bg-dl-bg-alt border border-dl-border p-4 text-dl-navy focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-dl-navy block mb-2">USDC Amount</label>
+                  <input
+                    type="number"
+                    value={lpUsdcAmount}
+                    onChange={(e) => { setLpUsdcAmount(e.target.value); setLpAxusdAmount(e.target.value); }}
+                    placeholder="0.00"
+                    className="w-full bg-dl-bg-alt border border-dl-border p-4 text-dl-navy focus:outline-none"
+                  />
+                </div>
+                {txStatus.message && activeTab === 'liquidity' && (
+                  <div className={`p-4 mb-4 border ${txStatus.type === 'success' ? 'bg-dl-bg-alt border-dl-border text-dl-forest' : 'border-dl-error text-dl-error'}`}>
+                    {txStatus.message}
+                  </div>
+                )}
+                {isWalletConnected ? (
+                  <button 
+                    className={`w-full py-4 font-medium ${txPending ? 'bg-dl-bg-alt text-dl-gray border border-dl-border cursor-not-allowed' : 'bg-dl-navy text-white'}`}
+                    onClick={handleAddLiquidity}
+                    disabled={txPending}
+                  >
+                    {txPending ? 'Processing...' : 'Add Liquidity'}
+                  </button>
+                ) : (
+                  <button 
+                    className="w-full bg-dl-navy text-white py-4 font-medium"
+                    onClick={connectMetaMask}
+                  >
+                    Connect Wallet to Add Liquidity
+                  </button>
+                )}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'analytics' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card className="p-6 text-center">
+                <div className="font-dl-mono text-2xl text-dl-navy">${formatNumber(lpAnalytics?.pool?.tvl || '0')}</div>
+                <div className="text-dl-gray">Pool TVL</div>
+              </Card>
+              <Card className="p-6 text-center">
+                <div className="font-dl-mono text-2xl text-dl-forest">{lpAnalytics?.metrics?.apr || '0'}%</div>
+                <div className="text-dl-gray">APR</div>
+              </Card>
+              <Card className="p-6 text-center">
+                <div className="font-dl-mono text-2xl text-dl-navy">${lpAnalytics?.metrics?.dailyFees || '0'}</div>
+                <div className="text-dl-gray">Daily Fees</div>
+              </Card>
+              <Card className="p-6 text-center">
+                <div className="font-dl-mono text-2xl text-dl-navy">${formatNumber(lpAnalytics?.metrics?.annualFees || '0')}</div>
+                <div className="text-dl-gray">Annual Fees</div>
+              </Card>
+            </div>
+            <Card className="p-6">
+              <h3 className="text-dl-navy font-dl-serif mb-4 text-xl">Pool Reserves</h3>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="text-center p-6 bg-dl-bg-alt border border-dl-border">
+                  <div className="font-dl-mono text-3xl text-dl-navy">{formatNumber(lpAnalytics?.pool?.axusdReserve || '0')}</div>
+                  <div className="text-dl-gray">AXUSD Reserve</div>
+                </div>
+                <div className="text-center p-6 bg-dl-bg-alt border border-dl-border">
+                  <div className="font-dl-mono text-3xl text-dl-navy">{formatNumber(lpAnalytics?.pool?.usdcReserve || '0')}</div>
+                  <div className="text-dl-gray">USDC Reserve</div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'treasury' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              <div className="lg:col-span-2">
+                <Card className="p-6 h-full">
+                  <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div>
+                      <h2 className="font-dl-serif text-2xl text-dl-navy mb-1 flex items-center gap-3">
+                        <Vault className="w-7 h-7 text-dl-navy" /> Treasury Health
+                      </h2>
+                      <p className="text-dl-gray">Real-time reserve backing and protocol health metrics</p>
+                    </div>
+                    <span className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-dl-mono ${treasuryHealth?.overview?.geniusCompliant ? 'bg-dl-bg-alt text-dl-forest border border-dl-border' : 'bg-dl-bg-alt text-dl-error border border-dl-error'}`}>
+                      {treasuryHealth?.overview?.geniusCompliant ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                      GENIUS Act {treasuryHealth?.overview?.geniusCompliant ? 'Compliant' : 'Non-Compliant'}
+                    </span>
+                  </div>
+                </Card>
+              </div>
+              <div className="relative">
+                <Image
+                  src={treasuryVaultImage}
+                  alt="Treasury Vault"
+                  width={400}
+                  height={300}
+                  className="w-full h-48 object-cover"
+                  style={{ width: '100%', height: 'auto' }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card className="p-6 text-center">
+                <div className="font-dl-mono text-3xl text-dl-forest">{treasuryHealth?.overview?.reserveRatio || '100'}%</div>
+                <div className="text-dl-gray">Reserve Ratio</div>
+              </Card>
+              <Card className="p-6 text-center">
+                <div className="font-dl-mono text-2xl text-dl-navy">${formatNumber(treasuryHealth?.reserves?.psmUsdc || '0')}</div>
+                <div className="text-dl-gray">PSM USDC</div>
+              </Card>
+              <Card className="p-6 text-center">
+                <div className="font-dl-mono text-2xl text-dl-navy">${formatNumber(treasuryHealth?.reserves?.backstopUsdc || '0')}</div>
+                <div className="text-dl-gray">Backstop USDC</div>
+              </Card>
+              <Card className="p-6 text-center">
+                <div className="font-dl-mono text-2xl text-dl-navy">{treasuryHealth?.overview?.healthScore || 0}/100</div>
+                <div className="text-dl-gray">Health Score</div>
+              </Card>
+            </div>
+
+            <Card className="p-6">
+              <h3 className="text-dl-navy font-dl-serif mb-4 text-xl">Stress Test Scenarios</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {treasuryHealth?.stressTests && Object.entries(treasuryHealth.stressTests).map(([key, test]) => (
+                  <div key={key} className={`p-4 border ${test.canHandle ? 'bg-dl-bg-alt border-dl-border' : 'bg-dl-bg-alt border-dl-error'}`}>
+                    <h4 className={`font-dl-serif mb-2 ${test.canHandle ? 'text-dl-forest' : 'text-dl-error'}`}>{test.name}</h4>
+                    <p className="text-dl-gray text-sm mb-2">Status: {test.canHandle ? 'Can Handle' : 'At Risk'}</p>
+                    <p className="text-dl-navy font-dl-mono">New Ratio: {test.newReserveRatio.toFixed(1)}%</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'vaults' && (
+          <Card className="p-8 text-center">
+            <div className="w-16 h-16 mx-auto bg-dl-bg-alt flex items-center justify-center text-3xl text-dl-navy border border-dl-border">$</div>
+            <h3 className="font-dl-serif text-2xl text-dl-navy mt-6 mb-2">My Vaults</h3>
+              <p className="text-dl-gray mb-6">Connect wallet to view and manage AXUSD vaults</p>
+            <button 
+              onClick={() => setActiveTab('mint')}
+              className="bg-dl-navy text-white font-medium px-8 py-4"
+            >
+              Create Your First Vault
+            </button>
+          </Card>
+        )}
+
+        {activeTab === 'earn' && (
+          <div className="space-y-6">
+            <Card className="p-8">
+              <h3 className="text-dl-navy font-dl-serif mb-6 text-2xl">SEED Yield Distribution</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-dl-bg-alt p-6 border border-dl-border">
+                  <h4 className="font-dl-serif text-dl-navy mb-4 text-lg">How to Earn</h4>
+                  <ol className="space-y-3 text-dl-navy">
+                    <li className="flex items-start gap-3">
+                      <span className="text-dl-forest font-dl-mono">1.</span>
+                      Lock AXM tokens in SEED contract
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-dl-forest font-dl-mono">2.</span>
+                      Receive voting power proportional to lock duration
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-dl-forest font-dl-mono">3.</span>
+                      Claim AXUSD yield every week
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-dl-forest font-dl-mono">4.</span>
+                      50% of all protocol revenue goes to SEED holders
+                    </li>
+                  </ol>
+                </div>
+                <div className="bg-dl-bg-alt p-6 border border-dl-border">
+                  <h4 className="font-dl-serif text-dl-navy mb-4 text-lg">Current Epoch</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-dl-gray">Epoch</span>
+                      <span className="text-dl-navy font-dl-mono">1</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-dl-gray">Total Revenue</span>
+                      <span className="text-dl-forest font-dl-mono">0 AXUSD</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-dl-gray">Your SEED Balance</span>
+                      <span className="text-dl-navy font-dl-mono">0 SEED</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-dl-gray">Estimated Yield</span>
+                      <span className="text-dl-navy font-dl-mono">0 AXUSD</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <h3 className="text-dl-navy font-dl-serif mb-6 text-xl">AXUSD Use Cases</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  { icon: 'S', title: 'SUSU Circles', desc: 'Join savings circles denominated in AXUSD for stable, predictable savings' },
+                  { icon: 'H', title: 'KeyGrow Housing', desc: 'Pay rent in AXUSD and build equity toward home ownership' },
+                  { icon: 'L', title: 'DeFi Liquidity', desc: 'Provide liquidity in AXUSD pools on Camelot DEX' },
+                ].map((item, i) => (
+                  <div key={i} className="text-center p-6 bg-dl-bg-alt border border-dl-border">
+                    <div className="w-12 h-12 mx-auto bg-dl-bg-alt flex items-center justify-center text-2xl text-dl-navy border border-dl-border">{item.icon}</div>
+                    <h4 className="font-dl-serif text-dl-navy mt-4 mb-2">{item.title}</h4>
+                    <p className="text-dl-gray text-sm">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+      </section>
+    </DesignLawLayout>
   );
 }
