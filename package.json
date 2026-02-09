@@ -13,6 +13,7 @@
     "build:minimal": "NODE_ENV=production NODE_OPTIONS='--max-old-space-size=4096' next build",
     "prebuild:deploy": "rm -rf artifacts* cache* typechain* stablecoin-deploy .next archive docs test tests integration contracts* attached_assets AXIOM.wiki node_modules/.cache 2>/dev/null || true",
     "build:deploy:clean": "rm -rf artifacts* cache* typechain* stablecoin-deploy .next archive docs test tests integration contracts* attached_assets AXIOM.wiki node_modules/.cache 2>/dev/null || true && NODE_ENV=production NODE_OPTIONS='--max-old-space-size=8192' next build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public",
+    "build:replit": "NODE_ENV=production NODE_OPTIONS='--max-old-space-size=4096' next build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public",
     "clean": "rm -rf node_modules 2>/dev/null || true",
     "start:minimal": "HOSTNAME=0.0.0.0 PORT=5000 node .next/standalone/server.js",
     "build:production": "next build",
@@ -122,12 +123,9 @@
     "@types/react-router-dom": "^5.3.3",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.18.1",
-    "canvas": "^3.1.0",
-    "chartjs-node-canvas": "^5.0.0",
     "chrome-devtools-mcp": "^0.12.1",
     "dotenv": "^16.6.1",
     "hardhat": "^2.27.0",
-    "puppeteer": "^24.30.0",
     "solc": "^0.8.17",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
@@ -141,7 +139,6 @@
     "@heroicons/react": "^2.2.0",
     "@metamask/delegation-toolkit": "^0.13.0-rc.1",
     "@metamask/sdk": "^0.33.0",
-    "@napi-rs/canvas": "^0.1.52",
     "@neondatabase/serverless": "^1.0.0",
     "@radix-ui/react-slot": "^1.2.3",
     "@replit/database": "^3.0.1",
@@ -162,7 +159,6 @@
     "@uppy/react": "^5.1.1",
     "autoprefixer": "^10.4.21",
     "axios": "^1.11.0",
-    "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "chart.js": "^4.5.0",
     "class-variance-authority": "^0.7.1",
@@ -236,6 +232,13 @@
   "directories": {
     "lib": "lib",
     "test": "test"
+  },
+  "optionalDependencies": {
+    "bcrypt": "^5.1.1",
+    "@napi-rs/canvas": "^0.1.52",
+    "canvas": "^3.1.0",
+    "chartjs-node-canvas": "^5.0.0",
+    "puppeteer": "^24.30.0"
   },
   "overrides": {
     "glob": "^10.4.5",

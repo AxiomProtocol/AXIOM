@@ -38,7 +38,7 @@ packages = ["jq"]
 [deployment]
 deploymentTarget = "vm"
 run = ["npm", "run", "start:minimal"]
-build = ["npm", "run", "build:deploy:clean"]
+build = ["npm", "run", "build:replit"]
 
 [userenv]
 
