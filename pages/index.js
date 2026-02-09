@@ -1,5 +1,5 @@
-import { RebuildHome } from '../components/axiomRebuild';
+import { DesignLawHome } from '../components/design-law/DesignLawHome';
 
 export default function Home() {
-  return <RebuildHome />;
+  return <DesignLawHome />;
 }

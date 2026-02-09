@@ -18,8 +18,15 @@ export const useOnboarding = () => useContext(OnboardingContext)
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID
 
+const DESIGN_LAW_PAGES = ['/', '/mirdt']
+
+function isDesignLawPage(pathname) {
+  if (DESIGN_LAW_PAGES.includes(pathname)) return true;
+  if (pathname.startsWith('/mirdt/')) return true;
+  return false;
+}
+
 const REBUILD_NAV_PAGES = [
-  '/',
   '/how-it-works',
   '/about-us',
   '/community',
@@ -56,7 +63,8 @@ function matchesRebuildNavPages(pathname) {
 
 export default function App({ Component, pageProps }) {
   const router = useRouter()
-  const showRebuildNav = matchesRebuildNavPages(router.pathname)
+  const isDLPage = isDesignLawPage(router.pathname)
+  const showRebuildNav = !isDLPage && matchesRebuildNavPages(router.pathname)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardingChecked, setOnboardingChecked] = useState(false)
 
@@ -106,9 +114,9 @@ export default function App({ Component, pageProps }) {
             {showRebuildNav && <RebuildNav />}
             <Component {...pageProps} />
             {showRebuildNav && <RebuildFooter />}
-            <SettingsButton />
-            <PersonalizedNavigation />
-            <MobileBottomNav />
+            {!isDLPage && <SettingsButton />}
+            {!isDLPage && <PersonalizedNavigation />}
+            {!isDLPage && <MobileBottomNav />}
             {showOnboarding && (
               <EnhancedOnboarding
                 onComplete={handleOnboardingComplete}

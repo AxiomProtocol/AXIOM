@@ -9,3 +9,4 @@ export { FormField, DLInput, DLTextarea, DLSelect } from './FormField';
 export { SolidButton } from './SolidButton';
 export { SectionHeading } from './SectionHeading';
 export { DetailGrid } from './DetailGrid';
+export { ConnectWalletButton } from './ConnectWalletButton';
