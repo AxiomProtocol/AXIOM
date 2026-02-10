@@ -1,10 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
+import { ACTIVE_CONTRACTS, ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM } from '../../../src/config/activeContracts.generated';
 
-const EULER_VAULT = '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059';
-const REVENUE_ROUTER = '0x39A9Ca593d350450d93aF7F24dC1A682df47F30a';
-const TREASURY_HUB = '0x3fD63728288546AC41dAe3bf25ca383061c3A929';
-const DEPLOYER = '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96';
+const EULER_VAULT = ACTIVE_CONTRACTS.eulerVault;
+const REVENUE_ROUTER = ACTIVE_CONTRACTS.revenueRouter;
+const TREASURY_HUB = ACTIVE_CONTRACTS.treasuryHub;
+const DEPLOYER = ACTIVE_CONTRACTS.deployer;
 
 const VAULT_ABI = [
   'function feeReceiver() view returns (address)',
@@ -129,6 +130,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           backstopShare: Number(backstopShare) / 100 + '%',
           totalRouted: ethers.formatEther(totalRouted) + ' AXUSD',
         },
+      },
+      activeContracts: {
+        primaryAxusd: ACTIVE_AXUSD,
+        primaryPsm: ACTIVE_PSM,
+        eulerAxusd: EULER_AXUSD,
+        eulerPsm: EULER_PSM,
+        note: 'Euler Vault + Revenue Router are bound to Original AXUSD (immutable on-chain)',
       },
       proposedAction: canProceed ? {
         function: 'setFeeReceiver(address)',

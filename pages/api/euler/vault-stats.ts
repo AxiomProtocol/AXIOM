@@ -1,14 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 
+import { ACTIVE_CONTRACTS, EULER_AXUSD, ACTIVE_AXUSD, ACTIVE_PSM, EULER_PSM } from '../../../src/config/activeContracts.generated';
+
 const EULER_LENDING_CONFIG = {
-  // V4 Vault (eAXUSD-4) - Fixed hook configuration, fully operational
-  AXUSD_VAULT: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059',
+  AXUSD_VAULT: ACTIVE_CONTRACTS.eulerVault,
   VAULT_GOVERNOR: '0xE742Ee9b946043ecc75bFc71B47216C1f8248316',
   PRICE_ORACLE: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15',
-  AXUSD_TOKEN: '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c',
-  REVENUE_ROUTER: '0x39A9Ca593d350450d93aF7F24dC1A682df47F30a',
-  TREASURY_HUB: '0x3fD63728288546AC41dAe3bf25ca383061c3A929',
+  AXUSD_TOKEN: EULER_AXUSD,
+  REVENUE_ROUTER: ACTIVE_CONTRACTS.revenueRouter,
+  TREASURY_HUB: ACTIVE_CONTRACTS.treasuryHub,
   COLLATERAL_VAULTS: {
     USDC: { address: '0x0a1eCC5Fe8C9be3C809844fcBe615B46A869b899', borrowLTV: 90, liqLTV: 95 },
     USDT: { address: '0x37512F45B4ba8808910632323b73783Ca938CD51', borrowLTV: 90, liqLTV: 95 },
@@ -163,6 +164,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       network: {
         chainId: 42161,
         name: 'Arbitrum One'
+      },
+      activeContracts: {
+        axusd: ACTIVE_AXUSD,
+        eulerAxusd: EULER_AXUSD,
+        psm: ACTIVE_PSM,
+        eulerPsm: EULER_PSM,
+        note: 'Euler Vault uses Original AXUSD (immutable on-chain binding)'
       },
       warnings: warnings.length > 0 ? warnings : undefined,
       timestamp: new Date().toISOString()

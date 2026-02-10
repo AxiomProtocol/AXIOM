@@ -1,9 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { pool } from '../../../server/db';
+import { ACTIVE_CONTRACTS } from '../../../src/config/activeContracts.generated';
 
-const EULER_VAULT = '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059';
-const REVENUE_ROUTER = '0x39A9Ca593d350450d93aF7F24dC1A682df47F30a';
+const EULER_VAULT = ACTIVE_CONTRACTS.eulerVault;
+const REVENUE_ROUTER = ACTIVE_CONTRACTS.revenueRouter;
 
 const VAULT_ABI = [
   'function feeReceiver() view returns (address)',

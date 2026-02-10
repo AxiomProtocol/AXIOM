@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { AXUSD_GENIUS_CONTRACTS, CORE_CONTRACTS } from '../../../shared/contracts';
+import { ACTIVE_AXUSD, EULER_AXUSD } from '../../../src/config/activeContracts.generated';
 
 const ARBITRUM_RPC = process.env.ALCHEMY_API_KEY 
   ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
@@ -51,6 +52,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         maxSupply: '1000000000',
         decimals: Number(decimals),
         contractAddress: AXUSD_GENIUS_CONTRACTS.AXUSD,
+        activeAxusd: ACTIVE_AXUSD,
+        eulerAxusd: EULER_AXUSD,
         geniusCompliant: true,
         timestamp: new Date().toISOString()
       }

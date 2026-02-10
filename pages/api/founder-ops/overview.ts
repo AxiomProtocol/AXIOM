@@ -1,14 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { ACTIVE_CONTRACTS, ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM } from '../../../src/config/activeContracts.generated';
 
-const EULER_VAULT = '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059';
-const REVENUE_ROUTER = '0x39A9Ca593d350450d93aF7F24dC1A682df47F30a';
-const TREASURY_HUB = '0x3fD63728288546AC41dAe3bf25ca383061c3A929';
-const DEPLOYER = '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96';
+const EULER_VAULT = ACTIVE_CONTRACTS.eulerVault;
+const REVENUE_ROUTER = ACTIVE_CONTRACTS.revenueRouter;
+const TREASURY_HUB = ACTIVE_CONTRACTS.treasuryHub;
+const DEPLOYER = ACTIVE_CONTRACTS.deployer;
 const FIX_FLIP_VAULT = '0xF4AcD4B7EaBfDA7E1b96D3abA1C6340557aa93E5';
-const AXUSD = '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C';
-const AXM = '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D';
-const SEED = '0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046';
-const PSM = '0x5db58d9c21369d1532a48Bdd658E4Fe415404922';
+const AXUSD = ACTIVE_AXUSD;
+const AXM = ACTIVE_CONTRACTS.axmToken;
+const SEED = ACTIVE_CONTRACTS.seed;
+const PSM = ACTIVE_PSM;
 
 async function fetchInternal(baseUrl: string, path: string) {
   try {
@@ -131,9 +132,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       deployer: DEPLOYER,
       fixFlipVault: FIX_FLIP_VAULT,
       axusd: AXUSD,
+      axusdLabel: 'GENIUS Act Compliant (Primary)',
+      eulerAxusd: EULER_AXUSD,
+      eulerAxusdLabel: 'Original AxiomStable (Euler Vault binding)',
       axm: AXM,
       seed: SEED,
       psm: PSM,
+      psmLabel: 'GENIUS PSM (Primary)',
+      eulerPsm: EULER_PSM,
+      eulerPsmLabel: 'Original PSM (Euler ecosystem)',
     },
     dataSourceStatus: sourceStatus,
   };
