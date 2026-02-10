@@ -1,7 +1,18 @@
 import { Pool } from 'pg';
 import { Resend } from 'resend';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+let _pool: Pool | null = null;
+function getPool(): Pool {
+  if (!_pool) {
+    _pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  }
+  return _pool;
+}
+const pool = new Proxy({} as Pool, {
+  get(_target, prop) {
+    return (getPool() as any)[prop];
+  }
+});
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

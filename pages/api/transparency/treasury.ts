@@ -3,8 +3,17 @@ import { Pool } from 'pg';
 import { ethers } from 'ethers';
 import { REALESTATE_LENDING_CONTRACTS, AXUSD_STABLECOIN_CONTRACTS } from '../../../shared/contracts';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+let _pool: Pool | null = null;
+function getPgPool(): Pool {
+  if (!_pool) {
+    _pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  }
+  return _pool;
+}
+const pool = new Proxy({} as Pool, {
+  get(_target, prop) {
+    return (getPgPool() as any)[prop];
+  }
 });
 
 const DSCR_VAULT_ABI = [

@@ -8,11 +8,19 @@
 const nodemailer = require('nodemailer');
 const { Pool } = require('pg');
 
-// Create a connection pool to the database
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
+let _pool = null;
+function getPool() {
+  if (!_pool) {
+    _pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+  }
+  return _pool;
+}
+const pool = new Proxy({}, {
+  get(_target, prop) {
+    return getPool()[prop];
   }
 });
 
