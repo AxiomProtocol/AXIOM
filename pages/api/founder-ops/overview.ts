@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { ACTIVE_CONTRACTS, ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM } from '../../../src/config/activeContracts.generated';
+import { ACTIVE_CONTRACTS, ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM, DO_NOT_MIX } from '../../../src/config/activeContracts.generated';
 
 const EULER_VAULT = ACTIVE_CONTRACTS.eulerVault;
 const REVENUE_ROUTER = ACTIVE_CONTRACTS.revenueRouter;
@@ -141,6 +141,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       psmLabel: 'GENIUS PSM (Primary)',
       eulerPsm: EULER_PSM,
       eulerPsmLabel: 'Original PSM (Euler ecosystem)',
+      DO_NOT_MIX,
     },
     dataSourceStatus: sourceStatus,
   };
