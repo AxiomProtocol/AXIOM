@@ -58,6 +58,7 @@ const NAV_LINKS = [
   { href: '/mirdt', label: 'Intelligence' },
   { href: '/sentinel', label: 'Sentinel' },
   { href: '/observer', label: 'Observer' },
+  { href: '/founder-ops', label: 'Founder Ops' },
   { href: '/products', label: 'Products' },
   { href: '/about-us', label: 'About' },
 ];

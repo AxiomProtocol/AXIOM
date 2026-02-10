@@ -6,11 +6,8 @@ The Axiom Smart City project aims to establish America's first 1,000-acre on-cha
 ## User Preferences
 - **Communication style**: Simple, everyday language explaining technical concepts.
 - **Video scripts**: Always deliver in a plain text code block format (```text```) so the copy button appears for easy one-click copying. No markdown formatting, no scene directions with brackets - just clean, copyable text with the script, caption, and hashtags.
-- **Navigation system**: When adding new pages, add them to ALL THREE navigation files:
-  1. `components/axiomRebuild/navConfig.ts` - RebuildNav system (mobile menu)
-  2. `components/navigation/SiteNavModel.ts` - Site navigation model
-  3. `lib/navigation.js` - Desktop dropdown (ADVANCED_DROPDOWN)
-- **Page structure**: ALL pages now use `<DesignLawLayout>` wrapper from `components/design-law`. This provides: nav header (AXIOM logo, 7 nav links, Access Platform button, mobile hamburger), footer (chain ID, disclaimer, timestamp), and `max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8` container. New pages must wrap in `<DesignLawLayout>` and use Design Law styling (serif headings, monospace data, dl-* color classes, no rounded corners/shadows/animations/gradients).
+- **Navigation system**: The active navigation is the `NAV_LINKS` array in `components/design-law/DesignLawLayout.tsx` (and duplicated in `components/design-law/DesignLawHome.tsx` for the home page). When adding new pages to the nav, update both files. The legacy nav files (`navConfig.ts`, `SiteNavModel.ts`, `lib/navigation.js`) exist but are NOT rendered by the current DesignLawLayout.
+- **Page structure**: ALL pages now use `<DesignLawLayout>` wrapper from `components/design-law`. This provides: nav header (AXIOM logo, 9 nav links, Connect Wallet button, mobile hamburger), footer (chain ID, disclaimer, timestamp), and `max-w-7xl mx-auto px-6 py-8` container. New pages must wrap in `<DesignLawLayout>` and use Design Law styling (serif headings, monospace data, dl-* color classes, no rounded corners/shadows/animations/gradients).
 - **DEPRECATED - Old page structure**: Do NOT use the old dark-themed structure with `<Layout>` wrapper, `bg-black`/`bg-gray-900` backgrounds, or yellow accent colors. Do NOT use bare `<>` fragment wrappers or teal accent colors. All pages must use `<DesignLawLayout>` wrapper.
 - **Data sources**: NEVER use hardcoded placeholder data in any new pages. Always fetch real data from blockchain (via services like `CamelotPoolService`), database (PostgreSQL/Drizzle), or external APIs. Use async data fetching patterns with proper loading states and error handling.
 

@@ -214,6 +214,11 @@ export default function FounderOpsPage() {
         subtitle="Internal proof-of-concept validation. $100/week operational playbook. All data is live on-chain state."
         disclosure={FOOTER_DISCLOSURE}
       >
+        <div className="mb-6">
+          <a href="/founder-ops/playbook" className="inline-block font-dl-mono text-sm text-dl-navy border border-dl-border px-4 py-2 hover:underline">
+            View Operational Playbook v2.1
+          </a>
+        </div>
         {loading ? (
           <p className="text-sm text-dl-gray py-12 text-center">Loading operational data...</p>
         ) : error ? (

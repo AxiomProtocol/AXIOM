@@ -21,6 +21,7 @@ const EULER_LENDING_CONFIG = {
 const VAULT_ABI = [
   'function totalAssets() view returns (uint256)',
   'function totalBorrows() view returns (uint256)',
+  'function totalSupply() view returns (uint256)',
   'function interestRate() view returns (uint256)',
   'function caps() view returns (uint16 supplyCap, uint16 borrowCap)',
   'function asset() view returns (address)',
@@ -56,9 +57,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const warnings: string[] = [];
     
-    const [totalAssets, totalBorrows, interestRate, caps, name, symbol, feeReceiver, interestFee, creator, governorAdmin] = await Promise.all([
+    const [totalAssets, totalBorrows, totalShareSupply, interestRate, caps, name, symbol, feeReceiver, interestFee, creator, governorAdmin] = await Promise.all([
       vault.totalAssets(),
       vault.totalBorrows(),
+      vault.totalSupply().catch(() => { warnings.push('totalSupply fetch failed'); return BigInt(0); }),
       vault.interestRate().catch(() => { warnings.push('interestRate fetch failed'); return BigInt(0); }),
       vault.caps(),
       vault.name(),
@@ -138,6 +140,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
+    const totalSharesNum = parseFloat(ethers.formatEther(totalShareSupply));
+    const sharePrice = totalSharesNum > 0 ? totalAssetsNum / totalSharesNum : 1.0;
+    const shareMathHealthy = totalSharesNum > 0 && sharePrice > 0.95 && sharePrice < 1.10;
+
+    const guardRail3 = {
+      name: 'Guard Rail #3: ERC4626 Share Math Edge Case',
+      status: shareMathHealthy ? 'PASS' : (totalSharesNum === 0 ? 'NO_DEPOSITS' : 'WARNING'),
+      totalShares: totalSharesNum.toFixed(6),
+      totalAssets: totalAssetsNum.toFixed(6),
+      sharePrice: sharePrice.toFixed(6),
+      rule: 'On every deposit, assert minSharesOut > 0. First depositor gets 1:1 shares.',
+      detail: totalSharesNum === 0
+        ? 'No deposits yet — first depositor will get 1:1 shares'
+        : shareMathHealthy
+          ? `Share price ${sharePrice.toFixed(4)} is within safe range (0.95–1.10)`
+          : `Share price ${sharePrice.toFixed(4)} is outside safe range — investigate before depositing`,
+    };
+
     return res.status(200).json({
       success: true,
       vault: {
@@ -172,6 +192,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         eulerPsm: EULER_PSM,
         note: 'Euler Vault uses Original AXUSD (immutable on-chain binding)'
       },
+      guardRail3,
       warnings: warnings.length > 0 ? warnings : undefined,
       timestamp: new Date().toISOString()
     });

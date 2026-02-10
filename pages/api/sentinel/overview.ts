@@ -55,6 +55,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         denied: parseInt(deniedResult.rows[0].total),
       },
       systemStance,
+      authorityMode: 'ADVISORY',
+      guardRail5: {
+        name: 'Guard Rail #5: Sentinel Authority Boundary',
+        status: 'ENFORCED',
+        rule: 'Sentinel is ADVISORY ONLY until post-public governance vote grants execution authority',
+        detail: 'All Sentinel outputs are informational. No automated trades permitted during proof-of-concept.',
+      },
       lastUpdated: new Date().toISOString(),
     });
   } catch (error: any) {
