@@ -13,7 +13,7 @@ const nextConfig = {
   },
 
   experimental: {
-    serverComponentsExternalPackages: ['ws', '@neondatabase/serverless'],
+    serverComponentsExternalPackages: ['pg'],
   },
 
   webpack: (config, { isServer }) => {

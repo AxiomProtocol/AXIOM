@@ -1,5 +1,5 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "../shared/schema";
 import {
   index,
@@ -16,26 +16,19 @@ import {
 
 let _pool: Pool | null = null;
 let _db: ReturnType<typeof drizzle> | null = null;
-let _wsConfigured = false;
-
-function ensureWs() {
-  if (!_wsConfigured) {
-    try {
-      const ws = require('ws');
-      neonConfig.webSocketConstructor = ws;
-    } catch {
-    }
-    _wsConfigured = true;
-  }
-}
 
 function getPool(): Pool {
   if (!_pool) {
     if (!process.env.DATABASE_URL) {
       throw new Error('DATABASE_URL must be set. Did you forget to provision a database?');
     }
-    ensureWs();
-    _pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    _pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.DATABASE_URL.includes('neon.tech') ? { rejectUnauthorized: false } : undefined,
+      max: 5,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    });
   }
   return _pool;
 }
