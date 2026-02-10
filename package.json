@@ -21,6 +21,7 @@
     "test:invariants": "hardhat test test/invariants/*.test.ts --config hardhat.config.ts",
     "test:scenarios": "hardhat test test/scenarios/*.test.ts --config hardhat.config.ts",
     "verify:contracts": "node scripts/verify-active-contracts.js",
+    "verify:observer": "node scripts/verify-observer.js",
     "slither": "slither contracts/ --exclude-dependencies --json reports/slither-output.json 2>/dev/null || true",
     "audit:full": "npm run test:invariants && npm run test:scenarios",
     "audit:report": "node scripts/generate-audit-report.js",

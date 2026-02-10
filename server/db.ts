@@ -1,6 +1,5 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
 import * as schema from "../shared/schema";
 import {
   index,
@@ -15,16 +14,50 @@ import {
   serial,
 } from "drizzle-orm/pg-core";
 
-neonConfig.webSocketConstructor = ws;
+let _pool: Pool | null = null;
+let _db: ReturnType<typeof drizzle> | null = null;
+let _wsConfigured = false;
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+function ensureWs() {
+  if (!_wsConfigured) {
+    try {
+      const ws = require('ws');
+      neonConfig.webSocketConstructor = ws;
+    } catch {
+    }
+    _wsConfigured = true;
+  }
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool, { schema });
+function getPool(): Pool {
+  if (!_pool) {
+    if (!process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL must be set. Did you forget to provision a database?');
+    }
+    ensureWs();
+    _pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  }
+  return _pool;
+}
+
+function getDb() {
+  if (!_db) {
+    _db = drizzle(getPool(), { schema });
+  }
+  return _db;
+}
+
+export const pool = new Proxy({} as Pool, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getPool(), prop, receiver);
+  },
+});
+
+export const db = new Proxy({} as ReturnType<typeof drizzle>, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getDb(), prop, receiver);
+  },
+});
 
 export const keygrowSellerStatusEnum = pgEnum('keygrow_seller_status', [
   'pending',

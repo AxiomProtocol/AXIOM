@@ -25,7 +25,7 @@ outputType = "webview"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd /home/runner/workspace && HOSTNAME=0.0.0.0 npm run dev"
-waitForPort = 3000
+waitForPort = 5000
 [nix]
 channel = "stable-25_05"
 packages = ["jq"]
@@ -52,5 +52,9 @@ localPort = 3000
 externalPort = 80
 
 [[ports]]
+localPort = 3999
+externalPort = 3000
+
+[[ports]]
 localPort = 5000
-externalPort = 5000
+externalPort = 80

@@ -1,8 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import { Pool } from 'pg';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+let _pgPool: any = null;
+function getPgPool() {
+  if (!_pgPool) {
+    const { Pool } = require('pg');
+    _pgPool = new Pool({ connectionString: process.env.DATABASE_URL });
+  }
+  return _pgPool;
+}
 
 const CONTRACTS = {
   CapitalBridgeHub: '0x6a00455dC277C9430e5c45324B34F2425ba0408d',
@@ -57,7 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const poolRegistry = new ethers.Contract(CONTRACTS.PoolRegistry, POOL_REGISTRY_ABI, provider);
     const servicingLog = new ethers.Contract(CONTRACTS.ServicingEventLog, SERVICING_LOG_ABI, provider);
 
-    const notesSummaryQuery = pool.query(`
+    const notesSummaryQuery = getPgPool().query(`
       SELECT 
         COUNT(*) as total_notes,
         COUNT(*) FILTER (WHERE status IN ('active', 'current')) as active_notes,
