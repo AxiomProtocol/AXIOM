@@ -8796,3 +8796,23 @@ export type SentinelCalibrationRun = typeof sentinelCalibrationRuns.$inferSelect
 export type InsertSentinelCalibrationRun = typeof sentinelCalibrationRuns.$inferInsert;
 export type SentinelAuditLog = typeof sentinelAuditLog.$inferSelect;
 export type InsertSentinelAuditLog = typeof sentinelAuditLog.$inferInsert;
+
+export const founderOpsLog = pgTable("founder_ops_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  week: integer("week").notNull(),
+  phase: integer("phase").notNull(),
+  category: varchar("category", { length: 64 }).notNull(),
+  title: varchar("title", { length: 256 }).notNull(),
+  description: text("description").notNull(),
+  txHash: varchar("tx_hash", { length: 128 }),
+  product: varchar("product", { length: 64 }),
+  amount: decimal("amount", { precision: 24, scale: 8 }),
+  status: varchar("status", { length: 32 }).notNull().default('completed'),
+  failureReason: text("failure_reason"),
+  fixApplied: text("fix_applied"),
+  protocolChange: text("protocol_change"),
+});
+
+export type FounderOpsLog = typeof founderOpsLog.$inferSelect;
+export type InsertFounderOpsLog = typeof founderOpsLog.$inferInsert;

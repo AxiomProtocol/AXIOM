@@ -59,6 +59,26 @@ Sentinel is the unified capital decision and risk authorization layer across all
 
 **Future phases:** PermissionManager.sol onchain contract, EIP-712 signed decisions, automated scheduling
 
+### Founder Operations Dashboard (NEW — Feb 2026)
+**Internal proof-of-concept validation tool for $100/week operational playbook.**
+
+**Dashboard page:** `/founder-ops` — 4-tab dashboard (System Overview, Capital Allocation, Risk Checkpoints, Operations Log)
+
+**API routes** (`pages/api/founder-ops/`):
+- GET `/api/founder-ops/overview` — Aggregates live data from Euler, Sentinel, AXUSD, Lending Fund, DEX, Observer with per-source status tracking
+- GET `/api/founder-ops/log` — Read operations log entries
+- POST `/api/founder-ops/log` — Write operations log (requires x-scan-key auth)
+
+**Database table:** `founder_ops_log` — Tracks weekly operations, failures, fixes, and protocol changes with tx hash references
+
+**6 Mandatory Guard Rails** (embedded in dashboard):
+1. Fee Recipient Assumption Check — verify Euler fees non-zero before setFeeReceiver()
+2. Revenue Router Accounting Visibility — explicit balance read + event verification
+3. ERC4626 Share Math Edge Case — minSharesOut > 0 assertion on first deposit
+4. Self-Borrow Risk Contamination — tag all founder loopback tests as non-representative
+5. Sentinel Authority Boundary — advisory only until post-public governance vote
+6. Property Phase Timing Risk — hard pause if no qualifying property by Week 44
+
 ### Deployment SOP (Standard Operating Procedure)
 **Last successful deployment: Feb 9, 2026 (commit e6834e30)**
 
