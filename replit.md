@@ -7,7 +7,7 @@ The Axiom Smart City project aims to establish America's first 1,000-acre on-cha
 - **Communication style**: Simple, everyday language explaining technical concepts.
 - **Video scripts**: Always deliver in a plain text code block format (```text```) so the copy button appears for easy one-click copying. No markdown formatting, no scene directions with brackets - just clean, copyable text with the script, caption, and hashtags.
 - **Navigation system**: The active navigation is the `NAV_LINKS` array in `components/design-law/DesignLawLayout.tsx` (and duplicated in `components/design-law/DesignLawHome.tsx` for the home page). When adding new pages to the nav, update both files. The legacy nav files (`navConfig.ts`, `SiteNavModel.ts`, `lib/navigation.js`) exist but are NOT rendered by the current DesignLawLayout.
-- **Page structure**: ALL pages now use `<DesignLawLayout>` wrapper from `components/design-law`. This provides: nav header (AXIOM logo, 9 nav links, Connect Wallet button, mobile hamburger), footer (chain ID, disclaimer, timestamp), and `max-w-7xl mx-auto px-6 py-8` container. New pages must wrap in `<DesignLawLayout>` and use Design Law styling (serif headings, monospace data, dl-* color classes, no rounded corners/shadows/animations/gradients).
+- **Page structure**: ALL pages now use `<DesignLawLayout>` wrapper from `components/design-law`. This provides: nav header (AXIOM logo, 10 nav links, Connect Wallet button, mobile hamburger), footer (chain ID, disclaimer, timestamp), and `max-w-7xl mx-auto px-6 py-8` container. New pages must wrap in `<DesignLawLayout>` and use Design Law styling (serif headings, monospace data, dl-* color classes, no rounded corners/shadows/animations/gradients).
 - **DEPRECATED - Old page structure**: Do NOT use the old dark-themed structure with `<Layout>` wrapper, `bg-black`/`bg-gray-900` backgrounds, or yellow accent colors. Do NOT use bare `<>` fragment wrappers or teal accent colors. All pages must use `<DesignLawLayout>` wrapper.
 - **Data sources**: NEVER use hardcoded placeholder data in any new pages. Always fetch real data from blockchain (via services like `CamelotPoolService`), database (PostgreSQL/Drizzle), or external APIs. Use async data fetching patterns with proper loading states and error handling.
 
@@ -88,6 +88,22 @@ Two AXUSD ecosystems coexist on Arbitrum One:
 4. Self-Borrow Risk Contamination — tag all founder loopback tests as non-representative
 5. Sentinel Authority Boundary — advisory only until post-public governance vote
 6. Property Phase Timing Risk — hard pause if no qualifying property by Week 44
+
+### DeNet DePIN Node Integration (NEW — Feb 2026)
+**Decentralized storage infrastructure via DeNet Datakeeper Node.**
+
+**Dashboard page:** `/depin/denet` — 3-tab dashboard (Node Status, Storage Metrics, Google Cloud Setup)
+**Google Cloud guide:** `docs/internal/DENET_GCLOUD_DEPLOYMENT_GUIDE.md` — Step-by-step VM deployment instructions
+
+**API routes** (`pages/api/denet/`):
+- GET `/api/denet/status` — Node configuration status, health, storage, uptime
+- GET `/api/denet/metrics` — Storage metrics, 24h activity, distribution by document type
+
+**Integration package:** `packages/denet/` — Client, uploader, verifier, CID enforcement (pre-existing)
+**Environment variable:** `DENET_NODE_KEY` — Required to enable live DeNet API connection
+**Navigation:** "DePIN" link in main nav points to `/depin/denet`
+
+**Deployment model:** DeNet Datakeeper Node binary runs on Google Cloud Compute Engine VM (not in Replit). Axiom dashboard monitors remotely via DeNet API. Requires Datakeeper License (ERC-721 on peaq Network).
 
 ### Deployment SOP (Standard Operating Procedure)
 **Last successful deployment: Feb 9, 2026 (commit e6834e30)**
