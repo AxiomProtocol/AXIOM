@@ -49,10 +49,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const eulerUtilization = eulerData?.vault?.utilization || '0.00';
   const eulerSupplyAPY = eulerData?.vault?.supplyAPY || '0.00';
   const eulerBorrowAPY = eulerData?.vault?.borrowAPY || '0.00';
-  const feeRecipientConfigured = eulerData?.vault?.feeConfiguration?.status?.isFeeRecipientConfigured || false;
-  const revenueRouterSet = eulerData?.vault?.feeConfiguration?.status?.isRevenueRouterSet || false;
-  const feeRoutingStatus = eulerData?.vault?.feeConfiguration?.status?.feeRoutingStatus || 'UNKNOWN';
-  const interestFeePercent = eulerData?.vault?.feeConfiguration?.interestFeePercent || '0.00';
+  const feeRecipientConfigured = eulerData?.feeConfiguration?.status?.isFeeRecipientConfigured || false;
+  const revenueRouterSet = eulerData?.feeConfiguration?.status?.isRevenueRouterSet || false;
+  const feeRoutingStatus = eulerData?.feeConfiguration?.status?.feeRoutingStatus || 'UNKNOWN';
+  const interestFeePercent = eulerData?.feeConfiguration?.interestFeePercent || '0.00';
 
   const regime = sentinelData?.regime?.regime || 'UNKNOWN';
   const regimeConfidence = sentinelData?.regime?.confidence || '0';
