@@ -74,7 +74,8 @@ export const SITE_NAV: NavItem[] = [
       { label: "Capital Bridge", href: "/observer/capital-bridge" },
       { label: "Node Economy", href: "/observer/node-economy" },
       { label: "Institutional Overview", href: "/institutional" },
-      { label: "Founder Operations", href: "/founder-ops" }
+      { label: "Founder Operations", href: "/founder-ops" },
+      { label: "Operational Playbook", href: "/founder-ops/playbook" }
     ]
   },
   {

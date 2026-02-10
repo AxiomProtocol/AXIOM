@@ -66,7 +66,8 @@ export const navItems: NavItem[] = [
       { label: "Capital Bridge", href: "/observer/capital-bridge" },
       { label: "Node Economy", href: "/observer/node-economy" },
       { label: "Institutional Overview", href: "/institutional" },
-      { label: "Founder Operations", href: "/founder-ops", visibility: 'app' }
+      { label: "Founder Operations", href: "/founder-ops", visibility: 'app' },
+      { label: "Operational Playbook", href: "/founder-ops/playbook", visibility: 'app' }
     ]
   },
   {

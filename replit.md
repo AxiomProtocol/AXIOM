@@ -75,6 +75,7 @@ Two AXUSD ecosystems coexist on Arbitrum One:
 **Internal proof-of-concept validation tool for $100/week operational playbook.**
 
 **Dashboard page:** `/founder-ops` — 4-tab dashboard (System Overview, Capital Allocation, Risk Checkpoints, Operations Log)
+**Playbook page:** `/founder-ops/playbook` — Interactive 4-tab view of Operational Playbook v2.1 (Overview, Contract Registry, 52-Week Phases, Guard Rails) with live system status from `/api/founder-ops/overview`
 
 **API routes** (`pages/api/founder-ops/`):
 - GET `/api/founder-ops/overview` — Aggregates live data from Euler, Sentinel, AXUSD, Lending Fund, DEX, Observer with per-source status tracking
