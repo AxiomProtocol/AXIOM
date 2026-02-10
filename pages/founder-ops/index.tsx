@@ -18,6 +18,16 @@ interface SentinelData {
   qualifiedSignals: number;
   approvedDecisions: number;
   deniedDecisions: number;
+  authorityMode?: string;
+  guardRail5?: { status: string; rule: string };
+}
+
+interface GuardRailStatus {
+  id: number;
+  title: string;
+  status: 'PASS' | 'ENFORCED' | 'WARNING' | 'UNKNOWN' | 'LOADING';
+  detail: string;
+  source: string;
 }
 
 interface EulerData {
@@ -120,6 +130,14 @@ const FOOTER_DISCLOSURE =
 export default function FounderOpsPage() {
   const [data, setData] = useState<OverviewData | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [guardRails, setGuardRails] = useState<GuardRailStatus[]>([
+    { id: 1, title: 'Fee Recipient Assumption Check', status: 'LOADING', detail: 'Checking...', source: '/api/founder-ops/fee-plumbing-preflight' },
+    { id: 2, title: 'Revenue Router Accounting Visibility', status: 'LOADING', detail: 'Checking...', source: '/api/founder-ops/overview' },
+    { id: 3, title: 'ERC4626 Share Math Edge Case', status: 'LOADING', detail: 'Checking...', source: '/api/euler/vault-stats' },
+    { id: 4, title: 'Self-Borrow Risk Contamination', status: 'ENFORCED', detail: 'POST /api/founder-ops/log rejects untagged self-borrow entries', source: 'Code enforcement' },
+    { id: 5, title: 'Sentinel Authority Boundary', status: 'LOADING', detail: 'Checking...', source: '/api/sentinel/overview' },
+    { id: 6, title: 'Property Phase Timing Risk', status: 'ENFORCED', detail: 'POST /api/founder-ops/log blocks Week 44+ property ops without qualifying property or HARD PAUSE', source: 'Code enforcement' },
+  ]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'allocation' | 'checkpoints' | 'log'>('overview');
@@ -129,11 +147,51 @@ export default function FounderOpsPage() {
     Promise.all([
       fetch('/api/founder-ops/overview').then(r => r.json()),
       fetch('/api/founder-ops/log').then(r => r.json()),
+      fetch('/api/founder-ops/fee-plumbing-preflight').then(r => r.json()).catch(() => null),
+      fetch('/api/euler/vault-stats').then(r => r.json()).catch(() => null),
+      fetch('/api/sentinel/overview').then(r => r.json()).catch(() => null),
     ])
-      .then(([overviewRes, logRes]) => {
+      .then(([overviewRes, logRes, preflightRes, vaultRes, sentinelRes]) => {
         if (overviewRes.success) setData(overviewRes.data);
         else setError(overviewRes.error || 'Failed to load overview');
         if (logRes.success) setLogs(logRes.entries || []);
+
+        setGuardRails(prev => {
+          const updated = [...prev];
+
+          if (preflightRes?.data?.guardRails) {
+            const gr1 = preflightRes.data.guardRails.find((g: any) => g.name?.includes('Fee Recipient') || g.name?.includes('GR1'));
+            const gr2 = preflightRes.data.guardRails.find((g: any) => g.name?.includes('Revenue Router') || g.name?.includes('GR2'));
+            if (gr1) {
+              updated[0] = { ...updated[0], status: gr1.status === 'PASS' ? 'PASS' : 'WARNING', detail: gr1.details?.finding || gr1.status };
+            }
+            if (gr2) {
+              updated[1] = { ...updated[1], status: gr2.status === 'PASS' ? 'PASS' : 'WARNING', detail: gr2.details?.finding || gr2.status };
+            }
+          } else {
+            if (overviewRes.data?.feePlumbing) {
+              const fp = overviewRes.data.feePlumbing;
+              updated[0] = { ...updated[0], status: fp.eulerFeeRecipientSet ? 'PASS' : 'WARNING', detail: fp.eulerFeeRecipientSet ? 'Fee recipient configured' : 'Fee recipient NOT set' };
+              updated[1] = { ...updated[1], status: fp.revenueRouterConnected ? 'PASS' : 'WARNING', detail: fp.revenueRouterConnected ? 'Revenue router connected' : 'Revenue router NOT connected' };
+            }
+          }
+
+          if (vaultRes?.guardRail3) {
+            const gr3 = vaultRes.guardRail3;
+            const gr3Status = gr3.status === 'PASS' ? 'PASS' : gr3.status === 'WARNING' ? 'WARNING' : gr3.status === 'NO_DEPOSITS' ? 'PASS' : 'UNKNOWN';
+            updated[2] = { ...updated[2], status: gr3Status as GuardRailStatus['status'], detail: gr3.detail || `Share price: ${gr3.sharePrice}` };
+          }
+
+          if (sentinelRes?.guardRail5) {
+            const gr5 = sentinelRes.guardRail5;
+            const gr5Status = gr5.status === 'ENFORCED' ? 'ENFORCED' : gr5.status === 'PASS' ? 'PASS' : 'WARNING';
+            updated[4] = { ...updated[4], status: gr5Status as GuardRailStatus['status'], detail: gr5.rule || `Authority mode: ${sentinelRes.authorityMode}` };
+          } else if (sentinelRes?.authorityMode === 'ADVISORY') {
+            updated[4] = { ...updated[4], status: 'ENFORCED', detail: 'Sentinel is ADVISORY ONLY until post-public governance vote' };
+          }
+
+          return updated;
+        });
       })
       .catch(() => setError('Failed to connect to server'))
       .finally(() => setLoading(false));
@@ -368,30 +426,29 @@ export default function FounderOpsPage() {
                 <div className="mb-8">
                   <SectionHeading>Mandatory Guard Rails</SectionHeading>
                   <div className="space-y-3">
-                    <div className="border border-dl-border p-3">
-                      <p className="text-xs uppercase tracking-wider text-dl-error mb-1">FIX #1 — FEE RECIPIENT ASSUMPTION</p>
-                      <p className="text-xs text-dl-gray">Before setFeeReceiver(): confirm fees non-zero, borrow interest exists, vault fee config enabled. Zero fees = false validation.</p>
-                    </div>
-                    <div className="border border-dl-border p-3">
-                      <p className="text-xs uppercase tracking-wider text-dl-error mb-1">FIX #2 — REVENUE ROUTER VISIBILITY</p>
-                      <p className="text-xs text-dl-gray">Router must emit events on receipt. Verify explicit balance read method. Distribution math must be deterministic. Silent balances = lost audit clarity.</p>
-                    </div>
-                    <div className="border border-dl-border p-3">
-                      <p className="text-xs uppercase tracking-wider text-dl-error mb-1">FIX #3 — ERC4626 SHARE MATH</p>
-                      <p className="text-xs text-dl-gray">Assert minSharesOut &gt; 0 on first deposit. Guard against first-depositor rounding, dust minting, fee-on-transfer assumptions.</p>
-                    </div>
-                    <div className="border border-dl-border p-3">
-                      <p className="text-xs uppercase tracking-wider text-dl-error mb-1">FIX #4 — SELF-BORROW CONTAMINATION</p>
-                      <p className="text-xs text-dl-gray">All self-borrow tests tagged: &quot;Founder Loopback Test — Non-Representative Yield.&quot; Never mix with public metrics.</p>
-                    </div>
-                    <div className="border border-dl-border p-3">
-                      <p className="text-xs uppercase tracking-wider text-dl-error mb-1">FIX #5 — SENTINEL AUTHORITY BOUNDARY</p>
-                      <p className="text-xs text-dl-gray">Sentinel is ADVISORY ONLY until post-public governance vote. Must never auto-execute capital movement in this phase.</p>
-                    </div>
-                    <div className="border border-dl-border p-3">
-                      <p className="text-xs uppercase tracking-wider text-dl-error mb-1">FIX #6 — PROPERTY PHASE TIMING</p>
-                      <p className="text-xs text-dl-gray">Hard rule: If no qualifying property by Week 44, Phase 4 pauses. Capital continues compounding. No forced deals.</p>
-                    </div>
+                    {guardRails.map((gr) => {
+                      const statusColor =
+                        gr.status === 'PASS' ? 'text-dl-forest' :
+                        gr.status === 'ENFORCED' ? 'text-dl-forest' :
+                        gr.status === 'WARNING' ? 'text-dl-gold' :
+                        gr.status === 'LOADING' ? 'text-dl-gray' :
+                        'text-dl-error';
+                      const statusBg =
+                        gr.status === 'PASS' || gr.status === 'ENFORCED' ? 'border-l-2 border-l-[#2D5F2D]' :
+                        gr.status === 'WARNING' ? 'border-l-2 border-l-[#8B7355]' :
+                        gr.status === 'LOADING' ? 'border-l-2 border-l-gray-300' :
+                        'border-l-2 border-l-[#8B2500]';
+                      return (
+                        <div key={gr.id} className={`border border-dl-border p-3 ${statusBg}`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs uppercase tracking-wider text-dl-navy">GR #{gr.id} — {gr.title}</p>
+                            <span className={`text-xs font-dl-mono font-bold ${statusColor}`}>{gr.status}</span>
+                          </div>
+                          <p className="text-xs text-dl-gray">{gr.detail}</p>
+                          <p className="text-[10px] font-dl-mono text-dl-gray mt-1">Source: {gr.source}</p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </>

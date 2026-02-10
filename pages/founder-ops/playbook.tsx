@@ -19,6 +19,11 @@ interface GuardRail {
   check: string;
 }
 
+interface GuardRailLiveStatus {
+  status: 'PASS' | 'ENFORCED' | 'WARNING' | 'UNKNOWN' | 'LOADING';
+  detail: string;
+}
+
 interface PhaseInfo {
   name: string;
   weeks: string;
@@ -162,13 +167,55 @@ const RISK_CHECKPOINTS = [
 export default function PlaybookPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'contracts' | 'phases' | 'guardrails'>('overview');
   const [liveStatus, setLiveStatus] = useState<any>(null);
+  const [grLive, setGrLive] = useState<Record<number, GuardRailLiveStatus>>({
+    1: { status: 'LOADING', detail: 'Checking...' },
+    2: { status: 'LOADING', detail: 'Checking...' },
+    3: { status: 'LOADING', detail: 'Checking...' },
+    4: { status: 'ENFORCED', detail: 'POST /api/founder-ops/log rejects untagged self-borrow entries' },
+    5: { status: 'LOADING', detail: 'Checking...' },
+    6: { status: 'ENFORCED', detail: 'POST /api/founder-ops/log blocks Week 44+ property ops without HARD PAUSE' },
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/founder-ops/overview')
-      .then((r) => r.json())
-      .then((d) => {
-        setLiveStatus(d.data || null);
+    Promise.all([
+      fetch('/api/founder-ops/overview').then((r) => r.json()),
+      fetch('/api/founder-ops/fee-plumbing-preflight').then((r) => r.json()).catch(() => null),
+      fetch('/api/euler/vault-stats').then((r) => r.json()).catch(() => null),
+      fetch('/api/sentinel/overview').then((r) => r.json()).catch(() => null),
+    ])
+      .then(([overviewRes, preflightRes, vaultRes, sentinelRes]) => {
+        setLiveStatus(overviewRes.data || null);
+
+        setGrLive(prev => {
+          const updated = { ...prev };
+
+          if (preflightRes?.data?.guardRails) {
+            const gr1 = preflightRes.data.guardRails.find((g: any) => g.name?.includes('Fee Recipient') || g.name?.includes('GR1'));
+            const gr2 = preflightRes.data.guardRails.find((g: any) => g.name?.includes('Revenue Router') || g.name?.includes('GR2'));
+            if (gr1) updated[1] = { status: gr1.status === 'PASS' ? 'PASS' : 'WARNING', detail: gr1.details?.finding || gr1.status };
+            if (gr2) updated[2] = { status: gr2.status === 'PASS' ? 'PASS' : 'WARNING', detail: gr2.details?.finding || gr2.status };
+          } else if (overviewRes.data?.feePlumbing) {
+            const fp = overviewRes.data.feePlumbing;
+            updated[1] = { status: fp.eulerFeeRecipientSet ? 'PASS' : 'WARNING', detail: fp.eulerFeeRecipientSet ? 'Fee recipient configured' : 'Fee recipient NOT set' };
+            updated[2] = { status: fp.revenueRouterConnected ? 'PASS' : 'WARNING', detail: fp.revenueRouterConnected ? 'Revenue router connected' : 'Revenue router NOT connected' };
+          }
+
+          if (vaultRes?.guardRail3) {
+            const gr3 = vaultRes.guardRail3;
+            const gr3Status = gr3.status === 'PASS' ? 'PASS' : gr3.status === 'WARNING' ? 'WARNING' : gr3.status === 'NO_DEPOSITS' ? 'PASS' : 'UNKNOWN';
+            updated[3] = { status: gr3Status as GuardRailLiveStatus['status'], detail: gr3.detail || `Share price: ${gr3.sharePrice}` };
+          }
+
+          if (sentinelRes?.guardRail5) {
+            const gr5Status = sentinelRes.guardRail5.status === 'ENFORCED' ? 'ENFORCED' : sentinelRes.guardRail5.status === 'PASS' ? 'PASS' : 'WARNING';
+            updated[5] = { status: gr5Status as GuardRailLiveStatus['status'], detail: sentinelRes.guardRail5.rule || `Authority mode: ${sentinelRes.authorityMode}` };
+          } else if (sentinelRes?.authorityMode === 'ADVISORY') {
+            updated[5] = { status: 'ENFORCED', detail: 'Sentinel is ADVISORY ONLY until post-public governance vote' };
+          }
+
+          return updated;
+        });
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -451,19 +498,44 @@ export default function PlaybookPage() {
         {activeTab === 'guardrails' && (
           <>
             <SectionHeading>6 Mandatory Guard Rails</SectionHeading>
-            {GUARD_RAILS.map((gr) => (
-              <div key={gr.number} style={{ border: '1px solid #1B2A4A', padding: '1rem', marginBottom: '1rem' }}>
-                <h4 style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', margin: '0 0 0.5rem', color: '#1B2A4A' }}>
-                  #{gr.number}: {gr.title}
-                </h4>
-                <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>
-                  {gr.description}
-                </p>
-                <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem', color: '#6B7280', margin: 0 }}>
-                  Check: {gr.check}
-                </p>
-              </div>
-            ))}
+            {GUARD_RAILS.map((gr) => {
+              const live = grLive[gr.number];
+              const statusColor =
+                live?.status === 'PASS' || live?.status === 'ENFORCED' ? '#2D5F2D' :
+                live?.status === 'WARNING' ? '#8B7355' :
+                live?.status === 'LOADING' ? '#9CA3AF' :
+                '#8B2500';
+              const borderLeft = `3px solid ${statusColor}`;
+              return (
+                <div key={gr.number} style={{ border: '1px solid #1B2A4A', borderLeft, padding: '1rem', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <h4 style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', margin: 0, color: '#1B2A4A' }}>
+                      #{gr.number}: {gr.title}
+                    </h4>
+                    <span style={{
+                      fontFamily: 'ui-monospace, monospace',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      color: statusColor,
+                      textTransform: 'uppercase',
+                    }}>
+                      {live?.status || 'UNKNOWN'}
+                    </span>
+                  </div>
+                  <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>
+                    {gr.description}
+                  </p>
+                  {live && live.status !== 'LOADING' && (
+                    <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem', color: statusColor, margin: '0 0 0.5rem', fontWeight: 600 }}>
+                      {live.detail}
+                    </p>
+                  )}
+                  <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.7rem', color: '#9CA3AF', margin: 0 }}>
+                    Check: {gr.check}
+                  </p>
+                </div>
+              );
+            })}
 
             <div style={{ marginTop: '2rem' }}>
               <SectionHeading>Weekly Operations Checklist</SectionHeading>
