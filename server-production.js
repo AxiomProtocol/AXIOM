@@ -1,7 +1,7 @@
 const path = require('path');
 const { spawn } = require('child_process');
 
-const PORT = process.env.PORT || '5000';
+const PORT = process.env.PORT || '3000';
 const HOSTNAME = '0.0.0.0';
 
 const standaloneServer = path.join(__dirname, '.next', 'standalone', 'server.js');

@@ -120,8 +120,9 @@ output: 'standalone',
 
 **package.json scripts (exact):**
 ```json
+"dev": "next dev -p 5000",
 "build": "NODE_ENV=production NODE_OPTIONS='--max-old-space-size=8192' next build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public",
-"start": "HOSTNAME=0.0.0.0 PORT=5000 node .next/standalone/server.js",
+"start": "HOSTNAME=0.0.0.0 PORT=3000 node .next/standalone/server.js",
 ```
 
 **.replit deployment section (exact):**
@@ -133,12 +134,13 @@ build = ["npm", "run", "build"]
 ```
 
 **Port configuration:**
-- Next.js standalone listens on `0.0.0.0:5000`
-- `.replit` maps internal port 5000 → external port 80
-- Port 3000 mapping exists but is unused (do not remove, does not affect deployment)
+- Development: Next.js dev server listens on `0.0.0.0:5000` (required for Replit webview preview)
+- Production/Deployment: Next.js standalone listens on `0.0.0.0:3000` (required for Replit deployment health checks)
+- `.replit` maps internal port 5000 → external port 80 (dev), port 3000 → external port 3000 (prod)
+- `server.js` and `server-production.js` default to port 3000 but honor `process.env.PORT`
 
 **Health check endpoints:**
-- `/api/health` — lightweight Pages Router endpoint at `pages/api/health.js`, returns `"ok"` HTTP 200
+- `/api/health` — zero-dependency Pages Router endpoint at `pages/api/health.js`, returns `{"status":"ok"}` HTTP 200 instantly (no DB, blockchain, or external calls)
 - `/healthz` — Pages Router page at `pages/healthz.js` with `getStaticProps`
 - Home page (`/`) uses `getStaticProps` with dynamic import for fast loading
 
@@ -147,8 +149,9 @@ build = ["npm", "run", "build"]
 2. NEVER remove `output: 'standalone'` from next.config.js
 3. NEVER change the `start` script away from `node .next/standalone/server.js`
 4. The build script MUST copy `.next/static` and `public` into the standalone directory
-5. HOSTNAME must be `0.0.0.0` and PORT must be `5000` in the start command
+5. HOSTNAME must be `0.0.0.0` — PORT is `5000` for dev, `3000` for production start
 6. `server-production.js` exists but is NOT used — the standalone server.js is the production entry point
+7. `/api/health` must NEVER import DB, blockchain, or external service modules
 
 ## External Dependencies
 - **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
