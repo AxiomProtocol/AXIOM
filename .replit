@@ -32,7 +32,7 @@ packages = ["jq"]
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["npm", "run", "start"]
+run = ["node", ".next/standalone/server.js"]
 build = ["npm", "run", "build"]
 
 [userenv]
