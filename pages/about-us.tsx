@@ -48,13 +48,13 @@ export default function AboutUsPage() {
     <DesignLawLayout>
       <Head>
         <title>About — Axiom Protocol</title>
-        <meta name="description" content="Axiom Protocol builds community ownership infrastructure for real assets through transparent capital programs, on chain reporting, and disciplined governance." />
+        <meta name="description" content="Axiom Protocol provides disciplined capital infrastructure for real asset ownership through transparent capital programs, risk visibility, and deterministic governance." />
       </Head>
 
       <div className="border-b border-dl-border pb-8 mb-10">
         <p className="text-xs text-dl-gray uppercase tracking-widest mb-4 font-dl-mono">About Axiom Protocol</p>
         <h1 className="font-dl-serif text-3xl md:text-4xl text-dl-navy leading-tight mb-4">
-          Capital infrastructure for community owned real assets
+          Disciplined capital infrastructure for real asset ownership
         </h1>
         <p className="text-sm text-dl-gray max-w-3xl leading-relaxed mb-4">
           Axiom Protocol is designed to make real asset ownership investable, transparent, and governable.
