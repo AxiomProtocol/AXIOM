@@ -3,6 +3,30 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading, SolidButton } from '../components/design-law';
 
+const THESIS_CARDS = [
+  { label: 'Core thesis', value: 'Infrastructure first', note: 'Ownership scales when capital and reporting scale.' },
+  { label: 'Program focus', value: 'Structured capital', note: 'Clear mandate, clear deployment, clear oversight.' },
+  { label: 'Transparency', value: 'On chain reporting', note: 'Auditable signals, not marketing claims.' },
+];
+
+const AXIOM_IS = [
+  'Real asset capital infrastructure with transparent reporting',
+  'Program based deployment model with defined rules',
+  'Governance oriented operations with a clean audit trail',
+];
+
+const AXIOM_IS_NOT = [
+  'A meme driven token story',
+  'A black box fund with unclear use of proceeds',
+  'A yield promise without risk disclosure and controls',
+];
+
+const ACCOUNTABILITY = [
+  { title: 'Leadership', description: 'Responsible for mandate definition, capital allocation policy, and execution standards.' },
+  { title: 'Governance', description: 'Controls, permissions, and oversight. Ensures program rules are enforceable and visible.' },
+  { title: 'Reporting', description: 'Metrics and disclosures that align with institutional expectations and auditability.' },
+];
+
 const PRINCIPLES = [
   { title: 'Transparency', description: 'Every capital movement, governance decision, and operational action is recorded with full audit trails. Verifiable records replace informal trust.' },
   { title: 'Coordination', description: 'Structure and shared rules create reliable collaboration. Defined roles, accountability loops, and evidence-based processes replace ad-hoc decision making.' },
@@ -24,22 +48,38 @@ export default function AboutUsPage() {
     <DesignLawLayout>
       <Head>
         <title>About — Axiom Protocol</title>
-        <meta name="description" content="Axiom Protocol is community ownership infrastructure for real assets, built from real execution." />
+        <meta name="description" content="Axiom Protocol builds community ownership infrastructure for real assets through transparent capital programs, on chain reporting, and disciplined governance." />
       </Head>
 
       <div className="border-b border-dl-border pb-8 mb-10">
         <p className="text-xs text-dl-gray uppercase tracking-widest mb-4 font-dl-mono">About Axiom Protocol</p>
         <h1 className="font-dl-serif text-3xl md:text-4xl text-dl-navy leading-tight mb-4">
-          Structure Over Speculation
+          Capital infrastructure for community owned real assets
         </h1>
         <p className="text-sm text-dl-gray max-w-3xl leading-relaxed mb-4">
-          Axiom Protocol is community ownership infrastructure for real assets. We provide the coordination tools,
-          treasury structure, and reporting systems that make shared ownership work at scale.
+          Axiom Protocol is designed to make real asset ownership investable, transparent, and governable.
+          The focus is not hype. The focus is disciplined execution: acquire or finance real assets,
+          report performance with institutional grade clarity, and protect capital with explicit controls.
         </p>
         <p className="text-sm text-dl-gray max-w-3xl leading-relaxed">
           Built from real execution — a community farmland purchase, development work, and a founder-led infrastructure roadmap —
           Axiom exists to turn what already worked into a repeatable system that can scale responsibly.
         </p>
+      </div>
+
+      <div className="mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border">
+          {THESIS_CARDS.map((card, i) => (
+            <div
+              key={card.label}
+              className={`px-6 py-5 ${i < THESIS_CARDS.length - 1 ? 'border-b md:border-b-0 md:border-r border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}
+            >
+              <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">{card.label}</p>
+              <p className="font-dl-serif text-lg text-dl-navy font-semibold mb-1">{card.value}</p>
+              <p className="text-sm text-dl-gray leading-relaxed">{card.note}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="mb-12">
@@ -54,6 +94,57 @@ export default function AboutUsPage() {
             on-chain audit trails, and institutional-grade reporting — so communities can own real assets together with
             the same rigor and transparency expected of institutional programs.
           </p>
+        </div>
+      </div>
+
+      <div className="mb-12">
+        <SectionHeading>The Capital Program narrative</SectionHeading>
+        <div className="border border-dl-border bg-dl-bg-alt p-6 mb-6">
+          <p className="text-sm text-dl-gray leading-relaxed">
+            The Capital Program exists to convert real world execution into a repeatable system.
+            That means disciplined underwriting, explicit capital controls, and clear reporting.
+            Each deployment is treated like an operating mandate: objectives, constraints, governance,
+            and measurable outcomes.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
+          <div className="px-6 py-5 border-b md:border-b-0 md:border-r border-dl-border bg-dl-bg">
+            <h3 className="font-dl-serif text-base text-dl-navy font-medium mb-3">What Axiom is</h3>
+            <ul className="space-y-2">
+              {AXIOM_IS.map((item) => (
+                <li key={item} className="text-sm text-dl-gray leading-relaxed">— {item}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="px-6 py-5 bg-dl-bg-alt">
+            <h3 className="font-dl-serif text-base text-dl-navy font-medium mb-3">What Axiom is not</h3>
+            <ul className="space-y-2">
+              {AXIOM_IS_NOT.map((item) => (
+                <li key={item} className="text-sm text-dl-gray leading-relaxed">— {item}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-12">
+        <SectionHeading>Leadership, governance, and accountability</SectionHeading>
+        <div className="border border-dl-border bg-dl-bg-alt p-6 mb-6">
+          <p className="text-sm text-dl-gray leading-relaxed">
+            Axiom is built around explicit decision rights and measurable accountability.
+            The goal is simple: protect capital, enforce program rules, and maintain integrity of reporting.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border">
+          {ACCOUNTABILITY.map((item, i) => (
+            <div
+              key={item.title}
+              className={`px-6 py-5 ${i < ACCOUNTABILITY.length - 1 ? 'border-b md:border-b-0 md:border-r border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}
+            >
+              <h3 className="font-dl-serif text-base text-dl-navy font-medium mb-2">{item.title}</h3>
+              <p className="text-sm text-dl-gray leading-relaxed">{item.description}</p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -104,11 +195,11 @@ export default function AboutUsPage() {
 
       <div className="mb-8">
         <div className="flex flex-wrap gap-3">
+          <Link href="/">
+            <SolidButton variant="secondary">Back to home</SolidButton>
+          </Link>
           <Link href="/pilot">
             <SolidButton>View Capital Program</SolidButton>
-          </Link>
-          <Link href="/how-it-works">
-            <SolidButton variant="secondary">How It Works</SolidButton>
           </Link>
           <Link href="/transparency">
             <SolidButton variant="secondary">Transparency Reports</SolidButton>
