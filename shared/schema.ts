@@ -8673,6 +8673,28 @@ export type InsertMirdtPaperTrade = typeof mirdtPaperTrades.$inferInsert;
 export type MirdtDataSnapshot = typeof mirdtDataSnapshots.$inferSelect;
 export type InsertMirdtDataSnapshot = typeof mirdtDataSnapshots.$inferInsert;
 
+export const lexiconScanStatusEnum = pgEnum('lexicon_scan_status', ['FOUND', 'CLEAN']);
+
+export const mirdtLexiconScanLogs = pgTable("mirdt_lexicon_scan_logs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  scope: varchar("scope", { length: 100 }).notNull(),
+  filePath: varchar("file_path", { length: 500 }),
+  originalTerm: varchar("original_term", { length: 200 }).notNull(),
+  replacementTerm: varchar("replacement_term", { length: 200 }),
+  lineNumber: integer("line_number"),
+  excerpt: text("excerpt"),
+  status: lexiconScanStatusEnum("status").default('FOUND').notNull(),
+  meta: jsonb("meta"),
+}, (table) => ({
+  scopeIdx: index("lexicon_scan_scope_idx").on(table.scope),
+  termIdx: index("lexicon_scan_term_idx").on(table.originalTerm),
+  createdIdx: index("lexicon_scan_created_idx").on(table.createdAt),
+}));
+
+export type MirdtLexiconScanLog = typeof mirdtLexiconScanLogs.$inferSelect;
+export type InsertMirdtLexiconScanLog = typeof mirdtLexiconScanLogs.$inferInsert;
+
 export const sentinelRegimeEnum = pgEnum('sentinel_regime', ['TREND_UP', 'TREND_DOWN', 'RANGE_LOW_VOL', 'HIGH_VOL_DISLOCATION']);
 export const sentinelDecisionEnum = pgEnum('sentinel_decision', ['APPROVED', 'DENIED']);
 export const sentinelActionTypeEnum = pgEnum('sentinel_action_type', ['TREASURY_DEPLOY', 'LEND_ISSUE', 'MINT', 'BURN', 'PARAMETER_CHANGE', 'SWAP', 'LP_ACTION', 'BRIDGE']);
