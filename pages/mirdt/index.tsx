@@ -17,6 +17,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {
+  DesignLawLayout,
   PageShell,
   DataTable,
   StatusBadge,
@@ -208,6 +209,7 @@ export default function MIRDTIndex() {
   ];
 
   return (
+    <DesignLawLayout>
     <PageShell
       title="Market Intelligence &amp; Risk Disclosure Terminal"
       subtitle="Probabilistic trend-following analysis with full audit trail. Past patterns do not guarantee future outcomes."
@@ -263,5 +265,6 @@ export default function MIRDTIndex() {
         </>
       )}
     </PageShell>
+    </DesignLawLayout>
   );
 }

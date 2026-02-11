@@ -3,16 +3,16 @@ import Link from 'next/link';
 import { ConnectWalletButton } from './ConnectWalletButton';
 
 const NAV_LINKS = [
+  { href: '/products', label: 'Products' },
   { href: '/pilot', label: 'Capital Program' },
   { href: '/lending-fund', label: 'Lending Fund' },
   { href: '/dex', label: 'Exchange' },
   { href: '/mirdt', label: 'Intelligence' },
   { href: '/sentinel', label: 'Sentinel' },
   { href: '/observer', label: 'Observer' },
+  { href: '/solvency', label: 'Solvency' },
   { href: '/depin/denet', label: 'DePIN' },
   { href: '/founder-ops', label: 'Founder Ops' },
-  { href: '/products', label: 'Products' },
-  { href: '/solvency', label: 'Solvency' },
   { href: '/about-us', label: 'About' },
 ];
 

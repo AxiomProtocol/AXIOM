@@ -18,6 +18,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {
+  DesignLawLayout,
   PageShell,
   DataTable,
   StatusBadge,
@@ -297,6 +298,7 @@ export default function MIRDTDetail() {
   ];
 
   return (
+    <DesignLawLayout>
     <PageShell
       title={setup ? `Setup Detail — ${setup.symbol}` : 'Setup Detail'}
       disclosure={FOOTER_DISCLOSURE}
@@ -417,5 +419,6 @@ export default function MIRDTDetail() {
         </>
       )}
     </PageShell>
+    </DesignLawLayout>
   );
 }
