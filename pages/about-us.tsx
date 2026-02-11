@@ -30,14 +30,14 @@ const ACCOUNTABILITY = [
 const PRINCIPLES = [
   { title: 'Transparency', description: 'Every capital movement, governance decision, and operational action is recorded with full audit trails. Verifiable records replace informal trust.' },
   { title: 'Coordination', description: 'Structure and shared rules create reliable collaboration. Defined roles, accountability loops, and evidence-based processes replace ad-hoc decision making.' },
-  { title: 'Security', description: 'Multi-party authorization controls, audited automated control layers, and privacy by default. 23 verified contracts on Arbitrum One provide independent auditability.' },
+  { title: 'Security', description: 'Multi-party authorization controls, audited automated control layers, and privacy by default. 72 verified contracts on Arbitrum One provide independent auditability.' },
   { title: 'Discipline', description: 'Measured onboarding, fixed treasury allocation policies, and institutional-grade reporting. No speculation, no hype, no shortcuts.' },
 ];
 
 const MILESTONES = [
   { period: '2023', event: 'Community farmland acquisition — 6+ acres of community-owned land, USDA-supported development' },
   { period: '2024', event: 'Axiom Protocol concept development, automated control layer architecture design, and initial infrastructure buildout' },
-  { period: 'Q1 2025', event: '23 verified automated control layers deployed on Arbitrum One, DEX V2 ecosystem with 10 mainnet contracts' },
+  { period: 'Q1 2025', event: 'Initial automated control layers deployed on Arbitrum One, DEX V2 ecosystem with mainnet contracts' },
   { period: 'Q2 2025', event: 'Capital Program launch — $1M dual-asset program with two SPVs, institutional reporting, and compliance audit trails' },
   { period: 'Q3 2025', event: 'Lending Fund operational — SEC Reg D 506(c) compliant bridge loan fund for real asset acquisition' },
   { period: 'Q1 2026', event: 'Market Intelligence Terminal, Institutional Observer dashboard, and expanded platform infrastructure' },

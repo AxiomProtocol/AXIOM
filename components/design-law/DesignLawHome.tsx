@@ -9,7 +9,7 @@ const PLATFORM_STATS = [
   { label: 'Real Land Acquired', value: '6+ Acres', detail: 'Community farmland, USDA-supported' },
   { label: 'Network', value: 'Arbitrum One', detail: 'Chain ID 42161' },
   { label: 'Governance Asset', value: 'AXM', detail: 'Live on mainnet' },
-  { label: 'Verified Contracts', value: '23', detail: 'Auditable on-chain' },
+  { label: 'Verified Contracts', value: '72', detail: 'Auditable on-chain' },
 ];
 
 const PRODUCT_SECTIONS = [
@@ -52,6 +52,9 @@ const PARTICIPATION_STEPS = [
 ];
 
 const NAV_LINKS = [
+  { href: '/about-us', label: 'About' },
+  { href: '/founder-ops', label: 'Founder Ops' },
+  { href: '/solvency', label: 'Solvency' },
   { href: '/products', label: 'Products' },
   { href: '/pilot', label: 'Capital Program' },
   { href: '/lending-fund', label: 'Lending Fund' },
@@ -59,10 +62,7 @@ const NAV_LINKS = [
   { href: '/mirdt', label: 'Intelligence' },
   { href: '/sentinel', label: 'Sentinel' },
   { href: '/observer', label: 'Observer' },
-  { href: '/solvency', label: 'Solvency' },
   { href: '/depin/denet', label: 'DePIN' },
-  { href: '/founder-ops', label: 'Founder Ops' },
-  { href: '/about-us', label: 'About' },
 ];
 
 export function DesignLawHome() {

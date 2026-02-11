@@ -36,7 +36,7 @@ const MODEL_SECTIONS = [
   },
   {
     title: 'On-Chain Settlement',
-    description: 'The protocol operates on Arbitrum One with 23 verified smart contracts. All material transactions are recorded on-chain for independent verification. The Institutional Observer provides read-only access to treasury and governance data.',
+    description: 'The protocol operates on Arbitrum One with 72 verified smart contracts. All material transactions are recorded on-chain for independent verification. The Institutional Observer provides read-only access to treasury and governance data.',
   },
 ];
 

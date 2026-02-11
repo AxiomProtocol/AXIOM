@@ -3,6 +3,9 @@ import Link from 'next/link';
 import { ConnectWalletButton } from './ConnectWalletButton';
 
 const NAV_LINKS = [
+  { href: '/about-us', label: 'About' },
+  { href: '/founder-ops', label: 'Founder Ops' },
+  { href: '/solvency', label: 'Solvency' },
   { href: '/products', label: 'Products' },
   { href: '/pilot', label: 'Capital Program' },
   { href: '/lending-fund', label: 'Lending Fund' },
@@ -10,10 +13,7 @@ const NAV_LINKS = [
   { href: '/mirdt', label: 'Intelligence' },
   { href: '/sentinel', label: 'Sentinel' },
   { href: '/observer', label: 'Observer' },
-  { href: '/solvency', label: 'Solvency' },
   { href: '/depin/denet', label: 'DePIN' },
-  { href: '/founder-ops', label: 'Founder Ops' },
-  { href: '/about-us', label: 'About' },
 ];
 
 interface DesignLawLayoutProps {
