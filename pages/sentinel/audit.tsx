@@ -114,8 +114,14 @@ export default function SentinelAudit() {
       .then((data) => {
         if (data.error) {
           setVerifyError(data.error);
+        } else if (data.verification) {
+          setVerification({
+            valid: data.verification.valid,
+            entries_checked: data.verification.checked,
+            first_broken_at: data.verification.brokenAt ? 0 : undefined,
+          });
         } else {
-          setVerification(data);
+          setVerifyError('No verification data returned');
         }
       })
       .catch(() => setVerifyError('Failed to run chain verification'))
