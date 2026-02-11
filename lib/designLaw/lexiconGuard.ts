@@ -44,6 +44,14 @@ export interface LexiconViolation {
   context: string;
 }
 
+const EXCLUDED_COMPOUNDS = [
+  'bridge loan',
+  'bridge financing',
+  'hash map',
+  'hash table',
+  'hash code',
+];
+
 export function checkLexicon(text: string): LexiconViolation[] {
   const violations: LexiconViolation[] = [];
   const lowerText = text.toLowerCase();
@@ -52,8 +60,16 @@ export function checkLexicon(text: string): LexiconViolation[] {
     const regex = new RegExp(`\\b${term.replace(/\s+/g, '\\s+')}\\b`, 'gi');
     let match;
     while ((match = regex.exec(lowerText)) !== null) {
-      const start = Math.max(0, match.index - 20);
-      const end = Math.min(text.length, match.index + match[0].length + 20);
+      const matchStart = match.index;
+      const surroundingText = lowerText.slice(
+        Math.max(0, matchStart - 15),
+        Math.min(lowerText.length, matchStart + match[0].length + 15)
+      );
+      const isExcluded = EXCLUDED_COMPOUNDS.some(compound => surroundingText.includes(compound));
+      if (isExcluded) continue;
+
+      const start = Math.max(0, matchStart - 20);
+      const end = Math.min(text.length, matchStart + match[0].length + 20);
       violations.push({
         term,
         context: `...${text.slice(start, end)}...`,
