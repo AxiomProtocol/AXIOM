@@ -1,3 +1,19 @@
+/**
+ * MIRDT DESIGN GATE CHECKLIST
+ * ────────────────────────────
+ * [x] Light mode only — no dark theme
+ * [x] Data-grid first — DataTable is primary element
+ * [x] Pagination required — PaginationControls present
+ * [x] No infinite scroll
+ * [x] No toast notifications for normal operations
+ * [x] No shimmer/skeleton loaders
+ * [x] No animated counters
+ * [x] No gradients
+ * [x] All outputs probabilistic with explicit invalidation triggers
+ * [x] Risk disclosure visible on page
+ * [x] No prohibited vocabulary (lexicon guard enforced)
+ * [x] Setup records link to immutable-style audit artifacts (data_snapshot_ref)
+ */
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {

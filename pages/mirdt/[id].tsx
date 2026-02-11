@@ -1,3 +1,20 @@
+/**
+ * MIRDT DESIGN GATE CHECKLIST — Setup Detail
+ * ────────────────────────────────────────────
+ * [x] Light mode only — no dark theme
+ * [x] Data-grid first — DetailGrid and DataTable for paper trades
+ * [x] Pagination — not applicable (single record view)
+ * [x] No infinite scroll
+ * [x] No toast notifications for normal operations
+ * [x] No shimmer/skeleton loaders
+ * [x] No animated counters
+ * [x] No gradients
+ * [x] Audit fields displayed: Setup ID, timestamp, model version, snapshot ref
+ * [x] Rationale trace rendered read-only
+ * [x] Paper-trade form for manual entry only (no auto execution)
+ * [x] Risk disclosure visible
+ * [x] No prohibited vocabulary (lexicon guard enforced)
+ */
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {
