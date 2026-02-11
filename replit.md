@@ -26,6 +26,8 @@ The architecture employs a "Product Factory Approach" for scalability. Arbitrum 
 
 **Founder Operations Dashboard:** This internal tool provides a 4-tab dashboard for System Overview, Capital Allocation, Risk Checkpoints, and Operations Log, along with an interactive playbook. It aggregates live data from various Axiom components and includes 6 mandatory Guard Rails for operational safety.
 
+**Solvency and Reserve Transparency:** The `/solvency` page provides verifiable visibility into protocol financial health. It combines live metrics from a database-backed snapshot system (`solvencySnapshots` table) with institutional disclosure content including definitions, capital waterfall, stabilization policy modes, FAQ, and verification instructions. Admin snapshot ingestion is available at `/api/solvency/ingest-snapshot` (protected by `ADMIN_SOLVENCY_KEY`). Metrics API at `/api/solvency/metrics` returns a versioned `solvency-v1` JSON contract.
+
 **DeNet DePIN Node Integration:** This integrates decentralized storage infrastructure via DeNet Datakeeper Node. A dedicated dashboard monitors node status and storage metrics, supported by an internal Google Cloud deployment guide. The integration utilizes a client, uploader, verifier, and CID enforcement package.
 
 **Deployment SOP:** The project exclusively uses `autoscale` for deployment. The `next.config.js` must include `output: 'standalone'`, and `package.json` scripts specify `next dev -p 5000`, `next build` with asset copying, and `start` using `node .next/standalone/server.js`. Ports are `5000` for dev and `3000` for production, with `HOSTNAME=0.0.0.0`. Health checks are available at `/api/health` and `/healthz`, with `/api/health` having zero external dependencies.

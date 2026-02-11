@@ -11,6 +11,7 @@ const ADVISORY_FILES = [
   'pages/pilot/index.tsx',
   'pages/sentinel/index.tsx',
   'pages/about-us.tsx',
+  'pages/solvency.tsx',
 ];
 
 const TARGET_FILES = [...CRITICAL_FILES, ...ADVISORY_FILES];

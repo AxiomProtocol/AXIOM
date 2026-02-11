@@ -61,6 +61,7 @@ const NAV_LINKS = [
   { href: '/depin/denet', label: 'DePIN' },
   { href: '/founder-ops', label: 'Founder Ops' },
   { href: '/products', label: 'Products' },
+  { href: '/solvency', label: 'Solvency' },
   { href: '/about-us', label: 'About' },
 ];
 

@@ -8838,3 +8838,17 @@ export const founderOpsLog = pgTable("founder_ops_log", {
 
 export type FounderOpsLog = typeof founderOpsLog.$inferSelect;
 export type InsertFounderOpsLog = typeof founderOpsLog.$inferInsert;
+
+export const solvencySnapshots = pgTable("solvency_snapshots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  asOfUtc: timestamp("as_of_utc").notNull(),
+  payloadJson: jsonb("payload_json").notNull(),
+  checksum: text("checksum").notNull(),
+  notes: text("notes"),
+}, (table) => ({
+  createdIdx: index("solvency_snap_created_idx").on(table.createdAt),
+}));
+
+export type SolvencySnapshot = typeof solvencySnapshots.$inferSelect;
+export type InsertSolvencySnapshot = typeof solvencySnapshots.$inferInsert;
