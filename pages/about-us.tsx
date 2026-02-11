@@ -149,6 +149,71 @@ export default function AboutUsPage() {
       </div>
 
       <div className="mb-12">
+        <SectionHeading>Founder</SectionHeading>
+        <div className="border border-dl-border">
+          <div className="px-6 py-5 bg-dl-bg border-b border-dl-border">
+            <p className="font-dl-serif text-lg text-dl-navy font-semibold mb-1">Clarence Fuqua</p>
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider">Founder & Lead Architect — Axiom Protocol</p>
+          </div>
+          <div className="px-6 py-5 bg-dl-bg-alt border-b border-dl-border">
+            <p className="text-sm text-dl-gray leading-relaxed mb-4">
+              Clarence Fuqua is the Founder and Lead Architect of Axiom Protocol, a financial infrastructure initiative
+              focused on transparency, risk visibility, and deterministic capital behavior.
+            </p>
+            <p className="text-sm text-dl-gray leading-relaxed mb-4">
+              His professional foundation was established in Atlanta, Georgia, where he began as an Acquisition and
+              Research Specialist within a real estate investment environment. This early role centered on opportunity
+              evaluation, underwriting logic, and capital efficiency analysis — disciplines that shaped a long-term
+              orientation toward risk-adjusted decision frameworks rather than purely growth-driven strategies.
+            </p>
+            <p className="text-sm text-dl-gray leading-relaxed mb-4">
+              Across more than two decades, Clarence expanded his scope through multiple operational layers of the real
+              estate sector, including property management, short-term rental systems, construction management, and
+              property preservation. This progression cultivated a systems-level perspective on asset performance, cash
+              flow mechanics, and operational risk — reinforcing the principle that outcomes are governed less by
+              prediction and more by structure, controls, and execution discipline.
+            </p>
+            <p className="text-sm text-dl-gray leading-relaxed">
+              This operational background later evolved into a focused engagement with financial architecture, capital
+              flow design, and risk mechanics, ultimately informing the conceptualization of Axiom Protocol.
+            </p>
+          </div>
+          <div className="px-6 py-5 bg-dl-bg border-b border-dl-border">
+            <h3 className="font-dl-serif text-base text-dl-navy font-medium mb-3">Design philosophy</h3>
+            <p className="text-sm text-dl-gray leading-relaxed mb-4">
+              Clarence's approach to financial technology is infrastructure-centric. Rather than prioritizing product
+              narratives or speculative positioning, his work emphasizes:
+            </p>
+            <ul className="space-y-2 mb-4">
+              <li className="text-sm text-dl-gray leading-relaxed">— Capital preservation logic</li>
+              <li className="text-sm text-dl-gray leading-relaxed">— Explicit risk visibility</li>
+              <li className="text-sm text-dl-gray leading-relaxed">— Deterministic system behavior</li>
+              <li className="text-sm text-dl-gray leading-relaxed">— Audit-traceable decision pathways</li>
+              <li className="text-sm text-dl-gray leading-relaxed">— Governance-aware design constraints</li>
+            </ul>
+            <p className="text-sm text-dl-gray leading-relaxed">
+              Axiom Protocol reflects this philosophy, functioning as a structured financial environment designed to
+              expose assumptions, clarify risk, and reinforce disciplined capital allocation behavior.
+            </p>
+          </div>
+          <div className="px-6 py-5 bg-dl-bg-alt">
+            <p className="text-sm text-dl-gray leading-relaxed mb-4">
+              As a founder-led initiative, Axiom Protocol benefits from direct architectural oversight, enabling rapid
+              iteration while maintaining design coherence, accountability, and systemic integrity. Clarence leverages
+              modern cloud tooling, automation frameworks, and AI-assisted engineering workflows to operate with
+              institutional-grade rigor within a lean operating structure.
+            </p>
+            <div className="border border-dl-border p-4 bg-dl-bg">
+              <p className="font-dl-serif text-sm text-dl-navy leading-relaxed italic">
+                "Sustainable financial systems are not defined by yield generation alone, but by risk discipline,
+                structural integrity, and decision architecture."
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-12">
         <SectionHeading>Operating Principles</SectionHeading>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
           {PRINCIPLES.map((p, i) => (
