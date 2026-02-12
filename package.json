@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "unified-platform.js",
   "scripts": {
-    "dev": "next dev -p 5000",
+    "dev": "next dev -H 0.0.0.0 -p 5000",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "build": "NODE_ENV=production NODE_OPTIONS='--max-old-space-size=8192' next build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public && cp -r node_modules/ws .next/standalone/node_modules/ws && cp -r node_modules/bufferutil .next/standalone/node_modules/bufferutil 2>/dev/null; cp -r node_modules/utf-8-validate .next/standalone/node_modules/utf-8-validate 2>/dev/null; true",

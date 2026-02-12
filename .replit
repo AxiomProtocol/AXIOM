@@ -24,7 +24,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd /home/runner/workspace && HOSTNAME=0.0.0.0 npm run dev"
+args = "cd /home/runner/workspace && npm run dev"
 waitForPort = 5000
 [nix]
 channel = "stable-25_05"
