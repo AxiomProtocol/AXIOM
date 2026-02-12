@@ -542,9 +542,11 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    const host = req.headers.host || `localhost:${process.env.PORT || 5000}`;
+    const baseUrl = `${protocol}://${host}`;
     const res = await fetch(`${baseUrl}/api/solvency/metrics`);
     const metrics = await res.json();
     return { props: { metrics } };
