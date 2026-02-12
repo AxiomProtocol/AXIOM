@@ -12,6 +12,17 @@ export default async function handler(
   res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
 
   try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS ame_metrics_timeseries (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        metric_key TEXT NOT NULL,
+        ts TIMESTAMP NOT NULL,
+        value DECIMAL(24,10) NOT NULL,
+        evaluation_id VARCHAR NOT NULL
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS ame_ts_metric_ts_idx ON ame_metrics_timeseries(metric_key, ts)`);
+
     const metricKey = String(req.query.metricKey || 'RS');
     const rawLimit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
 
