@@ -332,6 +332,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
   };
 
   const renderMetricsGrid = () => {
+    const isBootstrap = m?.policyMode === 'BOOTSTRAP' || !m?.policyMode;
     if (m && m.dataStatus !== 'empty') {
       return (
         <div className="mb-10">
@@ -350,6 +351,13 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
               { label: 'Policy Mode', value: <span className={policyColor(m.policyMode)}>{m.policyMode}</span>, mono: true },
             ]}
           />
+          {isBootstrap && (
+            <div className="border border-dl-border border-t-0 px-6 py-3 bg-dl-bg-alt">
+              <p className="text-xs text-dl-gray leading-relaxed font-dl-mono">
+                Bootstrap phase — metrics reflect control validation and computation correctness, not capital adequacy at scale. See Interpretation Guidance above.
+              </p>
+            </div>
+          )}
         </div>
       );
     }
@@ -512,6 +520,33 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
           </div>
         </div>
       )}
+
+      <div className="mb-10">
+        <SectionHeading>Custody and Authorization Structure</SectionHeading>
+        <div className="border border-dl-border p-6 bg-dl-bg-alt">
+          <p className="text-sm text-dl-gray leading-relaxed mb-4">
+            Protocol-governed capital is held in on-chain smart contracts deployed on Arbitrum One. Treasury
+            operations are executed through multi-party authorization controls. No single key holder can
+            unilaterally move, deploy, or withdraw capital.
+          </p>
+          <DetailGrid
+            left={[
+              { label: 'Custody Model', value: 'On-chain smart contracts', mono: true },
+              { label: 'Authorization', value: 'Multi-party (multi-sig)', mono: true },
+            ]}
+            right={[
+              { label: 'Network', value: 'Arbitrum One (L2)', mono: true },
+              { label: 'Contract Registry', value: 'lib/contracts/ (verified)', mono: true },
+            ]}
+          />
+          <div className="border border-dl-border border-t-0 px-6 py-3 bg-dl-bg">
+            <p className="text-xs text-dl-gray leading-relaxed font-dl-mono">
+              Signer count, threshold configuration, and timelock parameters are governed by protocol administration.
+              Full multisig details will be disclosed as part of the independent attestation process.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {m && m.limitations && m.limitations.length > 0 && (
         <div className="mb-10">
@@ -799,31 +834,31 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       <SectionHeading>AME Methodology</SectionHeading>
       <div className="border border-dl-border">
         <div className="px-6 py-4 bg-dl-bg border-b border-dl-border">
-          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">What these metrics mean</p>
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">What These Metrics Mean</p>
           <p className="text-sm text-dl-gray leading-relaxed">Regime Score (RS) is a composite measure (0.0–1.0) quantifying the protocol stress environment from volatility, drawdown, flow imbalance, and liquidity compression signals. Policy Multiplier (PM) scales protective thresholds nonlinearly based on RS. Payout Factor (PF) determines the stability-weighted distribution capacity. All computations are deterministic and reproducible from input snapshot data.</p>
         </div>
         <div className="px-6 py-4 bg-dl-bg-alt border-b border-dl-border">
-          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">How to interpret RS and PM</p>
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">How to Interpret RS and PM</p>
           <p className="text-sm text-dl-gray leading-relaxed">RS below 0.25 = STABLE. RS 0.25–0.50 = CAUTION. RS 0.50–0.75 = STRESS. RS 0.75+ = CRISIS. PM is computed as 1/(1−RS) clamped to 1–10. Higher PM means more protective target ratios.</p>
         </div>
         <div className="px-6 py-4 bg-dl-bg border-b border-dl-border">
-          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">What triggers do</p>
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">What Triggers Do</p>
           <p className="text-sm text-dl-gray leading-relaxed">Hard brakes are deterministic policy gates. When coverage, reserve, or liquidity ratios fall below their adaptive targets, corresponding actions activate automatically. Actions are prioritized in waterfall order: Crisis Lockdown, Freeze Distributions, Liquidity Defense, Redirect Flows.</p>
         </div>
         <div className="px-6 py-4 bg-dl-bg-alt border-b border-dl-border">
-          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">What we do in crisis mode</p>
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Crisis Regime Protocol</p>
           <p className="text-sm text-dl-gray leading-relaxed">In CRISIS regime (RS ≥ 0.75), payout factor is forced to zero. All discretionary distributions are frozen. Crisis lockdown procedures activate. This state requires governance intervention to resolve.</p>
         </div>
         <div className="px-6 py-4 bg-dl-bg border-b border-dl-border">
-          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Model limitations and data freshness</p>
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Model Limitations and Data Freshness</p>
           <p className="text-sm text-dl-gray leading-relaxed">AME operates on reconciliation snapshot data subject to temporal variance relative to real-time conditions. Realized volatility and drawdown inputs are proxy estimates. The model applies deterministic linear and clamped nonlinear transforms; it does not capture tail correlations, contagion effects, or non-linear cross-asset dependencies. External price feed references may introduce mark-to-market variance and rounding.</p>
         </div>
         <div className="px-6 py-4 bg-dl-bg-alt border-b border-dl-border">
-          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Reconciliation and disclosure cadence</p>
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Reconciliation and Disclosure Cadence</p>
           <p className="text-sm text-dl-gray leading-relaxed">AME evaluations are produced on a controlled reconciliation cycle by protocol administration. Each evaluation creates immutable, checksummed audit artifacts with full input lineage. Historical evaluations are retained indefinitely for auditability and regulatory reference.</p>
         </div>
         <div className="px-6 py-4 bg-dl-bg">
-          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Data sources and integrity</p>
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Data Sources and Integrity</p>
           <p className="text-sm text-dl-gray leading-relaxed">Input data is derived from on-chain treasury positions, protocol database snapshots, and computed market proxies. Each input snapshot is checksummed. Each evaluation references its input snapshot for full data lineage.</p>
         </div>
       </div>
@@ -936,10 +971,15 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
             Each snapshot captures the state of protocol capital at a specific point in time and includes a
             cryptographic checksum (SHA-256 truncated digest) for independent verification.
           </p>
-          <p className="text-sm text-dl-gray leading-relaxed">
+          <p className="text-sm text-dl-gray leading-relaxed mb-4">
             The scope of this disclosure covers treasury capital, reserve designations, liability obligations,
             capital adequacy ratios, stabilization policy status, the composition of protocol-governed assets,
             and adaptive risk metrics produced by the Adaptive Metrics Engine (AME).
+          </p>
+          <p className="text-sm text-dl-gray leading-relaxed font-medium">
+            No independent third-party attestation or external audit has been completed as of this disclosure.
+            Data integrity assurance currently relies on cryptographic snapshot checksums, deterministic computation
+            reproducibility, and internal administrative controls.
           </p>
         </div>
       </div>
