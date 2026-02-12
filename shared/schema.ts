@@ -8886,3 +8886,75 @@ export const disclosureEvents = pgTable("disclosure_events", {
 
 export type DisclosureEvent = typeof disclosureEvents.$inferSelect;
 export type InsertDisclosureEvent = typeof disclosureEvents.$inferInsert;
+
+export const ameInputSnapshots = pgTable("ame_input_snapshots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  checksum: text("checksum").notNull(),
+  rawJson: jsonb("raw_json").notNull(),
+  sourceVersion: text("source_version").notNull(),
+  mode: text("mode").notNull(),
+}, (table) => ({
+  createdIdx: index("ame_input_snap_created_idx").on(table.createdAt),
+}));
+
+export type AmeInputSnapshot = typeof ameInputSnapshots.$inferSelect;
+export type InsertAmeInputSnapshot = typeof ameInputSnapshots.$inferInsert;
+
+export const ameEvaluations = pgTable("ame_evaluations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  modelVersion: text("model_version").notNull(),
+  inputSnapshotId: varchar("input_snapshot_id").notNull(),
+  regimeBand: text("regime_band").notNull(),
+  rs: decimal("rs", { precision: 6, scale: 4 }).notNull(),
+  pm: decimal("pm", { precision: 6, scale: 4 }).notNull(),
+  cr: decimal("cr", { precision: 18, scale: 8 }).notNull(),
+  rr: decimal("rr", { precision: 18, scale: 8 }).notNull(),
+  lbr: decimal("lbr", { precision: 18, scale: 8 }).notNull(),
+  ld: decimal("ld", { precision: 18, scale: 8 }).notNull(),
+  crTarget: decimal("cr_target", { precision: 18, scale: 8 }).notNull(),
+  rrTarget: decimal("rr_target", { precision: 18, scale: 8 }).notNull(),
+  lbrTarget: decimal("lbr_target", { precision: 18, scale: 8 }).notNull(),
+  ldTarget: decimal("ld_target", { precision: 18, scale: 8 }).notNull(),
+  payoutFactor: decimal("payout_factor", { precision: 6, scale: 4 }).notNull(),
+  actionsJson: jsonb("actions_json").notNull(),
+  disclosureJson: jsonb("disclosure_json").notNull(),
+  status: text("status").notNull(),
+}, (table) => ({
+  createdIdx: index("ame_eval_created_idx").on(table.createdAt),
+  regimeBandIdx: index("ame_eval_regime_idx").on(table.regimeBand),
+  statusIdx: index("ame_eval_status_idx").on(table.status),
+}));
+
+export type AmeEvaluation = typeof ameEvaluations.$inferSelect;
+export type InsertAmeEvaluation = typeof ameEvaluations.$inferInsert;
+
+export const ameMetricsTimeseries = pgTable("ame_metrics_timeseries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  metricKey: text("metric_key").notNull(),
+  ts: timestamp("ts").notNull(),
+  value: decimal("value", { precision: 24, scale: 10 }).notNull(),
+  evaluationId: varchar("evaluation_id").notNull(),
+}, (table) => ({
+  metricTsIdx: index("ame_ts_metric_ts_idx").on(table.metricKey, table.ts),
+}));
+
+export type AmeMetricsTimeseries = typeof ameMetricsTimeseries.$inferSelect;
+export type InsertAmeMetricsTimeseries = typeof ameMetricsTimeseries.$inferInsert;
+
+export const ameStressScenarios = pgTable("ame_stress_scenarios", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  scenarioKey: text("scenario_key").notNull(),
+  shockJson: jsonb("shock_json").notNull(),
+  baselineEvaluationId: varchar("baseline_evaluation_id").notNull(),
+  projectedJson: jsonb("projected_json").notNull(),
+  checksum: text("checksum").notNull(),
+}, (table) => ({
+  createdIdx: index("ame_stress_created_idx").on(table.createdAt),
+  scenarioIdx: index("ame_stress_scenario_idx").on(table.scenarioKey),
+}));
+
+export type AmeStressScenario = typeof ameStressScenarios.$inferSelect;
+export type InsertAmeStressScenario = typeof ameStressScenarios.$inferInsert;

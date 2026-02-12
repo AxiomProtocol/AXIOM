@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { GetServerSideProps } from 'next';
 import dynamic from 'next/dynamic';
-import { DesignLawLayout, SectionHeading, DetailGrid, DisclosureBlock } from '../components/design-law';
+import { DesignLawLayout, SectionHeading, DetailGrid, DisclosureBlock, PaginationControls } from '../components/design-law';
 
 const HistoryChart = dynamic(() => import('../components/solvency/HistoryChart'), { ssr: false });
 
@@ -58,6 +58,37 @@ function fmtTimestamp(iso: string): string {
     return iso;
   }
 }
+
+function regimeBandColor(band: string): string {
+  switch (band) {
+    case 'STABLE': return 'text-dl-forest';
+    case 'CAUTION': return 'text-dl-gold';
+    case 'STRESS': return 'text-dl-error';
+    case 'CRISIS': return 'text-dl-error';
+    default: return 'text-dl-gray';
+  }
+}
+
+function statusColor(status: string): string {
+  switch (status) {
+    case 'OK': return 'text-dl-forest';
+    case 'BREACH': return 'text-dl-gold';
+    case 'CRISIS': return 'text-dl-error';
+    default: return 'text-dl-gray';
+  }
+}
+
+function fmtDecimal(value: number | string, decimals: number = 4): string {
+  return Number(value).toFixed(decimals);
+}
+
+const AME_SCENARIOS = [
+  { key: 'MARKET_CORRECTION', label: 'Market Correction' },
+  { key: 'LIQUIDITY_CRISIS', label: 'Liquidity Crisis' },
+  { key: 'BLACK_SWAN', label: 'Black Swan' },
+  { key: 'DEPEG', label: 'Stablecoin Depeg' },
+  { key: 'GOVERNANCE_ATTACK', label: 'Governance Attack' },
+];
 
 const DEFINITIONS = [
   { term: 'Treasury', definition: 'The total pool of protocol-controlled capital, including liquid holdings, locked positions, and operational reserves. Treasury represents the full balance sheet of assets under protocol governance.' },
@@ -140,6 +171,8 @@ const VIEW_DESCRIPTIONS: Record<string, string> = {
   regulatory: 'Full disclosure documentation, compliance definitions, audit verification procedures, and risk reporting framework.',
 };
 
+const AME_HISTORY_PAGE_SIZE = 10;
+
 export default function SolvencyPage({ metrics }: SolvencyPageProps) {
   const [viewMode, setViewMode] = useState<'allocator' | 'clearinghouse' | 'regulatory'>('allocator');
   const [faqOpen, setFaqOpen] = useState<Record<number, boolean>>({});
@@ -149,8 +182,31 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
   const [stressResults, setStressResults] = useState<any[]>([]);
   const [stressLoading, setStressLoading] = useState(false);
   const [historyData, setHistoryData] = useState<any[]>([]);
+  const [ameData, setAmeData] = useState<any>(null);
+  const [ameLoading, setAmeLoading] = useState(true);
+  const [ameStressResult, setAmeStressResult] = useState<any>(null);
+  const [ameStressLoading, setAmeStressLoading] = useState(false);
+  const [ameStressScenario, setAmeStressScenario] = useState('MARKET_CORRECTION');
+  const [ameHistory, setAmeHistory] = useState<any[]>([]);
+  const [ameHistoryPage, setAmeHistoryPage] = useState(1);
+  const [liabilityMode, setLiabilityMode] = useState<'GROSS' | 'NET'>('GROSS');
 
   const m = liveMetrics;
+
+  useEffect(() => {
+    fetch('/api/solvency/ame/latest')
+      .then(res => res.json())
+      .then(data => { setAmeData(data); setAmeLoading(false); })
+      .catch(() => setAmeLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (viewMode !== 'regulatory') return;
+    fetch('/api/solvency/ame/history?metricKey=RS&limit=100')
+      .then(res => res.json())
+      .then(data => { if (data.points) setAmeHistory(data.points); })
+      .catch(() => {});
+  }, [viewMode]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -216,6 +272,62 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
     }
   };
 
+  const runAmeStress = async () => {
+    setAmeStressLoading(true);
+    try {
+      const res = await fetch('/api/solvency/ame/stress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scenarioKey: ameStressScenario }),
+      });
+      const data = await res.json();
+      setAmeStressResult(data);
+    } catch {
+    } finally {
+      setAmeStressLoading(false);
+    }
+  };
+
+  const renderAmeStatusStrip = () => {
+    if (ameLoading) {
+      return (
+        <div className="border border-dl-border p-4 mb-8 bg-dl-bg-alt">
+          <p className="text-sm text-dl-gray font-dl-mono">Loading AME data...</p>
+        </div>
+      );
+    }
+    if (!ameData || !ameData.regimeBand) {
+      return (
+        <div className="border border-dl-border p-4 mb-8 bg-dl-bg-alt">
+          <p className="text-sm text-dl-gray font-dl-mono">AME evaluation data not available.</p>
+        </div>
+      );
+    }
+    const primaryAction = ameData.actions && ameData.actions.length > 0
+      ? ameData.actions[0].action.replace('ACTION_', '').replace(/_/g, ' ')
+      : 'None';
+    return (
+      <div className="grid grid-cols-4 border border-dl-border mb-8">
+        <div className="px-4 py-3 border-r border-dl-border bg-dl-bg-alt">
+          <p className="text-xs text-dl-gray mb-1">Last AME Evaluation</p>
+          <p className="text-sm font-dl-mono text-dl-navy">{fmtTimestamp(ameData.timestamp)}</p>
+        </div>
+        <div className="px-4 py-3 border-r border-dl-border bg-dl-bg-alt">
+          <p className="text-xs text-dl-gray mb-1">Regime Band</p>
+          <p className={`text-sm font-dl-mono font-semibold ${regimeBandColor(ameData.regimeBand)}`}>{ameData.regimeBand}</p>
+        </div>
+        <div className="px-4 py-3 border-r border-dl-border bg-dl-bg-alt">
+          <p className="text-xs text-dl-gray mb-1">Breach Status</p>
+          <p className={`text-sm font-dl-mono font-semibold ${statusColor(ameData.status)}`}>{ameData.status}</p>
+        </div>
+        <div className="px-4 py-3 bg-dl-bg-alt">
+          <p className="text-xs text-dl-gray mb-1">Primary Action</p>
+          <p className="text-sm font-dl-mono text-dl-navy">{primaryAction}</p>
+        </div>
+      </div>
+    );
+  };
+
   const renderMetricsGrid = () => {
     if (m && m.dataStatus !== 'empty') {
       return (
@@ -262,9 +374,75 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
     return null;
   };
 
+  const renderAmeAllocatorSection = () => {
+    if (!ameData || !ameData.regimeBand) return null;
+    const ratios = ameData.ratios || {};
+    const targets = ameData.targets || {};
+    const metricRows = [
+      { label: 'Coverage Ratio (CR)', actual: ratios.coverageRatio, target: targets.crTarget, key: 'cr' },
+      { label: 'Reserve Ratio (RR)', actual: ratios.reserveRatio, target: targets.rrTarget, key: 'rr' },
+      { label: 'Loss Buffer Ratio (LBR)', actual: ratios.lossBufferRatio, target: targets.lbrTarget, key: 'lbr' },
+      { label: 'Liquidity Depth (LD)', actual: ratios.liquidityDepth, target: targets.ldTarget, key: 'ld' },
+    ];
+    const activeActions = (ameData.actions || []).filter((a: any) => a.breached);
+    return (
+      <div className="mb-10">
+        <SectionHeading>Adaptive Metrics Engine</SectionHeading>
+        <DetailGrid
+          left={[
+            { label: 'Regime Score (RS)', value: fmtDecimal(ameData.rs), mono: true },
+            { label: 'Policy Multiplier (PM)', value: fmtDecimal(ameData.pm, 2), mono: true },
+          ]}
+          right={[
+            { label: 'Payout Factor (PF)', value: fmtDecimal(ameData.payoutFactor, 2), mono: true },
+            { label: 'Regime Band', value: <span className={regimeBandColor(ameData.regimeBand)}>{ameData.regimeBand}</span>, mono: true },
+          ]}
+        />
+        <div className="border border-dl-border mb-6">
+          <div className="grid grid-cols-4 px-6 py-3 bg-dl-bg border-b border-dl-border">
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Metric</p>
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Actual</p>
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Target</p>
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Status</p>
+          </div>
+          {metricRows.map((row, i) => {
+            const actual = row.actual != null ? Number(row.actual) : 0;
+            const target = row.target != null ? Number(row.target) : 0;
+            const met = actual >= target;
+            return (
+              <div
+                key={row.key}
+                className={`grid grid-cols-4 px-6 py-3 ${i < metricRows.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}
+              >
+                <p className="text-sm text-dl-navy">{row.label}</p>
+                <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtDecimal(actual)}</p>
+                <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtDecimal(target)}</p>
+                <p className={`text-sm font-dl-mono text-right font-semibold ${met ? 'text-dl-forest' : 'text-dl-error'}`}>
+                  {met ? 'Met' : 'Breached'}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+        {activeActions.length > 0 && (
+          <div className="border border-dl-border p-6 bg-dl-bg-alt">
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-3">Active Policy Actions</p>
+            {activeActions.map((a: any, i: number) => (
+              <div key={i} className={`py-2 ${i < activeActions.length - 1 ? 'border-b border-dl-border' : ''}`}>
+                <p className="text-sm font-dl-mono text-dl-error font-semibold">{a.action.replace('ACTION_', '').replace(/_/g, ' ')}</p>
+                <p className="text-xs text-dl-gray mt-1">{a.reason}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderAllocatorView = () => (
     <>
       {renderMetricsGrid()}
+      {renderAmeAllocatorSection()}
 
       {m && m.composition && m.composition.length > 0 && (
         <div className="mb-10">
@@ -350,13 +528,164 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
     </>
   );
 
+  const renderHardBrakeTriggerTable = () => {
+    if (!ameData || !ameData.regimeBand) return null;
+    const rs = Number(ameData.rs || 0);
+    const ratios = ameData.ratios || {};
+    const targets = ameData.targets || {};
+    const triggers = [
+      { trigger: 'CRISIS_LOCKDOWN', threshold: 'RS ≥ 0.80', current: fmtDecimal(rs), breached: rs >= 0.80, priority: 1 },
+      { trigger: 'FREEZE_DISTRIBUTIONS', threshold: `CR < ${fmtDecimal(targets.crTarget || 0)}`, current: fmtDecimal(ratios.coverageRatio || 0), breached: (ratios.coverageRatio || 0) < (targets.crTarget || 0), priority: 2 },
+      { trigger: 'LIQUIDITY_DEFENSE', threshold: `LD < ${fmtDecimal(targets.ldTarget || 0)}`, current: fmtDecimal(ratios.liquidityDepth || 0), breached: (ratios.liquidityDepth || 0) < (targets.ldTarget || 0), priority: 3 },
+      { trigger: 'REDIRECT_FLOWS', threshold: `RR < ${fmtDecimal(targets.rrTarget || 0)}`, current: fmtDecimal(ratios.reserveRatio || 0), breached: (ratios.reserveRatio || 0) < (targets.rrTarget || 0), priority: 4 },
+    ];
+    return (
+      <div className="mb-10">
+        <SectionHeading>Hard Brake Trigger Table</SectionHeading>
+        <div className="border border-dl-border mb-4">
+          <div className="grid grid-cols-4 px-6 py-3 bg-dl-bg border-b border-dl-border">
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Trigger</p>
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Threshold</p>
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Current</p>
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Breached</p>
+          </div>
+          {triggers.map((t, i) => (
+            <div
+              key={t.trigger}
+              className={`grid grid-cols-4 px-6 py-3 ${i < triggers.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}
+            >
+              <p className="text-sm font-dl-mono text-dl-navy">{t.trigger}</p>
+              <p className="text-sm font-dl-mono text-dl-navy text-right">{t.threshold}</p>
+              <p className="text-sm font-dl-mono text-dl-navy text-right">{t.current}</p>
+              <p className={`text-sm font-dl-mono text-right font-semibold ${t.breached ? 'text-dl-error' : 'text-dl-forest'}`}>
+                {t.breached ? 'YES' : 'NO'}
+              </p>
+            </div>
+          ))}
+        </div>
+        <div className="border border-dl-border p-6 bg-dl-bg-alt">
+          <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-3">Waterfall Priority Order</p>
+          <p className="text-sm text-dl-gray leading-relaxed">
+            1. Crisis Lockdown → 2. Freeze Distributions → 3. Liquidity Defense → 4. Redirect Flows
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  const renderAmeStressSimulator = () => (
+    <div className="mb-10">
+      <SectionHeading>AME Stress Simulator</SectionHeading>
+      <div className="border border-dl-border p-6 bg-dl-bg-alt mb-4">
+        <p className="text-sm text-dl-gray leading-relaxed">
+          Simulation — deterministic projection. Select a predefined stress scenario and run the AME engine against current inputs with applied shocks. Results are projections, not predictions.
+        </p>
+      </div>
+      <div className="flex items-center gap-4 mb-4">
+        <select
+          value={ameStressScenario}
+          onChange={(e) => setAmeStressScenario(e.target.value)}
+          className="px-4 py-2 border border-dl-border bg-dl-bg text-sm font-dl-mono text-dl-navy"
+        >
+          {AME_SCENARIOS.map((s) => (
+            <option key={s.key} value={s.key}>{s.label}</option>
+          ))}
+        </select>
+        <button
+          onClick={runAmeStress}
+          disabled={ameStressLoading}
+          className="px-4 py-2 border border-dl-border bg-dl-bg text-xs font-dl-mono text-dl-navy"
+        >
+          {ameStressLoading ? 'Running...' : 'Run AME Simulation'}
+        </button>
+      </div>
+      {ameStressResult && ameStressResult.projectedRS != null && (
+        <div className="border border-dl-border">
+          <div className="grid grid-cols-4 px-6 py-3 bg-dl-bg border-b border-dl-border">
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Metric</p>
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Projected</p>
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Baseline</p>
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Status</p>
+          </div>
+          <div className="grid grid-cols-4 px-6 py-3 bg-dl-bg-alt border-b border-dl-border">
+            <p className="text-sm text-dl-navy">Regime Score (RS)</p>
+            <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtDecimal(ameStressResult.projectedRS)}</p>
+            <p className="text-sm font-dl-mono text-dl-navy text-right">{ameData ? fmtDecimal(ameData.rs) : '—'}</p>
+            <p className={`text-sm font-dl-mono text-right ${regimeBandColor(ameStressResult.projectedRegimeBand)}`}>{ameStressResult.projectedRegimeBand}</p>
+          </div>
+          <div className="grid grid-cols-4 px-6 py-3 bg-dl-bg border-b border-dl-border">
+            <p className="text-sm text-dl-navy">Policy Multiplier (PM)</p>
+            <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtDecimal(ameStressResult.projectedPM, 2)}</p>
+            <p className="text-sm font-dl-mono text-dl-navy text-right">{ameData ? fmtDecimal(ameData.pm, 2) : '—'}</p>
+            <p className="text-sm font-dl-mono text-dl-navy text-right">—</p>
+          </div>
+          {ameStressResult.projectedRatios && (
+            <>
+              {[
+                { label: 'Coverage Ratio', key: 'coverageRatio' },
+                { label: 'Reserve Ratio', key: 'reserveRatio' },
+                { label: 'Loss Buffer Ratio', key: 'lossBufferRatio' },
+                { label: 'Liquidity Depth', key: 'liquidityDepth' },
+              ].map((r, i) => (
+                <div key={r.key} className={`grid grid-cols-4 px-6 py-3 ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'} ${i < 3 ? 'border-b border-dl-border' : ''}`}>
+                  <p className="text-sm text-dl-navy">{r.label}</p>
+                  <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtDecimal(ameStressResult.projectedRatios[r.key] || 0)}</p>
+                  <p className="text-sm font-dl-mono text-dl-navy text-right">{ameData?.ratios ? fmtDecimal(ameData.ratios[r.key] || 0) : '—'}</p>
+                  <p className="text-sm font-dl-mono text-dl-navy text-right">—</p>
+                </div>
+              ))}
+            </>
+          )}
+          {ameStressResult.projectedActions && ameStressResult.projectedActions.length > 0 && (
+            <div className="px-6 py-3 bg-dl-bg-alt border-t border-dl-border">
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">Projected Actions</p>
+              {ameStressResult.projectedActions.map((a: any, i: number) => (
+                <p key={i} className="text-sm font-dl-mono text-dl-error">{a.action.replace('ACTION_', '').replace(/_/g, ' ')}</p>
+              ))}
+            </div>
+          )}
+          {ameStressResult.breaches && ameStressResult.breaches.length > 0 && (
+            <div className="px-6 py-3 bg-dl-bg border-t border-dl-border">
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">Breaches</p>
+              {ameStressResult.breaches.filter((b: any) => b.breached).map((b: any, i: number) => (
+                <p key={i} className="text-sm font-dl-mono text-dl-error">{b.metric}: {fmtDecimal(b.projected)} vs target {fmtDecimal(b.target)}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
   const renderClearinghouseView = () => (
     <>
       {renderMetricsGrid()}
 
       <div className="mb-10">
         <SectionHeading>AXUSD Stability Assessment</SectionHeading>
-        {axusdStability ? (
+        <div className="flex border border-dl-border mb-4">
+          {(['GROSS', 'NET'] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setLiabilityMode(mode)}
+              className={`px-4 py-2 text-xs font-dl-mono uppercase tracking-wider border-r border-dl-border last:border-r-0 ${
+                liabilityMode === mode
+                  ? 'bg-dl-navy text-white'
+                  : 'bg-dl-bg text-dl-navy'
+              }`}
+            >
+              {mode}
+            </button>
+          ))}
+        </div>
+        {liabilityMode === 'NET' ? (
+          <div className="border border-dl-border p-6 bg-dl-bg-alt">
+            <p className="text-sm font-dl-mono text-dl-navy font-semibold mb-2">Not available</p>
+            <p className="text-sm text-dl-gray leading-relaxed">
+              NET liability mode is not yet available. External circulation heuristics are pending implementation. NET mode will distinguish between protocol-held AXUSD and externally circulating AXUSD to provide a more precise liability figure. Until external circulation tracking is operational, GROSS mode (total AXUSD supply) is used as the conservative liability measure.
+            </p>
+          </div>
+        ) : axusdStability ? (
           <DetailGrid
             left={[
               { label: 'Total Supply', value: fmtUsd(axusdStability.totalSupply), mono: true },
@@ -375,6 +704,9 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
           </div>
         )}
       </div>
+
+      {renderHardBrakeTriggerTable()}
+      {renderAmeStressSimulator()}
 
       <div className="mb-10">
         <SectionHeading>Stress Test Scenarios</SectionHeading>
@@ -431,6 +763,131 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       </div>
     </>
   );
+
+  const renderAmeMethodology = () => (
+    <div className="mb-10">
+      <SectionHeading>AME Methodology</SectionHeading>
+      <div className="border border-dl-border">
+        <div className="px-6 py-4 bg-dl-bg border-b border-dl-border">
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">What these metrics mean</p>
+          <p className="text-sm text-dl-gray leading-relaxed">RS is a composite score (0–1) measuring the protocol stress environment. PM scales protective thresholds nonlinearly. PF determines the stability-weighted distribution capacity. All computations are deterministic and reproducible from input data.</p>
+        </div>
+        <div className="px-6 py-4 bg-dl-bg-alt border-b border-dl-border">
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">How to interpret RS and PM</p>
+          <p className="text-sm text-dl-gray leading-relaxed">RS below 0.25 = STABLE. RS 0.25–0.50 = CAUTION. RS 0.50–0.75 = STRESS. RS 0.75+ = CRISIS. PM is computed as 1/(1−RS) clamped to 1–10. Higher PM means more protective target ratios.</p>
+        </div>
+        <div className="px-6 py-4 bg-dl-bg border-b border-dl-border">
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">What triggers do</p>
+          <p className="text-sm text-dl-gray leading-relaxed">Hard brakes are deterministic policy gates. When coverage, reserve, or liquidity ratios fall below their adaptive targets, corresponding actions activate automatically. Actions are prioritized in waterfall order: Crisis Lockdown, Freeze Distributions, Liquidity Defense, Redirect Flows.</p>
+        </div>
+        <div className="px-6 py-4 bg-dl-bg-alt border-b border-dl-border">
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">What we do in crisis mode</p>
+          <p className="text-sm text-dl-gray leading-relaxed">In CRISIS regime (RS ≥ 0.75), payout factor is forced to zero. All discretionary distributions are frozen. Crisis lockdown procedures activate. This state requires governance intervention to resolve.</p>
+        </div>
+        <div className="px-6 py-4 bg-dl-bg border-b border-dl-border">
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Limitations</p>
+          <p className="text-sm text-dl-gray leading-relaxed">AME operates on snapshot data which may lag real-time conditions. Realized volatility and drawdown estimates are proxies. The model assumes deterministic linear or clamped nonlinear transforms and does not capture tail correlations.</p>
+        </div>
+        <div className="px-6 py-4 bg-dl-bg-alt border-b border-dl-border">
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Update cadence</p>
+          <p className="text-sm text-dl-gray leading-relaxed">AME evaluations are produced periodically by protocol administration. Each evaluation creates immutable audit artifacts. Historical evaluations are retained indefinitely.</p>
+        </div>
+        <div className="px-6 py-4 bg-dl-bg">
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Data sources and integrity</p>
+          <p className="text-sm text-dl-gray leading-relaxed">Input data is derived from on-chain treasury positions, protocol database snapshots, and computed market proxies. Each input snapshot is checksummed. Each evaluation references its input snapshot for full data lineage.</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAmeAuditArtifacts = () => {
+    if (!ameData || !ameData.evaluationId) return null;
+    return (
+      <div className="mb-10">
+        <SectionHeading>AME Audit Artifacts</SectionHeading>
+        <DetailGrid
+          left={[
+            { label: 'Evaluation ID', value: ameData.evaluationId, mono: true },
+            { label: 'Snapshot ID', value: ameData.inputSnapshotRef || '—', mono: true },
+          ]}
+          right={[
+            { label: 'Model Version', value: ameData.modelVersion || '—', mono: true },
+            { label: 'Checksum', value: ameData.disclosureSummary ? ameData.disclosureSummary.slice(0, 16) : '—', mono: true },
+          ]}
+        />
+        <div className="border border-dl-border p-4 bg-dl-bg-alt">
+          <a
+            href="/api/solvency/ame/latest"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-dl-mono text-dl-navy underline"
+          >
+            View latest evaluation data (JSON)
+          </a>
+        </div>
+      </div>
+    );
+  };
+
+  const renderAmeHistory = () => {
+    const totalPages = Math.max(1, Math.ceil(ameHistory.length / AME_HISTORY_PAGE_SIZE));
+    const startIdx = (ameHistoryPage - 1) * AME_HISTORY_PAGE_SIZE;
+    const pageData = ameHistory.slice(startIdx, startIdx + AME_HISTORY_PAGE_SIZE);
+    return (
+      <div className="mb-10">
+        <SectionHeading>Historical Evaluations</SectionHeading>
+        {ameHistory.length === 0 ? (
+          <div className="border border-dl-border p-6 bg-dl-bg-alt">
+            <p className="text-sm text-dl-gray">No historical evaluation data available.</p>
+          </div>
+        ) : (
+          <>
+            <div className="border border-dl-border">
+              <div className="grid grid-cols-6 px-6 py-3 bg-dl-bg border-b border-dl-border">
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Timestamp</p>
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-center">Regime Band</p>
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">RS</p>
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">PM</p>
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-center">Status</p>
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Actions</p>
+              </div>
+              {pageData.map((point: any, i: number) => {
+                const rs = Number(point.value || 0);
+                let band = 'STABLE';
+                if (rs >= 0.75) band = 'CRISIS';
+                else if (rs >= 0.50) band = 'STRESS';
+                else if (rs >= 0.25) band = 'CAUTION';
+                const pm = Math.min(10, Math.max(1, 1 / (1 - rs)));
+                return (
+                  <div
+                    key={point.evaluationId || i}
+                    className={`grid grid-cols-6 px-6 py-3 ${i < pageData.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}
+                  >
+                    <p className="text-sm font-dl-mono text-dl-navy">{fmtTimestamp(point.ts)}</p>
+                    <p className={`text-sm font-dl-mono text-center ${regimeBandColor(band)}`}>{band}</p>
+                    <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtDecimal(rs)}</p>
+                    <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtDecimal(pm, 2)}</p>
+                    <p className={`text-sm font-dl-mono text-center ${rs >= 0.75 ? 'text-dl-error' : rs >= 0.50 ? 'text-dl-gold' : 'text-dl-forest'}`}>
+                      {rs >= 0.75 ? 'CRISIS' : rs >= 0.50 ? 'BREACH' : 'OK'}
+                    </p>
+                    <p className="text-sm font-dl-mono text-dl-navy text-right">—</p>
+                  </div>
+                );
+              })}
+            </div>
+            <PaginationControls
+              page={ameHistoryPage}
+              totalPages={totalPages}
+              total={ameHistory.length}
+              limit={AME_HISTORY_PAGE_SIZE}
+              onPageChange={setAmeHistoryPage}
+              itemLabel="evaluations"
+            />
+          </>
+        )}
+      </div>
+    );
+  };
 
   const renderRegulatoryView = () => (
     <>
@@ -515,6 +972,10 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
           </p>
         </div>
       </div>
+
+      {renderAmeMethodology()}
+      {renderAmeAuditArtifacts()}
+      {renderAmeHistory()}
 
       <div className="mb-10">
         <SectionHeading>How to read this page</SectionHeading>
@@ -683,6 +1144,8 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
           </p>
         </div>
       )}
+
+      {renderAmeStatusStrip()}
 
       <div className="mb-8">
         <div className="flex border border-dl-border">
