@@ -10,9 +10,7 @@ const FIXFLIP_VAULT_ABI = [
 ];
 
 const FIXFLIP_MANAGER_ABI = [
-  'function loanCount() view returns (uint256)',
-  'function totalActiveLoans() view returns (uint256)',
-  'function totalLockedCapital() view returns (uint256)'
+  'function getStats() view returns (uint256 totalOriginated, uint256 totalRepaid, uint256 activeCount, uint256 totalDefaulted)',
 ];
 
 const RISK_CONFIG_ABI = [
@@ -48,7 +46,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let totalAssets = BigInt(0);
     let totalSupply = BigInt(0);
     let activeLoans = 0;
-    let lockedCapital = BigInt(0);
+    let totalOriginated = BigInt(0);
+    let totalRepaidAmount = BigInt(0);
+    let totalDefaulted = BigInt(0);
     let riskParams = null;
 
     const vaultPromise = Promise.all([
@@ -59,14 +59,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       totalSupply = supply;
     }).catch(() => {});
 
-    const managerPromise = Promise.all([
-      managerContract.loanCount(),
-      managerContract.totalActiveLoans(),
-      managerContract.totalLockedCapital()
-    ]).then(([, totalActive, locked]) => {
-      activeLoans = Number(totalActive);
-      lockedCapital = locked;
-    }).catch(() => {});
+    const managerPromise = managerContract.getStats().then(
+      (stats: { totalOriginated: bigint; totalRepaid: bigint; activeCount: bigint; totalDefaulted: bigint }) => {
+        totalOriginated = stats.totalOriginated;
+        totalRepaidAmount = stats.totalRepaid;
+        activeLoans = Number(stats.activeCount);
+        totalDefaulted = stats.totalDefaulted;
+      }
+    ).catch(() => {});
 
     const riskPromise = (async () => {
       try {
@@ -97,8 +97,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await Promise.all([vaultPromise, managerPromise, riskPromise]);
 
     const totalAssetsUSD = ethers.formatUnits(totalAssets, 18);
-    const availableLiquidity = ethers.formatUnits(totalAssets - lockedCapital, 18);
-    const lockedInLoans = ethers.formatUnits(lockedCapital, 18);
+    const netDeployed = totalOriginated - totalRepaidAmount - totalDefaulted;
+    const lockedInLoans = ethers.formatUnits(netDeployed > 0n ? netDeployed : 0n, 18);
+    const availableLiquidity = ethers.formatUnits(
+      netDeployed > 0n ? totalAssets - netDeployed : totalAssets, 18
+    );
 
     let sharePrice = '1.00';
     if (totalSupply > 0n) {
@@ -111,6 +114,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       availableLiquidity,
       lockedInLoans,
       activeLoans,
+      totalOriginated: ethers.formatUnits(totalOriginated, 18),
+      totalRepaid: ethers.formatUnits(totalRepaidAmount, 18),
+      totalDefaulted: ethers.formatUnits(totalDefaulted, 18),
       sharePrice,
       apy: '10-14%',
       riskParams,
@@ -133,6 +139,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       availableLiquidity: '0',
       lockedInLoans: '0',
       activeLoans: 0,
+      totalOriginated: '0',
+      totalRepaid: '0',
+      totalDefaulted: '0',
       sharePrice: '1.00',
       apy: '10-14%',
       riskParams: {
