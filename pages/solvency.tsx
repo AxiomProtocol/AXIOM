@@ -1260,31 +1260,53 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       </div>
 
       {m && (() => {
-        const snapshotAge = m.asOfUtc ? (Date.now() - new Date(m.asOfUtc).getTime()) / (1000 * 60 * 60) : 0;
-        const isStale = snapshotAge > 48;
+        const snapshotAgeMs = m.asOfUtc ? Date.now() - new Date(m.asOfUtc).getTime() : 0;
+        const snapshotAgeHours = snapshotAgeMs / (1000 * 60 * 60);
+        const isStale = snapshotAgeHours > 48;
+        const fmtAge = (ms: number): string => {
+          const totalMinutes = Math.floor(ms / (1000 * 60));
+          if (totalMinutes < 60) return `${totalMinutes} minute${totalMinutes !== 1 ? 's' : ''}`;
+          const hours = Math.floor(totalMinutes / 60);
+          if (hours < 48) return `${hours} hour${hours !== 1 ? 's' : ''}`;
+          const days = Math.floor(hours / 24);
+          const remainingHours = hours % 24;
+          return `${days}d ${remainingHours}h`;
+        };
         return (
           <>
             {isStale && (
               <div className="border-2 border-dl-gold px-4 py-3 mb-2 bg-dl-bg">
                 <p className="text-sm text-dl-gold font-dl-mono font-semibold">DATA STALENESS ALERT</p>
-                <p className="text-xs text-dl-gray mt-1">This snapshot is more than 48 hours old ({Math.round(snapshotAge)} hours). Displayed metrics may not reflect current on-chain balances. Contact the protocol administrator if reconciliation has not occurred within the expected cadence.</p>
+                <p className="text-xs text-dl-gray mt-1">This snapshot is more than 48 hours old ({Math.round(snapshotAgeHours)} hours). Displayed metrics may not reflect current on-chain balances. Contact the protocol administrator if reconciliation has not occurred within the expected cadence.</p>
               </div>
             )}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border border-dl-border p-4 mb-8 bg-dl-bg-alt">
               <div>
-                <p className="text-xs text-dl-gray mb-1">Data as of</p>
+                <div className="flex items-center gap-4 mb-1">
+                  <p className="text-xs text-dl-gray">Data as of</p>
+                  <p className="text-xs font-dl-mono text-dl-gray">Snapshot Age: <span className={isStale ? 'text-dl-gold font-semibold' : 'text-dl-navy'}>{fmtAge(snapshotAgeMs)}</span></p>
+                </div>
                 <p className="font-dl-mono text-sm text-dl-navy">{fmtTimestamp(m.asOfUtc)}</p>
                 <p className="font-dl-mono text-xs text-dl-gray mt-1">
                   Snapshot: {m.snapshotId !== 'none' ? m.snapshotId.slice(0, 12) : 'none'} — Checksum: {m.checksum}
                 </p>
               </div>
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className="mt-3 sm:mt-0 px-4 py-2 border border-dl-border bg-dl-bg text-xs font-dl-mono text-dl-navy"
-              >
-                {refreshing ? 'Refreshing...' : 'Refresh data'}
-              </button>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-3 sm:mt-0">
+                <a
+                  href={`/api/solvency/export?snapshotId=${m.snapshotId !== 'none' ? m.snapshotId : ''}`}
+                  className="px-4 py-2 border border-dl-border bg-dl-bg text-xs font-dl-mono text-dl-navy"
+                  download
+                >
+                  Download Snapshot PDF
+                </a>
+                <button
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                  className="px-4 py-2 border border-dl-border bg-dl-bg text-xs font-dl-mono text-dl-navy"
+                >
+                  {refreshing ? 'Refreshing...' : 'Refresh data'}
+                </button>
+              </div>
             </div>
           </>
         );
