@@ -310,12 +310,12 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       ? ameData.actions[0].action.replace('ACTION_', '').replace(/_/g, ' ')
       : 'None';
     return (
-      <div className="grid grid-cols-4 border border-dl-border mb-8">
-        <div className="px-4 py-3 border-r border-dl-border bg-dl-bg-alt">
+      <div className="grid grid-cols-2 sm:grid-cols-4 border border-dl-border mb-8">
+        <div className="px-4 py-3 border-r border-b sm:border-b-0 border-dl-border bg-dl-bg-alt">
           <p className="text-xs text-dl-gray mb-1">Last AME Evaluation</p>
           <p className="text-sm font-dl-mono text-dl-navy">{fmtTimestamp(ameData.timestamp)}</p>
         </div>
-        <div className="px-4 py-3 border-r border-dl-border bg-dl-bg-alt">
+        <div className="px-4 py-3 sm:border-r border-b sm:border-b-0 border-dl-border bg-dl-bg-alt">
           <p className="text-xs text-dl-gray mb-1">Regime Band</p>
           <p className={`text-sm font-dl-mono font-semibold ${regimeBandColor(ameData.regimeBand)}`}>{ameData.regimeBand}</p>
         </div>
@@ -536,9 +536,32 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
             ]}
             right={[
               { label: 'Network', value: 'Arbitrum One (L2)', mono: true },
-              { label: 'Contract Registry', value: 'lib/contracts/ (verified)', mono: true },
+              { label: 'Contract Registry', value: '72 verified contracts', mono: true },
             ]}
           />
+          <div className="border border-dl-border border-t-0 px-6 py-4 bg-dl-bg">
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-3">Key Contract Addresses</p>
+            <div className="space-y-2">
+              {[
+                { label: 'AXUSD Primary', address: '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C' },
+                { label: 'PSM (USDC)', address: '0x5db58d9c21369d1532a48Bdd658E4Fe415404922' },
+                { label: 'PSM (USDT)', address: '0x4584888cB411E9cc88e3800BAB73A430D90d3793' },
+                { label: 'Treasury Hub', address: '0x3fD63728288546AC41dAe3bf25ca383061c3A929' },
+              ].map((c) => (
+                <div key={c.address} className="flex items-center gap-2">
+                  <span className="text-xs text-dl-gray font-dl-mono w-28 shrink-0">{c.label}</span>
+                  <a
+                    href={`https://arbiscan.io/address/${c.address}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-dl-mono text-dl-navy underline break-all"
+                  >
+                    {c.address}
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
           <div className="border border-dl-border border-t-0 px-6 py-3 bg-dl-bg">
             <p className="text-xs text-dl-gray leading-relaxed font-dl-mono">
               Signer count, threshold configuration, and timelock parameters are governed by protocol administration.
@@ -574,7 +597,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
           {[
             { source: 'On-chain balances', ref: 'Alchemy RPC — Arbitrum One' },
             { source: 'Spot price reference', ref: 'CoinGecko API (mark-to-market)' },
-            { source: 'Contract registry', ref: 'lib/contracts/ — verified addresses' },
+            { source: 'Contract registry', ref: '72 verified contracts — arbiscan.io' },
             { source: 'Snapshot reference', ref: m ? `${m.snapshotId !== 'none' ? m.snapshotId.slice(0, 12) : '—'}` : '—' },
             { source: 'Integrity checksum', ref: m?.checksum || '—' },
           ].map((row, i) => (
@@ -822,7 +845,8 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
           <HistoryChart data={historyData} />
         ) : (
           <div className="border border-dl-border p-6 bg-dl-bg-alt">
-            <p className="text-sm text-dl-gray">No historical data available.</p>
+            <p className="text-sm text-dl-navy font-medium mb-1">No historical data recorded yet</p>
+            <p className="text-xs text-dl-gray leading-relaxed">Historical coverage tracking begins after the first two reconciliation cycles. Once multiple snapshots exist, a time-series chart of coverage ratio, reserve ratio, and policy mode will appear here.</p>
           </div>
         )}
       </div>
@@ -903,7 +927,8 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
         <SectionHeading>Historical Evaluations</SectionHeading>
         {ameHistory.length === 0 ? (
           <div className="border border-dl-border p-6 bg-dl-bg-alt">
-            <p className="text-sm text-dl-gray">No historical evaluation data available.</p>
+            <p className="text-sm text-dl-navy font-medium mb-1">No AME evaluations recorded yet</p>
+            <p className="text-xs text-dl-gray leading-relaxed">Historical AME evaluations will appear here after the first administrative evaluation is run. Each evaluation records regime score, policy multiplier, adaptive targets, and any breach actions for longitudinal analysis.</p>
           </div>
         ) : (
           <>
@@ -1234,24 +1259,36 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
         </div>
       </div>
 
-      {m && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border border-dl-border p-4 mb-8 bg-dl-bg-alt">
-          <div>
-            <p className="text-xs text-dl-gray mb-1">Data as of</p>
-            <p className="font-dl-mono text-sm text-dl-navy">{fmtTimestamp(m.asOfUtc)}</p>
-            <p className="font-dl-mono text-xs text-dl-gray mt-1">
-              Snapshot: {m.snapshotId !== 'none' ? m.snapshotId.slice(0, 12) : 'none'} — Checksum: {m.checksum}
-            </p>
-          </div>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="mt-3 sm:mt-0 px-4 py-2 border border-dl-border bg-dl-bg text-xs font-dl-mono text-dl-navy"
-          >
-            {refreshing ? 'Refreshing...' : 'Refresh data'}
-          </button>
-        </div>
-      )}
+      {m && (() => {
+        const snapshotAge = m.asOfUtc ? (Date.now() - new Date(m.asOfUtc).getTime()) / (1000 * 60 * 60) : 0;
+        const isStale = snapshotAge > 48;
+        return (
+          <>
+            {isStale && (
+              <div className="border-2 border-dl-gold px-4 py-3 mb-2 bg-dl-bg">
+                <p className="text-sm text-dl-gold font-dl-mono font-semibold">DATA STALENESS ALERT</p>
+                <p className="text-xs text-dl-gray mt-1">This snapshot is more than 48 hours old ({Math.round(snapshotAge)} hours). Displayed metrics may not reflect current on-chain balances. Contact the protocol administrator if reconciliation has not occurred within the expected cadence.</p>
+              </div>
+            )}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border border-dl-border p-4 mb-8 bg-dl-bg-alt">
+              <div>
+                <p className="text-xs text-dl-gray mb-1">Data as of</p>
+                <p className="font-dl-mono text-sm text-dl-navy">{fmtTimestamp(m.asOfUtc)}</p>
+                <p className="font-dl-mono text-xs text-dl-gray mt-1">
+                  Snapshot: {m.snapshotId !== 'none' ? m.snapshotId.slice(0, 12) : 'none'} — Checksum: {m.checksum}
+                </p>
+              </div>
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="mt-3 sm:mt-0 px-4 py-2 border border-dl-border bg-dl-bg text-xs font-dl-mono text-dl-navy"
+              >
+                {refreshing ? 'Refreshing...' : 'Refresh data'}
+              </button>
+            </div>
+          </>
+        );
+      })()}
 
       {m && m.dataStatus === 'empty' && (
         <div className="border border-dl-border p-6 mb-8 bg-dl-bg-alt">

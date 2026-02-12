@@ -78,8 +78,16 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const adminKey = process.env.ADMIN_SOLVENCY_KEY;
+  const provided = req.headers['x-admin-key'] as string;
+  const isAdmin = adminKey ? provided === adminKey : false;
+
   try {
     const { snapshotId, scenarioId, customScenario } = req.body || {};
+
+    if (customScenario && !isAdmin) {
+      return res.status(403).json({ error: 'Custom scenarios require admin authorization (x-admin-key header)' });
+    }
 
     const snapshot = snapshotId
       ? await fetchSnapshotById(snapshotId)
@@ -123,45 +131,48 @@ export default async function handler(
       results = runAllStressScenarios(metrics);
     }
 
-    try {
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS scenario_runs (
-          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
-          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-          snapshot_id VARCHAR NOT NULL,
-          scenario_id VARCHAR NOT NULL,
-          scenario_label VARCHAR NOT NULL,
-          input_json JSONB NOT NULL,
-          result_json JSONB NOT NULL,
-          resulting_policy_mode VARCHAR NOT NULL,
-          breaches_threshold BOOLEAN NOT NULL DEFAULT false
-        )
-      `);
-      await pool.query(`CREATE INDEX IF NOT EXISTS scenario_runs_snapshot_idx ON scenario_runs(snapshot_id)`);
-      await pool.query(`CREATE INDEX IF NOT EXISTS scenario_runs_created_idx ON scenario_runs(created_at)`);
-      for (const r of results) {
-        const sid = r.scenario?.id || (scenarioId ? scenarioId : customScenario ? 'custom' : 'all');
-        const slabel = r.scenario?.label || sid;
-        await pool.query(
-          `INSERT INTO scenario_runs (id, snapshot_id, scenario_id, scenario_label, input_json, result_json, resulting_policy_mode, breaches_threshold)
-           VALUES (gen_random_uuid(), $1, $2, $3, $4::jsonb, $5::jsonb, $6, $7)`,
-          [
-            snapshot.id,
-            sid,
-            slabel,
-            JSON.stringify(r.scenario || {}),
-            JSON.stringify(r),
-            r.resultingPolicyMode || 'UNKNOWN',
-            r.breachesThreshold || false,
-          ]
-        );
+    if (isAdmin) {
+      try {
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS scenario_runs (
+            id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            snapshot_id VARCHAR NOT NULL,
+            scenario_id VARCHAR NOT NULL,
+            scenario_label VARCHAR NOT NULL,
+            input_json JSONB NOT NULL,
+            result_json JSONB NOT NULL,
+            resulting_policy_mode VARCHAR NOT NULL,
+            breaches_threshold BOOLEAN NOT NULL DEFAULT false
+          )
+        `);
+        await pool.query(`CREATE INDEX IF NOT EXISTS scenario_runs_snapshot_idx ON scenario_runs(snapshot_id)`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS scenario_runs_created_idx ON scenario_runs(created_at)`);
+        for (const r of results) {
+          const sid = r.scenario?.id || (scenarioId ? scenarioId : customScenario ? 'custom' : 'all');
+          const slabel = r.scenario?.label || sid;
+          await pool.query(
+            `INSERT INTO scenario_runs (id, snapshot_id, scenario_id, scenario_label, input_json, result_json, resulting_policy_mode, breaches_threshold)
+             VALUES (gen_random_uuid(), $1, $2, $3, $4::jsonb, $5::jsonb, $6, $7)`,
+            [
+              snapshot.id,
+              sid,
+              slabel,
+              JSON.stringify(r.scenario || {}),
+              JSON.stringify(r),
+              r.resultingPolicyMode || 'UNKNOWN',
+              r.breachesThreshold || false,
+            ]
+          );
+        }
+      } catch {
       }
-    } catch {
     }
 
     return res.status(200).json({
       schemaVersion: 'solvency-scenario-v1',
       snapshotId: snapshot.id,
+      authenticated: isAdmin,
       results,
     });
   } catch (error: any) {
