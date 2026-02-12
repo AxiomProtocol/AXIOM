@@ -51,51 +51,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let lockedCapital = BigInt(0);
     let riskParams = null;
 
-    try {
-      [totalAssets, totalSupply] = await Promise.all([
-        vaultContract.totalAssets(),
-        vaultContract.totalSupply()
-      ]);
-    } catch (e) {
-      console.log('Vault data not available yet:', e);
-    }
+    const vaultPromise = Promise.all([
+      vaultContract.totalAssets(),
+      vaultContract.totalSupply()
+    ]).then(([assets, supply]) => {
+      totalAssets = assets;
+      totalSupply = supply;
+    }).catch(() => {});
 
-    try {
-      const [loanCount, totalActive, locked] = await Promise.all([
-        managerContract.loanCount(),
-        managerContract.totalActiveLoans(),
-        managerContract.totalLockedCapital()
-      ]);
+    const managerPromise = Promise.all([
+      managerContract.loanCount(),
+      managerContract.totalActiveLoans(),
+      managerContract.totalLockedCapital()
+    ]).then(([, totalActive, locked]) => {
       activeLoans = Number(totalActive);
       lockedCapital = locked;
-    } catch (e) {
-      console.log('Manager data not available yet:', e);
-    }
+    }).catch(() => {});
 
-    try {
-      const productId = ethers.id('FIX_FLIP_BRIDGE');
-      const config = await riskConfigContract.getProductConfig(productId);
-      riskParams = {
-        maxLtvBps: Number(config.maxLtvBps),
-        interestRateBps: Number(config.interestRateBps),
-        originationFeeBps: Number(config.originationFeeBps),
-        maxTermDays: Number(config.maxTermDays),
-        minLoanSize: ethers.formatUnits(config.minLoanSize, 18),
-        maxLoanSize: ethers.formatUnits(config.maxLoanSize, 18),
-        active: config.active
-      };
-    } catch (e) {
-      console.log('Risk config not available, using defaults');
-      riskParams = {
-        maxLtvBps: 7000,
-        interestRateBps: 1400,
-        originationFeeBps: 300,
-        maxTermDays: 365,
-        minLoanSize: '50000',
-        maxLoanSize: '500000',
-        active: true
-      };
-    }
+    const riskPromise = (async () => {
+      try {
+        const productId = ethers.id('FIX_FLIP_BRIDGE');
+        const config = await riskConfigContract.getProductConfig(productId);
+        riskParams = {
+          maxLtvBps: Number(config.maxLtvBps),
+          interestRateBps: Number(config.interestRateBps),
+          originationFeeBps: Number(config.originationFeeBps),
+          maxTermDays: Number(config.maxTermDays),
+          minLoanSize: ethers.formatUnits(config.minLoanSize, 18),
+          maxLoanSize: ethers.formatUnits(config.maxLoanSize, 18),
+          active: config.active
+        };
+      } catch {
+        riskParams = {
+          maxLtvBps: 7000,
+          interestRateBps: 1400,
+          originationFeeBps: 300,
+          maxTermDays: 365,
+          minLoanSize: '50000',
+          maxLoanSize: '500000',
+          active: true
+        };
+      }
+    })();
+
+    await Promise.all([vaultPromise, managerPromise, riskPromise]);
 
     const totalAssetsUSD = ethers.formatUnits(totalAssets, 18);
     const availableLiquidity = ethers.formatUnits(totalAssets - lockedCapital, 18);
