@@ -1161,6 +1161,39 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
         </ul>
       </div>
 
+      <div className="mb-10">
+        <SectionHeading>Metric Interpretation Under Bootstrap Conditions</SectionHeading>
+        <div className="border border-dl-border p-6 bg-dl-bg-alt mb-6">
+          <p className="text-sm text-dl-gray leading-relaxed mb-5">
+            During bootstrap, disclosed balances may be small by design. Magnitude is not the validation objective at this stage.
+            The purpose of this page is to demonstrate that the disclosure system is operating with deterministic computations,
+            defined capital segregation, and traceable reconciliation.
+          </p>
+
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-3">What these metrics are designed to demonstrate during bootstrap</p>
+          <ul className="space-y-2 mb-6">
+            <li className="text-sm text-dl-gray leading-relaxed pl-4">— Deterministic calculation behavior and reproducible outputs from the same inputs</li>
+            <li className="text-sm text-dl-gray leading-relaxed pl-4">— Segregation integrity across treasury, reserves, and designated buckets</li>
+            <li className="text-sm text-dl-gray leading-relaxed pl-4">— Reconciliation traceability via the snapshot reference and integrity checksum</li>
+            <li className="text-sm text-dl-gray leading-relaxed pl-4">— Policy state and regime classification behavior under defined rules</li>
+          </ul>
+
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-3">What these metrics are not designed to imply during bootstrap</p>
+          <ul className="space-y-2 mb-6">
+            <li className="text-sm text-dl-gray leading-relaxed pl-4">— Readiness for institutional scale or capacity</li>
+            <li className="text-sm text-dl-gray leading-relaxed pl-4">— Any guarantee of liquidity, redemption capacity, or loss recovery</li>
+            <li className="text-sm text-dl-gray leading-relaxed pl-4">— Any form of performance marketing, yield representation, or solicitation</li>
+          </ul>
+
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-3">Decision Use</p>
+          <p className="text-sm text-dl-gray leading-relaxed">
+            At this stage, use this page to verify control design, reporting integrity, and operational discipline.
+            A later-stage disclosure posture would typically require an established disclosure cadence, defined reserve targets,
+            and independent external attestations, without implying timing or commitment.
+          </p>
+        </div>
+      </div>
+
       {m && (
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border border-dl-border p-4 mb-8 bg-dl-bg-alt">
           <div>
