@@ -1,11 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
+import { ethers } from 'ethers';
 import {
   DesignLawLayout,
   PageShell,
   SectionHeading,
   StatusBadge,
 } from '../../components/design-law';
+import { PSM_ABI, ERC20_ABI, USDC_ADDRESS, USDC_DECIMALS, AXUSD_DECIMALS, PRIMARY_AXUSD, PRIMARY_PSM, EULER_AXUSD, EULER_PSM } from '../../lib/psm/abi';
+
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
 
 interface ContractEntry {
   label: string;
@@ -165,7 +173,7 @@ const RISK_CHECKPOINTS = [
 ];
 
 export default function PlaybookPage() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'contracts' | 'phases' | 'guardrails'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'contracts' | 'phases' | 'guardrails' | 'operations'>('overview');
   const [liveStatus, setLiveStatus] = useState<any>(null);
   const [grLive, setGrLive] = useState<Record<number, GuardRailLiveStatus>>({
     1: { status: 'LOADING', detail: 'Checking...' },
@@ -221,11 +229,188 @@ export default function PlaybookPage() {
       .catch(() => setLoading(false));
   }, []);
 
+  const [psmStatus, setPsmStatus] = useState<any>(null);
+  const [psmLoading, setPsmLoading] = useState(false);
+  const [opsLog, setOpsLog] = useState<any[]>([]);
+  const [ecosystem, setEcosystem] = useState<'PRIMARY' | 'EULER'>('PRIMARY');
+  const [operation, setOperation] = useState<'MINT' | 'REDEEM'>('MINT');
+  const [amount, setAmount] = useState('');
+  const [weekNum, setWeekNum] = useState(1);
+  const [txStatus, setTxStatus] = useState<{ type: 'idle' | 'pending' | 'success' | 'error'; message: string; txHash?: string }>({ type: 'idle', message: '' });
+  const [walletAddr, setWalletAddr] = useState<string | null>(null);
+  const [eulerConfirmed, setEulerConfirmed] = useState(false);
+
+  const fetchPsmStatus = useCallback(async () => {
+    setPsmLoading(true);
+    try {
+      const res = await fetch('/api/founder-ops/psm-status');
+      const json = await res.json();
+      if (json.success) setPsmStatus(json.data);
+    } catch {}
+    setPsmLoading(false);
+  }, []);
+
+  const fetchOpsLog = useCallback(async () => {
+    try {
+      const res = await fetch('/api/founder-ops/log');
+      const json = await res.json();
+      if (json.success) setOpsLog(json.entries?.slice(0, 10) || []);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'operations') {
+      fetchPsmStatus();
+      fetchOpsLog();
+    }
+  }, [activeTab, fetchPsmStatus, fetchOpsLog]);
+
+  const getPsmAddress = () => ecosystem === 'PRIMARY' ? PRIMARY_PSM : EULER_PSM;
+  const getAxusdAddress = () => ecosystem === 'PRIMARY' ? PRIMARY_AXUSD : EULER_AXUSD;
+  const getEcosystemLabel = () => ecosystem === 'PRIMARY' ? 'PRIMARY' : 'EULER';
+
+  const computeFee = () => {
+    if (!amount || !psmStatus) return { input: '0', fee: '0', output: '0' };
+    const val = parseFloat(amount);
+    if (isNaN(val) || val <= 0) return { input: '0', fee: '0', output: '0' };
+    const eco = ecosystem === 'PRIMARY' ? psmStatus.primary : psmStatus.euler;
+    const feeBps = operation === 'MINT' ? eco.mintFee : eco.redeemFee;
+    const feeAmt = val * feeBps / 10000;
+    const output = val - feeAmt;
+    const inputDecimals = operation === 'MINT' ? USDC_DECIMALS : AXUSD_DECIMALS;
+    const outputDecimals = operation === 'MINT' ? AXUSD_DECIMALS : USDC_DECIMALS;
+    return {
+      input: val.toFixed(Math.min(inputDecimals, 6)),
+      fee: feeAmt.toFixed(6),
+      output: output.toFixed(Math.min(outputDecimals, 6)),
+    };
+  };
+
+  const executePsmOperation = async () => {
+    if (!window.ethereum) {
+      setTxStatus({ type: 'error', message: 'No wallet detected. Please install MetaMask.' });
+      return;
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      setTxStatus({ type: 'error', message: 'Enter a valid amount.' });
+      return;
+    }
+    if (ecosystem === 'EULER' && !eulerConfirmed) {
+      setTxStatus({ type: 'error', message: 'You must confirm the DO NOT MIX acknowledgment before executing Euler PSM operations.' });
+      return;
+    }
+
+    setTxStatus({ type: 'pending', message: 'Connecting wallet...' });
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.send('eth_requestAccounts', []);
+      if (!accounts.length) throw new Error('No accounts found');
+      setWalletAddr(accounts[0]);
+
+      const network = await provider.getNetwork();
+      if (Number(network.chainId) !== 42161) {
+        setTxStatus({ type: 'pending', message: 'Switching to Arbitrum One...' });
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0xa4b1' }],
+          });
+        } catch (switchErr: any) {
+          if (switchErr.code === 4902) {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: '0xa4b1',
+                chainName: 'Arbitrum One',
+                rpcUrls: ['https://arb1.arbitrum.io/rpc'],
+                nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                blockExplorerUrls: ['https://arbiscan.io'],
+              }],
+            });
+          } else {
+            throw new Error('Please switch to Arbitrum One (chain 42161)');
+          }
+        }
+      }
+
+      const signer = await provider.getSigner();
+      const psmAddress = getPsmAddress();
+      const val = parseFloat(amount);
+
+      if (operation === 'MINT') {
+        const usdcAmount = ethers.parseUnits(val.toString(), USDC_DECIMALS);
+        const usdcContract = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, signer);
+
+        setTxStatus({ type: 'pending', message: 'Approving USDC...' });
+        const approveTx = await usdcContract.approve(psmAddress, usdcAmount);
+        await approveTx.wait();
+
+        setTxStatus({ type: 'pending', message: 'Minting AXUSD...' });
+        const psmContract = new ethers.Contract(psmAddress, PSM_ABI, signer);
+        const mintTx = await psmContract.mint(usdcAmount);
+        const receipt = await mintTx.wait();
+        const txHash = receipt.hash;
+
+        const feeInfo = computeFee();
+        setTxStatus({ type: 'success', message: `Minted ${feeInfo.output} AXUSD via ${getEcosystemLabel()} PSM`, txHash });
+
+        await logOperation(txHash, val, 'Mint');
+      } else {
+        const axusdAmount = ethers.parseUnits(val.toString(), AXUSD_DECIMALS);
+        const axusdAddress = getAxusdAddress();
+        const axusdContract = new ethers.Contract(axusdAddress, ERC20_ABI, signer);
+
+        setTxStatus({ type: 'pending', message: 'Approving AXUSD...' });
+        const approveTx = await axusdContract.approve(psmAddress, axusdAmount);
+        await approveTx.wait();
+
+        setTxStatus({ type: 'pending', message: 'Redeeming USDC...' });
+        const psmContract = new ethers.Contract(psmAddress, PSM_ABI, signer);
+        const redeemTx = await psmContract.redeem(axusdAmount);
+        const receipt = await redeemTx.wait();
+        const txHash = receipt.hash;
+
+        const feeInfo = computeFee();
+        setTxStatus({ type: 'success', message: `Redeemed ${feeInfo.output} USDC via ${getEcosystemLabel()} PSM`, txHash });
+
+        await logOperation(txHash, val, 'Redeem');
+      }
+
+      fetchPsmStatus();
+      fetchOpsLog();
+    } catch (err: any) {
+      setTxStatus({ type: 'error', message: err.message || 'Transaction failed' });
+    }
+  };
+
+  const logOperation = async (txHash: string, inputAmt: number, op: string) => {
+    try {
+      const feeBps = ecosystem === 'PRIMARY'
+        ? (op === 'Mint' ? psmStatus?.primary?.mintFee : psmStatus?.primary?.redeemFee)
+        : (op === 'Mint' ? psmStatus?.euler?.mintFee : psmStatus?.euler?.redeemFee);
+
+      await fetch('/api/founder-ops/log-psm-op', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          txHash,
+          week: weekNum,
+          ecosystem,
+          operation: op,
+          inputAmount: inputAmt,
+          description: `${op} via ${getEcosystemLabel()} PSM. Fee: ${feeBps} bps. Verified on-chain.`,
+        }),
+      });
+    } catch {}
+  };
+
   const tabs = [
     { key: 'overview', label: 'Overview' },
     { key: 'contracts', label: 'Contract Registry' },
     { key: 'phases', label: '52-Week Phases' },
     { key: 'guardrails', label: 'Guard Rails' },
+    { key: 'operations', label: 'Operations' },
   ] as const;
 
   return (
@@ -363,7 +548,7 @@ export default function PlaybookPage() {
                     <tr key={src} style={{ borderBottom: '1px solid #E5E7EB' }}>
                       <td style={{ padding: '0.5rem 0', color: '#6B7280', textTransform: 'capitalize' }}>{src}</td>
                       <td style={{ padding: '0.5rem 0' }}>
-                        <StatusBadge status={status === 'OK' ? 'active' : 'warning'} label={String(status)} />
+                        <StatusBadge status={String(status)} />
                       </td>
                     </tr>
                   ))}
@@ -439,7 +624,7 @@ export default function PlaybookPage() {
                 </tr>
                 <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
                   <td style={{ padding: '0.5rem', color: '#6B7280' }}>Match</td>
-                  <td style={{ padding: '0.5rem' }}><StatusBadge status="active" label="CONFIRMED" /></td>
+                  <td style={{ padding: '0.5rem' }}><StatusBadge status="CONFIRMED" /></td>
                 </tr>
               </tbody>
             </table>
@@ -552,6 +737,262 @@ export default function PlaybookPage() {
                 <li style={{ padding: '0.25rem 0' }}>Update operations log with week number and outcomes</li>
               </ol>
             </div>
+          </>
+        )}
+
+        {activeTab === 'operations' && (
+          <>
+            <SectionHeading>Live PSM Status</SectionHeading>
+            {psmLoading ? (
+              <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#6B7280' }}>Loading on-chain PSM data...</p>
+            ) : psmStatus ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                {[
+                  { label: 'PRIMARY PSM (GENIUS)', data: psmStatus.primary },
+                  { label: 'EULER PSM (Original)', data: psmStatus.euler },
+                ].map(({ label, data }) => (
+                  <div key={label} style={{ border: '1px solid #1B2A4A', padding: '1rem' }}>
+                    <h4 style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', margin: '0 0 0.75rem', color: '#1B2A4A' }}>{label}</h4>
+                    <table style={{ width: '100%', fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem' }}>
+                      <tbody>
+                        <tr><td style={{ padding: '0.25rem 0', color: '#6B7280' }}>USDC Reserves</td><td style={{ textAlign: 'right' }}>{data.usdcReserves} USDC</td></tr>
+                        <tr><td style={{ padding: '0.25rem 0', color: '#6B7280' }}>AXUSD Supply</td><td style={{ textAlign: 'right' }}>{parseFloat(data.axusdSupply).toLocaleString()} AXUSD</td></tr>
+                        <tr><td style={{ padding: '0.25rem 0', color: '#6B7280' }}>Debt Ceiling</td><td style={{ textAlign: 'right' }}>{parseFloat(data.debtCeiling).toLocaleString()} USDC</td></tr>
+                        <tr><td style={{ padding: '0.25rem 0', color: '#6B7280' }}>Mint Fee</td><td style={{ textAlign: 'right' }}>{data.mintFeePct} ({data.mintFee} bps)</td></tr>
+                        <tr><td style={{ padding: '0.25rem 0', color: '#6B7280' }}>Redeem Fee</td><td style={{ textAlign: 'right' }}>{data.redeemFeePct} ({data.redeemFee} bps)</td></tr>
+                        <tr><td style={{ padding: '0.25rem 0', color: '#6B7280' }}>PSM Reserve Ratio</td><td style={{ textAlign: 'right' }}>{data.pegRatioPct || '—'}</td></tr>
+                        <tr><td style={{ padding: '0.25rem 0', color: '#6B7280' }}>Status</td><td style={{ textAlign: 'right' }}><StatusBadge status={data.paused ? 'PAUSED' : 'ACTIVE'} /></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#8B0000' }}>Failed to load PSM status. Ensure ALCHEMY_API_KEY is set.</p>
+            )}
+
+            <SectionHeading>Weekly Capital Allocation Reference</SectionHeading>
+            <table style={{ width: '100%', fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', borderCollapse: 'collapse', marginBottom: '2rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #1B2A4A' }}>
+                  <th style={{ padding: '0.5rem', textAlign: 'left' }}>Category</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>DEFAULT</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>HALTED</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>RISK_ON</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['AXUSD Minting (PRIMARY)', '$40', '$40', '$40'],
+                  ['AXM Accumulation', '$25', '$15', '$35'],
+                  ['Buffer / Gas', '$20', '$30', '$10'],
+                  ['DePIN Node', '$15', '$15', '$15'],
+                  ['Total', '$100', '$100', '$100'],
+                ].map(([cat, def_, halt, risk], i, arr) => (
+                  <tr key={cat} style={{ borderBottom: '1px solid #E5E7EB', fontWeight: i === arr.length - 1 ? 600 : 400 }}>
+                    <td style={{ padding: '0.5rem' }}>{cat}</td>
+                    <td style={{ padding: '0.5rem', textAlign: 'right' }}>{def_}</td>
+                    <td style={{ padding: '0.5rem', textAlign: 'right' }}>{halt}</td>
+                    <td style={{ padding: '0.5rem', textAlign: 'right' }}>{risk}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <SectionHeading>PSM Mint / Redeem Console</SectionHeading>
+            <div style={{ border: '1px solid #1B2A4A', padding: '1.5rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                <div>
+                  <label style={{ fontFamily: 'Georgia, serif', fontSize: '0.9rem', display: 'block', marginBottom: '0.5rem', color: '#1B2A4A' }}>Ecosystem</label>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    {(['PRIMARY', 'EULER'] as const).map((eco) => (
+                      <label key={eco} style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <input type="radio" name="ecosystem" checked={ecosystem === eco} onChange={() => { setEcosystem(eco); setEulerConfirmed(false); }} />
+                        {eco}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label style={{ fontFamily: 'Georgia, serif', fontSize: '0.9rem', display: 'block', marginBottom: '0.5rem', color: '#1B2A4A' }}>Operation</label>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    {([{ key: 'MINT' as const, label: 'MINT (USDC → AXUSD)' }, { key: 'REDEEM' as const, label: 'REDEEM (AXUSD → USDC)' }]).map((op) => (
+                      <label key={op.key} style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <input type="radio" name="operation" checked={operation === op.key} onChange={() => setOperation(op.key)} />
+                        {op.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {ecosystem === 'EULER' && (
+                <div style={{ border: '1px solid #8B0000', padding: '0.75rem', marginBottom: '1rem', background: '#FFF5F5' }}>
+                  <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#8B0000', margin: 0, fontWeight: 600 }}>
+                    DO NOT MIX: EULER AXUSD is for Euler Vault and Revenue Router ONLY. Never deposit into PRIMARY ecosystem products.
+                  </p>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem', color: '#8B0000', marginTop: '0.5rem', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={eulerConfirmed}
+                      onChange={(e) => setEulerConfirmed(e.target.checked)}
+                      style={{ accentColor: '#8B0000' }}
+                    />
+                    I confirm this operation targets the Euler ecosystem only and will not be mixed with the Primary ecosystem.
+                  </label>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '1rem' }}>
+                <div>
+                  <label style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem', display: 'block', marginBottom: '0.25rem', color: '#6B7280' }}>
+                    Amount ({operation === 'MINT' ? 'USDC' : 'AXUSD'})
+                  </label>
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                    style={{
+                      fontFamily: 'ui-monospace, monospace',
+                      fontSize: '0.875rem',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #1B2A4A',
+                      background: '#fff',
+                      width: '12rem',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem', display: 'block', marginBottom: '0.25rem', color: '#6B7280' }}>Week #</label>
+                  <input
+                    type="number"
+                    value={weekNum}
+                    onChange={(e) => setWeekNum(parseInt(e.target.value) || 1)}
+                    min="1"
+                    max="52"
+                    style={{
+                      fontFamily: 'ui-monospace, monospace',
+                      fontSize: '0.875rem',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #1B2A4A',
+                      background: '#fff',
+                      width: '5rem',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {amount && parseFloat(amount) > 0 && psmStatus && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <table style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', borderCollapse: 'collapse' }}>
+                    <tbody>
+                      <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                        <td style={{ padding: '0.35rem 1rem 0.35rem 0', color: '#6B7280' }}>Input</td>
+                        <td style={{ padding: '0.35rem 0' }}>{computeFee().input} {operation === 'MINT' ? 'USDC' : 'AXUSD'}</td>
+                      </tr>
+                      <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                        <td style={{ padding: '0.35rem 1rem 0.35rem 0', color: '#6B7280' }}>Fee</td>
+                        <td style={{ padding: '0.35rem 0' }}>{computeFee().fee} {operation === 'MINT' ? 'USDC' : 'AXUSD'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '0.35rem 1rem 0.35rem 0', color: '#6B7280' }}>Output</td>
+                        <td style={{ padding: '0.35rem 0', fontWeight: 600 }}>{computeFee().output} {operation === 'MINT' ? 'AXUSD' : 'USDC'}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <button
+                onClick={executePsmOperation}
+                disabled={txStatus.type === 'pending'}
+                style={{
+                  fontFamily: 'ui-monospace, monospace',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  padding: '0.6rem 1.5rem',
+                  border: '1px solid #1B2A4A',
+                  background: txStatus.type === 'pending' ? '#E5E7EB' : '#1B2A4A',
+                  color: txStatus.type === 'pending' ? '#6B7280' : '#fff',
+                  cursor: txStatus.type === 'pending' ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {txStatus.type === 'pending' ? txStatus.message : `Execute ${operation}`}
+              </button>
+
+              {walletAddr && (
+                <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.7rem', color: '#6B7280', marginTop: '0.5rem' }}>
+                  Connected: {walletAddr.slice(0, 6)}...{walletAddr.slice(-4)}
+                </p>
+              )}
+
+              {txStatus.type === 'success' && (
+                <div style={{ border: '1px solid #2D5F2D', padding: '0.75rem', marginTop: '1rem', background: '#F0FFF0' }}>
+                  <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#2D5F2D', margin: 0, fontWeight: 600 }}>
+                    {txStatus.message}
+                  </p>
+                  {txStatus.txHash && (
+                    <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem', margin: '0.25rem 0 0' }}>
+                      Tx: <a href={`https://arbiscan.io/tx/${txStatus.txHash}`} target="_blank" rel="noopener noreferrer" style={{ color: '#1B2A4A', textDecoration: 'underline' }}>{txStatus.txHash.slice(0, 10)}...{txStatus.txHash.slice(-8)}</a>
+                    </p>
+                  )}
+                  <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.7rem', color: '#6B7280', margin: '0.25rem 0 0' }}>
+                    Entry logged to founder-ops operations log.
+                  </p>
+                </div>
+              )}
+
+              {txStatus.type === 'error' && (
+                <div style={{ border: '1px solid #8B0000', padding: '0.75rem', marginTop: '1rem', background: '#FFF5F5' }}>
+                  <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#8B0000', margin: 0 }}>
+                    {txStatus.message}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <SectionHeading>Recent Operations Log</SectionHeading>
+            {opsLog.length > 0 ? (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid #1B2A4A' }}>
+                      <th style={{ padding: '0.5rem', textAlign: 'left' }}>Date</th>
+                      <th style={{ padding: '0.5rem', textAlign: 'left' }}>Week</th>
+                      <th style={{ padding: '0.5rem', textAlign: 'left' }}>Category</th>
+                      <th style={{ padding: '0.5rem', textAlign: 'left' }}>Title</th>
+                      <th style={{ padding: '0.5rem', textAlign: 'left' }}>Tx Hash</th>
+                      <th style={{ padding: '0.5rem', textAlign: 'left' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {opsLog.map((entry, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid #E5E7EB' }}>
+                        <td style={{ padding: '0.5rem', whiteSpace: 'nowrap' }}>{entry.created_at ? new Date(entry.created_at).toLocaleDateString() : '—'}</td>
+                        <td style={{ padding: '0.5rem' }}>{entry.week || '—'}</td>
+                        <td style={{ padding: '0.5rem' }}>{entry.category || '—'}</td>
+                        <td style={{ padding: '0.5rem', maxWidth: '20rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.title || '—'}</td>
+                        <td style={{ padding: '0.5rem' }}>
+                          {entry.tx_hash ? (
+                            <a href={`https://arbiscan.io/tx/${entry.tx_hash}`} target="_blank" rel="noopener noreferrer" style={{ color: '#1B2A4A', textDecoration: 'underline' }}>
+                              {entry.tx_hash.slice(0, 8)}...{entry.tx_hash.slice(-6)}
+                            </a>
+                          ) : '—'}
+                        </td>
+                        <td style={{ padding: '0.5rem' }}>
+                          <StatusBadge status={entry.status || '—'} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#6B7280' }}>No operations logged yet.</p>
+            )}
           </>
         )}
       </PageShell>
