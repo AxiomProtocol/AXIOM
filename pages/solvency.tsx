@@ -1170,7 +1170,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
             defined capital segregation, and traceable reconciliation.
           </p>
 
-          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-3">What these metrics are designed to demonstrate during bootstrap</p>
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-3">What These Metrics Demonstrate During Bootstrap</p>
           <ul className="space-y-2 mb-6">
             <li className="text-sm text-dl-gray leading-relaxed pl-4">— Deterministic calculation behavior and reproducible outputs from the same inputs</li>
             <li className="text-sm text-dl-gray leading-relaxed pl-4">— Segregation integrity across treasury, reserves, and designated buckets</li>
@@ -1178,14 +1178,14 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
             <li className="text-sm text-dl-gray leading-relaxed pl-4">— Policy state and regime classification behavior under defined rules</li>
           </ul>
 
-          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-3">What these metrics are not designed to imply during bootstrap</p>
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-3">What These Metrics Do Not Imply During Bootstrap</p>
           <ul className="space-y-2 mb-6">
             <li className="text-sm text-dl-gray leading-relaxed pl-4">— Readiness for institutional scale or capacity</li>
             <li className="text-sm text-dl-gray leading-relaxed pl-4">— Any guarantee of liquidity, redemption capacity, or loss recovery</li>
             <li className="text-sm text-dl-gray leading-relaxed pl-4">— Any form of performance marketing, yield representation, or solicitation</li>
           </ul>
 
-          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-3">Decision Use</p>
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-3">Decision Use for Allocators</p>
           <p className="text-sm text-dl-gray leading-relaxed">
             At this stage, use this page to verify control design, reporting integrity, and operational discipline.
             A later-stage disclosure posture would typically require an established disclosure cadence, defined reserve targets,
