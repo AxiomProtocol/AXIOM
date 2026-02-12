@@ -124,6 +124,21 @@ export default async function handler(
     }
 
     try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS scenario_runs (
+          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          snapshot_id VARCHAR NOT NULL,
+          scenario_id VARCHAR NOT NULL,
+          scenario_label VARCHAR NOT NULL,
+          input_json JSONB NOT NULL,
+          result_json JSONB NOT NULL,
+          resulting_policy_mode VARCHAR NOT NULL,
+          breaches_threshold BOOLEAN NOT NULL DEFAULT false
+        )
+      `);
+      await pool.query(`CREATE INDEX IF NOT EXISTS scenario_runs_snapshot_idx ON scenario_runs(snapshot_id)`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS scenario_runs_created_idx ON scenario_runs(created_at)`);
       for (const r of results) {
         const sid = r.scenario?.id || (scenarioId ? scenarioId : customScenario ? 'custom' : 'all');
         const slabel = r.scenario?.label || sid;
