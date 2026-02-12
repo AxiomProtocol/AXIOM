@@ -1123,6 +1123,14 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       <Head>
         <title>Solvency and Reserve Transparency — Axiom Protocol | Institutional Disclosure</title>
         <meta name="description" content="Institutional-grade solvency disclosure, reserve transparency, capital adequacy metrics, and risk posture reporting for the Axiom Protocol. Verifiable, checksummed, and deterministic." />
+        <meta property="og:title" content="Solvency and Reserve Transparency — Axiom Protocol" />
+        <meta property="og:description" content="Institutional-grade solvency disclosure, reserve transparency, capital adequacy metrics, and risk posture reporting. Verifiable, checksummed, and deterministic." />
+        <meta property="og:image" content="/images/og-solvency-transparency.png" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Solvency and Reserve Transparency — Axiom Protocol" />
+        <meta name="twitter:description" content="Institutional-grade solvency disclosure, reserve transparency, and capital adequacy metrics for the Axiom Protocol." />
+        <meta name="twitter:image" content="/images/og-solvency-transparency.png" />
       </Head>
 
       <div className="border-b border-dl-border pb-8 mb-10">
