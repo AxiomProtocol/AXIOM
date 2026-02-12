@@ -91,19 +91,22 @@ const AME_SCENARIOS = [
 ];
 
 const DEFINITIONS = [
-  { term: 'Treasury', definition: 'The total pool of protocol-controlled capital, including liquid holdings, locked positions, and operational reserves. Treasury represents the full balance sheet of assets under protocol governance.' },
-  { term: 'Reserves', definition: 'Capital specifically designated to backstop obligations. Reserves are a subset of the treasury, earmarked under stabilization policy to meet liabilities and absorb potential losses.' },
-  { term: 'AXUSD Issued', definition: 'The total supply of AXUSD stablecoin tokens minted by the protocol. This figure represents all AXUSD currently in circulation on Arbitrum One. As the protocol matures, issued AXUSD held by external participants constitutes redeemable obligations.' },
-  { term: 'Loss Buffer', definition: 'A dedicated capital cushion that absorbs losses before reserves are impacted. The loss buffer serves as the first line of defense in the capital waterfall.' },
-  { term: 'Coverage Ratio', definition: 'The ratio of total available capital (treasury plus reserves) to total liabilities. A coverage ratio above 1.0 indicates that the protocol holds more assets than it owes.' },
-  { term: 'Reserve Ratio', definition: 'The ratio of designated reserves to total liabilities. This metric indicates the proportion of obligations directly backed by earmarked reserve capital.' },
+  { term: 'Treasury Capital', definition: 'The aggregate pool of protocol-governed capital, encompassing liquid holdings, deployed positions, and operational reserves. Treasury capital represents the full asset side of the protocol balance sheet.' },
+  { term: 'Designated Reserves', definition: 'Capital expressly allocated to backstop outstanding obligations. Reserves are a segregated subset of treasury capital, earmarked under stabilization policy to absorb losses and meet redemption demands.' },
+  { term: 'AXUSD Outstanding', definition: 'The total supply of AXUSD issued by the protocol and currently outstanding on Arbitrum One. This figure represents the gross liability measure. As the protocol matures, externally circulating AXUSD constitutes the redeemable obligation base.' },
+  { term: 'Loss Buffer', definition: 'A dedicated capital cushion positioned as the first absorption layer in the capital waterfall. The loss buffer is consumed before designated reserves or general treasury capital bear any impairment.' },
+  { term: 'Coverage Ratio (CR)', definition: 'Total available capital divided by total outstanding liabilities. A CR above 1.0 indicates the protocol holds sufficient assets to meet all obligations. This is the primary capital adequacy measure.' },
+  { term: 'Reserve Ratio (RR)', definition: 'Designated reserves divided by total outstanding liabilities. RR indicates the proportion of obligations directly supported by segregated reserve capital, independent of broader treasury holdings.' },
+  { term: 'Loss Buffer Ratio (LBR)', definition: 'Loss buffer capital divided by total outstanding liabilities. LBR measures the depth of first-loss absorption capacity before reserves are drawn upon.' },
+  { term: 'Liquidity Depth (LD)', definition: 'Immediately redeemable capital (e.g., PSM reserves) divided by total outstanding liabilities. LD measures the protocol capacity to meet instantaneous redemption demands without asset liquidation.' },
+  { term: 'Regime Band', definition: 'A classification of the current protocol stress environment derived from the Regime Score (RS). Bands range from STABLE (low stress) through CAUTION and STRESS to CRISIS (severe stress). The regime band determines the Policy Multiplier applied to adaptive targets.' },
 ];
 
 const WATERFALL_STEPS = [
-  { order: '1', label: 'Loss Buffer', description: 'Absorbs initial losses. This dedicated capital cushion is consumed first before any other capital layer is affected.' },
-  { order: '2', label: 'Designated Reserves', description: 'If losses exceed the loss buffer, designated reserve capital is drawn upon to meet remaining obligations.' },
-  { order: '3', label: 'Treasury General', description: 'If reserves are insufficient, the broader treasury pool may be utilized under governance authorization to cover shortfalls.' },
-  { order: '4', label: 'Participant Capital', description: 'Only after all protocol-controlled buffers are exhausted does participant capital bear loss exposure. This is the last layer of absorption.' },
+  { order: '1', label: 'Loss Buffer (First Loss)', description: 'Absorbs initial impairment. This dedicated capital cushion is consumed before any other layer is drawn upon. It is the primary shock absorber in the capital structure.' },
+  { order: '2', label: 'Designated Reserves', description: 'If losses exceed the loss buffer, segregated reserve capital is applied to meet remaining obligations under stabilization policy.' },
+  { order: '3', label: 'Treasury General Pool', description: 'If designated reserves are insufficient, the broader treasury pool may be utilized under governance authorization to cover residual shortfalls.' },
+  { order: '4', label: 'Participant Capital (Last Loss)', description: 'Only after all protocol-controlled buffers and reserves are fully exhausted does participant capital bear loss exposure. This is the terminal absorption layer.' },
 ];
 
 const POLICY_MODES = [
@@ -117,58 +120,58 @@ const POLICY_MODES = [
 const FAQ_ITEMS = [
   {
     q: 'What does solvency mean in this context?',
-    a: 'Solvency refers to the protocol ability to meet all outstanding obligations using its available capital. A solvent protocol holds sufficient assets to cover all liabilities, with additional reserves providing a margin of safety.',
+    a: 'Solvency refers to the protocol capacity to meet all outstanding obligations from available capital. A solvent protocol maintains sufficient assets to satisfy all liabilities, with additional reserves providing a margin of safety against adverse conditions.',
   },
   {
-    q: 'How often is the data on this page updated?',
-    a: 'Snapshot data is updated periodically by the protocol administrator. Updates typically occur daily, but may vary based on operational requirements. The "as of" timestamp and snapshot identifier indicate exactly when the displayed data was captured.',
+    q: 'What is the reconciliation cadence for this data?',
+    a: 'Disclosure snapshots are produced on a controlled reconciliation cycle by the protocol administrator. The standard cadence is daily, subject to operational requirements. Each snapshot is timestamped at the moment of capture. The "Data as of" indicator and snapshot reference ID reflect the exact reconciliation point. Values may exhibit temporal variance of up to 24 hours relative to real-time balances.',
   },
   {
     q: 'What does the coverage ratio represent?',
-    a: 'The coverage ratio measures total available capital (treasury plus reserves) divided by total liabilities. A ratio above 1.0 means the protocol holds more assets than it owes. For example, a coverage ratio of 1.50 means there is $1.50 in assets for every $1.00 of obligations.',
+    a: 'The coverage ratio (CR) measures total available capital divided by total outstanding liabilities. A CR above 1.0 indicates the protocol holds sufficient assets to meet all obligations. For example, a CR of 1.50 indicates $1.50 in available capital for every $1.00 of outstanding liability.',
   },
   {
-    q: 'What happens if reserves drop below the target level?',
-    a: 'If reserves decline below established thresholds, the policy mode transitions from NORMAL to CAUTION or RESTRICTED. This triggers enhanced monitoring and may limit certain operations until reserves are restored to target levels.',
+    q: 'What happens if reserves decline below target levels?',
+    a: 'If reserves decline below established thresholds, the stabilization policy mode transitions from NORMAL to CAUTION or RESTRICTED. This activates enhanced monitoring protocols and may constrain certain operations until reserves are restored to target adequacy levels.',
   },
   {
     q: 'Can I independently verify the data shown here?',
-    a: 'Yes. Each snapshot includes a checksum (a cryptographic fingerprint of the underlying data). You can compare this checksum against the on-record snapshot to confirm data integrity. The snapshot identifier and timestamp provide an audit trail.',
+    a: 'Yes. Each snapshot includes a cryptographic checksum (SHA-256 truncated digest) derived from the complete underlying dataset. This checksum can be cross-referenced against the protocol snapshot records to confirm data integrity. The snapshot reference ID and reconciliation timestamp provide a complete audit trail.',
   },
   {
     q: 'What is a checksum and why does it matter?',
-    a: 'A checksum is a short alphanumeric string derived from the complete dataset using a cryptographic digest function. If any value in the underlying data changes, the checksum changes. This allows anyone to verify that the displayed data has not been altered since the snapshot was recorded.',
+    a: 'A checksum is a deterministic alphanumeric string produced by applying a cryptographic digest function to the complete dataset. Any modification to the underlying data — however minor — produces a different checksum. This tamper-evident mechanism enables independent verification that displayed figures have not been altered since the reconciliation snapshot was recorded.',
   },
   {
     q: 'What does the policy mode indicate?',
-    a: 'Policy mode reflects the current operational posture of the protocol stabilization system. NORMAL indicates healthy operations. CAUTION signals elevated monitoring. RESTRICTED means certain actions are limited. EMERGENCY indicates a critical situation requiring governance intervention.',
+    a: 'Policy mode reflects the current operational posture of the protocol stabilization framework. NORMAL indicates standard operations within target thresholds. CAUTION signals enhanced monitoring due to advisory threshold crossings. RESTRICTED indicates intervention-level constraints on certain operations. EMERGENCY denotes a critical situation requiring governance intervention.',
   },
   {
     q: 'What is the loss buffer and how does it protect capital?',
-    a: 'The loss buffer is a dedicated capital reserve that absorbs losses before any other capital layer is impacted. It serves as the first line of defense in the capital waterfall, protecting designated reserves, treasury capital, and ultimately participant capital from loss exposure.',
+    a: 'The loss buffer is a dedicated first-loss capital cushion positioned at the top of the capital waterfall. It absorbs impairment before any other capital layer is drawn upon, thereby protecting designated reserves, general treasury capital, and ultimately participant capital from loss exposure.',
   },
   {
     q: 'Who controls the treasury and how are decisions made?',
-    a: 'Treasury operations are governed by multi-party authorization controls. No single party can unilaterally move or deploy capital. All treasury actions require defined approval workflows and produce audit-traceable records visible through protocol reporting.',
+    a: 'Treasury operations are governed by multi-party authorization controls with defined approval workflows. No single party can unilaterally move or deploy capital. All treasury actions produce audit-traceable records visible through protocol reporting and snapshot disclosure.',
   },
   {
     q: 'Is this data audited by an independent third party?',
-    a: 'The protocol maintains internal audit trails and cryptographic verification of all snapshots. Independent third-party audits are planned as part of the protocol maturity roadmap. Current data integrity relies on snapshot checksums and administrative controls.',
+    a: 'The protocol maintains internal audit trails, cryptographic verification of all snapshots, and deterministic computation lineage. Independent third-party audits are planned as part of the protocol maturity roadmap. Current data integrity assurance relies on snapshot checksums, computation reproducibility, and administrative controls.',
   },
   {
     q: 'What is the difference between treasury total and treasury liquid?',
-    a: 'Treasury total represents all capital under protocol governance, including locked or deployed positions. Treasury liquid represents the portion that is immediately available and can be redeemed or redeployed without unwinding existing commitments.',
+    a: 'Treasury total represents the aggregate capital under protocol governance, including deployed, locked, and reserved positions. Treasury liquid represents the immediately available portion that can be redeemed or redeployed without unwinding existing commitments or incurring liquidation costs.',
   },
   {
     q: 'What does BOOTSTRAP policy mode mean?',
-    a: 'BOOTSTRAP indicates the protocol is in its initialization phase. During this period, all metrics are informational. Stabilization policies are not yet active, and the system is building toward operational thresholds required for NORMAL mode.',
+    a: 'BOOTSTRAP indicates the protocol is in its control validation phase. During this period, all metrics are disclosed for transparency but stabilization policies are not yet active. The system is building toward the operational thresholds and capital levels required for transition to NORMAL mode. Bootstrap-phase capital levels do not invalidate the control design.',
   },
 ];
 
 const VIEW_DESCRIPTIONS: Record<string, string> = {
-  allocator: 'Capital adequacy metrics, asset composition, and loss absorption structure for institutional capital allocation decisions.',
-  clearinghouse: 'Counterparty risk assessment, AXUSD stability modeling, stress test scenarios, and historical solvency tracking.',
-  regulatory: 'Full disclosure documentation, compliance definitions, audit verification procedures, and risk reporting framework.',
+  allocator: 'Capital adequacy metrics, asset composition, loss absorption structure, and adaptive target compliance for institutional capital allocation review.',
+  clearinghouse: 'Counterparty risk assessment, AXUSD stability modeling, deterministic stress scenarios, hard brake triggers, and historical solvency tracking.',
+  regulatory: 'Comprehensive disclosure documentation, compliance definitions, audit verification procedures, data integrity controls, and risk reporting framework.',
 };
 
 const AME_HISTORY_PAGE_SIZE = 10;
@@ -332,7 +335,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
     if (m && m.dataStatus !== 'empty') {
       return (
         <div className="mb-10">
-          <SectionHeading>Live metrics</SectionHeading>
+          <SectionHeading>Live Metrics</SectionHeading>
           <DetailGrid
             left={[
               { label: 'Treasury Total', value: fmtUsd(m.treasuryTotalUsd), mono: true },
@@ -353,7 +356,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
     if (m && m.dataStatus === 'empty') {
       return (
         <div className="mb-10">
-          <SectionHeading>Live metrics</SectionHeading>
+          <SectionHeading>Live Metrics</SectionHeading>
           <DetailGrid
             left={[
               { label: 'Treasury Total', value: fmtUsd(0), mono: true },
@@ -468,7 +471,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       )}
 
       <div className="mb-10">
-        <SectionHeading>Capital waterfall</SectionHeading>
+        <SectionHeading>Capital Waterfall — Loss Absorption Priority</SectionHeading>
         <div className="border border-dl-border p-6 bg-dl-bg-alt mb-4">
           <p className="text-sm text-dl-gray leading-relaxed">
             In the event of a capital shortfall, losses are absorbed in a defined sequence.
@@ -512,7 +515,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
 
       {m && m.limitations && m.limitations.length > 0 && (
         <div className="mb-10">
-          <SectionHeading>Limitations</SectionHeading>
+          <SectionHeading>Limitations and Data Freshness</SectionHeading>
           <div className="border border-dl-border">
             {m.limitations.map((lim, i) => (
               <div
@@ -525,6 +528,33 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
           </div>
         </div>
       )}
+
+      <div className="mb-10">
+        <SectionHeading>Data Provenance</SectionHeading>
+        <div className="border border-dl-border">
+          <div className="grid grid-cols-2 px-6 py-3 bg-dl-bg border-b border-dl-border">
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Source</p>
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Reference</p>
+          </div>
+          {[
+            { source: 'On-chain balances', ref: 'Alchemy RPC — Arbitrum One' },
+            { source: 'Spot price reference', ref: 'CoinGecko API (mark-to-market)' },
+            { source: 'Contract registry', ref: 'lib/contracts/ — verified addresses' },
+            { source: 'Snapshot reference', ref: m ? `${m.snapshotId !== 'none' ? m.snapshotId.slice(0, 12) : '—'}` : '—' },
+            { source: 'Integrity checksum', ref: m?.checksum || '—' },
+          ].map((row, i) => (
+            <div key={row.source} className={`grid grid-cols-2 px-6 py-3 ${i < 4 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
+              <p className="text-sm text-dl-navy">{row.source}</p>
+              <p className="text-sm font-dl-mono text-dl-gray">{row.ref}</p>
+            </div>
+          ))}
+        </div>
+        <div className="border border-dl-border border-t-0 px-6 py-3 bg-dl-bg-alt">
+          <p className="text-xs text-dl-gray leading-relaxed font-dl-mono">
+            Auditability: All displayed figures are derived from deterministic computations applied to checksummed reconciliation snapshots. Each metric is traceable to its source snapshot ID and reproducible from the underlying input data.
+          </p>
+        </div>
+      </div>
     </>
   );
 
@@ -770,7 +800,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       <div className="border border-dl-border">
         <div className="px-6 py-4 bg-dl-bg border-b border-dl-border">
           <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">What these metrics mean</p>
-          <p className="text-sm text-dl-gray leading-relaxed">RS is a composite score (0–1) measuring the protocol stress environment. PM scales protective thresholds nonlinearly. PF determines the stability-weighted distribution capacity. All computations are deterministic and reproducible from input data.</p>
+          <p className="text-sm text-dl-gray leading-relaxed">Regime Score (RS) is a composite measure (0.0–1.0) quantifying the protocol stress environment from volatility, drawdown, flow imbalance, and liquidity compression signals. Policy Multiplier (PM) scales protective thresholds nonlinearly based on RS. Payout Factor (PF) determines the stability-weighted distribution capacity. All computations are deterministic and reproducible from input snapshot data.</p>
         </div>
         <div className="px-6 py-4 bg-dl-bg-alt border-b border-dl-border">
           <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">How to interpret RS and PM</p>
@@ -785,12 +815,12 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
           <p className="text-sm text-dl-gray leading-relaxed">In CRISIS regime (RS ≥ 0.75), payout factor is forced to zero. All discretionary distributions are frozen. Crisis lockdown procedures activate. This state requires governance intervention to resolve.</p>
         </div>
         <div className="px-6 py-4 bg-dl-bg border-b border-dl-border">
-          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Limitations</p>
-          <p className="text-sm text-dl-gray leading-relaxed">AME operates on snapshot data which may lag real-time conditions. Realized volatility and drawdown estimates are proxies. The model assumes deterministic linear or clamped nonlinear transforms and does not capture tail correlations.</p>
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Model limitations and data freshness</p>
+          <p className="text-sm text-dl-gray leading-relaxed">AME operates on reconciliation snapshot data subject to temporal variance relative to real-time conditions. Realized volatility and drawdown inputs are proxy estimates. The model applies deterministic linear and clamped nonlinear transforms; it does not capture tail correlations, contagion effects, or non-linear cross-asset dependencies. External price feed references may introduce mark-to-market variance and rounding.</p>
         </div>
         <div className="px-6 py-4 bg-dl-bg-alt border-b border-dl-border">
-          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Update cadence</p>
-          <p className="text-sm text-dl-gray leading-relaxed">AME evaluations are produced periodically by protocol administration. Each evaluation creates immutable audit artifacts. Historical evaluations are retained indefinitely.</p>
+          <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Reconciliation and disclosure cadence</p>
+          <p className="text-sm text-dl-gray leading-relaxed">AME evaluations are produced on a controlled reconciliation cycle by protocol administration. Each evaluation creates immutable, checksummed audit artifacts with full input lineage. Historical evaluations are retained indefinitely for auditability and regulatory reference.</p>
         </div>
         <div className="px-6 py-4 bg-dl-bg">
           <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Data sources and integrity</p>
@@ -894,21 +924,22 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       {renderMetricsGrid()}
 
       <div className="mb-10">
-        <SectionHeading>Purpose and scope</SectionHeading>
+        <SectionHeading>Disclosure Purpose and Scope</SectionHeading>
         <div className="border border-dl-border p-6 bg-dl-bg-alt">
           <p className="text-sm text-dl-gray leading-relaxed mb-4">
-            This page exists to provide transparent, verifiable financial health data for the Axiom Protocol.
-            It is designed for participants, prospective participants, and any interested party who requires
-            visibility into the capital adequacy and reserve posture of the protocol.
+            This page provides transparent, verifiable financial health data for the Axiom Protocol.
+            It is designed for participants, prospective allocators, counterparties, and any interested party
+            requiring visibility into the capital adequacy and reserve posture of the protocol.
           </p>
           <p className="text-sm text-dl-gray leading-relaxed mb-4">
-            All data presented here is derived from periodic administrative snapshots. Each snapshot captures
-            the state of protocol capital at a specific point in time and includes a cryptographic checksum
-            for independent verification.
+            All data is derived from controlled reconciliation snapshots produced on a defined disclosure cycle.
+            Each snapshot captures the state of protocol capital at a specific point in time and includes a
+            cryptographic checksum (SHA-256 truncated digest) for independent verification.
           </p>
           <p className="text-sm text-dl-gray leading-relaxed">
-            The scope of this disclosure covers treasury balances, reserve designations, liability obligations,
-            capital adequacy ratios, stabilization policy status, and the composition of protocol-controlled assets.
+            The scope of this disclosure covers treasury capital, reserve designations, liability obligations,
+            capital adequacy ratios, stabilization policy status, the composition of protocol-governed assets,
+            and adaptive risk metrics produced by the Adaptive Metrics Engine (AME).
           </p>
         </div>
       </div>
@@ -929,7 +960,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       </div>
 
       <div className="mb-10">
-        <SectionHeading>Stabilization policy</SectionHeading>
+        <SectionHeading>Stabilization Policy Framework</SectionHeading>
         <div className="border border-dl-border p-6 bg-dl-bg-alt mb-4">
           <p className="text-sm text-dl-gray leading-relaxed">
             The protocol operates under a tiered stabilization policy that adjusts operational posture
@@ -952,7 +983,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       </div>
 
       <div className="mb-10">
-        <SectionHeading>Data integrity</SectionHeading>
+        <SectionHeading>Data Integrity and Verification</SectionHeading>
         <div className="border border-dl-border p-6 bg-dl-bg-alt">
           <p className="text-sm text-dl-gray leading-relaxed mb-4">
             Every solvency snapshot is assigned a unique identifier and a cryptographic checksum
@@ -978,7 +1009,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       {renderAmeHistory()}
 
       <div className="mb-10">
-        <SectionHeading>How to read this page</SectionHeading>
+        <SectionHeading>Reading Guide</SectionHeading>
         <div className="border border-dl-border p-6 bg-dl-bg-alt">
           <p className="text-sm text-dl-gray leading-relaxed mb-4">
             This page is designed for transparency. Here is a brief guide for readers who may not
@@ -1021,7 +1052,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       </div>
 
       <div className="mb-10">
-        <SectionHeading>Frequently asked questions</SectionHeading>
+        <SectionHeading>Frequently Asked Questions</SectionHeading>
         <div className="border border-dl-border">
           {FAQ_ITEMS.map((faq, i) => (
             <div
@@ -1048,7 +1079,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       </div>
 
       <div className="mb-10">
-        <SectionHeading>Verification and reporting</SectionHeading>
+        <SectionHeading>Verification and Reporting Procedures</SectionHeading>
         <div className="border border-dl-border p-6 bg-dl-bg-alt">
           <p className="text-sm text-dl-gray leading-relaxed mb-4">
             To verify any data on this page, locate the snapshot identifier and checksum displayed
@@ -1068,12 +1099,13 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       </div>
 
       <div className="mb-10">
-        <SectionHeading>Disclosure</SectionHeading>
+        <SectionHeading>General Disclosure</SectionHeading>
         <div className="border border-dl-border p-6 bg-dl-bg-alt">
           <p className="text-sm text-dl-gray leading-relaxed mb-3">
             The information presented on this page is provided for informational and transparency purposes only.
             Nothing on this page constitutes financial, legal, tax, or investment advice. All figures are
-            derived from periodic administrative snapshots and may not reflect real-time balances.
+            derived from controlled reconciliation snapshots subject to temporal variance and may not reflect
+            real-time balances. External price feed references may introduce mark-to-market variance and rounding.
           </p>
           <p className="text-sm text-dl-gray leading-relaxed">
             Participation in the Axiom Protocol carries material risk, including the potential for total loss
@@ -1089,20 +1121,36 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
   return (
     <DesignLawLayout>
       <Head>
-        <title>Solvency and Reserve Transparency — Axiom Protocol</title>
-        <meta name="description" content="Verifiable solvency data, reserve transparency, and capital health metrics for the Axiom Protocol." />
+        <title>Solvency and Reserve Transparency — Axiom Protocol | Institutional Disclosure</title>
+        <meta name="description" content="Institutional-grade solvency disclosure, reserve transparency, capital adequacy metrics, and risk posture reporting for the Axiom Protocol. Verifiable, checksummed, and deterministic." />
       </Head>
 
       <div className="border-b border-dl-border pb-8 mb-10">
-        <p className="text-xs text-dl-gray uppercase tracking-widest mb-4 font-dl-mono">Protocol Health</p>
+        <div className="flex items-center gap-4 mb-4">
+          <p className="text-xs text-dl-gray uppercase tracking-widest font-dl-mono">Protocol Health</p>
+          <span className="px-3 py-1 border border-dl-border text-xs font-dl-mono uppercase tracking-wider text-dl-gray bg-dl-bg-alt">
+            {m?.policyMode === 'NORMAL' ? 'OPERATIONAL' : m?.policyMode === 'BOOTSTRAP' || !m?.policyMode ? 'CONTROL VALIDATION WINDOW' : m.policyMode}
+          </span>
+        </div>
         <h1 className="font-dl-serif text-3xl md:text-4xl text-dl-navy leading-tight mb-4">
           Solvency and Reserve Transparency
         </h1>
         <p className="text-sm text-dl-gray max-w-3xl leading-relaxed">
           This page provides verifiable visibility into the financial health of the Axiom Protocol.
-          All figures are derived from administrative snapshots and reflect capital positions,
-          reserve adequacy, and stabilization policy status at the time of the most recent data capture.
+          All figures are derived from controlled reconciliation snapshots and reflect capital positions,
+          reserve adequacy, and stabilization policy status at the time of the most recent disclosure cycle.
         </p>
+      </div>
+
+      <div className="border border-dl-border p-6 mb-10 bg-dl-bg-alt">
+        <p className="font-dl-serif text-sm text-dl-navy font-medium mb-3">Interpretation Guidance</p>
+        <ul className="space-y-2">
+          <li className="text-sm text-dl-gray leading-relaxed">— This dashboard is a transparency and risk posture disclosure tool. It is not performance marketing and should not be interpreted as a solicitation.</li>
+          <li className="text-sm text-dl-gray leading-relaxed">— Early-stage and bootstrap capital levels do not invalidate the control design. The stabilization framework is active regardless of absolute capital scale.</li>
+          <li className="text-sm text-dl-gray leading-relaxed">— The capital waterfall describes the structural priority of loss absorption. It is not a guarantee of recovery or a commitment to maintain specific capital levels.</li>
+          <li className="text-sm text-dl-gray leading-relaxed">— Key metrics: Coverage Ratio (CR) measures total capital adequacy. Reserve Ratio (RR) measures segregated reserve depth. Loss Buffer Ratio (LBR) measures first-loss capacity. Liquidity Depth (LD) measures instantaneous redemption capacity. Regime Band classifies the stress environment.</li>
+          <li className="text-sm text-dl-gray leading-relaxed">— All figures are subject to reconciliation latency. The data freshness window is indicated by the snapshot timestamp and reference ID below.</li>
+        </ul>
       </div>
 
       {m && (
@@ -1170,11 +1218,13 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       {viewMode === 'clearinghouse' && renderClearinghouseView()}
       {viewMode === 'regulatory' && renderRegulatoryView()}
 
-      <DisclosureBlock
-        label="Full Risk Disclosure"
-        text="RISK DISCLOSURE: This page provides informational transparency data only. It does not constitute an offer, solicitation, or recommendation to participate in any protocol activity. All solvency data is derived from periodic administrative snapshots and may not reflect real-time conditions. Reserve ratios, coverage ratios, and capital positions are subject to change. The protocol stabilization policy operates on a best-efforts basis and does not guarantee any particular outcome. Participation in the Axiom Protocol involves material risk including, but not limited to, total loss of contributed capital. The loss buffer and reserve designations are structural mechanisms and do not constitute insurance, guarantees, or warranties of any kind. Past performance, reserve adequacy, and historical coverage ratios are not indicative of future results. Multi-party authorization controls reduce but do not eliminate operational risk. Automated control layers are subject to technical risk including software defects and settlement environment disruptions. Participants are solely responsible for their own due diligence and should consult qualified legal, financial, and tax advisors. Axiom Protocol does not provide investment advice."
-        defaultOpen={false}
-      />
+      <div className="border-t-2 border-dl-navy pt-8 mt-12">
+        <DisclosureBlock
+          label="Full Risk Disclosure — Material Risks and Limitations"
+          text="RISK DISCLOSURE: This page provides informational transparency data only. It does not constitute an offer, solicitation, or recommendation to participate in any protocol activity. All solvency data is derived from controlled reconciliation snapshots subject to temporal variance and may not reflect real-time conditions. Reserve ratios, coverage ratios, and capital positions are subject to change between disclosure cycles. External price feed references may introduce mark-to-market variance and rounding. The protocol stabilization policy operates on a best-efforts basis and does not guarantee any particular outcome. Participation in the Axiom Protocol involves material risk including, but not limited to, total loss of contributed capital. The loss buffer and reserve designations are structural mechanisms and do not constitute insurance, guarantees, or warranties of any kind. Past performance, reserve adequacy, and historical coverage ratios are not indicative of future results. Multi-party authorization controls reduce but do not eliminate operational risk. Automated control layers are subject to technical risk including software defects and settlement environment disruptions. The Adaptive Metrics Engine (AME) produces deterministic computations from snapshot inputs; model outputs are projections subject to the limitations of input data quality and model assumptions. Participants are solely responsible for their own due diligence and should consult qualified legal, financial, and tax advisors. Axiom Protocol does not provide investment advice."
+          defaultOpen={false}
+        />
+      </div>
     </DesignLawLayout>
   );
 }
