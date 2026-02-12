@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { GetServerSideProps } from 'next';
+import dynamic from 'next/dynamic';
 import { DesignLawLayout, SectionHeading, DetailGrid, DisclosureBlock } from '../components/design-law';
+
+const HistoryChart = dynamic(() => import('../components/solvency/HistoryChart'), { ssr: false });
 
 interface CompositionItem {
   label: string;
@@ -131,10 +134,21 @@ const FAQ_ITEMS = [
   },
 ];
 
+const VIEW_DESCRIPTIONS: Record<string, string> = {
+  allocator: 'Capital adequacy metrics, asset composition, and loss absorption structure for institutional capital allocation decisions.',
+  clearinghouse: 'Counterparty risk assessment, AXUSD stability modeling, stress test scenarios, and historical solvency tracking.',
+  regulatory: 'Full disclosure documentation, compliance definitions, audit verification procedures, and risk reporting framework.',
+};
+
 export default function SolvencyPage({ metrics }: SolvencyPageProps) {
+  const [viewMode, setViewMode] = useState<'allocator' | 'clearinghouse' | 'regulatory'>('allocator');
   const [faqOpen, setFaqOpen] = useState<Record<number, boolean>>({});
   const [refreshing, setRefreshing] = useState(false);
   const [liveMetrics, setLiveMetrics] = useState<SolvencyMetrics | null>(metrics);
+  const [axusdStability, setAxusdStability] = useState<any>(null);
+  const [stressResults, setStressResults] = useState<any[]>([]);
+  const [stressLoading, setStressLoading] = useState(false);
+  const [historyData, setHistoryData] = useState<any[]>([]);
 
   const m = liveMetrics;
 
@@ -145,7 +159,6 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       const data = await res.json();
       setLiveMetrics(data);
     } catch {
-      // silent fail — keep existing data
     } finally {
       setRefreshing(false);
     }
@@ -165,56 +178,47 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
     }
   };
 
-  return (
-    <DesignLawLayout>
-      <Head>
-        <title>Solvency and Reserve Transparency — Axiom Protocol</title>
-        <meta name="description" content="Verifiable solvency data, reserve transparency, and capital health metrics for the Axiom Protocol." />
-      </Head>
+  const stabilityScoreColor = (score: string): string => {
+    switch (score) {
+      case 'STRONG': return 'text-dl-forest';
+      case 'ADEQUATE': return 'text-dl-navy';
+      case 'WEAK': return 'text-dl-gold';
+      case 'CRITICAL': return 'text-dl-error';
+      default: return 'text-dl-gray';
+    }
+  };
 
-      <div className="border-b border-dl-border pb-8 mb-10">
-        <p className="text-xs text-dl-gray uppercase tracking-widest mb-4 font-dl-mono">Protocol Health</p>
-        <h1 className="font-dl-serif text-3xl md:text-4xl text-dl-navy leading-tight mb-4">
-          Solvency and Reserve Transparency
-        </h1>
-        <p className="text-sm text-dl-gray max-w-3xl leading-relaxed">
-          This page provides verifiable visibility into the financial health of the Axiom Protocol.
-          All figures are derived from administrative snapshots and reflect capital positions,
-          reserve adequacy, and stabilization policy status at the time of the most recent data capture.
-        </p>
-      </div>
+  useEffect(() => {
+    if (viewMode !== 'clearinghouse') return;
+    fetch('/api/solvency/latest')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.axusdStability) setAxusdStability(data.axusdStability);
+      })
+      .catch(() => {});
+    fetch('/api/solvency/history?limit=30')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.points) setHistoryData(data.points);
+      })
+      .catch(() => {});
+  }, [viewMode]);
 
-      {m && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border border-dl-border p-4 mb-8 bg-dl-bg-alt">
-          <div>
-            <p className="text-xs text-dl-gray mb-1">Data as of</p>
-            <p className="font-dl-mono text-sm text-dl-navy">{fmtTimestamp(m.asOfUtc)}</p>
-            <p className="font-dl-mono text-xs text-dl-gray mt-1">
-              Snapshot: {m.snapshotId !== 'none' ? m.snapshotId.slice(0, 12) : 'none'} — Checksum: {m.checksum}
-            </p>
-          </div>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="mt-3 sm:mt-0 px-4 py-2 border border-dl-border bg-dl-bg text-xs font-dl-mono text-dl-navy"
-          >
-            {refreshing ? 'Refreshing...' : 'Refresh data'}
-          </button>
-        </div>
-      )}
+  const runStressScenarios = async () => {
+    setStressLoading(true);
+    try {
+      const res = await fetch('/api/solvency/scenario', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const data = await res.json();
+      if (data.results) setStressResults(data.results);
+    } catch {
+    } finally {
+      setStressLoading(false);
+    }
+  };
 
-      {m && m.dataStatus === 'empty' && (
-        <div className="border border-dl-border p-6 mb-8 bg-dl-bg-alt">
-          <p className="font-dl-serif text-lg text-dl-navy mb-2">No snapshot recorded</p>
-          <p className="text-sm text-dl-gray leading-relaxed">
-            The protocol has not yet recorded a solvency snapshot. This typically occurs during the initial
-            bootstrap phase. Once the first administrative snapshot is ingested, all metrics will populate
-            with verifiable data. Current policy mode is BOOTSTRAP and all values are informational placeholders.
-          </p>
-        </div>
-      )}
-
-      {m && m.dataStatus !== 'empty' && (
+  const renderMetricsGrid = () => {
+    if (m && m.dataStatus !== 'empty') {
+      return (
         <div className="mb-10">
           <SectionHeading>Live metrics</SectionHeading>
           <DetailGrid
@@ -232,9 +236,10 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
             ]}
           />
         </div>
-      )}
-
-      {m && m.dataStatus === 'empty' && (
+      );
+    }
+    if (m && m.dataStatus === 'empty') {
+      return (
         <div className="mb-10">
           <SectionHeading>Live metrics</SectionHeading>
           <DetailGrid
@@ -252,17 +257,184 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
             ]}
           />
         </div>
-      )}
+      );
+    }
+    return null;
+  };
 
-      {!m && (
-        <div className="border border-dl-border p-6 mb-8 bg-dl-bg-alt">
-          <p className="font-dl-serif text-lg text-dl-navy mb-2">Data unavailable</p>
-          <p className="text-sm text-dl-gray leading-relaxed">
-            Unable to retrieve solvency metrics at this time. Please try refreshing the page.
-            If the issue persists, the data service may be temporarily unavailable.
-          </p>
+  const renderAllocatorView = () => (
+    <>
+      {renderMetricsGrid()}
+
+      {m && m.composition && m.composition.length > 0 && (
+        <div className="mb-10">
+          <SectionHeading>Composition</SectionHeading>
+          <div className="border border-dl-border">
+            <div className="grid grid-cols-3 px-6 py-3 bg-dl-bg border-b border-dl-border">
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Asset</p>
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Value (USD)</p>
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Allocation</p>
+            </div>
+            {m.composition.map((item, i) => (
+              <div
+                key={item.label}
+                className={`grid grid-cols-3 px-6 py-3 ${i < m.composition.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}
+              >
+                <p className="text-sm text-dl-navy">{item.label}</p>
+                <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtUsd(item.valueUsd)}</p>
+                <p className="text-sm font-dl-mono text-dl-navy text-right">{item.pct.toFixed(2)}%</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
+
+      <div className="mb-10">
+        <SectionHeading>Capital waterfall</SectionHeading>
+        <div className="border border-dl-border p-6 bg-dl-bg-alt mb-4">
+          <p className="text-sm text-dl-gray leading-relaxed">
+            In the event of a capital shortfall, losses are absorbed in a defined sequence.
+            This waterfall structure ensures that dedicated buffers and reserves are consumed
+            before participant capital is exposed to loss. The order below reflects the
+            priority of loss absorption from first to last.
+          </p>
+        </div>
+        <div className="border border-dl-border">
+          {WATERFALL_STEPS.map((step, i) => (
+            <div
+              key={step.order}
+              className={`flex items-start gap-4 px-6 py-4 ${i < WATERFALL_STEPS.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}
+            >
+              <span className="font-dl-mono text-lg text-dl-navy font-semibold w-8 flex-shrink-0">{step.order}</span>
+              <div>
+                <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">{step.label}</p>
+                <p className="text-sm text-dl-gray leading-relaxed">{step.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {m && m.sources && m.sources.length > 0 && (
+        <div className="mb-10">
+          <SectionHeading>Sources</SectionHeading>
+          <div className="border border-dl-border">
+            {m.sources.map((src, i) => (
+              <div
+                key={i}
+                className={`flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 px-6 py-3 ${i < m.sources.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}
+              >
+                <p className="text-sm font-dl-mono text-dl-navy font-medium w-40 flex-shrink-0">{src.label}</p>
+                <p className="text-sm text-dl-gray">{src.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {m && m.limitations && m.limitations.length > 0 && (
+        <div className="mb-10">
+          <SectionHeading>Limitations</SectionHeading>
+          <div className="border border-dl-border">
+            {m.limitations.map((lim, i) => (
+              <div
+                key={i}
+                className={`px-6 py-3 ${i < m.limitations.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}
+              >
+                <p className="text-sm text-dl-gray leading-relaxed">— {lim}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  const renderClearinghouseView = () => (
+    <>
+      {renderMetricsGrid()}
+
+      <div className="mb-10">
+        <SectionHeading>AXUSD Stability Assessment</SectionHeading>
+        {axusdStability ? (
+          <DetailGrid
+            left={[
+              { label: 'Total Supply', value: fmtUsd(axusdStability.totalSupply), mono: true },
+              { label: 'PSM Reserves', value: fmtUsd(axusdStability.psmReserves), mono: true },
+              { label: 'Backing Ratio', value: fmtRatio(axusdStability.backingRatio), mono: true },
+            ]}
+            right={[
+              { label: 'Peg Deviation', value: fmtRatio(axusdStability.pegDeviation), mono: true },
+              { label: 'Redemption Capacity', value: fmtUsd(axusdStability.redemptionCapacity), mono: true },
+              { label: 'Stability Score', value: <span className={stabilityScoreColor(axusdStability.stabilityScore)}>{axusdStability.stabilityScore}</span>, mono: true },
+            ]}
+          />
+        ) : (
+          <div className="border border-dl-border p-6 bg-dl-bg-alt">
+            <p className="text-sm text-dl-gray">Loading stability assessment data...</p>
+          </div>
+        )}
+      </div>
+
+      <div className="mb-10">
+        <SectionHeading>Stress Test Scenarios</SectionHeading>
+        <div className="border border-dl-border p-6 bg-dl-bg-alt mb-4">
+          <p className="text-sm text-dl-gray leading-relaxed">
+            Deterministic stress scenarios model the impact of adverse conditions on protocol solvency metrics. Each scenario applies defined drawdowns to treasury, reserves, and liabilities to project resulting capital adequacy.
+          </p>
+        </div>
+        <div className="mb-4">
+          <button
+            onClick={runStressScenarios}
+            disabled={stressLoading}
+            className="px-4 py-2 border border-dl-border bg-dl-bg text-xs font-dl-mono text-dl-navy"
+          >
+            {stressLoading ? 'Running scenarios...' : 'Run All Scenarios'}
+          </button>
+        </div>
+        {stressResults.length > 0 && (
+          <div className="border border-dl-border">
+            <div className="grid grid-cols-5 px-6 py-3 bg-dl-bg border-b border-dl-border">
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Scenario</p>
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Coverage Ratio</p>
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Reserve Ratio</p>
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Policy Mode</p>
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Threshold Breach</p>
+            </div>
+            {stressResults.map((result, i) => (
+              <div
+                key={result.scenario?.id || i}
+                className={`grid grid-cols-5 px-6 py-3 ${i < stressResults.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}
+              >
+                <p className="text-sm text-dl-navy">{result.scenario?.label || 'Unknown'}</p>
+                <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtRatio(result.adjustedCoverageRatio)}</p>
+                <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtRatio(result.adjustedReserveRatio)}</p>
+                <p className={`text-sm font-dl-mono text-right ${policyColor(result.resultingPolicyMode)}`}>{result.resultingPolicyMode}</p>
+                <p className={`text-sm font-dl-mono text-right ${result.breachesThreshold ? 'text-dl-error' : 'text-dl-forest'}`}>
+                  {result.breachesThreshold ? 'YES' : 'NO'}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="mb-10">
+        <SectionHeading>Historical Coverage</SectionHeading>
+        {historyData.length > 0 ? (
+          <HistoryChart data={historyData} />
+        ) : (
+          <div className="border border-dl-border p-6 bg-dl-bg-alt">
+            <p className="text-sm text-dl-gray">No historical data available.</p>
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  const renderRegulatoryView = () => (
+    <>
+      {renderMetricsGrid()}
 
       <div className="mb-10">
         <SectionHeading>Purpose and scope</SectionHeading>
@@ -294,32 +466,6 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
             >
               <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">{d.term}</p>
               <p className="text-sm text-dl-gray leading-relaxed">{d.definition}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mb-10">
-        <SectionHeading>Capital waterfall</SectionHeading>
-        <div className="border border-dl-border p-6 bg-dl-bg-alt mb-4">
-          <p className="text-sm text-dl-gray leading-relaxed">
-            In the event of a capital shortfall, losses are absorbed in a defined sequence.
-            This waterfall structure ensures that dedicated buffers and reserves are consumed
-            before participant capital is exposed to loss. The order below reflects the
-            priority of loss absorption from first to last.
-          </p>
-        </div>
-        <div className="border border-dl-border">
-          {WATERFALL_STEPS.map((step, i) => (
-            <div
-              key={step.order}
-              className={`flex items-start gap-4 px-6 py-4 ${i < WATERFALL_STEPS.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}
-            >
-              <span className="font-dl-mono text-lg text-dl-navy font-semibold w-8 flex-shrink-0">{step.order}</span>
-              <div>
-                <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">{step.label}</p>
-                <p className="text-sm text-dl-gray leading-relaxed">{step.description}</p>
-              </div>
             </div>
           ))}
         </div>
@@ -369,62 +515,6 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
           </p>
         </div>
       </div>
-
-      {m && m.composition && m.composition.length > 0 && (
-        <div className="mb-10">
-          <SectionHeading>Composition</SectionHeading>
-          <div className="border border-dl-border">
-            <div className="grid grid-cols-3 px-6 py-3 bg-dl-bg border-b border-dl-border">
-              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Asset</p>
-              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Value (USD)</p>
-              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Allocation</p>
-            </div>
-            {m.composition.map((item, i) => (
-              <div
-                key={item.label}
-                className={`grid grid-cols-3 px-6 py-3 ${i < m.composition.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}
-              >
-                <p className="text-sm text-dl-navy">{item.label}</p>
-                <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtUsd(item.valueUsd)}</p>
-                <p className="text-sm font-dl-mono text-dl-navy text-right">{item.pct.toFixed(2)}%</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {m && m.sources && m.sources.length > 0 && (
-        <div className="mb-10">
-          <SectionHeading>Sources</SectionHeading>
-          <div className="border border-dl-border">
-            {m.sources.map((src, i) => (
-              <div
-                key={i}
-                className={`flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 px-6 py-3 ${i < m.sources.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}
-              >
-                <p className="text-sm font-dl-mono text-dl-navy font-medium w-40 flex-shrink-0">{src.label}</p>
-                <p className="text-sm text-dl-gray">{src.detail}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {m && m.limitations && m.limitations.length > 0 && (
-        <div className="mb-10">
-          <SectionHeading>Limitations</SectionHeading>
-          <div className="border border-dl-border">
-            {m.limitations.map((lim, i) => (
-              <div
-                key={i}
-                className={`px-6 py-3 ${i < m.limitations.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}
-              >
-                <p className="text-sm text-dl-gray leading-relaxed">— {lim}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="mb-10">
         <SectionHeading>How to read this page</SectionHeading>
@@ -532,6 +622,90 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
           </p>
         </div>
       </div>
+    </>
+  );
+
+  return (
+    <DesignLawLayout>
+      <Head>
+        <title>Solvency and Reserve Transparency — Axiom Protocol</title>
+        <meta name="description" content="Verifiable solvency data, reserve transparency, and capital health metrics for the Axiom Protocol." />
+      </Head>
+
+      <div className="border-b border-dl-border pb-8 mb-10">
+        <p className="text-xs text-dl-gray uppercase tracking-widest mb-4 font-dl-mono">Protocol Health</p>
+        <h1 className="font-dl-serif text-3xl md:text-4xl text-dl-navy leading-tight mb-4">
+          Solvency and Reserve Transparency
+        </h1>
+        <p className="text-sm text-dl-gray max-w-3xl leading-relaxed">
+          This page provides verifiable visibility into the financial health of the Axiom Protocol.
+          All figures are derived from administrative snapshots and reflect capital positions,
+          reserve adequacy, and stabilization policy status at the time of the most recent data capture.
+        </p>
+      </div>
+
+      {m && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border border-dl-border p-4 mb-8 bg-dl-bg-alt">
+          <div>
+            <p className="text-xs text-dl-gray mb-1">Data as of</p>
+            <p className="font-dl-mono text-sm text-dl-navy">{fmtTimestamp(m.asOfUtc)}</p>
+            <p className="font-dl-mono text-xs text-dl-gray mt-1">
+              Snapshot: {m.snapshotId !== 'none' ? m.snapshotId.slice(0, 12) : 'none'} — Checksum: {m.checksum}
+            </p>
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="mt-3 sm:mt-0 px-4 py-2 border border-dl-border bg-dl-bg text-xs font-dl-mono text-dl-navy"
+          >
+            {refreshing ? 'Refreshing...' : 'Refresh data'}
+          </button>
+        </div>
+      )}
+
+      {m && m.dataStatus === 'empty' && (
+        <div className="border border-dl-border p-6 mb-8 bg-dl-bg-alt">
+          <p className="font-dl-serif text-lg text-dl-navy mb-2">No snapshot recorded</p>
+          <p className="text-sm text-dl-gray leading-relaxed">
+            The protocol has not yet recorded a solvency snapshot. This typically occurs during the initial
+            bootstrap phase. Once the first administrative snapshot is ingested, all metrics will populate
+            with verifiable data. Current policy mode is BOOTSTRAP and all values are informational placeholders.
+          </p>
+        </div>
+      )}
+
+      {!m && (
+        <div className="border border-dl-border p-6 mb-8 bg-dl-bg-alt">
+          <p className="font-dl-serif text-lg text-dl-navy mb-2">Data unavailable</p>
+          <p className="text-sm text-dl-gray leading-relaxed">
+            Unable to retrieve solvency metrics at this time. Please try refreshing the page.
+            If the issue persists, the data service may be temporarily unavailable.
+          </p>
+        </div>
+      )}
+
+      <div className="mb-8">
+        <div className="flex border border-dl-border">
+          {(['allocator', 'clearinghouse', 'regulatory'] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={`flex-1 px-4 py-3 text-xs font-dl-mono uppercase tracking-wider border-r border-dl-border last:border-r-0 ${
+                viewMode === mode
+                  ? 'bg-dl-navy text-white'
+                  : 'bg-dl-bg text-dl-navy'
+              }`}
+            >
+              {mode === 'allocator' ? 'Allocator' : mode === 'clearinghouse' ? 'Clearinghouse' : 'Regulatory'}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-dl-gray mt-3 leading-relaxed">{VIEW_DESCRIPTIONS[viewMode]}</p>
+      </div>
+
+      {viewMode === 'allocator' && renderAllocatorView()}
+      {viewMode === 'clearinghouse' && renderClearinghouseView()}
+      {viewMode === 'regulatory' && renderRegulatoryView()}
 
       <DisclosureBlock
         label="Full Risk Disclosure"

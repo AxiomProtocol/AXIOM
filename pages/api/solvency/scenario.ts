@@ -124,19 +124,23 @@ export default async function handler(
     }
 
     try {
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS scenario_runs (
-          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
-          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-          snapshot_id VARCHAR NOT NULL,
-          scenario_id VARCHAR,
-          results_json JSONB NOT NULL
-        )
-      `);
-      await pool.query(
-        `INSERT INTO scenario_runs (id, snapshot_id, scenario_id, results_json) VALUES (gen_random_uuid(), $1, $2, $3::jsonb)`,
-        [snapshot.id, scenarioId || customScenario ? 'custom' : 'all', JSON.stringify(results)]
-      );
+      for (const r of results) {
+        const sid = r.scenario?.id || (scenarioId ? scenarioId : customScenario ? 'custom' : 'all');
+        const slabel = r.scenario?.label || sid;
+        await pool.query(
+          `INSERT INTO scenario_runs (id, snapshot_id, scenario_id, scenario_label, input_json, result_json, resulting_policy_mode, breaches_threshold)
+           VALUES (gen_random_uuid(), $1, $2, $3, $4::jsonb, $5::jsonb, $6, $7)`,
+          [
+            snapshot.id,
+            sid,
+            slabel,
+            JSON.stringify(r.scenario || {}),
+            JSON.stringify(r),
+            r.resultingPolicyMode || 'UNKNOWN',
+            r.breachesThreshold || false,
+          ]
+        );
+      }
     } catch {
     }
 
