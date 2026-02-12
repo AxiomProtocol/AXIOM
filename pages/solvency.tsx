@@ -59,7 +59,7 @@ function fmtTimestamp(iso: string): string {
 const DEFINITIONS = [
   { term: 'Treasury', definition: 'The total pool of protocol-controlled capital, including liquid holdings, locked positions, and operational reserves. Treasury represents the full balance sheet of assets under protocol governance.' },
   { term: 'Reserves', definition: 'Capital specifically designated to backstop obligations. Reserves are a subset of the treasury, earmarked under stabilization policy to meet liabilities and absorb potential losses.' },
-  { term: 'Liabilities', definition: 'Outstanding obligations owed by the protocol to participants, including redeemable instrument balances, pending settlements, and accrued commitments.' },
+  { term: 'AXUSD Issued', definition: 'The total supply of AXUSD stablecoin tokens minted by the protocol. This figure represents all AXUSD currently in circulation on Arbitrum One. As the protocol matures, issued AXUSD held by external participants constitutes redeemable obligations.' },
   { term: 'Loss Buffer', definition: 'A dedicated capital cushion that absorbs losses before reserves are impacted. The loss buffer serves as the first line of defense in the capital waterfall.' },
   { term: 'Coverage Ratio', definition: 'The ratio of total available capital (treasury plus reserves) to total liabilities. A coverage ratio above 1.0 indicates that the protocol holds more assets than it owes.' },
   { term: 'Reserve Ratio', definition: 'The ratio of designated reserves to total liabilities. This metric indicates the proportion of obligations directly backed by earmarked reserve capital.' },
@@ -222,7 +222,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
               { label: 'Treasury Total', value: fmtUsd(m.treasuryTotalUsd), mono: true },
               { label: 'Treasury Liquid', value: fmtUsd(m.treasuryLiquidUsd), mono: true },
               { label: 'Reserves Total', value: fmtUsd(m.reservesTotalUsd), mono: true },
-              { label: 'Liabilities Total', value: fmtUsd(m.liabilitiesTotalUsd), mono: true },
+              { label: 'AXUSD Issued', value: fmtUsd(m.liabilitiesTotalUsd), mono: true },
             ]}
             right={[
               { label: 'Reserve Ratio', value: fmtRatio(m.reserveRatio), mono: true },
@@ -242,7 +242,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
               { label: 'Treasury Total', value: fmtUsd(0), mono: true },
               { label: 'Treasury Liquid', value: fmtUsd(0), mono: true },
               { label: 'Reserves Total', value: fmtUsd(0), mono: true },
-              { label: 'Liabilities Total', value: fmtUsd(0), mono: true },
+              { label: 'AXUSD Issued', value: fmtUsd(0), mono: true },
             ]}
             right={[
               { label: 'Reserve Ratio', value: '0.00%', mono: true },
