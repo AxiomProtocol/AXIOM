@@ -18,6 +18,18 @@ export default async function handler(
   }
 
   try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS solvency_snapshots (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        as_of_utc TIMESTAMP NOT NULL,
+        payload_json JSONB NOT NULL,
+        checksum TEXT NOT NULL,
+        notes TEXT
+      );
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS solvency_snap_created_idx ON solvency_snapshots(created_at);`);
+
     const { payloadJson, notes, asOfUtc } = req.body;
 
     if (!payloadJson || typeof payloadJson !== 'object') {

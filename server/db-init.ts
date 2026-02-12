@@ -66,6 +66,18 @@ export async function initializeDatabase() {
       );
     `);
 
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS solvency_snapshots (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        as_of_utc TIMESTAMP NOT NULL,
+        payload_json JSONB NOT NULL,
+        checksum TEXT NOT NULL,
+        notes TEXT
+      );
+    `);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS solvency_snap_created_idx ON solvency_snapshots(created_at);`);
+
     console.log('✅ Database initialized successfully');
     return true;
   } catch (error) {
