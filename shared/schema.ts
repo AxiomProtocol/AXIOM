@@ -8852,3 +8852,37 @@ export const solvencySnapshots = pgTable("solvency_snapshots", {
 
 export type SolvencySnapshot = typeof solvencySnapshots.$inferSelect;
 export type InsertSolvencySnapshot = typeof solvencySnapshots.$inferInsert;
+
+export const scenarioRuns = pgTable("scenario_runs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  snapshotId: varchar("snapshot_id").notNull(),
+  scenarioId: varchar("scenario_id").notNull(),
+  scenarioLabel: varchar("scenario_label").notNull(),
+  inputJson: jsonb("input_json").notNull(),
+  resultJson: jsonb("result_json").notNull(),
+  resultingPolicyMode: varchar("resulting_policy_mode").notNull(),
+  breachesThreshold: boolean("breaches_threshold").notNull().default(false),
+}, (table) => ({
+  snapshotIdx: index("scenario_runs_snapshot_idx").on(table.snapshotId),
+  createdIdx: index("scenario_runs_created_idx").on(table.createdAt),
+}));
+
+export type ScenarioRun = typeof scenarioRuns.$inferSelect;
+export type InsertScenarioRun = typeof scenarioRuns.$inferInsert;
+
+export const disclosureEvents = pgTable("disclosure_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  eventType: varchar("event_type").notNull(),
+  severity: varchar("severity").notNull().default("info"),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  typeIdx: index("disclosure_events_type_idx").on(table.eventType),
+  createdIdx: index("disclosure_events_created_idx").on(table.createdAt),
+}));
+
+export type DisclosureEvent = typeof disclosureEvents.$inferSelect;
+export type InsertDisclosureEvent = typeof disclosureEvents.$inferInsert;
