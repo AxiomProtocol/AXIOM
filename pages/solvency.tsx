@@ -193,6 +193,8 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
   const [ameHistory, setAmeHistory] = useState<any[]>([]);
   const [ameHistoryPage, setAmeHistoryPage] = useState(1);
   const [liabilityMode, setLiabilityMode] = useState<'GROSS' | 'NET'>('GROSS');
+  const [psmOps, setPsmOps] = useState<any[]>([]);
+  const [psmOpsLoading, setPsmOpsLoading] = useState(false);
 
   const m = liveMetrics;
 
@@ -202,6 +204,21 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       .then(data => { setAmeData(data); setAmeLoading(false); })
       .catch(() => setAmeLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (viewMode !== 'allocator') return;
+    setPsmOpsLoading(true);
+    fetch('/api/founder-ops/log')
+      .then(res => res.json())
+      .then(data => {
+        if (data.entries) {
+          const psm = data.entries.filter((e: any) => e.product === 'PSM' || (e.category || '').includes('PSM'));
+          setPsmOps(psm);
+        }
+        setPsmOpsLoading(false);
+      })
+      .catch(() => setPsmOpsLoading(false));
+  }, [viewMode]);
 
   useEffect(() => {
     if (viewMode !== 'regulatory') return;
@@ -534,6 +551,128 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
     </div>
   );
 
+  const classifyPsmOp = (op: any): 'MINT' | 'REDEEM' | 'OP' => {
+    const t = ((op.title || '') + ' ' + (op.description || '')).toLowerCase();
+    if (t.includes('mint')) return 'MINT';
+    if (t.includes('redeem')) return 'REDEEM';
+    return 'OP';
+  };
+
+  const classifyEcosystem = (op: any): string => {
+    const t = ((op.title || '') + ' ' + (op.description || '')).toLowerCase();
+    if (t.includes('euler') || t.includes('original')) return 'Euler';
+    return 'Primary';
+  };
+
+  const renderPsmActivityLog = () => {
+    const sortedOps = [...psmOps].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const totalMinted = sortedOps.filter(op => classifyPsmOp(op) === 'MINT').reduce((sum: number, op: any) => sum + (parseFloat(op.amount) || 0), 0);
+    const totalRedeemed = sortedOps.filter(op => classifyPsmOp(op) === 'REDEEM').reduce((sum: number, op: any) => sum + (parseFloat(op.amount) || 0), 0);
+    const netCapitalDeployed = totalMinted - totalRedeemed;
+
+    return (
+      <div className="mb-10">
+        <SectionHeading>PSM Activity Log — On-Chain Verified</SectionHeading>
+        <div className="border border-dl-border p-6 bg-dl-bg-alt mb-4">
+          <p className="text-sm text-dl-gray leading-relaxed">
+            Every PSM mint and redemption is verified against the Arbitrum One blockchain before recording.
+            Transaction hashes link directly to on-chain confirmation. This log provides a complete audit trail
+            of all capital flows through the Peg Stability Module.
+          </p>
+        </div>
+
+        {psmOpsLoading ? (
+          <div className="border border-dl-border p-6 bg-dl-bg">
+            <p className="text-sm text-dl-gray font-dl-mono">Loading activity log...</p>
+          </div>
+        ) : sortedOps.length === 0 ? (
+          <div className="border border-dl-border p-6 bg-dl-bg">
+            <p className="text-sm text-dl-gray font-dl-mono">No PSM operations recorded yet.</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-0 mb-4">
+              <div className="border border-dl-border p-4 bg-dl-bg">
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-1">Total Operations</p>
+                <p className="text-lg font-dl-mono text-dl-navy font-semibold">{sortedOps.length}</p>
+              </div>
+              <div className="border border-dl-border border-l-0 p-4 bg-dl-bg">
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-1">Total Minted (USDC In)</p>
+                <p className="text-lg font-dl-mono text-dl-forest font-semibold">{fmtUsd(totalMinted)}</p>
+              </div>
+              <div className="border border-dl-border border-l-0 p-4 bg-dl-bg">
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-1">Total Redeemed (AXUSD Out)</p>
+                <p className="text-lg font-dl-mono text-dl-navy font-semibold">{fmtUsd(totalRedeemed)}</p>
+              </div>
+            </div>
+
+            <div className="border border-dl-border p-4 bg-dl-bg mb-4">
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-1">Net Capital Deployed via PSM</p>
+              <p className="text-lg font-dl-mono text-dl-navy font-semibold">{fmtUsd(netCapitalDeployed)}</p>
+            </div>
+
+            <div className="border border-dl-border">
+              <div className="grid grid-cols-12 px-6 py-3 bg-dl-bg border-b border-dl-border">
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono col-span-2">Date</p>
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono col-span-1">Type</p>
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono col-span-2 text-right">Amount</p>
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono col-span-2">Ecosystem</p>
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono col-span-4">Transaction Hash</p>
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono col-span-1 text-right">Status</p>
+              </div>
+              {sortedOps.map((op, i) => {
+                const opType = classifyPsmOp(op);
+                const isMint = opType === 'MINT';
+                const ecosystem = classifyEcosystem(op);
+                const txHash = op.tx_hash || '';
+                const shortHash = txHash ? `${txHash.slice(0, 10)}...${txHash.slice(-8)}` : '—';
+                const arbiscanUrl = txHash ? `https://arbiscan.io/tx/${txHash}` : '';
+                const dateStr = op.created_at ? new Date(op.created_at).toISOString().split('T')[0] : '—';
+                const timeStr = op.created_at ? new Date(op.created_at).toISOString().split('T')[1]?.replace(/\.\d+Z$/, '') : '';
+
+                return (
+                  <div
+                    key={op.id || i}
+                    className={`grid grid-cols-12 px-6 py-3 ${i < sortedOps.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}
+                  >
+                    <div className="col-span-2">
+                      <p className="text-sm font-dl-mono text-dl-navy">{dateStr}</p>
+                      <p className="text-xs font-dl-mono text-dl-gray">{timeStr} UTC</p>
+                    </div>
+                    <div className="col-span-1">
+                      <span className={`text-xs font-dl-mono font-semibold px-2 py-1 border ${isMint ? 'text-dl-forest border-dl-forest' : 'text-dl-navy border-dl-navy'}`}>
+                        {opType}
+                      </span>
+                    </div>
+                    <p className="text-sm font-dl-mono text-dl-navy col-span-2 text-right">
+                      {fmtUsd(parseFloat(op.amount) || 0)}
+                    </p>
+                    <p className="text-sm font-dl-mono text-dl-navy col-span-2">{ecosystem}</p>
+                    <div className="col-span-4">
+                      {arbiscanUrl ? (
+                        <a href={arbiscanUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-dl-mono text-dl-link underline break-all">
+                          {shortHash}
+                        </a>
+                      ) : (
+                        <p className="text-sm font-dl-mono text-dl-gray">—</p>
+                      )}
+                    </div>
+                    <p className="text-xs font-dl-mono text-dl-forest col-span-1 text-right uppercase">{op.status || '—'}</p>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="border border-dl-border border-t-0 px-6 py-4 bg-dl-bg-alt">
+              <p className="text-xs text-dl-gray leading-relaxed font-dl-mono">
+                All transactions are verified against Arbitrum One before recording. Each entry is immutable once logged. Transaction hashes link to Arbiscan for independent verification.
+              </p>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
   const renderAllocatorView = () => (
     <>
       {renderMetricsGrid()}
@@ -563,6 +702,8 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
           </div>
         </div>
       )}
+
+      {renderPsmActivityLog()}
 
       <div className="mb-10">
         <SectionHeading>Capital Waterfall — Loss Absorption Priority</SectionHeading>
