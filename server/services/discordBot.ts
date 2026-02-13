@@ -1062,6 +1062,289 @@ export async function cleanupDuplicateCategories(guildId: string): Promise<{ suc
   }
 }
 
+const CATEGORY_ICONS: Record<string, string> = {
+  'AXIOM PROTOCOL': '🔷',
+  'COMMUNITY': '💬',
+  'DEFI OPERATIONS': '⚙️',
+  'SOLVENCY & RISK': '🛡️',
+  'GOVERNANCE': '⚖️',
+  'INSTITUTIONAL': '🏛️'
+};
+
+const CHANNEL_CONTENT: Record<string, { title: string; description: string; color: number; fields?: { name: string; value: string; inline?: boolean }[] }> = {
+  'welcome': {
+    title: 'Welcome to Axiom Protocol',
+    description: 'This is the official Discord of Axiom Protocol — DeFi infrastructure on Arbitrum One.\n\nAxiom Protocol operates 72 verified smart contracts covering governance, treasury, stablecoin issuance, lending markets, and solvency transparency. The protocol is non-custodial and community-governed.\n\nThis server is for protocol participants, observers, and anyone interested in transparent DeFi infrastructure.',
+    color: 0x1B3A4B,
+    fields: [
+      { name: 'Getting Started', value: '1. Head to #get-roles and select your role\n2. Read #protocol-overview for protocol context\n3. Follow #announcements for updates\n4. Ask questions in #questions', inline: false },
+      { name: 'Key Links', value: '• App: axiomprotocol.app\n• Solvency Console: axiomprotocol.app/solvency\n• Arbiscan: All 72 contracts verified on-chain\n• Chain: Arbitrum One (42161)', inline: false }
+    ]
+  },
+  'announcements': {
+    title: 'Protocol Announcements',
+    description: 'Official protocol updates, milestone completions, and operational notices.\n\nThis channel is reserved for verified protocol communications. All announcements reference on-chain transactions or verifiable protocol state changes.\n\nNo speculation. No marketing. Disclosure standard maintained.',
+    color: 0x1B3A4B,
+    fields: [
+      { name: 'Current Phase', value: 'Week 1-2: PSM stress testing and bootstrap-phase validation at $100/week capital allocation.', inline: false },
+      { name: 'Protocol Status', value: '72 verified contracts deployed on Arbitrum One. AXUSD peg active via dual PSM architecture. Euler V2 lending markets in observation window through March 26, 2026.', inline: false }
+    ]
+  },
+  'protocol-overview': {
+    title: 'Axiom Protocol — Overview',
+    description: 'Axiom Protocol is DeFi infrastructure on Arbitrum One. It is not a fund, not a yield platform, and not an investment vehicle. It is a set of smart contracts that enable community-governed financial operations.',
+    color: 0x1B3A4B,
+    fields: [
+      { name: 'Core Components', value: '• **AXM** — Governance and fee-routing token\n• **AXUSD** — Stablecoin pegged 1:1 to USDC via PSM\n• **Peg Stability Module** — Dual architecture (Primary + Euler)\n• **Euler V2 Vault** — Permissionless AXUSD lending market\n• **Revenue Router** — 90% LP / 10% protocol treasury split\n• **Solvency Console** — Three-mode institutional disclosure', inline: false },
+      { name: 'Smart Contract Count', value: '72 verified contracts on Arbitrum One covering identity, treasury, staking, emissions, asset registries, PSM, governance, and lending.', inline: false },
+      { name: 'Observation Window', value: 'Euler V2 Vault observation period runs through March 26, 2026. This validates vault behavior before broader external adoption.', inline: false },
+      { name: 'Critical Rule: DO NOT MIX', value: 'PRIMARY AXUSD and EULER AXUSD are separate ecosystems. Never deposit Primary AXUSD into Euler vaults. Never report Euler AXUSD metrics as public supply.', inline: false }
+    ]
+  },
+  'general-chat': {
+    title: 'General Discussion',
+    description: 'Open discussion for the Axiom community.\n\nThis is a space for protocol-related conversation, observations, and community interaction. Keep it constructive.\n\nFor specific protocol questions, use #questions.\nFor market observations or feedback, use #observations.',
+    color: 0x2D5016,
+    fields: [
+      { name: 'Guidelines', value: '• Stay on-topic: DeFi, protocol operations, Arbitrum ecosystem\n• No financial advice or investment solicitation\n• No marketing language — this is an institutional-grade server\n• Respect the disclosure standard', inline: false }
+    ]
+  },
+  'introductions': {
+    title: 'Introductions',
+    description: 'Introduce yourself to the Axiom Protocol community.\n\nShare your background, what brought you here, and what aspects of the protocol interest you. This helps build a transparent community of informed participants.',
+    color: 0x2D5016,
+    fields: [
+      { name: 'Suggested Format', value: '• Background (DeFi experience, professional context)\n• How you found Axiom Protocol\n• What you are most interested in (governance, lending, solvency, infrastructure)\n• Observer / participant / builder intent', inline: false }
+    ]
+  },
+  'questions': {
+    title: 'Questions',
+    description: 'Ask anything about Axiom Protocol, AXUSD, the PSM, lending markets, solvency metrics, or DeFi concepts.\n\nThere are no uninformed questions here. If you do not understand something, ask. The protocol bot also responds to /faq commands with common topics.',
+    color: 0x2D5016,
+    fields: [
+      { name: 'Bot Commands', value: 'Use `/faq` to see answers on common topics:\n• What is Axiom Protocol?\n• What is AXUSD?\n• How does the PSM work?\n• How is solvency measured?\n• What is the AME?\n• Euler V2 Vault explained', inline: false }
+    ]
+  },
+  'observations': {
+    title: 'Observations',
+    description: 'Share market observations, protocol feedback, and analytical insights.\n\nThis channel is for data-informed commentary. If you notice something about peg behavior, liquidity conditions, on-chain activity, or protocol metrics — post it here.',
+    color: 0x2D5016,
+    fields: [
+      { name: 'What belongs here', value: '• On-chain observations (transactions, pool state changes)\n• Peg deviation observations\n• Liquidity condition commentary\n• Competitor protocol comparisons (factual)\n• Feedback on protocol tools and dashboards', inline: false }
+    ]
+  },
+  'axusd-peg-stability': {
+    title: 'AXUSD Peg Stability',
+    description: 'Tracking AXUSD peg performance, PSM mint/redeem operations, and stability metrics.\n\nAXUSD is pegged 1:1 to USDC through the Peg Stability Module. Both mint and redeem operations carry a 10 basis point fee.',
+    color: 0x3B82F6,
+    fields: [
+      { name: 'Dual PSM Architecture', value: '• **Primary PSM (GENIUS)** — Main public-facing PSM for AXUSD supply\n• **Euler PSM (Original)** — Isolated PSM for Euler V2 lending market\n• These ecosystems MUST NOT be mixed', inline: false },
+      { name: 'Monitoring', value: 'Use `/psm` for current PSM status. The Founder Ops dashboard provides real-time mint/redeem execution.', inline: false }
+    ]
+  },
+  'dex-liquidity': {
+    title: 'DEX Liquidity',
+    description: 'Camelot DEX pool monitoring, LP position tracking, and trading activity observation.\n\nLiquidity is critical protocol infrastructure. This channel tracks pool depth, volume, and LP behavior across Axiom trading pairs on Camelot.',
+    color: 0x3B82F6,
+    fields: [
+      { name: 'Active Pools', value: 'AXM/USDC and related pairs on Camelot DEX V2 (Arbitrum One). Revenue split: 90% to LPs, 10% to protocol.', inline: false },
+      { name: 'Commands', value: 'Use `/stats` for community metrics and protocol statistics.', inline: false }
+    ]
+  },
+  'euler-vault': {
+    title: 'Euler V2 AXUSD Lending Market',
+    description: 'Observation window monitoring for the Euler V2 permissionless lending market.\n\nThe observation period runs through March 26, 2026. During this window, vault behavior is monitored, metrics collected, and stability validated before broader external adoption.',
+    color: 0x3B82F6,
+    fields: [
+      { name: 'Vault Parameters', value: '• Deposit asset: AXUSD\n• Collateral: eUSDC (90% LTV), eWETH (80% LTV)\n• Fee split: 90% LP / 10% protocol\n• Status: Observation mode', inline: false },
+      { name: 'Critical Rule', value: 'Euler AXUSD is a separate ecosystem from Primary AXUSD. DO NOT MIX. Never deposit Primary AXUSD into the Euler vault.', inline: false },
+      { name: 'Commands', value: 'Use `/vault` for current vault status and `/faq euler-vault` for detailed explanation.', inline: false }
+    ]
+  },
+  'treasury-ops': {
+    title: 'Treasury Operations',
+    description: 'Protocol treasury operations, revenue routing, and capital allocation tracking.\n\nAll treasury operations are on-chain and verifiable. The revenue router distributes protocol income according to the 90/10 split.',
+    color: 0x3B82F6,
+    fields: [
+      { name: 'Current Allocation', value: 'Bootstrap phase: $100/week operational budget. Capital deployed across PSM reserves, DEX liquidity, and Euler vault positions.', inline: false },
+      { name: 'Transparency', value: 'All treasury movements are logged on-chain. The solvency console at axiomprotocol.app/solvency provides real-time reserve composition.', inline: false }
+    ]
+  },
+  'solvency-reports': {
+    title: 'Solvency Reports',
+    description: 'Coverage ratios, reserve transparency, and Adaptive Metrics Engine evaluations.\n\nThe solvency system provides three disclosure modes: Allocator (capital adequacy), Clearinghouse (AXUSD stability and stress tests), and Regulatory (compliance and methodology).',
+    color: 0x8B7355,
+    fields: [
+      { name: 'Key Metrics', value: '• **Coverage Ratio (CR)** — Total assets / total liabilities\n• **Reserve Ratio (RR)** — Liquid reserves / outstanding AXUSD\n• **Liquidity Buffer Ratio (LBR)** — Immediately redeemable / short-term obligations\n• **Leverage Distance (LD)** — Distance from maximum leverage threshold', inline: false },
+      { name: 'AME Integration', value: 'The Adaptive Metrics Engine adjusts target thresholds based on regime scoring. Higher regime scores (more stress) trigger more conservative targets.', inline: false },
+      { name: 'Commands', value: 'Use `/solvency` for current solvency status. Full console at axiomprotocol.app/solvency.', inline: false }
+    ]
+  },
+  'risk-disclosure': {
+    title: 'Risk Disclosure',
+    description: 'Protocol risk factors, stress scenario results, and hard brake trigger status.\n\nAxiom Protocol maintains full risk transparency. This channel documents known risks, stress test outcomes, and defensive mechanism status.',
+    color: 0x8B7355,
+    fields: [
+      { name: 'Hard Brake Triggers', value: '• **CRISIS_LOCKDOWN** — Activated when Regime Score > 0.85\n• **FREEZE_DISTRIBUTIONS** — Activated when Coverage Ratio < 0.5\n• **LIQUIDITY_DEFENSE** — Activated when Leverage Distance < 0.1\n• **REDIRECT_FLOWS** — Activated when Reserve Ratio < 0.3', inline: false },
+      { name: 'Stress Scenarios', value: '5 predefined scenarios: Market Correction, Liquidity Crisis, Black Swan, Stablecoin Depeg, Governance Attack. Results available in the solvency console Clearinghouse view.', inline: false },
+      { name: 'Disclaimer', value: 'This protocol is in bootstrap phase. All metrics should be evaluated in context of current scale ($100/week allocation). Past stability does not guarantee future performance.', inline: false }
+    ]
+  },
+  'sentinel-alerts': {
+    title: 'Axiom Sentinel Alerts',
+    description: 'Authorization events, circuit breaker status, and capital decision audit trail from Axiom Sentinel.\n\nSentinel is the unified capital decision and risk authorization layer across all Axiom products. It converts market intelligence signals into authorized capital actions with cryptographic audit trails.',
+    color: 0x8B7355,
+    fields: [
+      { name: 'Core Engines', value: '• RegimeEngine — Market regime classification\n• ConfidenceCalibrator — Signal confidence scoring\n• ConfirmationEngine — Multi-signal confirmation\n• PortfolioEngine — Position sizing and allocation\n• AuthorizationService — Capital action gating\n• AuditLogger — Append-only hash chain audit', inline: false },
+      { name: 'Alert Types', value: 'Regime transitions, circuit breaker activations, authorization grants/denials, and hard brake triggers will be posted here as they occur.', inline: false }
+    ]
+  },
+  'proposals': {
+    title: 'Governance Proposals',
+    description: 'Protocol governance proposals, parameter changes, and community voting.\n\nAXM token holders participate in protocol governance. This channel tracks active and historical proposals.',
+    color: 0x6B21A8,
+    fields: [
+      { name: 'Governance Framework', value: 'Community-governed protocol with AXM as the governance token. Proposals cover protocol parameters, treasury allocation, contract upgrades, and policy changes.', inline: false },
+      { name: 'Current Status', value: 'Bootstrap phase — governance framework being established alongside 52-week operational validation.', inline: false }
+    ]
+  },
+  'smart-contracts': {
+    title: 'Smart Contract Registry',
+    description: '72 verified smart contracts deployed on Arbitrum One.\n\nAll contracts are verified on Arbiscan and readable by anyone. This channel serves as the discussion space for contract architecture, upgrades, and on-chain verification.',
+    color: 0x6B21A8,
+    fields: [
+      { name: 'Contract Categories', value: '• Identity and access control\n• Treasury and revenue routing\n• Staking and emissions\n• Asset registries\n• PSM (Primary + Euler)\n• Governance\n• Lending infrastructure (Euler V2)', inline: false },
+      { name: 'Verification', value: 'Use `/faq contracts` for contract count details. All source code is verified on Arbiscan.', inline: false }
+    ]
+  },
+  'audit-log': {
+    title: 'Audit Log',
+    description: 'On-chain transaction notifications and protocol event logging.\n\nThis channel provides a chronological record of significant protocol events, contract interactions, and governance actions. All entries reference verifiable on-chain data.',
+    color: 0x6B21A8,
+    fields: [
+      { name: 'Event Types', value: '• PSM mint/redeem operations\n• Treasury movements\n• Contract deployments and upgrades\n• Governance proposal state changes\n• Sentinel authorization events\n• Hard brake activations', inline: false }
+    ]
+  },
+  'data-room': {
+    title: 'Institutional Data Room',
+    description: 'Due diligence documents, audit reports, and protocol disclosures for institutional observers.\n\nThis channel provides the documentation necessary for professional capital allocators conducting due diligence on Axiom Protocol.',
+    color: 0x14B8A6,
+    fields: [
+      { name: 'Available Documentation', value: '• Solvency Console: axiomprotocol.app/solvency (3-mode disclosure)\n• Smart Contract Registry: 72 verified contracts on Arbiscan\n• AME Methodology: Deterministic computation documentation\n• Stress Test Results: 5 predefined scenarios with full outputs\n• Reserve Composition: Real-time on-chain verification', inline: false },
+      { name: 'Access Level', value: 'Institutional Observer role holders receive notifications for new disclosures and data room updates.', inline: false }
+    ]
+  },
+  'office-hours': {
+    title: 'Office Hours',
+    description: 'Scheduled sessions for allocators, auditors, and institutional participants.\n\nOpen Q&A sessions where protocol contributors address questions about architecture, solvency methodology, risk management, and operational procedures.',
+    color: 0x14B8A6,
+    fields: [
+      { name: 'Format', value: 'Text-based Q&A sessions. Questions submitted in advance or live. All responses reference verifiable protocol state.', inline: false },
+      { name: 'Scheduling', value: 'Office hours schedule will be posted as community grows. Institutional Observer role holders will be notified of upcoming sessions.', inline: false }
+    ]
+  },
+  'compliance': {
+    title: 'Compliance & Regulatory Disclosure',
+    description: 'Regulatory disclosures, observation window status, and legal framework documentation.\n\nAxiom Protocol maintains transparent regulatory positioning. This channel documents compliance status, regulatory classifications, and legal disclaimers.',
+    color: 0x14B8A6,
+    fields: [
+      { name: 'Protocol Classification', value: 'Axiom Protocol is a set of non-custodial smart contracts on Arbitrum One. Users interact directly with on-chain contracts. The protocol does not custody user funds.', inline: false },
+      { name: 'Observation Window', value: 'Euler V2 Vault observation period: Active through March 26, 2026. This is a monitoring and validation exercise, not an invitation to invest.', inline: false },
+      { name: 'Disclaimer', value: 'This protocol is experimental software in bootstrap phase. Participation carries risk of total loss. Nothing in this server constitutes financial advice or an offer of securities.', inline: false }
+    ]
+  }
+};
+
+export async function addCategoryIcons(guildId: string): Promise<{ success: boolean; message: string; updated: string[] }> {
+  const discordClient = await getDiscordClient();
+  if (!discordClient) {
+    return { success: false, message: 'Discord bot not initialized', updated: [] };
+  }
+
+  try {
+    const guild = await discordClient.guilds.fetch(guildId);
+    const channels = await guild.channels.fetch();
+    const updated: string[] = [];
+
+    for (const [, channel] of channels) {
+      if (!channel || channel.type !== ChannelType.GuildCategory) continue;
+
+      const iconValues = Object.values(CATEGORY_ICONS);
+      let baseName = channel.name;
+      for (const ic of iconValues) {
+        if (baseName.startsWith(ic)) {
+          baseName = baseName.slice(ic.length).trim();
+          break;
+        }
+      }
+      const icon = CATEGORY_ICONS[baseName];
+
+      if (icon) {
+        const newName = `${icon} ${baseName}`;
+        if (channel.name !== newName) {
+          await channel.setName(newName);
+          updated.push(`${baseName} → ${newName}`);
+        }
+      }
+    }
+
+    return { success: true, message: `Updated ${updated.length} category icons`, updated };
+  } catch (error: any) {
+    console.error('Error adding category icons:', error);
+    return { success: false, message: error.message, updated: [] };
+  }
+}
+
+export async function postChannelContent(guildId: string): Promise<{ success: boolean; message: string; posted: string[]; failed: string[] }> {
+  const discordClient = await getDiscordClient();
+  if (!discordClient) {
+    return { success: false, message: 'Discord bot not initialized', posted: [], failed: [] };
+  }
+
+  try {
+    const guild = await discordClient.guilds.fetch(guildId);
+    const channels = await guild.channels.fetch();
+    const posted: string[] = [];
+    const failed: string[] = [];
+
+    for (const [channelName, content] of Object.entries(CHANNEL_CONTENT)) {
+      const channel = channels.find(
+        ch => ch?.name === channelName && ch?.type === ChannelType.GuildText
+      ) as TextChannel | undefined;
+
+      if (!channel) {
+        failed.push(`#${channelName} (not found)`);
+        continue;
+      }
+
+      const embed = new EmbedBuilder()
+        .setColor(content.color)
+        .setTitle(content.title)
+        .setDescription(content.description)
+        .setFooter({ text: 'Axiom Protocol — On-chain infrastructure and disclosure' })
+        .setTimestamp();
+
+      if (content.fields) {
+        for (const field of content.fields) {
+          embed.addFields({ name: field.name, value: field.value, inline: field.inline ?? false });
+        }
+      }
+
+      try {
+        await channel.send({ embeds: [embed] });
+        posted.push(`#${channelName}`);
+      } catch (err: any) {
+        failed.push(`#${channelName} (${err.message})`);
+      }
+    }
+
+    return { success: true, message: `Posted content to ${posted.length} channels`, posted, failed };
+  } catch (error: any) {
+    console.error('Error posting channel content:', error);
+    return { success: false, message: error.message, posted: [], failed: [] };
+  }
+}
+
 export async function reorderCategories(guildId: string): Promise<{ success: boolean; message: string; order: string[] }> {
   const discordClient = await getDiscordClient();
   if (!discordClient) {
@@ -1080,7 +1363,15 @@ export async function reorderCategories(guildId: string): Promise<{ success: boo
     for (const [, category] of categories) {
       if (!category) continue;
       
-      const orderIndex = categoryOrder.indexOf(category.name);
+      let catName = category.name;
+      const iconVals = Object.values(CATEGORY_ICONS);
+      for (const ic of iconVals) {
+        if (catName.startsWith(ic)) {
+          catName = catName.slice(ic.length).trim();
+          break;
+        }
+      }
+      const orderIndex = categoryOrder.indexOf(catName);
       if (orderIndex !== -1) {
         positionUpdates.push({ channel: category.id, position: orderIndex });
       }
