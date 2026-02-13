@@ -1,21 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-
-interface WalletState {
-  address: string | null;
-  chainId: number | null;
-  isConnected: boolean;
-  balance: string;
-  axmBalance: string;
-}
-
-const defaultWalletState: WalletState = {
-  address: null,
-  chainId: null,
-  isConnected: false,
-  balance: '0',
-  axmBalance: '0',
-};
+import { useWallet } from '../WalletConnect/WalletContext';
 
 function ModalPortal({ children }: { children: React.ReactNode }) {
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
@@ -45,128 +30,49 @@ interface ConnectWalletButtonProps {
 }
 
 export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletButtonProps) {
-  const [walletState, setWalletState] = useState<WalletState>(defaultWalletState);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const { walletState, siweState, isConnecting, error: contextError, connectMetaMask, connectInjected, disconnect } = useWallet();
   const [mounted, setMounted] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
   const connectInProgressRef = useRef(false);
-  const siweAttemptedRef = useRef(false);
 
   useEffect(() => {
     setMounted(true);
-    if (typeof window === 'undefined') return;
-
-    let unsubscribe: (() => void) | undefined;
-
-    const initWallet = async () => {
-      try {
-        const { walletService } = await import('../../lib/services/WalletService');
-        setWalletState(walletService.getState() as WalletState);
-        unsubscribe = walletService.subscribe((state: any) => {
-          if (!connectInProgressRef.current) {
-            setWalletState(state as WalletState);
-          }
-        });
-
-        const { siweService } = await import('../../lib/services/SIWEService');
-        const session = await siweService.getSession(true);
-        setIsAuthenticated(session.authenticated);
-      } catch (err) {
-        console.error('Failed to initialize custody account service:', err);
-      }
-    };
-
-    initWallet();
-    return () => { if (unsubscribe) unsubscribe(); };
   }, []);
 
-  const handleConnect = async (type: 'metamask' | 'injected') => {
-    if (typeof window === 'undefined') return;
-    if (connectInProgressRef.current) {
-      console.log('⚠️ Connect already in progress, ignoring duplicate call');
-      return;
+  useEffect(() => {
+    if (walletState.isConnected && walletState.address && showModal) {
+      setShowModal(false);
+      if (onConnect) onConnect(walletState.address);
     }
+  }, [walletState.isConnected, walletState.address]);
 
+  const handleConnect = async (type: 'metamask' | 'injected') => {
+    if (connectInProgressRef.current) return;
     connectInProgressRef.current = true;
-    siweAttemptedRef.current = false;
-    setIsConnecting(true);
-    setError(null);
+    setLocalError(null);
 
     try {
-      const { WalletService } = await import('../../lib/services/WalletService');
-      const walletInstance = WalletService.getInstance();
-
-      let connectedAddress: string | null = null;
-
       if (type === 'metamask') {
-        connectedAddress = await walletInstance.connectMetaMask();
+        await connectMetaMask();
       } else {
-        connectedAddress = await walletInstance.connectInjected();
+        await connectInjected();
       }
-
-      console.log('✅ Wallet connected, address:', connectedAddress);
-
-      if (!connectedAddress) {
-        throw new Error('No accounts returned');
-      }
-
-      setWalletState(walletInstance.getState() as WalletState);
-
-      const signer = walletInstance.getSigner();
-      const state = walletInstance.getState();
-
-      if (signer && !siweAttemptedRef.current) {
-        siweAttemptedRef.current = true;
-        try {
-          setIsAuthenticating(true);
-          const { siweService } = await import('../../lib/services/SIWEService');
-          siweService.resetSigningState();
-
-          console.log('📝 Requesting signature...');
-          const result = await siweService.signIn(
-            signer,
-            connectedAddress,
-            state.chainId || 42161
-          );
-
-          console.log('📝 Signature result:', result.success ? 'Success' : result.error);
-
-          if (result.success) {
-            setIsAuthenticated(true);
-          } else {
-            console.error('SIWE sign-in failed:', result.error);
-          }
-        } catch (siweErr: any) {
-          console.error('Authentication error:', siweErr);
-        } finally {
-          setIsAuthenticating(false);
-        }
-      }
-
-      setShowModal(false);
-      if (onConnect) onConnect(connectedAddress);
     } catch (err: any) {
       if (err.code === 4001 || err.message?.includes('rejected')) {
-        setError('Connection declined. Please try again.');
+        setLocalError('Connection declined. Please try again.');
       } else if (err.code === -32002) {
-        setError('Connection pending. Please check your custody provider.');
+        setLocalError('Connection pending. Please check your custody provider.');
       } else {
-        setError(err.message || 'Failed to connect');
+        setLocalError(err.message || 'Failed to connect');
       }
     } finally {
       connectInProgressRef.current = false;
-      setIsConnecting(false);
     }
   };
 
   const handleDisconnect = async () => {
-    if (typeof window === 'undefined') return;
-    const { walletService } = await import('../../lib/services/WalletService');
-    await walletService.disconnect();
-    setIsAuthenticated(false);
+    await disconnect();
     if (onDisconnect) onDisconnect();
   };
 
@@ -179,6 +85,8 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
     if (num < 0.01) return '<0.01';
     return num.toFixed(2);
   };
+
+  const displayError = localError || contextError;
 
   if (!mounted) {
     return (
@@ -198,7 +106,7 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
           <span className="border-l border-dl-border pl-3 flex gap-3">
             <span className="text-xs">
               <span className="text-dl-gray block text-[9px] uppercase">ETH</span>
-              <span className="font-dl-mono text-xs font-semibold text-dl-gold">{formatBalance(walletState.balance)}</span>
+              <span className="font-dl-mono text-xs font-semibold text-dl-gold">{formatBalance(walletState.ethBalance)}</span>
             </span>
             <span className="text-xs">
               <span className="text-dl-gray block text-[9px] uppercase">AXM</span>
@@ -208,7 +116,7 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
           <span className="font-dl-mono text-xs text-dl-navy bg-dl-bg-alt border border-dl-border px-2 py-0.5">
             {formatAddress(walletState.address)}
           </span>
-          {isAuthenticated && (
+          {siweState.isAuthenticated && (
             <span className="text-dl-forest text-xs font-bold" title="Verified">V</span>
           )}
           <button
@@ -229,7 +137,7 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
         disabled={isConnecting}
         className="bg-dl-navy text-white px-5 py-2 text-sm font-medium disabled:opacity-50"
       >
-        {isConnecting ? 'Connecting...' : 'Access Platform'}
+        {isConnecting ? 'Connecting...' : siweState.isAuthenticating ? 'Signing...' : 'Access Platform'}
       </button>
 
       {showModal && mounted && (
@@ -251,9 +159,9 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
                 Connect your custody account to access the Axiom Protocol on Arbitrum One.
               </p>
 
-              {error && (
+              {displayError && (
                 <div className="border border-dl-error bg-red-50 text-dl-error text-xs p-3 mb-4">
-                  {error}
+                  {displayError}
                 </div>
               )}
 

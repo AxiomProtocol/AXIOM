@@ -3,7 +3,7 @@
  * Global wallet state management for React components with SIWE authentication
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
 
 interface WalletState {
   isConnected: boolean;
@@ -66,6 +66,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const autoSiweAttemptedForRef = useRef<string | null>(null);
+  const connectFlowActiveRef = useRef(false);
 
   const checkSIWESession = useCallback(async () => {
     if (typeof window === 'undefined') return;
@@ -130,74 +132,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     initWallet();
   }, [checkSIWESession]);
 
-  // Auto-trigger SIWE when wallet is connected but not authenticated
   useEffect(() => {
-    console.log('🔍 Auto-SIWE check:', {
-      mounted,
-      isConnected: walletState.isConnected,
-      address: walletState.address,
-      isAuthenticated: siweState.isAuthenticated,
-      isAuthenticating: siweState.isAuthenticating,
-      authError: siweState.authError
-    });
-    
-    const triggerSIWE = async () => {
-      if (
-        mounted &&
-        walletState.isConnected && 
-        walletState.address && 
-        !siweState.isAuthenticated && 
-        !siweState.isAuthenticating
-      ) {
-        console.log('🔐 Auto-triggering SIWE for connected wallet:', walletState.address);
-        
-        setSIWEState(prev => ({
-          ...prev,
-          isAuthenticating: true,
-          authError: null
-        }));
-        
-        try {
-          const { siweService } = await import('../../lib/services/SIWEService');
-          
-          // Reset any stale signing state before attempting
-          siweService.resetSigningState();
-          
-          const result = await siweService.signIn(
-            null, // Will use window.ethereum directly
-            walletState.address,
-            walletState.chainId || 42161
-          );
-          
-          console.log('🔐 Auto-SIWE result:', result.success ? 'Success' : result.error);
-          
-          if (result.success) {
-            setSIWEState({
-              isAuthenticated: true,
-              authenticatedAddress: result.address || walletState.address,
-              isAuthenticating: false,
-              authError: null
-            });
-          } else {
-            setSIWEState(prev => ({
-              ...prev,
-              isAuthenticating: false,
-              authError: result.error || 'Authentication failed'
-            }));
-          }
-        } catch (err: any) {
-          console.error('Auto-SIWE error:', err);
-          setSIWEState(prev => ({
-            ...prev,
-            isAuthenticating: false,
-            authError: err.message || 'Signature request failed'
-          }));
-        }
-      }
-    };
-
-    triggerSIWE();
-  }, [mounted, walletState.isConnected, walletState.address, siweState.isAuthenticated, siweState.isAuthenticating, walletState.chainId]);
+    if (!walletState.isConnected || !walletState.address) {
+      autoSiweAttemptedForRef.current = null;
+    }
+  }, [walletState.isConnected, walletState.address]);
 
   const signInWithEthereum = async (): Promise<boolean> => {
     if (typeof window === 'undefined') return false;
@@ -274,152 +213,117 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   };
 
+  const performSIWESignIn = async (walletInstance: any, connectedAddress: string): Promise<void> => {
+    const signer = walletInstance.getSigner();
+    const state = walletInstance.getState();
+
+    if (!signer) {
+      console.error('❌ Signer not available after wallet connection');
+      return;
+    }
+
+    if (autoSiweAttemptedForRef.current === connectedAddress) {
+      console.log('⚠️ SIWE already attempted for this address, skipping');
+      return;
+    }
+
+    autoSiweAttemptedForRef.current = connectedAddress;
+
+    setSIWEState(prev => ({
+      ...prev,
+      isAuthenticating: true,
+      authError: null
+    }));
+
+    try {
+      const { siweService } = await import('../../lib/services/SIWEService');
+      siweService.resetSigningState();
+
+      console.log('📝 Requesting signature...');
+      const result = await siweService.signIn(
+        signer,
+        connectedAddress,
+        state.chainId || 42161
+      );
+
+      console.log('📝 Signature result:', result.success ? 'Success' : result.error);
+
+      if (result.success) {
+        setSIWEState({
+          isAuthenticated: true,
+          authenticatedAddress: result.address || connectedAddress,
+          isAuthenticating: false,
+          authError: null
+        });
+      } else {
+        setSIWEState(prev => ({
+          ...prev,
+          isAuthenticating: false,
+          authError: result.error || 'Authentication failed'
+        }));
+      }
+    } catch (siweErr: any) {
+      console.error('SIWE sign-in error:', siweErr);
+      setSIWEState(prev => ({
+        ...prev,
+        isAuthenticating: false,
+        authError: siweErr.message || 'Signature request failed'
+      }));
+    }
+  };
+
   const connectMetaMask = async () => {
     if (typeof window === 'undefined') return;
-    
+    if (connectFlowActiveRef.current) return;
+
+    connectFlowActiveRef.current = true;
     setIsConnecting(true);
     setError(null);
-    
+
     try {
       const { WalletService } = await import('../../lib/services/WalletService');
       const walletInstance = WalletService.getInstance();
-      
+
       const connectedAddress = await walletInstance.connectMetaMask();
       console.log('✅ Wallet connected, address:', connectedAddress);
-      
+
       if (connectedAddress) {
-        const { siweService } = await import('../../lib/services/SIWEService');
-        const signer = walletInstance.getSigner();
-        const state = walletInstance.getState();
-        
-        console.log('🔐 Starting SIWE sign-in, signer available:', !!signer);
-        
-        if (signer) {
-          setSIWEState(prev => ({
-            ...prev,
-            isAuthenticating: true,
-            authError: null
-          }));
-          
-          try {
-            console.log('📝 Requesting signature...');
-            // Reset any stale signing state before attempting
-            siweService.resetSigningState();
-            
-            const result = await siweService.signIn(
-              signer,
-              connectedAddress,
-              state.chainId || 42161
-            );
-            
-            console.log('📝 Signature result:', result.success ? 'Success' : result.error);
-            
-            if (result.success) {
-              setSIWEState({
-                isAuthenticated: true,
-                authenticatedAddress: result.address || connectedAddress,
-                isAuthenticating: false,
-                authError: null
-              });
-            } else {
-              setSIWEState(prev => ({
-                ...prev,
-                isAuthenticating: false,
-                authError: result.error || 'Authentication failed'
-              }));
-            }
-          } catch (siweErr: any) {
-            console.error('SIWE auto-sign error:', siweErr);
-            setSIWEState(prev => ({
-              ...prev,
-              isAuthenticating: false,
-              authError: siweErr.message || 'Signature request failed'
-            }));
-          }
-        } else {
-          console.error('❌ Signer not available after wallet connection');
-        }
+        await performSIWESignIn(walletInstance, connectedAddress);
       }
     } catch (err: any) {
       console.error('❌ MetaMask connection error:', err);
       setError(err.message || 'Failed to connect MetaMask');
       throw err;
     } finally {
+      connectFlowActiveRef.current = false;
       setIsConnecting(false);
     }
   };
 
   const connectInjected = async () => {
     if (typeof window === 'undefined') return;
-    
+    if (connectFlowActiveRef.current) return;
+
+    connectFlowActiveRef.current = true;
     setIsConnecting(true);
     setError(null);
-    
+
     try {
       const { WalletService } = await import('../../lib/services/WalletService');
       const walletInstance = WalletService.getInstance();
-      
+
       const connectedAddress = await walletInstance.connectInjected();
       console.log('✅ Wallet connected (injected), address:', connectedAddress);
-      
+
       if (connectedAddress) {
-        const { siweService } = await import('../../lib/services/SIWEService');
-        const signer = walletInstance.getSigner();
-        const state = walletInstance.getState();
-        
-        console.log('🔐 Starting SIWE sign-in, signer available:', !!signer);
-        
-        if (signer) {
-          setSIWEState(prev => ({
-            ...prev,
-            isAuthenticating: true,
-            authError: null
-          }));
-          
-          try {
-            console.log('📝 Requesting signature...');
-            // Reset any stale signing state before attempting
-            siweService.resetSigningState();
-            
-            const result = await siweService.signIn(
-              signer,
-              connectedAddress,
-              state.chainId || 42161
-            );
-            
-            console.log('📝 Signature result:', result.success ? 'Success' : result.error);
-            
-            if (result.success) {
-              setSIWEState({
-                isAuthenticated: true,
-                authenticatedAddress: result.address || connectedAddress,
-                isAuthenticating: false,
-                authError: null
-              });
-            } else {
-              setSIWEState(prev => ({
-                ...prev,
-                isAuthenticating: false,
-                authError: result.error || 'Authentication failed'
-              }));
-            }
-          } catch (siweErr: any) {
-            console.error('SIWE auto-sign error:', siweErr);
-            setSIWEState(prev => ({
-              ...prev,
-              isAuthenticating: false,
-              authError: siweErr.message || 'Signature request failed'
-            }));
-          }
-        } else {
-          console.error('❌ Signer not available after wallet connection');
-        }
+        await performSIWESignIn(walletInstance, connectedAddress);
       }
     } catch (err: any) {
       console.error('❌ Injected wallet connection error:', err);
       setError(err.message || 'Failed to connect wallet');
       throw err;
     } finally {
+      connectFlowActiveRef.current = false;
       setIsConnecting(false);
     }
   };
