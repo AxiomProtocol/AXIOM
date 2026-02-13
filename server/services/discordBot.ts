@@ -495,7 +495,7 @@ export async function initializeDiscordBot(): Promise<Client | null> {
           const progressBar = '█'.repeat(Math.floor(progressToNext / 10)) + '░'.repeat(10 - Math.floor(progressToNext / 10));
           
           const progressEmbed = new EmbedBuilder()
-            .setColor(0x8B5CF6)
+            .setColor(0x3B82F6)
             .setTitle(`${interaction.user.username}'s Progress`)
             .setThumbnail(interaction.user.displayAvatarURL({ size: 128 }))
             .addFields(
@@ -625,7 +625,7 @@ export async function initializeDiscordBot(): Promise<Client | null> {
       
       if (levelUpChannel) {
         const levelUpEmbed = new EmbedBuilder()
-          .setColor(0x8B5CF6)
+          .setColor(0x1B3A4B)
           .setTitle('Level Up')
           .setDescription(`**${message.author.username}** reached **Level ${newLevel.level}** - ${newLevel.title}`)
           .setThumbnail(message.author.displayAvatarURL({ size: 64 }))
