@@ -239,6 +239,56 @@ export default function PlaybookPage() {
   const [txStatus, setTxStatus] = useState<{ type: 'idle' | 'pending' | 'success' | 'error'; message: string; txHash?: string }>({ type: 'idle', message: '' });
   const [walletAddr, setWalletAddr] = useState<string | null>(null);
   const [eulerConfirmed, setEulerConfirmed] = useState(false);
+  const [roleStatus, setRoleStatus] = useState<{ primary: { admin: boolean; minter: boolean } | null; euler: { admin: boolean; minter: boolean } | null; checked: boolean }>({ primary: null, euler: null, checked: false });
+  const [roleGranting, setRoleGranting] = useState(false);
+
+  const MINTER_ROLE = '0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6';
+  const ACCESS_CONTROL_ABI = [
+    'function hasRole(bytes32 role, address account) view returns (bool)',
+    'function grantRole(bytes32 role, address account) external',
+  ];
+
+  const checkRoles = useCallback(async (address: string) => {
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const primaryPsm = new ethers.Contract(PRIMARY_PSM, ACCESS_CONTROL_ABI, provider);
+      const eulerPsm = new ethers.Contract(EULER_PSM, ACCESS_CONTROL_ABI, provider);
+      const adminRole = ethers.ZeroHash;
+      const [pAdmin, pMinter, eAdmin, eMinter] = await Promise.all([
+        primaryPsm.hasRole(adminRole, address),
+        primaryPsm.hasRole(MINTER_ROLE, address),
+        eulerPsm.hasRole(adminRole, address),
+        eulerPsm.hasRole(MINTER_ROLE, address),
+      ]);
+      setRoleStatus({
+        primary: { admin: pAdmin, minter: pMinter },
+        euler: { admin: eAdmin, minter: eMinter },
+        checked: true,
+      });
+    } catch {
+      setRoleStatus({ primary: null, euler: null, checked: true });
+    }
+  }, []);
+
+  const grantMinterRole = async (psmAddress: string, label: string) => {
+    if (!window.ethereum) return;
+    setRoleGranting(true);
+    setTxStatus({ type: 'pending', message: `Granting MINTER_ROLE on ${label} PSM — confirm in MetaMask...` });
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const walletAddress = await signer.getAddress();
+      const psm = new ethers.Contract(psmAddress, ACCESS_CONTROL_ABI, signer);
+      const tx = await psm.grantRole(MINTER_ROLE, walletAddress);
+      setTxStatus({ type: 'pending', message: 'Grant submitted. Waiting for confirmation...' });
+      await tx.wait();
+      setTxStatus({ type: 'success', message: `MINTER_ROLE granted on ${label} PSM. You can now mint/redeem.`, txHash: tx.hash });
+      await checkRoles(walletAddress);
+    } catch (err: any) {
+      setTxStatus({ type: 'error', message: err.message || 'Failed to grant role' });
+    }
+    setRoleGranting(false);
+  };
 
   const fetchPsmStatus = useCallback(async () => {
     setPsmLoading(true);
@@ -307,6 +357,7 @@ export default function PlaybookPage() {
       const accounts = await provider.send('eth_requestAccounts', []);
       if (!accounts.length) throw new Error('No accounts found');
       setWalletAddr(accounts[0]);
+      if (!roleStatus.checked) checkRoles(accounts[0]);
 
       const network = await provider.getNetwork();
       if (Number(network.chainId) !== 42161) {
@@ -400,7 +451,17 @@ export default function PlaybookPage() {
       fetchPsmStatus();
       fetchOpsLog();
     } catch (err: any) {
-      setTxStatus({ type: 'error', message: err.message || 'Transaction failed' });
+      const msg = err.message || 'Transaction failed';
+      if (msg.includes('require(false)') || msg.includes('CALL_EXCEPTION')) {
+        const currentEco = ecosystem === 'PRIMARY' ? roleStatus.primary : roleStatus.euler;
+        if (currentEco && !currentEco.minter) {
+          setTxStatus({ type: 'error', message: `Transaction reverted: Your wallet does not have MINTER_ROLE on the ${ecosystem} PSM. Use the "Grant Minter Role" button in the Access Control section above to fix this.` });
+        } else {
+          setTxStatus({ type: 'error', message: `Transaction reverted by the PSM contract. This may indicate a missing role or contract-level restriction. Check the Access Control section above.` });
+        }
+      } else {
+        setTxStatus({ type: 'error', message: msg });
+      }
     }
   };
 
@@ -818,6 +879,90 @@ export default function PlaybookPage() {
                 ))}
               </tbody>
             </table>
+
+            <SectionHeading>PSM Access Control</SectionHeading>
+            <div style={{ border: '1px solid #1B2A4A', padding: '1.5rem', marginBottom: '2rem' }}>
+              {!roleStatus.checked ? (
+                <div>
+                  <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#6B7280', margin: '0 0 1rem' }}>
+                    Connect your wallet to check PSM role assignments.
+                  </p>
+                  <button
+                    onClick={async () => {
+                      if (!window.ethereum) return;
+                      const provider = new ethers.BrowserProvider(window.ethereum);
+                      const accounts = await provider.send('eth_requestAccounts', []);
+                      if (accounts.length) {
+                        setWalletAddr(accounts[0]);
+                        checkRoles(accounts[0]);
+                      }
+                    }}
+                    style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', padding: '0.5rem 1rem', border: '1px solid #1B2A4A', background: '#1B2A4A', color: '#fff', cursor: 'pointer' }}
+                  >
+                    Check Roles
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <table style={{ width: '100%', fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid #1B2A4A' }}>
+                        <th style={{ padding: '0.5rem', textAlign: 'left' }}>PSM</th>
+                        <th style={{ padding: '0.5rem', textAlign: 'center' }}>ADMIN</th>
+                        <th style={{ padding: '0.5rem', textAlign: 'center' }}>MINTER</th>
+                        <th style={{ padding: '0.5rem', textAlign: 'center' }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { label: 'PRIMARY', data: roleStatus.primary, address: PRIMARY_PSM },
+                        { label: 'EULER', data: roleStatus.euler, address: EULER_PSM },
+                      ].map((row) => (
+                        <tr key={row.label} style={{ borderBottom: '1px solid #E5E7EB' }}>
+                          <td style={{ padding: '0.5rem' }}>{row.label}</td>
+                          <td style={{ padding: '0.5rem', textAlign: 'center' }}>
+                            {row.data ? (
+                              <span style={{ color: row.data.admin ? '#2D5F2D' : '#8B0000', fontWeight: 600 }}>
+                                {row.data.admin ? 'YES' : 'NO'}
+                              </span>
+                            ) : '—'}
+                          </td>
+                          <td style={{ padding: '0.5rem', textAlign: 'center' }}>
+                            {row.data ? (
+                              <span style={{ color: row.data.minter ? '#2D5F2D' : '#8B0000', fontWeight: 600 }}>
+                                {row.data.minter ? 'YES' : 'NO'}
+                              </span>
+                            ) : '—'}
+                          </td>
+                          <td style={{ padding: '0.5rem', textAlign: 'center' }}>
+                            {row.data && row.data.admin && !row.data.minter ? (
+                              <button
+                                onClick={() => grantMinterRole(row.address, row.label)}
+                                disabled={roleGranting}
+                                style={{
+                                  fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem', padding: '0.35rem 0.75rem',
+                                  border: '1px solid #8B0000', background: roleGranting ? '#E5E7EB' : '#fff',
+                                  color: roleGranting ? '#6B7280' : '#8B0000', cursor: roleGranting ? 'not-allowed' : 'pointer', fontWeight: 600,
+                                }}
+                              >
+                                Grant Minter Role
+                              </button>
+                            ) : row.data?.minter ? (
+                              <span style={{ color: '#2D5F2D', fontSize: '0.75rem' }}>Ready</span>
+                            ) : (
+                              <span style={{ color: '#6B7280', fontSize: '0.75rem' }}>—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.7rem', color: '#6B7280', margin: 0 }}>
+                    MINTER_ROLE is required to call mint() and redeem() on the PSM contracts. As admin, you can grant this role to your wallet.
+                  </p>
+                </div>
+              )}
+            </div>
 
             <SectionHeading>PSM Mint / Redeem Console</SectionHeading>
             <div style={{ border: '1px solid #1B2A4A', padding: '1.5rem', marginBottom: '2rem' }}>
