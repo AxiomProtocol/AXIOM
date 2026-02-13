@@ -20,20 +20,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const adminKey = process.env.ADMIN_SOLVENCY_KEY;
-  const providedKey = req.query.key as string;
-  const referer = (req.headers['referer'] || '') as string;
-  const origin = (req.headers['origin'] || '') as string;
-  const host = req.headers['host'] || '';
-  const forwardedHost = req.headers['x-forwarded-host'] || '';
-  const publicDomain = process.env.PUBLIC_DOMAIN || '';
+  const providedKey = (req.query.key as string) || (req.headers['x-admin-key'] as string);
 
-  const trustedHosts = [host, forwardedHost, publicDomain, `www.${publicDomain}`].filter(Boolean);
-  const requestSource = referer || origin;
-  const isInternalCall = trustedHosts.some(h => requestSource.includes(h as string));
-  const isAdminAuth = adminKey && providedKey && providedKey === adminKey;
-
-  if (!isInternalCall && !isAdminAuth) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  if (!adminKey || !providedKey || providedKey !== adminKey) {
+    return res.status(401).json({ error: 'Unauthorized. Use ?key=YOUR_ADMIN_SOLVENCY_KEY' });
   }
 
   const alchemyKey = process.env.ALCHEMY_API_KEY;
