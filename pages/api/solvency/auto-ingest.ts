@@ -1,0 +1,168 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { ethers } from 'ethers';
+import { pool } from '../../../server/db';
+import crypto from 'crypto';
+import { ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM } from '../../../src/config/activeContracts.generated';
+
+const PSM_ABI = [
+  'function axusd() view returns (address)',
+  'function collateral() view returns (address)',
+  'function debtCeiling() view returns (uint256)',
+  'function mintFee() view returns (uint256)',
+  'function redeemFee() view returns (uint256)',
+  'function paused() view returns (bool)',
+];
+
+const ERC20_ABI = [
+  'function balanceOf(address account) view returns (uint256)',
+  'function totalSupply() view returns (uint256)',
+  'function decimals() view returns (uint8)',
+];
+
+const USDC_ADDRESS = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+const DEPLOYER_ADDRESS = '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96';
+
+const INTERNAL_SECRET = process.env.AUTO_INGEST_SECRET || crypto.randomBytes(32).toString('hex');
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  res.setHeader('Cache-Control', 'no-cache');
+
+  const adminKey = process.env.ADMIN_SOLVENCY_KEY;
+  const providedKey = req.headers['x-auto-ingest-key'] as string;
+  const referer = req.headers['referer'] || '';
+  const host = req.headers['host'] || '';
+  const isInternalCall = host && referer.includes(host);
+  const isAdminAuth = adminKey && providedKey && providedKey === adminKey;
+
+  if (!isInternalCall && !isAdminAuth) {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+
+  const lastSnapshotResult = await pool.query(
+    `SELECT created_at FROM solvency_snapshots ORDER BY created_at DESC LIMIT 1`
+  ).catch(() => ({ rows: [] }));
+
+  if (lastSnapshotResult.rows.length > 0) {
+    const lastCreated = new Date(lastSnapshotResult.rows[0].created_at);
+    const secondsSince = (Date.now() - lastCreated.getTime()) / 1000;
+    if (secondsSince < 30) {
+      return res.status(429).json({ success: false, error: `Rate limited. Last snapshot was ${Math.round(secondsSince)}s ago. Wait at least 30 seconds.` });
+    }
+  }
+
+  const alchemyKey = process.env.ALCHEMY_API_KEY;
+  if (!alchemyKey) {
+    return res.status(500).json({ success: false, error: 'ALCHEMY_API_KEY not configured' });
+  }
+
+  try {
+    const provider = new ethers.JsonRpcProvider(`https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`);
+    const usdc = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, provider);
+    const primaryAxusd = new ethers.Contract(ACTIVE_AXUSD, ERC20_ABI, provider);
+    const eulerAxusd = new ethers.Contract(EULER_AXUSD, ERC20_ABI, provider);
+
+    const [
+      primaryPsmUsdcRaw,
+      eulerPsmUsdcRaw,
+      primaryAxusdSupplyRaw,
+      eulerAxusdSupplyRaw,
+      deployerEthRaw,
+      deployerUsdcRaw,
+    ] = await Promise.all([
+      usdc.balanceOf(ACTIVE_PSM),
+      usdc.balanceOf(EULER_PSM),
+      primaryAxusd.totalSupply(),
+      eulerAxusd.totalSupply(),
+      provider.getBalance(DEPLOYER_ADDRESS),
+      usdc.balanceOf(DEPLOYER_ADDRESS),
+    ]);
+
+    const primaryPsmUsdc = parseFloat(ethers.formatUnits(primaryPsmUsdcRaw, 6));
+    const eulerPsmUsdc = parseFloat(ethers.formatUnits(eulerPsmUsdcRaw, 6));
+    const primaryAxusdSupply = parseFloat(ethers.formatUnits(primaryAxusdSupplyRaw, 18));
+    const eulerAxusdSupply = parseFloat(ethers.formatUnits(eulerAxusdSupplyRaw, 18));
+    const deployerEth = parseFloat(ethers.formatEther(deployerEthRaw));
+    const deployerUsdc = parseFloat(ethers.formatUnits(deployerUsdcRaw, 6));
+
+    let ethPrice = 2600;
+    try {
+      const cgRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+      const cgData = await cgRes.json();
+      if (cgData?.ethereum?.usd) ethPrice = cgData.ethereum.usd;
+    } catch {}
+
+    const deployerEthUsd = Math.round(deployerEth * ethPrice * 100) / 100;
+    const psmReservesTotal = Math.round((primaryPsmUsdc + eulerPsmUsdc) * 100) / 100;
+    const treasuryTotalUsd = Math.round((deployerEthUsd + deployerUsdc + psmReservesTotal) * 100) / 100;
+    const liabilitiesTotalUsd = Math.round((primaryAxusdSupply + eulerAxusdSupply) * 100) / 100;
+
+    const totalAssets = deployerEthUsd + deployerUsdc + psmReservesTotal;
+    const composition = [
+      { label: 'ETH (Deployer)', valueUsd: deployerEthUsd, pct: Math.round(deployerEthUsd / totalAssets * 10000) / 100 },
+      { label: 'USDC (PSM)', valueUsd: psmReservesTotal, pct: Math.round(psmReservesTotal / totalAssets * 10000) / 100 },
+      { label: 'USDC (Deployer)', valueUsd: deployerUsdc, pct: Math.round(deployerUsdc / totalAssets * 10000) / 100 },
+    ].filter(c => c.valueUsd > 0);
+
+    const now = new Date().toISOString();
+    const payloadJson = {
+      treasuryTotalUsd,
+      treasuryLiquidUsd: treasuryTotalUsd,
+      reservesTotalUsd: psmReservesTotal,
+      liabilitiesTotalUsd,
+      lossBufferUsd: 0,
+      policyMode: 'BOOTSTRAP',
+      hardBrake: 'OFF',
+      gateStatus: 'OPEN',
+      composition,
+      sources: [
+        { label: 'Arbitrum One RPC', detail: 'Live on-chain balance queries via Alchemy' },
+        { label: 'CoinGecko', detail: `ETH/USD spot price: $${ethPrice}` },
+        { label: 'Contract Registry', detail: 'activeContracts.generated.ts — PSM, deployer addresses' },
+      ],
+    };
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS solvency_snapshots (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        as_of_utc TIMESTAMP NOT NULL,
+        payload_json JSONB NOT NULL,
+        checksum TEXT NOT NULL,
+        notes TEXT
+      );
+    `);
+
+    const payloadStr = JSON.stringify(payloadJson);
+    const checksum = crypto.createHash('sha256').update(payloadStr).digest('hex').slice(0, 16);
+    const notes = req.body?.notes || `Auto-ingest after PSM operation — ${now}`;
+
+    const result = await pool.query(
+      `INSERT INTO solvency_snapshots (id, created_at, as_of_utc, payload_json, checksum, notes)
+       VALUES (gen_random_uuid(), NOW(), $1, $2::jsonb, $3, $4)
+       RETURNING id, created_at, checksum`,
+      [now, payloadStr, checksum, notes]
+    );
+
+    const row = result.rows[0];
+
+    return res.status(201).json({
+      success: true,
+      snapshotId: row.id,
+      checksum: row.checksum,
+      createdAt: row.created_at,
+      summary: {
+        treasuryTotalUsd,
+        psmReserves: psmReservesTotal,
+        liabilities: liabilitiesTotalUsd,
+        ethPrice,
+      },
+    });
+  } catch (err: any) {
+    console.error('[solvency/auto-ingest] Error:', err);
+    return res.status(500).json({ success: false, error: err.message || 'Auto-ingest failed' });
+  }
+}

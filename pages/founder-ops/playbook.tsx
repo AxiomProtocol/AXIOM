@@ -320,21 +320,12 @@ export default function PlaybookPage() {
   const [snapshotStatus, setSnapshotStatus] = useState<{ type: 'idle' | 'pending' | 'success' | 'error'; message: string; snapshotId?: string; checksum?: string }>({ type: 'idle', message: '' });
 
   const ingestSolvencySnapshot = useCallback(async () => {
-    setSnapshotStatus({ type: 'pending', message: 'Fetching live metrics from chain...' });
+    setSnapshotStatus({ type: 'pending', message: 'Fetching live on-chain data and ingesting snapshot...' });
     try {
-      const metricsRes = await fetch('/api/solvency/metrics');
-      const metricsJson = await metricsRes.json();
-      if (metricsJson.dataStatus !== 'ok') throw new Error('Failed to fetch live metrics');
-
-      setSnapshotStatus({ type: 'pending', message: 'Ingesting snapshot...' });
-      const ingestRes = await fetch('/api/solvency/ingest-snapshot', {
+      const ingestRes = await fetch('/api/solvency/auto-ingest', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': prompt('Enter ADMIN_SOLVENCY_KEY:') || '' },
-        body: JSON.stringify({
-          asOfUtc: metricsJson.asOfUtc || new Date().toISOString(),
-          payloadJson: metricsJson,
-          notes: `Operations tab ingest — ${new Date().toISOString()}`,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: `Manual ingest from Operations tab — ${new Date().toISOString()}` }),
       });
       const ingestJson = await ingestRes.json();
       if (!ingestRes.ok) throw new Error(ingestJson.error || 'Ingest failed');
@@ -543,6 +534,18 @@ export default function PlaybookPage() {
           description: `${op} via ${getEcosystemLabel()} PSM. Fee: ${feeBps} bps. Verified on-chain.`,
         }),
       });
+    } catch {}
+
+    try {
+      const ingestRes = await fetch('/api/solvency/auto-ingest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: `Auto-ingest after ${op} ${inputAmt} via ${getEcosystemLabel()} PSM. Tx: ${txHash}` }),
+      });
+      const ingestJson = await ingestRes.json();
+      if (ingestJson.success) {
+        setSnapshotStatus({ type: 'success', message: 'Solvency snapshot auto-ingested.', snapshotId: ingestJson.snapshotId, checksum: ingestJson.checksum });
+      }
     } catch {}
   };
 

@@ -30,8 +30,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ success: false, error: 'ALCHEMY_API_KEY not configured' });
   }
 
-  const MINT_SELECTOR = '0xa0712d68';
-  const REDEEM_SELECTOR = '0xdb006a75';
+  const MINT_SELECTORS = ['0xa0712d68', '0xa43e6141'];
+  const REDEEM_SELECTORS = ['0xdb006a75', '0xe042f940'];
 
   try {
     const provider = new ethers.JsonRpcProvider(`https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`);
@@ -59,9 +59,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const selector = tx.data?.slice(0, 10).toLowerCase();
-    const expectedSelector = operation === 'Mint' ? MINT_SELECTOR : REDEEM_SELECTOR;
-    if (selector !== expectedSelector) {
-      return res.status(400).json({ success: false, error: `Transaction method signature ${selector} does not match expected ${operation} selector ${expectedSelector}.` });
+    const expectedSelectors = operation === 'Mint' ? MINT_SELECTORS : REDEEM_SELECTORS;
+    if (!expectedSelectors.includes(selector)) {
+      return res.status(400).json({ success: false, error: `Transaction method signature ${selector} does not match expected ${operation} selectors ${expectedSelectors.join(', ')}.` });
     }
 
     const ecoLabel = ecosystem === 'PRIMARY' ? 'PRIMARY (GENIUS)' : 'EULER (Original)';
