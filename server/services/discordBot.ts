@@ -35,91 +35,77 @@ export interface CategoryConfig {
 }
 
 const AXIOM_ROLES = {
-  member: { name: 'Community Member', color: 0x4ade80, position: 1 },
-  workbook: { name: 'Workbook Subscriber', color: 0xfbbf24, position: 2 },
-  investor: { name: 'Land Fund Investor', color: 0xf59e0b, position: 3 },
-  founder: { name: 'Founding Member', color: 0xeab308, position: 4 },
-  level5: { name: 'Rising Steward', color: 0x60a5fa, position: 5 },
-  level10: { name: 'Land Guardian', color: 0x8b5cf6, position: 6 },
-  level25: { name: 'Heritage Keeper', color: 0xf472b6, position: 7 },
-  vaultObserver: { name: 'Vault Observer', color: 0x3b82f6, position: 8 },
-  landResearcher: { name: 'Land Researcher', color: 0x22c55e, position: 9 },
-  communityBuilder: { name: 'Community Builder', color: 0xa855f7, position: 10 },
-  institutional: { name: 'Institutional Observer', color: 0x14b8a6, position: 11 },
-  auditor: { name: 'Verified Auditor', color: 0x0ea5e9, position: 12 }
+  member: { name: 'Protocol Member', color: 0x1B3A4B, position: 1 },
+  tokenHolder: { name: 'AXM Holder', color: 0x8B7355, position: 2 },
+  lpProvider: { name: 'LP Provider', color: 0x2D5016, position: 3 },
+  vaultObserver: { name: 'Vault Observer', color: 0x3B82F6, position: 4 },
+  contributor: { name: 'Protocol Contributor', color: 0x6B21A8, position: 5 },
+  institutional: { name: 'Institutional Observer', color: 0x14B8A6, position: 6 },
+  auditor: { name: 'Verified Auditor', color: 0x0EA5E9, position: 7 },
+  founder: { name: 'Founding Member', color: 0x8B7355, position: 8 },
+  level5: { name: 'Active Participant', color: 0x60A5FA, position: 9 },
+  level10: { name: 'Protocol Steward', color: 0x8B5CF6, position: 10 },
+  level25: { name: 'Core Contributor', color: 0xF472B6, position: 11 }
 };
 
 const XP_LEVELS = [
-  { level: 1, xp: 0, title: 'Newcomer' },
-  { level: 2, xp: 100, title: 'Explorer' },
-  { level: 3, xp: 250, title: 'Learner' },
-  { level: 4, xp: 500, title: 'Contributor' },
-  { level: 5, xp: 1000, title: 'Rising Steward' },
-  { level: 10, xp: 3000, title: 'Land Guardian' },
-  { level: 15, xp: 6000, title: 'Community Pillar' },
-  { level: 25, xp: 15000, title: 'Heritage Keeper' }
+  { level: 1, xp: 0, title: 'Observer' },
+  { level: 2, xp: 100, title: 'Participant' },
+  { level: 3, xp: 250, title: 'Contributor' },
+  { level: 4, xp: 500, title: 'Analyst' },
+  { level: 5, xp: 1000, title: 'Active Participant' },
+  { level: 10, xp: 3000, title: 'Protocol Steward' },
+  { level: 15, xp: 6000, title: 'Senior Contributor' },
+  { level: 25, xp: 15000, title: 'Core Contributor' }
 ];
 
 const DAILY_TIPS = [
-  { title: '🔍 Research Tip', tip: 'Start with what you know! Write down the oldest family member you can remember, their full name, and where they lived.' },
-  { title: '📜 Heir Property Fact', tip: 'Heir property occurs when land passes without a will. Across America, this affects billions of dollars worth of family-owned land.' },
-  { title: '🏛️ Document Source', tip: 'Historical archives contain valuable records including labor contracts, marriage records, and land patents from the 1800s onward.' },
-  { title: '💡 Pro Tip', tip: 'County deed offices often have records going back to the 1800s. Many are now digitized and searchable online.' },
-  { title: '📚 Did You Know?', tip: 'Millions of acres of family farmland have been lost over the past century due to unclear title. We help families protect and reclaim their heritage.' },
-  { title: '🗂️ Organization Tip', tip: 'Create a family tree chart with dates and locations. This becomes your roadmap for property research.' },
-  { title: '⚖️ Legal Insight', tip: 'The Uniform Partition of Heirs Property Act (UPHPA) provides protections against forced partition sales. Check if your state has adopted it.' },
-  { title: '🌱 Wealth Building', tip: 'Land is the foundation of generational wealth. Building a legacy starts with ownership.' },
-  { title: '📍 Location Matters', tip: 'Focus your research on counties where your family lived longest. Local historical societies can be gold mines of information.' },
-  { title: '🤝 Community Power', tip: 'Collective ownership means collective strength. When we pool resources, we can acquire land that benefits everyone.' },
-  { title: '🔷 DeFi Tip', tip: 'The AXUSD vault uses overcollateralization to protect lenders. Higher LTV means more capital efficiency, but also more liquidation risk.' },
-  { title: '📊 Transparency', tip: 'All protocol transactions are on-chain and verifiable. Check Arbiscan for real-time activity.' }
-];
-
-const HEIR_PROPERTY_CHECKLIST = [
-  '1. Gather family stories about land ownership',
-  '2. Create a family tree going back 4+ generations',
-  '3. Identify the county where family land was located',
-  '4. Search county deed records for family surnames',
-  '5. Check census records (1870-1950) for land ownership clues',
-  '6. Look for death certificates and wills in probate court',
-  '7. Search historical archives and land patent records',
-  '8. Contact living relatives who might have documents',
-  '9. Verify current property tax status and ownership',
-  '10. Consult with an heir property attorney if needed'
+  { title: 'Peg Stability', tip: 'The PSM (Peg Stability Module) maintains the AXUSD 1:1 peg to USDC through mint and redeem operations. Both carry a 10 bps fee.' },
+  { title: 'On-Chain Verification', tip: 'All 72 Axiom smart contracts are verified on Arbiscan. You can read and verify every function call directly.' },
+  { title: 'Self-Custody', tip: 'Axiom Protocol is non-custodial. Your assets remain in your wallet or in smart contracts you interact with directly. No intermediaries.' },
+  { title: 'Solvency Transparency', tip: 'The solvency console at axiomprotocol.app/solvency shows real-time coverage ratios, reserve composition, and stress test results.' },
+  { title: 'AME Engine', tip: 'The Adaptive Metrics Engine computes regime scores from 0.0-1.0 based on volatility, drawdown, and flow signals. Higher scores trigger defensive policy actions.' },
+  { title: 'Hard Brake Triggers', tip: 'Four hard brake conditions protect the protocol: Crisis Lockdown (RS>0.85), Freeze Distributions (CR<0.5), Liquidity Defense (LD<0.1), Redirect Flows (RR<0.3).' },
+  { title: 'DO NOT MIX', tip: 'PRIMARY AXUSD and EULER AXUSD are separate ecosystems. Never deposit Primary AXUSD into Euler vaults or report Euler metrics as public supply.' },
+  { title: 'Revenue Routing', tip: 'Protocol revenue flows through the Revenue Router: 90% to LPs, 10% to protocol treasury. All on-chain and verifiable.' },
+  { title: 'Arbitrum One', tip: 'Axiom Protocol operates on Arbitrum One (Chain ID 42161), an Ethereum L2 with low gas fees and high throughput.' },
+  { title: 'Governance Token', tip: 'AXM is the governance and fee-routing token. It enables community voting on protocol parameters and receives a share of protocol revenue.' },
+  { title: 'Observation Window', tip: 'The Euler V2 Vault observation window runs until March 26, 2026. This period validates vault behavior before broader external adoption.' },
+  { title: 'Stress Testing', tip: 'The solvency system runs 5 predefined stress scenarios: Market Correction, Liquidity Crisis, Black Swan, Stablecoin Depeg, and Governance Attack.' }
 ];
 
 const FAQ_RESPONSES: Record<string, { question: string; answer: string }> = {
-  'heir-property': {
-    question: 'What is heir property?',
-    answer: 'Heir property is land that passes from one generation to the next without a will or clear legal documentation. This often happens when someone dies "intestate" (without a will). All legal heirs inherit the property together as "tenants in common," which can include dozens of descendants over time.'
+  'what-is-axiom': {
+    question: 'What is Axiom Protocol?',
+    answer: 'Axiom Protocol is a DeFi infrastructure project on Arbitrum One with 72 verified smart contracts. It includes a governance token (AXM), stablecoin (AXUSD), Peg Stability Modules, lending markets via Euler V2, and a comprehensive solvency transparency system. The protocol is community-governed and non-custodial.'
   },
-  'workbook-cost': {
-    question: 'How much does the Workbook cost?',
-    answer: 'The Land Reclamation Workbook is $20/month. It includes AI-powered research assistance, document templates, state-specific guides, and direct support from our team.'
+  'axusd': {
+    question: 'What is AXUSD?',
+    answer: 'AXUSD is the protocol stablecoin, pegged 1:1 to USDC via the Peg Stability Module (PSM). You can mint AXUSD by depositing USDC, and redeem USDC by burning AXUSD. Both operations carry a 10 basis point fee. There are two separate AXUSD ecosystems (Primary and Euler) that must never be mixed.'
   },
-  'land-fund': {
-    question: 'How does the Land Fund work?',
-    answer: 'The Community Land Fund allows members to pool $100/month toward collective land acquisition. You receive fractional ownership (via blockchain tokens) of real property. This is SEC Reg CF compliant crowdfunding.'
+  'psm': {
+    question: 'How does the PSM work?',
+    answer: 'The Peg Stability Module accepts USDC deposits and mints AXUSD at a 1:1 ratio (minus 10 bps fee). To redeem, you burn AXUSD and receive USDC from the PSM reserves. The PSM only holds as much USDC as has been deposited through it — AXUSD minted outside the PSM is not backed by PSM reserves.'
   },
-  'get-started': {
-    question: 'How do I get started?',
-    answer: '1. Introduce yourself in #introductions\n2. Check out #heir-property-101 for the basics\n3. Get your free checklist in #resource-library\n4. Ask questions in #ask-questions\n5. Consider the Workbook ($20/mo) when you\'re ready to dig deeper'
+  'solvency': {
+    question: 'How is solvency measured?',
+    answer: 'The solvency console provides three views: Allocator (capital adequacy, asset composition), Clearinghouse (AXUSD stability, stress tests), and Regulatory (compliance, methodology). Coverage ratios and reserve ratios are computed from on-chain data and updated via the Adaptive Metrics Engine.'
   },
-  'find-records': {
-    question: 'Where can I find property records?',
-    answer: 'Start with: County deed offices, FamilySearch.org (free), Ancestry.com, National Archives, state historical societies, and local libraries. Many counties have digitized records online.'
+  'ame': {
+    question: 'What is the AME?',
+    answer: 'The Adaptive Metrics Engine is a deterministic financial computation engine. It calculates Regime Scores (0.0-1.0), Policy Multipliers (0.5-2.0), and adaptive targets for coverage and reserve ratios. It has 4 hard brake triggers that automatically activate defensive measures during extreme conditions.'
   },
-  'axusd-vault': {
-    question: 'What is the AXUSD Vault?',
-    answer: 'The AXUSD Euler V2 Vault is a permissionless lending market on Arbitrum One. LPs can deposit AXUSD to earn yield, while borrowers can take loans using eUSDC or eWETH as collateral. It is currently in observation mode until March 26, 2026.'
+  'euler-vault': {
+    question: 'What is the Euler V2 Vault?',
+    answer: 'A permissionless lending market on Arbitrum One where LPs deposit AXUSD to earn yield and borrowers use eUSDC (90% LTV) or eWETH (80% LTV) as collateral. Currently in observation mode until March 26, 2026. Fee split: 90% to LPs, 10% to protocol.'
   },
-  'vault-collateral': {
-    question: 'What collateral can I use?',
-    answer: 'The AXUSD vault accepts two types of collateral:\n• eUSDC (90% Borrow LTV / 95% Liquidation LTV)\n• eWETH (80% Borrow LTV / 85% Liquidation LTV)\nYou must first deposit into Euler\'s USDC or WETH vaults to get the collateral tokens.'
+  'contracts': {
+    question: 'How many smart contracts does Axiom have?',
+    answer: 'Axiom Protocol has 72 verified smart contracts on Arbitrum One covering identity, treasury, staking, emissions, asset registries, PSM, governance, and lending infrastructure. All contracts are verified on Arbiscan and readable by anyone.'
   },
   'observation-window': {
     question: 'What is the observation window?',
-    answer: 'The observation window (ending March 26, 2026) is a monitoring period where we observe vault behavior, collect feedback, and ensure everything works correctly before full external adoption. This is not a call to invest—we are building credibility through transparency.'
+    answer: 'A monitoring period ending March 26, 2026 where vault behavior is observed, metrics collected, and stability validated before broader adoption. This is not an invitation to invest — it is a transparency and validation exercise.'
   }
 };
 
@@ -200,61 +186,61 @@ async function getTopMembers(limit: number = 10): Promise<Array<{ discord_user_i
 }
 
 const REACTION_ROLES: Record<string, string> = {
-  '🏡': 'Community Member',
-  '📚': 'Workbook Subscriber',
-  '💰': 'Land Fund Investor'
+  '🔷': 'Protocol Member',
+  '💎': 'AXM Holder',
+  '🏦': 'Vault Observer'
 };
 
 const AXIOM_CHANNEL_STRUCTURE: CategoryConfig[] = [
   {
-    name: '🌱 START HERE',
+    name: 'AXIOM PROTOCOL',
     channels: [
-      { name: 'welcome', topic: "You're now part of a movement to build generational wealth together", type: 'text' },
-      { name: 'get-roles', topic: 'React to get your roles and access more channels', type: 'text' },
-      { name: 'our-story', topic: 'Why Axiom exists - the mission and vision', type: 'text' },
-      { name: 'how-it-works', topic: 'From $100/month to fractional land ownership and DeFi tools', type: 'text' },
-      { name: 'announcements', topic: 'Official updates, news, and milestones', type: 'text' }
+      { name: 'welcome', topic: 'The Official Discord of Axiom Protocol — DeFi infrastructure on Arbitrum One', type: 'text' },
+      { name: 'get-roles', topic: 'React to select your protocol role', type: 'text' },
+      { name: 'announcements', topic: 'Official protocol updates and milestones', type: 'text' },
+      { name: 'protocol-overview', topic: 'What Axiom Protocol is, what it does, and where it stands', type: 'text' }
     ]
   },
   {
-    name: '💬 COMMUNITY',
+    name: 'COMMUNITY',
     channels: [
-      { name: 'introductions', topic: 'Tell us your story - where are you from, why did you join?', type: 'text' },
-      { name: 'general-chat', topic: 'Casual conversation and community bonding', type: 'text' },
-      { name: 'ask-questions', topic: 'No question is too basic - we all learn together', type: 'text' },
-      { name: 'observations', topic: 'Share vault observations, market insights, and protocol feedback during the observation window', type: 'text' }
+      { name: 'general-chat', topic: 'Open discussion for the Axiom community', type: 'text' },
+      { name: 'introductions', topic: 'Introduce yourself to the community', type: 'text' },
+      { name: 'questions', topic: 'Ask anything about Axiom Protocol, AXUSD, or DeFi', type: 'text' },
+      { name: 'observations', topic: 'Share market observations and protocol feedback', type: 'text' }
     ]
   },
   {
-    name: '📚 LEARN',
+    name: 'DEFI OPERATIONS',
     channels: [
-      { name: 'heir-property-101', topic: 'The basics of heir property and why it matters', type: 'text' },
-      { name: 'defi-basics', topic: 'Understanding DeFi, stablecoins, lending, and yield', type: 'text' },
-      { name: 'resource-library', topic: 'Guides, videos, articles, and templates', type: 'text' }
+      { name: 'axusd-peg-stability', topic: 'AXUSD peg tracking, PSM operations, and stability metrics', type: 'text' },
+      { name: 'dex-liquidity', topic: 'Camelot DEX pools, LP positions, and trading activity', type: 'text' },
+      { name: 'euler-vault', topic: 'Euler V2 AXUSD lending market status and observation window', type: 'text' },
+      { name: 'treasury-ops', topic: 'Protocol treasury operations, revenue routing, and capital allocation', type: 'text' }
     ]
   },
   {
-    name: '🔷 AXUSD VAULT',
+    name: 'SOLVENCY & RISK',
     channels: [
-      { name: 'vault-overview', topic: 'Technical overview of the AXUSD Euler V2 Lending Vault on Arbitrum One', type: 'text' },
-      { name: 'weekly-reports', topic: 'Weekly transparency reports on vault metrics: TVL, utilization, and protocol health', type: 'text' },
-      { name: 'feedback', topic: 'Share observations, report issues, suggest improvements', type: 'text' }
+      { name: 'solvency-reports', topic: 'Coverage ratios, reserve transparency, and AME evaluations', type: 'text' },
+      { name: 'risk-disclosure', topic: 'Protocol risk factors, stress scenarios, and hard brake triggers', type: 'text' },
+      { name: 'sentinel-alerts', topic: 'Axiom Sentinel authorization events and circuit breaker status', type: 'text' }
     ]
   },
   {
-    name: '⚖️ GOVERNANCE & TRANSPARENCY',
+    name: 'GOVERNANCE',
     channels: [
-      { name: 'proposals', topic: 'Active governance proposals and voting discussions', type: 'text' },
-      { name: 'treasury-transparency', topic: 'On-chain treasury data and protocol metrics', type: 'text' },
-      { name: 'audit-log', topic: 'Real-time on-chain transaction notifications and security events', type: 'text' }
+      { name: 'proposals', topic: 'Protocol governance proposals and voting', type: 'text' },
+      { name: 'smart-contracts', topic: '72 verified contracts on Arbitrum One — registry and discussion', type: 'text' },
+      { name: 'audit-log', topic: 'On-chain transaction notifications and protocol events', type: 'text' }
     ]
   },
   {
-    name: '🏛️ INSTITUTIONAL',
+    name: 'INSTITUTIONAL',
     channels: [
-      { name: 'data-room', topic: 'Due diligence documents, audits, legal disclosures for institutional observers', type: 'text' },
-      { name: 'office-hours', topic: 'Scheduled Q&A sessions for allocators and auditors', type: 'text' },
-      { name: 'compliance', topic: 'Regulatory disclosures and observation window status', type: 'text' }
+      { name: 'data-room', topic: 'Due diligence documents, audits, and disclosures for institutional observers', type: 'text' },
+      { name: 'office-hours', topic: 'Scheduled sessions for allocators and auditors', type: 'text' },
+      { name: 'compliance', topic: 'Regulatory disclosures, observation window status, and legal framework', type: 'text' }
     ]
   }
 ];
@@ -262,25 +248,16 @@ const AXIOM_CHANNEL_STRUCTURE: CategoryConfig[] = [
 const slashCommands = [
   new SlashCommandBuilder()
     .setName('info')
-    .setDescription('Learn about Axiom and how to get started'),
+    .setDescription('Get Axiom Protocol overview'),
   new SlashCommandBuilder()
     .setName('resources')
-    .setDescription('Get links to key resources and guides'),
+    .setDescription('Get links to protocol resources and dashboards'),
   new SlashCommandBuilder()
     .setName('stats')
-    .setDescription('See community statistics'),
-  new SlashCommandBuilder()
-    .setName('workbook')
-    .setDescription('Learn about the Land Reclamation Workbook'),
-  new SlashCommandBuilder()
-    .setName('landfund')
-    .setDescription('Learn about the Community Land Fund'),
-  new SlashCommandBuilder()
-    .setName('checklist')
-    .setDescription('Get the heir property research checklist'),
+    .setDescription('See protocol community statistics'),
   new SlashCommandBuilder()
     .setName('tip')
-    .setDescription('Get a random research tip'),
+    .setDescription('Get a protocol tip'),
   new SlashCommandBuilder()
     .setName('faq')
     .setDescription('Get answers to common questions')
@@ -289,13 +266,13 @@ const slashCommands = [
         .setDescription('FAQ topic')
         .setRequired(true)
         .addChoices(
-          { name: 'What is heir property?', value: 'heir-property' },
-          { name: 'Workbook cost', value: 'workbook-cost' },
-          { name: 'Land Fund explained', value: 'land-fund' },
-          { name: 'Getting started', value: 'get-started' },
-          { name: 'Finding records', value: 'find-records' },
-          { name: 'AXUSD Vault explained', value: 'axusd-vault' },
-          { name: 'Vault collateral types', value: 'vault-collateral' },
+          { name: 'What is Axiom Protocol?', value: 'what-is-axiom' },
+          { name: 'What is AXUSD?', value: 'axusd' },
+          { name: 'How does the PSM work?', value: 'psm' },
+          { name: 'How is solvency measured?', value: 'solvency' },
+          { name: 'What is the AME?', value: 'ame' },
+          { name: 'Euler V2 Vault explained', value: 'euler-vault' },
+          { name: 'Smart contracts count', value: 'contracts' },
           { name: 'Observation window', value: 'observation-window' }
         )),
   new SlashCommandBuilder()
@@ -306,7 +283,16 @@ const slashCommands = [
     .setDescription('See the top community contributors'),
   new SlashCommandBuilder()
     .setName('vault')
-    .setDescription('Get AXUSD Euler V2 Vault information and stats')
+    .setDescription('Get AXUSD Euler V2 Vault information and status'),
+  new SlashCommandBuilder()
+    .setName('psm')
+    .setDescription('Get PSM (Peg Stability Module) status and information'),
+  new SlashCommandBuilder()
+    .setName('solvency')
+    .setDescription('Get current solvency and reserve transparency information'),
+  new SlashCommandBuilder()
+    .setName('protocol')
+    .setDescription('Get Axiom Protocol overview and key metrics')
 ];
 
 async function registerSlashCommands() {
@@ -328,83 +314,53 @@ async function registerSlashCommands() {
 
 function createWelcomeEmbed(member: GuildMember): EmbedBuilder {
   return new EmbedBuilder()
-    .setColor(0xfbbf24)
-    .setTitle('Welcome to the Axiom Community!')
-    .setDescription(`Hey **${member.user.username}**, you're now part of a movement building generational wealth through collective land ownership.`)
+    .setColor(0x1B3A4B)
+    .setTitle('Welcome to Axiom Protocol')
+    .setDescription(`**${member.user.username}** — you have joined the official community of Axiom Protocol, a DeFi infrastructure project on Arbitrum One.`)
     .setThumbnail(member.user.displayAvatarURL({ size: 128 }))
     .addFields(
-      { 
-        name: '🌱 Get Started', 
-        value: '1. Introduce yourself in #introductions\n2. Learn the basics in #heir-property-101\n3. Ask questions in #ask-questions',
-        inline: false 
-      },
-      { 
-        name: '📚 Free Resources', 
-        value: 'Get your free Heir Property Checklist in #resource-library',
-        inline: true 
-      },
-      { 
-        name: '🏡 The Vision', 
-        value: 'Building the first 1,000-acre community-owned land reserve',
-        inline: true 
-      }
+      { name: 'Get Oriented', value: '1. Read #protocol-overview for what Axiom is\n2. Select your role in #get-roles\n3. Ask questions in #questions', inline: false },
+      { name: 'Protocol Links', value: '[axiomprotocol.app](https://axiomprotocol.app) | [Solvency Console](https://axiomprotocol.app/solvency) | [Arbiscan Contracts](https://arbiscan.io)', inline: false }
     )
-    .setFooter({ text: 'Axiom Protocol - Build Wealth Together, On-Chain' })
+    .setFooter({ text: 'Axiom Protocol — Build Wealth Together, On-Chain' })
     .setTimestamp();
 }
 
 function createInfoEmbed(): EmbedBuilder {
   return new EmbedBuilder()
-    .setColor(0xfbbf24)
-    .setTitle('What is Axiom?')
-    .setDescription('Axiom is infrastructure for truth, record-keeping, and reclamation. We help families research heir property and build generational wealth through collective land ownership and DeFi tools.')
+    .setColor(0x1B3A4B)
+    .setTitle('Axiom Protocol')
+    .setDescription('DeFi infrastructure on Arbitrum One. 72 verified smart contracts. Non-custodial. Community-governed.')
     .addFields(
-      { 
-        name: '🌱 Our Mission', 
-        value: 'Reclaim what was taken. Build what was denied. Own what is ours.',
-        inline: false 
-      },
-      { 
-        name: '📚 Land Reclamation Workbook ($20/mo)', 
-        value: 'AI-powered tool to research your family\'s land history and heir property claims.',
-        inline: false 
-      },
-      { 
-        name: '🏡 Community Land Fund ($100/mo)', 
-        value: 'Pool resources with the community to acquire and develop land together.',
-        inline: false 
-      }
+      { name: 'Core Infrastructure', value: 'AXM governance token, AXUSD stablecoin, Peg Stability Modules, Euler V2 lending markets, solvency transparency system', inline: false },
+      { name: 'Current Phase', value: '52-week bootstrap playbook at $100/week. Validating all contracts through real capital flows. Euler Vault in observation mode until March 26, 2026.', inline: false },
+      { name: 'Transparency', value: 'All operations are on-chain and verifiable. Solvency metrics, stress tests, and regime scoring are publicly accessible.', inline: false }
     )
-    .setFooter({ text: 'axiomprotocol.app' });
+    .setFooter({ text: 'axiomprotocol.app — This is not financial advice.' });
 }
 
 function createResourcesEmbed(): EmbedBuilder {
   return new EmbedBuilder()
-    .setColor(0x4ade80)
-    .setTitle('Axiom Resources')
+    .setColor(0x2D5016)
+    .setTitle('Axiom Protocol Resources')
     .addFields(
-      { name: '🌐 Website', value: '[axiomprotocol.app](https://axiomprotocol.app)', inline: true },
-      { name: '📖 Workbook', value: '[Start Research](https://axiomprotocol.app/workbook)', inline: true },
-      { name: '🏡 Land Fund', value: '[Join Fund](https://axiomprotocol.app/land-funds)', inline: true },
-      { name: '📚 Heir Property Guide', value: 'Check #resource-library for the free checklist', inline: false },
-      { name: '❓ Questions?', value: 'Ask in #ask-questions - no question is too basic!', inline: false }
+      { name: 'Protocol Dashboard', value: '[axiomprotocol.app](https://axiomprotocol.app)', inline: true },
+      { name: 'Solvency Console', value: '[Live Metrics](https://axiomprotocol.app/solvency)', inline: true },
+      { name: 'DEX', value: '[Trading](https://axiomprotocol.app/dex)', inline: true },
+      { name: 'Smart Contracts', value: '72 verified on [Arbiscan](https://arbiscan.io)', inline: true },
+      { name: 'Euler Vault', value: '[Observation Dashboard](https://app.euler.finance)', inline: true },
+      { name: 'Questions', value: 'Ask in #questions', inline: true }
     );
 }
 
 function createStatsEmbed(memberCount: number): EmbedBuilder {
-  const foundingSpots = 5000;
-  const spotsRemaining = Math.max(0, foundingSpots - memberCount);
-  const progress = Math.min(100, Math.round((memberCount / foundingSpots) * 100));
-  const progressBar = '█'.repeat(Math.floor(progress / 10)) + '░'.repeat(10 - Math.floor(progress / 10));
-  
   return new EmbedBuilder()
-    .setColor(0xfbbf24)
-    .setTitle('Community Statistics')
+    .setColor(0x1B3A4B)
+    .setTitle('Protocol Community')
     .addFields(
-      { name: '👥 Members', value: `**${memberCount.toLocaleString()}**`, inline: true },
-      { name: '🎯 Goal', value: `**${foundingSpots.toLocaleString()}** founding members`, inline: true },
-      { name: '⏳ Spots Left', value: `**${spotsRemaining.toLocaleString()}**`, inline: true },
-      { name: '📊 Progress', value: `${progressBar} ${progress}%`, inline: false }
+      { name: 'Members', value: `**${memberCount.toLocaleString()}**`, inline: true },
+      { name: 'Network', value: 'Arbitrum One', inline: true },
+      { name: 'Contracts', value: '72 verified', inline: true }
     )
     .setTimestamp();
 }
@@ -420,7 +376,7 @@ async function ensureRolesExist(guild: any): Promise<Map<string, Role>> {
         role = await guild.roles.create({
           name: config.name,
           color: config.color,
-          reason: 'Axiom community role setup'
+          reason: 'Axiom Protocol role setup'
         });
         console.log(`Created role: ${config.name}`);
       } catch (error) {
@@ -507,47 +463,13 @@ export async function initializeDiscordBot(): Promise<Client | null> {
           const memberCount = interaction.guild?.memberCount || 0;
           await interaction.reply({ embeds: [createStatsEmbed(memberCount)] });
           break;
-        case 'workbook':
-          const workbookEmbed = new EmbedBuilder()
-            .setColor(0xfbbf24)
-            .setTitle('Land Reclamation Workbook')
-            .setDescription('AI-powered research tool to help you discover your family\'s land history and potential heir property claims.')
-            .addFields(
-              { name: '💰 Price', value: '$20/month', inline: true },
-              { name: '🔗 Get Started', value: '[axiomprotocol.app/workbook](https://axiomprotocol.app/workbook)', inline: true }
-            );
-          await interaction.reply({ embeds: [workbookEmbed], ephemeral: true });
-          break;
-        case 'landfund':
-          const landfundEmbed = new EmbedBuilder()
-            .setColor(0xf59e0b)
-            .setTitle('Community Land Fund')
-            .setDescription('Pool resources with the community to acquire and develop land together. Own fractional shares of real property.')
-            .addFields(
-              { name: '💰 Contribution', value: '$100/month', inline: true },
-              { name: '🔗 Learn More', value: '[axiomprotocol.app/land-funds](https://axiomprotocol.app/land-funds)', inline: true }
-            );
-          await interaction.reply({ embeds: [landfundEmbed], ephemeral: true });
-          break;
-        case 'checklist':
-          const checklistEmbed = new EmbedBuilder()
-            .setColor(0x4ade80)
-            .setTitle('📋 Heir Property Research Checklist')
-            .setDescription('Follow these steps to research your family\'s land history:')
-            .addFields(
-              { name: 'Steps', value: HEIR_PROPERTY_CHECKLIST.join('\n'), inline: false },
-              { name: '📚 Need Help?', value: 'Get the full Workbook with AI assistance at [axiomprotocol.app/workbook](https://axiomprotocol.app/workbook)', inline: false }
-            )
-            .setFooter({ text: 'Save this checklist and check off each step as you complete it!' });
-          await interaction.reply({ embeds: [checklistEmbed], ephemeral: true });
-          break;
         case 'tip':
           const randomTip = DAILY_TIPS[Math.floor(Math.random() * DAILY_TIPS.length)];
           const tipEmbed = new EmbedBuilder()
-            .setColor(0x60a5fa)
+            .setColor(0x3B82F6)
             .setTitle(randomTip.title)
             .setDescription(randomTip.tip)
-            .setFooter({ text: 'Use /tip anytime for more research tips!' });
+            .setFooter({ text: 'Axiom Protocol' });
           await interaction.reply({ embeds: [tipEmbed] });
           break;
         case 'faq':
@@ -555,10 +477,10 @@ export async function initializeDiscordBot(): Promise<Client | null> {
           const faqData = FAQ_RESPONSES[topic];
           if (faqData) {
             const faqEmbed = new EmbedBuilder()
-              .setColor(0xfbbf24)
-              .setTitle(`❓ ${faqData.question}`)
+              .setColor(0x1B3A4B)
+              .setTitle(faqData.question)
               .setDescription(faqData.answer)
-              .setFooter({ text: 'More questions? Ask in #ask-questions!' });
+              .setFooter({ text: 'axiomprotocol.app' });
             await interaction.reply({ embeds: [faqEmbed], ephemeral: true });
           } else {
             await interaction.reply({ content: 'FAQ topic not found', ephemeral: true });
@@ -573,15 +495,15 @@ export async function initializeDiscordBot(): Promise<Client | null> {
           const progressBar = '█'.repeat(Math.floor(progressToNext / 10)) + '░'.repeat(10 - Math.floor(progressToNext / 10));
           
           const progressEmbed = new EmbedBuilder()
-            .setColor(0x8b5cf6)
+            .setColor(0x8B5CF6)
             .setTitle(`${interaction.user.username}'s Progress`)
             .setThumbnail(interaction.user.displayAvatarURL({ size: 128 }))
             .addFields(
-              { name: '🏆 Level', value: `**${currentLevel.level}** - ${currentLevel.title}`, inline: true },
-              { name: '⭐ XP', value: `**${progressData.xp.toLocaleString()}**`, inline: true },
-              { name: '📊 Progress', value: nextLevel ? `${progressBar} ${progressToNext}%\n${progressData.xp}/${nextLevel.xp} XP to Level ${nextLevel.level}` : 'Max level reached!', inline: false }
+              { name: 'Level', value: `**${currentLevel.level}** - ${currentLevel.title}`, inline: true },
+              { name: 'XP', value: `**${progressData.xp.toLocaleString()}**`, inline: true },
+              { name: 'Progress', value: nextLevel ? `${progressBar} ${progressToNext}%\n${progressData.xp}/${nextLevel.xp} XP to Level ${nextLevel.level}` : 'Max level reached!', inline: false }
             )
-            .setFooter({ text: 'Earn XP by participating in the community!' });
+            .setFooter({ text: 'Axiom Protocol' });
           await interaction.reply({ embeds: [progressEmbed], ephemeral: true });
           break;
         case 'leaderboard':
@@ -603,27 +525,72 @@ export async function initializeDiscordBot(): Promise<Client | null> {
           }
           
           const leaderboardEmbed = new EmbedBuilder()
-            .setColor(0xfbbf24)
-            .setTitle('🏆 Community Leaderboard')
-            .setDescription(leaderboardText || 'No members on the leaderboard yet. Start participating to earn XP!')
-            .setFooter({ text: 'Earn XP by being active in the community!' });
+            .setColor(0x1B3A4B)
+            .setTitle('Community Leaderboard')
+            .setDescription(leaderboardText || 'No members on the leaderboard yet.')
+            .setFooter({ text: 'Axiom Protocol' });
           await interaction.reply({ embeds: [leaderboardEmbed] });
           break;
         case 'vault':
           const vaultEmbed = new EmbedBuilder()
-            .setColor(0x3b82f6)
-            .setTitle('🔷 AXUSD Euler V2 Lending Vault')
+            .setColor(0x3B82F6)
+            .setTitle('AXUSD Euler V2 Lending Vault')
             .setDescription('Permissionless lending market on Arbitrum One. Currently in observation mode.')
             .addFields(
-              { name: '📍 Status', value: 'Live - Observation Mode', inline: true },
-              { name: '⏳ Window Ends', value: 'March 26, 2026', inline: true },
-              { name: '🔗 Network', value: 'Arbitrum One', inline: true },
-              { name: '💰 Collateral', value: '• eUSDC: 90% LTV / 95% Liq\n• eWETH: 80% LTV / 85% Liq', inline: false },
-              { name: '📊 Fee Structure', value: '• 90% to LPs\n• 10% to Revenue Router', inline: false },
-              { name: '🔗 View on Euler', value: '[Open Vault](https://app.euler.finance/vault/0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059?network=arbitrumone)', inline: false }
+              { name: 'Status', value: 'Live - Observation Mode', inline: true },
+              { name: 'Window Ends', value: 'March 26, 2026', inline: true },
+              { name: 'Network', value: 'Arbitrum One', inline: true },
+              { name: 'Collateral', value: 'eUSDC: 90% LTV / 95% Liq\neWETH: 80% LTV / 85% Liq', inline: false },
+              { name: 'Fee Structure', value: '90% to LPs\n10% to Revenue Router', inline: false },
+              { name: 'View on Euler', value: '[Open Vault](https://app.euler.finance/vault/0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059?network=arbitrumone)', inline: false }
             )
-            .setFooter({ text: 'This is educational information, not financial advice.' });
+            .setFooter({ text: 'axiomprotocol.app — This is not financial advice.' });
           await interaction.reply({ embeds: [vaultEmbed] });
+          break;
+        case 'psm':
+          const psmEmbed = new EmbedBuilder()
+            .setColor(0x1B3A4B)
+            .setTitle('Peg Stability Module')
+            .setDescription('The PSM maintains the AXUSD 1:1 peg to USDC through mint and redeem operations.')
+            .addFields(
+              { name: 'Primary PSM', value: 'Mint AXUSD with USDC deposits. Redeem USDC by burning AXUSD.', inline: false },
+              { name: 'Euler PSM', value: 'Separate PSM for the Euler V2 ecosystem. Do not mix with Primary AXUSD.', inline: false },
+              { name: 'Fee Rate', value: '10 basis points (0.10%) on both mint and redeem', inline: false },
+              { name: 'Operations Console', value: '[axiomprotocol.app](https://axiomprotocol.app)', inline: false }
+            )
+            .setFooter({ text: 'axiomprotocol.app' });
+          await interaction.reply({ embeds: [psmEmbed], ephemeral: true });
+          break;
+        case 'solvency':
+          const solvencyEmbed = new EmbedBuilder()
+            .setColor(0x3B82F6)
+            .setTitle('Solvency and Reserve Transparency')
+            .setDescription('Real-time solvency metrics computed from on-chain data via the Adaptive Metrics Engine.')
+            .addFields(
+              { name: 'Allocator View', value: 'Capital adequacy, asset composition, and coverage ratios', inline: false },
+              { name: 'Clearinghouse View', value: 'AXUSD stability metrics, stress test results, and peg health', inline: false },
+              { name: 'Regulatory View', value: 'Compliance methodology, reserve transparency, and disclosure framework', inline: false },
+              { name: 'Solvency Console', value: '[Live Metrics](https://axiomprotocol.app/solvency)', inline: false }
+            )
+            .setFooter({ text: 'axiomprotocol.app' });
+          await interaction.reply({ embeds: [solvencyEmbed], ephemeral: true });
+          break;
+        case 'protocol':
+          const protocolEmbed = new EmbedBuilder()
+            .setColor(0x1B3A4B)
+            .setTitle('Axiom Protocol Overview')
+            .setDescription('DeFi infrastructure on Arbitrum One. Non-custodial. Community-governed.')
+            .addFields(
+              { name: 'Network', value: 'Arbitrum One (Chain ID 42161)', inline: true },
+              { name: 'Smart Contracts', value: '72 verified on Arbiscan', inline: true },
+              { name: 'Governance Token', value: 'AXM', inline: true },
+              { name: 'Stablecoin', value: 'AXUSD (pegged 1:1 to USDC via PSM)', inline: true },
+              { name: 'Lending', value: 'Euler V2 Vault (observation mode)', inline: true },
+              { name: 'Current Phase', value: '52-week bootstrap playbook', inline: true },
+              { name: 'Protocol Dashboard', value: '[axiomprotocol.app](https://axiomprotocol.app)', inline: false }
+            )
+            .setFooter({ text: 'axiomprotocol.app — This is not financial advice.' });
+          await interaction.reply({ embeds: [protocolEmbed], ephemeral: true });
           break;
         default:
           await interaction.reply({ content: 'Unknown command', ephemeral: true });
@@ -658,10 +625,11 @@ export async function initializeDiscordBot(): Promise<Client | null> {
       
       if (levelUpChannel) {
         const levelUpEmbed = new EmbedBuilder()
-          .setColor(0x8b5cf6)
-          .setTitle('🎉 Level Up!')
-          .setDescription(`**${message.author.username}** just reached **Level ${newLevel.level}** - ${newLevel.title}!`)
+          .setColor(0x8B5CF6)
+          .setTitle('Level Up')
+          .setDescription(`**${message.author.username}** reached **Level ${newLevel.level}** - ${newLevel.title}`)
           .setThumbnail(message.author.displayAvatarURL({ size: 64 }))
+          .setFooter({ text: 'Axiom Protocol' })
           .setTimestamp();
         await levelUpChannel.send({ embeds: [levelUpEmbed] });
       }
@@ -793,21 +761,20 @@ export async function postRoleSelectionMessage(guildId: string): Promise<boolean
     }
 
     const embed = new EmbedBuilder()
-      .setColor(0xfbbf24)
-      .setTitle('Choose Your Role')
-      .setDescription('React below to get roles that match your journey:')
+      .setColor(0x1B3A4B)
+      .setTitle('Select Your Role')
+      .setDescription('React below to identify your relationship with Axiom Protocol:')
       .addFields(
-        { name: '🏡 Community Member', value: 'General community access', inline: false },
-        { name: '📚 Workbook Subscriber', value: 'Access to workbook discussions', inline: false },
-        { name: '💰 Land Fund Investor', value: 'Access to investor channels', inline: false }
+        { name: '🔷 Protocol Member', value: 'General community access and protocol updates', inline: false },
+        { name: '💎 AXM Holder', value: 'AXM token holder — governance and fee-routing', inline: false },
+        { name: '🏦 Vault Observer', value: 'Monitoring Euler V2 vault during observation window', inline: false }
       )
-      .setFooter({ text: 'React to this message to get your roles!' });
+      .setFooter({ text: 'React to this message to get your roles.' });
 
     const message = await rolesChannel.send({ embeds: [embed] });
-    
-    await message.react('🏡');
-    await message.react('📚');
-    await message.react('💰');
+    await message.react('🔷');
+    await message.react('💎');
+    await message.react('🏦');
 
     return true;
   } catch (error) {
@@ -870,7 +837,7 @@ export async function createChannelStructure(guildId: string): Promise<{ success
 
     return {
       success: true,
-      message: `Successfully set up Axiom community channels`,
+      message: `Successfully set up Axiom Protocol channels`,
       created
     };
   } catch (error: any) {
@@ -930,37 +897,6 @@ export async function sendEmbed(guildId: string, channelName: string, embed: Emb
   }
 }
 
-export async function postFundingUpdate(guildId: string, parcelName: string, fundingPercent: number, totalRaised: number): Promise<boolean> {
-  const embed = new EmbedBuilder()
-    .setColor(fundingPercent >= 100 ? 0x4ade80 : 0xfbbf24)
-    .setTitle(fundingPercent >= 100 ? 'MILESTONE REACHED!' : `Funding Update: ${parcelName}`)
-    .addFields(
-      { name: 'Progress', value: `${'█'.repeat(Math.floor(fundingPercent / 10))}${'░'.repeat(10 - Math.floor(fundingPercent / 10))} ${fundingPercent}%`, inline: false },
-      { name: 'Total Raised', value: `$${totalRaised.toLocaleString()}`, inline: true }
-    )
-    .setTimestamp();
-
-  if (fundingPercent >= 100) {
-    embed.setDescription(`**${parcelName}** is now fully funded! Thank you to everyone who contributed to this historic moment!`);
-  }
-
-  return await sendEmbed(guildId, 'announcements', embed);
-}
-
-export async function postNewMemberAnnouncement(guildId: string, memberCount: number, foundingSpotsRemaining: number): Promise<boolean> {
-  const embed = new EmbedBuilder()
-    .setColor(0x4ade80)
-    .setTitle('New Member Joined!')
-    .setDescription(`Our community has grown to **${memberCount.toLocaleString()}** members.`)
-    .addFields(
-      { name: 'Founding Spots Remaining', value: `**${foundingSpotsRemaining.toLocaleString()}**`, inline: true }
-    )
-    .setFooter({ text: 'Join us: axiomprotocol.app/joincommunity' })
-    .setTimestamp();
-
-  return await sendEmbed(guildId, 'announcements', embed);
-}
-
 export async function getGuildList(): Promise<{ id: string; name: string; memberCount: number }[]> {
   const discordClient = await getDiscordClient();
   if (!discordClient) return [];
@@ -989,81 +925,17 @@ export async function postDailyTip(guildId: string): Promise<boolean> {
   const tip = DAILY_TIPS[Math.floor(Math.random() * DAILY_TIPS.length)];
   
   const embed = new EmbedBuilder()
-    .setColor(0x60a5fa)
-    .setTitle(`📅 Daily Tip: ${tip.title}`)
+    .setColor(0x3B82F6)
+    .setTitle(`Daily Tip: ${tip.title}`)
     .setDescription(tip.tip)
     .addFields(
-      { name: '💡 Take Action', value: 'Use `/checklist` to see the full research checklist, or ask questions in #ask-questions!', inline: false }
+      { name: 'Learn More', value: 'Use /protocol for protocol overview, or ask in #questions.', inline: false }
     )
-    .setFooter({ text: 'Axiom Community - Building Generational Wealth Together' })
+    .setFooter({ text: 'Axiom Protocol' })
     .setTimestamp();
 
   return await sendEmbed(guildId, 'general-chat', embed);
 }
-
-export async function postWeeklyChallenge(guildId: string, challenge: { title: string; description: string; reward: string }): Promise<boolean> {
-  const embed = new EmbedBuilder()
-    .setColor(0xf59e0b)
-    .setTitle(`🎯 Weekly Challenge: ${challenge.title}`)
-    .setDescription(challenge.description)
-    .addFields(
-      { name: '🏆 Reward', value: challenge.reward, inline: true },
-      { name: '⏰ Deadline', value: 'Sunday 11:59 PM EST', inline: true },
-      { name: '📝 How to Participate', value: 'Complete the challenge and share your progress in this channel. React with ✅ when done!', inline: false }
-    )
-    .setFooter({ text: 'Complete challenges to earn XP and climb the leaderboard!' })
-    .setTimestamp();
-
-  return await sendEmbed(guildId, 'general-chat', embed);
-}
-
-export async function postWorkbookPreview(guildId: string, preview: { title: string; content: string; feature: string }): Promise<boolean> {
-  const embed = new EmbedBuilder()
-    .setColor(0xfbbf24)
-    .setTitle(`📚 Workbook Preview: ${preview.title}`)
-    .setDescription(preview.content)
-    .addFields(
-      { name: '✨ Premium Feature', value: preview.feature, inline: false },
-      { name: '🔗 Get the Full Workbook', value: '[Start your subscription](https://axiomprotocol.app/workbook) - Only $20/month', inline: false }
-    )
-    .setFooter({ text: 'AI-powered research to help you reclaim your family\'s land history' })
-    .setTimestamp();
-
-  return await sendEmbed(guildId, 'resource-library', embed);
-}
-
-export async function postMemberSpotlight(guildId: string, member: { username: string; story: string; achievement: string; avatarUrl?: string }): Promise<boolean> {
-  const embed = new EmbedBuilder()
-    .setColor(0x8b5cf6)
-    .setTitle('⭐ Member Spotlight')
-    .setDescription(`**${member.username}**\n\n${member.story}`)
-    .addFields(
-      { name: '🏆 Achievement', value: member.achievement, inline: false }
-    )
-    .setFooter({ text: 'Want to be featured? Share your story in #success-stories!' })
-    .setTimestamp();
-
-  if (member.avatarUrl) {
-    embed.setThumbnail(member.avatarUrl);
-  }
-
-  return await sendEmbed(guildId, 'observations', embed);
-}
-
-export const WEEKLY_CHALLENGES = [
-  { title: 'Family Tree Starter', description: 'Create or update your family tree with at least 3 generations. Include names, approximate dates, and locations.', reward: '100 XP + Researcher Badge' },
-  { title: 'Document Hunter', description: 'Find and share one historical document related to your family (census, deed, marriage record, etc).', reward: '150 XP + Archivist Badge' },
-  { title: 'County Research', description: 'Identify the county where your ancestors lived and research its deed office or historical society.', reward: '100 XP + Explorer Badge' },
-  { title: 'Story Collector', description: 'Interview a family elder about land your family owned or worked. Share what you learned.', reward: '200 XP + Storyteller Badge' },
-  { title: 'Community Helper', description: 'Help 3 other members with their research questions in #ask-questions.', reward: '150 XP + Mentor Badge' }
-];
-
-export const WORKBOOK_PREVIEWS = [
-  { title: 'AI Research Assistant', content: 'Our AI helps you search historical databases, interpret old documents, and connect the dots in your family history.', feature: 'Ask questions in plain English and get research guidance tailored to your family\'s unique story.' },
-  { title: 'Document Templates', content: 'Professional templates for heir property research, including family tree charts, property timelines, and heir identification worksheets.', feature: 'Download ready-to-use templates that organize your research systematically.' },
-  { title: 'State-Specific Guides', content: 'Each Southern state has different laws around heir property. Our guides break down what you need to know for your state.', feature: 'Get step-by-step instructions customized for your state\'s legal requirements.' },
-  { title: 'Record Request Letters', content: 'Need to request records from courthouses or historical societies? We have letter templates ready for you.', feature: 'Professionally worded letters that get results - just fill in your details and send.' }
-];
 
 export async function deleteCategory(guildId: string, categoryName: string): Promise<{ success: boolean; message: string; deleted: string[] }> {
   const discordClient = await getDiscordClient();
