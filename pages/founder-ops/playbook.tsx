@@ -342,13 +342,23 @@ export default function PlaybookPage() {
         const usdcAmount = ethers.parseUnits(val.toString(), USDC_DECIMALS);
         const usdcContract = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, signer);
 
-        setTxStatus({ type: 'pending', message: 'Approving USDC...' });
-        const approveTx = await usdcContract.approve(psmAddress, usdcAmount);
-        await approveTx.wait();
+        const walletAddress = await signer.getAddress();
+        const currentAllowance = await usdcContract.allowance(walletAddress, psmAddress);
 
-        setTxStatus({ type: 'pending', message: 'Minting AXUSD...' });
+        if (currentAllowance < usdcAmount) {
+          const approveAmount = ethers.parseUnits('1000000', USDC_DECIMALS);
+          setTxStatus({ type: 'pending', message: `USDC allowance insufficient (${ethers.formatUnits(currentAllowance, USDC_DECIMALS)} approved). Requesting approval — confirm in MetaMask...` });
+          const approveTx = await usdcContract.approve(psmAddress, approveAmount);
+          setTxStatus({ type: 'pending', message: 'Approval submitted. Waiting for confirmation...' });
+          await approveTx.wait();
+          setTxStatus({ type: 'pending', message: 'USDC approved. Now minting AXUSD...' });
+        } else {
+          setTxStatus({ type: 'pending', message: 'USDC allowance sufficient. Minting AXUSD...' });
+        }
+
         const psmContract = new ethers.Contract(psmAddress, PSM_ABI, signer);
         const mintTx = await psmContract.mint(usdcAmount);
+        setTxStatus({ type: 'pending', message: 'Mint submitted. Waiting for confirmation...' });
         const receipt = await mintTx.wait();
         const txHash = receipt.hash;
 
@@ -361,13 +371,23 @@ export default function PlaybookPage() {
         const axusdAddress = getAxusdAddress();
         const axusdContract = new ethers.Contract(axusdAddress, ERC20_ABI, signer);
 
-        setTxStatus({ type: 'pending', message: 'Approving AXUSD...' });
-        const approveTx = await axusdContract.approve(psmAddress, axusdAmount);
-        await approveTx.wait();
+        const walletAddress = await signer.getAddress();
+        const currentAllowance = await axusdContract.allowance(walletAddress, psmAddress);
 
-        setTxStatus({ type: 'pending', message: 'Redeeming USDC...' });
+        if (currentAllowance < axusdAmount) {
+          const approveAmount = ethers.parseUnits('1000000', AXUSD_DECIMALS);
+          setTxStatus({ type: 'pending', message: `AXUSD allowance insufficient (${ethers.formatUnits(currentAllowance, AXUSD_DECIMALS)} approved). Requesting approval — confirm in MetaMask...` });
+          const approveTx = await axusdContract.approve(psmAddress, approveAmount);
+          setTxStatus({ type: 'pending', message: 'Approval submitted. Waiting for confirmation...' });
+          await approveTx.wait();
+          setTxStatus({ type: 'pending', message: 'AXUSD approved. Now redeeming USDC...' });
+        } else {
+          setTxStatus({ type: 'pending', message: 'AXUSD allowance sufficient. Redeeming USDC...' });
+        }
+
         const psmContract = new ethers.Contract(psmAddress, PSM_ABI, signer);
         const redeemTx = await psmContract.redeem(axusdAmount);
+        setTxStatus({ type: 'pending', message: 'Redeem submitted. Waiting for confirmation...' });
         const receipt = await redeemTx.wait();
         const txHash = receipt.hash;
 
