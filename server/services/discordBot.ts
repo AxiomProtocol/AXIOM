@@ -25,6 +25,32 @@ let client: Client | null = null;
 
 async function resolveDiscordToken(): Promise<string | undefined> {
   if (DISCORD_BOT_TOKEN) return DISCORD_BOT_TOKEN;
+
+  try {
+    const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+    const xReplitToken = process.env.REPL_IDENTITY
+      ? 'repl ' + process.env.REPL_IDENTITY
+      : process.env.WEB_REPL_RENEWAL
+      ? 'depl ' + process.env.WEB_REPL_RENEWAL
+      : null;
+
+    if (!hostname || !xReplitToken) return undefined;
+
+    const res = await fetch(
+      'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=discord',
+      { headers: { 'Accept': 'application/json', 'X_REPLIT_TOKEN': xReplitToken } }
+    );
+    const data = await res.json();
+    const conn = data.items?.[0];
+    const token = conn?.settings?.access_token || conn?.settings?.oauth?.credentials?.access_token;
+    if (token) {
+      DISCORD_BOT_TOKEN = token;
+      console.log('Discord token resolved from Replit connection');
+      return token;
+    }
+  } catch (e: any) {
+    console.error('Failed to resolve Discord token:', e.message);
+  }
   return undefined;
 }
 
