@@ -33,12 +33,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const adminKey = process.env.ADMIN_SOLVENCY_KEY;
   const providedKey = req.headers['x-auto-ingest-key'] as string;
-  const referer = req.headers['referer'] || '';
+  const referer = (req.headers['referer'] || '') as string;
+  const origin = (req.headers['origin'] || '') as string;
   const host = req.headers['host'] || '';
-  const isInternalCall = host && referer.includes(host);
+  const forwardedHost = req.headers['x-forwarded-host'] || '';
+  const publicDomain = process.env.PUBLIC_DOMAIN || '';
+
+  const trustedHosts = [host, forwardedHost, publicDomain, `www.${publicDomain}`].filter(Boolean);
+  const requestSource = referer || origin;
+  const isInternalCall = trustedHosts.some(h => requestSource.includes(h as string));
   const isAdminAuth = adminKey && providedKey && providedKey === adminKey;
 
   if (!isInternalCall && !isAdminAuth) {
+    console.log('[auto-ingest] Auth failed:', { referer, origin, host, forwardedHost, publicDomain, trustedHosts });
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
