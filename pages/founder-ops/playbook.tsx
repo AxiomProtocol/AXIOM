@@ -429,19 +429,22 @@ export default function PlaybookPage() {
           const approveTx = await usdcContract.approve(psmAddress, approveAmount);
           setTxStatus({ type: 'pending', message: 'Approval submitted. Waiting for confirmation...' });
           await approveTx.wait();
-          setTxStatus({ type: 'pending', message: 'USDC approved. Now minting AXUSD...' });
+          setTxStatus({ type: 'pending', message: 'USDC approved. Getting swap quote...' });
         } else {
-          setTxStatus({ type: 'pending', message: 'USDC allowance sufficient. Minting AXUSD...' });
+          setTxStatus({ type: 'pending', message: 'USDC allowance sufficient. Getting swap quote...' });
         }
 
         const psmContract = new ethers.Contract(psmAddress, PSM_ABI, signer);
-        const mintTx = await psmContract.mint(usdcAmount);
-        setTxStatus({ type: 'pending', message: 'Mint submitted. Waiting for confirmation...' });
+        const quote = await psmContract.getSwapQuote(usdcAmount, false);
+        const minOut = quote.amountOut * 95n / 100n;
+        setTxStatus({ type: 'pending', message: `Swapping ${val} USDC for ~${parseFloat(ethers.formatUnits(quote.amountOut, AXUSD_DECIMALS)).toFixed(4)} AXUSD — confirm in MetaMask...` });
+        const mintTx = await psmContract.swapCollateralForAXUSDWithMin(usdcAmount, minOut);
+        setTxStatus({ type: 'pending', message: 'Swap submitted. Waiting for confirmation...' });
         const receipt = await mintTx.wait();
         const txHash = receipt.hash;
 
-        const feeInfo = computeFee();
-        setTxStatus({ type: 'success', message: `Minted ${feeInfo.output} AXUSD via ${getEcosystemLabel()} PSM`, txHash });
+        const axusdOut = parseFloat(ethers.formatUnits(quote.amountOut, AXUSD_DECIMALS)).toFixed(4);
+        setTxStatus({ type: 'success', message: `Minted ${axusdOut} AXUSD via ${getEcosystemLabel()} PSM`, txHash });
 
         await logOperation(txHash, val, 'Mint');
       } else {
@@ -458,19 +461,22 @@ export default function PlaybookPage() {
           const approveTx = await axusdContract.approve(psmAddress, approveAmount);
           setTxStatus({ type: 'pending', message: 'Approval submitted. Waiting for confirmation...' });
           await approveTx.wait();
-          setTxStatus({ type: 'pending', message: 'AXUSD approved. Now redeeming USDC...' });
+          setTxStatus({ type: 'pending', message: 'AXUSD approved. Getting swap quote...' });
         } else {
-          setTxStatus({ type: 'pending', message: 'AXUSD allowance sufficient. Redeeming USDC...' });
+          setTxStatus({ type: 'pending', message: 'AXUSD allowance sufficient. Getting swap quote...' });
         }
 
         const psmContract = new ethers.Contract(psmAddress, PSM_ABI, signer);
-        const redeemTx = await psmContract.redeem(axusdAmount);
-        setTxStatus({ type: 'pending', message: 'Redeem submitted. Waiting for confirmation...' });
+        const quote = await psmContract.getSwapQuote(axusdAmount, true);
+        const minOut = quote.amountOut * 95n / 100n;
+        setTxStatus({ type: 'pending', message: `Swapping ${val} AXUSD for ~${parseFloat(ethers.formatUnits(quote.amountOut, USDC_DECIMALS)).toFixed(4)} USDC — confirm in MetaMask...` });
+        const redeemTx = await psmContract.swapAXUSDForCollateralWithMin(axusdAmount, minOut);
+        setTxStatus({ type: 'pending', message: 'Swap submitted. Waiting for confirmation...' });
         const receipt = await redeemTx.wait();
         const txHash = receipt.hash;
 
-        const feeInfo = computeFee();
-        setTxStatus({ type: 'success', message: `Redeemed ${feeInfo.output} USDC via ${getEcosystemLabel()} PSM`, txHash });
+        const usdcOut = parseFloat(ethers.formatUnits(quote.amountOut, USDC_DECIMALS)).toFixed(4);
+        setTxStatus({ type: 'success', message: `Redeemed ${usdcOut} USDC via ${getEcosystemLabel()} PSM`, txHash });
 
         await logOperation(txHash, val, 'Redeem');
       }
@@ -906,90 +912,6 @@ export default function PlaybookPage() {
                 ))}
               </tbody>
             </table>
-
-            <SectionHeading>PSM Access Control</SectionHeading>
-            <div style={{ border: '1px solid #1B2A4A', padding: '1.5rem', marginBottom: '2rem' }}>
-              {!roleStatus.checked ? (
-                <div>
-                  <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#6B7280', margin: '0 0 1rem' }}>
-                    Connect your wallet to check PSM role assignments.
-                  </p>
-                  <button
-                    onClick={async () => {
-                      if (!window.ethereum) return;
-                      const provider = new ethers.BrowserProvider(window.ethereum);
-                      const accounts = await provider.send('eth_requestAccounts', []);
-                      if (accounts.length) {
-                        setWalletAddr(accounts[0]);
-                        checkRoles(accounts[0]);
-                      }
-                    }}
-                    style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', padding: '0.5rem 1rem', border: '1px solid #1B2A4A', background: '#1B2A4A', color: '#fff', cursor: 'pointer' }}
-                  >
-                    Check Roles
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <table style={{ width: '100%', fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '2px solid #1B2A4A' }}>
-                        <th style={{ padding: '0.5rem', textAlign: 'left' }}>PSM</th>
-                        <th style={{ padding: '0.5rem', textAlign: 'center' }}>ADMIN</th>
-                        <th style={{ padding: '0.5rem', textAlign: 'center' }}>MINTER</th>
-                        <th style={{ padding: '0.5rem', textAlign: 'center' }}>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        { label: 'PRIMARY', data: roleStatus.primary, address: PRIMARY_PSM },
-                        { label: 'EULER', data: roleStatus.euler, address: EULER_PSM },
-                      ].map((row) => (
-                        <tr key={row.label} style={{ borderBottom: '1px solid #E5E7EB' }}>
-                          <td style={{ padding: '0.5rem' }}>{row.label}</td>
-                          <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                            {row.data ? (
-                              <span style={{ color: row.data.admin ? '#2D5F2D' : '#8B0000', fontWeight: 600 }}>
-                                {row.data.admin ? 'YES' : 'NO'}
-                              </span>
-                            ) : '—'}
-                          </td>
-                          <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                            {row.data ? (
-                              <span style={{ color: row.data.minter ? '#2D5F2D' : '#8B0000', fontWeight: 600 }}>
-                                {row.data.minter ? 'YES' : 'NO'}
-                              </span>
-                            ) : '—'}
-                          </td>
-                          <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                            {row.data && row.data.admin && !row.data.minter ? (
-                              <button
-                                onClick={() => grantMinterRole(row.address, row.label)}
-                                disabled={roleGranting}
-                                style={{
-                                  fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem', padding: '0.35rem 0.75rem',
-                                  border: '1px solid #8B0000', background: roleGranting ? '#E5E7EB' : '#fff',
-                                  color: roleGranting ? '#6B7280' : '#8B0000', cursor: roleGranting ? 'not-allowed' : 'pointer', fontWeight: 600,
-                                }}
-                              >
-                                Grant Minter Role
-                              </button>
-                            ) : row.data?.minter ? (
-                              <span style={{ color: '#2D5F2D', fontSize: '0.75rem' }}>Ready</span>
-                            ) : (
-                              <span style={{ color: '#6B7280', fontSize: '0.75rem' }}>—</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.7rem', color: '#6B7280', margin: 0 }}>
-                    MINTER_ROLE is required to call mint() and redeem() on the PSM contracts. As admin, you can grant this role to your wallet.
-                  </p>
-                </div>
-              )}
-            </div>
 
             <SectionHeading>PSM Mint / Redeem Console</SectionHeading>
             <div style={{ border: '1px solid #1B2A4A', padding: '1.5rem', marginBottom: '2rem' }}>

@@ -9,6 +9,9 @@ export const PSM_ABI = [
   'function paused() view returns (bool)',
   'function mint(uint256 usdcAmount) external returns (uint256)',
   'function redeem(uint256 axusdAmount) external returns (uint256)',
+  'function swapCollateralForAXUSDWithMin(uint256 collateralAmount, uint256 minAxusdOut) public returns (uint256)',
+  'function swapAXUSDForCollateralWithMin(uint256 axusdAmount, uint256 minCollateralOut) public returns (uint256)',
+  'function getSwapQuote(uint256 amountIn, bool axusdToCollateral) view returns (uint256 amountOut, uint256 fee)',
 ] as const;
 
 export const ERC20_ABI = [
