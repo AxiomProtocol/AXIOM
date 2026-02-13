@@ -450,9 +450,95 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
     );
   };
 
+  const renderSupplyClassification = () => {
+    const psmReserves = (m?.composition || []).filter(c => c.label.toUpperCase().includes('PSM')).reduce((sum, c) => sum + c.valueUsd, 0);
+    const initialDeploymentSupply = (m?.liabilitiesTotalUsd || 0) - psmReserves;
+    const effectiveBackingRatio = (m?.liabilitiesTotalUsd || 0) > 0 ? psmReserves / m!.liabilitiesTotalUsd : 0;
+
+    return (
+      <div className="mb-10">
+        <SectionHeading>AXUSD Supply Classification</SectionHeading>
+        <div className="border border-dl-border p-6 bg-dl-bg-alt">
+          <div className="mb-4">
+            <div className="flex items-baseline justify-between py-2 border-b border-dl-border">
+              <span className="text-sm text-dl-navy font-dl-serif font-medium">Total AXUSD Outstanding</span>
+              <span className="text-sm font-dl-mono text-dl-navy font-semibold">{fmtUsd(m?.liabilitiesTotalUsd || 0)}</span>
+            </div>
+            <div className="flex items-baseline justify-between py-2 border-b border-dl-border pl-4">
+              <span className="text-sm text-dl-navy">├── Initial Deployment Supply</span>
+              <div className="text-right">
+                <span className="text-sm font-dl-mono text-dl-navy">{fmtUsd(initialDeploymentSupply)}</span>
+                <span className="text-xs text-dl-gray ml-2">(Contract deployment mint — not USDC-backed)</span>
+              </div>
+            </div>
+            <div className="flex items-baseline justify-between py-2 border-b border-dl-border pl-4">
+              <span className="text-sm text-dl-navy">└── PSM-Backed Supply</span>
+              <div className="text-right">
+                <span className="text-sm font-dl-mono text-dl-forest">{fmtUsd(psmReserves)}</span>
+                <span className="text-xs text-dl-gray ml-2">(1:1 USDC collateralized via PSM swaps)</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between py-3 border border-dl-border px-4 bg-dl-bg">
+            <span className="text-sm text-dl-navy font-dl-serif font-medium">Effective PSM Backing Ratio</span>
+            <span className="text-sm font-dl-mono text-dl-navy font-semibold">{fmtRatio(effectiveBackingRatio)}</span>
+          </div>
+        </div>
+        <div className="border border-dl-border border-t-0 px-6 py-4 bg-dl-bg">
+          <p className="text-xs text-dl-gray leading-relaxed font-dl-mono">
+            Initial deployment supply represents tokens minted during contract deployment for protocol initialization. These tokens are not backed by USDC deposits in the PSM. The protocol is in a bootstrap capital deployment phase, systematically building collateral backing at $100 per week. As USDC is deposited through PSM swaps, the effective backing ratio will increase toward full collateralization.
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  const renderBootstrapCapitalDeployment = () => (
+    <div className="mb-10">
+      <SectionHeading>Bootstrap Capital Deployment</SectionHeading>
+      <DetailGrid
+        left={[
+          { label: 'Current Weekly Deployment', value: '$100 / week', mono: true },
+          { label: 'Target', value: 'Full collateralization of outstanding supply', mono: true },
+        ]}
+        right={[
+          { label: 'Deployment Channels', value: 'PSM deposits, Euler Vault, DEX liquidity', mono: true },
+          { label: 'Phase', value: 'Bootstrap — Active', mono: true },
+        ]}
+      />
+      <div className="border border-dl-border border-t-0">
+        <div className="grid grid-cols-2 px-6 py-3 bg-dl-bg border-b border-dl-border">
+          <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Milestone</p>
+          <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Cumulative Capital Deployed</p>
+        </div>
+        {[
+          { milestone: 'Week 1', value: '~$100' },
+          { milestone: 'Week 13 (Quarter 1)', value: '~$1,300' },
+          { milestone: 'Week 26 (Half Year)', value: '~$2,600' },
+          { milestone: 'Week 52 (Year 1)', value: '~$5,200' },
+        ].map((row, i) => (
+          <div
+            key={row.milestone}
+            className={`grid grid-cols-2 px-6 py-3 ${i < 3 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}
+          >
+            <p className="text-sm text-dl-navy">{row.milestone}</p>
+            <p className="text-sm font-dl-mono text-dl-navy text-right">{row.value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="border border-dl-border border-t-0 px-6 py-4 bg-dl-bg-alt">
+        <p className="text-xs text-dl-gray leading-relaxed font-dl-mono">
+          This is a controlled, transparent bootstrap process. All capital deployments are verifiable on-chain.
+        </p>
+      </div>
+    </div>
+  );
+
   const renderAllocatorView = () => (
     <>
       {renderMetricsGrid()}
+      {renderSupplyClassification()}
+      {renderBootstrapCapitalDeployment()}
       {renderAmeAllocatorSection()}
 
       {m && m.composition && m.composition.length > 0 && (
@@ -791,6 +877,11 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
             <p className="text-sm text-dl-gray">Loading stability assessment data...</p>
           </div>
         )}
+        <div className="border border-dl-border border-t-0 px-6 py-3 bg-dl-bg">
+          <p className="text-xs text-dl-gray leading-relaxed font-dl-mono">
+            Note: Total supply includes initial deployment mint. PSM backing ratio reflects only USDC-collateralized supply. See Allocator view for full supply classification.
+          </p>
+        </div>
       </div>
 
       {renderHardBrakeTriggerTable()}

@@ -652,6 +652,56 @@ export default function PlaybookPage() {
               </tbody>
             </table>
 
+            <SectionHeading>Weekly Capital Deployment Checklist</SectionHeading>
+            <div style={{ border: '1px solid #1B2A4A', padding: '1rem', marginBottom: '1.5rem', background: '#FAFBFC' }}>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: '0.9rem', color: '#1B2A4A', margin: '0 0 0.75rem', fontWeight: 600 }}>
+                Each Week — Execute in Order
+              </p>
+              <table style={{ width: '100%', fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid #1B2A4A' }}>
+                    <th style={{ padding: '0.5rem', textAlign: 'left', width: '2rem' }}>#</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'left' }}>Action</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'left' }}>Amount</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'left' }}>Verification</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ['1', 'Deposit USDC into PRIMARY PSM (mint AXUSD)', '$40', 'PSM USDC reserve increases, AXUSD minted'],
+                    ['2', 'Deposit EULER AXUSD into Euler Vault', 'Variable', 'Vault shares received, fee accrual starts'],
+                    ['3', 'Buy AXM on Camelot DEX', '$25', 'AXM balance increases, slippage logged'],
+                    ['4', 'Fund DePIN node operations', '$15', 'Node active, storage metrics updating'],
+                    ['5', 'Reserve gas + buffer', '$20', 'ETH balance sufficient for next week'],
+                    ['6', 'Ingest solvency snapshot', '—', 'Snapshot ID + checksum recorded'],
+                    ['7', 'Log all operations in founder-ops', '—', 'All txHashes verified on-chain'],
+                  ].map(([num, action, amt, verify]) => (
+                    <tr key={num} style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      <td style={{ padding: '0.5rem' }}>{num}</td>
+                      <td style={{ padding: '0.5rem' }}>{action}</td>
+                      <td style={{ padding: '0.5rem' }}>{amt}</td>
+                      <td style={{ padding: '0.5rem', color: '#6B7280' }}>{verify}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div style={{ border: '1px solid #1B2A4A', padding: '1rem', marginBottom: '2rem' }}>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: '0.9rem', color: '#1B2A4A', margin: '0 0 0.5rem', fontWeight: 600 }}>
+                Supply Classification Context
+              </p>
+              <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#6B7280', lineHeight: 1.6, margin: '0 0 0.5rem' }}>
+                Total PRIMARY AXUSD outstanding: ~1,000,048 (initial deployment mint — not PSM-backed).
+                Weekly PSM deposits build real USDC collateral backing. Current effective backing ratio
+                is less than 0.01%. Each $100 deposit incrementally improves this ratio toward full collateralization.
+              </p>
+              <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#6B7280', lineHeight: 1.6, margin: 0 }}>
+                The solvency page (/solvency) discloses this classification transparently under the
+                Allocator view. All capital deployments are verifiable on Arbitrum One via Arbiscan.
+              </p>
+            </div>
+
             <SectionHeading>Live System Status</SectionHeading>
             {loading ? (
               <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#6B7280' }}>Loading live data...</p>
