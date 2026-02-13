@@ -90,6 +90,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ]
     );
 
+    const host = req.headers['host'] || 'localhost:5000';
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const baseUrl = `${protocol}://${host}`;
+    try {
+      await fetch(`${baseUrl}/api/solvency/auto-ingest`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auto-ingest-key': process.env.ADMIN_SOLVENCY_KEY || '',
+          'referer': baseUrl,
+        },
+        body: JSON.stringify({ notes: `Auto-ingest after PSM ${operation} — ${new Date().toISOString()}` }),
+      });
+    } catch (ingestErr: any) {
+      console.warn('[log-psm-op] Auto-ingest warning:', ingestErr.message);
+    }
+
     return res.status(201).json({ success: true, entry: result.rows[0] });
   } catch (err: any) {
     console.error('[log-psm-op] Error:', err.message);

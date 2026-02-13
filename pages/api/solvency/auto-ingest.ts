@@ -25,14 +25,14 @@ const DEPLOYER_ADDRESS = '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96';
 const INTERNAL_SECRET = process.env.AUTO_INGEST_SECRET || crypto.randomBytes(32).toString('hex');
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
+  if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   res.setHeader('Cache-Control', 'no-cache');
 
   const adminKey = process.env.ADMIN_SOLVENCY_KEY;
-  const providedKey = req.headers['x-auto-ingest-key'] as string;
+  const providedKey = (req.headers['x-auto-ingest-key'] as string) || (req.query.key as string);
   const referer = (req.headers['referer'] || '') as string;
   const origin = (req.headers['origin'] || '') as string;
   const host = req.headers['host'] || '';
