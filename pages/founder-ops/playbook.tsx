@@ -273,19 +273,46 @@ export default function PlaybookPage() {
   const grantMinterRole = async (psmAddress: string, label: string) => {
     if (!window.ethereum) return;
     setRoleGranting(true);
-    setTxStatus({ type: 'pending', message: `Granting MINTER_ROLE on ${label} PSM — confirm in MetaMask...` });
+    setTxStatus({ type: 'pending', message: `Connecting wallet for ${label} PSM role grant...` });
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.send('eth_requestAccounts', []);
+      if (!accounts.length) throw new Error('No accounts found');
+      setWalletAddr(accounts[0]);
+
+      const network = await provider.getNetwork();
+      if (Number(network.chainId) !== 42161) {
+        setTxStatus({ type: 'pending', message: 'Switching to Arbitrum One...' });
+        try {
+          await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xa4b1' }] });
+        } catch (switchErr: any) {
+          if (switchErr.code === 4902) {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{ chainId: '0xa4b1', chainName: 'Arbitrum One', rpcUrls: ['https://arb1.arbitrum.io/rpc'], nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 }, blockExplorerUrls: ['https://arbiscan.io'] }],
+            });
+          } else {
+            throw new Error('Please switch to Arbitrum One');
+          }
+        }
+      }
+
       const signer = await provider.getSigner();
       const walletAddress = await signer.getAddress();
+      setTxStatus({ type: 'pending', message: `Granting MINTER_ROLE on ${label} PSM — confirm in MetaMask...` });
       const psm = new ethers.Contract(psmAddress, ACCESS_CONTROL_ABI, signer);
       const tx = await psm.grantRole(MINTER_ROLE, walletAddress);
-      setTxStatus({ type: 'pending', message: 'Grant submitted. Waiting for confirmation...' });
+      setTxStatus({ type: 'pending', message: 'Grant submitted. Waiting for on-chain confirmation...' });
       await tx.wait();
       setTxStatus({ type: 'success', message: `MINTER_ROLE granted on ${label} PSM. You can now mint/redeem.`, txHash: tx.hash });
       await checkRoles(walletAddress);
     } catch (err: any) {
-      setTxStatus({ type: 'error', message: err.message || 'Failed to grant role' });
+      const msg = err.message || 'Failed to grant role';
+      if (msg.includes('user rejected') || msg.includes('User denied') || err.code === 4001) {
+        setTxStatus({ type: 'error', message: 'Transaction rejected in wallet. Try again when ready.' });
+      } else {
+        setTxStatus({ type: 'error', message: msg });
+      }
     }
     setRoleGranting(false);
   };
@@ -1115,6 +1142,26 @@ export default function PlaybookPage() {
                   <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#8B0000', margin: 0 }}>
                     {txStatus.message}
                   </p>
+                  <button
+                    onClick={() => setTxStatus({ type: 'idle', message: '' })}
+                    style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem', padding: '0.25rem 0.5rem', border: '1px solid #8B0000', background: '#fff', color: '#8B0000', cursor: 'pointer', marginTop: '0.5rem' }}
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+
+              {txStatus.type === 'pending' && (
+                <div style={{ border: '1px solid #B8860B', padding: '0.75rem', marginTop: '1rem', background: '#FFFBEB' }}>
+                  <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#92400E', margin: 0 }}>
+                    {txStatus.message}
+                  </p>
+                  <button
+                    onClick={() => { setTxStatus({ type: 'idle', message: '' }); setRoleGranting(false); }}
+                    style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem', padding: '0.25rem 0.5rem', border: '1px solid #92400E', background: '#fff', color: '#92400E', cursor: 'pointer', marginTop: '0.5rem' }}
+                  >
+                    Cancel / Reset
+                  </button>
                 </div>
               )}
             </div>
