@@ -71,19 +71,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const logDescription = description || `${operation} operation via ${ecoLabel} PSM. Verified on-chain: tx ${txHash} confirmed in block ${receipt.blockNumber}.`;
 
+    const numericAmount = parseFloat(inputAmount) || 0;
+
     const result = await pool.query(
       `INSERT INTO founder_ops_log (week, phase, category, title, description, tx_hash, product, amount, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
-        week,
-        'Phase 1 — Foundation',
+        parseInt(week) || 1,
+        1,
         'PSM Stress Test',
         title,
         logDescription,
         txHash,
         'PSM',
-        operation === 'Mint' ? `${inputAmount} USDC` : `${inputAmount} AXUSD`,
+        numericAmount,
         'completed',
       ]
     );
