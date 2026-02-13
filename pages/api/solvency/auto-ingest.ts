@@ -156,6 +156,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const row = result.rows[0];
 
+    let ameResult = null;
+    try {
+      const host = req.headers['host'] || 'localhost:5000';
+      const proto = host.includes('localhost') ? 'http' : 'https';
+      const ameRes = await fetch(`${proto}://${host}/api/solvency/ame/run`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': process.env.ADMIN_SOLVENCY_KEY || '',
+        },
+        body: JSON.stringify({}),
+      });
+      ameResult = await ameRes.json();
+    } catch (ameErr: any) {
+      console.warn('[auto-ingest] AME auto-run warning:', ameErr.message);
+    }
+
     return res.status(201).json({
       success: true,
       snapshotId: row.id,
@@ -167,6 +184,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         liabilities: liabilitiesTotalUsd,
         ethPrice,
       },
+      ameRun: ameResult?.dataStatus === 'ok' ? 'success' : (ameResult?.error || 'skipped'),
     });
   } catch (err: any) {
     console.error('[solvency/auto-ingest] Error:', err);
