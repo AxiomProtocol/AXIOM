@@ -317,6 +317,33 @@ export default function PlaybookPage() {
     setRoleGranting(false);
   };
 
+  const [snapshotStatus, setSnapshotStatus] = useState<{ type: 'idle' | 'pending' | 'success' | 'error'; message: string; snapshotId?: string; checksum?: string }>({ type: 'idle', message: '' });
+
+  const ingestSolvencySnapshot = useCallback(async () => {
+    setSnapshotStatus({ type: 'pending', message: 'Fetching live metrics from chain...' });
+    try {
+      const metricsRes = await fetch('/api/solvency/metrics');
+      const metricsJson = await metricsRes.json();
+      if (metricsJson.dataStatus !== 'ok') throw new Error('Failed to fetch live metrics');
+
+      setSnapshotStatus({ type: 'pending', message: 'Ingesting snapshot...' });
+      const ingestRes = await fetch('/api/solvency/ingest-snapshot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': prompt('Enter ADMIN_SOLVENCY_KEY:') || '' },
+        body: JSON.stringify({
+          asOfUtc: metricsJson.asOfUtc || new Date().toISOString(),
+          payloadJson: metricsJson,
+          notes: `Operations tab ingest — ${new Date().toISOString()}`,
+        }),
+      });
+      const ingestJson = await ingestRes.json();
+      if (!ingestRes.ok) throw new Error(ingestJson.error || 'Ingest failed');
+      setSnapshotStatus({ type: 'success', message: `Snapshot ingested successfully.`, snapshotId: ingestJson.snapshotId, checksum: ingestJson.checksum });
+    } catch (err: any) {
+      setSnapshotStatus({ type: 'error', message: err.message || 'Failed to ingest snapshot' });
+    }
+  }, []);
+
   const fetchPsmStatus = useCallback(async () => {
     setPsmLoading(true);
     try {
@@ -1134,6 +1161,49 @@ export default function PlaybookPage() {
                   >
                     Cancel / Reset
                   </button>
+                </div>
+              )}
+            </div>
+
+            <SectionHeading>Ingest Solvency Snapshot</SectionHeading>
+            <div style={{ border: '1px solid #1B2A4A', padding: '1.5rem', marginBottom: '2rem' }}>
+              <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#6B7280', margin: '0 0 1rem', lineHeight: 1.6 }}>
+                Captures the current live on-chain metrics and saves them as a timestamped solvency snapshot.
+                This updates the /solvency page with the latest data, including your most recent PSM deposits.
+              </p>
+              <button
+                onClick={ingestSolvencySnapshot}
+                disabled={snapshotStatus.type === 'pending'}
+                style={{
+                  fontFamily: 'ui-monospace, monospace',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  padding: '0.6rem 1.5rem',
+                  border: '1px solid #2D5F2D',
+                  background: snapshotStatus.type === 'pending' ? '#E5E7EB' : '#2D5F2D',
+                  color: snapshotStatus.type === 'pending' ? '#6B7280' : '#fff',
+                  cursor: snapshotStatus.type === 'pending' ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {snapshotStatus.type === 'pending' ? snapshotStatus.message : 'Ingest Snapshot Now'}
+              </button>
+
+              {snapshotStatus.type === 'success' && (
+                <div style={{ border: '1px solid #2D5F2D', padding: '0.75rem', marginTop: '1rem', background: '#F0FFF0' }}>
+                  <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#2D5F2D', margin: 0, fontWeight: 600 }}>
+                    {snapshotStatus.message}
+                  </p>
+                  <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem', color: '#6B7280', margin: '0.25rem 0 0' }}>
+                    Snapshot ID: {snapshotStatus.snapshotId?.slice(0, 8)} | Checksum: {snapshotStatus.checksum}
+                  </p>
+                </div>
+              )}
+
+              {snapshotStatus.type === 'error' && (
+                <div style={{ border: '1px solid #8B0000', padding: '0.75rem', marginTop: '1rem', background: '#FFF5F5' }}>
+                  <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', color: '#8B0000', margin: 0 }}>
+                    {snapshotStatus.message}
+                  </p>
                 </div>
               )}
             </div>
