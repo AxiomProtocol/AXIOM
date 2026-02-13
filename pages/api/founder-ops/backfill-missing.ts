@@ -6,20 +6,31 @@ import { ACTIVE_PSM, EULER_PSM } from '../../../src/config/activeContracts.gener
 const MINT_SELECTORS = ['0xa0712d68', '0xa43e6141'];
 const REDEEM_SELECTORS = ['0xdb006a75', '0xe042f940'];
 
+const MISSING_TX_HASHES = [
+  '0xbcab02674e355cbcfa76b439a0e2fb9b57b7cfcdef7b9d56ef2f09ab10161643',
+  '0x1f0741f1bb7949f75c286aeb3a5511703d5d4f12e5138a9ae7e6fac94c5525fd',
+];
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
+  if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const adminKey = process.env.ADMIN_SOLVENCY_KEY;
-  const providedKey = req.headers['x-admin-key'] as string;
-  if (!adminKey || providedKey !== adminKey) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  const providedKey = req.query.key as string;
+  const referer = (req.headers['referer'] || '') as string;
+  const origin = (req.headers['origin'] || '') as string;
+  const host = req.headers['host'] || '';
+  const forwardedHost = req.headers['x-forwarded-host'] || '';
+  const publicDomain = process.env.PUBLIC_DOMAIN || '';
 
-  const { txHashes } = req.body;
-  if (!txHashes || !Array.isArray(txHashes) || txHashes.length === 0) {
-    return res.status(400).json({ error: 'Provide txHashes array' });
+  const trustedHosts = [host, forwardedHost, publicDomain, `www.${publicDomain}`].filter(Boolean);
+  const requestSource = referer || origin;
+  const isInternalCall = trustedHosts.some(h => requestSource.includes(h as string));
+  const isAdminAuth = adminKey && providedKey && providedKey === adminKey;
+
+  if (!isInternalCall && !isAdminAuth) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const alchemyKey = process.env.ALCHEMY_API_KEY;
@@ -30,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const provider = new ethers.JsonRpcProvider(`https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`);
   const results: any[] = [];
 
-  for (const txHash of txHashes) {
+  for (const txHash of MISSING_TX_HASHES) {
     try {
       const existing = await pool.query(
         `SELECT id FROM founder_ops_log WHERE tx_hash = $1`,
