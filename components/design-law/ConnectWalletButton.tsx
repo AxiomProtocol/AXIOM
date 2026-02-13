@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 interface WalletState {
@@ -52,6 +52,8 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
   const [isConnecting, setIsConnecting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const connectInProgressRef = useRef(false);
+  const siweAttemptedRef = useRef(false);
 
   useEffect(() => {
     setMounted(true);
@@ -64,7 +66,9 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
         const { walletService } = await import('../../lib/services/WalletService');
         setWalletState(walletService.getState() as WalletState);
         unsubscribe = walletService.subscribe((state: any) => {
-          setWalletState(state as WalletState);
+          if (!connectInProgressRef.current) {
+            setWalletState(state as WalletState);
+          }
         });
 
         const { siweService } = await import('../../lib/services/SIWEService');
@@ -81,6 +85,13 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
 
   const handleConnect = async (type: 'metamask' | 'injected') => {
     if (typeof window === 'undefined') return;
+    if (connectInProgressRef.current) {
+      console.log('⚠️ Connect already in progress, ignoring duplicate call');
+      return;
+    }
+
+    connectInProgressRef.current = true;
+    siweAttemptedRef.current = false;
     setIsConnecting(true);
     setError(null);
 
@@ -102,12 +113,13 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
         throw new Error('No accounts returned');
       }
 
+      setWalletState(walletInstance.getState() as WalletState);
+
       const signer = walletInstance.getSigner();
       const state = walletInstance.getState();
 
-      console.log('🔐 Starting SIWE sign-in, signer available:', !!signer);
-
-      if (signer) {
+      if (signer && !siweAttemptedRef.current) {
+        siweAttemptedRef.current = true;
         try {
           setIsAuthenticating(true);
           const { siweService } = await import('../../lib/services/SIWEService');
@@ -132,14 +144,12 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
         } finally {
           setIsAuthenticating(false);
         }
-      } else {
-        console.error('❌ Signer not available after wallet connection');
       }
 
       setShowModal(false);
       if (onConnect) onConnect(connectedAddress);
     } catch (err: any) {
-      if (err.code === 4001) {
+      if (err.code === 4001 || err.message?.includes('rejected')) {
         setError('Connection declined. Please try again.');
       } else if (err.code === -32002) {
         setError('Connection pending. Please check your custody provider.');
@@ -147,6 +157,7 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
         setError(err.message || 'Failed to connect');
       }
     } finally {
+      connectInProgressRef.current = false;
       setIsConnecting(false);
     }
   };
