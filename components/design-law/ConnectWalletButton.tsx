@@ -85,38 +85,59 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
     setError(null);
 
     try {
-      if (!window.ethereum) {
-        throw new Error('No compatible custody provider detected. Please install MetaMask.');
+      const { WalletService } = await import('../../lib/services/WalletService');
+      const walletInstance = WalletService.getInstance();
+
+      let connectedAddress: string | null = null;
+
+      if (type === 'metamask') {
+        connectedAddress = await walletInstance.connectMetaMask();
+      } else {
+        connectedAddress = await walletInstance.connectInjected();
       }
 
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      if (!accounts || accounts.length === 0) {
+      console.log('✅ Wallet connected, address:', connectedAddress);
+
+      if (!connectedAddress) {
         throw new Error('No accounts returned');
       }
 
-      const address = accounts[0];
-      const { ethers } = await import('ethers');
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const network = await provider.getNetwork();
-      const chainId = Number(network.chainId);
+      const signer = walletInstance.getSigner();
+      const state = walletInstance.getState();
 
-      try {
-        setIsAuthenticating(true);
-        const { siweService } = await import('../../lib/services/SIWEService');
-        siweService.resetSigningState();
-        const result = await siweService.signIn(signer, address, chainId || 42161);
-        if (result.success) {
-          setIsAuthenticated(true);
+      console.log('🔐 Starting SIWE sign-in, signer available:', !!signer);
+
+      if (signer) {
+        try {
+          setIsAuthenticating(true);
+          const { siweService } = await import('../../lib/services/SIWEService');
+          siweService.resetSigningState();
+
+          console.log('📝 Requesting signature...');
+          const result = await siweService.signIn(
+            signer,
+            connectedAddress,
+            state.chainId || 42161
+          );
+
+          console.log('📝 Signature result:', result.success ? 'Success' : result.error);
+
+          if (result.success) {
+            setIsAuthenticated(true);
+          } else {
+            console.error('SIWE sign-in failed:', result.error);
+          }
+        } catch (siweErr: any) {
+          console.error('Authentication error:', siweErr);
+        } finally {
+          setIsAuthenticating(false);
         }
-      } catch (siweErr: any) {
-        console.error('Authentication error:', siweErr);
-      } finally {
-        setIsAuthenticating(false);
+      } else {
+        console.error('❌ Signer not available after wallet connection');
       }
 
       setShowModal(false);
-      if (onConnect) onConnect(address);
+      if (onConnect) onConnect(connectedAddress);
     } catch (err: any) {
       if (err.code === 4001) {
         setError('Connection declined. Please try again.');
