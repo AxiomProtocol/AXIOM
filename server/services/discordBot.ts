@@ -18,10 +18,15 @@ import {
   PartialUser
 } from 'discord.js';
 
-const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
+let DISCORD_BOT_TOKEN: string | undefined = process.env.DISCORD_BOT_TOKEN;
 const GUILD_ID = '1462325620322336852';
 
 let client: Client | null = null;
+
+async function resolveDiscordToken(): Promise<string | undefined> {
+  if (DISCORD_BOT_TOKEN) return DISCORD_BOT_TOKEN;
+  return undefined;
+}
 
 export interface ChannelConfig {
   name: string;
@@ -296,9 +301,10 @@ const slashCommands = [
 ];
 
 async function registerSlashCommands() {
-  if (!DISCORD_BOT_TOKEN) return;
+  const token = await resolveDiscordToken();
+  if (!token) return;
   
-  const rest = new REST({ version: '10' }).setToken(DISCORD_BOT_TOKEN);
+  const rest = new REST({ version: '10' }).setToken(token);
   
   try {
     console.log('Registering slash commands...');
@@ -409,7 +415,8 @@ async function assignMemberRole(member: GuildMember): Promise<boolean> {
 }
 
 export async function initializeDiscordBot(): Promise<Client | null> {
-  if (!DISCORD_BOT_TOKEN) {
+  const token = await resolveDiscordToken();
+  if (!token) {
     console.log('Discord bot token not configured');
     return null;
   }
@@ -710,7 +717,7 @@ export async function initializeDiscordBot(): Promise<Client | null> {
   });
 
   try {
-    await client.login(DISCORD_BOT_TOKEN);
+    await client.login(token);
     return client;
   } catch (error) {
     console.error('Failed to login Discord bot:', error);
