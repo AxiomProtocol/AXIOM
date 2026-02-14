@@ -12,8 +12,10 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
+  swcMinify: true,
+
   experimental: {
-    serverComponentsExternalPackages: ['pg'],
+    serverComponentsExternalPackages: ['pg', 'hardhat', '@nomiclabs/hardhat-ethers', '@nomicfoundation/hardhat-toolbox'],
   },
 
   webpack: (config, { isServer }) => {
@@ -21,12 +23,23 @@ const nextConfig = {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         '@react-native-async-storage/async-storage': false,
+        fs: false,
+        net: false,
+        tls: false,
+        child_process: false,
+        readline: false,
       };
     }
 
     config.plugins.push(
       new webpack.IgnorePlugin({
         resourceRegExp: /^\.[\\/]_archive/,
+      })
+    );
+
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^(hardhat|@nomiclabs\/hardhat|@nomicfoundation\/hardhat|slither)/,
       })
     );
 
