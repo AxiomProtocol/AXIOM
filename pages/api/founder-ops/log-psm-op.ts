@@ -30,8 +30,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ success: false, error: 'ALCHEMY_API_KEY not configured' });
   }
 
-  const MINT_SELECTORS = ['0xa0712d68', '0xa43e6141'];
-  const REDEEM_SELECTORS = ['0xdb006a75', '0xe042f940'];
+  const MINT_SELECTORS = ['0xa0712d68', '0xa43e6141', '0xda6dd95a'];
+  const REDEEM_SELECTORS = ['0xdb006a75', '0xe042f940', '0x5de8946f'];
 
   try {
     const provider = new ethers.JsonRpcProvider(`https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`);
