@@ -4,6 +4,7 @@ import { ConnectWalletButton } from './ConnectWalletButton';
 
 const NAV_LINKS = [
   { href: '/about-us', label: 'About' },
+  { href: '/disclosure', label: 'Disclosure' },
   { href: '/founder-ops', label: 'Founder Ops' },
   { href: '/solvency', label: 'Solvency' },
   { href: '/products', label: 'Products' },

@@ -129,7 +129,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'What is the reconciliation cadence for this data?',
-    a: 'Disclosure snapshots are produced on a controlled reconciliation cycle by the protocol administrator. The standard cadence is daily, subject to operational requirements. Each snapshot is timestamped at the moment of capture. The "Data as of" indicator and snapshot reference ID reflect the exact reconciliation point. Values may exhibit temporal variance of up to 24 hours relative to real-time balances.',
+    a: 'Disclosure snapshots are produced on a controlled reconciliation cycle by the protocol administrator. The standard cadence is daily, subject to operational requirements. Each snapshot is timestamped at the moment of capture. The "Data as of" indicator and snapshot reference ID reflect the exact reconciliation point. Values may exhibit temporal variance of up to 24 hours relative to point-in-time balances.',
   },
   {
     q: 'What does the coverage ratio represent?',
@@ -757,14 +757,14 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
         <SectionHeading>Custody and Authorization Structure</SectionHeading>
         <div className="border border-dl-border p-6 bg-dl-bg-alt">
           <p className="text-sm text-dl-gray leading-relaxed mb-4">
-            Protocol-governed capital is held in on-chain smart contracts deployed on Arbitrum One. Treasury
+            Protocol-governed capital is held in automated control layers deployed on Arbitrum One. Treasury
             operations are executed through multi-party authorization controls. No single key holder can
             unilaterally move, deploy, or withdraw capital.
           </p>
           <DetailGrid
             left={[
-              { label: 'Custody Model', value: 'On-chain smart contracts', mono: true },
-              { label: 'Authorization', value: 'Multi-party (multi-sig)', mono: true },
+              { label: 'Custody Model', value: 'On-chain automated control layers', mono: true },
+              { label: 'Authorization', value: 'Multi-party authorization', mono: true },
             ]}
             right={[
               { label: 'Network', value: 'Arbitrum One (L2)', mono: true },
@@ -777,7 +777,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
               {[
                 { label: 'AXUSD Primary', address: '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C' },
                 { label: 'PSM (USDC)', address: '0x5db58d9c21369d1532a48Bdd658E4Fe415404922' },
-                { label: 'PSM (USDT)', address: '0x4584888cB411E9cc88e3800BAB73A430D90d3793' },
+                { label: 'PSM (Euler)', address: '0x4584888cB411E9cc88e3800BAB73A430D90d3793' },
                 { label: 'Treasury Hub', address: '0x3fD63728288546AC41dAe3bf25ca383061c3A929' },
               ].map((c) => (
                 <div key={c.address} className="flex items-center gap-2">
@@ -797,7 +797,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
           <div className="border border-dl-border border-t-0 px-6 py-3 bg-dl-bg">
             <p className="text-xs text-dl-gray leading-relaxed font-dl-mono">
               Signer count, threshold configuration, and timelock parameters are governed by protocol administration.
-              Full multisig details will be disclosed as part of the independent attestation process.
+              Full authorization details will be disclosed as part of the independent attestation process.
             </p>
           </div>
         </div>
@@ -1112,7 +1112,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
         </div>
         <div className="px-6 py-4 bg-dl-bg border-b border-dl-border">
           <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Model Limitations and Data Freshness</p>
-          <p className="text-sm text-dl-gray leading-relaxed">AME operates on reconciliation snapshot data subject to temporal variance relative to real-time conditions. Realized volatility and drawdown inputs are proxy estimates. The model applies deterministic linear and clamped nonlinear transforms; it does not capture tail correlations, contagion effects, or non-linear cross-asset dependencies. External price feed references may introduce mark-to-market variance and rounding.</p>
+          <p className="text-sm text-dl-gray leading-relaxed">AME operates on reconciliation snapshot data subject to temporal variance relative to point-in-time conditions. Realized volatility and drawdown inputs are proxy estimates. The model applies deterministic linear and clamped nonlinear transforms; it does not capture tail correlations, contagion effects, or non-linear cross-asset dependencies. External price feed references may introduce mark-to-market variance and rounding.</p>
         </div>
         <div className="px-6 py-4 bg-dl-bg-alt border-b border-dl-border">
           <p className="font-dl-serif text-sm text-dl-navy font-medium mb-1">Reconciliation and Disclosure Cadence</p>
@@ -1407,7 +1407,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
             The information presented on this page is provided for informational and transparency purposes only.
             Nothing on this page constitutes financial, legal, tax, or investment advice. All figures are
             derived from controlled reconciliation snapshots subject to temporal variance and may not reflect
-            real-time balances. External price feed references may introduce mark-to-market variance and rounding.
+            point-in-time balances. External price feed references may introduce mark-to-market variance and rounding.
           </p>
           <p className="text-sm text-dl-gray leading-relaxed">
             Participation in the Axiom Protocol carries material risk, including the potential for total loss
@@ -1598,7 +1598,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       <div className="border-t-2 border-dl-navy pt-8 mt-12">
         <DisclosureBlock
           label="Full Risk Disclosure — Material Risks and Limitations"
-          text="RISK DISCLOSURE: This page provides informational transparency data only. It does not constitute an offer, solicitation, or recommendation to participate in any protocol activity. All solvency data is derived from controlled reconciliation snapshots subject to temporal variance and may not reflect real-time conditions. Reserve ratios, coverage ratios, and capital positions are subject to change between disclosure cycles. External price feed references may introduce mark-to-market variance and rounding. The protocol stabilization policy operates on a best-efforts basis and does not guarantee any particular outcome. Participation in the Axiom Protocol involves material risk including, but not limited to, total loss of contributed capital. The loss buffer and reserve designations are structural mechanisms and do not constitute insurance, guarantees, or warranties of any kind. Past performance, reserve adequacy, and historical coverage ratios are not indicative of future results. Multi-party authorization controls reduce but do not eliminate operational risk. Automated control layers are subject to technical risk including software defects and settlement environment disruptions. The Adaptive Metrics Engine (AME) produces deterministic computations from snapshot inputs; model outputs are projections subject to the limitations of input data quality and model assumptions. Participants are solely responsible for their own due diligence and should consult qualified legal, financial, and tax advisors. Axiom Protocol does not provide investment advice."
+          text="RISK DISCLOSURE: This page provides informational transparency data only. It does not constitute an offer, solicitation, or recommendation to participate in any protocol activity. All solvency data is derived from controlled reconciliation snapshots subject to temporal variance and may not reflect point-in-time conditions. Reserve ratios, coverage ratios, and capital positions are subject to change between disclosure cycles. External price feed references may introduce mark-to-market variance and rounding. The protocol stabilization policy operates on a best-efforts basis and does not guarantee any particular outcome. Participation in the Axiom Protocol involves material risk including, but not limited to, total loss of contributed capital. The loss buffer and reserve designations are structural mechanisms and do not constitute insurance, guarantees, or warranties of any kind. Past performance, reserve adequacy, and historical coverage ratios are not indicative of future results. Multi-party authorization controls reduce but do not eliminate operational risk. Automated control layers are subject to technical risk including software defects and settlement environment disruptions. The Adaptive Metrics Engine (AME) produces deterministic computations from snapshot inputs; model outputs are projections subject to the limitations of input data quality and model assumptions. Participants are solely responsible for their own due diligence and should consult qualified legal, financial, and tax advisors. Axiom Protocol does not provide investment advice."
           defaultOpen={false}
         />
       </div>

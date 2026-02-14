@@ -61,7 +61,7 @@ function StatusBadge({ status }: { status: 'live' | 'observation' | 'planned' })
 }
 
 export default function InstitutionalPage() {
-  const lastUpdated = 'February 3, 2026';
+  const lastUpdated = 'February 14, 2026';
   const observationWindowStart = 'January 2026';
 
   return (
@@ -86,9 +86,9 @@ export default function InstitutionalPage() {
         <section className="mb-12">
           <SectionHeading>1. Executive Overview</SectionHeading>
           <p className="text-dl-navy leading-relaxed">
-            Axiom Protocol is a land-first community ownership platform built on Arbitrum One with 43 deployed smart contracts.
+            Axiom Protocol is a land-first community ownership platform built on Arbitrum One with 43 deployed automated control layers (verified contract addresses on Arbiscan).
             The protocol enables communities to acquire, develop, and own real estate through SEC-compliant crowdfunding,
-            SUSU-style savings pooling, and tokenized land options. It bridges traditional real estate finance with
+            SUSU-style savings pooling, and digitally issued land participation instruments. It bridges traditional real estate finance with
             decentralized infrastructure, offering institutional-grade treasury management, transparent settlement systems,
             and community-driven governance. The protocol's mission is to build America's first 1,000-acre on-chain sovereign
             smart city economy.
@@ -157,7 +157,7 @@ export default function InstitutionalPage() {
                     </tr>
                     <tr className="border-b border-dl-border">
                       <td className="py-2 pr-4">Settlement</td>
-                      <td className="py-2 pr-4 font-dl-mono">Arbitrum One Smart Contracts</td>
+                      <td className="py-2 pr-4 font-dl-mono">Arbitrum One Settlement Contracts</td>
                       <td className="py-2">On-chain transactions, immutable records</td>
                     </tr>
                     <tr>
@@ -282,19 +282,19 @@ export default function InstitutionalPage() {
                         <td className="py-2 pr-4">Fix & Flip Bridge</td>
                         <td className="py-2 pr-4 font-dl-mono">75% ARV</td>
                         <td className="py-2 pr-4 font-dl-mono">12%</td>
-                        <td className="py-2"><StatusBadge status="live" /></td>
+                        <td className="py-2"><StatusBadge status="observation" /></td>
                       </tr>
                       <tr className="border-b border-dl-border">
                         <td className="py-2 pr-4">30-Year DSCR Rental</td>
                         <td className="py-2 pr-4 font-dl-mono">75%</td>
                         <td className="py-2 pr-4 font-dl-mono">8%</td>
-                        <td className="py-2"><StatusBadge status="live" /></td>
+                        <td className="py-2"><StatusBadge status="observation" /></td>
                       </tr>
                       <tr>
                         <td className="py-2 pr-4">BRRRR Refinance</td>
                         <td className="py-2 pr-4 font-dl-mono">70%</td>
                         <td className="py-2 pr-4 font-dl-mono">8.5%</td>
-                        <td className="py-2"><StatusBadge status="live" /></td>
+                        <td className="py-2"><StatusBadge status="observation" /></td>
                       </tr>
                     </tbody>
                   </table>
@@ -324,7 +324,7 @@ export default function InstitutionalPage() {
                   </div>
                   <p>
                     <strong>Purpose:</strong> Prove end-to-end settlement capability before scaling.
-                    No tokenization, no public participation, no AXUSD minting until settlement loop is verified.
+                    No asset issuance, no public participation, no AXUSD minting until settlement loop is verified.
                   </p>
                 </div>
               ),
@@ -357,7 +357,7 @@ export default function InstitutionalPage() {
               content: (
                 <div className="space-y-3 text-sm text-dl-navy">
                   <p>
-                    SEC-compliant community ownership of real property through tokenized crowdfunding.
+                    Community ownership of real property through asset onboarding and issuance workflows, structured to align with applicable securities regulations.
                   </p>
                   <p><strong>Token Standard:</strong> <span className="font-dl-mono">ERC-1155</span> (multi-token) for fractional land shares</p>
                   <p><strong>Regulatory Framework:</strong> SEC Reg CF for community participation</p>
@@ -367,7 +367,7 @@ export default function InstitutionalPage() {
                       <li>Sourcing: Identify target properties</li>
                       <li>Due Diligence: Property evaluation, title search</li>
                       <li>Crowdfunding: SEC Reg CF compliant capital raise</li>
-                      <li>Tokenization: Issue ERC-1155 ownership tokens</li>
+                      <li>Asset Issuance: Issue ERC-1155 ownership instruments</li>
                       <li>Governance: Community decisions on development</li>
                       <li>Revenue: Distribute income to token holders</li>
                     </ol>
@@ -410,12 +410,10 @@ export default function InstitutionalPage() {
               <h3 className="font-dl-serif text-dl-navy mb-2">Important Disclaimers</h3>
               <ul className="text-sm text-dl-navy space-y-2">
                 <li>
-                  <strong>Not a security claim:</strong> AXM token utility is designed around governance,
-                  staking, and fee payment. Token mechanics coordinate infrastructure participation.
+                  <strong>Intended function:</strong> AXM is designed to function as a governance and coordination mechanism. Whether any particular token constitutes a security depends on applicable law and specific facts and circumstances. Participants should consult independent legal counsel.
                 </li>
                 <li>
-                  <strong>No redemption promises:</strong> AXUSD is designed as settlement infrastructure.
-                  There are no guarantees of redemption for underlying assets.
+                  <strong>No redemption guarantee:</strong> AXUSD is designed as settlement infrastructure. Redemption capacity is limited to available reserves. There is no guarantee that redemption requests can be fulfilled at any given time.
                 </li>
                 <li>
                   <strong>Observation window:</strong> The protocol is in an observation period. Capital
@@ -452,7 +450,7 @@ export default function InstitutionalPage() {
                   <tbody className="text-dl-navy">
                     <tr className="border-b border-dl-border">
                       <td className="py-2 pr-4 font-dl-mono">DEFAULT_ADMIN_ROLE</td>
-                      <td className="py-2">Protocol-level control (Gnosis Safe multisig)</td>
+                      <td className="py-2">Protocol-level control (multi-party authorization)</td>
                     </tr>
                     <tr className="border-b border-dl-border">
                       <td className="py-2 pr-4 font-dl-mono">RISK_COMMITTEE_ROLE</td>
@@ -482,7 +480,7 @@ export default function InstitutionalPage() {
             <div className="p-4 bg-dl-bg-alt border border-dl-border">
               <h3 className="font-dl-serif text-dl-navy mb-2">Auditability</h3>
               <ul className="text-sm text-dl-navy space-y-1">
-                <li>All 43 contracts verified on Blockscout</li>
+                <li>43 contracts deployed on Arbiscan (34 source-verified)</li>
                 <li>Complete event logging for critical operations</li>
                 <li>Credits Ledger with transparent accrual and distribution</li>
                 <li>Observer Dashboard with 7 public transparency pages</li>
@@ -518,7 +516,7 @@ export default function InstitutionalPage() {
               <h3 className="font-dl-serif text-dl-navy mb-2">Builders & Developers</h3>
               <ul className="text-sm text-dl-navy space-y-1">
                 <li>API access for integration</li>
-                <li>Smart contract documentation</li>
+                <li>Contract and integration documentation</li>
                 <li>Builder & Farmer credit programs</li>
                 <li>Infrastructure development participation</li>
               </ul>
@@ -552,8 +550,8 @@ export default function InstitutionalPage() {
                 <StatusBadge status="live" /> Live Components
               </h3>
               <ul className="text-sm text-dl-navy space-y-1 ml-4">
-                <li>43 smart contracts deployed on Arbitrum One (34 verified)</li>
-                <li>Core infrastructure: AxiomV2, Treasury, Staking, Governance, Identity</li>
+                <li>43 automated control layers deployed on Arbitrum One (34 source-verified)</li>
+                <li>Core infrastructure: AxiomV2, Treasury, Participation, Governance, Identity</li>
                 <li>DEX V2 ecosystem (10 contracts)</li>
                 <li>AXUSD token contract</li>
                 <li>Lending fund infrastructure (3 contracts)</li>
@@ -578,10 +576,10 @@ export default function InstitutionalPage() {
                 <StatusBadge status="planned" /> Planned / Capital-Dependent
               </h3>
               <ul className="text-sm text-dl-navy space-y-1 ml-4">
-                <li>AXUSD CDP and PSM modules</li>
-                <li>External security audits</li>
+                <li>AXUSD extended collateral modules</li>
+                <li>Independent third-party security audits</li>
                 <li>Treasury adapter contracts for external capital</li>
-                <li>Universe L3 testnet and mainnet migration</li>
+                <li>Universe L3 network migration (testnet not yet launched)</li>
                 <li>External pilot programs ($100K-$500K allocations)</li>
               </ul>
             </div>
@@ -609,7 +607,7 @@ export default function InstitutionalPage() {
                   </a>
                 </li>
                 <li>
-                  <strong>Contract Registry:</strong> All 43 contracts verified on Arbitrum One Blockscout
+                  <strong>Contract Registry:</strong> 43 contracts deployed on Arbitrum One (34 source-verified on Arbiscan)
                 </li>
               </ul>
             </div>
