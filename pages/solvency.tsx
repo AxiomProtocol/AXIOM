@@ -53,7 +53,12 @@ function fmtRatio(value: number): string {
 
 function fmtTimestamp(iso: string): string {
   try {
-    return new Date(iso).toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
+    return new Date(iso).toLocaleString('en-US', {
+      timeZone: 'America/New_York',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false,
+    }) + ' ET';
   } catch {
     return iso;
   }
@@ -627,8 +632,8 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
                 const txHash = op.tx_hash || '';
                 const shortHash = txHash ? `${txHash.slice(0, 10)}...${txHash.slice(-8)}` : '—';
                 const arbiscanUrl = txHash ? `https://arbiscan.io/tx/${txHash}` : '';
-                const dateStr = op.created_at ? new Date(op.created_at).toISOString().split('T')[0] : '—';
-                const timeStr = op.created_at ? new Date(op.created_at).toISOString().split('T')[1]?.replace(/\.\d+Z$/, '') : '';
+                const dateStr = op.created_at ? new Date(op.created_at).toLocaleDateString('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }) : '—';
+                const timeStr = op.created_at ? new Date(op.created_at).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '';
 
                 return (
                   <div
@@ -637,7 +642,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
                   >
                     <div className="col-span-2">
                       <p className="text-sm font-dl-mono text-dl-navy">{dateStr}</p>
-                      <p className="text-xs font-dl-mono text-dl-gray">{timeStr} UTC</p>
+                      <p className="text-xs font-dl-mono text-dl-gray">{timeStr} ET</p>
                     </div>
                     <div className="col-span-1">
                       <span className={`text-xs font-dl-mono font-semibold px-2 py-1 border ${isMint ? 'text-dl-forest border-dl-forest' : 'text-dl-navy border-dl-navy'}`}>

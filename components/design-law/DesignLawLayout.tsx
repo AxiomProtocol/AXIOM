@@ -25,7 +25,12 @@ export function DesignLawLayout({ children }: DesignLawLayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    setTimestamp(new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC'));
+    setTimestamp(new Date().toLocaleString('en-US', {
+      timeZone: 'America/New_York',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false,
+    }) + ' ET');
   }, []);
 
   return (
