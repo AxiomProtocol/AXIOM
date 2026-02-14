@@ -32,16 +32,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const MINT_SELECTORS = ['0xa0712d68', '0xa43e6141', '0xda6dd95a'];
   const REDEEM_SELECTORS = ['0xdb006a75', '0xe042f940', '0x5de8946f'];
+  const ALL_PSM_SELECTORS = [...MINT_SELECTORS, ...REDEEM_SELECTORS];
 
   try {
     const provider = new ethers.JsonRpcProvider(`https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`);
-    const [receipt, tx] = await Promise.all([
-      provider.getTransactionReceipt(txHash),
-      provider.getTransaction(txHash),
-    ]);
+
+    let receipt, tx;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      [receipt, tx] = await Promise.all([
+        provider.getTransactionReceipt(txHash),
+        provider.getTransaction(txHash),
+      ]);
+      if (receipt && tx) break;
+      if (attempt < 3) await new Promise(r => setTimeout(r, 2000 * attempt));
+    }
 
     if (!receipt || !tx) {
-      return res.status(400).json({ success: false, error: 'Transaction not found on-chain. It may still be pending.' });
+      return res.status(400).json({ success: false, error: 'Transaction not found on-chain after 3 attempts. It may still be pending — try again in a few seconds.' });
     }
 
     if (receipt.status !== 1) {
@@ -59,10 +66,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const selector = tx.data?.slice(0, 10).toLowerCase();
-    const expectedSelectors = operation === 'Mint' ? MINT_SELECTORS : REDEEM_SELECTORS;
-    if (!expectedSelectors.includes(selector)) {
-      return res.status(400).json({ success: false, error: `Transaction method signature ${selector} does not match expected ${operation} selectors ${expectedSelectors.join(', ')}.` });
+    if (!ALL_PSM_SELECTORS.includes(selector)) {
+      return res.status(400).json({ success: false, error: `Transaction method signature ${selector} is not a recognized PSM function.` });
     }
+
+    const detectedOp = MINT_SELECTORS.includes(selector) ? 'Mint' : 'Redeem';
+    if (detectedOp !== operation) {
+      console.warn(`[log-psm-op] Client sent operation=${operation} but on-chain selector ${selector} is ${detectedOp}. Using detected value.`);
+    }
+    const verifiedOperation = detectedOp;
 
     const existingLog = await pool.query(
       'SELECT id FROM founder_ops_log WHERE tx_hash = $1 LIMIT 1',
@@ -73,11 +85,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const ecoLabel = ecosystem === 'PRIMARY' ? 'PRIMARY (GENIUS)' : 'EULER (Original)';
-    const title = operation === 'Mint'
+    const title = verifiedOperation === 'Mint'
       ? `PSM Mint: ${inputAmount} USDC via ${ecoLabel} PSM`
       : `PSM Redeem: ${inputAmount} AXUSD via ${ecoLabel} PSM`;
 
-    const logDescription = description || `${operation} operation via ${ecoLabel} PSM. Verified on-chain: tx ${txHash} confirmed in block ${receipt.blockNumber}.`;
+    const logDescription = description || `${verifiedOperation} operation via ${ecoLabel} PSM. Verified on-chain: tx ${txHash} confirmed in block ${receipt.blockNumber}.`;
 
     const numericAmount = parseFloat(inputAmount) || 0;
 
@@ -109,7 +121,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           'x-auto-ingest-key': process.env.ADMIN_SOLVENCY_KEY || '',
           'referer': baseUrl,
         },
-        body: JSON.stringify({ notes: `Auto-ingest after PSM ${operation} — ${new Date().toISOString()}` }),
+        body: JSON.stringify({ notes: `Auto-ingest after PSM ${verifiedOperation} — ${new Date().toISOString()}` }),
       });
     } catch (ingestErr: any) {
       console.warn('[log-psm-op] Auto-ingest warning:', ingestErr.message);

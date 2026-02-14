@@ -521,27 +521,46 @@ export default function PlaybookPage() {
       ? (op === 'Mint' ? psmStatus?.primary?.mintFee : psmStatus?.primary?.redeemFee)
       : (op === 'Mint' ? psmStatus?.euler?.mintFee : psmStatus?.euler?.redeemFee);
 
-    try {
-      const logRes = await fetch('/api/founder-ops/log-psm-op', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          txHash,
-          week: weekNum,
-          ecosystem,
-          operation: op,
-          inputAmount: inputAmt,
-          description: `${op} via ${getEcosystemLabel()} PSM. Fee: ${feeBps} bps. Verified on-chain.`,
-        }),
-      });
-      if (!logRes.ok) {
+    const MAX_RETRIES = 3;
+    let logged = false;
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const logRes = await fetch('/api/founder-ops/log-psm-op', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            txHash,
+            week: weekNum,
+            ecosystem,
+            operation: op,
+            inputAmount: inputAmt,
+            description: `${op} via ${getEcosystemLabel()} PSM. Fee: ${feeBps} bps. Verified on-chain.`,
+          }),
+        });
+        if (logRes.ok) {
+          logged = true;
+          const logJson = await logRes.json().catch(() => ({}));
+          if (logJson.duplicate) {
+            console.info('[logOperation] Transaction already logged (duplicate).');
+          }
+          break;
+        }
         const errBody = await logRes.json().catch(() => ({ error: logRes.statusText }));
-        console.error('[logOperation] PSM log failed:', errBody);
-        setTxStatus(prev => prev ? { ...prev, message: `${prev.message} (Warning: log recording failed — ${errBody.error || 'unknown error'})` } : prev);
+        console.error(`[logOperation] Attempt ${attempt}/${MAX_RETRIES} failed:`, errBody);
+        if (attempt < MAX_RETRIES) {
+          await new Promise(r => setTimeout(r, 1000 * attempt));
+        }
+      } catch (logErr: any) {
+        console.error(`[logOperation] Attempt ${attempt}/${MAX_RETRIES} network error:`, logErr.message);
+        if (attempt < MAX_RETRIES) {
+          await new Promise(r => setTimeout(r, 1000 * attempt));
+        }
       }
-    } catch (logErr: any) {
-      console.error('[logOperation] PSM log network error:', logErr.message);
-      setTxStatus(prev => prev ? { ...prev, message: `${prev.message} (Warning: log recording failed — network error)` } : prev);
+    }
+
+    if (!logged) {
+      setTxStatus(prev => prev ? { ...prev, message: `${prev.message} — WARNING: Transaction succeeded on-chain but log recording failed after ${MAX_RETRIES} attempts. TX: ${txHash}` } : prev);
     }
 
     try {
