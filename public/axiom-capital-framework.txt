@@ -1,0 +1,822 @@
+AXIOM PROTOCOL
+Sovereign Infrastructure Disclosure & Capital Framework
+Document Date: February 14, 2026 | Network: Arbitrum One (Chain ID 42161)
+Document Classification: Institutional — Not Investment Advice
+
+========================================================================
+TABLE OF CONTENTS
+========================================================================
+
+1. Executive Summary
+2. Protocol Architecture
+3. Core Token: AXM
+4. AXUSD Stablecoin System
+5. Peg Stability Module (PSM) — Dual Ecosystem
+6. Euler V2 Lending Markets
+7. Revenue Router & Fee Architecture
+8. SEED Participation Lockup Engine
+9. SUSU Savings Circles
+10. Axiom DEX
+11. Axiom Lending Fund (SEC Reg D 506(c))
+12. Real Estate Asset Onboarding Pipeline
+13. Axiom Sentinel — Capital Decision Layer
+14. MIRDT — Market Intelligence Terminal
+15. Adaptive Metrics Engine (AME)
+16. Solvency & Reserve Transparency
+17. DePIN Infrastructure (DeNet)
+18. Institutional Observer Dashboard
+19. Automated Control Layer Registry
+20. Security Architecture
+21. Governance Framework
+22. 52-Week Operational Playbook
+23. 6 Mandatory Guard Rails
+24. Bootstrap-Phase Disclosure
+25. Risk Factors
+26. Verification & Contact
+
+========================================================================
+1. EXECUTIVE SUMMARY
+========================================================================
+
+Axiom Protocol is a sovereign digital-physical economy built on Arbitrum
+One, designed to create America's first on-chain sovereign digital-physical
+economy. The protocol combines treasury infrastructure, real estate asset
+onboarding, decentralized physical infrastructure (DePIN), and community
+governance into a single integrated system.
+
+Current State: Bootstrap Phase (Week 5 of 52-Week Playbook)
+Treasury Total: $167.43 USD
+AXUSD Total Supply: 1,000,080.85
+Coverage Ratio: 0.03%
+Policy Mode: BOOTSTRAP
+AME Regime Band: CAUTION (RS 0.2562)
+
+Axiom discloses its current state with radical transparency. The protocol
+is in early bootstrap with minimal capital deployment. Every metric shown
+here is live, verifiable on-chain, and updated from reconciliation
+snapshots. This is not marketing — this is a disclosure system designed
+to build institutional trust through honest reporting.
+
+Founded by Clarence Fuqua Bey (Managing Member), with advisory support
+spanning blockchain architecture, real estate law, treasury design,
+and regulatory compliance.
+
+========================================================================
+2. PROTOCOL ARCHITECTURE
+========================================================================
+
+Axiom operates a vertically integrated financial stack:
+
+Layer 1 — Settlement:         AXUSD stablecoin (designed to align with GENIUS Act requirements)
+Layer 2 — Stability:          Dual PSM system (Primary + Euler ecosystem)
+Layer 3 — Yield:              Euler V2 lending markets + SEED participation lockup
+Layer 4 — Governance:         AXM token + community voting
+Layer 5 — Revenue:            Revenue Router (50/30/20 distribution)
+Layer 6 — Intelligence:       MIRDT + Sentinel (advisory mode)
+Layer 7 — Physical:           Real estate asset onboarding + DePIN nodes
+Layer 8 — Disclosure:         Solvency console + AME + Observer dashboard
+
+Current Blockchain: Arbitrum One
+Planned Migration: Universe Blockchain (L3) — testnet pending
+RPC Provider: Alchemy API
+Database: PostgreSQL (Neon-backed) with Drizzle ORM
+
+========================================================================
+3. CORE TOKEN: AXM
+========================================================================
+
+Contract: 0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D
+Network: Arbitrum One
+Standard: ERC20
+Verified: Yes (Arbiscan)
+
+Functions:
+- Governance voting power
+- Fee routing recipient
+- SEED participation lockup input (lock AXM, receive voting power + revenue share)
+- Protocol revenue distribution
+
+AXM is designed as a governance and coordination token. Its intended
+function is governance voting, fee routing, and operational participation
+in the protocol. Revenue distribution is determined by governance vote
+and protocol mechanics. This characterization reflects intended function
+and should not be treated as a definitive legal conclusion. Participants
+should consult qualified legal counsel regarding applicable regulations.
+
+========================================================================
+4. AXUSD STABLECOIN SYSTEM
+========================================================================
+
+AXUSD is a hybrid CDP stablecoin maintaining a 1:1 USD peg. It is the
+settlement layer for all Axiom Protocol transactions.
+
+CRITICAL: Axiom operates TWO separate AXUSD ecosystems. They must
+NEVER be mixed.
+
+PRIMARY AXUSD (designed to align with GENIUS Act requirements):
+  Contract:     0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C
+  Deployed:     January 11, 2026
+  Total Supply: 1,000,080.85 AXUSD
+  Compliance:   Designed to align with GENIUS Act (Public Law 119-27)
+  PSM:          0x5db58d9c21369d1532a48Bdd658E4Fe415404922
+  PSM Ceiling:  5,000,000 AXUSD
+
+EULER AXUSD (Original — Euler Vault Binding):
+  Contract:     0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c
+  Deployed:     January 5, 2026
+  Total Supply: ~156.50 AXUSD
+  Purpose:      Euler Vault lending market (immutable binding)
+  PSM:          0x4584888cB411E9cc88e3800BAB73A430D90d3793
+  PSM Ceiling:  500,000 AXUSD
+
+DO NOT MIX RULE: Never deposit PRIMARY AXUSD into Euler Vault. Never
+report EULER AXUSD metrics as public supply. The Euler Vault's asset()
+function returns the Euler AXUSD address — this is an immutable on-chain
+binding and cannot be changed.
+
+GENIUS Act Alignment:
+- 100% reserve backing requirement
+- Asset segregation (reserves held in segregated custody contracts)
+- Anti-rehypothecation mechanisms
+- Regular audit trail
+- Designed to align with federal regulatory requirements for payment
+  stablecoins; external compliance attestation pending
+
+========================================================================
+5. PEG STABILITY MODULE (PSM) — DUAL ECOSYSTEM
+========================================================================
+
+The PSM enables 1:1 minting and redemption of AXUSD against USDC.
+
+PRIMARY PSM (GENIUS):
+  Address:    0x5db58d9c21369d1532a48Bdd658E4Fe415404922
+  Collateral: USDC
+  Ceiling:    5,000,000 AXUSD
+  Mint Fee:   0%
+  Redeem Fee: 0%
+
+EULER PSM (Original):
+  Address:    0x4584888cB411E9cc88e3800BAB73A430D90d3793
+  Collateral: USDC
+  Ceiling:    500,000 AXUSD
+  Mint Fee:   0%
+  Redeem Fee: 0%
+
+Operational History (as of Feb 14, 2026):
+  Total Operations: 8 (6 mints, 2 redeems)
+  Total Volume:     $213.00 USDC
+  First Operation:  January 11, 2026
+  Latest Operation: February 14, 2026
+  PSM Reserves:     $137.63 USDC
+
+Function Selectors (verified on-chain):
+  Mint:   0xa0712d68 (mint)
+          0xa43e6141 (swapCollateralForAXUSDWithMin)
+          0xda6dd95a (swapCollateralForAXUSD)
+  Redeem: 0xdb006a75 (redeem)
+          0xe042f940 (swapAXUSDForCollateralWithMin)
+          0x5de8946f (swapAXUSDForCollateral)
+
+========================================================================
+6. EULER V2 LENDING MARKETS
+========================================================================
+
+Axiom operates an ERC4626-compliant vault on Euler V2.
+
+Vault Address:       0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059
+Vault Name:          EVK Vault eAXUSD-4
+Vault Symbol:        eAXUSD-4
+Underlying Asset:    Euler AXUSD (0xA7907b...)
+Total Deposits:      155.50 AXUSD
+Total Borrows:       0.00 AXUSD
+Available Liquidity: 155.50 AXUSD
+Utilization:         0.00%
+Supply APY:          0.00%
+Borrow APY:          0.00%
+Supply Cap:          100,000,000 AXUSD
+Borrow Cap:          100,000,000 AXUSD
+
+Accepted Collateral:
+  USDC  — Borrow LTV: 90%, Liquidation LTV: 95%
+  USDT  — Borrow LTV: 90%, Liquidation LTV: 95%
+
+Interest Fee:        10% (routed to Revenue Router)
+Fee Recipient:       Revenue Router configured
+Revenue Router:      0x39A9Ca593d350450d93aF7F24dC1A682df47F30a
+
+Status: Vault is live and accepting deposits. No active borrows during
+bootstrap phase. First depositor received 1:1 shares per Guard Rail #3.
+
+========================================================================
+7. REVENUE ROUTER & FEE ARCHITECTURE
+========================================================================
+
+Revenue Router: 0x39A9Ca593d350450d93aF7F24dC1A682df47F30a
+
+Distribution Split:
+  50% — SEED participants (protocol revenue share)
+  30% — Treasury (growth and operations)
+  20% — Ecosystem fund (development and grants)
+
+Revenue Sources:
+  - Euler Vault interest fees (10% of all borrowing interest)
+  - PSM fees (currently 0% during bootstrap)
+  - DEX trading fees
+  - Lending Fund origination fees (3.00%)
+  - DePIN node revenue
+
+Current Revenue: Pre-revenue during bootstrap phase. Fee plumbing is
+verified and configured but awaiting utilization growth to generate
+meaningful flow.
+
+========================================================================
+8. SEED PARTICIPATION LOCKUP ENGINE
+========================================================================
+
+SEED Contract: 0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046
+
+Mechanics:
+  - Lock AXM tokens in SEED contract
+  - Receive voting power (governance weight)
+  - Earn 50% of protocol revenue distributed weekly in AXUSD
+  - Revenue share proportional to locked position
+
+Status: Contract deployed. Activation planned for Weeks 11-13 of
+the 52-week playbook.
+
+========================================================================
+9. SUSU SAVINGS CIRCLES
+========================================================================
+
+SUSU (also known as rotating savings circles) enables community
+members to form savings groups with rotating payouts denominated
+in AXUSD for stable, predictable savings.
+
+Status: Planned activation alongside SEED in Weeks 11-13.
+
+========================================================================
+10. AXIOM DEX
+========================================================================
+
+Axiom DEX Hub: 0xF660d260a0bBC690a8ab0f1e6A41049FC919A34D
+Camelot DEX Integration: AXM/USDC pair
+
+Current Metrics:
+  TVL:         $0 (bootstrap phase)
+  24h Volume:  $0
+
+The DEX supports token swaps, liquidity provision, and reward
+distribution. AXM accumulation via Camelot DEX is planned for
+Weeks 7-8 of the playbook.
+
+========================================================================
+11. AXIOM LENDING FUND (SEC Reg D 506(c))
+========================================================================
+
+A bridge loan fund providing short-term capital for real asset
+acquisition, structured as a compliant private offering.
+
+Vault:       0xF4AcD4B7EaBfDA7E1b96D3abA1C6340557aa93E5
+Manager:     0xD6ebaBEAEf4B263fa10cc0E630Ab2B9A2e478958
+Risk Config: 0xD9a53c691B688351283Fecc33D8D9AF964A9a078
+
+Parameters:
+  Target APY:         10-14%
+  Max LTV:            70%
+  Interest Rate:      14.00%
+  Origination Fee:    3.00%
+  Max Term:           365 days
+  Min Loan Size:      $50,000
+  Max Loan Size:      $500,000
+  Share Price:        $1.00
+
+Current State:
+  Total Assets:       $0.00
+  Active Loans:       0
+  Available Liquidity: $0.00
+
+Regulatory:
+  SEC Rule 506(c) — Accredited investors only
+  Accreditation verification required
+  Investment minimums and compliance documentation enforced
+
+========================================================================
+12. REAL ESTATE ASSET ONBOARDING PIPELINE
+========================================================================
+
+Land Registry: 0xaB15907b124620E165aB6E464eE45b178d8a6591
+Lease Engine:  0x26a20dEa57F951571AD6e518DFb3dC60634D5297
+
+Current Assets: 6+ acres of community-owned farmland (USDA-supported)
+
+Asset Onboarding Framework:
+  - KeyGrow rent-to-own engine (on-chain lease management)
+  - ATTOM Data integration (property valuation)
+  - RentCast API (rental market analysis)
+  - Walk Score API (location scoring)
+
+Property Acquisition Timeline: Weeks 40-52 of playbook
+  - Week 40-43: Property pipeline via API search
+  - Week 44: HARD PAUSE checkpoint (go/no-go decision)
+  - Week 45-48: Due diligence and asset onboarding prep
+  - Week 49-52: Execute acquisition and issue on-chain instruments
+
+Guard Rail #6: If no qualifying property is identified by Week 44,
+a mandatory HARD PAUSE is executed on the property acquisition track.
+
+========================================================================
+13. AXIOM SENTINEL — CAPITAL DECISION LAYER
+========================================================================
+
+Sentinel is the unified capital decision and risk authorization layer
+across all Axiom products. It converts MIRDT market intelligence signals
+into authorized capital actions with cryptographic audit trails.
+
+Current Status:
+  Regime:            RANGE_LOW_VOL
+  Confidence:        50%
+  System Stance:     NEUTRAL
+  Authority Mode:    ADVISORY (not execution)
+  Total Signals:     26
+  Qualified Signals: 2
+  Approved:          2
+  Denied:            0
+
+Core Engines:
+  - RegimeEngine: Market regime classification
+  - ConfidenceCalibrator: Signal quality assessment
+  - ConfirmationEngine: Multi-factor validation
+  - PortfolioEngine: Position sizing and allocation
+  - AuthorizationService: Cryptographic approval/denial
+  - AuditLogger: Append-only hash chain audit trail
+
+Guard Rail #5: Sentinel is ADVISORY ONLY until a post-public governance
+vote explicitly grants execution authority. No automated trades are
+permitted during the proof-of-concept phase. Every Sentinel output is
+informational only.
+
+========================================================================
+14. MIRDT — MARKET INTELLIGENCE TERMINAL
+========================================================================
+
+The Market Intelligence & Risk Disclosure Terminal provides probabilistic
+trend-following analysis for capital decision support.
+
+Data Sources:
+  - Alpha Vantage: US equities OHLCV data
+  - CoinGecko: Digital asset OHLCV data
+
+Analysis Capabilities:
+  - Multi-timeframe regime detection
+  - Volatility surface mapping
+  - Breadth scoring
+  - Trend confirmation signals
+
+MIRDT feeds directly into Sentinel for authorized capital decisions.
+All analysis is probabilistic — no certainty claims are made.
+
+========================================================================
+15. ADAPTIVE METRICS ENGINE (AME)
+========================================================================
+
+AME is the final protocol upgrade — a deterministic financial computation
+engine that provides risk assessment and adaptive targets from
+reconciliation snapshots.
+
+Model Version: AME-v1.0.0
+Location: lib/ame/ (pure-function math, no side effects)
+
+Current Evaluation (Feb 14, 2026):
+  Regime Score (RS):     0.2562 (CAUTION band)
+  Policy Multiplier (PM): 1.3444
+  Payout Factor:          0.9344
+
+Current Ratios vs Adaptive Targets:
+  Coverage Ratio:   0.017% actual vs 201.66% target — BREACHED
+  Reserve Ratio:    0.017% actual vs 13.44% target — BREACHED
+  Loss Buffer:      0.000% actual vs 4.03% target — BREACHED
+  Liquidity Depth:  0.014% actual vs 20.17% target — BREACHED
+
+Active Policy Actions:
+  ACTION_FREEZE_DISTRIBUTIONS — Coverage below adaptive target
+  ACTION_LIQUIDITY_DEFENSE_MODE — Liquidity below adaptive target
+  ACTION_REDIRECT_FLOWS — Reserve ratio below adaptive target
+
+Hard Brake Triggers (4 total):
+  CRISIS_LOCKDOWN:       RS > 0.85 (current: 0.2562 — NOT TRIGGERED)
+  FREEZE_DISTRIBUTIONS:  CR < 0.50 (current: 0.00017 — TRIGGERED)
+  LIQUIDITY_DEFENSE:     LD < 0.10 (current: 0.00014 — TRIGGERED)
+  REDIRECT_FLOWS:        RR < 0.30 (current: 0.00017 — TRIGGERED)
+
+IMPORTANT: All "BREACHED" statuses are EXPECTED during bootstrap phase.
+The protocol has $167.43 in treasury against $1,000,237.36 in
+liabilities (AXUSD supply). AME is designed to surface these realities
+transparently — not to hide them. As the 52-week playbook executes and
+capital grows, these metrics will improve proportionally.
+
+========================================================================
+16. SOLVENCY & RESERVE TRANSPARENCY
+========================================================================
+
+Three-mode institutional solvency console at /solvency:
+
+ALLOCATOR VIEW — Capital Adequacy:
+  Treasury Total:     $167.43
+  Treasury Liquid:    $167.43
+  Reserves Total:     $137.63 (USDC in PSM)
+  Liabilities Total:  $1,000,237.36 (AXUSD supply)
+  Coverage Ratio:     0.03%
+  Reserve Ratio:      0.01%
+  Capital Adequacy:   0.03%
+  Policy Mode:        BOOTSTRAP
+
+Asset Composition:
+  USDC (PSM):       $137.63 (82.2%)
+  ETH (Deployer):    $18.83 (11.3%)
+  USDC (Deployer):   $10.97 (6.5%)
+
+AXUSD Stability Assessment:
+  Total Supply:       1,000,237.36
+  PSM Reserves:       $137.63
+  Backing Ratio:      0.01%
+  Peg Deviation:      99.99%
+  Redemption Capacity: $137.63
+  Stability Score:    CRITICAL
+
+CLEARINGHOUSE VIEW — Stress Testing:
+  5 predefined deterministic stress scenarios:
+    1. Market Correction
+    2. Liquidity Crisis
+    3. Black Swan
+    4. Stablecoin Depeg
+    5. Governance Attack
+  AME stress simulator with custom scenario input
+  Hard brake trigger monitoring table
+  Historical coverage charts (recharts visualization)
+
+REGULATORY VIEW — Compliance:
+  Compliance definitions and stabilization policies
+  Data integrity verification with checksums
+  AME methodology documentation
+  Audit artifacts and disclosure events
+  Full risk disclosure
+
+All solvency data is snapshot-based with cryptographic checksums,
+stored in PostgreSQL with append-only audit trail.
+
+========================================================================
+17. DEPIN INFRASTRUCTURE (DeNet)
+========================================================================
+
+DePIN Node Suite: 0x16dC3884d88b767D99E0701Ba026a1ed39a250F1
+
+DeNet Datakeeper Node:
+  - Decentralized storage infrastructure
+  - Datakeeper License: ERC-721 on peaq Network
+  - Revenue: PEAQ token earnings (variable, based on network demand,
+    uptime, and storage capacity)
+  - Deployment: Google Cloud infrastructure
+  - Monitoring: Dedicated dashboard in Axiom Protocol
+
+Planned Activation: Weeks 14-16 of playbook
+  - Deploy first node
+  - Verify revenue flow
+  - Integrate with Revenue Router
+
+========================================================================
+18. INSTITUTIONAL OBSERVER DASHBOARD
+========================================================================
+
+A comprehensive monitoring interface at /observer providing:
+
+  - Treasury overview (ETH and USD totals by bucket)
+  - 4-bucket treasury allocation (Operating, Maintenance, Growth, Long-Term)
+  - Inflow/outflow tracking (7d, 30d, 90d)
+  - Governance status (pause states, parameter hashes, timelock)
+  - Risk posture (max exposure vs current exposure)
+  - Operator network status (active, certified, pending operators)
+
+Current Observer Data:
+  Max Exposure:        $50,000,000
+  Current Exposure:    $0.00
+  Utilization:         0%
+  Governance Paused:   No
+  Lending Paused:      No
+  Timelock Locked:     No
+  Total Operators:     1
+  Active Operators:    0
+  Certified Operators: 1
+  Attestor Count:      1
+
+========================================================================
+19. AUTOMATED CONTROL LAYER REGISTRY
+========================================================================
+
+Verified automated control layers deployed on Arbitrum One:
+
+CORE PROTOCOL:
+  AXM Token (AxiomV2):                 0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D
+  Identity & Compliance Hub:           0xf88bb44511E5752Ee69953166C5d5dC0cfC8B3ED
+  Treasury & Revenue Hub:              0x3fD63728288546AC41dAe3bf25ca383061c3A929
+  Emissions Hub:                       0x8b99cDeefB3116cA87AF24A9E10D5580dA07B885
+  Citizen Credential Registry:         0x8EF87e0ab34d5088fcBc4cD2E2943eAD9085C344
+  Land & Asset Registry:               0xaB15907b124620E165aB6E464eE45b178d8a6591
+  Lease & Rent Engine (KeyGrow):       0x26a20dEa57F951571AD6e518DFb3dC60634D5297
+  DePIN Node Suite:                    0x16dC3884d88b767D99E0701Ba026a1ed39a250F1
+  Exchange Hub:                        0xF660d260a0bBC690a8ab0f1e6A41049FC919A34D
+
+AXUSD ECOSYSTEM:
+  Primary AXUSD (GENIUS):              0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C
+  Primary PSM (GENIUS):                0x5db58d9c21369d1532a48Bdd658E4Fe415404922
+  Euler AXUSD (Original):              0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c
+  Euler PSM (Original):                0x4584888cB411E9cc88e3800BAB73A430D90d3793
+  GENIUS Compliance:                   0x8E8F769dA133cd3825549EE3E814fC936C8dE7be
+
+ON-CHAIN FINANCIAL INFRASTRUCTURE:
+  Euler Vault (eAXUSD-4):              0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059
+  Revenue Router:                      0x39A9Ca593d350450d93aF7F24dC1A682df47F30a
+  SEED Contract:                       0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046
+  Lending Fund Vault:                  0xF4AcD4B7EaBfDA7E1b96D3abA1C6340557aa93E5
+  Lending Fund Manager:                0xD6ebaBEAEf4B263fa10cc0E630Ab2B9A2e478958
+  Lending Fund Risk Config:            0xD9a53c691B688351283Fecc33D8D9AF964A9a078
+
+OPERATIONAL:
+  Deployer:                            0x8d7892CF226B43d48B6e3ce988A1274e6D114C96
+
+All contracts are source-verified on Arbiscan. No independent
+third-party security audit has been completed to date. OpenZeppelin
+standards are used throughout.
+
+========================================================================
+20. SECURITY ARCHITECTURE
+========================================================================
+
+Current Security Posture:
+
+  Code Standards:     OpenZeppelin Contracts (audited library)
+  Verification:       All contracts source-verified on Arbiscan
+  Access Control:     Role-based with multi-party authorization
+  Key Management:     Deployer key secured, rotation planned
+  Monitoring:         On-chain event monitoring via Alchemy webhooks
+  Audit Status:       No independent third-party audit completed
+
+Planned Security Enhancements:
+  - Independent security audit (Weeks 17-20)
+  - Bug bounty program launch
+  - Formal verification of critical paths (PSM, Vault)
+  - Multi-party authorization migration for treasury operations
+  - Hardware security module integration for deployer key
+
+Risk Acknowledgment: The absence of an independent audit is a material
+risk factor. Users should evaluate this when considering any interaction
+with protocol contracts.
+
+========================================================================
+21. GOVERNANCE FRAMEWORK
+========================================================================
+
+Current Model: Founder-Operated
+Planned Transition: Community Governance via AXM Token Voting
+
+Governance Phases:
+  Phase 1 (Current): Founder-operated with full transparency
+    - All decisions disclosed on Observer dashboard
+    - Operational playbook provides decision framework
+    - 6 Guard Rails constrain founder authority
+
+  Phase 2 (Weeks 20-30): Hybrid Governance
+    - AXM holders gain proposal rights
+    - Founder retains veto on security-critical decisions
+    - SEED participants receive weighted voting power
+
+  Phase 3 (Weeks 30-52): Community Governance
+    - Token-weighted voting for all protocol parameters
+    - Timelock on governance actions
+    - Multi-party authorization for treasury movements
+    - Founder transitions to advisory role
+
+Governance Scope:
+  - Revenue Router distribution percentages
+  - PSM fee adjustments
+  - Lending Fund parameters
+  - SEED reward rates
+  - Protocol upgrade proposals
+  - Sentinel execution authority (requires governance vote)
+  - Property acquisition approval (Week 44+ checkpoint)
+
+========================================================================
+22. 52-WEEK OPERATIONAL PLAYBOOK
+========================================================================
+
+$100/week budget — total capital deployment: $5,200 over 52 weeks.
+
+PHASE 1 — FOUNDATION (Weeks 1-6):
+  Week 1-2: PSM operations, mint/redeem validation
+  Week 3-4: Euler Vault deposits, Revenue Router verification
+  Week 5-6: Solvency console, AME deployment, disclosure system
+  Budget: $600 | Status: IN PROGRESS (Week 5)
+
+PHASE 2 — ACTIVATION (Weeks 7-13):
+  Week 7-8: AXM accumulation via Camelot DEX
+  Week 9-10: Liquidity pool seeding
+  Week 11-13: SEED and SUSU activation
+  Budget: $700
+
+PHASE 3 — INFRASTRUCTURE (Weeks 14-20):
+  Week 14-16: DePIN node deployment (DeNet)
+  Week 17-20: Security audit, bug bounty launch
+  Budget: $700
+
+PHASE 4 — GROWTH (Weeks 21-30):
+  Week 21-25: Lending Fund first loans
+  Week 26-30: Governance transition begins
+  Budget: $1,000
+
+PHASE 5 — SCALE (Weeks 31-39):
+  Week 31-35: Cross-chain prep (Universe L3)
+  Week 36-39: Capital program expansion
+  Budget: $900
+
+PHASE 6 — PROPERTY (Weeks 40-52):
+  Week 40-43: Property pipeline search
+  Week 44: HARD PAUSE checkpoint (Guard Rail #6)
+  Week 45-48: Due diligence
+  Week 49-52: Acquisition execution
+  Budget: $1,300
+
+Total Playbook Budget: $5,200
+Current Week: 5 of 52
+Capital Deployed to Date: ~$500
+
+========================================================================
+23. 6 MANDATORY GUARD RAILS
+========================================================================
+
+These guard rails are non-negotiable operational constraints:
+
+Guard Rail 1 — Fee Recipient Assumption Check
+  Before any fee receiver configuration, verify vault fees are
+  non-zero on-chain. Never assume fee routing is active without
+  explicit on-chain confirmation.
+
+Guard Rail 2 — Revenue Router Accounting Visibility
+  Never trust balance assumptions. Always perform explicit balance
+  read plus event verification on the Revenue Router before
+  reporting any revenue figures.
+
+Guard Rail 3 — ERC4626 Share Math Edge Case
+  On every vault deposit, assert minimum shares output is greater
+  than zero. The first depositor received 1:1 shares — this must
+  be verified for subsequent deposits as well.
+
+Guard Rail 4 — Self-Borrow Risk Contamination
+  All founder loopback test positions must be tagged as
+  NON-REPRESENTATIVE in all reporting. These positions exist for
+  contract validation, not as evidence of organic demand.
+
+Guard Rail 5 — Sentinel Authority Boundary
+  Sentinel is ADVISORY ONLY until a post-public governance vote
+  explicitly grants execution authority. No automated trades are
+  permitted. Every Sentinel output is informational only.
+
+Guard Rail 6 — Property Phase Timing Risk
+  If no qualifying property is identified by Week 44 of the
+  playbook, a mandatory HARD PAUSE is executed on the property
+  acquisition track. This prevents capital deployment into
+  suboptimal real estate opportunities.
+
+========================================================================
+24. BOOTSTRAP-PHASE DISCLOSURE
+========================================================================
+
+Axiom Protocol is in bootstrap phase. The following disclosures are
+mandatory reading for any participant or observer:
+
+1. UNDERCOLLATERALIZATION: The protocol holds $167.43 in treasury
+   against $1,000,237.36 in AXUSD liabilities. Coverage ratio is
+   0.03%. This is expected during bootstrap and is disclosed
+   transparently rather than hidden.
+
+2. PRE-REVENUE: No meaningful revenue has been generated. Fee
+   infrastructure is configured and verified but awaiting
+   utilization growth. Revenue Router distributions are $0.00.
+
+3. SINGLE OPERATOR: The protocol is founder-operated. Key person
+   risk is material. Governance transition is planned but not
+   yet implemented.
+
+4. NO AUDIT: No independent third-party security audit has been
+   completed. All contracts use OpenZeppelin standards but have
+   not been formally verified by an external auditor.
+
+5. MINIMAL LIQUIDITY: PSM reserves of $137.63 represent the total
+   immediate redemption capacity. Redemption requests exceeding
+   this amount cannot be fulfilled.
+
+6. AME BREACHED STATUS: All AME metrics show BREACHED status.
+   This is mathematically correct given current capitalization
+   levels and demonstrates honest disclosure.
+
+7. ADVISORY MODE ONLY: Sentinel operates in advisory mode with no
+   execution authority. MIRDT analysis is probabilistic with no
+   certainty claims.
+
+8. GENIUS ACT ALIGNMENT: GENIUS Act alignment is self-assessed.
+   External compliance attestation has not been obtained. Changes
+   in federal regulation could require protocol modifications.
+
+========================================================================
+25. RISK FACTORS
+========================================================================
+
+Contract Risk:
+  All contracts deployed and source-verified on Arbiscan. No
+  independent third-party security audit has been completed.
+  OpenZeppelin standards mitigate but do not eliminate risk.
+
+Liquidity Risk:
+  PSM redemption capacity is limited to current USDC reserves
+  ($137.63). Redemption requests exceeding available reserves
+  cannot be fulfilled without additional capital.
+
+Concentration Risk:
+  Treasury composition is concentrated in USDC. Diversification
+  is a Phase 2-3 objective in the 52-week playbook.
+
+Regulatory Risk:
+  Alignment with GENIUS Act requirements is self-assessed.
+  Changes in federal regulation could require protocol
+  modifications. The Lending Fund 506(c) exemption requires
+  ongoing compliance with SEC requirements.
+
+Key Person Risk:
+  Protocol is currently founder-operated. All operational
+  authority rests with a single managing member. Governance
+  transition is planned but not yet implemented.
+
+Market Risk:
+  ETH position in treasury is subject to price volatility.
+  Market intelligence systems are in advisory mode only with
+  no automated risk management active.
+
+Technology Risk:
+  Planned migration to Universe Blockchain (L3) introduces
+  migration risk. Arbitrum One dependency means the protocol
+  inherits L2 sequencer risk.
+
+Bootstrap Risk:
+  The protocol may not achieve sufficient scale within 52 weeks
+  to justify property acquisition. Guard Rail #6 addresses this
+  with a mandatory hard pause at Week 44.
+
+Counterparty Risk:
+  Dependencies on Euler V2, Camelot DEX, Alchemy RPC, and
+  DeNet introduce third-party platform risk. Failure or
+  compromise of any dependency could impact protocol operations.
+
+========================================================================
+26. VERIFICATION & CONTACT
+========================================================================
+
+On-Chain Verification:
+  All contract addresses listed in this document can be verified
+  at https://arbiscan.io. Search any address to view source code,
+  transaction history, and current state.
+
+Live Dashboards:
+  Solvency Console:         /solvency
+  Institutional Disclosure: /disclosure
+  Observer Dashboard:       /observer
+  Founder Operations:       /founder-ops
+  Market Intelligence:      /mirdt
+  Sentinel:                 /sentinel
+
+Data Sources:
+  Solvency snapshots are stored in PostgreSQL with cryptographic
+  checksums. Historical data is available via /api/solvency/history.
+  AME evaluations are deterministic and reproducible from any
+  snapshot input.
+
+Contact:
+  Managing Member: Clarence Fuqua Bey
+  Protocol: Axiom Protocol
+  Network: Arbitrum One (Chain ID 42161)
+
+========================================================================
+DISCLAIMER
+========================================================================
+
+This document is provided for informational and disclosure purposes
+only. It does not constitute investment advice, a solicitation to
+purchase any token or security, or a guarantee of any outcome.
+Participation in any protocol activity carries risk, including total
+loss of capital. All forward-looking statements regarding planned
+features, timelines, and objectives are subject to change. Past
+performance and current metrics do not guarantee future results.
+Participants should conduct independent due diligence and consult
+qualified legal, financial, and tax advisors before engaging with
+any protocol component.
+
+========================================================================
+END OF DOCUMENT
+========================================================================
