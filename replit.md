@@ -1,7 +1,7 @@
-# Axiom Smart City - Sovereign Digital-Physical Economy
+# Axiom Protocol - Sovereign Digital-Physical Economy
 
 ## Overview
-The Axiom Smart City project aims to establish America's first 1,000-acre on-chain sovereign smart city economy. It functions as a community-governed DeFi protocol with a robust treasury system and economic engine. Its core purpose is to create a model for future sovereign digital-physical economies, emphasizing self-custody and a non-custodial DeFi approach. Key capabilities include a governance token (AXM), DeFi treasury tools, real estate tokenization, DePIN infrastructure, smart city services, cross-chain interoperability, and sustainability initiatives within a decentralized, community-governed framework. The project's ambition is to build wealth together, on-chain.
+The Axiom Protocol project aims to establish America's first 1,000-acre on-chain sovereign digital-physical economy. It functions as a community-governed protocol with a robust treasury system and economic engine. Its core purpose is to create a model for future sovereign digital-physical economies, emphasizing self-custody and a non-custodial approach. Key capabilities include a governance token (AXM), treasury tools, real estate asset onboarding, DePIN infrastructure, cross-chain interoperability, and sustainability initiatives within a decentralized, community-governed framework. The project's ambition is to build wealth together, on-chain.
 
 ## User Preferences
 - **Communication style**: Simple, everyday language explaining technical concepts.

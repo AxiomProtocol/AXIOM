@@ -91,7 +91,7 @@ export default function InstitutionalPage() {
             SUSU-style savings pooling, and digitally issued land participation instruments. It bridges traditional real estate finance with
             decentralized infrastructure, offering institutional-grade treasury management, transparent settlement systems,
             and community-driven governance. The protocol's mission is to build America's first 1,000-acre on-chain sovereign
-            smart city economy.
+            digital-physical economy.
           </p>
         </section>
 
