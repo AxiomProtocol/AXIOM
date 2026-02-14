@@ -64,6 +64,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ success: false, error: `Transaction method signature ${selector} does not match expected ${operation} selectors ${expectedSelectors.join(', ')}.` });
     }
 
+    const existingLog = await pool.query(
+      'SELECT id FROM founder_ops_log WHERE tx_hash = $1 LIMIT 1',
+      [txHash]
+    );
+    if (existingLog.rows.length > 0) {
+      return res.status(200).json({ success: true, duplicate: true, entry: existingLog.rows[0], message: 'Transaction already logged.' });
+    }
+
     const ecoLabel = ecosystem === 'PRIMARY' ? 'PRIMARY (GENIUS)' : 'EULER (Original)';
     const title = operation === 'Mint'
       ? `PSM Mint: ${inputAmount} USDC via ${ecoLabel} PSM`

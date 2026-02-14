@@ -517,12 +517,12 @@ export default function PlaybookPage() {
   };
 
   const logOperation = async (txHash: string, inputAmt: number, op: string) => {
-    try {
-      const feeBps = ecosystem === 'PRIMARY'
-        ? (op === 'Mint' ? psmStatus?.primary?.mintFee : psmStatus?.primary?.redeemFee)
-        : (op === 'Mint' ? psmStatus?.euler?.mintFee : psmStatus?.euler?.redeemFee);
+    const feeBps = ecosystem === 'PRIMARY'
+      ? (op === 'Mint' ? psmStatus?.primary?.mintFee : psmStatus?.primary?.redeemFee)
+      : (op === 'Mint' ? psmStatus?.euler?.mintFee : psmStatus?.euler?.redeemFee);
 
-      await fetch('/api/founder-ops/log-psm-op', {
+    try {
+      const logRes = await fetch('/api/founder-ops/log-psm-op', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -534,7 +534,15 @@ export default function PlaybookPage() {
           description: `${op} via ${getEcosystemLabel()} PSM. Fee: ${feeBps} bps. Verified on-chain.`,
         }),
       });
-    } catch {}
+      if (!logRes.ok) {
+        const errBody = await logRes.json().catch(() => ({ error: logRes.statusText }));
+        console.error('[logOperation] PSM log failed:', errBody);
+        setTxStatus(prev => prev ? { ...prev, message: `${prev.message} (Warning: log recording failed — ${errBody.error || 'unknown error'})` } : prev);
+      }
+    } catch (logErr: any) {
+      console.error('[logOperation] PSM log network error:', logErr.message);
+      setTxStatus(prev => prev ? { ...prev, message: `${prev.message} (Warning: log recording failed — network error)` } : prev);
+    }
 
     try {
       const ingestRes = await fetch('/api/solvency/auto-ingest', {
@@ -542,11 +550,17 @@ export default function PlaybookPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes: `Auto-ingest after ${op} ${inputAmt} via ${getEcosystemLabel()} PSM. Tx: ${txHash}` }),
       });
-      const ingestJson = await ingestRes.json();
-      if (ingestJson.success) {
-        setSnapshotStatus({ type: 'success', message: 'Solvency snapshot auto-ingested.', snapshotId: ingestJson.snapshotId, checksum: ingestJson.checksum });
+      if (ingestRes.ok) {
+        const ingestJson = await ingestRes.json();
+        if (ingestJson.success) {
+          setSnapshotStatus({ type: 'success', message: 'Solvency snapshot auto-ingested.', snapshotId: ingestJson.snapshotId, checksum: ingestJson.checksum });
+        }
+      } else {
+        console.warn('[logOperation] Auto-ingest returned', ingestRes.status);
       }
-    } catch {}
+    } catch (ingestErr: any) {
+      console.warn('[logOperation] Auto-ingest network error:', ingestErr.message);
+    }
   };
 
   const tabs = [
