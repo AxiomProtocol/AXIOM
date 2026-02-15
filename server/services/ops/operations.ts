@@ -194,9 +194,20 @@ export async function runScan(scanType: string = 'all'): Promise<OpResult> {
   let setupsGenerated = 0;
   let errors = 0;
 
+  const activeResult = await pool.query(
+    `SELECT DISTINCT symbol FROM mirdt_setups WHERE status = 'ACTIVE'`
+  );
+  const activeSymbols = new Set(activeResult.rows.map((r: any) => r.symbol));
+  let skippedDuplicates = 0;
+
   for (const asset of universe) {
     try {
       assetsScanned++;
+
+      if (activeSymbols.has(asset.symbol)) {
+        skippedDuplicates++;
+        continue;
+      }
 
       const provider = asset.assetType === 'CRYPTO' ? coinGecko : alphaVantage;
       const bars = await provider.fetchOHLCV(asset.symbol, 100);
@@ -264,6 +275,7 @@ export async function runScan(scanType: string = 'all'): Promise<OpResult> {
     success: true,
     assetsScanned,
     setupsGenerated,
+    skippedDuplicates,
     errors,
     timestamp: new Date().toISOString(),
   };
