@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { href: '/sentinel', label: 'Sentinel' },
   { href: '/observer', label: 'Observer' },
   { href: '/depin/denet', label: 'DePIN' },
+  { href: '/contact', label: 'Contact' },
 ];
 
 interface DesignLawLayoutProps {
