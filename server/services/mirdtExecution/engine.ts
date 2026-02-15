@@ -633,7 +633,7 @@ export async function closePaperTrade(
     ? (exitPrice - entryPrice) * quantity
     : (entryPrice - exitPrice) * quantity;
   const pnlPct = entryPrice > 0 ? ((exitPrice - entryPrice) / entryPrice) * 100 * (direction === 'SHORT' ? -1 : 1) : 0;
-  const outcome = pnl > 0 ? 'WIN' : pnl < 0 ? 'LOSS' : 'BREAKEVEN';
+  const outcome = pnl > 0 ? 'WIN' : pnl < 0 ? 'LOSS' : 'FLAT';
 
   await pool.query(
     `UPDATE mirdt_paper_trades SET
@@ -684,7 +684,8 @@ export async function emergencyExitAll(): Promise<{ closed: number; errors: numb
       } else {
         errors++;
       }
-    } catch {
+    } catch (err) {
+      console.error(`[MIRDTExecution] Emergency exit error for trade ${trade.id}:`, (err as Error).message);
       errors++;
     }
   }
