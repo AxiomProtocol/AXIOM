@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { pool } from '../../db';
 import { CoinGeckoProvider } from '../mirdt/CoinGeckoProvider';
 import { AlphaVantageProvider } from '../mirdt/AlphaVantageProvider';
@@ -152,7 +153,7 @@ async function insertEvent(
   eventType: EventType,
   setupId: string,
   decisionId: string | null,
-  runId: string,
+  runId: string | null,
   eventData: object
 ): Promise<void> {
   const now = new Date().toISOString();
@@ -194,22 +195,60 @@ export async function runExecutionBatch(
   let errors = 0;
   const decisionChecksums: string[] = [];
 
+  const priceCache: Record<string, number | null> = {};
+  const uniqueSymbols = [...new Set(setups.map(s => `${s.assetType}:${s.symbol}`))];
+
+  const cryptoSymbols = uniqueSymbols.filter(k => k.startsWith('CRYPTO:')).map(k => k.split(':')[1]);
+  const equitySymbols = uniqueSymbols.filter(k => k.startsWith('EQUITY:')).map(k => k.split(':')[1]);
+
+  if (cryptoSymbols.length > 0) {
+    try {
+      const ids = cryptoSymbols.map(s => CoinGeckoProvider.resolveId(s)).join(',');
+      const { data } = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+        params: { ids, vs_currencies: 'usd' },
+        timeout: 15000,
+      });
+      for (const symbol of cryptoSymbols) {
+        const id = CoinGeckoProvider.resolveId(symbol);
+        priceCache[`CRYPTO:${symbol}`] = data?.[id]?.usd ?? null;
+      }
+      console.log(`[MIRDTExecution] Batch fetched ${cryptoSymbols.length} crypto prices`);
+    } catch (err) {
+      console.log(`[MIRDTExecution] Batch crypto price fetch failed:`, (err as Error).message);
+      for (const symbol of cryptoSymbols) {
+        priceCache[`CRYPTO:${symbol}`] = null;
+      }
+    }
+  }
+
+  const avApiKey = process.env.ALPHA_VANTAGE_API_KEY ?? '';
+  for (const symbol of equitySymbols) {
+    try {
+      const { data } = await axios.get('https://www.alphavantage.co/query', {
+        params: { function: 'GLOBAL_QUOTE', symbol, apikey: avApiKey },
+        timeout: 10000,
+      });
+      const price = parseFloat(data?.['Global Quote']?.['05. price']);
+      priceCache[`EQUITY:${symbol}`] = (price && price > 0) ? price : null;
+      if (price) console.log(`[MIRDTExecution] Fetched ${symbol}: $${price}`);
+      await new Promise(r => setTimeout(r, 1500));
+    } catch (err) {
+      console.log(`[MIRDTExecution] Price fetch failed for ${symbol}:`, (err as Error).message);
+      priceCache[`EQUITY:${symbol}`] = null;
+    }
+  }
+
+  try {
+
   for (const setup of setups) {
     try {
       setupsEvaluated++;
 
-      const provider = setup.assetType === 'CRYPTO' ? coinGecko : alphaVantage;
-      const bars = await provider.fetchOHLCV(setup.symbol, 1);
+      const cacheKey = `${setup.assetType}:${setup.symbol}`;
+      const currentPrice = priceCache[cacheKey];
 
-      if (!bars || bars.length === 0) {
-        console.log(`[MIRDTExecution] No price data for ${setup.symbol}, skipping`);
-        errors++;
-        continue;
-      }
-
-      const currentPrice = bars[bars.length - 1].close;
       if (!currentPrice || currentPrice <= 0) {
-        console.log(`[MIRDTExecution] Invalid price for ${setup.symbol}: ${currentPrice}, skipping`);
+        console.log(`[MIRDTExecution] No valid price for ${setup.symbol}, skipping`);
         errors++;
         continue;
       }
@@ -423,23 +462,28 @@ export async function runExecutionBatch(
     }
   }
 
+  } finally {
+    const finishedAt = new Date();
+    const runChecksum = computeRunChecksum(runId, decisionChecksums);
+
+    await pool.query(
+      `UPDATE mirdt_execution_runs SET
+        finished_at = $1,
+        processed_count = $2,
+        eligible_count = $3,
+        authorized_count = 0,
+        opened_count = 0,
+        invalidated_count = 0,
+        expired_count = 0,
+        failed_count = $4,
+        checksum = $5
+      WHERE id = $6`,
+      [finishedAt, setupsEvaluated, decisionsCreated, errors, runChecksum, runId]
+    );
+  }
+
   const finishedAt = new Date();
   const runChecksum = computeRunChecksum(runId, decisionChecksums);
-
-  await pool.query(
-    `UPDATE mirdt_execution_runs SET
-      finished_at = $1,
-      processed_count = $2,
-      eligible_count = $3,
-      authorized_count = 0,
-      opened_count = 0,
-      invalidated_count = 0,
-      expired_count = 0,
-      failed_count = $4,
-      checksum = $5
-    WHERE id = $6`,
-    [finishedAt, setupsEvaluated, decisionsCreated, errors, runChecksum, runId]
-  );
 
   return {
     runId,
