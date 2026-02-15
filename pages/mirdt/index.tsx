@@ -113,7 +113,7 @@ const AUTO_REFRESH_OPTIONS = [
 export default function MIRDTIndex() {
   const router = useRouter();
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('ACTIVE');
   const [assetType, setAssetType] = useState('');
   const [setups, setSetups] = useState<Setup[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
