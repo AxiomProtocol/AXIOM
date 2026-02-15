@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   DesignLawLayout,
@@ -95,6 +95,21 @@ const FOOTER_DISCLOSURE =
 
 type TabId = 'dashboard' | 'education';
 
+type OpStatus = 'idle' | 'running' | 'success' | 'error';
+
+interface OpState {
+  status: OpStatus;
+  message: string;
+  lastRun: string;
+}
+
+const AUTO_REFRESH_OPTIONS = [
+  { value: 0, label: 'Off' },
+  { value: 60, label: '1 min' },
+  { value: 300, label: '5 min' },
+  { value: 900, label: '15 min' },
+];
+
 export default function SentinelIndex() {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [signals, setSignals] = useState<Signal[]>([]);
@@ -105,8 +120,14 @@ export default function SentinelIndex() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [autoRefreshSec, setAutoRefreshSec] = useState(0);
+  const autoRefreshRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
+  const [signalsOp, setSignalsOp] = useState<OpState>({ status: 'idle', message: '', lastRun: '' });
+  const [fullCycleOp, setFullCycleOp] = useState<OpState>({ status: 'idle', message: '', lastRun: '' });
+
+  const fetchData = useCallback(() => {
     setLoading(true);
     setError(null);
 
@@ -141,6 +162,69 @@ export default function SentinelIndex() {
       .catch(() => setError('Failed to connect to server'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData, refreshKey]);
+
+  useEffect(() => {
+    if (autoRefreshRef.current) {
+      clearInterval(autoRefreshRef.current);
+      autoRefreshRef.current = null;
+    }
+    if (autoRefreshSec > 0) {
+      autoRefreshRef.current = setInterval(() => {
+        setRefreshKey(k => k + 1);
+      }, autoRefreshSec * 1000);
+    }
+    return () => {
+      if (autoRefreshRef.current) clearInterval(autoRefreshRef.current);
+    };
+  }, [autoRefreshSec]);
+
+  const runOperation = async (
+    endpoint: string,
+    setter: React.Dispatch<React.SetStateAction<OpState>>,
+    label: string,
+    body?: Record<string, any>
+  ) => {
+    setter({ status: 'running', message: `Running ${label}...`, lastRun: '' });
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      const data = await res.json();
+      if (res.ok && data.success !== false) {
+        let details = 'Complete';
+        if (label === 'Signal Generation') {
+          details = `Generated ${data.signalsGenerated || 0} signals`;
+        } else if (label === 'Full Cycle') {
+          const results = data.results || [];
+          details = results.map((r: any) => `${r.step}: ${r.success ? 'OK' : 'FAIL'}`).join(' | ');
+        }
+        setter({
+          status: 'success',
+          message: details,
+          lastRun: new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC'),
+        });
+        setRefreshKey(k => k + 1);
+      } else {
+        setter({
+          status: 'error',
+          message: data.error || `${label} failed`,
+          lastRun: new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC'),
+        });
+      }
+    } catch (err: any) {
+      setter({
+        status: 'error',
+        message: err.message || 'Network error',
+        lastRun: new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC'),
+      });
+    }
+  };
 
   const exportCSV = () => {
     if (!signals.length) return;
@@ -178,6 +262,76 @@ export default function SentinelIndex() {
         subtitle="Unified Capital Decision & Risk Authorization Layer. Strategy proposes. Sentinel decides. Execution obeys."
         disclosure={FOOTER_DISCLOSURE}
       >
+        <div className="border border-dl-border bg-dl-bg p-4 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <SectionHeading>Operations</SectionHeading>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-dl-mono text-dl-gray">AUTO-REFRESH</span>
+              <select
+                value={autoRefreshSec}
+                onChange={(e) => setAutoRefreshSec(Number(e.target.value))}
+                className="px-2 py-1 border border-dl-border bg-white text-dl-navy font-dl-mono text-xs"
+              >
+                {AUTO_REFRESH_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+              {autoRefreshSec > 0 && (
+                <span className="text-xs font-dl-mono text-dl-forest">ACTIVE</span>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="border border-dl-border p-3">
+              <p className="text-xs font-dl-mono text-dl-gray mb-2">FULL CYCLE (SCAN + SIGNALS)</p>
+              <button
+                onClick={() => runOperation('/api/ops/trigger', setFullCycleOp, 'Full Cycle', { operation: 'full-cycle' })}
+                disabled={fullCycleOp.status === 'running'}
+                className="w-full px-3 py-2 bg-dl-navy text-white font-dl-mono text-xs disabled:bg-dl-gray"
+              >
+                {fullCycleOp.status === 'running' ? 'RUNNING...' : 'RUN FULL CYCLE'}
+              </button>
+              {fullCycleOp.message && (
+                <p className={`text-xs mt-1 font-dl-mono ${fullCycleOp.status === 'error' ? 'text-dl-error' : fullCycleOp.status === 'success' ? 'text-dl-forest' : 'text-dl-gray'}`}>
+                  {fullCycleOp.message}
+                </p>
+              )}
+            </div>
+
+            <div className="border border-dl-border p-3">
+              <p className="text-xs font-dl-mono text-dl-gray mb-2">GENERATE SIGNALS</p>
+              <button
+                onClick={() => runOperation('/api/ops/trigger', setSignalsOp, 'Signal Generation', { operation: 'run-signals' })}
+                disabled={signalsOp.status === 'running'}
+                className="w-full px-3 py-2 bg-dl-navy text-white font-dl-mono text-xs disabled:bg-dl-gray"
+              >
+                {signalsOp.status === 'running' ? 'GENERATING...' : 'RUN SIGNALS'}
+              </button>
+              {signalsOp.message && (
+                <p className={`text-xs mt-1 font-dl-mono ${signalsOp.status === 'error' ? 'text-dl-error' : signalsOp.status === 'success' ? 'text-dl-forest' : 'text-dl-gray'}`}>
+                  {signalsOp.message}
+                </p>
+              )}
+            </div>
+
+            <div className="border border-dl-border p-3">
+              <p className="text-xs font-dl-mono text-dl-gray mb-2">REFRESH DISPLAY</p>
+              <button
+                onClick={() => setRefreshKey(k => k + 1)}
+                className="w-full px-3 py-2 bg-dl-navy text-white font-dl-mono text-xs"
+              >
+                REFRESH DATA
+              </button>
+              {lastUpdated && (
+                <p className="text-xs mt-1 font-dl-mono text-dl-gray">
+                  Last: {lastUpdated}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
         {health && health.operationalState !== 'NORMAL' && (
           <CircuitBreakerBanner state={health.operationalState} />
         )}
