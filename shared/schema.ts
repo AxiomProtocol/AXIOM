@@ -8958,3 +8958,130 @@ export const ameStressScenarios = pgTable("ame_stress_scenarios", {
 
 export type AmeStressScenario = typeof ameStressScenarios.$inferSelect;
 export type InsertAmeStressScenario = typeof ameStressScenarios.$inferInsert;
+
+// ==== MIRDT EXECUTION MODEL ====
+
+export const mirdtExecutionGradeEnum = pgEnum('mirdt_execution_grade', ['A', 'B', 'C', 'REJECT']);
+
+export const mirdtExecutionStatusEnum = pgEnum('mirdt_execution_status', ['DRAFT', 'ELIGIBLE', 'WAIT', 'REJECTED', 'AUTHORIZED', 'OPENED', 'CLOSED', 'EXPIRED', 'INVALIDATED']);
+
+export const mirdtLiquidityTierEnum = pgEnum('mirdt_liquidity_tier', ['HIGH', 'MODERATE', 'LOW', 'FRAGILE']);
+
+export const mirdtRegimeTierEnum = pgEnum('mirdt_regime_tier', ['LOW', 'NORMAL', 'EXPANDING', 'EXTREME']);
+
+export const mirdtEntryTriggerEnum = pgEnum('mirdt_entry_trigger', ['ZONE_EDGE', 'BREAKOUT', 'MEAN_DRIFT', 'VOL_EXPANSION', 'NONE']);
+
+export const mirdtPolicyModeEnum = pgEnum('mirdt_policy_mode', ['BOOTSTRAP', 'NORMAL', 'CAUTION', 'RESTRICTED', 'EMERGENCY']);
+
+export const mirdtEventTypeEnum = pgEnum('mirdt_event_type', ['DECISION_CREATED', 'DECISION_REJECTED', 'DECISION_WAIT', 'AUTHORIZED', 'OPENED', 'CLOSED', 'INVALIDATED', 'EXPIRED', 'EMERGENCY_EXIT']);
+
+export const mirdtExecutionDecisions = pgTable("mirdt_execution_decisions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  setupId: uuid("setup_id").notNull(),
+  snapshotId: uuid("snapshot_id"),
+  currentPrice: decimal("current_price", { precision: 18, scale: 8 }).notNull(),
+  priceSource: varchar("price_source", { length: 100 }).notNull(),
+  priceAsOf: timestamp("price_as_of").notNull(),
+  signalZ: decimal("signal_z", { precision: 8, scale: 4 }),
+  volatilityEstimate: decimal("volatility_estimate", { precision: 8, scale: 4 }),
+  liquidityTier: mirdtLiquidityTierEnum("liquidity_tier").notNull(),
+  regimeTier: mirdtRegimeTierEnum("regime_tier").notNull(),
+  eligibilityStatus: varchar("eligibility_status", { length: 20 }).notNull(),
+  grade: mirdtExecutionGradeEnum("grade").notNull(),
+  reasonCodes: jsonb("reason_codes").notNull().default(sql`'[]'::jsonb`),
+  entryTriggerType: mirdtEntryTriggerEnum("entry_trigger_type").notNull(),
+  entryAllowed: boolean("entry_allowed").notNull(),
+  riskFractionBps: integer("risk_fraction_bps").notNull(),
+  riskBudgetUsd: decimal("risk_budget_usd", { precision: 18, scale: 8 }).notNull(),
+  invalidationDistance: decimal("invalidation_distance", { precision: 18, scale: 8 }).notNull(),
+  positionSizeQty: decimal("position_size_qty", { precision: 18, scale: 8 }).notNull(),
+  positionNotionalUsd: decimal("position_notional_usd", { precision: 18, scale: 8 }).notNull(),
+  stopPrice: decimal("stop_price", { precision: 18, scale: 8 }).notNull(),
+  takeProfitP50: decimal("take_profit_p50", { precision: 18, scale: 8 }),
+  takeProfitP95: decimal("take_profit_p95", { precision: 18, scale: 8 }),
+  timeHorizonExitAt: timestamp("time_horizon_exit_at").notNull(),
+  policyMode: mirdtPolicyModeEnum("policy_mode").notNull(),
+  decisionTraceJson: jsonb("decision_trace_json").notNull(),
+  checksum: varchar("checksum", { length: 64 }).notNull(),
+  direction: varchar("direction", { length: 10 }).notNull(),
+  symbol: varchar("symbol", { length: 20 }).notNull(),
+  assetType: varchar("asset_type", { length: 20 }).notNull(),
+}, (table) => ({
+  setupCreatedIdx: index("mirdt_exec_dec_setup_created_idx").on(table.setupId, table.createdAt),
+  gradeCreatedIdx: index("mirdt_exec_dec_grade_created_idx").on(table.grade, table.createdAt),
+  eligibilityCreatedIdx: index("mirdt_exec_dec_eligibility_created_idx").on(table.eligibilityStatus, table.createdAt),
+}));
+
+export type MirdtExecutionDecision = typeof mirdtExecutionDecisions.$inferSelect;
+export type InsertMirdtExecutionDecision = typeof mirdtExecutionDecisions.$inferInsert;
+
+export const mirdtExecutionRuns = pgTable("mirdt_execution_runs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  runType: varchar("run_type", { length: 20 }).notNull(),
+  startedAt: timestamp("started_at").notNull(),
+  finishedAt: timestamp("finished_at"),
+  processedCount: integer("processed_count").notNull().default(0),
+  eligibleCount: integer("eligible_count").notNull().default(0),
+  authorizedCount: integer("authorized_count").notNull().default(0),
+  openedCount: integer("opened_count").notNull().default(0),
+  invalidatedCount: integer("invalidated_count").notNull().default(0),
+  expiredCount: integer("expired_count").notNull().default(0),
+  failedCount: integer("failed_count").notNull().default(0),
+  failureDetails: jsonb("failure_details").notNull().default(sql`'[]'::jsonb`),
+  checksum: varchar("checksum", { length: 64 }).notNull(),
+});
+
+export type MirdtExecutionRun = typeof mirdtExecutionRuns.$inferSelect;
+export type InsertMirdtExecutionRun = typeof mirdtExecutionRuns.$inferInsert;
+
+export const mirdtExecutionEvents = pgTable("mirdt_execution_events", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  setupId: uuid("setup_id").notNull(),
+  decisionId: uuid("decision_id"),
+  paperTradeId: uuid("paper_trade_id"),
+  eventType: mirdtEventTypeEnum("event_type").notNull(),
+  eventData: jsonb("event_data").notNull(),
+  checksum: varchar("checksum", { length: 64 }).notNull(),
+}, (table) => ({
+  setupCreatedIdx: index("mirdt_exec_evt_setup_created_idx").on(table.setupId, table.createdAt),
+}));
+
+export type MirdtExecutionEvent = typeof mirdtExecutionEvents.$inferSelect;
+export type InsertMirdtExecutionEvent = typeof mirdtExecutionEvents.$inferInsert;
+
+export const mirdtPortfolioState = pgTable("mirdt_portfolio_state", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  portfolioCapitalUsd: decimal("portfolio_capital_usd", { precision: 18, scale: 8 }).notNull(),
+  riskFractionBps: integer("risk_fraction_bps").notNull().default(50),
+  maxConcurrentTrades: integer("max_concurrent_trades").notNull().default(5),
+  maxPerAssetExposureBps: integer("max_per_asset_exposure_bps").notNull().default(2000),
+  drawdownBrakeBps: integer("drawdown_brake_bps").notNull().default(500),
+  systemVolatilityTier: mirdtRegimeTierEnum("system_volatility_tier").notNull().default('NORMAL'),
+  policyMode: mirdtPolicyModeEnum("policy_mode").notNull().default('BOOTSTRAP'),
+  globalSizeMultiplier: decimal("global_size_multiplier", { precision: 18, scale: 8 }).notNull().default('1.0'),
+  notes: text("notes"),
+  isActive: boolean("is_active").notNull().default(true),
+}, (table) => ({
+  createdIdx: index("mirdt_portfolio_state_created_idx").on(table.createdAt),
+}));
+
+export type MirdtPortfolioState = typeof mirdtPortfolioState.$inferSelect;
+export type InsertMirdtPortfolioState = typeof mirdtPortfolioState.$inferInsert;
+
+export const mirdtExecutionTimeseries = pgTable("mirdt_execution_timeseries", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  metricKey: varchar("metric_key", { length: 100 }).notNull(),
+  metricValue: decimal("metric_value", { precision: 18, scale: 8 }).notNull(),
+  tags: jsonb("tags"),
+  runId: uuid("run_id"),
+}, (table) => ({
+  metricCreatedIdx: index("mirdt_exec_ts_metric_created_idx").on(table.metricKey, table.createdAt),
+}));
+
+export type MirdtExecutionTimeseries = typeof mirdtExecutionTimeseries.$inferSelect;
+export type InsertMirdtExecutionTimeseries = typeof mirdtExecutionTimeseries.$inferInsert;

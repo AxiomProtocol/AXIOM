@@ -16,6 +16,7 @@
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import {
   DesignLawLayout,
   PageShell,
@@ -317,7 +318,12 @@ export default function MIRDTIndex() {
     >
       <div className="border border-dl-border bg-dl-bg p-4 mb-6">
         <div className="flex items-center justify-between mb-3">
-          <SectionHeading>Operations</SectionHeading>
+          <div className="flex items-center gap-4">
+            <SectionHeading>Operations</SectionHeading>
+            <Link href="/mirdt/execution" className="px-3 py-1 bg-dl-forest text-white font-dl-mono text-xs">
+              EXECUTION CONSOLE
+            </Link>
+          </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-dl-mono text-dl-gray">AUTO-REFRESH</span>
             <select
