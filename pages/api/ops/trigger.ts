@@ -1,4 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import {
+  markExpired,
+  checkInvalidations,
+  runScan,
+  runSignals,
+  runFullCycle,
+} from '../../../server/services/ops/operations';
 
 const VALID_OPERATIONS = [
   'run-scan',
@@ -9,20 +16,6 @@ const VALID_OPERATIONS = [
 ] as const;
 
 type Operation = typeof VALID_OPERATIONS[number];
-
-function getBaseUrl(req: NextApiRequest): string {
-  const protocol = req.headers['x-forwarded-proto'] || 'http';
-  const host = req.headers['host'] || 'localhost:5000';
-  return `${protocol}://${host}`;
-}
-
-const OPERATION_ENDPOINTS: Record<Operation, string> = {
-  'run-scan': '/api/mirdt/run-scan',
-  'check-invalidations': '/api/mirdt/check-invalidations',
-  'mark-expired': '/api/mirdt/mark-expired',
-  'run-signals': '/api/sentinel/run-signals',
-  'full-cycle': '/api/scheduler/run-cycle',
-};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -43,26 +36,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ success: false, error: 'Scan key not configured' });
   }
 
-  const baseUrl = getBaseUrl(req);
-  const endpoint = OPERATION_ENDPOINTS[operation as Operation];
-
   try {
-    const url = operation === 'run-scan' && scanType
-      ? `${baseUrl}${endpoint}?type=${scanType}`
-      : `${baseUrl}${endpoint}`;
+    let result: any;
 
-    const fetchRes = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(scanKey ? { 'x-scan-key': scanKey } : {}),
-      },
-      body: operation === 'full-cycle' ? JSON.stringify({ scanType: scanType || 'all' }) : undefined,
-    });
+    switch (operation as Operation) {
+      case 'mark-expired':
+        result = await markExpired();
+        break;
+      case 'check-invalidations':
+        result = await checkInvalidations();
+        break;
+      case 'run-scan':
+        result = await runScan(scanType || 'all');
+        break;
+      case 'run-signals':
+        result = await runSignals();
+        break;
+      case 'full-cycle':
+        result = await runFullCycle(scanType || 'all');
+        break;
+    }
 
-    const data = await fetchRes.json();
-    return res.status(fetchRes.status).json(data);
+    const status = result.success ? 200 : (operation === 'full-cycle' && result.cycleComplete ? 207 : 500);
+    return res.status(status).json(result);
   } catch (err: any) {
+    console.error(`[ops/trigger] Error running ${operation}:`, err);
     return res.status(500).json({ success: false, error: err.message || 'Internal server error' });
   }
 }
