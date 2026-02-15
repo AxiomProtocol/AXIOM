@@ -222,19 +222,45 @@ export async function runExecutionBatch(
   }
 
   const avApiKey = process.env.ALPHA_VANTAGE_API_KEY ?? '';
-  for (const symbol of equitySymbols) {
-    try {
-      const { data } = await axios.get('https://www.alphavantage.co/query', {
-        params: { function: 'GLOBAL_QUOTE', symbol, apikey: avApiKey },
-        timeout: 10000,
-      });
-      const price = parseFloat(data?.['Global Quote']?.['05. price']);
-      priceCache[`EQUITY:${symbol}`] = (price && price > 0) ? price : null;
-      if (price) console.log(`[MIRDTExecution] Fetched ${symbol}: $${price}`);
-      await new Promise(r => setTimeout(r, 1500));
-    } catch (err) {
-      console.log(`[MIRDTExecution] Price fetch failed for ${symbol}:`, (err as Error).message);
+  if (!avApiKey) {
+    console.log(`[MIRDTExecution] ALPHA_VANTAGE_API_KEY not set, skipping ${equitySymbols.length} equity symbols`);
+    for (const symbol of equitySymbols) {
       priceCache[`EQUITY:${symbol}`] = null;
+    }
+  } else {
+    const AV_DELAY_MS = 13000;
+    for (const symbol of equitySymbols) {
+      try {
+        const { data } = await axios.get('https://www.alphavantage.co/query', {
+          params: { function: 'GLOBAL_QUOTE', symbol, apikey: avApiKey },
+          timeout: 10000,
+        });
+        if (data?.['Note'] || data?.['Information']) {
+          console.log(`[MIRDTExecution] Alpha Vantage rate limit hit at ${symbol}, stopping equity fetch`);
+          priceCache[`EQUITY:${symbol}`] = null;
+          for (const remaining of equitySymbols.slice(equitySymbols.indexOf(symbol) + 1)) {
+            priceCache[`EQUITY:${remaining}`] = null;
+          }
+          break;
+        }
+        if (data?.['Error Message']) {
+          console.log(`[MIRDTExecution] Alpha Vantage error for ${symbol}: ${data['Error Message']}`);
+          priceCache[`EQUITY:${symbol}`] = null;
+          await new Promise(r => setTimeout(r, AV_DELAY_MS));
+          continue;
+        }
+        const price = parseFloat(data?.['Global Quote']?.['05. price']);
+        priceCache[`EQUITY:${symbol}`] = (!isNaN(price) && price > 0) ? price : null;
+        if (!isNaN(price) && price > 0) {
+          console.log(`[MIRDTExecution] Fetched ${symbol}: $${price}`);
+        } else {
+          console.log(`[MIRDTExecution] No price data for ${symbol} (market closed or invalid response)`);
+        }
+        await new Promise(r => setTimeout(r, AV_DELAY_MS));
+      } catch (err) {
+        console.log(`[MIRDTExecution] Price fetch failed for ${symbol}:`, (err as Error).message);
+        priceCache[`EQUITY:${symbol}`] = null;
+      }
     }
   }
 
