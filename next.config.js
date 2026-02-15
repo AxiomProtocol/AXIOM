@@ -4,6 +4,7 @@ const webpack = require('webpack');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  allowedDevOrigins: ['*'],
   eslint: {
     ignoreDuringBuilds: true,
   },
