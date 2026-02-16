@@ -80,6 +80,19 @@ export default function WealthPracticePage() {
   const [createMsg, setCreateMsg] = useState('');
   const [createError, setCreateError] = useState('');
 
+  const [showHubForm, setShowHubForm] = useState(false);
+  const [hubForm, setHubForm] = useState({
+    hubName: '',
+    description: '',
+    city: '',
+    region: '',
+    regionType: 'metro',
+    interest: '',
+  });
+  const [creatingHub, setCreatingHub] = useState(false);
+  const [hubCreateMsg, setHubCreateMsg] = useState('');
+  const [hubCreateError, setHubCreateError] = useState('');
+
   useEffect(() => {
     if (activeTab === 'overview') {
       fetchAnalytics();
@@ -178,6 +191,46 @@ export default function WealthPracticePage() {
       setCreateError('Failed to create group');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleCreateHub = async () => {
+    if (!hubForm.hubName.trim()) {
+      setHubCreateError('Hub name is required');
+      return;
+    }
+    if (!hubForm.city.trim()) {
+      setHubCreateError('City is required');
+      return;
+    }
+    if (!hubForm.region.trim()) {
+      setHubCreateError('State/region is required');
+      return;
+    }
+
+    setCreatingHub(true);
+    setHubCreateError('');
+    setHubCreateMsg('');
+
+    try {
+      const res = await fetch('/api/wealth-practice/hubs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(hubForm),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setHubCreateMsg('Interest Hub created successfully.');
+        setHubForm({ hubName: '', description: '', city: '', region: '', regionType: 'metro', interest: '' });
+        setShowHubForm(false);
+        fetchDiscoverData();
+      } else {
+        setHubCreateError(data.error || 'Failed to create hub');
+      }
+    } catch {
+      setHubCreateError('Failed to create hub');
+    } finally {
+      setCreatingHub(false);
     }
   };
 
@@ -328,22 +381,134 @@ export default function WealthPracticePage() {
 
           {!discoverLoading && (
             <>
-              <h3 className="font-dl-serif text-lg text-dl-navy font-bold mb-4">Interest Hubs</h3>
-              {hubs.length === 0 ? (
-                <p className="text-dl-gray text-sm mb-8">No hubs found.</p>
-              ) : (
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-dl-serif text-lg text-dl-navy font-bold">Interest Hubs</h3>
+                <button
+                  onClick={() => setShowHubForm(!showHubForm)}
+                  className="border border-dl-navy bg-dl-bg text-dl-navy px-4 py-1.5 text-sm font-bold hover:bg-dl-navy hover:text-white transition-none"
+                >
+                  {showHubForm ? 'Cancel' : 'Create Hub'}
+                </button>
+              </div>
+
+              {hubCreateMsg && (
+                <div className="border border-dl-forest bg-dl-bg p-3 mb-4">
+                  <p className="text-dl-forest text-sm">{hubCreateMsg}</p>
+                </div>
+              )}
+
+              {showHubForm && (
+                <div className="border border-dl-border p-6 mb-6">
+                  <h4 className="font-dl-serif text-dl-navy font-bold mb-4">New Interest Hub</h4>
+                  <p className="text-dl-gray text-sm mb-4">Create a hub for your city or region. Other participants can discover it and form Wealth Practice groups within it.</p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-dl-navy text-sm font-bold mb-1">Hub Name</label>
+                      <input
+                        type="text"
+                        value={hubForm.hubName}
+                        onChange={(e) => setHubForm({ ...hubForm, hubName: e.target.value })}
+                        placeholder="e.g. Atlanta Wealth Builders"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-dl-navy text-sm font-bold mb-1">Interest / Focus</label>
+                      <input
+                        type="text"
+                        value={hubForm.interest}
+                        onChange={(e) => setHubForm({ ...hubForm, interest: e.target.value })}
+                        placeholder="e.g. Homeownership, Land Stewardship, Food Security"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <label className="block text-dl-navy text-sm font-bold mb-1">City</label>
+                      <input
+                        type="text"
+                        value={hubForm.city}
+                        onChange={(e) => setHubForm({ ...hubForm, city: e.target.value })}
+                        placeholder="e.g. Atlanta"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-dl-navy text-sm font-bold mb-1">State / Region</label>
+                      <input
+                        type="text"
+                        value={hubForm.region}
+                        onChange={(e) => setHubForm({ ...hubForm, region: e.target.value })}
+                        placeholder="e.g. Georgia"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-dl-navy text-sm font-bold mb-1">Region Type</label>
+                      <select
+                        value={hubForm.regionType}
+                        onChange={(e) => setHubForm({ ...hubForm, regionType: e.target.value })}
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                      >
+                        <option value="metro">Metro Area</option>
+                        <option value="state">State</option>
+                        <option value="county">County</option>
+                        <option value="rural">Rural</option>
+                        <option value="national">National</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-dl-navy text-sm font-bold mb-1">Description (optional)</label>
+                    <textarea
+                      value={hubForm.description}
+                      onChange={(e) => setHubForm({ ...hubForm, description: e.target.value })}
+                      placeholder="Describe the purpose and community focus of this hub..."
+                      rows={2}
+                      className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  {hubCreateError && <p className="text-sm mb-3" style={{ color: '#991b1b' }}>{hubCreateError}</p>}
+
+                  <button
+                    onClick={handleCreateHub}
+                    disabled={creatingHub}
+                    className="border border-dl-navy bg-dl-navy text-white px-6 py-2 text-sm font-bold hover:bg-dl-bg hover:text-dl-navy transition-none disabled:opacity-50"
+                  >
+                    {creatingHub ? 'Creating...' : 'Create Interest Hub'}
+                  </button>
+                </div>
+              )}
+
+              {hubs.length === 0 && !showHubForm ? (
+                <div className="border border-dl-border bg-dl-bg p-6 mb-8 text-center">
+                  <p className="text-dl-gray text-sm mb-2">No Interest Hubs yet. Be the first to create one for your city or region.</p>
+                  <button
+                    onClick={() => setShowHubForm(true)}
+                    className="border border-dl-navy bg-dl-bg text-dl-navy px-4 py-1.5 text-sm font-bold hover:bg-dl-navy hover:text-white transition-none mt-2"
+                  >
+                    Create the First Hub
+                  </button>
+                </div>
+              ) : hubs.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                   {hubs.map((hub) => (
                     <div key={hub.id} className="border border-dl-border p-4">
-                      <div className="font-dl-serif text-dl-navy font-bold">{hub.region_display}</div>
-                      <div className="font-dl-mono text-sm text-dl-gray mt-1">{hub.member_count} members</div>
+                      <div className="font-dl-serif text-dl-navy font-bold">{hub.hub_name || hub.region_display}</div>
+                      <div className="font-dl-mono text-xs text-dl-gray mt-1">{hub.region_display} &middot; {hub.region_type}</div>
+                      <div className="font-dl-mono text-sm text-dl-forest mt-1">{hub.member_count} members</div>
                       {hub.description && (
                         <p className="text-dl-gray text-xs mt-2">{hub.description}</p>
                       )}
                     </div>
                   ))}
                 </div>
-              )}
+              ) : null}
 
               <h3 className="font-dl-serif text-lg text-dl-navy font-bold mb-4">
                 Wealth Practice Groups
