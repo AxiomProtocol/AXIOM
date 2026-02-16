@@ -376,7 +376,7 @@ export const pagesCopy: Record<string, PageCopy> = {
       secondary: "Real Members. Real Results.",
       subheadline: "Join thousands of members saving together, learning together, and building generational wealth through community coordination.",
       primaryCta: { label: "Join the Community", href: "/register" },
-      secondaryCta: { label: "Learn About The Wealth Practice", href: "/susu" },
+      secondaryCta: { label: "Learn About The Wealth Practice", href: "/wealth-practice" },
       microcopy: "2,500+ active members across 45 cities."
     },
     sections: [
@@ -400,7 +400,7 @@ export const pagesCopy: Record<string, PageCopy> = {
           "Insurance fund for circle protection",
           "Reputation building through participation"
         ],
-        primaryCta: { label: "Start a Circle", href: "/susu" }
+        primaryCta: { label: "Start a Circle", href: "/wealth-practice" }
       },
       {
         id: "impact",

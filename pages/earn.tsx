@@ -64,7 +64,7 @@ const YIELD_OPPORTUNITIES: YieldOpportunity[] = [
     tvl: '$0',
     type: 'savings',
     risk: 'low',
-    link: '/susu',
+    link: '/wealth-practice',
     description: 'Participate in structured group savings with transparent scheduling and audit trails.'
   },
   {

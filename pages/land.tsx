@@ -584,7 +584,7 @@ function ProduceTab({
           </ol>
         </div>
         <div className="border-t border-dl-border pt-4 mt-4">
-          <a href="/susu" className="text-dl-navy text-sm font-bold border-b border-dl-navy hover:text-dl-forest">
+          <a href="/wealth-practice" className="text-dl-navy text-sm font-bold border-b border-dl-navy hover:text-dl-forest">
             Join The Wealth Practice to earn participation credits &rarr;
           </a>
         </div>

@@ -63,7 +63,7 @@ const NAV_ITEMS: NavItem[] = [
   {
     label: 'Community',
     children: [
-      { href: '/susu', label: 'Wealth Practice' },
+      { href: '/wealth-practice', label: 'Wealth Practice' },
       { href: '/land', label: 'Land' },
     ],
   },
