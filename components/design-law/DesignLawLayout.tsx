@@ -8,6 +8,8 @@ const NAV_LINKS = [
   { href: '/founder-ops', label: 'Founder Ops' },
   { href: '/solvency', label: 'Solvency' },
   { href: '/products', label: 'Products' },
+  { href: '/susu', label: 'Wealth Practice' },
+  { href: '/land', label: 'Land' },
   { href: '/pilot', label: 'Capital Program' },
   { href: '/lending-fund', label: 'Lending Fund' },
   { href: '/dex', label: 'Exchange' },
