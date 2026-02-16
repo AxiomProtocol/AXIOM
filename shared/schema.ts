@@ -8959,6 +8959,72 @@ export const ameStressScenarios = pgTable("ame_stress_scenarios", {
 export type AmeStressScenario = typeof ameStressScenarios.$inferSelect;
 export type InsertAmeStressScenario = typeof ameStressScenarios.$inferInsert;
 
+// ==== AME ENFORCEMENT TABLES ====
+
+export const amePolicyState = pgTable("ame_policy_state", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  policyMode: text("policy_mode").notNull(),
+  triggerMetric: text("trigger_metric").notNull(),
+  triggerValue: decimal("trigger_value", { precision: 18, scale: 8 }).notNull(),
+  thresholdsJson: jsonb("thresholds_json").notNull(),
+  notes: text("notes"),
+  evaluationId: varchar("evaluation_id"),
+}, (table) => ({
+  createdIdx: index("ame_policy_state_created_idx").on(table.createdAt),
+  policyModeIdx: index("ame_policy_state_policy_mode_idx").on(table.policyMode),
+}));
+
+export type AmePolicyState = typeof amePolicyState.$inferSelect;
+export type InsertAmePolicyState = typeof amePolicyState.$inferInsert;
+
+export const ameEnforcementEvent = pgTable("ame_enforcement_event", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  eventType: text("event_type").notNull(),
+  severity: text("severity").notNull(),
+  policyMode: text("policy_mode").notNull(),
+  detailsJson: jsonb("details_json").notNull(),
+  metricSnapshotId: varchar("metric_snapshot_id"),
+  evaluationId: varchar("evaluation_id"),
+}, (table) => ({
+  createdIdx: index("ame_enforcement_event_created_idx").on(table.createdAt),
+  eventTypeIdx: index("ame_enforcement_event_event_type_idx").on(table.eventType),
+  severityIdx: index("ame_enforcement_event_severity_idx").on(table.severity),
+}));
+
+export type AmeEnforcementEvent = typeof ameEnforcementEvent.$inferSelect;
+export type InsertAmeEnforcementEvent = typeof ameEnforcementEvent.$inferInsert;
+
+export const ameDataSnapshot = pgTable("ame_data_snapshot", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  provider: text("provider").notNull(),
+  rawRef: text("raw_ref"),
+  checksum: text("checksum").notNull(),
+  payloadJson: jsonb("payload_json").notNull(),
+}, (table) => ({
+  createdIdx: index("ame_data_snapshot_created_idx").on(table.createdAt),
+}));
+
+export type AmeDataSnapshot = typeof ameDataSnapshot.$inferSelect;
+export type InsertAmeDataSnapshot = typeof ameDataSnapshot.$inferInsert;
+
+export const ameTradeoffLog = pgTable("ame_tradeoff_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  decision: text("decision").notNull(),
+  constraintsJson: jsonb("constraints_json").notNull(),
+  rationale: text("rationale").notNull(),
+  policyMode: text("policy_mode"),
+  evaluationId: varchar("evaluation_id"),
+}, (table) => ({
+  createdIdx: index("ame_tradeoff_log_created_idx").on(table.createdAt),
+}));
+
+export type AmeTradeoffLog = typeof ameTradeoffLog.$inferSelect;
+export type InsertAmeTradeoffLog = typeof ameTradeoffLog.$inferInsert;
+
 // ==== MIRDT EXECUTION MODEL ====
 
 export const mirdtExecutionGradeEnum = pgEnum('mirdt_execution_grade', ['A', 'B', 'C', 'REJECT']);

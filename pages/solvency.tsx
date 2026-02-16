@@ -200,6 +200,10 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
   const [liabilityMode, setLiabilityMode] = useState<'GROSS' | 'NET'>('GROSS');
   const [psmOps, setPsmOps] = useState<any[]>([]);
   const [psmOpsLoading, setPsmOpsLoading] = useState(false);
+  const [enforcementState, setEnforcementState] = useState<any>(null);
+  const [oracleResponse, setOracleResponse] = useState<any>(null);
+  const [oracleLoading, setOracleLoading] = useState(false);
+  const [oracleQueryType, setOracleQueryType] = useState('regime_narration');
 
   const m = liveMetrics;
 
@@ -208,6 +212,10 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       .then(res => res.json())
       .then(data => { setAmeData(data); setAmeLoading(false); })
       .catch(() => setAmeLoading(false));
+    fetch('/api/solvency/ame/enforcement')
+      .then(res => res.json())
+      .then(data => setEnforcementState(data))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -311,6 +319,145 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
     } finally {
       setAmeStressLoading(false);
     }
+  };
+
+  const queryOracle = async (queryType: string) => {
+    setOracleLoading(true);
+    setOracleQueryType(queryType);
+    try {
+      const res = await fetch('/api/solvency/ame/oracle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ queryType, includeStress: queryType === 'stress_recommendation' || queryType === 'full_briefing' }),
+      });
+      const data = await res.json();
+      setOracleResponse(data);
+    } catch {
+      setOracleResponse({ interpretation: 'Oracle interpretation temporarily unavailable.', disclaimer: 'AI-generated interpretation. Not financial advice.' });
+    } finally {
+      setOracleLoading(false);
+    }
+  };
+
+  const renderEnforcementPanel = () => {
+    if (!enforcementState) return null;
+    const ps = enforcementState.policyState;
+    const events = enforcementState.recentEvents || [];
+    const brakeArmed = enforcementState.hardBrakeArmed;
+    return (
+      <div className="mb-10">
+        <SectionHeading>Enforcement Status</SectionHeading>
+        <div className="grid grid-cols-1 sm:grid-cols-3 border border-dl-border mb-4">
+          <div className="px-4 py-3 border-r border-b sm:border-b-0 border-dl-border bg-dl-bg-alt">
+            <p className="text-xs text-dl-gray mb-1">Hard Brake</p>
+            <p className={`text-sm font-dl-mono font-semibold ${brakeArmed ? 'text-dl-error' : 'text-dl-forest'}`}>
+              {brakeArmed ? 'ARMED' : 'RELEASED'}
+            </p>
+          </div>
+          <div className="px-4 py-3 border-r border-dl-border bg-dl-bg-alt">
+            <p className="text-xs text-dl-gray mb-1">Policy Mode</p>
+            <p className={`text-sm font-dl-mono font-semibold ${policyColor(ps?.policyMode || 'BOOTSTRAP')}`}>
+              {ps?.policyMode || 'BOOTSTRAP'}
+            </p>
+          </div>
+          <div className="px-4 py-3 bg-dl-bg-alt">
+            <p className="text-xs text-dl-gray mb-1">Last Event</p>
+            <p className="text-sm font-dl-mono text-dl-navy">
+              {events.length > 0 ? events[0].event_type?.replace(/_/g, ' ') || events[0].eventType?.replace(/_/g, ' ') || 'N/A' : 'None'}
+            </p>
+          </div>
+        </div>
+        {events.length > 0 && (
+          <div className="border border-dl-border">
+            <div className="px-4 py-2 bg-dl-bg-alt border-b border-dl-border">
+              <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">Recent Enforcement Events</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-dl-border bg-dl-bg-alt">
+                    <th className="px-4 py-2 text-left text-xs font-dl-mono text-dl-gray">Timestamp</th>
+                    <th className="px-4 py-2 text-left text-xs font-dl-mono text-dl-gray">Event</th>
+                    <th className="px-4 py-2 text-left text-xs font-dl-mono text-dl-gray">Severity</th>
+                    <th className="px-4 py-2 text-left text-xs font-dl-mono text-dl-gray">Mode</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {events.slice(0, 10).map((e: any, i: number) => (
+                    <tr key={i} className="border-b border-dl-border last:border-b-0">
+                      <td className="px-4 py-2 font-dl-mono text-xs text-dl-navy">{e.created_at ? fmtTimestamp(e.created_at) : (e.createdAt ? fmtTimestamp(e.createdAt) : 'N/A')}</td>
+                      <td className="px-4 py-2 font-dl-mono text-xs">{(e.event_type || e.eventType || '').replace(/_/g, ' ')}</td>
+                      <td className={`px-4 py-2 font-dl-mono text-xs ${e.severity === 'CRITICAL' ? 'text-dl-error' : e.severity === 'WARN' ? 'text-dl-gold' : 'text-dl-gray'}`}>{e.severity}</td>
+                      <td className={`px-4 py-2 font-dl-mono text-xs ${policyColor(e.policy_mode || e.policyMode || '')}`}>{e.policy_mode || e.policyMode || 'N/A'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderOraclePanel = () => {
+    const ORACLE_QUERIES = [
+      { key: 'regime_narration', label: 'Regime Analysis' },
+      { key: 'stress_recommendation', label: 'Stress Assessment' },
+      { key: 'tradeoff_analysis', label: 'Tradeoff Analysis' },
+      { key: 'audit_summary', label: 'Audit Summary' },
+      { key: 'full_briefing', label: 'Full Briefing' },
+    ];
+    return (
+      <div className="mb-10">
+        <SectionHeading>Oracle Interpretation</SectionHeading>
+        <div className="border border-dl-border mb-4 px-4 py-3 bg-dl-bg-alt">
+          <p className="text-xs text-dl-gray leading-relaxed">
+            AI-generated interpretation of deterministic AME metrics. The oracle reads system state and provides institutional-grade analysis.
+            Deterministic metrics remain the authoritative source for all capital decisions. Oracle outputs are interpretive, not directive.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {ORACLE_QUERIES.map((q) => (
+            <button
+              key={q.key}
+              onClick={() => queryOracle(q.key)}
+              disabled={oracleLoading}
+              className={`px-3 py-2 text-xs font-dl-mono border border-dl-border ${
+                oracleQueryType === q.key && oracleResponse
+                  ? 'bg-dl-navy text-white'
+                  : 'bg-dl-bg text-dl-navy'
+              } ${oracleLoading ? 'opacity-50' : ''}`}
+            >
+              {q.label}
+            </button>
+          ))}
+        </div>
+        {oracleLoading && (
+          <div className="border border-dl-border p-4 bg-dl-bg-alt">
+            <p className="text-sm text-dl-gray font-dl-mono">Generating oracle interpretation...</p>
+          </div>
+        )}
+        {oracleResponse && !oracleLoading && (
+          <div className="border border-dl-border">
+            <div className="px-4 py-2 bg-dl-bg-alt border-b border-dl-border flex justify-between items-center">
+              <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">
+                {ORACLE_QUERIES.find(q => q.key === oracleResponse.queryType)?.label || 'Interpretation'}
+              </p>
+              <p className="text-xs font-dl-mono text-dl-gray">{oracleResponse.timestamp ? fmtTimestamp(oracleResponse.timestamp) : ''}</p>
+            </div>
+            <div className="px-4 py-4">
+              <div className="text-sm text-dl-navy leading-relaxed whitespace-pre-wrap font-dl-mono">
+                {oracleResponse.interpretation}
+              </div>
+            </div>
+            <div className="px-4 py-2 bg-dl-bg-alt border-t border-dl-border">
+              <p className="text-xs text-dl-gray italic">{oracleResponse.disclaimer}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const renderAmeStatusStrip = () => {
@@ -681,6 +828,8 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
   const renderAllocatorView = () => (
     <>
       {renderMetricsGrid()}
+      {renderEnforcementPanel()}
+      {renderOraclePanel()}
       {renderSupplyClassification()}
       {renderBootstrapCapitalDeployment()}
       {renderAmeAllocatorSection()}
@@ -980,6 +1129,8 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
   const renderClearinghouseView = () => (
     <>
       {renderMetricsGrid()}
+      {renderEnforcementPanel()}
+      {renderOraclePanel()}
 
       <div className="mb-10">
         <SectionHeading>AXUSD Stability Assessment</SectionHeading>
@@ -1219,6 +1370,8 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
   const renderRegulatoryView = () => (
     <>
       {renderMetricsGrid()}
+      {renderEnforcementPanel()}
+      {renderOraclePanel()}
 
       <div className="mb-10">
         <SectionHeading>Disclosure Purpose and Scope</SectionHeading>
