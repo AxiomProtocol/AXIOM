@@ -311,7 +311,7 @@ const LearnHowItWorksPage: React.FC = () => {
   };
 
   const handleCommunityNavigation = () => {
-    console.log('🏘️ Navigating to SouSou Circle');
+    console.log('🏘️ Navigating to Wealth Practice Circle');
     navigate('/sousou-circle');
   };
 
@@ -368,7 +368,7 @@ const LearnHowItWorksPage: React.FC = () => {
                 <div className="text-4xl mb-4">🌐</div>
                 <h3 className="text-xl font-bold text-blue-800 mb-3">Decentralized Finance</h3>
                 <p className="text-gray-700">
-                  Leverage cutting-edge DeFi protocols to maximize returns while maintaining security and transparency.
+                  Leverage cutting-edge DeFi protocols to optimize portfolio performance while maintaining security and transparency.
                 </p>
               </div>
 
@@ -379,7 +379,7 @@ const LearnHowItWorksPage: React.FC = () => {
                 <div className="text-4xl mb-4">🏘️</div>
                 <h3 className="text-xl font-bold text-blue-800 mb-3">Community Circles</h3>
                 <p className="text-gray-700">
-                  Join or create SouSou savings circles to build wealth collectively with trusted community members.
+                  Join or create Wealth Practice circles to build wealth collectively with trusted community members.
                 </p>
               </div>
 
@@ -491,13 +491,13 @@ const LearnHowItWorksPage: React.FC = () => {
                 {
                   step: 3,
                   title: "Community Integration",
-                  description: "Join savings circles and investment groups to leverage collective buying power and shared knowledge.",
-                  features: ["SouSou circles participation", "Group investment opportunities", "Peer learning network", "Shared risk mitigation"]
+                  description: "Join Wealth Practice circles and investment groups to leverage collective buying power and shared knowledge.",
+                  features: ["Wealth Practice circles participation", "Group investment opportunities", "Peer learning network", "Shared risk mitigation"]
                 },
                 {
                   step: 4,
                   title: "Active Growth Strategies",
-                  description: "Implement advanced strategies like staking, yield farming, and liquidity provision to maximize returns.",
+                  description: "Implement advanced strategies like staking, yield farming, and liquidity provision to optimize portfolio performance.",
                   features: ["DeFi yield optimization", "Staking rewards", "Liquidity mining", "Compound interest"]
                 },
                 {
@@ -555,7 +555,7 @@ const LearnHowItWorksPage: React.FC = () => {
             <div className="text-center">
               <h2 className="text-4xl font-bold text-blue-800 mb-4">Advanced DeFi Strategies</h2>
               <p className="text-xl text-gray-700 max-w-4xl mx-auto">
-                Harness the power of decentralized finance with sophisticated strategies designed to maximize returns while managing risk.
+                Harness the power of decentralized finance with sophisticated strategies designed to optimize portfolio performance while managing risk.
               </p>
             </div>
 
@@ -831,7 +831,7 @@ const LearnHowItWorksPage: React.FC = () => {
             <div className="text-center">
               <h2 className="text-4xl font-bold text-blue-800 mb-4">Community-Powered Wealth Building</h2>
               <p className="text-xl text-gray-700 max-w-4xl mx-auto">
-                Join thousands of members building wealth together through collaborative savings circles, 
+                Join thousands of members building wealth together through collaborative Wealth Practice circles, 
                 shared investment opportunities, and collective knowledge sharing.
               </p>
             </div>
@@ -840,10 +840,10 @@ const LearnHowItWorksPage: React.FC = () => {
               <div className="bg-gradient-to-br from-white to-blue-50 border-2 border-blue-300 rounded-xl p-6 shadow-lg">
                 <h3 className="text-xl font-bold text-blue-800 mb-4 flex items-center">
                   <span className="mr-3">🤝</span>
-                  SouSou Savings Circles
+                  Wealth Practice Circles
                 </h3>
                 <p className="text-gray-700 mb-4">
-                  Traditional rotating savings and credit associations enhanced with blockchain transparency and smart contracts.
+                  Traditional community Wealth Practice circles enhanced with blockchain transparency and smart contracts.
                 </p>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
@@ -963,7 +963,7 @@ const LearnHowItWorksPage: React.FC = () => {
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-green-600 mb-2">156</div>
-                  <div className="text-sm text-gray-700">Active Savings Circles</div>
+                  <div className="text-sm text-gray-700">Active Wealth Practice Circles</div>
                 </div>
               </div>
             </div>
@@ -1685,7 +1685,7 @@ const LearnHowItWorksPage: React.FC = () => {
                       { label: "Set up 2FA security", key: "twoFactorEnabled" as keyof typeof completionStatus },
                       { label: "Connect Web3 wallet", key: "walletConnected" as keyof typeof completionStatus },
                       { label: "Make your first deposit", key: "accountFunded" as keyof typeof completionStatus },
-                      { label: "Join a SouSou circle", key: "circleJoined" as keyof typeof completionStatus },
+                      { label: "Join a Wealth Practice circle", key: "circleJoined" as keyof typeof completionStatus },
                       { label: "Start your first stake", key: "firstStake" as keyof typeof completionStatus },
                       { label: "Vote on a proposal", key: "votedOnProposal" as keyof typeof completionStatus }
                     ].map((item, idx) => (
@@ -1752,7 +1752,7 @@ const LearnHowItWorksPage: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-purple-700 mb-1">Join a Circle</h4>
-                      <p className="text-sm text-gray-700">Participate in a SouSou savings circle to build community connections</p>
+                      <p className="text-sm text-gray-700">Participate in a Wealth Practice circle to build community connections</p>
                     </div>
                     <div>
                       <h4 className="font-semibold text-purple-700 mb-1">Learn & Earn</h4>

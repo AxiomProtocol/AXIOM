@@ -172,7 +172,7 @@ export default function ProtocolHealthScore({ metrics }: Props) {
           <span className="text-yellow-400">💡</span>
           <div className="text-sm text-gray-300">
             <strong className="text-yellow-400">How to improve:</strong> Lock AXM as veAXM for governance, 
-            join SUSU circles, or run DePIN nodes to boost protocol health and earn rewards.
+            join Wealth Practice circles, or run DePIN nodes to boost protocol health and earn rewards.
           </div>
         </div>
       </div>

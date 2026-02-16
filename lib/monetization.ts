@@ -80,7 +80,7 @@ const membershipPlans: MembershipPlan[] = [
     monthlyPrice: 0,
     yearlyPrice: 0,
     features: [
-      'Join 1 SUSU circle',
+      'Join 1 Wealth Practice circle',
       'View land campaigns',
       'Basic governance participation',
       'Community forum access',
@@ -96,7 +96,7 @@ const membershipPlans: MembershipPlan[] = [
     monthlyPrice: 19,
     yearlyPrice: 190,
     features: [
-      'Join up to 3 SUSU circles',
+      'Join up to 3 Wealth Practice circles',
       'Contribute to land campaigns',
       'Create governance proposals',
       'Access to basic courses',
@@ -113,7 +113,7 @@ const membershipPlans: MembershipPlan[] = [
     monthlyPrice: 49,
     yearlyPrice: 490,
     features: [
-      'Unlimited SUSU circles',
+      'Unlimited Wealth Practice circles',
       'Unlimited land campaign access',
       'Unlimited governance proposals',
       'All premium courses & workbooks',
@@ -135,7 +135,7 @@ const membershipPlans: MembershipPlan[] = [
     yearlyPrice: 1990,
     features: [
       'Everything in Steward tier',
-      'Custom SUSU circles',
+      'Custom Wealth Practice circles',
       'Dedicated land acquisition support',
       'White-label options',
       'Custom integrations',
@@ -149,7 +149,7 @@ const membershipPlans: MembershipPlan[] = [
 
 const paywallContent: PaywallContent[] = [
   { id: 'c1', title: 'Land Acquisition Masterclass', description: 'Complete guide to community land acquisition', type: 'course', requiredTier: 'premium' },
-  { id: 'c2', title: 'SUSU Circle Management', description: 'Best practices for running successful savings circles', type: 'course', requiredTier: 'basic' },
+  { id: 'c2', title: 'Wealth Practice Circle Management', description: 'Best practices for running successful Wealth Practice circles', type: 'course', requiredTier: 'basic' },
   { id: 'c3', title: 'Land Reclamation Workbook', description: 'Genealogical research tools for land claims', type: 'workbook', requiredTier: 'premium' },
   { id: 'c4', title: 'Treasury Analysis Report', description: 'Monthly treasury performance report', type: 'report', requiredTier: 'premium' },
   { id: 'c5', title: 'Smart Contract Audit Checklist', description: 'Security checklist for contract reviews', type: 'tool', requiredTier: 'basic' },

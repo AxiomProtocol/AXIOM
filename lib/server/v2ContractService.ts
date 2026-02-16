@@ -4,7 +4,7 @@
  * 
  * Contracts:
  * - AxiomScoreSBT: Credit scoring with Soulbound Tokens
- * - SusuInsuranceFund: Default insurance fund
+ * - SusuInsuranceFund: Default insurance fund for Wealth Practice circles
  * - SEED (veAXM contract): Vote-escrowed AXM for governance
  * - AxiomFeeBurner: Fee collection and buyback/burn
  */

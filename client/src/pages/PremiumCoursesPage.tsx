@@ -72,8 +72,8 @@ const PremiumCoursesPage: React.FC = () => {
       },
       {
         id: 4,
-        title: 'Community Savings Circle Leadership',
-        description: 'Learn to create and manage successful SouSou circles for community wealth building.',
+        title: 'Community Wealth Practice Leadership',
+        description: 'Learn to create and manage successful Wealth Practice circles for community wealth building.',
         instructor: 'David Thompson',
         duration: '6 hours',
         level: 'Intermediate',

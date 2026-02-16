@@ -29,7 +29,7 @@ export default function AIMemberSupport({ isOpen, onClose }) {
     }
     return [{
       role: 'assistant',
-      content: "Hello! I'm your Axiom AI Assistant. I can help you understand The Wealth Practice, savings circles, staking, and more. How can I help you today?"
+      content: "Hello! I'm your Axiom AI Assistant. I can help you understand The Wealth Practice, Wealth Practice circles, staking, and more. How can I help you today?"
     }];
   });
   const [input, setInput] = useState('');
@@ -82,7 +82,7 @@ export default function AIMemberSupport({ isOpen, onClose }) {
   }, [messages]);
 
   const suggestedQuestions = [
-    "What is a SUSU circle?",
+    "What is a Wealth Practice circle?",
     "How does Personal Vault work?",
     "What is The Wealth Practice?",
     "How do I graduate to Capital Mode?"

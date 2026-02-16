@@ -15,7 +15,7 @@ export default function TrustGraduationModal({ isOpen, onClose }) {
               Trust and Graduation Overview
             </h2>
             <p className="text-gray-400 text-sm mt-1">
-              How Axiom SUSU builds credibility before commitment
+              How Axiom builds credibility before commitment
             </p>
           </div>
           <button
@@ -33,10 +33,10 @@ export default function TrustGraduationModal({ isOpen, onClose }) {
           <section>
             <h3 className="text-lg font-semibold text-yellow-400 mb-2 flex items-center gap-2">
               <span className="w-6 h-6 bg-yellow-500/20 rounded-full flex items-center justify-center text-sm">1</span>
-              Why Axiom SUSU Starts with Trust
+              Why The Wealth Practice Starts with Trust
             </h3>
             <p className="text-gray-300 leading-relaxed">
-              Axiom SUSU is designed so that financial commitment follows human connection. 
+              The Wealth Practice is designed so that financial commitment follows human connection. 
               Members build credibility before joining an on-chain circle.
             </p>
           </section>
@@ -64,7 +64,7 @@ export default function TrustGraduationModal({ isOpen, onClose }) {
               <div className="bg-gray-800/50 border border-amber-500/30 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="text-2xl">🔗</div>
-                  <h4 className="font-semibold text-white">SUSU Circles</h4>
+                  <h4 className="font-semibold text-white">Wealth Practice Circles</h4>
                   <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded-full">Step 2</span>
                 </div>
                 <p className="text-gray-400 text-sm">
@@ -83,7 +83,7 @@ export default function TrustGraduationModal({ isOpen, onClose }) {
                   <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">Step 3</span>
                 </div>
                 <p className="text-gray-400 text-sm">
-                  After completing successful SUSU rounds, graduate into The Wealth Practice for 
+                  After completing successful Wealth Practice rounds, graduate into The Wealth Practice for 
                   access to larger investment opportunities, real estate pools, DePIN infrastructure, 
                   and enhanced governance power.
                 </p>
@@ -97,8 +97,8 @@ export default function TrustGraduationModal({ isOpen, onClose }) {
               What "Graduation" Means
             </h3>
             <p className="text-gray-300 leading-relaxed">
-              Each stage has graduation requirements. Purpose Groups graduate to SUSU Circles when 
-              members meet trust thresholds. SUSU Circles graduate to The Wealth Practice after 
+              Each stage has graduation requirements. Purpose Groups graduate to Wealth Practice Circles when 
+              members meet trust thresholds. Wealth Practice Circles graduate to The Wealth Practice after 
               completing 3+ successful rounds or 6+ months with all members in good standing.
             </p>
           </section>
@@ -109,7 +109,7 @@ export default function TrustGraduationModal({ isOpen, onClose }) {
               Read the Full Protocol Design
             </h3>
             <p className="text-gray-300 text-sm mb-4">
-              Learn more about trust mechanics, reputation scoring, and the complete Axiom SUSU framework.
+              Learn more about trust mechanics, reputation scoring, and the complete Wealth Practice framework.
             </p>
             <Link
               href="/whitepaper"
@@ -117,7 +117,7 @@ export default function TrustGraduationModal({ isOpen, onClose }) {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 text-black font-semibold rounded-lg hover:bg-yellow-400 transition-colors"
             >
-              Read the AXIOM SUSU Whitepaper
+              Read the AXIOM Whitepaper
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>

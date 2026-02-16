@@ -210,7 +210,7 @@ export default function BorrowPage() {
           <div className="p-4 bg-dl-bg-alt border border-dl-border">
             <span className="text-2xl mb-2 block">🏠</span>
             <h4 className="text-dl-navy font-medium mb-1">Real Estate</h4>
-            <p className="text-dl-gray text-sm">Use AXUSD for KeyGrow property payments or SUSU contributions</p>
+            <p className="text-dl-gray text-sm">Use AXUSD for KeyGrow property payments or Wealth Practice contributions</p>
           </div>
           <div className="p-4 bg-dl-bg-alt border border-dl-border">
             <span className="text-2xl mb-2 block">💱</span>

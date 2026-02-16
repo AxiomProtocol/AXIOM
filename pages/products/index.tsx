@@ -117,7 +117,7 @@ export default function ProductsPage() {
       dark: true,
       stats: [
         { label: 'Parcels', value: '4' },
-        { label: 'Total Acreage', value: '480 acres' },
+        { label: 'Pipeline Acreage', value: 'In Framework' },
         { label: 'Status', value: 'Active', highlight: true }
       ]
     },

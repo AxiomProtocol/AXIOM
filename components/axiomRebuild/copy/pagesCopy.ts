@@ -369,14 +369,14 @@ export const pagesCopy: Record<string, PageCopy> = {
   community: {
     title: "Community",
     intro:
-      "Real stories from Axiom members building wealth together through community savings circles and shared ownership.",
+      "Real stories from Axiom members building wealth together through community Wealth Practice circles and shared ownership.",
     hero: {
       kicker: "Success Stories",
       headline: "Wealth Built Together",
       secondary: "Real Members. Real Results.",
       subheadline: "Join thousands of members saving together, learning together, and building generational wealth through community coordination.",
       primaryCta: { label: "Join the Community", href: "/register" },
-      secondaryCta: { label: "Learn About SUSU", href: "/susu" },
+      secondaryCta: { label: "Learn About The Wealth Practice", href: "/susu" },
       microcopy: "2,500+ active members across 45 cities."
     },
     sections: [
@@ -390,9 +390,9 @@ export const pagesCopy: Record<string, PageCopy> = {
       },
       {
         id: "circles",
-        title: "Savings Circles",
+        title: "Wealth Practice Circles",
         body:
-          "SUSU circles modernize the traditional rotating savings model with on-chain transparency and community insurance. Join or start a circle with people who share your goals.",
+          "Wealth Practice circles modernize the traditional rotating savings model with on-chain transparency and community insurance. Join or start a circle with people who share your goals.",
         image: "/generated/hands_planting_together_unity.png",
         imageAlt: "Hands coming together representing unity and collaboration",
         bullets: [
@@ -406,7 +406,7 @@ export const pagesCopy: Record<string, PageCopy> = {
         id: "impact",
         title: "Community Impact",
         body:
-          "Together, our community has saved over $1.2M, formed 150+ savings groups, and reached 45 cities across 8 countries. The movement is growing.",
+          "Together, our community has saved over $1.2M, formed 150+ Wealth Practice groups, and reached 45 cities across 8 countries. The movement is growing.",
         image: "/generated/sustainable_impact_farmland_aerial.png",
         imageAlt: "Aerial view of sustainable farmland representing impact",
         primaryCta: { label: "See Full Impact", href: "/impact" }

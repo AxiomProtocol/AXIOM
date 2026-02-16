@@ -84,10 +84,10 @@ const WEALTH_PATHS: WealthPath[] = [
     id: 'community',
     icon: '🤝',
     title: "I Want to Save with Others",
-    description: "Join community savings circles. Achieve goals together, faster.",
+    description: "Join community Wealth Practice circles. Achieve goals together, faster.",
     detailedDescription: "Connect with others who share your goals. Pool resources, share knowledge, and achieve milestones together in our community circles.",
     goals: [
-      { id: 'community1', title: 'Savings Circle ($5,000)', amount: 5000, timeframe: '12-18 months', description: 'Join local savings group' },
+      { id: 'community1', title: 'Wealth Practice Circle ($5,000)', amount: 5000, timeframe: '12-18 months', description: 'Join local Wealth Practice group' },
       { id: 'community2', title: 'Group Investment ($25,000)', amount: 25000, timeframe: '3-4 years', description: 'Invest with community support' },
       { id: 'community3', title: 'Collective Goal ($100,000)', amount: 100000, timeframe: '5-8 years', description: 'Major community milestone' },
     ]

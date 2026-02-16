@@ -69,41 +69,41 @@ export const CERTIFICATION_LEVELS: CertificationLevel[] = [
 export const TRAINING_MODULES: TrainingModule[] = [
   {
     id: 'susu-basics',
-    title: 'SUSU Fundamentals',
-    description: 'Learn the history, principles, and mechanics of rotating savings groups.',
+    title: 'Wealth Practice Fundamentals',
+    description: 'Learn the history, principles, and mechanics of community Wealth Practice groups.',
     duration: 20,
-    content: `# SUSU Fundamentals
+    content: `# Wealth Practice Fundamentals
 
-## What is SUSU?
+## What is The Wealth Practice?
 
-SUSU (also known as ROSCA - Rotating Savings and Credit Association) is a centuries-old practice where a group of trusted individuals pool money together and take turns receiving the full pot.
+The Wealth Practice is a modern take on a centuries-old community savings model where a group of trusted individuals pool money together and take turns receiving the full pot.
 
 ### Historical Origins
 
-SUSU practices originated in West Africa and the Caribbean, where communities developed ingenious ways to save and access capital without formal banking. The practice has spread globally, with variations found in:
+Community savings practices originated in West Africa and the Caribbean, where communities developed ingenious ways to save and access capital without formal banking. The practice has spread globally, with variations found in:
 
-- **Caribbean**: SUSU, Partner, Box Hand
+- **Caribbean**: Partner, Box Hand
 - **Africa**: Tontines, Chit Funds
 - **Asia**: Hui, Chit Funds, Arisan
 - **Latin America**: Tandas, Cundinas
 
-### How Traditional SUSU Works
+### How Traditional Community Savings Works
 
 1. A group of people agree to contribute a fixed amount regularly (weekly, monthly)
 2. Each contribution period, one member receives the entire pot
 3. The cycle continues until everyone has received the pot once
 4. Trust and social bonds ensure participation
 
-### Example: 10-Member Monthly SUSU
+### Example: 10-Member Monthly Wealth Practice
 
 - 10 members, $100 each per month
 - Monthly pot: $1,000
 - Each member contributes $1,000 total over 10 months
 - Each member receives $1,000 once
 
-## Axiom's On-Chain SUSU
+## Axiom's On-Chain Wealth Practice
 
-Axiom brings SUSU into the digital age with blockchain technology:
+Axiom brings The Wealth Practice into the digital age with blockchain technology:
 
 ### Key Advantages
 
@@ -115,7 +115,7 @@ Axiom brings SUSU into the digital age with blockchain technology:
 
 ### The Organizer's Role
 
-As an organizer, you are the heart of your SUSU group. Your responsibilities include:
+As an organizer, you are the heart of your Wealth Practice group. Your responsibilities include:
 
 - Setting group parameters (contribution amount, frequency, size)
 - Recruiting and vetting members
@@ -126,7 +126,7 @@ As an organizer, you are the heart of your SUSU group. Your responsibilities inc
 
 ## Trust Building
 
-Trust is the foundation of every successful SUSU. As an organizer, you build trust by:
+Trust is the foundation of every successful Wealth Practice. As an organizer, you build trust by:
 
 - Being transparent about all processes
 - Communicating regularly and clearly
@@ -136,7 +136,7 @@ Trust is the foundation of every successful SUSU. As an organizer, you build tru
 
 ## The Axiom Difference
 
-Unlike traditional SUSU, Axiom provides:
+Unlike traditional Wealth Practice circles, Axiom provides:
 
 - **Policy Guard**: Soft enforcement through deposits and reputation
 - **Mode Progression**: Grow from Community to Capital Mode
@@ -145,18 +145,18 @@ Unlike traditional SUSU, Axiom provides:
     quiz: [
       {
         id: 1,
-        question: 'What does SUSU/ROSCA stand for?',
+        question: 'What is The Wealth Practice based on?',
         options: [
-          'Rotating Savings and Credit Association',
+          'A community savings model where members pool and rotate funds',
           'Regular Savings Under Supervision',
-          'Rotating Shares and Unified Accounts',
-          'Registered Savings Union Cooperative'
+          'A stock market investment club',
+          'A registered banking cooperative'
         ],
         correctAnswer: 0
       },
       {
         id: 2,
-        question: 'In a 10-member SUSU with $100 monthly contributions, what is the pot size?',
+        question: 'In a 10-member Wealth Practice circle with $100 monthly contributions, what is the pot size?',
         options: ['$100', '$500', '$1,000', '$10,000'],
         correctAnswer: 2
       },
@@ -173,7 +173,7 @@ Unlike traditional SUSU, Axiom provides:
       },
       {
         id: 4,
-        question: 'What advantage does blockchain bring to SUSU?',
+        question: 'What advantage does blockchain bring to The Wealth Practice?',
         options: [
           'Higher interest rates',
           'Transparency and automatic enforcement',
@@ -184,7 +184,7 @@ Unlike traditional SUSU, Axiom provides:
       },
       {
         id: 5,
-        question: 'What is the foundation of every successful SUSU?',
+        question: 'What is the foundation of every successful Wealth Practice?',
         options: ['Large contributions', 'Trust', 'Speed', 'Profit'],
         correctAnswer: 1
       }
@@ -200,7 +200,7 @@ Unlike traditional SUSU, Axiom provides:
 
 ## Recruiting the Right Members
 
-The success of your SUSU depends on having reliable members. Quality over quantity.
+The success of your Wealth Practice depends on having reliable members. Quality over quantity.
 
 ### Where to Find Members
 
@@ -286,7 +286,7 @@ Have a clear process:
 
 ### Building Community
 
-SUSU is more than money:
+The Wealth Practice is more than money:
 
 - Celebrate member achievements
 - Create bonding opportunities
@@ -356,7 +356,7 @@ As you gain experience:
 
 Conflicts are natural in any group setting. As an organizer, your ability to resolve conflicts fairly determines your group's success.
 
-### Common SUSU Conflicts
+### Common Wealth Practice Conflicts
 
 1. **Payment Disputes**: Late payments, partial payments, or non-payment
 2. **Payout Order**: Disagreements about who receives when
@@ -533,15 +533,15 @@ When you can't resolve it alone:
   {
     id: 'financial-literacy',
     title: 'Financial Literacy for Organizers',
-    description: 'Understand the financial aspects of running successful savings groups.',
+    description: 'Understand the financial aspects of running successful Wealth Practice groups.',
     duration: 25,
     content: `# Financial Literacy for Organizers
 
 ## Group Economics
 
-Understanding the economics of your SUSU makes you a better organizer.
+Understanding the economics of your Wealth Practice makes you a better organizer.
 
-### The SUSU Math
+### The Wealth Practice Math
 
 For a group with N members and contribution amount C:
 - Monthly pot = N × C
@@ -632,7 +632,7 @@ Share with your group:
 
 Encourage members to set goals:
 - What do they want to achieve?
-- How does SUSU help them?
+- How does The Wealth Practice help them?
 - What's their next step after?
 - How can the group support them?
 
@@ -658,7 +658,7 @@ Each step brings:
     quiz: [
       {
         id: 1,
-        question: 'In a 10-member SUSU, if each member contributes $200/month, what is the total pot?',
+        question: 'In a 10-member Wealth Practice circle, if each member contributes $200/month, what is the total pot?',
         options: ['$200', '$2,000', '$20,000', '$2'],
         correctAnswer: 1
       },
@@ -712,7 +712,7 @@ Graduation is the pathway from community savings to larger investment opportunit
 
 ### The Graduation Pathway
 
-1. **Community Mode**: Build trust, learn SUSU mechanics
+1. **Community Mode**: Build trust, learn Wealth Practice mechanics
 2. **Capital Mode**: Larger contributions, bigger goals
 3. **Investment Pools**: Access real estate, DePIN, and other opportunities
 

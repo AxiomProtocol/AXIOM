@@ -119,7 +119,7 @@ function getWelcomeEmailHtml(): string {
             <span style="background: #f59e0b; color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-block; text-align: center; line-height: 24px; font-weight: bold; font-size: 12px; margin-right: 12px; flex-shrink: 0;">3</span>
             <div>
               <strong style="color: #1f2937;">Save Together</strong>
-              <p style="color: #6b7280; margin: 4px 0 0; font-size: 14px;">Join SUSU savings circles with clear rules and shared accountability.</p>
+              <p style="color: #6b7280; margin: 4px 0 0; font-size: 14px;">Join Wealth Practice circles with clear rules and shared accountability.</p>
             </div>
           </div>
         </div>
@@ -136,7 +136,7 @@ function getWelcomeEmailHtml(): string {
         <ul style="color: #4b5563; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 0;">
           <li>Financial Foundations 101 - Build your wealth mindset</li>
           <li>Budgeting & Saving Strategies - Control your money flow</li>
-          <li>The Wealth Practice (SUSU) - Community savings that work</li>
+          <li>The Wealth Practice - Community savings that work</li>
           <li>Path to Homeownership - KeyGrow rent-to-own explained</li>
         </ul>
       </div>

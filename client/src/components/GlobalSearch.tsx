@@ -94,7 +94,7 @@ export function GlobalSearch({ isOpen, onClose, className }: GlobalSearchProps) 
     {
       id: 'sousou-circle',
       title: 'SouSou Circle',
-      description: 'Join rotating savings groups with friends and family',
+      description: 'Join Wealth Practice groups with friends and family',
       url: '/sousou-circle',
       type: 'feature',
       keywords: ['sousou', 'savings', 'group', 'circle', 'rotating'],

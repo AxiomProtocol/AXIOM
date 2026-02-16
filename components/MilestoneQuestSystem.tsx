@@ -17,14 +17,14 @@ interface Quest {
 
 const MILESTONE_QUESTS: Quest[] = [
   { id: 'welcome', title: 'Welcome to Axiom', description: 'Complete your profile and join a group', category: 'onboarding', xpReward: 100, axmReward: 25, creditBoost: 15, progress: 0, maxProgress: 1, status: 'active', icon: '👋', tier: 'starter' },
-  { id: 'first_contribution', title: 'First Contribution', description: 'Make your first SUSU contribution', category: 'susu', xpReward: 200, axmReward: 50, creditBoost: 25, progress: 0, maxProgress: 1, status: 'locked', icon: '💰', tier: 'starter' },
+  { id: 'first_contribution', title: 'First Contribution', description: 'Make your first Wealth Practice contribution', category: 'susu', xpReward: 200, axmReward: 50, creditBoost: 25, progress: 0, maxProgress: 1, status: 'locked', icon: '💰', tier: 'starter' },
   { id: 'week_streak', title: 'Weekly Warrior', description: 'Login for 7 consecutive days', category: 'community', xpReward: 150, axmReward: 30, creditBoost: 10, progress: 0, maxProgress: 7, status: 'active', icon: '🔥', tier: 'starter' },
   { id: 'invite_friend', title: 'Community Builder', description: 'Invite 3 friends who join', category: 'community', xpReward: 300, axmReward: 100, creditBoost: 20, progress: 0, maxProgress: 3, status: 'active', icon: '👥', tier: 'builder' },
-  { id: 'complete_cycle', title: 'Full Circle', description: 'Complete an entire SUSU rotation', category: 'susu', xpReward: 500, axmReward: 150, creditBoost: 50, progress: 0, maxProgress: 1, status: 'locked', icon: '🎯', tier: 'builder' },
+  { id: 'complete_cycle', title: 'Full Circle', description: 'Complete an entire Wealth Practice rotation', category: 'susu', xpReward: 500, axmReward: 150, creditBoost: 50, progress: 0, maxProgress: 1, status: 'locked', icon: '🎯', tier: 'builder' },
   { id: 'lock_veaxm', title: 'Diamond Hands', description: 'Lock 1000 AXM in Wealth Engine', category: 'staking', xpReward: 400, axmReward: 75, creditBoost: 35, progress: 0, maxProgress: 1000, status: 'locked', icon: '💎', tier: 'builder' },
   { id: 'vote_3', title: 'Active Citizen', description: 'Vote on 3 governance proposals', category: 'governance', xpReward: 250, axmReward: 60, creditBoost: 20, progress: 0, maxProgress: 3, status: 'locked', icon: '🗳️', tier: 'builder' },
   { id: 'month_streak', title: 'Consistency Champion', description: 'Make on-time payments for 3 months', category: 'susu', xpReward: 750, axmReward: 200, creditBoost: 75, progress: 0, maxProgress: 3, status: 'locked', icon: '🏆', tier: 'champion' },
-  { id: 'lead_group', title: 'Circle Leader', description: 'Become an organizer of a SUSU circle', category: 'community', xpReward: 600, axmReward: 250, creditBoost: 40, progress: 0, maxProgress: 1, status: 'locked', icon: '👑', tier: 'champion' },
+  { id: 'lead_group', title: 'Circle Leader', description: 'Become an organizer of a Wealth Practice circle', category: 'community', xpReward: 600, axmReward: 250, creditBoost: 40, progress: 0, maxProgress: 1, status: 'locked', icon: '👑', tier: 'champion' },
   { id: 'create_proposal', title: 'Governance Pioneer', description: 'Create an approved governance proposal', category: 'governance', xpReward: 1000, axmReward: 500, creditBoost: 100, progress: 0, maxProgress: 1, status: 'locked', icon: '⚡', tier: 'legend' },
 ];
 

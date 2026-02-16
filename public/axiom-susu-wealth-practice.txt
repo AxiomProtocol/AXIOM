@@ -16,18 +16,18 @@ PART 1 — TRADITIONAL SUSU CIRCLES
   3. The Cultural Legacy
   4. Risks of Traditional SUSU
 
-PART 2 — AXIOM SUSU: THE MODERN EVOLUTION
-  5. What is Axiom SUSU?
+PART 2 — THE WEALTH PRACTICE: THE MODERN EVOLUTION
+  5. What is The Wealth Practice?
   6. Deployed Infrastructure
-  7. How Axiom SUSU Manages Traditional Risks
+  7. How The Wealth Practice Manages Traditional Risks
   8. AxiomScore: On-Chain Reputation
-  9. The SUSU Insurance Fund
+  9. The Wealth Practice Insurance Fund
   10. AXUSD-Denominated Circles
 
 PART 3 — GRADUATION TO THE WEALTH PRACTICE
   11. The Three-Stage Trust Pipeline
   12. Stage 1: Purpose Groups
-  13. Stage 2: SUSU Circles (On-Chain)
+  13. Stage 2: Wealth Practice Circles (On-Chain)
   14. Stage 3: The Wealth Practice
   15. What Graduation Means
   16. Capital Mode: From Saver to Investor
@@ -130,7 +130,7 @@ The SUSU is the original community bank.
 ========================================================================
 
 Traditional SUSU circles carry significant risks. Understanding
-these risks is essential to appreciating what Axiom SUSU solves.
+these risks is essential to appreciating what The Wealth Practice solves.
 
 RISK 1 — DEFAULT RISK (Member Stops Paying)
   The single greatest risk. After a member receives their payout,
@@ -219,23 +219,29 @@ RISK 10 — NO RECORD-KEEPING
   Frequency: Universal — the financial system does not
   recognize SUSU participation.
 
+NOTE: Axiom Protocol has rebranded its implementation of the
+SUSU model as "The Wealth Practice." The traditional term
+"SUSU" is preserved throughout Part 1 for historical and
+cultural accuracy. In Parts 2 and 3, "The Wealth Practice"
+refers to Axiom's on-chain implementation of these principles.
+
 ========================================================================
 
-PART 2 — AXIOM SUSU: THE MODERN EVOLUTION
+PART 2 — THE WEALTH PRACTICE: THE MODERN EVOLUTION
 
 ========================================================================
-5. WHAT IS AXIOM SUSU?
+5. WHAT IS THE WEALTH PRACTICE?
 ========================================================================
 
-Axiom SUSU takes the ancient wisdom of rotating savings circles
-and rebuilds it on blockchain infrastructure. The core principle
-remains: community members save together and take turns receiving
-a lump sum. But every traditional weakness is addressed through
-automated control layers, on-chain transparency, and built-in
-financial protections.
+The Wealth Practice takes the ancient wisdom of rotating savings
+circles (traditionally known as SUSU) and rebuilds it on blockchain
+infrastructure. The core principle remains: community members save
+together and take turns receiving a lump sum. But every traditional
+weakness is addressed through automated control layers, on-chain
+transparency, and built-in financial protections.
 
-Axiom SUSU is not a bank. It does not lend money. It does not
-charge interest on savings. It is a structured savings tool
+The Wealth Practice is not a bank. It does not lend money. It does
+not charge interest on savings. It is a structured savings framework
 governed by automated control layers that enforce the rules no
 human organizer can be trusted to enforce perfectly.
 
@@ -246,17 +252,17 @@ accountability. No trust required — only verification.
 6. DEPLOYED INFRASTRUCTURE
 ========================================================================
 
-Axiom SUSU operates through verified automated control layers
-on Arbitrum One:
+The Wealth Practice operates through verified automated control
+layers on Arbitrum One:
 
-AxiomSusuHub (Pooled Custody):
+WealthPracticeHub (Pooled Custody):
   Contract: 0x6C69D730327930B49A7997B7b5fb0865F30c95A5
   Model: Community pool — contributions are collected into a
   shared contract and distributed automatically.
   Features: Configurable cycles, automated payout rotation,
   protocol fee routing, grace periods, late fee enforcement.
 
-SusuPersonalVault (Self-Custody):
+PersonalVault (Self-Custody):
   Contract: 0x7F474D9D5aF702D587A126c49aDa43318c1420E5
   Model: Self-custody — each member's contributions are held
   in their own vault. Payouts are assembled from individual
@@ -264,13 +270,13 @@ SusuPersonalVault (Self-Custody):
   Benefit: Members never lose custody of their funds until
   the moment of payout distribution.
 
-SusuInsuranceFund (Default Protection):
+InsuranceFund (Default Protection):
   Contract: 0x7B69ce0d83f45C2dBa3e5B73076beA8b1Be1271F
   Funding: 5% of DePIN node rewards are diverted to this fund.
   Purpose: Covers losses from member defaults so remaining
   members are made whole.
 
-SusuAXUSDAdapter (Stablecoin Integration):
+AXUSDAdapter (Stablecoin Integration):
   Contract: 0x4c17360651c2c46F1739E92f512D8ce6318106b4
   Purpose: AXUSD-denominated circles with automatic PSM
   conversion, ensuring contributions and payouts maintain
@@ -279,38 +285,38 @@ SusuAXUSDAdapter (Stablecoin Integration):
 All contracts are source-verified on Arbiscan.
 
 ========================================================================
-7. HOW AXIOM SUSU MANAGES TRADITIONAL RISKS
+7. HOW THE WEALTH PRACTICE MANAGES TRADITIONAL RISKS
 ========================================================================
 
-Each of the 10 traditional SUSU risks has a specific Axiom
-solution:
+Each of the 10 traditional SUSU risks has a specific Wealth
+Practice solution:
 
 RISK 1 — DEFAULT RISK
   Traditional: Member stops paying after receiving payout.
-  Axiom Solution: Automated control layers enforce contribution
-  schedules. Members cannot withdraw or skip without the contract
-  registering a default. Defaulting members are flagged on-chain,
-  their AxiomScore is reduced, and the Insurance Fund covers the
-  shortfall for remaining members.
+  Wealth Practice Solution: Automated control layers enforce
+  contribution schedules. Members cannot withdraw or skip without
+  the contract registering a default. Defaulting members are
+  flagged on-chain, their AxiomScore is reduced, and the Insurance
+  Fund covers the shortfall for remaining members.
 
 RISK 2 — ORGANIZER FRAUD
   Traditional: Organizer disappears with collected funds.
-  Axiom Solution: There is no human organizer holding funds.
-  The automated control layer is the organizer. Funds are held
-  in either the pooled contract (SusuHub) or individual vaults
-  (SusuPersonalVault). No single person has withdrawal access.
-  The code is the custodian.
+  Wealth Practice Solution: There is no human organizer holding
+  funds. The automated control layer is the organizer. Funds are
+  held in either the pooled contract (WealthPracticeHub) or
+  individual vaults (PersonalVault). No single person has
+  withdrawal access. The code is the custodian.
 
 RISK 3 — NO TRANSPARENCY
   Traditional: No visibility into who paid or current balance.
-  Axiom Solution: Every contribution, every payout, every default
+  Wealth Practice Solution: Every contribution, every payout, every default
   is recorded on Arbitrum One. Any member can verify the state of
   their circle at any time by reading the contract. Transaction
   history is permanent and public.
 
 RISK 4 — NO LEGAL RECOURSE
   Traditional: No enforceable contract, no recovery mechanism.
-  Axiom Solution: The automated control layer IS the contract.
+  Wealth Practice Solution: The automated control layer IS the contract.
   It is self-enforcing. Contributions are programmatic — the
   code does not forgive, forget, or play favorites. Rules are
   executed exactly as written, with no human interpretation
@@ -318,14 +324,14 @@ RISK 4 — NO LEGAL RECOURSE
 
 RISK 5 — TRUST FRAGILITY
   Traditional: One bad experience destroys trust in the system.
-  Axiom Solution: Trust is replaced by verification. Members
+  Wealth Practice Solution: Trust is replaced by verification. Members
   do not need to trust each other or an organizer — they verify
   the contract code, the on-chain state, and the insurance fund
   balance. Trust is earned through AxiomScore, not assumed.
 
 RISK 6 — LATE PAYMENT DISRUPTION
   Traditional: Late payments delay the entire cycle.
-  Axiom Solution: The contract enforces grace periods
+  Wealth Practice Solution: The contract enforces grace periods
   (configurable per circle). After the grace period expires,
   automatic late fees are assessed. Chronic lateness reduces
   AxiomScore. The system creates strong economic incentives
@@ -333,7 +339,7 @@ RISK 6 — LATE PAYMENT DISRUPTION
 
 RISK 7 — POSITION INEQUALITY
   Traditional: Early recipients get more time-value benefit.
-  Axiom Solution: Because contributions are in AXUSD (a
+  Wealth Practice Solution: Because contributions are in AXUSD (a
   stablecoin pegged 1:1 to USD), there is no inflation
   erosion. Additionally, the protocol can implement
   interest-offset mechanisms where later-position members
@@ -342,7 +348,7 @@ RISK 7 — POSITION INEQUALITY
 
 RISK 8 — NO INSURANCE
   Traditional: Defaults absorbed entirely by members.
-  Axiom Solution: The SusuInsuranceFund (funded by 5% of
+  Wealth Practice Solution: The InsuranceFund (funded by 5% of
   DePIN node rewards) exists specifically to cover defaults.
   If a member defaults, remaining members are made whole
   from the insurance pool. Higher fund levels mean higher
@@ -351,16 +357,16 @@ RISK 8 — NO INSURANCE
 
 RISK 9 — SCALING LIMITATIONS
   Traditional: Cannot grow beyond 5-15 trusted individuals.
-  Axiom Solution: Because trust is replaced by automated
+  Wealth Practice Solution: Because trust is replaced by automated
   enforcement and insurance, circles can scale to larger
   sizes. The three-stage trust pipeline (Purpose Groups to
-  SUSU Circles to Wealth Practice) allows strangers to
+  Wealth Practice Circles to full Wealth Practice) allows strangers to
   build trust progressively before committing funds.
   Regional hubs organize members by geography and interest.
 
 RISK 10 — NO RECORD-KEEPING
   Traditional: No credit benefit from SUSU participation.
-  Axiom Solution: AxiomScore. Every on-time contribution,
+  Wealth Practice Solution: AxiomScore. Every on-time contribution,
   every completed cycle, every act of reliability is recorded
   on-chain and reflected in a score from 300 to 850. This
   score unlocks access to larger circles, lower collateral
@@ -378,7 +384,7 @@ not on debt you take on.
 Range: 300 to 850 (mirrors traditional credit scoring scale)
 
 Score Inputs:
-  - SUSU contribution consistency (on-time payments)
+  - Contribution consistency (on-time payments)
   - Completed circle cycles (full rotations finished)
   - Community engagement (helping new members, vouching)
   - Payment streak length (consecutive on-time payments)
@@ -404,12 +410,12 @@ on-chain. Every on-time payment is a chapter. Every completed
 cycle is a milestone.
 
 ========================================================================
-9. THE SUSU INSURANCE FUND
+9. THE WEALTH PRACTICE INSURANCE FUND
 ========================================================================
 
 Contract: 0x7B69ce0d83f45C2dBa3e5B73076beA8b1Be1271F
 
-The Insurance Fund is the safety net that makes Axiom SUSU
+The Insurance Fund is the safety net that makes The Wealth Practice
 fundamentally different from traditional SUSU.
 
 Funding Source:
@@ -417,7 +423,7 @@ Funding Source:
   are automatically routed to the Insurance Fund.
 
 Purpose:
-  When a member defaults on their SUSU contributions, the
+  When a member defaults on their contributions, the
   Insurance Fund covers the shortfall so remaining circle
   members receive their full expected payouts.
 
@@ -451,7 +457,7 @@ cash face a hidden risk: the value of contributions can
 change between when you contribute and when you receive
 your payout.
 
-Axiom SUSU circles denominated in AXUSD eliminate this risk:
+Wealth Practice circles denominated in AXUSD eliminate this risk:
 
   - AXUSD maintains a 1:1 peg to USD
   - Contributions are in stable dollar value
@@ -471,7 +477,7 @@ PART 3 — GRADUATION TO THE WEALTH PRACTICE
 11. THE THREE-STAGE TRUST PIPELINE
 ========================================================================
 
-Axiom SUSU does not start with money. It starts with people.
+The Wealth Practice does not start with money. It starts with people.
 
 The system is designed so that financial commitment follows
 human connection. Members build credibility before joining an
@@ -481,12 +487,12 @@ on-chain circle. This is the Three-Stage Trust Pipeline:
     No money involved. Members find each other, align on
     goals, exchange vouches, and build reputation.
 
-  Stage 2: SUSU CIRCLES (Savings Execution)
+  Stage 2: WEALTH PRACTICE CIRCLES (Savings Execution)
     On-chain circle with automated enforcement. Members
     contribute, rotate, and build AxiomScore.
 
   Stage 3: THE WEALTH PRACTICE (Investment Graduation)
-    After proving reliability through completed SUSU cycles,
+    After proving reliability through completed savings cycles,
     groups qualify to expand into larger investment vehicles
     including real estate, infrastructure, and capital pools.
 
@@ -513,10 +519,10 @@ Activities in Purpose Groups:
   - Financial literacy discussions
   - Vouching for other members you trust
   - Attending group check-ins
-  - Learning about SUSU mechanics
+  - Learning about Wealth Practice mechanics
   - Building AxiomScore through engagement
 
-Graduation Requirements (Purpose Group to SUSU Circle):
+Graduation Requirements (Purpose Group to Wealth Practice Circle):
   - Minimum member count met
   - Members have exchanged mutual vouches
   - Group has been active for minimum qualifying period
@@ -534,11 +540,11 @@ Database Infrastructure:
   susu_group_members — Group membership and roles
 
 ========================================================================
-13. STAGE 2: SUSU CIRCLES (ON-CHAIN)
+13. STAGE 2: WEALTH PRACTICE CIRCLES (ON-CHAIN)
 ========================================================================
 
 Once a Purpose Group meets its graduation requirements, it
-transitions to an on-chain SUSU Circle.
+transitions to an on-chain Wealth Practice circle.
 
 This is where money enters the picture — but only after
 trust has been established in Stage 1.
@@ -548,9 +554,9 @@ Circle Configuration:
   - Contribution frequency (weekly, bi-weekly, monthly)
   - Number of members (determines cycle length)
   - Custody model selection:
-      Pooled Custody (SusuHub) — Contributions pooled in
+      Pooled Custody (WealthPracticeHub) — Contributions pooled in
       shared contract, payouts distributed automatically.
-      Self-Custody (SusuPersonalVault) — Each member's
+      Self-Custody (PersonalVault) — Each member's
       funds stay in their own vault until payout assembly.
 
 On-Chain Mechanics:
@@ -586,8 +592,8 @@ Basic Readiness Tracking:
 The Wealth Practice is the destination. It is where disciplined
 savers become collective investors.
 
-After a SUSU circle completes multiple successful rotations
-and meets Capital Mode thresholds, it qualifies to graduate
+After a Wealth Practice circle completes multiple successful
+rotations and meets Capital Mode thresholds, it qualifies to graduate
 into The Wealth Practice — a larger investment vehicle where
 the group can pool resources for opportunities that no single
 member could access alone.
@@ -618,7 +624,7 @@ What Does NOT Change:
 Graduation is not automatic. It is earned through demonstrated
 reliability.
 
-Graduation from SUSU Circle to Wealth Practice requires:
+Graduation from Wealth Practice circle to full Wealth Practice requires:
 
   Option A — Time-Based:
     6+ months of active participation with all members in
@@ -668,7 +674,7 @@ Community Mode (Pre-Graduation):
 Capital Mode (Post-Graduation):
   - Collective investment vehicle
   - Pooled capital for investment opportunities
-  - Focus: Returns, asset acquisition, wealth building
+  - Focus: Potential returns, asset acquisition, wealth-building discipline
   - Ceiling: Expandable — new qualified members can join
 
 The Wealth Ladder:
@@ -677,8 +683,8 @@ The Wealth Ladder:
   Level 3 — INVESTOR: Your money works for you
   Level 4 — OWNER: Assets generate income
 
-SUSU circles take you from Level 1 or 2 to Level 2 or 3.
-The Wealth Practice takes you from Level 3 to Level 4.
+Wealth Practice circles take you from Level 1 or 2 to Level 2 or 3.
+The full Wealth Practice takes you from Level 3 to Level 4.
 
 What Capital Mode Groups Can Do:
   - Vote on investment proposals as a collective unit
@@ -703,7 +709,7 @@ investing in real estate together as one unit.
 How It Works:
 
 STEP 1 — Circle Builds Trust
-  A group of 10 people start a SUSU circle at $100/week.
+  A group of 10 people start a Wealth Practice circle at $100/week.
   Over 6 months, they complete 3 full rotations.
   Every member has proven reliability.
   Every member has an AxiomScore above 650.
@@ -729,8 +735,8 @@ STEP 4 — Investment Selection
   and KeyGrow rent-to-own engine.
 
   Example: A $50/token fractional share in a Dallas property
-  yielding 14% annual rental income. The group acquires
-  1,560 tokens ($78,000) as a collective unit.
+  with a projected 14% annual rental income. The group
+  acquires 1,560 tokens ($78,000) as a collective unit.
 
   Or: A direct property acquisition through Axiom's asset
   onboarding pipeline — using the Land Registry contract
@@ -764,15 +770,15 @@ Axiom Infrastructure Supporting This Journey:
 18. THE FULL JOURNEY: $25/WEEK TO PROPERTY OWNERSHIP
 ========================================================================
 
-Here is the complete path from first contribution to
+Here is the reference architecture from first contribution to
 collective property ownership:
 
 MONTH 1-2: PURPOSE GROUP
-  Join a regional hub. Find your people. Learn about SUSU.
+  Join a regional hub. Find your people. Learn about The Wealth Practice.
   Exchange vouches. Build initial AxiomScore through
   engagement. No money required.
 
-MONTH 3-5: FIRST SUSU CIRCLE
+MONTH 3-5: FIRST WEALTH PRACTICE CIRCLE
   Start small — $25/week with 8 members.
   Total pot per rotation: $200.
   Complete your first full cycle (8 weeks).
@@ -804,24 +810,25 @@ MONTH 10-12: WEALTH PRACTICE — CAPITAL ACCUMULATION
 MONTH 13-15: FIRST INVESTMENT
   Group votes on investment: fractional real estate.
   $15,600 deployed into rental property tokens.
-  At 14% annual yield, group earns ~$2,184/year.
+  At an illustrative 14% annual yield, the group could earn
+  ~$2,184/year (actual returns may vary).
   Monthly income distributed to members proportionally.
-  Each of 12 members receives ~$15/month passive income.
+  Each of 12 members may receive ~$15/month in projected income.
 
 MONTH 16+: COMPOUND AND SCALE
   Continue weekly contributions.
   Reinvest rental income.
   Acquire additional positions.
   By month 24: Multiple property positions, growing
-  passive income, expanding group.
+  projected income, expanding group.
 
-  What started as $25/week becomes a collectively owned
-  real estate portfolio generating passive income for
-  every member of the group.
+  What started as $25/week may become a collectively owned
+  real estate portfolio with the potential to generate
+  income for every member of the group.
 
 This is The Wealth Practice.
-This is how communities build generational wealth.
-This is SUSU evolved.
+This is how communities pursue generational wealth.
+This is the SUSU tradition evolved.
 
 ========================================================================
 RISK DISCLOSURE
@@ -836,7 +843,7 @@ should be understood by all participants:
    independent third-party security audit. OpenZeppelin
    standards are used throughout.
 
-2. Insurance Fund limitations: The SUSU Insurance Fund
+2. Insurance Fund limitations: The Wealth Practice Insurance Fund
    coverage depends on DePIN node revenue. If node revenue
    is insufficient, the fund may not fully cover all defaults.
 
@@ -844,10 +851,10 @@ should be understood by all participants:
    liquidity risk, and platform risk. Fractional real estate
    tokens may not be easily sold. Property values can decline.
 
-4. Regulatory risk: The legal treatment of SUSU circles,
-   fractional real estate ownership, and on-chain investment
-   pools may vary by jurisdiction. Participants should consult
-   qualified legal counsel.
+4. Regulatory risk: The legal treatment of rotating savings
+   circles, fractional real estate ownership, and on-chain
+   investment pools may vary by jurisdiction. Participants
+   should consult qualified legal counsel.
 
 5. AxiomScore limitations: AxiomScore reflects on-chain
    behavior within the Axiom ecosystem only. It is not a
@@ -857,10 +864,12 @@ should be understood by all participants:
 6. Bootstrap phase: Axiom Protocol is in early bootstrap
    (Week 5 of 52-week playbook). Many features described
    in this document are deployed but not yet activated.
-   SEED and SUSU activation is planned for Weeks 11-13.
+   SEED and Wealth Practice activation is planned for
+   Weeks 11-13.
 
-7. No guaranteed returns: No yield, return, or appreciation
-   is guaranteed. All investment outcomes depend on market
+7. No guaranteed returns: Past performance is not indicative
+   of future results. No yield, return, or appreciation is
+   guaranteed. All investment outcomes depend on market
    conditions, property performance, and group governance
    decisions.
 

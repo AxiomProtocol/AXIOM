@@ -3,7 +3,7 @@ import { useWallet } from './WalletConnect/WalletContext';
 
 const BADGE_DEFINITIONS = [
   { id: 'first_stake', name: 'First Stake', icon: '🌱', description: 'Staked AXM tokens for the first time', category: 'staking' },
-  { id: 'rotation_complete', name: 'Circle Closer', icon: '🔄', description: 'Completed a full SUSU rotation', category: 'susu' },
+  { id: 'rotation_complete', name: 'Circle Closer', icon: '🔄', description: 'Completed a full Wealth Practice rotation', category: 'susu' },
   { id: 'identity_verified', name: 'Verified Member', icon: '✅', description: 'Completed identity verification', category: 'identity' },
   { id: 'first_vote', name: 'First Vote', icon: '🗳️', description: 'Cast your first governance vote', category: 'governance' },
   { id: 'node_owner', name: 'Node Operator', icon: '🖥️', description: 'Purchased a DePIN node', category: 'depin' },

@@ -25,7 +25,7 @@ export default function CreditScoreHistory({ walletAddress }: CreditScoreHistory
     const points: ScoreHistoryPoint[] = [];
     const events = [
       { change: 0, label: 'Profile Created' },
-      { change: 15, label: 'First SUSU Payment' },
+      { change: 15, label: 'First Wealth Practice Payment' },
       { change: 10, label: 'On-time Payment' },
       { change: 12, label: 'On-time Payment' },
       { change: 8, label: 'On-time Payment' },

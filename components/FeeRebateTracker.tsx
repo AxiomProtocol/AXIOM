@@ -96,7 +96,7 @@ export default function FeeRebateTracker({ walletAddress, compact = false }: Pro
         </div>
         
         <div className="text-xs text-gray-500">
-          Complete SUSU rotations to earn up to 75% fee rebate
+          Complete Wealth Practice rotations to earn up to 75% fee rebate
         </div>
         
         <a href="/wealth-dashboard?tab=rebates" className="block text-center text-green-400 hover:text-green-300 text-sm mt-3">
@@ -115,7 +115,7 @@ export default function FeeRebateTracker({ walletAddress, compact = false }: Pro
               <span>💸</span> Fee Rebate Program
             </h3>
             <p className="text-sm text-gray-400 mt-1">
-              Earn back fees by completing SUSU rotations via AxiomFeeBurner
+              Earn back fees by completing Wealth Practice rotations via AxiomFeeBurner
             </p>
           </div>
         </div>
@@ -173,7 +173,7 @@ export default function FeeRebateTracker({ walletAddress, compact = false }: Pro
           <div className="text-center py-8">
             <div className="text-4xl mb-2">💰</div>
             <p className="text-gray-400 mb-2">No rebates yet</p>
-            <p className="text-sm text-gray-500">Join a SUSU circle and complete rotations to earn fee rebates</p>
+            <p className="text-sm text-gray-500">Join a Wealth Practice circle and complete rotations to earn fee rebates</p>
           </div>
         ) : (
           rebates.map(rebate => {

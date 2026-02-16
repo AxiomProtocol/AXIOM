@@ -357,7 +357,7 @@ export default function FounderOpsPage() {
                     <div className="border border-dl-border p-4">
                       <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">AXUSD SUPPLY</p>
                       <p className="font-dl-heading text-xl text-dl-navy">{parseFloat(data.axusd.totalSupply).toLocaleString()}</p>
-                      <p className="font-dl-mono text-xs text-dl-gray mt-1">GENIUS Act compliant</p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-1">Designed to align with GENIUS Act</p>
                     </div>
                     <div className="border border-dl-border p-4">
                       <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">TREASURY</p>

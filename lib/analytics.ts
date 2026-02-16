@@ -87,7 +87,7 @@ export async function getOverviewMetrics(): Promise<AnalyticsMetric[]> {
     { id: 'tvl', name: 'Total Value Locked', value: 1245000, change: 89000, changePercent: 7.7, trend: 'up', period: '7d', timestamp: now },
     { id: 'proposals', name: 'Active Proposals', value: proposalCount, change: 2, changePercent: 66.7, trend: 'up', period: '7d', timestamp: now },
     { id: 'landCampaigns', name: 'Land Campaigns', value: landCampaignCount, change: 1, changePercent: 50, trend: 'up', period: '7d', timestamp: now },
-    { id: 'susuCircles', name: 'SUSU Circles', value: susuCircleCount, change: 2, changePercent: 33.3, trend: 'up', period: '7d', timestamp: now },
+    { id: 'susuCircles', name: 'Wealth Practice Circles', value: susuCircleCount, change: 2, changePercent: 33.3, trend: 'up', period: '7d', timestamp: now },
     { id: 'transactions', name: 'Daily Transactions', value: 156, change: 23, changePercent: 17.3, trend: 'up', period: '24h', timestamp: now },
     { id: 'axmPrice', name: 'AXM Price', value: 0.85, change: 0.05, changePercent: 6.25, trend: 'up', period: '24h', timestamp: now },
     { id: 'gasUsed', name: 'Gas Used (ETH)', value: 2.34, change: -0.12, changePercent: -4.9, trend: 'down', period: '24h', timestamp: now }
@@ -96,7 +96,7 @@ export async function getOverviewMetrics(): Promise<AnalyticsMetric[]> {
 
 export async function getProgramMetrics(): Promise<ProgramMetrics[]> {
   return [
-    { programId: 'susu', programName: 'SUSU Circles', participants: 847, totalValue: 425000, activeTransactions: 45, growthRate: 12.5 },
+    { programId: 'susu', programName: 'Wealth Practice Circles', participants: 847, totalValue: 425000, activeTransactions: 45, growthRate: 12.5 },
     { programId: 'land', programName: 'Land Acquisition', participants: 312, totalValue: 580000, activeTransactions: 18, growthRate: 8.3 },
     { programId: 'staking', programName: 'AXM Staking', participants: 1245, totalValue: 890000, activeTransactions: 67, growthRate: 15.2 },
     { programId: 'governance', programName: 'Governance', participants: 456, totalValue: 0, activeTransactions: 12, growthRate: 22.1 },

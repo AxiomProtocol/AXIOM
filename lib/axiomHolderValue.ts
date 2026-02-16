@@ -159,7 +159,7 @@ export const stewardReputationCopy = {
     { action: 'Hold AXM for 30 days', points: 1, frequency: 'per 30-day period' },
     { action: 'Complete participation action', points: 1, frequency: 'per action' },
     { action: 'Complete onboarding checklist', points: 1, frequency: 'one-time' },
-    { action: 'Successful SUSU cycle completion', points: 2, frequency: 'per cycle' },
+    { action: 'Successful Wealth Practice cycle completion', points: 2, frequency: 'per cycle' },
     { action: 'Governance vote cast', points: 1, frequency: 'per proposal' }
   ],
   

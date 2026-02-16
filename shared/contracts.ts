@@ -188,9 +188,9 @@ export const AXUSD_STABLECOIN_CONTRACTS = {
   PSM: '0x4584888cB411E9cc88e3800BAB73A430D90d3793'
 } as const;
 
-// AXUSD GENIUS Act Compliant Contracts (41-52)
+// AXUSD GENIUS Act Aligned Contracts (41-52)
 // Deployed: January 11, 2026 | Arbitrum One
-// Features: Full GENIUS Act compliance (Public Law 119-27), 100% reserve backing, peg stability
+// Features: Designed to align with GENIUS Act framework (Public Law 119-27), 100% reserve backing, peg stability
 // Deployer: 0x8d7892CF226B43d48B6e3ce988A1274e6D114C96
 export const AXUSD_GENIUS_CONTRACTS = {
   // AXUSD Token (GENIUS Compliant)

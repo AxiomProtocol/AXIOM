@@ -61,7 +61,7 @@ export default function InsuranceClaimsHistory({ limit = 10, showPending = true 
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
               <span>🛡️</span> Insurance Claims History
             </h3>
-            <p className="text-sm text-gray-400 mt-1">Public record of SUSU protection claims</p>
+            <p className="text-sm text-gray-400 mt-1">Public record of Wealth Practice protection claims</p>
           </div>
         </div>
 
@@ -109,7 +109,7 @@ export default function InsuranceClaimsHistory({ limit = 10, showPending = true 
         <div className="p-8 text-center">
           <div className="text-4xl mb-3">🛡️</div>
           <p className="text-gray-400">No claims found</p>
-          <p className="text-sm text-gray-500 mt-1">The insurance fund is ready to protect SUSU circles</p>
+          <p className="text-sm text-gray-500 mt-1">The insurance fund is ready to protect Wealth Practice circles</p>
         </div>
       ) : (
         <div className="divide-y divide-gray-800">

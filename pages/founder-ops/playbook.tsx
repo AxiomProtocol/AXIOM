@@ -100,7 +100,7 @@ const PHASES: PhaseInfo[] = [
       'Revenue Router Verification (Weeks 5–6): Confirm fee flow, verify 50/30/20 distribution split',
       'AXM Accumulation (Weeks 7–8): Execute AXM buys on Camelot DEX, record slippage',
       'Lending Fund Activation (Weeks 9–10): Test deposit/withdrawal flows, verify compliance docs',
-      'SEED & SUSU Launch (Weeks 11–13): Deploy SEED staking, initialize SUSU savings circle',
+      'SEED & Wealth Practice Launch (Weeks 11-13): Deploy SEED staking, initialize Wealth Practice circle',
     ],
     exitCriteria: [
       'PSM mint/redeem cycle completed with both PSMs',

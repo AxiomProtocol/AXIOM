@@ -95,7 +95,7 @@ export function generateDigestHtml(data: WeeklyDigestData): string {
             <tr>
               <td style="background: #0f172a; padding: 15px; border-radius: 8px; text-align: center; width: 50%;">
                 <p style="color: #a855f7; font-size: 24px; font-weight: bold; margin: 0;">+${data.newSusuCircles}</p>
-                <p style="color: #94a3b8; font-size: 12px; margin: 5px 0 0;">New SUSU Circles</p>
+                <p style="color: #94a3b8; font-size: 12px; margin: 5px 0 0;">New Wealth Practice Circles</p>
               </td>
               <td style="width: 10px;"></td>
               <td style="background: #0f172a; padding: 15px; border-radius: 8px; text-align: center; width: 50%;">
@@ -128,7 +128,7 @@ export async function sendWeeklyDigestToAll(): Promise<{ sent: number; failed: n
 
   const metrics = await fetchWeeklyMetrics();
   const html = generateDigestHtml(metrics);
-  const text = `Axiom Weekly Digest\n\nAXM Burned: ${metrics.axmBurned}\nveAXM Rewards: ${metrics.veAxmRewards}\nInsurance Fund Growth: $${metrics.insuranceFundGrowth}\nNew SUSU Circles: ${metrics.newSusuCircles}\nNew Node Operators: ${metrics.newNodeOperators}\n\nView the full dashboard at https://axiom.city/transparency-dashboard`;
+  const text = `Axiom Weekly Digest\n\nAXM Burned: ${metrics.axmBurned}\nveAXM Rewards: ${metrics.veAxmRewards}\nInsurance Fund Growth: $${metrics.insuranceFundGrowth}\nNew Wealth Practice Circles: ${metrics.newSusuCircles}\nNew Node Operators: ${metrics.newNodeOperators}\n\nView the full dashboard at https://axiom.city/transparency-dashboard`;
 
   let sent = 0;
   let failed = 0;

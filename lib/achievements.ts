@@ -158,7 +158,7 @@ export const achievements: Achievement[] = [
   {
     id: 'susu-completion',
     name: 'Circle Complete',
-    description: 'Complete a full SUSU cycle',
+    description: 'Complete a full Wealth Practice cycle',
     icon: '💰',
     category: 'treasury',
     rarity: 'rare',

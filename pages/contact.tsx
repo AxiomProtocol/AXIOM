@@ -261,7 +261,7 @@ export default function ContactPage() {
                 Capital Framework (Download)
               </a>
               <a href="/axiom-susu-wealth-practice.txt" className="block text-sm text-dl-navy underline" target="_blank" rel="noopener noreferrer">
-                SUSU Wealth Practice (Download)
+                The Wealth Practice (Download)
               </a>
             </div>
           </div>

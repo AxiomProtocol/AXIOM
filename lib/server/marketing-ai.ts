@@ -21,7 +21,7 @@ const AXIOM_CONTEXT = `
 Axiom Protocol is a DeFi treasury system for community-driven wealth building on Arbitrum One blockchain.
 
 Key Features:
-- SUSU Savings Circles: Rotating savings groups where members save together
+- The Wealth Practice: Community Wealth Practice circles where members save together
 - Wealth Engine: Stake AXM tokens for variable protocol rewards  
 - veAXM Governance: Lock tokens to vote on protocol decisions
 - DePIN Nodes: Infrastructure nodes that earn rewards
@@ -94,7 +94,7 @@ Generate a JSON object with this structure:
   "subtitle": "Ready-to-post content for maximum engagement",
   "sections": [
     {"heading": "Post title", "content": "Full post text with emojis and hashtags"},
-    // Include 6 posts: Introduction, SUSU Feature, Wealth Engine, Community Focus, FOMO/Urgency, Educational
+    // Include 6 posts: Introduction, Wealth Practice Feature, Wealth Engine, Community Focus, FOMO/Urgency, Educational
   ]
 }
 
@@ -212,7 +212,7 @@ Generate a JSON object with this structure:
   "subtitle": "Ready-to-post content for maximum engagement",
   "sections": [
     {"heading": "Post title", "content": "Full post text with emojis and hashtags"},
-    // Include 6 posts: Introduction, SUSU Feature, Wealth Engine, Community Focus, FOMO/Urgency, Educational
+    // Include 6 posts: Introduction, Wealth Practice Feature, Wealth Engine, Community Focus, FOMO/Urgency, Educational
   ]
 }
 

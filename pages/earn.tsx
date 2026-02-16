@@ -8,7 +8,7 @@ interface YieldOpportunity {
   name: string;
   protocol: string;
   asset: string;
-  apy: string;
+  rate: string;
   tvl: string;
   type: 'lending' | 'staking' | 'liquidity' | 'savings';
   risk: 'low' | 'medium' | 'high';
@@ -23,7 +23,7 @@ const YIELD_OPPORTUNITIES: YieldOpportunity[] = [
     name: 'AXUSD Lending',
     protocol: 'Euler Finance',
     asset: 'AXUSD',
-    apy: 'Variable',
+    rate: 'Variable',
     tvl: '$56.49',
     type: 'lending',
     risk: 'low',
@@ -36,7 +36,7 @@ const YIELD_OPPORTUNITIES: YieldOpportunity[] = [
     name: 'AXM Staking',
     protocol: 'Axiom Protocol',
     asset: 'AXM',
-    apy: '8-15%',
+    rate: 'Variable',
     tvl: '$0',
     type: 'staking',
     risk: 'low',
@@ -48,7 +48,7 @@ const YIELD_OPPORTUNITIES: YieldOpportunity[] = [
     name: 'SEED Wealth Engine',
     protocol: 'Axiom Protocol',
     asset: 'AXM',
-    apy: '10-20%',
+    rate: 'Variable',
     tvl: '$0',
     type: 'staking',
     risk: 'medium',
@@ -57,27 +57,27 @@ const YIELD_OPPORTUNITIES: YieldOpportunity[] = [
   },
   {
     id: 'susu-savings',
-    name: 'SUSU Savings Circles',
+    name: 'The Wealth Practice',
     protocol: 'Axiom Protocol',
     asset: 'AXUSD',
-    apy: '5-8%',
+    rate: 'Variable',
     tvl: '$0',
     type: 'savings',
     risk: 'low',
     link: '/susu',
-    description: 'Join community savings circles with rotating payouts and bonus rewards.'
+    description: 'Participate in structured group savings with transparent scheduling and audit trails.'
   },
   {
     id: 'lending-fund',
     name: 'Real Estate Lending',
     protocol: 'Axiom Protocol',
     asset: 'AXUSD',
-    apy: '8-12%',
+    rate: 'Variable',
     tvl: '$0',
     type: 'lending',
     risk: 'medium',
     link: '/lending-fund/invest',
-    description: 'Invest in real estate bridge loans and DSCR rental loans backed by property collateral.'
+    description: 'Participate in real estate bridge loans and DSCR rental loans backed by property collateral.'
   }
 ];
 
@@ -176,8 +176,8 @@ export default function EarnPage() {
 
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-dl-gray text-xs">APY</p>
-                <p className="text-dl-forest font-dl-mono font-medium">{opportunity.apy}</p>
+                <p className="text-dl-gray text-xs">Rate</p>
+                <p className="text-dl-forest font-dl-mono font-medium">{opportunity.rate}</p>
               </div>
               <div>
                 <p className="text-dl-gray text-xs">Asset</p>
@@ -219,7 +219,7 @@ export default function EarnPage() {
       </div>
 
       <div className="mt-8 text-center text-dl-gray text-sm">
-        <p>APY rates are variable and subject to change based on market conditions.</p>
+        <p>Rates are variable and subject to change based on market conditions and protocol parameters. Past rates do not indicate future performance.</p>
         <p className="mt-1">Always do your own research before investing.</p>
       </div>
     </DesignLawLayout>

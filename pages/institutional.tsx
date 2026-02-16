@@ -86,12 +86,7 @@ export default function InstitutionalPage() {
         <section className="mb-12">
           <SectionHeading>1. Executive Overview</SectionHeading>
           <p className="text-dl-navy leading-relaxed">
-            Axiom Protocol is a land-first community ownership platform built on Arbitrum One with 43 deployed automated control layers (verified contract addresses on Arbiscan).
-            The protocol enables communities to acquire, develop, and own real estate through SEC-compliant crowdfunding,
-            SUSU-style savings pooling, and digitally issued land participation instruments. It bridges traditional real estate finance with
-            decentralized infrastructure, offering institutional-grade treasury management, transparent settlement systems,
-            and community-driven governance. The protocol's mission is to build America's first 1,000-acre on-chain sovereign
-            digital-physical economy.
+            Axiom Protocol is a governance-first community infrastructure platform built on Arbitrum One with 43 deployed automated control layers (verified contract addresses on Arbiscan). The protocol provides a framework for communities to participate in real asset acquisition, development, and ownership through SEC-compliant crowdfunding, structured group savings (The Wealth Practice), and digitally issued land participation instruments. It bridges traditional real estate finance with decentralized infrastructure, offering institutional-grade treasury management, transparent settlement systems, and community-driven governance. The protocol operates under a targeted land acquisition roadmap toward building a sovereign digital-physical economy.
           </p>
         </section>
 
@@ -256,7 +251,7 @@ export default function InstitutionalPage() {
                     <strong>Contract:</strong> <code className="text-xs bg-dl-bg-alt px-1 py-0.5 font-dl-mono">0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C</code>
                   </p>
                   <p>
-                    <strong>Constraints:</strong> No redemption promises. Integration with lending, SUSU, land acquisition,
+                    <strong>Constraints:</strong> No redemption promises. Integration with lending, The Wealth Practice, land acquisition,
                     and node rewards is planned but dependent on infrastructure readiness.
                   </p>
                 </div>
@@ -331,12 +326,12 @@ export default function InstitutionalPage() {
             },
             {
               id: 'susu',
-              title: 'SUSU Savings Circles',
+              title: 'The Wealth Practice',
               content: (
                 <div className="space-y-3 text-sm text-dl-navy">
                   <p>
-                    On-chain Rotating Savings and Credit Associations (ROSCAs) enabling community-based
-                    savings pools with blockchain transparency.
+                    Structured group savings framework enabling community-based
+                    capital formation with on-chain transparency and audit trails.
                   </p>
                   <ul className="list-disc list-inside space-y-1">
                     <li>Configurable pools: 2-50 members</li>

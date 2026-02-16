@@ -44,7 +44,7 @@ export default function SocialUnlockMissions({ walletAddress, compact = false }:
     { id: 'complete_onboarding', title: 'Complete Onboarding', description: 'Finish the guided onboarding flow', requirement: 1, progress: 0, reward: 50, rewardType: 'AXM', status: 'in_progress', icon: '🎯' },
     { id: 'invite_1', title: 'First Friend', description: 'Invite your first friend to join', requirement: 1, progress: 0, reward: 100, rewardType: 'AXM', status: 'locked', icon: '👤' },
     { id: 'invite_5', title: 'Squad Builder', description: 'Invite 5 friends to unlock shared rewards', requirement: 5, progress: 0, reward: 500, rewardType: 'AXM', status: 'locked', icon: '👥' },
-    { id: 'friend_joins_susu', title: 'Circle Catalyst', description: 'Have a referred friend join a SUSU circle', requirement: 1, progress: 0, reward: 250, rewardType: 'AXM', status: 'locked', icon: '🔄' },
+    { id: 'friend_joins_susu', title: 'Circle Catalyst', description: 'Have a referred friend join a Wealth Practice circle', requirement: 1, progress: 0, reward: 250, rewardType: 'AXM', status: 'locked', icon: '🔄' },
     { id: 'group_milestone', title: 'Collective Power', description: 'Your referral network reaches 25 members', requirement: 25, progress: 0, reward: 1000, rewardType: 'AXM', status: 'locked', icon: '🚀' },
   ];
 

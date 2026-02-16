@@ -12,7 +12,7 @@ const BLOCKSCOUT_BASE = 'https://arbitrum.blockscout.com/api/v2';
 const CANDIDATES = {
   AXUSD: [
     { address: '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c', label: 'Original AxiomStable (Jan 5 2026)' },
-    { address: '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C', label: 'GENIUS Act Compliant (Jan 11 2026)' },
+    { address: '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C', label: 'GENIUS Act Aligned (Jan 11 2026)' },
     { address: '0x8616E8EA83f048ab9A5eC513c9412dd2993bcE3F', label: 'handleUSD (fxUSD) — NOT Axiom' },
   ],
   PSM: [
@@ -276,7 +276,7 @@ export const ACTIVE_CONTRACTS = {
     primary: ACTIVE_AXUSD,
     euler: EULER_AXUSD,
     label: {
-      primary: 'GENIUS Act Compliant AXUSD (Jan 11, 2026)',
+      primary: 'GENIUS Act Aligned AXUSD (Jan 11, 2026)',
       euler: 'Original AxiomStable (Jan 5, 2026) — Euler Vault binding',
     },
   },

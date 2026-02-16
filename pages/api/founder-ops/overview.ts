@@ -132,7 +132,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       deployer: DEPLOYER,
       fixFlipVault: FIX_FLIP_VAULT,
       axusd: AXUSD,
-      axusdLabel: 'GENIUS Act Compliant (Primary)',
+      axusdLabel: 'GENIUS Act Aligned (Primary)',
       eulerAxusd: EULER_AXUSD,
       eulerAxusdLabel: 'Original AxiomStable (Euler Vault binding)',
       axm: AXM,

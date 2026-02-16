@@ -122,7 +122,7 @@ export default function WeeklyDigestCard({
               </div>
               <div className="bg-gray-800/50 rounded-lg p-3">
                 <div className="text-2xl font-bold text-purple-400">⭕ +{latestDigest.newSusuCircles}</div>
-                <div className="text-xs text-gray-400">New SUSU Circles</div>
+                <div className="text-xs text-gray-400">New Wealth Practice Circles</div>
               </div>
               <div className="bg-gray-800/50 rounded-lg p-3">
                 <div className="text-2xl font-bold text-yellow-400">📡 +{latestDigest.newNodeOperators}</div>

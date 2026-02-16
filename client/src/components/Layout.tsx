@@ -210,7 +210,7 @@ const Layout: React.FC<LayoutProps> = ({
     { path: '/axiom-defi', label: 'DeFi Opportunities', isExternal: false },
     { path: '/axiom-staking', label: 'Staking Hub', isExternal: false },
     { path: '/axiom-dex', label: 'DEX (Exchange)', isExternal: false },
-    { path: '/susu', label: '🤝 SUSU (Savings Groups)', isExternal: false },
+    { path: '/susu', label: '🤝 The Wealth Practice', isExternal: false },
     { path: '/axiom-tokenomics', label: 'Tokenomics', isExternal: false },
     { path: '/axiom-governance', label: 'Governance', isExternal: false },
     { path: '/axiom-fee-manager', label: 'Fee Manager', isExternal: false }

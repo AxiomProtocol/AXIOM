@@ -11,8 +11,8 @@ interface CreditAction {
 }
 
 const CREDIT_ACTIONS: CreditAction[] = [
-  { id: 'join_susu', name: 'Join a SUSU Circle', description: 'Become a member of a savings circle', points: 25, category: 'susu', status: 'available' },
-  { id: 'complete_susu', name: 'Complete SUSU Cycle', description: 'Successfully finish a full savings cycle', points: 50, category: 'susu', status: 'available' },
+  { id: 'join_susu', name: 'Join a Wealth Practice Circle', description: 'Become a member of a Wealth Practice circle', points: 25, category: 'susu', status: 'available' },
+  { id: 'complete_susu', name: 'Complete Wealth Practice Cycle', description: 'Successfully finish a full Wealth Practice cycle', points: 50, category: 'susu', status: 'available' },
   { id: 'ontime_payment', name: 'On-Time Payment', description: 'Make contribution before deadline', points: 10, category: 'susu', status: 'available' },
   { id: 'streak_3', name: '3-Month Streak', description: 'Pay on-time for 3 consecutive months', points: 30, category: 'susu', status: 'available' },
   { id: 'streak_6', name: '6-Month Streak', description: 'Pay on-time for 6 consecutive months', points: 75, category: 'susu', status: 'available' },
@@ -42,7 +42,7 @@ export default function CreditScoreTracker({ currentScore = 550, walletAddress, 
 
   const categories = [
     { id: 'all', name: 'All Actions', icon: '📊' },
-    { id: 'susu', name: 'SUSU', icon: '💰' },
+    { id: 'susu', name: 'Wealth Practice', icon: '💰' },
     { id: 'staking', name: 'Staking', icon: '🔒' },
     { id: 'governance', name: 'Governance', icon: '🗳️' },
     { id: 'community', name: 'Community', icon: '👥' },

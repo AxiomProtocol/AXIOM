@@ -413,7 +413,7 @@ function MyCirclesDashboard({ userCircles }: { userCircles: UserCircle[] }) {
             <div className="text-6xl mb-4">🤝</div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No Circles Yet</h3>
             <p className="text-gray-600 mb-4">
-              Join your first savings circle to start building wealth with community support
+              Join your first Wealth Practice circle to start building wealth with community support
             </p>
             <Button className="bg-yellow-500 hover:bg-yellow-600">
               Browse Available Circles

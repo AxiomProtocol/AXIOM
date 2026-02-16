@@ -48,9 +48,9 @@ export default function WealthAdvancement({ wallet }) {
       name: 'Community Mode', 
       icon: '🤝', 
       color: 'green',
-      description: 'Community savings circles',
+      description: 'Community Wealth Practice circles',
       threshold: 'Up to $1,000/contribution',
-      features: ['Peer savings groups', 'Rotating payouts', 'Trust building']
+      features: ['Peer Wealth Practice groups', 'Rotating payouts', 'Trust building']
     },
     { 
       name: 'Capital Mode', 

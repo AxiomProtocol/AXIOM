@@ -16,7 +16,7 @@ const SAMPLE_PROPOSALS: Proposal[] = [
   {
     id: 1,
     title: 'AIP-002: Increase Insurance Fund Diversion to 7%',
-    description: 'Proposal to increase node rewards diversion from 5% to 7% for stronger SUSU coverage.',
+    description: 'Proposal to increase node rewards diversion from 5% to 7% for stronger Wealth Practice coverage.',
     status: 'active',
     votesFor: 45000,
     votesAgainst: 12000,

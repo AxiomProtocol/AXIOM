@@ -112,7 +112,7 @@ export function EnhancedOnboarding({ onComplete, onDismiss }: EnhancedOnboarding
               Welcome to Axiom Protocol
             </h2>
             <p style={{ fontSize: '16px', color: '#6B7280', maxWidth: '420px', margin: '0 auto 16px', lineHeight: 1.6 }}>
-              Build wealth together through community land ownership, savings circles, and real economic infrastructure.
+              Build wealth together through community land ownership, Wealth Practice circles, and real economic infrastructure.
             </p>
             <div style={{ 
               background: '#F0FDF4', 

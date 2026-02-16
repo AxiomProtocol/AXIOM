@@ -35,7 +35,7 @@ const PRINCIPLES = [
 ];
 
 const MILESTONES = [
-  { period: '2023', event: 'Community farmland acquisition — 6+ acres of community-owned land, USDA-supported development' },
+  { period: '2023', event: 'Community farmland acquisition initiative — USDA-supported development planning and land framework established' },
   { period: '2024', event: 'Axiom Protocol concept development, automated control layer architecture design, and initial infrastructure buildout' },
   { period: 'Q1 2025', event: 'Initial automated control layers deployed on Arbitrum One, DEX V2 ecosystem with mainnet contracts' },
   { period: 'Q2 2025', event: 'Capital Program launch — $1M dual-asset program with two SPVs, institutional reporting, and compliance audit trails' },

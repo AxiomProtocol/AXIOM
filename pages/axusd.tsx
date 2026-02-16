@@ -220,7 +220,7 @@ const FAQ_DATA = [
     questions: [
       {
         q: "What is AXUSD?",
-        a: "AXUSD is Axiom Protocol's hybrid CDP stablecoin, designed to maintain a 1:1 peg with the US Dollar. It's backed by a combination of crypto collateral (ETH, BTC), USDC reserves, and real-world assets like T-Bills. AXUSD is GENIUS Act compliant, meeting federal regulatory requirements for payment stablecoins."
+        a: "AXUSD is Axiom Protocol's hybrid CDP stablecoin, designed to maintain a 1:1 peg with the US Dollar. It is backed by a combination of crypto collateral (ETH, BTC), USDC reserves, and real-world assets like T-Bills. AXUSD is designed to align with the GENIUS Act framework for payment stablecoins."
       },
       {
         q: "How do I get AXUSD?",
@@ -274,8 +274,8 @@ const FAQ_DATA = [
         a: "The GENIUS Act (Public Law 119-27) is federal legislation establishing regulatory requirements for payment stablecoins in the United States. It mandates 100% reserve backing, asset segregation, and regular audits."
       },
       {
-        q: "How is AXUSD GENIUS Act compliant?",
-        a: "AXUSD implements all required safeguards: 100%+ reserve ratio, segregated custody of reserves, 93-day maximum maturity for T-Bill holdings, anti-rehypothecation controls, and real-time reserve verification on-chain."
+        q: "How does AXUSD align with the GENIUS Act?",
+        a: "AXUSD is designed to implement key safeguards aligned with the GENIUS Act framework: 100%+ reserve ratio target, segregated custody of reserves, 93-day maximum maturity for T-Bill holdings, anti-rehypothecation controls, and on-chain reserve verification."
       },
       {
         q: "Can AXUSD reserves be rehypothecated?",
@@ -288,7 +288,7 @@ const FAQ_DATA = [
     questions: [
       {
         q: "How do I earn yield with AXUSD?",
-        a: "There are multiple ways: 1) Lock AXM in SEED to earn 50% of protocol revenue, 2) Provide liquidity to earn trading fees + AXM rewards, 3) Join SUSU savings circles for group savings benefits."
+        a: "There are multiple ways: 1) Lock AXM in SEED to earn 50% of protocol revenue, 2) Provide liquidity to earn trading fees + AXM rewards, 3) Join Wealth Practice circles for group savings benefits."
       },
       {
         q: "What is SEED?",
@@ -519,7 +519,7 @@ export default function AXUSDStablecoinPage() {
     <DesignLawLayout>
       <Head>
         <title>AXUSD Stablecoin | Axiom Protocol</title>
-        <meta name="description" content="AXUSD - The GENIUS Act compliant hybrid CDP stablecoin. 100% backed, segregated custody, cross-chain enabled. The settlement layer of Axiom Protocol." />
+        <meta name="description" content="AXUSD - A hybrid CDP stablecoin designed to align with the GENIUS Act framework. Reserve-backed, segregated custody, cross-chain enabled. The settlement layer of Axiom Protocol." />
       </Head>
       
       {isWalletConnected && !isCorrectNetwork && (
@@ -558,7 +558,7 @@ export default function AXUSDStablecoinPage() {
           <div className="text-center lg:text-left">
             <div className="inline-flex items-center gap-2 bg-dl-bg-alt border border-dl-border px-5 py-2 mb-6">
               <Shield className="w-4 h-4 text-dl-navy" />
-              <span className="text-dl-navy font-medium text-sm tracking-wide">GENIUS ACT COMPLIANT STABLECOIN</span>
+              <span className="text-dl-navy font-medium text-sm tracking-wide">DESIGNED TO ALIGN WITH GENIUS ACT</span>
             </div>
             
             <h1 className="font-dl-serif text-5xl md:text-6xl mb-4 text-dl-navy">
@@ -571,13 +571,13 @@ export default function AXUSDStablecoinPage() {
             
             <p className="text-lg text-dl-gray max-w-xl mb-8 leading-relaxed">
               A <span className="text-dl-forest font-medium">100% backed hybrid stablecoin</span> with segregated custody, 
-              cross-chain bridging, and full GENIUS Act compliance.
+              cross-chain bridging, and designed to align with the GENIUS Act framework.
             </p>
 
             <div className="flex flex-wrap justify-center lg:justify-start gap-3 text-sm mb-8">
               {[
                 { icon: <CheckCircle className="w-4 h-4" />, text: '100% Reserve Backed' },
-                { icon: <Shield className="w-4 h-4" />, text: 'GENIUS Act Compliant' },
+                { icon: <Shield className="w-4 h-4" />, text: 'GENIUS Act Aligned' },
                 { icon: <Globe className="w-4 h-4" />, text: 'Cross-Chain Enabled' },
                 { icon: <Lock className="w-4 h-4" />, text: 'Segregated Custody' },
               ].map((item, i) => (
@@ -648,7 +648,7 @@ export default function AXUSDStablecoinPage() {
                 {[
                   { step: 1, title: 'Deposit Collateral', desc: 'Lock WETH or WBTC at 150% ratio' },
                   { step: 2, title: 'Mint AXUSD', desc: 'Create stablecoin against your collateral' },
-                  { step: 3, title: 'Use Anywhere', desc: 'SUSU circles, KeyGrow rent, DeFi' },
+                  { step: 3, title: 'Use Anywhere', desc: 'Wealth Practice circles, KeyGrow rent, DeFi' },
                   { step: 4, title: 'Earn Yield', desc: 'Lock SEED for protocol revenue share' },
                 ].map((item) => (
                   <div key={item.step} className="text-center">
@@ -1479,7 +1479,7 @@ export default function AXUSDStablecoinPage() {
               <h3 className="text-dl-navy font-dl-serif mb-6 text-xl">AXUSD Use Cases</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
-                  { icon: 'S', title: 'SUSU Circles', desc: 'Join savings circles denominated in AXUSD for stable, predictable savings' },
+                  { icon: 'S', title: 'Wealth Practice Circles', desc: 'Join Wealth Practice circles denominated in AXUSD for stable, predictable savings' },
                   { icon: 'H', title: 'KeyGrow Housing', desc: 'Pay rent in AXUSD and build equity toward home ownership' },
                   { icon: 'L', title: 'DeFi Liquidity', desc: 'Provide liquidity in AXUSD pools on Camelot DEX' },
                 ].map((item, i) => (

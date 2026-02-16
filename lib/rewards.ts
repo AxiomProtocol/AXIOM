@@ -83,11 +83,11 @@ const quests: Quest[] = [
   },
   {
     id: 'q2',
-    title: 'First SUSU Contribution',
-    description: 'Make your first contribution to a SUSU circle',
+    title: 'First Wealth Practice Contribution',
+    description: 'Make your first contribution to a Wealth Practice circle',
     category: 'participation',
     requirements: [
-      { id: 'r3', type: 'action', description: 'Join a SUSU circle', target: 1, current: 0 },
+      { id: 'r3', type: 'action', description: 'Join a Wealth Practice circle', target: 1, current: 0 },
       { id: 'r4', type: 'action', description: 'Make a contribution', target: 1, current: 0 }
     ],
     rewards: [
@@ -166,7 +166,7 @@ const stakingBoosts: StakingBoost[] = [
   { id: 'b1', name: 'Loyalty Boost', description: '+5% APY for 30+ day stakers', multiplier: 1.05, requirement: 'Stake for 30+ days', duration: 'Permanent while staked', active: true },
   { id: 'b2', name: 'veAXM Boost', description: '+10% APY for vote-escrowed AXM', multiplier: 1.10, requirement: 'Lock AXM for 6+ months', duration: 'Lock duration', active: true },
   { id: 'b3', name: 'Governance Boost', description: '+3% APY for active voters', multiplier: 1.03, requirement: 'Vote on 5+ proposals/month', duration: '30 days', active: true },
-  { id: 'b4', name: 'SUSU Participant Boost', description: '+2% APY for SUSU members', multiplier: 1.02, requirement: 'Active SUSU membership', duration: 'While active', active: true },
+  { id: 'b4', name: 'Wealth Practice Participant Boost', description: '+2% APY for Wealth Practice members', multiplier: 1.02, requirement: 'Active Wealth Practice membership', duration: 'While active', active: true },
   { id: 'b5', name: 'Early Bird Boost', description: '+15% APY for first 100 stakers', multiplier: 1.15, requirement: 'Be among first 100 stakers', duration: '90 days', active: false }
 ];
 
@@ -348,7 +348,7 @@ export function getLeaderboard(limit: number = 10): LeaderboardEntry[] {
   const sampleUsers = [
     { userId: 'user1', displayName: 'CryptoSage', xp: 4500, badges: 12, streak: 45 },
     { userId: 'user2', displayName: 'LandBuilder', xp: 3800, badges: 9, streak: 32 },
-    { userId: 'user3', displayName: 'SusuChampion', xp: 3200, badges: 8, streak: 28 },
+    { userId: 'user3', displayName: 'WealthChampion', xp: 3200, badges: 8, streak: 28 },
     { userId: 'user4', displayName: 'GovernanceGuru', xp: 2900, badges: 7, streak: 21 },
     { userId: 'user5', displayName: 'CommunityFirst', xp: 2500, badges: 6, streak: 18 },
     { userId: 'user6', displayName: 'TokenMaster', xp: 2100, badges: 5, streak: 14 },

@@ -104,7 +104,7 @@ export default function AXUSDReservesDashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-white">AXUSD Reserve Transparency</h2>
-            <p className="text-white/80 mt-1">GENIUS Act Compliant Stablecoin Reserves</p>
+            <p className="text-white/80 mt-1">GENIUS Act Aligned Stablecoin Reserves</p>
           </div>
           <div className={`px-4 py-2 rounded-full ${
             reserveData.compliance.geniusActCompliant 

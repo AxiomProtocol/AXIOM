@@ -38,7 +38,7 @@ const SECTIONS: ExplainerSection[] = [
   },
   {
     id: 'insurance',
-    title: 'SUSU Insurance Fund',
+    title: 'Wealth Practice Insurance Fund',
     icon: '🛡️',
     content: [
       '5% of all DePIN node rewards are diverted to the fund',

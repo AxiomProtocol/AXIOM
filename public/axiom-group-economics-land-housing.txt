@@ -25,15 +25,15 @@ PART 2 — GROUP ECONOMICS AND WHY IT MATTERS NOW
 
 PART 3 — HOW AXIOM PROTOCOL SOLVES THIS
   10. The Complete Infrastructure
-  11. SUSU Circles: The Entry Point
+  11. Wealth Practice Circles: The Entry Point
   12. Graduation to Capital Mode
   13. Land Acquisition: Community Farms
   14. Food Distribution: Regional Drop Points
   15. Apartment Buildings: Purchase and Renovation
   16. The Full Economic Loop
 
-PART 4 — WHY AXIOM PROTOCOL IS THE ONLY OPTION
-  17. What the Alternatives Are (and Why They Fail)
+PART 4 — AXIOM PROTOCOL AS PREFERRED INFRASTRUCTURE
+  17. What the Alternatives Are (and Their Limitations)
   18. What Makes Axiom Different
   19. The Infrastructure Already Exists
 
@@ -385,9 +385,9 @@ Blockchain solves the infrastructure gap.
 
 Not because blockchain is magical. Not because cryptocurrency
 is the answer to everything. But because blockchain provides
-specific capabilities that no other technology provides — and
-those capabilities map exactly to the problems that have
-prevented group economics from scaling:
+specific capabilities that are difficult to replicate with
+other technology — and those capabilities map directly to the
+problems that have prevented group economics from scaling:
 
 TRUST → VERIFICATION:
   Every transaction on a blockchain is publicly verifiable.
@@ -408,7 +408,7 @@ ENFORCEMENT → AUTOMATION:
   or execute the transfer. The code runs.
 
 SCALING → COMPOSABILITY:
-  On-chain systems can connect to each other. A SUSU savings
+  On-chain systems can connect to each other. A Wealth Practice savings
   circle can graduate into a land acquisition pool that
   connects to a property registry that feeds into a revenue
   distribution system. Each piece works independently but
@@ -500,21 +500,22 @@ This is not a whitepaper. These are deployed, verified
 contracts. Every address can be inspected on Arbiscan.
 
 ========================================================================
-11. SUSU CIRCLES: THE ENTRY POINT
+11. WEALTH PRACTICE CIRCLES: THE ENTRY POINT
 ========================================================================
 
-The journey begins with SUSU circles — the same rotating
-savings practice Black communities have used for generations,
-rebuilt with modern accountability.
+The journey begins with Wealth Practice circles — built on
+the same rotating savings tradition (SUSU) that Black
+communities have practiced for generations, now rebuilt with
+modern accountability.
 
 A group of people agrees to contribute a fixed amount each
 week. Each period, one member receives the full pot. The
 rotation continues until everyone has received their payout.
 
 Traditional SUSU depends on trust.
-Axiom SUSU depends on code.
+Axiom Wealth Practice circles depend on code.
 
-What Axiom SUSU adds:
+What Axiom Wealth Practice circles add:
   - Automated contribution enforcement (no chasing payments)
   - On-chain transparency (every dollar visible)
   - Insurance Fund protection (defaults are covered)
@@ -536,9 +537,10 @@ balance. No account fees. Just show up and contribute.
 12. GRADUATION TO CAPITAL MODE
 ========================================================================
 
-After a SUSU circle completes 3+ successful rotations (or
-operates for 6+ months with all members in good standing),
-the group qualifies to graduate to Capital Mode.
+After a Wealth Practice circle completes 3+ successful
+rotations (or operates for 6+ months with all members in
+good standing), the group qualifies to graduate to Capital
+Mode.
 
 Capital Mode transforms a savings circle into an investment
 vehicle. The group is no longer just saving money and rotating
@@ -587,8 +589,8 @@ Step 1 — Capital Formation:
 Step 2 — Land Identification:
   The group identifies target farmland. In many rural areas
   of the American South, farmland is available for $2,000-
-  $5,000 per acre. $104,000 can purchase 20-50 acres depending
-  on location and condition.
+  $5,000 per acre. A $104,000 pool could target 20-50 acres
+  depending on location, condition, and market availability.
 
 Step 3 — On-Chain Land Acquisition:
   Capital is deployed through the LandAcquisitionPool
@@ -696,7 +698,7 @@ WHY APARTMENT BUILDINGS:
 HOW AXIOM MAKES THIS POSSIBLE:
 
 Step 1 — Capital Formation:
-  Same SUSU-to-Capital-Mode pipeline. A group of 30 members
+  Same Wealth Practice-to-Capital-Mode pipeline. A group of 30 members
   contributing $150/week in Capital Mode accumulates
   $4,500/week collectively.
   Over 12 months: $234,000.
@@ -753,8 +755,8 @@ Step 6 — Revenue Circulation:
     → KeyGrow escrow (building tenant equity)
 
   Every dollar is visible. Every distribution is on-chain.
-  The building generates wealth for the community that
-  owns it — not for an absentee investor in another state.
+  The building strengthens capital formation for the community
+  that owns it — not for an absentee investor in another state.
 
 ========================================================================
 16. THE FULL ECONOMIC LOOP
@@ -764,7 +766,7 @@ When these three investments operate together — farmland,
 food distribution, and housing — they create a self-
 reinforcing economic loop:
 
-  SUSU Circles → Build savings discipline and AxiomScore
+  Wealth Practice Circles → Build savings discipline and AxiomScore
        ↓
   Capital Mode → Pool capital for investment
        ↓
@@ -795,10 +797,10 @@ ensures democratic decision-making.
 
 ========================================================================
 
-PART 4 — WHY AXIOM PROTOCOL IS THE ONLY OPTION
+PART 4 — AXIOM PROTOCOL AS PREFERRED INFRASTRUCTURE
 
 ========================================================================
-17. WHAT THE ALTERNATIVES ARE (AND WHY THEY FAIL)
+17. WHAT THE ALTERNATIVES ARE (AND THEIR LIMITATIONS)
 ========================================================================
 
 ALTERNATIVE 1: TRADITIONAL BANK POOLING
@@ -812,7 +814,7 @@ ALTERNATIVE 1: TRADITIONAL BANK POOLING
   - No insurance for member defaults
   - No reputation system
   - Requires every member to pass bank verification
-  Verdict: One dishonest person destroys everything.
+  Verdict: Vulnerable to individual mismanagement.
 
 ALTERNATIVE 2: CROWDFUNDING (GoFundMe, etc.)
   Raise money through a campaign.
@@ -876,7 +878,7 @@ ALTERNATIVE 6: INFORMAL GROUP ECONOMICS (Cash-Based)
 ALTERNATIVE 7: EXISTING CRYPTO/DeFi PLATFORMS
   Use DeFi protocols for pooling and investment.
   Problems:
-  - No SUSU circle mechanics (no rotating savings)
+  - No Wealth Practice circle mechanics (no rotating savings)
   - No graduation pipeline (no trust-building stages)
   - No insurance fund for member defaults
   - No AxiomScore reputation system
@@ -886,67 +888,67 @@ ALTERNATIVE 7: EXISTING CRYPTO/DeFi PLATFORMS
   - No farmer/builder credit facilities
   - Not designed for community asset acquisition
   - Designed for individual traders, not collective economics
-  Verdict: DeFi provides financial tools but not community
-  economic infrastructure.
+  Verdict: DeFi provides financial tools but generally lacks
+  community economic infrastructure.
 
 ========================================================================
 18. WHAT MAKES AXIOM DIFFERENT
 ========================================================================
 
-Axiom Protocol is the only system that combines ALL of the
-following in a single deployed infrastructure:
+Axiom Protocol is designed to combine all of the following
+in a single deployed infrastructure:
 
-1. COMMUNITY SAVINGS CIRCLES (SUSU)
+1. COMMUNITY SAVINGS CIRCLES (Wealth Practice)
    Rotating savings with automated enforcement, insurance
    protection, and on-chain reputation building.
-   No other protocol has this.
+   This capability is uncommon in existing protocols.
 
 2. TRUST-BUILDING PIPELINE
-   Purpose Groups (no money) → SUSU Circles (savings) →
+   Purpose Groups (no money) → Wealth Practice Circles (savings) →
    Wealth Practice (investment). Progressive trust
    development before financial commitment.
-   No other protocol has this.
+   This capability is uncommon in existing protocols.
 
 3. GRADUATION MECHANICS
    Verifiable on-chain criteria for advancing from saver
    to investor. AxiomScore tracks reliability across
    the entire journey.
-   No other protocol has this.
+   This capability is uncommon in existing protocols.
 
 4. LAND ACQUISITION CONTRACTS
    Dedicated automated control layers for community land
    pooling, tokenized land options, and farmer credit
    facilities. Designed specifically for collective
    land purchases.
-   No other protocol has this.
+   This capability is uncommon in existing protocols.
 
 5. HOUSING MANAGEMENT CONTRACTS
    Lease management, rent collection, rent-to-own
    pathways, and revenue distribution — all on-chain.
-   No other protocol has this.
+   This capability is uncommon in existing protocols.
 
 6. DEFAULT INSURANCE
    A funded insurance pool (backed by DePIN infrastructure
    revenue) that covers member defaults so the group is
    protected.
-   No other protocol has this.
+   This capability is uncommon in existing protocols.
 
 7. STABLECOIN DENOMINATION
    AXUSD-denominated circles and investments maintain
    stable dollar value throughout. No volatility risk
    on savings or revenue.
-   No other protocol has this for community savings.
+   This capability is uncommon for community savings protocols.
 
 8. COMPLETE REVENUE LOOP
    From contribution to investment to asset management
    to revenue distribution — every step is on-chain,
    transparent, and automated.
-   No other protocol connects all these steps.
+   Few existing protocols connect all these steps.
 
 9. BUILDER AND FARMER CREDIT
    Dedicated credit facilities with terms designed for
    building renovations and farm development.
-   No other protocol has this.
+   This capability is uncommon in existing protocols.
 
 10. CULTURAL ALIGNMENT
     Built on the SUSU tradition that Black communities
@@ -967,7 +969,7 @@ layers are deployed on Arbitrum One. The contracts are
 source-verified on Arbiscan. The system is built.
 
 72 verified contracts handle:
-  - Savings and SUSU mechanics
+  - Savings and Wealth Practice mechanics
   - Insurance and default protection
   - Land registration and acquisition
   - Lease and rent management
@@ -979,8 +981,8 @@ source-verified on Arbiscan. The system is built.
   - Infrastructure (DePIN) revenue generation
 
 The protocol is in its bootstrap phase (Week 5 of a 52-week
-operational playbook). SUSU circle activation is planned for
-Weeks 11-13. Land acquisition infrastructure activation
+operational playbook). Wealth Practice circle activation is
+planned for Weeks 11-13. Land acquisition infrastructure activation
 follows in subsequent phases.
 
 The point is: You are not waiting for someone to build
@@ -1003,7 +1005,7 @@ MONTH 1-2: JOIN A PURPOSE GROUP
   - Build relationships, exchange vouches, learn the system
   - Begin earning AxiomScore through engagement
 
-MONTH 3-5: FIRST SUSU CIRCLE
+MONTH 3-5: FIRST WEALTH PRACTICE CIRCLE
   - Start a circle: 10 members, $50/week, AXUSD-denominated
   - Weekly pot: $500 rotating to one member per period
   - Complete first full rotation (10 weeks)
@@ -1053,7 +1055,7 @@ MONTH 18-24 (PARALLEL): HOUSING ACQUISITION
 MONTH 25+: COMPOUND AND EXPAND
   - Multiple revenue streams: farm sales + rent income
   - Reinvest into additional land and buildings
-  - New SUSU circles feed new groups into the pipeline
+  - New Wealth Practice circles feed new groups into the pipeline
   - Regional network of community-owned assets grows
   - Each success funds the next acquisition
 
@@ -1061,7 +1063,7 @@ MONTH 25+: COMPOUND AND EXPAND
 21. COMMUNITY FARM DEVELOPMENT MODEL
 ========================================================================
 
-TARGET: 30 acres of farmland
+TARGETED ACQUISITION: Approximately 30 acres of farmland (illustrative)
 
 ACQUISITION COST: $60,000-$150,000 (varies by region)
   - Deep South (AL, MS, GA): $2,000-$3,000/acre
@@ -1142,7 +1144,7 @@ DISTRIBUTION VOLUME (5 Drop Points):
 
 REVENUE:
   - Non-member sales at drop points fund logistics
-  - Member access included in SUSU/Wealth Practice membership
+  - Member access included in Wealth Practice circle membership
   - Zero-profit model for members (food at production cost)
   - Surplus produce donated or composted
 
@@ -1210,7 +1212,7 @@ THE COMMUNITY IMPACT:
     deteriorate)
   - Residents have a path to ownership (not perpetual renting)
   - Revenue funds additional acquisitions
-  - Visible proof that group economics works
+  - Visible demonstration of group economics in practice
 
 ========================================================================
 24. COMBINING ALL THREE
@@ -1222,7 +1224,7 @@ and community-owned housing together, the economics compound:
 YEAR 1:
   - 20 members, $100/week Capital Mode contributions
   - Total pooled: $104,000
-  - Purchase: 30 acres of farmland ($90,000)
+  - Targeted land acquisition: approximately 30 acres ($90,000 illustrative)
   - Remaining: $14,000 for initial farm development
   - Begin cultivation
 
@@ -1252,15 +1254,15 @@ YEAR 4:
 
 YEAR 5:
   - Multiple revenue streams compounding
-  - Community owns 50+ acres of farmland
-  - Community owns 1-2 apartment buildings (20+ units)
-  - 10+ food drop points serving the region
-  - 500+ families receiving fresh food weekly
+  - Community targets 50+ acres of farmland in its pipeline
+  - Community targets 1-2 apartment buildings (20+ units)
+  - 10+ food drop points planned for the region
+  - Projected: 500+ families receiving fresh food weekly
   - 20+ families on rent-to-own pathway
-  - Total community assets: $800,000-$1,200,000
+  - Projected community asset base: $800,000-$1,200,000 (illustrative)
 
-Started with $25/week SUSU contributions.
-Built to over $1,000,000 in community-owned assets.
+Started with $25/week Wealth Practice contributions.
+Projected to build toward $1,000,000+ in community-held assets.
 Every dollar tracked on-chain.
 Every decision made by group vote.
 Every member's contribution and ownership share verifiable.

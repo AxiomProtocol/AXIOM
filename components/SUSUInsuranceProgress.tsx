@@ -90,7 +90,7 @@ export default function SUSUInsuranceProgress({
     <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 border border-blue-500/30 rounded-xl p-6">
       <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
         <span className="text-2xl">🛡️</span>
-        SUSU Insurance Fund
+        Wealth Practice Insurance Fund
       </h3>
 
       <div className="grid md:grid-cols-2 gap-6">
@@ -184,7 +184,7 @@ export default function SUSUInsuranceProgress({
         <div className="flex items-start gap-2">
           <span className="text-blue-400">ℹ️</span>
           <div className="text-sm text-gray-300">
-            The Insurance Fund is built from 5% of DePIN node rewards and protects SUSU circles 
+            The Insurance Fund is built from 5% of DePIN node rewards and protects Wealth Practice circles 
             against defaults. Higher coverage = safer circles.
           </div>
         </div>

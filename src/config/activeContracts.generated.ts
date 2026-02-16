@@ -37,7 +37,7 @@ export const ACTIVE_CONTRACTS = {
     primary: ACTIVE_AXUSD,
     euler: EULER_AXUSD,
     label: {
-      primary: 'GENIUS Act Compliant AXUSD (Jan 11, 2026)',
+      primary: 'GENIUS Act Aligned AXUSD (Jan 11, 2026)',
       euler: 'Original AxiomStable (Jan 5, 2026) — Euler Vault binding',
     },
   },

@@ -85,7 +85,7 @@ export async function generateHeroBackground(pageName: string): Promise<string |
     treasury: 'Abstract vault visualization with golden security shields and flowing particle effects, DeFi treasury aesthetic, dark luxurious background',
     staking: 'Glowing golden tokens stacking and multiplying, particle effects, wealth growth visualization, dark gradient background with subtle grid',
     governance: 'Democratic assembly visualization with glowing voting nodes, golden and blue accents, decentralized governance aesthetic',
-    susu: 'Connected community circle with flowing golden energy between members, rotating savings visualization, warm golden glow on dark background',
+    susu: 'Connected community circle with flowing golden energy between members, community savings visualization, warm golden glow on dark background',
     nodes: 'DePIN infrastructure network with glowing server nodes connected by golden data streams, futuristic hardware visualization',
     keygrow: 'Tokenized real estate visualization with holographic property blueprints and golden key, Web3 property ownership aesthetic'
   };

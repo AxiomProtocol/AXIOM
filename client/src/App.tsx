@@ -287,7 +287,7 @@ function CreateCirclePage() {
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center max-w-md mx-auto p-8">
             <h1 className="text-3xl font-bold text-gray-100 mb-4">🎯 Circle Creation</h1>
-            <p className="text-gray-300 mb-6">Ready to create your savings circle?</p>
+            <p className="text-gray-300 mb-6">Ready to create your Wealth Practice circle?</p>
             <div className="space-x-4">
               <button
                 onClick={() => setShowWizard(true)}

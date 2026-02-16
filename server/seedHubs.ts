@@ -75,11 +75,11 @@ export async function seedHubsIfEmpty(): Promise<void> {
     const count = parseInt(result.rows[0]?.count || '0');
     
     if (count > 0) {
-      console.log(`SUSU hubs already seeded (${count} hubs found)`);
+      console.log(`Wealth Practice hubs already seeded (${count} hubs found)`);
       return;
     }
 
-    console.log('Seeding SUSU interest hubs...');
+    console.log('Seeding Wealth Practice interest hubs...');
 
     for (const hub of US_STATES) {
       await pool.query(
@@ -108,7 +108,7 @@ export async function seedHubsIfEmpty(): Promise<void> {
       );
     }
 
-    console.log('SUSU hubs seeded successfully (60 regions added)');
+    console.log('Wealth Practice hubs seeded successfully (60 regions added)');
   } catch (error: any) {
     console.error('Error seeding hubs:', error.message);
   }

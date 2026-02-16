@@ -319,7 +319,7 @@ export default function BuyAXMPage() {
             </div>
             <div className="bg-dl-bg p-4 border border-dl-border">
               <div className="text-dl-gray mb-1">Use Cases</div>
-              <div className="text-dl-navy">Staking, Governance, SUSU</div>
+              <div className="text-dl-navy">Staking, Governance, Wealth Practice</div>
             </div>
           </div>
         </div>

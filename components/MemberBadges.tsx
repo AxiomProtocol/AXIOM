@@ -16,14 +16,14 @@ const ALL_BADGES: Badge[] = [
   {
     id: 'first-susu',
     name: 'First Steps',
-    description: 'Completed your first SUSU payment',
+    description: 'Completed your first Wealth Practice payment',
     icon: '🌱',
     rarity: 'common'
   },
   {
     id: 'circle-complete',
     name: 'Circle Champion',
-    description: 'Completed a full SUSU cycle',
+    description: 'Completed a full Wealth Practice cycle',
     icon: '🔄',
     rarity: 'rare'
   },
@@ -37,7 +37,7 @@ const ALL_BADGES: Badge[] = [
   {
     id: 'organizer',
     name: 'Community Leader',
-    description: 'Became a certified SUSU organizer',
+    description: 'Became a certified Wealth Practice organizer',
     icon: '👑',
     rarity: 'epic'
   },

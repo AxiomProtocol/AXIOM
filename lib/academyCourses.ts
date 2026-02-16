@@ -2065,8 +2065,8 @@ Plan for various scenarios:
   {
     id: 5,
     slug: 'susu-community-savings',
-    title: 'SUSU: Community Savings Circles',
-    description: 'Learn the traditional rotating savings method modernized with blockchain for trust, transparency, and efficiency.',
+    title: 'The Wealth Practice: Community Wealth Circles',
+    description: 'Learn the traditional community savings method modernized with blockchain for trust, transparency, and efficiency.',
     category: 'Community',
     difficulty: 'beginner',
     durationMinutes: 30,
@@ -2075,15 +2075,15 @@ Plan for various scenarios:
     lessons: [
       {
         id: 1,
-        title: 'The History of SUSU',
+        title: 'The History of The Wealth Practice',
         duration: 8,
-        content: `SUSU (also known as ROSCA - Rotating Savings and Credit Association) is one of humanity's oldest financial systems.
+        content: `The Wealth Practice draws from one of humanity's oldest financial systems -- community wealth circles found in cultures worldwide.
 
 ## Origins and Global Presence
 
-SUSU has many names worldwide:
+Community savings has many names worldwide:
 
-- **SUSU**: Caribbean, West Africa
+- **Partner, Box Hand**: Caribbean
 - **Tanda**: Mexico, Latin America
 - **Chit Fund**: India
 - **Hui**: China
@@ -2092,7 +2092,7 @@ SUSU has many names worldwide:
 
 The concept spans continents and centuries.
 
-## How Traditional SUSU Works
+## How Traditional Community Savings Works
 
 The basic structure:
 
@@ -2104,7 +2104,7 @@ The basic structure:
 
 Example: 10 people × $100/month = $1,000 payout each month to one person.
 
-## Why SUSU Developed
+## Why Community Savings Developed
 
 Traditional banking doesn't serve everyone:
 
@@ -2116,14 +2116,14 @@ Traditional banking doesn't serve everyone:
 
 ## The Trust Problem
 
-Traditional SUSU has vulnerabilities:
+Traditional community savings has vulnerabilities:
 
 - What if someone collects early and disappears?
 - What if the organizer takes the money?
 - How do you verify contributions?
 - What if someone can't pay?
 
-These risks have limited SUSU's growth.
+These risks have limited community savings growth.
 
 ## Blockchain as the Solution
 
@@ -2135,23 +2135,23 @@ Smart contracts solve trust issues:
 - Rules are enforced by code
 - Participation history is public
 
-> "SUSU proves that communities can create their own financial systems. Blockchain makes them trustless and global."`,
+> "The Wealth Practice proves that communities can create their own financial systems. Blockchain makes them trustless and global."`,
         keyTakeaways: [
-          'SUSU is a centuries-old savings method found in cultures worldwide',
+          'The Wealth Practice is based on a centuries-old savings method found in cultures worldwide',
           'Groups pool money and take turns receiving the full pot',
-          'Traditional SUSU requires high trust between members',
+          'Traditional community savings requires high trust between members',
           'Blockchain eliminates trust issues through transparent smart contracts'
         ]
       },
       {
         id: 2,
-        title: 'How Axiom SUSU Works',
+        title: 'How Axiom Wealth Practice Works',
         duration: 8,
-        content: `Axiom SUSU brings this ancient practice on-chain with smart contract security.
+        content: `Axiom's Wealth Practice brings this ancient community savings model on-chain with smart contract security.
 
 ## The Smart Contract Structure
 
-AxiomSusuHub manages everything:
+The Wealth Practice smart contract manages everything:
 
 - Pool creation and parameters
 - Member enrollment
@@ -2210,7 +2210,7 @@ If someone misses a payment:
 - Repeated defaults lead to removal
 - Other members are protected`,
         keyTakeaways: [
-          'AxiomSusuHub smart contract manages all pool operations',
+          'The Wealth Practice smart contract manages all pool operations',
           'Organizers set contribution amount, cycle duration, and member count',
           'Payouts are automatic when your turn arrives',
           'Protocol fees are minimal (1-2%) and fund platform development'
@@ -2218,9 +2218,9 @@ If someone misses a payment:
       },
       {
         id: 3,
-        title: 'Participating in SUSU Pools',
+        title: 'Participating in Wealth Practice Pools',
         duration: 7,
-        content: `Ready to join a SUSU pool? Here's what you need to know.
+        content: `Ready to join a Wealth Practice pool? Here's what you need to know.
 
 ## Finding the Right Pool
 
@@ -2254,12 +2254,12 @@ Breaking commitment affects your reputation and may lose deposits.
 
 ## Managing Cash Flow
 
-Plan your finances around SUSU:
+Plan your finances around The Wealth Practice:
 
 - Set aside contribution amount from each paycheck
 - Use calendar reminders
 - Automate if possible
-- Don't rely on SUSU payout for immediate expenses
+- Don't rely on Wealth Practice payout for immediate expenses
 
 ## Receiving Your Payout
 
@@ -2279,7 +2279,7 @@ When cycle completes:
 - Build reputation for better pools
 - Invite trusted friends and family
 
-> "SUSU works because everyone wins—you just win at different times."`,
+> "The Wealth Practice works because everyone wins -- you just win at different times."`,
         keyTakeaways: [
           'Choose pools with contribution amounts you can reliably commit to',
           'Plan cash flow to ensure you never miss a contribution',
@@ -2291,7 +2291,7 @@ When cycle completes:
         id: 4,
         title: 'Starting Your Own Pool',
         duration: 7,
-        content: `Want to organize a SUSU pool? Here's how to create a successful one.
+        content: `Want to organize a Wealth Practice pool? Here's how to create a successful one.
 
 ## Planning Your Pool
 
@@ -2315,7 +2315,7 @@ Consider these factors:
 
 Creating pool on Axiom:
 
-1. Connect wallet to Axiom SUSU
+1. Connect wallet to Axiom Wealth Practice
 2. Click "Create Pool"
 3. Set contribution amount
 4. Choose cycle duration
@@ -2329,7 +2329,7 @@ Creating pool on Axiom:
 Build your circle:
 
 - Start with people you know
-- Explain SUSU concept to newcomers
+- Explain The Wealth Practice concept to newcomers
 - Be transparent about terms
 - Screen for reliability
 - Maintain waitlist for future cycles
@@ -3990,7 +3990,7 @@ Building wealth within the ecosystem:
 - AXM staking rewards
 - DePIN node operation
 - KeyGrow equity accumulation
-- SUSU community participation
+- Wealth Practice community participation
 - Governance participation
 - Ecosystem growth
 
@@ -4791,7 +4791,7 @@ Axiom uses smart contracts for:
 - AXM token transfers
 - DePIN node rewards
 - KeyGrow equity tracking
-- SUSU savings pools
+- Wealth Practice savings pools
 - Governance voting`,
         keyTakeaways: [
           'Smart contracts are self-executing code on blockchain',
@@ -4991,7 +4991,7 @@ Our ecosystem includes:
 
 - AXM staking
 - Liquidity provision
-- SUSU savings circles
+- Wealth Practice circles
 - Future: Full DEX functionality`,
         keyTakeaways: [
           'DEXs let you trade without giving up custody',
@@ -5553,7 +5553,7 @@ Axiom's token provides:
 - Staking rewards
 - Platform fee discounts
 - DePIN participation
-- SUSU pool contributions
+- Wealth Practice pool contributions
 - Future: Native gas token`,
         keyTakeaways: [
           'Strong utility creates real demand for tokens',

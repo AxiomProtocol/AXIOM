@@ -286,7 +286,7 @@ function BasicInformation({ formData, onUpdate, onNext, onBack }: {
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">📝 Circle Details</h2>
-        <p className="text-lg text-gray-600">Tell us about your savings circle</p>
+        <p className="text-lg text-gray-600">Tell us about your Wealth Practice circle</p>
       </div>
 
       <Card>
@@ -533,7 +533,7 @@ function ContributionSettings({ formData, onUpdate, onNext, onBack }: {
                 />
                 <div>
                   <label htmlFor="rotating" className="font-medium text-gray-900">Rotating Payout</label>
-                  <p className="text-sm text-gray-600">One member gets the full amount each period (traditional SouSou)</p>
+                  <p className="text-sm text-gray-600">One member gets the full amount each period (traditional Wealth Practice)</p>
                 </div>
               </div>
 
@@ -1136,7 +1136,7 @@ export function CreateCircleWizard({
           <div className="max-w-4xl mx-auto px-4 py-6">
             <div className="flex justify-between items-center">
               <div>
-                <h1 className="text-2xl font-bold">Create Your Savings Circle</h1>
+                <h1 className="text-2xl font-bold">Create Your Wealth Practice Circle</h1>
                 <p className="opacity-90">Build wealth together with community support</p>
               </div>
               <Button 

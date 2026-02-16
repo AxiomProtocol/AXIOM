@@ -18,7 +18,7 @@ const WEALTH_PRACTICE_MODES = {
     ],
     features: [
       'Pay as you go - no large upfront commitment',
-      'Classic SUSU experience trusted for generations',
+      'Classic Wealth Practice experience trusted for generations',
       'Flexible timing - contribute during each cycle window',
       'Community accountability keeps everyone on track'
     ],

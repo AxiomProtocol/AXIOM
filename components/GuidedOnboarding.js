@@ -545,7 +545,7 @@ export default function GuidedOnboarding({ onComplete, onDismiss, initialReferra
 
       <div className="mt-6 pt-4 border-t border-gray-700">
         <p className="text-xs text-gray-500 text-center">
-          🔒 Protected by SUSU Insurance Fund • No lock-ups • Leave anytime
+          🔒 Protected by Wealth Practice Insurance Fund • No lock-ups • Leave anytime
         </p>
       </div>
     </div>

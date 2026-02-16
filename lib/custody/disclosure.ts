@@ -44,7 +44,7 @@ export const CUSTODY_DEFINITIONS: Record<CustodyType, CustodyInfo> = {
     label: 'Pooled Custody',
     color: 'amber',
     shortDescription: 'Funds pooled with other users. Managers or automated rules control distributions. Higher risk.',
-    fullDescription: 'Your tokens are combined with funds from other users in a shared pool. Distributions are controlled by fund managers (human or algorithmic) or by rotating group rules (like SUSU). You may not be able to withdraw immediately, and your share is proportional rather than segregated. This model carries higher risk due to counterparty exposure and pooled liquidity.',
+    fullDescription: 'Your tokens are combined with funds from other users in a shared pool. Distributions are controlled by fund managers (human or algorithmic) or by rotating group rules (like The Wealth Practice). You may not be able to withdraw immediately, and your share is proportional rather than segregated. This model carries higher risk due to counterparty exposure and pooled liquidity.',
     riskLevel: 'high',
     userControl: 'Limited. You deposit voluntarily but distributions follow pool rules.',
     protocolAccess: 'Fund managers control pool operations within defined parameters.',
@@ -87,7 +87,7 @@ export const STANDARD_RISK_WARNINGS: RiskWarning[] = [
   {
     id: 'counterparty',
     title: 'Counterparty Risk (Pooled Products Only)',
-    description: 'In pooled products like SUSU circles or investment funds, other participants may default or exit early, potentially affecting your returns.',
+    description: 'In pooled products like Wealth Practice circles or investment funds, other participants may default or exit early, potentially affecting your outcome.',
     severity: 'warning',
   },
   {

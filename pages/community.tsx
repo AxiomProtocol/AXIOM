@@ -18,7 +18,7 @@ const TESTIMONIALS: Testimonial[] = [
     name: "Marcus J.",
     location: "Atlanta, GA",
     avatar: "MJ",
-    story: "Before Axiom, I never thought homeownership was possible. Through KeyGrow and my SUSU circle, I've saved my entire down payment in just 18 months.",
+    story: "Before Axiom, I never thought homeownership was possible. Through KeyGrow and my Wealth Practice circle, I've saved my entire down payment in just 18 months.",
     achievement: "Saved $15,000 for down payment",
     joinedDate: "March 2024"
   },
@@ -27,8 +27,8 @@ const TESTIMONIALS: Testimonial[] = [
     name: "Keisha T.",
     location: "Houston, TX",
     avatar: "KT",
-    story: "My savings group became my accountability partners. We check in weekly, celebrate wins together, and push each other toward our goals.",
-    achievement: "Started 2 savings groups",
+    story: "My Wealth Practice group became my accountability partners. We check in weekly, celebrate wins together, and push each other toward our goals.",
+    achievement: "Started 2 Wealth Practice groups",
     joinedDate: "January 2024"
   },
   {
@@ -36,7 +36,7 @@ const TESTIMONIALS: Testimonial[] = [
     name: "David R.",
     location: "Chicago, IL",
     avatar: "DR",
-    story: "The Academy courses taught me about wealth building in ways school never did. Combined with the SUSU model, I finally understand community wealth.",
+    story: "The Academy courses taught me about wealth building in ways school never did. Combined with the Wealth Practice model, I finally understand community wealth.",
     achievement: "Completed 8 courses",
     joinedDate: "February 2024"
   },
@@ -45,7 +45,7 @@ const TESTIMONIALS: Testimonial[] = [
     name: "Angela M.",
     location: "Detroit, MI",
     avatar: "AM",
-    story: "I referred my entire family to Axiom. Now we have a family savings circle working toward generational wealth together.",
+    story: "I referred my entire family to Axiom. Now we have a family Wealth Practice circle working toward generational wealth together.",
     achievement: "Referred 12 family members",
     joinedDate: "December 2023"
   }
@@ -54,7 +54,7 @@ const TESTIMONIALS: Testimonial[] = [
 const SUCCESS_STATS = [
   { value: "2,500+", label: "Active Members", icon: "👥" },
   { value: "$1.2M+", label: "Total Saved", icon: "💰" },
-  { value: "150+", label: "Savings Groups", icon: "🤝" },
+  { value: "150+", label: "Wealth Practice Groups", icon: "🤝" },
   { value: "45", label: "Cities Represented", icon: "🌍" },
 ];
 

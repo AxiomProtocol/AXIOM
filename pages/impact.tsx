@@ -68,7 +68,7 @@ function AnimatedCounter({ value, prefix = '', suffix = '' }: {
 const METRIC_CARDS = [
   { key: 'totalMembers', label: 'Active Members', icon: '👥' },
   { key: 'susuTotalSaved', label: 'Total Saved', icon: '💰', prefix: '$' },
-  { key: 'susuPoolsCreated', label: 'SUSU Circles', icon: '🤝' },
+  { key: 'susuPoolsCreated', label: 'Wealth Practice Circles', icon: '🤝' },
   { key: 'keygrowEnrollments', label: 'KeyGrow Enrollments', icon: '🏠' },
   { key: 'depinNodesActive', label: 'DePIN Nodes', icon: '🌐' },
   { key: 'academyCompletions', label: 'Course Completions', icon: '📚' },

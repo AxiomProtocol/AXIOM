@@ -188,7 +188,7 @@ export default function ShareableProgressCard({ walletAddress, compact = false }
         <div className="flex items-center justify-between p-3 bg-gray-800/30 rounded-xl">
           <div className="flex items-center gap-2">
             <span className="text-lg">🔄</span>
-            <span className="text-sm text-gray-300">{progress?.susuRotations || 0} SUSU Rotations</span>
+            <span className="text-sm text-gray-300">{progress?.susuRotations || 0} Wealth Practice Rotations</span>
           </div>
           <div className="text-sm text-indigo-400 font-medium">
             Join with code: {progress?.referralCode || 'AXIOM'}

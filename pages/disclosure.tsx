@@ -100,7 +100,7 @@ export default function DisclosurePage() {
 
   const configuredItems = [
     'SEED participation lockup program (contract deployed, activation planned Weeks 11-13)',
-    'SUSU rotating savings program (contract deployed, activation planned Weeks 11-13)',
+    'The Wealth Practice savings program (contract deployed, activation planned Weeks 11-13)',
     'Sentinel capital decision layer (deployed, advisory mode only \u2014 no execution authority)',
     'Lending Fund vault infrastructure (3 contracts deployed, awaiting first deposit)',
     'DEX liquidity pools (contracts deployed, awaiting liquidity seeding)',

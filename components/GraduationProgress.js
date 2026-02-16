@@ -72,7 +72,7 @@ export default function GraduationProgress({ groupId, isCreator, onGraduate }) {
               <p className="text-gray-400 text-sm">
                 {status.currentMode === 'capital' 
                   ? 'Eligible for larger investment opportunities' 
-                  : 'Traditional savings circle - grow to unlock Capital Mode'}
+                  : 'Traditional Wealth Practice circle - grow to unlock Capital Mode'}
               </p>
             </div>
           </div>
