@@ -1,24 +1,93 @@
-import React, { useState, useEffect, ReactNode } from 'react';
+import React, { useState, useEffect, useRef, ReactNode } from 'react';
 import Link from 'next/link';
 import { ConnectWalletButton } from './ConnectWalletButton';
 
-const NAV_LINKS = [
+interface NavItem {
+  href?: string;
+  label: string;
+  children?: { href: string; label: string }[];
+}
+
+const NAV_ITEMS: NavItem[] = [
   { href: '/about-us', label: 'About' },
   { href: '/disclosure', label: 'Disclosure' },
-  { href: '/founder-ops', label: 'Founder Ops' },
-  { href: '/solvency', label: 'Solvency' },
-  { href: '/products', label: 'Products' },
-  { href: '/susu', label: 'Wealth Practice' },
-  { href: '/land', label: 'Land' },
-  { href: '/pilot', label: 'Capital Program' },
-  { href: '/lending-fund', label: 'Lending Fund' },
-  { href: '/dex', label: 'Exchange' },
-  { href: '/mirdt', label: 'Intelligence' },
-  { href: '/sentinel', label: 'Sentinel' },
-  { href: '/observer', label: 'Observer' },
-  { href: '/depin/denet', label: 'DePIN' },
+  {
+    label: 'Community',
+    children: [
+      { href: '/susu', label: 'Wealth Practice' },
+      { href: '/land', label: 'Land' },
+    ],
+  },
+  {
+    label: 'Products',
+    children: [
+      { href: '/pilot', label: 'Capital Program' },
+      { href: '/lending-fund', label: 'Lending Fund' },
+      { href: '/dex', label: 'Exchange' },
+      { href: '/depin/denet', label: 'DePIN' },
+    ],
+  },
+  {
+    label: 'Intelligence',
+    children: [
+      { href: '/mirdt', label: 'MIRDT' },
+      { href: '/sentinel', label: 'Sentinel' },
+      { href: '/observer', label: 'Observer' },
+    ],
+  },
+  {
+    label: 'Operations',
+    children: [
+      { href: '/founder-ops', label: 'Founder Ops' },
+      { href: '/solvency', label: 'Solvency' },
+      { href: '/products', label: 'All Products' },
+    ],
+  },
   { href: '/contact', label: 'Contact' },
 ];
+
+function NavDropdown({ item }: { item: NavItem }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1 hover:underline text-dl-navy text-sm"
+      >
+        {item.label}
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.5" className={open ? 'rotate-180' : ''}>
+          <polyline points="1,1 5,5 9,1" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-2 min-w-[180px] border border-dl-border bg-dl-bg z-50">
+          {item.children!.map((child) => (
+            <Link
+              key={child.href}
+              href={child.href}
+              className="block px-4 py-2.5 text-sm text-dl-navy border-b border-dl-border last:border-b-0 hover:bg-gray-50"
+              onClick={() => setOpen(false)}
+            >
+              {child.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface DesignLawLayoutProps {
   children: ReactNode;
@@ -44,18 +113,22 @@ export function DesignLawLayout({ children }: DesignLawLayoutProps) {
           <Link href="/" className="font-dl-serif text-lg text-dl-navy font-bold">
             AXIOM
           </Link>
-          <div className="hidden md:flex items-center gap-6 text-sm text-dl-navy">
-            {NAV_LINKS.map((link) => (
-              <Link key={link.href} href={link.href} className="hover:underline">{link.label}</Link>
-            ))}
+          <div className="hidden lg:flex items-center gap-6 text-sm text-dl-navy">
+            {NAV_ITEMS.map((item) =>
+              item.children ? (
+                <NavDropdown key={item.label} item={item} />
+              ) : (
+                <Link key={item.href} href={item.href!} className="hover:underline">{item.label}</Link>
+              )
+            )}
           </div>
           <div className="flex items-center gap-3">
-            <div className="hidden md:block">
+            <div className="hidden lg:block">
               <ConnectWalletButton />
             </div>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden p-2 text-dl-navy border border-dl-border bg-dl-bg"
+              className="lg:hidden p-2 text-dl-navy border border-dl-border bg-dl-bg"
               aria-label="Menu"
             >
               {menuOpen ? (
@@ -74,18 +147,34 @@ export function DesignLawLayout({ children }: DesignLawLayoutProps) {
           </div>
         </div>
         {menuOpen && (
-          <div className="md:hidden border-t border-dl-border bg-dl-bg">
+          <div className="lg:hidden border-t border-dl-border bg-dl-bg">
             <div className="max-w-7xl mx-auto px-6 py-3">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="block py-2 text-sm text-dl-navy border-b border-dl-border last:border-b-0 hover:underline"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {NAV_ITEMS.map((item) =>
+                item.children ? (
+                  <div key={item.label} className="border-b border-dl-border last:border-b-0">
+                    <p className="py-2 text-xs text-dl-gray uppercase tracking-wider font-dl-mono">{item.label}</p>
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        className="block py-2 pl-4 text-sm text-dl-navy hover:underline"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        {child.label}
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <Link
+                    key={item.href}
+                    href={item.href!}
+                    className="block py-2 text-sm text-dl-navy border-b border-dl-border last:border-b-0 hover:underline"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                )
+              )}
               <div className="pt-3">
                 <ConnectWalletButton />
               </div>
