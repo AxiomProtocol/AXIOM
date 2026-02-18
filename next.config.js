@@ -20,6 +20,16 @@ const nextConfig = {
   },
 
   webpack: (config, { isServer }) => {
+    // Fix @metamask/sdk uuid ESM browser module resolution issue.
+    // Must apply to BOTH client and server builds since webpack analyzes
+    // dynamic imports on both sides. Forces all uuid imports (including
+    // nested ones inside @metamask/sdk/node_modules/) to resolve to
+    // the top-level uuid package which has the correct files.
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'uuid': path.resolve(__dirname, 'node_modules/uuid'),
+    };
+
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -29,12 +39,6 @@ const nextConfig = {
         tls: false,
         child_process: false,
         readline: false,
-      };
-
-      // Fix @metamask/sdk uuid ESM browser module resolution issue
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        'uuid': path.resolve(__dirname, 'node_modules/uuid'),
       };
     }
 
