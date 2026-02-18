@@ -31,6 +31,14 @@ const nextConfig = {
       };
     }
 
+    // Provide a stub for @metamask/sdk so webpack never tries to bundle it.
+    // The SDK has a broken uuid/dist/esm-browser import that can't be resolved.
+    // Our code uses window.ethereum directly instead.
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@metamask/sdk': false,
+    };
+
     config.plugins.push(
       new webpack.IgnorePlugin({
         resourceRegExp: /^\.[\\/]_archive/,
