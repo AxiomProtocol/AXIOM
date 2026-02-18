@@ -40,7 +40,7 @@ export class WalletService {
 
   private constructor() {
     if (typeof window !== 'undefined') {
-      this.initializeMetaMaskSDK();
+      this.initializeWalletDetection();
     }
   }
 
@@ -55,32 +55,20 @@ export class WalletService {
   }
 
   /**
-   * Initialize MetaMask SDK and check for existing connection
+   * Initialize wallet detection and check for existing connection.
+   * Uses window.ethereum (injected provider) directly instead of MetaMask SDK
+   * to avoid build-time module resolution issues with uuid ESM browser bundles.
    */
-  private async initializeMetaMaskSDK() {
+  private async initializeWalletDetection() {
     if (typeof window === 'undefined' || this.sdkInitialized) return;
     
     try {
-      const baseUrl = window.location.origin;
-      // Dynamically import MetaMask SDK to avoid SSR/build issues with uuid ESM browser module
-      const { default: MetaMaskSDK } = await import('@metamask/sdk');
-      this.metamaskSDK = new MetaMaskSDK({
-        dappMetadata: {
-          name: 'Axiom Protocol',
-          url: window.location.href,
-          iconUrl: `${baseUrl}/logo.png`
-        },
-        checkInstallationImmediately: false,
-        enableAnalytics: false
-      });
       this.sdkInitialized = true;
-      console.log('✅ MetaMask SDK initialized');
       
       // Check for existing connection (auto-reconnect)
       this.checkExistingConnection();
     } catch (error) {
-      console.error('❌ MetaMask SDK initialization error:', error);
-      // Still attempt to check existing connection via window.ethereum even if SDK fails
+      console.error('Wallet detection error:', error);
       this.checkExistingConnection();
     }
   }
@@ -180,21 +168,13 @@ export class WalletService {
     try {
       console.log('🦊 Connecting MetaMask...');
       
-      // Prefer injected provider for better production compatibility
-      // MetaMask SDK can have issues with popups in iframe/production contexts
-      let provider: any = null;
-      
-      if (typeof window !== 'undefined' && window.ethereum) {
-        console.log('📦 Using injected provider (window.ethereum)');
-        provider = window.ethereum;
-      } else if (this.metamaskSDK) {
-        console.log('📦 Using MetaMask SDK provider');
-        provider = this.metamaskSDK.getProvider();
-      }
-      
-      if (!provider) {
+      // Use injected provider (window.ethereum) directly.
+      // MetaMask browser extension injects this automatically.
+      if (typeof window === 'undefined' || !window.ethereum) {
         throw new Error('MetaMask provider not available. Please install MetaMask.');
       }
+      
+      const provider = window.ethereum;
 
       // Request account access
       const accounts = await provider.request({

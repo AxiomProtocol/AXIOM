@@ -124,7 +124,7 @@
     "@google/genai": "^1.34.0",
     "@heroicons/react": "^2.2.0",
     "@metamask/delegation-toolkit": "^0.13.0-rc.1",
-    "@metamask/sdk": "^0.33.0",
+
     "@neondatabase/serverless": "^1.0.0",
     "@octokit/rest": "^22.0.1",
     "@radix-ui/react-slot": "^1.2.3",
