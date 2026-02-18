@@ -16,7 +16,7 @@ const nextConfig = {
   swcMinify: true,
 
   experimental: {
-    serverComponentsExternalPackages: ['pg', 'hardhat', '@nomiclabs/hardhat-ethers', '@nomicfoundation/hardhat-toolbox'],
+    serverComponentsExternalPackages: ['pg'],
   },
 
   webpack: (config, { isServer }) => {
