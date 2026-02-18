@@ -1,3 +1,4 @@
+const path = require('path');
 const webpack = require('webpack');
 
 /** @type {import('next').NextConfig} */
@@ -31,12 +32,13 @@ const nextConfig = {
       };
     }
 
-    // Provide a stub for @metamask/sdk so webpack never tries to bundle it.
-    // The SDK has a broken uuid/dist/esm-browser import that can't be resolved.
-    // Our code uses window.ethereum directly instead.
+    // Replace @metamask/sdk with a stub module so webpack never bundles the real SDK.
+    // The real SDK has a broken uuid/dist/esm-browser import that can't be resolved.
+    // Our code and wagmi's MetaMask connector both try to import it, but we use
+    // window.ethereum directly instead. The stub returns an empty object/constructor.
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@metamask/sdk': false,
+      '@metamask/sdk': path.resolve(__dirname, 'lib/stubs/metamask-sdk-stub.js'),
     };
 
     config.plugins.push(
