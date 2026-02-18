@@ -5,7 +5,6 @@
  */
 
 import { ethers } from 'ethers';
-import MetaMaskSDK from '@metamask/sdk';
 import { NETWORK_CONFIG, CORE_CONTRACTS } from '../../shared/contracts';
 
 export type WalletProvider = 'metamask' | 'walletconnect' | 'injected' | null;
@@ -58,11 +57,13 @@ export class WalletService {
   /**
    * Initialize MetaMask SDK and check for existing connection
    */
-  private initializeMetaMaskSDK() {
+  private async initializeMetaMaskSDK() {
     if (typeof window === 'undefined' || this.sdkInitialized) return;
     
     try {
       const baseUrl = window.location.origin;
+      // Dynamically import MetaMask SDK to avoid SSR/build issues with uuid ESM browser module
+      const { default: MetaMaskSDK } = await import('@metamask/sdk');
       this.metamaskSDK = new MetaMaskSDK({
         dappMetadata: {
           name: 'Axiom Protocol',
@@ -79,6 +80,8 @@ export class WalletService {
       this.checkExistingConnection();
     } catch (error) {
       console.error('❌ MetaMask SDK initialization error:', error);
+      // Still attempt to check existing connection via window.ethereum even if SDK fails
+      this.checkExistingConnection();
     }
   }
 

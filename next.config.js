@@ -30,6 +30,12 @@ const nextConfig = {
         child_process: false,
         readline: false,
       };
+
+      // Fix @metamask/sdk uuid ESM browser module resolution issue
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'uuid': path.resolve(__dirname, 'node_modules/uuid'),
+      };
     }
 
     config.plugins.push(
