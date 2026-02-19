@@ -1,7 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { timingSafeEqual } from 'crypto';
 import { pool } from '../../../server/db';
 import { runStressScenario, runAllStressScenarios, STRESS_SCENARIOS } from '../../../lib/solvency';
 import type { SolvencyMetrics, StressScenario, StressResult } from '../../../lib/solvency';
+
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 async function fetchSnapshotById(snapshotId: string): Promise<{
   payload: Record<string, any>;
@@ -79,8 +85,11 @@ export default async function handler(
   }
 
   const adminKey = process.env.ADMIN_SOLVENCY_KEY;
-  const provided = req.headers['x-admin-key'] as string;
-  const isAdmin = adminKey ? provided === adminKey : false;
+  if (!adminKey) {
+    console.warn('[solvency/scenario] ADMIN_SOLVENCY_KEY not configured — admin features disabled');
+  }
+  const provided = req.headers['x-admin-key'];
+  const isAdmin = !!(adminKey && typeof provided === 'string' && safeCompare(provided, adminKey));
 
   try {
     const { snapshotId, scenarioId, customScenario } = req.body || {};
@@ -177,10 +186,9 @@ export default async function handler(
     });
   } catch (error: any) {
     console.error('[solvency/scenario] Error:', error);
-    return res.status(200).json({
+    return res.status(500).json({
       schemaVersion: 'solvency-scenario-v1',
-      snapshotId: 'none',
-      results: [],
+      error: 'Failed to run stress scenario',
     });
   }
 }

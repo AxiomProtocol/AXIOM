@@ -1,13 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { createHash, timingSafeEqual } from 'crypto';
 import { pool } from '../../../../server/db';
 import { computeFullMetrics, runStressProjection, runAllStressProjections, STRESS_SCENARIOS } from '../../../../lib/solvency/ame';
 import { fetchAllProviderData } from '../../../../lib/solvency/ame/providers';
 import type { AmeInputs, StressProjection } from '../../../../lib/solvency/ame';
 
-const { createHash } = require('crypto');
-
 function computeChecksum(data: any): string {
   return createHash('sha256').update(JSON.stringify(data)).digest('hex').slice(0, 16);
+}
+
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
 }
 
 function parseExplicitInputs(body: any): AmeInputs {
@@ -44,8 +48,9 @@ export default async function handler(
 
   res.setHeader('Cache-Control', 'no-cache');
 
-  const adminKey = req.headers['x-admin-key'];
-  if (!adminKey || adminKey !== process.env.ADMIN_SOLVENCY_KEY) {
+  const adminKey = process.env.ADMIN_SOLVENCY_KEY;
+  const provided = req.headers['x-admin-key'];
+  if (!adminKey || typeof provided !== 'string' || !safeCompare(provided, adminKey)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -60,7 +65,7 @@ export default async function handler(
       inputs = providerResult.inputs;
 
       if (inputs.treasuryTotalUsd === 0 && inputs.netExternalExposureUsd === 0) {
-        return res.status(200).json({
+        return res.status(404).json({
           schemaVersion: 'ame-stress-v2',
           dataStatus: 'empty',
           error: 'No solvency snapshot available to derive AME inputs',
@@ -172,7 +177,7 @@ export default async function handler(
     });
   } catch (error: any) {
     console.error('[solvency/ame/stress-v2] Error:', error);
-    return res.status(200).json({
+    return res.status(500).json({
       schemaVersion: 'ame-stress-v2',
       dataStatus: 'error',
       error: 'Failed to run stress projections',

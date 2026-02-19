@@ -24,8 +24,9 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
     }
 
     if (q) {
+      const sanitizedQ = String(q).replace(/[%_\\]/g, '\\$&');
       conditions.push(`(spg.display_name ILIKE $${paramIndex} OR spg.description ILIKE $${paramIndex})`);
-      params.push(`%${q}%`);
+      params.push(`%${sanitizedQ}%`);
       paramIndex++;
     }
 
