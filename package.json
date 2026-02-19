@@ -98,7 +98,7 @@
   "description": "## Overview",
   "devDependencies": {
     "eslint": "^8.57.0",
-    "eslint-config-next": "14.2.13",
+    "eslint-config-next": "^14.2.13",
     "@nomicfoundation/hardhat-ethers": "^3.0.0",
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "@nomicfoundation/hardhat-verify": "^2.0.0",
