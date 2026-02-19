@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { GetServerSideProps } from 'next';
 import dynamic from 'next/dynamic';
 import { DesignLawLayout, SectionHeading, DetailGrid, DisclosureBlock, PaginationControls } from '../components/design-law';
 
@@ -37,10 +36,6 @@ interface SolvencyMetrics {
   composition: CompositionItem[];
   limitations: string[];
   sources: SourceItem[];
-}
-
-interface SolvencyPageProps {
-  metrics: SolvencyMetrics | null;
 }
 
 function fmtUsd(value: number): string {
@@ -182,11 +177,11 @@ const VIEW_DESCRIPTIONS: Record<string, string> = {
 
 const AME_HISTORY_PAGE_SIZE = 10;
 
-export default function SolvencyPage({ metrics }: SolvencyPageProps) {
+export default function SolvencyPage() {
   const [viewMode, setViewMode] = useState<'allocator' | 'clearinghouse' | 'regulatory'>('allocator');
   const [faqOpen, setFaqOpen] = useState<Record<number, boolean>>({});
   const [refreshing, setRefreshing] = useState(false);
-  const [liveMetrics, setLiveMetrics] = useState<SolvencyMetrics | null>(metrics);
+  const [liveMetrics, setLiveMetrics] = useState<SolvencyMetrics | null>(null);
   const [axusdStability, setAxusdStability] = useState<any>(null);
   const [stressResults, setStressResults] = useState<any[]>([]);
   const [stressLoading, setStressLoading] = useState(false);
@@ -210,6 +205,10 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
   const m = liveMetrics;
 
   useEffect(() => {
+    fetch('/api/solvency/metrics')
+      .then(res => res.json())
+      .then(data => setLiveMetrics(data))
+      .catch((err) => { console.error('[solvency] metrics fetch failed:', err); });
     fetch('/api/solvency/ame/latest')
       .then(res => res.json())
       .then(data => { setAmeData(data); setAmeLoading(false); })
@@ -1801,15 +1800,4 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async ({ req }) => {
-  try {
-    const protocol = req.headers['x-forwarded-proto'] || 'http';
-    const host = req.headers.host || `localhost:${process.env.PORT || 5000}`;
-    const baseUrl = `${protocol}://${host}`;
-    const res = await fetch(`${baseUrl}/api/solvency/metrics`);
-    const metrics = await res.json();
-    return { props: { metrics } };
-  } catch {
-    return { props: { metrics: null } };
-  }
-};
+
