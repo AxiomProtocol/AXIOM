@@ -381,7 +381,7 @@ export default function HomePage() {
                   <div className="text-4xl">🏦</div>
                   <div>
                     <h3 className="text-2xl font-bold text-yellow-400 mb-3">Full-Service Digital Banking</h3>
-                    <p className="text-gray-300 mb-4">30+ banking product modules: checking, savings, CDs, credit cards, loans, mortgages — all on-chain. Rates are variable and subject to protocol policy.</p>
+                    <p className="text-gray-300 mb-4">30+ banking product modules: checking, savings, CDs, credit cards, loans, mortgages—all on-chain. Rates are variable and subject to protocol policy.</p>
                     <ul className="space-y-2 text-sm text-gray-400">
                       <li>✓ On-chain settlement</li>
                       <li>✓ Transparent fee structure</li>
@@ -417,7 +417,7 @@ export default function HomePage() {
                   <div className="text-4xl">⚡</div>
                   <div>
                     <h3 className="text-2xl font-bold text-yellow-400 mb-3">DePIN Infrastructure</h3>
-                    <p className="text-gray-300 mb-4">Participate in structured utility infrastructure: energy grids, water systems, internet, IoT networks — all tokenized with on-chain reporting.</p>
+                    <p className="text-gray-300 mb-4">Participate in structured utility infrastructure: energy grids, water systems, internet, IoT networks—all tokenized with on-chain reporting.</p>
                     <ul className="space-y-2 text-sm text-gray-400">
                       <li>✓ Infrastructure participation instruments</li>
                       <li>✓ Usage-based fee distribution</li>
