@@ -155,6 +155,7 @@ contract RegCFCrowdfunding is AccessControl, Pausable, ReentrancyGuard {
         require(campaign.status == CampaignStatus.Live, "Campaign not live");
         require(block.timestamp >= campaign.startDate, "Campaign not started");
         require(block.timestamp <= campaign.endDate, "Campaign ended");
+        require(amount > 0, "Amount must be greater than zero");
         require(amount >= campaign.minInvestment, "Below minimum investment");
 
         Investor storage investor = investors[msg.sender];
@@ -233,6 +234,7 @@ contract RegCFCrowdfunding is AccessControl, Pausable, ReentrancyGuard {
 
         uint256 refundAmount = investment.amount;
         investment.refunded = true;
+        investment.amount = 0;
 
         require(
             paymentToken.transferFrom(escrowWallet, msg.sender, refundAmount),

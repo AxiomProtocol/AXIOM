@@ -254,6 +254,7 @@ contract LandAcquisitionPool is AccessControl, Pausable, ReentrancyGuard {
         Pool storage pool = pools[poolId];
         require(pool.status == PoolStatus.Funded, "Pool not funded");
         require(recipient != address(0), "Invalid recipient");
+        require(pool.totalContributed > 0, "No funds to distribute");
 
         uint256 platformFee = (pool.totalContributed * platformFeeBps) / 10000;
         uint256 distributionAmount = pool.totalContributed - platformFee;
@@ -282,6 +283,7 @@ contract LandAcquisitionPool is AccessControl, Pausable, ReentrancyGuard {
         require(member.totalContributed > 0, "No contributions");
         
         uint256 refundAmount = member.totalContributed;
+        require(refundAmount > 0, "No refund available");
         member.totalContributed = 0;
         member.active = false;
 

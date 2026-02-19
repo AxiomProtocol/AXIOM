@@ -218,6 +218,8 @@ contract LandOptionRegistry is ERC1155, ERC1155Supply, AccessControl, Pausable, 
         LandOption storage option = options[optionId];
         require(option.status == OptionStatus.Active, "Option not active");
         require(block.timestamp < option.expiresAt, "Option expired");
+        require(option.optionFee > 0, "No option fee required");
+        require(option.landowner != address(0), "Invalid landowner");
 
         uint256 platformFee = (option.optionFee * platformFeeBps) / 10000;
         uint256 landownerPayment = option.optionFee - platformFee;
@@ -242,6 +244,8 @@ contract LandOptionRegistry is ERC1155, ERC1155Supply, AccessControl, Pausable, 
             "Option not ready for exercise"
         );
         require(option.sharesSold == option.totalShares, "Not fully funded");
+        require(option.landowner != address(0), "Invalid landowner");
+        require(option.purchasePrice > 0, "Invalid purchase price");
 
         uint256 totalRaised = option.purchasePrice;
         uint256 platformFee = (totalRaised * platformFeeBps) / 10000;
@@ -286,6 +290,7 @@ contract LandOptionRegistry is ERC1155, ERC1155Supply, AccessControl, Pausable, 
 
         ShareHolder storage holder = shareholders[optionId][msg.sender];
         require(holder.investedAmount > 0, "No investment to refund");
+        require(holder.shares > 0, "No shares to burn");
 
         uint256 refundAmount = holder.investedAmount;
         holder.investedAmount = 0;
