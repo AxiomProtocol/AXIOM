@@ -70,7 +70,7 @@ const ComparisonPage: React.FC = () => {
     },
     {
       category: "Smart City Integration",
-      axiom: { status: "full", text: "Purpose-built for 1,000-acre smart city with DePIN, IoT, municipal services, banking suite" },
+      axiom: { status: "full", text: "Designed for smart city coordination with DePIN, IoT, municipal services, and banking modules" },
       bitcoin: { status: "none", text: "Not designed for smart city use cases" },
       ethereum: { status: "partial", text: "Platform capable but no built-in city infrastructure" },
       xrp: { status: "none", text: "Payment-focused only" },

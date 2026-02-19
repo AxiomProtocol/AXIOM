@@ -240,14 +240,14 @@ export default function PurposeGroupOnboarding() {
             
             <h2 className="font-dl-serif text-2xl text-dl-navy mb-3">Welcome to The Wealth Practice</h2>
             <p className="text-sm text-dl-gray mb-6 max-w-xl mx-auto">
-              You're about to discover a proven system for building wealth together through Group Economics.
+              You're about to explore a structured system for coordinated capital formation through community-led participation.
             </p>
 
             <div className="max-w-2xl mx-auto mb-6 border border-dl-border bg-dl-bg-alt p-6">
               <div className="text-3xl mb-3">🌱</div>
-              <h3 className="font-dl-serif text-lg text-dl-navy mb-2">Join 5,000+ Builders</h3>
+              <h3 className="font-dl-serif text-lg text-dl-navy mb-2">Join the Community</h3>
               <p className="text-sm text-dl-gray mb-4">
-                Connect with a community of people committed to building generational wealth through collective land ownership.
+                Connect with a community exploring structured land stewardship and coordinated participation.
               </p>
               <a 
                 href="https://discord.gg/mKYFjSeR4" 

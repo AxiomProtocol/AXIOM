@@ -230,7 +230,7 @@ export const INCOME_STREAMS: IncomeStream[] = [
   // Professional+ Streams
   {
     name: 'Utility Metering Fees',
-    description: 'Process water/energy/bandwidth usage data for 1,000-acre smart city',
+    description: 'Process water/energy/bandwidth usage data for smart city infrastructure',
     icon: '💧',
     contract: 'UtilityAndMeteringHub',
     avgMonthly: '$25-80 (Pro) | $100-320 (Enterprise 4x)',
