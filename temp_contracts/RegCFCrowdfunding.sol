@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.20;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
@@ -86,6 +86,7 @@ contract RegCFCrowdfunding is AccessControl, Pausable, ReentrancyGuard {
         address _escrowWallet
     ) {
         require(_paymentToken != address(0), "Invalid payment token");
+        require(_landOptionRegistry != address(0), "Invalid land option registry");
         require(_escrowWallet != address(0), "Invalid escrow wallet");
         
         paymentToken = IERC20(_paymentToken);
@@ -300,6 +301,7 @@ contract RegCFCrowdfunding is AccessControl, Pausable, ReentrancyGuard {
     }
 
     function setLandOptionRegistry(address newRegistry) external onlyRole(ADMIN_ROLE) {
+        require(newRegistry != address(0), "Invalid registry");
         landOptionRegistry = ILandOptionRegistry(newRegistry);
     }
 

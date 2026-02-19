@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.20;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
@@ -91,6 +91,7 @@ contract LandOptionRegistry is ERC1155, ERC1155Supply, AccessControl, Pausable, 
     ) ERC1155("https://axiom.city/api/land-options/{id}.json") {
         require(_paymentToken != address(0), "Invalid payment token");
         require(_treasury != address(0), "Invalid treasury");
+        // Note: revenueRouter can be address(0) initially and set later
         
         paymentToken = IERC20(_paymentToken);
         treasury = _treasury;
@@ -169,6 +170,7 @@ contract LandOptionRegistry is ERC1155, ERC1155Supply, AccessControl, Pausable, 
         require(option.status == OptionStatus.Active || option.status == OptionStatus.OptionFeePaid, "Option not active");
         require(block.timestamp < option.expiresAt, "Option expired");
         require(shareAmount > 0, "Invalid share amount");
+        require(option.totalShares > 0, "Invalid total shares");
         require(option.sharesSold + shareAmount <= option.totalShares, "Exceeds available shares");
 
         uint256 pricePerShare = option.purchasePrice / option.totalShares;
@@ -353,6 +355,7 @@ contract LandOptionRegistry is ERC1155, ERC1155Supply, AccessControl, Pausable, 
 
     function getRaisedAmount(uint256 optionId) external view returns (uint256) {
         LandOption storage option = options[optionId];
+        if (option.totalShares == 0) return 0;
         uint256 pricePerShare = option.purchasePrice / option.totalShares;
         return option.sharesSold * pricePerShare;
     }

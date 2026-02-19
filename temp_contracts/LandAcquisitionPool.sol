@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.20;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
@@ -82,6 +82,7 @@ contract LandAcquisitionPool is AccessControl, Pausable, ReentrancyGuard {
         address _treasury
     ) {
         require(_paymentToken != address(0), "Invalid payment token");
+        require(_landOptionRegistry != address(0), "Invalid land option registry");
         require(_treasury != address(0), "Invalid treasury");
         
         paymentToken = IERC20(_paymentToken);
@@ -322,7 +323,7 @@ contract LandAcquisitionPool is AccessControl, Pausable, ReentrancyGuard {
         Pool storage pool = pools[poolId];
         raised = pool.totalContributed;
         target = pool.targetAmount;
-        percentage = (raised * 100) / target;
+        percentage = target > 0 ? (raised * 100) / target : 0;
     }
 
     function setTreasury(address newTreasury) external onlyRole(ADMIN_ROLE) {
