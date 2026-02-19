@@ -4,6 +4,8 @@ const webpack = require('webpack');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  // Compression handled by reverse proxy (nginx/Cloudflare) in production
+  compress: false,
   allowedDevOrigins: ['*'],
   eslint: {
     ignoreDuringBuilds: true,
