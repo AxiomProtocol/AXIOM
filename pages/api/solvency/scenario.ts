@@ -100,6 +100,16 @@ export default async function handler(
       return res.status(403).json({ error: 'Custom scenarios require admin authorization (x-admin-key header)' });
     }
 
+    if (customScenario) {
+      const drawdownPct = Number(customScenario.treasuryDrawdownPct || 0);
+      const reservePct = Number(customScenario.reserveDrawdownPct || 0);
+      const liabPct = Number(customScenario.liabilityIncreasePct || 0);
+      const ethPct = Number(customScenario.ethPriceChangePct || 0);
+      if ([drawdownPct, reservePct, liabPct, ethPct].some(v => isNaN(v) || v < -100 || v > 1000)) {
+        return res.status(400).json({ error: 'Custom scenario parameters must be numeric values between -100 and 1000' });
+      }
+    }
+
     const snapshot = snapshotId
       ? await fetchSnapshotById(snapshotId)
       : await fetchLatestSnapshot();

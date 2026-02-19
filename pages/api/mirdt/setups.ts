@@ -28,8 +28,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (symbol) {
-      conditions.push(`symbol ILIKE $${paramIdx++}`);
-      params.push(`%${symbol}%`);
+      const sanitizedSymbol = symbol.replace(/[%_\\]/g, '');
+      if (sanitizedSymbol.length > 0) {
+        conditions.push(`symbol ILIKE $${paramIdx++}`);
+        params.push(`%${sanitizedSymbol}%`);
+      }
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';

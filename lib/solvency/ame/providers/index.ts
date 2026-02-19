@@ -21,12 +21,18 @@ export async function fetchAllProviderData(): Promise<{
   const liquidityProvider = new SolvencySnapshotLiquidityProvider();
   const volatilityProvider = new DefaultVolatilityProvider();
 
-  const [treasury, issuance, liquidity, volatility] = await Promise.all([
-    treasuryProvider.fetchTreasury(),
-    issuanceProvider.fetchIssuance(),
-    liquidityProvider.fetchLiquidity(),
-    volatilityProvider.fetchVolatility(),
-  ]);
+  let treasury, issuance, liquidity, volatility;
+  try {
+    [treasury, issuance, liquidity, volatility] = await Promise.all([
+      treasuryProvider.fetchTreasury(),
+      issuanceProvider.fetchIssuance(),
+      liquidityProvider.fetchLiquidity(),
+      volatilityProvider.fetchVolatility(),
+    ]);
+  } catch (err) {
+    console.error('[AME Providers] Failed to fetch provider data:', err);
+    throw new Error(`Provider data fetch failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+  }
 
   const inputs: AmeInputs = {
     treasuryLiquidUsd: treasury.treasuryLiquidUsd,

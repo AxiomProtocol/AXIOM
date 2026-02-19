@@ -69,9 +69,10 @@ export default async function handler(
     });
   } catch (error: any) {
     console.error('[solvency/ame/history] Error:', error);
-    return res.status(200).json({
+    return res.status(500).json({
       schemaVersion: 'ame-history-v2',
-      dataStatus: 'empty',
+      dataStatus: 'error',
+      error: 'Failed to fetch AME history',
       snapshots: [],
       pagination: { total: 0, limit: 50, offset: 0, hasMore: false },
     });

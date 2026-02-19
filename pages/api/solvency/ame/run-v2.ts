@@ -1,43 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createHash, timingSafeEqual } from 'crypto';
 import { pool } from '../../../../server/db';
 import { computeFullMetrics, computeYieldPermission, routeInflow, AME_VERSION } from '../../../../lib/solvency/ame';
 import { evaluatePolicy, determineSeverity } from '../../../../lib/solvency/ame/PolicyEngine';
 import { fetchAllProviderData } from '../../../../lib/solvency/ame/providers';
+import { computeChecksum, safeCompare, parseExplicitInputs } from '../../../../lib/solvency/ame/utils';
 import type { AmeInputs } from '../../../../lib/solvency/ame';
-
-function computeChecksum(data: any): string {
-  return createHash('sha256').update(JSON.stringify(data)).digest('hex').slice(0, 16);
-}
-
-function safeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
-}
-
-function parseExplicitInputs(body: any): AmeInputs {
-  return {
-    treasuryLiquidUsd: Number(body.treasuryLiquidUsd || 0),
-    treasuryTotalUsd: Number(body.treasuryTotalUsd || 0),
-    designatedReservesUsd: Number(body.designatedReservesUsd || 0),
-    lossBufferUsd: Number(body.lossBufferUsd || 0),
-    netExternalExposureUsd: Number(body.netExternalExposureUsd || 0),
-    circulatingExposureUsd: Number(body.circulatingExposureUsd || 0),
-    redemptionCapacityUsd: Number(body.redemptionCapacityUsd || 0),
-    estimatedRedemptionDemandUsd: Number(body.estimatedRedemptionDemandUsd || 0),
-    volatilitySignals: {
-      pegDeviation: Number(body.volatilitySignals?.pegDeviation ?? 0.05),
-      liquidityDepthDrop: Number(body.volatilitySignals?.liquidityDepthDrop ?? 0.05),
-      redemptionAcceleration: Number(body.volatilitySignals?.redemptionAcceleration ?? 0.05),
-      correlationSpike: Number(body.volatilitySignals?.correlationSpike ?? 0.05),
-    },
-    liquiditySignals: {
-      depthUsd: Number(body.liquiditySignals?.depthUsd ?? 0),
-      bidAskSpreadBps: Number(body.liquiditySignals?.bidAskSpreadBps ?? 0),
-      volumeChange24h: Number(body.liquiditySignals?.volumeChange24h ?? 0),
-    },
-  };
-}
 
 export default async function handler(
   req: NextApiRequest,

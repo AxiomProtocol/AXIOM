@@ -94,7 +94,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ 
         error: 'Domain mismatch. The signature was created for a different site.',
         code: 'DOMAIN_MISMATCH',
-        debug: { validHosts, received: messageDomain }
+        debug: process.env.NODE_ENV !== 'production' ? { validHosts, received: messageDomain } : undefined
       });
     }
     
@@ -167,8 +167,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error: any) {
     console.error('SIWE verification error:', error);
     res.status(401).json({ 
-      error: 'Signature verification failed',
-      details: error.message
+      error: 'Signature verification failed'
     });
   }
 }

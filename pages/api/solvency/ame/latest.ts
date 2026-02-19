@@ -85,9 +85,10 @@ export default async function handler(
     });
   } catch (error: any) {
     console.error('[solvency/ame/latest] Error:', error);
-    return res.status(200).json({
+    return res.status(500).json({
       schemaVersion: 'ame-latest-v2',
-      dataStatus: 'empty',
+      dataStatus: 'error',
+      error: 'Failed to fetch latest AME data',
       metricSnapshot: null,
       policyState: null,
       hardBrakeArmed: false,

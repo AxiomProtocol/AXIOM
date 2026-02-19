@@ -65,6 +65,6 @@ export function canReleaseHardBrake(
 
 export function determineSeverity(mode: PolicyMode): 'INFO' | 'WARN' | 'CRITICAL' {
   if (mode === 'EMERGENCY' || mode === 'RESTRICTED') return 'CRITICAL';
-  if (mode === 'DEFENSIVE') return 'WARN';
+  if (mode === 'DEFENSIVE' || mode === 'CAUTION') return 'WARN';
   return 'INFO';
 }

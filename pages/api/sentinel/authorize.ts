@@ -61,7 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `SELECT * FROM sentinel_regime_snapshots
        ORDER BY created_at DESC LIMIT 1`
     );
-    const currentRegime: RegimeState = regimeResult.rows[0]?.regime || 'RANGE_LOW_VOL';
+    const currentRegime: RegimeState = regimeResult.rows[0]?.regime || 'BOOTSTRAP';
 
     const auditLogger = new AuditLogger();
     await auditLogger.initialize();

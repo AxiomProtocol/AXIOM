@@ -156,7 +156,7 @@ export function DesignLawHome() {
               Axiom is building the economic infrastructure for community-led real asset ownership.
               Our Capital Program deploys capital into two real properties through structured SPVs,
               with transparent treasury allocation, institutional-grade reporting, and full audit trails.
-              No speculation. No hype. Just disciplined execution backed by land already acquired.
+              No speculation. No hype. Just disciplined execution backed by targeted land acquisition.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/pilot">
