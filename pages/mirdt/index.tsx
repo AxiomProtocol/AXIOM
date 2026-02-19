@@ -329,7 +329,7 @@ export default function MIRDTIndex() {
             <select
               value={autoRefreshSec}
               onChange={(e) => setAutoRefreshSec(Number(e.target.value))}
-              className="px-2 py-1 border border-dl-border bg-white text-dl-navy font-dl-mono text-xs"
+              className="px-2 py-1 border border-dl-border bg-dl-bg text-dl-navy font-dl-mono text-xs"
             >
               {AUTO_REFRESH_OPTIONS.map(o => (
                 <option key={o.value} value={o.value}>{o.label}</option>
@@ -426,7 +426,7 @@ export default function MIRDTIndex() {
         </FormField>
         <button
           onClick={() => setRefreshKey(k => k + 1)}
-          className="px-3 py-2 border border-dl-border bg-white text-dl-navy font-dl-mono text-xs"
+          className="px-3 py-2 border border-dl-border bg-dl-bg text-dl-navy font-dl-mono text-xs"
         >
           REFRESH DATA
         </button>

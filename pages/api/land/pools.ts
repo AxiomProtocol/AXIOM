@@ -51,7 +51,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({
       success: false,
       error: 'Failed to fetch acquisition pools',
-      details: error.message,
     });
   }
 }

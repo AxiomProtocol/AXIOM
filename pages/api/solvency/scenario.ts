@@ -26,7 +26,8 @@ async function fetchSnapshotById(snapshotId: string): Promise<{
         : row.payload_json,
       id: row.id,
     };
-  } catch {
+  } catch (err) {
+    console.error('[solvency/scenario] Failed to fetch snapshot by ID:', err);
     return null;
   }
 }
@@ -47,7 +48,8 @@ async function fetchLatestSnapshot(): Promise<{
         : row.payload_json,
       id: row.id,
     };
-  } catch {
+  } catch (err) {
+    console.error('[solvency/scenario] Failed to fetch latest snapshot:', err);
     return null;
   }
 }
@@ -174,7 +176,8 @@ export default async function handler(
             ]
           );
         }
-      } catch {
+      } catch (err) {
+        console.error('[solvency/scenario] Failed to log scenario run:', err);
       }
     }
 

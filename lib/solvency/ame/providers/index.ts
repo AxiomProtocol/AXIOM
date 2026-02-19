@@ -4,7 +4,7 @@ export { SolvencySnapshotTreasuryProvider, SolvencySnapshotIssuanceProvider, Sol
 import type { AmeInputs } from '../types';
 import { SolvencySnapshotTreasuryProvider, SolvencySnapshotIssuanceProvider, SolvencySnapshotLiquidityProvider, DefaultVolatilityProvider } from './SolvencySnapshotProvider';
 
-const { createHash } = require('crypto');
+import { createHash } from 'crypto';
 
 export async function fetchAllProviderData(): Promise<{
   inputs: AmeInputs;

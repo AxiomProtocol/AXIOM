@@ -50,7 +50,7 @@ export default async function handler(
         liabilitiesTotalUsd,
         coverageRatio,
         reserveRatio,
-        policyMode: String(payload.policyMode || 'NORMAL'),
+        policyMode: String(payload.policyMode || 'NORMAL') as HistoryPoint['policyMode'],
       };
     });
 
@@ -62,11 +62,10 @@ export default async function handler(
     });
   } catch (error: any) {
     console.error('[solvency/history] Error:', error);
-    return res.status(200).json({
+    return res.status(500).json({
       schemaVersion: 'solvency-history-v1',
-      count: 0,
-      total: 0,
-      points: [],
+      dataStatus: 'error',
+      error: 'Failed to fetch history data',
     });
   }
 }

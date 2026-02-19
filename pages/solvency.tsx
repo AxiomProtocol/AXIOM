@@ -205,6 +205,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
   const [oracleResponse, setOracleResponse] = useState<any>(null);
   const [oracleLoading, setOracleLoading] = useState(false);
   const [oracleQueryType, setOracleQueryType] = useState('regime_narration');
+  const [fetchErrors, setFetchErrors] = useState<string[]>([]);
 
   const m = liveMetrics;
 
@@ -212,11 +213,11 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
     fetch('/api/solvency/ame/latest')
       .then(res => res.json())
       .then(data => { setAmeData(data); setAmeLoading(false); })
-      .catch(() => setAmeLoading(false));
+      .catch((err) => { console.error('[solvency] AME latest fetch failed:', err); setAmeLoading(false); setFetchErrors(prev => [...prev, 'AME metrics unavailable']); });
     fetch('/api/solvency/ame/enforcement')
       .then(res => res.json())
       .then(data => setEnforcementState(data))
-      .catch(() => {});
+      .catch((err) => { console.error('[solvency] enforcement fetch failed:', err); });
   }, []);
 
   useEffect(() => {
@@ -231,7 +232,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
         }
         setPsmOpsLoading(false);
       })
-      .catch(() => setPsmOpsLoading(false));
+      .catch((err) => { console.error('[solvency] PSM ops fetch failed:', err); setPsmOpsLoading(false); });
   }, [viewMode]);
 
   useEffect(() => {
@@ -239,7 +240,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
     fetch('/api/solvency/ame/history?limit=100')
       .then(res => res.json())
       .then(data => { if (data.snapshots) setAmeHistory(data.snapshots); })
-      .catch(() => {});
+      .catch((err) => { console.error('[solvency] AME history fetch failed:', err); });
   }, [viewMode]);
 
   const handleRefresh = async () => {
@@ -285,13 +286,13 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
       .then((data) => {
         if (data.axusdStability) setAxusdStability(data.axusdStability);
       })
-      .catch(() => {});
+      .catch((err) => { console.error('[solvency] latest fetch failed:', err); });
     fetch('/api/solvency/history?limit=30')
       .then((res) => res.json())
       .then((data) => {
         if (data.points) setHistoryData(data.points);
       })
-      .catch(() => {});
+      .catch((err) => { console.error('[solvency] history fetch failed:', err); });
   }, [viewMode]);
 
   const runStressScenarios = async () => {
@@ -1621,6 +1622,13 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
         <meta name="twitter:description" content="Institutional-grade solvency disclosure, reserve transparency, and capital adequacy metrics for the Axiom Protocol." />
         <meta name="twitter:image" content="/images/og-solvency-transparency.png" />
       </Head>
+
+      {fetchErrors.length > 0 && (
+        <div className="border border-dl-error bg-dl-bg-alt px-4 py-3 mb-6">
+          <p className="text-xs font-dl-mono text-dl-error uppercase tracking-wider mb-1">Data Fetch Warning</p>
+          <p className="text-sm text-dl-gray">{fetchErrors.join('. ')}. Displayed data may be incomplete.</p>
+        </div>
+      )}
 
       <div className="border-b border-dl-border pb-8 mb-10">
         <div className="flex items-center gap-4 mb-4">

@@ -38,7 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           COALESCE(SUM(total_contributed::numeric), 0)::numeric as total_contributed,
           COALESCE(SUM(member_count), 0)::int as total_pool_members
         FROM land_acquisition_pools
-      `).catch(() => ({ rows: [{ total_pools: 0, active_pools: 0, total_target: 0, total_contributed: 0, total_pool_members: 0 }] })),
+      `).catch((err) => { console.error('[capital-flow] land pools query failed:', err); return { rows: [{ total_pools: 0, active_pools: 0, total_target: 0, total_contributed: 0, total_pool_members: 0 }] }; }),
       pool.query(`
         SELECT 
           COUNT(*)::int as total_reservations,
@@ -46,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           COUNT(CASE WHEN status = 'confirmed' THEN 1 END)::int as confirmed,
           COUNT(CASE WHEN status = 'claimed' THEN 1 END)::int as claimed
         FROM produce_reservations
-      `).catch(() => ({ rows: [{ total_reservations: 0, reserved: 0, confirmed: 0, claimed: 0 }] }))
+      `).catch((err) => { console.error('[capital-flow] produce reservations query failed:', err); return { rows: [{ total_reservations: 0, reserved: 0, confirmed: 0, claimed: 0 }] }; })
     ]);
 
     const gs = groupStats.rows[0];

@@ -41,7 +41,7 @@ export const STRESS_SCENARIOS: StressScenario[] = [
   },
   {
     key: 'STABLECOIN_DEPEG',
-    label: 'Stablecoin Depeg',
+    label: 'Reserve Asset Depeg',
     description: 'Reserve asset depegging with 15% liability increase.',
     shock: {
       treasuryDrawdownPct: 10,

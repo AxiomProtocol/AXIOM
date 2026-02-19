@@ -2768,7 +2768,7 @@ export type PlatformMetric = typeof platformMetrics.$inferSelect;
 export type InsertPlatformMetric = typeof platformMetrics.$inferInsert;
 
 // ============================================
-// SUSU REGIONAL INTEREST HUBS & PURPOSE GROUPS
+// WEALTH PRACTICE — REGIONAL INTEREST HUBS & PURPOSE GROUPS
 // ============================================
 
 export const susuRegionTypeEnum = pgEnum('susu_region_type', [
