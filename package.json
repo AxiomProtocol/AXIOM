@@ -27,6 +27,7 @@
     "slither": "slither contracts/ --exclude-dependencies --json reports/slither-output.json 2>/dev/null || true",
     "audit:full": "npm run test:invariants && npm run test:scenarios",
     "audit:report": "node scripts/generate-audit-report.js",
+    "audit:download": "node scripts/generate-audit-download.js",
     "test:capital-bridge": "hardhat test test/capital-bridge/*.test.ts --config hardhat.config.capital-bridge.ts",
     "test:capital-bridge:hub": "hardhat test test/capital-bridge/CapitalBridgeHub.audit.test.ts --config hardhat.config.capital-bridge.ts",
     "test:capital-bridge:nodes": "hardhat test test/capital-bridge/NodeEconomy.audit.test.ts --config hardhat.config.capital-bridge.ts",
