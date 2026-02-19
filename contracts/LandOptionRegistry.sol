@@ -91,7 +91,8 @@ contract LandOptionRegistry is ERC1155, ERC1155Supply, AccessControl, Pausable, 
     ) ERC1155("https://axiom.city/api/land-options/{id}.json") {
         require(_paymentToken != address(0), "Invalid payment token");
         require(_treasury != address(0), "Invalid treasury");
-        // Note: revenueRouter can be address(0) initially and set later
+        // Note: revenueRouter can be address(0) initially and set later via setRevenueRouter()
+        // This allows flexibility in deployment - treasury is used as fallback if revenueRouter is not set
         
         paymentToken = IERC20(_paymentToken);
         treasury = _treasury;

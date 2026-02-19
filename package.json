@@ -133,7 +133,7 @@
     "dotenv": "^16.6.1",
     "hardhat": "^2.27.0",
     "hardhat-gas-reporter": "^2.3.0",
-    "solc": "^0.8.20",
+    "solc": "0.8.20",
     "solidity-coverage": "^0.8.17",
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",

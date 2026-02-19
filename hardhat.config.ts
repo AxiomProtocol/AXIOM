@@ -6,6 +6,9 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
+// Standard optimizer runs for production contracts
+const OPTIMIZER_RUNS = 200;
+
 const config: HardhatUserConfig = {
   solidity: {
     compilers: [
@@ -14,7 +17,7 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 200,
+            runs: OPTIMIZER_RUNS,
           },
           viaIR: true,
           evmVersion: "paris",
@@ -36,189 +39,189 @@ const config: HardhatUserConfig = {
       "contracts/land-acquisition/LandOptionRegistry.sol": {
         version: "0.8.24",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/land-acquisition/RegCFCrowdfunding.sol": {
         version: "0.8.24",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/land-acquisition/LandAcquisitionPool.sol": {
         version: "0.8.24",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/land-simple/LandOptionRegistry.sol": {
         version: "0.8.24",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/land-simple/RegCFCrowdfunding.sol": {
         version: "0.8.24",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/land-simple/LandAcquisitionPool.sol": {
         version: "0.8.24",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/land-simple/BuilderFarmerCredit.sol": {
         version: "0.8.24",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/phase3/CreditLineVault.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/phase3/InsurancePoolHub.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/phase3/TreasuryNoteToken.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/AxiomExchangeHub.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/AxiomSusuHub.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/governance/GovernanceHub.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/governance/IGovernanceHub.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/realestate/RiskConfig.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/realestate/dscr/DSCRRiskConfig.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/realestate/FixFlipManager.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/realestate/dscr/DSCRLoanManager.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/realestate/ProductRegistry.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/realestate/dscr/DSCRLoanReceiptNFT.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/realestate/dscr/IDSCRInterfaces.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/realestate/LoanReceiptNFT.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/realestate/Interfaces.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/capital-bridge/CapitalBridgeHub.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/capital-bridge/CapitalBridgeTypes.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/capital-bridge/ICapitalBridge.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
       "contracts/readiness/CapitalReadinessGate.sol": {
         version: "0.8.20",
         settings: {
-          optimizer: { enabled: true, runs: 200 },
+          optimizer: { enabled: true, runs: OPTIMIZER_RUNS },
           viaIR: true,
         },
       },
