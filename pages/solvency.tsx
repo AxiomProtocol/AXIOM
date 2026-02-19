@@ -206,7 +206,7 @@ export default function SolvencyPage() {
 
   useEffect(() => {
     fetch('/api/solvency/metrics')
-      .then(res => res.json())
+      .then(res => { if (!res.ok) throw new Error('metrics response not ok'); return res.json(); })
       .then(data => setLiveMetrics(data))
       .catch((err) => { console.error('[solvency] metrics fetch failed:', err); });
     fetch('/api/solvency/ame/latest')
