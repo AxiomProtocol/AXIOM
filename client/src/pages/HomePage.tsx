@@ -111,7 +111,7 @@ export default function HomePage() {
               </h2>
               <p className="text-lg text-gray-300 max-w-2xl">
                 From <span className="text-yellow-400 font-semibold">checking accounts to mortgages</span>, 
-                credit cards to tokenized real estate. America's first fully sovereign blockchain banking system.
+                credit cards to tokenized real estate. On-chain banking infrastructure with full transparency.
               </p>
             </div>
             <div className="flex-shrink-0">
@@ -135,15 +135,15 @@ export default function HomePage() {
                 <span className="text-yellow-400 font-semibold">📡 AXIOM DePIN INFRASTRUCTURE</span>
               </div>
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                Own Real-World Infrastructure
+                Participate in Physical Infrastructure
                 <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600">
-                  Earn Real-World Income
+                  Through On-Chain Coordination
                 </span>
               </h2>
               <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-6">
-                From smartphones to data centers - start with what you have and scale up. 
-                Power the smart city's physical infrastructure and earn from <span className="text-green-400 font-bold">14 income streams</span>.
+                From smartphones to data centers — start with what you have and scale up. 
+                Support smart city infrastructure through <span className="text-green-400 font-bold">14 participation channels</span>.
               </p>
             </div>
 
@@ -228,8 +228,8 @@ export default function HomePage() {
                 The Settlement Layer of Axiom
               </h2>
               <p className="text-lg text-gray-300 max-w-2xl">
-                Mint <span className="text-green-400 font-semibold">AXUSD</span> against crypto collateral, 
-                swap 1:1 via PSM, and earn <span className="text-green-400 font-semibold">50% protocol revenue</span> through SEED.
+                Issue <span className="text-green-400 font-semibold">AXUSD</span> against crypto collateral, 
+                swap 1:1 via PSM, and participate in <span className="text-green-400 font-semibold">protocol fee routing</span> through SEED.
                 11 verified contracts on Arbitrum One.
               </p>
             </div>
@@ -254,11 +254,11 @@ export default function HomePage() {
                 <span className="text-blue-400 text-sm font-semibold">ARBITRUM ONE NETWORK</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
-                Earn Real Yield with Arbitrum DeFi
+                Explore On-Chain DeFi on Arbitrum
               </h2>
               <p className="text-lg text-gray-300 max-w-2xl">
-                Explore <span className="text-yellow-400 font-semibold">4 Arbitrum-native DeFi opportunities</span>: 
-                AXM-ETH LP Staking, Uniswap V3, GMX Lending & AXM Staking. Real returns, low gas fees.
+                Explore <span className="text-yellow-400 font-semibold">4 Arbitrum-native DeFi mechanisms</span>: 
+                AXM-ETH LP participation, Uniswap V3, GMX Lending and AXM lockup. On-chain transparency, low network fees.
               </p>
             </div>
             <div className="flex-shrink-0">
@@ -282,11 +282,11 @@ export default function HomePage() {
                 <span className="text-yellow-400 text-sm font-semibold">🆕 JUST RELEASED</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
-                Why Axiom Will Replace Bitcoin as #1
+                How Axiom Compares to Other Protocols
               </h2>
               <p className="text-lg text-gray-300 max-w-2xl">
-                See the side-by-side comparison: Axiom vs Bitcoin, Ethereum, XRP & others. 
-                Discover why <span className="text-yellow-400 font-semibold">real revenue beats speculation</span> every time.
+                See the side-by-side comparison: Axiom vs Bitcoin, Ethereum, XRP and others. 
+                Review how <span className="text-yellow-400 font-semibold">coordination infrastructure differs from speculation</span>.
               </p>
             </div>
             <div className="flex-shrink-0">
@@ -306,10 +306,10 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              While Everyone Else is Talking...
+              How Axiom Differs
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600">
-                We're Building
+                From Conventional Approaches
               </span>
             </h2>
             <div className="w-32 h-1 bg-gradient-to-r from-yellow-400 to-yellow-600 mx-auto mb-8 rounded-full"></div>
@@ -322,7 +322,7 @@ export default function HomePage() {
               <ul className="space-y-2 text-gray-400 text-sm">
                 <li>• High entry barriers ($50K+ down payments)</li>
                 <li>• Illiquid (months to sell)</li>
-                <li>• Hidden fees eating profits</li>
+                <li>• Hidden fees reducing capital</li>
                 <li>• Zero transparency</li>
                 <li>• Controlled by gatekeepers</li>
               </ul>
