@@ -9025,6 +9025,58 @@ export const ameTradeoffLog = pgTable("ame_tradeoff_log", {
 export type AmeTradeoffLog = typeof ameTradeoffLog.$inferSelect;
 export type InsertAmeTradeoffLog = typeof ameTradeoffLog.$inferInsert;
 
+// ==== AME METRIC SNAPSHOT TABLE ====
+
+export const ameMetricSnapshot = pgTable("ame_metric_snapshot", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  environment: text("environment").notNull().default('PRODUCTION'),
+  version: text("version").notNull().default('AME-v2.0'),
+  treasuryTotalUsd: decimal("treasury_total_usd", { precision: 18, scale: 8 }).notNull(),
+  treasuryLiquidUsd: decimal("treasury_liquid_usd", { precision: 18, scale: 8 }).notNull(),
+  designatedReservesUsd: decimal("designated_reserves_usd", { precision: 18, scale: 8 }).notNull(),
+  lossBufferUsd: decimal("loss_buffer_usd", { precision: 18, scale: 8 }).notNull(),
+  netExternalExposureUsd: decimal("net_external_exposure_usd", { precision: 18, scale: 8 }).notNull(),
+  grossIssuanceAxusd: decimal("gross_issuance_axusd", { precision: 18, scale: 8 }).notNull().default('0'),
+  circulatingExposureUsd: decimal("circulating_exposure_usd", { precision: 18, scale: 8 }).notNull(),
+  coverageRatio: decimal("coverage_ratio", { precision: 18, scale: 8 }).notNull(),
+  reserveRatio: decimal("reserve_ratio", { precision: 18, scale: 8 }).notNull(),
+  liquidityStabilityRatio: decimal("liquidity_stability_ratio", { precision: 18, scale: 8 }).notNull(),
+  redemptionStressRatio: decimal("redemption_stress_ratio", { precision: 18, scale: 8 }).notNull(),
+  volatilityPressureIndex: decimal("volatility_pressure_index", { precision: 18, scale: 8 }).notNull(),
+  stabilityScore: decimal("stability_score", { precision: 6, scale: 2 }).notNull(),
+  policyMode: text("policy_mode").notNull(),
+  compositionJson: jsonb("composition_json"),
+  inputsRef: varchar("inputs_ref"),
+  evaluationId: varchar("evaluation_id"),
+}, (table) => ({
+  createdIdx: index("ame_metric_snapshot_created_idx").on(table.createdAt),
+  policyModeIdx: index("ame_metric_snapshot_policy_mode_idx").on(table.policyMode),
+  environmentIdx: index("ame_metric_snapshot_env_idx").on(table.environment),
+}));
+
+export type AmeMetricSnapshot = typeof ameMetricSnapshot.$inferSelect;
+export type InsertAmeMetricSnapshot = typeof ameMetricSnapshot.$inferInsert;
+
+// ==== AME STRESS RUN TABLE ====
+
+export const ameStressRun = pgTable("ame_stress_run", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  runName: text("run_name").notNull(),
+  baseSnapshotId: varchar("base_snapshot_id"),
+  scenariosJson: jsonb("scenarios_json").notNull(),
+  resultsJson: jsonb("results_json").notNull(),
+  conclusion: text("conclusion").notNull(),
+  policyModeAfter: text("policy_mode_after").notNull(),
+  evaluationId: varchar("evaluation_id"),
+}, (table) => ({
+  createdIdx: index("ame_stress_run_created_idx").on(table.createdAt),
+}));
+
+export type AmeStressRunRecord = typeof ameStressRun.$inferSelect;
+export type InsertAmeStressRun = typeof ameStressRun.$inferInsert;
+
 // ==== MIRDT EXECUTION MODEL ====
 
 export const mirdtExecutionGradeEnum = pgEnum('mirdt_execution_grade', ['A', 'B', 'C', 'REJECT']);

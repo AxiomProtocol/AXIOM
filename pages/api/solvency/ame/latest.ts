@@ -1,27 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../server/db';
 
-const EMPTY_RESPONSE = {
-  schemaVersion: 'ame-latest-v1',
-  dataStatus: 'empty',
-  evaluationId: 'none',
-  modelVersion: 'AME-v1.0.0',
-  inputSnapshotId: null,
-  inputChecksum: null,
-  createdAt: null,
-  regimeBand: 'STABLE',
-  rs: 0,
-  pm: 1,
-  ratios: { coverageRatio: 0, reserveRatio: 0, lossBufferRatio: 0, liquidityDepth: 0 },
-  targets: { crTarget: 0, rrTarget: 0, lbrTarget: 0, ldTarget: 0 },
-  payoutFactor: 1,
-  actions: [],
-  status: 'OK',
-  disclosureSummary: 'No AME evaluations have been recorded yet. Protocol is in bootstrap phase.',
-  timestamp: new Date().toISOString(),
-  inputSnapshot: null,
-};
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -30,94 +9,89 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+  res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=120');
 
   try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS ame_evaluations (
-        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
-        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        model_version TEXT NOT NULL,
-        input_snapshot_id VARCHAR NOT NULL,
-        regime_band TEXT NOT NULL,
-        rs DECIMAL(6,4) NOT NULL,
-        pm DECIMAL(6,4) NOT NULL,
-        cr DECIMAL(18,8) NOT NULL,
-        rr DECIMAL(18,8) NOT NULL,
-        lbr DECIMAL(18,8) NOT NULL,
-        ld DECIMAL(18,8) NOT NULL,
-        cr_target DECIMAL(18,8) NOT NULL,
-        rr_target DECIMAL(18,8) NOT NULL,
-        lbr_target DECIMAL(18,8) NOT NULL,
-        ld_target DECIMAL(18,8) NOT NULL,
-        payout_factor DECIMAL(6,4) NOT NULL,
-        actions_json JSONB NOT NULL,
-        disclosure_json JSONB NOT NULL,
-        status TEXT NOT NULL
-      )
-    `);
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS ame_input_snapshots (
-        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
-        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        checksum TEXT NOT NULL,
-        raw_json JSONB NOT NULL,
-        source_version TEXT NOT NULL,
-        mode TEXT NOT NULL
-      )
-    `);
-
-    const result = await pool.query(
-      `SELECT e.*, s.raw_json, s.checksum as input_checksum
-       FROM ame_evaluations e
-       LEFT JOIN ame_input_snapshots s ON e.input_snapshot_id = s.id
-       ORDER BY e.created_at DESC
-       LIMIT 1`
+    const snapshotResult = await pool.query(
+      `SELECT * FROM ame_metric_snapshot ORDER BY created_at DESC LIMIT 1`
     );
 
-    if (result.rows.length === 0) {
-      return res.status(200).json({ ...EMPTY_RESPONSE, timestamp: new Date().toISOString() });
+    const policyResult = await pool.query(
+      `SELECT * FROM ame_policy_state ORDER BY created_at DESC LIMIT 1`
+    );
+
+    const brakeResult = await pool.query(
+      `SELECT event_type FROM ame_enforcement_event
+       WHERE event_type IN ('HARD_BRAKE_ARMED', 'HARD_BRAKE_RELEASED')
+       ORDER BY created_at DESC LIMIT 1`
+    );
+
+    const hardBrakeArmed = brakeResult.rows.length > 0 && brakeResult.rows[0].event_type === 'HARD_BRAKE_ARMED';
+
+    if (snapshotResult.rows.length === 0) {
+      return res.status(200).json({
+        schemaVersion: 'ame-latest-v2',
+        dataStatus: 'empty',
+        metricSnapshot: null,
+        policyState: null,
+        hardBrakeArmed: false,
+        timestamp: new Date().toISOString(),
+      });
     }
 
-    const row = result.rows[0];
-    const actions = typeof row.actions_json === 'string' ? JSON.parse(row.actions_json) : (row.actions_json || []);
-    const disclosure = typeof row.disclosure_json === 'string' ? JSON.parse(row.disclosure_json) : (row.disclosure_json || {});
-    const inputSnapshot = row.raw_json
-      ? (typeof row.raw_json === 'string' ? JSON.parse(row.raw_json) : row.raw_json)
+    const row = snapshotResult.rows[0];
+
+    const metricSnapshot = {
+      id: row.id,
+      createdAt: row.created_at,
+      environment: row.environment,
+      version: row.version,
+      treasuryTotalUsd: Number(row.treasury_total_usd),
+      treasuryLiquidUsd: Number(row.treasury_liquid_usd),
+      designatedReservesUsd: Number(row.designated_reserves_usd),
+      lossBufferUsd: Number(row.loss_buffer_usd),
+      netExternalExposureUsd: Number(row.net_external_exposure_usd),
+      grossIssuanceAxusd: Number(row.gross_issuance_axusd),
+      circulatingExposureUsd: Number(row.circulating_exposure_usd),
+      coverageRatio: Number(row.coverage_ratio),
+      reserveRatio: Number(row.reserve_ratio),
+      liquidityStabilityRatio: Number(row.liquidity_stability_ratio),
+      redemptionStressRatio: Number(row.redemption_stress_ratio),
+      volatilityPressureIndex: Number(row.volatility_pressure_index),
+      stabilityScore: Number(row.stability_score),
+      policyMode: row.policy_mode,
+      compositionJson: row.composition_json,
+      inputsRef: row.inputs_ref,
+    };
+
+    const policyState = policyResult.rows.length > 0
+      ? {
+          id: policyResult.rows[0].id,
+          createdAt: policyResult.rows[0].created_at,
+          policyMode: policyResult.rows[0].policy_mode,
+          triggerMetric: policyResult.rows[0].trigger_metric,
+          triggerValue: Number(policyResult.rows[0].trigger_value),
+          notes: policyResult.rows[0].notes,
+        }
       : null;
 
     return res.status(200).json({
-      schemaVersion: 'ame-latest-v1',
+      schemaVersion: 'ame-latest-v2',
       dataStatus: 'ok',
-      evaluationId: row.id,
-      modelVersion: row.model_version,
-      inputSnapshotId: row.input_snapshot_id,
-      inputChecksum: row.input_checksum,
-      createdAt: row.created_at,
-      regimeBand: row.regime_band,
-      rs: Number(row.rs),
-      pm: Number(row.pm),
-      ratios: {
-        coverageRatio: Number(row.cr),
-        reserveRatio: Number(row.rr),
-        lossBufferRatio: Number(row.lbr),
-        liquidityDepth: Number(row.ld),
-      },
-      targets: {
-        crTarget: Number(row.cr_target),
-        rrTarget: Number(row.rr_target),
-        lbrTarget: Number(row.lbr_target),
-        ldTarget: Number(row.ld_target),
-      },
-      payoutFactor: Number(row.payout_factor),
-      actions,
-      status: row.status,
-      disclosureSummary: disclosure.summary || disclosure,
-      timestamp: new Date(row.created_at).toISOString(),
-      inputSnapshot,
+      metricSnapshot,
+      policyState,
+      hardBrakeArmed,
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
     console.error('[solvency/ame/latest] Error:', error);
-    return res.status(200).json({ ...EMPTY_RESPONSE, timestamp: new Date().toISOString() });
+    return res.status(200).json({
+      schemaVersion: 'ame-latest-v2',
+      dataStatus: 'empty',
+      metricSnapshot: null,
+      policyState: null,
+      hardBrakeArmed: false,
+      timestamp: new Date().toISOString(),
+    });
   }
 }

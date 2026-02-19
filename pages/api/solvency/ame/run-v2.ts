@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../server/db';
-import { computeFullMetrics, computeYieldPermission, routeInflow } from '../../../../lib/solvency/ame';
+import { computeFullMetrics, computeYieldPermission, routeInflow, AME_VERSION } from '../../../../lib/solvency/ame';
+import { evaluatePolicy, determineSeverity } from '../../../../lib/solvency/ame/PolicyEngine';
+import { fetchAllProviderData } from '../../../../lib/solvency/ame/providers';
 import type { AmeInputs } from '../../../../lib/solvency/ame';
 
 const { createHash } = require('crypto');
@@ -9,52 +11,16 @@ function computeChecksum(data: any): string {
   return createHash('sha256').update(JSON.stringify(data)).digest('hex').slice(0, 16);
 }
 
-async function buildInputs(body: any): Promise<AmeInputs | null> {
-  if (body.treasuryLiquidUsd !== undefined || body.treasuryTotalUsd !== undefined) {
-    return {
-      treasuryLiquidUsd: Number(body.treasuryLiquidUsd || 0),
-      treasuryTotalUsd: Number(body.treasuryTotalUsd || 0),
-      designatedReservesUsd: Number(body.designatedReservesUsd || 0),
-      lossBufferUsd: Number(body.lossBufferUsd || 0),
-      netExternalExposureUsd: Number(body.netExternalExposureUsd || 0),
-      circulatingExposureUsd: Number(body.circulatingExposureUsd || 0),
-      redemptionCapacityUsd: Number(body.redemptionCapacityUsd || 0),
-      estimatedRedemptionDemandUsd: Number(body.estimatedRedemptionDemandUsd || 0),
-      volatilitySignals: {
-        pegDeviation: Number(body.volatilitySignals?.pegDeviation ?? 0.05),
-        liquidityDepthDrop: Number(body.volatilitySignals?.liquidityDepthDrop ?? 0.05),
-        redemptionAcceleration: Number(body.volatilitySignals?.redemptionAcceleration ?? 0.05),
-        correlationSpike: Number(body.volatilitySignals?.correlationSpike ?? 0.05),
-      },
-      liquiditySignals: {
-        depthUsd: Number(body.liquiditySignals?.depthUsd ?? 0),
-        bidAskSpreadBps: Number(body.liquiditySignals?.bidAskSpreadBps ?? 0),
-        volumeChange24h: Number(body.liquiditySignals?.volumeChange24h ?? 0),
-      },
-    };
-  }
-
-  const snapshotResult = await pool.query(
-    `SELECT payload_json FROM solvency_snapshots ORDER BY created_at DESC LIMIT 1`
-  );
-
-  if (snapshotResult.rows.length === 0) {
-    return null;
-  }
-
-  const payload = typeof snapshotResult.rows[0].payload_json === 'string'
-    ? JSON.parse(snapshotResult.rows[0].payload_json)
-    : snapshotResult.rows[0].payload_json;
-
+function parseExplicitInputs(body: any): AmeInputs {
   return {
-    treasuryLiquidUsd: Number(payload.treasuryLiquidUsd || 0),
-    treasuryTotalUsd: Number(payload.treasuryTotalUsd || 0),
-    designatedReservesUsd: Number(payload.designatedReservesUsd || 0),
-    lossBufferUsd: Number(payload.lossBufferUsd || 0),
-    netExternalExposureUsd: Number(payload.netExternalExposureUsd || payload.liabilitiesTotalUsd || 0),
-    circulatingExposureUsd: Number(payload.circulatingExposureUsd || payload.liabilitiesTotalUsd || 0),
-    redemptionCapacityUsd: Number(payload.redemptionCapacityUsd || 0),
-    estimatedRedemptionDemandUsd: Number(payload.estimatedRedemptionDemandUsd || 0),
+    treasuryLiquidUsd: Number(body.treasuryLiquidUsd || 0),
+    treasuryTotalUsd: Number(body.treasuryTotalUsd || 0),
+    designatedReservesUsd: Number(body.designatedReservesUsd || 0),
+    lossBufferUsd: Number(body.lossBufferUsd || 0),
+    netExternalExposureUsd: Number(body.netExternalExposureUsd || 0),
+    circulatingExposureUsd: Number(body.circulatingExposureUsd || 0),
+    redemptionCapacityUsd: Number(body.redemptionCapacityUsd || 0),
+    estimatedRedemptionDemandUsd: Number(body.estimatedRedemptionDemandUsd || 0),
     volatilitySignals: {
       pegDeviation: Number(body.volatilitySignals?.pegDeviation ?? 0.05),
       liquidityDepthDrop: Number(body.volatilitySignals?.liquidityDepthDrop ?? 0.05),
@@ -86,26 +52,74 @@ export default async function handler(
 
   try {
     const body = req.body || {};
-    const inputs = await buildInputs(body);
+    let inputs: AmeInputs;
+    let checksum: string;
+    let providerMeta: any = null;
+    let dataSnapshotId: string | null = null;
 
-    if (!inputs) {
-      return res.status(200).json({
-        schemaVersion: 'ame-run-v2',
-        dataStatus: 'empty',
-        error: 'No solvency snapshot available to derive AME inputs',
-      });
+    if (body.treasuryLiquidUsd !== undefined || body.treasuryTotalUsd !== undefined) {
+      inputs = parseExplicitInputs(body);
+      checksum = computeChecksum(inputs);
+    } else {
+      const providerResult = await fetchAllProviderData();
+      inputs = providerResult.inputs;
+      checksum = providerResult.checksum;
+      providerMeta = providerResult.providerMeta;
+
+      if (inputs.treasuryTotalUsd === 0 && inputs.netExternalExposureUsd === 0) {
+        return res.status(200).json({
+          schemaVersion: 'ame-run-v2',
+          dataStatus: 'empty',
+          error: 'No solvency snapshot available to derive AME inputs',
+          providerMeta,
+        });
+      }
     }
+
+    const dataSnapshotResult = await pool.query(
+      `INSERT INTO ame_data_snapshot (provider, checksum, payload_json)
+       VALUES ($1, $2, $3::jsonb)
+       RETURNING id`,
+      [providerMeta ? 'provider-pipeline' : 'run-v2-explicit', checksum, JSON.stringify(inputs)]
+    );
+    dataSnapshotId = dataSnapshotResult.rows[0].id;
 
     const metrics = computeFullMetrics(inputs);
     const yieldPermission = computeYieldPermission(metrics.stabilityScore, metrics.policyMode);
     const waterfall = routeInflow(100, metrics.policyMode);
-    const checksum = computeChecksum(inputs);
 
-    await pool.query(
-      `INSERT INTO ame_data_snapshot (provider, checksum, payload_json)
-       VALUES ($1, $2, $3::jsonb)`,
-      ['run-v2', checksum, JSON.stringify(inputs)]
+    const metricSnapshotResult = await pool.query(
+      `INSERT INTO ame_metric_snapshot (
+        environment, version,
+        treasury_total_usd, treasury_liquid_usd, designated_reserves_usd, loss_buffer_usd,
+        net_external_exposure_usd, gross_issuance_axusd, circulating_exposure_usd,
+        coverage_ratio, reserve_ratio, liquidity_stability_ratio,
+        redemption_stress_ratio, volatility_pressure_index, stability_score,
+        policy_mode, composition_json, inputs_ref
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+      RETURNING id`,
+      [
+        body.environment || 'PRODUCTION',
+        AME_VERSION,
+        inputs.treasuryTotalUsd,
+        inputs.treasuryLiquidUsd,
+        inputs.designatedReservesUsd,
+        inputs.lossBufferUsd,
+        inputs.netExternalExposureUsd,
+        0,
+        inputs.circulatingExposureUsd,
+        metrics.coverageRatio,
+        metrics.reserveRatio,
+        metrics.liquidityStabilityRatio,
+        metrics.redemptionStressRatio,
+        metrics.volatilityPressureIndex,
+        metrics.stabilityScore,
+        metrics.policyMode,
+        JSON.stringify(providerMeta || {}),
+        dataSnapshotId,
+      ]
     );
+    const metricSnapshotId = metricSnapshotResult.rows[0].id;
 
     const enforcementEvents: any[] = [];
 
@@ -118,8 +132,8 @@ export default async function handler(
 
     if (prevPolicyMode !== metrics.policyMode) {
       await pool.query(
-        `INSERT INTO ame_policy_state (policy_mode, trigger_metric, trigger_value, thresholds_json, notes)
-         VALUES ($1, $2, $3, $4::jsonb, $5)`,
+        `INSERT INTO ame_policy_state (policy_mode, trigger_metric, trigger_value, thresholds_json, notes, evaluation_id)
+         VALUES ($1, $2, $3, $4::jsonb, $5, $6)`,
         [
           metrics.policyMode,
           metrics.triggerMetric,
@@ -128,17 +142,18 @@ export default async function handler(
           prevPolicyMode
             ? `Policy mode changed from ${prevPolicyMode} to ${metrics.policyMode}`
             : `Initial policy mode set to ${metrics.policyMode}`,
+          metricSnapshotId,
         ]
       );
 
       if (prevPolicyMode !== null) {
         const modeChangeResult = await pool.query(
-          `INSERT INTO ame_enforcement_event (event_type, severity, policy_mode, details_json)
-           VALUES ($1, $2, $3, $4::jsonb)
+          `INSERT INTO ame_enforcement_event (event_type, severity, policy_mode, details_json, metric_snapshot_id, evaluation_id)
+           VALUES ($1, $2, $3, $4::jsonb, $5, $6)
            RETURNING *`,
           [
             'MODE_CHANGE',
-            metrics.policyMode === 'EMERGENCY' || metrics.policyMode === 'RESTRICTED' ? 'CRITICAL' : metrics.policyMode === 'DEFENSIVE' ? 'WARN' : 'INFO',
+            determineSeverity(metrics.policyMode),
             metrics.policyMode,
             JSON.stringify({
               previousMode: prevPolicyMode,
@@ -146,6 +161,8 @@ export default async function handler(
               triggerMetric: metrics.triggerMetric,
               triggerValue: metrics.triggerValue,
             }),
+            metricSnapshotId,
+            metricSnapshotId,
           ]
         );
         enforcementEvents.push({
@@ -168,14 +185,16 @@ export default async function handler(
 
     if (metrics.hardBrake && !wasArmed) {
       const brakeResult = await pool.query(
-        `INSERT INTO ame_enforcement_event (event_type, severity, policy_mode, details_json)
-         VALUES ($1, $2, $3, $4::jsonb)
+        `INSERT INTO ame_enforcement_event (event_type, severity, policy_mode, details_json, metric_snapshot_id, evaluation_id)
+         VALUES ($1, $2, $3, $4::jsonb, $5, $6)
          RETURNING *`,
         [
           'HARD_BRAKE_ARMED',
           'CRITICAL',
           metrics.policyMode,
           JSON.stringify({ reasons: metrics.hardBrakeReasons, armedByRunV2: true }),
+          metricSnapshotId,
+          metricSnapshotId,
         ]
       );
       enforcementEvents.push({
@@ -191,11 +210,14 @@ export default async function handler(
     return res.status(200).json({
       schemaVersion: 'ame-run-v2',
       dataStatus: 'ok',
+      metricSnapshotId,
+      dataSnapshotId,
       metrics,
       yieldPermission,
       waterfall,
       checksum,
       enforcementEvents,
+      providerMeta,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {

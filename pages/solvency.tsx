@@ -88,11 +88,12 @@ function fmtDecimal(value: number | string, decimals: number = 4): string {
 }
 
 const AME_SCENARIOS = [
-  { key: 'MARKET_CORRECTION', label: 'Market Correction' },
-  { key: 'LIQUIDITY_CRISIS', label: 'Liquidity Crisis' },
-  { key: 'BLACK_SWAN', label: 'Black Swan' },
-  { key: 'DEPEG', label: 'Stablecoin Depeg' },
-  { key: 'GOVERNANCE_ATTACK', label: 'Governance Attack' },
+  { key: 'MARKET_CORRECTION', label: 'Market Correction', description: '15% treasury drawdown with elevated volatility' },
+  { key: 'LIQUIDITY_CRISIS', label: 'Liquidity Crisis', description: '50% redemption capacity drawdown with flow imbalance' },
+  { key: 'BLACK_SWAN', label: 'Black Swan', description: '50% treasury collapse with 70% redemption capacity loss' },
+  { key: 'STABLECOIN_DEPEG', label: 'Stablecoin Depeg', description: 'Reserve asset depegging with 15% liability increase' },
+  { key: 'GOVERNANCE_ATTACK', label: 'Governance Attack', description: 'Malicious issuance with 25% treasury drawdown' },
+  { key: 'BANK_RUN', label: 'Redemption Run', description: 'Coordinated redemption demand exceeding capacity' },
 ];
 
 const DEFINITIONS = [
@@ -235,9 +236,9 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
 
   useEffect(() => {
     if (viewMode !== 'regulatory') return;
-    fetch('/api/solvency/ame/history?metricKey=RS&limit=100')
+    fetch('/api/solvency/ame/history?limit=100')
       .then(res => res.json())
-      .then(data => { if (data.points) setAmeHistory(data.points); })
+      .then(data => { if (data.snapshots) setAmeHistory(data.snapshots); })
       .catch(() => {});
   }, [viewMode]);
 
@@ -308,14 +309,23 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
   const runAmeStress = async () => {
     setAmeStressLoading(true);
     try {
-      const res = await fetch('/api/solvency/ame/stress', {
+      const res = await fetch('/api/solvency/ame/stress-v2', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scenarioKey: ameStressScenario }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          scenarioKeys: ameStressScenario === 'ALL' ? undefined : [ameStressScenario],
+        }),
       });
+      if (!res.ok) {
+        setAmeStressResult({ dataStatus: 'error', projections: [] });
+        return;
+      }
       const data = await res.json();
       setAmeStressResult(data);
     } catch {
+      setAmeStressResult({ dataStatus: 'error', projections: [] });
     } finally {
       setAmeStressLoading(false);
     }
@@ -1042,89 +1052,104 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
     );
   };
 
-  const renderAmeStressSimulator = () => (
-    <div className="mb-10">
-      <SectionHeading>AME Stress Simulator</SectionHeading>
-      <div className="border border-dl-border p-6 bg-dl-bg-alt mb-4">
-        <p className="text-sm text-dl-gray leading-relaxed">
-          Simulation — deterministic projection. Select a predefined stress scenario and run the AME engine against current inputs with applied shocks. Results are projections, not predictions.
-        </p>
-      </div>
-      <div className="flex items-center gap-4 mb-4">
-        <select
-          value={ameStressScenario}
-          onChange={(e) => setAmeStressScenario(e.target.value)}
-          className="px-4 py-2 border border-dl-border bg-dl-bg text-sm font-dl-mono text-dl-navy"
-        >
-          {AME_SCENARIOS.map((s) => (
-            <option key={s.key} value={s.key}>{s.label}</option>
-          ))}
-        </select>
-        <button
-          onClick={runAmeStress}
-          disabled={ameStressLoading}
-          className="px-4 py-2 border border-dl-border bg-dl-bg text-xs font-dl-mono text-dl-navy"
-        >
-          {ameStressLoading ? 'Running...' : 'Run AME Simulation'}
-        </button>
-      </div>
-      {ameStressResult && ameStressResult.projectedRS != null && (
-        <div className="border border-dl-border">
-          <div className="grid grid-cols-4 px-6 py-3 bg-dl-bg border-b border-dl-border">
-            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Metric</p>
-            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Projected</p>
-            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Baseline</p>
-            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Status</p>
-          </div>
-          <div className="grid grid-cols-4 px-6 py-3 bg-dl-bg-alt border-b border-dl-border">
-            <p className="text-sm text-dl-navy">Regime Score (RS)</p>
-            <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtDecimal(ameStressResult.projectedRS)}</p>
-            <p className="text-sm font-dl-mono text-dl-navy text-right">{ameData ? fmtDecimal(ameData.rs) : '—'}</p>
-            <p className={`text-sm font-dl-mono text-right ${regimeBandColor(ameStressResult.projectedRegimeBand)}`}>{ameStressResult.projectedRegimeBand}</p>
-          </div>
-          <div className="grid grid-cols-4 px-6 py-3 bg-dl-bg border-b border-dl-border">
-            <p className="text-sm text-dl-navy">Policy Multiplier (PM)</p>
-            <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtDecimal(ameStressResult.projectedPM, 2)}</p>
-            <p className="text-sm font-dl-mono text-dl-navy text-right">{ameData ? fmtDecimal(ameData.pm, 2) : '—'}</p>
-            <p className="text-sm font-dl-mono text-dl-navy text-right">—</p>
-          </div>
-          {ameStressResult.projectedRatios && (
-            <>
-              {[
-                { label: 'Coverage Ratio', key: 'coverageRatio' },
-                { label: 'Reserve Ratio', key: 'reserveRatio' },
-                { label: 'Loss Buffer Ratio', key: 'lossBufferRatio' },
-                { label: 'Liquidity Depth', key: 'liquidityDepth' },
-              ].map((r, i) => (
-                <div key={r.key} className={`grid grid-cols-4 px-6 py-3 ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'} ${i < 3 ? 'border-b border-dl-border' : ''}`}>
-                  <p className="text-sm text-dl-navy">{r.label}</p>
-                  <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtDecimal(ameStressResult.projectedRatios[r.key] || 0)}</p>
-                  <p className="text-sm font-dl-mono text-dl-navy text-right">{ameData?.ratios ? fmtDecimal(ameData.ratios[r.key] || 0) : '—'}</p>
-                  <p className="text-sm font-dl-mono text-dl-navy text-right">—</p>
-                </div>
-              ))}
-            </>
-          )}
-          {ameStressResult.projectedActions && ameStressResult.projectedActions.length > 0 && (
-            <div className="px-6 py-3 bg-dl-bg-alt border-t border-dl-border">
-              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">Projected Actions</p>
-              {ameStressResult.projectedActions.map((a: any, i: number) => (
-                <p key={i} className="text-sm font-dl-mono text-dl-error">{a.action.replace('ACTION_', '').replace(/_/g, ' ')}</p>
-              ))}
-            </div>
-          )}
-          {ameStressResult.breaches && ameStressResult.breaches.length > 0 && (
-            <div className="px-6 py-3 bg-dl-bg border-t border-dl-border">
-              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">Breaches</p>
-              {ameStressResult.breaches.filter((b: any) => b.breached).map((b: any, i: number) => (
-                <p key={i} className="text-sm font-dl-mono text-dl-error">{b.metric}: {fmtDecimal(b.projected)} vs target {fmtDecimal(b.target)}</p>
-              ))}
-            </div>
-          )}
+  const renderAmeStressSimulator = () => {
+    const projections = ameStressResult?.projections || [];
+    return (
+      <div className="mb-10">
+        <SectionHeading>AME Stress Simulator</SectionHeading>
+        <div className="border border-dl-border p-6 bg-dl-bg-alt mb-4">
+          <p className="text-sm text-dl-gray leading-relaxed">
+            Deterministic stress projection. Select a predefined shock scenario and run the AME engine against current inputs. Results show projected metric changes and policy mode transitions. These are deterministic projections, not predictions.
+          </p>
         </div>
-      )}
-    </div>
-  );
+        <div className="flex items-center gap-4 mb-4">
+          <select
+            value={ameStressScenario}
+            onChange={(e) => setAmeStressScenario(e.target.value)}
+            className="px-4 py-2 border border-dl-border bg-dl-bg text-sm font-dl-mono text-dl-navy"
+          >
+            {AME_SCENARIOS.map((s) => (
+              <option key={s.key} value={s.key}>{s.label}</option>
+            ))}
+            <option value="ALL">All Scenarios</option>
+          </select>
+          <button
+            onClick={runAmeStress}
+            disabled={ameStressLoading}
+            className="px-4 py-2 border border-dl-border bg-dl-bg text-xs font-dl-mono text-dl-navy"
+          >
+            {ameStressLoading ? 'Running...' : 'Run Stress Projection'}
+          </button>
+        </div>
+        {ameStressScenario !== 'ALL' && (
+          <div className="border border-dl-border p-4 bg-dl-bg mb-4">
+            <p className="text-xs text-dl-gray">{AME_SCENARIOS.find(s => s.key === ameStressScenario)?.description || ''}</p>
+          </div>
+        )}
+        {ameStressResult?.dataStatus === 'error' && (
+          <div className="border border-dl-border p-4 bg-dl-bg-alt mb-4">
+            <p className="text-sm text-dl-error">Stress projection requires administrative authorization. Contact protocol administration to run authorized stress tests.</p>
+          </div>
+        )}
+        {ameStressResult?.dataStatus === 'empty' && (
+          <div className="border border-dl-border p-4 bg-dl-bg-alt mb-4">
+            <p className="text-sm text-dl-gray">No solvency snapshot available to derive inputs. Run an AME evaluation first.</p>
+          </div>
+        )}
+        {projections.length > 0 && (
+          <>
+            <div className="border border-dl-border overflow-x-auto mb-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-dl-bg border-b border-dl-border">
+                    <th className="px-4 py-3 text-left text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Scenario</th>
+                    <th className="px-4 py-3 text-right text-xs text-dl-gray uppercase tracking-wider font-dl-mono">CR After</th>
+                    <th className="px-4 py-3 text-right text-xs text-dl-gray uppercase tracking-wider font-dl-mono">SSS After</th>
+                    <th className="px-4 py-3 text-center text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Mode After</th>
+                    <th className="px-4 py-3 text-center text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Hard Brake</th>
+                    <th className="px-4 py-3 text-right text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Breaches</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projections.map((proj: any, i: number) => (
+                    <tr key={proj.scenario?.key || i} className={`border-b border-dl-border last:border-b-0 ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
+                      <td className="px-4 py-2 font-dl-mono text-xs text-dl-navy">{proj.scenario?.label || 'N/A'}</td>
+                      <td className="px-4 py-2 font-dl-mono text-xs text-dl-navy text-right">{fmtDecimal(proj.projectedMetrics?.coverageRatio || 0)}</td>
+                      <td className="px-4 py-2 font-dl-mono text-xs text-dl-navy text-right">{proj.projectedMetrics?.stabilityScore || 0}</td>
+                      <td className={`px-4 py-2 font-dl-mono text-xs text-center ${policyColor(proj.policyModeAfter || '')}`}>{proj.policyModeAfter || 'N/A'}</td>
+                      <td className={`px-4 py-2 font-dl-mono text-xs text-center ${proj.hardBrakeAfter ? 'text-dl-error' : 'text-dl-forest'}`}>{proj.hardBrakeAfter ? 'YES' : 'NO'}</td>
+                      <td className={`px-4 py-2 font-dl-mono text-xs text-right ${(proj.breaches?.length || 0) > 0 ? 'text-dl-error' : 'text-dl-forest'}`}>{proj.breaches?.length || 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {ameStressResult.worstCase && (
+              <div className="border border-dl-border p-4 bg-dl-bg-alt mb-4">
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">Worst Case Analysis</p>
+                <p className="text-sm text-dl-navy mb-1">Scenario: <span className="font-dl-mono">{ameStressResult.worstCase.scenario?.label}</span></p>
+                <p className="text-sm text-dl-navy mb-1">Resulting Mode: <span className={`font-dl-mono ${policyColor(ameStressResult.worstCase.policyModeAfter)}`}>{ameStressResult.worstCase.policyModeAfter}</span></p>
+                {ameStressResult.worstCase.breaches?.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs text-dl-gray mb-1">Threshold Breaches:</p>
+                    {ameStressResult.worstCase.breaches.map((b: string, i: number) => (
+                      <p key={i} className="text-xs font-dl-mono text-dl-error">{b}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {ameStressResult.conclusion && (
+              <div className="border border-dl-border p-4 bg-dl-bg">
+                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-1">Conclusion</p>
+                <p className="text-sm text-dl-navy">{ameStressResult.conclusion}</p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
 
   const renderClearinghouseView = () => (
     <>
@@ -1310,48 +1335,57 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
     const totalPages = Math.max(1, Math.ceil(ameHistory.length / AME_HISTORY_PAGE_SIZE));
     const startIdx = (ameHistoryPage - 1) * AME_HISTORY_PAGE_SIZE;
     const pageData = ameHistory.slice(startIdx, startIdx + AME_HISTORY_PAGE_SIZE);
+
+    const getBandFromScore = (score: number): string => {
+      if (score >= 75) return 'STABLE';
+      if (score >= 50) return 'CAUTION';
+      if (score >= 25) return 'STRESS';
+      return 'CRISIS';
+    };
+
     return (
       <div className="mb-10">
-        <SectionHeading>Historical Evaluations</SectionHeading>
+        <SectionHeading>Historical Metric Snapshots</SectionHeading>
         {ameHistory.length === 0 ? (
           <div className="border border-dl-border p-6 bg-dl-bg-alt">
-            <p className="text-sm text-dl-navy font-medium mb-1">No AME evaluations recorded yet</p>
-            <p className="text-xs text-dl-gray leading-relaxed">Historical AME evaluations will appear here after the first administrative evaluation is run. Each evaluation records regime score, policy multiplier, adaptive targets, and any breach actions for longitudinal analysis.</p>
+            <p className="text-sm text-dl-navy font-medium mb-1">No metric snapshots recorded yet</p>
+            <p className="text-xs text-dl-gray leading-relaxed">Historical metric snapshots will appear here after the first AME evaluation is run. Each snapshot records coverage ratio, reserve ratio, stability score, and policy mode for longitudinal analysis and audit reference.</p>
           </div>
         ) : (
           <>
-            <div className="border border-dl-border">
-              <div className="grid grid-cols-6 px-6 py-3 bg-dl-bg border-b border-dl-border">
-                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Timestamp</p>
-                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-center">Regime Band</p>
-                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">RS</p>
-                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">PM</p>
-                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-center">Status</p>
-                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono text-right">Actions</p>
-              </div>
-              {pageData.map((point: any, i: number) => {
-                const rs = Number(point.value || 0);
-                let band = 'STABLE';
-                if (rs >= 0.75) band = 'CRISIS';
-                else if (rs >= 0.50) band = 'STRESS';
-                else if (rs >= 0.25) band = 'CAUTION';
-                const pm = Math.min(10, Math.max(1, 1 / (1 - rs)));
-                return (
-                  <div
-                    key={point.evaluationId || i}
-                    className={`grid grid-cols-6 px-6 py-3 ${i < pageData.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}
-                  >
-                    <p className="text-sm font-dl-mono text-dl-navy">{fmtTimestamp(point.ts)}</p>
-                    <p className={`text-sm font-dl-mono text-center ${regimeBandColor(band)}`}>{band}</p>
-                    <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtDecimal(rs)}</p>
-                    <p className="text-sm font-dl-mono text-dl-navy text-right">{fmtDecimal(pm, 2)}</p>
-                    <p className={`text-sm font-dl-mono text-center ${rs >= 0.75 ? 'text-dl-error' : rs >= 0.50 ? 'text-dl-gold' : 'text-dl-forest'}`}>
-                      {rs >= 0.75 ? 'CRISIS' : rs >= 0.50 ? 'BREACH' : 'OK'}
-                    </p>
-                    <p className="text-sm font-dl-mono text-dl-navy text-right">—</p>
-                  </div>
-                );
-              })}
+            <div className="border border-dl-border overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-dl-bg border-b border-dl-border">
+                    <th className="px-4 py-3 text-left text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Timestamp</th>
+                    <th className="px-4 py-3 text-right text-xs text-dl-gray uppercase tracking-wider font-dl-mono">CR</th>
+                    <th className="px-4 py-3 text-right text-xs text-dl-gray uppercase tracking-wider font-dl-mono">RR</th>
+                    <th className="px-4 py-3 text-right text-xs text-dl-gray uppercase tracking-wider font-dl-mono">LSR</th>
+                    <th className="px-4 py-3 text-right text-xs text-dl-gray uppercase tracking-wider font-dl-mono">VPI</th>
+                    <th className="px-4 py-3 text-right text-xs text-dl-gray uppercase tracking-wider font-dl-mono">SSS</th>
+                    <th className="px-4 py-3 text-center text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Band</th>
+                    <th className="px-4 py-3 text-center text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Mode</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pageData.map((snap: any, i: number) => {
+                    const sss = Number(snap.stabilityScore || 0);
+                    const band = getBandFromScore(sss);
+                    return (
+                      <tr key={snap.id || i} className={`border-b border-dl-border last:border-b-0 ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
+                        <td className="px-4 py-2 font-dl-mono text-xs text-dl-navy">{fmtTimestamp(snap.createdAt)}</td>
+                        <td className="px-4 py-2 font-dl-mono text-xs text-dl-navy text-right">{fmtDecimal(snap.coverageRatio)}</td>
+                        <td className="px-4 py-2 font-dl-mono text-xs text-dl-navy text-right">{fmtDecimal(snap.reserveRatio)}</td>
+                        <td className="px-4 py-2 font-dl-mono text-xs text-dl-navy text-right">{fmtDecimal(snap.liquidityStabilityRatio)}</td>
+                        <td className="px-4 py-2 font-dl-mono text-xs text-dl-navy text-right">{fmtDecimal(snap.volatilityPressureIndex)}</td>
+                        <td className="px-4 py-2 font-dl-mono text-xs text-dl-navy text-right">{sss}</td>
+                        <td className={`px-4 py-2 font-dl-mono text-xs text-center ${regimeBandColor(band)}`}>{band}</td>
+                        <td className={`px-4 py-2 font-dl-mono text-xs text-center ${policyColor(snap.policyMode || '')}`}>{snap.policyMode || 'N/A'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
             <PaginationControls
               page={ameHistoryPage}
@@ -1359,7 +1393,7 @@ export default function SolvencyPage({ metrics }: SolvencyPageProps) {
               total={ameHistory.length}
               limit={AME_HISTORY_PAGE_SIZE}
               onPageChange={setAmeHistoryPage}
-              itemLabel="evaluations"
+              itemLabel="snapshots"
             />
           </>
         )}
