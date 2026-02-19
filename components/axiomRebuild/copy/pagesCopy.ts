@@ -72,8 +72,8 @@ export const pagesCopy: Record<string, PageCopy> = {
       "Axiom was not created in a lab. It was born from real-world execution: a community land purchase, USDA-supported development, and the founder's ongoing commitment to building infrastructure for shared ownership.",
     hero: {
       kicker: "Our Story",
-      headline: "From Six Acres to a Movement",
-      secondary: "Real Land. Real People. Real Proof.",
+      headline: "From Community Initiative to a Movement",
+      secondary: "Real Coordination. Real People. Real Execution.",
       subheadline: "Before Axiom was software, it was a community of people who pooled resources, bought farmland, and built something real together.",
       primaryCta: { label: "Explore KeyGrow", href: "/products" },
       secondaryCta: { label: "How It Works", href: "/how-it-works" },
@@ -84,7 +84,7 @@ export const pagesCopy: Record<string, PageCopy> = {
         id: "proof",
         title: "The Farmland Proof",
         body:
-          "Before Axiom existed as software, a real community came together, pooled funds, acquired six acres of farmland, and developed it into a working farm with USDA support. Real people. Real land. Real outcomes.\n\nThat experience proved shared ownership works. It also proved most groups fail because coordination breaks down. Axiom exists to turn what already worked into a repeatable system that can scale responsibly.",
+          "Before Axiom existed as software, a real community came together, pooled funds, and participated in the acquisition and development of farmland with USDA support. Real people. Real coordination. Real execution.\n\nThat experience demonstrated that shared ownership can work with structure. It also showed that most groups fail because coordination breaks down. Axiom exists to turn what already worked into a repeatable system that can scale responsibly.",
         image: "/generated/origin_story_farmland_sunrise.png",
         imageAlt: "Sunrise over farmland representing the origin of Axiom",
         primaryCta: { label: "See KeyGrow", href: "/products" }
@@ -369,12 +369,12 @@ export const pagesCopy: Record<string, PageCopy> = {
   community: {
     title: "Community",
     intro:
-      "Real stories from Axiom members building wealth together through community Wealth Practice circles and shared ownership.",
+      "Real stories from Axiom members coordinating capital together through community Wealth Practice circles and shared stewardship.",
     hero: {
       kicker: "Success Stories",
-      headline: "Wealth Built Together",
-      secondary: "Real Members. Real Results.",
-      subheadline: "Join thousands of members saving together, learning together, and building generational wealth through community coordination.",
+      headline: "Coordination Built Together",
+      secondary: "Real Members. Real Participation.",
+      subheadline: "Join thousands of members saving together, learning together, and improving financial coordination through community participation.",
       primaryCta: { label: "Join the Community", href: "/register" },
       secondaryCta: { label: "Learn About The Wealth Practice", href: "/wealth-practice" },
       microcopy: "2,500+ active members across 45 cities."
@@ -421,7 +421,7 @@ export const pagesCopy: Record<string, PageCopy> = {
       kicker: "Our Progress",
       headline: "Impact You Can Measure",
       secondary: "Transparent. Verifiable. Growing.",
-      subheadline: "Every metric is real-time, on-chain verifiable, and represents actual community activity — not projections or promises.",
+      subheadline: "Every metric is real-time, on-chain verifiable, and represents actual community activity — not projections or forward-looking statements.",
       primaryCta: { label: "Join the Movement", href: "/register" },
       secondaryCta: { label: "View Transparency", href: "/transparency" },
       microcopy: "Updated in real-time. Verified on-chain."
@@ -452,7 +452,7 @@ export const pagesCopy: Record<string, PageCopy> = {
         id: "growth",
         title: "Community Growth",
         body:
-          "The Axiom community continues to expand across cities and countries. Real growth driven by real outcomes and word-of-mouth from satisfied members.",
+          "The Axiom community continues to expand across cities and countries. Structured coordination driven by measurable execution and word-of-mouth from active members.",
         image: "/generated/community_collaboration_around_data.png",
         imageAlt: "Community growth visualization",
         primaryCta: { label: "Join Today", href: "/register" }
@@ -462,7 +462,7 @@ export const pagesCopy: Record<string, PageCopy> = {
   transparency: {
     title: "Transparency",
     intro:
-      "Complete visibility into Axiom's smart contracts, security infrastructure, token allocation, and governance. Trust through verification, not promises.",
+      "Complete visibility into Axiom's smart contracts, security infrastructure, token allocation, and governance. Trust through verification, not forward-looking statements.",
     hero: {
       kicker: "Trust Through Verification",
       headline: "Everything On-Chain",

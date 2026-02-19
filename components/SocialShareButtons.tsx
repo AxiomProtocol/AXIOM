@@ -72,7 +72,7 @@ export function SocialShareButtons({ campaign, userId }: SocialShareButtonsProps
     ? ((parseFloat(campaign.raisedAmount) / parseFloat(campaign.targetAmount)) * 100).toFixed(0)
     : '0';
 
-  const shareText = `Join me in investing in real land! ${campaign.title} - ${percentFunded}% funded with ${campaign.investorCount} investors. Min $100 investment.`;
+  const shareText = `Learn about community land coordination through Axiom. ${campaign.title} - ${percentFunded}% funded with ${campaign.investorCount} participants. Min $100 participation.`;
 
   const openShareWindow = (url: string) => {
     window.open(url, '_blank', 'width=600,height=400');

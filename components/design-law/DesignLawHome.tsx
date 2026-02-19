@@ -8,7 +8,7 @@ import { NAV_ITEMS } from './navItems';
 import { NavDropdown } from './NavDropdown';
 
 const PLATFORM_STATS = [
-  { label: 'Real Land Acquired', value: '6+ Acres', detail: 'Community farmland, USDA-supported' },
+  { label: 'Land Framework', value: '6+ Acres', detail: 'Community farmland initiative, USDA-supported' },
   { label: 'Network', value: 'Arbitrum One', detail: 'Chain ID 42161' },
   { label: 'Governance Asset', value: 'AXM', detail: 'Live on mainnet' },
   { label: 'Verified Contracts', value: '72', detail: 'Auditable on-chain' },
@@ -303,8 +303,8 @@ export function DesignLawHome() {
             <SectionHeading>Origin: Proof of Execution</SectionHeading>
             <div className="border border-dl-border bg-dl-bg-alt p-6">
               <p className="text-sm text-dl-gray leading-relaxed mb-4">
-                Before Axiom existed as software, a real community came together, pooled funds, acquired six acres
-                of farmland, and developed it into a working farm with USDA support. Real people. Real land. Real outcomes.
+                Before Axiom existed as software, a real community came together, pooled funds, and participated in the acquisition and development
+                of farmland with USDA support. Real people. Real coordination. Real execution.
               </p>
               <p className="text-sm text-dl-gray leading-relaxed mb-4">
                 That experience proved shared ownership works. It also proved most groups fail because coordination

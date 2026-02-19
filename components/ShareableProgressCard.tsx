@@ -65,7 +65,7 @@ export default function ShareableProgressCard({ walletAddress, compact = false }
   };
 
   const shareToTwitter = () => {
-    const text = encodeURIComponent(`I'm building wealth with Axiom! 🏦\n\n✨ ${progress?.totalXP || 0} XP earned\n🔥 ${progress?.streakDays || 0} day streak\n💰 ${progress?.totalAXM || 0} AXM rewards\n\nJoin me and earn rewards together:`);
+    const text = encodeURIComponent(`I'm participating in Axiom Protocol! 🏦\n\n✨ ${progress?.totalXP || 0} XP earned\n🔥 ${progress?.streakDays || 0} day streak\n💰 ${progress?.totalAXM || 0} AXM rewards\n\nJoin me and earn rewards together:`);
     const url = encodeURIComponent(`${window.location.origin}/join?ref=${progress?.referralCode || ''}`);
     window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
   };

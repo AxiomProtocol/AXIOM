@@ -14,7 +14,7 @@ export default function WealthCoach({ minimized = false, onToggle }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Hey! I'm your AI Wealth Coach. I can help you understand how to build wealth with Axiom's community savings system. What would you like to know?",
+      content: "Hey! I'm your AI Wealth Coach. I can help you understand how to coordinate capital with Axiom's community savings system. What would you like to know?",
     },
   ]);
   const [input, setInput] = useState('');

@@ -110,7 +110,7 @@ export default function ProductsPage() {
       id: 'land-funds',
       name: 'Community Land Funds',
       tagline: 'Collective ownership of strategic land parcels',
-      description: 'Pool resources with your community to acquire land that builds generational wealth. SEC Reg CF compliant crowdfunding.',
+      description: 'Pool resources with your community to participate in land acquisition through a structured coordination framework. SEC Reg CF compliant crowdfunding.',
       href: '/land-funds',
       icon: '🌍',
       phase: 2,
