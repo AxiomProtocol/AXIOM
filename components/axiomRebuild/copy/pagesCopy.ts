@@ -421,7 +421,7 @@ export const pagesCopy: Record<string, PageCopy> = {
       kicker: "Our Progress",
       headline: "Impact You Can Measure",
       secondary: "Transparent. Verifiable. Growing.",
-      subheadline: "Every metric is real-time, on-chain verifiable, and represents actual community activity — not projections or forward-looking statements.",
+      subheadline: "Every metric is real-time, on-chain verifiable, and represents actual community activity — not projections or speculative claims.",
       primaryCta: { label: "Join the Movement", href: "/register" },
       secondaryCta: { label: "View Transparency", href: "/transparency" },
       microcopy: "Updated in real-time. Verified on-chain."
@@ -462,7 +462,7 @@ export const pagesCopy: Record<string, PageCopy> = {
   transparency: {
     title: "Transparency",
     intro:
-      "Complete visibility into Axiom's smart contracts, security infrastructure, token allocation, and governance. Trust through verification, not forward-looking statements.",
+      "Complete visibility into Axiom's smart contracts, security infrastructure, token allocation, and governance. Trust through verification, not speculative claims.",
     hero: {
       kicker: "Trust Through Verification",
       headline: "Everything On-Chain",

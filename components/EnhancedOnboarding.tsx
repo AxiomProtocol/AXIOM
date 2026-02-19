@@ -510,7 +510,7 @@ export function EnhancedOnboarding({ onComplete, onDismiss }: EnhancedOnboarding
                   <div style={{ fontSize: '14px', fontWeight: 600, color: '#3730A3' }}>Quick Tip</div>
                   <div style={{ fontSize: '13px', color: '#4338CA' }}>
                     {formData.experienceLevel === 'new' || formData.experienceLevel === 'learning'
-                      ? 'Check out the Steward Corps training program to learn the fundamentals of community wealth building.'
+                      ? 'Check out the Steward Corps training program to learn the fundamentals of community financial coordination.'
                       : 'Explore the Transparency page to see real-time protocol metrics and treasury activity.'}
                   </div>
                 </div>
