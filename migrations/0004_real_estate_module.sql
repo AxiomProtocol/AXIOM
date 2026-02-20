@@ -324,3 +324,39 @@ CREATE TABLE IF NOT EXISTS re_risk_flags (
 CREATE INDEX IF NOT EXISTS re_risk_flags_scenario_idx ON re_risk_flags (scenario_id);
 CREATE INDEX IF NOT EXISTS re_risk_flags_severity_idx ON re_risk_flags (severity);
 CREATE INDEX IF NOT EXISTS re_risk_flags_type_idx ON re_risk_flags (flag_type);
+
+-- 16. re_comparables: comparable property sales for deal valuation
+CREATE TABLE IF NOT EXISTS re_comparables (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  deal_id UUID NOT NULL REFERENCES re_deals(id),
+  property_id UUID REFERENCES re_properties(id),
+  address TEXT NOT NULL,
+  city VARCHAR(100),
+  state VARCHAR(2),
+  zip VARCHAR(10),
+  lat DECIMAL(10,7),
+  lon DECIMAL(10,7),
+  location_point GEOMETRY(Point, 4326),
+  distance_miles DECIMAL(6,2),
+  property_type VARCHAR(50),
+  sqft INTEGER,
+  lot_sqft INTEGER,
+  bedrooms SMALLINT,
+  bathrooms DECIMAL(3,1),
+  year_built INTEGER,
+  sale_price DECIMAL(14,2),
+  sale_date TIMESTAMP,
+  price_per_sqft DECIMAL(10,2),
+  days_on_market INTEGER,
+  condition VARCHAR(50),
+  source VARCHAR(50),
+  similarity_score DECIMAL(5,4),
+  is_selected BOOLEAN NOT NULL DEFAULT TRUE,
+  meta JSONB,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS re_comparables_deal_idx ON re_comparables (deal_id);
+CREATE INDEX IF NOT EXISTS re_comparables_property_idx ON re_comparables (property_id);
+CREATE INDEX IF NOT EXISTS re_comparables_sale_date_idx ON re_comparables (sale_date);
+CREATE INDEX IF NOT EXISTS re_comparables_location_gist_idx ON re_comparables USING GIST (location_point);

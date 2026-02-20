@@ -315,6 +315,40 @@ export const reRiskFlags = pgTable("re_risk_flags", {
   flagTypeIdx: index("re_risk_flags_type_idx").on(table.flagType),
 }));
 
+export const reComparables = pgTable("re_comparables", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  dealId: uuid("deal_id").references(() => reDeals.id).notNull(),
+  propertyId: uuid("property_id").references(() => reProperties.id),
+  address: text("address").notNull(),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 2 }),
+  zip: varchar("zip", { length: 10 }),
+  lat: decimal("lat", { precision: 10, scale: 7 }),
+  lon: decimal("lon", { precision: 10, scale: 7 }),
+  locationPoint: pointGeometry("location_point"),
+  distanceMiles: decimal("distance_miles", { precision: 6, scale: 2 }),
+  propertyType: varchar("property_type", { length: 50 }),
+  sqft: integer("sqft"),
+  lotSqft: integer("lot_sqft"),
+  bedrooms: smallint("bedrooms"),
+  bathrooms: decimal("bathrooms", { precision: 3, scale: 1 }),
+  yearBuilt: integer("year_built"),
+  salePrice: decimal("sale_price", { precision: 14, scale: 2 }),
+  saleDate: timestamp("sale_date"),
+  pricePerSqft: decimal("price_per_sqft", { precision: 10, scale: 2 }),
+  daysOnMarket: integer("days_on_market"),
+  condition: varchar("condition", { length: 50 }),
+  source: varchar("source", { length: 50 }),
+  similarityScore: decimal("similarity_score", { precision: 5, scale: 4 }),
+  isSelected: boolean("is_selected").default(true).notNull(),
+  meta: jsonb("meta"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  dealIdx: index("re_comparables_deal_idx").on(table.dealId),
+  propertyIdx: index("re_comparables_property_idx").on(table.propertyId),
+  saleDateIdx: index("re_comparables_sale_date_idx").on(table.saleDate),
+}));
+
 export type ReSource = typeof reSources.$inferSelect;
 export type InsertReSource = typeof reSources.$inferInsert;
 export type ReIngestRun = typeof reIngestRuns.$inferSelect;
@@ -345,3 +379,5 @@ export type ReDecisionLogEntry = typeof reDecisionLog.$inferSelect;
 export type InsertReDecisionLogEntry = typeof reDecisionLog.$inferInsert;
 export type ReRiskFlag = typeof reRiskFlags.$inferSelect;
 export type InsertReRiskFlag = typeof reRiskFlags.$inferInsert;
+export type ReComparable = typeof reComparables.$inferSelect;
+export type InsertReComparable = typeof reComparables.$inferInsert;
