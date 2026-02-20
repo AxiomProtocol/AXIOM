@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { properties } from '@/shared/realEstateSchema';
-import { eq, sql } from 'drizzle-orm';
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +15,7 @@ export async function POST(request: NextRequest) {
         {
           data: null,
           meta: {
-            as_of: new Date().toISOString(),
+            as_of: nowIso(),
             sources_used: ['user_input'],
             confidence: 0,
             warnings: ['Invalid address provided'],
@@ -28,60 +30,46 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedAddress = address.trim().toLowerCase();
-    
-    const existingProperty = await db
-      .select({
-        id: properties.id,
-        addressNormalized: properties.addressNormalized,
-        latitude: properties.latitude,
-        longitude: properties.longitude,
-        confidence: properties.confidence,
-      })
-      .from(properties)
-      .where(eq(properties.addressNormalized, normalizedAddress))
-      .limit(1);
 
-    if (existingProperty.length > 0) {
-      const prop = existingProperty[0];
-      const hasGeocode = prop.latitude !== null && prop.longitude !== null;
-      
+    const existing = await db.query(
+      `SELECT id, address_normalized, lat, lon FROM re_properties WHERE address_normalized = $1 LIMIT 1`,
+      [normalizedAddress]
+    );
+
+    if (existing.rows.length > 0) {
+      const prop = existing.rows[0];
+      const hasGeocode = prop.lat !== null && prop.lon !== null;
+      const confidence = hasGeocode ? 0.7 : 0.4;
+
       return NextResponse.json({
         data: {
           property_id: prop.id,
-          confidence: hasGeocode ? 0.7 : 0.4,
-          address_normalized: prop.addressNormalized,
+          confidence,
+          address_normalized: prop.address_normalized,
         },
         meta: {
-          as_of: new Date().toISOString(),
+          as_of: nowIso(),
           sources_used: ['internal_db'],
-          confidence: hasGeocode ? 0.7 : 0.4,
+          confidence,
           warnings: [],
         },
       });
     }
 
-    const newProperty = await db
-      .insert(properties)
-      .values({
-        addressNormalized: normalizedAddress,
-        addressRaw: address,
-        confidence: 0.4,
-        sourcesUsed: ['user_input'],
-      })
-      .returning({
-        id: properties.id,
-        addressNormalized: properties.addressNormalized,
-      });
+    const inserted = await db.query(
+      `INSERT INTO re_properties (address_raw, address_normalized) VALUES ($1, $2) RETURNING id, address_normalized`,
+      [address, normalizedAddress]
+    );
 
     return NextResponse.json(
       {
         data: {
-          property_id: newProperty[0].id,
+          property_id: inserted.rows[0].id,
           confidence: 0.4,
-          address_normalized: newProperty[0].addressNormalized,
+          address_normalized: inserted.rows[0].address_normalized,
         },
         meta: {
-          as_of: new Date().toISOString(),
+          as_of: nowIso(),
           sources_used: ['user_input'],
           confidence: 0.4,
           warnings: ['New property stub created - geocoding pending'],
@@ -95,7 +83,7 @@ export async function POST(request: NextRequest) {
       {
         data: null,
         meta: {
-          as_of: new Date().toISOString(),
+          as_of: nowIso(),
           sources_used: [],
           confidence: 0,
           warnings: ['Internal server error'],

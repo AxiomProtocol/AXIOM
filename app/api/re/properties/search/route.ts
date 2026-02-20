@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { properties } from '@/shared/realEstateSchema';
-import { sql, or, eq } from 'drizzle-orm';
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,23 +12,44 @@ export async function GET(request: NextRequest) {
     const city = searchParams.get('city');
     const state = searchParams.get('state');
     const zip = searchParams.get('zip');
+    const lat = searchParams.get('lat');
+    const lon = searchParams.get('lon');
+    const radius = searchParams.get('radius');
 
-    const conditions = [];
-    
+    const conditions: string[] = [];
+    const params: (string | number)[] = [];
+    let idx = 1;
+
     if (q) {
-      conditions.push(sql`${properties.addressNormalized} % ${q.toLowerCase()}`);
+      conditions.push(`similarity(address_normalized, $${idx}) > 0.2`);
+      params.push(q.toLowerCase());
+      idx++;
     }
-    
+
     if (city) {
-      conditions.push(eq(properties.city, city));
+      conditions.push(`city = $${idx}`);
+      params.push(city);
+      idx++;
     }
-    
+
     if (state) {
-      conditions.push(eq(properties.state, state));
+      conditions.push(`state = $${idx}`);
+      params.push(state);
+      idx++;
     }
-    
+
     if (zip) {
-      conditions.push(eq(properties.zipCode, zip));
+      conditions.push(`zip = $${idx}`);
+      params.push(zip);
+      idx++;
+    }
+
+    if (lat && lon && radius) {
+      conditions.push(
+        `ST_DWithin(location_point::geography, ST_MakePoint($${idx}, $${idx + 1})::geography, $${idx + 2})`
+      );
+      params.push(parseFloat(lon), parseFloat(lat), parseFloat(radius));
+      idx += 3;
     }
 
     if (conditions.length === 0) {
@@ -34,45 +57,37 @@ export async function GET(request: NextRequest) {
         {
           data: null,
           meta: {
-            as_of: new Date().toISOString(),
+            as_of: nowIso(),
             sources_used: [],
             confidence: 0,
             warnings: ['At least one search parameter is required'],
           },
           error: {
             code: 'MISSING_PARAMS',
-            message: 'Provide at least one of: q, city, state, zip',
+            message: 'Provide at least one of: q, city, state, zip, lat+lon+radius',
           },
         },
         { status: 400 }
       );
     }
 
-    const results = await db
-      .select({
-        id: properties.id,
-        addressNormalized: properties.addressNormalized,
-        addressRaw: properties.addressRaw,
-        city: properties.city,
-        state: properties.state,
-        zipCode: properties.zipCode,
-        county: properties.county,
-        latitude: properties.latitude,
-        longitude: properties.longitude,
-        confidence: properties.confidence,
-        createdAt: properties.createdAt,
-      })
-      .from(properties)
-      .where(conditions.length > 1 ? or(...conditions) : conditions[0])
-      .limit(50);
+    const whereClause = conditions.join(' AND ');
+    const result = await db.query(
+      `SELECT id, address_normalized, address_raw, city, state, zip, county, lat, lon, property_type, sqft, bedrooms, year_built, created_at
+       FROM re_properties
+       WHERE is_active = TRUE AND ${whereClause}
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      params
+    );
 
     return NextResponse.json({
-      data: results,
+      data: result.rows,
       meta: {
-        as_of: new Date().toISOString(),
+        as_of: nowIso(),
         sources_used: ['internal_db'],
         confidence: 0.7,
-        warnings: results.length === 50 ? ['Results limited to 50'] : [],
+        warnings: result.rows.length === 50 ? ['Results limited to 50'] : [],
       },
     });
   } catch (error) {
@@ -81,7 +96,7 @@ export async function GET(request: NextRequest) {
       {
         data: null,
         meta: {
-          as_of: new Date().toISOString(),
+          as_of: nowIso(),
           sources_used: [],
           confidence: 0,
           warnings: ['Internal server error'],
