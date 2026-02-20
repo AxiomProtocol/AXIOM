@@ -224,7 +224,7 @@ export default function Layout({ children, showWallet = true }) {
                 </div>
               </Link>
               <p className="text-sm text-gray-500 mb-4">
-                Build wealth through discipline, structure, and community.
+                Structured coordination through discipline, transparency, and community.
               </p>
               <div className="flex items-center gap-3">
                 <a

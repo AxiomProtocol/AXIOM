@@ -162,7 +162,7 @@ export function ProofStrip({ page = 'home' }: ProofStripProps) {
               Foundational Land Project Proof
             </h3>
             <p style={{ fontSize: 14, color: "rgba(26,26,46,0.7)", maxWidth: 600, margin: "0 auto 6px" }}>
-              Real community coordination, real land acquisition, real development progress.
+              Community coordination, land acquisition framework, and development progress.
             </p>
             <p style={{ fontSize: 12, color: "rgba(26,26,46,0.5)", fontStyle: "italic" }}>
               Proof of execution, not a promise of results.

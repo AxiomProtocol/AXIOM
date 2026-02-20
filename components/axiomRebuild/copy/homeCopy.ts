@@ -16,7 +16,7 @@ export const homeCopy = {
       id: "proof",
       title: "We Built the Model Before We Built the Platform",
       body:
-        "Before Axiom existed as software, a real community came together, pooled funds, acquired six acres of farmland, and developed it into a working farm with USDA support. Real people. Real land. Real outcomes.\n\nThat experience proved shared ownership works. It also proved most groups fail because coordination breaks down.\n\nAxiom exists to turn what already worked into a repeatable system that can scale responsibly.",
+        "Before Axiom existed as software, a real community came together, pooled funds, and participated in the acquisition and development of farmland with USDA support. Real people. Real coordination. Real execution.\n\nThat experience demonstrated that shared ownership can work with structure. It also showed that most groups fail because coordination breaks down.\n\nAxiom exists to turn what already worked into a repeatable system that can scale responsibly.",
       primaryCta: { label: "View the Farmland Proof", href: "/about-us" },
       secondaryCta: { label: "Read the Origin Story", href: "/about-us" },
       image: "/keygrow-proof/proof-01.jpg",

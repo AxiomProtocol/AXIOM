@@ -36,7 +36,7 @@ const TESTIMONIALS: Testimonial[] = [
     name: "David R.",
     location: "Chicago, IL",
     avatar: "DR",
-    story: "The Academy courses taught me about wealth building in ways school never did. Combined with the Wealth Practice model, I finally understand community wealth.",
+    story: "The Academy courses taught me about financial coordination in ways school never did. Combined with the Wealth Practice model, I finally understand structured community participation.",
     achievement: "Completed 8 courses",
     joinedDate: "February 2024"
   },
@@ -45,7 +45,7 @@ const TESTIMONIALS: Testimonial[] = [
     name: "Angela M.",
     location: "Detroit, MI",
     avatar: "AM",
-    story: "I referred my entire family to Axiom. Now we have a family Wealth Practice circle working toward generational wealth together.",
+    story: "I referred my entire family to Axiom. Now we have a family Wealth Practice circle coordinating toward long-term financial resilience together.",
     achievement: "Referred 12 family members",
     joinedDate: "December 2023"
   }
@@ -77,11 +77,11 @@ export default function CommunityPage() {
     <DesignLawLayout>
       <Head>
         <title>Community Success Stories | Axiom</title>
-        <meta name="description" content="Real stories from Axiom members building wealth together through community savings." />
+        <meta name="description" content="Real stories from Axiom members coordinating capital together through structured community savings." />
       </Head>
 
       <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Community Success Stories</h1>
-      <p className="text-sm text-dl-gray mb-8">Real stories from Axiom members building wealth together through community savings.</p>
+      <p className="text-sm text-dl-gray mb-8">Real stories from Axiom members coordinating capital together through structured community savings.</p>
 
       <section className="mb-10">
         <SectionHeading>Community Stats</SectionHeading>
