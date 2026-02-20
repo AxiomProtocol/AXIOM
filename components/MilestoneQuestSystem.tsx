@@ -153,7 +153,7 @@ export default function MilestoneQuestSystem({ walletAddress, compact = false }:
           </div>
         ))}
         
-        <a href="/wealth-dashboard?tab=quests" className="block text-center text-yellow-500 hover:text-yellow-400 text-sm mt-2">
+        <a href="/wealth-practice" className="block text-center text-yellow-500 hover:text-yellow-400 text-sm mt-2">
           View All Quests →
         </a>
       </div>

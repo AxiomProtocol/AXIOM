@@ -216,7 +216,7 @@ export default function GraduationProgress({ groupId, isCreator, onGraduate }) {
       )}
 
       <div className="bg-gray-800/50 rounded-lg p-4 text-center">
-        <Link href="/learn-wealth-practice" className="text-yellow-400 hover:text-yellow-300 text-sm">
+        <Link href="/wealth-practice" className="text-yellow-400 hover:text-yellow-300 text-sm">
           Learn more about The Wealth Practice →
         </Link>
       </div>

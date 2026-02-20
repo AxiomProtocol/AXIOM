@@ -91,7 +91,7 @@ export default function WealthPracticePathway({ compact = false, onModeSelect })
           <span className="text-3xl">🎯</span>
           <div>
             <h2 className="text-xl font-bold">The Wealth Practice Pathway</h2>
-            <p className="text-white/80">Your 2-step journey to building wealth together</p>
+            <p className="text-white/80">Your 2-step journey to structured financial coordination</p>
           </div>
         </div>
       </div>

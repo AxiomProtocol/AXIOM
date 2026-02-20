@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { ConnectWalletButton } from './ConnectWalletButton';
 import { SectionHeading } from './SectionHeading';
 import { SolidButton } from './SolidButton';
+import { NAV_ITEMS } from './navItems';
+import { NavDropdown } from './NavDropdown';
 
 const PLATFORM_STATS = [
-  { label: 'Real Land Acquired', value: '6+ Acres', detail: 'Community farmland, USDA-supported' },
+  { label: 'Land Framework', value: '6+ Acres', detail: 'Community farmland initiative, USDA-supported' },
   { label: 'Network', value: 'Arbitrum One', detail: 'Chain ID 42161' },
   { label: 'Governance Asset', value: 'AXM', detail: 'Live on mainnet' },
   { label: 'Verified Contracts', value: '72', detail: 'Auditable on-chain' },
@@ -51,92 +53,6 @@ const PARTICIPATION_STEPS = [
   { step: '3', title: 'Participate', description: 'Engage with the Capital Program, Lending Fund, or Exchange based on your qualification and intent.' },
 ];
 
-interface NavItem {
-  href?: string;
-  label: string;
-  children?: { href: string; label: string }[];
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { href: '/about-us', label: 'About' },
-  { href: '/disclosure', label: 'Disclosure' },
-  {
-    label: 'Community',
-    children: [
-      { href: '/wealth-practice', label: 'Wealth Practice' },
-      { href: '/land', label: 'Land' },
-    ],
-  },
-  {
-    label: 'Products',
-    children: [
-      { href: '/pilot', label: 'Capital Program' },
-      { href: '/lending-fund', label: 'Lending Fund' },
-      { href: '/dex', label: 'Exchange' },
-      { href: '/depin/denet', label: 'DePIN' },
-    ],
-  },
-  {
-    label: 'Intelligence',
-    children: [
-      { href: '/mirdt', label: 'MIRDT' },
-      { href: '/sentinel', label: 'Sentinel' },
-      { href: '/observer', label: 'Observer' },
-    ],
-  },
-  {
-    label: 'Operations',
-    children: [
-      { href: '/founder-ops', label: 'Founder Ops' },
-      { href: '/solvency', label: 'Solvency' },
-      { href: '/products', label: 'All Products' },
-    ],
-  },
-  { href: '/contact', label: 'Contact' },
-];
-
-function HomeNavDropdown({ item }: { item: NavItem }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 hover:underline text-dl-navy text-sm"
-      >
-        {item.label}
-        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.5" className={open ? 'rotate-180' : ''}>
-          <polyline points="1,1 5,5 9,1" />
-        </svg>
-      </button>
-      {open && (
-        <div className="absolute top-full left-0 mt-2 min-w-[180px] border border-dl-border bg-dl-bg z-50">
-          {item.children!.map((child) => (
-            <Link
-              key={child.href}
-              href={child.href}
-              className="block px-4 py-2.5 text-sm text-dl-navy border-b border-dl-border last:border-b-0 hover:bg-gray-50"
-              onClick={() => setOpen(false)}
-            >
-              {child.label}
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 export function DesignLawHome() {
   const [timestamp, setTimestamp] = useState('');
@@ -160,7 +76,7 @@ export function DesignLawHome() {
             <div className="hidden lg:flex items-center gap-6 text-sm text-dl-navy">
               {NAV_ITEMS.map((item) =>
                 item.children ? (
-                  <HomeNavDropdown key={item.label} item={item} />
+                  <NavDropdown key={item.label} item={item} />
                 ) : (
                   <Link key={item.href} href={item.href!} className="hover:underline">{item.label}</Link>
                 )
@@ -240,7 +156,7 @@ export function DesignLawHome() {
               Axiom is building the economic infrastructure for community-led real asset ownership.
               Our Capital Program deploys capital into two real properties through structured SPVs,
               with transparent treasury allocation, institutional-grade reporting, and full audit trails.
-              No speculation. No hype. Just disciplined execution backed by land already acquired.
+              No speculation. No hype. Just disciplined execution backed by targeted land acquisition.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/pilot">
@@ -387,8 +303,8 @@ export function DesignLawHome() {
             <SectionHeading>Origin: Proof of Execution</SectionHeading>
             <div className="border border-dl-border bg-dl-bg-alt p-6">
               <p className="text-sm text-dl-gray leading-relaxed mb-4">
-                Before Axiom existed as software, a real community came together, pooled funds, acquired six acres
-                of farmland, and developed it into a working farm with USDA support. Real people. Real land. Real outcomes.
+                Before Axiom existed as software, a real community came together, pooled funds, and participated in the acquisition and development
+                of farmland with USDA support. Real people. Real coordination. Real execution.
               </p>
               <p className="text-sm text-dl-gray leading-relaxed mb-4">
                 That experience proved shared ownership works. It also proved most groups fail because coordination

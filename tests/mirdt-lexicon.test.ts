@@ -5,13 +5,17 @@ import { checkLexicon } from '../lib/designLaw/lexiconGuard';
 const CRITICAL_FILES = [
   'pages/mirdt/index.tsx',
   'pages/mirdt/[id].tsx',
+  'pages/solvency.tsx',
+  'lib/solvency/ame/oracle.ts',
 ];
 
 const ADVISORY_FILES = [
   'pages/pilot/index.tsx',
   'pages/sentinel/index.tsx',
   'pages/about-us.tsx',
-  'pages/solvency.tsx',
+  'pages/api/solvency/ame/run-v2.ts',
+  'pages/api/solvency/ame/stress-v2.ts',
+  'pages/api/solvency/ame/enforcement.ts',
 ];
 
 const TARGET_FILES = [...CRITICAL_FILES, ...ADVISORY_FILES];

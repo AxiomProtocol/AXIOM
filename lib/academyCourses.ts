@@ -2130,7 +2130,7 @@ These risks have limited community savings growth.
 Smart contracts solve trust issues:
 
 - Contributions are transparent and verifiable
-- Payouts are automatic and guaranteed
+- Payouts are automatic and enforced by smart contract logic
 - No single person controls the funds
 - Rules are enforced by code
 - Participation history is public

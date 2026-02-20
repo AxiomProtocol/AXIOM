@@ -34,11 +34,15 @@ export function computeRedemptionStressRatio(inputs: AmeInputs): number {
 }
 
 export function computeVolatilityPressureIndex(signals: AmeInputs['volatilitySignals']): number {
+  const peg = isFinite(signals.pegDeviation) ? signals.pegDeviation : 0;
+  const depth = isFinite(signals.liquidityDepthDrop) ? signals.liquidityDepthDrop : 0;
+  const accel = isFinite(signals.redemptionAcceleration) ? signals.redemptionAcceleration : 0;
+  const corr = isFinite(signals.correlationSpike) ? signals.correlationSpike : 0;
   const raw =
-    VPI_WEIGHTS.pegDeviation * clamp01(signals.pegDeviation) +
-    VPI_WEIGHTS.liquidityDepthDrop * clamp01(signals.liquidityDepthDrop) +
-    VPI_WEIGHTS.redemptionAcceleration * clamp01(signals.redemptionAcceleration) +
-    VPI_WEIGHTS.correlationSpike * clamp01(signals.correlationSpike);
+    VPI_WEIGHTS.pegDeviation * clamp01(peg) +
+    VPI_WEIGHTS.liquidityDepthDrop * clamp01(depth) +
+    VPI_WEIGHTS.redemptionAcceleration * clamp01(accel) +
+    VPI_WEIGHTS.correlationSpike * clamp01(corr);
   return round8(clamp01(raw));
 }
 
@@ -58,6 +62,9 @@ export function computeStabilityScore(
   rsr: number,
   vpi: number
 ): number {
+  if (!isFinite(cr) || !isFinite(rr) || !isFinite(lsr) || !isFinite(rsr) || !isFinite(vpi)) {
+    return 0;
+  }
   let score = 100;
 
   const { crBreach, rrBreach, lsrBreach, rsrBreach, vpiBreach } = STABILITY_PENALTIES;
@@ -72,17 +79,17 @@ export function computeStabilityScore(
     score -= rrBreach.weight * severity;
   }
 
-  if (lsr < lsrBreach.threshold) {
+  if (lsr < lsrBreach.threshold && lsrBreach.threshold > 0) {
     const severity = clamp01(1 - lsr / lsrBreach.threshold);
     score -= lsrBreach.weight * severity;
   }
 
-  if (rsr > rsrBreach.threshold) {
+  if (rsr > rsrBreach.threshold && rsrBreach.threshold < 1) {
     const severity = clamp01((rsr - rsrBreach.threshold) / (1 - rsrBreach.threshold));
     score -= rsrBreach.weight * severity;
   }
 
-  if (vpi > vpiBreach.threshold) {
+  if (vpi > vpiBreach.threshold && vpiBreach.threshold < 1) {
     const severity = clamp01((vpi - vpiBreach.threshold) / (1 - vpiBreach.threshold));
     score -= vpiBreach.weight * severity;
   }

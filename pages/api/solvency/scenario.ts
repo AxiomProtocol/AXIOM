@@ -1,7 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { timingSafeEqual } from 'crypto';
 import { pool } from '../../../server/db';
 import { runStressScenario, runAllStressScenarios, STRESS_SCENARIOS } from '../../../lib/solvency';
 import type { SolvencyMetrics, StressScenario, StressResult } from '../../../lib/solvency';
+
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 async function fetchSnapshotById(snapshotId: string): Promise<{
   payload: Record<string, any>;
@@ -20,7 +26,8 @@ async function fetchSnapshotById(snapshotId: string): Promise<{
         : row.payload_json,
       id: row.id,
     };
-  } catch {
+  } catch (err) {
+    console.error('[solvency/scenario] Failed to fetch snapshot by ID:', err);
     return null;
   }
 }
@@ -41,7 +48,8 @@ async function fetchLatestSnapshot(): Promise<{
         : row.payload_json,
       id: row.id,
     };
-  } catch {
+  } catch (err) {
+    console.error('[solvency/scenario] Failed to fetch latest snapshot:', err);
     return null;
   }
 }
@@ -79,14 +87,27 @@ export default async function handler(
   }
 
   const adminKey = process.env.ADMIN_SOLVENCY_KEY;
-  const provided = req.headers['x-admin-key'] as string;
-  const isAdmin = adminKey ? provided === adminKey : false;
+  if (!adminKey) {
+    console.warn('[solvency/scenario] ADMIN_SOLVENCY_KEY not configured — admin features disabled');
+  }
+  const provided = req.headers['x-admin-key'];
+  const isAdmin = !!(adminKey && typeof provided === 'string' && safeCompare(provided, adminKey));
 
   try {
     const { snapshotId, scenarioId, customScenario } = req.body || {};
 
     if (customScenario && !isAdmin) {
       return res.status(403).json({ error: 'Custom scenarios require admin authorization (x-admin-key header)' });
+    }
+
+    if (customScenario) {
+      const drawdownPct = Number(customScenario.treasuryDrawdownPct || 0);
+      const reservePct = Number(customScenario.reserveDrawdownPct || 0);
+      const liabPct = Number(customScenario.liabilityIncreasePct || 0);
+      const ethPct = Number(customScenario.ethPriceChangePct || 0);
+      if ([drawdownPct, reservePct, liabPct, ethPct].some(v => isNaN(v) || v < -100 || v > 1000)) {
+        return res.status(400).json({ error: 'Custom scenario parameters must be numeric values between -100 and 1000' });
+      }
     }
 
     const snapshot = snapshotId
@@ -165,7 +186,8 @@ export default async function handler(
             ]
           );
         }
-      } catch {
+      } catch (err) {
+        console.error('[solvency/scenario] Failed to log scenario run:', err);
       }
     }
 
@@ -177,10 +199,9 @@ export default async function handler(
     });
   } catch (error: any) {
     console.error('[solvency/scenario] Error:', error);
-    return res.status(200).json({
+    return res.status(500).json({
       schemaVersion: 'solvency-scenario-v1',
-      snapshotId: 'none',
-      results: [],
+      error: 'Failed to run stress scenario',
     });
   }
 }

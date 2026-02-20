@@ -227,7 +227,7 @@ export function Web3Hero({
           marginTop: "40px"
         }}>
           {[
-            { icon: "🌾", label: "Real Land", value: "6+ Acres", desc: "Farmland acquired" },
+            { icon: "🌾", label: "Land Framework", value: "6+ Acres", desc: "Farmland initiative" },
             { icon: "👥", label: "Community", value: "Active", desc: "Shared ownership" },
             { icon: "🪙", label: "AXM Token", value: "Live", desc: "Governance enabled" },
             { icon: "⛓️", label: "On-Chain", value: "Arbitrum", desc: "Transparent records" }

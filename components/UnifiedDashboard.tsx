@@ -390,7 +390,7 @@ function HomeTabContent({ greeting, overallStats, quickActions, widgets, prefere
                 {preferences.interests.includes('land') 
                   ? 'Check out the Land Stewardship page to see active community campaigns and contribute to land acquisition.'
                   : preferences.interests.includes('susu')
-                  ? 'Join The Wealth Practice to start building wealth together with your community.'
+                  ? 'Join The Wealth Practice to start coordinating capital together with your community.'
                   : 'Explore the features you selected during onboarding to get started with your journey.'}
               </p>
             </div>

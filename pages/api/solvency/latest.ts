@@ -26,7 +26,8 @@ async function fetchLatestSnapshot(): Promise<{
       asOfUtc: row.as_of_utc,
       checksum: row.checksum,
     };
-  } catch {
+  } catch (err) {
+    console.error('[solvency/latest] Failed to fetch snapshot:', err);
     return null;
   }
 }
@@ -128,30 +129,10 @@ export default async function handler(
     });
   } catch (error: any) {
     console.error('[solvency/latest] Error:', error);
-    return res.status(200).json({
+    return res.status(500).json({
       schemaVersion: 'solvency-latest-v1',
-      dataStatus: 'empty',
-      asOfUtc: new Date().toISOString(),
-      snapshotId: 'none',
-      checksum: '0000000000000000',
-      treasuryTotalUsd: 0,
-      treasuryLiquidUsd: 0,
-      reservesTotalUsd: 0,
-      liabilitiesTotalUsd: 0,
-      lossBufferUsd: 0,
-      coverageRatio: 0,
-      reserveRatio: 0,
-      capitalAdequacy: 0,
-      policyMode: 'BOOTSTRAP',
-      composition: [],
-      axusdStability: {
-        totalSupply: 0,
-        psmReserves: 0,
-        backingRatio: 0,
-        pegDeviation: 0,
-        redemptionCapacity: 0,
-        stabilityScore: 'CRITICAL',
-      } as AxusdStabilityMetrics,
+      dataStatus: 'error',
+      error: 'Failed to fetch solvency data',
     });
   }
 }

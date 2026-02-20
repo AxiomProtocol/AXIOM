@@ -86,7 +86,7 @@ export const INSTITUTIONAL_VOCABULARY = {
   savingsCircle: 'The Wealth Practice',
   savingsCircles: 'Wealth Practice groups',
   rosca: 'structured group savings framework',
-  makeWealthier: 'support disciplined savings and allocation behavior',
+  makeWealthier: null,
   guaranteedReturns: null,
   apy: null,
   profit: null,

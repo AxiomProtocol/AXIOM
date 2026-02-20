@@ -44,7 +44,7 @@ export default function MembershipGate({
                 Your membership application is being reviewed. Once approved, you will have access to participate in pools, vote on proposals, and engage with the community.
               </p>
               <Link
-                href="/pma"
+                href="/community"
                 className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
               >
                 View Membership Status
@@ -93,7 +93,7 @@ export default function MembershipGate({
               </Link>
               <p className="mt-4 text-sm text-gray-500">
                 Already a member?{' '}
-                <Link href="/login" className="text-amber-600 hover:underline">
+                <Link href="/join" className="text-amber-600 hover:underline">
                   Sign in
                 </Link>
               </p>

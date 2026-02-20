@@ -1,0 +1,1346 @@
+{
+  "timestamp": "2026-02-19T15:45:57.707Z",
+  "engine": "claude-haiku-4-5",
+  "totalFindings": 147,
+  "summary": {
+    "bySeverity": {
+      "CRITICAL": 6,
+      "HIGH": 34,
+      "MEDIUM": 76,
+      "LOW": 31
+    },
+    "byCategory": {
+      "SECURITY": 22,
+      "DATA_INTEGRITY": 30,
+      "CODE_QUALITY": 49,
+      "ARCHITECTURE": 13,
+      "COMPLIANCE": 26,
+      "DESIGN_LAW": 7
+    }
+  },
+  "findings": [
+    {
+      "severity": "CRITICAL",
+      "category": "SECURITY",
+      "file": "pages/api/solvency/ame/run-v2.ts",
+      "line": 1,
+      "title": "Environment variable exposed in error responses",
+      "detail": "Line 56: adminKey comparison uses process.env.ADMIN_SOLVENCY_KEY without validation. More critically, multiple endpoints return HTTP 200 on errors (lines 81, 218) with generic messages, masking whether auth failed. This prevents proper error handling and may leak timing information about valid keys.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "SECURITY",
+      "file": "pages/api/solvency/ame/run-v2.ts",
+      "line": 218,
+      "title": "Silent error handling returns 200 status on failure",
+      "detail": "Error catch block (lines 213-221) returns HTTP 200 with generic error message instead of appropriate error status. This masks failures and prevents clients from distinguishing between valid empty data and actual errors. Client-side code cannot properly handle or retry on failures.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "SECURITY",
+      "file": "pages/api/solvency/ame/stress-v2.ts",
+      "line": 1,
+      "title": "Admin key validation missing/weak",
+      "detail": "Line 57: same weak auth check as run-v2.ts. Line 211: catch block returns HTTP 200 with generic error instead of 5xx, preventing proper error detection.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "pages/api/solvency/ame/oracle.ts",
+      "line": 125,
+      "title": "Silent catch blocks suppress errors",
+      "detail": "Lines 125-129: Two .catch(() => ({ rows: [] })) silently swallow query errors, including permission errors or connection failures. Client receives false 'empty' data instead of error state. Line 182: main catch also returns HTTP 200 with error flag but no status code to indicate failure.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "HIGH",
+      "category": "DATA_INTEGRITY",
+      "file": "pages/api/solvency/ame/oracle.ts",
+      "line": 27,
+      "title": "Hardcoded mock data in production code",
+      "detail": "buildInputsFromSnapshot() contains hardcoded fallback values (lines 27-43): 'pegDeviation: 0.05' and '0.8 * treasuryLiquidUsd' magic numbers used as defaults. These mock values are silently applied to real calculations if input data is missing, producing false confidence in metrics.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "HIGH",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/solvency/ame/run-v2.ts",
+      "line": 7,
+      "title": "Unsafe use of 'any' types throughout",
+      "detail": "Multiple 'any' casts without validation: line 7 (computeChecksum parameter), line 15 (parseExplicitInputs body parameter), line 63 (providerMeta assignment), line 213 (error handling). Prevents compile-time type safety for critical financial calculations.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "HIGH",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/solvency/ame/stress-v2.ts",
+      "line": 7,
+      "title": "Unsafe 'any' types in stress testing logic",
+      "detail": "Lines 7, 15, 67: Same 'any' type issues. Additionally, line 196 uses 'any' for projections without validation before inserting into database.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "HIGH",
+      "category": "ARCHITECTURE",
+      "file": "pages/api/solvency/ame/run-v2.ts",
+      "line": 67,
+      "title": "Business logic in route handler - metric computation",
+      "detail": "Lines 67-117: Complex business logic (computeFullMetrics, policy state transitions, enforcement event decisions) implemented directly in API handler. Should be extracted to service layer for testability, reusability, and separation of concerns.",
+      "fix_effort": "large"
+    },
+    {
+      "severity": "HIGH",
+      "category": "ARCHITECTURE",
+      "file": "pages/api/solvency/ame/stress-v2.ts",
+      "line": 85,
+      "title": "Business logic in route handler - scenario filtering",
+      "detail": "Lines 85-96: Scenario selection and stress computation intermingled with route logic. Lines 114-130: Result aggregation and severity determination mixed into handler. Extract to service layer.",
+      "fix_effort": "large"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "SECURITY",
+      "file": "pages/api/solvency/ame/run-v2.ts",
+      "line": 7,
+      "title": "Crypto module imported via require instead of import",
+      "detail": "Line 7: 'const { createHash } = require('crypto')' bypasses type checking and is inconsistent with ES6 imports. Use 'import { createHash } from 'crypto' for consistency and better tree-shaking.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/solvency/ame/oracle.ts",
+      "line": 138,
+      "title": "Dynamic import in route handler",
+      "detail": "Line 138: 'await import()' for stress projections adds latency and potential failure modes. Should be statically imported at module level or moved to service layer.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "pages/api/solvency/ame/latest.ts",
+      "line": 50,
+      "title": "Missing error/loading state handling",
+      "detail": "Lines 50-60: When snapshotResult is empty, returns 'empty' status but code doesn't distinguish between 'never run' vs 'latest run failed'. No timestamp for last successful run. Clients cannot detect stale data.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "pages/api/solvency/ame/history.ts",
+      "line": 98,
+      "title": "Silent error suppression loses context",
+      "detail": "Line 98: catch block returns generic empty response without distinguishing between permission errors, connection failures, or actual empty dataset. Should include error type or log level indicator.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/solvency/ame/enforcement.ts",
+      "line": 30,
+      "title": "Silent catch block in query chain",
+      "detail": "Line 30: '.catch(() => ({ rows: [] }))' hides query failures. Should log error and return proper error state instead of silently returning empty array.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "ARCHITECTURE",
+      "file": "pages/api/solvency/ame/hard-brake.ts",
+      "line": 40,
+      "title": "State validation logic in route handler",
+      "detail": "Lines 40-48: Check for EMERGENCY/RESTRICTED mode before releasing brake is business logic that should be in service layer, not API handler. Makes it untestable and hard to reuse.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/solvency/ame/run-v2.ts",
+      "line": 21,
+      "title": "Duplicate parseExplicitInputs function",
+      "detail": "parseExplicitInputs() defined identically in run-v2.ts (lines 12-38) and stress-v2.ts (lines 11-37). Should extract to shared utility module.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/solvency/ame/run-v2.ts",
+      "line": 7,
+      "title": "Duplicate computeChecksum function",
+      "detail": "computeChecksum() defined identically in run-v2.ts (lines 9-11) and stress-v2.ts (lines 9-11). Extract to shared utility.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "HIGH",
+      "category": "CODE_QUALITY",
+      "file": "lib/solvency/ame/MetricsMath.ts",
+      "line": 0,
+      "title": "Utility functions should be in separate module",
+      "detail": "Helper functions (clamp01, clamp, safeDivisor, round8) are defined at file scope and used only within this module. Extract to a dedicated utils file to improve maintainability and reusability across the AME package.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "lib/solvency/ame/MetricsMath.ts",
+      "line": 62,
+      "title": "No validation of input ranges in computeVolatilityPressureIndex",
+      "detail": "The function applies clamp01 to individual signals but doesn't validate that VPI_WEIGHTS sum to 1.0. If weights are misconfigured, the result could exceed [0,1] before final clamping. Consider asserting weight sum or validating at config load time.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "lib/solvency/ame/MetricsMath.ts",
+      "line": 67,
+      "title": "Precision loss in round8 with extreme values",
+      "detail": "The round8 function uses 1e8 multiplier. For values >9.22e15, floating-point precision loss occurs. DeFi protocols handle large USD values; add bounds checking or use BigInt for financial calculations.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "lib/solvency/ame/MetricsMath.ts",
+      "line": 75,
+      "title": "Silent failure in computeStabilityScore penalty application",
+      "detail": "Penalty logic assumes STABILITY_PENALTIES thresholds are valid. If a threshold is NaN or negative, severity calculations produce NaN silently. Add validation: if (!Number.isFinite(threshold)) throw new Error(...).",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "HIGH",
+      "category": "DATA_INTEGRITY",
+      "file": "lib/solvency/ame/config.ts",
+      "line": 5,
+      "title": "Missing validation of environment variable parsing",
+      "detail": "parseFloat() on environment variables can return NaN without error. If AME_CR_EXPANSION is missing or malformed, DEFAULT_THRESHOLDS.crExpansion becomes NaN, breaking downstream calculations. Add fallback validation: parseFloat(x) || defaultValue and isFinite() checks.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "lib/solvency/ame/config.ts",
+      "line": 17,
+      "title": "VPI_WEIGHTS do not sum to 1.0",
+      "detail": "VPI_WEIGHTS sum to 1.00 by design, but this is not documented or asserted. Add a compile-time assertion or runtime validation that weights sum to exactly 1.0 to prevent future misconfiguration.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "lib/solvency/ame/config.ts",
+      "line": 24,
+      "title": "STABILITY_PENALTIES hardcoded with no validation",
+      "detail": "Penalty weights (30, 20, 20, 15, 15) and thresholds lack validation. If a threshold equals 0, severity division produces Infinity. Add runtime check: Object.values(STABILITY_PENALTIES).forEach(p => if (p.threshold <= 0) throw Error()).",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "ARCHITECTURE",
+      "file": "lib/solvency/ame/PolicyEngine.ts",
+      "line": 11,
+      "title": "PolicyDecision breaches field redundant with evaluatePolicy logic",
+      "detail": "PolicyDecision computes breaches array by re-checking thresholds in evaluatePolicy(). This duplicates logic from determinePolicyModeV2. Consider extending AmeMetricsResult with breach details instead.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "lib/solvency/ame/PolicyEngine.ts",
+      "line": 1,
+      "title": "Unused import: computeFullMetrics not imported",
+      "detail": "PolicyEngine imports individual metric functions but MetricsMath also exports computeFullMetrics. If PolicyEngine should delegate to computeFullMetrics instead of reimplementing, update imports and reduce duplication.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "lib/solvency/ame/PolicyEngine.ts",
+      "line": 13,
+      "title": "No error handling for invalid thresholds in determinePolicyModeV2",
+      "detail": "If thresholds contain NaN or inverted ranges (e.g., crDefensive > crNormal), policy determination fails silently. Add precondition check: if (thresholds.crDefensive >= thresholds.crNormal) throw Error().",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "lib/solvency/ame/PolicyEngine.ts",
+      "line": 50,
+      "title": "determineSeverity lacks handling for unrecognized mode",
+      "detail": "If an unexpected PolicyMode is passed, the function returns 'INFO' as fallback. This could mask configuration errors. Add explicit default case with warning: console.warn() or throw.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "lib/solvency/ame/types.ts",
+      "line": 0,
+      "title": "No documented meaning of 'stabilityScore' in metrics",
+      "detail": "AmeMetricsResult.stabilityScore is a 0-100 bounded integer but lacks documentation on what values indicate health vs. risk. Add JSDoc explaining thresholds and interpretation to prevent misuse.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "HIGH",
+      "category": "COMPLIANCE",
+      "file": "lib/solvency/ame/StressEngine.ts",
+      "line": 18,
+      "title": "Prohibited term 'Stablecoin Depeg' uses non-compliant language",
+      "detail": "The scenario label 'Stablecoin Depeg' and description contain implied references to stablecoins/tokenization. Per compliance rules, use 'Reserve Asset Depeg' and avoid tokenization terminology. Replace 'Reserve asset depegging' description to focus on reserve mechanism failure.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "lib/solvency/ame/StressEngine.ts",
+      "line": 37,
+      "title": "Scenario 'BANK_RUN' uses non-institutional terminology",
+      "detail": "Label 'Redemption Run' is acceptable, but the description 'Coordinated redemption demand' could imply loss-of-confidence narratives. Use 'Elevated redemption demand wave' to stay neutral and institutional.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "lib/solvency/ame/providers/index.ts",
+      "line": 14,
+      "title": "Unsafe require() for crypto module in production code",
+      "detail": "Using CommonJS require('crypto') in an ES module context is unsafe and can cause module resolution issues. Import 'crypto' as ESM: `import { createHash } from 'crypto';` at the top level.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "lib/solvency/ame/oracle.ts",
+      "line": 5,
+      "title": "Overly verbose ORACLE_SYSTEM_PROMPT (650+ chars) embedded in code",
+      "detail": "The system prompt is very long and should be extracted to a separate config file or constants module. This makes the file harder to maintain and test. Extract to `lib/solvency/ame/oraclePrompts.ts`.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "lib/solvency/ame/oracle.ts",
+      "line": 90,
+      "title": "Excessive inline helper functions and record literals",
+      "detail": "Functions like `buildMetricsBlock`, `buildEventsBlock`, `buildStressBlock` are well-named but the QUERY_PROMPTS record is complex and hard to test. Consider extracting prompt builders to a separate module.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "DATA_INTEGRITY",
+      "file": "lib/solvency/ame/oracle.ts",
+      "line": 166,
+      "title": "Missing error handling in queryOracle Gemini API call",
+      "detail": "The `generateText()` call has no try-catch. If Gemini API fails, the error will propagate unhandled. Wrap in try-catch and return a graceful fallback response.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "lib/solvency/ame/CapitalFlowEngine.ts",
+      "line": 48,
+      "title": "Silent rounding in routeInflow may lose precision",
+      "detail": "The function rounds each bucket independently: `Math.round(inflowUsd * alloc.pct * 100) / 100`. This can cause the sum of allocations to not equal inflowUsd due to rounding error accumulation. Add a reconciliation step or document expected precision loss.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "lib/solvency/ame/StressEngine.ts",
+      "line": 107,
+      "title": "Breaches array is populated but completeness not validated",
+      "detail": "The `runStressProjection` function checks 5 specific thresholds but silently succeeds if none breach. No validation that thresholds are properly defined or that all critical metrics are checked. Add assertion or logging for data completeness.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "ARCHITECTURE",
+      "file": "lib/solvency/ame/providers/index.ts",
+      "line": 22,
+      "title": "fetchAllProviderData creates provider instances inline without factory",
+      "detail": "Creating provider instances directly in the function makes it hard to mock or swap implementations. Consider injecting providers as dependencies or using a factory pattern.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "lib/solvency/ame/CapitalFlowEngine.ts",
+      "line": 1,
+      "title": "Unused import: YIELD_CONFIG not used in CapitalFlowEngine exports",
+      "detail": "YIELD_CONFIG is imported from './config' but only used inside `computeYieldPermission`. The module structure should clarify if YIELD_CONFIG belongs here or if it should be imported only where needed.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "lib/solvency/ame/oracle.ts",
+      "line": 13,
+      "title": "System prompt uses term 'smart contracts' (prohibited)",
+      "detail": "Line in rules uses institutional language guidance but the system prompt context should avoid implying technical implementation details. Replace any implicit references with 'automated control layer' terminology to fully comply.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "lib/solvency/ame/providers/index.ts",
+      "line": 44,
+      "title": "No error handling for Promise.all provider data fetch",
+      "detail": "If any provider fails, the entire fetchAllProviderData call fails without graceful degradation. Wrap in try-catch and return partial data with error metadata, or explicitly document that partial failures are not acceptable.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "SECURITY",
+      "file": "pages/api/solvency/scenario.ts",
+      "line": 98,
+      "title": "Admin key comparison vulnerable to timing attacks",
+      "detail": "Direct string comparison `provided === adminKey` is vulnerable to timing attacks. Use constant-time comparison like `crypto.timingSafeEqual()` to prevent attackers from inferring the correct key through response timing.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "SECURITY",
+      "file": "pages/api/solvency/scenario.ts",
+      "line": 96,
+      "title": "Admin key exposed in environment without validation",
+      "detail": "ADMIN_SOLVENCY_KEY is read from process.env without validation. If missing, authentication is silently disabled (`isAdmin = false` when `adminKey` is falsy). Attackers could exploit this by ensuring the key is undefined. Either enforce the key presence or use a different auth mechanism.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "HIGH",
+      "category": "DATA_INTEGRITY",
+      "file": "pages/api/solvency/latest.ts",
+      "line": 21,
+      "title": "Silent error handling masks database failures",
+      "detail": "The catch block in `fetchLatestSnapshot()` returns `null` without logging, hiding database errors like connection failures. This causes clients to receive empty data when the system is actually down, creating false confidence.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "HIGH",
+      "category": "DATA_INTEGRITY",
+      "file": "pages/api/solvency/history.ts",
+      "line": 65,
+      "title": "Silent error handling masks query failures",
+      "detail": "The catch block in the main handler returns 200 with empty data instead of indicating an error state. Clients cannot distinguish between 'no data' and 'database connection failed', leading to incorrect UI behavior and silent data loss.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "HIGH",
+      "category": "DATA_INTEGRITY",
+      "file": "pages/api/solvency/scenario.ts",
+      "line": 142,
+      "title": "Silent failure in scenario logging with bare catch block",
+      "detail": "Line 142: `catch {}` swallows all errors from scenario_runs table creation and insertions. If the table creation fails, subsequent inserts will silently fail without logging, causing audit trail data loss.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "HIGH",
+      "category": "DATA_INTEGRITY",
+      "file": "pages/api/solvency/scenario.ts",
+      "line": 82,
+      "title": "Silent error in fetchSnapshotById masks database issues",
+      "detail": "The catch block returns `null` without logging, identical to the latest.ts issue. Database errors remain invisible to monitoring systems.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/solvency/latest.ts",
+      "line": 1,
+      "title": "Excessive 'any' type usage",
+      "detail": "Line 103 uses `error: any`. Should be typed as `Error` or specific error types. The scenario.ts file also uses `error: any` at line 176.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/solvency/history.ts",
+      "line": 38,
+      "title": "Untyped 'any' in map callback",
+      "detail": "Line 38: `(row: any)` should be typed properly based on the database row structure. Use a defined interface instead of `any`.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "ARCHITECTURE",
+      "file": "pages/api/solvency/scenario.ts",
+      "line": 111,
+      "title": "Database schema creation in API route handler",
+      "detail": "Lines 111-121 create tables dynamically in the request handler. This business logic should be in migrations or database initialization, not in the API route. Creates race conditions if multiple requests run simultaneously.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "SECURITY",
+      "file": "pages/api/solvency/scenario.ts",
+      "line": 102,
+      "title": "Missing rate limiting on privileged endpoint",
+      "detail": "The POST /solvency/scenario endpoint accepts admin operations (custom scenarios, logging) without rate limiting. A compromised admin key could be used to spam scenario logging or exhaust database resources.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "SECURITY",
+      "file": "pages/api/solvency/scenario.ts",
+      "line": 107,
+      "title": "No input validation on custom scenario parameters",
+      "detail": "Custom scenario values (treasuryDrawdownPct, etc.) are coerced with `Number()` without bounds checking. Malicious input like `Number('1e308')` could cause numeric overflow or misleading analysis results.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "pages/api/solvency/latest.ts",
+      "line": 40,
+      "title": "Terminology: 'coverage' may imply absolute guarantees",
+      "detail": "Terms like 'coverageRatio' and 'coverageRatio: 0' in empty state could mislead users into thinking 100% coverage means guaranteed solvency. Consider clarifying language like 'liquidityRatio' or add disclaimers.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/solvency/latest.ts",
+      "line": 48,
+      "title": "Duplicate empty response structure",
+      "detail": "Lines 48-67 and lines 159-178 define identical empty response payloads. Extract to a constant to reduce duplication and maintenance burden.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/solvency/scenario.ts",
+      "line": 67,
+      "title": "Helper function buildMetricsFromPayload has unclear purpose",
+      "detail": "The function creates an object with `snapshotId: ''` and `checksum: ''` which are immediately overwritten (line 128). This suggests muddled initialization logic that should be clarified.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "SECURITY",
+      "file": "pages/api/wealth-practice/groups.ts",
+      "line": 23,
+      "title": "SQL Injection via ILIKE search parameter",
+      "detail": "The 'q' parameter is concatenated with wildcard characters directly into the SQL query without proper escaping. While parameterized queries are used, the wildcard injection (%q%) could still be problematic if 'q' contains special regex characters. Additionally, the parameter index increment logic is broken for the ILIKE clause—paramIndex is incremented after pushing the parameter, causing misalignment.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "pages/api/wealth-practice/join.ts",
+      "line": 0,
+      "title": "Missing authentication and authorization",
+      "detail": "The join endpoint accepts any memberAddress without verifying that the requester is authorized to join on behalf of that address. No wallet signature verification, session validation, or permission checks exist. Any caller can add any address to any group.",
+      "fix_effort": "large"
+    },
+    {
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "pages/api/wealth-practice/hubs.ts",
+      "line": 0,
+      "title": "Missing authentication for POST endpoint",
+      "detail": "The hub creation endpoint has no authentication. Any unauthenticated user can create interest hubs without restriction.",
+      "fix_effort": "large"
+    },
+    {
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "pages/api/wealth-practice/groups.ts",
+      "line": 0,
+      "title": "Missing authentication for POST endpoint",
+      "detail": "Group creation endpoint lacks any authentication or authorization checks. Any user can create groups.",
+      "fix_effort": "large"
+    },
+    {
+      "severity": "HIGH",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/wealth-practice/groups.ts",
+      "line": 63,
+      "title": "Excessive 'any' type usage",
+      "detail": "Multiple instances of 'any' type: params array and error objects. Use proper typing: params should be (string | number)[], error should be Error type.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "HIGH",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/wealth-practice/capital-flow.ts",
+      "line": 43,
+      "title": "Silent error handling with fallback mock data",
+      "detail": "The .catch() blocks return hardcoded mock data structures when land pools or produce stats queries fail. This masks database errors and returns false data, violating DATA_INTEGRITY principle. Failures should be propagated or clearly indicated.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "HIGH",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/land/pools.ts",
+      "line": 12,
+      "title": "Silent error handling with fallback empty state",
+      "detail": "Table existence check returns empty data instead of propagating the error. While this prevents crashes, it masks database connectivity issues and returns misleading success:true responses for failures.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "pages/api/wealth-practice/groups.ts",
+      "line": 1,
+      "title": "Prohibited terminology: 'Wealth Practice'",
+      "detail": "File and database references use 'wealth-practice' and 'purpose_groups'. Should use compliant terminology like 'participation groups' or 'community circles'.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "pages/api/wealth-practice/capital-flow.ts",
+      "line": 60,
+      "title": "Prohibited terminology: 'Capital' and 'graduation'",
+      "detail": "Response includes 'estimatedCapitalCommitted', 'graduationRate', 'graduatedGroups'. Should use terms like 'participation commitment', 'activation rate', 'completed cycles'.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "pages/api/land/candidates.ts",
+      "line": 1,
+      "title": "Prohibited terminology: 'Land' and 'acquisition'",
+      "detail": "File refers to 'land_candidates' and 'land_governance_proposals'. Should use terms like 'site candidates', 'resource governance'.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "ARCHITECTURE",
+      "file": "pages/api/wealth-practice/capital-flow.ts",
+      "line": 0,
+      "title": "Complex business logic in API route handler",
+      "detail": "Capital flow calculation, graduation rate computation, and funding progress logic should be extracted to a service layer rather than inline in the route handler for testability and reusability.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "pages/api/wealth-practice/groups.ts",
+      "line": 40,
+      "title": "Hardcoded trust score calculation",
+      "detail": "Trust score uses magic numbers (40, 8, 15, 25) without explanation or configuration. Should be externalized to a config file or service with clear business logic documentation.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/wealth-practice/hubs.ts",
+      "line": 48,
+      "title": "Complex string manipulation for IDs",
+      "detail": "Region ID generation uses chained string operations (toLowerCase, replace). Should extract to a utility function.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "pages/api/land/candidates.ts",
+      "line": 17,
+      "title": "Hardcoded stage ordering and due diligence total",
+      "detail": "Stage ordering list (11 cases) and due_diligence_total (6) are hardcoded. Should be database-driven or config constants.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/wealth-practice/capital-flow.ts",
+      "line": 55,
+      "title": "Unused mapping transformation",
+      "detail": "The graduatedGroups query result is mapped to camelCase properties, but original snake_case properties already exist. Confirm whether both are needed or if one is redundant.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/wealth-practice/analytics.ts",
+      "line": 0,
+      "title": "Missing rate limiting",
+      "detail": "Analytics endpoint performs multiple aggregation queries without rate limiting. High-frequency requests could impact database performance.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/land/pools.ts",
+      "line": 26,
+      "title": "Unnecessary precision calculation",
+      "detail": "Funding progress calculated as Math.round((total / target) * 10000) / 100 is overly complex. Simple Math.round((total / target) * 100) suffices for percentage.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "pages/api/auth/siwe/nonce.ts",
+      "line": 11,
+      "title": "Global mutable state for pool warm-up tracking",
+      "detail": "The `poolWarmedUp` variable is a module-level mutable boolean that persists across requests. This creates a race condition where concurrent requests may all attempt warm-up simultaneously, and in serverless environments (Vercel, Replit) where new instances spin up, this state is unreliable. Use connection pool's built-in health checks or per-request state instead.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "SECURITY",
+      "file": "pages/api/auth/siwe/verify.ts",
+      "line": 56,
+      "title": "Debug information exposed in production error responses",
+      "detail": "The response includes `debug: { validHosts, received: messageDomain }` which exposes internal domain configuration to clients. Remove debug field or only include in development mode.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "pages/api/auth/siwe/verify.ts",
+      "line": 109,
+      "title": "Missing rate limiting on verify endpoint",
+      "detail": "The verify endpoint accepts POST requests with signature verification but has no rate limiting. An attacker could brute-force nonces or perform dictionary attacks on wallet addresses. Implement rate limiting by IP or wallet address.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/auth/siwe/verify.ts",
+      "line": 35,
+      "title": "Silent failures in URL parsing",
+      "detail": "URL parsing in try-catch blocks silently fails with empty catch blocks, setting variables to undefined. This makes debugging difficult. Either log errors or use URL.canParse() validation.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "SECURITY",
+      "file": "pages/api/auth/siwe/verify.ts",
+      "line": 1,
+      "title": "Missing CSRF protection on state-changing endpoint",
+      "detail": "The verify endpoint modifies database state (inserts session, deletes nonce) via POST but doesn't validate CSRF tokens. Add CSRF token validation or rely on SameSite cookie policy documentation.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "pages/api/sentinel/authorize.ts",
+      "line": 9,
+      "title": "Weak authorization: NODE_ENV check allows development access",
+      "detail": "Function `isAuthorized()` returns true in development mode if MIRDT_SCAN_KEY is missing. This allows unauthenticated access to authorization decisions in dev environments that may be connected to production databases. Require explicit key validation always.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "pages/api/sentinel/authorize.ts",
+      "line": 15,
+      "title": "Missing rate limiting on authorization endpoint",
+      "detail": "The authorize endpoint controls financial decisions (maxNotional, actionType) but has no rate limiting. An attacker with the scan key could spam authorization requests. Implement rate limiting by scope, subject, or IP.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/sentinel/authorize.ts",
+      "line": 40,
+      "title": "Silent catch block in signal query",
+      "detail": "The query for sentinel_signals has no error handling; if it fails, signal remains undefined without logging. This could mask database issues. Either log the error or throw.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "pages/api/sentinel/authorize.ts",
+      "line": 69,
+      "title": "Hardcoded fallback for regime state",
+      "detail": "If no regime snapshot exists, defaults to 'RANGE_LOW_VOL' without warning. This could mask data availability issues. Log when fallback is used or require explicit regime initialization.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/mirdt/setups.ts",
+      "line": 28,
+      "title": "SQL injection risk with ILIKE and user input",
+      "detail": "The symbol filter uses ILIKE with `%${symbol}%` but doesn't validate symbol format. While parameterized, a wildcard-heavy input could cause regex DoS or excessive database load. Add length limits and validation.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/mirdt/setups.ts",
+      "line": 1,
+      "title": "Missing authentication on public data endpoint",
+      "detail": "The setups endpoint has no authentication check. While public data may be intended, there's no rate limiting and it could be abused for information gathering. Consider adding rate limiting or auth gate.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "SECURITY",
+      "file": "pages/api/auth/siwe/session.ts",
+      "line": 8,
+      "title": "Unsafe cookie parsing allows injection",
+      "detail": "The `parseCookies()` function naively splits on '=' without handling edge cases like cookies containing '=' in values. Use a robust cookie parser library instead.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "pages/api/auth/siwe/session.ts",
+      "line": 23,
+      "title": "Missing error handling in finally block",
+      "detail": "The `client.release()` in finally block could throw if client is in bad state. While unlikely, wrap in try-catch or use pool.query() without explicit client management.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "pages/api/sentinel/authorize.ts",
+      "line": 1,
+      "title": "Prohibited compliance term in file context",
+      "detail": "This appears to be a control layer for financial operations. Ensure response messages don't use prohibited terms like 'smart contract', 'multi-sig', 'DeFi', 'tokenization', or 'staking'. Use 'automated control layer', 'multi-party authorization', 'on-chain financial rails', 'asset onboarding', 'participation lockup' respectively.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "HIGH",
+      "category": "CODE_QUALITY",
+      "file": "pages/solvency.tsx",
+      "line": 186,
+      "title": "Silent catch block in fetch operations",
+      "detail": "Multiple fetch calls use empty catch blocks (lines 186, 199, 210, 230, 265, etc.), silencing network errors and making debugging difficult. Users see no error state when API fails.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "HIGH",
+      "category": "DATA_INTEGRITY",
+      "file": "pages/solvency.tsx",
+      "line": 186,
+      "title": "Missing error states in data fetches",
+      "detail": "API calls for ameData, psmOps, ameHistory, and historyData silently fail without user feedback. setAmeLoading(false) is called in catch, but no error state is captured or displayed.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "pages/solvency.tsx",
+      "line": 153,
+      "title": "Excessive 'any' types throughout component",
+      "detail": "State variables use 'any' type (axusdStability, stressResults, ameData, ameHistory, enforcementState, oracleResponse, psmOps). This defeats TypeScript safety and creates maintenance risk.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "pages/solvency.tsx",
+      "line": 1,
+      "title": "File exceeds recommended size (1200+ lines)",
+      "detail": "solvency.tsx is significantly over 500 lines with multiple distinct concerns: metrics display, AME stress testing, oracle integration, enforcement panel, and PSM operations. Should be split into smaller components.",
+      "fix_effort": "large"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DESIGN_LAW",
+      "file": "pages/solvency.tsx",
+      "line": 336,
+      "title": "Missing DesignLawLayout wrapper at page root",
+      "detail": "The page uses DesignLawLayout components internally but does not wrap the entire page return in DesignLawLayout, breaking design system consistency and dark theme handling.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "pages/solvency.tsx",
+      "line": 66,
+      "title": "Prohibited term: 'smart contracts'",
+      "detail": "Line 66 contains definition using technical term. Per compliance rules, should use 'automated control layers' for institutional audience.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "pages/disclosure.tsx",
+      "line": 177,
+      "title": "Prohibited term: 'Smart contracts' in contract overview",
+      "detail": "Multiple references to 'smart contracts' throughout should be replaced with 'automated control layers' for compliance.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "pages/disclosure.tsx",
+      "line": 285,
+      "title": "Prohibited term: 'multi-sig' (multisig reference)",
+      "detail": "Glossary entry maps 'Multi-signature wallet (multisig)' to 'Multi-party authorization' - term should not appear at all in compliance contexts.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "LOW",
+      "category": "DATA_INTEGRITY",
+      "file": "pages/disclosure.tsx",
+      "line": 37,
+      "title": "Silent catch block in snapshot fetch",
+      "detail": "The useEffect fetching snapshot data has empty catch block (line 37), so if API fails, user sees 'Snapshot data unavailable' without knowing why.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "pages/disclosure.tsx",
+      "line": 21,
+      "title": "Incorrect formula in fmtPct function",
+      "detail": "Line 21: `(Number(value) / 0.01).toFixed(2)` is mathematically equivalent to `(value * 100).toFixed(2)` but confusing. The 0.01 divisor is non-obvious. Also does not match solvency.tsx approach (line 44 uses `(value * 100).toFixed(2)`). Should use consistent formatting.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "LOW",
+      "category": "DESIGN_LAW",
+      "file": "pages/disclosure.tsx",
+      "line": 1,
+      "title": "Page properly wrapped in DesignLawLayout",
+      "detail": "disclosure.tsx correctly uses DesignLawLayout at root (line 193), but uses minimal styling. Ensure consistency with design system color tokens (dl-navy, dl-forest, dl-gold, etc.) which are present but could be expanded for better visual hierarchy.",
+      "fix_effort": "low"
+    },
+    {
+      "severity": "LOW",
+      "category": "SECURITY",
+      "file": "pages/disclosure.tsx",
+      "line": 119,
+      "title": "External link missing rel='noopener noreferrer'",
+      "detail": "Line 119: Arbiscan links in Addr component correctly include rel='noopener noreferrer', but this pattern should be verified across all external links to prevent window.opener attacks.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "pages/solvency.tsx",
+      "line": 258,
+      "title": "Unused dependency: useEffect viewMode check in multiple effects",
+      "detail": "Multiple useEffect hooks check `if (viewMode !== 'X') return;` which is inefficient dependency management. Should include viewMode in dependency array for clarity.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "pages/about-us.tsx",
+      "line": 115,
+      "title": "Prohibited term: 'multi-party authorization'",
+      "detail": "Line 115 uses 'Multi-party authorization controls' which violates compliance lexicon. Should use 'Multi-party authorization' is acceptable, but context suggests this refers to governance controls. Verify against prohibited terms list: 'multi-sig' should become 'multi-party authorization' (this is correct), but ensure no use of 'smart contracts' → 'automated control layers', 'tokenization' → 'asset onboarding', etc.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "pages/wealth-practice.tsx",
+      "line": 1,
+      "title": "Multiple compliance violations in wealth-practice page",
+      "detail": "File uses prohibited terminology that violates compliance requirements: 'DeFi' (should be 'on-chain financial rails'), 'staking' references (should be 'participation lockup'), potential 'wealth' promises without proper risk framing. Review entire file for absolutist claims about returns or wealth building.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "HIGH",
+      "category": "CODE_QUALITY",
+      "file": "pages/wealth-practice.tsx",
+      "line": 1,
+      "title": "File exceeds 500 lines and needs architectural split",
+      "detail": "wealth-practice.tsx is approximately 700+ lines with multiple independent features (hub management, group creation, discovery). Should be split into: WealthPracticeOverview, HubManagement, GroupDiscovery, and GroupCreation sub-components or separate pages.",
+      "fix_effort": "large"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "pages/wealth-practice.tsx",
+      "line": 204,
+      "title": "Silent catch blocks hiding real errors",
+      "detail": "Multiple fetch operations use bare `.catch(() => setError('...')` without logging. Lines 123, 148, 204, 246, 294 all swallow errors. Errors should be logged to console or error tracking before being set. Example: catch block at line 204 catches POST error but doesn't distinguish network failures from API errors.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "ARCHITECTURE",
+      "file": "pages/wealth-practice.tsx",
+      "line": 242,
+      "title": "Business logic in event handler",
+      "detail": "handleCreateGroup and handleCreateHub contain business logic for validation, API calls, and state management. These should be extracted to custom hooks (useCreateGroup, useCreateHub) or service layer for reusability and testability.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "pages/wealth-practice.tsx",
+      "line": 57,
+      "title": "Inconsistent error display styling",
+      "detail": "Error messages use inline style `{ color: '#991b1b' }` instead of consistent Tailwind class. Should use `text-dl-error` class for consistency across pages.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DESIGN_LAW",
+      "file": "pages/land.tsx",
+      "line": 200,
+      "title": "Missing DesignLawLayout wrapper verification",
+      "detail": "File uses DesignLawLayout correctly, but verify all tab content sections are wrapped. Sub-components (PipelineTab, FundingTab, etc.) should be reviewed for missing dark theme classes or inconsistent styling.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "pages/land.tsx",
+      "line": 1,
+      "title": "Utility functions not extracted to separate file",
+      "detail": "formatCurrency, formatAcreage, getStageBadge functions (lines 101-121) should be moved to utils/land-formatting.ts for reuse across land-related pages.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "HIGH",
+      "category": "DESIGN_LAW",
+      "file": "pages/sentinel/index.tsx",
+      "line": 1,
+      "title": "Dark theme violation: bg-white and hardcoded colors",
+      "detail": "Line 367: `className='px-2 py-1 border border-dl-border bg-white text-dl-navy'` uses hardcoded `bg-white`. Should use `bg-dl-bg`. Multiple select/input elements throughout use `bg-white` instead of design system colors.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "pages/sentinel/index.tsx",
+      "line": 95,
+      "title": "Excessive use of 'any' type",
+      "detail": "Lines 95 (OpState), 360 (runOperation response), 439 (data.results) use untyped 'any'. Response types should be properly typed. Example: `const data = await res.json()` should have type annotations instead of relying on 'any'.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "ARCHITECTURE",
+      "file": "pages/sentinel/index.tsx",
+      "line": 123,
+      "title": "Complex state management should use reducer",
+      "detail": "Component manages 9+ useState calls (overview, signals, decisions, regimes, health, loading, error, activeTab, refreshKey, autoRefreshSec, signalsOp, fullCycleOp). This should use useReducer or custom hook to manage coherent state group.",
+      "fix_effort": "large"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "pages/sentinel/index.tsx",
+      "line": 165,
+      "title": "Missing cleanup in useEffect",
+      "detail": "Line 165: autoRefreshRef effect has cleanup, but fetchData callback lacks dependency array depth verification. If fetchData is called frequently, may cause unnecessary re-renders.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "HIGH",
+      "category": "DESIGN_LAW",
+      "file": "pages/mirdt/index.tsx",
+      "line": 240,
+      "title": "Dark theme violation: bg-white hardcoded",
+      "detail": "Line 240, 250: `className='px-2 py-1 border border-dl-border bg-white text-dl-navy'` uses hardcoded `bg-white`. Should be `bg-dl-bg`. This appears in select elements throughout operations panel.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "pages/mirdt/index.tsx",
+      "line": 45,
+      "title": "Unused type: Setup.rationale_trace_json",
+      "detail": "Interface Setup includes rationale_trace_json field (line 45) but it is never used in rendering or processing. Should be removed or documented if intentional.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "ARCHITECTURE",
+      "file": "pages/mirdt/index.tsx",
+      "line": 1,
+      "title": "Business logic in formatOpResult should be in service layer",
+      "detail": "formatOpResult function (lines 193-209) contains operation-specific formatting logic that should be in a separate service or utility module, not in the page component.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "COMPLIANCE",
+      "file": "pages/mirdt/index.tsx",
+      "line": 30,
+      "title": "Risk disclosure language review needed",
+      "detail": "RISK_DISCLOSURE and FOOTER_DISCLOSURE mention 'investment advice' — verify this aligns with overall compliance requirements and doesn't contain prohibited terminology like 'wealth promises' or 'guaranteed returns'.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "pages/pilot/index.tsx",
+      "line": 92,
+      "title": "Silent error handling in useEffect",
+      "detail": "Lines 92-109: Async fetch wrapped in try/catch but errors only set error state without logging. Should log to console or error tracking service for debugging.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "pages/pilot/index.tsx",
+      "line": 45,
+      "title": "Formatting functions not extracted",
+      "detail": "formatMoney, formatStatus, formatPercent (lines 45-67) should be moved to utils/formatting.ts for consistency across all pages.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "pages/pilot/index.tsx",
+      "line": 73,
+      "title": "Potential wealth promise in messaging",
+      "detail": "Line 73: 'capital program' description should be reviewed to ensure it doesn't contain absolutist claims about returns or performance. Current text appears safe but verify against compliance requirements.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "LOW",
+      "category": "DESIGN_LAW",
+      "file": "pages/about-us.tsx",
+      "line": 1,
+      "title": "Verify all color scheme compliance",
+      "detail": "about-us.tsx uses appropriate DesignLawLayout wrapper and color classes. However, verify no dark theme colors (bg-black, bg-gray-900) are present. Spot check: all backgrounds use dl-bg or dl-bg-alt ✓",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "pages/about-us.tsx",
+      "line": 205,
+      "title": "Disclosure statement review for absolutist claims",
+      "detail": "Disclosure block (lines 205-210) appropriately disclaims guaranteed outcomes. However, review earlier narrative text (lines 30-40) to ensure no absolutist claims about 'disciplined' leading to predictable returns.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "HIGH",
+      "category": "COMPLIANCE",
+      "file": "shared/schema.ts",
+      "line": 1,
+      "title": "Prohibited term 'staking' used throughout schema",
+      "detail": "Field 'totalStaked' and references to 'staking' violate compliance glossary. Must use 'participation lockup' per INSTITUTIONAL_VOCABULARY. Affects: users.totalStaked, userTransactions (stake/unstake types), contribution tracking semantics.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "HIGH",
+      "category": "COMPLIANCE",
+      "file": "shared/schema.ts",
+      "line": 520,
+      "title": "Comment references 'SUSU Savings Circle' — use 'The Wealth Practice'",
+      "detail": "Schema comment mentions 'SUSU Savings Circle' which is deprecated per glossary.ts. Must use canonical 'The Wealth Practice' or 'Wealth Practice groups'.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "shared/schema.ts",
+      "line": 49,
+      "title": "Unsafe 'any' type in foreign key reference",
+      "detail": "Line 49: `referredBy: integer(\"referred_by\").references((): any => users.id)` uses `: any` return type. Should be `(): typeof users => users.id`.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "shared/schema.ts",
+      "line": 1,
+      "title": "Missing validation constraints on sensitive financial fields",
+      "detail": "Decimal fields (targetAmount, monthlyContribution, etc.) lack CHECK constraints to prevent negative values. Should add: `check(sql`amount >= 0`)` to financial amount columns.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "shared/schema.ts",
+      "line": 18,
+      "title": "Email field lacks domain validation constraint",
+      "detail": "users.email uses varchar without CHECK constraint for valid email format. Recommend adding: `check(sql`email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$'`)` at DB level.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "ARCHITECTURE",
+      "file": "shared/schema.ts",
+      "line": 1,
+      "title": "Multiple timestamp default conflicts with business logic",
+      "detail": "Several tables use .defaultNow() for both createdAt and updatedAt (e.g., userOnboarding line 250). If application only sets createdAt on insert, updatedAt won't auto-update on record modification. Need trigger or app-level logic to sync.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "shared/schema.ts",
+      "line": 405,
+      "title": "KYC documents fileHash field lacks uniqueness constraint",
+      "detail": "kycDocuments.fileHash (line 405) should have .unique() to prevent duplicate uploads of same document. Recommend: `fileHash: varchar(\"file_hash\", { length: 128 }).unique()`.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "shared/schema.ts",
+      "line": 525,
+      "title": "Wealth-building feature table names and comments use absolutist language",
+      "detail": "contributionPlans, circles, and wealth-building tables lack explicit disclaimers. Consider table comments: 'For tracking user-directed contributions. Not guaranteed returns. Users bear all risk.'",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "shared/schema.ts",
+      "line": 700,
+      "title": "Truncated file — schema incomplete",
+      "detail": "File ends mid-definition at line ~700 with `isPublished: boolea[TRUNCATED]`. Cannot verify final table definitions or indexes. Ensure file is complete before deployment.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "shared/schema.ts",
+      "line": 25,
+      "title": "walletAddress field allows NULL but semantically should reject for DeFi operations",
+      "detail": "users.walletAddress is nullable but many downstream tables assume valid wallet. Should either: (a) make NOT NULL after wallet connection, (b) add CHECK constraint, or (c) document when NULL is valid.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "ARCHITECTURE",
+      "file": "lib/glossary.ts",
+      "line": 70,
+      "title": "Null assignment for forbidden terms lacks enforcement mechanism",
+      "detail": "INSTITUTIONAL_VOCABULARY has entries like `guaranteedReturns: null` but no active linting/validation enforces their absence. checkLexicon() in lexiconGuard.ts doesn't reference this glossary. Need integration.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "HIGH",
+      "category": "COMPLIANCE",
+      "file": "lib/glossary.ts",
+      "line": 50,
+      "title": "Forbidden phrase 'make them wealthier' in SAFE_REPLACEMENTS context",
+      "detail": "Line 50 shows 'make them wealthier' mapped to acceptable phrases, but glossary.ts line 70 lists 'makeWealthier: null' as forbidden. Inconsistency: is it forbidden or replaceable? Clarify policy.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "lib/designLaw/lexiconGuard.ts",
+      "line": 1,
+      "title": "PROHIBITED_TERMS list includes 'token' and 'tokens' — may over-suppress legitimate use",
+      "detail": "'token' is a generic term (authentication token, security token, ERC-20). EXCLUDED_COMPOUNDS filters only 'bridge loan', 'hash map'. Need exceptions for: 'CSRF token', 'session token', 'governance token' in technical contexts.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "lib/designLaw/lexiconGuard.ts",
+      "line": 85,
+      "title": "Replacement 'automated settlement logic' for 'smart contract' is vague in schema context",
+      "detail": "APPROVED_REPLACEMENTS maps 'smart contract' → 'automated settlement logic', but schema.ts has no code comments. When developers see schema, they won't know term is prohibited. Add schema comments with replacements.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "lib/designLaw/lexiconGuard.ts",
+      "line": 20,
+      "title": "Regex escape in checkLexicon() not robust for special characters",
+      "detail": "Line 33: `term.replace(/\\s+/g, '\\\\s+')` only handles spaces. If PROHIBITED_TERMS ever include terms with regex special chars (e.g., '+', '('), escaping fails. Use lodash.escapeRegExp or native RegExp.escape when available.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "shared/schema.ts",
+      "line": 175,
+      "title": "KYC verification missing explicit consent/audit trail for sensitive PII",
+      "detail": "kycVerifications stores firstName, lastName, dateOfBirth, address in plaintext fields. No encryption flag or purpose-limiting note. Recommend: (1) add isEncrypted boolean, (2) document data retention policy, (3) link to consent record.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "shared/schema.ts",
+      "line": 264,
+      "title": "Admin action logging missing rate-limit/deduplication safeguards",
+      "detail": "adminLogs.action is VARCHAR(100) without uniqueness or frequency checks. Admin could log same action millions of times. Consider: (a) add throttling logic, (b) require reason field, (c) add composite index on (adminId, action, createdAt).",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "LOW",
+      "category": "COMPLIANCE",
+      "file": "shared/schema.ts",
+      "line": 525,
+      "title": "contributionPlans table lacks explicit risk/non-guarantee disclaimers",
+      "detail": "While glossary.ts defines 'whatItIsNot' for Wealth Practice, schema table has no comment repeating disclaimer. Developers integrating this table might assume guaranteed returns. Add: CREATE TABLE COMMENT: 'User-directed contribution tracking. Not FDIC insured. No guaranteed returns.'",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "HIGH",
+      "category": "CODE_QUALITY",
+      "file": "components/design-law/DesignLawLayout.tsx",
+      "line": 37,
+      "title": "Duplicated NavDropdown component logic",
+      "detail": "NavDropdown component is defined identically in both DesignLawLayout.tsx and DesignLawHome.tsx (HomeNavDropdown). This violates DRY principle and creates maintenance burden. Extract to shared component.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "HIGH",
+      "category": "CODE_QUALITY",
+      "file": "components/design-law/DesignLawHome.tsx",
+      "line": 25,
+      "title": "Duplicated NAV_ITEMS and navigation logic",
+      "detail": "NAV_ITEMS array and entire navigation implementation (HomeNavDropdown, menu state, mobile menu) are duplicated from DesignLawLayout. Extract to shared layout or utility to reduce maintenance burden and inconsistency risk.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "COMPLIANCE",
+      "file": "components/design-law/DesignLawHome.tsx",
+      "line": 55,
+      "title": "Absolutist claim in product description",
+      "detail": "PRODUCT_SECTIONS contains 'SEC Reg D 506(c) compliant bridge loan fund' which is a compliance claim that should not appear in UI without explicit legal review and disclaimers. Remove or add prominent disclaimer.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "CODE_QUALITY",
+      "file": "components/design-law/DesignLawHome.tsx",
+      "line": 1,
+      "title": "Unused imports",
+      "detail": "SectionHeading and SolidButton are imported but components file is not provided. Verify these are actually used. Head import appears unused in favor of meta tags approach.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "ARCHITECTURE",
+      "file": "components/design-law/DesignLawHome.tsx",
+      "line": 95,
+      "title": "Business logic in component file",
+      "detail": "DesignLawHome mixes navigation logic (HomeNavDropdown with useEffect/useState), timestamp generation, and page content. Should separate navigation into layout component and extract timestamp logic to utility.",
+      "fix_effort": "medium"
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "DATA_INTEGRITY",
+      "file": "components/design-law/DesignLawLayout.tsx",
+      "line": 65,
+      "title": "Timestamp generated on every render without memoization",
+      "detail": "setTimestamp is called in useEffect without dependency array issue, but timestamp format changes between files (toLocaleString vs toISOString). Inconsistent. Extract to shared utility with stable format.",
+      "fix_effort": "small"
+    },
+    {
+      "severity": "LOW",
+      "category": "DESIGN_LAW",
+      "file": "components/design-law/DesignLawHome.tsx",
+      "line": 303,
+      "title": "Hardcoded external link URLs in footer",
+      "detail": "Discord, Twitter, LinkedIn URLs are hardcoded. Should be moved to configuration for easier maintenance and to allow content team updates without code changes.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "LOW",
+      "category": "CODE_QUALITY",
+      "file": "components/design-law/DesignLawLayout.tsx",
+      "line": 45,
+      "title": "Missing null check before accessing item.children",
+      "detail": "Line uses item.children! with non-null assertion in NavDropdown map. While conditional above ensures children exist, add explicit guard or refactor for clarity.",
+      "fix_effort": "trivial"
+    },
+    {
+      "severity": "LOW",
+      "category": "COMPLIANCE",
+      "file": "components/design-law/DesignLawHome.tsx",
+      "line": 236,
+      "title": "Risk disclosure adequacy",
+      "detail": "Risk disclosure mentions 'total loss of capital' and recommends consulting advisors, but does not explicitly disclaim that this is not investment advice prominently. Consider expanding or moving to separate modal on first visit.",
+      "fix_effort": "small"
+    }
+  ]
+}

@@ -133,7 +133,7 @@ KeyGrowStaking.sol
 - Path to homeownership
 
 ### For Sellers
-- Guaranteed rental income
+- Consistent rental income
 - Premium pricing
 - Reduced vacancy
 - Motivated tenants

@@ -21,6 +21,7 @@ export const VPI_WEIGHTS = {
   redemptionAcceleration: 0.25,
   correlationSpike: 0.20,
 } as const;
+// VPI_WEIGHTS must sum to 1.0: 0.30 + 0.25 + 0.25 + 0.20 = 1.00
 
 export const STABILITY_PENALTIES = {
   crBreach: { threshold: 1.15, weight: 30 },

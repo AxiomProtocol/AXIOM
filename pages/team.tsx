@@ -58,7 +58,7 @@ export default function TeamPage() {
       <section className="mb-12">
         <SectionHeading>Leadership</SectionHeading>
         <p className="text-dl-gray mb-6">
-          Axiom Nexus, LLC is led by visionary entrepreneurs committed to transforming how communities build wealth together through blockchain technology and shared ownership models.
+          Axiom Nexus, LLC is led by experienced operators committed to improving how communities coordinate capital through governance-first infrastructure and shared ownership models.
         </p>
 
         <div className="flex justify-center">

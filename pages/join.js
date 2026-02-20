@@ -38,7 +38,7 @@ const purposes = [
   { id: 'homeownership', name: 'Home Ownership', description: 'Save toward your first home', icon: '🏠', monthlyMin: 200 },
   { id: 'business', name: 'Business Launch', description: 'Fund your entrepreneurial dreams', icon: '💼', monthlyMin: 150 },
   { id: 'education', name: 'Education', description: 'Invest in learning and growth', icon: '📚', monthlyMin: 100 },
-  { id: 'investment', name: 'Investment Capital', description: 'Build wealth through investing', icon: '📈', monthlyMin: 250 },
+  { id: 'investment', name: 'Investment Capital', description: 'Coordinate capital through structured participation', icon: '📈', monthlyMin: 250 },
   { id: 'travel', name: 'Travel & Experience', description: 'Save for meaningful experiences', icon: '✈️', monthlyMin: 75 },
   { id: 'family', name: 'Family Goals', description: 'Plan for your family\'s future', icon: '👨‍👩‍👧‍👦', monthlyMin: 100 },
   { id: 'custom', name: 'Custom Purpose', description: 'Define your own goal', icon: '⭐', monthlyMin: 50 }
@@ -240,14 +240,14 @@ export default function PurposeGroupOnboarding() {
             
             <h2 className="font-dl-serif text-2xl text-dl-navy mb-3">Welcome to The Wealth Practice</h2>
             <p className="text-sm text-dl-gray mb-6 max-w-xl mx-auto">
-              You're about to explore a structured system for coordinated capital formation through community-led participation.
+              You're about to discover a structured system for coordinating capital together through Group Economics.
             </p>
 
             <div className="max-w-2xl mx-auto mb-6 border border-dl-border bg-dl-bg-alt p-6">
               <div className="text-3xl mb-3">🌱</div>
               <h3 className="font-dl-serif text-lg text-dl-navy mb-2">Join the Community</h3>
               <p className="text-sm text-dl-gray mb-4">
-                Connect with a community exploring structured land stewardship and coordinated participation.
+                Connect with a community of people committed to long-term financial coordination through collective stewardship.
               </p>
               <a 
                 href="https://discord.gg/mKYFjSeR4" 
@@ -569,7 +569,7 @@ export default function PurposeGroupOnboarding() {
             <div className="text-4xl mb-4">🎉</div>
             <h2 className="font-dl-serif text-2xl text-dl-navy mb-3">Welcome to the Family!</h2>
             <p className="text-sm text-dl-gray mb-6 max-w-xl mx-auto">
-              You've successfully joined a Purpose Group. Your journey toward building wealth 
+              You've successfully joined a Purpose Group. Your journey toward structured financial coordination 
               together starts now.
             </p>
             

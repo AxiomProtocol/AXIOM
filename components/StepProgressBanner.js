@@ -86,7 +86,7 @@ export function JourneyIntro({ step, title, subtitle }) {
     },
     grow: {
       emoji: '🌱',
-      message: 'After you build consistency, explore opportunities to grow your wealth.'
+      message: 'After you build consistency, explore opportunities to improve your financial coordination.'
     }
   };
 

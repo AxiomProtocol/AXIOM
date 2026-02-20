@@ -24,13 +24,13 @@ function buildInputsFromSnapshot(payload: any): AmeInputs {
     lossBufferUsd,
     netExternalExposureUsd: liabilitiesTotalUsd,
     circulatingExposureUsd: liabilitiesTotalUsd,
-    redemptionCapacityUsd: psmReserves || treasuryLiquidUsd * 0.8,
-    estimatedRedemptionDemandUsd: liabilitiesTotalUsd * 0.15,
+    redemptionCapacityUsd: psmReserves > 0 ? psmReserves : treasuryLiquidUsd * 0.8,
+    estimatedRedemptionDemandUsd: liabilitiesTotalUsd > 0 ? liabilitiesTotalUsd * 0.15 : 0,
     volatilitySignals: {
-      pegDeviation: 0.05,
-      liquidityDepthDrop: 0.05,
-      redemptionAcceleration: 0.05,
-      correlationSpike: 0.05,
+      pegDeviation: Number(payload.pegDeviation ?? 0.05),
+      liquidityDepthDrop: Number(payload.liquidityDepthDrop ?? 0.05),
+      redemptionAcceleration: Number(payload.redemptionAcceleration ?? 0.05),
+      correlationSpike: Number(payload.correlationSpike ?? 0.05),
     },
     liquiditySignals: {
       depthUsd: 0,
@@ -86,18 +86,30 @@ export default async function handler(
       waterfall = getWaterfall(metrics.policyMode);
     }
 
-    const eventsResult = await pool.query(
-      `SELECT event_type as "eventType", severity, policy_mode as "policyMode",
-              created_at as "createdAt", details_json as "detailsJson"
-       FROM ame_enforcement_event
-       ORDER BY created_at DESC
-       LIMIT 20`
-    ).catch(() => ({ rows: [] }));
+    let eventsResult: { rows: any[] };
+    try {
+      eventsResult = await pool.query(
+        `SELECT event_type as "eventType", severity, policy_mode as "policyMode",
+                created_at as "createdAt", details_json as "detailsJson"
+         FROM ame_enforcement_event
+         ORDER BY created_at DESC
+         LIMIT 20`
+      );
+    } catch (err) {
+      console.error('[oracle] Failed to fetch enforcement events:', err);
+      eventsResult = { rows: [] };
+    }
 
     let previousMetrics: AmeMetricsResult | null = null;
-    const prevSnapshotResult = await pool.query(
-      `SELECT payload_json FROM solvency_snapshots ORDER BY created_at DESC LIMIT 1 OFFSET 1`
-    ).catch(() => ({ rows: [] }));
+    let prevSnapshotResult: { rows: any[] };
+    try {
+      prevSnapshotResult = await pool.query(
+        `SELECT payload_json FROM solvency_snapshots ORDER BY created_at DESC LIMIT 1 OFFSET 1`
+      );
+    } catch (err) {
+      console.error('[oracle] Failed to fetch previous snapshot:', err);
+      prevSnapshotResult = { rows: [] };
+    }
 
     if (prevSnapshotResult.rows.length > 0) {
       const prevPayload = typeof prevSnapshotResult.rows[0].payload_json === 'string'
@@ -142,7 +154,7 @@ export default async function handler(
     });
   } catch (error: any) {
     console.error('[solvency/ame/oracle] Error:', error);
-    return res.status(200).json({
+    return res.status(500).json({
       schemaVersion: 'oracle-v1',
       dataStatus: 'error',
       interpretation: 'Oracle interpretation temporarily unavailable. Deterministic metrics remain the authoritative source for all capital decisions.',
