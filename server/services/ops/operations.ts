@@ -200,7 +200,10 @@ export async function runScan(scanType: string = 'all'): Promise<OpResult> {
   const activeSymbols = new Set(activeResult.rows.map((r: any) => r.symbol));
   let skippedDuplicates = 0;
 
-  for (const asset of universe) {
+  const SCAN_BATCH_LIMIT = 10;
+  const scanBatch = universe.slice(0, SCAN_BATCH_LIMIT);
+
+  for (const asset of scanBatch) {
     try {
       assetsScanned++;
 
