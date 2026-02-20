@@ -64,7 +64,7 @@ export class CoinGeckoProvider implements DataProvider {
       const data = await fetchWithRetry(`${BASE_URL}/coins/markets`, {
         vs_currency: 'usd',
         order: 'market_cap_desc',
-        per_page: 20,
+        per_page: 10,
         page: 1,
       });
 
