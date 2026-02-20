@@ -103,7 +103,7 @@ export default function ProductsPage() {
       icon: '🌍',
       phase: 2,
       dark: true,
-      stats: [
+      metrics: [
         { label: 'Parcels', value: '4' },
         { label: 'Pipeline Acreage', value: 'In Framework' },
         { label: 'Status', value: 'Active', highlight: true }
