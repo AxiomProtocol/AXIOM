@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
-      const { name, description } = req.body;
+      const { scenarioName, description, isPrimary } = req.body;
 
       const [deal] = await db.select()
         .from(reDeals)
@@ -39,9 +39,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const [scenario] = await db.insert(reDealScenarios).values({
         dealId: id,
-        scenarioName: name || 'Base Case',
+        scenarioName: scenarioName || 'Base Case',
         description: description || null,
-        isPrimary: false,
+        isPrimary: isPrimary === true,
       }).returning();
 
       return successResponse(res, { scenario }, buildMeta(['internal_db', 'user_input'], 0.7));
