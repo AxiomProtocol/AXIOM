@@ -19,13 +19,13 @@ args = "AXIOM Dev Server"
 name = "AXIOM Dev Server"
 author = "agent"
 
-[workflows.workflow.metadata]
-outputType = "webview"
-
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
 [nix]
 channel = "stable-25_05"
 packages = ["jq"]
