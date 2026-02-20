@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
 
-const TIERS = [
+const TIERS: Array<{ id: string; label: string; price: string; priceNote: string; features: string[]; sources: string; cta: string; highlight?: boolean; disabled?: boolean }> = [
   {
     id: 'free',
     label: 'Free',
@@ -33,8 +33,9 @@ const TIERS = [
       'Deal grade (A-F)',
     ],
     sources: '+ ATTOM Property Data',
-    cta: 'Purchase Base Report',
+    cta: 'Coming Soon',
     highlight: true,
+    disabled: true,
   },
   {
     id: 'premium',
@@ -50,7 +51,8 @@ const TIERS = [
       'Full neighborhood analysis',
     ],
     sources: '+ RentCast, Walk Score',
-    cta: 'Purchase Premium Report',
+    cta: 'Coming Soon',
+    disabled: true,
   },
 ];
 
@@ -230,12 +232,14 @@ export default function PropertyAnalysis() {
                     ))}
                   </ul>
                   <button
-                    onClick={() => handleGenerate(tier.id)}
-                    disabled={loading !== null}
+                    onClick={() => !tier.disabled && handleGenerate(tier.id)}
+                    disabled={loading !== null || tier.disabled}
                     className={`w-full py-2.5 text-sm font-dl-mono border transition-colors ${
-                      tier.highlight
-                        ? 'bg-dl-navy text-white border-dl-navy hover:bg-opacity-90'
-                        : 'bg-white text-dl-navy border-dl-navy hover:bg-dl-navy hover:text-white'
+                      tier.disabled
+                        ? 'bg-gray-100 text-dl-gray border-dl-border cursor-not-allowed'
+                        : tier.highlight
+                          ? 'bg-dl-navy text-white border-dl-navy hover:bg-opacity-90'
+                          : 'bg-white text-dl-navy border-dl-navy hover:bg-dl-navy hover:text-white'
                     } ${loading === tier.id ? 'opacity-60 cursor-wait' : ''}`}
                   >
                     {loading === tier.id ? 'Processing...' : tier.cta}
