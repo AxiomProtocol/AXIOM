@@ -42,27 +42,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }, buildMeta(['internal_db', 'user_input'], confidence));
     }
 
-    const trigram = await db.select({
-      id: reProperties.id,
-      addressNormalized: reProperties.addressNormalized,
-      similarity: sql<number>`similarity(address_normalized, ${parsed.normalized})`,
-    })
-      .from(reProperties)
-      .where(sql`similarity(address_normalized, ${parsed.normalized}) > 0.3`)
-      .orderBy(sql`similarity(address_normalized, ${parsed.normalized}) DESC`)
-      .limit(5);
+    try {
+      const trigram = await db.select({
+        id: reProperties.id,
+        addressNormalized: reProperties.addressNormalized,
+        similarity: sql<number>`similarity(address_normalized, ${parsed.normalized})`,
+      })
+        .from(reProperties)
+        .where(sql`similarity(address_normalized, ${parsed.normalized}) > 0.3`)
+        .orderBy(sql`similarity(address_normalized, ${parsed.normalized}) DESC`)
+        .limit(5);
 
-    if (trigram.length > 0) {
-      const confidence = computeConfidence(parsed, true, false);
-      return successResponse(res, {
-        propertyId: trigram[0].id,
-        addressNormalized: trigram[0].addressNormalized,
-        parsed,
-        matched: true,
-        fuzzy: true,
-        similarityScore: trigram[0].similarity,
-        alternatives: trigram.slice(1),
-      }, buildMeta(['internal_db', 'user_input'], confidence));
+      if (trigram.length > 0) {
+        const confidence = computeConfidence(parsed, true, false);
+        return successResponse(res, {
+          propertyId: trigram[0].id,
+          addressNormalized: trigram[0].addressNormalized,
+          parsed,
+          matched: true,
+          fuzzy: true,
+          similarityScore: trigram[0].similarity,
+          alternatives: trigram.slice(1),
+        }, buildMeta(['internal_db', 'user_input'], confidence));
+      }
+    } catch (trigramErr: any) {
+      console.warn('Trigram search unavailable (pg_trgm may not be installed):', trigramErr.message);
     }
 
     const [newProp] = await db.insert(reProperties).values({
