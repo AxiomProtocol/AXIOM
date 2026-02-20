@@ -21,8 +21,9 @@ export async function GET(request: NextRequest) {
     let idx = 1;
 
     if (q) {
-      conditions.push(`similarity(address_normalized, $${idx}) > 0.2`);
-      params.push(q.toLowerCase());
+      conditions.push(`COALESCE(address_normalized, address_raw) ILIKE $${idx}`);
+      const escapedQ = q.trim().replace(/[%_\\]/g, '\\$&');
+      params.push(`%${escapedQ}%`);
       idx++;
     }
 
