@@ -61,7 +61,7 @@ export default function ReferralWidget({ compact = false }) {
 
   const shareOnTwitter = () => {
     const link = `${typeof window !== 'undefined' ? window.location.origin : ''}/join?ref=${referralCode}`;
-    const text = `Join me on Axiom and build wealth together! Get bonus AXM tokens when you sign up: ${link}`;
+    const text = `Join me on Axiom for structured financial coordination! Get bonus AXM tokens when you sign up: ${link}`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -177,7 +177,7 @@ export default function ReferralWidget({ compact = false }) {
           <button
             onClick={() => {
               const link = `${window.location.origin}/join?ref=${referralCode}`;
-              window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('Join me on Axiom and build wealth together!')}`, '_blank');
+              window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('Join me on Axiom for structured financial coordination!')}`, '_blank');
             }}
             className="flex-1 py-2 bg-sky-500 text-white font-medium rounded-lg hover:bg-sky-400 transition-colors flex items-center justify-center gap-2"
           >
