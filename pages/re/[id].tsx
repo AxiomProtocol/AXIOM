@@ -99,6 +99,9 @@ export default function PropertyProfile() {
   const [dealCreating, setDealCreating] = useState(false);
   const [dealError, setDealError] = useState<string | null>(null);
 
+  const [ingesting, setIngesting] = useState(false);
+  const [ingestResult, setIngestResult] = useState<string | null>(null);
+
   const loadProperty = useCallback(async () => {
     if (!id) return;
     setLoading(true);
@@ -126,6 +129,35 @@ export default function PropertyProfile() {
   useEffect(() => {
     loadProperty();
   }, [loadProperty]);
+
+  const handleIngest = async () => {
+    if (!id) return;
+    setIngesting(true);
+    setIngestResult(null);
+    try {
+      const res = await fetch('/api/re/ingest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ property_id: id }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        setIngestResult(json.error?.message || 'Data fetch failed.');
+      } else {
+        const written = json.data?.total_records_written ?? 0;
+        const warnings: string[] = json.meta?.warnings || [];
+        setIngestResult(
+          `Fetched ${written} record(s).` +
+          (warnings.length > 0 ? ' Note: ' + warnings[0] : '')
+        );
+        await loadProperty();
+      }
+    } catch {
+      setIngestResult('Network error during data fetch.');
+    } finally {
+      setIngesting(false);
+    }
+  };
 
   const handleCreateDeal = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -232,13 +264,26 @@ export default function PropertyProfile() {
         timestamp={asOf || undefined}
         timestampLabel="Data as of"
       >
-        <div className="mb-2 flex items-center gap-4">
+        <div className="mb-4 flex flex-wrap items-center gap-4">
           <Link href="/re" className="text-xs text-dl-navy underline">Back to Search</Link>
           {confidence !== null && (
             <span className="text-xs text-dl-gray font-dl-mono">
               Data confidence: {(confidence * 100).toFixed(0)}%
             </span>
           )}
+          <div className="flex items-center gap-3 ml-auto">
+            <SolidButton
+              onClick={handleIngest}
+              disabled={ingesting}
+              variant="secondary"
+              size="sm"
+            >
+              {ingesting ? 'Fetching data...' : 'Fetch Real Data'}
+            </SolidButton>
+            {ingestResult && (
+              <span className="text-xs text-dl-gray font-dl-mono">{ingestResult}</span>
+            )}
+          </div>
         </div>
 
         <SectionHeading>Property Details</SectionHeading>
