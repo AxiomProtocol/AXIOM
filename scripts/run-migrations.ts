@@ -8,6 +8,11 @@
  * Supports both plain SQL files and Drizzle-style files that use
  * `-->statement-breakpoint` to separate individual statements.
  *
+ * Each statement is wrapped in a SAVEPOINT so that "already exists" errors
+ * (e.g. duplicate table, duplicate index) are gracefully skipped instead of
+ * aborting the whole migration. This allows the runner to be applied to
+ * databases that were bootstrapped before the runner was introduced.
+ *
  * Usage:
  *   npx tsx scripts/run-migrations.ts
  */
@@ -31,6 +36,20 @@ const BOOTSTRAP_SQL = `
     applied_at TIMESTAMP NOT NULL DEFAULT NOW()
   )
 `;
+
+/**
+ * PostgreSQL error codes that indicate an object already exists.
+ * These are safe to skip when applying migrations to a database that was
+ * bootstrapped before the migration runner was introduced.
+ */
+const ALREADY_EXISTS_CODES = new Set([
+  '42P07', // duplicate_table
+  '42701', // duplicate_column
+  '42710', // duplicate_object  (indexes, constraints, sequences, …)
+  '42723', // duplicate_function
+  '42P06', // duplicate_schema
+  '23505', // unique_violation   (e.g. duplicate INSERT into tracking table)
+]);
 
 async function main() {
   const pool = new Pool({ connectionString: DATABASE_URL });
@@ -79,8 +98,26 @@ async function main() {
 
       await client.query('BEGIN');
       try {
-        for (const stmt of statements) {
-          await client.query(stmt);
+        // i is a loop counter, so the savepoint name is always safe.
+        for (let i = 0; i < statements.length; i++) {
+          const sp = `_mig_sp_${i}`;
+          await client.query(`SAVEPOINT ${sp}`);
+          try {
+            await client.query(statements[i]);
+            await client.query(`RELEASE SAVEPOINT ${sp}`);
+          } catch (stmtErr: any) {
+            if (ALREADY_EXISTS_CODES.has(stmtErr.code)) {
+              // Object already exists – roll back just this statement and continue.
+              await client.query(`ROLLBACK TO SAVEPOINT ${sp}`);
+              await client.query(`RELEASE SAVEPOINT ${sp}`);
+            } else {
+              // Real error – abort the whole migration.
+              await client.query('ROLLBACK');
+              throw new Error(
+                `Migration ${file} statement ${i + 1} failed (${stmtErr.code}): ${stmtErr.message}`
+              );
+            }
+          }
         }
         await client.query(
           'INSERT INTO _schema_migrations (filename) VALUES ($1)',
@@ -88,8 +125,10 @@ async function main() {
         );
         await client.query('COMMIT');
       } catch (err) {
-        await client.query('ROLLBACK');
-        throw new Error(`Migration ${file} failed: ${(err as Error).message}`);
+        // Best-effort rollback for any error not already handled above
+        // (e.g. failure in INSERT or COMMIT).
+        try { await client.query('ROLLBACK'); } catch { /* ignore */ }
+        throw err;
       }
 
       ran++;
