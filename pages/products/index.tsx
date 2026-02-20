@@ -95,16 +95,19 @@ export default function ProductsPage() {
       ],
     },
     {
-      id: 'sentinel',
-      name: 'Axiom Sentinel',
-      description: 'Unified capital decision and risk authorization layer with cryptographic audit trails across all products.',
-      href: '/sentinel',
-      status: 'LIVE',
+      id: 'land-funds',
+      name: 'Community Land Funds',
+      tagline: 'Collective ownership of strategic land parcels',
+      description: 'Pool resources with your community to participate in land acquisition through a structured coordination framework. SEC Reg CF compliant crowdfunding.',
+      href: '/land-funds',
+      icon: '🌍',
+      phase: 2,
+      dark: true,
       metrics: [
-        { label: 'Authorization', value: 'Multi-Gate' },
-        { label: 'Audit', value: 'Hash Chain' },
-        { label: 'Gating', value: 'On/Off-Chain' },
-      ],
+        { label: 'Parcels', value: '4' },
+        { label: 'Pipeline Acreage', value: 'In Framework' },
+        { label: 'Status', value: 'Active', highlight: true }
+      ]
     },
     {
       id: 'solvency',
