@@ -99,7 +99,7 @@ export default function FeeRebateTracker({ walletAddress, compact = false }: Pro
           Complete Wealth Practice rotations to earn up to 75% fee rebate
         </div>
         
-        <a href="/wealth-dashboard?tab=rebates" className="block text-center text-green-400 hover:text-green-300 text-sm mt-3">
+        <a href="/wealth-practice" className="block text-center text-green-400 hover:text-green-300 text-sm mt-3">
           View Rebate Details →
         </a>
       </div>
