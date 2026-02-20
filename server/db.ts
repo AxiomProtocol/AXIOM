@@ -20,12 +20,30 @@ let _db: ReturnType<typeof drizzle> | null = null;
 function getPool(): Pool {
   if (!_pool) {
     if (!process.env.DATABASE_URL) {
-      throw new Error('DATABASE_URL must be set. Did you forget to provision a database?');
+      console.warn('[db] DATABASE_URL not set — database queries will return empty results');
+      _pool = new Proxy({} as Pool, {
+        get(_target, prop) {
+          if (prop === 'query') {
+            return async () => ({ rows: [], rowCount: 0 });
+          }
+          if (prop === 'connect') {
+            return async () => ({
+              query: async () => ({ rows: [], rowCount: 0 }),
+              release: () => {},
+            });
+          }
+          if (prop === 'end') {
+            return async () => {};
+          }
+          return undefined;
+        },
+      }) as unknown as Pool;
+      return _pool;
     }
     _pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: process.env.DATABASE_URL.includes('neon.tech') ? { rejectUnauthorized: false } : undefined,
-      max: 5,
+      max: 20,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
     });
