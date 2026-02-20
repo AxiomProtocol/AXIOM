@@ -188,6 +188,34 @@ export default function PropertyProfilePage() {
                   <span className="font-dl-mono text-sm text-dl-text">{property.lat}, {property.lon}</span>
                 </div>
               )}
+              {property.meta?.rentcast && (
+                <div className="mt-4 pt-4 border-t border-dl-border grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {property.meta.rentcast.subdivision && (
+                    <div>
+                      <span className="block text-xs font-dl-mono text-dl-muted uppercase">Subdivision</span>
+                      <span className="block font-dl-mono text-sm text-dl-text">{property.meta.rentcast.subdivision}</span>
+                    </div>
+                  )}
+                  {property.meta.rentcast.legalDescription && (
+                    <div className="col-span-2">
+                      <span className="block text-xs font-dl-mono text-dl-muted uppercase">Legal Description</span>
+                      <span className="block font-dl-mono text-sm text-dl-text">{property.meta.rentcast.legalDescription}</span>
+                    </div>
+                  )}
+                  {property.meta.rentcast.hoa?.fee && (
+                    <div>
+                      <span className="block text-xs font-dl-mono text-dl-muted uppercase">HOA Fee</span>
+                      <span className="block font-dl-mono text-sm text-dl-text">${property.meta.rentcast.hoa.fee}/mo</span>
+                    </div>
+                  )}
+                  {property.meta.rentcast.enrichedAt && (
+                    <div>
+                      <span className="block text-xs font-dl-mono text-dl-muted uppercase">Data As Of</span>
+                      <span className="block font-dl-mono text-sm text-dl-text">{new Date(property.meta.rentcast.enrichedAt).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {sales.length > 0 && (

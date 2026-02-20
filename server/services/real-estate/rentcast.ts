@@ -239,90 +239,79 @@ export async function enrichProperty(propertyId: string): Promise<{
     await db.update(reProperties).set(updates).where(eq(reProperties.id, propertyId));
 
     let salesAdded = 0;
-    if (rc.history && Object.keys(rc.history).length > 0) {
-      for (const [year, sale] of Object.entries(rc.history)) {
-        if (!sale.date || !sale.price) continue;
-        const saleDate = sale.date.split('T')[0];
-        const existing = await db.select({ id: reSales.id })
-          .from(reSales)
-          .where(and(
-            eq(reSales.propertyId, propertyId),
-            eq(reSales.saleDate, saleDate),
-          ))
-          .limit(1);
+    const seenSales = new Set<string>();
 
-        if (existing.length === 0) {
-          const pricePerSqft = rc.squareFootage && rc.squareFootage > 0
-            ? String(Math.round((sale.price / rc.squareFootage) * 100) / 100)
-            : null;
+    const insertSale = async (saleDate: string, price: number, meta: Record<string, any>) => {
+      const key = `${saleDate}_${price}`;
+      if (seenSales.has(key)) return;
+      seenSales.add(key);
 
-          await db.insert(reSales).values({
-            propertyId,
-            saleDate,
-            salePrice: String(sale.price),
-            pricePerSqft,
-            sourceId,
-            meta: { event: sale.event || 'sale', rentcastYear: year },
-          });
-          salesAdded++;
-        }
-      }
-    }
-
-    if (rc.lastSaleDate && rc.lastSalePrice) {
-      const lastDate = rc.lastSaleDate.split('T')[0];
-      const existingLast = await db.select({ id: reSales.id })
+      const existing = await db.select({ id: reSales.id })
         .from(reSales)
         .where(and(
           eq(reSales.propertyId, propertyId),
-          eq(reSales.saleDate, lastDate),
+          eq(reSales.saleDate, saleDate),
         ))
         .limit(1);
 
-      if (existingLast.length === 0) {
+      if (existing.length === 0) {
         const pricePerSqft = rc.squareFootage && rc.squareFootage > 0
-          ? String(Math.round((rc.lastSalePrice / rc.squareFootage) * 100) / 100)
+          ? String(Math.round((price / rc.squareFootage) * 100) / 100)
           : null;
 
         await db.insert(reSales).values({
           propertyId,
-          saleDate: lastDate,
-          salePrice: String(rc.lastSalePrice),
+          saleDate,
+          salePrice: String(price),
           pricePerSqft,
           sourceId,
-          meta: { event: 'last_sale' },
+          meta,
         });
         salesAdded++;
       }
+    };
+
+    if (rc.history && Object.keys(rc.history).length > 0) {
+      for (const [year, sale] of Object.entries(rc.history)) {
+        if (!sale.date || !sale.price) continue;
+        await insertSale(sale.date.split('T')[0], sale.price, { event: sale.event || 'sale', rentcastYear: year });
+      }
+    }
+
+    if (rc.lastSaleDate && rc.lastSalePrice) {
+      await insertSale(rc.lastSaleDate.split('T')[0], rc.lastSalePrice, { event: 'last_sale' });
     }
 
     let taxesAdded = 0;
-    if (rc.taxAssessments && Object.keys(rc.taxAssessments).length > 0) {
-      for (const [year, assessment] of Object.entries(rc.taxAssessments)) {
-        const taxYear = parseInt(year);
-        if (isNaN(taxYear)) continue;
+    const allTaxYears = new Set<string>();
+    if (rc.taxAssessments) Object.keys(rc.taxAssessments).forEach(y => allTaxYears.add(y));
+    if (rc.propertyTaxes) Object.keys(rc.propertyTaxes).forEach(y => allTaxYears.add(y));
 
-        const existing = await db.select({ id: reTaxes.id })
-          .from(reTaxes)
-          .where(and(
-            eq(reTaxes.propertyId, propertyId),
-            eq(reTaxes.taxYear, taxYear),
-          ))
-          .limit(1);
+    for (const year of allTaxYears) {
+      const taxYear = parseInt(year);
+      if (isNaN(taxYear)) continue;
 
-        if (existing.length === 0) {
-          const taxEntry = rc.propertyTaxes?.[year];
-          await db.insert(reTaxes).values({
-            propertyId,
-            taxYear,
-            assessedTotal: assessment.value ? String(assessment.value) : null,
-            assessedLand: assessment.land ? String(assessment.land) : null,
-            assessedImprovement: assessment.improvements ? String(assessment.improvements) : null,
-            taxAmount: taxEntry?.total ? String(taxEntry.total) : null,
-            sourceId,
-          });
-          taxesAdded++;
-        }
+      const existing = await db.select({ id: reTaxes.id })
+        .from(reTaxes)
+        .where(and(
+          eq(reTaxes.propertyId, propertyId),
+          eq(reTaxes.taxYear, taxYear),
+        ))
+        .limit(1);
+
+      if (existing.length === 0) {
+        const assessment = rc.taxAssessments?.[year];
+        const taxEntry = rc.propertyTaxes?.[year];
+        await db.insert(reTaxes).values({
+          propertyId,
+          taxYear,
+          assessedTotal: assessment?.value ? String(assessment.value) : null,
+          assessedLand: assessment?.land ? String(assessment.land) : null,
+          assessedImprovement: assessment?.improvements ? String(assessment.improvements) : null,
+          taxAmount: taxEntry?.total ? String(taxEntry.total) : null,
+          sourceId,
+        });
+        taxesAdded++;
       }
     }
 
