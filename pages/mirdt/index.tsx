@@ -192,7 +192,13 @@ export default function MIRDTIndex() {
         headers: { 'Content-Type': 'application/json' },
         body: body ? JSON.stringify(body) : undefined,
       });
-      const data = await res.json();
+      const text = await res.text();
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(text.length > 100 ? text.slice(0, 100) + '...' : text || 'Empty response from server');
+      }
       if (res.ok && data.success !== false) {
         const details = formatOpResult(label, data);
         setter({

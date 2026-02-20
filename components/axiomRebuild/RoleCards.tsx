@@ -177,7 +177,7 @@ export function RoleCards({ page = 'home' }: RoleCardsProps) {
         
           <div className="role-cta-container" style={{ display: "flex", justifyContent: "center", flexWrap: "wrap" }}>
             <Link
-              href="/keygrow?section=paths"
+              href="/land"
               onClick={() => handleCtaClick("Choose Your Participation Path", "/keygrow?section=paths")}
               style={{
                 display: "inline-flex",
@@ -199,7 +199,7 @@ export function RoleCards({ page = 'home' }: RoleCardsProps) {
               🛤️ Choose Your Path
             </Link>
             <Link
-              href="/keygrow?section=projects"
+              href="/land"
               onClick={() => handleCtaClick("See Land Projects", "/keygrow?section=projects")}
               style={{
                 display: "inline-flex",

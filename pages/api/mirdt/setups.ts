@@ -37,11 +37,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
+    res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
     const countResult = await pool.query(
       `SELECT COUNT(*) as total FROM mirdt_setups ${whereClause}`,
       params
     );
-    const total = parseInt(countResult.rows[0].total);
+    const total = countResult.rows.length > 0 ? parseInt(countResult.rows[0].total) : 0;
     const totalPages = Math.ceil(total / limit);
     const offset = (page - 1) * limit;
 
