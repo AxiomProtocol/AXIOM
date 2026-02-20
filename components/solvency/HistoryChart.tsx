@@ -13,7 +13,7 @@ export default function HistoryChart({ data }: HistoryChartProps) {
     reserves: Math.round(d.reserveRatio * 10000) / 100,
   })).reverse();
 
-  const formatTooltip = (value: number) => `${value.toFixed(2)}%`;
+  const formatTooltip = (value: number, _name: string): [string, string] => [`${value.toFixed(2)}%`, _name];
 
   return (
     <div style={{ width: '100%', height: 300, border: '1px solid #d1d5db', background: '#fafaf8' }}>
