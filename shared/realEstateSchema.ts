@@ -16,9 +16,15 @@ import {
   customType,
 } from "drizzle-orm/pg-core";
 
-const geometry = customType<{ data: string }>({
+const pointGeometry = customType<{ data: string }>({
   dataType() {
-    return 'geometry';
+    return 'geometry(Point, 4326)';
+  },
+});
+
+const polygonGeometry = customType<{ data: string }>({
+  dataType() {
+    return 'geometry(Polygon, 4326)';
   },
 });
 
@@ -86,7 +92,7 @@ export const reProperties = pgTable("re_properties", {
   apn: varchar("apn", { length: 50 }),
   lat: decimal("lat", { precision: 10, scale: 7 }),
   lon: decimal("lon", { precision: 10, scale: 7 }),
-  locationPoint: geometry("location_point"),
+  locationPoint: pointGeometry("location_point"),
   propertyType: varchar("property_type", { length: 50 }),
   yearBuilt: integer("year_built"),
   sqft: integer("sqft"),
@@ -113,7 +119,7 @@ export const reParcels = pgTable("re_parcels", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   apn: varchar("apn", { length: 50 }),
   fips: varchar("fips", { length: 15 }),
-  geometry: geometry("geometry"),
+  geometry: polygonGeometry("geometry"),
   acreage: decimal("acreage", { precision: 12, scale: 4 }),
   landUse: varchar("land_use", { length: 100 }),
   zoning: varchar("zoning", { length: 50 }),

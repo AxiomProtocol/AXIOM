@@ -179,7 +179,7 @@ CREATE TABLE IF NOT EXISTS re_sales (
 );
 
 CREATE INDEX IF NOT EXISTS re_sales_property_idx ON re_sales (property_id);
-CREATE INDEX IF NOT EXISTS re_sales_date_idx ON re_sales (sale_date DESC);
+CREATE INDEX IF NOT EXISTS re_sales_date_idx ON re_sales (sale_date);
 CREATE INDEX IF NOT EXISTS re_sales_property_date_idx ON re_sales (property_id, sale_date);
 
 -- 9. re_taxes: tax assessment history
@@ -200,7 +200,7 @@ CREATE TABLE IF NOT EXISTS re_taxes (
 );
 
 CREATE INDEX IF NOT EXISTS re_taxes_property_idx ON re_taxes (property_id);
-CREATE INDEX IF NOT EXISTS re_taxes_year_idx ON re_taxes (tax_year DESC);
+CREATE INDEX IF NOT EXISTS re_taxes_year_idx ON re_taxes (tax_year);
 CREATE INDEX IF NOT EXISTS re_taxes_property_year_idx ON re_taxes (property_id, tax_year);
 
 -- 10. re_deals: deal analysis workspace
