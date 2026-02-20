@@ -41,7 +41,7 @@ The architecture uses a "Product Factory Approach" for scalability. The current 
 - **Physical-Digital Bridge (Land Acquisition Pipeline)**: The `/land` page visualizes the full land acquisition lifecycle, from submission to activation, including funding pools, governance, and produce/housing reservations.
 - **Property Analysis Tool**: The `/property` page offers a pay-per-report property analysis tool for real estate investors, providing tiered access to data, deterministic estimation, and report generation with Stripe integration.
 - **DeNet DePIN Node Integration**: Provides decentralized storage infrastructure and monitoring via DeNet Datakeeper Node.
-- Deployment uses `autoscale` with `next.config.js` configured for `standalone` output.
+- Deployment targets Vercel (serverless). `instrumentation.ts` runs inline SQL on cold start to ensure all database tables/extensions exist (no dependency on migration files being present on disk).
 
 ## External Dependencies
 - **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
