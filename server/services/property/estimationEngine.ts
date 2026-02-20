@@ -1,11 +1,11 @@
 import type { GeoResult, AmenityScores } from './geocoder';
-import type { CensusData, HpiData, AttomData, RentCastData, WalkScoreData } from './dataProviders';
+import type { CensusData, HpiData, RentCastPropertyData, RentCastData, WalkScoreData } from './dataProviders';
 
 interface EstimationInput {
   geo: GeoResult;
   census: CensusData | null;
   hpi: HpiData | null;
-  attom: AttomData | null;
+  rcProperty: RentCastPropertyData | null;
   rentcast: RentCastData | null;
   walkScore: WalkScoreData | null;
   tier: 'free' | 'base' | 'premium';
@@ -104,12 +104,12 @@ const SPREAD_PCT_BASE = 0.18;
 const SPREAD_PCT_PREMIUM = 0.12;
 
 export function runEstimation(input: EstimationInput): EstimationResult {
-  const sqft = input.attom?.sqft || input.userSqft || 1500;
-  const bedrooms = input.attom?.bedrooms || input.userBedrooms || 3;
-  const bathrooms = input.attom?.bathrooms || input.userBathrooms || 2;
-  const yearBuilt = input.attom?.yearBuilt || input.userYearBuilt || 1990;
-  const propertyType = input.attom?.propertyType || input.userPropertyType || 'SFR';
-  const lotSqft = input.attom?.lotSqft || 7000;
+  const sqft = input.rcProperty?.sqft || input.userSqft || 1500;
+  const bedrooms = input.rcProperty?.bedrooms || input.userBedrooms || 3;
+  const bathrooms = input.rcProperty?.bathrooms || input.userBathrooms || 2;
+  const yearBuilt = input.rcProperty?.yearBuilt || input.userYearBuilt || 1990;
+  const propertyType = input.rcProperty?.propertyType || input.userPropertyType || 'SFR';
+  const lotSqft = input.rcProperty?.lotSqft || 7000;
 
   const details: PropertyDetails = { sqft, bedrooms, bathrooms, yearBuilt, propertyType, lotSqft };
 
@@ -128,16 +128,16 @@ export function runEstimation(input: EstimationInput): EstimationResult {
 function estimateValue(input: EstimationInput, details: PropertyDetails): ValueRange {
   const sources: { value: number; weight: number; source: string }[] = [];
 
-  if (input.attom?.avm && input.attom.avm > 0) {
-    sources.push({ value: input.attom.avm, weight: 5, source: 'ATTOM AVM' });
-    if (input.attom.avmLow > 0 && input.attom.avmHigh > 0) {
-      const spreadPct = (input.attom.avmHigh - input.attom.avmLow) / input.attom.avm;
+  if (input.rcProperty?.avm && input.rcProperty.avm > 0) {
+    sources.push({ value: input.rcProperty.avm, weight: 5, source: 'RentCast AVM' });
+    if (input.rcProperty.avmLow > 0 && input.rcProperty.avmHigh > 0) {
+      const spreadPct = (input.rcProperty.avmHigh - input.rcProperty.avmLow) / input.rcProperty.avm;
       return {
-        low: Math.round(input.attom.avmLow),
-        mid: Math.round(input.attom.avm),
-        high: Math.round(input.attom.avmHigh),
-        ppsf: Math.round(input.attom.avm / details.sqft),
-        methodology: `ATTOM AVM with ${Math.round(spreadPct * 100)}% confidence interval`,
+        low: Math.round(input.rcProperty.avmLow),
+        mid: Math.round(input.rcProperty.avm),
+        high: Math.round(input.rcProperty.avmHigh),
+        ppsf: Math.round(input.rcProperty.avm / details.sqft),
+        methodology: `RentCast AVM with ${Math.round(spreadPct * 100)}% confidence interval`,
       };
     }
   }
@@ -275,12 +275,12 @@ function computeConfidence(input: EstimationInput, details: PropertyDetails): Co
   let compCoverage = 20;
   let propertyInfo = 30;
 
-  if (input.attom) {
+  if (input.rcProperty) {
     dataQuality += 30;
-    factors.push('ATTOM property data available');
-    if (input.attom.avmConfidence > 0) {
-      dataQuality += Math.min(20, input.attom.avmConfidence / 5);
-      factors.push(`ATTOM AVM confidence: ${input.attom.avmConfidence}`);
+    factors.push('RentCast property data available');
+    if (input.rcProperty.avmConfidence > 0) {
+      dataQuality += Math.min(20, input.rcProperty.avmConfidence / 5);
+      factors.push(`RentCast AVM confidence: ${input.rcProperty.avmConfidence}`);
     }
   }
 
@@ -377,9 +377,6 @@ function identifyRisks(input: EstimationInput, value: ValueRange, rent: RentRang
     flags.push({ code: 'LOW_WALKABILITY', severity: 'info', message: `Walk Score is ${input.walkScore.walkScore} — car-dependent area` });
   }
 
-  if (input.attom?.mortgageBalance && input.attom.mortgageBalance > value.mid * 0.9) {
-    flags.push({ code: 'UNDERWATER_RISK', severity: 'critical', message: 'Mortgage balance may exceed estimated value' });
-  }
 
   return flags;
 }
@@ -427,7 +424,7 @@ function collectDataSources(input: EstimationInput): string[] {
   const sources: string[] = ['OpenStreetMap Nominatim (geocoding)'];
   if (input.census) sources.push('US Census ACS 5-Year (demographics)');
   if (input.hpi) sources.push('FHFA House Price Index (market trends)');
-  if (input.attom) sources.push('ATTOM Property API (property details, AVM)');
+  if (input.rcProperty) sources.push('RentCast Property API (property details, AVM)');
   if (input.rentcast) sources.push('RentCast API (rental estimates, comps)');
   if (input.walkScore) sources.push('Walk Score API (walkability metrics)');
   if (input.geo.amenityScores.totalPoi > 0) sources.push('Overpass API (amenity density)');

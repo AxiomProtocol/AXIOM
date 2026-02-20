@@ -26,7 +26,6 @@ const REQUIRED_ENV_VARS = [
 const OPTIONAL_ENV_VARS = [
   'SESSION_SECRET',
   'STRIPE_API_KEY',
-  'ATTOM_API_KEY',
   'RENTCAST_API_KEY',
   'WALKSCORE_API_KEY',
   'ALCHEMY_API_KEY',
@@ -123,12 +122,10 @@ export function isDatabaseConfigured(): boolean {
  * Check if property services are configured
  */
 export function isPropertyServicesConfigured(): {
-  attom: boolean;
   rentcast: boolean;
   walkscore: boolean;
 } {
   return {
-    attom: hasEnvVar('ATTOM_API_KEY'),
     rentcast: hasEnvVar('RENTCAST_API_KEY'),
     walkscore: hasEnvVar('WALKSCORE_API_KEY'),
   };

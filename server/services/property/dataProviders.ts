@@ -20,7 +20,7 @@ interface HpiData {
   fiveYearCagr: number;
 }
 
-interface AttomData {
+interface RentCastPropertyData {
   avm: number;
   avmLow: number;
   avmHigh: number;
@@ -35,8 +35,6 @@ interface AttomData {
   bathrooms: number;
   propertyType: string;
   ownerName: string;
-  equity: number;
-  mortgageBalance: number;
 }
 
 interface RentCastData {
@@ -173,54 +171,63 @@ export async function fetchHpiData(state: string, reportId?: string): Promise<Hp
   }, reportId);
 }
 
-export async function fetchAttomData(address: string, reportId?: string): Promise<AttomData | null> {
-  const apiKey = process.env.ATTOM_API_KEY;
+export async function fetchRentCastPropertyData(address: string, reportId?: string): Promise<RentCastPropertyData | null> {
+  const apiKey = process.env.RENTCAST_API_KEY;
   if (!apiKey) return null;
 
-  const key = `attom:${address}`.toLowerCase().replace(/[^a-z0-9]/g, '');
-  return getCachedOrFetch(key, 'attom', 'property', 168, async () => {
-    const start = Date.now();
+  const key = `rcprop:${address}`.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return getCachedOrFetch(key, 'rentcast', 'property-details', 168, async () => {
+    const headers = { 'X-Api-Key': apiKey, 'Accept': 'application/json' };
+    let propData: any = null;
+    let avmData: any = null;
+
+    const start1 = Date.now();
     try {
-      const url = `https://api.gateway.attomdata.com/propertyapi/v1.0.0/property/expandedprofile?address=${encodeURIComponent(address)}`;
-      const res = await fetch(url, {
-        headers: { 'apikey': apiKey, 'Accept': 'application/json' },
-      });
-      await logCall(reportId, 'attom', 'expandedprofile', res.status, Date.now() - start, false, null);
-
-      if (!res.ok) return null;
-      const data = await res.json();
-      const prop = data?.property?.[0];
-      if (!prop) return null;
-
-      const building = prop.building || {};
-      const lot = prop.lot || {};
-      const sale = prop.sale || {};
-      const assessment = prop.assessment || {};
-      const avm = prop.avm || {};
-      const mortgage = prop.mortgage || {};
-
-      return {
-        avm: avm.amount?.value || 0,
-        avmLow: avm.amount?.low || 0,
-        avmHigh: avm.amount?.high || 0,
-        avmConfidence: avm.amount?.scr || 0,
-        lastSalePrice: sale.saleAmountData?.saleAmt || 0,
-        lastSaleDate: sale.saleAmountData?.saleRecDate || '',
-        taxAssessed: assessment.assessed?.assdTtlValue || 0,
-        yearBuilt: building.summary?.yearBuilt || 0,
-        sqft: building.size?.livingSize || 0,
-        lotSqft: lot.lotSize1 || 0,
-        bedrooms: building.rooms?.beds || 0,
-        bathrooms: building.rooms?.bathsTotal || 0,
-        propertyType: prop.summary?.propType || 'SFR',
-        ownerName: prop.owner?.owner1?.fullName || '',
-        equity: 0,
-        mortgageBalance: mortgage?.amount?.loanAmt || 0,
-      };
+      const propUrl = `https://api.rentcast.io/v1/properties?address=${encodeURIComponent(address)}`;
+      const propRes = await fetch(propUrl, { headers });
+      await logCall(reportId, 'rentcast', 'properties', propRes.status, Date.now() - start1, false, null);
+      if (propRes.ok) {
+        const arr = await propRes.json();
+        if (Array.isArray(arr) && arr.length > 0) propData = arr[0];
+      }
     } catch (err: any) {
-      await logCall(reportId, 'attom', 'expandedprofile', 0, Date.now() - start, false, err.message);
-      return null;
+      await logCall(reportId, 'rentcast', 'properties', 0, Date.now() - start1, false, err.message);
     }
+
+    const start2 = Date.now();
+    try {
+      const avmUrl = `https://api.rentcast.io/v1/avm/value?address=${encodeURIComponent(address)}&compCount=5`;
+      const avmRes = await fetch(avmUrl, { headers });
+      await logCall(reportId, 'rentcast', 'avm-value', avmRes.status, Date.now() - start2, false, null);
+      if (avmRes.ok) {
+        avmData = await avmRes.json();
+      }
+    } catch (err: any) {
+      await logCall(reportId, 'rentcast', 'avm-value', 0, Date.now() - start2, false, err.message);
+    }
+
+    if (!propData && !avmData) return null;
+
+    const latestAssessment = propData?.taxAssessments
+      ? Object.values(propData.taxAssessments).sort((a: any, b: any) => (b.year || 0) - (a.year || 0))[0] as any
+      : null;
+
+    return {
+      avm: avmData?.price || 0,
+      avmLow: avmData?.priceRangeLow || 0,
+      avmHigh: avmData?.priceRangeHigh || 0,
+      avmConfidence: avmData?.price ? 70 : 0,
+      lastSalePrice: propData?.lastSalePrice || 0,
+      lastSaleDate: propData?.lastSaleDate || '',
+      taxAssessed: latestAssessment?.value || 0,
+      yearBuilt: propData?.yearBuilt || 0,
+      sqft: propData?.squareFootage || 0,
+      lotSqft: propData?.lotSize || 0,
+      bedrooms: propData?.bedrooms || 0,
+      bathrooms: propData?.bathrooms || 0,
+      propertyType: propData?.propertyType || 'Single Family',
+      ownerName: propData?.owner?.names?.[0] || '',
+    };
   }, reportId);
 }
 
@@ -332,4 +339,4 @@ async function logCall(reportId: string | undefined, provider: string, endpoint:
   } catch {}
 }
 
-export type { CensusData, HpiData, AttomData, RentCastData, WalkScoreData, RentComp };
+export type { CensusData, HpiData, RentCastPropertyData, RentCastData, WalkScoreData, RentComp };

@@ -2,13 +2,13 @@ import { db } from '../../db';
 import { propertyReports } from '../../../shared/propertySchema';
 import { eq } from 'drizzle-orm';
 import { geocodeAddress } from './geocoder';
-import { fetchCensusData, fetchHpiData, fetchAttomData, fetchRentCastData, fetchWalkScore } from './dataProviders';
+import { fetchCensusData, fetchHpiData, fetchRentCastPropertyData, fetchRentCastData, fetchWalkScore } from './dataProviders';
 import { runEstimation, type EstimationResult } from './estimationEngine';
 
 export const TIER_CONFIG: Record<string, { label: string; priceCents: number; maxPerMonth: number; dataSources: string[] }> = {
   free: { label: 'Free Report', priceCents: 0, maxPerMonth: 3, dataSources: ['census', 'fhfa', 'osm'] },
-  base: { label: 'Base Report', priceCents: 499, maxPerMonth: 50, dataSources: ['census', 'fhfa', 'osm', 'attom'] },
-  premium: { label: 'Premium Report', priceCents: 1499, maxPerMonth: 100, dataSources: ['census', 'fhfa', 'osm', 'attom', 'rentcast', 'walkscore'] },
+  base: { label: 'Base Report', priceCents: 499, maxPerMonth: 50, dataSources: ['census', 'fhfa', 'osm', 'rentcast-property'] },
+  premium: { label: 'Premium Report', priceCents: 1499, maxPerMonth: 100, dataSources: ['census', 'fhfa', 'osm', 'rentcast-property', 'rentcast', 'walkscore'] },
 };
 
 export async function generateReport(reportId: string): Promise<EstimationResult> {
@@ -32,12 +32,12 @@ export async function generateReport(reportId: string): Promise<EstimationResult
       fetchHpiData(geo.state, reportId),
     ]);
 
-    let attom = null;
+    let rcProperty = null;
     let rentcast = null;
     let walkScore = null;
 
-    if (cfg.dataSources.includes('attom')) {
-      attom = await fetchAttomData(report.addressRaw, reportId);
+    if (cfg.dataSources.includes('rentcast-property')) {
+      rcProperty = await fetchRentCastPropertyData(report.addressRaw, reportId);
     }
 
     if (cfg.dataSources.includes('rentcast')) {
@@ -52,7 +52,7 @@ export async function generateReport(reportId: string): Promise<EstimationResult
       geo,
       census,
       hpi,
-      attom,
+      rcProperty,
       rentcast,
       walkScore,
       tier,

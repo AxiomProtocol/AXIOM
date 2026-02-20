@@ -56,5 +56,5 @@ The architecture uses a "Product Factory Approach" for scalability. The current 
 - **Cloud Storage:** Google Cloud Storage, Storacha (Web3 Storage/IPFS)
 - **Auth Provider:** Supabase
 - **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image)
-- **Property Data:** ATTOM Data, RentCast API, Walk Score API
+- **Property Data:** RentCast API (property details, AVM valuations, rental estimates), Walk Score API
 - **Market Data:** Alpha Vantage (US equities OHLCV), CoinGecko (digital asset OHLCV)
