@@ -30,6 +30,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/mirdt', label: 'MIRDT' },
       { href: '/sentinel', label: 'Sentinel' },
       { href: '/observer', label: 'Observer' },
+      { href: '/re', label: 'RE Intelligence' },
     ],
   },
   {

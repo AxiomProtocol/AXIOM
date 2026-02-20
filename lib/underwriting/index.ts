@@ -1,4 +1,4 @@
-import { UnderwritingAssumptions, UnderwritingResult } from './strategies/base';
+import type { UnderwritingAssumptions, UnderwritingResult } from './strategies/base';
 import { computeBrrrr } from './strategies/brrrr';
 import { computeFlip } from './strategies/flip';
 import { computeHold } from './strategies/hold';
@@ -7,7 +7,7 @@ import { computeMultifamily } from './strategies/multifamily';
 
 export type DealStrategy = 'brrrr' | 'flip' | 'hold' | 'note' | 'multifamily';
 
-export { UnderwritingAssumptions, UnderwritingResult };
+export type { UnderwritingAssumptions, UnderwritingResult };
 
 export function computeMetrics(strategy: DealStrategy, assumptions: UnderwritingAssumptions): UnderwritingResult {
   switch (strategy) {
