@@ -28,8 +28,10 @@ export default function PropertyProfilePage() {
   const [error, setError] = useState('');
   const [strategy, setStrategy] = useState('hold');
   const [creating, setCreating] = useState(false);
+  const [enriching, setEnriching] = useState(false);
+  const [enrichResult, setEnrichResult] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadProperty = useCallback(() => {
     if (!id) return;
     setLoading(true);
     fetch(`/api/real-estate/properties/${id}`)
@@ -41,6 +43,33 @@ export default function PropertyProfilePage() {
       .catch(() => setError('Failed to load property'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => { loadProperty(); }, [loadProperty]);
+
+  const handleEnrich = useCallback(async () => {
+    if (!id) return;
+    setEnriching(true);
+    setEnrichResult(null);
+    try {
+      const res = await fetch('/api/real-estate/properties/enrich', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ propertyId: id }),
+      });
+      const json = await res.json();
+      if (json.error) {
+        setEnrichResult(json.error.message);
+      } else {
+        const d = json.data;
+        setEnrichResult(`Enriched: ${d.fields_updated?.length || 0} fields, ${d.sales_added || 0} sales, ${d.taxes_added || 0} tax records, ${d.facts_added || 0} facts`);
+        loadProperty();
+      }
+    } catch {
+      setEnrichResult('Failed to enrich property');
+    } finally {
+      setEnriching(false);
+    }
+  }, [id, loadProperty]);
 
   const handleCreateDeal = useCallback(async () => {
     if (!id) return;
@@ -89,7 +118,8 @@ export default function PropertyProfilePage() {
     );
   }
 
-  const { property, sales, taxes } = profile;
+  const { property, sales, taxes, facts } = profile;
+  const hasData = property.sqft || property.bedrooms || property.yearBuilt;
 
   return (
     <DesignLawLayout>
@@ -104,10 +134,28 @@ export default function PropertyProfilePage() {
           </Link>
         </div>
 
-        <h1 className="font-dl-serif text-2xl text-dl-navy mb-1">{property.addressRaw || property.addressNormalized}</h1>
-        <p className="text-dl-muted font-dl-mono text-sm mb-6">
-          {[property.city, property.state, property.zip].filter(Boolean).join(', ')}
-        </p>
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="font-dl-serif text-2xl text-dl-navy mb-1">{property.addressRaw || property.addressNormalized}</h1>
+            <p className="text-dl-muted font-dl-mono text-sm">
+              {[property.city, property.state, property.zip].filter(Boolean).join(', ')}
+              {property.county ? ` | ${property.county} County` : ''}
+            </p>
+          </div>
+          <button
+            onClick={handleEnrich}
+            disabled={enriching}
+            className="border border-dl-navy text-dl-navy px-4 py-2 font-dl-mono text-xs hover:bg-dl-navy hover:text-white disabled:opacity-50"
+          >
+            {enriching ? 'Fetching Data...' : hasData ? 'Refresh Data' : 'Fetch Property Data'}
+          </button>
+        </div>
+
+        {enrichResult && (
+          <div className={`border p-3 mb-6 font-dl-mono text-xs ${enrichResult.startsWith('Enriched') ? 'border-green-300 bg-green-50 text-green-800' : 'border-amber-300 bg-amber-50 text-amber-800'}`}>
+            {enrichResult}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2">
@@ -115,12 +163,16 @@ export default function PropertyProfilePage() {
               <h2 className="font-dl-serif text-lg text-dl-navy mb-4">Property Details</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: 'Type', value: property.propertyType || '-' },
+                  { label: 'Type', value: property.propertyType?.replace(/_/g, ' ') || '-' },
                   { label: 'Sqft', value: property.sqft?.toLocaleString() || '-' },
                   { label: 'Lot Sqft', value: property.lotSqft?.toLocaleString() || '-' },
                   { label: 'Year Built', value: property.yearBuilt || '-' },
-                  { label: 'Bedrooms', value: property.bedrooms || '-' },
-                  { label: 'Bathrooms', value: property.bathrooms || '-' },
+                  { label: 'Bedrooms', value: property.bedrooms ?? '-' },
+                  { label: 'Bathrooms', value: property.bathrooms ?? '-' },
+                  { label: 'Stories', value: property.stories || '-' },
+                  { label: 'Garage', value: property.garage || '-' },
+                  { label: 'Pool', value: property.pool ? 'Yes' : 'No' },
+                  { label: 'Zoning', value: property.zoning || '-' },
                   { label: 'FIPS', value: property.fips || '-' },
                   { label: 'APN', value: property.apn || '-' },
                 ].map((item) => (
@@ -130,17 +182,22 @@ export default function PropertyProfilePage() {
                   </div>
                 ))}
               </div>
+              {property.lat && property.lon && (
+                <div className="mt-4 pt-4 border-t border-dl-border">
+                  <span className="text-xs font-dl-mono text-dl-muted uppercase">Coordinates: </span>
+                  <span className="font-dl-mono text-sm text-dl-text">{property.lat}, {property.lon}</span>
+                </div>
+              )}
             </div>
 
             {sales.length > 0 && (
               <div className="border border-dl-border p-6 mb-6">
-                <h2 className="font-dl-serif text-lg text-dl-navy mb-4">Sale History</h2>
+                <h2 className="font-dl-serif text-lg text-dl-navy mb-4">Sale History ({sales.length})</h2>
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-dl-border">
                       <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Date</th>
                       <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Price</th>
-                      <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Type</th>
                       <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">$/Sqft</th>
                     </tr>
                   </thead>
@@ -149,7 +206,6 @@ export default function PropertyProfilePage() {
                       <tr key={sale.id} className="border-b border-dl-border">
                         <td className="px-2 py-2 font-dl-mono text-sm">{sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : '-'}</td>
                         <td className="px-2 py-2 font-dl-mono text-sm">{sale.salePrice ? `$${Number(sale.salePrice).toLocaleString()}` : '-'}</td>
-                        <td className="px-2 py-2 font-dl-mono text-sm text-dl-muted">{sale.saleType || '-'}</td>
                         <td className="px-2 py-2 font-dl-mono text-sm">{sale.pricePerSqft ? `$${Number(sale.pricePerSqft).toFixed(0)}` : '-'}</td>
                       </tr>
                     ))}
@@ -159,28 +215,51 @@ export default function PropertyProfilePage() {
             )}
 
             {taxes.length > 0 && (
-              <div className="border border-dl-border p-6">
-                <h2 className="font-dl-serif text-lg text-dl-navy mb-4">Tax History</h2>
+              <div className="border border-dl-border p-6 mb-6">
+                <h2 className="font-dl-serif text-lg text-dl-navy mb-4">Tax History ({taxes.length})</h2>
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-dl-border">
                       <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Year</th>
                       <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Assessed</th>
                       <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Tax Amount</th>
-                      <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Land Value</th>
+                      <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Land</th>
+                      <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Improvements</th>
                     </tr>
                   </thead>
                   <tbody>
                     {taxes.map((tax: any) => (
                       <tr key={tax.id} className="border-b border-dl-border">
                         <td className="px-2 py-2 font-dl-mono text-sm">{tax.taxYear}</td>
-                        <td className="px-2 py-2 font-dl-mono text-sm">{tax.assessedValue ? `$${Number(tax.assessedValue).toLocaleString()}` : '-'}</td>
+                        <td className="px-2 py-2 font-dl-mono text-sm">{tax.assessedTotal ? `$${Number(tax.assessedTotal).toLocaleString()}` : '-'}</td>
                         <td className="px-2 py-2 font-dl-mono text-sm">{tax.taxAmount ? `$${Number(tax.taxAmount).toLocaleString()}` : '-'}</td>
-                        <td className="px-2 py-2 font-dl-mono text-sm">{tax.landValue ? `$${Number(tax.landValue).toLocaleString()}` : '-'}</td>
+                        <td className="px-2 py-2 font-dl-mono text-sm">{tax.assessedLand ? `$${Number(tax.assessedLand).toLocaleString()}` : '-'}</td>
+                        <td className="px-2 py-2 font-dl-mono text-sm">{tax.assessedImprovement ? `$${Number(tax.assessedImprovement).toLocaleString()}` : '-'}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {facts.length > 0 && (
+              <div className="border border-dl-border p-6">
+                <h2 className="font-dl-serif text-lg text-dl-navy mb-4">Property Facts ({facts.length})</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {facts.map((fact: any) => (
+                    <div key={fact.id}>
+                      <span className="block text-xs font-dl-mono text-dl-muted uppercase">{fact.factType?.replace(/_/g, ' ')}</span>
+                      <span className="block font-dl-mono text-sm text-dl-text">{fact.factValue || '-'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!hasData && sales.length === 0 && taxes.length === 0 && facts.length === 0 && (
+              <div className="border border-dl-border p-6 text-center">
+                <p className="text-dl-muted font-dl-mono text-sm mb-2">No property data available yet.</p>
+                <p className="text-dl-muted font-dl-mono text-xs">Click "Fetch Property Data" above to pull details from public records.</p>
               </div>
             )}
           </div>

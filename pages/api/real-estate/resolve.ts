@@ -4,6 +4,7 @@ import { reProperties } from '../../../shared/realEstateSchema';
 import { eq, sql } from 'drizzle-orm';
 import { parseAddress, computeConfidence } from '../../../server/services/real-estate/address';
 import { successResponse, errorResponse, buildMeta } from '../../../server/services/real-estate/helpers';
+import { enrichProperty } from '../../../server/services/real-estate/rentcast';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -72,14 +73,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       zip: parsed.zip || null,
     }).returning();
 
-    const confidence = computeConfidence(parsed, false, false);
+    let enrichment = null;
+    if (process.env.RENTCAST_API_KEY) {
+      try {
+        enrichment = await enrichProperty(newProp.id);
+      } catch (err: any) {
+        console.error('Auto-enrich failed (non-blocking):', err.message);
+        enrichment = { enriched: false, error: err.message };
+      }
+    }
+
+    const sources = ['user_input'];
+    if (enrichment?.enriched) sources.push('rentcast');
+    const confidence = computeConfidence(parsed, false, enrichment?.enriched || false);
     return successResponse(res, {
       propertyId: newProp.id,
       addressNormalized: newProp.addressNormalized,
       parsed,
       matched: false,
       created: true,
-    }, buildMeta(['user_input'], confidence));
+      enrichment,
+    }, buildMeta(sources, confidence));
 
   } catch (err: any) {
     console.error('Address resolve error:', err.message);
