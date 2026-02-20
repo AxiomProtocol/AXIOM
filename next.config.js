@@ -18,6 +18,7 @@ const nextConfig = {
   swcMinify: true,
 
   experimental: {
+    instrumentationHook: true,
     serverComponentsExternalPackages: ['pg', 'hardhat', '@nomiclabs/hardhat-ethers', '@nomicfoundation/hardhat-toolbox'],
   },
 

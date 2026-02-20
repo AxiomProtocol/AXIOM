@@ -8,6 +8,34 @@
       "when": 1767934033317,
       "tag": "0000_round_medusa",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766707200000,
+      "tag": "0002_admin_rbac_two_step_approval",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1768435200000,
+      "tag": "0003_idempotency_keys",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771545600000,
+      "tag": "0004_real_estate_module",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1771545601000,
+      "tag": "0005_re_ingest_constraints",
+      "breakpoints": true
     }
   ]
 }
