@@ -245,7 +245,7 @@ export default function PurposeGroupOnboarding() {
 
             <div className="max-w-2xl mx-auto mb-6 border border-dl-border bg-dl-bg-alt p-6">
               <div className="text-3xl mb-3">🌱</div>
-              <h3 className="font-dl-serif text-lg text-dl-navy mb-2">Join 5,000+ Builders</h3>
+              <h3 className="font-dl-serif text-lg text-dl-navy mb-2">Join the Community</h3>
               <p className="text-sm text-dl-gray mb-4">
                 Connect with a community of people committed to long-term financial coordination through collective stewardship.
               </p>

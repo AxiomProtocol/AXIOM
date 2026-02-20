@@ -91,7 +91,7 @@ const INCOME_STREAMS = [
   },
   {
     name: 'Utility Metering Fees',
-    description: 'Process water/energy/bandwidth usage data for 1,000-acre smart city',
+    description: 'Process water/energy/bandwidth usage data for smart city infrastructure',
     icon: '💧',
     contract: 'UtilityAndMeteringHub',
     avgMonthly: '$20-50',
@@ -367,7 +367,7 @@ export default function AxiomDePINNodePage() {
             </p>
             <div className="inline-block bg-green-500/20 border border-green-500/50 rounded-xl px-6 py-3">
               <span className="text-green-400 font-bold">✓ Backed by Real Assets: </span>
-              <span className="text-white">1,000-acre fintech city + trucking fleet + tokenized properties</span>
+              <span className="text-white">Physical asset pipeline with targeted land acquisition and tokenized infrastructure</span>
             </div>
           </div>
 
@@ -541,7 +541,7 @@ export default function AxiomDePINNodePage() {
               <h3 className="text-2xl font-bold text-yellow-400 mb-4">Physical Infrastructure</h3>
               <div className="space-y-4">
                 <div className="bg-black/40 rounded-xl p-4">
-                  <div className="text-white font-semibold mb-2">🏘️ 1,000-Acre Smart City</div>
+                  <div className="text-white font-semibold mb-2">🏘️ Smart City Infrastructure</div>
                   <div className="text-gray-400 text-sm">Real land parcels tokenized on-chain with zoning, utilities, property rights</div>
                 </div>
                 <div className="bg-black/40 rounded-xl p-4">

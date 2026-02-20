@@ -39,26 +39,26 @@ export default function HomePage() {
         <div className="relative z-10 max-w-6xl mx-auto text-center">
           {/* Pre-Headline (credibility) */}
           <div className="inline-block bg-yellow-500/20 border border-yellow-400 rounded-full px-6 py-2 mb-6 backdrop-blur-sm">
-            <span className="text-yellow-400 font-semibold">🏛️ America's First On-Chain Sovereign Smart City</span>
+            <span className="text-yellow-400 font-semibold">🏛️ Governance-First Wealth Infrastructure</span>
           </div>
           
           {/* Main Headline - Problem & Solution */}
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-500">
-              Own a Piece of the Future
+              Transparent Infrastructure
             </span>
             <br />
             <span className="text-white">
-              While Wall Street Sleeps on It
+              For Coordinated Capital Formation
             </span>
           </h1>
           
-          {/* Sub-Headline - The Promise */}
+          {/* Sub-Headline */}
           <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-8 leading-relaxed">
-            Be an <span className="text-yellow-400 font-semibold">early stakeholder</span> in a 
-            <span className="text-yellow-400 font-semibold"> 1,000-acre smart city economy</span>. 
-            Real estate. Real businesses. Real blockchain infrastructure.
-            <span className="block mt-2 text-green-400 font-bold">All tokenized. All transparent. All yours.</span>
+            Explore a <span className="text-yellow-400 font-semibold">disclosure-first capital framework</span> designed to 
+            <span className="text-yellow-400 font-semibold"> bridge digital capital and real assets</span>. 
+            Structured participation. On-chain transparency. Community coordination.
+            <span className="block mt-2 text-green-400 font-bold">All auditable. All on-chain. All governed.</span>
           </p>
 
           {/* Trust Indicators */}
@@ -111,7 +111,7 @@ export default function HomePage() {
               </h2>
               <p className="text-lg text-gray-300 max-w-2xl">
                 From <span className="text-yellow-400 font-semibold">checking accounts to mortgages</span>, 
-                credit cards to tokenized real estate. America's first fully sovereign blockchain banking system.
+                credit cards to tokenized real estate. On-chain banking infrastructure with full transparency.
               </p>
             </div>
             <div className="flex-shrink-0">
@@ -135,15 +135,15 @@ export default function HomePage() {
                 <span className="text-yellow-400 font-semibold">📡 AXIOM DePIN INFRASTRUCTURE</span>
               </div>
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                Own Real-World Infrastructure
+                Participate in Physical Infrastructure
                 <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600">
-                  Earn Real-World Income
+                  Through On-Chain Coordination
                 </span>
               </h2>
               <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-6">
-                From smartphones to data centers - start with what you have and scale up. 
-                Power the smart city's physical infrastructure and earn from <span className="text-green-400 font-bold">14 income streams</span>.
+                From smartphones to data centers — start with what you have and scale up. 
+                Support smart city infrastructure through <span className="text-green-400 font-bold">14 participation channels</span>.
               </p>
             </div>
 
@@ -180,8 +180,8 @@ export default function HomePage() {
               <div className="flex items-start space-x-4">
                 <div className="text-3xl">✅</div>
                 <div>
-                  <div className="text-white font-semibold mb-1">Real Asset Backing</div>
-                  <div className="text-gray-400 text-sm">1,000-acre city + trucking fleet + tokenized properties</div>
+                  <div className="text-white font-semibold mb-1">Physical Asset Pipeline</div>
+                  <div className="text-gray-400 text-sm">Targeted land acquisition roadmap with tokenized asset onboarding</div>
                 </div>
               </div>
               <div className="flex items-start space-x-4">
@@ -228,8 +228,8 @@ export default function HomePage() {
                 The Settlement Layer of Axiom
               </h2>
               <p className="text-lg text-gray-300 max-w-2xl">
-                Mint <span className="text-green-400 font-semibold">AXUSD</span> against crypto collateral, 
-                swap 1:1 via PSM, and earn <span className="text-green-400 font-semibold">50% protocol revenue</span> through SEED.
+                Issue <span className="text-green-400 font-semibold">AXUSD</span> against crypto collateral, 
+                swap 1:1 via PSM, and participate in <span className="text-green-400 font-semibold">protocol fee routing</span> through SEED.
                 11 verified contracts on Arbitrum One.
               </p>
             </div>
@@ -254,11 +254,11 @@ export default function HomePage() {
                 <span className="text-blue-400 text-sm font-semibold">ARBITRUM ONE NETWORK</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
-                Earn Real Yield with Arbitrum DeFi
+                Explore On-Chain DeFi on Arbitrum
               </h2>
               <p className="text-lg text-gray-300 max-w-2xl">
-                Explore <span className="text-yellow-400 font-semibold">4 Arbitrum-native DeFi opportunities</span>: 
-                AXM-ETH LP Staking, Uniswap V3, GMX Lending & AXM Staking. Real returns, low gas fees.
+                Explore <span className="text-yellow-400 font-semibold">4 Arbitrum-native DeFi mechanisms</span>: 
+                AXM-ETH LP participation, Uniswap V3, GMX Lending and AXM lockup. On-chain transparency, low network fees.
               </p>
             </div>
             <div className="flex-shrink-0">
@@ -282,11 +282,11 @@ export default function HomePage() {
                 <span className="text-yellow-400 text-sm font-semibold">🆕 JUST RELEASED</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
-                Why Axiom Will Replace Bitcoin as #1
+                How Axiom Compares to Other Protocols
               </h2>
               <p className="text-lg text-gray-300 max-w-2xl">
-                See the side-by-side comparison: Axiom vs Bitcoin, Ethereum, XRP & others. 
-                Discover why <span className="text-yellow-400 font-semibold">real revenue beats speculation</span> every time.
+                See the side-by-side comparison: Axiom vs Bitcoin, Ethereum, XRP and others. 
+                Review how <span className="text-yellow-400 font-semibold">coordination infrastructure differs from speculation</span>.
               </p>
             </div>
             <div className="flex-shrink-0">
@@ -306,10 +306,10 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              While Everyone Else is Talking...
+              How Axiom Differs
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600">
-                We're Building
+                From Conventional Approaches
               </span>
             </h2>
             <div className="w-32 h-1 bg-gradient-to-r from-yellow-400 to-yellow-600 mx-auto mb-8 rounded-full"></div>
@@ -322,7 +322,7 @@ export default function HomePage() {
               <ul className="space-y-2 text-gray-400 text-sm">
                 <li>• High entry barriers ($50K+ down payments)</li>
                 <li>• Illiquid (months to sell)</li>
-                <li>• Hidden fees eating profits</li>
+                <li>• Hidden fees reducing capital</li>
                 <li>• Zero transparency</li>
                 <li>• Controlled by gatekeepers</li>
               </ul>
@@ -344,20 +344,20 @@ export default function HomePage() {
               <div className="text-4xl mb-4">✅</div>
               <h3 className="text-xl font-bold text-green-400 mb-3">Axiom Smart City</h3>
               <ul className="space-y-2 text-green-300 text-sm font-semibold">
-                <li>✓ Real 1,000-acre development</li>
+                <li>✓ Physical asset pipeline</li>
                 <li>✓ Fully transparent blockchain</li>
                 <li>✓ Start with any amount</li>
                 <li>✓ Instant liquidity via DEX</li>
-                <li>✓ Earn while you hold</li>
+                <li>✓ Participate with structure</li>
               </ul>
             </div>
           </div>
 
           <div className="text-center bg-yellow-500/10 border-2 border-yellow-400 rounded-2xl p-8 backdrop-blur-sm">
-            <p className="text-2xl text-yellow-400 font-bold mb-2">The Difference?</p>
+            <p className="text-2xl text-yellow-400 font-bold mb-2">The Difference</p>
             <p className="text-xl text-white">
-              We're not selling tokens. We're selling <span className="text-yellow-400 font-bold">ownership in a real economy</span> 
-              with <span className="text-green-400">banking, real estate, utilities, and infrastructure</span>—all on-chain.
+              Axiom is coordination infrastructure for <span className="text-yellow-400 font-bold">structured, transparent participation</span> 
+              in <span className="text-green-400">real asset pipelines, governance, and capital formation</span> — all on-chain.
             </p>
           </div>
         </div>
@@ -370,7 +370,7 @@ export default function HomePage() {
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
               What You Get as an AXM Stakeholder
             </h2>
-            <p className="text-xl text-gray-400">This isn't just a token. It's your key to an entire sovereign economy.</p>
+            <p className="text-xl text-gray-400">Structured participation across the Axiom coordination layer.</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
@@ -381,10 +381,10 @@ export default function HomePage() {
                   <div className="text-4xl">🏦</div>
                   <div>
                     <h3 className="text-2xl font-bold text-yellow-400 mb-3">Full-Service Digital Banking</h3>
-                    <p className="text-gray-300 mb-4">30+ banking products: checking, savings (4.25% APY), CDs (6.25% APY), credit cards, loans, mortgages—all on-chain.</p>
+                    <p className="text-gray-300 mb-4">30+ banking product modules: checking, savings, CDs, credit cards, loans, mortgages—all on-chain. Rates are variable and subject to protocol policy.</p>
                     <ul className="space-y-2 text-sm text-gray-400">
-                      <li>✓ Higher yields than traditional banks</li>
-                      <li>✓ Instant settlement</li>
+                      <li>✓ On-chain settlement</li>
+                      <li>✓ Transparent fee structure</li>
                       <li>✓ No hidden fees</li>
                     </ul>
                   </div>
@@ -417,10 +417,10 @@ export default function HomePage() {
                   <div className="text-4xl">⚡</div>
                   <div>
                     <h3 className="text-2xl font-bold text-yellow-400 mb-3">DePIN Infrastructure</h3>
-                    <p className="text-gray-300 mb-4">Earn from city utilities: energy grids, water systems, internet, IoT networks—all tokenized and revenue-generating.</p>
+                    <p className="text-gray-300 mb-4">Participate in structured utility infrastructure: energy grids, water systems, internet, IoT networks—all tokenized with on-chain reporting.</p>
                     <ul className="space-y-2 text-sm text-gray-400">
-                      <li>✓ Infrastructure ownership tokens</li>
-                      <li>✓ Usage fee dividends</li>
+                      <li>✓ Infrastructure participation instruments</li>
+                      <li>✓ Usage-based fee distribution</li>
                       <li>✓ Smart city IoT integration</li>
                     </ul>
                   </div>
@@ -470,10 +470,10 @@ export default function HomePage() {
                 <div className="flex items-start gap-4">
                   <div className="text-4xl">💰</div>
                   <div>
-                    <h3 className="text-2xl font-bold text-yellow-400 mb-3">Passive Staking Rewards</h3>
-                    <p className="text-gray-300 mb-4">Stake AXM to earn rewards from protocol fees, transaction revenue, and ecosystem growth. Target APY: 12-25%.</p>
+                    <h3 className="text-2xl font-bold text-yellow-400 mb-3">Participation Lockup</h3>
+                    <p className="text-gray-300 mb-4">Lock AXM to participate in protocol fee routing, governance, and ecosystem coordination. Rates are variable and not guaranteed.</p>
                     <ul className="space-y-2 text-sm text-gray-400">
-                      <li>✓ No lock-up periods</li>
+                      <li>✓ Configurable lockup terms</li>
                       <li>✓ Compound automatically</li>
                       <li>✓ Claim anytime</li>
                     </ul>
@@ -486,12 +486,12 @@ export default function HomePage() {
           {/* Total Value Callout */}
           <div className="mt-12 bg-gradient-to-r from-green-900/30 to-blue-900/30 border-2 border-green-400 rounded-2xl p-10 text-center backdrop-blur-sm">
             <p className="text-3xl font-bold text-white mb-4">
-              Total Value if Purchased Separately: <span className="text-red-400 line-through">$50,000+</span>
+              Explore the Full Axiom Coordination Layer
             </p>
             <p className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-yellow-400 mb-2">
-              Your Investment to Start: $100
+              Participation starts at $100
             </p>
-            <p className="text-gray-400 text-lg">Full access to the entire Axiom ecosystem. No gatekeepers. No minimums.</p>
+            <p className="text-gray-400 text-lg">Transparent access to the entire ecosystem. No hidden gatekeepers. Subject to protocol terms.</p>
           </div>
         </div>
       </section>
@@ -501,9 +501,9 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              See Your Potential Returns
+              Hypothetical Projection Model
             </h2>
-            <p className="text-xl text-gray-400">Based on conservative 15% annual growth from staking + ecosystem expansion</p>
+            <p className="text-xl text-gray-400">Illustrative scenarios only. Not a forecast, guarantee, or promise of any outcome.</p>
           </div>
 
           <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-yellow-500">
@@ -535,8 +535,8 @@ export default function HomePage() {
                   <div className="text-4xl font-bold text-white mb-2">
                     ${calculateProjection(monthlyInvestment, 1, 15).toLocaleString()}
                   </div>
-                  <div className="text-sm text-gray-400">Total Value</div>
-                  <div className="text-xs text-green-400 mt-2">+${(calculateProjection(monthlyInvestment, 1, 15) - (monthlyInvestment * 12)).toLocaleString()} profit</div>
+                  <div className="text-sm text-gray-400">Hypothetical Value</div>
+                  <div className="text-xs text-green-400 mt-2">+${(calculateProjection(monthlyInvestment, 1, 15) - (monthlyInvestment * 12)).toLocaleString()} hypothetical gain</div>
                 </div>
 
                 <div className="bg-gradient-to-br from-blue-900/30 to-gray-800 border-2 border-blue-400 rounded-xl p-6 text-center">
@@ -544,8 +544,8 @@ export default function HomePage() {
                   <div className="text-4xl font-bold text-white mb-2">
                     ${calculateProjection(monthlyInvestment, 3, 15).toLocaleString()}
                   </div>
-                  <div className="text-sm text-gray-400">Total Value</div>
-                  <div className="text-xs text-blue-400 mt-2">+${(calculateProjection(monthlyInvestment, 3, 15) - (monthlyInvestment * 36)).toLocaleString()} profit</div>
+                  <div className="text-sm text-gray-400">Hypothetical Value</div>
+                  <div className="text-xs text-blue-400 mt-2">+${(calculateProjection(monthlyInvestment, 3, 15) - (monthlyInvestment * 36)).toLocaleString()} hypothetical gain</div>
                 </div>
 
                 <div className="bg-gradient-to-br from-purple-900/30 to-gray-800 border-2 border-purple-400 rounded-xl p-6 text-center">
@@ -553,13 +553,13 @@ export default function HomePage() {
                   <div className="text-4xl font-bold text-white mb-2">
                     ${calculateProjection(monthlyInvestment, 5, 15).toLocaleString()}
                   </div>
-                  <div className="text-sm text-gray-400">Total Value</div>
-                  <div className="text-xs text-purple-400 mt-2">+${(calculateProjection(monthlyInvestment, 5, 15) - (monthlyInvestment * 60)).toLocaleString()} profit</div>
+                  <div className="text-sm text-gray-400">Hypothetical Value</div>
+                  <div className="text-xs text-purple-400 mt-2">+${(calculateProjection(monthlyInvestment, 5, 15) - (monthlyInvestment * 60)).toLocaleString()} hypothetical gain</div>
                 </div>
               </div>
 
               <p className="text-center text-gray-500 text-sm mt-8">
-                * Projections based on 15% APY from staking rewards + ecosystem growth. Not financial advice. Past performance doesn't guarantee future results.
+                Projections are hypothetical illustrations using an assumed 15% annual rate. They do not represent actual or expected results. Past performance does not indicate future outcomes. All participation carries material risk including total loss of capital.
               </p>
             </CardContent>
           </Card>
@@ -571,9 +571,9 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              The Numbers Don't Lie
+              Infrastructure Progress
             </h2>
-            <p className="text-xl text-gray-400">Real progress. Real infrastructure. Real opportunity.</p>
+            <p className="text-xl text-gray-400">Deployed contracts and coordination milestones.</p>
           </div>
 
           <div className="grid md:grid-cols-4 gap-6 mb-12">
@@ -586,12 +586,12 @@ export default function HomePage() {
               <div className="text-gray-400">Transparency<br />On-Chain</div>
             </div>
             <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-yellow-500/30 rounded-xl p-8 text-center">
-              <div className="text-5xl font-bold text-blue-400 mb-2">1,000</div>
-              <div className="text-gray-400">Acres<br />Development</div>
+              <div className="text-5xl font-bold text-blue-400 mb-2">Planned</div>
+              <div className="text-gray-400">Land Acquisition<br />Pipeline</div>
             </div>
             <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-yellow-500/30 rounded-xl p-8 text-center">
-              <div className="text-5xl font-bold text-purple-400 mb-2">$5B</div>
-              <div className="text-gray-400">Target Economy<br />Size</div>
+              <div className="text-5xl font-bold text-purple-400 mb-2">Target</div>
+              <div className="text-gray-400">Economy<br />Scale</div>
             </div>
           </div>
 
@@ -653,22 +653,22 @@ export default function HomePage() {
       <section className="py-20 px-4 bg-gradient-to-br from-red-900/20 via-gray-900 to-orange-900/20">
         <div className="max-w-4xl mx-auto text-center">
           <div className="bg-gradient-to-r from-red-600 to-orange-600 text-white text-sm font-bold py-2 px-6 rounded-full inline-block mb-6">
-            ⏰ EARLY STAKEHOLDER WINDOW
+            PROTOCOL DEVELOPMENT ROADMAP
           </div>
           
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            You're Still Early. But Not for Long.
+            Planned Development Milestones
           </h2>
           
           <div className="bg-gray-800/50 backdrop-blur-sm border-2 border-yellow-500 rounded-2xl p-10 mb-8">
-            <p className="text-2xl text-yellow-400 font-bold mb-6">Here's What Happens Next:</p>
+            <p className="text-2xl text-yellow-400 font-bold mb-6">Development Roadmap:</p>
             
             <div className="space-y-6 text-left max-w-2xl mx-auto">
               <div className="flex gap-4">
                 <div className="bg-yellow-500 text-black font-bold rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">1</div>
                 <div>
-                  <p className="font-bold text-white mb-1">Q1 2025: Staking Pools Launch</p>
-                  <p className="text-gray-400 text-sm">First staking pools go live. Early stakers get highest APY (25%+ target)</p>
+                  <p className="font-bold text-white mb-1">Q1 2025: Participation Lockup Pools</p>
+                  <p className="text-gray-400 text-sm">Initial lockup pools planned for launch. Rates are variable and subject to protocol governance.</p>
                 </div>
               </div>
               
@@ -676,7 +676,7 @@ export default function HomePage() {
                 <div className="bg-yellow-500 text-black font-bold rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">2</div>
                 <div>
                   <p className="font-bold text-white mb-1">Q2 2025: Real Estate Tokenization</p>
-                  <p className="text-gray-400 text-sm">First properties tokenized. Early stakeholders get first access to fractional ownership</p>
+                  <p className="text-gray-400 text-sm">Initial asset onboarding targets. Participation subject to eligibility and governance approval.</p>
                 </div>
               </div>
               
@@ -684,7 +684,7 @@ export default function HomePage() {
                 <div className="bg-yellow-500 text-black font-bold rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">3</div>
                 <div>
                   <p className="font-bold text-white mb-1">Q3 2025: Utility Infrastructure Goes Live</p>
-                  <p className="text-gray-400 text-sm">Energy, water, internet grids operational. Revenue distribution to stakeholders begins</p>
+                  <p className="text-gray-400 text-sm">Infrastructure operational targets. Fee distribution subject to protocol policy and governance.</p>
                 </div>
               </div>
               
@@ -699,10 +699,10 @@ export default function HomePage() {
           </div>
 
           <div className="bg-gradient-to-r from-orange-600 to-red-600 rounded-2xl p-8 text-white mb-8">
-            <p className="text-xl font-bold mb-3">⚠️ Early Stakeholder Benefits End When Staking Pools Launch</p>
+            <p className="text-xl font-bold mb-3">Development milestones are subject to change based on governance decisions and market conditions.</p>
             <p className="text-lg">
-              Right now, you can explore everything, connect your wallet, and be ready to stake immediately when pools go live. 
-              <span className="block mt-2 text-yellow-300 font-bold">The longer you wait, the lower the APY.</span>
+              Explore the dashboard, review disclosures, and connect your account to monitor protocol progress.
+              <span className="block mt-2 text-yellow-300 font-bold">All timelines are targets, not commitments.</span>
             </p>
           </div>
         </div>
@@ -721,9 +721,9 @@ export default function HomePage() {
                 Is this actually backed by real assets?
               </summary>
               <p className="mt-4 text-gray-400 pl-4">
-                Yes. Axiom Smart City is a 1,000-acre fintech smart city development with real physical infrastructure, real estate, 
-                and real utility services. Every token represents ownership in this ecosystem. All contracts are verified on Arbitrum One 
-                and fully transparent.
+                Axiom includes a physical asset pipeline designed to bridge digital capital and real assets. This includes a targeted land acquisition roadmap 
+                with real infrastructure planning. All contracts are verified on Arbitrum One 
+                and designed for full on-chain transparency. Asset acquisition targets are subject to governance approval and market conditions.
               </p>
             </details>
 
@@ -732,9 +732,9 @@ export default function HomePage() {
                 How is this different from other crypto projects?
               </summary>
               <p className="mt-4 text-gray-400 pl-4">
-                Most crypto projects are pure speculation with no real-world backing. Axiom is building an actual sovereign economy with 
-                banking, real estate, infrastructure, and governance—all on-chain. You're not gambling on token price; you're investing 
-                in real economic output.
+                Most crypto projects lack real-world coordination infrastructure. Axiom is building a governance-first coordination layer with 
+                real asset pipelines, structured participation, and on-chain transparency. Participation is structured around coordination and governance, 
+                not speculation.
               </p>
             </details>
 
@@ -743,8 +743,8 @@ export default function HomePage() {
                 What's the minimum investment?
               </summary>
               <p className="mt-4 text-gray-400 pl-4">
-                There's no mandatory minimum. You can start exploring the dashboard and transparency portal for free. When staking pools 
-                launch, you can stake any amount of AXM tokens you're comfortable with—even $10.
+                There is no mandatory minimum. You can explore the dashboard and transparency portal without commitment. When participation lockup pools 
+                launch, you can participate with any amount you are comfortable with. Subject to protocol terms.
               </p>
             </details>
 
@@ -753,8 +753,8 @@ export default function HomePage() {
                 Can I withdraw my money anytime?
               </summary>
               <p className="mt-4 text-gray-400 pl-4">
-                Yes! There are no lock-up periods. You can unstake your AXM tokens at any time and trade them on the internal DEX or 
-                external exchanges. Full liquidity, full control.
+                Withdrawal terms depend on the specific participation mechanism. Review the applicable terms and lockup conditions before participating. 
+                Liquidity on the internal DEX is subject to market conditions.
               </p>
             </details>
 
@@ -763,9 +763,8 @@ export default function HomePage() {
                 Is this legal and compliant?
               </summary>
               <p className="mt-4 text-gray-400 pl-4">
-                Axiom City DAO LLC is a legally registered entity operating under U.S. regulations. We maintain full compliance with 
-                securities laws, tax reporting, and smart city development regulations. All governance and financial operations are 
-                transparent on-chain.
+                Axiom City DAO LLC is a legally registered entity. The protocol is designed to align with applicable U.S. regulations. 
+                Governance and financial operations are recorded on-chain for transparency. Regulatory alignment is ongoing and subject to change as frameworks evolve.
               </p>
             </details>
 
@@ -774,9 +773,9 @@ export default function HomePage() {
                 What are the risks?
               </summary>
               <p className="mt-4 text-gray-400 pl-4">
-                Like any investment, there are risks: smart contract vulnerabilities, market volatility, regulatory changes, and project 
-                execution risk. However, we mitigate these through audited contracts, legal compliance, transparent governance, and real 
-                asset backing. Never invest more than you can afford to lose.
+                All participation carries material risk including: smart contract vulnerabilities, market volatility, regulatory changes, and project 
+                execution risk. Risk mitigation measures include audited contracts, transparent governance, and structured controls, but these do not eliminate risk. 
+                Never participate with more than you can afford to lose.
               </p>
             </details>
           </div>
@@ -789,13 +788,13 @@ export default function HomePage() {
         
         <div className="relative z-10 max-w-4xl mx-auto text-center">
           <h2 className="text-5xl md:text-6xl font-bold text-white mb-6">
-            Ready to Build the Future?
+            Explore the Axiom Ecosystem
           </h2>
           
           <p className="text-2xl text-gray-300 mb-10 leading-relaxed">
-            Join 1,000+ early stakeholders building America's first on-chain sovereign smart city. 
+            Review disclosures, explore coordination infrastructure, and connect your account. 
             <span className="block mt-3 text-yellow-400 font-bold">
-              The question isn't "if"—it's "how early did you get in?"
+              Structure, transparency, and governance-first design.
             </span>
           </p>
 
@@ -804,14 +803,14 @@ export default function HomePage() {
               onClick={() => navigate('/axiom-staking')}
               className="text-2xl px-12 py-8 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-bold rounded-xl shadow-2xl hover:shadow-yellow-500/50 transition-all duration-300 hover:scale-105"
             >
-              🚀 Explore Staking Now
+              🔍 Explore Participation
             </Button>
             <Button 
               onClick={() => navigate('/axiom-dashboard')}
               variant="outline"
               className="text-2xl px-12 py-8 border-2 border-yellow-400 text-yellow-400 hover:bg-yellow-400/10 font-semibold rounded-xl shadow-xl transition-all duration-300"
             >
-              📊 View Live Dashboard
+              📊 View Dashboard
             </Button>
           </div>
 
