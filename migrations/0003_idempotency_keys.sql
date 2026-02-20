@@ -1,7 +1,9 @@
 -- Migration: 0003_idempotency_keys
 -- Description: Add idempotency_keys table for request deduplication
 
-CREATE TABLE IF NOT EXISTS idempotency_keys (
+DROP TABLE IF EXISTS idempotency_keys CASCADE;
+
+CREATE TABLE idempotency_keys (
     id SERIAL PRIMARY KEY,
     idempotency_key VARCHAR(255) NOT NULL,
     endpoint VARCHAR(255) NOT NULL,
@@ -14,17 +16,8 @@ CREATE TABLE IF NOT EXISTS idempotency_keys (
     UNIQUE(idempotency_key, endpoint, method)
 );
 
-CREATE INDEX IF NOT EXISTS idx_idempotency_keys_lookup 
+CREATE INDEX idx_idempotency_keys_lookup
 ON idempotency_keys(idempotency_key, endpoint, method);
 
-CREATE INDEX IF NOT EXISTS idx_idempotency_keys_expires 
+CREATE INDEX idx_idempotency_keys_expires
 ON idempotency_keys(expires_at);
-
-COMMENT ON TABLE idempotency_keys IS 'Stores idempotency keys for request deduplication';
-COMMENT ON COLUMN idempotency_keys.idempotency_key IS 'Client-provided idempotency key';
-COMMENT ON COLUMN idempotency_keys.endpoint IS 'API endpoint path';
-COMMENT ON COLUMN idempotency_keys.method IS 'HTTP method (POST, PUT, etc)';
-COMMENT ON COLUMN idempotency_keys.request_id IS 'Internal request ID for tracing';
-COMMENT ON COLUMN idempotency_keys.response_code IS 'Cached HTTP response code';
-COMMENT ON COLUMN idempotency_keys.response_body IS 'Cached JSON response body';
-COMMENT ON COLUMN idempotency_keys.expires_at IS 'When this cached response expires';

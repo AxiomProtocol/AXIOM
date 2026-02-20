@@ -4,6 +4,7 @@
   "main": "unified-platform.js",
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 5000",
+    "db:migrate": "npx tsx scripts/run-migrations.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "lint": "next lint",
