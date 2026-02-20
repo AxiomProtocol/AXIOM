@@ -46,23 +46,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const trigram = await db.select({
         id: reProperties.id,
         addressNormalized: reProperties.addressNormalized,
+        streetNumber: reProperties.streetNumber,
+        streetName: reProperties.streetName,
+        city: reProperties.city,
+        state: reProperties.state,
+        zip: reProperties.zip,
         similarity: sql<number>`similarity(address_normalized, ${parsed.normalized})`,
       })
         .from(reProperties)
-        .where(sql`similarity(address_normalized, ${parsed.normalized}) > 0.3`)
+        .where(sql`similarity(address_normalized, ${parsed.normalized}) > 0.6`)
         .orderBy(sql`similarity(address_normalized, ${parsed.normalized}) DESC`)
         .limit(5);
 
-      if (trigram.length > 0) {
+      const validMatches = trigram.filter(m => {
+        if (parsed.streetNumber && m.streetNumber && parsed.streetNumber !== m.streetNumber) return false;
+        return true;
+      });
+
+      if (validMatches.length > 0) {
         const confidence = computeConfidence(parsed, true, false);
         return successResponse(res, {
-          propertyId: trigram[0].id,
-          addressNormalized: trigram[0].addressNormalized,
+          propertyId: validMatches[0].id,
+          addressNormalized: validMatches[0].addressNormalized,
           parsed,
           matched: true,
           fuzzy: true,
-          similarityScore: trigram[0].similarity,
-          alternatives: trigram.slice(1),
+          similarityScore: validMatches[0].similarity,
+          alternatives: validMatches.slice(1).map(a => ({ id: a.id, addressNormalized: a.addressNormalized, similarity: a.similarity })),
         }, buildMeta(['internal_db', 'user_input'], confidence));
       }
     } catch (trigramErr: any) {
@@ -72,6 +82,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const [newProp] = await db.insert(reProperties).values({
       addressRaw: address.trim(),
       addressNormalized: parsed.normalized,
+      streetNumber: parsed.streetNumber || null,
+      streetName: parsed.streetName || null,
       city: parsed.city || null,
       state: parsed.state || null,
       zip: parsed.zip || null,
