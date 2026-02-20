@@ -4,10 +4,14 @@ import { pool } from '../../../../server/db';
 function parseCookies(cookieHeader: string | undefined): Record<string, string> {
   if (!cookieHeader) return {};
   return Object.fromEntries(
-    cookieHeader.split(';').map(cookie => {
-      const [key, ...val] = cookie.trim().split('=');
-      return [key, val.join('=')];
-    })
+    cookieHeader.split(';')
+      .map(cookie => {
+        const [key, ...val] = cookie.trim().split('=');
+        const sanitizedKey = key.replace(/[^\w\-_.]/g, '');
+        const sanitizedVal = val.join('=').replace(/[^\w\-_.=]/g, '');
+        return [sanitizedKey, sanitizedVal];
+      })
+      .filter(([key]) => key.length > 0)
   );
 }
 

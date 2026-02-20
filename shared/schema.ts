@@ -2768,7 +2768,7 @@ export type PlatformMetric = typeof platformMetrics.$inferSelect;
 export type InsertPlatformMetric = typeof platformMetrics.$inferInsert;
 
 // ============================================
-// SUSU REGIONAL INTEREST HUBS & PURPOSE GROUPS
+// WEALTH PRACTICE — REGIONAL INTEREST HUBS & PURPOSE GROUPS
 // ============================================
 
 export const susuRegionTypeEnum = pgEnum('susu_region_type', [
@@ -5734,9 +5734,9 @@ export const tokenHolderProposals = pgTable("token_holder_proposals", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  campaignIdx: index("proposals_campaign_idx").on(table.campaignId),
-  poolIdx: index("proposals_pool_idx").on(table.poolId),
-  statusIdx: index("proposals_status_idx").on(table.status),
+  campaignIdx: index("th_proposals_campaign_idx").on(table.campaignId),
+  poolIdx: index("th_proposals_pool_idx").on(table.poolId),
+  statusIdx: index("th_proposals_status_idx").on(table.status),
 }));
 
 // Token Holder Votes
@@ -7112,7 +7112,7 @@ export const fundSubscriptions = pgTable("fund_subscriptions", {
 }, (table) => ({
   investorIdx: index("subscription_investor_idx").on(table.investorId),
   fundIdx: index("subscription_fund_idx").on(table.fundId),
-  statusIdx: index("subscription_status_idx").on(table.status),
+  statusIdx: index("fund_subscription_status_idx").on(table.status),
 }));
 
 // Investor Document Acknowledgments (audit trail)
@@ -9025,6 +9025,58 @@ export const ameTradeoffLog = pgTable("ame_tradeoff_log", {
 export type AmeTradeoffLog = typeof ameTradeoffLog.$inferSelect;
 export type InsertAmeTradeoffLog = typeof ameTradeoffLog.$inferInsert;
 
+// ==== AME METRIC SNAPSHOT TABLE ====
+
+export const ameMetricSnapshot = pgTable("ame_metric_snapshot", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  environment: text("environment").notNull().default('PRODUCTION'),
+  version: text("version").notNull().default('AME-v2.0'),
+  treasuryTotalUsd: decimal("treasury_total_usd", { precision: 18, scale: 8 }).notNull(),
+  treasuryLiquidUsd: decimal("treasury_liquid_usd", { precision: 18, scale: 8 }).notNull(),
+  designatedReservesUsd: decimal("designated_reserves_usd", { precision: 18, scale: 8 }).notNull(),
+  lossBufferUsd: decimal("loss_buffer_usd", { precision: 18, scale: 8 }).notNull(),
+  netExternalExposureUsd: decimal("net_external_exposure_usd", { precision: 18, scale: 8 }).notNull(),
+  grossIssuanceAxusd: decimal("gross_issuance_axusd", { precision: 18, scale: 8 }).notNull().default('0'),
+  circulatingExposureUsd: decimal("circulating_exposure_usd", { precision: 18, scale: 8 }).notNull(),
+  coverageRatio: decimal("coverage_ratio", { precision: 18, scale: 8 }).notNull(),
+  reserveRatio: decimal("reserve_ratio", { precision: 18, scale: 8 }).notNull(),
+  liquidityStabilityRatio: decimal("liquidity_stability_ratio", { precision: 18, scale: 8 }).notNull(),
+  redemptionStressRatio: decimal("redemption_stress_ratio", { precision: 18, scale: 8 }).notNull(),
+  volatilityPressureIndex: decimal("volatility_pressure_index", { precision: 18, scale: 8 }).notNull(),
+  stabilityScore: decimal("stability_score", { precision: 6, scale: 2 }).notNull(),
+  policyMode: text("policy_mode").notNull(),
+  compositionJson: jsonb("composition_json"),
+  inputsRef: varchar("inputs_ref"),
+  evaluationId: varchar("evaluation_id"),
+}, (table) => ({
+  createdIdx: index("ame_metric_snapshot_created_idx").on(table.createdAt),
+  policyModeIdx: index("ame_metric_snapshot_policy_mode_idx").on(table.policyMode),
+  environmentIdx: index("ame_metric_snapshot_env_idx").on(table.environment),
+}));
+
+export type AmeMetricSnapshot = typeof ameMetricSnapshot.$inferSelect;
+export type InsertAmeMetricSnapshot = typeof ameMetricSnapshot.$inferInsert;
+
+// ==== AME STRESS RUN TABLE ====
+
+export const ameStressRun = pgTable("ame_stress_run", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  runName: text("run_name").notNull(),
+  baseSnapshotId: varchar("base_snapshot_id"),
+  scenariosJson: jsonb("scenarios_json").notNull(),
+  resultsJson: jsonb("results_json").notNull(),
+  conclusion: text("conclusion").notNull(),
+  policyModeAfter: text("policy_mode_after").notNull(),
+  evaluationId: varchar("evaluation_id"),
+}, (table) => ({
+  createdIdx: index("ame_stress_run_created_idx").on(table.createdAt),
+}));
+
+export type AmeStressRunRecord = typeof ameStressRun.$inferSelect;
+export type InsertAmeStressRun = typeof ameStressRun.$inferInsert;
+
 // ==== MIRDT EXECUTION MODEL ====
 
 export const mirdtExecutionGradeEnum = pgEnum('mirdt_execution_grade', ['A', 'B', 'C', 'REJECT']);
@@ -9151,3 +9203,104 @@ export const mirdtExecutionTimeseries = pgTable("mirdt_execution_timeseries", {
 
 export type MirdtExecutionTimeseries = typeof mirdtExecutionTimeseries.$inferSelect;
 export type InsertMirdtExecutionTimeseries = typeof mirdtExecutionTimeseries.$inferInsert;
+
+export const propReportTierEnum = pgEnum('prop_report_tier', ['free', 'base', 'premium']);
+export const propReportStatusEnum = pgEnum('prop_report_status', ['pending', 'paid', 'generating', 'ready', 'failed', 'expired']);
+
+export const propertyReports = pgTable("property_reports", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  tier: propReportTierEnum("tier").notNull(),
+  status: propReportStatusEnum("status").notNull().default('pending'),
+  addressRaw: varchar("address_raw", { length: 500 }).notNull(),
+  addressNormalized: varchar("address_normalized", { length: 500 }),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  zip: varchar("zip", { length: 20 }),
+  lat: decimal("lat", { precision: 10, scale: 7 }),
+  lon: decimal("lon", { precision: 10, scale: 7 }),
+  fips: varchar("fips", { length: 15 }),
+  propertyType: varchar("property_type", { length: 50 }),
+  bedrooms: integer("bedrooms"),
+  bathrooms: decimal("bathrooms", { precision: 3, scale: 1 }),
+  sqft: integer("sqft"),
+  yearBuilt: integer("year_built"),
+  lotSqft: integer("lot_sqft"),
+  valueLow: decimal("value_low", { precision: 14, scale: 2 }),
+  valueMid: decimal("value_mid", { precision: 14, scale: 2 }),
+  valueHigh: decimal("value_high", { precision: 14, scale: 2 }),
+  rentLow: decimal("rent_low", { precision: 10, scale: 2 }),
+  rentMid: decimal("rent_mid", { precision: 10, scale: 2 }),
+  rentHigh: decimal("rent_high", { precision: 10, scale: 2 }),
+  rehabLow: decimal("rehab_low", { precision: 12, scale: 2 }),
+  rehabMid: decimal("rehab_mid", { precision: 12, scale: 2 }),
+  rehabHigh: decimal("rehab_high", { precision: 12, scale: 2 }),
+  confidenceScore: integer("confidence_score"),
+  dealGrade: varchar("deal_grade", { length: 2 }),
+  riskFlags: jsonb("risk_flags").default(sql`'[]'::jsonb`),
+  neighborhoodContext: jsonb("neighborhood_context"),
+  rehabItems: jsonb("rehab_items"),
+  compsUsed: jsonb("comps_used"),
+  dataSources: jsonb("data_sources"),
+  fullReport: jsonb("full_report"),
+  stripeSessionId: varchar("stripe_session_id", { length: 255 }),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
+  amountPaidCents: integer("amount_paid_cents"),
+  buyerEmail: varchar("buyer_email", { length: 255 }),
+  buyerWallet: varchar("buyer_wallet", { length: 42 }),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  expiresAt: timestamp("expires_at"),
+  errorMessage: text("error_message"),
+}, (table) => ({
+  statusIdx: index("prop_report_status_idx").on(table.status),
+  tierIdx: index("prop_report_tier_idx").on(table.tier),
+  emailIdx: index("prop_report_email_idx").on(table.buyerEmail),
+  createdIdx: index("prop_report_created_idx").on(table.createdAt),
+  stripeIdx: index("prop_report_stripe_idx").on(table.stripeSessionId),
+}));
+
+export type PropertyReport = typeof propertyReports.$inferSelect;
+export type InsertPropertyReport = typeof propertyReports.$inferInsert;
+
+export const propGeoCache = pgTable("prop_geo_cache", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  queryKey: varchar("query_key", { length: 500 }).unique().notNull(),
+  lat: decimal("lat", { precision: 10, scale: 7 }).notNull(),
+  lon: decimal("lon", { precision: 10, scale: 7 }).notNull(),
+  addressNormalized: varchar("address_normalized", { length: 500 }),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  zip: varchar("zip", { length: 20 }),
+  county: varchar("county", { length: 100 }),
+  fips: varchar("fips", { length: 15 }),
+  censusTract: varchar("census_tract", { length: 20 }),
+  amenityScores: jsonb("amenity_scores"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
+
+export const propContextCache = pgTable("prop_context_cache", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  cacheKey: varchar("cache_key", { length: 500 }).unique().notNull(),
+  provider: varchar("provider", { length: 50 }).notNull(),
+  dataType: varchar("data_type", { length: 50 }).notNull(),
+  payload: jsonb("payload").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
+
+export const propProviderCalls = pgTable("prop_provider_calls", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  reportId: uuid("report_id"),
+  provider: varchar("provider", { length: 50 }).notNull(),
+  endpoint: varchar("endpoint", { length: 255 }).notNull(),
+  statusCode: integer("status_code"),
+  latencyMs: integer("latency_ms"),
+  cached: boolean("cached").default(false),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  providerIdx: index("prop_prov_call_provider_idx").on(table.provider),
+  reportIdx: index("prop_prov_call_report_idx").on(table.reportId),
+}));

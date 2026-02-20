@@ -26,6 +26,8 @@ const SYMBOL_TO_ID: Record<string, string> = {
   OP: 'optimism',
 };
 
+const SKIP_SYMBOLS = new Set(['USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'FDUSD']);
+
 const ID_TO_SYMBOL: Record<string, string> = Object.fromEntries(
   Object.entries(SYMBOL_TO_ID).map(([k, v]) => [v, k])
 );
@@ -34,16 +36,15 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchWithRetry(url: string, params: object, maxRetries = 3): Promise<any> {
+async function fetchWithRetry(url: string, params: object, maxRetries = 2): Promise<any> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const { data } = await axios.get(url, { params, timeout: 15000 });
+      const { data } = await axios.get(url, { params, timeout: 10000 });
       return data;
     } catch (err: any) {
       if (err?.response?.status === 429 && attempt < maxRetries - 1) {
-        const retryAfter = parseInt(err.response.headers['retry-after'] || '10', 10);
-        console.log(`[CoinGeckoProvider] Rate limited. Waiting ${retryAfter + 5}s before retry ${attempt + 2}/${maxRetries}`);
-        await delay((retryAfter + 5) * 1000);
+        console.log(`[CoinGeckoProvider] Rate limited. Waiting 10s before retry ${attempt + 2}/${maxRetries}`);
+        await delay(10000);
         continue;
       }
       throw err;
@@ -63,16 +64,18 @@ export class CoinGeckoProvider implements DataProvider {
       const data = await fetchWithRetry(`${BASE_URL}/coins/markets`, {
         vs_currency: 'usd',
         order: 'market_cap_desc',
-        per_page: 20,
+        per_page: 10,
         page: 1,
       });
 
-      return (data as any[]).map((coin) => ({
-        symbol: (ID_TO_SYMBOL[coin.id] || (coin.symbol as string).toUpperCase()),
-        name: coin.name as string,
-        assetType: 'CRYPTO' as const,
-        venue: 'CoinGecko',
-      }));
+      return (data as any[])
+        .map((coin) => ({
+          symbol: (ID_TO_SYMBOL[coin.id] || (coin.symbol as string).toUpperCase()),
+          name: coin.name as string,
+          assetType: 'CRYPTO' as const,
+          venue: 'CoinGecko',
+        }))
+        .filter((a) => !SKIP_SYMBOLS.has(a.symbol));
     } catch (err) {
       console.error('[CoinGeckoProvider] Failed to fetch universe:', (err as Error).message);
       return [];
@@ -80,10 +83,13 @@ export class CoinGeckoProvider implements DataProvider {
   }
 
   async fetchOHLCV(symbol: string, days: number): Promise<OHLCVBar[]> {
+    if (SKIP_SYMBOLS.has(symbol.toUpperCase())) {
+      return [];
+    }
     try {
       const id = CoinGeckoProvider.resolveId(symbol);
 
-      await delay(7000);
+      await delay(2500);
 
       const data = await fetchWithRetry(`${BASE_URL}/coins/${id}/market_chart`, {
         vs_currency: 'usd',

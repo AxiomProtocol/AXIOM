@@ -12,7 +12,7 @@ interface MetricItem {
 }
 
 const staticMetrics: MetricItem[] = [
-  { value: "6+", label: "Acres (Real Land)", icon: "🌾" },
+  { value: "6+", label: "Acres (Land Framework)", icon: "🌾" },
   { value: "Active", label: "Community", icon: "👥" }
 ];
 

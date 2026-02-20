@@ -63,7 +63,8 @@ export default async function handler(
     });
   } catch (error: any) {
     console.error('[solvency/ame/enforcement] Error:', error);
-    return res.status(200).json({
+    return res.status(500).json({
+      error: 'Failed to fetch enforcement data',
       policyState: null,
       recentEvents: [],
       hardBrakeArmed: false,

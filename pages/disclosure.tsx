@@ -17,7 +17,7 @@ function fmtUsd(value: number): string {
 }
 
 function fmtPct(value: number): string {
-  return (Number(value) / 0.01).toFixed(2) + '%';
+  return (Number(value) * 100).toFixed(2) + '%';
 }
 
 function fmtTimestamp(iso: string): string {
@@ -75,7 +75,10 @@ export default function DisclosurePage() {
         });
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        console.error('[disclosure] Failed to fetch solvency snapshot:', err);
+        setLoading(false);
+      });
   }, []);
 
   const liveItems = [

@@ -14,6 +14,16 @@ function isAuthorized(req: NextApiRequest): boolean {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method === 'GET') {
+    return res.status(200).json({
+      endpoint: '/api/mirdt/run-scan',
+      method: 'POST',
+      description: 'Trigger MIRDT market scan',
+      modelVersion: SignalEngine.MODEL_VERSION,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
