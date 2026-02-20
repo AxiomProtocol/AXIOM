@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
-import { propertyReports } from '../../../../shared/schema';
+import { propertyReports } from '../../../../shared/propertySchema';
 import { eq, desc, and, sql } from 'drizzle-orm';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

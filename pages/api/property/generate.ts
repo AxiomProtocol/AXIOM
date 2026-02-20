@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../server/db';
-import { propertyReports } from '../../../shared/schema';
+import { propertyReports } from '../../../shared/propertySchema';
 import { eq, and, gte, sql } from 'drizzle-orm';
 import { generateReport, TIER_CONFIG } from '../../../server/services/property/pipeline';
 

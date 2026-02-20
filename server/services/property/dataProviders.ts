@@ -1,5 +1,5 @@
 import { db } from '../../db';
-import { propContextCache, propProviderCalls } from '../../../shared/schema';
+import { propContextCache, propProviderCalls } from '../../../shared/propertySchema';
 import { eq, gt } from 'drizzle-orm';
 
 interface CensusData {

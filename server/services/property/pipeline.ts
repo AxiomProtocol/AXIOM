@@ -1,5 +1,5 @@
 import { db } from '../../db';
-import { propertyReports } from '../../../shared/schema';
+import { propertyReports } from '../../../shared/propertySchema';
 import { eq } from 'drizzle-orm';
 import { geocodeAddress } from './geocoder';
 import { fetchCensusData, fetchHpiData, fetchAttomData, fetchRentCastData, fetchWalkScore } from './dataProviders';

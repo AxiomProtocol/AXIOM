@@ -1,5 +1,5 @@
 import { db } from '../../db';
-import { propGeoCache, propProviderCalls } from '../../../shared/schema';
+import { propGeoCache, propProviderCalls } from '../../../shared/propertySchema';
 import { eq, gt } from 'drizzle-orm';
 
 interface GeoResult {
