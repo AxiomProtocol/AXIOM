@@ -220,12 +220,11 @@ export default function ExecutionConsole() {
   }, [tradesPage]);
 
   const fetchLivePrices = useCallback(() => {
-    const openTrades = trades.filter((t) => t.status === 'OPEN');
-    if (openTrades.length === 0) return;
+    if (trades.length === 0) return;
 
-    const symbols = [...new Set(openTrades.map((t) => t.symbol))];
+    const symbols = [...new Set(trades.map((t) => t.symbol))];
     const types = symbols.map((s) => {
-      const trade = openTrades.find((t) => t.symbol === s);
+      const trade = trades.find((t) => t.symbol === s);
       return trade?.asset_type || 'EQUITY';
     });
 
@@ -479,10 +478,12 @@ export default function ExecutionConsole() {
       header: 'Live',
       align: 'right',
       render: (t) => {
-        if (t.status !== 'OPEN') return <span className="font-dl-mono text-dl-gray">—</span>;
         const price = livePrices[t.symbol];
         if (price === undefined) return <span className="font-dl-mono text-dl-gray">...</span>;
-        return <span className="font-dl-mono font-medium text-dl-navy">{formatQty(price)}</span>;
+        if (t.status === 'OPEN') {
+          return <span className="font-dl-mono font-medium text-dl-navy">{formatQty(price)}</span>;
+        }
+        return <span className="font-dl-mono text-dl-gray">{formatQty(price)}</span>;
       },
     },
     {
@@ -805,7 +806,7 @@ export default function ExecutionConsole() {
               )}
             </div>
 
-            {pricesUpdatedAt && trades.some((t) => t.status === 'OPEN') && (
+            {pricesUpdatedAt && trades.length > 0 && (
               <p className="text-xs font-dl-mono text-dl-gray mb-2">
                 PRICES UPDATED: {new Date(pricesUpdatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} (polling every 15s)
               </p>
