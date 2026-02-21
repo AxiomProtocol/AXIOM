@@ -87,7 +87,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       city: parsed.city || null,
       state: parsed.state || null,
       zip: parsed.zip || null,
-    }).returning();
+    }).returning({
+      id: reProperties.id,
+      addressRaw: reProperties.addressRaw,
+      addressNormalized: reProperties.addressNormalized,
+      city: reProperties.city,
+      state: reProperties.state,
+      zip: reProperties.zip,
+    });
 
     let enrichment = null;
     if (process.env.RENTCAST_API_KEY) {
