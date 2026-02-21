@@ -157,7 +157,7 @@ export default function ExecutionConsole() {
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   const [volData, setVolData] = useState<Record<string, { volRatio: number; approx: boolean }>>({});
-  const volFetchedRef = useRef(false);
+  const volFetchedRef = useRef<string>('');
 
   const fetchPortfolio = useCallback(() => {
     setPortfolioLoading(true);
@@ -251,9 +251,13 @@ export default function ExecutionConsole() {
   }, [trades]);
 
   const fetchVolatility = useCallback(() => {
-    if (trades.length === 0 || volFetchedRef.current) return;
+    if (trades.length === 0) return;
 
     const symbols = [...new Set(trades.map((t) => t.symbol))];
+    const symbolsKey = symbols.sort().join(',');
+
+    if (volFetchedRef.current === symbolsKey) return;
+
     const types = symbols.map((s) => {
       const trade = trades.find((t) => t.symbol === s);
       return trade?.asset_type || 'EQUITY';
@@ -268,7 +272,7 @@ export default function ExecutionConsole() {
             map[sym] = { volRatio: v.volRatio, approx: v.approx };
           }
           setVolData(map);
-          volFetchedRef.current = true;
+          volFetchedRef.current = symbolsKey;
         }
       })
       .catch(() => {});
@@ -294,7 +298,7 @@ export default function ExecutionConsole() {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [fetchLivePrices, fetchVolatility, activeTab]);
+  }, [fetchLivePrices, fetchVolatility, activeTab, refreshKey]);
 
   const handleSave = async () => {
     setSaveStatus(null);

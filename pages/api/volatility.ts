@@ -81,17 +81,18 @@ async function fetchEquityVol(symbol: string): Promise<Omit<VolCacheEntry, 'cach
     if (!timeSeries) return null;
 
     const bars = Object.entries(timeSeries)
+      .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
+      .slice(-30)
       .map(([, values]: [string, any]) => ({
         high: parseFloat(values['2. high']),
         low: parseFloat(values['3. low']),
         close: parseFloat(values['4. close']),
-      }))
-      .slice(0, 30);
+      }));
 
     const atr14 = computeATR(bars);
     if (atr14 === null || bars.length === 0) return null;
 
-    const lastClose = bars[0].close;
+    const lastClose = bars[bars.length - 1].close;
     const volRatio = lastClose > 0 ? atr14 / lastClose : 0;
 
     return {
@@ -158,11 +159,13 @@ async function fetchCryptoVol(symbol: string): Promise<Omit<VolCacheEntry, 'cach
       return fetchCryptoVolFallback(symbol);
     }
 
-    const bars = data.map((candle: number[]) => ({
-      high: candle[2],
-      low: candle[3],
-      close: candle[4],
-    }));
+    const bars = [...data]
+      .sort((a: number[], b: number[]) => a[0] - b[0])
+      .map((candle: number[]) => ({
+        high: candle[2],
+        low: candle[3],
+        close: candle[4],
+      }));
 
     const atr14 = computeATR(bars);
     if (atr14 === null || bars.length === 0) return fetchCryptoVolFallback(symbol);

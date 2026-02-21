@@ -68,12 +68,14 @@ export function computeHybridExit(input: HybridExitInput): HybridExitResult {
   const { direction, entry, invalidationLevel, target, openedAt, horizonDays, livePrice, volRatio } = input;
   const isLong = direction.toUpperCase() === 'LONG';
 
-  const riskDistance = Math.abs(entry - invalidationLevel);
+  const rawRiskDistance = Math.abs(entry - invalidationLevel);
+  const hasValidStop = rawRiskDistance > 0 && invalidationLevel > 0;
+  const riskDistance = hasValidStop ? rawRiskDistance : 0;
   const k = adaptiveK(volRatio);
 
-  const riskStop = isLong
-    ? entry - k * riskDistance
-    : entry + k * riskDistance;
+  const riskStop = hasValidStop
+    ? (isLong ? entry - k * riskDistance : entry + k * riskDistance)
+    : (isLong ? entry * 0.95 : entry * 1.05);
 
   const unrealizedPnl = isLong ? livePrice - entry : entry - livePrice;
   const unrealizedPnlPct = entry > 0 ? (unrealizedPnl / entry) * 100 : 0;
@@ -97,9 +99,9 @@ export function computeHybridExit(input: HybridExitInput): HybridExitResult {
 
   const riskBreach = isLong ? livePrice <= riskStop : livePrice >= riskStop;
 
-  const invalidated = isLong
-    ? livePrice <= invalidationLevel
-    : livePrice >= invalidationLevel;
+  const invalidated = hasValidStop
+    ? (isLong ? livePrice <= invalidationLevel : livePrice >= invalidationLevel)
+    : false;
 
   const targetHit = target !== undefined && target !== null
     ? (isLong ? livePrice >= target : livePrice <= target)
