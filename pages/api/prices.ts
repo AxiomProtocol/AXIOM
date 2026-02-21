@@ -142,7 +142,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const equityToFetch: string[] = [];
 
   for (const sym of symbols) {
-    const cached = getCached(sym);
+    const cacheKey = `${symbolTypeMap[sym]}:${sym}`;
+    const cached = getCached(cacheKey);
     if (cached) {
       results.push({
         symbol: sym,
@@ -161,12 +162,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (cryptoToFetch.length > 0) {
     const batchPrices = await fetchBatchCryptoPrices(cryptoToFetch);
     for (const sym of cryptoToFetch) {
+      const cacheKey = `CRYPTO:${sym}`;
       const price = batchPrices[sym] ?? null;
       if (price !== null) {
-        setCache(sym, price);
+        setCache(cacheKey, price);
         results.push({ symbol: sym, price, cached: false, stale: false, fetchedAt: new Date().toISOString() });
       } else {
-        const stale = getStale(sym);
+        const stale = getStale(cacheKey);
         results.push({
           symbol: sym,
           price: stale?.price ?? null,
@@ -179,12 +181,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   for (const sym of equityToFetch) {
+    const cacheKey = `EQUITY:${sym}`;
     const price = await fetchEquityPrice(sym);
     if (price !== null) {
-      setCache(sym, price);
+      setCache(cacheKey, price);
       results.push({ symbol: sym, price, cached: false, stale: false, fetchedAt: new Date().toISOString() });
     } else {
-      const stale = getStale(sym);
+      const stale = getStale(cacheKey);
       results.push({
         symbol: sym,
         price: stale?.price ?? null,

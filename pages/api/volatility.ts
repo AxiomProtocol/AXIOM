@@ -206,7 +206,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const sym = symbols[i];
     const assetType = types[i] || (SYMBOL_TO_COINGECKO_ID[sym] ? 'CRYPTO' : 'EQUITY');
 
-    const cached = getCached(sym);
+    const cacheKey = `${assetType}:${sym}`;
+    const cached = getCached(cacheKey);
     if (cached) {
       vol[sym] = { atr14: cached.atr14, volRatio: cached.volRatio, approx: cached.approx, asOf: cached.asOf };
       continue;
@@ -214,10 +215,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const result = assetType === 'CRYPTO' ? await fetchCryptoVol(sym) : await fetchEquityVol(sym);
     if (result) {
-      setCache(sym, result);
+      setCache(cacheKey, result);
       vol[sym] = { atr14: result.atr14, volRatio: result.volRatio, approx: result.approx, asOf: result.asOf };
     } else {
-      const stale = getStale(sym);
+      const stale = getStale(cacheKey);
       if (stale) {
         vol[sym] = { atr14: stale.atr14, volRatio: stale.volRatio, approx: stale.approx, asOf: stale.asOf };
       }
