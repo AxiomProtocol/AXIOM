@@ -697,6 +697,15 @@ export async function register() {
       )`, 'table re_property_parcel_links');
 
       // ═══════════════════════════════════════════
+      //  COLUMN SAFETY: ADD MISSING COLUMNS
+      // ═══════════════════════════════════════════
+
+      await exec(`DO $$ BEGIN ALTER TABLE mirdt_paper_trades ADD COLUMN decision_id UUID; EXCEPTION WHEN duplicate_column THEN NULL; END $$`, 'alter mirdt_paper_trades add decision_id');
+      await exec(`DO $$ BEGIN ALTER TABLE mirdt_paper_trades ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'OPEN'; EXCEPTION WHEN duplicate_column THEN NULL; END $$`, 'alter mirdt_paper_trades add status');
+      await exec(`DO $$ BEGIN ALTER TABLE mirdt_paper_trades ADD COLUMN exit_reason VARCHAR(50); EXCEPTION WHEN duplicate_column THEN NULL; END $$`, 'alter mirdt_paper_trades add exit_reason');
+      await exec(`DO $$ BEGIN ALTER TABLE mirdt_paper_trades ADD COLUMN direction VARCHAR(10); EXCEPTION WHEN duplicate_column THEN NULL; END $$`, 'alter mirdt_paper_trades add direction');
+
+      // ═══════════════════════════════════════════
       //  INDEXES & CONSTRAINTS
       // ═══════════════════════════════════════════
 
