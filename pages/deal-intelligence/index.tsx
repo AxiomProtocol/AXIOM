@@ -61,10 +61,11 @@ export default function DealIntelligenceSearch() {
     setResolving(true);
     setError('');
     try {
+      const fullAddress = [query.trim(), city.trim(), state.trim()].filter(Boolean).join(', ');
       const res = await fetch('/api/real-estate/resolve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address: query }),
+        body: JSON.stringify({ address: fullAddress }),
       });
       const json = await res.json();
 
@@ -78,7 +79,7 @@ export default function DealIntelligenceSearch() {
     } finally {
       setResolving(false);
     }
-  }, [query]);
+  }, [query, city, state]);
 
   return (
     <DesignLawLayout>
