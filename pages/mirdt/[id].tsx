@@ -15,8 +15,9 @@
  * [x] Risk disclosure visible
  * [x] No prohibited vocabulary (lexicon guard enforced)
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
+import { computeExitSignals } from '../../lib/mirdt/exitSignals';
 import {
   DesignLawLayout,
   PageShell,
@@ -116,6 +117,15 @@ export default function MIRDTDetail() {
   const [closeExitPrice, setCloseExitPrice] = useState('');
   const [closeStatus, setCloseStatus] = useState<string | null>(null);
 
+  // ── Live price state ────────────────────────────────────────────────────
+  interface LivePrice {
+    price: number;
+    asOf: string;
+    stale: boolean;
+  }
+  const [livePrice, setLivePrice] = useState<LivePrice | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
   function fetchData() {
     if (!id || typeof id !== 'string') return;
     setLoading(true);
@@ -138,6 +148,42 @@ export default function MIRDTDetail() {
   useEffect(() => {
     if (id) fetchData();
   }, [id]);
+
+  // ── Live price polling ──────────────────────────────────────────────────
+  useEffect(() => {
+    const openTrades = paperTrades.filter((t) => !t.exit_price);
+    if (!setup || openTrades.length === 0) return;
+
+    const symbol = setup.symbol;
+
+    const fetchPrice = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        return;
+      }
+      fetch(`/api/prices?symbols=${encodeURIComponent(symbol)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.prices?.[symbol]) {
+            setLivePrice({
+              price: data.prices[symbol].price,
+              asOf: data.asOf,
+              stale: data.stale,
+            });
+          }
+        })
+        .catch(() =>
+          setLivePrice((prev) => (prev ? { ...prev, stale: true } : null))
+        );
+    };
+
+    fetchPrice();
+    intervalRef.current = setInterval(fetchPrice, 15000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+    // Re-run when setup changes or a trade is opened/closed
+  }, [setup?.id, paperTrades.length]);
 
   async function handleRecordEntry(e: React.FormEvent) {
     e.preventDefault();
@@ -199,6 +245,34 @@ export default function MIRDTDetail() {
 
   const assetType = setup?.asset_type || 'CRYPTO';
 
+  // ── Per-trade exit signal helper ────────────────────────────────────────
+  function getSignals(trade: PaperTrade) {
+    if (!setup || !livePrice || trade.exit_price) return null;
+    const entry = parseFloat(trade.entry_price);
+    const stop = parseFloat(setup.invalidation_price);
+    if (isNaN(entry) || isNaN(stop)) return null;
+    const direction: 'long' | 'short' = stop < entry ? 'long' : 'short';
+    const targetStr =
+      direction === 'long' ? setup.expected_p95 : setup.expected_p5;
+    const targetVal = targetStr ? parseFloat(targetStr) : undefined;
+    return computeExitSignals({
+      direction,
+      entry,
+      stop,
+      target: targetVal !== undefined && !isNaN(targetVal) ? targetVal : undefined,
+      openedAt: trade.opened_at,
+      horizonDays: setup.horizon_days,
+      livePrice: livePrice.price,
+    });
+  }
+
+  const BADGE_CLASS: Record<string, string> = {
+    STOP: 'text-dl-error',
+    'TAKE PROFIT': 'text-dl-forest',
+    'TIME EXIT': 'text-dl-navy',
+    HOLD: 'text-dl-gray',
+  };
+
   const tradeColumns: Column<PaperTrade>[] = [
     {
       key: 'opened_at',
@@ -217,8 +291,120 @@ export default function MIRDTDetail() {
       align: 'right',
       render: (t) => <span className="font-dl-mono">{parseFloat(t.quantity).toFixed(4)}</span>,
     },
+    // ── Live-price columns (open trades only) ─────────────────────────────
     {
-      key: 'exit_price',
+      key: 'live_price',
+      header: 'Live Price',
+      align: 'right',
+      render: (t) => {
+        if (t.exit_price || !livePrice)
+          return <span className="font-dl-mono text-dl-gray">—</span>;
+        return (
+          <span className="font-dl-mono">
+            {formatPrice(livePrice.price, assetType)}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'unrealized_pnl',
+      header: 'Unreal. P&L',
+      align: 'right',
+      render: (t) => {
+        const sig = getSignals(t);
+        if (!sig)
+          return <span className="font-dl-mono text-dl-gray">—</span>;
+        const pnlAmt = sig.unrealizedPnl * parseFloat(t.quantity);
+        const cls = pnlAmt >= 0 ? 'text-dl-forest' : 'text-dl-error';
+        return (
+          <span className={`font-dl-mono ${cls}`}>
+            {pnlAmt >= 0 ? '+' : ''}
+            {pnlAmt.toFixed(2)}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'dist_stop',
+      header: 'Stop Dist.',
+      align: 'right',
+      render: (t) => {
+        const sig = getSignals(t);
+        if (!sig)
+          return <span className="font-dl-mono text-dl-gray">—</span>;
+        return (
+          <span className="font-dl-mono">
+            {(sig.distanceToStop * 100).toFixed(2)}%
+          </span>
+        );
+      },
+    },
+    {
+      key: 'dist_target',
+      header: 'Target Dist.',
+      align: 'right',
+      render: (t) => {
+        const sig = getSignals(t);
+        if (!sig || sig.distanceToTarget === null)
+          return <span className="font-dl-mono text-dl-gray">—</span>;
+        return (
+          <span className="font-dl-mono">
+            {(sig.distanceToTarget * 100).toFixed(2)}%
+          </span>
+        );
+      },
+    },
+    {
+      key: 'r_multiple',
+      header: 'R-Mult.',
+      align: 'right',
+      render: (t) => {
+        const sig = getSignals(t);
+        if (!sig || sig.rMultiple === null)
+          return <span className="font-dl-mono text-dl-gray">—</span>;
+        const cls = sig.rMultiple >= 0 ? 'text-dl-forest' : 'text-dl-error';
+        return (
+          <span className={`font-dl-mono ${cls}`}>
+            {sig.rMultiple >= 0 ? '+' : ''}
+            {sig.rMultiple.toFixed(2)}R
+          </span>
+        );
+      },
+    },
+    {
+      key: 'signal',
+      header: 'Signal',
+      render: (t) => {
+        const sig = getSignals(t);
+        if (!sig)
+          return <span className="font-dl-mono text-dl-gray text-xs">—</span>;
+        return (
+          <span
+            className={`font-dl-mono text-xs font-medium ${BADGE_CLASS[sig.badge] ?? 'text-dl-gray'}`}
+          >
+            {sig.badge}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'price_updated',
+      header: 'Price At',
+      render: (t) => {
+        if (t.exit_price || !livePrice)
+          return <span className="font-dl-mono text-dl-gray text-xs">—</span>;
+        const ts = new Date(livePrice.asOf)
+          .toISOString()
+          .replace('T', ' ')
+          .replace(/\.\d+Z$/, ' UTC');
+        return (
+          <span className="font-dl-mono text-xs text-dl-gray">
+            {ts}
+            {livePrice.stale ? ' [STALE]' : ''}
+          </span>
+        );
+      },
+    },
       header: 'Exit',
       align: 'right',
       render: (t) => <span className="font-dl-mono">{t.exit_price ? formatPrice(t.exit_price, assetType) : '—'}</span>,
