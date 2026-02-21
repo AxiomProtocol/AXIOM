@@ -7,9 +7,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const scanKey = req.headers['x-scan-key'];
-  if (!scanKey) {
-    return res.status(401).json({ error: 'Missing x-scan-key header' });
+  const expectedKey = process.env.MIRDT_SCAN_KEY;
+  if (!expectedKey && process.env.NODE_ENV !== 'development') {
+    return res.status(503).json({ error: 'Sentinel authorization not configured' });
+  }
+  if (expectedKey) {
+    const scanKey = req.headers['x-scan-key'];
+    if (scanKey !== expectedKey) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
   }
 
   try {
