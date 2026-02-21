@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
 import { reProperties, reSales, reTaxes, rePropertyFacts } from '../../../../shared/realEstateSchema';
 import { eq, desc } from 'drizzle-orm';
-import { successResponse, errorResponse, buildMeta } from '../../../../server/services/real-estate/helpers';
+import { successResponse, errorResponse, buildMeta, safePropertyColumns } from '../../../../server/services/real-estate/helpers';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return errorResponse(res, 400, 'INVALID_ID', 'Property ID is required');
     }
 
-    const [property] = await db.select()
+    const [property] = await db.select(safePropertyColumns)
       .from(reProperties)
       .where(eq(reProperties.id, id))
       .limit(1);

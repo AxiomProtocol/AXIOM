@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../../server/db';
 import { reDeals, reProperties, reDealScenarios, reDealAssumptions, reDealMetrics, reRiskFlags, reDecisionLog, reComparables } from '../../../../../shared/realEstateSchema';
 import { eq, desc, sql } from 'drizzle-orm';
-import { successResponse, errorResponse, buildMeta } from '../../../../../server/services/real-estate/helpers';
+import { successResponse, errorResponse, buildMeta, safePropertyColumns } from '../../../../../server/services/real-estate/helpers';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return errorResponse(res, 404, 'DEAL_NOT_FOUND', 'Deal does not exist');
     }
 
-    const [property] = await db.select().from(reProperties)
+    const [property] = await db.select(safePropertyColumns).from(reProperties)
       .where(eq(reProperties.id, deal.propertyId)).limit(1);
 
     const scenarios = await db.select().from(reDealScenarios)
@@ -54,7 +54,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .orderBy(desc(reDecisionLog.decidedAt))
       .limit(20);
 
-    const comparables = await db.select().from(reComparables)
+    const comparables = await db.select({
+      id: reComparables.id,
+      dealId: reComparables.dealId,
+      propertyId: reComparables.propertyId,
+      address: reComparables.address,
+      city: reComparables.city,
+      state: reComparables.state,
+      zip: reComparables.zip,
+      lat: reComparables.lat,
+      lon: reComparables.lon,
+      distanceMiles: reComparables.distanceMiles,
+      propertyType: reComparables.propertyType,
+      sqft: reComparables.sqft,
+      bedrooms: reComparables.bedrooms,
+      bathrooms: reComparables.bathrooms,
+      yearBuilt: reComparables.yearBuilt,
+      salePrice: reComparables.salePrice,
+      saleDate: reComparables.saleDate,
+      pricePerSqft: reComparables.pricePerSqft,
+      source: reComparables.source,
+      createdAt: reComparables.createdAt,
+    }).from(reComparables)
       .where(eq(reComparables.dealId, id));
 
     const hasMetrics = scenarioData.some(s => s.metrics !== null);

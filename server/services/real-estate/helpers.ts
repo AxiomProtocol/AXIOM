@@ -1,4 +1,38 @@
 import type { NextApiResponse } from 'next';
+import { reProperties } from '../../../shared/realEstateSchema';
+
+export const safePropertyColumns = {
+  id: reProperties.id,
+  sourceId: reProperties.sourceId,
+  externalId: reProperties.externalId,
+  addressRaw: reProperties.addressRaw,
+  addressNormalized: reProperties.addressNormalized,
+  streetNumber: reProperties.streetNumber,
+  streetName: reProperties.streetName,
+  unit: reProperties.unit,
+  city: reProperties.city,
+  state: reProperties.state,
+  zip: reProperties.zip,
+  county: reProperties.county,
+  fips: reProperties.fips,
+  apn: reProperties.apn,
+  lat: reProperties.lat,
+  lon: reProperties.lon,
+  propertyType: reProperties.propertyType,
+  yearBuilt: reProperties.yearBuilt,
+  sqft: reProperties.sqft,
+  lotSqft: reProperties.lotSqft,
+  bedrooms: reProperties.bedrooms,
+  bathrooms: reProperties.bathrooms,
+  stories: reProperties.stories,
+  garage: reProperties.garage,
+  pool: reProperties.pool,
+  zoning: reProperties.zoning,
+  isActive: reProperties.isActive,
+  meta: reProperties.meta,
+  createdAt: reProperties.createdAt,
+  updatedAt: reProperties.updatedAt,
+};
 
 export interface ApiMeta {
   as_of: string;

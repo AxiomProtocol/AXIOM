@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
 import { reDeals, reProperties, reDealScenarios, reDealAssumptions, reDecisionLog } from '../../../../shared/realEstateSchema';
 import { eq } from 'drizzle-orm';
-import { successResponse, errorResponse, buildMeta } from '../../../../server/services/real-estate/helpers';
+import { successResponse, errorResponse, buildMeta, safePropertyColumns } from '../../../../server/services/real-estate/helpers';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return errorResponse(res, 400, 'INVALID_STRATEGY', `Strategy must be one of: ${validStrategies.join(', ')}`);
     }
 
-    const [property] = await db.select()
+    const [property] = await db.select(safePropertyColumns)
       .from(reProperties)
       .where(eq(reProperties.id, propertyId))
       .limit(1);

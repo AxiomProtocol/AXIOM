@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../server/db';
 import { reProperties, reSales, reDealMetrics, reDeals, reDealScenarios } from '../../../shared/realEstateSchema';
 import { eq, desc, and, gte, lte, ilike, sql } from 'drizzle-orm';
-import { successResponse, errorResponse, buildMeta, parseNumeric } from '../../../server/services/real-estate/helpers';
+import { successResponse, errorResponse, buildMeta, parseNumeric, safePropertyColumns } from '../../../server/services/real-estate/helpers';
 
 interface InvestorConstraint {
   field: string;
@@ -66,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const limitNum = Math.min(100, Math.max(1, parseNumeric(queryLimit, 20)));
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const properties = await db.select()
+    const properties = await db.select(safePropertyColumns)
       .from(reProperties)
       .where(whereClause)
       .limit(limitNum * 2);

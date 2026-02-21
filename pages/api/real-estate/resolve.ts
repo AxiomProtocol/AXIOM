@@ -3,7 +3,7 @@ import { db } from '../../../server/db';
 import { reProperties } from '../../../shared/realEstateSchema';
 import { eq, sql } from 'drizzle-orm';
 import { parseAddress, computeConfidence } from '../../../server/services/real-estate/address';
-import { successResponse, errorResponse, buildMeta } from '../../../server/services/real-estate/helpers';
+import { successResponse, errorResponse, buildMeta, safePropertyColumns } from '../../../server/services/real-estate/helpers';
 import { enrichProperty } from '../../../server/services/real-estate/rentcast';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -25,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const existing = await db.select()
+    const existing = await db.select(safePropertyColumns)
       .from(reProperties)
       .where(eq(reProperties.addressNormalized, parsed.normalized))
       .limit(1);
