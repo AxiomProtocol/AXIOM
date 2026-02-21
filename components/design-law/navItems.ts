@@ -38,6 +38,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Operations',
     children: [
       { href: '/founder-ops', label: 'Founder Ops' },
+      { href: '/founder-ops/proof-of-execution', label: 'Proof of Execution' },
       { href: '/solvency', label: 'Solvency' },
       { href: '/products', label: 'All Products' },
     ],
