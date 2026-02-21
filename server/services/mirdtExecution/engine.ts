@@ -45,15 +45,17 @@ export async function getLatestPortfolioState(): Promise<PortfolioState> {
   }
 
   const row = result.rows[0];
+  const capitalUsd = safeParseFloat(row.portfolio_capital_usd, 10000);
+  const sizeMult = safeParseFloat(row.global_size_multiplier, 1.0);
   return {
-    portfolioCapitalUsd: parseFloat(row.portfolio_capital_usd),
-    riskFractionBps: row.risk_fraction_bps,
-    maxConcurrentTrades: row.max_concurrent_trades,
-    maxPerAssetExposureBps: row.max_per_asset_exposure_bps,
-    drawdownBrakeBps: row.drawdown_brake_bps,
-    systemVolatilityTier: row.system_volatility_tier,
-    policyMode: row.policy_mode as PolicyMode,
-    globalSizeMultiplier: parseFloat(row.global_size_multiplier),
+    portfolioCapitalUsd: capitalUsd > 0 ? capitalUsd : 10000,
+    riskFractionBps: row.risk_fraction_bps ?? DEFAULT_RISK_FRACTION_BPS,
+    maxConcurrentTrades: row.max_concurrent_trades ?? MAX_CONCURRENT_TRADES,
+    maxPerAssetExposureBps: row.max_per_asset_exposure_bps ?? 2000,
+    drawdownBrakeBps: row.drawdown_brake_bps ?? DRAWDOWN_BRAKE_BPS,
+    systemVolatilityTier: row.system_volatility_tier ?? 'NORMAL',
+    policyMode: (row.policy_mode as PolicyMode) ?? 'BOOTSTRAP',
+    globalSizeMultiplier: sizeMult > 0 ? sizeMult : 1.0,
   };
 }
 
@@ -508,20 +510,24 @@ export async function runExecutionBatch(
     const finishedAt = new Date();
     const runChecksum = computeRunChecksum(runId, decisionChecksums);
 
-    await pool.query(
-      `UPDATE mirdt_execution_runs SET
-        finished_at = $1,
-        processed_count = $2,
-        eligible_count = $3,
-        authorized_count = 0,
-        opened_count = 0,
-        invalidated_count = 0,
-        expired_count = 0,
-        failed_count = $4,
-        checksum = $5
-      WHERE id = $6`,
-      [finishedAt, setupsEvaluated, decisionsCreated, errors, runChecksum, runId]
-    );
+    try {
+      await pool.query(
+        `UPDATE mirdt_execution_runs SET
+          finished_at = $1,
+          processed_count = $2,
+          eligible_count = $3,
+          authorized_count = 0,
+          opened_count = 0,
+          invalidated_count = 0,
+          expired_count = 0,
+          failed_count = $4,
+          checksum = $5
+        WHERE id = $6`,
+        [finishedAt, setupsEvaluated, decisionsCreated, errors, runChecksum, runId]
+      );
+    } catch (updateErr) {
+      console.error(`[MIRDTExecution] Failed to update run record ${runId}:`, (updateErr as Error).message);
+    }
   }
 
   const finishedAt = new Date();
@@ -641,9 +647,13 @@ export async function closePaperTrade(
   const trade = result.rows[0];
   if (trade.status !== 'OPEN') return { success: false, error: 'Trade is not open' };
 
-  const entryPrice = parseFloat(trade.entry_price);
-  const quantity = parseFloat(trade.quantity);
+  const entryPrice = safeParseFloat(trade.entry_price);
+  const quantity = safeParseFloat(trade.quantity);
   const direction = trade.direction;
+
+  if (entryPrice <= 0 || quantity <= 0) {
+    return { success: false, error: 'Invalid entry price or quantity on trade record' };
+  }
 
   const pnl = direction === 'LONG'
     ? (exitPrice - entryPrice) * quantity
@@ -688,7 +698,7 @@ export async function emergencyExitAll(): Promise<{ closed: number; errors: numb
 
   for (const trade of openTrades.rows) {
     try {
-      const exitPrice = parseFloat(trade.current_price) || parseFloat(trade.entry_price);
+      const exitPrice = safeParseFloat(trade.current_price) || safeParseFloat(trade.entry_price);
       const result = await closePaperTrade(trade.id, exitPrice, 'EMERGENCY_EXIT');
       if (result.success) {
         closed++;
@@ -745,7 +755,7 @@ export async function getPaperTrades(status?: string, page = 1, limit = 20) {
 
 export async function checkPaperTradeInvalidations(): Promise<{ checked: number; invalidated: number }> {
   const openTrades = await pool.query(
-    `SELECT t.*, d.symbol, d.direction, d.stop_price
+    `SELECT t.*, d.symbol, d.asset_type, d.direction, d.stop_price, d.current_price
      FROM mirdt_paper_trades t
      LEFT JOIN mirdt_execution_decisions d ON t.decision_id = d.id
      WHERE t.status = 'OPEN'`
@@ -756,17 +766,23 @@ export async function checkPaperTradeInvalidations(): Promise<{ checked: number;
 
   for (const trade of openTrades.rows) {
     checked++;
-    const stopPrice = parseFloat(trade.stop_price);
-    const entryPrice = parseFloat(trade.entry_price);
+    const stopPrice = safeParseFloat(trade.stop_price);
+    const lastKnownPrice = safeParseFloat(trade.current_price) || safeParseFloat(trade.entry_price);
     const direction = trade.direction;
 
+    if (stopPrice <= 0 || lastKnownPrice <= 0) continue;
+
     const breached = direction === 'LONG'
-      ? entryPrice <= stopPrice
-      : entryPrice >= stopPrice;
+      ? lastKnownPrice <= stopPrice
+      : lastKnownPrice >= stopPrice;
 
     if (breached) {
-      await closePaperTrade(trade.id, stopPrice, 'STOP_HIT');
-      invalidated++;
+      const closeResult = await closePaperTrade(trade.id, stopPrice, 'STOP_HIT');
+      if (closeResult.success) {
+        invalidated++;
+      } else {
+        console.error(`[MIRDTExecution] Failed to close trade ${trade.id} on stop hit: ${closeResult.error}`);
+      }
     }
   }
 
