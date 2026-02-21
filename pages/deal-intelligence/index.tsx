@@ -69,13 +69,15 @@ export default function DealIntelligenceSearch() {
       });
       const json = await res.json();
 
-      if (json.error) {
-        setError(json.error.message || 'Resolution failed');
+      if (!res.ok || json.error) {
+        setError(json.error?.message || `Resolution failed (status ${res.status})`);
       } else if (json.data?.propertyId) {
         window.location.href = `/deal-intelligence/property/${json.data.propertyId}`;
+      } else {
+        setError('Unexpected response from server. Please try again.');
       }
-    } catch (err) {
-      setError('Failed to resolve address');
+    } catch (err: any) {
+      setError(`Failed to connect to resolve service: ${err.message || 'Network error'}`);
     } finally {
       setResolving(false);
     }

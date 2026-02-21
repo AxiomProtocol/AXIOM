@@ -112,7 +112,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }, buildMeta(sources, confidence));
 
   } catch (err: any) {
-    console.error('Address resolve error:', err.message);
-    return errorResponse(res, 500, 'INTERNAL_ERROR', 'Failed to resolve address');
+    console.error('Address resolve error:', err.message, err.stack);
+    const isDbError = err.message?.includes('relation') || err.message?.includes('connect') || err.message?.includes('ECONNREFUSED') || err.message?.includes('does not exist') || err.message?.includes('timeout');
+    const userMessage = isDbError
+      ? 'Database connection issue. The system may need to be redeployed or the database is temporarily unavailable.'
+      : `Failed to resolve address: ${err.message || 'Unknown error'}`;
+    return errorResponse(res, 500, 'INTERNAL_ERROR', userMessage);
   }
 }
