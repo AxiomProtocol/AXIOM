@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
-import { reDeals, reProperties } from '../../../../shared/realEstateSchema';
+import { reDeals, reProperties, reDealScenarios, reDealAssumptions, reDecisionLog } from '../../../../shared/realEstateSchema';
 import { eq } from 'drizzle-orm';
 import { successResponse, errorResponse, buildMeta } from '../../../../server/services/real-estate/helpers';
 
@@ -38,7 +38,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       notes: notes || null,
     }).returning();
 
-    return successResponse(res, { deal }, buildMeta(['internal_db', 'user_input'], 0.7));
+    const [scenario] = await db.insert(reDealScenarios).values({
+      dealId: deal.id,
+      scenarioName: 'Base Case',
+      isPrimary: true,
+    }).returning();
+
+    await db.insert(reDealAssumptions).values({
+      scenarioId: scenario.id,
+      purchasePrice: '200000',
+      arvEstimate: '280000',
+      rehabBudget: '40000',
+      downPaymentPct: '20',
+      interestRate: '7.5',
+      loanTermYears: 30,
+      closingCostPct: '3',
+      monthlyRent: '1800',
+      vacancyPct: '8',
+      propertyMgmtPct: '10',
+      annualInsurance: '1800',
+      annualTaxes: '3600',
+      annualCapex: '2000',
+      annualMaintenance: '2000',
+      holdPeriodMonths: 6,
+      appreciationPct: '3',
+    });
+
+    await db.insert(reDecisionLog).values({
+      dealId: deal.id,
+      decision: 'DEAL_CREATED',
+      decidedBy: 'system',
+      rationale: `Deal workspace created for ${property.addressRaw || property.addressNormalized}. Strategy: ${strategy.toUpperCase()}. Base Case scenario with default assumptions ready for underwriting.`,
+    });
+
+    return successResponse(res, { deal, scenario }, buildMeta(['internal_db', 'user_input'], 0.7));
 
   } catch (err: any) {
     console.error('Deal create error:', err.message);

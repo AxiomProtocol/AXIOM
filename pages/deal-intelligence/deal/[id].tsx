@@ -111,7 +111,7 @@ export default function DealWorkspacePage() {
       const res = await fetch(`/api/real-estate/deals/${id}/scenarios`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: 'Base Case' }),
+        body: JSON.stringify({ scenarioName: 'Base Case' }),
       });
       const json = await res.json();
       if (json.data?.scenario?.id) {

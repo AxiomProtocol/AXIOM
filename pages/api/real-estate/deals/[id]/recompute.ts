@@ -147,7 +147,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       dealId: id as string,
       decision: 'UNDERWRITING_COMPUTED',
       decidedBy: 'system',
-      rationale: `Scenario "${scenario.name}" underwriting complete. Cap Rate: ${result.capRate.toFixed(2)}%, Cash-on-Cash: ${result.cashOnCash.toFixed(2)}%, DSCR: ${result.dscr.toFixed(2)}. ${riskSummary}.`,
+      rationale: `Scenario "${scenario.scenarioName}" underwriting complete. Cap Rate: ${result.capRate.toFixed(2)}%, Cash-on-Cash: ${result.cashOnCash.toFixed(2)}%, DSCR: ${result.dscr.toFixed(2)}. ${riskSummary}.`,
       snapshotMetrics: {
         noi: result.noiAnnual,
         capRate: result.capRate,
@@ -156,7 +156,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         cashNeeded: result.cashNeeded,
         riskCount: result.riskFlags.length,
         criticalRisks: criticalCount,
-        scenarioName: scenario.name,
+        scenarioName: scenario.scenarioName,
       },
     });
 
