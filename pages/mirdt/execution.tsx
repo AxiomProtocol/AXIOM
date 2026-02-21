@@ -158,6 +158,9 @@ export default function ExecutionConsole() {
   const [expireOp, setExpireOp] = useState<OpState>({ status: 'idle', message: '' });
   const [emergencyOp, setEmergencyOp] = useState<OpState>({ status: 'idle', message: '' });
 
+  const [adminKey, setAdminKey] = useState<string>('');
+  const [adminKeyVisible, setAdminKeyVisible] = useState(false);
+
   const [livePrices, setLivePrices] = useState<Record<string, number>>({});
   const [pricesUpdatedAt, setPricesUpdatedAt] = useState<string | null>(null);
   const [pricesStale, setPricesStale] = useState(false);
@@ -308,11 +311,15 @@ export default function ExecutionConsole() {
   }, [fetchLivePrices, fetchVolatility, activeTab, refreshKey]);
 
   const handleSave = async () => {
+    if (!adminKey) {
+      setSaveStatus({ type: 'error', message: 'Enter Admin Key above before saving.' });
+      return;
+    }
     setSaveStatus(null);
     try {
       const res = await fetch('/api/mirdt/execution/portfolio', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
         body: JSON.stringify(editForm),
       });
       const data = await res.json();
@@ -336,11 +343,15 @@ export default function ExecutionConsole() {
     label: string,
     body?: Record<string, any>
   ) => {
+    if (!adminKey) {
+      setter({ status: 'error', message: 'Enter Admin Key above before running operations.' });
+      return;
+    }
     setter({ status: 'running', message: `Running ${label}...` });
     try {
       const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
         body: body ? JSON.stringify(body) : undefined,
       });
       const data = await res.json();
@@ -356,12 +367,16 @@ export default function ExecutionConsole() {
   };
 
   const executeAction = async (id: string, body: Record<string, any>) => {
+    if (!adminKey) {
+      setActionMessage({ id, type: 'error', msg: 'Enter Admin Key above before running actions.' });
+      return;
+    }
     setActionLoading(id);
     setActionMessage(null);
     try {
       const res = await fetch('/api/mirdt/execution/action', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
         body: JSON.stringify(body),
       });
       const data = await res.json();
@@ -788,6 +803,29 @@ export default function ExecutionConsole() {
               {saveStatus.message}
             </p>
           )}
+        </div>
+
+        <div className="border border-dl-border bg-dl-bg p-4 mb-6">
+          <SectionHeading>Authentication</SectionHeading>
+          <div className="flex items-center gap-3 mt-3">
+            <label className="text-xs font-dl-mono text-dl-gray whitespace-nowrap">ADMIN KEY</label>
+            <input
+              type={adminKeyVisible ? 'text' : 'password'}
+              value={adminKey}
+              onChange={(e) => setAdminKey(e.target.value)}
+              placeholder="Enter admin key to enable operations"
+              className="flex-1 border border-dl-border bg-white px-3 py-2 font-dl-mono text-xs text-dl-navy"
+            />
+            <button
+              onClick={() => setAdminKeyVisible(!adminKeyVisible)}
+              className="px-3 py-2 border border-dl-border font-dl-mono text-xs text-dl-gray"
+            >
+              {adminKeyVisible ? 'HIDE' : 'SHOW'}
+            </button>
+            {adminKey && (
+              <span className="text-xs font-dl-mono text-dl-forest">Ready</span>
+            )}
+          </div>
         </div>
 
         <div className="border border-dl-border bg-dl-bg p-4 mb-6">

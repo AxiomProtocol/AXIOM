@@ -599,12 +599,12 @@ export async function openPaperTrade(decisionId: string): Promise<{ success: boo
 
   const row = result.rows[0];
 
-  const existingTrade = await pool.query(
-    `SELECT id FROM mirdt_paper_trades WHERE decision_id = $1`,
+  const openTrade = await pool.query(
+    `SELECT id FROM mirdt_paper_trades WHERE decision_id = $1 AND status = 'OPEN'`,
     [decisionId]
   );
-  if (existingTrade.rows.length > 0) {
-    return { success: false, error: 'Paper trade already exists for this decision' };
+  if (openTrade.rows.length > 0) {
+    return { success: false, error: 'An open trade already exists for this decision' };
   }
 
   const entryPrice = safeParseFloat(row.current_price);
@@ -613,23 +613,30 @@ export async function openPaperTrade(decisionId: string): Promise<{ success: boo
     return { success: false, error: 'Invalid entry price or position size on decision record' };
   }
 
-  const tradeResult = await pool.query(
-    `INSERT INTO mirdt_paper_trades (
-      setup_id, decision_id, direction, opened_at, entry_price, quantity, status
-    ) VALUES ($1, $2, $3, NOW(), $4, $5, 'OPEN')
-    ON CONFLICT (decision_id) DO NOTHING
-    RETURNING id`,
-    [
-      row.setup_id,
-      decisionId,
-      row.direction,
-      entryPrice,
-      quantity,
-    ]
-  );
+  let tradeResult;
+  try {
+    tradeResult = await pool.query(
+      `INSERT INTO mirdt_paper_trades (
+        setup_id, decision_id, direction, opened_at, entry_price, quantity, status
+      ) VALUES ($1, $2, $3, NOW(), $4, $5, 'OPEN')
+      RETURNING id`,
+      [
+        row.setup_id,
+        decisionId,
+        row.direction,
+        entryPrice,
+        quantity,
+      ]
+    );
+  } catch (err: any) {
+    if (err.code === '23505') {
+      return { success: false, error: 'An open trade already exists for this decision (concurrent open detected)' };
+    }
+    throw err;
+  }
 
   if (tradeResult.rows.length === 0) {
-    return { success: false, error: 'Paper trade already exists for this decision (concurrent open detected)' };
+    return { success: false, error: 'Failed to open trade' };
   }
 
   const tradeId = tradeResult.rows[0].id;
