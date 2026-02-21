@@ -57,6 +57,9 @@ export default function DealWorkspacePage() {
   const [saving, setSaving] = useState(false);
   const [computing, setComputing] = useState(false);
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
+  const [newDecision, setNewDecision] = useState('');
+  const [newRationale, setNewRationale] = useState('');
+  const [submittingDecision, setSubmittingDecision] = useState(false);
 
   const loadSummary = useCallback(async () => {
     if (!id) return;
@@ -160,6 +163,36 @@ export default function DealWorkspacePage() {
       setComputing(false);
     }
   }, [id, activeScenarioId, handleSaveAssumptions, loadSummary]);
+
+  const handleAddDecision = useCallback(async () => {
+    if (!id || !newDecision.trim()) return;
+    setSubmittingDecision(true);
+    try {
+      const currentMetrics = summary?.scenarios?.find(s => s.scenario.id === activeScenarioId)?.metrics;
+      await fetch(`/api/real-estate/deals/${id}/decisions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          decision: newDecision.trim(),
+          decidedBy: 'operator',
+          rationale: newRationale.trim() || null,
+          snapshotMetrics: currentMetrics ? {
+            noi: currentMetrics.noi,
+            capRate: currentMetrics.capRate,
+            cashOnCash: currentMetrics.cashOnCash,
+            dscr: currentMetrics.dscr,
+          } : null,
+        }),
+      });
+      setNewDecision('');
+      setNewRationale('');
+      await loadSummary();
+    } catch {
+      setError('Failed to record decision');
+    } finally {
+      setSubmittingDecision(false);
+    }
+  }, [id, newDecision, newRationale, activeScenarioId, summary, loadSummary]);
 
   const handleField = (field: keyof AssumptionsState, value: string) => {
     setAssumptions(prev => ({ ...prev, [field]: value }));
@@ -401,22 +434,78 @@ export default function DealWorkspacePage() {
             {activeTab === 'decisions' && (
               <div className="border border-dl-border p-6">
                 <h2 className="font-dl-serif text-lg text-dl-navy mb-4">Decision Log</h2>
+
+                <div className="border border-dl-border p-4 mb-6 bg-gray-50">
+                  <h3 className="font-dl-mono text-xs text-dl-muted uppercase mb-3">Record Decision</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <label className="block text-xs font-dl-mono text-dl-muted mb-1">Decision</label>
+                      <select
+                        value={newDecision}
+                        onChange={(e) => setNewDecision(e.target.value)}
+                        className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm bg-white"
+                      >
+                        <option value="">Select decision...</option>
+                        <option value="PROCEED">PROCEED — Move forward with deal</option>
+                        <option value="HOLD">HOLD — Need more information</option>
+                        <option value="RENEGOTIATE">RENEGOTIATE — Adjust terms</option>
+                        <option value="REJECT">REJECT — Pass on deal</option>
+                        <option value="APPROVE">APPROVE — Final approval</option>
+                        <option value="NOTE">NOTE — General observation</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-dl-mono text-dl-muted mb-1">Rationale</label>
+                      <input
+                        type="text"
+                        value={newRationale}
+                        onChange={(e) => setNewRationale(e.target.value)}
+                        placeholder="Reasoning for this decision..."
+                        className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleAddDecision}
+                    disabled={!newDecision || submittingDecision}
+                    className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                  >
+                    {submittingDecision ? 'Recording...' : 'Record Decision'}
+                  </button>
+                </div>
+
+                {summary?.decisions?.total ? (
+                  <p className="font-dl-mono text-xs text-dl-muted mb-3">{summary.decisions.total} total entries</p>
+                ) : null}
+
                 {(!summary?.decisions?.recent || summary.decisions.recent.length === 0) ? (
-                  <p className="text-dl-muted font-dl-mono text-sm">No decisions recorded yet.</p>
+                  <p className="text-dl-muted font-dl-mono text-sm">No decisions recorded yet. Run underwriting or record a decision above.</p>
                 ) : (
                   <div className="space-y-3">
-                    {summary.decisions.recent.map((entry: any) => (
-                      <div key={entry.id} className="border border-dl-border p-3">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-dl-mono text-sm font-bold text-dl-navy">{entry.decision}</span>
-                          <span className="font-dl-mono text-xs text-dl-muted">
-                            {entry.decidedAt ? new Date(entry.decidedAt).toLocaleString() : ''}
-                          </span>
+                    {summary.decisions.recent.map((entry: any) => {
+                      const decisionColors: Record<string, string> = {
+                        APPROVE: 'border-l-4 border-l-green-600',
+                        PROCEED: 'border-l-4 border-l-green-500',
+                        HOLD: 'border-l-4 border-l-yellow-500',
+                        RENEGOTIATE: 'border-l-4 border-l-orange-500',
+                        REJECT: 'border-l-4 border-l-red-500',
+                        UNDERWRITING_COMPUTED: 'border-l-4 border-l-blue-500',
+                        NOTE: 'border-l-4 border-l-gray-400',
+                      };
+                      const colorClass = decisionColors[entry.decision] || 'border-l-4 border-l-gray-300';
+                      return (
+                        <div key={entry.id} className={`border border-dl-border p-3 ${colorClass}`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-dl-mono text-sm font-bold text-dl-navy">{entry.decision}</span>
+                            <span className="font-dl-mono text-xs text-dl-muted">
+                              {entry.decidedAt ? new Date(entry.decidedAt).toLocaleString() : ''}
+                            </span>
+                          </div>
+                          <p className="font-dl-mono text-sm text-dl-muted">{entry.rationale || '-'}</p>
+                          <span className="font-dl-mono text-xs text-dl-muted">by {entry.decidedBy}</span>
                         </div>
-                        <p className="font-dl-mono text-sm text-dl-muted">{entry.rationale || '-'}</p>
-                        <span className="font-dl-mono text-xs text-dl-muted">by {entry.decidedBy}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

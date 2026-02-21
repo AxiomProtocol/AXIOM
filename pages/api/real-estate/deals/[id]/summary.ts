@@ -52,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const recentDecisions = await db.select().from(reDecisionLog)
       .where(eq(reDecisionLog.dealId, id))
       .orderBy(desc(reDecisionLog.decidedAt))
-      .limit(5);
+      .limit(20);
 
     const comparables = await db.select().from(reComparables)
       .where(eq(reComparables.dealId, id));

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../../server/db';
-import { reDeals, reDealScenarios, reDealAssumptions, reDealMetrics, reRiskFlags } from '../../../../../shared/realEstateSchema';
+import { reDeals, reDealScenarios, reDealAssumptions, reDealMetrics, reRiskFlags, reDecisionLog } from '../../../../../shared/realEstateSchema';
 import { eq } from 'drizzle-orm';
 import { computeUnderwriting } from '../../../../../server/services/real-estate/underwriting';
 import { successResponse, errorResponse, buildMeta, parseNumeric } from '../../../../../server/services/real-estate/helpers';
@@ -132,6 +132,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const riskFlags = await db.select().from(reRiskFlags)
       .where(eq(reRiskFlags.scenarioId, scenarioId));
+
+    const criticalCount = result.riskFlags.filter(f => f.severity === 'critical').length;
+    const highCount = result.riskFlags.filter(f => f.severity === 'high').length;
+    const riskSummary = criticalCount > 0
+      ? `${criticalCount} critical risk${criticalCount > 1 ? 's' : ''} detected`
+      : highCount > 0
+        ? `${highCount} high risk${highCount > 1 ? 's' : ''} detected`
+        : result.riskFlags.length > 0
+          ? `${result.riskFlags.length} risk flag${result.riskFlags.length > 1 ? 's' : ''} noted`
+          : 'No significant risks detected';
+
+    await db.insert(reDecisionLog).values({
+      dealId: id as string,
+      decision: 'UNDERWRITING_COMPUTED',
+      decidedBy: 'system',
+      rationale: `Scenario "${scenario.name}" underwriting complete. Cap Rate: ${result.capRate.toFixed(2)}%, Cash-on-Cash: ${result.cashOnCash.toFixed(2)}%, DSCR: ${result.dscr.toFixed(2)}. ${riskSummary}.`,
+      snapshotMetrics: {
+        noi: result.noiAnnual,
+        capRate: result.capRate,
+        cashOnCash: result.cashOnCash,
+        dscr: result.dscr,
+        cashNeeded: result.cashNeeded,
+        riskCount: result.riskFlags.length,
+        criticalRisks: criticalCount,
+        scenarioName: scenario.name,
+      },
+    });
 
     return successResponse(res, {
       metrics,
