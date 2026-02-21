@@ -693,13 +693,16 @@ export default function ExecutionConsole() {
       header: '',
       render: (t) => {
         if (t.status !== 'OPEN') return null;
+        const currentPrice = livePrices[t.symbol];
+        const hasPriceData = currentPrice !== undefined && currentPrice > 0;
         return (
           <button
-            onClick={() => handleCloseTrade(t.id, t.entry_price)}
-            disabled={actionLoading === t.id}
+            onClick={() => handleCloseTrade(t.id, String(currentPrice))}
+            disabled={actionLoading === t.id || !hasPriceData}
             className="px-2 py-1 bg-dl-error text-white font-dl-mono text-xs disabled:bg-dl-gray"
+            title={hasPriceData ? `Close at $${currentPrice.toFixed(2)}` : 'Waiting for live price...'}
           >
-            {actionLoading === t.id ? '...' : 'CLOSE'}
+            {actionLoading === t.id ? '...' : hasPriceData ? 'CLOSE' : 'NO PRICE'}
           </button>
         );
       },
