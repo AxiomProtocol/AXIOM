@@ -79,7 +79,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const dailyMap: Record<string, { trades: number; wins: number; losses: number; flats: number; pnl: number }> = {};
     for (const t of closedTrades) {
-      const day = new Date(t.closed_at).toISOString().split('T')[0];
+      const closedMs = t.closed_at ? new Date(t.closed_at).getTime() : NaN;
+      if (isNaN(closedMs)) continue;
+      const day = new Date(closedMs).toISOString().split('T')[0];
       if (!dailyMap[day]) dailyMap[day] = { trades: 0, wins: 0, losses: 0, flats: 0, pnl: 0 };
       dailyMap[day].trades++;
       if (t.outcome === 'WIN') dailyMap[day].wins++;
@@ -130,12 +132,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       : 0;
     const sharpeEstimate = stdDailyPnl > 0 ? (meanDailyPnl / stdDailyPnl) * Math.sqrt(252) : 0;
 
-    const avgDurationMs = closedTrades.length > 0
-      ? closedTrades.reduce((sum: number, t: any) => {
+    const validDurationTrades = closedTrades.filter((t: any) => {
+      const opened = t.opened_at ? new Date(t.opened_at).getTime() : NaN;
+      const closed = t.closed_at ? new Date(t.closed_at).getTime() : NaN;
+      return !isNaN(opened) && !isNaN(closed) && closed >= opened;
+    });
+    const avgDurationMs = validDurationTrades.length > 0
+      ? validDurationTrades.reduce((sum: number, t: any) => {
           const opened = new Date(t.opened_at).getTime();
           const closed = new Date(t.closed_at).getTime();
           return sum + (closed - opened);
-        }, 0) / closedTrades.length
+        }, 0) / validDurationTrades.length
       : 0;
 
     const now = new Date();

@@ -33,13 +33,23 @@ interface CacheEntry {
 }
 
 const priceCache = new Map<string, CacheEntry>();
-const CACHE_TTL_MS = parseInt(process.env.PRICES_CACHE_TTL_SECONDS || '60', 10) * 1000;
+const parsedTtl = parseInt(process.env.PRICES_CACHE_TTL_SECONDS || '60', 10);
+const CACHE_TTL_MS = (isNaN(parsedTtl) || parsedTtl <= 0 ? 60 : parsedTtl) * 1000;
 
 function getCached(key: string): CacheEntry | null {
   const entry = priceCache.get(key);
   if (!entry) return null;
   if (Date.now() - entry.fetchedAt > CACHE_TTL_MS) return null;
   return entry;
+}
+
+function pruneExpiredCache(): void {
+  const now = Date.now();
+  for (const [key, entry] of priceCache) {
+    if (now - entry.fetchedAt > CACHE_TTL_MS * 10) {
+      priceCache.delete(key);
+    }
+  }
 }
 
 function getStale(key: string): CacheEntry | null {
@@ -122,6 +132,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   res.setHeader('Cache-Control', 'no-cache');
+  pruneExpiredCache();
 
   const rawSymbols = req.query.symbols;
   if (!rawSymbols || typeof rawSymbols !== 'string') {

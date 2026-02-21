@@ -30,6 +30,15 @@ function getCached(key: string): VolCacheEntry | null {
   return entry;
 }
 
+function pruneExpiredCache(): void {
+  const now = Date.now();
+  for (const [key, entry] of volCache) {
+    if (now - entry.cachedAt > CACHE_TTL_MS * 10) {
+      volCache.delete(key);
+    }
+  }
+}
+
 function getStale(key: string): VolCacheEntry | null {
   return volCache.get(key) || null;
 }
@@ -190,6 +199,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   res.setHeader('Cache-Control', 'no-cache');
+  pruneExpiredCache();
 
   const rawSymbols = req.query.symbols;
   if (!rawSymbols || typeof rawSymbols !== 'string') {

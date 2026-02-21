@@ -108,9 +108,10 @@ export function computeHybridExit(input: HybridExitInput): HybridExitResult {
     : false;
 
   const maxDays = horizonDays || 14;
-  const elapsedMs = Date.now() - new Date(openedAt).getTime();
+  const openedAtMs = openedAt ? new Date(openedAt).getTime() : NaN;
+  const elapsedMs = isNaN(openedAtMs) ? 0 : Date.now() - openedAtMs;
   const elapsedDays = elapsedMs / (1000 * 60 * 60 * 24);
-  const timeExit = elapsedDays >= maxDays;
+  const timeExit = !isNaN(openedAtMs) && elapsedDays >= maxDays;
 
   let badge: HybridExitBadge = 'HOLD';
   if (riskBreach) badge = 'EXIT_RISK';
