@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   DesignLawLayout,
   PageShell,
@@ -7,6 +7,7 @@ import {
   SectionHeading,
 } from '../../components/design-law';
 import type { Column } from '../../components/design-law';
+import { computeExitSignal, badgeColor, type ExitBadge } from '../../lib/exitSignals';
 
 interface PortfolioState {
   portfolioCapitalUsd: number;
@@ -150,6 +151,10 @@ export default function ExecutionConsole() {
   const [expireOp, setExpireOp] = useState<OpState>({ status: 'idle', message: '' });
   const [emergencyOp, setEmergencyOp] = useState<OpState>({ status: 'idle', message: '' });
 
+  const [livePrices, setLivePrices] = useState<Record<string, number>>({});
+  const [pricesUpdatedAt, setPricesUpdatedAt] = useState<string | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
   const fetchPortfolio = useCallback(() => {
     setPortfolioLoading(true);
     setPortfolioError(null);
@@ -214,6 +219,31 @@ export default function ExecutionConsole() {
       .finally(() => setTradesLoading(false));
   }, [tradesPage]);
 
+  const fetchLivePrices = useCallback(() => {
+    const openTrades = trades.filter((t) => t.status === 'OPEN');
+    if (openTrades.length === 0) return;
+
+    const symbols = [...new Set(openTrades.map((t) => t.symbol))];
+    const types = symbols.map((s) => {
+      const trade = openTrades.find((t) => t.symbol === s);
+      return trade?.asset_type || 'EQUITY';
+    });
+
+    fetch(`/api/prices?symbols=${symbols.join(',')}&types=${types.join(',')}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.prices) {
+          const map: Record<string, number> = {};
+          for (const p of data.prices) {
+            if (p.price !== null) map[p.symbol] = p.price;
+          }
+          setLivePrices(map);
+          setPricesUpdatedAt(data.timestamp);
+        }
+      })
+      .catch(() => {});
+  }, [trades]);
+
   useEffect(() => {
     fetchPortfolio();
   }, [fetchPortfolio, refreshKey]);
@@ -225,6 +255,15 @@ export default function ExecutionConsole() {
   useEffect(() => {
     if (activeTab === 'trades') fetchTrades();
   }, [fetchTrades, refreshKey, activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== 'trades') return;
+    fetchLivePrices();
+    pollingRef.current = setInterval(fetchLivePrices, 15000);
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [fetchLivePrices, activeTab]);
 
   const handleSave = async () => {
     setSaveStatus(null);
@@ -436,6 +475,76 @@ export default function ExecutionConsole() {
       render: (t) => <span className="font-dl-mono">{formatQty(t.entry_price)}</span>,
     },
     {
+      key: 'live_price' as any,
+      header: 'Live',
+      align: 'right',
+      render: (t) => {
+        if (t.status !== 'OPEN') return <span className="font-dl-mono text-dl-gray">—</span>;
+        const price = livePrices[t.symbol];
+        if (price === undefined) return <span className="font-dl-mono text-dl-gray">...</span>;
+        return <span className="font-dl-mono font-medium text-dl-navy">{formatQty(price)}</span>;
+      },
+    },
+    {
+      key: 'exit_signal' as any,
+      header: 'Signal',
+      render: (t) => {
+        if (t.status !== 'OPEN') {
+          if (t.exit_reason) return <span className="font-dl-mono text-xs">{t.exit_reason}</span>;
+          return <span className="font-dl-mono text-dl-gray">—</span>;
+        }
+        const price = livePrices[t.symbol];
+        if (price === undefined) return <span className="font-dl-mono text-dl-gray">...</span>;
+        const signal = computeExitSignal({
+          direction: t.direction,
+          entryPrice: parseFloat(t.entry_price),
+          livePrice: price,
+          stopPrice: parseFloat(t.stop_price),
+          takeProfitP50: parseFloat(t.take_profit_p50),
+          openedAt: t.opened_at,
+        });
+        return (
+          <span className={`inline-block px-2 py-0.5 text-xs font-dl-mono font-medium border ${badgeColor(signal.badge)}`}>
+            {signal.badge}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'unrealized_pnl' as any,
+      header: 'Unreal P&L',
+      align: 'right',
+      render: (t) => {
+        if (t.status !== 'OPEN') {
+          if (t.pnl) {
+            const val = parseFloat(t.pnl);
+            return (
+              <span className={`font-dl-mono ${val > 0 ? 'text-dl-forest' : val < 0 ? 'text-dl-error' : ''}`}>
+                {formatUsd(t.pnl)} ({parseFloat(t.pnl_pct || '0').toFixed(2)}%)
+              </span>
+            );
+          }
+          return <span className="font-dl-mono">—</span>;
+        }
+        const price = livePrices[t.symbol];
+        if (price === undefined) return <span className="font-dl-mono text-dl-gray">...</span>;
+        const signal = computeExitSignal({
+          direction: t.direction,
+          entryPrice: parseFloat(t.entry_price),
+          livePrice: price,
+          stopPrice: parseFloat(t.stop_price),
+          takeProfitP50: parseFloat(t.take_profit_p50),
+          openedAt: t.opened_at,
+        });
+        const color = signal.pnlUsd > 0 ? 'text-dl-forest' : signal.pnlUsd < 0 ? 'text-dl-error' : '';
+        return (
+          <span className={`font-dl-mono ${color}`}>
+            {formatUsd(signal.pnlUsd)} ({signal.pnlPct.toFixed(2)}%)
+          </span>
+        );
+      },
+    },
+    {
       key: 'quantity',
       header: 'Qty',
       align: 'right',
@@ -448,26 +557,6 @@ export default function ExecutionConsole() {
       render: (t) => <span className="font-dl-mono">{formatQty(t.stop_price)}</span>,
     },
     {
-      key: 'exit_price',
-      header: 'Exit',
-      align: 'right',
-      render: (t) => <span className="font-dl-mono">{t.exit_price ? formatQty(t.exit_price) : '—'}</span>,
-    },
-    {
-      key: 'pnl',
-      header: 'P&L',
-      align: 'right',
-      render: (t) => {
-        if (!t.pnl) return <span className="font-dl-mono">—</span>;
-        const val = parseFloat(t.pnl);
-        return (
-          <span className={`font-dl-mono ${val > 0 ? 'text-dl-forest' : val < 0 ? 'text-dl-error' : ''}`}>
-            {formatUsd(t.pnl)} ({parseFloat(t.pnl_pct || '0').toFixed(2)}%)
-          </span>
-        );
-      },
-    },
-    {
       key: 'outcome',
       header: 'Outcome',
       render: (t) => {
@@ -475,11 +564,6 @@ export default function ExecutionConsole() {
         const color = t.outcome === 'WIN' ? 'text-dl-forest' : t.outcome === 'LOSS' ? 'text-dl-error' : 'text-dl-gray';
         return <span className={`font-dl-mono font-medium ${color}`}>{t.outcome}</span>;
       },
-    },
-    {
-      key: 'exit_reason',
-      header: 'Reason',
-      render: (t) => <span className="font-dl-mono text-xs">{t.exit_reason || '—'}</span>,
     },
     {
       key: 'opened_at',
@@ -720,6 +804,12 @@ export default function ExecutionConsole() {
                 </span>
               )}
             </div>
+
+            {pricesUpdatedAt && trades.some((t) => t.status === 'OPEN') && (
+              <p className="text-xs font-dl-mono text-dl-gray mb-2">
+                PRICES UPDATED: {new Date(pricesUpdatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} (polling every 15s)
+              </p>
+            )}
 
             {tradesLoading ? (
               <p className="text-sm text-dl-gray py-12 text-center">Loading trades...</p>
