@@ -103,10 +103,17 @@ function formatQty(n: number | string | null | undefined): string {
   return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 4 });
 }
 
-function formatUTC(dateStr: string): string {
+function safeParse(val: string | number | null | undefined, fallback: number = 0): number {
+  if (val === null || val === undefined) return fallback;
+  const n = typeof val === 'string' ? parseFloat(val) : val;
+  return isNaN(n) ? fallback : n;
+}
+
+function formatUTC(dateStr: string | null | undefined): string {
   if (!dateStr) return '—';
-  const d = new Date(dateStr);
-  return d.toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
+  const ts = Date.parse(dateStr);
+  if (isNaN(ts)) return '—';
+  return new Date(ts).toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
 }
 
 function gradeColor(grade: string): string {
@@ -532,9 +539,9 @@ export default function ExecutionConsole() {
         if (price === undefined) return <span className="font-dl-mono text-dl-gray">...</span>;
         const signal = computeHybridExit({
           direction: t.direction,
-          entry: parseFloat(t.entry_price),
-          invalidationLevel: parseFloat(t.stop_price),
-          target: t.take_profit_p50 ? parseFloat(t.take_profit_p50) : undefined,
+          entry: safeParse(t.entry_price),
+          invalidationLevel: safeParse(t.stop_price),
+          target: t.take_profit_p50 ? safeParse(t.take_profit_p50) : undefined,
           openedAt: t.opened_at,
           livePrice: price,
           volRatio: vol?.volRatio,
@@ -557,9 +564,9 @@ export default function ExecutionConsole() {
         if (price === undefined) return <span className="font-dl-mono text-dl-gray">...</span>;
         const signal = computeHybridExit({
           direction: t.direction,
-          entry: parseFloat(t.entry_price),
-          invalidationLevel: parseFloat(t.stop_price),
-          target: t.take_profit_p50 ? parseFloat(t.take_profit_p50) : undefined,
+          entry: safeParse(t.entry_price),
+          invalidationLevel: safeParse(t.stop_price),
+          target: t.take_profit_p50 ? safeParse(t.take_profit_p50) : undefined,
           openedAt: t.opened_at,
           livePrice: price,
           volRatio: vol?.volRatio,
@@ -583,9 +590,9 @@ export default function ExecutionConsole() {
         const vol = volData[t.symbol];
         const signal = computeHybridExit({
           direction: t.direction,
-          entry: parseFloat(t.entry_price),
-          invalidationLevel: parseFloat(t.stop_price),
-          target: t.take_profit_p50 ? parseFloat(t.take_profit_p50) : undefined,
+          entry: safeParse(t.entry_price),
+          invalidationLevel: safeParse(t.stop_price),
+          target: t.take_profit_p50 ? safeParse(t.take_profit_p50) : undefined,
           openedAt: t.opened_at,
           livePrice: price,
           volRatio: vol?.volRatio,
@@ -615,9 +622,9 @@ export default function ExecutionConsole() {
         const vol = volData[t.symbol];
         const signal = computeHybridExit({
           direction: t.direction,
-          entry: parseFloat(t.entry_price),
-          invalidationLevel: parseFloat(t.stop_price),
-          target: t.take_profit_p50 ? parseFloat(t.take_profit_p50) : undefined,
+          entry: safeParse(t.entry_price),
+          invalidationLevel: safeParse(t.stop_price),
+          target: t.take_profit_p50 ? safeParse(t.take_profit_p50) : undefined,
           openedAt: t.opened_at,
           livePrice: price,
           volRatio: vol?.volRatio,
@@ -647,9 +654,9 @@ export default function ExecutionConsole() {
         const vol = volData[t.symbol];
         const signal = computeHybridExit({
           direction: t.direction,
-          entry: parseFloat(t.entry_price),
-          invalidationLevel: parseFloat(t.stop_price),
-          target: t.take_profit_p50 ? parseFloat(t.take_profit_p50) : undefined,
+          entry: safeParse(t.entry_price),
+          invalidationLevel: safeParse(t.stop_price),
+          target: t.take_profit_p50 ? safeParse(t.take_profit_p50) : undefined,
           openedAt: t.opened_at,
           livePrice: price,
           volRatio: vol?.volRatio,

@@ -104,13 +104,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
     });
 
+    const closedByCloseTime = [...closedTrades].sort((a: any, b: any) => {
+      const aTime = a.closed_at ? new Date(a.closed_at).getTime() : 0;
+      const bTime = b.closed_at ? new Date(b.closed_at).getTime() : 0;
+      return aTime - bTime;
+    });
+
     let maxDrawdown = 0;
     let peak = 0;
     const pnlValues: number[] = [];
     cumPnl = 0;
-    for (const t of closedTrades) {
-      cumPnl += parseFloat(t.pnl || '0');
-      pnlValues.push(parseFloat(t.pnl || '0'));
+    for (const t of closedByCloseTime) {
+      const pnlVal = parseFloat(t.pnl || '0');
+      cumPnl += isNaN(pnlVal) ? 0 : pnlVal;
+      pnlValues.push(isNaN(pnlVal) ? 0 : pnlVal);
       if (cumPnl > peak) peak = cumPnl;
       const dd = peak - cumPnl;
       if (dd > maxDrawdown) maxDrawdown = dd;

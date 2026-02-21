@@ -128,20 +128,36 @@ export async function getLatestDecision(setupId: string): Promise<ExecutionDecis
   };
 }
 
-function parseSetupRow(row: any): SetupInput {
+function safeParseFloat(val: any, fallback: number = 0): number {
+  const n = parseFloat(val);
+  return isNaN(n) ? fallback : n;
+}
+
+function parseSetupRow(row: any): SetupInput | null {
+  const entryZoneLow = safeParseFloat(row.entry_zone_low);
+  const entryZoneHigh = safeParseFloat(row.entry_zone_high);
+  const invalidationPrice = safeParseFloat(row.invalidation_price);
+  const signalZ = safeParseFloat(row.signal_z);
+  const volatilityEstimate = safeParseFloat(row.volatility_estimate);
+
+  if (entryZoneLow <= 0 || entryZoneHigh <= 0 || invalidationPrice <= 0) {
+    console.log(`[MIRDTExecution] Skipping setup ${row.id} (${row.symbol}): invalid numeric fields (low=${entryZoneLow}, high=${entryZoneHigh}, inv=${invalidationPrice})`);
+    return null;
+  }
+
   return {
     id: row.id,
     symbol: row.symbol,
     assetType: row.asset_type,
-    entryZoneLow: parseFloat(row.entry_zone_low),
-    entryZoneHigh: parseFloat(row.entry_zone_high),
-    invalidationPrice: parseFloat(row.invalidation_price),
-    signalZ: parseFloat(row.signal_z),
-    volatilityEstimate: parseFloat(row.volatility_estimate),
+    entryZoneLow,
+    entryZoneHigh,
+    invalidationPrice,
+    signalZ,
+    volatilityEstimate,
     confidenceScore: row.confidence_score,
-    expectedP5: parseFloat(row.expected_p5),
-    expectedP50: parseFloat(row.expected_p50),
-    expectedP95: parseFloat(row.expected_p95),
+    expectedP5: safeParseFloat(row.expected_p5),
+    expectedP50: safeParseFloat(row.expected_p50),
+    expectedP95: safeParseFloat(row.expected_p95),
     horizonDays: row.horizon_days,
     expiresAt: row.expires_at ? new Date(row.expires_at) : null,
     status: row.status,
@@ -183,7 +199,7 @@ export async function runExecutionBatch(
   const setupsResult = await pool.query(
     `SELECT * FROM mirdt_setups WHERE status = 'ACTIVE'`
   );
-  const setups = setupsResult.rows.map(parseSetupRow);
+  const setups = setupsResult.rows.map(parseSetupRow).filter((s): s is SetupInput => s !== null);
 
   const coinGecko = new CoinGeckoProvider();
   const alphaVantage = new AlphaVantageProvider();
