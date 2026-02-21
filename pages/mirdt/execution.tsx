@@ -126,6 +126,198 @@ function gradeColor(grade: string): string {
   }
 }
 
+type ExecViewMode = 'console' | 'guide';
+
+function ExecutionGuide() {
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const EXEC_FAQS = [
+    { q: 'What is the Execution Console?', a: 'The Execution Console is the paper-trading engine for MIRDT setups. It converts market intelligence observations into sized, risk-managed trade decisions with deterministic position sizing, then allows you to open and close paper trades to track performance against a verifiable target.' },
+    { q: 'What is paper trading?', a: 'Paper trading is simulated trading that uses real market prices but does not deploy actual capital. Every trade opened through the Execution Console is tracked with real entry/exit prices, P&L calculations, and full audit trails, but no real money is at risk.' },
+    { q: 'How does position sizing work?', a: 'Position sizing is fully deterministic. The system calculates the maximum position size based on your portfolio capital, risk fraction (in basis points), the distance between entry price and stop price, and the global size multiplier. The formula ensures no single trade risks more than your configured risk budget.' },
+    { q: 'What is the risk fraction (BPS)?', a: 'Risk fraction in basis points (BPS) defines the maximum percentage of portfolio capital at risk per trade. 50 BPS = 0.50% of capital. For a $100,000 portfolio at 50 BPS, the maximum risk per trade is $500. This is the distance from entry to stop, multiplied by position size.' },
+    { q: 'What are the decision grades (A, B, C, REJECT)?', a: 'Decisions are graded by the execution engine based on signal strength, confidence level, and risk/reward characteristics. Grade A represents the highest-conviction setups, B is moderate conviction, C is lower conviction, and REJECT means the setup did not meet minimum criteria for execution consideration.' },
+    { q: 'What is the drawdown brake?', a: 'The drawdown brake (in BPS) is a circuit breaker that halts new trade openings if cumulative losses exceed the threshold. At 500 BPS (5%), if total P&L reaches -5% of starting capital, the system prevents opening new positions until losses are recovered. This prevents catastrophic drawdowns.' },
+    { q: 'What does "human confirmation required" mean?', a: 'Every trade requires explicit human authorization before opening. The system generates decisions and sizes positions, but a human operator must review and click "AUTHORIZE OPEN" to initiate each trade. No trades are opened automatically.' },
+    { q: 'How are exit prices determined?', a: 'When you close a trade, the system uses the current live market price (updated every 15 seconds) as the exit price. This ensures P&L calculations reflect actual market conditions at the time of closing.' },
+    { q: 'What is the hybrid exit system?', a: 'The hybrid exit system provides two distinct exit boundaries: a riskStop (capital protection, tighter) and an invalidation level (thesis invalidation, wider). The riskStop uses adaptive k-values based on current volatility to adjust its tightness. Exit badges indicate which boundary was breached: EXIT_RISK, TAKE_PROFIT, INVALIDATED, TIME_EXIT, or HOLD.' },
+    { q: 'What are policy modes?', a: 'Policy modes control the execution regime: BOOTSTRAP (initial phase, conservative sizing), NORMAL (standard operation), CAUTION (reduced sizing), RESTRICTED (minimal sizing, high-conviction only), and EMERGENCY (no new positions, exit-only mode). The mode affects position sizing multipliers.' },
+    { q: 'What is the Proof of Execution target?', a: 'The Proof of Execution Playbook tracks cumulative P&L toward a $100 target over 30 days. This serves as verifiable evidence that the system can generate consistent returns before it is offered as a subscription product to external users.' },
+    { q: 'Can the Execution Console trade with real money?', a: 'No. The Execution Console operates in paper-trade mode only. No live orders are placed on any exchange. All trades are simulated using real market prices for tracking and verification purposes.' },
+  ];
+
+  const EXEC_STEPS = [
+    { step: '01', title: 'Configure Portfolio', detail: 'Set your portfolio capital, risk fraction (BPS), maximum concurrent trades, drawdown brake threshold, size multiplier, and policy mode. These parameters govern all position sizing calculations.' },
+    { step: '02', title: 'Run Execution Batch', detail: 'The engine scans all active MIRDT setups, evaluates eligibility, calculates deterministic position sizes, and generates graded decisions (A/B/C/REJECT). Each decision includes entry price, stop price, quantity, and notional value.' },
+    { step: '03', title: 'Review Decisions', detail: 'Browse the Decision Queue to see all generated decisions with their grades, directions, entry zones, and risk budgets. Decisions are informational until you authorize them.' },
+    { step: '04', title: 'Authorize Trades', detail: 'Click "AUTHORIZE OPEN" on any decision to open a paper trade. The trade is created with the current market price as entry, and begins tracking live P&L against the 15-second price feed.' },
+    { step: '05', title: 'Monitor Open Positions', detail: 'Switch to the Paper Trades tab to see all open positions with live P&L, hybrid exit badges (EXIT_RISK, TAKE_PROFIT, INVALIDATED, TIME_EXIT, HOLD), and distance to risk/invalidation levels.' },
+    { step: '06', title: 'Close Trades', detail: 'Click "CLOSE" on any open trade to close it at the current live market price. The system calculates realized P&L, win/loss outcome, and logs the complete trade to the audit trail.' },
+  ];
+
+  return (
+    <div className="space-y-10">
+      <section>
+        <SectionHeading>Introduction</SectionHeading>
+        <div className="border border-dl-border p-6 space-y-4 text-sm text-dl-gray leading-relaxed">
+          <p>
+            The Execution Console is Axiom Protocol's paper-trading engine. It converts MIRDT market
+            intelligence setups into sized, risk-managed trade decisions with deterministic position
+            sizing and full audit trails.
+          </p>
+          <p>
+            Every aspect of the execution pipeline is deterministic: given the same portfolio parameters
+            and market data, the system will always produce the same position sizes, grades, and decisions.
+            Human confirmation is required before any position is opened.
+          </p>
+          <p>
+            The console operates in paper-trade mode only. No live orders are placed on any exchange.
+            All trades use real market prices for accurate P&L tracking, but no actual capital is deployed.
+            This serves as the foundation for the Proof of Execution Playbook, which demonstrates
+            verifiable system capability.
+          </p>
+          <div className="border-l-2 border-dl-gold pl-4 mt-4">
+            <p className="text-xs font-dl-mono text-dl-navy">
+              KEY PRINCIPLE: The system sizes positions. Humans confirm trades. Every action is logged.
+              No capital is deployed without explicit authorization.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <SectionHeading>Core Capabilities</SectionHeading>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { title: 'Deterministic Sizing', desc: 'Position sizes are computed algorithmically from portfolio capital, risk fraction, stop distance, and policy mode. No discretionary overrides.' },
+            { title: 'Human Confirmation Gates', desc: 'Every trade requires explicit operator authorization. The system proposes; you decide. No automated execution.' },
+            { title: 'Live Price Integration', desc: '15-second polling against live market prices for real-time P&L tracking, exit badge computation, and accurate trade closing.' },
+            { title: 'Hybrid Exit System', desc: 'Dual-boundary exit model with capital-protecting riskStop (adaptive k) and thesis-invalidating stop. Volatility-aware adjustments.' },
+            { title: 'Graded Decision Queue', desc: 'Decisions are graded A through REJECT based on signal strength, confidence, and risk/reward. Focus on the highest-conviction setups.' },
+            { title: 'Full Audit Trail', desc: 'Every action (batch run, authorization, open, close, emergency exit) is logged with timestamps, parameters, and outcomes for complete transparency.' },
+          ].map((c, i) => (
+            <div key={i} className="border border-dl-border p-4">
+              <p className="text-sm font-medium text-dl-navy mb-2">{c.title}</p>
+              <p className="text-xs text-dl-gray leading-relaxed">{c.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <SectionHeading>How It Works</SectionHeading>
+        <div className="space-y-3">
+          {EXEC_STEPS.map((s) => (
+            <div key={s.step} className="border border-dl-border p-4 flex gap-4">
+              <div className="flex-shrink-0 w-10 h-10 border border-dl-border flex items-center justify-center bg-dl-bg-alt">
+                <span className="font-dl-mono text-sm text-dl-navy">{s.step}</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-dl-navy">{s.title}</p>
+                <p className="text-xs text-dl-gray leading-relaxed mt-1">{s.detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <SectionHeading>Position Sizing Formula</SectionHeading>
+        <div className="border border-dl-border p-6 space-y-4">
+          <div className="bg-dl-bg-alt p-4 border border-dl-border-light">
+            <p className="font-dl-mono text-xs text-dl-navy mb-2">RISK BUDGET</p>
+            <p className="font-dl-mono text-sm text-dl-gray">riskBudget = portfolioCapital x (riskFractionBps / 10000)</p>
+          </div>
+          <div className="bg-dl-bg-alt p-4 border border-dl-border-light">
+            <p className="font-dl-mono text-xs text-dl-navy mb-2">STOP DISTANCE</p>
+            <p className="font-dl-mono text-sm text-dl-gray">stopDistance = |entryPrice - stopPrice|</p>
+          </div>
+          <div className="bg-dl-bg-alt p-4 border border-dl-border-light">
+            <p className="font-dl-mono text-xs text-dl-navy mb-2">POSITION SIZE</p>
+            <p className="font-dl-mono text-sm text-dl-gray">quantity = (riskBudget / stopDistance) x globalSizeMultiplier</p>
+          </div>
+          <p className="text-xs text-dl-gray leading-relaxed">
+            This ensures that if the stop price is hit, the maximum loss equals the risk budget.
+            For a $100,000 portfolio at 50 BPS with a 1x multiplier, the maximum risk per trade
+            is $500. The position size adjusts based on how far the stop is from entry: tighter
+            stops allow larger positions, wider stops require smaller positions.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <SectionHeading>Exit Badge Reference</SectionHeading>
+        <div className="border border-dl-border overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-dl-border bg-dl-bg-alt">
+                <th className="text-left px-4 py-2 font-dl-mono text-xs text-dl-gray">BADGE</th>
+                <th className="text-left px-4 py-2 font-dl-mono text-xs text-dl-gray">MEANING</th>
+                <th className="text-left px-4 py-2 font-dl-mono text-xs text-dl-gray">PRIORITY</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ['EXIT_RISK', 'Live price breached the adaptive riskStop. Capital protection triggered.', '1 (Highest)'],
+                ['TAKE_PROFIT', 'Live price reached the P50 target level. Profit objective met.', '2'],
+                ['INVALIDATED', 'Live price crossed the invalidation level. Original thesis is structurally broken.', '3'],
+                ['TIME_EXIT', 'Trade exceeded its defined horizon in days. Time-based expiration.', '4'],
+                ['HOLD', 'No exit condition met. Trade remains open within normal parameters.', '5 (Lowest)'],
+              ].map(([badge, meaning, priority], i) => (
+                <tr key={i} className={i % 2 === 0 ? '' : 'bg-dl-bg-alt'}>
+                  <td className="px-4 py-2 font-dl-mono text-xs text-dl-navy whitespace-nowrap">{badge}</td>
+                  <td className="px-4 py-2 text-xs text-dl-gray">{meaning}</td>
+                  <td className="px-4 py-2 font-dl-mono text-xs text-dl-gray text-center">{priority}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <SectionHeading>Frequently Asked Questions</SectionHeading>
+        <div className="border border-dl-border-light">
+          {EXEC_FAQS.map((item, i) => (
+            <div key={i} className={i < EXEC_FAQS.length - 1 ? 'border-b border-dl-border-light' : ''}>
+              <button
+                onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                className="w-full text-left px-4 py-3 flex items-center justify-between bg-dl-bg hover:bg-dl-bg-alt"
+              >
+                <span className="text-sm text-dl-navy font-medium pr-4">{item.q}</span>
+                <span className="text-dl-gray text-xs font-dl-mono flex-shrink-0">{openFaq === i ? '−' : '+'}</span>
+              </button>
+              {openFaq === i && (
+                <div className="px-4 py-3 bg-dl-bg-alt text-sm text-dl-gray leading-relaxed">{item.a}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <SectionHeading>Important Disclosures</SectionHeading>
+        <div className="border border-dl-border p-6 space-y-3 text-xs text-dl-gray leading-relaxed">
+          <p>
+            The Execution Console operates in paper-trade mode only. No live orders are placed on any
+            exchange. All trades are simulated using real market prices. P&L figures represent simulated
+            performance and do not reflect actual trading results.
+          </p>
+          <p>
+            Past simulated performance does not guarantee future results. Position sizing calculations
+            are deterministic but do not account for slippage, fees, liquidity constraints, or market
+            impact that would exist in live trading conditions.
+          </p>
+          <p>
+            Axiom Protocol does not provide investment advice. The Execution Console is an internal
+            tool for system capability demonstration and strategy validation purposes only.
+          </p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function ExecutionConsole() {
   const [portfolioState, setPortfolioState] = useState<PortfolioState | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -168,6 +360,7 @@ export default function ExecutionConsole() {
 
   const [volData, setVolData] = useState<Record<string, { volRatio: number; approx: boolean }>>({});
   const volFetchedRef = useRef<string>('');
+  const [execViewMode, setExecViewMode] = useState<ExecViewMode>('console');
 
   const fetchPortfolio = useCallback(() => {
     setPortfolioLoading(true);
@@ -716,6 +909,25 @@ export default function ExecutionConsole() {
         subtitle="Paper-trade execution decisions derived from MIRDT setups. All sizing is deterministic. Human confirmation required."
         disclosure={FOOTER_DISCLOSURE}
       >
+        <div className="flex border-b border-dl-border mb-6" role="tablist">
+          {([['console', 'Console'], ['guide', 'Guide & FAQ']] as const).map(([id, label]) => (
+            <button
+              key={id}
+              role="tab"
+              aria-selected={execViewMode === id}
+              onClick={() => setExecViewMode(id as ExecViewMode)}
+              className={`px-6 py-3 text-sm font-dl-mono uppercase tracking-wider border-b-2 ${
+                execViewMode === id ? 'border-dl-navy text-dl-navy font-medium' : 'border-transparent text-dl-gray'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {execViewMode === 'guide' && <ExecutionGuide />}
+
+        {execViewMode === 'console' && (<>
         <div className="border border-dl-border bg-dl-bg p-4 mb-6">
           <div className="flex items-center justify-between mb-3">
             <SectionHeading>Portfolio Controls</SectionHeading>
@@ -985,6 +1197,7 @@ export default function ExecutionConsole() {
             )}
           </>
         )}
+        </>)}
       </PageShell>
     </DesignLawLayout>
   );
