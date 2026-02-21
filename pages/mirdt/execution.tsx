@@ -7,7 +7,7 @@ import {
   SectionHeading,
 } from '../../components/design-law';
 import type { Column } from '../../components/design-law';
-import { computeExitSignal, badgeColor, type ExitBadge } from '../../lib/exitSignals';
+import { computeHybridExit, hybridBadgeColor, type HybridExitBadge } from '../../lib/mirdt/hybridExit';
 
 interface PortfolioState {
   portfolioCapitalUsd: number;
@@ -153,7 +153,11 @@ export default function ExecutionConsole() {
 
   const [livePrices, setLivePrices] = useState<Record<string, number>>({});
   const [pricesUpdatedAt, setPricesUpdatedAt] = useState<string | null>(null);
+  const [pricesStale, setPricesStale] = useState(false);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [volData, setVolData] = useState<Record<string, { volRatio: number; approx: boolean }>>({});
+  const volFetchedRef = useRef(false);
 
   const fetchPortfolio = useCallback(() => {
     setPortfolioLoading(true);
@@ -233,11 +237,38 @@ export default function ExecutionConsole() {
       .then((data) => {
         if (data.prices) {
           const map: Record<string, number> = {};
+          let hasStale = false;
           for (const p of data.prices) {
             if (p.price !== null) map[p.symbol] = p.price;
+            if (p.stale) hasStale = true;
           }
           setLivePrices(map);
           setPricesUpdatedAt(data.timestamp);
+          setPricesStale(hasStale);
+        }
+      })
+      .catch(() => {});
+  }, [trades]);
+
+  const fetchVolatility = useCallback(() => {
+    if (trades.length === 0 || volFetchedRef.current) return;
+
+    const symbols = [...new Set(trades.map((t) => t.symbol))];
+    const types = symbols.map((s) => {
+      const trade = trades.find((t) => t.symbol === s);
+      return trade?.asset_type || 'EQUITY';
+    });
+
+    fetch(`/api/volatility?symbols=${symbols.join(',')}&types=${types.join(',')}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.vol) {
+          const map: Record<string, { volRatio: number; approx: boolean }> = {};
+          for (const [sym, v] of Object.entries(data.vol) as [string, any][]) {
+            map[sym] = { volRatio: v.volRatio, approx: v.approx };
+          }
+          setVolData(map);
+          volFetchedRef.current = true;
         }
       })
       .catch(() => {});
@@ -258,11 +289,12 @@ export default function ExecutionConsole() {
   useEffect(() => {
     if (activeTab !== 'trades') return;
     fetchLivePrices();
+    fetchVolatility();
     pollingRef.current = setInterval(fetchLivePrices, 15000);
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [fetchLivePrices, activeTab]);
+  }, [fetchLivePrices, fetchVolatility, activeTab]);
 
   const handleSave = async () => {
     setSaveStatus(null);
@@ -487,33 +519,80 @@ export default function ExecutionConsole() {
       },
     },
     {
-      key: 'exit_signal' as any,
-      header: 'Signal',
+      key: 'k_val' as any,
+      header: 'k',
+      align: 'right',
       render: (t) => {
-        if (t.status !== 'OPEN') {
-          if (t.exit_reason) return <span className="font-dl-mono text-xs">{t.exit_reason}</span>;
-          return <span className="font-dl-mono text-dl-gray">—</span>;
-        }
+        const vol = volData[t.symbol];
         const price = livePrices[t.symbol];
         if (price === undefined) return <span className="font-dl-mono text-dl-gray">...</span>;
-        const signal = computeExitSignal({
+        const signal = computeHybridExit({
           direction: t.direction,
-          entryPrice: parseFloat(t.entry_price),
-          livePrice: price,
-          stopPrice: parseFloat(t.stop_price),
-          takeProfitP50: parseFloat(t.take_profit_p50),
+          entry: parseFloat(t.entry_price),
+          invalidationLevel: parseFloat(t.stop_price),
+          target: t.take_profit_p50 ? parseFloat(t.take_profit_p50) : undefined,
           openedAt: t.opened_at,
+          livePrice: price,
+          volRatio: vol?.volRatio,
         });
         return (
-          <span className={`inline-block px-2 py-0.5 text-xs font-dl-mono font-medium border ${badgeColor(signal.badge)}`}>
-            {signal.badge}
+          <span className="font-dl-mono text-xs">
+            {signal.k.toFixed(1)}
+            {vol?.approx && <span className="text-dl-gold ml-0.5" title="Volatility approximated">~</span>}
           </span>
         );
       },
     },
     {
-      key: 'unrealized_pnl' as any,
-      header: 'Unreal P&L',
+      key: 'risk_stop' as any,
+      header: 'RiskStop',
+      align: 'right',
+      render: (t) => {
+        const vol = volData[t.symbol];
+        const price = livePrices[t.symbol];
+        if (price === undefined) return <span className="font-dl-mono text-dl-gray">...</span>;
+        const signal = computeHybridExit({
+          direction: t.direction,
+          entry: parseFloat(t.entry_price),
+          invalidationLevel: parseFloat(t.stop_price),
+          target: t.take_profit_p50 ? parseFloat(t.take_profit_p50) : undefined,
+          openedAt: t.opened_at,
+          livePrice: price,
+          volRatio: vol?.volRatio,
+        });
+        return <span className="font-dl-mono text-dl-error">{formatQty(signal.riskStop)}</span>;
+      },
+    },
+    {
+      key: 'stop_price',
+      header: 'Invalidation',
+      align: 'right',
+      render: (t) => <span className="font-dl-mono">{formatQty(t.stop_price)}</span>,
+    },
+    {
+      key: 'r_multiple' as any,
+      header: 'R',
+      align: 'right',
+      render: (t) => {
+        const price = livePrices[t.symbol];
+        if (price === undefined) return <span className="font-dl-mono text-dl-gray">...</span>;
+        const vol = volData[t.symbol];
+        const signal = computeHybridExit({
+          direction: t.direction,
+          entry: parseFloat(t.entry_price),
+          invalidationLevel: parseFloat(t.stop_price),
+          target: t.take_profit_p50 ? parseFloat(t.take_profit_p50) : undefined,
+          openedAt: t.opened_at,
+          livePrice: price,
+          volRatio: vol?.volRatio,
+        });
+        const color = signal.rMultiple > 0 ? 'text-dl-forest' : signal.rMultiple < 0 ? 'text-dl-error' : '';
+        return <span className={`font-dl-mono font-medium ${color}`}>{signal.rMultiple.toFixed(2)}R</span>;
+      },
+    },
+    {
+      key: 'pnl_col' as any,
+      header: 'P&L',
       align: 'right',
       render: (t) => {
         if (t.status !== 'OPEN') {
@@ -529,41 +608,53 @@ export default function ExecutionConsole() {
         }
         const price = livePrices[t.symbol];
         if (price === undefined) return <span className="font-dl-mono text-dl-gray">...</span>;
-        const signal = computeExitSignal({
+        const vol = volData[t.symbol];
+        const signal = computeHybridExit({
           direction: t.direction,
-          entryPrice: parseFloat(t.entry_price),
-          livePrice: price,
-          stopPrice: parseFloat(t.stop_price),
-          takeProfitP50: parseFloat(t.take_profit_p50),
+          entry: parseFloat(t.entry_price),
+          invalidationLevel: parseFloat(t.stop_price),
+          target: t.take_profit_p50 ? parseFloat(t.take_profit_p50) : undefined,
           openedAt: t.opened_at,
+          livePrice: price,
+          volRatio: vol?.volRatio,
         });
-        const color = signal.pnlUsd > 0 ? 'text-dl-forest' : signal.pnlUsd < 0 ? 'text-dl-error' : '';
+        const color = signal.unrealizedPnl > 0 ? 'text-dl-forest' : signal.unrealizedPnl < 0 ? 'text-dl-error' : '';
         return (
           <span className={`font-dl-mono ${color}`}>
-            {formatUsd(signal.pnlUsd)} ({signal.pnlPct.toFixed(2)}%)
+            {formatUsd(signal.unrealizedPnl)} ({signal.unrealizedPnlPct.toFixed(2)}%)
           </span>
         );
       },
     },
     {
-      key: 'quantity',
-      header: 'Qty',
-      align: 'right',
-      render: (t) => <span className="font-dl-mono">{formatQty(t.quantity)}</span>,
-    },
-    {
-      key: 'stop_price',
-      header: 'Stop',
-      align: 'right',
-      render: (t) => <span className="font-dl-mono">{formatQty(t.stop_price)}</span>,
-    },
-    {
-      key: 'outcome',
-      header: 'Outcome',
+      key: 'exit_badge' as any,
+      header: 'Signal',
       render: (t) => {
-        if (!t.outcome) return <span className="font-dl-mono">—</span>;
-        const color = t.outcome === 'WIN' ? 'text-dl-forest' : t.outcome === 'LOSS' ? 'text-dl-error' : 'text-dl-gray';
-        return <span className={`font-dl-mono font-medium ${color}`}>{t.outcome}</span>;
+        if (t.status !== 'OPEN') {
+          if (t.exit_reason) return <span className="font-dl-mono text-xs">{t.exit_reason}</span>;
+          if (t.outcome) {
+            const color = t.outcome === 'WIN' ? 'text-dl-forest' : t.outcome === 'LOSS' ? 'text-dl-error' : 'text-dl-gray';
+            return <span className={`font-dl-mono font-medium ${color}`}>{t.outcome}</span>;
+          }
+          return <span className="font-dl-mono text-dl-gray">—</span>;
+        }
+        const price = livePrices[t.symbol];
+        if (price === undefined) return <span className="font-dl-mono text-dl-gray">...</span>;
+        const vol = volData[t.symbol];
+        const signal = computeHybridExit({
+          direction: t.direction,
+          entry: parseFloat(t.entry_price),
+          invalidationLevel: parseFloat(t.stop_price),
+          target: t.take_profit_p50 ? parseFloat(t.take_profit_p50) : undefined,
+          openedAt: t.opened_at,
+          livePrice: price,
+          volRatio: vol?.volRatio,
+        });
+        return (
+          <span className={`inline-block px-2 py-0.5 text-xs font-dl-mono font-medium border ${hybridBadgeColor(signal.badge)}`}>
+            {signal.badge}
+          </span>
+        );
       },
     },
     {
@@ -809,6 +900,10 @@ export default function ExecutionConsole() {
             {pricesUpdatedAt && trades.length > 0 && (
               <p className="text-xs font-dl-mono text-dl-gray mb-2">
                 PRICES UPDATED: {new Date(pricesUpdatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} (polling every 15s)
+                {pricesStale && <span className="text-dl-gold ml-2">[STALE]</span>}
+                {Object.keys(volData).length > 0 && (
+                  <span className="ml-3">VOL DATA: {Object.keys(volData).length} symbols loaded</span>
+                )}
               </p>
             )}
 
