@@ -696,6 +696,23 @@ export async function register() {
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )`, 'table re_property_parcel_links');
 
+      // ── Sentinel Subscriptions ──
+      await exec(`CREATE TABLE IF NOT EXISTS sentinel_subscriptions (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) NOT NULL,
+        plan_key VARCHAR(50) NOT NULL DEFAULT 'sentinel_monthly',
+        status VARCHAR(20) NOT NULL DEFAULT 'pending',
+        stripe_customer_id VARCHAR(255),
+        stripe_subscription_id VARCHAR(255),
+        current_period_start TIMESTAMP,
+        current_period_end TIMESTAMP,
+        cancel_at_period_end BOOLEAN DEFAULT FALSE,
+        email VARCHAR(255),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        UNIQUE(wallet_address)
+      )`, 'table sentinel_subscriptions');
+
       // ═══════════════════════════════════════════
       //  COLUMN SAFETY: ADD MISSING COLUMNS
       // ═══════════════════════════════════════════
