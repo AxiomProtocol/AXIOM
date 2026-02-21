@@ -738,6 +738,7 @@ export async function register() {
       await exec(`CREATE INDEX IF NOT EXISTS re_prop_facts_property_idx ON re_property_facts (property_id)`, 'idx');
       await exec(`CREATE INDEX IF NOT EXISTS mirdt_setups_status_idx ON mirdt_setups (status)`, 'idx');
       await exec(`CREATE INDEX IF NOT EXISTS mirdt_paper_trades_setup_idx ON mirdt_paper_trades (setup_id)`, 'idx');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS mirdt_paper_trades_decision_id_unique ON mirdt_paper_trades (decision_id) WHERE decision_id IS NOT NULL`, 'idx unique decision_id');
       await exec(`CREATE INDEX IF NOT EXISTS sentinel_signals_qualified_idx ON sentinel_signals (qualified)`, 'idx');
       await exec(`CREATE INDEX IF NOT EXISTS sentinel_decisions_created_idx ON sentinel_decisions (created_at)`, 'idx');
 

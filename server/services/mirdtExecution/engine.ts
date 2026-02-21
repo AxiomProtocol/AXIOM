@@ -607,26 +607,37 @@ export async function openPaperTrade(decisionId: string): Promise<{ success: boo
     return { success: false, error: 'Paper trade already exists for this decision' };
   }
 
+  const entryPrice = safeParseFloat(row.current_price);
+  const quantity = safeParseFloat(row.position_size_qty);
+  if (entryPrice <= 0 || quantity <= 0) {
+    return { success: false, error: 'Invalid entry price or position size on decision record' };
+  }
+
   const tradeResult = await pool.query(
     `INSERT INTO mirdt_paper_trades (
       setup_id, decision_id, direction, opened_at, entry_price, quantity, status
     ) VALUES ($1, $2, $3, NOW(), $4, $5, 'OPEN')
+    ON CONFLICT (decision_id) DO NOTHING
     RETURNING id`,
     [
       row.setup_id,
       decisionId,
       row.direction,
-      parseFloat(row.current_price),
-      parseFloat(row.position_size_qty),
+      entryPrice,
+      quantity,
     ]
   );
+
+  if (tradeResult.rows.length === 0) {
+    return { success: false, error: 'Paper trade already exists for this decision (concurrent open detected)' };
+  }
 
   const tradeId = tradeResult.rows[0].id;
 
   await insertEvent('OPENED', row.setup_id, decisionId, row.run_id, {
     tradeId,
-    entryPrice: parseFloat(row.current_price),
-    quantity: parseFloat(row.position_size_qty),
+    entryPrice,
+    quantity,
     direction: row.direction,
   });
 
@@ -661,7 +672,7 @@ export async function closePaperTrade(
   const pnlPct = entryPrice > 0 ? ((exitPrice - entryPrice) / entryPrice) * 100 * (direction === 'SHORT' ? -1 : 1) : 0;
   const outcome = pnl > 0 ? 'WIN' : pnl < 0 ? 'LOSS' : 'FLAT';
 
-  await pool.query(
+  const updateResult = await pool.query(
     `UPDATE mirdt_paper_trades SET
       status = 'CLOSED',
       closed_at = NOW(),
@@ -670,9 +681,13 @@ export async function closePaperTrade(
       pnl = $3,
       pnl_pct = $4,
       outcome = $5
-    WHERE id = $6`,
+    WHERE id = $6 AND status = 'OPEN'`,
     [exitPrice, exitReason, pnl, pnlPct, outcome, tradeId]
   );
+
+  if ((updateResult.rowCount ?? 0) === 0) {
+    return { success: false, error: 'Trade was already closed (concurrent close detected)' };
+  }
 
   await insertEvent('CLOSED', trade.setup_id, trade.decision_id, null, {
     tradeId,

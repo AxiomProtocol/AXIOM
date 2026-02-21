@@ -7,6 +7,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const adminKey = process.env.ADMIN_SOLVENCY_KEY;
   if (!adminKey) return res.status(503).json({ error: 'Execution system not configured' });
 
+  const provided = req.headers['x-admin-key'] as string;
+  if (provided !== adminKey) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   const { operation, decisionId, tradeId, exitPrice, exitReason } = req.body;
 
   try {
@@ -21,7 +26,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       case 'close-trade': {
         if (!tradeId || exitPrice === undefined) return res.status(400).json({ error: 'tradeId and exitPrice required' });
-        const result = await closePaperTrade(tradeId, parseFloat(exitPrice), exitReason || 'MANUAL');
+        const parsedExit = parseFloat(exitPrice);
+        if (isNaN(parsedExit) || parsedExit <= 0) return res.status(400).json({ error: 'exitPrice must be a valid positive number' });
+        const result = await closePaperTrade(tradeId, parsedExit, exitReason || 'MANUAL');
         return res.status(result.success ? 200 : 400).json(result);
       }
 

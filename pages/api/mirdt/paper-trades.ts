@@ -61,25 +61,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const trade = existing.rows[0];
+      if (trade.closed_at) {
+        return res.status(400).json({ success: false, error: 'Trade is already closed' });
+      }
+
       const entry = parseFloat(trade.entry_price);
       const exit = parseFloat(exitPrice);
       const qty = parseFloat(trade.quantity);
 
-      const pnl = (exit - entry) * qty;
-      const pnlPct = ((exit - entry) / entry) * 100;
+      if (isNaN(entry) || isNaN(exit) || isNaN(qty) || entry <= 0 || qty <= 0) {
+        return res.status(400).json({ success: false, error: 'Invalid numeric values for entry, exit, or quantity' });
+      }
+
+      const direction = trade.direction || 'LONG';
+      const rawPnl = direction === 'LONG'
+        ? (exit - entry) * qty
+        : (entry - exit) * qty;
+      const rawPnlPct = direction === 'LONG'
+        ? ((exit - entry) / entry) * 100
+        : ((entry - exit) / entry) * 100;
 
       let outcome: string;
-      if (pnlPct > 0.5) outcome = 'WIN';
-      else if (pnlPct < -0.5) outcome = 'LOSS';
+      if (rawPnl > 0) outcome = 'WIN';
+      else if (rawPnl < 0) outcome = 'LOSS';
       else outcome = 'FLAT';
 
       const result = await pool.query(
         `UPDATE mirdt_paper_trades
-         SET exit_price = $1, pnl = $2, pnl_pct = $3, outcome = $4, closed_at = NOW(), notes = $5
-         WHERE id = $6
+         SET exit_price = $1, pnl = $2, pnl_pct = $3, outcome = $4, closed_at = NOW(), status = 'CLOSED', notes = $5
+         WHERE id = $6 AND closed_at IS NULL
          RETURNING *`,
-        [exit, pnl, pnlPct, outcome, notes !== undefined ? notes : trade.notes, id]
+        [exit, rawPnl, rawPnlPct, outcome, notes !== undefined ? notes : trade.notes, id]
       );
+
+      if (result.rows.length === 0) {
+        return res.status(409).json({ success: false, error: 'Trade was already closed (concurrent close detected)' });
+      }
 
       return res.status(200).json({ success: true, trade: result.rows[0] });
     }

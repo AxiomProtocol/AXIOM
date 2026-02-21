@@ -32,7 +32,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (!tradeId || !exitPrice) {
           return res.status(400).json({ error: 'tradeId and exitPrice required' });
         }
-        const result = await closePaperTrade(tradeId, parseFloat(exitPrice), exitReason || 'MANUAL');
+        const parsedExit = parseFloat(exitPrice);
+        if (isNaN(parsedExit) || parsedExit <= 0) {
+          return res.status(400).json({ error: 'exitPrice must be a valid positive number' });
+        }
+        const result = await closePaperTrade(tradeId, parsedExit, exitReason || 'MANUAL');
         return res.status(result.success ? 200 : 400).json(result);
       }
 

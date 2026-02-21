@@ -42,13 +42,17 @@ export function replayDecision(trace: DecisionTrace, originalChecksum: string): 
 
   const atr = trace.volatilityEstimate * trace.currentPrice;
 
+  const portfolioCapital = trace.riskBudgetUsd > 0 && trace.riskFractionBps > 0
+    ? (trace.riskBudgetUsd / trace.riskFractionBps) * 10000
+    : 10000;
+
   const replayedSizing = computeSizing({
     currentPrice: trace.currentPrice,
     invalidationPrice: trace.invalidationPrice,
     atr,
     confidenceScore: trace.confidenceScore,
     portfolio: {
-      portfolioCapitalUsd: 0,
+      portfolioCapitalUsd: portfolioCapital,
       riskFractionBps: trace.riskFractionBps,
       maxConcurrentTrades: 5,
       maxPerAssetExposureBps: 2000,
