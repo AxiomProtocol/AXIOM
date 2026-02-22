@@ -49,16 +49,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (lat !== undefined && lon !== undefined && radius_meters !== undefined) {
+      const radiusKm = radius_meters / 1000;
       conditions.push(
-        `ST_DWithin(p.location_point::geography, ST_MakePoint($${idx}, $${idx + 1})::geography, $${idx + 2})`
+        `(6371 * acos(cos(radians($${idx})) * cos(radians(p.lat::float8)) * cos(radians(p.lon::float8) - radians($${idx + 1})) + sin(radians($${idx})) * sin(radians(p.lat::float8)))) <= $${idx + 2}`
       );
-      params.push(lon, lat, radius_meters);
+      params.push(lat, lon, radiusKm);
       idx += 3;
     } else if (bbox) {
       conditions.push(
-        `ST_Within(p.location_point, ST_MakeEnvelope($${idx}, $${idx + 1}, $${idx + 2}, $${idx + 3}, 4326))`
+        `p.lat::float8 BETWEEN $${idx} AND $${idx + 1} AND p.lon::float8 BETWEEN $${idx + 2} AND $${idx + 3}`
       );
-      params.push(bbox.min_lon, bbox.min_lat, bbox.max_lon, bbox.max_lat);
+      params.push(bbox.min_lat, bbox.max_lat, bbox.min_lon, bbox.max_lon);
       idx += 4;
     }
 

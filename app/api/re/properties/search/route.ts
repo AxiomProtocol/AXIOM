@@ -48,10 +48,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (lat && lon && radius) {
+      const radiusKm = parseFloat(radius) / 1000;
       conditions.push(
-        `ST_DWithin(location_point::geography, ST_MakePoint($${idx}, $${idx + 1})::geography, $${idx + 2})`
+        `(6371 * acos(cos(radians($${idx})) * cos(radians(lat::float8)) * cos(radians(lon::float8) - radians($${idx + 1})) + sin(radians($${idx})) * sin(radians(lat::float8)))) <= $${idx + 2}`
       );
-      params.push(parseFloat(lon), parseFloat(lat), parseFloat(radius));
+      params.push(parseFloat(lat), parseFloat(lon), radiusKm);
       idx += 3;
     }
 

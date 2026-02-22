@@ -13,20 +13,8 @@ import {
   uuid,
   date,
   smallint,
-  customType,
 } from "drizzle-orm/pg-core";
 
-const pointGeometry = customType<{ data: string }>({
-  dataType() {
-    return 'geometry(Point, 4326)';
-  },
-});
-
-const polygonGeometry = customType<{ data: string }>({
-  dataType() {
-    return 'geometry(Polygon, 4326)';
-  },
-});
 
 export const dealStrategyEnum = pgEnum('deal_strategy', ['brrrr', 'flip', 'hold', 'note', 'multifamily']);
 export const dealStatusEnum = pgEnum('deal_status', ['draft', 'analyzing', 'underwriting', 'approved', 'rejected', 'closed', 'archived']);
@@ -92,7 +80,6 @@ export const reProperties = pgTable("re_properties", {
   apn: varchar("apn", { length: 50 }),
   lat: decimal("lat", { precision: 10, scale: 7 }),
   lon: decimal("lon", { precision: 10, scale: 7 }),
-  locationPoint: pointGeometry("location_point"),
   propertyType: varchar("property_type", { length: 50 }),
   yearBuilt: integer("year_built"),
   sqft: integer("sqft"),
@@ -119,7 +106,7 @@ export const reParcels = pgTable("re_parcels", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   apn: varchar("apn", { length: 50 }),
   fips: varchar("fips", { length: 15 }),
-  geometry: polygonGeometry("geometry"),
+  geometryJson: jsonb("geometry_json"),
   acreage: decimal("acreage", { precision: 12, scale: 4 }),
   landUse: varchar("land_use", { length: 100 }),
   zoning: varchar("zoning", { length: 50 }),
@@ -325,7 +312,6 @@ export const reComparables = pgTable("re_comparables", {
   zip: varchar("zip", { length: 10 }),
   lat: decimal("lat", { precision: 10, scale: 7 }),
   lon: decimal("lon", { precision: 10, scale: 7 }),
-  locationPoint: pointGeometry("location_point"),
   distanceMiles: decimal("distance_miles", { precision: 6, scale: 2 }),
   propertyType: varchar("property_type", { length: 50 }),
   sqft: integer("sqft"),

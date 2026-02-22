@@ -4,7 +4,6 @@
 -- Description: Creates extensions, enums, and 16 tables for the RE deal intelligence pipeline
 
 -- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -88,7 +87,6 @@ CREATE TABLE IF NOT EXISTS re_properties (
   apn VARCHAR(50),
   lat DECIMAL(10, 7),
   lon DECIMAL(10, 7),
-  location_point GEOMETRY(Point, 4326),
   property_type VARCHAR(50),
   year_built INTEGER,
   sqft INTEGER,
@@ -110,7 +108,6 @@ CREATE INDEX IF NOT EXISTS re_properties_external_idx ON re_properties (external
 CREATE INDEX IF NOT EXISTS re_properties_city_state_idx ON re_properties (city, state);
 CREATE INDEX IF NOT EXISTS re_properties_zip_idx ON re_properties (zip);
 CREATE INDEX IF NOT EXISTS re_properties_fips_idx ON re_properties (fips);
-CREATE INDEX IF NOT EXISTS re_properties_location_gist_idx ON re_properties USING GIST (location_point);
 CREATE INDEX IF NOT EXISTS re_properties_address_trgm_idx ON re_properties USING GIN (address_normalized gin_trgm_ops);
 
 -- 5. re_parcels: parcel geometry records
@@ -336,7 +333,6 @@ CREATE TABLE IF NOT EXISTS re_comparables (
   zip VARCHAR(10),
   lat DECIMAL(10,7),
   lon DECIMAL(10,7),
-  location_point GEOMETRY(Point, 4326),
   distance_miles DECIMAL(6,2),
   property_type VARCHAR(50),
   sqft INTEGER,
@@ -359,4 +355,3 @@ CREATE TABLE IF NOT EXISTS re_comparables (
 CREATE INDEX IF NOT EXISTS re_comparables_deal_idx ON re_comparables (deal_id);
 CREATE INDEX IF NOT EXISTS re_comparables_property_idx ON re_comparables (property_id);
 CREATE INDEX IF NOT EXISTS re_comparables_sale_date_idx ON re_comparables (sale_date);
-CREATE INDEX IF NOT EXISTS re_comparables_location_gist_idx ON re_comparables USING GIST (location_point);

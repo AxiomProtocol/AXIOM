@@ -41,7 +41,6 @@ export async function register() {
       // ── Extensions ──
       await exec(`CREATE EXTENSION IF NOT EXISTS pg_trgm`, 'pg_trgm');
       await exec(`CREATE EXTENSION IF NOT EXISTS pgcrypto`, 'pgcrypto');
-      try { await exec(`CREATE EXTENSION IF NOT EXISTS postgis`, 'postgis'); } catch {}
 
       // ── Enums: Real Estate ──
       await exec(enumSafe('deal_strategy', ['brrrr','flip','hold','note','multifamily']), 'enum deal_strategy');

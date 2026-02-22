@@ -51,15 +51,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (max_sqft) conditions.push(lte(reProperties.sqft, parseNumeric(max_sqft)));
 
     if (lat && lon && radius_miles) {
-      const radiusMeters = parseNumeric(radius_miles) * 1609.34;
+      const radiusKm = parseNumeric(radius_miles) * 1.60934;
       conditions.push(
-        sql`ST_DWithin(${reProperties.locationPoint}::geography, ST_SetSRID(ST_MakePoint(${parseNumeric(lon)}, ${parseNumeric(lat)}), 4326)::geography, ${radiusMeters})`
+        sql`(6371 * acos(cos(radians(${parseNumeric(lat)})) * cos(radians(${reProperties.lat}::float8)) * cos(radians(${reProperties.lon}::float8) - radians(${parseNumeric(lon)})) + sin(radians(${parseNumeric(lat)})) * sin(radians(${reProperties.lat}::float8)))) <= ${radiusKm}`
       );
     }
 
     if (bbox && Array.isArray(bbox) && bbox.length === 4) {
       conditions.push(
-        sql`ST_Within(${reProperties.locationPoint}, ST_MakeEnvelope(${bbox[0]}, ${bbox[1]}, ${bbox[2]}, ${bbox[3]}, 4326))`
+        sql`${reProperties.lat}::float8 BETWEEN ${bbox[1]} AND ${bbox[3]} AND ${reProperties.lon}::float8 BETWEEN ${bbox[0]} AND ${bbox[2]}`
       );
     }
 

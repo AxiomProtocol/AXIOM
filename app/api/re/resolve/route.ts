@@ -117,19 +117,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const locationSql = lat !== null && lon !== null
-      ? `ST_SetSRID(ST_MakePoint($10, $9), 4326)`
-      : 'NULL';
-
     const inserted = await db.query(
       `INSERT INTO re_properties (
          address_raw, address_normalized, street_number, street_name,
-         city, state, zip, county, lat, lon, location_point
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, ${locationSql})
+         city, state, zip, county, lat, lon
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING id, address_normalized, lat, lon`,
-      lat !== null && lon !== null
-        ? [rawAddress, addressNormalized, streetNumber, streetName, city, state, zip, county, lat, lon]
-        : [rawAddress, addressNormalized, streetNumber, streetName, city, state, zip, county, null, null]
+      [rawAddress, addressNormalized, streetNumber, streetName, city, state, zip, county, lat, lon]
     );
 
     const newProp = inserted.rows[0];
