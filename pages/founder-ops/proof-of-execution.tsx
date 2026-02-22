@@ -89,6 +89,7 @@ export default function ProofOfExecutionPage() {
   const [error, setError] = useState<string | null>(null);
   const [runStatus, setRunStatus] = useState<{ type: 'idle' | 'running' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' });
   const [activeSection, setActiveSection] = useState<'summary' | 'daily' | 'audit' | 'runs'>('summary');
+  const [adminKey, setAdminKey] = useState('');
 
   const fetchPlaybook = useCallback(async () => {
     try {
@@ -110,16 +111,20 @@ export default function ProofOfExecutionPage() {
   const triggerExecutionRun = async () => {
     setRunStatus({ type: 'running', message: 'Pipeline executing...' });
     try {
-      const res = await fetch('/api/mirdt/execution/run', {
+      if (!adminKey) {
+        setRunStatus({ type: 'error', message: 'Admin key required to run execution cycle' });
+        return;
+      }
+      const res = await fetch('/api/mirdt/execution/playbook-run', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-scan-key': 'internal' },
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
       });
       const json = await res.json();
       if (json.error) throw new Error(json.error);
-      setRunStatus({
-        type: 'success',
-        message: `Run complete — ${json.setupsEvaluated} setups evaluated, ${json.decisionsCreated} decisions, ${json.errors} errors`,
-      });
+      const msg = json.setupsEvaluated !== undefined
+        ? `Run complete — ${json.setupsEvaluated} setups evaluated, ${json.decisionsCreated ?? 0} decisions, ${json.errors ?? 0} errors`
+        : `Run complete — ${json.processed ?? 0} processed`;
+      setRunStatus({ type: 'success', message: msg });
       await fetchPlaybook();
     } catch (err: any) {
       setRunStatus({ type: 'error', message: err.message });
@@ -217,9 +222,16 @@ export default function ProofOfExecutionPage() {
             )}
 
             <div className="flex items-center gap-3 mb-6">
+              <input
+                type="password"
+                placeholder="Admin Key"
+                value={adminKey}
+                onChange={(e) => setAdminKey(e.target.value)}
+                className="border border-dl-border px-3 py-2 font-mono text-sm w-40 bg-white"
+              />
               <button
                 onClick={triggerExecutionRun}
-                disabled={runStatus.type === 'running'}
+                disabled={runStatus.type === 'running' || !adminKey}
                 className="border border-dl-navy bg-dl-navy text-white px-4 py-2 font-mono text-sm hover:bg-dl-navy/90 disabled:opacity-50"
               >
                 {runStatus.type === 'running' ? 'EXECUTING...' : 'RUN EXECUTION CYCLE'}

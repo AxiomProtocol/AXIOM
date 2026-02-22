@@ -77,11 +77,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const grossWins = wins.reduce((sum: number, t: any) => sum + parseFloat(t.pnl || '0'), 0);
     const grossLosses = Math.abs(losses.reduce((sum: number, t: any) => sum + parseFloat(t.pnl || '0'), 0));
 
+    const toLocalDate = (dateVal: any): string => {
+      const d = new Date(dateVal);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
     const dailyMap: Record<string, { trades: number; wins: number; losses: number; flats: number; pnl: number }> = {};
     for (const t of closedTrades) {
-      const closedMs = t.closed_at ? new Date(t.closed_at).getTime() : NaN;
+      if (!t.closed_at) continue;
+      const closedMs = new Date(t.closed_at).getTime();
       if (isNaN(closedMs)) continue;
-      const day = new Date(closedMs).toISOString().split('T')[0];
+      const day = toLocalDate(t.closed_at);
       if (!dailyMap[day]) dailyMap[day] = { trades: 0, wins: 0, losses: 0, flats: 0, pnl: 0 };
       dailyMap[day].trades++;
       if (t.outcome === 'WIN') dailyMap[day].wins++;
@@ -149,6 +158,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const windowStart = new Date(now.getTime() - windowDays * 24 * 60 * 60 * 1000);
     const firstTradeDate = trades.length > 0 ? new Date(trades[0].opened_at) : null;
     const challengeStart = firstTradeDate && firstTradeDate > windowStart ? firstTradeDate : windowStart;
+    const todayStr = toLocalDate(now);
+    const startStr = toLocalDate(challengeStart);
     const daysElapsed = Math.max(1, Math.ceil((now.getTime() - challengeStart.getTime()) / (1000 * 60 * 60 * 24)));
     const dailyRate = closedTrades.length > 0 ? totalPnl / daysElapsed : 0;
     const remainingToTarget = targetUsd - totalPnl;
@@ -224,8 +235,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       progressPct: parseFloat(Math.min(100, (totalPnl / targetUsd) * 100).toFixed(1)),
       projectedDaysToTarget,
       onTrack: dailyRate >= (targetUsd / targetDays),
-      startDate: challengeStart.toISOString().split('T')[0],
-      endDate: now.toISOString().split('T')[0],
+      startDate: startStr,
+      endDate: todayStr,
     };
 
     return res.status(200).json({
