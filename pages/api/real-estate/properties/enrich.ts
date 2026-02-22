@@ -30,6 +30,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   } catch (err: any) {
     console.error('Enrich error:', err.message);
-    return errorResponse(res, 500, 'INTERNAL_ERROR', 'Failed to enrich property data');
+    const isRentCastError = err.message?.includes('RentCast API');
+    const userMessage = isRentCastError
+      ? `Property data lookup failed: ${err.message.replace(/RentCast API \d+: /, '').slice(0, 200)}`
+      : 'Failed to enrich property data';
+    return errorResponse(res, 500, 'ENRICH_FAILED', userMessage);
   }
 }
