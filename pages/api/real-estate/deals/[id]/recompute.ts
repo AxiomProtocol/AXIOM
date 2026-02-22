@@ -93,13 +93,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const breakEvenMonths = annualCashFlow > 0 ? Math.ceil(result.cashNeeded / (annualCashFlow / 12)) : null;
 
     const noi = safeNum(result.noiAnnual, 2, 12);
-    const capRate = safeNum(result.capRate, 4, 4);
-    const cashOnCash = safeNum(result.cashOnCash, 4, 4);
-    const dscr = safeNum(result.dscr, 4, 4);
+    const capRate = safeNum(result.capRate, 4, 6);
+    const cashOnCash = safeNum(result.cashOnCash, 4, 6);
+    const dscr = safeNum(result.dscr, 4, 6);
     const mCashFlow = safeNum(annualCashFlow / 12, 2, 8);
     const aCashFlow = safeNum(annualCashFlow, 2, 10);
-    const rRoi = safeNum(rehabRoi, 4, 4);
-    const rToV = safeNum(rentToValue, 4, 4);
+    const rRoi = safeNum(rehabRoi, 4, 6);
+    const rToV = safeNum(rentToValue, 4, 6);
     const grmVal = safeNum(grm, 2, 6);
     const metaJson = JSON.stringify({
       strategySpecific: result.strategySpecific,

@@ -6,6 +6,13 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+/** Clamp `value` so it fits in DECIMAL(`intDigits + scale`, `scale`) and format it. */
+function clampMetric(value: number, scale: number, maxIntDigits: number): string {
+  if (!Number.isFinite(value)) return (0).toFixed(scale);
+  const maxVal = Math.pow(10, maxIntDigits) - Math.pow(10, -scale);
+  return Math.max(-maxVal, Math.min(maxVal, value)).toFixed(scale);
+}
+
 export async function POST(
   _request: NextRequest,
   { params }: { params: { id: string } }
@@ -76,9 +83,9 @@ export async function POST(
         [
           row.id,
           result.noi_annual.toFixed(2),
-          result.cap_rate.toFixed(6),
-          result.cash_on_cash.toFixed(6),
-          result.dscr.toFixed(6),
+          clampMetric(result.cap_rate, 4, 6),
+          clampMetric(result.cash_on_cash, 4, 6),
+          clampMetric(result.dscr, 4, 6),
           (result.noi_annual / 12 - result.monthly_debt_service).toFixed(2),
           (result.noi_annual - result.monthly_debt_service * 12).toFixed(2),
           JSON.stringify(result.extra),
