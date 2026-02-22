@@ -87,18 +87,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const grm = grossRentalIncome > 0 ? purchasePrice / grossRentalIncome : 0;
     const breakEvenMonths = annualCashFlow > 0 ? Math.ceil(result.cashNeeded / (annualCashFlow / 12)) : null;
 
+    const clamp = (v: number, max: number) => Math.max(-max, Math.min(max, v));
     const metricsValues = {
       scenarioId,
-      noi: String(result.noiAnnual),
-      capRate: String(result.capRate),
-      cashOnCash: String(result.cashOnCash),
-      dscr: String(result.dscr),
-      monthlyCashFlow: String(Math.round((annualCashFlow / 12) * 100) / 100),
-      annualCashFlow: String(Math.round(annualCashFlow)),
+      noi: String(clamp(result.noiAnnual, 999999999999)),
+      capRate: String(clamp(Math.round(result.capRate * 10000) / 10000, 9999)),
+      cashOnCash: String(clamp(Math.round(result.cashOnCash * 10000) / 10000, 9999)),
+      dscr: String(clamp(Math.round(result.dscr * 10000) / 10000, 9999)),
+      monthlyCashFlow: String(clamp(Math.round((annualCashFlow / 12) * 100) / 100, 99999999)),
+      annualCashFlow: String(clamp(Math.round(annualCashFlow), 9999999999)),
       breakEvenMonths: breakEvenMonths,
-      rehabRoi: String(Math.round(rehabRoi * 100) / 100),
-      rentToValue: String(Math.round(rentToValue * 10000) / 10000),
-      grm: String(Math.round(grm * 100) / 100),
+      rehabRoi: String(clamp(Math.round(rehabRoi * 10000) / 10000, 9999)),
+      rentToValue: String(clamp(Math.round(rentToValue * 10000) / 10000, 9999)),
+      grm: String(clamp(Math.round(grm * 100) / 100, 999999)),
       meta: { strategySpecific: result.strategySpecific, grossYield: result.grossYield, netYield: result.netYield, arvSpread: result.arvSpread, cashNeeded: result.cashNeeded, monthlyDebtService: result.monthlyDebtService },
     };
 
