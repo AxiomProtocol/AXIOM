@@ -92,3 +92,10 @@ export function parseNumeric(value: unknown, fallback: number = 0): number {
   const num = Number(value);
   return isNaN(num) ? fallback : num;
 }
+
+export function safeNum(value: number, scale: number, maxIntDigits: number): string {
+  if (!Number.isFinite(value)) return (0).toFixed(scale);
+  const maxVal = Math.pow(10, maxIntDigits) - Math.pow(10, -scale);
+  const clamped = Math.max(-maxVal, Math.min(maxVal, value));
+  return clamped.toFixed(scale);
+}

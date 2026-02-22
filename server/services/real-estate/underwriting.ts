@@ -192,7 +192,8 @@ export function computeUnderwriting(input: UnderwritingInput): UnderwritingResul
   const monthlyFixedCosts = monthlyDebtService +
     (a.propertyTaxAnnual / 12) + (a.insuranceAnnual / 12) +
     (a.maintenanceAnnual / 12);
-  const breakEvenRent = monthlyFixedCosts / (1 - a.vacancyRate / 100 - a.managementRate / 100);
+  const breakEvenDenom = 1 - a.vacancyRate / 100 - a.managementRate / 100;
+  const breakEvenRent = breakEvenDenom > 0 ? monthlyFixedCosts / breakEvenDenom : 0;
 
   const arvSpread = a.afterRepairValue > 0
     ? ((a.afterRepairValue - totalProjectCost) / a.afterRepairValue) * 100

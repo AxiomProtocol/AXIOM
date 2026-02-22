@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../../server/db';
-import { reDeals, reProperties, reDealScenarios, reDealAssumptions, reDecisionLog } from '../../../../shared/realEstateSchema';
+import { db, pool } from '../../../../server/db';
+import { reProperties } from '../../../../shared/realEstateSchema';
 import { eq } from 'drizzle-orm';
 import { successResponse, errorResponse, buildMeta, safePropertyColumns } from '../../../../server/services/real-estate/helpers';
 
@@ -30,59 +30,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return errorResponse(res, 404, 'PROPERTY_NOT_FOUND', 'Referenced property does not exist');
     }
 
-    await db.insert(reDeals).values({
-      propertyId,
-      strategy,
-      status: 'draft',
-      dealName: name || `${strategy.toUpperCase()} - ${property.addressNormalized || property.addressRaw}`,
-      notes: notes || null,
-    });
+    const dealName = name || `${strategy.toUpperCase()} - ${property.addressNormalized || property.addressRaw}`;
 
-    const [deal] = await db.select().from(reDeals)
-      .where(eq(reDeals.propertyId, propertyId))
-      .limit(1);
+    const dealResult = await pool.query(
+      `INSERT INTO re_deals (id, property_id, strategy, status, deal_name, notes, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, 'draft', $3, $4, now(), now())
+       RETURNING id, property_id, strategy, status, deal_name, notes, created_at, updated_at`,
+      [propertyId, strategy, dealName, notes || null]
+    );
+    const deal = dealResult.rows[0];
 
-    await db.insert(reDealScenarios).values({
-      dealId: deal.id,
-      scenarioName: 'Base Case',
-      isPrimary: true,
-    });
+    const scenarioResult = await pool.query(
+      `INSERT INTO re_deal_scenarios (id, deal_id, scenario_name, is_primary, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, 'Base Case', true, now(), now())
+       RETURNING id, deal_id, scenario_name, is_primary`,
+      [deal.id]
+    );
+    const scenario = scenarioResult.rows[0];
 
-    const [scenario] = await db.select().from(reDealScenarios)
-      .where(eq(reDealScenarios.dealId, deal.id))
-      .limit(1);
+    await pool.query(
+      `INSERT INTO re_deal_assumptions (id, scenario_id, purchase_price, arv_estimate, rehab_budget,
+       down_payment_pct, interest_rate, loan_term_years, closing_cost_pct, monthly_rent,
+       vacancy_pct, property_mgmt_pct, annual_insurance, annual_taxes, annual_capex,
+       annual_maintenance, hold_period_months, appreciation_pct, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, 200000, 280000, 40000, 20, 7.5, 30, 3, 1800, 8, 10,
+       1800, 3600, 2000, 2000, 6, 3, now(), now())`,
+      [scenario.id]
+    );
 
-    await db.insert(reDealAssumptions).values({
-      scenarioId: scenario.id,
-      purchasePrice: '200000',
-      arvEstimate: '280000',
-      rehabBudget: '40000',
-      downPaymentPct: '20',
-      interestRate: '7.5',
-      loanTermYears: 30,
-      closingCostPct: '3',
-      monthlyRent: '1800',
-      vacancyPct: '8',
-      propertyMgmtPct: '10',
-      annualInsurance: '1800',
-      annualTaxes: '3600',
-      annualCapex: '2000',
-      annualMaintenance: '2000',
-      holdPeriodMonths: 6,
-      appreciationPct: '3',
-    });
-
-    await db.insert(reDecisionLog).values({
-      dealId: deal.id,
-      decision: 'DEAL_CREATED',
-      decidedBy: 'system',
-      rationale: `Deal workspace created for ${property.addressRaw || property.addressNormalized}. Strategy: ${strategy.toUpperCase()}. Base Case scenario with default assumptions ready for underwriting.`,
-    });
+    await pool.query(
+      `INSERT INTO re_decision_log (id, deal_id, decision, decided_by, rationale, decided_at)
+       VALUES (gen_random_uuid(), $1, 'DEAL_CREATED', 'system', $2, now())`,
+      [deal.id, `Deal workspace created for ${property.addressRaw || property.addressNormalized}. Strategy: ${strategy.toUpperCase()}. Base Case scenario with default assumptions ready for underwriting.`]
+    );
 
     return successResponse(res, { deal, scenario }, buildMeta(['internal_db', 'user_input'], 0.7));
 
   } catch (err: any) {
     console.error('Deal create error:', err.message);
-    return errorResponse(res, 500, 'INTERNAL_ERROR', 'Failed to create deal');
+    return errorResponse(res, 500, 'INTERNAL_ERROR', `Failed to create deal: ${err.message}`);
   }
 }

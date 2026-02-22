@@ -1,8 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../../../server/db';
-import { reDealAssumptions, reDealScenarios } from '../../../../../shared/realEstateSchema';
-import { eq } from 'drizzle-orm';
-import { successResponse, errorResponse, buildMeta, parseNumeric } from '../../../../../server/services/real-estate/helpers';
+import { pool } from '../../../../../server/db';
+import { successResponse, errorResponse, buildMeta, parseNumeric, safeNum } from '../../../../../server/services/real-estate/helpers';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
@@ -16,13 +14,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!scenario_id || typeof scenario_id !== 'string') {
         return errorResponse(res, 400, 'INVALID_PARAMS', 'scenario_id query param is required');
       }
-
-      const [assumptions] = await db.select()
-        .from(reDealAssumptions)
-        .where(eq(reDealAssumptions.scenarioId, scenario_id))
-        .limit(1);
-
-      return successResponse(res, { assumptions: assumptions || null }, buildMeta(['internal_db'], assumptions ? 0.7 : 0.4));
+      const result = await pool.query(
+        `SELECT * FROM re_deal_assumptions WHERE scenario_id = $1 LIMIT 1`,
+        [scenario_id]
+      );
+      return successResponse(res, { assumptions: result.rows[0] || null }, buildMeta(['internal_db'], result.rows.length > 0 ? 0.7 : 0.4));
     } catch (err: any) {
       console.error('Assumptions fetch error:', err.message);
       return errorResponse(res, 500, 'INTERNAL_ERROR', 'Failed to fetch assumptions');
@@ -36,49 +32,71 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return errorResponse(res, 400, 'INVALID_PARAMS', 'scenarioId is required in request body');
       }
 
-      const [scenario] = await db.select()
-        .from(reDealScenarios)
-        .where(eq(reDealScenarios.id, scenarioId))
-        .limit(1);
-
-      if (!scenario || scenario.dealId !== id) {
+      const scenarioCheck = await pool.query(
+        `SELECT id, deal_id FROM re_deal_scenarios WHERE id = $1`,
+        [scenarioId]
+      );
+      if (scenarioCheck.rows.length === 0 || scenarioCheck.rows[0].deal_id !== id) {
         return errorResponse(res, 404, 'SCENARIO_NOT_FOUND', 'Scenario not found for this deal');
       }
 
-      const numericFields = [
-        'purchasePrice', 'rehabBudget', 'arvEstimate', 'downPaymentPct',
-        'interestRate', 'loanTermYears', 'closingCostPct',
-        'monthlyRent', 'vacancyPct', 'propertyMgmtPct',
-        'annualInsurance', 'annualTaxes', 'annualCapex', 'annualMaintenance',
-        'holdPeriodMonths', 'appreciationPct',
-      ];
+      const p = (v: unknown) => safeNum(parseNumeric(v), 2, 12);
 
-      const upsertValues: Record<string, any> = { scenarioId };
-      for (const field of numericFields) {
-        if (values[field] !== undefined) {
-          upsertValues[field] = String(parseNumeric(values[field]));
-        }
-      }
+      const existing = await pool.query(
+        `SELECT id FROM re_deal_assumptions WHERE scenario_id = $1`,
+        [scenarioId]
+      );
 
-      const existing = await db.select()
-        .from(reDealAssumptions)
-        .where(eq(reDealAssumptions.scenarioId, scenarioId))
-        .limit(1);
-
-      if (existing.length > 0) {
-        await db.update(reDealAssumptions)
-          .set({ ...upsertValues, updatedAt: new Date() })
-          .where(eq(reDealAssumptions.scenarioId, scenarioId));
+      if (existing.rows.length > 0) {
+        await pool.query(
+          `UPDATE re_deal_assumptions SET
+           purchase_price = $1, arv_estimate = $2, rehab_budget = $3,
+           down_payment_pct = $4, interest_rate = $5, loan_term_years = $6,
+           closing_cost_pct = $7, monthly_rent = $8, vacancy_pct = $9,
+           property_mgmt_pct = $10, annual_insurance = $11, annual_taxes = $12,
+           annual_capex = $13, annual_maintenance = $14, hold_period_months = $15,
+           appreciation_pct = $16, updated_at = now()
+           WHERE scenario_id = $17`,
+          [
+            p(values.purchasePrice), p(values.arvEstimate), p(values.rehabBudget),
+            p(values.downPaymentPct), p(values.interestRate), parseNumeric(values.loanTermYears, 30),
+            p(values.closingCostPct), p(values.monthlyRent), p(values.vacancyPct),
+            p(values.propertyMgmtPct), p(values.annualInsurance), p(values.annualTaxes),
+            p(values.annualCapex), p(values.annualMaintenance), parseNumeric(values.holdPeriodMonths, 6),
+            p(values.appreciationPct), scenarioId
+          ]
+        );
       } else {
-        await db.insert(reDealAssumptions).values(upsertValues as any);
+        await pool.query(
+          `INSERT INTO re_deal_assumptions (id, scenario_id,
+           purchase_price, arv_estimate, rehab_budget, down_payment_pct,
+           interest_rate, loan_term_years, closing_cost_pct, monthly_rent,
+           vacancy_pct, property_mgmt_pct, annual_insurance, annual_taxes,
+           annual_capex, annual_maintenance, hold_period_months, appreciation_pct,
+           created_at, updated_at)
+           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+           $11, $12, $13, $14, $15, $16, $17, now(), now())`,
+          [
+            scenarioId,
+            p(values.purchasePrice), p(values.arvEstimate), p(values.rehabBudget),
+            p(values.downPaymentPct), p(values.interestRate), parseNumeric(values.loanTermYears, 30),
+            p(values.closingCostPct), p(values.monthlyRent), p(values.vacancyPct),
+            p(values.propertyMgmtPct), p(values.annualInsurance), p(values.annualTaxes),
+            p(values.annualCapex), p(values.annualMaintenance), parseNumeric(values.holdPeriodMonths, 6),
+            p(values.appreciationPct)
+          ]
+        );
       }
-      const [assumptions] = await db.select().from(reDealAssumptions)
-        .where(eq(reDealAssumptions.scenarioId, scenarioId)).limit(1);
 
-      return successResponse(res, { assumptions }, buildMeta(['internal_db', 'user_input'], 0.7));
+      const result = await pool.query(
+        `SELECT * FROM re_deal_assumptions WHERE scenario_id = $1 LIMIT 1`,
+        [scenarioId]
+      );
+
+      return successResponse(res, { assumptions: result.rows[0] }, buildMeta(['internal_db', 'user_input'], 0.7));
     } catch (err: any) {
       console.error('Assumptions upsert error:', err.message);
-      return errorResponse(res, 500, 'INTERNAL_ERROR', 'Failed to upsert assumptions');
+      return errorResponse(res, 500, 'INTERNAL_ERROR', `Failed to save assumptions: ${err.message}`);
     }
   }
 

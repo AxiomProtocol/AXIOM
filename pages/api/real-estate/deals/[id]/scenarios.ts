@@ -1,7 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../../../server/db';
-import { reDealScenarios, reDeals } from '../../../../../shared/realEstateSchema';
-import { eq, desc } from 'drizzle-orm';
+import { pool } from '../../../../../server/db';
 import { successResponse, errorResponse, buildMeta } from '../../../../../server/services/real-estate/helpers';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -12,12 +10,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'GET') {
     try {
-      const scenarios = await db.select()
-        .from(reDealScenarios)
-        .where(eq(reDealScenarios.dealId, id))
-        .orderBy(desc(reDealScenarios.createdAt));
-
-      return successResponse(res, { scenarios }, buildMeta(['internal_db'], 0.7));
+      const result = await pool.query(
+        `SELECT id, deal_id, scenario_name, description, is_primary, created_at, updated_at
+         FROM re_deal_scenarios WHERE deal_id = $1 ORDER BY created_at DESC`,
+        [id]
+      );
+      return successResponse(res, { scenarios: result.rows }, buildMeta(['internal_db'], 0.7));
     } catch (err: any) {
       console.error('Scenarios list error:', err.message);
       return errorResponse(res, 500, 'INTERNAL_ERROR', 'Failed to list scenarios');
@@ -28,32 +26,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const { scenarioName, description, isPrimary } = req.body;
 
-      const [deal] = await db.select()
-        .from(reDeals)
-        .where(eq(reDeals.id, id))
-        .limit(1);
-
-      if (!deal) {
+      const dealCheck = await pool.query(`SELECT id FROM re_deals WHERE id = $1`, [id]);
+      if (dealCheck.rows.length === 0) {
         return errorResponse(res, 404, 'DEAL_NOT_FOUND', 'Deal does not exist');
       }
 
-      await db.insert(reDealScenarios).values({
-        dealId: id,
-        scenarioName: scenarioName || 'Base Case',
-        description: description || null,
-        isPrimary: isPrimary === true,
-      });
+      const result = await pool.query(
+        `INSERT INTO re_deal_scenarios (id, deal_id, scenario_name, description, is_primary, created_at, updated_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, now(), now())
+         RETURNING id, deal_id, scenario_name, description, is_primary, created_at, updated_at`,
+        [id, scenarioName || 'Base Case', description || null, isPrimary === true]
+      );
 
-      const scenarios = await db.select().from(reDealScenarios)
-        .where(eq(reDealScenarios.dealId, id))
-        .orderBy(desc(reDealScenarios.createdAt))
-        .limit(1);
-      const scenario = scenarios[0];
-
-      return successResponse(res, { scenario }, buildMeta(['internal_db', 'user_input'], 0.7));
+      return successResponse(res, { scenario: result.rows[0] }, buildMeta(['internal_db', 'user_input'], 0.7));
     } catch (err: any) {
       console.error('Scenario create error:', err.message);
-      return errorResponse(res, 500, 'INTERNAL_ERROR', 'Failed to create scenario');
+      return errorResponse(res, 500, 'INTERNAL_ERROR', `Failed to create scenario: ${err.message}`);
     }
   }
 

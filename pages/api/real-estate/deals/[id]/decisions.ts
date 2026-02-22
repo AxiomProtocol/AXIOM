@@ -1,7 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../../../server/db';
-import { reDecisionLog, reDeals } from '../../../../../shared/realEstateSchema';
-import { eq, desc, sql } from 'drizzle-orm';
+import { pool } from '../../../../../server/db';
 import { successResponse, errorResponse, buildMeta, parseNumeric } from '../../../../../server/services/real-estate/helpers';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -17,21 +15,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const offset = (pageNum - 1) * limitNum;
 
       const [countResult, entries] = await Promise.all([
-        db.select({ total: sql<number>`count(*)` })
-          .from(reDecisionLog)
-          .where(eq(reDecisionLog.dealId, id)),
-        db.select()
-          .from(reDecisionLog)
-          .where(eq(reDecisionLog.dealId, id))
-          .orderBy(desc(reDecisionLog.decidedAt))
-          .limit(limitNum)
-          .offset(offset),
+        pool.query(`SELECT count(*) as total FROM re_decision_log WHERE deal_id = $1`, [id]),
+        pool.query(
+          `SELECT * FROM re_decision_log WHERE deal_id = $1 ORDER BY decided_at DESC LIMIT $2 OFFSET $3`,
+          [id, limitNum, offset]
+        ),
       ]);
 
-      const total = Number(countResult[0]?.total ?? 0);
+      const total = Number(countResult.rows[0]?.total ?? 0);
 
       return successResponse(res, {
-        entries,
+        entries: entries.rows,
         pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
       }, buildMeta(['internal_db'], 0.7));
     } catch (err: any) {
@@ -48,28 +42,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return errorResponse(res, 400, 'INVALID_PARAMS', 'decision is required');
       }
 
-      const [deal] = await db.select().from(reDeals).where(eq(reDeals.id, id)).limit(1);
-      if (!deal) {
+      const dealCheck = await pool.query(`SELECT id FROM re_deals WHERE id = $1`, [id]);
+      if (dealCheck.rows.length === 0) {
         return errorResponse(res, 404, 'DEAL_NOT_FOUND', 'Deal does not exist');
       }
 
-      await db.insert(reDecisionLog).values({
-        dealId: id,
-        decision,
-        decidedBy: decidedBy || 'system',
-        rationale: rationale || null,
-        snapshotMetrics: snapshotMetrics || null,
-      });
+      const result = await pool.query(
+        `INSERT INTO re_decision_log (id, deal_id, decision, decided_by, rationale, snapshot_metrics, decided_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, now())
+         RETURNING id, deal_id, decision, decided_by, rationale, snapshot_metrics, decided_at`,
+        [id, decision, decidedBy || 'system', rationale || null, snapshotMetrics ? JSON.stringify(snapshotMetrics) : null]
+      );
 
-      const [entry] = await db.select().from(reDecisionLog)
-        .where(eq(reDecisionLog.dealId, id))
-        .orderBy(desc(reDecisionLog.decidedAt))
-        .limit(1);
-
-      return successResponse(res, { entry }, buildMeta(['internal_db', 'user_input'], 0.7));
+      return successResponse(res, { entry: result.rows[0] }, buildMeta(['internal_db', 'user_input'], 0.7));
     } catch (err: any) {
       console.error('Decision append error:', err.message);
-      return errorResponse(res, 500, 'INTERNAL_ERROR', 'Failed to append decision');
+      return errorResponse(res, 500, 'INTERNAL_ERROR', `Failed to append decision: ${err.message}`);
     }
   }
 
