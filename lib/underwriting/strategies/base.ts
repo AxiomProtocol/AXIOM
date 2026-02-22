@@ -38,6 +38,7 @@ export interface UnderwritingResult {
 export const DSCR_NOT_APPLICABLE = Number.MAX_SAFE_INTEGER;
 
 export function calcMonthlyPayment(principal: number, annualRate: number, termYears: number): number {
+  if (principal <= 0 || termYears <= 0) return 0;
   if (annualRate === 0) return principal / (termYears * 12);
   const r = annualRate / 12;
   const n = termYears * 12;

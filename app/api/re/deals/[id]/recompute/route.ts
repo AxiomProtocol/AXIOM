@@ -82,12 +82,12 @@ export async function POST(
          ) VALUES ($1,$2,$3,$4,$5,$6,$7,NOW(),$8)`,
         [
           row.id,
-          result.noi_annual.toFixed(2),
+          clampMetric(result.noi_annual, 2, 12),
           clampMetric(result.cap_rate, 4, 6),
           clampMetric(result.cash_on_cash, 4, 6),
           clampMetric(result.dscr, 4, 6),
-          (result.noi_annual / 12 - result.monthly_debt_service).toFixed(2),
-          (result.noi_annual - result.monthly_debt_service * 12).toFixed(2),
+          clampMetric(result.noi_annual / 12 - result.monthly_debt_service, 2, 8),
+          clampMetric(result.noi_annual - result.monthly_debt_service * 12, 2, 10),
           JSON.stringify(result.extra),
         ]
       );

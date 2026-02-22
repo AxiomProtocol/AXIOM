@@ -16,7 +16,7 @@ export function computeFlip(a: UnderwritingAssumptions): UnderwritingResult {
   const grossProfit = a.arv_estimate - a.purchase_price - a.rehab_budget - closingCosts - sellingCosts - holdingCosts;
   const roi = cashNeeded > 0 ? grossProfit / cashNeeded : 0;
 
-  const noiAnnual = grossProfit / (a.hold_period_months / 12);
+  const noiAnnual = a.hold_period_months > 0 ? grossProfit / (a.hold_period_months / 12) : 0;
   const capRate = cashNeeded > 0 ? noiAnnual / cashNeeded : 0;
   const arvSpread = a.arv_estimate - (a.purchase_price + a.rehab_budget);
   const breakEvenRent = 0;
