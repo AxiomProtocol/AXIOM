@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../server/db';
+import { db, pool } from '../../../server/db';
 import { reProperties } from '../../../shared/realEstateSchema';
 import { eq, sql } from 'drizzle-orm';
 import { parseAddress, computeConfidence } from '../../../server/services/real-estate/address';
@@ -79,22 +79,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.warn('Trigram search unavailable (pg_trgm may not be installed):', trigramErr.message);
     }
 
-    const [newProp] = await db.insert(reProperties).values({
-      addressRaw: address.trim(),
-      addressNormalized: parsed.normalized,
-      streetNumber: parsed.streetNumber || null,
-      streetName: parsed.streetName || null,
-      city: parsed.city || null,
-      state: parsed.state || null,
-      zip: parsed.zip || null,
-    }).returning({
-      id: reProperties.id,
-      addressRaw: reProperties.addressRaw,
-      addressNormalized: reProperties.addressNormalized,
-      city: reProperties.city,
-      state: reProperties.state,
-      zip: reProperties.zip,
-    });
+    const insertResult = await pool.query(
+      `INSERT INTO re_properties (
+         address_raw, address_normalized, street_number, street_name,
+         city, state, zip
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id,
+                 address_raw AS "addressRaw",
+                 address_normalized AS "addressNormalized",
+                 city,
+                 state,
+                 zip`,
+      [
+        address.trim(),
+        parsed.normalized,
+        parsed.streetNumber || null,
+        parsed.streetName || null,
+        parsed.city || null,
+        parsed.state || null,
+        parsed.zip || null,
+      ]
+    );
+    const newProp = insertResult.rows[0];
 
     let enrichment = null;
     if (process.env.RENTCAST_API_KEY) {
@@ -119,11 +125,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }, buildMeta(sources, confidence));
 
   } catch (err: any) {
-    console.error('Address resolve error:', err.message, err.stack);
-    const isDbError = err.message?.includes('relation') || err.message?.includes('connect') || err.message?.includes('ECONNREFUSED') || err.message?.includes('does not exist') || err.message?.includes('timeout');
+    console.error('Address resolve error:', err.message, err.cause?.message, err.stack);
+    const causeMsg = err.cause?.message || '';
+    const errMsg = err.message || '';
+    const isDbError = [errMsg, causeMsg].some(m =>
+      m.includes('relation') || m.includes('connect') || m.includes('ECONNREFUSED') ||
+      m.includes('does not exist') || m.includes('timeout')
+    );
     const userMessage = isDbError
       ? 'Database connection issue. The system may need to be redeployed or the database is temporarily unavailable.'
-      : `Failed to resolve address: ${err.message || 'Unknown error'}`;
+      : 'Failed to resolve address';
     return errorResponse(res, 500, 'INTERNAL_ERROR', userMessage);
   }
 }
