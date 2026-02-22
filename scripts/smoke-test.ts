@@ -113,6 +113,52 @@ async function runTests() {
     if (status !== 200) throw new Error(`Expected 200, got ${status}`);
   });
 
+  console.log('\n--- Deal Intelligence: Property Enrichment Endpoints ---\n');
+
+  await test('GET /api/real-estate/properties/search returns 200', async () => {
+    const { status, data } = await fetchJson('/api/real-estate/properties/search');
+    if (status !== 200) throw new Error(`Expected 200, got ${status}`);
+    if (!Array.isArray(data.data?.properties)) throw new Error('Missing properties array in response');
+    if (!data.data?.pagination) throw new Error('Missing pagination in response');
+  });
+
+  await test('POST /api/real-estate/resolve rejects missing address with 400', async () => {
+    const { status, data } = await fetchJson('/api/real-estate/resolve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    if (status !== 400) throw new Error(`Expected 400, got ${status}`);
+    if (!data.error?.code) throw new Error('Response missing structured error code');
+  });
+
+  await test('POST /api/real-estate/properties/enrich rejects missing propertyId with 400', async () => {
+    const { status, data } = await fetchJson('/api/real-estate/properties/enrich', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    if (status !== 400) throw new Error(`Expected 400, got ${status}`);
+    if (!data.error?.code) throw new Error('Response missing structured error code');
+  });
+
+  await test('POST /api/real-estate/properties/enrich returns structured error for unknown property', async () => {
+    const { status, data } = await fetchJson('/api/real-estate/properties/enrich', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ propertyId: '00000000-0000-0000-0000-000000000000' }),
+    });
+    // 503 = RentCast API key not configured; 404 = property not found in DB
+    if (status !== 404 && status !== 503) throw new Error(`Expected 404 or 503, got ${status}`);
+    if (!data.error?.code) throw new Error('Response missing structured error code');
+  });
+
+  await test('GET /api/real-estate/properties/:id returns 404 for unknown ID', async () => {
+    const { status, data } = await fetchJson('/api/real-estate/properties/00000000-0000-0000-0000-000000000000');
+    if (status !== 404) throw new Error(`Expected 404, got ${status}`);
+    if (data.error?.code !== 'NOT_FOUND') throw new Error(`Expected NOT_FOUND error code, got ${data.error?.code}`);
+  });
+
   console.log('\n--- Data Integrity Checks ---\n');
 
   await test('Node Economy returns valid node classes', async () => {
