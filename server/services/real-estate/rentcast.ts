@@ -8,6 +8,7 @@ import {
   reIngestRuns,
 } from '../../../shared/realEstateSchema';
 import { eq, and } from 'drizzle-orm';
+import { safePropertyColumns } from './helpers';
 
 const RENTCAST_BASE = 'https://api.rentcast.io/v1';
 
@@ -197,7 +198,7 @@ export async function enrichProperty(propertyId: string): Promise<{
   facts_added: number;
   error?: string;
 }> {
-  const [property] = await db.select()
+  const [property] = await db.select(safePropertyColumns)
     .from(reProperties)
     .where(eq(reProperties.id, propertyId))
     .limit(1);
