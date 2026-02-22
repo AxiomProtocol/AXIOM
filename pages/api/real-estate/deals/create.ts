@@ -32,21 +32,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const dealName = name || `${strategy.toUpperCase()} - ${property.addressNormalized || property.addressRaw}`;
 
-    const dealResult = await pool.query(
-      `INSERT INTO re_deals (id, property_id, strategy, status, deal_name, notes, created_at, updated_at)
-       VALUES (gen_random_uuid(), $1, $2, 'draft', $3, $4, now(), now())
-       RETURNING id, property_id, strategy, status, deal_name, notes, created_at, updated_at`,
-      [propertyId, strategy, dealName, notes || null]
-    );
-    const deal = dealResult.rows[0];
+    const dealIdResult = await pool.query(`SELECT gen_random_uuid() as new_id`);
+    const dealId = dealIdResult.rows[0].new_id;
 
-    const scenarioResult = await pool.query(
-      `INSERT INTO re_deal_scenarios (id, deal_id, scenario_name, is_primary, created_at, updated_at)
-       VALUES (gen_random_uuid(), $1, 'Base Case', true, now(), now())
-       RETURNING id, deal_id, scenario_name, is_primary`,
-      [deal.id]
+    await pool.query(
+      `INSERT INTO re_deals (id, property_id, strategy, status, deal_name, notes, created_at, updated_at)
+       VALUES ($1, $2, $3, 'draft', $4, $5, now(), now())`,
+      [dealId, propertyId, strategy, dealName, notes || null]
     );
-    const scenario = scenarioResult.rows[0];
+    const dealFetch = await pool.query(
+      `SELECT id, property_id, strategy, status, deal_name, notes, created_at, updated_at FROM re_deals WHERE id = $1`,
+      [dealId]
+    );
+    const deal = dealFetch.rows[0];
+
+    const scenarioIdResult = await pool.query(`SELECT gen_random_uuid() as new_id`);
+    const scenarioId = scenarioIdResult.rows[0].new_id;
+
+    await pool.query(
+      `INSERT INTO re_deal_scenarios (id, deal_id, scenario_name, is_primary, created_at, updated_at)
+       VALUES ($1, $2, 'Base Case', true, now(), now())`,
+      [scenarioId, deal.id]
+    );
+    const scenarioFetch = await pool.query(
+      `SELECT id, deal_id, scenario_name, is_primary FROM re_deal_scenarios WHERE id = $1`,
+      [scenarioId]
+    );
+    const scenario = scenarioFetch.rows[0];
 
     await pool.query(
       `INSERT INTO re_deal_assumptions (id, scenario_id, purchase_price, arv_estimate, rehab_budget,

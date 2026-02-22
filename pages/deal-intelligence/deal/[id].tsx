@@ -52,7 +52,7 @@ export default function DealWorkspacePage() {
   const [summary, setSummary] = useState<DealSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'decisions'>('assumptions');
+  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'analysis' | 'decisions'>('assumptions');
   const [assumptions, setAssumptions] = useState<AssumptionsState>(DEFAULT_ASSUMPTIONS);
   const [saving, setSaving] = useState(false);
   const [computing, setComputing] = useState(false);
@@ -60,6 +60,8 @@ export default function DealWorkspacePage() {
   const [newDecision, setNewDecision] = useState('');
   const [newRationale, setNewRationale] = useState('');
   const [submittingDecision, setSubmittingDecision] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [analyzingDeal, setAnalyzingDeal] = useState(false);
 
   const loadSummary = useCallback(async () => {
     if (!id) return;
@@ -218,6 +220,30 @@ export default function DealWorkspacePage() {
     }
   }, [id, newDecision, newRationale, activeScenarioId, summary, loadSummary]);
 
+  const handleAiAnalysis = useCallback(async () => {
+    if (!id || !activeScenarioId) return;
+    setAnalyzingDeal(true);
+    setAiAnalysis(null);
+    try {
+      const res = await fetch(`/api/real-estate/deals/${id}/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scenarioId: activeScenarioId }),
+      });
+      const json = await res.json();
+      if (json.error) {
+        setError(json.error.message);
+      } else {
+        setAiAnalysis(json.data.analysis);
+        await loadSummary();
+      }
+    } catch {
+      setError('AI analysis failed');
+    } finally {
+      setAnalyzingDeal(false);
+    }
+  }, [id, activeScenarioId, loadSummary]);
+
   const handleField = (field: keyof AssumptionsState, value: string) => {
     setAssumptions(prev => ({ ...prev, [field]: value }));
   };
@@ -254,6 +280,7 @@ export default function DealWorkspacePage() {
     { key: 'assumptions' as const, label: 'Assumptions' },
     { key: 'metrics' as const, label: 'Metrics' },
     { key: 'risks' as const, label: `Risks (${riskFlags.length})` },
+    { key: 'analysis' as const, label: 'AI Analysis' },
     { key: 'decisions' as const, label: 'Decision Log' },
   ];
 
@@ -450,6 +477,99 @@ export default function DealWorkspacePage() {
                         <p className="font-dl-mono text-sm">{flag.message}</p>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'analysis' && (
+              <div className="border border-dl-border p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-dl-serif text-lg text-dl-navy">AI Deal Analysis</h2>
+                  <button
+                    onClick={handleAiAnalysis}
+                    disabled={analyzingDeal || !metrics}
+                    className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                  >
+                    {analyzingDeal ? 'Analyzing...' : 'Run AI Analysis'}
+                  </button>
+                </div>
+
+                {!metrics && (
+                  <p className="text-dl-muted font-dl-mono text-sm">Run underwriting first to generate metrics before requesting AI analysis.</p>
+                )}
+
+                {analyzingDeal && (
+                  <div className="border border-dl-border p-6 text-center">
+                    <p className="font-dl-mono text-sm text-dl-muted">AI analyst is reviewing your deal...</p>
+                    <p className="font-dl-mono text-xs text-dl-muted mt-2">This typically takes 10-15 seconds.</p>
+                  </div>
+                )}
+
+                {aiAnalysis && !analyzingDeal && (
+                  <div className="space-y-4">
+                    <div className={`border p-4 ${
+                      aiAnalysis.verdict === 'strong_buy' ? 'border-green-600 bg-green-50' :
+                      aiAnalysis.verdict === 'buy' ? 'border-green-400 bg-green-50' :
+                      aiAnalysis.verdict === 'hold' ? 'border-yellow-400 bg-yellow-50' :
+                      aiAnalysis.verdict === 'pass' ? 'border-red-400 bg-red-50' :
+                      'border-red-600 bg-red-50'
+                    }`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-dl-mono text-lg font-bold uppercase">{aiAnalysis.verdict?.replace('_', ' ')}</span>
+                        <span className="font-dl-mono text-sm text-dl-muted">Confidence: {((aiAnalysis.confidence || 0) * 100).toFixed(0)}%</span>
+                      </div>
+                      <p className="font-dl-mono text-sm">{aiAnalysis.summary}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="border border-green-200 p-4">
+                        <h3 className="font-dl-mono text-xs text-green-700 uppercase mb-2 font-bold">Strengths</h3>
+                        <ul className="space-y-1">
+                          {(aiAnalysis.strengths || []).map((s: string, i: number) => (
+                            <li key={i} className="font-dl-mono text-sm text-dl-text flex items-start gap-2">
+                              <span className="text-green-600 mt-0.5">+</span> {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="border border-red-200 p-4">
+                        <h3 className="font-dl-mono text-xs text-red-700 uppercase mb-2 font-bold">Weaknesses</h3>
+                        <ul className="space-y-1">
+                          {(aiAnalysis.weaknesses || []).map((w: string, i: number) => (
+                            <li key={i} className="font-dl-mono text-sm text-dl-text flex items-start gap-2">
+                              <span className="text-red-600 mt-0.5">-</span> {w}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div className="border border-dl-border p-4">
+                      <h3 className="font-dl-mono text-xs text-dl-muted uppercase mb-2 font-bold">Recommendations</h3>
+                      <ul className="space-y-1">
+                        {(aiAnalysis.recommendations || []).map((r: string, i: number) => (
+                          <li key={i} className="font-dl-mono text-sm text-dl-text flex items-start gap-2">
+                            <span className="text-dl-navy mt-0.5">&#8250;</span> {r}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="border border-dl-border p-3">
+                        <h4 className="font-dl-mono text-xs text-dl-muted uppercase mb-1">Market Context</h4>
+                        <p className="font-dl-mono text-sm text-dl-text">{aiAnalysis.marketContext}</p>
+                      </div>
+                      <div className="border border-dl-border p-3">
+                        <h4 className="font-dl-mono text-xs text-dl-muted uppercase mb-1">Risk Assessment</h4>
+                        <p className="font-dl-mono text-sm text-dl-text">{aiAnalysis.riskAssessment}</p>
+                      </div>
+                      <div className="border border-dl-border p-3">
+                        <h4 className="font-dl-mono text-xs text-dl-muted uppercase mb-1">Exit Strategy</h4>
+                        <p className="font-dl-mono text-sm text-dl-text">{aiAnalysis.exitStrategyNotes}</p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

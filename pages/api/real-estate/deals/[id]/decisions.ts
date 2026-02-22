@@ -47,11 +47,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return errorResponse(res, 404, 'DEAL_NOT_FOUND', 'Deal does not exist');
       }
 
-      const result = await pool.query(
+      const idResult = await pool.query(`SELECT gen_random_uuid() as new_id`);
+      const newId = idResult.rows[0].new_id;
+
+      await pool.query(
         `INSERT INTO re_decision_log (id, deal_id, decision, decided_by, rationale, snapshot_metrics, decided_at)
-         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, now())
-         RETURNING id, deal_id, decision, decided_by, rationale, snapshot_metrics, decided_at`,
-        [id, decision, decidedBy || 'system', rationale || null, snapshotMetrics ? JSON.stringify(snapshotMetrics) : null]
+         VALUES ($1, $2, $3, $4, $5, $6, now())`,
+        [newId, id, decision, decidedBy || 'system', rationale || null, snapshotMetrics ? JSON.stringify(snapshotMetrics) : null]
+      );
+      const result = await pool.query(
+        `SELECT id, deal_id, decision, decided_by, rationale, snapshot_metrics, decided_at
+         FROM re_decision_log WHERE id = $1`,
+        [newId]
       );
 
       return successResponse(res, { entry: result.rows[0] }, buildMeta(['internal_db', 'user_input'], 0.7));

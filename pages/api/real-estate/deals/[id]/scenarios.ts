@@ -31,11 +31,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return errorResponse(res, 404, 'DEAL_NOT_FOUND', 'Deal does not exist');
       }
 
-      const result = await pool.query(
+      const idResult = await pool.query(`SELECT gen_random_uuid() as new_id`);
+      const newId = idResult.rows[0].new_id;
+
+      await pool.query(
         `INSERT INTO re_deal_scenarios (id, deal_id, scenario_name, description, is_primary, created_at, updated_at)
-         VALUES (gen_random_uuid(), $1, $2, $3, $4, now(), now())
-         RETURNING id, deal_id, scenario_name, description, is_primary, created_at, updated_at`,
-        [id, scenarioName || 'Base Case', description || null, isPrimary === true]
+         VALUES ($1, $2, $3, $4, $5, now(), now())`,
+        [newId, id, scenarioName || 'Base Case', description || null, isPrimary === true]
+      );
+      const result = await pool.query(
+        `SELECT id, deal_id, scenario_name, description, is_primary, created_at, updated_at
+         FROM re_deal_scenarios WHERE id = $1`,
+        [newId]
       );
 
       return successResponse(res, { scenario: result.rows[0] }, buildMeta(['internal_db', 'user_input'], 0.7));
