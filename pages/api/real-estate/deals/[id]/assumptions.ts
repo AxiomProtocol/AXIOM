@@ -70,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .set({ ...upsertValues, updatedAt: new Date() })
           .where(eq(reDealAssumptions.scenarioId, scenarioId));
       } else {
-        await db.insert(reDealAssumptions).values(upsertValues);
+        await db.insert(reDealAssumptions).values(upsertValues as any);
       }
       const [assumptions] = await db.select().from(reDealAssumptions)
         .where(eq(reDealAssumptions.scenarioId, scenarioId)).limit(1);
