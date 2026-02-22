@@ -637,11 +637,11 @@ export async function register() {
       await exec(`CREATE TABLE IF NOT EXISTS re_deal_metrics (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         scenario_id UUID NOT NULL REFERENCES re_deal_scenarios(id),
-        noi DECIMAL(14,2), cap_rate DECIMAL(6,4), cash_on_cash DECIMAL(6,4),
-        dscr DECIMAL(6,4), irr DECIMAL(6,4), total_return DECIMAL(14,2),
+        noi DECIMAL(14,2), cap_rate DECIMAL(8,4), cash_on_cash DECIMAL(8,4),
+        dscr DECIMAL(8,4), irr DECIMAL(8,4), total_return DECIMAL(14,2),
         equity DECIMAL(14,2), monthly_cash_flow DECIMAL(10,2),
         annual_cash_flow DECIMAL(12,2), break_even_months INTEGER,
-        rehab_roi DECIMAL(6,4), rent_to_value DECIMAL(6,4),
+        rehab_roi DECIMAL(8,4), rent_to_value DECIMAL(8,4),
         grm DECIMAL(8,2), deal_score INTEGER, deal_grade VARCHAR(2),
         computed_at TIMESTAMP NOT NULL DEFAULT NOW(), meta JSONB,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
