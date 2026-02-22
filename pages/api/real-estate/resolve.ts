@@ -79,18 +79,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.warn('Trigram search unavailable (pg_trgm may not be installed):', trigramErr.message);
     }
 
-    const insertResult = await pool.query(
-      `INSERT INTO re_properties (
-         address_raw, address_normalized, street_number, street_name,
-         city, state, zip
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id,
-                 address_raw AS "addressRaw",
-                 address_normalized AS "addressNormalized",
-                 city,
-                 state,
-                 zip`,
+    const newIdResult = await pool.query(`SELECT gen_random_uuid() as new_id`);
+    const newPropId = newIdResult.rows[0].new_id;
+
+    await pool.query(
+      `INSERT INTO re_properties (id, address_raw, address_normalized, street_number, street_name,
+         city, state, zip)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [
+        newPropId,
         address.trim(),
         parsed.normalized,
         parsed.streetNumber || null,
@@ -100,7 +97,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         parsed.zip || null,
       ]
     );
-    const newProp = insertResult.rows[0];
+    const propFetch = await pool.query(
+      `SELECT id, address_raw AS "addressRaw", address_normalized AS "addressNormalized",
+              city, state, zip
+       FROM re_properties WHERE id = $1`,
+      [newPropId]
+    );
+    const newProp = propFetch.rows[0];
 
     let enrichment = null;
     if (process.env.RENTCAST_API_KEY) {
