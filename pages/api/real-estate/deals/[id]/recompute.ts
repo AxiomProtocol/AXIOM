@@ -87,19 +87,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const grm = grossRentalIncome > 0 ? purchasePrice / grossRentalIncome : 0;
     const breakEvenMonths = annualCashFlow > 0 ? Math.ceil(result.cashNeeded / (annualCashFlow / 12)) : null;
 
-    const clamp = (v: number, max: number) => Math.max(-max, Math.min(max, v));
+    const safe = (v: number, scale: number, maxInt: number): string => {
+      if (!Number.isFinite(v)) return '0';
+      const factor = Math.pow(10, scale);
+      const rounded = Math.round(v * factor) / factor;
+      const clamped = Math.max(-maxInt, Math.min(maxInt, rounded));
+      return clamped.toFixed(scale);
+    };
     const metricsValues = {
       scenarioId,
-      noi: String(clamp(result.noiAnnual, 999999999999)),
-      capRate: String(clamp(Math.round(result.capRate * 10000) / 10000, 9999)),
-      cashOnCash: String(clamp(Math.round(result.cashOnCash * 10000) / 10000, 9999)),
-      dscr: String(clamp(Math.round(result.dscr * 10000) / 10000, 9999)),
-      monthlyCashFlow: String(clamp(Math.round((annualCashFlow / 12) * 100) / 100, 99999999)),
-      annualCashFlow: String(clamp(Math.round(annualCashFlow), 9999999999)),
+      noi: safe(result.noiAnnual, 2, 999999999999),
+      capRate: safe(result.capRate, 4, 9999),
+      cashOnCash: safe(result.cashOnCash, 4, 9999),
+      dscr: safe(result.dscr, 4, 9999),
+      monthlyCashFlow: safe(annualCashFlow / 12, 2, 99999999),
+      annualCashFlow: safe(annualCashFlow, 2, 9999999999),
       breakEvenMonths: breakEvenMonths,
-      rehabRoi: String(clamp(Math.round(rehabRoi * 10000) / 10000, 9999)),
-      rentToValue: String(clamp(Math.round(rentToValue * 10000) / 10000, 9999)),
-      grm: String(clamp(Math.round(grm * 100) / 100, 999999)),
+      rehabRoi: safe(rehabRoi, 4, 9999),
+      rentToValue: safe(rentToValue, 4, 9999),
+      grm: safe(grm, 2, 999999),
       meta: { strategySpecific: result.strategySpecific, grossYield: result.grossYield, netYield: result.netYield, arvSpread: result.arvSpread, cashNeeded: result.cashNeeded, monthlyDebtService: result.monthlyDebtService },
     };
 
