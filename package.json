@@ -137,8 +137,10 @@
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.13",
     "hardhat": "^2.27.0",
+    "hardhat-gas-reporter": "^2.3.0",
     "playwright": "^1.58.2",
     "solc": "^0.8.17",
+    "solidity-coverage": "^0.8.17",
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
     "typescript": "^5.9.3"
