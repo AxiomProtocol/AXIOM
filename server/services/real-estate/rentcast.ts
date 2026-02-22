@@ -97,24 +97,43 @@ async function rentcastGet(path: string, params: Record<string, string> = {}): P
     if (v) url.searchParams.set(k, v);
   });
 
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'accept': 'application/json',
-      'X-Api-Key': getApiKey(),
-    },
-  });
+  const MAX_ATTEMPTS = 3;
+  let lastError: Error | null = null;
 
-  if (!response.ok) {
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'X-Api-Key': getApiKey(),
+      },
+    });
+
+    if (response.ok) {
+      return response.json();
+    }
+
     const body = await response.text();
-    throw new Error(`RentCast API ${response.status}: ${body}`);
+    const retryable = response.status === 429 || response.status >= 500;
+
+    if (!retryable || attempt === MAX_ATTEMPTS) {
+      throw new Error(`RentCast API ${response.status}: ${body}`);
+    }
+
+    lastError = new Error(`RentCast API ${response.status}: ${body}`);
+    const delay = Math.pow(2, attempt - 1) * 500;
+    await new Promise(resolve => setTimeout(resolve, delay));
   }
 
-  return response.json();
+  throw lastError ?? new Error('RentCast API request failed after retries');
 }
 
 export async function lookupProperty(address: string): Promise<RentCastProperty[]> {
-  return rentcastGet('/properties', { address });
+  const raw = await rentcastGet('/properties', { address });
+  if (Array.isArray(raw)) return raw;
+  if (raw && Array.isArray(raw.data)) return raw.data;
+  if (raw && Array.isArray(raw.properties)) return raw.properties;
+  return raw ? [raw] : [];
 }
 
 export async function lookupPropertyByZip(zipCode: string, limit = 50): Promise<RentCastProperty[]> {
@@ -133,6 +152,11 @@ function mapPropertyType(rcType: string | undefined): string | null {
     'Land': 'land',
   };
   return map[rcType] || rcType.toLowerCase().replace(/\s+/g, '_');
+}
+
+function toDateString(value: string | null | undefined): string | null {
+  if (!value || typeof value !== 'string') return null;
+  return value.split('T')[0];
 }
 
 async function getOrCreateSource(): Promise<string> {
@@ -189,6 +213,7 @@ export async function enrichProperty(propertyId: string): Promise<{
       await db.update(reIngestRuns)
         .set({ status: 'completed', finishedAt: new Date(), recordsProcessed: 0, meta: { propertyId, trigger: 'enrich', result: 'no_match' } })
         .where(eq(reIngestRuns.id, run.id));
+      console.log('[enrich] skipped - no match', { propertyId, address });
       return { enriched: false, fields_updated: [], sales_added: 0, taxes_added: 0, facts_added: 0, error: 'No matching property found in RentCast' };
     }
 
@@ -273,13 +298,17 @@ export async function enrichProperty(propertyId: string): Promise<{
 
     if (rc.history && Object.keys(rc.history).length > 0) {
       for (const [year, sale] of Object.entries(rc.history)) {
-        if (!sale.date || !sale.price) continue;
-        await insertSale(sale.date.split('T')[0], sale.price, { event: sale.event || 'sale', rentcastYear: year });
+        const saleDate = toDateString(sale.date);
+        if (!saleDate || sale.price == null) continue;
+        await insertSale(saleDate, sale.price, { event: sale.event || 'sale', rentcastYear: year });
       }
     }
 
-    if (rc.lastSaleDate && rc.lastSalePrice) {
-      await insertSale(rc.lastSaleDate.split('T')[0], rc.lastSalePrice, { event: 'last_sale' });
+    if (rc.lastSaleDate && rc.lastSalePrice != null) {
+      const saleDate = toDateString(rc.lastSaleDate);
+      if (saleDate) {
+        await insertSale(saleDate, rc.lastSalePrice, { event: 'last_sale' });
+      }
     }
 
     let taxesAdded = 0;
@@ -366,9 +395,13 @@ export async function enrichProperty(propertyId: string): Promise<{
       })
       .where(eq(reIngestRuns.id, run.id));
 
+    console.log('[enrich] completed', { propertyId, fieldsUpdated: fieldsUpdated.length, salesAdded, taxesAdded, factsAdded });
+
     return { enriched: true, fields_updated: fieldsUpdated, sales_added: salesAdded, taxes_added: taxesAdded, facts_added: factsAdded };
 
   } catch (err: any) {
+    console.error('[enrich] failed', { propertyId, error: err.message });
+
     await db.update(reIngestRuns)
       .set({
         status: 'failed',
