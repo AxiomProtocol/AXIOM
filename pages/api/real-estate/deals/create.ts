@@ -30,19 +30,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return errorResponse(res, 404, 'PROPERTY_NOT_FOUND', 'Referenced property does not exist');
     }
 
-    const [deal] = await db.insert(reDeals).values({
+    await db.insert(reDeals).values({
       propertyId,
       strategy,
       status: 'draft',
       dealName: name || `${strategy.toUpperCase()} - ${property.addressNormalized || property.addressRaw}`,
       notes: notes || null,
-    }).returning();
+    });
 
-    const [scenario] = await db.insert(reDealScenarios).values({
+    const [deal] = await db.select().from(reDeals)
+      .where(eq(reDeals.propertyId, propertyId))
+      .limit(1);
+
+    await db.insert(reDealScenarios).values({
       dealId: deal.id,
       scenarioName: 'Base Case',
       isPrimary: true,
-    }).returning();
+    });
+
+    const [scenario] = await db.select().from(reDealScenarios)
+      .where(eq(reDealScenarios.dealId, deal.id))
+      .limit(1);
 
     await db.insert(reDealAssumptions).values({
       scenarioId: scenario.id,

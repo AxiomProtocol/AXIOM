@@ -37,12 +37,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return errorResponse(res, 404, 'DEAL_NOT_FOUND', 'Deal does not exist');
       }
 
-      const [scenario] = await db.insert(reDealScenarios).values({
+      await db.insert(reDealScenarios).values({
         dealId: id,
         scenarioName: scenarioName || 'Base Case',
         description: description || null,
         isPrimary: isPrimary === true,
-      }).returning();
+      });
+
+      const scenarios = await db.select().from(reDealScenarios)
+        .where(eq(reDealScenarios.dealId, id))
+        .orderBy(desc(reDealScenarios.createdAt))
+        .limit(1);
+      const scenario = scenarios[0];
 
       return successResponse(res, { scenario }, buildMeta(['internal_db', 'user_input'], 0.7));
     } catch (err: any) {

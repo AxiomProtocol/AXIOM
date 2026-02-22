@@ -101,17 +101,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       meta: { strategySpecific: result.strategySpecific, grossYield: result.grossYield, netYield: result.netYield, arvSpread: result.arvSpread, cashNeeded: result.cashNeeded, monthlyDebtService: result.monthlyDebtService },
     };
 
-    let metrics;
     if (existingMetrics.length > 0) {
-      [metrics] = await db.update(reDealMetrics)
+      await db.update(reDealMetrics)
         .set({ ...metricsValues, computedAt: new Date() })
-        .where(eq(reDealMetrics.scenarioId, scenarioId))
-        .returning();
+        .where(eq(reDealMetrics.scenarioId, scenarioId));
     } else {
-      [metrics] = await db.insert(reDealMetrics)
-        .values(metricsValues)
-        .returning();
+      await db.insert(reDealMetrics).values(metricsValues);
     }
+    const [metrics] = await db.select().from(reDealMetrics)
+      .where(eq(reDealMetrics.scenarioId, scenarioId)).limit(1);
 
     if (result.riskFlags.length > 0) {
       await db.insert(reRiskFlags).values(
@@ -157,7 +155,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         riskCount: result.riskFlags.length,
         criticalRisks: criticalCount,
         scenarioName: scenario.scenarioName,
-      },
+      } as any,
     });
 
     return successResponse(res, {

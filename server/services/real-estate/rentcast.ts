@@ -7,7 +7,7 @@ import {
   reSources,
   reIngestRuns,
 } from '../../../shared/realEstateSchema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { safePropertyColumns } from './helpers';
 
 const RENTCAST_BASE = 'https://api.rentcast.io/v1';
@@ -178,14 +178,19 @@ async function getOrCreateSource(): Promise<string> {
 
   if (existing.length > 0) return existing[0].id;
 
-  const [src] = await db.insert(reSources).values({
+  await db.insert(reSources).values({
     name: 'rentcast',
     type: 'api',
     baseUrl: RENTCAST_BASE,
     credentialRef: 'RENTCAST_API_KEY',
     rateLimit: 50,
     isActive: true,
-  }).returning();
+  });
+
+  const [src] = await db.select()
+    .from(reSources)
+    .where(eq(reSources.name, 'rentcast'))
+    .limit(1);
 
   return src.id;
 }
@@ -209,12 +214,19 @@ export async function enrichProperty(propertyId: string): Promise<{
 
   const sourceId = await getOrCreateSource();
 
-  const [run] = await db.insert(reIngestRuns).values({
+  await db.insert(reIngestRuns).values({
     sourceId,
     status: 'running',
     startedAt: new Date(),
-    meta: { propertyId, trigger: 'enrich' },
-  }).returning();
+    meta: { propertyId, trigger: 'enrich' } as any,
+  });
+
+  const recentRuns = await db.select()
+    .from(reIngestRuns)
+    .where(eq(reIngestRuns.sourceId, sourceId))
+    .orderBy(sql`started_at DESC`)
+    .limit(1);
+  const run = recentRuns[0];
 
   try {
     const address = property.addressRaw;

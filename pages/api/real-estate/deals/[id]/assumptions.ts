@@ -65,17 +65,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .where(eq(reDealAssumptions.scenarioId, scenarioId))
         .limit(1);
 
-      let assumptions;
       if (existing.length > 0) {
-        [assumptions] = await db.update(reDealAssumptions)
+        await db.update(reDealAssumptions)
           .set({ ...upsertValues, updatedAt: new Date() })
-          .where(eq(reDealAssumptions.scenarioId, scenarioId))
-          .returning();
+          .where(eq(reDealAssumptions.scenarioId, scenarioId));
       } else {
-        [assumptions] = await db.insert(reDealAssumptions)
-          .values(upsertValues)
-          .returning();
+        await db.insert(reDealAssumptions).values(upsertValues);
       }
+      const [assumptions] = await db.select().from(reDealAssumptions)
+        .where(eq(reDealAssumptions.scenarioId, scenarioId)).limit(1);
 
       return successResponse(res, { assumptions }, buildMeta(['internal_db', 'user_input'], 0.7));
     } catch (err: any) {
