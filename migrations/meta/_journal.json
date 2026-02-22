@@ -36,6 +36,13 @@
       "when": 1771545601000,
       "tag": "0005_re_ingest_constraints",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1771718400000,
+      "tag": "0006_fix_deal_metrics_precision",
+      "breakpoints": true
     }
   ]
 }
