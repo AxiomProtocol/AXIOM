@@ -117,10 +117,14 @@ async function rentcastGet(path: string, params: Record<string, string> = {}): P
     const retryable = response.status === 429 || response.status >= 500;
 
     if (!retryable || attempt === MAX_ATTEMPTS) {
-      throw new Error(`RentCast API ${response.status}: ${body}`);
+      const err = new Error(`RentCast API ${response.status}: ${body}`) as Error & { statusCode: number };
+      err.statusCode = response.status;
+      throw err;
     }
 
-    lastError = new Error(`RentCast API ${response.status}: ${body}`);
+    const retryErr = new Error(`RentCast API ${response.status}: ${body}`) as Error & { statusCode: number };
+    retryErr.statusCode = response.status;
+    lastError = retryErr;
     const delay = Math.pow(2, attempt - 1) * 500;
     await new Promise(resolve => setTimeout(resolve, delay));
   }
@@ -129,11 +133,17 @@ async function rentcastGet(path: string, params: Record<string, string> = {}): P
 }
 
 export async function lookupProperty(address: string): Promise<RentCastProperty[]> {
-  const raw = await rentcastGet('/properties', { address });
-  if (Array.isArray(raw)) return raw;
-  if (raw && Array.isArray(raw.data)) return raw.data;
-  if (raw && Array.isArray(raw.properties)) return raw.properties;
-  return raw ? [raw] : [];
+  try {
+    const raw = await rentcastGet('/properties', { address });
+    if (Array.isArray(raw)) return raw;
+    if (raw && Array.isArray(raw.data)) return raw.data;
+    if (raw && Array.isArray(raw.properties)) return raw.properties;
+    return raw ? [raw] : [];
+  } catch (err: any) {
+    // RentCast returns 404 when no property matches the address — treat as empty results
+    if (err.statusCode === 404) return [];
+    throw err;
+  }
 }
 
 export async function lookupPropertyByZip(zipCode: string, limit = 50): Promise<RentCastProperty[]> {
