@@ -70,7 +70,31 @@ export default function DealWorkspacePage() {
         setError(json.error.message);
       } else {
         setSummary(json.data);
-        const scenarios = json.data?.scenarios || [];
+        let scenarios = json.data?.scenarios || [];
+
+        if (scenarios.length === 0) {
+          const createRes = await fetch(`/api/real-estate/deals/${id}/scenarios`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scenarioName: 'Base Case' }),
+          });
+          const createJson = await createRes.json();
+          if (createJson.data?.scenario?.id) {
+            const newScenarioId = createJson.data.scenario.id;
+            await fetch(`/api/real-estate/deals/${id}/assumptions`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ scenarioId: newScenarioId, ...DEFAULT_ASSUMPTIONS }),
+            });
+            const refreshRes = await fetch(`/api/real-estate/deals/${id}/summary`);
+            const refreshJson = await refreshRes.json();
+            if (!refreshJson.error) {
+              setSummary(refreshJson.data);
+              scenarios = refreshJson.data?.scenarios || [];
+            }
+          }
+        }
+
         if (scenarios.length > 0) {
           setActiveScenarioId(scenarios[0].scenario.id);
           if (scenarios[0].assumptions) {

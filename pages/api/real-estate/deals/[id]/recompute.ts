@@ -180,7 +180,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }, buildMeta(['internal_db', 'derived_computation'], 1.0));
 
   } catch (err: any) {
-    console.error('Recompute error:', err.message);
-    return errorResponse(res, 500, 'INTERNAL_ERROR', 'Failed to recompute deal metrics');
+    console.error('Recompute error:', err.message, err.stack);
+    return errorResponse(res, 500, 'INTERNAL_ERROR', `Failed to recompute deal metrics: ${err.message || 'Unknown error'}`);
   }
 }
