@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../../server/db';
-import { successResponse, errorResponse, buildMeta, parseNumeric, safeNum } from '../../../../../server/services/real-estate/helpers';
+import { successResponse, errorResponse, buildMeta, parseNumeric, safeNum, safeInt } from '../../../../../server/services/real-estate/helpers';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
@@ -52,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         money12(values.rehabBudget),
         pct5(values.downPaymentPct),
         rate5(values.interestRate),
-        parseNumeric(values.loanTermYears, 30),
+        safeInt(parseNumeric(values.loanTermYears, 30), 100) ?? 30,
         pct5(values.closingCostPct),
         money10(values.monthlyRent),
         pct5(values.vacancyPct),
@@ -61,7 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         money10(values.annualTaxes),
         money10(values.annualCapex),
         money10(values.annualMaintenance),
-        parseNumeric(values.holdPeriodMonths, 6),
+        safeInt(parseNumeric(values.holdPeriodMonths, 6), 1200) ?? 6,
         pct5(values.appreciationPct),
       ];
 

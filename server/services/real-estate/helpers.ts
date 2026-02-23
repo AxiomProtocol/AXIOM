@@ -99,3 +99,11 @@ export function safeNum(value: number, scale: number, maxIntDigits: number): str
   const clamped = Math.max(-maxVal, Math.min(maxVal, value));
   return clamped.toFixed(scale);
 }
+
+export function safeInt(value: number | null | undefined, max: number = 2147483647): number | null {
+  if (value === null || value === undefined) return null;
+  if (!Number.isFinite(value)) return null;
+  const rounded = Math.round(value);
+  if (rounded > max || rounded < -max) return null;
+  return rounded;
+}

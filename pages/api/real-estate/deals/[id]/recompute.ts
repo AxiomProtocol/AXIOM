@@ -3,7 +3,7 @@ import { db, pool } from '../../../../../server/db';
 import { reDealScenarios, reDealAssumptions, reDealMetrics, reRiskFlags } from '../../../../../shared/realEstateSchema';
 import { eq } from 'drizzle-orm';
 import { computeUnderwriting } from '../../../../../server/services/real-estate/underwriting';
-import { successResponse, errorResponse, buildMeta, parseNumeric, safeNum } from '../../../../../server/services/real-estate/helpers';
+import { successResponse, errorResponse, buildMeta, parseNumeric, safeNum, safeInt } from '../../../../../server/services/real-estate/helpers';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -90,7 +90,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const grossRentalIncome = p(assumptions.monthly_rent) * 12;
     const rentToValue = purchasePrice > 0 ? (p(assumptions.monthly_rent) / purchasePrice) * 100 : 0;
     const grm = grossRentalIncome > 0 ? purchasePrice / grossRentalIncome : 0;
-    const breakEvenMonths = annualCashFlow > 0 ? Math.ceil(result.cashNeeded / (annualCashFlow / 12)) : null;
+    const rawBreakEven = annualCashFlow > 0 ? Math.ceil(result.cashNeeded / (annualCashFlow / 12)) : null;
+    const breakEvenMonths = safeInt(rawBreakEven, 100000);
 
     const noi = safeNum(result.noiAnnual, 2, 12);
     const capRate = safeNum(result.capRate, 4, 4);
@@ -192,6 +193,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   } catch (err: any) {
     console.error('Recompute error:', err.message, err.stack);
+    console.error('Recompute debug: dealId=', id, 'scenarioId=', req.body?.scenarioId);
     return errorResponse(res, 500, 'INTERNAL_ERROR', `Failed to recompute deal metrics: ${err.message || 'Unknown error'}`);
   }
 }
