@@ -99,6 +99,9 @@ export default function DisclosurePage() {
     'Adaptive Metrics Engine (AME v1.0.0)',
     'Institutional Observer Dashboard',
     'Founder Operations Dashboard with operational logging',
+    'MIRDT Execution Model (deterministic paper trading with hybrid exit system)',
+    'Proof of Execution Playbook (auditable trade-level performance tracking)',
+    'Graduated Execution Framework (behavior-based qualification engine with SHA-256 audit chain)',
   ];
 
   const configuredItems = [
@@ -134,9 +137,10 @@ export default function DisclosurePage() {
     { layer: 'Layer 3 \u2014 Yield', desc: 'Euler V2 lending markets and protocol participation programs' },
     { layer: 'Layer 4 \u2014 Governance', desc: 'AXM governance token and community voting' },
     { layer: 'Layer 5 \u2014 Revenue', desc: 'Revenue distribution engine (50/30/20 allocation)' },
-    { layer: 'Layer 6 \u2014 Intelligence', desc: 'Market Intelligence Terminal and Sentinel (advisory mode only)' },
+    { layer: 'Layer 6 \u2014 Intelligence', desc: 'Market Intelligence Terminal, MIRDT execution model, and Sentinel capital decision layer (advisory mode only)' },
     { layer: 'Layer 7 \u2014 Physical', desc: 'Real estate asset onboarding pipeline and decentralized infrastructure nodes' },
     { layer: 'Layer 8 \u2014 Disclosure', desc: 'Solvency console, Adaptive Metrics Engine, and Observer dashboard' },
+    { layer: 'Layer 9 \u2014 Execution', desc: 'Graduated Execution Framework (GEF), Proof of Execution Playbook, and behavior-based qualification engine' },
   ];
 
   const guardRails = [
@@ -146,6 +150,7 @@ export default function DisclosurePage() {
     { num: '4', title: 'Self-Borrow Risk Contamination', desc: 'All founder loopback test positions must be tagged as NON-REPRESENTATIVE' },
     { num: '5', title: 'Sentinel Authority Boundary', desc: 'Advisory only until post-public governance vote grants execution authority' },
     { num: '6', title: 'Property Phase Timing Risk', desc: 'If no qualifying property is identified by Week 44, execute a mandatory hard pause' },
+    { num: '7', title: 'Execution Authority Escalation', desc: 'No GEF tier progression beyond PAPER may authorize live capital deployment without community governance approval and minimum 20 closed paper trades with positive EQS' },
   ];
 
   const riskFactors = [
@@ -171,6 +176,12 @@ export default function DisclosurePage() {
     { institutional: 'Reconciliation snapshot', technical: 'On-chain state capture at a point in time' },
     { institutional: 'Revenue distribution engine', technical: 'Revenue Router smart contract' },
     { institutional: 'Capital decision layer', technical: 'Automated trading signal pipeline' },
+    { institutional: 'Execution Qualification Score (EQS)', technical: 'Weighted composite of 6 behavioral scores determining tier eligibility' },
+    { institutional: 'Behavior Qualification Engine (BQE)', technical: 'Scoring engine computing RBAR, DSI, PSC, VRS, EDS, RCS metrics' },
+    { institutional: 'Graduated execution', technical: 'Tiered progression from paper trading to live capital deployment' },
+    { institutional: 'Paper execution', technical: 'Simulated trades with real market prices for capability demonstration' },
+    { institutional: 'Proof of execution', technical: 'Auditable trade record with SHA-256 hash chain for tamper-evident verification' },
+    { institutional: 'Tier progression', technical: 'Behavior-gated advancement from PAPER to TIER_1, TIER_2, TIER_3' },
   ];
 
   const coreContracts = [
@@ -580,7 +591,173 @@ export default function DisclosurePage() {
             </div>
             <div className="px-6 py-4">
               <p className="text-sm text-dl-navy leading-relaxed">
-                Sentinel converts market intelligence signals into capital action recommendations with cryptographic audit trails. During the current bootstrap and proof-of-concept phase, Sentinel has no execution authority. All outputs are informational. No automated capital deployment is permitted until a community governance vote explicitly grants execution authority.
+                Sentinel converts market intelligence signals into capital action recommendations with cryptographic audit trails. During the current bootstrap and proof-of-concept phase, Sentinel has no execution authority. All outputs are informational. No automated capital deployment is permitted until a community governance vote explicitly grants execution authority. Sentinel signals feed the MIRDT Execution Model for paper trade validation and the Graduated Execution Framework for behavior-based qualification tracking.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-12">
+          <SectionHeading>MIRDT Execution Model</SectionHeading>
+          <div className="border border-dl-border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
+              <div>
+                <p className="text-xs text-dl-gray mb-1">Type</p>
+                <p className="text-sm text-dl-navy">Deterministic paper trading engine with auditable decision pipeline</p>
+              </div>
+              <div>
+                <p className="text-xs text-dl-gray mb-1">Current Mode</p>
+                <p className="text-sm font-dl-mono text-dl-navy">PAPER ONLY</p>
+              </div>
+            </div>
+            <div className="px-6 py-3 border-b border-dl-border">
+              <p className="text-xs text-dl-gray mb-2">Pipeline Stages</p>
+              <div className="space-y-1">
+                <p className="text-sm text-dl-navy">1. Price fetching from external providers (CoinGecko, Alpha Vantage)</p>
+                <p className="text-sm text-dl-navy">2. Direction inference and signal classification (A/B/C grading)</p>
+                <p className="text-sm text-dl-navy">3. Position sizing via risk budget allocation (AXUSD denominated)</p>
+                <p className="text-sm text-dl-navy">4. Decision authorization and paper trade opening</p>
+                <p className="text-sm text-dl-navy">5. Hybrid exit system with ATR-based volatility-aware risk stops</p>
+              </div>
+            </div>
+            <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
+              <p className="text-xs text-dl-gray mb-2">Exit Classification</p>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                <p className="text-sm font-dl-mono text-dl-navy">EXIT_RISK</p>
+                <p className="text-sm font-dl-mono text-dl-navy">TAKE_PROFIT</p>
+                <p className="text-sm font-dl-mono text-dl-navy">INVALIDATED</p>
+                <p className="text-sm font-dl-mono text-dl-navy">TIME_EXIT</p>
+                <p className="text-sm font-dl-mono text-dl-navy">HOLD</p>
+              </div>
+            </div>
+            <div className="px-6 py-3 border-b border-dl-border">
+              <p className="text-xs text-dl-gray mb-2">Asset Coverage</p>
+              <p className="text-sm text-dl-navy">Digital assets (via CoinGecko OHLCV) and US equities (via Alpha Vantage OHLCV). Volatility computation uses ATR(14) with 6-hour cache. Live prices polled at 15-second intervals during monitoring.</p>
+            </div>
+            <div className="px-6 py-4 bg-dl-bg-alt">
+              <p className="text-xs text-dl-gray mb-1">Disclosure</p>
+              <p className="text-sm text-dl-navy leading-relaxed">
+                All MIRDT trades are paper-only simulations using real market prices. No actual capital is deployed. Paper trade results do not guarantee future performance. The execution model serves as a proof-of-concept for the deterministic decision pipeline and feeds the Graduated Execution Framework for qualification tracking. Each decision carries a cryptographic checksum for independent verification.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-12">
+          <SectionHeading>Graduated Execution Framework (GEF)</SectionHeading>
+          <div className="border border-dl-border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
+              <div>
+                <p className="text-xs text-dl-gray mb-1">Type</p>
+                <p className="text-sm text-dl-navy">Behavior-based qualification system for execution capability assessment</p>
+              </div>
+              <div>
+                <p className="text-xs text-dl-gray mb-1">Current Status</p>
+                <p className="text-sm font-dl-mono text-dl-navy">PAPER TIER (No live execution)</p>
+              </div>
+            </div>
+            <div className="px-6 py-3 border-b border-dl-border">
+              <p className="text-xs text-dl-gray mb-2">Tier Progression Ladder</p>
+              <div className="space-y-2">
+                <div className="flex gap-3">
+                  <p className="text-sm font-dl-mono text-dl-navy font-semibold w-24 flex-shrink-0">PAPER</p>
+                  <p className="text-sm text-dl-navy">Simulated execution only. No capital at risk. All current activity operates at this tier.</p>
+                </div>
+                <div className="flex gap-3">
+                  <p className="text-sm font-dl-mono text-dl-navy font-semibold w-24 flex-shrink-0">TIER 1</p>
+                  <p className="text-sm text-dl-navy">Minimum 20 paper trades, EQS above 0.65, AXM commitment required. Micro-scale live execution.</p>
+                </div>
+                <div className="flex gap-3">
+                  <p className="text-sm font-dl-mono text-dl-navy font-semibold w-24 flex-shrink-0">TIER 2</p>
+                  <p className="text-sm text-dl-navy">Extended track record, EQS above 0.75, increased AXM commitment. Expanded position sizing.</p>
+                </div>
+                <div className="flex gap-3">
+                  <p className="text-sm font-dl-mono text-dl-navy font-semibold w-24 flex-shrink-0">TIER 3</p>
+                  <p className="text-sm text-dl-navy">Full qualification, EQS above 0.85, maximum AXM commitment. Full execution authority (pending governance vote).</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
+              <p className="text-xs text-dl-gray mb-2">Behavior Qualification Engine (BQE) {'\u2014'} 6 Scores</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="flex gap-2">
+                  <p className="text-sm font-dl-mono text-dl-navy font-semibold w-14 flex-shrink-0">RBAR</p>
+                  <p className="text-sm text-dl-navy">Risk Budget Adherence Ratio (25% weight)</p>
+                </div>
+                <div className="flex gap-2">
+                  <p className="text-sm font-dl-mono text-dl-navy font-semibold w-14 flex-shrink-0">DSI</p>
+                  <p className="text-sm text-dl-navy">Drawdown Stability Index (25% weight)</p>
+                </div>
+                <div className="flex gap-2">
+                  <p className="text-sm font-dl-mono text-dl-navy font-semibold w-14 flex-shrink-0">PSC</p>
+                  <p className="text-sm text-dl-navy">Position Size Consistency (15% weight)</p>
+                </div>
+                <div className="flex gap-2">
+                  <p className="text-sm font-dl-mono text-dl-navy font-semibold w-14 flex-shrink-0">VRS</p>
+                  <p className="text-sm text-dl-navy">Volatility Response Stability (15% weight)</p>
+                </div>
+                <div className="flex gap-2">
+                  <p className="text-sm font-dl-mono text-dl-navy font-semibold w-14 flex-shrink-0">EDS</p>
+                  <p className="text-sm text-dl-navy">Exit Discipline Score (10% weight)</p>
+                </div>
+                <div className="flex gap-2">
+                  <p className="text-sm font-dl-mono text-dl-navy font-semibold w-14 flex-shrink-0">RCS</p>
+                  <p className="text-sm text-dl-navy">Rule Compliance Score (10% weight)</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-3 border-b border-dl-border">
+              <p className="text-xs text-dl-gray mb-2">EQS Composite Formula</p>
+              <p className="text-sm font-dl-mono text-dl-navy">EQS = (0.25 x RBAR) + (0.25 x DSI) + (0.15 x PSC) + (0.15 x VRS) + (0.10 x EDS) + (0.10 x RCS)</p>
+            </div>
+            <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
+              <p className="text-xs text-dl-gray mb-2">Audit Infrastructure</p>
+              <p className="text-sm text-dl-navy leading-relaxed">
+                Every GEF event (intent creation, execution fill, trade close, qualification computation, tier change) is recorded in a SHA-256 hash chain. Each entry references the previous hash, creating a tamper-evident audit log. The hash chain covers 9 dedicated database tables with transactional integrity. MIRDT paper trades are bridged into GEF via a dual-write pattern that creates corresponding GEF intents and executions with MAE/MFE tracking.
+              </p>
+            </div>
+            <div className="px-6 py-3 border-b border-dl-border">
+              <p className="text-xs text-dl-gray mb-2">AXUSD Denomination</p>
+              <p className="text-sm text-dl-navy leading-relaxed">
+                All GEF risk budgets, position sizing, and P&L tracking are denominated in AXUSD. This ensures execution capability is measured in protocol-native units. AXM commitment requirements for tier progression create alignment between execution authority and protocol participation.
+              </p>
+            </div>
+            <div className="px-6 py-4 bg-dl-bg-alt">
+              <p className="text-xs text-dl-gray mb-1">Disclosure</p>
+              <p className="text-sm text-dl-navy leading-relaxed">
+                The Graduated Execution Framework is currently in PAPER tier only. No live capital has been deployed through GEF. Tier progression beyond PAPER requires community governance approval (Guard Rail 7). BQE scores are computed from actual paper trade behavior and cannot be manipulated without invalidating the audit hash chain. Live execution is disabled by default and requires explicit environment configuration.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-12">
+          <SectionHeading>Proof of Execution Playbook</SectionHeading>
+          <div className="border border-dl-border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
+              <div>
+                <p className="text-xs text-dl-gray mb-1">Target</p>
+                <p className="text-sm font-dl-mono text-dl-navy">$100 cumulative P&L in 30 days (paper trading)</p>
+              </div>
+              <div>
+                <p className="text-xs text-dl-gray mb-1">Purpose</p>
+                <p className="text-sm text-dl-navy">Demonstrate deterministic execution capability before live deployment</p>
+              </div>
+            </div>
+            <div className="px-6 py-3 border-b border-dl-border">
+              <p className="text-xs text-dl-gray mb-2">Tracking Components</p>
+              <div className="space-y-1">
+                <p className="text-sm text-dl-navy">Daily P&L aggregates with cumulative equity curve</p>
+                <p className="text-sm text-dl-navy">Execution metrics: win rate, Sharpe estimate, max drawdown, profit factor</p>
+                <p className="text-sm text-dl-navy">Full audit trail linking Setup, Decision, Trade, and P&L</p>
+                <p className="text-sm text-dl-navy">GEF qualification snapshot with BQE score breakdown</p>
+                <p className="text-sm text-dl-navy">Execution run history with cryptographic checksums</p>
+              </div>
+            </div>
+            <div className="px-6 py-4 bg-dl-bg-alt">
+              <p className="text-xs text-dl-gray mb-1">Disclosure</p>
+              <p className="text-sm text-dl-navy leading-relaxed">
+                The Proof of Execution Playbook is an internal founder-operated dashboard. It serves as the source of truth for system capability demonstration. Paper trading P&L does not constitute realized returns and is not indicative of future performance. The $100/30-day target is a validation benchmark, not a yield commitment.
               </p>
             </div>
           </div>
@@ -712,7 +889,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>6 Mandatory Guard Rails</SectionHeading>
+          <SectionHeading>7 Mandatory Guard Rails</SectionHeading>
           <div className="border border-dl-border">
             {guardRails.map((gr, i) => (
               <div key={i} className={`px-6 py-3 ${i < guardRails.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
