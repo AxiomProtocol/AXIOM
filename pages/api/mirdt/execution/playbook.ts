@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../server/db';
+import { getFounderQualificationSnapshot } from '../../../../server/services/mirdtExecution/gefBridge';
 
 interface DailyAggregate {
   date: string;
@@ -239,12 +240,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       endDate: todayStr,
     };
 
+    let gefQualification = null;
+    try {
+      gefQualification = await getFounderQualificationSnapshot();
+    } catch (gefErr: any) {
+      console.error('[playbook] GEF qualification fetch failed:', gefErr.message);
+    }
+
+    const openTradeDetails = openTrades.map((t: any) => ({
+      tradeId: t.id,
+      setupId: t.setup_id,
+      decisionId: t.decision_id,
+      symbol: t.symbol || 'Unknown',
+      assetType: t.asset_type || 'Unknown',
+      direction: t.direction,
+      grade: t.grade,
+      entryPrice: parseFloat(t.entry_price),
+      quantity: parseFloat(t.quantity),
+      openedAt: t.opened_at,
+      stopPrice: t.stop_price ? parseFloat(t.stop_price) : null,
+      takeProfitP50: t.take_profit_p50 ? parseFloat(t.take_profit_p50) : null,
+      confidenceScore: t.confidence_score ? parseFloat(t.confidence_score) : null,
+      regimeTier: t.regime_tier,
+      policyMode: t.policy_mode,
+    }));
+
     return res.status(200).json({
       metrics,
       dailyAggregates,
       auditTrail,
+      openTradeDetails,
       portfolioConfig,
       recentRuns: runsResult.rows,
+      gefQualification,
       generatedAt: new Date().toISOString(),
     });
   } catch (error: any) {

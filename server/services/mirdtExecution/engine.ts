@@ -478,6 +478,24 @@ export async function runExecutionBatch(
         entryAllowed,
       });
 
+      if (eligibility.status === 'ELIGIBLE' && entryAllowed) {
+        try {
+          const authResult = await authorizeDecision(decisionId);
+          if (authResult.success) {
+            const tradeResult = await openPaperTrade(decisionId);
+            if (tradeResult.success) {
+              console.log(`[MIRDTExecution] Auto-opened trade ${tradeResult.tradeId} for ${setup.symbol} (${direction})`);
+            } else {
+              console.log(`[MIRDTExecution] Auto-open failed for ${setup.symbol}: ${tradeResult.error}`);
+            }
+          } else {
+            console.log(`[MIRDTExecution] Auto-authorize failed for ${setup.symbol}: ${authResult.error}`);
+          }
+        } catch (autoErr: any) {
+          console.error(`[MIRDTExecution] Auto-open error for ${setup.symbol}:`, autoErr.message);
+        }
+      }
+
       if (checkInvalidation(currentPrice, setup.invalidationPrice, direction)) {
         await pool.query(
           `UPDATE mirdt_setups SET status = 'INVALIDATED' WHERE id = $1`,

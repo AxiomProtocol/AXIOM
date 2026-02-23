@@ -48,6 +48,17 @@ export async function bridgeTradeOpen(
 
     const userId = await ensureFounderProfile();
 
+    const existingIntent = await client.query(
+      `SELECT intent_id FROM gef_execution_intents
+       WHERE user_id = $1 AND rejection_reason = $2`,
+      [userId, `mirdt:${mirdtTradeId}`]
+    );
+    if (existingIntent.rows.length > 0) {
+      await client.query('ROLLBACK');
+      console.log(`[GEF-Bridge] Idempotency: GEF intent already exists for MIRDT trade ${mirdtTradeId}`);
+      return { intentId: existingIntent.rows[0].intent_id, executionId: 'existing' };
+    }
+
     const entryPrice = safeNum(decision.current_price);
     const stopPrice = safeNum(decision.stop_price);
     const stopDistance = Math.abs(entryPrice - stopPrice);
@@ -63,8 +74,8 @@ export async function bridgeTradeOpen(
       `INSERT INTO gef_execution_intents
         (user_id, symbol, asset_class, signal_id, regime_id, policy_mode,
          direction, entry_price, stop_price, take_profit_price, invalidation_price,
-         stop_distance, risk_budget_axusd, position_size, is_live, status)
-       VALUES ($1, $2, $3, $4, NULL, $5, $6, $7, $8, $9, NULL, $10, $11, $12, false, 'OPEN')
+         stop_distance, risk_budget_axusd, position_size, is_live, status, rejection_reason)
+       VALUES ($1, $2, $3, $4, NULL, $5, $6, $7, $8, $9, NULL, $10, $11, $12, false, 'OPEN', $13)
        RETURNING intent_id`,
       [
         userId,
@@ -79,6 +90,7 @@ export async function bridgeTradeOpen(
         stopDistance,
         riskBudget,
         positionSize,
+        `mirdt:${mirdtTradeId}`,
       ]
     );
     const intentId = intentResult.rows[0].intent_id;
@@ -132,14 +144,10 @@ export async function bridgeTradeClose(
               i.intent_id, i.user_id, i.symbol, i.direction
        FROM gef_execution_intents i
        JOIN gef_executions e ON e.intent_id = i.intent_id
-       WHERE i.signal_id = (
-         SELECT setup_id FROM mirdt_paper_trades WHERE id = $1
-       )
+       WHERE i.rejection_reason = $1
        AND i.user_id = $2
-       AND e.closed_at IS NULL
-       ORDER BY e.opened_at DESC
-       LIMIT 1`,
-      [mirdtTradeId, FOUNDER_USER_ID]
+       AND e.closed_at IS NULL`,
+      [`mirdt:${mirdtTradeId}`, FOUNDER_USER_ID]
     );
 
     if (bridged.rows.length === 0) {
@@ -262,7 +270,7 @@ export async function getFounderQualificationSnapshot(): Promise<any> {
   const latestSnapshot = await pool.query(
     `SELECT * FROM gef_qualification_snapshots
      WHERE user_id = $1
-     ORDER BY computed_at DESC LIMIT 1`,
+     ORDER BY created_at DESC LIMIT 1`,
     [FOUNDER_USER_ID]
   );
 
@@ -307,7 +315,7 @@ export async function getFounderQualificationSnapshot(): Promise<any> {
       rcs: safeNum(snapshot.rcs),
       eqs: safeNum(snapshot.eqs),
       tierResult: snapshot.tier_result,
-      computedAt: snapshot.computed_at,
+      computedAt: snapshot.created_at,
     } : null,
   };
 }

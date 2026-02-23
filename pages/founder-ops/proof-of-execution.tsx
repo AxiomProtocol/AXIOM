@@ -74,12 +74,62 @@ interface AuditEntry {
   takeProfitP95: number | null;
 }
 
+interface OpenTrade {
+  tradeId: string;
+  setupId: string;
+  decisionId: string;
+  symbol: string;
+  assetType: string;
+  direction: string;
+  grade: string;
+  entryPrice: number;
+  quantity: number;
+  openedAt: string;
+  stopPrice: number | null;
+  takeProfitP50: number | null;
+  confidenceScore: number | null;
+  regimeTier: string;
+  policyMode: string;
+}
+
+interface GEFQualification {
+  userId: string;
+  wallet: string;
+  currentTier: string;
+  policyMode: string;
+  eqs: number;
+  paperTradeCount: number;
+  paperWinRate: number;
+  paperMaxDrawdown: number;
+  paperSharpe: number | null;
+  paperPnlAxusd: number;
+  liveEnabled: boolean;
+  axmBalance: number;
+  axusdReserve: number;
+  paperStartDate: string;
+  openGefTrades: number;
+  closedGefTrades: number;
+  latestBqe: {
+    rbar: number;
+    dsi: number;
+    psc: number;
+    vrs: number;
+    eds: number;
+    rcs: number;
+    eqs: number;
+    tierResult: string;
+    computedAt: string;
+  } | null;
+}
+
 interface PlaybookData {
   metrics: PlaybookMetrics;
   dailyAggregates: DailyAggregate[];
   auditTrail: AuditEntry[];
+  openTradeDetails: OpenTrade[];
   portfolioConfig: any;
   recentRuns: any[];
+  gefQualification: GEFQualification | null;
   generatedAt: string;
 }
 
@@ -88,7 +138,7 @@ export default function ProofOfExecutionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [runStatus, setRunStatus] = useState<{ type: 'idle' | 'running' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' });
-  const [activeSection, setActiveSection] = useState<'summary' | 'daily' | 'audit' | 'runs'>('summary');
+  const [activeSection, setActiveSection] = useState<'summary' | 'positions' | 'qualification' | 'daily' | 'audit' | 'runs'>('summary');
   const [adminKey, setAdminKey] = useState('');
 
   const fetchPlaybook = useCallback(async () => {
@@ -138,6 +188,8 @@ export default function ProofOfExecutionPage() {
 
   const tabs = [
     { key: 'summary', label: 'Target Progress' },
+    { key: 'positions', label: 'Open Positions' },
+    { key: 'qualification', label: 'GEF Qualification' },
     { key: 'daily', label: 'Daily P&L' },
     { key: 'audit', label: 'Audit Trail' },
     { key: 'runs', label: 'Execution Runs' },
@@ -291,6 +343,156 @@ export default function ProofOfExecutionPage() {
                     </tbody>
                   </table>
                 </div>
+              </div>
+            )}
+
+            {activeSection === 'positions' && (
+              <div className="border border-dl-border">
+                <div className="p-4 border-b border-dl-border bg-gray-50">
+                  <h3 className="font-serif text-lg text-dl-navy">Open Positions</h3>
+                  <p className="font-mono text-xs text-dl-muted mt-1">
+                    Active paper trades — bridged to GEF for qualification tracking
+                  </p>
+                </div>
+                {(!data.openTradeDetails || data.openTradeDetails.length === 0) ? (
+                  <div className="p-8 text-center">
+                    <p className="font-mono text-sm text-dl-muted">No open positions — run an execution cycle to open trades from active setups</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-dl-border/50">
+                    {data.openTradeDetails.map((trade) => (
+                      <div key={trade.tradeId} className="p-4 hover:bg-gray-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <span className="font-mono text-sm font-semibold text-dl-navy">{trade.symbol}</span>
+                            <span className={`font-mono text-xs px-2 py-0.5 border ${trade.direction === 'LONG' ? 'border-dl-forest text-dl-forest' : 'border-red-400 text-red-600'}`}>
+                              {trade.direction}
+                            </span>
+                            <span className="font-mono text-xs text-dl-muted">{trade.assetType}</span>
+                            {trade.grade && (
+                              <span className="font-mono text-xs px-2 py-0.5 border border-dl-border">{trade.grade}</span>
+                            )}
+                          </div>
+                          <StatusBadge status="OPEN" />
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 font-mono text-xs text-dl-muted">
+                          <span>Entry: ${trade.entryPrice.toFixed(4)}</span>
+                          <span>Qty: {trade.quantity.toFixed(6)}</span>
+                          {trade.stopPrice && <span>Stop: ${trade.stopPrice.toFixed(4)}</span>}
+                          {trade.takeProfitP50 && <span>TP50: ${trade.takeProfitP50.toFixed(4)}</span>}
+                          {trade.confidenceScore !== null && <span>Confidence: {trade.confidenceScore.toFixed(1)}</span>}
+                          {trade.regimeTier && <span>Regime: {trade.regimeTier}</span>}
+                          <span>Policy: {trade.policyMode}</span>
+                        </div>
+                        <div className="mt-2 font-mono text-xs text-dl-muted/70">
+                          <span>Opened: {fmtDateTime(trade.openedAt)}</span>
+                          <span className="mx-2">|</span>
+                          <span>Trade: {trade.tradeId.slice(0, 8)}...</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeSection === 'qualification' && (
+              <div className="border border-dl-border">
+                <div className="p-4 border-b border-dl-border bg-gray-50">
+                  <h3 className="font-serif text-lg text-dl-navy">GEF Qualification Status</h3>
+                  <p className="font-mono text-xs text-dl-muted mt-1">
+                    Graduated Execution Framework — behavior-based tier progression from paper to live execution
+                  </p>
+                </div>
+                {!data.gefQualification ? (
+                  <div className="p-8 text-center">
+                    <p className="font-mono text-sm text-dl-muted">GEF qualification data not available</p>
+                  </div>
+                ) : (
+                  <div className="p-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                      <div className="border border-dl-border p-3">
+                        <p className="font-mono text-xs text-dl-muted mb-1">Current Tier</p>
+                        <p className="font-mono text-lg text-dl-navy">{data.gefQualification.currentTier}</p>
+                      </div>
+                      <div className="border border-dl-border p-3">
+                        <p className="font-mono text-xs text-dl-muted mb-1">EQS</p>
+                        <p className="font-mono text-lg text-dl-navy">{data.gefQualification.eqs.toFixed(3)}</p>
+                      </div>
+                      <div className="border border-dl-border p-3">
+                        <p className="font-mono text-xs text-dl-muted mb-1">Policy Mode</p>
+                        <p className="font-mono text-lg text-dl-navy">{data.gefQualification.policyMode}</p>
+                      </div>
+                      <div className="border border-dl-border p-3">
+                        <p className="font-mono text-xs text-dl-muted mb-1">Live Enabled</p>
+                        <p className={`font-mono text-lg ${data.gefQualification.liveEnabled ? 'text-dl-forest' : 'text-dl-muted'}`}>
+                          {data.gefQualification.liveEnabled ? 'YES' : 'NO'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+                      <MetricCard label="GEF Paper Trades" value={`${data.gefQualification.closedGefTrades}`} />
+                      <MetricCard label="GEF Open Trades" value={`${data.gefQualification.openGefTrades}`} />
+                      <MetricCard label="Paper Win Rate" value={fmtPct(data.gefQualification.paperWinRate * 100)} />
+                      <MetricCard label="Paper P&L (AXUSD)" value={fmtUsd(data.gefQualification.paperPnlAxusd)} highlight={data.gefQualification.paperPnlAxusd > 0} />
+                      <MetricCard label="Max Drawdown" value={fmtPct(data.gefQualification.paperMaxDrawdown * 100)} />
+                      <MetricCard label="AXM Balance" value={`${data.gefQualification.axmBalance}`} />
+                    </div>
+
+                    {data.gefQualification.latestBqe && (
+                      <div className="border border-dl-border p-4">
+                        <h4 className="font-serif text-base text-dl-navy mb-3">BQE Score Breakdown</h4>
+                        <p className="font-mono text-xs text-dl-muted mb-3">
+                          Computed: {fmtDateTime(data.gefQualification.latestBqe.computedAt)} | Tier Result: {data.gefQualification.latestBqe.tierResult}
+                        </p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <BQEBar label="RBAR" sublabel="Risk Budget Adherence" value={data.gefQualification.latestBqe.rbar} weight={25} />
+                          <BQEBar label="DSI" sublabel="Drawdown Stability" value={data.gefQualification.latestBqe.dsi} weight={25} />
+                          <BQEBar label="PSC" sublabel="Position Size Consistency" value={data.gefQualification.latestBqe.psc} weight={15} />
+                          <BQEBar label="VRS" sublabel="Volatility Response Stability" value={data.gefQualification.latestBqe.vrs} weight={15} />
+                          <BQEBar label="EDS" sublabel="Exit Discipline" value={data.gefQualification.latestBqe.eds} weight={10} />
+                          <BQEBar label="RCS" sublabel="Rule Compliance" value={data.gefQualification.latestBqe.rcs} weight={10} />
+                          <div className="col-span-2 border border-dl-navy p-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-mono text-sm font-semibold text-dl-navy">EQS (Composite)</span>
+                              <span className="font-mono text-lg font-semibold text-dl-navy">{data.gefQualification.latestBqe.eqs.toFixed(3)}</span>
+                            </div>
+                            <div className="w-full bg-gray-200 h-3">
+                              <div className="h-3 bg-dl-navy" style={{ width: `${Math.min(100, data.gefQualification.latestBqe.eqs * 100)}%` }} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {!data.gefQualification.latestBqe && (
+                      <div className="border border-dl-border p-4">
+                        <p className="font-mono text-sm text-dl-muted">
+                          No BQE computation available yet — close some paper trades, then run qualification to generate scores
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="mt-4 border border-dl-border p-4">
+                      <h4 className="font-serif text-base text-dl-navy mb-2">Tier Progression</h4>
+                      <div className="flex items-center gap-2">
+                        {['PAPER', 'TIER_1', 'TIER_2', 'TIER_3'].map((tier) => (
+                          <div key={tier} className={`flex-1 border p-2 text-center font-mono text-xs ${
+                            data.gefQualification!.currentTier === tier
+                              ? 'border-dl-navy bg-dl-navy text-white'
+                              : 'border-dl-border text-dl-muted'
+                          }`}>
+                            {tier.replace('_', ' ')}
+                          </div>
+                        ))}
+                      </div>
+                      <p className="font-mono text-xs text-dl-muted mt-2">
+                        Paper start: {fmtDate(data.gefQualification.paperStartDate)} | Paper trades needed for TIER 1: 20 min
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -482,5 +684,23 @@ function SummaryRow({ label, value, highlight }: { label: string; value: string;
       <td className="py-2 pr-4 text-dl-muted">{label}</td>
       <td className={`py-2 text-right ${highlight ? 'text-dl-forest font-semibold' : ''}`}>{value}</td>
     </tr>
+  );
+}
+
+function BQEBar({ label, sublabel, value, weight }: { label: string; sublabel: string; value: number; weight: number }) {
+  const pct = Math.min(100, value * 100);
+  const color = pct >= 70 ? 'bg-dl-forest' : pct >= 40 ? 'bg-yellow-600' : 'bg-red-500';
+  return (
+    <div className="border border-dl-border p-2">
+      <div className="flex items-center justify-between mb-1">
+        <span className="font-mono text-xs font-semibold text-dl-navy">{label}</span>
+        <span className="font-mono text-xs text-dl-muted">{weight}%</span>
+      </div>
+      <p className="font-mono text-[10px] text-dl-muted mb-1">{sublabel}</p>
+      <div className="w-full bg-gray-200 h-2 mb-1">
+        <div className={`h-2 ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+      <p className="font-mono text-xs text-right text-dl-navy">{value.toFixed(3)}</p>
+    </div>
   );
 }
