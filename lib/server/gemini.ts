@@ -1,11 +1,12 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 
+const apiKey = process.env.GEMINI_API_KEY || process.env.AI_INTEGRATIONS_GEMINI_API_KEY || "";
+const baseUrl = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
+const useDirectApi = !baseUrl;
+
 const ai = new GoogleGenAI({
-  apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY!,
-  httpOptions: {
-    apiVersion: "",
-    baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL!,
-  },
+  apiKey,
+  ...(baseUrl ? { httpOptions: { apiVersion: "", baseUrl } } : {}),
 });
 
 export type GeminiModel = 
@@ -14,6 +15,19 @@ export type GeminiModel =
   | "gemini-2.5-pro"
   | "gemini-2.5-flash"
   | "gemini-2.5-flash-image";
+
+const DIRECT_API_MODEL_MAP: Record<string, string> = {
+  "gemini-3-flash": "gemini-2.5-flash",
+  "gemini-3-pro-preview": "gemini-2.5-pro",
+  "gemini-2.5-flash-image": "gemini-2.5-flash",
+};
+
+function resolveModel(model: string): string {
+  if (useDirectApi && DIRECT_API_MODEL_MAP[model]) {
+    return DIRECT_API_MODEL_MAP[model];
+  }
+  return model;
+}
 
 export interface GenerateContentOptions {
   model?: GeminiModel;
@@ -37,7 +51,7 @@ export async function generateText(
     : prompt;
 
   const response = await ai.models.generateContent({
-    model,
+    model: resolveModel(model),
     contents,
   });
 
@@ -59,7 +73,7 @@ export async function* generateTextStream(
     : prompt;
 
   const stream = await ai.models.generateContentStream({
-    model,
+    model: resolveModel(model),
     contents,
   });
 
@@ -73,7 +87,7 @@ export async function* generateTextStream(
 
 export async function generateImage(prompt: string): Promise<string> {
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-image",
+    model: resolveModel("gemini-2.5-flash-image"),
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
@@ -130,7 +144,7 @@ export async function chat(
   }
 
   const response = await ai.models.generateContent({
-    model,
+    model: resolveModel(model),
     contents,
   });
 
