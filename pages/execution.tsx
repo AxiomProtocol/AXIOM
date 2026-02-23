@@ -92,19 +92,28 @@ const TIER_DISPLAY: Record<string, { label: string; color: string }> = {
   TIER_3: { label: 'Tier 3', color: 'text-amber-700' },
 };
 
-function formatAxusd(val: number | null | undefined): string {
-  if (val === null || val === undefined) return '—';
-  return `${val >= 0 ? '+' : ''}${val.toFixed(2)} AXUSD`;
+function toNum(val: unknown): number | null {
+  if (val === null || val === undefined || val === '') return null;
+  const n = Number(val);
+  return isFinite(n) ? n : null;
 }
 
-function formatPct(val: number | null | undefined): string {
-  if (val === null || val === undefined) return '—';
-  return `${val >= 0 ? '+' : ''}${val.toFixed(2)}%`;
+function formatAxusd(val: unknown): string {
+  const n = toNum(val);
+  if (n === null) return '—';
+  return `${n >= 0 ? '+' : ''}${n.toFixed(2)} AXUSD`;
 }
 
-function formatScore(val: number | null | undefined): string {
-  if (val === null || val === undefined) return '—';
-  return val.toFixed(3);
+function formatPct(val: unknown): string {
+  const n = toNum(val);
+  if (n === null) return '—';
+  return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
+}
+
+function formatScore(val: unknown): string {
+  const n = toNum(val);
+  if (n === null) return '—';
+  return n.toFixed(3);
 }
 
 export default function ExecutionDashboard() {
@@ -324,10 +333,10 @@ function OverviewTab({ data }: { data: DashboardData }) {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y divide-gray-200">
           <MetricCell label="Trades" value={String(profile.paper_trade_count)} />
-          <MetricCell label="Win Rate" value={formatPct(profile.paper_win_rate * 100)} />
-          <MetricCell label="Total P&L" value={formatAxusd(profile.paper_pnl_axusd)} positive={profile.paper_pnl_axusd >= 0} />
-          <MetricCell label="Max Drawdown" value={formatPct(profile.paper_max_drawdown * 100)} />
-          <MetricCell label="Sharpe" value={profile.paper_sharpe !== null ? profile.paper_sharpe.toFixed(2) : '—'} />
+          <MetricCell label="Win Rate" value={formatPct((toNum(profile.paper_win_rate) ?? 0) * 100)} />
+          <MetricCell label="Total P&L" value={formatAxusd(profile.paper_pnl_axusd)} positive={(toNum(profile.paper_pnl_axusd) ?? 0) >= 0} />
+          <MetricCell label="Max Drawdown" value={formatPct((toNum(profile.paper_max_drawdown) ?? 0) * 100)} />
+          <MetricCell label="Sharpe" value={toNum(profile.paper_sharpe) !== null ? (toNum(profile.paper_sharpe) as number).toFixed(2) : '—'} />
           <MetricCell label="Open Positions" value={String(data.openPositionCount)} />
           <MetricCell label="AXM Balance" value={String(profile.axm_balance)} />
           <MetricCell label="AXUSD Reserve" value={String(profile.axusd_reserve_balance)} />
@@ -528,11 +537,11 @@ function QualificationTab({ data }: { data: DashboardData }) {
             <tbody className="divide-y divide-gray-100">
               {tierProgression.map((t) => {
                 const isCurrent = t.tier === profile.current_tier_id;
-                const eqsOk = (q?.eqs ?? 0) >= t.eqs;
+                const eqsOk = (toNum(q?.eqs) ?? 0) >= t.eqs;
                 const daysOk = paperDays >= t.days;
-                const tradesOk = profile.paper_trade_count >= t.trades;
-                const ddOk = (profile.paper_max_drawdown * 100) <= t.dd;
-                const axmOk = profile.axm_balance >= t.axm;
+                const tradesOk = (toNum(profile.paper_trade_count) ?? 0) >= t.trades;
+                const ddOk = ((toNum(profile.paper_max_drawdown) ?? 0) * 100) <= t.dd;
+                const axmOk = (toNum(profile.axm_balance) ?? 0) >= t.axm;
                 const allMet = eqsOk && daysOk && tradesOk && ddOk && axmOk;
 
                 return (
@@ -576,10 +585,10 @@ function QualificationTab({ data }: { data: DashboardData }) {
       <div className="border border-gray-200 p-4">
         <h3 className="font-mono text-sm font-medium mb-3">Your Progress</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <ProgressMetric label="EQS" current={q?.eqs ?? 0} target={0.70} format="score" />
+          <ProgressMetric label="EQS" current={toNum(q?.eqs) ?? 0} target={0.70} format="score" />
           <ProgressMetric label="Paper Days" current={paperDays} target={30} format="int" />
-          <ProgressMetric label="Trade Count" current={profile.paper_trade_count} target={60} format="int" />
-          <ProgressMetric label="Max Drawdown" current={profile.paper_max_drawdown * 100} target={6} format="pct" inverted />
+          <ProgressMetric label="Trade Count" current={toNum(profile.paper_trade_count) ?? 0} target={60} format="int" />
+          <ProgressMetric label="Max Drawdown" current={(toNum(profile.paper_max_drawdown) ?? 0) * 100} target={6} format="pct" inverted />
         </div>
       </div>
     </div>
@@ -597,8 +606,9 @@ function MetricCell({ label, value, positive }: { label: string; value: string; 
   );
 }
 
-function ScoreBar({ label, description, value, weight }: { label: string; description: string; value: number; weight: number }) {
-  const pct = Math.min(value * 100, 100);
+function ScoreBar({ label, description, value, weight }: { label: string; description: string; value: unknown; weight: number }) {
+  const numVal = toNum(value) ?? 0;
+  const pct = Math.min(numVal * 100, 100);
   return (
     <div className="border border-gray-100 p-3">
       <div className="flex justify-between items-baseline">
