@@ -15,6 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return errorResponse(res, 400, 'INVALID_ID', 'Deal ID is required');
   }
 
+  let debugMetrics: Record<string, unknown> = {};
   try {
     const { scenarioId } = req.body;
     if (!scenarioId || typeof scenarioId !== 'string') {
@@ -109,6 +110,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       monthlyDebtService: result.monthlyDebtService,
     });
 
+    debugMetrics = { noi, capRate, cashOnCash, dscr, mCashFlow, aCashFlow, breakEvenMonths, rRoi, rToV, grmVal };
+
     if (existingMetrics.rows.length > 0) {
       await pool.query(
         `UPDATE re_deal_metrics SET noi=$1, cap_rate=$2, cash_on_cash=$3, dscr=$4,
@@ -193,7 +196,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   } catch (err: any) {
     console.error('Recompute error:', err.message, err.stack);
-    console.error('Recompute debug: dealId=', id, 'scenarioId=', req.body?.scenarioId);
+    console.error('Recompute debug: dealId=', id, 'scenarioId=', req.body?.scenarioId,
+      'computed values:', JSON.stringify(debugMetrics));
     return errorResponse(res, 500, 'INTERNAL_ERROR', `Failed to recompute deal metrics: ${err.message || 'Unknown error'}`);
   }
 }

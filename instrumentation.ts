@@ -646,6 +646,16 @@ export async function register() {
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )`, 'table re_deal_metrics');
 
+      await exec(`DO $$ BEGIN
+        ALTER TABLE re_deal_metrics ALTER COLUMN cap_rate TYPE DECIMAL(8,4);
+        ALTER TABLE re_deal_metrics ALTER COLUMN cash_on_cash TYPE DECIMAL(8,4);
+        ALTER TABLE re_deal_metrics ALTER COLUMN dscr TYPE DECIMAL(8,4);
+        ALTER TABLE re_deal_metrics ALTER COLUMN irr TYPE DECIMAL(8,4);
+        ALTER TABLE re_deal_metrics ALTER COLUMN rehab_roi TYPE DECIMAL(8,4);
+        ALTER TABLE re_deal_metrics ALTER COLUMN rent_to_value TYPE DECIMAL(8,4);
+      EXCEPTION WHEN OTHERS THEN NULL;
+      END $$`, 'widen re_deal_metrics columns');
+
       await exec(`CREATE TABLE IF NOT EXISTS re_decision_log (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         deal_id UUID NOT NULL REFERENCES re_deals(id),
