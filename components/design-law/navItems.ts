@@ -40,6 +40,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/founder-ops', label: 'Founder Ops' },
       { href: '/founder-ops/proof-of-execution', label: 'Proof of Execution' },
       { href: '/execution', label: 'Execution Framework' },
+      { href: '/capital', label: 'Capital Accounting' },
       { href: '/solvency', label: 'Solvency' },
       { href: '/products', label: 'All Products' },
     ],

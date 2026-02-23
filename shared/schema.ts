@@ -9304,3 +9304,200 @@ export const propProviderCalls = pgTable("prop_provider_calls", {
   providerIdx: index("prop_prov_call_provider_idx").on(table.provider),
   reportIdx: index("prop_prov_call_report_idx").on(table.reportId),
 }));
+
+// ────────────────────────────────────────────────────────────────
+// Capital Accounting and Performance Intelligence System
+// ────────────────────────────────────────────────────────────────
+
+export const capAccountTypeEnum = pgEnum('cap_account_type', ['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE']);
+export const capAccountSubtypeEnum = pgEnum('cap_account_subtype', ['CASH', 'TRADING', 'FEE_RESERVE', 'UNREALIZED', 'REALIZED', 'OPERATING']);
+export const capPositionStatusEnum = pgEnum('cap_position_status', ['OPEN', 'CLOSED']);
+export const capTradeSideEnum = pgEnum('cap_trade_side', ['BUY', 'SELL']);
+export const capFeeTypeEnum = pgEnum('cap_fee_type', ['TRADING', 'NETWORK', 'MANAGEMENT', 'ADJUSTMENT']);
+export const capDrawdownStatusEnum = pgEnum('cap_drawdown_status', ['ACTIVE', 'RECOVERED']);
+export const capRiskSeverityEnum = pgEnum('cap_risk_severity', ['INFO', 'WARNING', 'ELEVATED', 'CRITICAL']);
+
+export const capAccounts = pgTable("cap_accounts", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 200 }).notNull(),
+  accountType: capAccountTypeEnum("account_type").notNull(),
+  subtype: capAccountSubtypeEnum("subtype").notNull(),
+  currency: varchar("currency", { length: 20 }).default('AXUSD').notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  typeIdx: index("cap_acct_type_idx").on(table.accountType),
+}));
+
+export const capLedgerEntries = pgTable("cap_ledger_entries", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  txGroupId: uuid("tx_group_id").notNull(),
+  accountId: uuid("account_id").notNull(),
+  debitAmount: decimal("debit_amount", { precision: 24, scale: 8 }).default('0').notNull(),
+  creditAmount: decimal("credit_amount", { precision: 24, scale: 8 }).default('0').notNull(),
+  currency: varchar("currency", { length: 20 }).default('AXUSD').notNull(),
+  description: text("description").default('').notNull(),
+  externalId: varchar("external_id", { length: 255 }),
+  sourceType: varchar("source_type", { length: 50 }).default('MANUAL').notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  txGroupIdx: index("cap_ledger_tx_group_idx").on(table.txGroupId),
+  accountIdx: index("cap_ledger_account_idx").on(table.accountId),
+  externalIdx: index("cap_ledger_external_idx").on(table.externalId),
+  createdIdx: index("cap_ledger_created_idx").on(table.createdAt),
+}));
+
+export const capPositions = pgTable("cap_positions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  instrument: varchar("instrument", { length: 50 }).notNull(),
+  venue: varchar("venue", { length: 50 }).default('PAPER').notNull(),
+  strategyId: varchar("strategy_id", { length: 100 }),
+  status: capPositionStatusEnum("status").default('OPEN').notNull(),
+  side: capTradeSideEnum("side").notNull(),
+  quantity: decimal("quantity", { precision: 24, scale: 8 }).notNull(),
+  avgEntryPrice: decimal("avg_entry_price", { precision: 24, scale: 8 }).notNull(),
+  avgExitPrice: decimal("avg_exit_price", { precision: 24, scale: 8 }),
+  realizedPnl: decimal("realized_pnl", { precision: 24, scale: 8 }),
+  openedAt: timestamp("opened_at").defaultNow().notNull(),
+  closedAt: timestamp("closed_at"),
+  mirdtSetupId: uuid("mirdt_setup_id"),
+  mirdtTradeId: uuid("mirdt_trade_id"),
+}, (table) => ({
+  instrumentIdx: index("cap_pos_instrument_idx").on(table.instrument),
+  statusIdx: index("cap_pos_status_idx").on(table.status),
+  openedIdx: index("cap_pos_opened_idx").on(table.openedAt),
+}));
+
+export const capTrades = pgTable("cap_trades", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  positionId: uuid("position_id").notNull(),
+  side: capTradeSideEnum("side").notNull(),
+  quantity: decimal("quantity", { precision: 24, scale: 8 }).notNull(),
+  price: decimal("price", { precision: 24, scale: 8 }).notNull(),
+  venue: varchar("venue", { length: 50 }).default('PAPER').notNull(),
+  executedAt: timestamp("executed_at").defaultNow().notNull(),
+  externalId: varchar("external_id", { length: 255 }),
+}, (table) => ({
+  positionIdx: index("cap_trade_position_idx").on(table.positionId),
+  executedIdx: index("cap_trade_executed_idx").on(table.executedAt),
+  externalIdx: index("cap_trade_external_idx").on(table.externalId),
+}));
+
+export const capFees = pgTable("cap_fees", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tradeId: uuid("trade_id"),
+  feeType: capFeeTypeEnum("fee_type").notNull(),
+  amount: decimal("amount", { precision: 24, scale: 8 }).notNull(),
+  currency: varchar("currency", { length: 20 }).default('AXUSD').notNull(),
+  description: text("description").default('').notNull(),
+  incurredAt: timestamp("incurred_at").defaultNow().notNull(),
+}, (table) => ({
+  tradeIdx: index("cap_fee_trade_idx").on(table.tradeId),
+  incurredIdx: index("cap_fee_incurred_idx").on(table.incurredAt),
+}));
+
+export const capPriceMarks = pgTable("cap_price_marks", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  instrument: varchar("instrument", { length: 50 }).notNull(),
+  price: decimal("price", { precision: 24, scale: 8 }).notNull(),
+  source: varchar("source", { length: 100 }).default('SYSTEM').notNull(),
+  markedAt: timestamp("marked_at").defaultNow().notNull(),
+}, (table) => ({
+  instrumentIdx: index("cap_mark_instrument_idx").on(table.instrument),
+  markedIdx: index("cap_mark_marked_idx").on(table.markedAt),
+}));
+
+export const capSnapshots = pgTable("cap_snapshots", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  asOf: timestamp("as_of").notNull(),
+  checksum: varchar("checksum", { length: 128 }).notNull(),
+  sourcesUsed: jsonb("sources_used").default(sql`'[]'::jsonb`).notNull(),
+  confidence: varchar("confidence", { length: 20 }).default('HIGH').notNull(),
+  warnings: jsonb("warnings").default(sql`'[]'::jsonb`).notNull(),
+  regimeBand: varchar("regime_band", { length: 50 }),
+  policyState: varchar("policy_state", { length: 50 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  asOfIdx: index("cap_snap_as_of_idx").on(table.asOf),
+}));
+
+export const capSnapshotLines = pgTable("cap_snapshot_lines", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  snapshotId: uuid("snapshot_id").notNull(),
+  metricKey: varchar("metric_key", { length: 100 }).notNull(),
+  metricValue: varchar("metric_value", { length: 200 }).notNull(),
+  period: varchar("period", { length: 20 }).notNull(),
+  instrument: varchar("instrument", { length: 50 }),
+}, (table) => ({
+  snapshotIdx: index("cap_snapline_snapshot_idx").on(table.snapshotId),
+  metricIdx: index("cap_snapline_metric_idx").on(table.metricKey),
+}));
+
+export const capDrawdowns = pgTable("cap_drawdowns", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  peakValue: decimal("peak_value", { precision: 24, scale: 8 }).notNull(),
+  troughValue: decimal("trough_value", { precision: 24, scale: 8 }).notNull(),
+  depthPct: decimal("depth_pct", { precision: 10, scale: 6 }).notNull(),
+  peakAt: timestamp("peak_at").notNull(),
+  troughAt: timestamp("trough_at").notNull(),
+  recoveredAt: timestamp("recovered_at"),
+  status: capDrawdownStatusEnum("status").default('ACTIVE').notNull(),
+  snapshotId: uuid("snapshot_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const capDriftSeries = pgTable("cap_drift_series", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  asOf: timestamp("as_of").notNull(),
+  expectedValue: decimal("expected_value", { precision: 24, scale: 8 }).notNull(),
+  actualValue: decimal("actual_value", { precision: 24, scale: 8 }).notNull(),
+  variancePct: decimal("variance_pct", { precision: 10, scale: 6 }).notNull(),
+  snapshotId: uuid("snapshot_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  asOfIdx: index("cap_drift_as_of_idx").on(table.asOf),
+}));
+
+export const capDecisionLog = pgTable("cap_decision_log", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  snapshotId: uuid("snapshot_id"),
+  setupId: uuid("setup_id"),
+  positionId: uuid("position_id"),
+  action: varchar("action", { length: 100 }).notNull(),
+  rationale: text("rationale").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  snapshotIdx: index("cap_decision_snapshot_idx").on(table.snapshotId),
+  createdIdx: index("cap_decision_created_idx").on(table.createdAt),
+}));
+
+export const capRiskFlags = pgTable("cap_risk_flags", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  severity: capRiskSeverityEnum("severity").notNull(),
+  category: varchar("category", { length: 100 }).notNull(),
+  explanation: text("explanation").notNull(),
+  snapshotId: uuid("snapshot_id"),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  severityIdx: index("cap_risk_severity_idx").on(table.severity),
+  snapshotIdx: index("cap_risk_snapshot_idx").on(table.snapshotId),
+}));
+
+export type CapAccount = typeof capAccounts.$inferSelect;
+export type InsertCapAccount = typeof capAccounts.$inferInsert;
+export type CapLedgerEntry = typeof capLedgerEntries.$inferSelect;
+export type InsertCapLedgerEntry = typeof capLedgerEntries.$inferInsert;
+export type CapPosition = typeof capPositions.$inferSelect;
+export type InsertCapPosition = typeof capPositions.$inferInsert;
+export type CapTrade = typeof capTrades.$inferSelect;
+export type InsertCapTrade = typeof capTrades.$inferInsert;
+export type CapFee = typeof capFees.$inferSelect;
+export type InsertCapFee = typeof capFees.$inferInsert;
+export type CapPriceMark = typeof capPriceMarks.$inferSelect;
+export type InsertCapPriceMark = typeof capPriceMarks.$inferInsert;
+export type CapSnapshot = typeof capSnapshots.$inferSelect;
+export type InsertCapSnapshot = typeof capSnapshots.$inferInsert;
+export type CapSnapshotLine = typeof capSnapshotLines.$inferSelect;
+export type InsertCapSnapshotLine = typeof capSnapshotLines.$inferInsert;

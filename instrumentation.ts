@@ -956,6 +956,181 @@ export async function register() {
           ('TIER_3', 'Execution Tier 3', 0.85, 0.5, 90, 200, 0.03, 1.0, true, true, 2000, 10000, 0.005, 6, 0.25, true)
         ON CONFLICT (tier_id) DO NOTHING`, 'seed gef_tier_thresholds');
 
+      // ── Capital Accounting Enums ──
+      await exec(enumSafe('cap_account_type', ['ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE']), 'enum cap_account_type');
+      await exec(enumSafe('cap_account_subtype', ['CASH','TRADING','FEE_RESERVE','UNREALIZED','REALIZED','OPERATING']), 'enum cap_account_subtype');
+      await exec(enumSafe('cap_position_status', ['OPEN','CLOSED']), 'enum cap_position_status');
+      await exec(enumSafe('cap_trade_side', ['BUY','SELL']), 'enum cap_trade_side');
+      await exec(enumSafe('cap_fee_type', ['TRADING','NETWORK','MANAGEMENT','ADJUSTMENT']), 'enum cap_fee_type');
+      await exec(enumSafe('cap_drawdown_status', ['ACTIVE','RECOVERED']), 'enum cap_drawdown_status');
+      await exec(enumSafe('cap_risk_severity', ['INFO','WARNING','ELEVATED','CRITICAL']), 'enum cap_risk_severity');
+
+      // ── Capital Accounting Tables ──
+      await exec(`CREATE TABLE IF NOT EXISTS cap_accounts (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(200) NOT NULL,
+        account_type cap_account_type NOT NULL,
+        subtype cap_account_subtype NOT NULL,
+        currency VARCHAR(20) NOT NULL DEFAULT 'AXUSD',
+        is_active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'cap_accounts');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_ledger_entries (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tx_group_id UUID NOT NULL,
+        account_id UUID NOT NULL,
+        debit_amount NUMERIC(24,8) NOT NULL DEFAULT 0,
+        credit_amount NUMERIC(24,8) NOT NULL DEFAULT 0,
+        currency VARCHAR(20) NOT NULL DEFAULT 'AXUSD',
+        description TEXT NOT NULL DEFAULT '',
+        external_id VARCHAR(255),
+        source_type VARCHAR(50) NOT NULL DEFAULT 'MANUAL',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'cap_ledger_entries');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_positions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        instrument VARCHAR(50) NOT NULL,
+        venue VARCHAR(50) NOT NULL DEFAULT 'PAPER',
+        strategy_id VARCHAR(100),
+        status cap_position_status NOT NULL DEFAULT 'OPEN',
+        side cap_trade_side NOT NULL,
+        quantity NUMERIC(24,8) NOT NULL,
+        avg_entry_price NUMERIC(24,8) NOT NULL,
+        avg_exit_price NUMERIC(24,8),
+        realized_pnl NUMERIC(24,8),
+        opened_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        closed_at TIMESTAMP,
+        mirdt_setup_id UUID,
+        mirdt_trade_id UUID
+      )`, 'cap_positions');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_trades (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        position_id UUID NOT NULL,
+        side cap_trade_side NOT NULL,
+        quantity NUMERIC(24,8) NOT NULL,
+        price NUMERIC(24,8) NOT NULL,
+        venue VARCHAR(50) NOT NULL DEFAULT 'PAPER',
+        executed_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        external_id VARCHAR(255)
+      )`, 'cap_trades');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_fees (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        trade_id UUID,
+        fee_type cap_fee_type NOT NULL,
+        amount NUMERIC(24,8) NOT NULL,
+        currency VARCHAR(20) NOT NULL DEFAULT 'AXUSD',
+        description TEXT NOT NULL DEFAULT '',
+        incurred_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'cap_fees');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_price_marks (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        instrument VARCHAR(50) NOT NULL,
+        price NUMERIC(24,8) NOT NULL,
+        source VARCHAR(100) NOT NULL DEFAULT 'SYSTEM',
+        marked_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'cap_price_marks');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_snapshots (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        as_of TIMESTAMP NOT NULL,
+        checksum VARCHAR(128) NOT NULL,
+        sources_used JSONB NOT NULL DEFAULT '[]'::jsonb,
+        confidence VARCHAR(20) NOT NULL DEFAULT 'HIGH',
+        warnings JSONB NOT NULL DEFAULT '[]'::jsonb,
+        regime_band VARCHAR(50),
+        policy_state VARCHAR(50),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'cap_snapshots');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_snapshot_lines (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        snapshot_id UUID NOT NULL,
+        metric_key VARCHAR(100) NOT NULL,
+        metric_value VARCHAR(200) NOT NULL,
+        period VARCHAR(20) NOT NULL,
+        instrument VARCHAR(50)
+      )`, 'cap_snapshot_lines');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_drawdowns (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        peak_value NUMERIC(24,8) NOT NULL,
+        trough_value NUMERIC(24,8) NOT NULL,
+        depth_pct NUMERIC(10,6) NOT NULL,
+        peak_at TIMESTAMP NOT NULL,
+        trough_at TIMESTAMP NOT NULL,
+        recovered_at TIMESTAMP,
+        status cap_drawdown_status NOT NULL DEFAULT 'ACTIVE',
+        snapshot_id UUID,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'cap_drawdowns');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_drift_series (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        as_of TIMESTAMP NOT NULL,
+        expected_value NUMERIC(24,8) NOT NULL,
+        actual_value NUMERIC(24,8) NOT NULL,
+        variance_pct NUMERIC(10,6) NOT NULL,
+        snapshot_id UUID,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'cap_drift_series');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_decision_log (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        snapshot_id UUID,
+        setup_id UUID,
+        position_id UUID,
+        action VARCHAR(100) NOT NULL,
+        rationale TEXT NOT NULL,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'cap_decision_log');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_risk_flags (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        severity cap_risk_severity NOT NULL,
+        category VARCHAR(100) NOT NULL,
+        explanation TEXT NOT NULL,
+        snapshot_id UUID,
+        resolved_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'cap_risk_flags');
+
+      // ── Capital Accounting Indexes ──
+      await exec(`CREATE INDEX IF NOT EXISTS cap_acct_type_idx ON cap_accounts(account_type)`, 'idx cap_acct_type');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_ledger_tx_group_idx ON cap_ledger_entries(tx_group_id)`, 'idx cap_ledger_tx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_ledger_account_idx ON cap_ledger_entries(account_id)`, 'idx cap_ledger_acct');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_ledger_external_idx ON cap_ledger_entries(external_id)`, 'idx cap_ledger_ext');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_ledger_created_idx ON cap_ledger_entries(created_at)`, 'idx cap_ledger_created');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_pos_instrument_idx ON cap_positions(instrument)`, 'idx cap_pos_instr');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_pos_status_idx ON cap_positions(status)`, 'idx cap_pos_status');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_pos_opened_idx ON cap_positions(opened_at)`, 'idx cap_pos_opened');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_trade_position_idx ON cap_trades(position_id)`, 'idx cap_trade_pos');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_trade_executed_idx ON cap_trades(executed_at)`, 'idx cap_trade_exec');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_fee_incurred_idx ON cap_fees(incurred_at)`, 'idx cap_fee_incurred');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_mark_instrument_idx ON cap_price_marks(instrument)`, 'idx cap_mark_instr');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_mark_marked_idx ON cap_price_marks(marked_at)`, 'idx cap_mark_marked');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_snap_as_of_idx ON cap_snapshots(as_of)`, 'idx cap_snap_asof');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_snapline_snapshot_idx ON cap_snapshot_lines(snapshot_id)`, 'idx cap_snapline_snap');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_drift_as_of_idx ON cap_drift_series(as_of)`, 'idx cap_drift_asof');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_decision_snapshot_idx ON cap_decision_log(snapshot_id)`, 'idx cap_decision_snap');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_risk_severity_idx ON cap_risk_flags(severity)`, 'idx cap_risk_sev');
+
+      // ── Seed default capital accounts ──
+      await exec(`INSERT INTO cap_accounts (name, account_type, subtype, currency)
+        VALUES
+          ('Trading Capital', 'ASSET', 'CASH', 'AXUSD'),
+          ('Paper Trading', 'ASSET', 'TRADING', 'AXUSD'),
+          ('Fee Reserve', 'EXPENSE', 'FEE_RESERVE', 'AXUSD'),
+          ('Realized Gains', 'REVENUE', 'REALIZED', 'AXUSD'),
+          ('Unrealized Position Value', 'ASSET', 'UNREALIZED', 'AXUSD'),
+          ('Operating Expenses', 'EXPENSE', 'OPERATING', 'AXUSD')
+        ON CONFLICT DO NOTHING`, 'seed cap_accounts');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
