@@ -25,6 +25,7 @@ import { computeSizing } from './sizing';
 import { classifyEntryTrigger, isEntryAllowed } from './triggers';
 import { computeDecisionChecksum, computeRunChecksum, computeEventChecksum } from './audit';
 import { checkInvalidation, checkExpiry } from './exits';
+import { bridgeTradeOpen, bridgeTradeClose } from './gefBridge';
 
 export async function getLatestPortfolioState(): Promise<PortfolioState> {
   const result = await pool.query(
@@ -648,6 +649,25 @@ export async function openPaperTrade(decisionId: string): Promise<{ success: boo
     direction: row.direction,
   });
 
+  try {
+    await bridgeTradeOpen(tradeId, {
+      setup_id: row.setup_id,
+      symbol: row.symbol,
+      asset_type: row.asset_type,
+      direction: row.direction,
+      current_price: entryPrice,
+      position_size_qty: quantity,
+      stop_price: safeParseFloat(row.stop_price),
+      take_profit_p50: safeParseFloat(row.take_profit_p50),
+      take_profit_p95: safeParseFloat(row.take_profit_p95),
+      risk_budget_usd: safeParseFloat(row.risk_budget_usd),
+      invalidation_distance: safeParseFloat(row.invalidation_distance),
+      policy_mode: row.policy_mode || 'BOOTSTRAP',
+    });
+  } catch (bridgeErr: any) {
+    console.error(`[MIRDTExecution] GEF bridge open failed (non-blocking):`, bridgeErr.message);
+  }
+
   return { success: true, tradeId };
 }
 
@@ -704,6 +724,12 @@ export async function closePaperTrade(
     pnlPct,
     outcome,
   });
+
+  try {
+    await bridgeTradeClose(tradeId, exitPrice, exitReason, pnl, pnlPct, direction);
+  } catch (bridgeErr: any) {
+    console.error(`[MIRDTExecution] GEF bridge close failed (non-blocking):`, bridgeErr.message);
+  }
 
   return { success: true };
 }
