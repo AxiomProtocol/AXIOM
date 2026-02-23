@@ -50,14 +50,19 @@ function safeNum(v: unknown, fallback = 0): number {
 
 async function fetchPaperTradeStats(userId: string, windowDays: number) {
   const trades = await pool.query(
-    `SELECT t.entry_price, t.exit_price, t.pnl, t.pnl_pct, t.quantity,
+    `SELECT t.id, t.entry_price, t.exit_price, t.pnl, t.pnl_pct, t.quantity,
             t.direction, t.outcome, t.opened_at, t.closed_at, t.mae, t.mfe
      FROM mirdt_paper_trades t
-     JOIN mirdt_execution_decisions d ON t.decision_id = d.id
+     LEFT JOIN mirdt_execution_decisions d ON t.decision_id = d.id
      WHERE t.status = 'CLOSED'
        AND t.closed_at >= NOW() - INTERVAL '1 day' * $1
+       AND t.id::text NOT IN (
+         SELECT REPLACE(rejection_reason, 'mirdt:', '')
+         FROM gef_execution_intents
+         WHERE user_id = $2 AND rejection_reason LIKE 'mirdt:%'
+       )
      ORDER BY t.closed_at ASC`,
-    [windowDays]
+    [windowDays, userId]
   );
 
   const gef = await pool.query(

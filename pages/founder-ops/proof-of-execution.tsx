@@ -469,7 +469,7 @@ export default function ProofOfExecutionPage() {
                     {!data.gefQualification.latestBqe && (
                       <div className="border border-dl-border p-4">
                         <p className="font-mono text-sm text-dl-muted">
-                          No BQE computation available yet — close some paper trades, then run qualification to generate scores
+                          No BQE computation available yet — close some paper trades, then click REFRESH DATA to auto-compute qualification scores
                         </p>
                       </div>
                     )}

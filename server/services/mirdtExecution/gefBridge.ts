@@ -1,5 +1,6 @@
 import { pool } from '../../db';
 import { appendAuditEvent } from '../../audit/hashChain';
+import { computeQualification } from '../execution/qualificationEngine';
 
 const FOUNDER_USER_ID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 const FOUNDER_WALLET = '0xFounderTestWallet001';
@@ -259,6 +260,38 @@ export async function bridgeTradeClose(
 }
 
 export async function getFounderQualificationSnapshot(): Promise<any> {
+  await ensureFounderProfile();
+
+  const closedMirdt = await pool.query(
+    `SELECT COUNT(*) as cnt FROM mirdt_paper_trades WHERE status = 'CLOSED'`
+  );
+  const closedGefExecs = await pool.query(
+    `SELECT COUNT(*) as cnt FROM gef_executions e
+     JOIN gef_execution_intents i ON e.intent_id = i.intent_id
+     WHERE i.user_id = $1 AND e.closed_at IS NOT NULL`,
+    [FOUNDER_USER_ID]
+  );
+  const totalClosed = safeNum(closedMirdt.rows[0].cnt) + safeNum(closedGefExecs.rows[0].cnt);
+
+  const latestSnapshotCheck = await pool.query(
+    `SELECT created_at FROM gef_qualification_snapshots
+     WHERE user_id = $1
+     ORDER BY created_at DESC LIMIT 1`,
+    [FOUNDER_USER_ID]
+  );
+  const lastComputed = latestSnapshotCheck.rows[0]?.created_at;
+  const staleThreshold = 30 * 60 * 1000;
+  const isStale = !lastComputed || (Date.now() - new Date(lastComputed).getTime() > staleThreshold);
+
+  if (totalClosed > 0 && isStale) {
+    try {
+      console.log(`[GEF-Bridge] Auto-computing BQE qualification (${totalClosed} closed trades, snapshot stale)`);
+      await computeQualification({ userId: FOUNDER_USER_ID, walletAddress: FOUNDER_WALLET });
+    } catch (err: any) {
+      console.error('[GEF-Bridge] Auto-qualification computation failed:', err.message);
+    }
+  }
+
   const profile = await pool.query(
     `SELECT * FROM gef_user_execution_profiles WHERE user_id = $1`,
     [FOUNDER_USER_ID]
