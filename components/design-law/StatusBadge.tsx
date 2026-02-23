@@ -8,6 +8,12 @@ const STATUS_STYLES: Record<string, string> = {
   OPEN: 'text-dl-navy',
   CLOSED: 'text-dl-gray',
   PENDING: 'text-dl-gold',
+  SUSPENDED: 'text-dl-error',
+  'LIVE ENABLED': 'text-dl-forest',
+  'PAPER ONLY': 'text-dl-navy',
+  QUALIFIED: 'text-dl-forest',
+  LOCKED: 'text-dl-gray',
+  REJECTED: 'text-dl-error',
 };
 
 interface StatusBadgeProps {
