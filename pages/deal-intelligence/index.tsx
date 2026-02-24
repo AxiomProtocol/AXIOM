@@ -90,20 +90,10 @@ export default function DealIntelligenceSearch() {
       </Head>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <h1 className="font-dl-serif text-3xl text-dl-navy mb-2">Deal Intelligence</h1>
-            <p className="text-dl-muted font-dl-mono text-sm">
-              Search properties, analyze deals, and run underwriting scenarios
-            </p>
-          </div>
-          <a
-            href="/api/documents/deal-intelligence-brief"
-            className="border border-dl-navy text-dl-navy px-4 py-2 font-dl-mono text-sm hover:bg-dl-navy hover:text-white transition-colors flex-shrink-0"
-          >
-            Download Brief
-          </a>
-        </div>
+        <h1 className="font-dl-serif text-3xl text-dl-navy mb-2">Deal Intelligence</h1>
+        <p className="text-dl-muted font-dl-mono text-sm mb-8">
+          Search properties, analyze deals, and run underwriting scenarios
+        </p>
 
         <div className="border border-dl-border p-6 mb-8">
           <h2 className="font-dl-serif text-xl text-dl-navy mb-4">Property Search</h2>
