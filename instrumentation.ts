@@ -1141,6 +1141,103 @@ export async function register() {
           ('Operating Expenses', 'EXPENSE', 'OPERATING', 'AXUSD')
         ON CONFLICT DO NOTHING`, 'seed cap_accounts');
 
+      // ── Saved AI Analysis Results ──
+      await exec(`CREATE TABLE IF NOT EXISTS re_saved_analysis (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        scenario_id UUID NOT NULL,
+        analysis_data JSONB NOT NULL,
+        saved_at TIMESTAMPTZ DEFAULT now()
+      )`, 're_saved_analysis');
+      await exec(`CREATE INDEX IF NOT EXISTS re_saved_analysis_deal_idx ON re_saved_analysis(deal_id)`, 'idx re_saved_analysis_deal');
+      await exec(`CREATE INDEX IF NOT EXISTS re_saved_analysis_scenario_idx ON re_saved_analysis(deal_id, scenario_id)`, 'idx re_saved_analysis_scenario');
+
+      // ── IVCEE (Institutional Viability & Capital Efficiency Engine) Tables ──
+      await exec(`CREATE TABLE IF NOT EXISTS ivcee_probability_models (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        scenario_id UUID,
+        base_viability_score NUMERIC,
+        viability_probability NUMERIC,
+        failure_probability NUMERIC,
+        dominant_risk_factor TEXT,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 'ivcee_probability_models');
+
+      await exec(`CREATE TABLE IF NOT EXISTS ivcee_sensitivity_matrix (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        scenario_id UUID,
+        price_delta NUMERIC,
+        rent_delta NUMERIC,
+        rate_delta NUMERIC,
+        dscr_output NUMERIC,
+        cashflow_output NUMERIC,
+        viability_shift NUMERIC,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 'ivcee_sensitivity_matrix');
+
+      await exec(`CREATE TABLE IF NOT EXISTS ivcee_stress_tests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        scenario_id UUID,
+        scenario_type TEXT NOT NULL,
+        dscr_stressed NUMERIC,
+        cashflow_stressed NUMERIC,
+        drawdown_projection NUMERIC,
+        survival_status TEXT,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 'ivcee_stress_tests');
+
+      await exec(`CREATE TABLE IF NOT EXISTS ivcee_refinance_risk (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        scenario_id UUID,
+        refinance_ltv NUMERIC,
+        refinance_dscr NUMERIC,
+        equity_extracted NUMERIC,
+        refinance_probability NUMERIC,
+        failure_conditions TEXT,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 'ivcee_refinance_risk');
+
+      await exec(`CREATE TABLE IF NOT EXISTS ivcee_downside_metrics (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        scenario_id UUID,
+        break_even_rent NUMERIC,
+        break_even_price NUMERIC,
+        max_safe_ltv NUMERIC,
+        margin_of_safety NUMERIC,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 'ivcee_downside_metrics');
+
+      await exec(`CREATE TABLE IF NOT EXISTS ivcee_capital_efficiency (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        scenario_id UUID,
+        roi_adjusted NUMERIC,
+        volatility_penalty NUMERIC,
+        leverage_penalty NUMERIC,
+        efficiency_score NUMERIC,
+        capital_rank INTEGER,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 'ivcee_capital_efficiency');
+
+      // ── IVCEE Indexes ──
+      await exec(`CREATE INDEX IF NOT EXISTS ivcee_prob_deal_idx ON ivcee_probability_models(deal_id)`, 'idx ivcee_prob_deal');
+      await exec(`CREATE INDEX IF NOT EXISTS ivcee_prob_created_idx ON ivcee_probability_models(created_at)`, 'idx ivcee_prob_created');
+      await exec(`CREATE INDEX IF NOT EXISTS ivcee_sens_deal_idx ON ivcee_sensitivity_matrix(deal_id)`, 'idx ivcee_sens_deal');
+      await exec(`CREATE INDEX IF NOT EXISTS ivcee_sens_created_idx ON ivcee_sensitivity_matrix(created_at)`, 'idx ivcee_sens_created');
+      await exec(`CREATE INDEX IF NOT EXISTS ivcee_stress_deal_idx ON ivcee_stress_tests(deal_id)`, 'idx ivcee_stress_deal');
+      await exec(`CREATE INDEX IF NOT EXISTS ivcee_stress_created_idx ON ivcee_stress_tests(created_at)`, 'idx ivcee_stress_created');
+      await exec(`CREATE INDEX IF NOT EXISTS ivcee_refi_deal_idx ON ivcee_refinance_risk(deal_id)`, 'idx ivcee_refi_deal');
+      await exec(`CREATE INDEX IF NOT EXISTS ivcee_refi_created_idx ON ivcee_refinance_risk(created_at)`, 'idx ivcee_refi_created');
+      await exec(`CREATE INDEX IF NOT EXISTS ivcee_down_deal_idx ON ivcee_downside_metrics(deal_id)`, 'idx ivcee_down_deal');
+      await exec(`CREATE INDEX IF NOT EXISTS ivcee_down_created_idx ON ivcee_downside_metrics(created_at)`, 'idx ivcee_down_created');
+      await exec(`CREATE INDEX IF NOT EXISTS ivcee_cap_deal_idx ON ivcee_capital_efficiency(deal_id)`, 'idx ivcee_cap_deal');
+      await exec(`CREATE INDEX IF NOT EXISTS ivcee_cap_created_idx ON ivcee_capital_efficiency(created_at)`, 'idx ivcee_cap_created');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
 import Link from 'next/link';
+import IVCEEPanel from '../../../components/deal-intelligence/IVCEEPanel';
 
 interface DealSummary {
   deal: Record<string, any>;
@@ -52,7 +53,7 @@ export default function DealWorkspacePage() {
   const [summary, setSummary] = useState<DealSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'comps' | 'analysis' | 'decisions'>('assumptions');
+  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'comps' | 'analysis' | 'decisions' | 'ivcee'>('assumptions');
   const [assumptions, setAssumptions] = useState<AssumptionsState>(DEFAULT_ASSUMPTIONS);
   const [saving, setSaving] = useState(false);
   const [computing, setComputing] = useState(false);
@@ -66,6 +67,9 @@ export default function DealWorkspacePage() {
   const [avm, setAvm] = useState<any>(null);
   const [fetchingComps, setFetchingComps] = useState(false);
   const [compsLoaded, setCompsLoaded] = useState(false);
+  const [savingAnalysis, setSavingAnalysis] = useState(false);
+  const [analysisSavedAt, setAnalysisSavedAt] = useState<string | null>(null);
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
 
   const loadSummary = useCallback(async () => {
     if (!id) return;
@@ -259,6 +263,43 @@ export default function DealWorkspacePage() {
     }
   }, [id, activeScenarioId, loadSummary]);
 
+  const handleSaveAnalysis = useCallback(async () => {
+    if (!id || !activeScenarioId || !aiAnalysis) return;
+    setSavingAnalysis(true);
+    try {
+      const res = await fetch(`/api/real-estate/deals/${id}/saved-analysis`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scenarioId: activeScenarioId, analysis: aiAnalysis }),
+      });
+      const json = await res.json();
+      if (json.data?.saved) {
+        setAnalysisSavedAt(json.data.savedAt);
+      }
+    } catch {}
+    setSavingAnalysis(false);
+  }, [id, activeScenarioId, aiAnalysis]);
+
+  const loadSavedAnalysis = useCallback(async () => {
+    if (!id || !activeScenarioId) return;
+    setLoadingAnalysis(true);
+    try {
+      const res = await fetch(`/api/real-estate/deals/${id}/saved-analysis?scenarioId=${activeScenarioId}`);
+      const json = await res.json();
+      if (json.data?.analysis) {
+        setAiAnalysis(json.data.analysis);
+        setAnalysisSavedAt(json.data.savedAt);
+      }
+    } catch {}
+    setLoadingAnalysis(false);
+  }, [id, activeScenarioId]);
+
+  useEffect(() => {
+    if (id && activeScenarioId && !aiAnalysis) {
+      loadSavedAnalysis();
+    }
+  }, [id, activeScenarioId, aiAnalysis, loadSavedAnalysis]);
+
   const loadComps = useCallback(async () => {
     if (!id) return;
     try {
@@ -341,6 +382,7 @@ export default function DealWorkspacePage() {
     { key: 'risks' as const, label: `Risks (${riskFlags.length})` },
     { key: 'comps' as const, label: `Comps (${comps.length})` },
     { key: 'analysis' as const, label: 'Acquisition Advisory' },
+    { key: 'ivcee' as const, label: 'IVCEE' },
     { key: 'decisions' as const, label: 'Decision Log' },
   ];
 
@@ -663,14 +705,33 @@ export default function DealWorkspacePage() {
             {activeTab === 'analysis' && (
               <div className="border border-dl-border p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-dl-serif text-lg text-dl-navy">Acquisition Advisory</h2>
-                  <button
-                    onClick={handleAiAnalysis}
-                    disabled={analyzingDeal || !metrics}
-                    className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
-                  >
-                    {analyzingDeal ? 'Analyzing...' : 'Run Acquisition Analysis'}
-                  </button>
+                  <div>
+                    <h2 className="font-dl-serif text-lg text-dl-navy">Acquisition Advisory</h2>
+                    {analysisSavedAt && (
+                      <span className="font-dl-mono text-xs text-dl-muted">Last saved: {new Date(analysisSavedAt).toLocaleString()}</span>
+                    )}
+                    {loadingAnalysis && (
+                      <span className="font-dl-mono text-xs text-dl-muted">Loading saved analysis...</span>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    {aiAnalysis && !analyzingDeal && (
+                      <button
+                        onClick={handleSaveAnalysis}
+                        disabled={savingAnalysis}
+                        className="border border-dl-navy text-dl-navy px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                      >
+                        {savingAnalysis ? 'Saving...' : 'Save Results'}
+                      </button>
+                    )}
+                    <button
+                      onClick={handleAiAnalysis}
+                      disabled={analyzingDeal || !metrics}
+                      className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                    >
+                      {analyzingDeal ? 'Analyzing...' : 'Run Acquisition Analysis'}
+                    </button>
+                  </div>
                 </div>
 
                 {!metrics && (
@@ -879,6 +940,10 @@ export default function DealWorkspacePage() {
                   </div>
                 )}
               </div>
+            )}
+
+            {activeTab === 'ivcee' && activeScenarioId && (
+              <IVCEEPanel dealId={id as string} scenarioId={activeScenarioId} />
             )}
 
             {activeTab === 'decisions' && (
