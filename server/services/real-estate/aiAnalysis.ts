@@ -51,6 +51,21 @@ export interface DealAnalysisInput {
     missingFields: string[];
     score: number;
   };
+  comparables?: Array<{
+    address: string;
+    salePrice: number;
+    pricePerSqft: number | null;
+    sqft: number | null;
+    bedrooms: number | null;
+    bathrooms: number | null;
+    distanceMiles: number | null;
+    saleDate: string | null;
+  }>;
+  avm?: {
+    value: number;
+    rangeLow: number | null;
+    rangeHigh: number | null;
+  } | null;
 }
 
 export interface OfferStrategy {
@@ -97,6 +112,51 @@ export interface DealAnalysisResult {
   exitStrategyNotes: string;
 }
 
+function buildCompsSection(input: DealAnalysisInput): string {
+  if (!input.comparables || input.comparables.length === 0) {
+    return '';
+  }
+
+  const comps = input.comparables;
+  const prices = comps.map(c => c.salePrice);
+  const avgPrice = Math.round(prices.reduce((s, p) => s + p, 0) / prices.length);
+  const medianPrice = prices.sort((a, b) => a - b)[Math.floor(prices.length / 2)];
+  const ppsValues = comps.filter(c => c.pricePerSqft).map(c => c.pricePerSqft!);
+  const avgPps = ppsValues.length > 0 ? Math.round(ppsValues.reduce((s, p) => s + p, 0) / ppsValues.length) : null;
+
+  let section = `\nCOMPARABLE SALES (${comps.length} properties):\n`;
+
+  if (input.avm) {
+    section += `AVM Estimate: $${input.avm.value.toLocaleString()}`;
+    if (input.avm.rangeLow && input.avm.rangeHigh) {
+      section += ` (range: $${input.avm.rangeLow.toLocaleString()} - $${input.avm.rangeHigh.toLocaleString()})`;
+    }
+    section += '\n';
+  }
+
+  section += `Avg Sale Price: $${avgPrice.toLocaleString()} | Median: $${medianPrice.toLocaleString()}`;
+  if (avgPps) section += ` | Avg $/SqFt: $${avgPps}`;
+  section += '\n';
+
+  const top = comps.slice(0, 10);
+  for (const c of top) {
+    const parts = [
+      `$${c.salePrice.toLocaleString()}`,
+      c.pricePerSqft ? `$${c.pricePerSqft}/sqft` : null,
+      c.sqft ? `${c.sqft.toLocaleString()} sqft` : null,
+      c.bedrooms != null ? `${c.bedrooms}bd/${c.bathrooms ?? '?'}ba` : null,
+      c.distanceMiles != null ? `${c.distanceMiles.toFixed(1)}mi` : null,
+      c.saleDate ? `sold ${c.saleDate}` : null,
+    ].filter(Boolean).join(' | ');
+    section += `- ${c.address}: ${parts}\n`;
+  }
+  if (comps.length > 10) {
+    section += `  ... and ${comps.length - 10} more comparables\n`;
+  }
+
+  return section;
+}
+
 export async function analyzeDeal(input: DealAnalysisInput): Promise<DealAnalysisResult> {
   const loanAmount = input.assumptions.purchasePrice * (1 - input.assumptions.downPaymentPct / 100);
   const totalCashNeeded = (input.assumptions.purchasePrice * input.assumptions.downPaymentPct / 100) +
@@ -113,7 +173,7 @@ INSTITUTIONAL BENCHMARKS:
 - Rent-to-value minimum: 0.8%
 
 ANALYTICAL FRAMEWORK:
-1. OFFER STRATEGY: Calculate maximum offer price using income approach (NOI / target cap rate), cost approach (ARV - rehab - profit margin), and comparable sales. Recommend the lowest of the three as the starting offer.
+1. OFFER STRATEGY: Calculate maximum offer price using THREE approaches: income approach (NOI / target cap rate), cost approach (ARV - rehab - profit margin), and comparable sales approach (median/average of actual comp sale prices provided). When comparable sales data is provided, you MUST use those actual sale prices — do not default to the asking price as the "implied comparable value." Recommend the lowest of the three as the starting offer.
 2. NEGOTIATION: Identify specific leverage points — days on market, seller motivation, market conditions, property condition issues.
 3. CREATIVE ACQUISITION: When conventional financing produces negative cash flow, evaluate: seller financing, subject-to existing mortgage, lease-option, wraparound mortgage, partnership/JV structure, owner carryback with balloon.
 4. RISK MANAGEMENT: Calculate specific reserve amounts (typically 6 months of total carrying costs), identify contingencies, and map exit scenarios with projected outcomes.
@@ -230,8 +290,8 @@ DATA COMPLETENESS (${(input.dataCompleteness.score * 100).toFixed(0)}%):
 - Tax history: ${input.dataCompleteness.hasTaxHistory ? `${input.dataCompleteness.taxYearsCount} years` : 'None available'}
 - Sale history: ${input.dataCompleteness.hasSaleHistory ? 'Available' : 'None available'}
 ${input.dataCompleteness.missingFields.length > 0 ? `- Missing fields: ${input.dataCompleteness.missingFields.join(', ')}` : ''}
-
-Provide a complete acquisition advisory with specific dollar amounts for offer price, reserves, and exit projections. If the deal fails at current terms, show exactly what price or terms would make it viable. Include at least 2 creative acquisition strategies if conventional financing produces negative cash flow.`;
+${buildCompsSection(input)}
+Provide a complete acquisition advisory with specific dollar amounts for offer price, reserves, and exit projections. Use the comparable sales data to anchor your valuation — derive the market-implied value from actual comp sale prices. If the deal fails at current terms, show exactly what price or terms would make it viable. Include at least 2 creative acquisition strategies if conventional financing produces negative cash flow.`;
 
   const responseText = await generateText(userPrompt, {
     model: 'gemini-2.5-flash',

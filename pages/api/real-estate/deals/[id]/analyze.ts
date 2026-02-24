@@ -3,6 +3,10 @@ import { pool } from '../../../../../server/db';
 import { analyzeDeal, DealAnalysisInput } from '../../../../../server/services/real-estate/aiAnalysis';
 import { successResponse, errorResponse, buildMeta, parseNumeric } from '../../../../../server/services/real-estate/helpers';
 
+export const config = {
+  maxDuration: 60,
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return errorResponse(res, 405, 'METHOD_NOT_ALLOWED', 'Only POST is accepted');
@@ -59,13 +63,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let compsCount = 0;
     let taxYearsCount = 0;
     let saleCount = 0;
+    let compsData: any[] = [];
+    let avmData: any = null;
 
     try {
       const compsResult = await pool.query(
-        `SELECT count(*) as cnt FROM re_comparables WHERE deal_id = $1`,
+        `SELECT address, sale_price, price_per_sqft, sqft, bedrooms, bathrooms, distance_miles, sale_date
+         FROM re_comparables WHERE deal_id = $1 AND sale_price > 0
+         ORDER BY distance_miles ASC NULLS LAST LIMIT 15`,
         [id]
       );
-      compsCount = parseInt(compsResult.rows[0]?.cnt || '0', 10);
+      compsData = compsResult.rows;
+      compsCount = compsData.length;
+
+      const avmResult = await pool.query(
+        `SELECT meta->'avm' as avm FROM re_deals WHERE id = $1`,
+        [id]
+      );
+      avmData = avmResult.rows[0]?.avm || null;
     } catch { /* table may not exist */ }
 
     try {
@@ -156,6 +171,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         missingFields,
         score: completenessScore,
       },
+      comparables: compsData.map((c: any) => ({
+        address: c.address || 'Unknown',
+        salePrice: parseFloat(c.sale_price) || 0,
+        pricePerSqft: c.price_per_sqft ? parseFloat(c.price_per_sqft) : null,
+        sqft: c.sqft ? parseInt(c.sqft) : null,
+        bedrooms: c.bedrooms != null ? parseInt(c.bedrooms) : null,
+        bathrooms: c.bathrooms != null ? parseFloat(c.bathrooms) : null,
+        distanceMiles: c.distance_miles ? parseFloat(c.distance_miles) : null,
+        saleDate: c.sale_date ? new Date(c.sale_date).toLocaleDateString() : null,
+      })),
+      avm: avmData ? {
+        value: parseFloat(avmData.value) || 0,
+        rangeLow: avmData.rangeLow ? parseFloat(avmData.rangeLow) : null,
+        rangeHigh: avmData.rangeHigh ? parseFloat(avmData.rangeHigh) : null,
+      } : null,
     };
 
     const analysis = await analyzeDeal(input);
