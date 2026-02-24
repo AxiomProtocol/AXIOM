@@ -280,7 +280,7 @@ export default function DealWorkspacePage() {
     { key: 'assumptions' as const, label: 'Assumptions' },
     { key: 'metrics' as const, label: 'Metrics' },
     { key: 'risks' as const, label: `Risks (${riskFlags.length})` },
-    { key: 'analysis' as const, label: 'AI Analysis' },
+    { key: 'analysis' as const, label: 'Acquisition Advisory' },
     { key: 'decisions' as const, label: 'Decision Log' },
   ];
 
@@ -485,46 +485,189 @@ export default function DealWorkspacePage() {
             {activeTab === 'analysis' && (
               <div className="border border-dl-border p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-dl-serif text-lg text-dl-navy">AI Deal Analysis</h2>
+                  <h2 className="font-dl-serif text-lg text-dl-navy">Acquisition Advisory</h2>
                   <button
                     onClick={handleAiAnalysis}
                     disabled={analyzingDeal || !metrics}
                     className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
                   >
-                    {analyzingDeal ? 'Analyzing...' : 'Run AI Analysis'}
+                    {analyzingDeal ? 'Analyzing...' : 'Run Acquisition Analysis'}
                   </button>
                 </div>
 
                 {!metrics && (
-                  <p className="text-dl-muted font-dl-mono text-sm">Run underwriting first to generate metrics before requesting AI analysis.</p>
+                  <p className="text-dl-muted font-dl-mono text-sm">Run underwriting first to generate metrics before requesting acquisition analysis.</p>
                 )}
 
                 {analyzingDeal && (
                   <div className="border border-dl-border p-6 text-center">
-                    <p className="font-dl-mono text-sm text-dl-muted">AI analyst is reviewing your deal...</p>
-                    <p className="font-dl-mono text-xs text-dl-muted mt-2">This typically takes 10-15 seconds.</p>
+                    <p className="font-dl-mono text-sm text-dl-muted">AI acquisition advisor is analyzing your deal...</p>
+                    <p className="font-dl-mono text-xs text-dl-muted mt-2">Calculating offer strategy, creative structures, and risk management plan.</p>
                   </div>
                 )}
 
                 {aiAnalysis && !analyzingDeal && (
-                  <div className="space-y-4">
+                  <div className="space-y-5">
                     <div className={`border p-4 ${
-                      aiAnalysis.verdict === 'strong_buy' ? 'border-green-600 bg-green-50' :
-                      aiAnalysis.verdict === 'buy' ? 'border-green-400 bg-green-50' :
-                      aiAnalysis.verdict === 'hold' ? 'border-yellow-400 bg-yellow-50' :
-                      aiAnalysis.verdict === 'pass' ? 'border-red-400 bg-red-50' :
+                      aiAnalysis.verdict === 'STRONG_PROCEED' ? 'border-green-600 bg-green-50' :
+                      aiAnalysis.verdict === 'PROCEED' ? 'border-green-400 bg-green-50' :
+                      aiAnalysis.verdict === 'CONDITIONAL_PROCEED' ? 'border-yellow-500 bg-yellow-50' :
                       'border-red-600 bg-red-50'
                     }`}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-dl-mono text-lg font-bold uppercase">{aiAnalysis.verdict?.replace('_', ' ')}</span>
+                        <span className="font-dl-mono text-lg font-bold uppercase">{aiAnalysis.verdict?.replace(/_/g, ' ')}</span>
                         <span className="font-dl-mono text-sm text-dl-muted">Confidence: {((aiAnalysis.confidence || 0) * 100).toFixed(0)}%</span>
                       </div>
                       <p className="font-dl-mono text-sm">{aiAnalysis.summary}</p>
+                      {aiAnalysis.acquisitionRecommendation && (
+                        <p className="font-dl-mono text-sm mt-2 font-bold text-dl-navy">{aiAnalysis.acquisitionRecommendation}</p>
+                      )}
+                      {(aiAnalysis.confidenceFactors || []).length > 0 && (
+                        <div className="mt-2 border-t border-dl-border pt-2">
+                          <span className="font-dl-mono text-xs text-dl-muted uppercase">Confidence factors: </span>
+                          <span className="font-dl-mono text-xs text-dl-muted">{aiAnalysis.confidenceFactors.join(' | ')}</span>
+                        </div>
+                      )}
                     </div>
+
+                    {aiAnalysis.offerStrategy && (
+                      <div className="border border-dl-navy p-4">
+                        <h3 className="font-dl-serif text-base text-dl-navy mb-3">Offer Strategy</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+                          <div className="border border-dl-border p-3">
+                            <span className="font-dl-mono text-xs text-dl-muted uppercase block">Max Offer Price</span>
+                            <span className="font-dl-mono text-xl font-bold text-dl-navy">${(aiAnalysis.offerStrategy.maxOfferPrice || 0).toLocaleString()}</span>
+                          </div>
+                          <div className="border border-dl-border p-3">
+                            <span className="font-dl-mono text-xs text-dl-muted uppercase block">Walk-Away Price</span>
+                            <span className="font-dl-mono text-xl font-bold text-red-700">${(aiAnalysis.offerStrategy.walkAwayPrice || 0).toLocaleString()}</span>
+                          </div>
+                        </div>
+                        <p className="font-dl-mono text-sm text-dl-text mb-3">{aiAnalysis.offerStrategy.offerRationale}</p>
+                        {aiAnalysis.offerStrategy.walkAwayRationale && (
+                          <p className="font-dl-mono text-xs text-dl-muted mb-3">{aiAnalysis.offerStrategy.walkAwayRationale}</p>
+                        )}
+                        {(aiAnalysis.offerStrategy.negotiationPoints || []).length > 0 && (
+                          <div>
+                            <h4 className="font-dl-mono text-xs text-dl-muted uppercase mb-1 font-bold">Negotiation Leverage</h4>
+                            <ul className="space-y-1">
+                              {aiAnalysis.offerStrategy.negotiationPoints.map((p: string, i: number) => (
+                                <li key={i} className="font-dl-mono text-sm text-dl-text flex items-start gap-2">
+                                  <span className="text-dl-navy mt-0.5">&#8250;</span> {p}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {(aiAnalysis.creativeStrategies || []).length > 0 && (
+                      <div className="border border-dl-border p-4">
+                        <h3 className="font-dl-serif text-base text-dl-navy mb-3">Creative Acquisition Strategies</h3>
+                        <div className="space-y-3">
+                          {aiAnalysis.creativeStrategies.map((s: any, i: number) => (
+                            <div key={i} className="border border-dl-border p-3">
+                              <div className="flex items-center justify-between mb-1">
+                                <h4 className="font-dl-mono text-sm font-bold text-dl-navy">{s.name}</h4>
+                                <span className={`font-dl-mono text-xs px-2 py-0.5 ${
+                                  s.riskLevel === 'LOW' ? 'bg-green-100 text-green-700' :
+                                  s.riskLevel === 'MODERATE' ? 'bg-yellow-100 text-yellow-700' :
+                                  'bg-red-100 text-red-700'
+                                }`}>{s.riskLevel}</span>
+                              </div>
+                              <p className="font-dl-mono text-sm text-dl-text mb-1">{s.description}</p>
+                              <p className="font-dl-mono text-sm text-dl-navy font-bold">{s.projectedCashFlow}</p>
+                              {(s.requirements || []).length > 0 && (
+                                <div className="mt-2">
+                                  <span className="font-dl-mono text-xs text-dl-muted">Requirements: </span>
+                                  <span className="font-dl-mono text-xs text-dl-text">{s.requirements.join(' | ')}</span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {aiAnalysis.riskManagement && (
+                      <div className="border border-dl-border p-4">
+                        <h3 className="font-dl-serif text-base text-dl-navy mb-3">Risk Management Plan</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+                          <div className="border border-dl-border p-3">
+                            <span className="font-dl-mono text-xs text-dl-muted uppercase block">Reserve Requirement</span>
+                            <span className="font-dl-mono text-xl font-bold text-dl-navy">${(aiAnalysis.riskManagement.reserveRequirement || 0).toLocaleString()}</span>
+                            <p className="font-dl-mono text-xs text-dl-muted mt-1">{aiAnalysis.riskManagement.reserveRationale}</p>
+                          </div>
+                          <div className="border border-dl-border p-3">
+                            <span className="font-dl-mono text-xs text-dl-muted uppercase block">Contingencies</span>
+                            <ul className="space-y-1 mt-1">
+                              {(aiAnalysis.riskManagement.contingencies || []).map((c: string, i: number) => (
+                                <li key={i} className="font-dl-mono text-xs text-dl-text flex items-start gap-1">
+                                  <span className="text-dl-navy">&#8226;</span> {c}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+
+                        {(aiAnalysis.riskManagement.exitScenarios || []).length > 0 && (
+                          <div className="mb-3">
+                            <h4 className="font-dl-mono text-xs text-dl-muted uppercase mb-2 font-bold">Exit Scenarios</h4>
+                            <div className="overflow-x-auto">
+                              <table className="w-full font-dl-mono text-sm">
+                                <thead>
+                                  <tr className="border-b border-dl-border">
+                                    <th className="text-left py-1 text-xs text-dl-muted uppercase">Scenario</th>
+                                    <th className="text-left py-1 text-xs text-dl-muted uppercase">Timeline</th>
+                                    <th className="text-left py-1 text-xs text-dl-muted uppercase">Projected Outcome</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {aiAnalysis.riskManagement.exitScenarios.map((e: any, i: number) => (
+                                    <tr key={i} className="border-b border-dl-border">
+                                      <td className="py-2 pr-2 text-dl-text">{e.scenario}</td>
+                                      <td className="py-2 pr-2 text-dl-text">{e.timeline}</td>
+                                      <td className="py-2 text-dl-text">{e.projectedOutcome}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+
+                        {(aiAnalysis.riskManagement.insuranceConsiderations || []).length > 0 && (
+                          <div>
+                            <h4 className="font-dl-mono text-xs text-dl-muted uppercase mb-1 font-bold">Insurance Considerations</h4>
+                            <ul className="space-y-1">
+                              {aiAnalysis.riskManagement.insuranceConsiderations.map((ic: string, i: number) => (
+                                <li key={i} className="font-dl-mono text-xs text-dl-text flex items-start gap-1">
+                                  <span className="text-dl-navy">&#8226;</span> {ic}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {(aiAnalysis.pathToViability || []).length > 0 && (
+                      <div className="border border-yellow-300 bg-yellow-50 p-4">
+                        <h3 className="font-dl-serif text-base text-dl-navy mb-2">Path to Viability</h3>
+                        <ul className="space-y-1">
+                          {aiAnalysis.pathToViability.map((p: string, i: number) => (
+                            <li key={i} className="font-dl-mono text-sm text-dl-text flex items-start gap-2">
+                              <span className="text-yellow-600 mt-0.5 font-bold">{i + 1}.</span> {p}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="border border-green-200 p-4">
-                        <h3 className="font-dl-mono text-xs text-green-700 uppercase mb-2 font-bold">Strengths</h3>
+                        <h3 className="font-dl-mono text-xs text-green-700 uppercase mb-2 font-bold">Deal Strengths</h3>
                         <ul className="space-y-1">
                           {(aiAnalysis.strengths || []).map((s: string, i: number) => (
                             <li key={i} className="font-dl-mono text-sm text-dl-text flex items-start gap-2">
@@ -534,7 +677,7 @@ export default function DealWorkspacePage() {
                         </ul>
                       </div>
                       <div className="border border-red-200 p-4">
-                        <h3 className="font-dl-mono text-xs text-red-700 uppercase mb-2 font-bold">Weaknesses</h3>
+                        <h3 className="font-dl-mono text-xs text-red-700 uppercase mb-2 font-bold">Deal Weaknesses</h3>
                         <ul className="space-y-1">
                           {(aiAnalysis.weaknesses || []).map((w: string, i: number) => (
                             <li key={i} className="font-dl-mono text-sm text-dl-text flex items-start gap-2">
@@ -545,25 +688,10 @@ export default function DealWorkspacePage() {
                       </div>
                     </div>
 
-                    <div className="border border-dl-border p-4">
-                      <h3 className="font-dl-mono text-xs text-dl-muted uppercase mb-2 font-bold">Recommendations</h3>
-                      <ul className="space-y-1">
-                        {(aiAnalysis.recommendations || []).map((r: string, i: number) => (
-                          <li key={i} className="font-dl-mono text-sm text-dl-text flex items-start gap-2">
-                            <span className="text-dl-navy mt-0.5">&#8250;</span> {r}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="border border-dl-border p-3">
                         <h4 className="font-dl-mono text-xs text-dl-muted uppercase mb-1">Market Context</h4>
                         <p className="font-dl-mono text-sm text-dl-text">{aiAnalysis.marketContext}</p>
-                      </div>
-                      <div className="border border-dl-border p-3">
-                        <h4 className="font-dl-mono text-xs text-dl-muted uppercase mb-1">Risk Assessment</h4>
-                        <p className="font-dl-mono text-sm text-dl-text">{aiAnalysis.riskAssessment}</p>
                       </div>
                       <div className="border border-dl-border p-3">
                         <h4 className="font-dl-mono text-xs text-dl-muted uppercase mb-1">Exit Strategy</h4>

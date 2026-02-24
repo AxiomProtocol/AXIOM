@@ -20,7 +20,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const dealResult = await pool.query(
-      `SELECT d.id, d.strategy, d.deal_name, p.address_raw, p.address_normalized,
+      `SELECT d.id, d.strategy, d.deal_name, d.property_id,
+              p.address_raw, p.address_normalized,
               p.bedrooms, p.bathrooms, p.sqft, p.year_built, p.property_type, p.lot_sqft
        FROM re_deals d
        JOIN re_properties p ON d.property_id = p.id
@@ -54,6 +55,55 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `SELECT flag_type, severity, message FROM re_risk_flags WHERE scenario_id = $1`,
       [scenarioId]
     );
+
+    let compsCount = 0;
+    let taxYearsCount = 0;
+    let saleCount = 0;
+
+    try {
+      const compsResult = await pool.query(
+        `SELECT count(*) as cnt FROM re_comparables WHERE deal_id = $1`,
+        [id]
+      );
+      compsCount = parseInt(compsResult.rows[0]?.cnt || '0', 10);
+    } catch { /* table may not exist */ }
+
+    try {
+      const taxResult = await pool.query(
+        `SELECT count(*) as cnt FROM re_tax_history WHERE property_id = $1`,
+        [deal.property_id]
+      );
+      taxYearsCount = parseInt(taxResult.rows[0]?.cnt || '0', 10);
+    } catch { /* table may not exist */ }
+
+    try {
+      const saleResult = await pool.query(
+        `SELECT count(*) as cnt FROM re_sale_history WHERE property_id = $1`,
+        [deal.property_id]
+      );
+      saleCount = parseInt(saleResult.rows[0]?.cnt || '0', 10);
+    } catch { /* table may not exist */ }
+
+    const missingFields: string[] = [];
+    if (!deal.bedrooms) missingFields.push('bedrooms');
+    if (!deal.bathrooms) missingFields.push('bathrooms');
+    if (!deal.sqft) missingFields.push('square footage');
+    if (!deal.year_built) missingFields.push('year built');
+    if (!deal.property_type) missingFields.push('property type');
+    if (!deal.lot_sqft) missingFields.push('lot size');
+
+    const hasPropertyFacts = missingFields.length <= 2;
+    const hasComps = compsCount > 0;
+    const hasTaxHistory = taxYearsCount > 0;
+    const hasSaleHistory = saleCount > 0;
+
+    let completenessScore = 0.4;
+    if (hasPropertyFacts) completenessScore += 0.15;
+    if (hasComps) completenessScore += 0.15 + Math.min(compsCount / 10, 1) * 0.1;
+    if (hasTaxHistory) completenessScore += 0.1;
+    if (hasSaleHistory) completenessScore += 0.1;
+    completenessScore -= missingFields.length * 0.03;
+    completenessScore = Math.max(0.2, Math.min(1.0, completenessScore));
 
     const input: DealAnalysisInput = {
       property: {
@@ -96,23 +146,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         severity: f.severity,
         message: f.message,
       })),
+      dataCompleteness: {
+        hasPropertyFacts,
+        hasComps,
+        hasTaxHistory,
+        hasSaleHistory,
+        compsCount,
+        taxYearsCount,
+        missingFields,
+        score: completenessScore,
+      },
     };
 
     const analysis = await analyzeDeal(input);
 
+    const verdictLabel = analysis.verdict.replace(/_/g, ' ');
     await pool.query(
       `INSERT INTO re_decision_log (id, deal_id, decision, decided_by, rationale, snapshot_metrics, decided_at)
-       VALUES (gen_random_uuid(), $1, 'AI_ANALYSIS', 'ai_analyst', $2, $3, now())`,
+       VALUES (gen_random_uuid(), $1, 'AI_ANALYSIS', 'ai_advisor', $2, $3, now())`,
       [
         id,
-        `AI Verdict: ${analysis.verdict.toUpperCase()} (${(analysis.confidence * 100).toFixed(0)}% confidence). ${analysis.summary}`,
+        `AI Verdict: ${verdictLabel} (${(analysis.confidence * 100).toFixed(0)}% confidence). Max offer: $${(analysis.offerStrategy?.maxOfferPrice || 0).toLocaleString()}. ${analysis.summary}`,
         JSON.stringify(analysis),
       ]
     );
 
-    return successResponse(res, { analysis }, buildMeta(['internal_db', 'ai_analysis'], analysis.confidence));
+    return successResponse(res, { analysis, dataCompleteness: input.dataCompleteness }, buildMeta(['internal_db', 'ai_analysis'], analysis.confidence));
   } catch (err: any) {
-    console.error('AI analysis error:', err.message);
+    console.error('AI analysis error:', err.message, err.stack);
     return errorResponse(res, 500, 'INTERNAL_ERROR', `AI analysis failed: ${err.message}`);
   }
 }
