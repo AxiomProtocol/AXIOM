@@ -1,20 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
-
-let _anthropic: Anthropic | null = null;
-
-function getAnthropicClient(): Anthropic {
-  if (!_anthropic) {
-    const apiKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;
-    const baseURL = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
-    if (!apiKey || !baseURL) {
-      throw new Error(
-        `Anthropic integration not configured. API_KEY=${apiKey ? 'set' : 'missing'}, BASE_URL=${baseURL ? 'set' : 'missing'}`
-      );
-    }
-    _anthropic = new Anthropic({ apiKey, baseURL });
-  }
-  return _anthropic;
-}
+import { generateText } from '../../../lib/server/gemini';
 
 export interface DealAnalysisInput {
   property: {
@@ -249,29 +233,21 @@ ${input.dataCompleteness.missingFields.length > 0 ? `- Missing fields: ${input.d
 
 Provide a complete acquisition advisory with specific dollar amounts for offer price, reserves, and exit projections. If the deal fails at current terms, show exactly what price or terms would make it viable. Include at least 2 creative acquisition strategies if conventional financing produces negative cash flow.`;
 
-  const message = await getAnthropicClient().messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 4096,
-    messages: [
-      { role: 'user', content: userPrompt }
-    ],
-    system: systemPrompt,
+  const responseText = await generateText(userPrompt, {
+    model: 'gemini-2.5-pro',
+    systemPrompt,
   });
-
-  const content = message.content[0];
-  if (content.type !== 'text') {
-    throw new Error('Unexpected response type from AI');
-  }
 
   let parsed: DealAnalysisResult;
   try {
-    const jsonMatch = content.text.match(/\{[\s\S]*\}/);
+    const cleaned = responseText.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       throw new Error('No JSON object found in response');
     }
     parsed = JSON.parse(jsonMatch[0]) as DealAnalysisResult;
   } catch (parseErr: any) {
-    console.error('AI response parse failed:', parseErr.message, 'Raw response (first 500):', content.text.substring(0, 500));
+    console.error('AI response parse failed:', parseErr.message, 'Raw response (first 500):', responseText.substring(0, 500));
     parsed = buildFallbackResult(input);
   }
 
