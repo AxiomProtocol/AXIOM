@@ -234,7 +234,7 @@ ${input.dataCompleteness.missingFields.length > 0 ? `- Missing fields: ${input.d
 Provide a complete acquisition advisory with specific dollar amounts for offer price, reserves, and exit projections. If the deal fails at current terms, show exactly what price or terms would make it viable. Include at least 2 creative acquisition strategies if conventional financing produces negative cash flow.`;
 
   const responseText = await generateText(userPrompt, {
-    model: 'gemini-2.5-pro',
+    model: 'gemini-2.5-flash',
     systemPrompt,
   });
 
