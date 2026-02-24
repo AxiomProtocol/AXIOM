@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../../server/db';
 import { analyzeDeal, DealAnalysisInput } from '../../../../../server/services/real-estate/aiAnalysis';
+import { fetchComparableSales } from '../../../../../server/services/real-estate/rentcast';
 import { successResponse, errorResponse, buildMeta, parseNumeric } from '../../../../../server/services/real-estate/helpers';
 
 export const config = {
@@ -75,6 +76,66 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       );
       compsData = compsResult.rows;
       compsCount = compsData.length;
+
+      if (compsCount === 0) {
+        const address = deal.address_normalized || deal.address_raw;
+        if (address) {
+          console.log(`[analyzeDeal] No comps found, auto-fetching from RentCast for: ${address}`);
+          try {
+            const rcResult = await fetchComparableSales(address, 15);
+            for (const comp of rcResult.comparables) {
+              const salePrice = comp.price || comp.lastSalePrice;
+              if (!salePrice) continue;
+              const pricePerSqft = comp.squareFootage && comp.squareFootage > 0
+                ? Math.round((salePrice / comp.squareFootage) * 100) / 100
+                : null;
+              await pool.query(
+                `INSERT INTO re_comparables (
+                  id, deal_id, property_id, address, city, state, zip,
+                  lat, lon, distance_miles, property_type, sqft, lot_sqft,
+                  bedrooms, bathrooms, year_built, sale_price, sale_date,
+                  price_per_sqft, days_on_market, source, similarity_score,
+                  is_selected, meta, created_at
+                ) VALUES (
+                  gen_random_uuid(), $1, $2, $3, $4, $5, $6,
+                  $7, $8, $9, $10, $11, $12,
+                  $13, $14, $15, $16, $17,
+                  $18, $19, $20, $21,
+                  true, $22, now()
+                )`,
+                [
+                  id, deal.property_id, comp.formattedAddress,
+                  comp.city || null, comp.state || null, comp.zipCode || null,
+                  comp.latitude || null, comp.longitude || null, comp.distance || null,
+                  comp.propertyType || null, comp.squareFootage || null, comp.lotSize || null,
+                  comp.bedrooms || null, comp.bathrooms || null, comp.yearBuilt || null,
+                  salePrice, comp.lastSaleDate || null,
+                  pricePerSqft, comp.daysOnMarket || null,
+                  'rentcast', comp.correlation || null,
+                  JSON.stringify({ rentcastId: comp.id, fetchedAt: new Date().toISOString() }),
+                ]
+              );
+            }
+            if (rcResult.value) {
+              await pool.query(
+                `UPDATE re_deals SET meta = COALESCE(meta, '{}'::jsonb) || $1::jsonb WHERE id = $2`,
+                [JSON.stringify({ avm: { value: rcResult.value, rangeLow: rcResult.valueRangeLow, rangeHigh: rcResult.valueRangeHigh, pricePerSqft: rcResult.pricePerSqft, fetchedAt: new Date().toISOString(), source: 'rentcast' } }), id]
+              );
+            }
+            const refreshed = await pool.query(
+              `SELECT address, sale_price, price_per_sqft, sqft, bedrooms, bathrooms, distance_miles, sale_date
+               FROM re_comparables WHERE deal_id = $1 AND sale_price > 0
+               ORDER BY distance_miles ASC NULLS LAST LIMIT 15`,
+              [id]
+            );
+            compsData = refreshed.rows;
+            compsCount = compsData.length;
+            console.log(`[analyzeDeal] Auto-fetched ${compsCount} comps from RentCast`);
+          } catch (rcErr: any) {
+            console.warn(`[analyzeDeal] RentCast auto-fetch failed: ${rcErr.message}`);
+          }
+        }
+      }
 
       const avmResult = await pool.query(
         `SELECT meta->'avm' as avm FROM re_deals WHERE id = $1`,
