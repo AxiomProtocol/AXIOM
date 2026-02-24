@@ -600,19 +600,14 @@ export async function authorizeDecision(decisionId: string): Promise<{ success: 
   }
 
   const symbolDupResult = await pool.query(
-    `SELECT status FROM mirdt_paper_trades
+    `SELECT id FROM mirdt_paper_trades
      WHERE setup_id IN (SELECT id FROM mirdt_setups WHERE symbol = $1)
-     ORDER BY opened_at DESC LIMIT 1`,
+       AND status = 'OPEN'
+     LIMIT 1`,
     [row.symbol]
   );
   if (symbolDupResult.rows.length > 0) {
-    const st = symbolDupResult.rows[0].status;
-    if (st === 'OPEN') {
-      return { success: false, error: `An open trade already exists for symbol ${row.symbol}` };
-    }
-    if (st === 'CLOSED') {
-      return { success: false, error: `A trade was already completed for ${row.symbol} — create a new setup to trade again` };
-    }
+    return { success: false, error: `An open trade already exists for symbol ${row.symbol}` };
   }
 
   await insertEvent('AUTHORIZED', row.setup_id, decisionId, row.run_id, {
@@ -643,17 +638,11 @@ export async function openPaperTrade(decisionId: string): Promise<{ success: boo
   }
 
   const existingForSetup = await pool.query(
-    `SELECT id, status FROM mirdt_paper_trades WHERE setup_id = $1 ORDER BY opened_at DESC LIMIT 1`,
+    `SELECT id FROM mirdt_paper_trades WHERE setup_id = $1 AND status = 'OPEN' LIMIT 1`,
     [row.setup_id]
   );
   if (existingForSetup.rows.length > 0) {
-    const existing = existingForSetup.rows[0];
-    if (existing.status === 'OPEN') {
-      return { success: false, error: 'An open trade already exists for this setup' };
-    }
-    if (existing.status === 'CLOSED') {
-      return { success: false, error: 'A trade was already completed for this setup' };
-    }
+    return { success: false, error: 'An open trade already exists for this setup' };
   }
 
   const entryPrice = safeParseFloat(row.current_price);
