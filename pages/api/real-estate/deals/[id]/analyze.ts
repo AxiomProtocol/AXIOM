@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../../server/db';
 import { analyzeDeal, DealAnalysisInput } from '../../../../../server/services/real-estate/aiAnalysis';
-import { successResponse, errorResponse, buildMeta, parseNumeric, safeNum } from '../../../../../server/services/real-estate/helpers';
+import { successResponse, errorResponse, buildMeta, parseNumeric } from '../../../../../server/services/real-estate/helpers';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const dealResult = await pool.query(
       `SELECT d.id, d.strategy, d.deal_name, p.address_raw, p.address_normalized,
-              p.bedrooms, p.bathrooms, p.square_footage, p.year_built, p.property_type, p.lot_size
+              p.bedrooms, p.bathrooms, p.sqft, p.year_built, p.property_type, p.lot_sqft
        FROM re_deals d
        JOIN re_properties p ON d.property_id = p.id
        WHERE d.id = $1`,
@@ -55,43 +55,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       [scenarioId]
     );
 
-    const p = (v: unknown) => safeNum(parseNumeric(v), 2, 12);
-
     const input: DealAnalysisInput = {
       property: {
         address: deal.address_normalized || deal.address_raw || 'Unknown',
         bedrooms: deal.bedrooms ? parseNumeric(deal.bedrooms) : undefined,
         bathrooms: deal.bathrooms ? parseNumeric(deal.bathrooms) : undefined,
-        squareFootage: deal.square_footage ? parseNumeric(deal.square_footage) : undefined,
+        squareFootage: deal.sqft ? parseNumeric(deal.sqft) : undefined,
         yearBuilt: deal.year_built ? parseNumeric(deal.year_built) : undefined,
         propertyType: deal.property_type || undefined,
-        lotSize: deal.lot_size ? parseNumeric(deal.lot_size) : undefined,
+        lotSize: deal.lot_sqft ? parseNumeric(deal.lot_sqft) : undefined,
       },
       strategy: deal.strategy,
       assumptions: {
-        purchasePrice: p(a.purchase_price),
-        arvEstimate: p(a.arv_estimate),
-        rehabBudget: p(a.rehab_budget),
-        monthlyRent: p(a.monthly_rent),
-        vacancyPct: p(a.vacancy_pct),
-        interestRate: p(a.interest_rate),
-        downPaymentPct: p(a.down_payment_pct),
+        purchasePrice: parseNumeric(a.purchase_price),
+        arvEstimate: parseNumeric(a.arv_estimate),
+        rehabBudget: parseNumeric(a.rehab_budget),
+        monthlyRent: parseNumeric(a.monthly_rent),
+        vacancyPct: parseNumeric(a.vacancy_pct),
+        interestRate: parseNumeric(a.interest_rate),
+        downPaymentPct: parseNumeric(a.down_payment_pct),
         loanTermYears: parseNumeric(a.loan_term_years),
-        annualTaxes: p(a.annual_taxes),
-        annualInsurance: p(a.annual_insurance),
-        propertyMgmtPct: p(a.property_mgmt_pct),
+        annualTaxes: parseNumeric(a.annual_taxes),
+        annualInsurance: parseNumeric(a.annual_insurance),
+        propertyMgmtPct: parseNumeric(a.property_mgmt_pct),
       },
       metrics: {
-        noi: p(m.noi),
-        capRate: p(m.cap_rate),
-        cashOnCash: p(m.cash_on_cash),
-        dscr: p(m.dscr),
-        monthlyCashFlow: p(m.monthly_cash_flow),
-        annualCashFlow: p(m.annual_cash_flow),
-        breakEvenMonths: m.break_even_months ? p(m.break_even_months) : null,
-        rehabRoi: p(m.rehab_roi),
-        rentToValue: p(m.rent_to_value),
-        grm: p(m.grm),
+        noi: parseNumeric(m.noi),
+        capRate: parseNumeric(m.cap_rate),
+        cashOnCash: parseNumeric(m.cash_on_cash),
+        dscr: parseNumeric(m.dscr),
+        monthlyCashFlow: parseNumeric(m.monthly_cash_flow),
+        annualCashFlow: parseNumeric(m.annual_cash_flow),
+        breakEvenMonths: m.break_even_months ? parseNumeric(m.break_even_months) : null,
+        rehabRoi: parseNumeric(m.rehab_roi),
+        rentToValue: parseNumeric(m.rent_to_value),
+        grm: parseNumeric(m.grm),
       },
       riskFlags: riskFlagsResult.rows.map((f: any) => ({
         flagType: f.flag_type,
