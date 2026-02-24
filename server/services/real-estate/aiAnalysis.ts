@@ -1,9 +1,20 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL,
-});
+let _anthropic: Anthropic | null = null;
+
+function getAnthropicClient(): Anthropic {
+  if (!_anthropic) {
+    const apiKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;
+    const baseURL = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
+    if (!apiKey || !baseURL) {
+      throw new Error(
+        `Anthropic integration not configured. API_KEY=${apiKey ? 'set' : 'missing'}, BASE_URL=${baseURL ? 'set' : 'missing'}`
+      );
+    }
+    _anthropic = new Anthropic({ apiKey, baseURL });
+  }
+  return _anthropic;
+}
 
 export interface DealAnalysisInput {
   property: {
@@ -238,7 +249,7 @@ ${input.dataCompleteness.missingFields.length > 0 ? `- Missing fields: ${input.d
 
 Provide a complete acquisition advisory with specific dollar amounts for offer price, reserves, and exit projections. If the deal fails at current terms, show exactly what price or terms would make it viable. Include at least 2 creative acquisition strategies if conventional financing produces negative cash flow.`;
 
-  const message = await anthropic.messages.create({
+  const message = await getAnthropicClient().messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 4096,
     messages: [
