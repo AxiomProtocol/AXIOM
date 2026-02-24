@@ -293,10 +293,28 @@ ${input.dataCompleteness.missingFields.length > 0 ? `- Missing fields: ${input.d
 ${buildCompsSection(input)}
 Provide a complete acquisition advisory with specific dollar amounts for offer price, reserves, and exit projections. Use the comparable sales data to anchor your valuation — derive the market-implied value from actual comp sale prices. If the deal fails at current terms, show exactly what price or terms would make it viable. Include at least 2 creative acquisition strategies if conventional financing produces negative cash flow.`;
 
-  const responseText = await generateText(userPrompt, {
-    model: 'gemini-2.5-flash',
-    systemPrompt,
-  });
+  let responseText: string;
+  const startTime = Date.now();
+  try {
+    responseText = await generateText(userPrompt, {
+      model: 'gemini-2.5-flash',
+      systemPrompt,
+      thinkingBudget: 4096,
+    });
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`[analyzeDeal] Gemini responded in ${elapsed}s, length=${responseText.length}`);
+  } catch (geminiErr: any) {
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.error(`[analyzeDeal] Gemini API failed after ${elapsed}s:`, geminiErr.message, geminiErr.status || '', geminiErr.code || '');
+    const fallback = buildFallbackResult(input);
+    return normalizeResult(fallback, input);
+  }
+
+  if (!responseText || responseText.trim().length === 0) {
+    console.error('[analyzeDeal] Gemini returned empty response');
+    const fallback = buildFallbackResult(input);
+    return normalizeResult(fallback, input);
+  }
 
   let parsed: DealAnalysisResult;
   try {
@@ -307,7 +325,7 @@ Provide a complete acquisition advisory with specific dollar amounts for offer p
     }
     parsed = JSON.parse(jsonMatch[0]) as DealAnalysisResult;
   } catch (parseErr: any) {
-    console.error('AI response parse failed:', parseErr.message, 'Raw response (first 500):', responseText.substring(0, 500));
+    console.error('[analyzeDeal] JSON parse failed:', parseErr.message, 'Raw (first 500):', responseText.substring(0, 500));
     parsed = buildFallbackResult(input);
   }
 

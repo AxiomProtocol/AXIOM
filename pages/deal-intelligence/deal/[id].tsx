@@ -228,21 +228,32 @@ export default function DealWorkspacePage() {
     if (!id || !activeScenarioId) return;
     setAnalyzingDeal(true);
     setAiAnalysis(null);
+    setError('');
     try {
       const res = await fetch(`/api/real-estate/deals/${id}/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scenarioId: activeScenarioId }),
       });
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const status = res.status;
+        if (status === 504 || status === 502) {
+          setError(`Analysis timed out (${status}). The AI model needs more time. Please try again.`);
+        } else {
+          setError(`Server returned non-JSON response (HTTP ${status}). Please try again.`);
+        }
+        return;
+      }
       const json = await res.json();
       if (json.error) {
-        setError(json.error.message);
+        setError(json.error.message || 'Analysis failed');
       } else {
         setAiAnalysis(json.data.analysis);
         await loadSummary();
       }
-    } catch {
-      setError('AI analysis failed');
+    } catch (err: any) {
+      setError(`AI analysis failed: ${err.message || 'Network error. Check your connection and try again.'}`);
     } finally {
       setAnalyzingDeal(false);
     }

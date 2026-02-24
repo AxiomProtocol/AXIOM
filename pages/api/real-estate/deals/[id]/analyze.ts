@@ -4,7 +4,7 @@ import { analyzeDeal, DealAnalysisInput } from '../../../../../server/services/r
 import { successResponse, errorResponse, buildMeta, parseNumeric } from '../../../../../server/services/real-estate/helpers';
 
 export const config = {
-  maxDuration: 60,
+  maxDuration: 120,
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

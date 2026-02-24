@@ -4,6 +4,10 @@ const apiKey = process.env.GEMINI_API_KEY || process.env.AI_INTEGRATIONS_GEMINI_
 const baseUrl = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
 const useDirectApi = !baseUrl;
 
+if (!apiKey) {
+  console.warn("[gemini] No API key found in GEMINI_API_KEY or AI_INTEGRATIONS_GEMINI_API_KEY");
+}
+
 const ai = new GoogleGenAI({
   apiKey,
   ...(baseUrl ? { httpOptions: { apiVersion: "", baseUrl } } : {}),
@@ -34,6 +38,7 @@ export interface GenerateContentOptions {
   systemPrompt?: string;
   temperature?: number;
   maxTokens?: number;
+  thinkingBudget?: number;
 }
 
 export async function generateText(
@@ -50,9 +55,15 @@ export async function generateText(
       ]
     : prompt;
 
+  const genConfig: any = {};
+  if (options.thinkingBudget !== undefined) {
+    genConfig.thinkingConfig = { thinkingBudget: options.thinkingBudget };
+  }
+
   const response = await ai.models.generateContent({
     model: resolveModel(model),
     contents,
+    config: Object.keys(genConfig).length > 0 ? genConfig : undefined,
   });
 
   return response.text || "";
