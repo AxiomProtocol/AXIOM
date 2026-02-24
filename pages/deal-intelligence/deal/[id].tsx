@@ -52,7 +52,7 @@ export default function DealWorkspacePage() {
   const [summary, setSummary] = useState<DealSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'analysis' | 'decisions'>('assumptions');
+  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'comps' | 'analysis' | 'decisions'>('assumptions');
   const [assumptions, setAssumptions] = useState<AssumptionsState>(DEFAULT_ASSUMPTIONS);
   const [saving, setSaving] = useState(false);
   const [computing, setComputing] = useState(false);
@@ -62,6 +62,10 @@ export default function DealWorkspacePage() {
   const [submittingDecision, setSubmittingDecision] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
   const [analyzingDeal, setAnalyzingDeal] = useState(false);
+  const [comps, setComps] = useState<any[]>([]);
+  const [avm, setAvm] = useState<any>(null);
+  const [fetchingComps, setFetchingComps] = useState(false);
+  const [compsLoaded, setCompsLoaded] = useState(false);
 
   const loadSummary = useCallback(async () => {
     if (!id) return;
@@ -244,6 +248,50 @@ export default function DealWorkspacePage() {
     }
   }, [id, activeScenarioId, loadSummary]);
 
+  const loadComps = useCallback(async () => {
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/real-estate/deals/${id}/comps`);
+      const json = await res.json();
+      if (!json.error) {
+        setComps(json.data.comps || []);
+        setAvm(json.data.avm || null);
+        setCompsLoaded(true);
+      }
+    } catch {}
+  }, [id]);
+
+  const handleFetchComps = useCallback(async () => {
+    if (!id) return;
+    setFetchingComps(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/real-estate/deals/${id}/comps`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ compCount: 15 }),
+      });
+      const json = await res.json();
+      if (json.error) {
+        setError(json.error.message);
+      } else {
+        setComps(json.data.comps || []);
+        setAvm(json.data.avm || null);
+        setCompsLoaded(true);
+      }
+    } catch {
+      setError('Failed to fetch comparable sales');
+    } finally {
+      setFetchingComps(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (id && !compsLoaded) {
+      loadComps();
+    }
+  }, [id, compsLoaded, loadComps]);
+
   const handleField = (field: keyof AssumptionsState, value: string) => {
     setAssumptions(prev => ({ ...prev, [field]: value }));
   };
@@ -280,6 +328,7 @@ export default function DealWorkspacePage() {
     { key: 'assumptions' as const, label: 'Assumptions' },
     { key: 'metrics' as const, label: 'Metrics' },
     { key: 'risks' as const, label: `Risks (${riskFlags.length})` },
+    { key: 'comps' as const, label: `Comps (${comps.length})` },
     { key: 'analysis' as const, label: 'Acquisition Advisory' },
     { key: 'decisions' as const, label: 'Decision Log' },
   ];
@@ -477,6 +526,124 @@ export default function DealWorkspacePage() {
                         <p className="font-dl-mono text-sm">{flag.message}</p>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'comps' && (
+              <div className="border border-dl-border p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-dl-serif text-lg text-dl-navy">Comparable Sales</h2>
+                  <button
+                    onClick={handleFetchComps}
+                    disabled={fetchingComps}
+                    className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                  >
+                    {fetchingComps ? 'Fetching...' : comps.length > 0 ? 'Refresh Comps' : 'Fetch Comps'}
+                  </button>
+                </div>
+
+                {fetchingComps && (
+                  <div className="border border-dl-border p-6 text-center">
+                    <p className="font-dl-mono text-sm text-dl-muted">Searching for comparable sales near this property...</p>
+                    <p className="font-dl-mono text-xs text-dl-muted mt-2">This typically takes 5-10 seconds.</p>
+                  </div>
+                )}
+
+                {avm && (
+                  <div className="border border-dl-navy bg-blue-50 p-4 mb-4">
+                    <h3 className="font-dl-mono text-xs text-dl-muted uppercase mb-2 font-bold">Automated Valuation Model (AVM)</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div>
+                        <span className="font-dl-mono text-xs text-dl-muted block">Estimated Value</span>
+                        <span className="font-dl-mono text-lg font-bold text-dl-navy">${(avm.value || 0).toLocaleString()}</span>
+                      </div>
+                      <div>
+                        <span className="font-dl-mono text-xs text-dl-muted block">Range Low</span>
+                        <span className="font-dl-mono text-sm text-dl-text">${(avm.rangeLow || 0).toLocaleString()}</span>
+                      </div>
+                      <div>
+                        <span className="font-dl-mono text-xs text-dl-muted block">Range High</span>
+                        <span className="font-dl-mono text-sm text-dl-text">${(avm.rangeHigh || 0).toLocaleString()}</span>
+                      </div>
+                      {avm.pricePerSqft && (
+                        <div>
+                          <span className="font-dl-mono text-xs text-dl-muted block">Price/SqFt</span>
+                          <span className="font-dl-mono text-sm text-dl-text">${avm.pricePerSqft.toFixed(0)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {comps.length === 0 && !fetchingComps && (
+                  <p className="text-dl-muted font-dl-mono text-sm">No comparable sales loaded. Click "Fetch Comps" to pull data from RentCast.</p>
+                )}
+
+                {comps.length > 0 && !fetchingComps && (
+                  <div>
+                    <p className="font-dl-mono text-xs text-dl-muted mb-3">{comps.length} comparable sales loaded</p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full font-dl-mono text-sm">
+                        <thead>
+                          <tr className="border-b border-dl-border">
+                            <th className="text-left py-2 text-xs text-dl-muted uppercase pr-3">Address</th>
+                            <th className="text-right py-2 text-xs text-dl-muted uppercase pr-3">Sale Price</th>
+                            <th className="text-right py-2 text-xs text-dl-muted uppercase pr-3">$/SqFt</th>
+                            <th className="text-right py-2 text-xs text-dl-muted uppercase pr-3">SqFt</th>
+                            <th className="text-center py-2 text-xs text-dl-muted uppercase pr-3">Bed/Bath</th>
+                            <th className="text-right py-2 text-xs text-dl-muted uppercase pr-3">Dist (mi)</th>
+                            <th className="text-left py-2 text-xs text-dl-muted uppercase">Sale Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {comps.map((c: any, i: number) => (
+                            <tr key={c.id || i} className="border-b border-dl-border hover:bg-gray-50">
+                              <td className="py-2 pr-3 text-dl-text text-xs">{c.address}</td>
+                              <td className="py-2 pr-3 text-right text-dl-navy font-bold">${Number(c.sale_price || 0).toLocaleString()}</td>
+                              <td className="py-2 pr-3 text-right">{c.price_per_sqft ? `$${Number(c.price_per_sqft).toFixed(0)}` : '-'}</td>
+                              <td className="py-2 pr-3 text-right">{c.sqft ? Number(c.sqft).toLocaleString() : '-'}</td>
+                              <td className="py-2 pr-3 text-center">{c.bedrooms || '-'}/{c.bathrooms || '-'}</td>
+                              <td className="py-2 pr-3 text-right">{c.distance_miles ? Number(c.distance_miles).toFixed(1) : '-'}</td>
+                              <td className="py-2 text-dl-muted text-xs">{c.sale_date ? new Date(c.sale_date).toLocaleDateString() : '-'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {comps.length >= 3 && (
+                      <div className="mt-4 border border-dl-border p-3">
+                        <h4 className="font-dl-mono text-xs text-dl-muted uppercase mb-2 font-bold">Comp Summary</h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <div>
+                            <span className="font-dl-mono text-xs text-dl-muted block">Avg Sale Price</span>
+                            <span className="font-dl-mono text-sm font-bold text-dl-navy">
+                              ${Math.round(comps.reduce((sum: number, c: any) => sum + Number(c.sale_price || 0), 0) / comps.length).toLocaleString()}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-dl-mono text-xs text-dl-muted block">Avg $/SqFt</span>
+                            <span className="font-dl-mono text-sm text-dl-text">
+                              ${Math.round(comps.filter((c: any) => c.price_per_sqft).reduce((sum: number, c: any) => sum + Number(c.price_per_sqft), 0) / (comps.filter((c: any) => c.price_per_sqft).length || 1)).toFixed(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-dl-mono text-xs text-dl-muted block">Price Range</span>
+                            <span className="font-dl-mono text-sm text-dl-text">
+                              ${Math.min(...comps.map((c: any) => Number(c.sale_price || 0))).toLocaleString()} - ${Math.max(...comps.map((c: any) => Number(c.sale_price || 0))).toLocaleString()}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-dl-mono text-xs text-dl-muted block">Avg Distance</span>
+                            <span className="font-dl-mono text-sm text-dl-text">
+                              {(comps.filter((c: any) => c.distance_miles).reduce((sum: number, c: any) => sum + Number(c.distance_miles), 0) / (comps.filter((c: any) => c.distance_miles).length || 1)).toFixed(1)} mi
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

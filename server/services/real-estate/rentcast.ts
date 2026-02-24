@@ -437,3 +437,81 @@ export async function enrichProperty(propertyId: string): Promise<{
     throw err;
   }
 }
+
+export interface RentCastComparable {
+  id: string;
+  formattedAddress: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  latitude?: number;
+  longitude?: number;
+  propertyType?: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  squareFootage?: number;
+  lotSize?: number;
+  yearBuilt?: number;
+  price?: number;
+  lastSalePrice?: number;
+  lastSaleDate?: string;
+  distance?: number;
+  daysOnMarket?: number;
+  listingType?: string;
+  correlation?: number;
+}
+
+export interface CompsResult {
+  value?: number;
+  valueRangeLow?: number;
+  valueRangeHigh?: number;
+  comparables: RentCastComparable[];
+  pricePerSqft?: number;
+}
+
+export async function fetchComparableSales(
+  address: string,
+  compCount: number = 15
+): Promise<CompsResult> {
+  const data = await rentcastGet('/avm/value', {
+    address,
+    compCount: String(compCount),
+  });
+
+  const comparables: RentCastComparable[] = [];
+
+  if (Array.isArray(data.comparables)) {
+    for (const c of data.comparables) {
+      comparables.push({
+        id: c.id || '',
+        formattedAddress: c.formattedAddress || c.addressLine1 || 'Unknown',
+        city: c.city,
+        state: c.state,
+        zipCode: c.zipCode,
+        latitude: c.latitude,
+        longitude: c.longitude,
+        propertyType: c.propertyType,
+        bedrooms: c.bedrooms,
+        bathrooms: c.bathrooms,
+        squareFootage: c.squareFootage,
+        lotSize: c.lotSize,
+        yearBuilt: c.yearBuilt,
+        price: c.price || c.lastSalePrice,
+        lastSalePrice: c.lastSalePrice,
+        lastSaleDate: c.lastSaleDate,
+        distance: c.distance,
+        daysOnMarket: c.daysOnMarket,
+        listingType: c.listingType,
+        correlation: c.correlation,
+      });
+    }
+  }
+
+  return {
+    value: data.value,
+    valueRangeLow: data.valueRangeLow,
+    valueRangeHigh: data.valueRangeHigh,
+    comparables,
+    pricePerSqft: data.pricePerSquareFoot,
+  };
+}
