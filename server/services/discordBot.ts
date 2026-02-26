@@ -1345,6 +1345,86 @@ export async function postChannelContent(guildId: string): Promise<{ success: bo
   }
 }
 
+export async function createStartHereChannel(guildId: string): Promise<{ success: boolean; message: string }> {
+  const discordClient = await getDiscordClient();
+  if (!discordClient) {
+    return { success: false, message: 'Discord bot not initialized' };
+  }
+
+  try {
+    const guild = await discordClient.guilds.fetch(guildId);
+    const channels = await guild.channels.fetch();
+
+    let axiomCategory = channels.find(
+      ch => ch?.type === ChannelType.GuildCategory && (ch.name === 'AXIOM PROTOCOL' || ch.name.includes('AXIOM PROTOCOL'))
+    ) as CategoryChannel | undefined;
+
+    if (!axiomCategory) {
+      axiomCategory = await guild.channels.create({
+        name: 'AXIOM PROTOCOL',
+        type: ChannelType.GuildCategory
+      });
+    }
+
+    let startHere = channels.find(
+      ch => ch?.name === 'start-here' && ch?.type === ChannelType.GuildText
+    ) as TextChannel | undefined;
+
+    if (!startHere) {
+      startHere = await guild.channels.create({
+        name: 'start-here',
+        type: ChannelType.GuildText,
+        parent: axiomCategory.id,
+        topic: 'Download the $100/Week Capital Deployment Manual before proceeding. This is your first step.',
+        position: 0,
+      }) as TextChannel;
+    }
+
+    const introEmbed = new EmbedBuilder()
+      .setColor(0x1B3A4B)
+      .setTitle('Welcome to Axiom Protocol')
+      .setDescription(
+        'Before you do anything else, **download and read the manual below.**\n\n' +
+        'This document is your complete guide to deploying $100/week across Axiom Protocol products to build toward $1,500+ per month in variable income over 24 months.\n\n' +
+        'It covers:\n' +
+        '\u2022 Step-by-step setup instructions for all 5 products\n' +
+        '\u2022 Weekly allocation strategy ($35 Staking, $25 Wealth Practice, $20 DEX, $15 Lending, $5 DePIN)\n' +
+        '\u2022 Four deployment phases over 24 months\n' +
+        '\u2022 Income projection tables (Conservative, Base, Optimistic)\n' +
+        '\u2022 Probability of success analysis\n' +
+        '\u2022 Risk factors and mitigation strategies\n' +
+        '\u2022 FAQ and glossary'
+      )
+      .addFields(
+        { name: 'Your First Step', value: 'Download the PDF attached below. Read it completely before participating in any protocol products.', inline: false },
+        { name: 'After Reading', value: '1. Set up your wallet (MetaMask on Arbitrum One)\n2. Acquire AXUSD via the PSM\n3. Begin your Week 1 deployment\n4. Join a Wealth Practice circle\n5. Ask questions in #questions', inline: false }
+      )
+      .setFooter({ text: 'Axiom Protocol — Build Wealth Together, On-Chain. All rates are variable. This is not investment advice.' })
+      .setTimestamp();
+
+    const fs = await import('fs');
+    const path = await import('path');
+    const pdfPath = path.join(process.cwd(), 'documents', 'Axiom_User_Manual_100_Per_Week.pdf');
+
+    if (!fs.existsSync(pdfPath)) {
+      return { success: false, message: `PDF not found at ${pdfPath}` };
+    }
+
+    const { AttachmentBuilder } = await import('discord.js');
+    const attachment = new AttachmentBuilder(pdfPath, { name: 'Axiom_User_Manual_100_Per_Week.pdf' });
+
+    await startHere.send({
+      embeds: [introEmbed],
+      files: [attachment],
+    });
+
+    return { success: true, message: `Created #start-here channel and uploaded manual PDF in guild ${guildId}` };
+  } catch (error: any) {
+    console.error('Error creating start-here channel:', error);
+    return { success: false, message: error.message };
+  }
+}
+
 export async function reorderCategories(guildId: string): Promise<{ success: boolean; message: string; order: string[] }> {
   const discordClient = await getDiscordClient();
   if (!discordClient) {
