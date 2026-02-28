@@ -9204,107 +9204,6 @@ export const mirdtExecutionTimeseries = pgTable("mirdt_execution_timeseries", {
 export type MirdtExecutionTimeseries = typeof mirdtExecutionTimeseries.$inferSelect;
 export type InsertMirdtExecutionTimeseries = typeof mirdtExecutionTimeseries.$inferInsert;
 
-export const propReportTierEnum = pgEnum('prop_report_tier', ['free', 'base', 'premium']);
-export const propReportStatusEnum = pgEnum('prop_report_status', ['pending', 'paid', 'generating', 'ready', 'failed', 'expired']);
-
-export const propertyReports = pgTable("property_reports", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  tier: propReportTierEnum("tier").notNull(),
-  status: propReportStatusEnum("status").notNull().default('pending'),
-  addressRaw: varchar("address_raw", { length: 500 }).notNull(),
-  addressNormalized: varchar("address_normalized", { length: 500 }),
-  city: varchar("city", { length: 100 }),
-  state: varchar("state", { length: 50 }),
-  zip: varchar("zip", { length: 20 }),
-  lat: decimal("lat", { precision: 10, scale: 7 }),
-  lon: decimal("lon", { precision: 10, scale: 7 }),
-  fips: varchar("fips", { length: 15 }),
-  propertyType: varchar("property_type", { length: 50 }),
-  bedrooms: integer("bedrooms"),
-  bathrooms: decimal("bathrooms", { precision: 3, scale: 1 }),
-  sqft: integer("sqft"),
-  yearBuilt: integer("year_built"),
-  lotSqft: integer("lot_sqft"),
-  valueLow: decimal("value_low", { precision: 14, scale: 2 }),
-  valueMid: decimal("value_mid", { precision: 14, scale: 2 }),
-  valueHigh: decimal("value_high", { precision: 14, scale: 2 }),
-  rentLow: decimal("rent_low", { precision: 10, scale: 2 }),
-  rentMid: decimal("rent_mid", { precision: 10, scale: 2 }),
-  rentHigh: decimal("rent_high", { precision: 10, scale: 2 }),
-  rehabLow: decimal("rehab_low", { precision: 12, scale: 2 }),
-  rehabMid: decimal("rehab_mid", { precision: 12, scale: 2 }),
-  rehabHigh: decimal("rehab_high", { precision: 12, scale: 2 }),
-  confidenceScore: integer("confidence_score"),
-  dealGrade: varchar("deal_grade", { length: 2 }),
-  riskFlags: jsonb("risk_flags").default(sql`'[]'::jsonb`),
-  neighborhoodContext: jsonb("neighborhood_context"),
-  rehabItems: jsonb("rehab_items"),
-  compsUsed: jsonb("comps_used"),
-  dataSources: jsonb("data_sources"),
-  fullReport: jsonb("full_report"),
-  stripeSessionId: varchar("stripe_session_id", { length: 255 }),
-  stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
-  amountPaidCents: integer("amount_paid_cents"),
-  buyerEmail: varchar("buyer_email", { length: 255 }),
-  buyerWallet: varchar("buyer_wallet", { length: 42 }),
-  ipAddress: varchar("ip_address", { length: 45 }),
-  expiresAt: timestamp("expires_at"),
-  errorMessage: text("error_message"),
-}, (table) => ({
-  statusIdx: index("prop_report_status_idx").on(table.status),
-  tierIdx: index("prop_report_tier_idx").on(table.tier),
-  emailIdx: index("prop_report_email_idx").on(table.buyerEmail),
-  createdIdx: index("prop_report_created_idx").on(table.createdAt),
-  stripeIdx: index("prop_report_stripe_idx").on(table.stripeSessionId),
-}));
-
-export type PropertyReport = typeof propertyReports.$inferSelect;
-export type InsertPropertyReport = typeof propertyReports.$inferInsert;
-
-export const propGeoCache = pgTable("prop_geo_cache", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  queryKey: varchar("query_key", { length: 500 }).unique().notNull(),
-  lat: decimal("lat", { precision: 10, scale: 7 }).notNull(),
-  lon: decimal("lon", { precision: 10, scale: 7 }).notNull(),
-  addressNormalized: varchar("address_normalized", { length: 500 }),
-  city: varchar("city", { length: 100 }),
-  state: varchar("state", { length: 50 }),
-  zip: varchar("zip", { length: 20 }),
-  county: varchar("county", { length: 100 }),
-  fips: varchar("fips", { length: 15 }),
-  censusTract: varchar("census_tract", { length: 20 }),
-  amenityScores: jsonb("amenity_scores"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  expiresAt: timestamp("expires_at").notNull(),
-});
-
-export const propContextCache = pgTable("prop_context_cache", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  cacheKey: varchar("cache_key", { length: 500 }).unique().notNull(),
-  provider: varchar("provider", { length: 50 }).notNull(),
-  dataType: varchar("data_type", { length: 50 }).notNull(),
-  payload: jsonb("payload").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  expiresAt: timestamp("expires_at").notNull(),
-});
-
-export const propProviderCalls = pgTable("prop_provider_calls", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  reportId: uuid("report_id"),
-  provider: varchar("provider", { length: 50 }).notNull(),
-  endpoint: varchar("endpoint", { length: 255 }).notNull(),
-  statusCode: integer("status_code"),
-  latencyMs: integer("latency_ms"),
-  cached: boolean("cached").default(false),
-  errorMessage: text("error_message"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-}, (table) => ({
-  providerIdx: index("prop_prov_call_provider_idx").on(table.provider),
-  reportIdx: index("prop_prov_call_report_idx").on(table.reportId),
-}));
-
 // ────────────────────────────────────────────────────────────────
 // Capital Accounting and Performance Intelligence System
 // ────────────────────────────────────────────────────────────────
@@ -9501,3 +9400,124 @@ export type CapSnapshot = typeof capSnapshots.$inferSelect;
 export type InsertCapSnapshot = typeof capSnapshots.$inferInsert;
 export type CapSnapshotLine = typeof capSnapshotLines.$inferSelect;
 export type InsertCapSnapshotLine = typeof capSnapshotLines.$inferInsert;
+
+export const agAgentStatusEnum = pgEnum('ag_agent_status', ['ACTIVE', 'SUSPENDED']);
+export const agAgentModeEnum = pgEnum('ag_agent_mode', ['ADVISORY', 'CONSTRAINED']);
+export const agPolicyStatusEnum = pgEnum('ag_policy_status', ['DRAFT', 'ACTIVE', 'DEPRECATED']);
+export const agIntentTypeEnum = pgEnum('ag_intent_type', ['TRADE', 'UNDERWRITE', 'PARAM_CHANGE_PROPOSAL', 'REPORT']);
+export const agIntentStatusEnum = pgEnum('ag_intent_status', ['PENDING', 'APPROVED', 'REJECTED', 'EXECUTED', 'SIMULATED']);
+export const agDecisionEnum = pgEnum('ag_decision', ['APPROVE', 'REJECT', 'THROTTLE', 'DOWNGRADE', 'HALT']);
+export const agExecutionModeEnum = pgEnum('ag_execution_mode', ['PAPER', 'LIVE']);
+export const agExecutionActionEnum = pgEnum('ag_execution_action', ['BUY', 'SELL', 'NOOP']);
+export const agExecutionStatusEnum = pgEnum('ag_execution_status', ['SIMULATED', 'SUBMITTED', 'FILLED', 'FAILED', 'SKIPPED']);
+export const agAuditEntityTypeEnum = pgEnum('ag_audit_entity_type', ['INTENT', 'DECISION', 'EXECUTION', 'POLICY', 'REGIME', 'AGENT', 'BUDGET']);
+
+export const agAgents = pgTable("ag_agents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  operatorId: text("operator_id"),
+  modelProvider: text("model_provider").notNull(),
+  modelName: text("model_name").notNull(),
+  version: text("version").notNull().default("1.0.0"),
+  permissionScope: jsonb("permission_scope").notNull().default(sql`'{"allowed_domains":[],"venues":[],"symbols":[]}'::jsonb`),
+  defaultMode: agAgentModeEnum("default_mode").notNull().default("ADVISORY"),
+  status: agAgentStatusEnum("status").notNull().default("ACTIVE"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const agPolicies = pgTable("ag_policies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  version: integer("version").notNull().default(1),
+  status: agPolicyStatusEnum("status").notNull().default("DRAFT"),
+  rules: jsonb("rules").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const agBudgets = pgTable("ag_budgets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id").notNull(),
+  policyId: varchar("policy_id").notNull(),
+  denom: text("denom").notNull().default("AXUSD"),
+  maxNotionalPerTrade: decimal("max_notional_per_trade", { precision: 24, scale: 8 }).notNull(),
+  maxNotionalPerDay: decimal("max_notional_per_day", { precision: 24, scale: 8 }).notNull(),
+  maxDailyLoss: decimal("max_daily_loss", { precision: 24, scale: 8 }).notNull(),
+  maxOpenPositions: integer("max_open_positions").notNull(),
+  allowedVenues: jsonb("allowed_venues").notNull().default(sql`'[]'::jsonb`),
+  allowedAssets: jsonb("allowed_assets").notNull().default(sql`'[]'::jsonb`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const agIntents = pgTable("ag_intents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id").notNull(),
+  intentType: agIntentTypeEnum("intent_type").notNull(),
+  payload: jsonb("payload").notNull(),
+  requestedAt: timestamp("requested_at").defaultNow().notNull(),
+  correlationId: text("correlation_id"),
+  status: agIntentStatusEnum("status").notNull().default("PENDING"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  agentRequestedIdx: index("ag_intents_agent_requested_idx").on(table.agentId, table.requestedAt),
+}));
+
+export const agDecisions = pgTable("ag_decisions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  intentId: varchar("intent_id").notNull(),
+  policyId: varchar("policy_id").notNull(),
+  regimeId: varchar("regime_id"),
+  decision: agDecisionEnum("decision").notNull(),
+  reason: text("reason").notNull(),
+  checks: jsonb("checks").notNull(),
+  decidedAt: timestamp("decided_at").defaultNow().notNull(),
+}, (table) => ({
+  intentIdx: index("ag_decisions_intent_idx").on(table.intentId),
+}));
+
+export const agExecutions = pgTable("ag_executions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  intentId: varchar("intent_id").notNull(),
+  mode: agExecutionModeEnum("mode").notNull().default("PAPER"),
+  venue: text("venue"),
+  action: agExecutionActionEnum("action").notNull(),
+  requestedNotional: decimal("requested_notional", { precision: 24, scale: 8 }).notNull(),
+  executedNotional: decimal("executed_notional", { precision: 24, scale: 8 }),
+  status: agExecutionStatusEnum("status").notNull(),
+  result: jsonb("result"),
+  executedAt: timestamp("executed_at").defaultNow().notNull(),
+}, (table) => ({
+  intentIdx: index("ag_executions_intent_idx").on(table.intentId),
+}));
+
+export const agAuditLog = pgTable("ag_audit_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  entityType: agAuditEntityTypeEnum("entity_type").notNull(),
+  entityId: varchar("entity_id").notNull(),
+  canonical: jsonb("canonical").notNull(),
+  prevHash: varchar("prev_hash", { length: 128 }).notNull(),
+  hash: varchar("hash", { length: 128 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  createdAtIdx: index("ag_audit_log_created_idx").on(table.createdAt),
+  entityIdx: index("ag_audit_log_entity_idx").on(table.entityType, table.entityId),
+}));
+
+export type AgAgent = typeof agAgents.$inferSelect;
+export type InsertAgAgent = typeof agAgents.$inferInsert;
+export type AgPolicy = typeof agPolicies.$inferSelect;
+export type InsertAgPolicy = typeof agPolicies.$inferInsert;
+export type AgBudget = typeof agBudgets.$inferSelect;
+export type InsertAgBudget = typeof agBudgets.$inferInsert;
+export type AgIntent = typeof agIntents.$inferSelect;
+export type InsertAgIntent = typeof agIntents.$inferInsert;
+export type AgDecision = typeof agDecisions.$inferSelect;
+export type InsertAgDecision = typeof agDecisions.$inferInsert;
+export type AgExecution = typeof agExecutions.$inferSelect;
+export type InsertAgExecution = typeof agExecutions.$inferInsert;
+export type AgAuditLogEntry = typeof agAuditLog.$inferSelect;
+export type InsertAgAuditLogEntry = typeof agAuditLog.$inferInsert;
