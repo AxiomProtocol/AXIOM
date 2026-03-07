@@ -1238,6 +1238,276 @@ export async function register() {
       await exec(`CREATE INDEX IF NOT EXISTS ivcee_cap_deal_idx ON ivcee_capital_efficiency(deal_id)`, 'idx ivcee_cap_deal');
       await exec(`CREATE INDEX IF NOT EXISTS ivcee_cap_created_idx ON ivcee_capital_efficiency(created_at)`, 'idx ivcee_cap_created');
 
+      // ── ERC-3643 Tables (t3_) ──
+      await exec(`CREATE TABLE IF NOT EXISTS t3_identities (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        wallet VARCHAR(42) NOT NULL UNIQUE,
+        onchain_id_address VARCHAR(42) NOT NULL,
+        country_code INTEGER NOT NULL DEFAULT 840,
+        verification_level INTEGER NOT NULL DEFAULT 1,
+        kyc_submission_id VARCHAR,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        status VARCHAR(20) NOT NULL DEFAULT 'active'
+      )`, 't3_identities');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_t3_identities_wallet ON t3_identities(wallet)`, 'idx t3_identities_wallet');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_t3_identities_status ON t3_identities(status)`, 'idx t3_identities_status');
+
+      await exec(`CREATE TABLE IF NOT EXISTS t3_claims (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        identity_id VARCHAR NOT NULL REFERENCES t3_identities(id),
+        topic INTEGER NOT NULL,
+        issuer_address VARCHAR(42) NOT NULL,
+        claim_data TEXT,
+        signature TEXT,
+        valid_from TIMESTAMPTZ NOT NULL DEFAULT now(),
+        valid_until TIMESTAMPTZ,
+        revoked BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 't3_claims');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_t3_claims_identity ON t3_claims(identity_id)`, 'idx t3_claims_identity');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_t3_claims_topic ON t3_claims(topic)`, 'idx t3_claims_topic');
+
+      await exec(`CREATE TABLE IF NOT EXISTS t3_compliance_events (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        tx_hash VARCHAR(66),
+        from_address VARCHAR(42) NOT NULL,
+        to_address VARCHAR(42) NOT NULL,
+        amount NUMERIC(24,8) NOT NULL,
+        module_checked VARCHAR(64) NOT NULL,
+        result VARCHAR(10) NOT NULL,
+        reason TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 't3_compliance_events');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_t3_compliance_from ON t3_compliance_events(from_address)`, 'idx t3_compliance_from');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_t3_compliance_to ON t3_compliance_events(to_address)`, 'idx t3_compliance_to');
+
+      await exec(`CREATE TABLE IF NOT EXISTS t3_platform_whitelist (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        contract_address VARCHAR(42) NOT NULL UNIQUE,
+        platform_name VARCHAR(128) NOT NULL,
+        added_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        added_by VARCHAR(42),
+        active BOOLEAN NOT NULL DEFAULT TRUE
+      )`, 't3_platform_whitelist');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_t3_platform_active ON t3_platform_whitelist(active)`, 'idx t3_platform_active');
+
+      // ── Distressed Property Feed Tables (dp_) ──
+      await exec(`DO $$ BEGIN
+        CREATE TYPE dp_distress_type AS ENUM ('foreclosure','tax_lien','reo','wholesale','short_sale','auction','government');
+      EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum dp_distress_type');
+      await exec(`DO $$ BEGIN
+        CREATE TYPE dp_listing_status AS ENUM ('active','under_contract','sold','expired','pending_review');
+      EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum dp_listing_status');
+      await exec(`DO $$ BEGIN
+        CREATE TYPE dp_submission_status AS ENUM ('pending','approved','rejected','expired');
+      EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum dp_submission_status');
+      await exec(`DO $$ BEGIN
+        CREATE TYPE dp_source AS ENUM ('hud','fannie_mae','freddie_mac','usda','wholesaler','tax_sale','manual');
+      EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum dp_source');
+
+      await exec(`CREATE TABLE IF NOT EXISTS dp_listings (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        source dp_source NOT NULL,
+        source_id VARCHAR,
+        address VARCHAR NOT NULL,
+        city VARCHAR NOT NULL,
+        state VARCHAR(2) NOT NULL,
+        zip VARCHAR(10) NOT NULL,
+        county VARCHAR,
+        lat NUMERIC(10,7),
+        lon NUMERIC(10,7),
+        property_type VARCHAR DEFAULT 'single_family',
+        bedrooms INTEGER,
+        bathrooms NUMERIC(3,1),
+        sqft INTEGER,
+        lot_sqft INTEGER,
+        year_built INTEGER,
+        list_price NUMERIC(14,2),
+        estimated_value NUMERIC(14,2),
+        discount_pct NUMERIC(5,2),
+        distress_type dp_distress_type NOT NULL,
+        source_url VARCHAR,
+        photos JSONB DEFAULT '[]',
+        description TEXT,
+        status dp_listing_status NOT NULL DEFAULT 'active',
+        auction_date TIMESTAMPTZ,
+        ingested_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        expires_at TIMESTAMPTZ
+      )`, 'dp_listings');
+      await exec(`CREATE INDEX IF NOT EXISTS dp_listings_status_state_idx ON dp_listings(status, state)`, 'idx dp_listings_status_state');
+      await exec(`CREATE INDEX IF NOT EXISTS dp_listings_distress_type_idx ON dp_listings(distress_type)`, 'idx dp_listings_distress_type');
+      await exec(`CREATE INDEX IF NOT EXISTS dp_listings_city_idx ON dp_listings(city, state)`, 'idx dp_listings_city');
+      await exec(`CREATE INDEX IF NOT EXISTS dp_listings_price_idx ON dp_listings(list_price)`, 'idx dp_listings_price');
+
+      await exec(`CREATE TABLE IF NOT EXISTS dp_buy_boxes (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_wallet VARCHAR NOT NULL,
+        name VARCHAR NOT NULL,
+        target_cities JSONB DEFAULT '[]',
+        target_states JSONB DEFAULT '[]',
+        min_price NUMERIC(14,2),
+        max_price NUMERIC(14,2),
+        property_types JSONB DEFAULT '[]',
+        distress_types JSONB DEFAULT '[]',
+        min_bedrooms INTEGER,
+        min_sqft INTEGER,
+        max_price_per_sqft NUMERIC(10,2),
+        min_dscr NUMERIC(5,2),
+        min_cap_rate NUMERIC(5,2),
+        max_risk_level VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'dp_buy_boxes');
+      await exec(`CREATE INDEX IF NOT EXISTS dp_buy_boxes_wallet_idx ON dp_buy_boxes(user_wallet)`, 'idx dp_buy_boxes_wallet');
+      await exec(`CREATE INDEX IF NOT EXISTS dp_buy_boxes_active_idx ON dp_buy_boxes(active)`, 'idx dp_buy_boxes_active');
+
+      await exec(`CREATE TABLE IF NOT EXISTS dp_matches (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        listing_id VARCHAR NOT NULL,
+        buy_box_id VARCHAR NOT NULL,
+        match_score NUMERIC(5,2) NOT NULL,
+        notified BOOLEAN NOT NULL DEFAULT FALSE,
+        notified_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'dp_matches');
+      await exec(`CREATE INDEX IF NOT EXISTS dp_matches_buy_box_idx ON dp_matches(buy_box_id)`, 'idx dp_matches_buy_box');
+      await exec(`CREATE INDEX IF NOT EXISTS dp_matches_listing_idx ON dp_matches(listing_id)`, 'idx dp_matches_listing');
+
+      await exec(`CREATE TABLE IF NOT EXISTS dp_wholesaler_submissions (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        submitter_name VARCHAR NOT NULL,
+        submitter_email VARCHAR NOT NULL,
+        submitter_phone VARCHAR,
+        property_address VARCHAR NOT NULL,
+        city VARCHAR NOT NULL,
+        state VARCHAR(2) NOT NULL,
+        zip VARCHAR(10) NOT NULL,
+        asking_price NUMERIC(14,2) NOT NULL,
+        arv NUMERIC(14,2),
+        rehab_estimate NUMERIC(14,2),
+        property_type VARCHAR DEFAULT 'single_family',
+        bedrooms INTEGER,
+        bathrooms NUMERIC(3,1),
+        sqft INTEGER,
+        year_built INTEGER,
+        description TEXT,
+        photos JSONB DEFAULT '[]',
+        contract_end_date TIMESTAMPTZ,
+        status dp_submission_status NOT NULL DEFAULT 'pending',
+        reviewed_at TIMESTAMPTZ,
+        reviewer_notes TEXT,
+        listing_id VARCHAR,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'dp_wholesaler_submissions');
+      await exec(`CREATE INDEX IF NOT EXISTS dp_submissions_status_idx ON dp_wholesaler_submissions(status)`, 'idx dp_submissions_status');
+
+      // ── Agent Governance Tables (ag_) ──
+      await exec(`DO $$ BEGIN CREATE TYPE ag_agent_status AS ENUM ('ACTIVE','SUSPENDED'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum ag_agent_status');
+      await exec(`DO $$ BEGIN CREATE TYPE ag_agent_mode AS ENUM ('ADVISORY','CONSTRAINED'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum ag_agent_mode');
+      await exec(`DO $$ BEGIN CREATE TYPE ag_policy_status AS ENUM ('DRAFT','ACTIVE','DEPRECATED'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum ag_policy_status');
+      await exec(`DO $$ BEGIN CREATE TYPE ag_intent_type AS ENUM ('TRADE','UNDERWRITE','PARAM_CHANGE_PROPOSAL','REPORT'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum ag_intent_type');
+      await exec(`DO $$ BEGIN CREATE TYPE ag_intent_status AS ENUM ('PENDING','APPROVED','REJECTED','EXECUTED','SIMULATED'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum ag_intent_status');
+      await exec(`DO $$ BEGIN CREATE TYPE ag_decision AS ENUM ('APPROVE','REJECT','THROTTLE','DOWNGRADE','HALT'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum ag_decision');
+      await exec(`DO $$ BEGIN CREATE TYPE ag_execution_mode AS ENUM ('PAPER','LIVE'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum ag_execution_mode');
+      await exec(`DO $$ BEGIN CREATE TYPE ag_execution_action AS ENUM ('BUY','SELL','NOOP'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum ag_execution_action');
+      await exec(`DO $$ BEGIN CREATE TYPE ag_execution_status AS ENUM ('SIMULATED','SUBMITTED','FILLED','FAILED','SKIPPED'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum ag_execution_status');
+      await exec(`DO $$ BEGIN CREATE TYPE ag_audit_entity_type AS ENUM ('INTENT','DECISION','EXECUTION','POLICY','REGIME','AGENT','BUDGET'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum ag_audit_entity_type');
+
+      await exec(`CREATE TABLE IF NOT EXISTS ag_agents (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        name TEXT NOT NULL,
+        description TEXT,
+        operator_id TEXT,
+        model_provider TEXT NOT NULL,
+        model_name TEXT NOT NULL,
+        version TEXT NOT NULL DEFAULT '1.0.0',
+        permission_scope JSONB NOT NULL DEFAULT '{"allowed_domains":[],"venues":[],"symbols":[]}'::jsonb,
+        default_mode ag_agent_mode NOT NULL DEFAULT 'ADVISORY',
+        status ag_agent_status NOT NULL DEFAULT 'ACTIVE',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'ag_agents');
+
+      await exec(`CREATE TABLE IF NOT EXISTS ag_policies (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        name TEXT NOT NULL,
+        version INTEGER NOT NULL DEFAULT 1,
+        status ag_policy_status NOT NULL DEFAULT 'DRAFT',
+        rules JSONB NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'ag_policies');
+
+      await exec(`CREATE TABLE IF NOT EXISTS ag_budgets (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        agent_id VARCHAR NOT NULL,
+        policy_id VARCHAR NOT NULL,
+        denom TEXT NOT NULL DEFAULT 'AXUSD',
+        max_notional_per_trade NUMERIC(24,8) NOT NULL,
+        max_notional_per_day NUMERIC(24,8) NOT NULL,
+        max_daily_loss NUMERIC(24,8) NOT NULL,
+        max_open_positions INTEGER NOT NULL,
+        allowed_venues JSONB NOT NULL DEFAULT '[]'::jsonb,
+        allowed_assets JSONB NOT NULL DEFAULT '[]'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'ag_budgets');
+
+      await exec(`CREATE TABLE IF NOT EXISTS ag_intents (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        agent_id VARCHAR NOT NULL,
+        intent_type ag_intent_type NOT NULL,
+        payload JSONB NOT NULL,
+        requested_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        correlation_id TEXT,
+        status ag_intent_status NOT NULL DEFAULT 'PENDING',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'ag_intents');
+      await exec(`CREATE INDEX IF NOT EXISTS ag_intents_agent_requested_idx ON ag_intents(agent_id, requested_at)`, 'idx ag_intents_agent_requested');
+
+      await exec(`CREATE TABLE IF NOT EXISTS ag_decisions (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        intent_id VARCHAR NOT NULL,
+        policy_id VARCHAR NOT NULL,
+        regime_id VARCHAR,
+        decision ag_decision NOT NULL,
+        reason TEXT NOT NULL,
+        checks JSONB NOT NULL,
+        decided_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'ag_decisions');
+      await exec(`CREATE INDEX IF NOT EXISTS ag_decisions_intent_idx ON ag_decisions(intent_id)`, 'idx ag_decisions_intent');
+
+      await exec(`CREATE TABLE IF NOT EXISTS ag_executions (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        intent_id VARCHAR NOT NULL,
+        mode ag_execution_mode NOT NULL DEFAULT 'PAPER',
+        venue TEXT,
+        action ag_execution_action NOT NULL,
+        requested_notional NUMERIC(24,8) NOT NULL,
+        executed_notional NUMERIC(24,8),
+        status ag_execution_status NOT NULL,
+        result JSONB,
+        executed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'ag_executions');
+      await exec(`CREATE INDEX IF NOT EXISTS ag_executions_intent_idx ON ag_executions(intent_id)`, 'idx ag_executions_intent');
+
+      await exec(`CREATE TABLE IF NOT EXISTS ag_audit_log (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        entity_type ag_audit_entity_type NOT NULL,
+        entity_id VARCHAR NOT NULL,
+        canonical JSONB NOT NULL,
+        prev_hash VARCHAR(128) NOT NULL,
+        hash VARCHAR(128) NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'ag_audit_log');
+      await exec(`CREATE INDEX IF NOT EXISTS ag_audit_log_created_idx ON ag_audit_log(created_at)`, 'idx ag_audit_log_created');
+      await exec(`CREATE INDEX IF NOT EXISTS ag_audit_log_entity_idx ON ag_audit_log(entity_type, entity_id)`, 'idx ag_audit_log_entity');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
