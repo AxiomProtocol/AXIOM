@@ -1,37 +1,48 @@
 import type { NormalizedListing, SourceResult } from '../types';
 
-const HUD_SEARCH_URL = 'https://www.hudhomestore.gov/Listing/PropertySearchResult';
+const HUD_BASE_URL = 'https://www.hudhomestore.gov';
+const CLOUDINARY_BASE = 'https://res.cloudinary.com/yardi/image/upload/q_auto,f_auto,c_limit/d_hhs:themes:common:images:NoImage.jpg/hhs/';
 
-interface HudSearchParams {
-  sState: string;
-  iPageSize: number;
-  iPage: number;
-  sPropertyType?: string;
-  sLoanType?: string;
+interface HudApiListing {
+  propertyCaseNumber?: string;
+  propertyAddress?: string;
+  propertyCity?: string;
+  propertyState?: string;
+  propertyZip?: string;
+  propertyCounty?: string;
+  listPrice?: string;
+  bedrooms?: string;
+  bathrooms?: string;
+  bathroomsdecimal?: number;
+  squareFootage?: string;
+  yearBuilt?: string;
+  propertyAge?: string;
+  propertyType?: string;
+  latitude?: string;
+  longitude?: string;
+  galleryImages?: string;
+  propertyThumb?: string;
+  listingPeriod?: string;
+  propertyStatusDesc?: string;
+  bidOpenDate?: string;
+  listDate?: string;
+  periodDeadlineDate?: string;
+  eligibleBidders?: string;
+  bidderTypes?: string;
+  fhaFinancing?: string;
+  inAmenities?: string;
+  outAmenities?: string;
+  parkingType?: string;
+  numberOfStories?: string;
 }
 
-interface HudRawListing {
-  CaseNumber?: string;
-  Address?: string;
-  City?: string;
-  State?: string;
-  Zip?: string;
-  County?: string;
-  Beds?: number;
-  Baths?: number;
-  SqFt?: number;
-  LotSize?: string;
-  YearBuilt?: number;
-  ListPrice?: number;
-  SalePrice?: number;
-  PropertyType?: string;
-  Status?: string;
-  ListingDate?: string;
-  BidDeadline?: string;
-  FHACaseNumber?: string;
-  Latitude?: number;
-  Longitude?: number;
-  PhotoUrl?: string;
+function parseGalleryImages(galleryStr: string | undefined): string[] {
+  if (!galleryStr) return [];
+  const imgs = galleryStr.replace(/"/g, '').split(',');
+  return imgs
+    .map(img => img.trim())
+    .filter(img => img.length > 0)
+    .map(img => CLOUDINARY_BASE + img);
 }
 
 function normalizePropertyType(hudType: string | undefined): string {
@@ -44,45 +55,95 @@ function normalizePropertyType(hudType: string | undefined): string {
   return 'single_family';
 }
 
-function parseLotSqft(lotSize: string | undefined): number | undefined {
-  if (!lotSize) return undefined;
-  const match = lotSize.match(/([\d,.]+)/);
-  if (!match) return undefined;
-  const val = parseFloat(match[1].replace(/,/g, ''));
-  if (lotSize.toLowerCase().includes('acre')) return Math.round(val * 43560);
-  return Math.round(val);
-}
-
-function normalizeHudListing(raw: HudRawListing): NormalizedListing | null {
-  if (!raw.Address || !raw.City || !raw.State || !raw.Zip) return null;
-  const listPrice = raw.ListPrice || raw.SalePrice || 0;
+function normalizeHudApiListing(raw: HudApiListing): NormalizedListing | null {
+  if (!raw.propertyAddress || !raw.propertyCity || !raw.propertyState || !raw.propertyZip) return null;
+  const listPrice = parseFloat((raw.listPrice || '0').replace(/,/g, ''));
   if (listPrice <= 0) return null;
+
+  const photos = parseGalleryImages(raw.galleryImages);
+  if (photos.length === 0 && raw.propertyThumb) {
+    photos.push(raw.propertyThumb);
+  }
+
+  const beds = parseInt(raw.bedrooms || '0', 10) || undefined;
+  const baths = raw.bathroomsdecimal || parseFloat(raw.bathrooms || '0') || undefined;
+  const sqft = parseInt(raw.squareFootage || '0', 10) || undefined;
+  const yearBuilt = parseInt(raw.yearBuilt || '0', 10) || undefined;
+  const lat = parseFloat(raw.latitude || '0') || undefined;
+  const lon = parseFloat(raw.longitude || '0') || undefined;
+  const caseNum = raw.propertyCaseNumber || '';
+
+  const descParts = [
+    `HUD foreclosed ${beds || ''}BR/${baths || ''}BA in ${raw.propertyCity}, ${raw.propertyState}.`,
+    sqft ? `${sqft.toLocaleString()} sqft.` : '',
+    yearBuilt ? `Built ${yearBuilt}.` : '',
+    raw.listingPeriod ? `${raw.listingPeriod} listing.` : '',
+    raw.eligibleBidders || '',
+  ].filter(Boolean);
+
+  let auctionDate: Date | undefined;
+  if (raw.bidOpenDate) {
+    try { auctionDate = new Date(raw.bidOpenDate); } catch {}
+  }
+
+  let expiresAt: Date | undefined;
+  if (raw.periodDeadlineDate) {
+    try { expiresAt = new Date(raw.periodDeadlineDate); } catch {}
+  }
 
   return {
     source: 'hud',
-    sourceId: raw.CaseNumber || raw.FHACaseNumber || `hud-${raw.Address}-${raw.Zip}`,
-    address: raw.Address,
-    city: raw.City,
-    state: raw.State.substring(0, 2).toUpperCase(),
-    zip: raw.Zip.substring(0, 10),
-    county: raw.County || undefined,
-    lat: raw.Latitude || undefined,
-    lon: raw.Longitude || undefined,
-    propertyType: normalizePropertyType(raw.PropertyType),
-    bedrooms: raw.Beds || undefined,
-    bathrooms: raw.Baths || undefined,
-    sqft: raw.SqFt || undefined,
-    lotSqft: parseLotSqft(raw.LotSize),
-    yearBuilt: raw.YearBuilt || undefined,
+    sourceId: `HUD-${caseNum}`,
+    address: raw.propertyAddress,
+    city: raw.propertyCity,
+    state: raw.propertyState.substring(0, 2).toUpperCase(),
+    zip: raw.propertyZip.substring(0, 10),
+    county: raw.propertyCounty || undefined,
+    lat,
+    lon,
+    propertyType: normalizePropertyType(raw.propertyType),
+    bedrooms: beds,
+    bathrooms: baths,
+    sqft,
+    yearBuilt,
     listPrice,
     distressType: 'government',
-    sourceUrl: raw.CaseNumber
-      ? `https://www.hudhomestore.gov/Listing/PropertyDetails/${raw.CaseNumber}`
+    sourceUrl: caseNum
+      ? `https://www.hudhomestore.gov/Listing/PropertyDetails/${caseNum}`
       : undefined,
-    photos: raw.PhotoUrl ? [raw.PhotoUrl] : [],
-    description: `HUD foreclosed property in ${raw.City}, ${raw.State}. ${raw.PropertyType || 'Residential'}.`,
-    auctionDate: raw.BidDeadline ? new Date(raw.BidDeadline) : undefined,
+    photos,
+    description: descParts.join(' '),
+    auctionDate,
+    expiresAt,
   };
+}
+
+async function getSessionAndToken(): Promise<{ cookies: string; token: string } | null> {
+  try {
+    const response = await fetch(`${HUD_BASE_URL}/searchresult?sState=GA`, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      redirect: 'follow',
+    });
+
+    if (!response.ok) return null;
+
+    const setCookieHeaders = response.headers.getSetCookie?.() || [];
+    const cookies = setCookieHeaders
+      .map(c => c.split(';')[0])
+      .join('; ');
+
+    const html = await response.text();
+    const tokenMatch = html.match(/id="request-verification-token"[^>]*value="([^"]*)"/);
+    if (!tokenMatch) return null;
+
+    return { cookies, token: tokenMatch[1] };
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchHudListings(states: string[] = ['GA', 'TX', 'NC', 'MS', 'AL', 'TN', 'SC', 'FL']): Promise<SourceResult> {
@@ -91,43 +152,54 @@ export async function fetchHudListings(states: string[] = ['GA', 'TX', 'NC', 'MS
 
   for (const state of states) {
     try {
-      const params: HudSearchParams = {
-        sState: state,
-        iPageSize: 100,
-        iPage: 1,
-      };
-
-      const searchParams = new URLSearchParams();
-      Object.entries(params).forEach(([k, v]) => searchParams.set(k, String(v)));
-
-      const response = await fetch(`${HUD_SEARCH_URL}?${searchParams.toString()}`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Axiom-Protocol/1.0 (Real Estate Research)',
-        },
-        signal: AbortSignal.timeout(15000),
-      });
-
-      if (!response.ok) {
-        errors.push(`HUD ${state}: HTTP ${response.status}`);
+      const session = await getSessionAndToken();
+      if (!session) {
+        errors.push(`HUD ${state}: Failed to get session/token`);
         continue;
       }
 
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        const data = await response.json() as { Properties?: HudRawListing[]; properties?: HudRawListing[]; results?: HudRawListing[] };
-        const rawListings = data.Properties || data.properties || data.results || [];
+      const body = new URLSearchParams({
+        citystate: state,
+        viewport: '',
+        zoom: '10',
+        geopickertype: '',
+        geopickeroutput: '',
+        locationchanged: '',
+        locationgeoid: '',
+        locationLat: '',
+        locationLong: '',
+        isdefault: '0',
+      });
 
-        for (const raw of rawListings) {
-          const normalized = normalizeHudListing(raw);
-          if (normalized) allListings.push(normalized);
-        }
-      } else {
-        errors.push(`HUD ${state}: Non-JSON response (${contentType}). Endpoint may require browser session.`);
+      const response = await fetch(`${HUD_BASE_URL}/SearchResult?handler=GetFilteredResult`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'RequestVerificationToken': session.token,
+          'Cookie': session.cookies,
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/json, text/plain, */*',
+          'Referer': `${HUD_BASE_URL}/searchresult?sState=${state}`,
+          'Origin': HUD_BASE_URL,
+        },
+        signal: AbortSignal.timeout(30000),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        errors.push(`HUD ${state}: HTTP ${response.status} - ${text.substring(0, 100)}`);
+        continue;
       }
 
-      await new Promise(r => setTimeout(r, 1000));
+      const data = await response.json() as { searchresult?: HudApiListing[] };
+      const rawListings = data.searchresult || [];
+
+      for (const raw of rawListings) {
+        const normalized = normalizeHudApiListing(raw);
+        if (normalized) allListings.push(normalized);
+      }
+
+      await new Promise(r => setTimeout(r, 1500));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       errors.push(`HUD ${state}: ${message}`);
