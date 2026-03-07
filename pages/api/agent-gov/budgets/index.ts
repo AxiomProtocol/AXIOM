@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
-import { agBudgets } from '../../../../shared/schema';
+import { agBudgets } from '../../../../shared/agentGovSchema';
 import { isAgentGovAuthorized } from '../../../../lib/agent-gov/auth';
 import { appendAuditRecord } from '../../../../lib/agent-gov/audit';
 import { eq, desc } from 'drizzle-orm';

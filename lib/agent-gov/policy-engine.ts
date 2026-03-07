@@ -1,5 +1,5 @@
 import { db } from '../../server/db';
-import { agPolicies, agBudgets, agAgents, agIntents, agExecutions, sentinelRegimeSnapshots } from '../../shared/schema';
+import { agPolicies, agBudgets, agAgents, agIntents, agExecutions, sentinelRegimeSnapshots } from '../../shared/agentGovSchema';
 import { eq, desc, sql, and, gte } from 'drizzle-orm';
 import type {
   PolicyRules, DecisionResult, DecisionVerdict, CheckResult,

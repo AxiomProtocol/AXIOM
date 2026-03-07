@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import { db } from '../../server/db';
-import { agAuditLog } from '../../shared/schema';
+import { agAuditLog } from '../../shared/agentGovSchema';
 import { desc, sql } from 'drizzle-orm';
 import type { AuditEntityType } from './types';
 
