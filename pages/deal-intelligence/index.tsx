@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -17,7 +18,24 @@ interface SearchResult {
   yearBuilt: number | null;
 }
 
+function parseAddress(fullAddress: string): { street: string; city: string; state: string } {
+  const parts = fullAddress.split(',').map(p => p.trim());
+  if (parts.length >= 3) {
+    const lastPart = parts[parts.length - 1];
+    const stateZipMatch = lastPart.match(/^([A-Z]{2})\s*\d{0,5}/i);
+    return {
+      street: parts.slice(0, parts.length - 2).join(', '),
+      city: parts[parts.length - 2],
+      state: stateZipMatch ? stateZipMatch[1].toUpperCase() : lastPart.substring(0, 2).toUpperCase(),
+    };
+  } else if (parts.length === 2) {
+    return { street: parts[0], city: '', state: parts[1].substring(0, 2).toUpperCase() };
+  }
+  return { street: fullAddress, city: '', state: '' };
+}
+
 export default function DealIntelligenceSearch() {
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
@@ -26,6 +44,7 @@ export default function DealIntelligenceSearch() {
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
   const [resolving, setResolving] = useState(false);
+  const autoResolveTriggered = useRef(false);
 
   const handleSearch = useCallback(async () => {
     setLoading(true);
@@ -82,6 +101,43 @@ export default function DealIntelligenceSearch() {
       setResolving(false);
     }
   }, [query, city, state]);
+
+  useEffect(() => {
+    if (!router.isReady || autoResolveTriggered.current) return;
+    const addressParam = router.query.address as string | undefined;
+    if (!addressParam) return;
+
+    autoResolveTriggered.current = true;
+    const parsed = parseAddress(addressParam);
+    setQuery(parsed.street);
+    setCity(parsed.city);
+    setState(parsed.state);
+
+    (async () => {
+      setResolving(true);
+      setError('');
+      try {
+        const res = await fetch('/api/real-estate/resolve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: addressParam }),
+        });
+        const json = await res.json();
+
+        if (!res.ok || json.error) {
+          setError(json.error?.message || `Resolution failed (status ${res.status})`);
+        } else if (json.data?.propertyId) {
+          router.replace(`/deal-intelligence/property/${json.data.propertyId}`);
+        } else {
+          setError('Could not resolve this address. Try searching manually.');
+        }
+      } catch (err: any) {
+        setError(`Failed to connect to resolve service: ${err.message || 'Network error'}`);
+      } finally {
+        setResolving(false);
+      }
+    })();
+  }, [router.isReady, router.query.address]);
 
   return (
     <DesignLawLayout>
@@ -150,6 +206,13 @@ export default function DealIntelligenceSearch() {
             </button>
           </div>
         </div>
+
+        {resolving && router.query.address && (
+          <div className="border border-dl-border bg-dl-bg p-6 mb-6 text-center">
+            <p className="text-dl-navy font-dl-mono text-sm mb-2">Resolving property address...</p>
+            <p className="text-dl-muted font-dl-mono text-xs">{router.query.address}</p>
+          </div>
+        )}
 
         {error && (
           <div className="border border-red-300 bg-red-50 p-4 mb-6">
