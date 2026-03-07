@@ -327,11 +327,17 @@ function FeedTab() {
                 <div className="border-t border-[#2c3e50] p-4 bg-[#faf8f4]">
                   {listing.photos && listing.photos.length > 0 && (
                     <div className="mb-4">
-                      <img
-                        src={listing.photos[0]}
-                        alt={listing.address}
-                        className="w-full max-w-md h-56 object-cover border border-[#2c3e50]"
-                      />
+                      <div className="flex gap-2 overflow-x-auto pb-2">
+                        {listing.photos.map((photo, idx) => (
+                          <img
+                            key={idx}
+                            src={photo}
+                            alt={`${listing.address} - Photo ${idx + 1}`}
+                            className="w-64 h-44 object-cover border border-[#2c3e50] flex-shrink-0"
+                          />
+                        ))}
+                      </div>
+                      <div className="font-mono text-xs text-[#5a6c7d] mt-1">{listing.photos.length} photos</div>
                     </div>
                   )}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
