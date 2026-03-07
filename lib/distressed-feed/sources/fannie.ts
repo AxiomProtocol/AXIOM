@@ -1,34 +1,28 @@
 import type { NormalizedListing, SourceResult } from '../types';
 
-const HOMEPATH_SEARCH_URL = 'https://www.homepath.com/listing/search';
+const HOMEPATH_BASE = 'https://homepath.fanniemae.com';
 
-interface FannieRawListing {
+interface HomepathListing {
   propertyId?: string;
   caseNumber?: string;
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    zip?: string;
-    county?: string;
-  };
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  county?: string;
   listPrice?: number;
-  estimatedValue?: number;
-  propertyDetails?: {
-    propertyType?: string;
-    bedrooms?: number;
-    bathrooms?: number;
-    sqft?: number;
-    lotSize?: number;
-    yearBuilt?: number;
-  };
-  coordinates?: {
-    lat?: number;
-    lng?: number;
-  };
+  bedrooms?: number;
+  bathrooms?: number;
+  sqft?: number;
+  lotSize?: number;
+  yearBuilt?: number;
+  propertyType?: string;
+  latitude?: number;
+  longitude?: number;
+  photos?: string[];
   status?: string;
-  images?: string[];
   description?: string;
+  firstLookEndDate?: string;
 }
 
 function normalizePropertyType(fType: string | undefined): string {
@@ -41,44 +35,82 @@ function normalizePropertyType(fType: string | undefined): string {
   return 'single_family';
 }
 
-function normalizeFannieListing(raw: FannieRawListing): NormalizedListing | null {
-  const addr = raw.address;
-  if (!addr?.street || !addr?.city || !addr?.state || !addr?.zip) return null;
+function normalizeHomepathListing(raw: HomepathListing): NormalizedListing | null {
+  if (!raw.address || !raw.city || !raw.state || !raw.zip) return null;
   const listPrice = raw.listPrice || 0;
   if (listPrice <= 0) return null;
 
-  const estimatedValue = raw.estimatedValue || undefined;
-  let discountPct: number | undefined;
-  if (estimatedValue && estimatedValue > 0) {
-    discountPct = Math.round(((estimatedValue - listPrice) / estimatedValue) * 100 * 100) / 100;
-  }
+  const id = raw.propertyId || raw.caseNumber || `fnma-${raw.address}-${raw.zip}`;
+  const beds = raw.bedrooms || undefined;
+  const baths = raw.bathrooms || undefined;
+
+  const descParts = [
+    `Fannie Mae REO ${beds || ''}BR/${baths || ''}BA in ${raw.city}, ${raw.state}.`,
+    raw.sqft ? `${raw.sqft.toLocaleString()} sqft.` : '',
+    raw.yearBuilt ? `Built ${raw.yearBuilt}.` : '',
+    'HomePath financing available.',
+  ].filter(Boolean);
 
   return {
     source: 'fannie_mae',
-    sourceId: raw.propertyId || raw.caseNumber || `fnma-${addr.street}-${addr.zip}`,
-    address: addr.street,
-    city: addr.city,
-    state: addr.state.substring(0, 2).toUpperCase(),
-    zip: addr.zip.substring(0, 10),
-    county: addr.county || undefined,
-    lat: raw.coordinates?.lat || undefined,
-    lon: raw.coordinates?.lng || undefined,
-    propertyType: normalizePropertyType(raw.propertyDetails?.propertyType),
-    bedrooms: raw.propertyDetails?.bedrooms || undefined,
-    bathrooms: raw.propertyDetails?.bathrooms || undefined,
-    sqft: raw.propertyDetails?.sqft || undefined,
-    lotSqft: raw.propertyDetails?.lotSize || undefined,
-    yearBuilt: raw.propertyDetails?.yearBuilt || undefined,
+    sourceId: `FNMA-${id}`,
+    address: raw.address,
+    city: raw.city,
+    state: raw.state.substring(0, 2).toUpperCase(),
+    zip: raw.zip.substring(0, 10),
+    county: raw.county || undefined,
+    lat: raw.latitude || undefined,
+    lon: raw.longitude || undefined,
+    propertyType: normalizePropertyType(raw.propertyType),
+    bedrooms: beds,
+    bathrooms: baths,
+    sqft: raw.sqft || undefined,
+    lotSqft: raw.lotSize || undefined,
+    yearBuilt: raw.yearBuilt || undefined,
     listPrice,
-    estimatedValue,
-    discountPct,
     distressType: 'reo',
-    sourceUrl: raw.propertyId
-      ? `https://www.homepath.com/listing/${raw.propertyId}`
-      : undefined,
-    photos: raw.images || [],
-    description: raw.description || `Fannie Mae REO property in ${addr.city}, ${addr.state}.`,
+    sourceUrl: `${HOMEPATH_BASE}/listing/${id}`,
+    photos: raw.photos || [],
+    description: descParts.join(' '),
+    expiresAt: raw.firstLookEndDate ? new Date(raw.firstLookEndDate) : undefined,
   };
+}
+
+async function tryHomepathApi(state: string): Promise<{ listings: HomepathListing[]; error?: string }> {
+  try {
+    const response = await fetch(`${HOMEPATH_BASE}/cfl/property-inventory`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': `${HOMEPATH_BASE}/`,
+        'Origin': HOMEPATH_BASE,
+      },
+      body: JSON.stringify({
+        state: state,
+        pageSize: 200,
+        page: 1,
+        propertyType: 'Single Family',
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
+
+    if (!response.ok) {
+      return { listings: [], error: `HTTP ${response.status}` };
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      return { listings: [], error: 'HomePath requires browser authentication (Cloudflare protected). Use manual import or MLS feed.' };
+    }
+
+    const data = await response.json() as { properties?: HomepathListing[]; listings?: HomepathListing[]; results?: HomepathListing[] };
+    return { listings: data.properties || data.listings || data.results || [] };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { listings: [], error: msg };
+  }
 }
 
 export async function fetchFannieListings(states: string[] = ['GA', 'TX', 'NC', 'MS', 'AL', 'TN', 'SC', 'FL']): Promise<SourceResult> {
@@ -86,49 +118,15 @@ export async function fetchFannieListings(states: string[] = ['GA', 'TX', 'NC', 
   const allListings: NormalizedListing[] = [];
 
   for (const state of states) {
-    try {
-      const body = {
-        state: state,
-        pageSize: 100,
-        page: 1,
-        sortBy: 'listPrice',
-        sortOrder: 'asc',
-      };
-
-      const response = await fetch(HOMEPATH_SEARCH_URL, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'User-Agent': 'Axiom-Protocol/1.0 (Real Estate Research)',
-        },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(15000),
-      });
-
-      if (!response.ok) {
-        errors.push(`Fannie ${state}: HTTP ${response.status}`);
-        continue;
-      }
-
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        const data = await response.json() as { properties?: FannieRawListing[]; listings?: FannieRawListing[]; results?: FannieRawListing[] };
-        const rawListings = data.properties || data.listings || data.results || [];
-
-        for (const raw of rawListings) {
-          const normalized = normalizeFannieListing(raw);
-          if (normalized) allListings.push(normalized);
-        }
-      } else {
-        errors.push(`Fannie ${state}: Non-JSON response. HomePath may require browser session.`);
-      }
-
-      await new Promise(r => setTimeout(r, 1000));
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      errors.push(`Fannie ${state}: ${message}`);
+    const result = await tryHomepathApi(state);
+    if (result.error) {
+      errors.push(`Fannie ${state}: ${result.error}`);
     }
+    for (const raw of result.listings) {
+      const normalized = normalizeHomepathListing(raw);
+      if (normalized) allListings.push(normalized);
+    }
+    await new Promise(r => setTimeout(r, 1000));
   }
 
   return {

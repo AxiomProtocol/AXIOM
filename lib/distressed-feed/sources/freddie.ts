@@ -1,8 +1,8 @@
 import type { NormalizedListing, SourceResult } from '../types';
 
-const HOMESTEPS_URL = 'https://www.homesteps.com/api/properties/search';
+const HOMESTEPS_BASE = 'https://www.homesteps.com';
 
-interface FreddieRawListing {
+interface HomestepsListing {
   id?: string;
   address?: string;
   city?: string;
@@ -21,6 +21,7 @@ interface FreddieRawListing {
   status?: string;
   images?: string[];
   description?: string;
+  firstLookEndDate?: string;
 }
 
 function normalizePropertyType(fType: string | undefined): string {
@@ -33,14 +34,24 @@ function normalizePropertyType(fType: string | undefined): string {
   return 'single_family';
 }
 
-function normalizeFreddieListing(raw: FreddieRawListing): NormalizedListing | null {
+function normalizeHomestepsListing(raw: HomestepsListing): NormalizedListing | null {
   if (!raw.address || !raw.city || !raw.state || !raw.zipCode) return null;
   const listPrice = raw.listPrice || 0;
   if (listPrice <= 0) return null;
 
+  const id = raw.id || `fhlmc-${raw.address}-${raw.zipCode}`;
+  const beds = raw.bedrooms || undefined;
+  const baths = raw.bathrooms || undefined;
+
+  const descParts = [
+    `Freddie Mac REO ${beds || ''}BR/${baths || ''}BA in ${raw.city}, ${raw.state}.`,
+    raw.squareFeet ? `${raw.squareFeet.toLocaleString()} sqft.` : '',
+    raw.yearBuilt ? `Built ${raw.yearBuilt}.` : '',
+  ].filter(Boolean);
+
   return {
     source: 'freddie_mac',
-    sourceId: raw.id || `fhlmc-${raw.address}-${raw.zipCode}`,
+    sourceId: `FHLMC-${id}`,
     address: raw.address,
     city: raw.city,
     state: raw.state.substring(0, 2).toUpperCase(),
@@ -49,17 +60,54 @@ function normalizeFreddieListing(raw: FreddieRawListing): NormalizedListing | nu
     lat: raw.latitude || undefined,
     lon: raw.longitude || undefined,
     propertyType: normalizePropertyType(raw.propertyType),
-    bedrooms: raw.bedrooms || undefined,
-    bathrooms: raw.bathrooms || undefined,
+    bedrooms: beds,
+    bathrooms: baths,
     sqft: raw.squareFeet || undefined,
     lotSqft: raw.lotSize || undefined,
     yearBuilt: raw.yearBuilt || undefined,
     listPrice,
     distressType: 'reo',
-    sourceUrl: raw.id ? `https://www.homesteps.com/property/${raw.id}` : undefined,
+    sourceUrl: `${HOMESTEPS_BASE}/property/${id}`,
     photos: raw.images || [],
-    description: raw.description || `Freddie Mac REO property in ${raw.city}, ${raw.state}.`,
+    description: descParts.join(' '),
+    expiresAt: raw.firstLookEndDate ? new Date(raw.firstLookEndDate) : undefined,
   };
+}
+
+async function tryHomestepsApi(state: string): Promise<{ listings: HomestepsListing[]; error?: string }> {
+  try {
+    const response = await fetch(`${HOMESTEPS_BASE}/api/properties/search`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': `${HOMESTEPS_BASE}/`,
+        'Origin': HOMESTEPS_BASE,
+      },
+      body: JSON.stringify({
+        state,
+        pageSize: 100,
+        page: 1,
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
+
+    if (!response.ok) {
+      return { listings: [], error: `HTTP ${response.status}` };
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      return { listings: [], error: 'HomeSteps does not expose a public search API. Properties are listed on MLS.' };
+    }
+
+    const data = await response.json() as { properties?: HomestepsListing[]; results?: HomestepsListing[] };
+    return { listings: data.properties || data.results || [] };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { listings: [], error: msg };
+  }
 }
 
 export async function fetchFreddieListings(states: string[] = ['GA', 'TX', 'NC', 'MS', 'AL', 'TN', 'SC', 'FL']): Promise<SourceResult> {
@@ -67,43 +115,15 @@ export async function fetchFreddieListings(states: string[] = ['GA', 'TX', 'NC',
   const allListings: NormalizedListing[] = [];
 
   for (const state of states) {
-    try {
-      const body = { state, pageSize: 100, page: 1 };
-
-      const response = await fetch(HOMESTEPS_URL, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'User-Agent': 'Axiom-Protocol/1.0 (Real Estate Research)',
-        },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(15000),
-      });
-
-      if (!response.ok) {
-        errors.push(`Freddie ${state}: HTTP ${response.status}`);
-        continue;
-      }
-
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        const data = await response.json() as { properties?: FreddieRawListing[]; results?: FreddieRawListing[] };
-        const rawListings = data.properties || data.results || [];
-
-        for (const raw of rawListings) {
-          const normalized = normalizeFreddieListing(raw);
-          if (normalized) allListings.push(normalized);
-        }
-      } else {
-        errors.push(`Freddie ${state}: Non-JSON response. HomeSteps may require browser session.`);
-      }
-
-      await new Promise(r => setTimeout(r, 1000));
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      errors.push(`Freddie ${state}: ${message}`);
+    const result = await tryHomestepsApi(state);
+    if (result.error) {
+      errors.push(`Freddie ${state}: ${result.error}`);
     }
+    for (const raw of result.listings) {
+      const normalized = normalizeHomestepsListing(raw);
+      if (normalized) allListings.push(normalized);
+    }
+    await new Promise(r => setTimeout(r, 1000));
   }
 
   return {

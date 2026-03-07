@@ -1,30 +1,43 @@
 import type { NormalizedListing, SourceResult } from '../types';
 
-const USDA_RESALES_URL = 'https://properties.sc.egov.usda.gov/resales/api/properties';
+const USDA_BASE = 'https://properties.sc.egov.usda.gov/resales';
 
-interface UsdaRawListing {
-  id?: string;
-  propertyId?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  county?: string;
-  latitude?: number;
-  longitude?: number;
-  askingPrice?: number;
-  listPrice?: number;
-  appraisedValue?: number;
-  propertyType?: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  sqft?: number;
-  lotAcres?: number;
-  yearBuilt?: number;
-  status?: string;
-  images?: string[];
-  description?: string;
-  saleDate?: string;
+const STATE_FIPS: Record<string, string> = {
+  'AL': '01', 'FL': '12', 'GA': '13', 'MS': '28',
+  'NC': '37', 'SC': '45', 'TN': '47', 'TX': '48',
+  'AK': '02', 'AZ': '04', 'AR': '05', 'CA': '06',
+  'CO': '08', 'CT': '09', 'DE': '10', 'DC': '11',
+  'HI': '15', 'ID': '16', 'IL': '17', 'IN': '18',
+  'IA': '19', 'KS': '20', 'KY': '21', 'LA': '22',
+  'ME': '23', 'MD': '24', 'MA': '25', 'MI': '26',
+  'MN': '27', 'MO': '29', 'MT': '30', 'NE': '31',
+  'NV': '32', 'NH': '33', 'NJ': '34', 'NM': '35',
+  'NY': '36', 'ND': '38', 'OH': '39', 'OK': '40',
+  'OR': '41', 'PA': '42', 'RI': '44', 'SD': '46',
+  'UT': '49', 'VT': '50', 'VA': '51', 'WA': '53',
+  'WV': '54', 'WI': '55', 'WY': '56',
+};
+
+interface UsdaCounty {
+  countyCode: string;
+  countyName: string;
+}
+
+interface UsdaPropertyRow {
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  county: string;
+  price: number;
+  bedrooms: number;
+  bathrooms: number;
+  sqft: number;
+  yearBuilt: number;
+  propertyType: string;
+  photos: string[];
+  sourceUrl: string;
+  sourceId: string;
 }
 
 function normalizePropertyType(uType: string | undefined): string {
@@ -37,80 +50,183 @@ function normalizePropertyType(uType: string | undefined): string {
   return 'single_family';
 }
 
-function normalizeUsdaListing(raw: UsdaRawListing): NormalizedListing | null {
-  if (!raw.address || !raw.city || !raw.state || !raw.zip) return null;
-  const listPrice = raw.askingPrice || raw.listPrice || 0;
-  if (listPrice <= 0) return null;
+async function getSession(): Promise<string | null> {
+  try {
+    const response = await fetch(`${USDA_BASE}/public/home`, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/html',
+      },
+      redirect: 'follow',
+    });
+    if (!response.ok) return null;
+    const setCookies = response.headers.getSetCookie?.() || [];
+    return setCookies.map(c => c.split(';')[0]).join('; ');
+  } catch {
+    return null;
+  }
+}
 
-  const estimatedValue = raw.appraisedValue || undefined;
-  let discountPct: number | undefined;
-  if (estimatedValue && estimatedValue > 0) {
-    discountPct = Math.round(((estimatedValue - listPrice) / estimatedValue) * 100 * 100) / 100;
+async function getActiveCounties(stateFips: string, cookies: string): Promise<UsdaCounty[]> {
+  try {
+    const url = `${USDA_BASE}/public/getCountiesOfStateWithActiveProperties?stateCode=${stateFips}&searchFormName=SFH`;
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json',
+        'Cookie': cookies,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!response.ok) return [];
+    return await response.json() as UsdaCounty[];
+  } catch {
+    return [];
+  }
+}
+
+async function searchProperties(stateFips: string, countyCode: string, cookies: string): Promise<string> {
+  try {
+    const body = new URLSearchParams({
+      stateCode: stateFips,
+      city: '',
+      zipCode: '',
+      countyCode: countyCode,
+      propertyType: 'Single Family',
+      searchFormName: 'SFH',
+      Search: 'Search',
+      countyCodeLast: countyCode,
+    });
+
+    const response = await fetch(`${USDA_BASE}/public/searchSFH`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Cookie': cookies,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': `${USDA_BASE}/public/searchSFH`,
+        'Origin': 'https://properties.sc.egov.usda.gov',
+      },
+      body: body.toString(),
+      redirect: 'follow',
+      signal: AbortSignal.timeout(20000),
+    });
+
+    if (!response.ok) return '';
+    return await response.text();
+  } catch {
+    return '';
+  }
+}
+
+function parseHtmlListings(html: string, state: string, countyName: string): UsdaPropertyRow[] {
+  const results: UsdaPropertyRow[] = [];
+
+  const propertyLinks = html.match(/viewProperty[^"']*/g) || [];
+  const rows = html.match(/<tr[^>]*class="[^"]*property[^"]*"[^>]*>[\s\S]*?<\/tr>/gi) || [];
+
+  const tdPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+
+  for (const row of rows) {
+    const cells: string[] = [];
+    let match;
+    while ((match = tdPattern.exec(row)) !== null) {
+      cells.push(match[1].replace(/<[^>]*>/g, '').trim());
+    }
+    tdPattern.lastIndex = 0;
+
+    if (cells.length >= 5) {
+      const linkMatch = row.match(/viewProperty\/(\d+)/);
+      const id = linkMatch ? linkMatch[1] : `usda-${cells[0]}-${cells[1]}`;
+
+      results.push({
+        address: cells[0] || '',
+        city: cells[1] || '',
+        state: state,
+        zip: cells[2] || '',
+        county: countyName.replace(/\s*\(\d+\)\s*$/, ''),
+        price: parseFloat((cells[3] || '0').replace(/[$,]/g, '')) || 0,
+        bedrooms: parseInt(cells[4] || '0', 10) || 0,
+        bathrooms: parseInt(cells[5] || '0', 10) || 0,
+        sqft: parseInt((cells[6] || '0').replace(/,/g, ''), 10) || 0,
+        yearBuilt: parseInt(cells[7] || '0', 10) || 0,
+        propertyType: 'single_family',
+        photos: [],
+        sourceUrl: linkMatch ? `${USDA_BASE}/public/viewProperty/${id}` : '',
+        sourceId: id,
+      });
+    }
   }
 
-  return {
-    source: 'usda',
-    sourceId: raw.id || raw.propertyId || `usda-${raw.address}-${raw.zip}`,
-    address: raw.address,
-    city: raw.city,
-    state: raw.state.substring(0, 2).toUpperCase(),
-    zip: raw.zip.substring(0, 10),
-    county: raw.county || undefined,
-    lat: raw.latitude || undefined,
-    lon: raw.longitude || undefined,
-    propertyType: normalizePropertyType(raw.propertyType),
-    bedrooms: raw.bedrooms || undefined,
-    bathrooms: raw.bathrooms || undefined,
-    sqft: raw.sqft || undefined,
-    lotSqft: raw.lotAcres ? Math.round(raw.lotAcres * 43560) : undefined,
-    yearBuilt: raw.yearBuilt || undefined,
-    listPrice,
-    estimatedValue,
-    discountPct,
-    distressType: 'government',
-    sourceUrl: raw.id ? `https://properties.sc.egov.usda.gov/resales/property/${raw.id}` : undefined,
-    photos: raw.images || [],
-    description: raw.description || `USDA Rural Development property in ${raw.city}, ${raw.state}.`,
-    auctionDate: raw.saleDate ? new Date(raw.saleDate) : undefined,
-  };
+  return results;
 }
 
 export async function fetchUsdaListings(states: string[] = ['GA', 'TX', 'NC', 'MS', 'AL', 'TN', 'SC', 'FL']): Promise<SourceResult> {
   const errors: string[] = [];
   const allListings: NormalizedListing[] = [];
 
+  const cookies = await getSession();
+  if (!cookies) {
+    errors.push('USDA: Failed to establish session');
+    return { source: 'usda', listings: [], errors, fetchedAt: new Date() };
+  }
+
   for (const state of states) {
+    const fips = STATE_FIPS[state];
+    if (!fips) {
+      errors.push(`USDA ${state}: Unknown FIPS code`);
+      continue;
+    }
+
     try {
-      const params = new URLSearchParams({ state, pageSize: '100', page: '1' });
+      const counties = await getActiveCounties(fips, cookies);
 
-      const response = await fetch(`${USDA_RESALES_URL}?${params.toString()}`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Axiom-Protocol/1.0 (Real Estate Research)',
-        },
-        signal: AbortSignal.timeout(15000),
-      });
+      let stateTotal = 0;
+      for (const county of counties) {
+        const countMatch = county.countyName.match(/\((\d+)\)/);
+        const expectedCount = countMatch ? parseInt(countMatch[1], 10) : 0;
+        stateTotal += expectedCount;
+      }
 
-      if (!response.ok) {
-        errors.push(`USDA ${state}: HTTP ${response.status}`);
+      if (counties.length === 0) {
         continue;
       }
 
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        const data = await response.json() as { properties?: UsdaRawListing[]; results?: UsdaRawListing[] };
-        const rawListings = data.properties || data.results || [];
+      for (const county of counties) {
+        const html = await searchProperties(fips, county.countyCode, cookies);
+        const parsed = parseHtmlListings(html, state, county.countyName);
 
-        for (const raw of rawListings) {
-          const normalized = normalizeUsdaListing(raw);
-          if (normalized) allListings.push(normalized);
+        for (const prop of parsed) {
+          if (prop.price <= 0) continue;
+
+          allListings.push({
+            source: 'usda',
+            sourceId: `USDA-${state}-${prop.sourceId}`,
+            address: prop.address,
+            city: prop.city,
+            state: state,
+            zip: prop.zip,
+            county: prop.county,
+            propertyType: normalizePropertyType(prop.propertyType),
+            bedrooms: prop.bedrooms || undefined,
+            bathrooms: prop.bathrooms || undefined,
+            sqft: prop.sqft || undefined,
+            yearBuilt: prop.yearBuilt || undefined,
+            listPrice: prop.price,
+            distressType: 'government',
+            sourceUrl: prop.sourceUrl || undefined,
+            photos: prop.photos,
+            description: `USDA Rural Development foreclosure in ${prop.city}, ${state}. ${prop.county} County. USDA financing eligible.`,
+          });
         }
-      } else {
-        errors.push(`USDA ${state}: Non-JSON response. API may require different access method.`);
+
+        await new Promise(r => setTimeout(r, 500));
       }
 
-      await new Promise(r => setTimeout(r, 1000));
+      if (stateTotal > 0 && allListings.filter(l => l.state === state).length === 0) {
+        errors.push(`USDA ${state}: ${stateTotal} properties reported in ${counties.length} counties but HTML parsing returned 0. Server may require JS execution.`);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       errors.push(`USDA ${state}: ${message}`);
