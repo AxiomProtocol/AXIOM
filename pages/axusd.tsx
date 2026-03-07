@@ -522,6 +522,23 @@ export default function AXUSDStablecoinPage() {
         <meta name="description" content="AXUSD - A hybrid CDP stablecoin designed to align with the GENIUS Act framework. Reserve-backed, segregated custody, cross-chain enabled. The settlement layer of Axiom Protocol." />
       </Head>
       
+      <div className="border border-dl-border bg-dl-bg-alt px-4 py-3 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-dl-navy">AXUSD has been unified under ERC-3643 (T-REX)</p>
+            <p className="text-xs text-dl-gray mt-1">
+              The dual-ecosystem (Primary + Euler) has been replaced by a single compliant token with on-chain identity and modular compliance.
+            </p>
+          </div>
+          <a
+            href="/axusd-3643"
+            className="bg-dl-navy text-white px-4 py-1.5 text-sm flex-shrink-0"
+          >
+            View Unified AXUSD
+          </a>
+        </div>
+      </div>
+
       {isWalletConnected && !isCorrectNetwork && (
         <div className="bg-dl-navy text-white px-4 py-4 mb-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">

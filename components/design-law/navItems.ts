@@ -23,6 +23,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/pilot', label: 'Capital Program' },
       { href: '/lending-fund', label: 'Lending Fund' },
       { href: '/dex', label: 'Exchange' },
+      { href: '/axusd-3643', label: 'Unified AXUSD' },
       { href: '/depin/denet', label: 'DePIN' },
     ],
   },

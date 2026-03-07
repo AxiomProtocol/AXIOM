@@ -197,11 +197,13 @@ export default function DisclosurePage() {
   ];
 
   const axusdContracts = [
-    { name: 'Primary AXUSD', address: '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C', purpose: 'GENIUS Act-aligned stablecoin' },
-    { name: 'Primary PSM', address: '0x5db58d9c21369d1532a48Bdd658E4Fe415404922', purpose: 'Peg Stability Module (5M ceiling)' },
-    { name: 'Euler AXUSD', address: '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c', purpose: 'Euler Vault-bound stablecoin' },
-    { name: 'Euler PSM', address: '0x4584888cB411E9cc88e3800BAB73A430D90d3793', purpose: 'Euler ecosystem PSM (500K ceiling)' },
-    { name: 'Compliance Module', address: '0x8E8F769dA133cd3825549EE3E814fC936C8dE7be', purpose: 'GENIUS Act compliance enforcement' },
+    { name: 'Unified AXUSD (ERC-3643)', address: '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7', purpose: 'T-REX compliant stablecoin (replaces dual ecosystem)' },
+    { name: 'Identity Registry', address: '0x58f64a1262d5434d6C7637a2309b0999bB6D1970', purpose: 'ONCHAINID investor identity management' },
+    { name: 'Modular Compliance', address: '0xaC9E1A91D1C7F584C9FC04E283fae30Ae2F636DD', purpose: 'Four-module compliance enforcement' },
+    { name: 'Identity Factory', address: '0x1A7c55AC9A4AB318039f8E2BDfA82500332c86B9', purpose: 'EIP-1167 ONCHAINID deployment' },
+    { name: 'Lending Platform Module', address: '0xC0177120Fb5922813031a5857f4dF7F01750Bb6F', purpose: 'DeFi platform whitelist for compliant lending' },
+    { name: 'Legacy Primary AXUSD', address: '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C', purpose: 'Deprecated — migrated to ERC-3643' },
+    { name: 'Legacy Euler AXUSD', address: '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c', purpose: 'Deprecated — migrated to ERC-3643' },
   ];
 
   const finContracts = [
@@ -300,10 +302,10 @@ export default function DisclosurePage() {
           </div>
 
           <div className="mt-6">
-            <h3 className="font-dl-serif text-dl-navy text-lg mb-3">Dual Ecosystem Measurement Rule</h3>
+            <h3 className="font-dl-serif text-dl-navy text-lg mb-3">Unified AXUSD (ERC-3643 Migration)</h3>
             <div className="border border-dl-border px-6 py-4 bg-dl-bg-alt">
               <p className="text-sm text-dl-navy leading-relaxed">
-                The protocol operates two separate AXUSD deployments that must never be aggregated in metrics reporting. PRIMARY AXUSD (designed to align with GENIUS Act requirements) is the public-facing stablecoin. EULER AXUSD (original deployment) is bound to the Euler lending vault and used exclusively within that subsystem. Supply, reserves, and liability figures in this document refer to PRIMARY AXUSD unless explicitly stated otherwise.
+                The protocol has migrated from two separate AXUSD deployments (Primary and Euler) to a single Unified AXUSD token under the ERC-3643 (T-REX) standard. The Unified AXUSD enforces on-chain identity verification and modular compliance through four modules: Country Allow, Max Balance, Transfer Limit, and Lending Platform. All legacy PSM backing has been recovered and consolidated. The legacy Primary AXUSD and Euler AXUSD contracts are deprecated. Supply, reserves, and liability figures in this document refer to Unified AXUSD unless explicitly stated otherwise.
               </p>
             </div>
           </div>
