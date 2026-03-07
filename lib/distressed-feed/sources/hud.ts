@@ -131,14 +131,33 @@ async function getSessionAndToken(): Promise<{ cookies: string; token: string } 
 
     if (!response.ok) return null;
 
+    const cookieParts: string[] = [];
     const setCookieHeaders = response.headers.getSetCookie?.() || [];
-    const cookies = setCookieHeaders
-      .map(c => c.split(';')[0])
-      .join('; ');
+    for (const sc of setCookieHeaders) {
+      const nameVal = sc.split(';')[0];
+      if (nameVal) cookieParts.push(nameVal);
+    }
+
+    if (cookieParts.length === 0) {
+      const rawSetCookie = response.headers.get('set-cookie');
+      if (rawSetCookie) {
+        const segments = rawSetCookie.split(/,(?=[^ ])/);
+        for (const seg of segments) {
+          const nameVal = seg.trim().split(';')[0];
+          if (nameVal && nameVal.includes('=')) cookieParts.push(nameVal);
+        }
+      }
+    }
+
+    const cookies = cookieParts.join('; ');
 
     const html = await response.text();
     const tokenMatch = html.match(/id="request-verification-token"[^>]*value="([^"]*)"/);
     if (!tokenMatch) return null;
+
+    if (!cookies || !cookies.includes('Antiforgery')) {
+      return null;
+    }
 
     return { cookies, token: tokenMatch[1] };
   } catch {
@@ -159,6 +178,7 @@ export async function fetchHudListings(states: string[] = ['GA', 'TX', 'NC', 'MS
       }
 
       const body = new URLSearchParams({
+        __RequestVerificationToken: session.token,
         citystate: state,
         viewport: '',
         zoom: '10',
@@ -182,6 +202,7 @@ export async function fetchHudListings(states: string[] = ['GA', 'TX', 'NC', 'MS
           'Referer': `${HUD_BASE_URL}/searchresult?sState=${state}`,
           'Origin': HUD_BASE_URL,
         },
+        body: body.toString(),
         signal: AbortSignal.timeout(30000),
       });
 
