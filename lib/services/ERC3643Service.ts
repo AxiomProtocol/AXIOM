@@ -1,0 +1,268 @@
+import { ethers } from 'ethers';
+import { db } from '../../server/db';
+import { t3Identities, t3Claims, t3ComplianceEvents, t3PlatformWhitelist } from '../../shared/erc3643Schema';
+import { eq } from 'drizzle-orm';
+import {
+  ERC3643_CONTRACTS,
+  CLAIM_TOPICS,
+  AXUSD_3643_ABI,
+  IDENTITY_REGISTRY_ABI,
+  IDENTITY_FACTORY_ABI,
+  CLAIM_ISSUER_ABI,
+  MODULAR_COMPLIANCE_ABI,
+  LENDING_PLATFORM_MODULE_ABI,
+} from '../../shared/contracts-3643';
+
+function getProvider() {
+  const rpcUrl = process.env.ALCHEMY_API_KEY
+    ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
+    : 'https://arb1.arbitrum.io/rpc';
+  return new ethers.JsonRpcProvider(rpcUrl);
+}
+
+function getSigner() {
+  const provider = getProvider();
+  if (!process.env.DEPLOYER_PRIVATE_KEY) throw new Error('DEPLOYER_PRIVATE_KEY not set');
+  return new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY, provider);
+}
+
+export class ERC3643Service {
+  static async getIdentityStatus(wallet: string) {
+    const provider = getProvider();
+    const identityRegistry = new ethers.Contract(
+      ERC3643_CONTRACTS.IDENTITY_REGISTRY,
+      IDENTITY_REGISTRY_ABI,
+      provider
+    );
+
+    const [isVerified, hasIdentity] = await Promise.all([
+      identityRegistry.isVerified(wallet).catch(() => false),
+      identityRegistry.contains(wallet).catch(() => false),
+    ]);
+
+    let identityAddr = null;
+    let country = 0;
+    if (hasIdentity) {
+      [identityAddr, country] = await Promise.all([
+        identityRegistry.identity(wallet),
+        identityRegistry.investorCountry(wallet),
+      ]);
+    }
+
+    const dbIdentity = await db.select().from(t3Identities).where(eq(t3Identities.wallet, wallet.toLowerCase())).limit(1);
+    const claims = dbIdentity.length > 0
+      ? await db.select().from(t3Claims).where(eq(t3Claims.identityId, dbIdentity[0].id))
+      : [];
+
+    return {
+      wallet,
+      isVerified,
+      hasIdentity,
+      identityAddress: identityAddr,
+      country: Number(country),
+      verificationLevel: dbIdentity[0]?.verificationLevel ?? 0,
+      status: dbIdentity[0]?.status ?? 'unregistered',
+      claims: claims.map(c => ({
+        topic: c.topic,
+        issuer: c.issuerAddress,
+        validFrom: c.validFrom,
+        validUntil: c.validUntil,
+        revoked: c.revoked,
+      })),
+    };
+  }
+
+  static async isCompliant(from: string, to: string, amount: string) {
+    const provider = getProvider();
+    const compliance = new ethers.Contract(
+      ERC3643_CONTRACTS.MODULAR_COMPLIANCE,
+      MODULAR_COMPLIANCE_ABI,
+      provider
+    );
+
+    const amountWei = ethers.parseEther(amount);
+    const canTransfer = await compliance.canTransfer(from, to, amountWei).catch(() => false);
+
+    const identityRegistry = new ethers.Contract(
+      ERC3643_CONTRACTS.IDENTITY_REGISTRY,
+      IDENTITY_REGISTRY_ABI,
+      provider
+    );
+    const receiverVerified = await identityRegistry.isVerified(to).catch(() => false);
+
+    return {
+      compliant: canTransfer && receiverVerified,
+      complianceCheck: canTransfer,
+      receiverVerified,
+    };
+  }
+
+  static async registerIdentity(wallet: string, countryCode: number = 840) {
+    const signer = getSigner();
+
+    const factory = new ethers.Contract(
+      ERC3643_CONTRACTS.IDENTITY_FACTORY,
+      IDENTITY_FACTORY_ABI,
+      signer
+    );
+
+    const tx = await factory.createIdentity(wallet, wallet);
+    const receipt = await tx.wait();
+    const identityAddr = await factory.getIdentity(wallet);
+
+    const registry = new ethers.Contract(
+      ERC3643_CONTRACTS.IDENTITY_REGISTRY,
+      IDENTITY_REGISTRY_ABI,
+      signer
+    );
+    const regTx = await registry.registerIdentity(wallet, identityAddr, countryCode);
+    await regTx.wait();
+
+    const [inserted] = await db.insert(t3Identities).values({
+      wallet: wallet.toLowerCase(),
+      onchainIdAddress: identityAddr.toLowerCase(),
+      countryCode,
+      verificationLevel: 1,
+      status: 'active',
+    }).returning();
+
+    return {
+      identityId: inserted.id,
+      wallet,
+      onchainIdAddress: identityAddr,
+      countryCode,
+      txHash: tx.hash,
+      registryTxHash: regTx.hash,
+    };
+  }
+
+  static async issueClaim(wallet: string, topic: number, data: string = '') {
+    const signer = getSigner();
+    const dbIdentity = await db.select().from(t3Identities).where(eq(t3Identities.wallet, wallet.toLowerCase())).limit(1);
+    if (dbIdentity.length === 0) throw new Error('Identity not found for wallet');
+
+    const identityAddr = dbIdentity[0].onchainIdAddress;
+
+    const claimData = ethers.AbiCoder.defaultAbiCoder().encode(
+      ['address', 'uint256', 'uint256'],
+      [wallet, topic, Math.floor(Date.now() / 1000) + 365 * 24 * 3600]
+    );
+
+    const dataHash = ethers.keccak256(
+      ethers.AbiCoder.defaultAbiCoder().encode(
+        ['address', 'uint256', 'bytes'],
+        [identityAddr, topic, claimData]
+      )
+    );
+    const signature = await signer.signMessage(ethers.getBytes(dataHash));
+
+    const [inserted] = await db.insert(t3Claims).values({
+      identityId: dbIdentity[0].id,
+      topic,
+      issuerAddress: ERC3643_CONTRACTS.CLAIM_ISSUER.toLowerCase(),
+      claimData: ethers.hexlify(claimData),
+      signature,
+      validFrom: new Date(),
+      validUntil: new Date(Date.now() + 365 * 24 * 3600 * 1000),
+      revoked: false,
+    }).returning();
+
+    return {
+      claimId: inserted.id,
+      topic,
+      signature,
+      identityAddress: identityAddr,
+    };
+  }
+
+  static async whitelistPlatform(contractAddress: string, platformName: string) {
+    const signer = getSigner();
+    const lpm = new ethers.Contract(
+      ERC3643_CONTRACTS.LENDING_PLATFORM_MODULE,
+      LENDING_PLATFORM_MODULE_ABI,
+      signer
+    );
+
+    const tx = await lpm.addPlatform(ERC3643_CONTRACTS.MODULAR_COMPLIANCE, contractAddress);
+    await tx.wait();
+
+    const [inserted] = await db.insert(t3PlatformWhitelist).values({
+      contractAddress: contractAddress.toLowerCase(),
+      platformName,
+      addedBy: await signer.getAddress(),
+      active: true,
+    }).returning();
+
+    return {
+      id: inserted.id,
+      contractAddress,
+      platformName,
+      txHash: tx.hash,
+    };
+  }
+
+  static async freezeAddress(wallet: string, freeze: boolean) {
+    const signer = getSigner();
+    const token = new ethers.Contract(
+      ERC3643_CONTRACTS.AXUSD_TOKEN,
+      AXUSD_3643_ABI,
+      signer
+    );
+
+    const tx = await token.freezeAddress(wallet, freeze);
+    await tx.wait();
+
+    await db.update(t3Identities)
+      .set({ status: freeze ? 'frozen' : 'active', updatedAt: new Date() })
+      .where(eq(t3Identities.wallet, wallet.toLowerCase()));
+
+    return { wallet, frozen: freeze, txHash: tx.hash };
+  }
+
+  static async getComplianceModules() {
+    const provider = getProvider();
+    const compliance = new ethers.Contract(
+      ERC3643_CONTRACTS.MODULAR_COMPLIANCE,
+      MODULAR_COMPLIANCE_ABI,
+      provider
+    );
+
+    const modules = await compliance.getModules();
+    const tokenBound = await compliance.getTokenBound();
+
+    const platforms = await db.select().from(t3PlatformWhitelist).where(eq(t3PlatformWhitelist.active, true));
+
+    return {
+      tokenBound,
+      modules: modules.map((addr: string) => addr),
+      knownModules: {
+        countryAllow: ERC3643_CONTRACTS.COUNTRY_ALLOW_MODULE,
+        maxBalance: ERC3643_CONTRACTS.MAX_BALANCE_MODULE,
+        transferLimit: ERC3643_CONTRACTS.TRANSFER_LIMIT_MODULE,
+        lendingPlatform: ERC3643_CONTRACTS.LENDING_PLATFORM_MODULE,
+      },
+      whitelistedPlatforms: platforms,
+    };
+  }
+
+  static async logComplianceEvent(event: {
+    txHash?: string;
+    fromAddress: string;
+    toAddress: string;
+    amount: string;
+    moduleChecked: string;
+    result: 'pass' | 'fail';
+    reason?: string;
+  }) {
+    const [inserted] = await db.insert(t3ComplianceEvents).values({
+      txHash: event.txHash,
+      fromAddress: event.fromAddress.toLowerCase(),
+      toAddress: event.toAddress.toLowerCase(),
+      amount: event.amount,
+      moduleChecked: event.moduleChecked,
+      result: event.result,
+      reason: event.reason,
+    }).returning();
+    return inserted;
+  }
+}
