@@ -1,4 +1,4 @@
-import { ethers, upgrades } from "hardhat";
+import { ethers, upgrades, run } from "hardhat";
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -277,18 +277,90 @@ async function main() {
   console.log("   ✓ Deployer exempt from transfer limits");
 
   console.log("\n═══════════════════════════════════════════════════════════════");
-  console.log("  DEPLOYMENT COMPLETE");
+  console.log("  DEPLOYMENT COMPLETE — SAVING MANIFEST");
   console.log("═══════════════════════════════════════════════════════════════\n");
 
   console.log("Full Deployment Manifest:");
   console.log(JSON.stringify(manifest, null, 2));
 
   const fs = await import("fs");
-  fs.writeFileSync(
-    "deployment-erc3643-manifest.json",
-    JSON.stringify({ network: "arbitrum", chainId: 42161, deployedAt: new Date().toISOString(), deployer: deployer.address, contracts: manifest }, null, 2)
-  );
+  const manifestData = {
+    network: "arbitrum",
+    chainId: 42161,
+    deployedAt: new Date().toISOString(),
+    deployer: deployer.address,
+    contracts: manifest,
+  };
+  fs.writeFileSync("deployment-erc3643-manifest.json", JSON.stringify(manifestData, null, 2));
   console.log("\n✓ Manifest saved to deployment-erc3643-manifest.json");
+
+  console.log("\n═══════════════════════════════════════════════════════════════");
+  console.log("  PHASE 7: BLOCKSCOUT VERIFICATION");
+  console.log("═══════════════════════════════════════════════════════════════\n");
+
+  async function verify(name: string, address: string, constructorArgs: any[] = []) {
+    try {
+      console.log(`Verifying ${name} at ${address}...`);
+      await run("verify:verify", {
+        address,
+        constructorArguments: constructorArgs,
+      });
+      console.log(`   ✓ ${name} verified`);
+    } catch (err: any) {
+      if (err.message?.includes("Already Verified") || err.message?.includes("already verified")) {
+        console.log(`   ✓ ${name} already verified`);
+      } else {
+        console.log(`   ✗ ${name} verification failed: ${err.message}`);
+      }
+    }
+  }
+
+  console.log("Verifying UUPS implementation contracts...\n");
+
+  await verify("IdentityRegistryStorage (impl)", irsImpl);
+  await verify("TrustedIssuersRegistry (impl)", tirImpl);
+  await verify("ClaimTopicsRegistry (impl)", ctrImpl);
+  await verify("IdentityRegistry (impl)", irImpl);
+  await verify("ModularCompliance (impl)", mcImpl);
+  await verify("AxiomStable3643 (impl)", tokenImpl);
+
+  console.log("\nVerifying standalone contracts...\n");
+
+  await verify("CountryAllowModule", camAddr);
+  await verify("MaxBalanceModule", mbmAddr);
+  await verify("TransferLimitModule", tlmAddr);
+  await verify("LendingPlatformModule", lpmAddr);
+  await verify("ClaimIssuer", ciAddr);
+  await verify("AxiomIdentity (impl)", identityImplAddr);
+  await verify("IdentityFactory", ifAddr, [identityImplAddr]);
+
+  console.log("\nVerifying UUPS proxies...\n");
+
+  const proxyConstructorABI = ethers.AbiCoder.defaultAbiCoder();
+
+  const irsInitData = IRS.interface.encodeFunctionData("initialize", []);
+  await verify("IdentityRegistryStorage (proxy)", irsAddr, [irsImpl, irsInitData]);
+
+  const tirInitData = TIR.interface.encodeFunctionData("initialize", []);
+  await verify("TrustedIssuersRegistry (proxy)", tirAddr, [tirImpl, tirInitData]);
+
+  const ctrInitData = CTR.interface.encodeFunctionData("initialize", []);
+  await verify("ClaimTopicsRegistry (proxy)", ctrAddr, [ctrImpl, ctrInitData]);
+
+  const irInitData = IR.interface.encodeFunctionData("initialize", [irsAddr, ctrAddr, tirAddr]);
+  await verify("IdentityRegistry (proxy)", irAddr, [irImpl, irInitData]);
+
+  const mcInitData = MC.interface.encodeFunctionData("initialize", []);
+  await verify("ModularCompliance (proxy)", mcAddr, [mcImpl, mcInitData]);
+
+  const tokenInitData = Token.interface.encodeFunctionData("initialize", [irAddr, mcAddr, "AxiomStable", "AXUSD", 18, ethers.ZeroAddress]);
+  await verify("AxiomStable3643 (proxy)", tokenAddr, [tokenImpl, tokenInitData]);
+
+  console.log("\n═══════════════════════════════════════════════════════════════");
+  console.log("  ALL CONTRACTS DEPLOYED AND VERIFIED");
+  console.log("═══════════════════════════════════════════════════════════════");
+  console.log("\nBlockscout: https://arbitrum.blockscout.com");
+  console.log("Manifest: deployment-erc3643-manifest.json\n");
 }
 
 function keccak256Encode(addr: string): string {

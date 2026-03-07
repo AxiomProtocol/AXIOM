@@ -55,9 +55,30 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      arbitrumOne: process.env.ARBISCAN_API_KEY || "",
-      arbitrumSepolia: process.env.ARBISCAN_API_KEY || "",
+      arbitrumOne: "no-key-needed",
+      arbitrumSepolia: "no-key-needed",
     },
+    customChains: [
+      {
+        network: "arbitrumOne",
+        chainId: 42161,
+        urls: {
+          apiURL: "https://arbitrum.blockscout.com/api",
+          browserURL: "https://arbitrum.blockscout.com",
+        },
+      },
+      {
+        network: "arbitrumSepolia",
+        chainId: 421614,
+        urls: {
+          apiURL: "https://arbitrum-sepolia.blockscout.com/api",
+          browserURL: "https://arbitrum-sepolia.blockscout.com",
+        },
+      },
+    ],
+  },
+  sourcify: {
+    enabled: false,
   },
 };
 
