@@ -22,6 +22,7 @@ interface Listing {
   sourceUrl: string | null;
   description: string | null;
   auctionDate: string | null;
+  photos: string[] | null;
   ingestedAt: string;
   status: string;
 }
@@ -286,12 +287,21 @@ function FeedTab() {
                 onClick={() => setExpanded(expanded === listing.id ? null : listing.id)}
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                  <div className="flex-1">
-                    <div className="font-serif text-[#2c3e50]">
-                      {listing.address}
-                    </div>
-                    <div className="font-mono text-sm text-[#5a6c7d]">
-                      {listing.city}, {listing.state} {listing.zip}
+                  <div className="flex items-center gap-3 flex-1">
+                    {listing.photos && listing.photos.length > 0 && (
+                      <img
+                        src={listing.photos[0]}
+                        alt={listing.address}
+                        className="w-16 h-12 object-cover border border-[#2c3e50] flex-shrink-0"
+                      />
+                    )}
+                    <div>
+                      <div className="font-serif text-[#2c3e50]">
+                        {listing.address}
+                      </div>
+                      <div className="font-mono text-sm text-[#5a6c7d]">
+                        {listing.city}, {listing.state} {listing.zip}
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-4 items-center">
@@ -315,6 +325,15 @@ function FeedTab() {
 
               {expanded === listing.id && (
                 <div className="border-t border-[#2c3e50] p-4 bg-[#faf8f4]">
+                  {listing.photos && listing.photos.length > 0 && (
+                    <div className="mb-4">
+                      <img
+                        src={listing.photos[0]}
+                        alt={listing.address}
+                        className="w-full max-w-md h-56 object-cover border border-[#2c3e50]"
+                      />
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div>
                       <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Property Type</div>
