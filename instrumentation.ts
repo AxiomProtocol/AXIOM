@@ -1315,9 +1315,84 @@ export async function register() {
       await exec(`ALTER TABLE t3_claims ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ`, 't3_claims add expires_at');
       await exec(`ALTER TABLE t3_claims ADD COLUMN IF NOT EXISTS refresh_required_by TIMESTAMPTZ`, 't3_claims add refresh_required_by');
 
-      // ── Wealth Practice group charter columns ──
+      // ── Wealth Practice tables and columns ──
+      await exec(`CREATE TABLE IF NOT EXISTS susu_interest_hubs (
+        id SERIAL PRIMARY KEY,
+        hub_id VARCHAR(100) NOT NULL UNIQUE,
+        hub_name VARCHAR(255),
+        description TEXT,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        region_id VARCHAR(100),
+        region_display VARCHAR(200),
+        region_type VARCHAR(50) DEFAULT 'metro',
+        member_count INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT TRUE
+      )`, 'susu_interest_hubs');
+      await exec(`ALTER TABLE susu_interest_hubs ADD COLUMN IF NOT EXISTS member_count INTEGER DEFAULT 0`, 'susu_hubs add member_count');
+      await exec(`ALTER TABLE susu_interest_hubs ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`, 'susu_hubs add is_active');
+
+      await exec(`CREATE TABLE IF NOT EXISTS susu_purpose_groups (
+        id SERIAL PRIMARY KEY,
+        group_id VARCHAR(100) NOT NULL UNIQUE,
+        group_name VARCHAR(255),
+        purpose TEXT,
+        target_amount NUMERIC(18,2),
+        current_amount NUMERIC(18,2) DEFAULT 0,
+        status VARCHAR(50) DEFAULT 'active',
+        created_at TIMESTAMPTZ DEFAULT now(),
+        hub_id INTEGER,
+        purpose_category_id INTEGER,
+        custom_purpose_label VARCHAR(200),
+        contribution_amount NUMERIC(18,2),
+        contribution_currency VARCHAR(10) DEFAULT 'USD',
+        cycle_length_days INTEGER,
+        display_name VARCHAR(200),
+        description TEXT,
+        member_count INTEGER DEFAULT 0,
+        min_members_to_activate INTEGER DEFAULT 3,
+        max_members INTEGER DEFAULT 12,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_by INTEGER,
+        graduated_to_pool_id INTEGER,
+        graduation_tx_hash VARCHAR(66),
+        graduated_at TIMESTAMPTZ,
+        contribution_frequency VARCHAR(20) DEFAULT 'monthly',
+        rotation_method VARCHAR(20) DEFAULT 'round-robin'
+      )`, 'susu_purpose_groups');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS member_count INTEGER DEFAULT 0`, 'susu_groups add member_count');
       await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS contribution_frequency VARCHAR(20) DEFAULT 'monthly'`, 'susu add contribution_frequency');
-      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS rotation_method VARCHAR(20) DEFAULT 'round_robin'`, 'susu add rotation_method');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS rotation_method VARCHAR(20) DEFAULT 'round-robin'`, 'susu add rotation_method');
+
+      await exec(`CREATE TABLE IF NOT EXISTS susu_group_members (
+        id SERIAL PRIMARY KEY,
+        group_id INTEGER,
+        member_id VARCHAR(100),
+        wallet_address VARCHAR(42),
+        role VARCHAR(20) DEFAULT 'member',
+        commitment_status VARCHAR(20) DEFAULT 'pending',
+        position_in_rotation INTEGER,
+        joined_at TIMESTAMPTZ DEFAULT now(),
+        is_active BOOLEAN DEFAULT TRUE
+      )`, 'susu_group_members');
+
+      await exec(`CREATE TABLE IF NOT EXISTS susu_analytics_events (
+        id SERIAL PRIMARY KEY,
+        event_type VARCHAR(50) NOT NULL,
+        hub_id INTEGER,
+        group_id INTEGER,
+        member_id VARCHAR(100),
+        wallet_address VARCHAR(42),
+        metadata JSONB,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 'susu_analytics_events');
+
+      await exec(`CREATE TABLE IF NOT EXISTS susu_purpose_categories (
+        id SERIAL PRIMARY KEY,
+        category_name VARCHAR(100) NOT NULL,
+        description TEXT,
+        icon VARCHAR(10),
+        is_active BOOLEAN DEFAULT TRUE
+      )`, 'susu_purpose_categories');
 
       // ── Lending Fund Tables (lf_) ──
       await exec(`CREATE TABLE IF NOT EXISTS lf_accreditation_records (

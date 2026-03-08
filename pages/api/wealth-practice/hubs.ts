@@ -4,9 +4,20 @@ import { pool } from '../../../server/db';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     try {
-      const result = await pool.query(
-        `SELECT * FROM susu_interest_hubs WHERE is_active = true ORDER BY member_count DESC`
-      );
+      let result;
+      try {
+        result = await pool.query(
+          `SELECT * FROM susu_interest_hubs WHERE is_active = true ORDER BY member_count DESC`
+        );
+      } catch (colErr: any) {
+        if (colErr.message?.includes('column') && colErr.message?.includes('does not exist')) {
+          result = await pool.query(
+            `SELECT *, 0 as member_count FROM susu_interest_hubs ORDER BY created_at DESC`
+          );
+        } else {
+          throw colErr;
+        }
+      }
 
       return res.status(200).json({
         success: true,

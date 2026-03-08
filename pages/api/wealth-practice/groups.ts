@@ -32,19 +32,40 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    const result = await pool.query(
-      `SELECT
-        spg.*,
-        spg.contribution_frequency,
-        spg.rotation_method,
-        sih.region_display,
-        sih.region_type
-      FROM susu_purpose_groups spg
-      LEFT JOIN susu_interest_hubs sih ON spg.hub_id = sih.id
-      ${whereClause}
-      ORDER BY spg.member_count DESC, spg.created_at DESC`,
-      params
-    );
+    let result;
+    try {
+      result = await pool.query(
+        `SELECT
+          spg.*,
+          spg.contribution_frequency,
+          spg.rotation_method,
+          sih.region_display,
+          sih.region_type
+        FROM susu_purpose_groups spg
+        LEFT JOIN susu_interest_hubs sih ON spg.hub_id = sih.id
+        ${whereClause}
+        ORDER BY spg.member_count DESC, spg.created_at DESC`,
+        params
+      );
+    } catch (colErr: any) {
+      if (colErr.message?.includes('column') && colErr.message?.includes('does not exist')) {
+        result = await pool.query(
+          `SELECT
+            spg.*,
+            'monthly' as contribution_frequency,
+            'round-robin' as rotation_method,
+            sih.region_display,
+            sih.region_type
+          FROM susu_purpose_groups spg
+          LEFT JOIN susu_interest_hubs sih ON spg.hub_id = sih.id
+          ${whereClause}
+          ORDER BY spg.created_at DESC`,
+          params
+        );
+      } else {
+        throw colErr;
+      }
+    }
 
     let groups = result.rows.map((g) => {
       const memberCount = parseInt(g.member_count) || 0;
