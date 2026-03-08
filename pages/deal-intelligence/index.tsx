@@ -145,8 +145,8 @@ export default function DealIntelligenceSearch() {
         <title>Deal Intelligence - Property Search | AXIOM</title>
       </Head>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <h1 className="font-dl-serif text-3xl text-dl-navy mb-2">Deal Intelligence</h1>
+      <div className="max-w-7xl mx-auto">
+        <h1 className="font-dl-serif text-2xl sm:text-3xl text-dl-navy mb-2">Deal Intelligence</h1>
         <p className="text-dl-muted font-dl-mono text-sm mb-8">
           Search properties, analyze deals, and run underwriting scenarios
         </p>
@@ -154,15 +154,15 @@ export default function DealIntelligenceSearch() {
         <div className="border border-dl-border p-6 mb-8">
           <h2 className="font-dl-serif text-xl text-dl-navy mb-4">Property Search</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div className="md:col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div className="sm:col-span-2 md:col-span-2">
               <label className="block text-sm font-dl-mono text-dl-muted mb-1">Address or Keywords</label>
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="123 Main St, Springfield, IL"
-                className="w-full border border-dl-border px-3 py-2 font-dl-mono text-sm bg-white text-dl-text focus:outline-none focus:border-dl-navy"
+                className="w-full border border-dl-border px-3 py-2.5 font-dl-mono text-sm bg-white text-dl-text focus:outline-none focus:border-dl-navy min-h-[44px]"
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               />
             </div>
@@ -173,7 +173,7 @@ export default function DealIntelligenceSearch() {
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="City"
-                className="w-full border border-dl-border px-3 py-2 font-dl-mono text-sm bg-white text-dl-text focus:outline-none focus:border-dl-navy"
+                className="w-full border border-dl-border px-3 py-2.5 font-dl-mono text-sm bg-white text-dl-text focus:outline-none focus:border-dl-navy min-h-[44px]"
               />
             </div>
             <div>
@@ -184,23 +184,23 @@ export default function DealIntelligenceSearch() {
                 onChange={(e) => setState(e.target.value)}
                 placeholder="IL"
                 maxLength={2}
-                className="w-full border border-dl-border px-3 py-2 font-dl-mono text-sm bg-white text-dl-text focus:outline-none focus:border-dl-navy uppercase"
+                className="w-full border border-dl-border px-3 py-2.5 font-dl-mono text-sm bg-white text-dl-text focus:outline-none focus:border-dl-navy uppercase min-h-[44px]"
               />
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleSearch}
               disabled={loading}
-              className="bg-dl-navy text-white px-6 py-2 font-dl-mono text-sm hover:bg-dl-navy/90 disabled:opacity-50"
+              className="bg-dl-navy text-white px-6 py-3 min-h-[44px] font-dl-mono text-sm hover:bg-dl-navy/90 disabled:opacity-50"
             >
               {loading ? 'Searching...' : 'Search Properties'}
             </button>
             <button
               onClick={handleResolve}
               disabled={resolving}
-              className="border border-dl-navy text-dl-navy px-6 py-2 font-dl-mono text-sm hover:bg-dl-navy/5 disabled:opacity-50"
+              className="border border-dl-navy text-dl-navy px-6 py-3 min-h-[44px] font-dl-mono text-sm hover:bg-dl-navy/5 disabled:opacity-50"
             >
               {resolving ? 'Resolving...' : 'Resolve Address'}
             </button>
@@ -231,37 +231,55 @@ export default function DealIntelligenceSearch() {
             <div className="bg-dl-bg border-b border-dl-border px-4 py-2">
               <span className="font-dl-mono text-sm text-dl-muted">{results.length} properties found</span>
             </div>
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-dl-border bg-dl-bg/50">
-                  <th className="text-left px-4 py-2 font-dl-mono text-xs text-dl-muted uppercase">Address</th>
-                  <th className="text-left px-4 py-2 font-dl-mono text-xs text-dl-muted uppercase">City</th>
-                  <th className="text-left px-4 py-2 font-dl-mono text-xs text-dl-muted uppercase">State</th>
-                  <th className="text-left px-4 py-2 font-dl-mono text-xs text-dl-muted uppercase">Type</th>
-                  <th className="text-left px-4 py-2 font-dl-mono text-xs text-dl-muted uppercase">Sqft</th>
-                  <th className="text-left px-4 py-2 font-dl-mono text-xs text-dl-muted uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.map((prop) => (
-                  <tr key={prop.id} className="border-b border-dl-border hover:bg-dl-bg/30">
-                    <td className="px-4 py-3 font-dl-mono text-sm text-dl-text">{prop.addressRaw || prop.addressNormalized}</td>
-                    <td className="px-4 py-3 font-dl-mono text-sm text-dl-muted">{prop.city || '-'}</td>
-                    <td className="px-4 py-3 font-dl-mono text-sm text-dl-muted">{prop.state || '-'}</td>
-                    <td className="px-4 py-3 font-dl-mono text-sm text-dl-muted">{prop.propertyType || '-'}</td>
-                    <td className="px-4 py-3 font-dl-mono text-sm text-dl-muted">{prop.sqft?.toLocaleString() || '-'}</td>
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/deal-intelligence/property/${prop.id}`}
-                        className="text-dl-navy font-dl-mono text-sm underline hover:no-underline"
-                      >
-                        View Profile
-                      </Link>
-                    </td>
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-dl-border bg-dl-bg/50">
+                    <th className="text-left px-4 py-2 font-dl-mono text-xs text-dl-muted uppercase">Address</th>
+                    <th className="text-left px-4 py-2 font-dl-mono text-xs text-dl-muted uppercase">City</th>
+                    <th className="text-left px-4 py-2 font-dl-mono text-xs text-dl-muted uppercase">State</th>
+                    <th className="text-left px-4 py-2 font-dl-mono text-xs text-dl-muted uppercase">Type</th>
+                    <th className="text-left px-4 py-2 font-dl-mono text-xs text-dl-muted uppercase">Sqft</th>
+                    <th className="text-left px-4 py-2 font-dl-mono text-xs text-dl-muted uppercase">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {results.map((prop) => (
+                    <tr key={prop.id} className="border-b border-dl-border hover:bg-dl-bg/30">
+                      <td className="px-4 py-3 font-dl-mono text-sm text-dl-text">{prop.addressRaw || prop.addressNormalized}</td>
+                      <td className="px-4 py-3 font-dl-mono text-sm text-dl-muted">{prop.city || '-'}</td>
+                      <td className="px-4 py-3 font-dl-mono text-sm text-dl-muted">{prop.state || '-'}</td>
+                      <td className="px-4 py-3 font-dl-mono text-sm text-dl-muted">{prop.propertyType || '-'}</td>
+                      <td className="px-4 py-3 font-dl-mono text-sm text-dl-muted">{prop.sqft?.toLocaleString() || '-'}</td>
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/deal-intelligence/property/${prop.id}`}
+                          className="text-dl-navy font-dl-mono text-sm underline hover:no-underline min-h-[44px] inline-flex items-center"
+                        >
+                          View Profile
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="sm:hidden">
+              {results.map((prop) => (
+                <div key={prop.id} className="border-b border-dl-border p-4">
+                  <div className="font-dl-mono text-sm text-dl-text mb-1">{prop.addressRaw || prop.addressNormalized}</div>
+                  <div className="font-dl-mono text-xs text-dl-muted mb-2">
+                    {prop.city || '-'}, {prop.state || '-'} {prop.propertyType ? `| ${prop.propertyType}` : ''} {prop.sqft ? `| ${prop.sqft.toLocaleString()} sqft` : ''}
+                  </div>
+                  <Link
+                    href={`/deal-intelligence/property/${prop.id}`}
+                    className="inline-flex items-center text-dl-navy font-dl-mono text-sm underline hover:no-underline min-h-[44px]"
+                  >
+                    View Profile
+                  </Link>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

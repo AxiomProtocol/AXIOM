@@ -20,7 +20,7 @@ export function SolidButton({
   className = '',
   ...props
 }: SolidButtonProps) {
-  const sizeClass = size === 'sm' ? 'px-3 py-1 text-xs' : 'px-6 py-1.5 text-sm';
+  const sizeClass = size === 'sm' ? 'px-3 py-2 text-xs min-h-[44px]' : 'px-6 py-2.5 text-sm min-h-[44px]';
   const disabledClass = disabled ? 'opacity-50 cursor-not-allowed' : '';
 
   return (

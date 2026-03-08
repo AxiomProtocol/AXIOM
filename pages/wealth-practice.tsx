@@ -30,6 +30,8 @@ interface Group {
   hub_id: number;
   contribution_amount: number;
   cycle_length_days: number;
+  contribution_frequency: string;
+  rotation_method: string;
   member_count: number;
   max_members: number;
   min_members_to_activate: number;
@@ -37,6 +39,26 @@ interface Group {
   status: 'forming' | 'active' | 'graduated';
   region_display: string;
   is_active: boolean;
+  created_at: string;
+}
+
+interface MyGroupMembership {
+  id: number;
+  group_id: number;
+  position: number;
+  status: string;
+  joined_at: string;
+  display_name: string;
+  description: string;
+  contribution_amount: number;
+  cycle_length_days: number;
+  contribution_frequency: string;
+  rotation_method: string;
+  member_count: number;
+  max_members: number;
+  region_display: string;
+  hub_name: string;
+  group_status: string;
 }
 
 type TabId = 'overview' | 'discover' | 'practice' | 'create';
@@ -73,12 +95,19 @@ export default function WealthPracticePage() {
     description: '',
     contributionAmount: 50,
     cycleLengthDays: 30,
+    contributionFrequency: 'monthly' as string,
+    rotationMethod: 'round-robin' as string,
     minMembersToActivate: 3,
     maxMembers: 10,
   });
   const [creating, setCreating] = useState(false);
   const [createMsg, setCreateMsg] = useState('');
   const [createError, setCreateError] = useState('');
+
+  const [myGroups, setMyGroups] = useState<MyGroupMembership[]>([]);
+  const [myPracticeLoading, setMyPracticeLoading] = useState(false);
+  const [myPracticeError, setMyPracticeError] = useState('');
+  const [practiceAddress, setPracticeAddress] = useState('');
 
   const [showHubForm, setShowHubForm] = useState(false);
   const [hubForm, setHubForm] = useState({
@@ -99,6 +128,9 @@ export default function WealthPracticePage() {
     }
     if (activeTab === 'discover' || activeTab === 'create') {
       fetchDiscoverData();
+    }
+    if (activeTab === 'practice' && practiceAddress) {
+      fetchMyPractice(practiceAddress);
     }
   }, [activeTab]);
 
@@ -152,6 +184,50 @@ export default function WealthPracticePage() {
     fetchDiscoverData();
   };
 
+  const fetchMyPractice = async (address: string) => {
+    setMyPracticeLoading(true);
+    setMyPracticeError('');
+    try {
+      const res = await fetch(`/api/wealth-practice/my-groups?memberAddress=${encodeURIComponent(address)}`);
+      const data = await res.json();
+      if (data.success) {
+        setMyGroups(data.groups || []);
+      } else {
+        setMyPracticeError(data.error || 'Failed to load your groups');
+      }
+    } catch {
+      setMyPracticeError('Failed to load your groups');
+    } finally {
+      setMyPracticeLoading(false);
+    }
+  };
+
+  const handleLookupPractice = () => {
+    if (practiceAddress.trim()) {
+      fetchMyPractice(practiceAddress.trim());
+    }
+  };
+
+  const getNextRotationDate = (joinedAt: string, cycleDays: number) => {
+    const joined = new Date(joinedAt);
+    const now = new Date();
+    const elapsed = now.getTime() - joined.getTime();
+    const cycleMs = cycleDays * 24 * 60 * 60 * 1000;
+    const cyclesPassed = Math.floor(elapsed / cycleMs);
+    const nextDate = new Date(joined.getTime() + (cyclesPassed + 1) * cycleMs);
+    return nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const getFrequencyLabel = (freq: string) => {
+    const map: Record<string, string> = { weekly: 'Weekly', biweekly: 'Bi-weekly', monthly: 'Monthly' };
+    return map[freq] || freq;
+  };
+
+  const getRotationLabel = (method: string) => {
+    const map: Record<string, string> = { 'round-robin': 'Round Robin', random: 'Random', 'need-based': 'Need-Based' };
+    return map[method] || method;
+  };
+
   const handleCreateGroup = async () => {
     if (!createForm.hubId) {
       setCreateError('Please select a hub');
@@ -181,6 +257,8 @@ export default function WealthPracticePage() {
           description: '',
           contributionAmount: 50,
           cycleLengthDays: 30,
+          contributionFrequency: 'monthly',
+          rotationMethod: 'round-robin',
           minMembersToActivate: 3,
           maxMembers: 10,
         });
@@ -240,18 +318,27 @@ export default function WealthPracticePage() {
         <title>The Wealth Practice | Axiom Protocol</title>
       </Head>
 
+      <div className="border border-dl-gold bg-dl-bg p-4 mb-6">
+        <div className="flex items-center gap-3">
+          <span className="text-dl-gold text-xs uppercase font-dl-mono font-bold border border-dl-gold px-2 py-0.5">Pilot Mode</span>
+          <p className="text-dl-navy text-sm">
+            Launching in <span className="font-bold">Atlanta</span>, <span className="font-bold">Houston</span>, and <span className="font-bold">Charlotte</span> — the first three cities activating community group economics.
+          </p>
+        </div>
+      </div>
+
       <div className="mb-8">
-        <h1 className="font-dl-serif text-3xl text-dl-navy font-bold">The Wealth Practice</h1>
+        <h1 className="font-dl-serif text-2xl sm:text-3xl text-dl-navy font-bold">The Wealth Practice</h1>
         <p className="text-dl-gray mt-1">Community Group Economics Engine</p>
       </div>
 
-      <div className="border-b border-dl-border mb-8">
-        <div className="flex gap-6">
+      <div className="border-b border-dl-border mb-8 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="flex gap-4 sm:gap-6 overflow-x-auto">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`pb-3 text-sm transition-none ${
+              className={`pb-3 text-sm min-h-[44px] whitespace-nowrap transition-none ${
                 activeTab === tab.id
                   ? 'border-b-2 border-dl-navy text-dl-navy font-bold'
                   : 'text-dl-gray hover:text-dl-navy'
@@ -349,19 +436,19 @@ export default function WealthPracticePage() {
         <div>
           <h2 className="font-dl-serif text-xl text-dl-navy font-bold mb-4">Discover</h2>
 
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <input
               type="text"
               placeholder="Search groups..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="flex-1 border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+              className="flex-1 border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
             />
             <select
               value={filterHubId}
               onChange={(e) => setFilterHubId(e.target.value)}
-              className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+              className="border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
             >
               <option value="">All Hubs</option>
               {hubs.map((hub) => (
@@ -370,7 +457,7 @@ export default function WealthPracticePage() {
             </select>
             <button
               onClick={handleSearch}
-              className="border border-dl-navy bg-dl-bg text-dl-navy px-6 py-2 text-sm font-bold hover:bg-dl-navy hover:text-white transition-none"
+              className="border border-dl-navy bg-dl-bg text-dl-navy px-6 py-2.5 min-h-[44px] text-sm font-bold hover:bg-dl-navy hover:text-white transition-none"
             >
               Search
             </button>
@@ -410,7 +497,7 @@ export default function WealthPracticePage() {
                         value={hubForm.hubName}
                         onChange={(e) => setHubForm({ ...hubForm, hubName: e.target.value })}
                         placeholder="e.g. Atlanta Wealth Builders"
-                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
                       />
                     </div>
                     <div>
@@ -420,7 +507,7 @@ export default function WealthPracticePage() {
                         value={hubForm.interest}
                         onChange={(e) => setHubForm({ ...hubForm, interest: e.target.value })}
                         placeholder="e.g. Homeownership, Land Stewardship, Food Security"
-                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
                       />
                     </div>
                   </div>
@@ -433,7 +520,7 @@ export default function WealthPracticePage() {
                         value={hubForm.city}
                         onChange={(e) => setHubForm({ ...hubForm, city: e.target.value })}
                         placeholder="e.g. Atlanta"
-                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
                       />
                     </div>
                     <div>
@@ -443,7 +530,7 @@ export default function WealthPracticePage() {
                         value={hubForm.region}
                         onChange={(e) => setHubForm({ ...hubForm, region: e.target.value })}
                         placeholder="e.g. Georgia"
-                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
                       />
                     </div>
                     <div>
@@ -451,7 +538,7 @@ export default function WealthPracticePage() {
                       <select
                         value={hubForm.regionType}
                         onChange={(e) => setHubForm({ ...hubForm, regionType: e.target.value })}
-                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
                       >
                         <option value="metro">Metro Area</option>
                         <option value="state">State</option>
@@ -478,7 +565,7 @@ export default function WealthPracticePage() {
                   <button
                     onClick={handleCreateHub}
                     disabled={creatingHub}
-                    className="border border-dl-navy bg-dl-navy text-white px-6 py-2 text-sm font-bold hover:bg-dl-bg hover:text-dl-navy transition-none disabled:opacity-50"
+                    className="border border-dl-navy bg-dl-navy text-white px-6 py-3 min-h-[44px] text-sm font-bold hover:bg-dl-bg hover:text-dl-navy transition-none disabled:opacity-50"
                   >
                     {creatingHub ? 'Creating...' : 'Create Interest Hub'}
                   </button>
@@ -490,13 +577,13 @@ export default function WealthPracticePage() {
                   <p className="text-dl-gray text-sm mb-2">No Interest Hubs yet. Be the first to create one for your city or region.</p>
                   <button
                     onClick={() => setShowHubForm(true)}
-                    className="border border-dl-navy bg-dl-bg text-dl-navy px-4 py-1.5 text-sm font-bold hover:bg-dl-navy hover:text-white transition-none mt-2"
+                    className="border border-dl-navy bg-dl-bg text-dl-navy px-4 py-2.5 min-h-[44px] text-sm font-bold hover:bg-dl-navy hover:text-white transition-none mt-2"
                   >
                     Create the First Hub
                   </button>
                 </div>
               ) : hubs.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
                   {hubs.map((hub) => (
                     <div key={hub.id} className="border border-dl-border p-4">
                       <div className="font-dl-serif text-dl-navy font-bold">{hub.hub_name || hub.region_display}</div>
@@ -537,6 +624,14 @@ export default function WealthPracticePage() {
                           <span className="font-dl-mono text-dl-navy ml-1">${group.contribution_amount}</span>
                         </div>
                         <div>
+                          <span className="text-dl-gray">Frequency:</span>
+                          <span className="font-dl-mono text-dl-navy ml-1">{getFrequencyLabel(group.contribution_frequency || 'monthly')}</span>
+                        </div>
+                        <div>
+                          <span className="text-dl-gray">Rotation:</span>
+                          <span className="font-dl-mono text-dl-navy ml-1">{getRotationLabel(group.rotation_method || 'round-robin')}</span>
+                        </div>
+                        <div>
                           <span className="text-dl-gray">Cycle:</span>
                           <span className="font-dl-mono text-dl-navy ml-1">{group.cycle_length_days}d</span>
                         </div>
@@ -573,10 +668,82 @@ export default function WealthPracticePage() {
       {activeTab === 'practice' && (
         <div>
           <h2 className="font-dl-serif text-xl text-dl-navy font-bold mb-4">My Practice</h2>
-          <div className="border border-dl-border p-8 text-center">
-            <p className="text-dl-gray text-sm">Connect your wallet to view your groups.</p>
-            <p className="text-dl-gray text-xs mt-2">Wallet-connected features will display your active Wealth Practice circles, contribution history, and group status.</p>
+
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <input
+              type="text"
+              placeholder="Enter your wallet address or member ID..."
+              value={practiceAddress}
+              onChange={(e) => setPracticeAddress(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleLookupPractice()}
+              className="flex-1 border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
+            />
+            <button
+              onClick={handleLookupPractice}
+              className="border border-dl-navy bg-dl-navy text-white px-6 py-2.5 min-h-[44px] text-sm font-bold hover:bg-dl-bg hover:text-dl-navy transition-none"
+            >
+              View My Groups
+            </button>
           </div>
+
+          {myPracticeLoading && <p className="text-dl-gray text-sm">Loading...</p>}
+          {myPracticeError && <p className="text-sm" style={{ color: '#991b1b' }}>{myPracticeError}</p>}
+
+          {!myPracticeLoading && !myPracticeError && myGroups.length === 0 && practiceAddress && (
+            <div className="border border-dl-border p-8 text-center">
+              <p className="text-dl-gray text-sm">No groups found for this address.</p>
+              <p className="text-dl-gray text-xs mt-2">Join a group from the Discover tab to get started.</p>
+            </div>
+          )}
+
+          {!myPracticeLoading && !practiceAddress && (
+            <div className="border border-dl-border p-8 text-center">
+              <p className="text-dl-gray text-sm">Enter your wallet address or member ID to view your groups.</p>
+              <p className="text-dl-gray text-xs mt-2">Your active Wealth Practice circles, contribution schedule, and rotation dates will appear here.</p>
+            </div>
+          )}
+
+          {myGroups.length > 0 && (
+            <div className="space-y-4">
+              {myGroups.map((mg) => (
+                <div key={mg.id} className="border border-dl-border p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="font-dl-serif text-dl-navy font-bold text-lg">{mg.display_name || `Group #${mg.group_id}`}</div>
+                      <div className="font-dl-mono text-xs text-dl-gray">{mg.hub_name} &middot; {mg.region_display}</div>
+                    </div>
+                    <span className={`text-xs px-2 py-0.5 uppercase ${STATUS_STYLES[mg.group_status] || 'border border-dl-border text-dl-gray'}`}>
+                      {mg.group_status}
+                    </span>
+                  </div>
+                  {mg.description && <p className="text-dl-gray text-sm mb-4">{mg.description}</p>}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="border border-dl-border p-3">
+                      <div className="text-dl-gray text-xs">Contribution</div>
+                      <div className="font-dl-mono text-dl-navy font-bold">${mg.contribution_amount}</div>
+                      <div className="text-dl-gray text-xs">{getFrequencyLabel(mg.contribution_frequency)}</div>
+                    </div>
+                    <div className="border border-dl-border p-3">
+                      <div className="text-dl-gray text-xs">Rotation Method</div>
+                      <div className="font-dl-mono text-dl-navy font-bold">{getRotationLabel(mg.rotation_method)}</div>
+                    </div>
+                    <div className="border border-dl-border p-3">
+                      <div className="text-dl-gray text-xs">Next Rotation</div>
+                      <div className="font-dl-mono text-dl-navy font-bold">{getNextRotationDate(mg.joined_at, mg.cycle_length_days)}</div>
+                    </div>
+                    <div className="border border-dl-border p-3">
+                      <div className="text-dl-gray text-xs">Members</div>
+                      <div className="font-dl-mono text-dl-navy font-bold">{mg.member_count}/{mg.max_members}</div>
+                      <div className="text-dl-gray text-xs">Position #{mg.position}</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 text-dl-gray text-xs">
+                    Joined {new Date(mg.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} &middot; Cycle: {mg.cycle_length_days} days
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -593,7 +760,7 @@ export default function WealthPracticePage() {
               <select
                 value={createForm.hubId}
                 onChange={(e) => setCreateForm({ ...createForm, hubId: e.target.value })}
-                className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
               >
                 <option value="">— Select a hub —</option>
                 {hubs.map((hub) => (
@@ -609,7 +776,7 @@ export default function WealthPracticePage() {
                 value={createForm.displayName}
                 onChange={(e) => setCreateForm({ ...createForm, displayName: e.target.value })}
                 placeholder="e.g. Atlanta Homeownership Circle"
-                className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
               />
             </div>
 
@@ -624,6 +791,8 @@ export default function WealthPracticePage() {
               />
             </div>
 
+            <h4 className="font-dl-serif text-dl-navy font-bold mb-3 mt-2">Group Charter</h4>
+
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-dl-navy text-sm font-bold mb-1">Contribution Amount ($)</label>
@@ -636,11 +805,38 @@ export default function WealthPracticePage() {
                 />
               </div>
               <div>
+                <label className="block text-dl-navy text-sm font-bold mb-1">Contribution Frequency</label>
+                <select
+                  value={createForm.contributionFrequency}
+                  onChange={(e) => setCreateForm({ ...createForm, contributionFrequency: e.target.value })}
+                  className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
+                >
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly">Bi-weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-dl-navy text-sm font-bold mb-1">Rotation Method</label>
+                <select
+                  value={createForm.rotationMethod}
+                  onChange={(e) => setCreateForm({ ...createForm, rotationMethod: e.target.value })}
+                  className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
+                >
+                  <option value="round-robin">Round Robin</option>
+                  <option value="random">Random</option>
+                  <option value="need-based">Need-Based</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-dl-navy text-sm font-bold mb-1">Cycle Length (Days)</label>
                 <select
                   value={createForm.cycleLengthDays}
                   onChange={(e) => setCreateForm({ ...createForm, cycleLengthDays: Number(e.target.value) })}
-                  className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                  className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
                 >
                   <option value={7}>7 days</option>
                   <option value={14}>14 days</option>

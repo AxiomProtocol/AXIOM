@@ -1,5 +1,5 @@
 import { db } from '../../server/db';
-import { t3Identities, t3Claims } from '../../shared/erc3643Schema';
+import { t3Identities, t3Claims, t3KycSubmissions, T3KycSubmission } from '../../shared/erc3643Schema';
 import { eq, and } from 'drizzle-orm';
 import { CLAIM_TOPICS, COUNTRY_CODES } from '../../shared/contracts-3643';
 import { ERC3643Service } from './ERC3643Service';
@@ -90,5 +90,45 @@ export class IdentityBridgeService {
     }
 
     return results;
+  }
+
+  static async bridgeSingleSubmission(submission: T3KycSubmission) {
+    const wallet = submission.walletAddress;
+    const countryMap: Record<string, number> = { US: 840, GB: 826, CA: 124 };
+    const countryCode = countryMap[submission.country] || COUNTRY_CODES.US;
+
+    const existing = await db.select()
+      .from(t3Identities)
+      .where(eq(t3Identities.wallet, wallet.toLowerCase()))
+      .limit(1);
+
+    if (existing.length > 0) {
+      return { status: 'already_registered', identityId: existing[0].id };
+    }
+
+    const identity = await ERC3643Service.registerIdentity(wallet, countryCode);
+
+    const topics = [CLAIM_TOPICS.KYC_VERIFIED, CLAIM_TOPICS.SANCTIONS_CLEAR];
+    const issuedClaims = [];
+    for (const topic of topics) {
+      const claim = await ERC3643Service.issueClaim(wallet, topic);
+      issuedClaims.push(claim);
+    }
+
+    await db.update(t3Identities)
+      .set({
+        kycSubmissionId: submission.id,
+        verificationLevel: 1,
+        updatedAt: new Date(),
+      })
+      .where(eq(t3Identities.wallet, wallet.toLowerCase()));
+
+    return {
+      status: 'bridged',
+      identityId: identity.identityId,
+      onchainIdAddress: identity.onchainIdAddress,
+      claims: issuedClaims,
+      txHash: identity.txHash,
+    };
   }
 }

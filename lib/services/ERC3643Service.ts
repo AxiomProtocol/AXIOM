@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { db } from '../../server/db';
-import { t3Identities, t3Claims, t3ComplianceEvents, t3PlatformWhitelist } from '../../shared/erc3643Schema';
-import { eq } from 'drizzle-orm';
+import { t3Identities, t3Claims, t3ComplianceEvents, t3PlatformWhitelist, CLAIM_VALIDITY_DAYS, CLAIM_REFRESH_WARNING_DAYS } from '../../shared/erc3643Schema';
+import { eq, and, lte, gte, or, isNull } from 'drizzle-orm';
 import {
   ERC3643_CONTRACTS,
   CLAIM_TOPICS,
@@ -67,6 +67,8 @@ export class ERC3643Service {
         issuer: c.issuerAddress,
         validFrom: c.validFrom,
         validUntil: c.validUntil,
+        expiresAt: c.expiresAt,
+        refreshRequiredBy: c.refreshRequiredBy,
         revoked: c.revoked,
       })),
     };
@@ -142,10 +144,13 @@ export class ERC3643Service {
     if (dbIdentity.length === 0) throw new Error('Identity not found for wallet');
 
     const identityAddr = dbIdentity[0].onchainIdAddress;
+    const validityDays = CLAIM_VALIDITY_DAYS[topic] || 365;
+    const validityMs = validityDays * 24 * 3600 * 1000;
+    const refreshWarningMs = CLAIM_REFRESH_WARNING_DAYS * 24 * 3600 * 1000;
 
     const claimData = ethers.AbiCoder.defaultAbiCoder().encode(
       ['address', 'uint256', 'uint256'],
-      [wallet, topic, Math.floor(Date.now() / 1000) + 365 * 24 * 3600]
+      [wallet, topic, Math.floor(Date.now() / 1000) + validityDays * 24 * 3600]
     );
 
     const dataHash = ethers.keccak256(
@@ -156,14 +161,20 @@ export class ERC3643Service {
     );
     const signature = await signer.signMessage(ethers.getBytes(dataHash));
 
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + validityMs);
+    const refreshRequiredBy = new Date(expiresAt.getTime() - refreshWarningMs);
+
     const [inserted] = await db.insert(t3Claims).values({
       identityId: dbIdentity[0].id,
       topic,
       issuerAddress: ERC3643_CONTRACTS.CLAIM_ISSUER.toLowerCase(),
       claimData: ethers.hexlify(claimData),
       signature,
-      validFrom: new Date(),
-      validUntil: new Date(Date.now() + 365 * 24 * 3600 * 1000),
+      validFrom: now,
+      validUntil: expiresAt,
+      expiresAt,
+      refreshRequiredBy,
       revoked: false,
     }).returning();
 
@@ -172,6 +183,75 @@ export class ERC3643Service {
       topic,
       signature,
       identityAddress: identityAddr,
+      expiresAt,
+      refreshRequiredBy,
+    };
+  }
+
+  static async getExpiringClaims() {
+    const now = new Date();
+    const thirtyDaysFromNow = new Date(now.getTime() + CLAIM_REFRESH_WARNING_DAYS * 24 * 3600 * 1000);
+
+    const expiringSoon = await db.select({
+      claim: t3Claims,
+      wallet: t3Identities.wallet,
+    })
+      .from(t3Claims)
+      .innerJoin(t3Identities, eq(t3Claims.identityId, t3Identities.id))
+      .where(
+        and(
+          eq(t3Claims.revoked, false),
+          or(
+            and(
+              lte(t3Claims.expiresAt, thirtyDaysFromNow),
+              gte(t3Claims.expiresAt, now)
+            ),
+            lte(t3Claims.expiresAt, now)
+          )
+        )
+      );
+
+    const expiring: typeof expiringSoon = [];
+    const expired: typeof expiringSoon = [];
+
+    for (const row of expiringSoon) {
+      if (row.claim.expiresAt && row.claim.expiresAt <= now) {
+        expired.push(row);
+      } else {
+        expiring.push(row);
+      }
+    }
+
+    return { expiring, expired };
+  }
+
+  static async renewClaim(claimId: string, adminWallet: string) {
+    const [existing] = await db.select()
+      .from(t3Claims)
+      .where(eq(t3Claims.id, claimId))
+      .limit(1);
+
+    if (!existing) throw new Error('Claim not found');
+
+    const [identity] = await db.select()
+      .from(t3Identities)
+      .where(eq(t3Identities.id, existing.identityId))
+      .limit(1);
+
+    if (!identity) throw new Error('Identity not found for claim');
+
+    await db.update(t3Claims)
+      .set({ revoked: true })
+      .where(eq(t3Claims.id, claimId));
+
+    const result = await this.issueClaim(identity.wallet, existing.topic);
+    return {
+      oldClaimId: claimId,
+      newClaimId: result.claimId,
+      topic: existing.topic,
+      wallet: identity.wallet,
+      expiresAt: result.expiresAt,
+      refreshRequiredBy: result.refreshRequiredBy,
     };
   }
 

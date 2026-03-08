@@ -53,8 +53,38 @@ const SOURCE_LABELS: Record<string, string> = {
   usda: 'USDA',
   wholesaler: 'Wholesaler',
   tax_sale: 'Tax Sale',
+  sheriff_sale: 'Sheriff Sale',
   manual: 'Manual',
 };
+
+interface SourceStatusInfo {
+  name: string;
+  state: string;
+  url: string;
+  status: 'active' | 'unavailable' | 'blocked' | 'manual_only';
+  statusReason: string;
+  frequency: string;
+  lastAttempt: string;
+}
+
+const SOURCE_STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+  active: { bg: 'bg-[#f0f5ec]', text: 'text-[#2d5016]', label: 'Active' },
+  unavailable: { bg: 'bg-[#fdf0f0]', text: 'text-[#8b1a1a]', label: 'Unavailable' },
+  blocked: { bg: 'bg-[#fff8e1]', text: 'text-[#8b6914]', label: 'Blocked' },
+  manual_only: { bg: 'bg-[#f0f0f5]', text: 'text-[#5a5a7d]', label: 'Manual Only' },
+};
+
+const GOVERNMENT_SOURCES = [
+  { name: 'HUD HomeStore', type: 'hud', status: 'active' as const, description: 'HUD foreclosed properties via hudhomestore.gov API' },
+  { name: 'Fannie Mae HomePath', type: 'fannie_mae', status: 'active' as const, description: 'Fannie Mae REO properties via HomePath' },
+  { name: 'Freddie Mac HomeSteps', type: 'freddie_mac', status: 'active' as const, description: 'Freddie Mac REO properties via HomeSteps' },
+  { name: 'USDA Rural Development', type: 'usda', status: 'active' as const, description: 'USDA foreclosed rural properties' },
+];
+
+const EXPANSION_SOURCES = [
+  { name: 'County Tax Lien Auctions', type: 'tax_sale', states: ['GA', 'TX', 'NC'], status: 'manual_only' as const, description: 'County tax lien/deed sales — most require manual lookup or PDF parsing' },
+  { name: 'Sheriff / Foreclosure Sales', type: 'sheriff_sale', states: ['GA', 'TX', 'NC'], status: 'manual_only' as const, description: 'Sheriff sales and trustee foreclosure auctions — county courthouse sales' },
+];
 
 const PROPERTY_TYPES = [
   { value: 'single_family', label: 'Single Family' },
@@ -135,25 +165,40 @@ function FeedTab() {
       <div className="border border-[#2c3e50] p-4 mb-6">
         <h3 className="font-serif text-lg text-[#2c3e50] mb-3">FEED STATISTICS</h3>
         {stats ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Active Listings</div>
-              <div className="font-mono text-xl text-[#2c3e50]">{stats.totalActive}</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Sources Active</div>
-              <div className="font-mono text-xl text-[#2c3e50]">{Object.keys(stats.bySource).length}</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">States Covered</div>
-              <div className="font-mono text-xl text-[#2c3e50]">{Object.keys(stats.byState).length}</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Last Ingestion</div>
-              <div className="font-mono text-sm text-[#2c3e50]">
-                {stats.lastIngestion ? new Date(stats.lastIngestion).toLocaleDateString() : 'None'}
+          <div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div>
+                <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Active Listings</div>
+                <div className="font-mono text-xl text-[#2c3e50]">{stats.totalActive}</div>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Sources Active</div>
+                <div className="font-mono text-xl text-[#2c3e50]">{Object.keys(stats.bySource).length}</div>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">States Covered</div>
+                <div className="font-mono text-xl text-[#2c3e50]">{Object.keys(stats.byState).length}</div>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Last Ingestion</div>
+                <div className="font-mono text-sm text-[#2c3e50]">
+                  {stats.lastIngestion ? new Date(stats.lastIngestion).toLocaleDateString() : 'None'}
+                </div>
               </div>
             </div>
+            {Object.keys(stats.bySource).length > 0 && (
+              <div>
+                <div className="text-xs uppercase tracking-wider text-[#5a6c7d] mb-2">Listings by Source</div>
+                <div className="flex flex-wrap gap-3">
+                  {Object.entries(stats.bySource).map(([src, count]) => (
+                    <div key={src} className="border border-[#2c3e50] px-3 py-1.5">
+                      <span className="font-mono text-xs uppercase text-[#5a6c7d]">{SOURCE_LABELS[src] || src}</span>
+                      <span className="font-mono text-sm text-[#2c3e50] ml-2">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="font-mono text-sm text-[#5a6c7d]">Loading statistics...</div>
@@ -161,14 +206,70 @@ function FeedTab() {
       </div>
 
       <div className="border border-[#2c3e50] p-4 mb-6">
+        <h3 className="font-serif text-lg text-[#2c3e50] mb-3">DATA SOURCES</h3>
+        <div className="mb-4">
+          <div className="text-xs uppercase tracking-wider text-[#5a6c7d] mb-2">Government Feeds (Automated)</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {GOVERNMENT_SOURCES.map(src => {
+              const count = stats?.bySource[src.type] || 0;
+              const colors = SOURCE_STATUS_COLORS[count > 0 ? 'active' : 'manual_only'];
+              return (
+                <div key={src.type} className={`border border-[#2c3e50] px-3 py-2 ${colors.bg}`}>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="font-mono text-sm text-[#2c3e50]">{src.name}</span>
+                      <span className={`ml-2 font-mono text-xs ${colors.text}`}>
+                        [{count > 0 ? `${count} listings` : 'Attempted'}]
+                      </span>
+                    </div>
+                    <div className={`border px-2 py-0.5 font-mono text-xs ${colors.text} border-current`}>
+                      {count > 0 ? 'Active' : 'Pending'}
+                    </div>
+                  </div>
+                  <div className="font-mono text-xs text-[#5a6c7d] mt-1">{src.description}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wider text-[#5a6c7d] mb-2">Expansion Sources (GA, TX, NC)</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {EXPANSION_SOURCES.map(src => {
+              const colors = SOURCE_STATUS_COLORS[src.status];
+              return (
+                <div key={src.type} className={`border border-[#2c3e50] px-3 py-2 ${colors.bg}`}>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="font-mono text-sm text-[#2c3e50]">{src.name}</span>
+                      <span className={`ml-2 font-mono text-xs ${colors.text}`}>
+                        [{src.states.join(', ')}]
+                      </span>
+                    </div>
+                    <div className={`border px-2 py-0.5 font-mono text-xs ${colors.text} border-current`}>
+                      {colors.label}
+                    </div>
+                  </div>
+                  <div className="font-mono text-xs text-[#5a6c7d] mt-1">{src.description}</div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="font-mono text-xs text-[#5a6c7d] mt-3 italic">
+            County tax lien auctions and sheriff/foreclosure sales for GA, TX, NC are monitored. Most government auction sites use Cloudflare protection or publish as PDFs, requiring manual data entry. Automated parsing will be enabled as sources become accessible.
+          </div>
+        </div>
+      </div>
+
+      <div className="border border-[#2c3e50] p-3 sm:p-4 mb-6">
         <h3 className="font-serif text-lg text-[#2c3e50] mb-3">FILTERS</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <div>
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">State</label>
             <select
               value={filterState}
               onChange={e => { setFilterState(e.target.value); setPage(1); }}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm"
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]"
             >
               <option value="">All States</option>
               {STATES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -182,7 +283,7 @@ function FeedTab() {
               onChange={e => setFilterCity(e.target.value)}
               onBlur={() => setPage(1)}
               placeholder="Any city"
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm"
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]"
             />
           </div>
           <div>
@@ -190,7 +291,7 @@ function FeedTab() {
             <select
               value={filterDistressType}
               onChange={e => { setFilterDistressType(e.target.value); setPage(1); }}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm"
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]"
             >
               <option value="">All Types</option>
               {Object.entries(DISTRESS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -201,7 +302,7 @@ function FeedTab() {
             <select
               value={filterPropertyType}
               onChange={e => { setFilterPropertyType(e.target.value); setPage(1); }}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm"
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]"
             >
               <option value="">All</option>
               {PROPERTY_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -215,7 +316,7 @@ function FeedTab() {
               onChange={e => setFilterMinPrice(e.target.value)}
               onBlur={() => setPage(1)}
               placeholder="0"
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm"
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]"
             />
           </div>
           <div>
@@ -226,7 +327,7 @@ function FeedTab() {
               onChange={e => setFilterMaxPrice(e.target.value)}
               onBlur={() => setPage(1)}
               placeholder="No limit"
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm"
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]"
             />
           </div>
           <div>
@@ -234,7 +335,7 @@ function FeedTab() {
             <select
               value={sortBy}
               onChange={e => { setSortBy(e.target.value); setPage(1); }}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm"
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]"
             >
               <option value="newest">Newest First</option>
               <option value="price_asc">Price: Low to High</option>
@@ -246,21 +347,21 @@ function FeedTab() {
         </div>
       </div>
 
-      <div className="mb-3 flex justify-between items-center">
+      <div className="mb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div className="font-mono text-sm text-[#5a6c7d]">{total} listings found</div>
         <div className="flex gap-2">
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page <= 1}
-            className="border border-[#2c3e50] px-3 py-1 font-mono text-sm disabled:opacity-30"
+            className="border border-[#2c3e50] px-4 py-2 min-h-[44px] min-w-[44px] font-mono text-sm disabled:opacity-30"
           >
             Prev
           </button>
-          <span className="font-mono text-sm py-1">{page} / {totalPages}</span>
+          <span className="font-mono text-sm py-2 min-h-[44px] flex items-center">{page} / {totalPages}</span>
           <button
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
-            className="border border-[#2c3e50] px-3 py-1 font-mono text-sm disabled:opacity-30"
+            className="border border-[#2c3e50] px-4 py-2 min-h-[44px] min-w-[44px] font-mono text-sm disabled:opacity-30"
           >
             Next
           </button>
@@ -283,11 +384,11 @@ function FeedTab() {
           {listings.map(listing => (
             <div key={listing.id} className="border border-[#2c3e50] border-b-0 last:border-b">
               <div
-                className="p-4 cursor-pointer hover:bg-[#f5f0e8]"
+                className="p-3 sm:p-4 cursor-pointer hover:bg-[#f5f0e8] min-h-[44px]"
                 onClick={() => setExpanded(expanded === listing.id ? null : listing.id)}
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                  <div className="flex items-center gap-3 flex-1">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
                     {listing.photos && listing.photos.length > 0 && (
                       <img
                         src={listing.photos[0]}
@@ -295,8 +396,8 @@ function FeedTab() {
                         className="w-16 h-12 object-cover border border-[#2c3e50] flex-shrink-0"
                       />
                     )}
-                    <div>
-                      <div className="font-serif text-[#2c3e50]">
+                    <div className="min-w-0">
+                      <div className="font-serif text-[#2c3e50] truncate">
                         {listing.address}
                       </div>
                       <div className="font-mono text-sm text-[#5a6c7d]">
@@ -304,8 +405,8 @@ function FeedTab() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-4 items-center">
-                    <div className="text-right">
+                  <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
+                    <div className="text-left sm:text-right">
                       <div className="font-mono text-lg text-[#2c3e50]">{formatCurrency(listing.listPrice)}</div>
                       {listing.discountPct && Number(listing.discountPct) > 0 && (
                         <div className="font-mono text-xs text-[#2d5016]">
@@ -313,10 +414,10 @@ function FeedTab() {
                         </div>
                       )}
                     </div>
-                    <div className="border border-[#2c3e50] px-2 py-0.5">
+                    <div className="border border-[#2c3e50] px-2 py-1 min-h-[28px] flex items-center">
                       <span className="font-mono text-xs uppercase">{DISTRESS_LABELS[listing.distressType] || listing.distressType}</span>
                     </div>
-                    <div className="border border-[#5a6c7d] px-2 py-0.5">
+                    <div className="border border-[#5a6c7d] px-2 py-1 min-h-[28px] flex items-center">
                       <span className="font-mono text-xs text-[#5a6c7d] uppercase">{SOURCE_LABELS[listing.source] || listing.source}</span>
                     </div>
                   </div>
@@ -324,20 +425,20 @@ function FeedTab() {
               </div>
 
               {expanded === listing.id && (
-                <div className="border-t border-[#2c3e50] p-4 bg-[#faf8f4]">
+                <div className="border-t border-[#2c3e50] p-3 sm:p-4 bg-[#faf8f4]">
                   {listing.photos && listing.photos.length > 0 && (
                     <div className="mb-4">
-                      <div className="flex gap-2 overflow-x-auto pb-2">
+                      <div className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory -mx-3 px-3 sm:mx-0 sm:px-0 touch-pan-x">
                         {listing.photos.map((photo, idx) => (
                           <img
                             key={idx}
                             src={photo}
                             alt={`${listing.address} - Photo ${idx + 1}`}
-                            className="w-64 h-44 object-cover border border-[#2c3e50] flex-shrink-0"
+                            className="w-[280px] sm:w-64 h-[200px] sm:h-44 object-cover border border-[#2c3e50] flex-shrink-0 snap-center"
                           />
                         ))}
                       </div>
-                      <div className="font-mono text-xs text-[#5a6c7d] mt-1">{listing.photos.length} photos</div>
+                      <div className="font-mono text-xs text-[#5a6c7d] mt-1">{listing.photos.length} photos — swipe to browse</div>
                     </div>
                   )}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -388,20 +489,20 @@ function FeedTab() {
                       <div className="font-mono text-sm text-[#8b6914]">{new Date(listing.auctionDate).toLocaleDateString()}</div>
                     </div>
                   )}
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     {listing.sourceUrl && (
                       <a
                         href={listing.sourceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="border border-[#2c3e50] px-4 py-2 font-mono text-sm hover:bg-[#2c3e50] hover:text-white transition-colors"
+                        className="border border-[#2c3e50] px-4 py-3 min-h-[44px] flex items-center justify-center font-mono text-sm hover:bg-[#2c3e50] hover:text-white transition-colors"
                       >
                         View Source
                       </a>
                     )}
                     <a
                       href={`/deal-intelligence?address=${encodeURIComponent(listing.address + ', ' + listing.city + ', ' + listing.state + ' ' + listing.zip)}`}
-                      className="border border-[#2d5016] text-[#2d5016] px-4 py-2 font-mono text-sm hover:bg-[#2d5016] hover:text-white transition-colors"
+                      className="border border-[#2d5016] text-[#2d5016] px-4 py-3 min-h-[44px] flex items-center justify-center font-mono text-sm hover:bg-[#2d5016] hover:text-white transition-colors"
                     >
                       Analyze with Deal Intelligence
                     </a>
@@ -518,17 +619,17 @@ function SubmitTab() {
           <div>
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Name *</label>
             <input type="text" required value={form.submitterName} onChange={e => updateField('submitterName', e.target.value)}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Email *</label>
             <input type="email" required value={form.submitterEmail} onChange={e => updateField('submitterEmail', e.target.value)}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Phone</label>
             <input type="tel" value={form.submitterPhone} onChange={e => updateField('submitterPhone', e.target.value)}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
         </div>
 
@@ -537,18 +638,18 @@ function SubmitTab() {
           <div className="md:col-span-2">
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Property Address *</label>
             <input type="text" required value={form.propertyAddress} onChange={e => updateField('propertyAddress', e.target.value)}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">City *</label>
             <input type="text" required value={form.city} onChange={e => updateField('city', e.target.value)}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">State *</label>
               <select required value={form.state} onChange={e => updateField('state', e.target.value)}
-                className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm">
+                className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]">
                 <option value="">--</option>
                 {STATES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -556,7 +657,7 @@ function SubmitTab() {
             <div>
               <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">ZIP *</label>
               <input type="text" required value={form.zip} onChange={e => updateField('zip', e.target.value)}
-                className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+                className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
             </div>
           </div>
         </div>
@@ -565,29 +666,29 @@ function SubmitTab() {
           <div>
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Property Type</label>
             <select value={form.propertyType} onChange={e => updateField('propertyType', e.target.value)}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm">
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]">
               {PROPERTY_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Bedrooms</label>
             <input type="number" value={form.bedrooms} onChange={e => updateField('bedrooms', e.target.value)}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Bathrooms</label>
             <input type="number" step="0.5" value={form.bathrooms} onChange={e => updateField('bathrooms', e.target.value)}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Sq Ft</label>
             <input type="number" value={form.sqft} onChange={e => updateField('sqft', e.target.value)}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Year Built</label>
             <input type="number" value={form.yearBuilt} onChange={e => updateField('yearBuilt', e.target.value)}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
         </div>
 
@@ -596,17 +697,17 @@ function SubmitTab() {
           <div>
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Asking Price *</label>
             <input type="number" required value={form.askingPrice} onChange={e => updateField('askingPrice', e.target.value)}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">ARV (After Repair Value)</label>
             <input type="number" value={form.arv} onChange={e => updateField('arv', e.target.value)}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Rehab Estimate</label>
             <input type="number" value={form.rehabEstimate} onChange={e => updateField('rehabEstimate', e.target.value)}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
         </div>
 
@@ -614,19 +715,19 @@ function SubmitTab() {
           <div>
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Description</label>
             <textarea value={form.description} onChange={e => updateField('description', e.target.value)}
-              rows={3} className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              rows={3} className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Contract End Date</label>
             <input type="date" value={form.contractEndDate} onChange={e => updateField('contractEndDate', e.target.value)}
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
         </div>
 
         <button
           type="submit"
           disabled={submitting}
-          className="border border-[#2c3e50] bg-[#2c3e50] text-white px-6 py-2 font-mono text-sm hover:bg-[#1a2a36] disabled:opacity-50"
+          className="border border-[#2c3e50] bg-[#2c3e50] text-white px-6 py-3 min-h-[44px] font-mono text-sm hover:bg-[#1a2a36] disabled:opacity-50"
         >
           {submitting ? 'Submitting...' : 'Submit Deal'}
         </button>
@@ -778,7 +879,7 @@ function BuyBoxTab() {
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Name *</label>
             <input type="text" required value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
               placeholder="e.g., Atlanta SFR Under 200K"
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
 
           <div className="mb-4">
@@ -799,34 +900,34 @@ function BuyBoxTab() {
             <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Target Cities (comma-separated)</label>
             <input type="text" value={form.targetCities} onChange={e => setForm(p => ({ ...p, targetCities: e.target.value }))}
               placeholder="e.g., Atlanta, Houston, Charlotte"
-              className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+              className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
             <div>
               <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Min Price</label>
               <input type="number" value={form.minPrice} onChange={e => setForm(p => ({ ...p, minPrice: e.target.value }))}
-                className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+                className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
             </div>
             <div>
               <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Max Price</label>
               <input type="number" value={form.maxPrice} onChange={e => setForm(p => ({ ...p, maxPrice: e.target.value }))}
-                className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+                className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
             </div>
             <div>
               <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Min Bedrooms</label>
               <input type="number" value={form.minBedrooms} onChange={e => setForm(p => ({ ...p, minBedrooms: e.target.value }))}
-                className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+                className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
             </div>
             <div>
               <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Min Sq Ft</label>
               <input type="number" value={form.minSqft} onChange={e => setForm(p => ({ ...p, minSqft: e.target.value }))}
-                className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+                className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
             </div>
             <div>
               <label className="block text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Max $/Sq Ft</label>
               <input type="number" value={form.maxPricePerSqft} onChange={e => setForm(p => ({ ...p, maxPricePerSqft: e.target.value }))}
-                className="w-full border border-[#2c3e50] bg-white px-2 py-1.5 font-mono text-sm" />
+                className="w-full border border-[#2c3e50] bg-white px-3 py-2.5 sm:px-2 sm:py-1.5 font-mono text-sm min-h-[44px]" />
             </div>
           </div>
 
@@ -859,7 +960,7 @@ function BuyBoxTab() {
           </div>
 
           <button type="submit" disabled={creating}
-            className="border border-[#2c3e50] bg-[#2c3e50] text-white px-6 py-2 font-mono text-sm hover:bg-[#1a2a36] disabled:opacity-50">
+            className="border border-[#2c3e50] bg-[#2c3e50] text-white px-6 py-3 min-h-[44px] font-mono text-sm hover:bg-[#1a2a36] disabled:opacity-50">
             {creating ? 'Creating...' : 'Create Buy Box'}
           </button>
         </form>
@@ -898,7 +999,7 @@ function BuyBoxTab() {
                 </div>
                 <button
                   onClick={() => deleteBuyBox(box.id)}
-                  className="border border-[#8b1a1a] text-[#8b1a1a] px-3 py-1 font-mono text-xs hover:bg-[#8b1a1a] hover:text-white"
+                  className="border border-[#8b1a1a] text-[#8b1a1a] px-3 py-2 min-h-[44px] font-mono text-xs hover:bg-[#8b1a1a] hover:text-white"
                 >
                   Remove
                 </button>
@@ -922,10 +1023,10 @@ export default function DistressedFeedPage() {
 
   return (
     <DesignLawLayout>
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto pb-20 sm:pb-8">
         <div className="mb-8">
-          <h1 className="font-serif text-3xl text-[#2c3e50] mb-2">DEAL FLOW</h1>
-          <h2 className="font-serif text-xl text-[#5a6c7d] mb-4">Distressed Property Acquisition Pipeline</h2>
+          <h1 className="font-serif text-2xl sm:text-3xl text-[#2c3e50] mb-2">DEAL FLOW</h1>
+          <h2 className="font-serif text-lg sm:text-xl text-[#5a6c7d] mb-4">Distressed Property Acquisition Pipeline</h2>
           <p className="font-mono text-sm text-[#5a6c7d] max-w-3xl">
             Aggregated feed of distressed, foreclosed, REO, and wholesale properties from government
             agencies and verified wholesalers. Each listing can be instantly analyzed through Deal Intelligence
@@ -933,12 +1034,12 @@ export default function DistressedFeedPage() {
           </p>
         </div>
 
-        <div className="flex border-b border-[#2c3e50] mb-6">
+        <div className="flex overflow-x-auto border-b border-[#2c3e50] mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-3 font-mono text-sm border-b-2 -mb-px ${
+              className={`px-4 sm:px-6 py-3 min-h-[44px] font-mono text-sm border-b-2 -mb-px whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'border-[#2c3e50] text-[#2c3e50]'
                   : 'border-transparent text-[#5a6c7d] hover:text-[#2c3e50]'
@@ -952,6 +1053,15 @@ export default function DistressedFeedPage() {
         {activeTab === 'feed' && <FeedTab />}
         {activeTab === 'submit' && <SubmitTab />}
         {activeTab === 'buybox' && <BuyBoxTab />}
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#2c3e50] p-3 sm:hidden z-40">
+        <a
+          href="/deal-intelligence"
+          className="block w-full bg-[#2c3e50] text-white text-center py-3 min-h-[44px] font-mono text-sm font-bold"
+        >
+          Analyze This Deal
+        </a>
       </div>
     </DesignLawLayout>
   );

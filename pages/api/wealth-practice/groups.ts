@@ -35,6 +35,8 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
     const result = await pool.query(
       `SELECT
         spg.*,
+        spg.contribution_frequency,
+        spg.rotation_method,
         sih.region_display,
         sih.region_type
       FROM susu_purpose_groups spg
@@ -96,6 +98,8 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
       description,
       minMembersToActivate,
       maxMembers,
+      contributionFrequency,
+      rotationMethod,
     } = req.body;
 
     if (!hubId || contributionAmount === undefined || !cycleLengthDays) {
@@ -107,12 +111,15 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
 
     const groupIdStr = `grp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+    const freq = contributionFrequency || 'monthly';
+    const rotation = rotationMethod || 'round-robin';
+
     const result = await pool.query(
       `INSERT INTO susu_purpose_groups (
         group_id, hub_id, purpose_category_id, contribution_amount, cycle_length_days,
         display_name, description, member_count, min_members_to_activate,
-        max_members, is_active, created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9, true, NOW())
+        max_members, contribution_frequency, rotation_method, is_active, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9, $10, $11, true, NOW())
       RETURNING *`,
       [
         groupIdStr,
@@ -124,6 +131,8 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
         description || null,
         minMembersToActivate ? Number(minMembersToActivate) : 3,
         maxMembers ? Number(maxMembers) : 12,
+        freq,
+        rotation,
       ]
     );
 

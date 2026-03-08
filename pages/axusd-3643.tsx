@@ -91,6 +91,19 @@ interface DashboardData {
   walletStatus: WalletStatus | null;
 }
 
+interface KycSubmissionData {
+  id: string;
+  walletAddress: string;
+  fullName: string;
+  dateOfBirth: string;
+  country: string;
+  documentType: string;
+  status: string;
+  reviewNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 type Tab = 'overview' | 'identity' | 'compliance' | 'contracts';
 
 function shortAddr(addr: string | null): string {
@@ -119,6 +132,26 @@ function fmtTimestamp(iso: string): string {
   } catch {
     return iso;
   }
+}
+
+function getClaimExpiryStatus(validUntil: string | null): { status: 'valid' | 'expiring_soon' | 'expired'; daysRemaining: number | null } {
+  if (!validUntil) return { status: 'valid', daysRemaining: null };
+  const expiry = new Date(validUntil);
+  const now = new Date();
+  const daysRemaining = Math.ceil((expiry.getTime() - now.getTime()) / (24 * 3600 * 1000));
+  if (daysRemaining <= 0) return { status: 'expired', daysRemaining: 0 };
+  if (daysRemaining <= 30) return { status: 'expiring_soon', daysRemaining };
+  return { status: 'valid', daysRemaining };
+}
+
+function ClaimExpiryBadge({ status }: { status: 'valid' | 'expiring_soon' | 'expired' }) {
+  const map = {
+    valid: { label: 'Valid', color: 'bg-green-100 text-green-800' },
+    expiring_soon: { label: 'Expiring Soon', color: 'bg-yellow-100 text-yellow-800' },
+    expired: { label: 'Expired', color: 'bg-red-100 text-red-800' },
+  };
+  const s = map[status];
+  return <span className={`px-2 py-0.5 text-xs font-dl-mono rounded ${s.color}`}>{s.label}</span>;
 }
 
 export default function AXUSD3643Page() {
@@ -346,6 +379,113 @@ function OverviewTab({ data }: { data: DashboardData }) {
   );
 }
 
+function KycStatusBadge({ status }: { status: string }) {
+  const map: Record<string, { label: string; color: string }> = {
+    submitted: { label: 'Submitted', color: 'bg-blue-100 text-blue-800' },
+    under_review: { label: 'Under Review', color: 'bg-yellow-100 text-yellow-800' },
+    approved: { label: 'Approved', color: 'bg-green-100 text-green-800' },
+    bridged: { label: 'Bridged', color: 'bg-emerald-100 text-emerald-800' },
+    rejected: { label: 'Rejected', color: 'bg-red-100 text-red-800' },
+  };
+  const s = map[status] || { label: status, color: 'bg-gray-100 text-gray-800' };
+  return <span className={`px-2 py-0.5 text-xs font-dl-mono rounded ${s.color}`}>{s.label}</span>;
+}
+
+function KycSubmissionForm({ address, onSubmitted }: { address: string; onSubmitted: () => void }) {
+  const [form, setForm] = useState({ fullName: '', dateOfBirth: '', country: 'US', documentType: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setSubmitError(null);
+    setSubmitSuccess(false);
+    try {
+      const res = await fetch('/api/erc3643/identity/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress: address, ...form }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Submission failed');
+      setSubmitSuccess(true);
+      setForm({ fullName: '', dateOfBirth: '', country: 'US', documentType: '' });
+      onSubmitted();
+    } catch (err: any) {
+      setSubmitError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const isValid = form.fullName.trim().length >= 2 && /^\d{4}-\d{2}-\d{2}$/.test(form.dateOfBirth) && form.documentType;
+
+  return (
+    <div className="border border-dl-border p-4 mb-8">
+      <p className="text-xs text-dl-gray mb-3">
+        Submit your identity information for KYC verification. Once approved, your on-chain identity
+        will be created automatically with KYC_VERIFIED and SANCTIONS_CLEAR claims.
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+        <div>
+          <label className="text-xs text-dl-gray mb-1 block">Full Name</label>
+          <input
+            type="text"
+            value={form.fullName}
+            onChange={e => setForm(prev => ({ ...prev, fullName: e.target.value }))}
+            placeholder="John Doe"
+            className="w-full border border-dl-border px-3 py-1.5 text-sm font-dl-mono bg-white"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-dl-gray mb-1 block">Date of Birth</label>
+          <input
+            type="date"
+            value={form.dateOfBirth}
+            onChange={e => setForm(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+            className="w-full border border-dl-border px-3 py-1.5 text-sm font-dl-mono bg-white"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-dl-gray mb-1 block">Country</label>
+          <select
+            value={form.country}
+            onChange={e => setForm(prev => ({ ...prev, country: e.target.value }))}
+            className="w-full border border-dl-border px-3 py-1.5 text-sm font-dl-mono bg-white"
+          >
+            <option value="US">United States</option>
+            <option value="GB">United Kingdom</option>
+            <option value="CA">Canada</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-xs text-dl-gray mb-1 block">Document Type</label>
+          <select
+            value={form.documentType}
+            onChange={e => setForm(prev => ({ ...prev, documentType: e.target.value }))}
+            className="w-full border border-dl-border px-3 py-1.5 text-sm font-dl-mono bg-white"
+          >
+            <option value="">Select document...</option>
+            <option value="passport">Passport</option>
+            <option value="drivers_license">Driver's License</option>
+            <option value="national_id">National ID</option>
+            <option value="residence_permit">Residence Permit</option>
+          </select>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <SolidButton onClick={handleSubmit} disabled={submitting || !isValid} size="sm">
+          {submitting ? 'Submitting...' : 'Submit KYC'}
+        </SolidButton>
+        <span className="text-xs text-dl-gray font-dl-mono">Wallet: {shortAddr(address)}</span>
+      </div>
+      {submitError && <p className="text-xs text-dl-error mt-2">{submitError}</p>}
+      {submitSuccess && <p className="text-xs text-green-700 mt-2">KYC submission received. You will be notified once reviewed.</p>}
+    </div>
+  );
+}
+
 function IdentityTab({
   data,
   address,
@@ -360,6 +500,8 @@ function IdentityTab({
   const [identityStatus, setIdentityStatus] = useState<any>(null);
   const [identityLoading, setIdentityLoading] = useState(false);
   const [identityError, setIdentityError] = useState<string | null>(null);
+  const [kycSubmissions, setKycSubmissions] = useState<KycSubmissionData[]>([]);
+  const [kycLoading, setKycLoading] = useState(false);
 
   const loadIdentityStatus = async () => {
     if (!address) return;
@@ -377,9 +519,30 @@ function IdentityTab({
     }
   };
 
+  const loadKycSubmissions = async () => {
+    if (!address) return;
+    setKycLoading(true);
+    try {
+      const res = await fetch(`/api/erc3643/identity/submit?wallet=${address}`);
+      if (res.ok) {
+        const json = await res.json();
+        setKycSubmissions(json.data || []);
+      }
+    } catch {
+    } finally {
+      setKycLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (address) loadIdentityStatus();
+    if (address) {
+      loadIdentityStatus();
+      loadKycSubmissions();
+    }
   }, [address]);
+
+  const hasActiveSubmission = kycSubmissions.some(s => ['submitted', 'under_review', 'approved', 'bridged'].includes(s.status));
+  const showForm = isConnected && address && !identityStatus?.hasIdentity && !hasActiveSubmission;
 
   return (
     <>
@@ -442,35 +605,77 @@ function IdentityTab({
               <SectionHeading>Claims</SectionHeading>
               <div className="border border-dl-border mb-8">
                 <div className="grid grid-cols-12 border-b border-dl-border bg-dl-bg px-4 py-2 text-xs text-dl-gray font-dl-mono">
-                  <div className="col-span-3">Topic</div>
-                  <div className="col-span-3">Issuer</div>
-                  <div className="col-span-3">Valid Until</div>
-                  <div className="col-span-3">Status</div>
+                  <div className="col-span-2">Topic</div>
+                  <div className="col-span-2">Issuer</div>
+                  <div className="col-span-3">Expires</div>
+                  <div className="col-span-2">Days Left</div>
+                  <div className="col-span-3">Expiry Status</div>
                 </div>
-                {identityStatus.claims.map((c: any, i: number) => (
-                  <div key={i} className="grid grid-cols-12 border-b border-dl-border px-4 py-2 text-sm font-dl-mono">
-                    <div className="col-span-3">
-                      {c.topic === 1 ? 'KYC Verified' : c.topic === 2 ? 'Accredited Investor' : c.topic === 3 ? 'Sanctions Clear' : `Topic ${c.topic}`}
+                {identityStatus.claims.map((c: any, i: number) => {
+                  const expiryStatus = getClaimExpiryStatus(c.validUntil);
+                  return (
+                    <div key={i} className="grid grid-cols-12 border-b border-dl-border px-4 py-2 text-sm font-dl-mono">
+                      <div className="col-span-2">
+                        {c.topic === 1 ? 'KYC Verified' : c.topic === 2 ? 'Accredited Investor' : c.topic === 3 ? 'Sanctions Clear' : `Topic ${c.topic}`}
+                      </div>
+                      <div className="col-span-2 text-xs">{shortAddr(c.issuer)}</div>
+                      <div className="col-span-3 text-xs">{c.validUntil ? fmtTimestamp(c.validUntil) : '—'}</div>
+                      <div className="col-span-2 text-xs">
+                        {expiryStatus.daysRemaining !== null ? `${expiryStatus.daysRemaining}d` : '—'}
+                      </div>
+                      <div className="col-span-3">
+                        {c.revoked ? (
+                          <StatusBadge status="REJECTED" />
+                        ) : (
+                          <ClaimExpiryBadge status={expiryStatus.status} />
+                        )}
+                      </div>
                     </div>
-                    <div className="col-span-3 text-xs">{shortAddr(c.issuer)}</div>
-                    <div className="col-span-3 text-xs">{c.validUntil ? fmtTimestamp(c.validUntil) : '—'}</div>
-                    <div className="col-span-3">
-                      <StatusBadge status={c.revoked ? 'REJECTED' : 'ACTIVE'} />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}
 
-          {!identityStatus.hasIdentity && (
+          {!identityStatus.hasIdentity && !hasActiveSubmission && (
             <div className="border border-dl-border p-6 mb-8">
               <p className="text-sm text-dl-gray mb-2">
                 No on-chain identity registered for this wallet.
-                Identity registration is required before holding or transferring AXUSD.
+                Submit your KYC information below to begin the verification process.
               </p>
             </div>
           )}
+        </>
+      )}
+
+      {showForm && address && (
+        <>
+          <SectionHeading>Submit KYC Verification</SectionHeading>
+          <KycSubmissionForm address={address} onSubmitted={() => { loadKycSubmissions(); }} />
+        </>
+      )}
+
+      {isConnected && kycSubmissions.length > 0 && (
+        <>
+          <SectionHeading>Your KYC Submissions</SectionHeading>
+          <div className="border border-dl-border mb-8">
+            <div className="grid grid-cols-12 border-b border-dl-border bg-dl-bg px-4 py-2 text-xs text-dl-gray font-dl-mono">
+              <div className="col-span-3">Name</div>
+              <div className="col-span-2">Document</div>
+              <div className="col-span-2">Country</div>
+              <div className="col-span-2">Status</div>
+              <div className="col-span-3">Submitted</div>
+            </div>
+            {kycSubmissions.map((s) => (
+              <div key={s.id} className="grid grid-cols-12 border-b border-dl-border px-4 py-2 text-sm font-dl-mono">
+                <div className="col-span-3 text-xs">{s.fullName}</div>
+                <div className="col-span-2 text-xs text-dl-gray">{s.documentType.replace('_', ' ')}</div>
+                <div className="col-span-2 text-xs">{s.country}</div>
+                <div className="col-span-2"><KycStatusBadge status={s.status} /></div>
+                <div className="col-span-3 text-xs text-dl-gray">{fmtTimestamp(s.createdAt)}</div>
+              </div>
+            ))}
+          </div>
         </>
       )}
 

@@ -44,6 +44,20 @@ export default function InvestPage() {
     { id: 5, title: 'Sign & Deposit', description: 'Sign subscription and deposit AXUSD', completed: false }
   ]);
 
+  const [accreditationMethod, setAccreditationMethod] = useState<string>('');
+  const [accreditationData, setAccreditationData] = useState({
+    fullName: '',
+    email: '',
+    filingStatus: '',
+    incomeThreshold: '',
+    netWorthThreshold: '',
+    entityAssetsThreshold: '',
+    professionalCertification: '',
+    selfCertified: false,
+  });
+  const [accreditationSubmitting, setAccreditationSubmitting] = useState(false);
+  const [accreditationError, setAccreditationError] = useState('');
+
   const [acknowledgments, setAcknowledgments] = useState({
     readPPM: false,
     understandRisks: false,
@@ -164,9 +178,33 @@ export default function InvestPage() {
     }
   };
 
-  const completeAccreditation = () => {
-    updateStep(3, true);
-    setCurrentStep(4);
+  const completeAccreditation = async () => {
+    if (!accreditationMethod || !accreditationData.selfCertified) return;
+    setAccreditationSubmitting(true);
+    setAccreditationError('');
+    try {
+      const res = await fetch('/api/realestate/accreditation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress,
+          method: accreditationMethod,
+          ...accreditationData,
+          selfCertificationStatement: `I certify under penalty of perjury that I qualify as an accredited investor under SEC Rule 501(a) via the ${accreditationMethod} method.`,
+        })
+      });
+      if (res.ok) {
+        updateStep(3, true);
+        setCurrentStep(4);
+      } else {
+        const data = await res.json();
+        setAccreditationError(data.error || 'Failed to submit accreditation');
+      }
+    } catch {
+      setAccreditationError('Network error. Please try again.');
+    } finally {
+      setAccreditationSubmitting(false);
+    }
   };
 
   const handleAmountChange = (value: string) => {
@@ -258,6 +296,24 @@ export default function InvestPage() {
                 <div className="text-xl font-bold text-dl-navy">{formatUSD(axusdBalance)}</div>
               </div>
             )}
+
+            <div className="mt-6 pt-6 border-t border-dl-border">
+              <h4 className="text-xs text-dl-gray uppercase tracking-wider mb-3">LP Onboarding Status</h4>
+              <div className="space-y-2">
+                {[
+                  { label: 'Wallet Connected', done: walletConnected },
+                  { label: 'Documents Reviewed', done: steps[1]?.completed || false },
+                  { label: 'Accreditation Verified', done: steps[2]?.completed || false },
+                  { label: 'Subscription Signed', done: steps[3]?.completed || false },
+                  { label: 'Deposited', done: steps[4]?.completed || false },
+                ].map((stage, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs">
+                    <div className={`w-3 h-3 rounded-full flex-shrink-0 ${stage.done ? 'bg-green-500' : 'bg-dl-border'}`} />
+                    <span className={stage.done ? 'text-dl-navy' : 'text-dl-gray'}>{stage.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -347,42 +403,223 @@ export default function InvestPage() {
           {currentStep === 3 && (
             <StepCard title="Step 3: Accredited Investor Verification">
               <p className="mb-6 text-dl-gray">
-                Under SEC Rule 506(c), we must verify your accredited investor status.
-                Please complete the verification questionnaire.
+                Under SEC Rule 506(c), we must verify your accredited investor status per SEC Rule 501(a).
+                Please select your qualification method and complete the questionnaire.
               </p>
 
-              <div className="border border-dl-border bg-dl-bg-alt p-4 mb-6">
-                <h4 className="font-medium text-dl-navy mb-2">Accredited Investor Qualifications</h4>
-                <ul className="text-sm space-y-2 text-dl-navy">
-                  <li>• Income: $200K+ individual or $300K+ joint for past 2 years</li>
-                  <li>• Net Worth: $1M+ (excluding primary residence)</li>
-                  <li>• Professional: Series 7, 65, or 82 license holder</li>
-                  <li>• Entity: $5M+ in assets, or all owners are accredited</li>
-                </ul>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-dl-navy mb-2">Your Name</label>
+                <input
+                  type="text"
+                  value={accreditationData.fullName}
+                  onChange={e => setAccreditationData(prev => ({ ...prev, fullName: e.target.value }))}
+                  placeholder="Full legal name"
+                  className="w-full px-4 py-3 border border-dl-border bg-dl-bg text-dl-navy text-sm font-dl-mono"
+                />
               </div>
 
-              <Link
-                href="/lending-fund"
-                className="block p-4 bg-dl-bg border border-dl-border mb-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-dl-navy">Accredited Investor Questionnaire</div>
-                    <div className="text-sm text-dl-gray">Download and complete this form</div>
-                  </div>
-                  <span className="text-dl-navy">Download →</span>
-                </div>
-              </Link>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-dl-navy mb-2">Email Address</label>
+                <input
+                  type="email"
+                  value={accreditationData.email}
+                  onChange={e => setAccreditationData(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="you@example.com"
+                  className="w-full px-4 py-3 border border-dl-border bg-dl-bg text-dl-navy text-sm font-dl-mono"
+                />
+              </div>
 
-              <p className="text-sm mb-4 text-dl-gray">
-                For this demo, click below to proceed. In production, you would upload your verification documents.
-              </p>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-dl-navy mb-3">Qualification Method (SEC Rule 501)</label>
+                <div className="space-y-3">
+                  {[
+                    { value: 'income', label: 'Income Test', desc: 'Individual income >$200K (or $300K joint) for each of the last 2 years with expectation of the same' },
+                    { value: 'net-worth', label: 'Net Worth Test', desc: 'Individual or joint net worth >$1M, excluding primary residence' },
+                    { value: 'professional', label: 'Professional Certification', desc: 'Hold a Series 7, Series 65, or Series 82 license in good standing' },
+                    { value: 'entity', label: 'Entity Qualification', desc: 'Entity with >$5M in assets, or entity where all equity owners are accredited investors' },
+                  ].map(opt => (
+                    <label
+                      key={opt.value}
+                      className={`block p-4 border cursor-pointer ${
+                        accreditationMethod === opt.value
+                          ? 'border-dl-navy bg-dl-bg-alt'
+                          : 'border-dl-border bg-dl-bg'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="radio"
+                          name="accreditationMethod"
+                          value={opt.value}
+                          checked={accreditationMethod === opt.value}
+                          onChange={() => setAccreditationMethod(opt.value)}
+                          className="mt-1"
+                        />
+                        <div>
+                          <div className="font-medium text-dl-navy text-sm">{opt.label}</div>
+                          <div className="text-xs text-dl-gray mt-1">{opt.desc}</div>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {accreditationMethod === 'income' && (
+                <div className="border border-dl-border bg-dl-bg p-4 mb-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-dl-navy mb-1">Filing Status</label>
+                    <select
+                      value={accreditationData.filingStatus}
+                      onChange={e => setAccreditationData(prev => ({ ...prev, filingStatus: e.target.value }))}
+                      className="w-full px-4 py-3 border border-dl-border bg-dl-bg text-dl-navy text-sm font-dl-mono"
+                    >
+                      <option value="">Select...</option>
+                      <option value="individual">Individual</option>
+                      <option value="joint">Joint with Spouse/Partner</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-dl-navy mb-1">
+                      {accreditationData.filingStatus === 'joint' ? 'Joint Income for Each of Past 2 Years' : 'Individual Income for Each of Past 2 Years'}
+                    </label>
+                    <select
+                      value={accreditationData.incomeThreshold}
+                      onChange={e => setAccreditationData(prev => ({ ...prev, incomeThreshold: e.target.value }))}
+                      className="w-full px-4 py-3 border border-dl-border bg-dl-bg text-dl-navy text-sm font-dl-mono"
+                    >
+                      <option value="">Select income range...</option>
+                      {accreditationData.filingStatus === 'joint' ? (
+                        <>
+                          <option value="under_300k">Under $300,000</option>
+                          <option value="300k_500k">$300,000 - $500,000</option>
+                          <option value="500k_1m">$500,000 - $1,000,000</option>
+                          <option value="over_1m">Over $1,000,000</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="under_200k">Under $200,000</option>
+                          <option value="200k_300k">$200,000 - $300,000</option>
+                          <option value="300k_500k">$300,000 - $500,000</option>
+                          <option value="500k_1m">$500,000 - $1,000,000</option>
+                          <option value="over_1m">Over $1,000,000</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                  {accreditationData.incomeThreshold === 'under_200k' || accreditationData.incomeThreshold === 'under_300k' ? (
+                    <div className="p-3 bg-red-50 border border-red-200 text-sm text-red-800">
+                      Based on your selection, you may not meet the income threshold for accredited investor status under SEC Rule 501(a).
+                    </div>
+                  ) : null}
+                </div>
+              )}
+
+              {accreditationMethod === 'net-worth' && (
+                <div className="border border-dl-border bg-dl-bg p-4 mb-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-dl-navy mb-1">Net Worth (excluding primary residence)</label>
+                    <select
+                      value={accreditationData.netWorthThreshold}
+                      onChange={e => setAccreditationData(prev => ({ ...prev, netWorthThreshold: e.target.value }))}
+                      className="w-full px-4 py-3 border border-dl-border bg-dl-bg text-dl-navy text-sm font-dl-mono"
+                    >
+                      <option value="">Select net worth range...</option>
+                      <option value="under_1m">Under $1,000,000</option>
+                      <option value="1m_2m">$1,000,000 - $2,000,000</option>
+                      <option value="2m_5m">$2,000,000 - $5,000,000</option>
+                      <option value="5m_10m">$5,000,000 - $10,000,000</option>
+                      <option value="over_10m">Over $10,000,000</option>
+                    </select>
+                  </div>
+                  {accreditationData.netWorthThreshold === 'under_1m' && (
+                    <div className="p-3 bg-red-50 border border-red-200 text-sm text-red-800">
+                      Based on your selection, you may not meet the net worth threshold for accredited investor status under SEC Rule 501(a).
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {accreditationMethod === 'professional' && (
+                <div className="border border-dl-border bg-dl-bg p-4 mb-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-dl-navy mb-1">Professional Certification Held</label>
+                    <select
+                      value={accreditationData.professionalCertification}
+                      onChange={e => setAccreditationData(prev => ({ ...prev, professionalCertification: e.target.value }))}
+                      className="w-full px-4 py-3 border border-dl-border bg-dl-bg text-dl-navy text-sm font-dl-mono"
+                    >
+                      <option value="">Select certification...</option>
+                      <option value="series_7">Series 7 (General Securities Representative)</option>
+                      <option value="series_65">Series 65 (Investment Adviser Representative)</option>
+                      <option value="series_82">Series 82 (Private Securities Offerings Representative)</option>
+                      <option value="none">None of the above</option>
+                    </select>
+                  </div>
+                  {accreditationData.professionalCertification === 'none' && (
+                    <div className="p-3 bg-red-50 border border-red-200 text-sm text-red-800">
+                      You must hold one of the listed certifications to qualify under the professional certification method.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {accreditationMethod === 'entity' && (
+                <div className="border border-dl-border bg-dl-bg p-4 mb-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-dl-navy mb-1">Entity Total Assets</label>
+                    <select
+                      value={accreditationData.entityAssetsThreshold}
+                      onChange={e => setAccreditationData(prev => ({ ...prev, entityAssetsThreshold: e.target.value }))}
+                      className="w-full px-4 py-3 border border-dl-border bg-dl-bg text-dl-navy text-sm font-dl-mono"
+                    >
+                      <option value="">Select total assets...</option>
+                      <option value="under_5m">Under $5,000,000</option>
+                      <option value="5m_10m">$5,000,000 - $10,000,000</option>
+                      <option value="10m_50m">$10,000,000 - $50,000,000</option>
+                      <option value="over_50m">Over $50,000,000</option>
+                      <option value="all_owners_accredited">All equity owners are individually accredited</option>
+                    </select>
+                  </div>
+                  {accreditationData.entityAssetsThreshold === 'under_5m' && (
+                    <div className="p-3 bg-red-50 border border-red-200 text-sm text-red-800">
+                      Entity must have over $5M in assets or all equity owners must be individually accredited.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {accreditationMethod && (
+                <div className="border border-dl-border bg-dl-bg-alt p-4 mb-6">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={accreditationData.selfCertified}
+                      onChange={e => setAccreditationData(prev => ({ ...prev, selfCertified: e.target.checked }))}
+                      className="w-5 h-5 mt-0.5"
+                    />
+                    <span className="text-sm text-dl-navy leading-relaxed">
+                      I certify under penalty of perjury that the information provided is true and correct,
+                      and that I qualify as an accredited investor under SEC Rule 501(a) of Regulation D.
+                      I understand that this offering is made in reliance on an exemption from registration
+                      under Section 4(a)(2) of the Securities Act of 1933 and Rule 506(c) of Regulation D.
+                    </span>
+                  </label>
+                </div>
+              )}
+
+              {accreditationError && (
+                <div className="border border-red-300 bg-red-50 p-3 mb-4 text-sm text-red-800">
+                  {accreditationError}
+                </div>
+              )}
 
               <button
                 onClick={completeAccreditation}
-                className="w-full py-4 bg-dl-navy text-white font-medium"
+                disabled={!accreditationMethod || !accreditationData.selfCertified || accreditationSubmitting}
+                className="w-full py-4 bg-dl-navy text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Confirm Accredited Status
+                {accreditationSubmitting ? 'Submitting...' : 'Submit Accreditation & Continue'}
               </button>
             </StepCard>
           )}

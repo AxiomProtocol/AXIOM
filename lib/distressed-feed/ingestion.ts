@@ -6,6 +6,8 @@ import { fetchHudListings } from './sources/hud';
 import { fetchFannieListings } from './sources/fannie';
 import { fetchFreddieListings } from './sources/freddie';
 import { fetchUsdaListings } from './sources/usda';
+import { fetchTaxLienListings } from './sources/tax-liens';
+import { fetchSheriffSaleListings } from './sources/sheriff-sales';
 
 const TARGET_STATES = ['GA', 'TX', 'NC', 'MS', 'AL', 'TN', 'SC', 'FL'];
 
@@ -82,11 +84,16 @@ export async function runIngestion(states?: string[]): Promise<IngestionResult> 
   let totalUpdated = 0;
   let totalSkipped = 0;
 
+  const taxLienStates = targetStates.filter(s => ['GA', 'TX', 'NC'].includes(s));
+  const sheriffStates = targetStates.filter(s => ['GA', 'TX', 'NC'].includes(s));
+
   const sources = [
     { name: 'HUD', fn: () => fetchHudListings(targetStates) },
     { name: 'Fannie Mae', fn: () => fetchFannieListings(targetStates) },
     { name: 'Freddie Mac', fn: () => fetchFreddieListings(targetStates) },
     { name: 'USDA', fn: () => fetchUsdaListings(targetStates) },
+    ...(taxLienStates.length > 0 ? [{ name: 'Tax Liens', fn: () => fetchTaxLienListings(taxLienStates).then(r => ({ source: r.source, listings: r.listings, errors: r.errors, fetchedAt: r.fetchedAt } as SourceResult)) }] : []),
+    ...(sheriffStates.length > 0 ? [{ name: 'Sheriff Sales', fn: () => fetchSheriffSaleListings(sheriffStates).then(r => ({ source: r.source, listings: r.listings, errors: r.errors, fetchedAt: r.fetchedAt } as SourceResult)) }] : []),
   ];
 
   for (const source of sources) {

@@ -24,7 +24,7 @@ export function DesignLawLayout({ children }: DesignLawLayoutProps) {
   return (
     <div className="design-law-root min-h-screen bg-dl-bg">
       <nav className="border-b border-dl-border bg-dl-bg sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link href="/" className="font-dl-serif text-lg text-dl-navy font-bold">
             AXIOM
           </Link>
@@ -43,7 +43,7 @@ export function DesignLawLayout({ children }: DesignLawLayoutProps) {
             </div>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="lg:hidden p-2 text-dl-navy border border-dl-border bg-dl-bg"
+              className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-dl-navy border border-dl-border bg-dl-bg"
               aria-label="Menu"
             >
               {menuOpen ? (
@@ -61,48 +61,50 @@ export function DesignLawLayout({ children }: DesignLawLayoutProps) {
             </button>
           </div>
         </div>
-        {menuOpen && (
-          <div className="lg:hidden border-t border-dl-border bg-dl-bg">
-            <div className="max-w-7xl mx-auto px-6 py-3">
-              {NAV_ITEMS.map((item) =>
-                item.children ? (
-                  <div key={item.label} className="border-b border-dl-border last:border-b-0">
-                    <p className="py-2 text-xs text-dl-gray uppercase tracking-wider font-dl-mono">{item.label}</p>
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        className="block py-2 pl-4 text-sm text-dl-navy hover:underline"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        {child.label}
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <Link
-                    key={item.href}
-                    href={item.href!}
-                    className="block py-2 text-sm text-dl-navy border-b border-dl-border last:border-b-0 hover:underline"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                )
-              )}
-              <div className="pt-3">
-                <ConnectWalletButton />
-              </div>
+        <div
+          className={`lg:hidden border-t border-dl-border bg-dl-bg overflow-y-auto transition-all duration-200 ease-in-out ${
+            menuOpen ? 'max-h-[80vh] opacity-100' : 'max-h-0 opacity-0 border-t-0 overflow-hidden'
+          }`}
+        >
+          <div className="max-w-7xl mx-auto px-4 py-3">
+            {NAV_ITEMS.map((item) =>
+              item.children ? (
+                <div key={item.label} className="border-b border-dl-border last:border-b-0">
+                  <p className="py-2 text-xs text-dl-gray uppercase tracking-wider font-dl-mono">{item.label}</p>
+                  {item.children.map((child) => (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      className="block min-h-[44px] flex items-center pl-4 text-sm text-dl-navy hover:underline"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {child.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <Link
+                  key={item.href}
+                  href={item.href!}
+                  className="block min-h-[44px] flex items-center text-sm text-dl-navy border-b border-dl-border last:border-b-0 hover:underline"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              )
+            )}
+            <div className="pt-3">
+              <ConnectWalletButton />
             </div>
           </div>
-        )}
+        </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {children}
       </div>
 
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="border-t border-dl-border pt-6 pb-8">
           <div className="flex flex-col md:flex-row md:justify-between gap-4 text-xs text-dl-gray">
             <div>

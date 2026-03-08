@@ -773,3 +773,70 @@ function getOperatorCertificateEmailHtml(name: string, operatorId: string, role:
 </html>
   `.trim();
 }
+
+export async function sendLoanApprovalEmail(params: {
+  borrowerEmail: string;
+  borrowerName: string;
+  applicationId: number;
+  loanAmount: string;
+  propertyAddress: string;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { client, fromEmail } = await getResendClient();
+
+    const { data, error } = await client.emails.send({
+      from: fromEmail || 'AXUSD Lending Fund <fund@axiom.money>',
+      to: [params.borrowerEmail],
+      subject: `Loan Application #${params.applicationId} Approved`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Loan Approved</title></head>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f9fafb;">
+<div style="max-width:600px;margin:0 auto;padding:20px;">
+<div style="background:linear-gradient(135deg,#00D4AA 0%,#0891b2 100%);padding:40px 30px;border-radius:16px 16px 0 0;text-align:center;">
+<div style="font-size:48px;margin-bottom:10px;">&#9989;</div>
+<h1 style="color:white;margin:0;font-size:28px;">Loan Application Approved</h1>
+<p style="color:rgba(255,255,255,0.9);margin:10px 0 0;font-size:16px;">AXUSD Fix & Flip Lending Fund</p>
+</div>
+<div style="background:white;padding:40px 30px;border-radius:0 0 16px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+<p style="color:#1f2937;font-size:16px;line-height:1.6;">Hi ${params.borrowerName},</p>
+<p style="color:#4b5563;font-size:16px;line-height:1.6;">Your loan application has been approved. Our team will be in touch shortly with the term sheet and next steps for funding.</p>
+<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:24px;margin:24px 0;">
+<h3 style="color:#166534;margin:0 0 16px;font-size:18px;">Approval Details</h3>
+<table style="width:100%;border-collapse:collapse;">
+<tr><td style="color:#6b7280;padding:8px 0;font-size:14px;">Application ID</td><td style="color:#1f2937;padding:8px 0;font-size:14px;text-align:right;font-weight:bold;">#${params.applicationId}</td></tr>
+<tr><td style="color:#6b7280;padding:8px 0;font-size:14px;">Loan Amount</td><td style="color:#1f2937;padding:8px 0;font-size:14px;text-align:right;font-weight:bold;">$${params.loanAmount}</td></tr>
+<tr><td style="color:#6b7280;padding:8px 0;font-size:14px;">Property</td><td style="color:#1f2937;padding:8px 0;font-size:14px;text-align:right;font-weight:bold;">${params.propertyAddress}</td></tr>
+</table>
+</div>
+<h3 style="color:#1f2937;margin:24px 0 12px;">Next Steps</h3>
+<ol style="color:#4b5563;font-size:15px;line-height:1.8;padding-left:20px;">
+<li>Review and sign the term sheet (arriving within 24 hours)</li>
+<li>Complete any remaining due diligence requirements</li>
+<li>Funding closes in 7-10 business days upon completion</li>
+</ol>
+<p style="color:#1f2937;margin-top:24px;font-size:14px;">Best regards,<br><strong>AXUSD Lending Fund Team</strong></p>
+</div>
+<div style="text-align:center;padding:20px;color:#9ca3af;font-size:11px;">
+<p style="margin:0;">SEC Regulation D 506(c) - Accredited Investors Only</p>
+<p style="margin:8px 0 0;">Axiom Nexus LLC | Mississippi</p>
+</div>
+</div>
+</body>
+</html>
+      `.trim()
+    });
+
+    if (error) {
+      console.error('Resend error:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('Loan approval email sent:', data?.id);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Failed to send loan approval email:', error);
+    return { success: false, error: error.message };
+  }
+}

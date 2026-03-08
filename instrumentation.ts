@@ -1292,6 +1292,93 @@ export async function register() {
       )`, 't3_platform_whitelist');
       await exec(`CREATE INDEX IF NOT EXISTS idx_t3_platform_active ON t3_platform_whitelist(active)`, 'idx t3_platform_active');
 
+      await exec(`CREATE TABLE IF NOT EXISTS t3_kyc_submissions (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        wallet_address VARCHAR(42) NOT NULL,
+        full_name VARCHAR(256) NOT NULL,
+        date_of_birth VARCHAR(10) NOT NULL,
+        country VARCHAR(3) NOT NULL DEFAULT 'US',
+        document_type VARCHAR(32) NOT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'submitted',
+        review_note TEXT,
+        reviewed_by VARCHAR(42),
+        reviewed_at TIMESTAMPTZ,
+        bridged_at TIMESTAMPTZ,
+        bridge_error TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 't3_kyc_submissions');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_t3_kyc_wallet ON t3_kyc_submissions(wallet_address)`, 'idx t3_kyc_wallet');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_t3_kyc_status ON t3_kyc_submissions(status)`, 'idx t3_kyc_status');
+
+      // Add expires_at and refresh_required_by to t3_claims if missing
+      await exec(`ALTER TABLE t3_claims ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ`, 't3_claims add expires_at');
+      await exec(`ALTER TABLE t3_claims ADD COLUMN IF NOT EXISTS refresh_required_by TIMESTAMPTZ`, 't3_claims add refresh_required_by');
+
+      // ── Wealth Practice group charter columns ──
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS contribution_frequency VARCHAR(20) DEFAULT 'monthly'`, 'susu add contribution_frequency');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS rotation_method VARCHAR(20) DEFAULT 'round_robin'`, 'susu add rotation_method');
+
+      // ── Lending Fund Tables (lf_) ──
+      await exec(`CREATE TABLE IF NOT EXISTS lf_accreditation_records (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42),
+        email VARCHAR(255),
+        full_name VARCHAR(200),
+        method VARCHAR(50) NOT NULL,
+        income_threshold VARCHAR(50),
+        net_worth_threshold VARCHAR(50),
+        entity_assets_threshold VARCHAR(50),
+        professional_certification VARCHAR(100),
+        filing_status VARCHAR(50),
+        self_certified BOOLEAN DEFAULT FALSE,
+        self_certification_statement TEXT,
+        verification_status VARCHAR(50) DEFAULT 'pending',
+        admin_reviewed_by VARCHAR(200),
+        admin_notes TEXT,
+        expires_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now(),
+        reviewed_at TIMESTAMPTZ
+      )`, 'lf_accreditation_records');
+
+      await exec(`CREATE TABLE IF NOT EXISTS loan_applications (
+        id SERIAL PRIMARY KEY,
+        borrower_name VARCHAR(200) NOT NULL,
+        borrower_email VARCHAR(255) NOT NULL,
+        borrower_phone VARCHAR(20),
+        company_name VARCHAR(255),
+        borrower_address VARCHAR(500),
+        years_experience INTEGER,
+        projects_completed INTEGER,
+        property_address VARCHAR(500) NOT NULL,
+        property_city VARCHAR(100),
+        property_state VARCHAR(50),
+        property_zip VARCHAR(20),
+        property_type VARCHAR(50),
+        purchase_price VARCHAR(50),
+        rehab_budget VARCHAR(50),
+        arv_estimate VARCHAR(50),
+        loan_amount_requested VARCHAR(50) NOT NULL,
+        loan_term_months INTEGER,
+        acquisition_status VARCHAR(50),
+        rehab_scope TEXT,
+        exit_strategy VARCHAR(50),
+        timeline_months INTEGER,
+        has_contractor BOOLEAN,
+        contractor_name VARCHAR(200),
+        additional_notes TEXT,
+        status VARCHAR(50),
+        admin_notes TEXT,
+        rejection_reason TEXT,
+        wallet_address VARCHAR(42),
+        created_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ,
+        reviewed_at TIMESTAMPTZ,
+        approved_at TIMESTAMPTZ,
+        funded_at TIMESTAMPTZ
+      )`, 'loan_applications');
+
       // ── Distressed Property Feed Tables (dp_) ──
       await exec(`DO $$ BEGIN
         CREATE TYPE dp_distress_type AS ENUM ('foreclosure','tax_lien','reo','wholesale','short_sale','auction','government');

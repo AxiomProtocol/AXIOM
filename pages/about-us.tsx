@@ -53,7 +53,7 @@ export default function AboutUsPage() {
 
       <div className="border-b border-dl-border pb-8 mb-10">
         <p className="text-xs text-dl-gray uppercase tracking-widest mb-4 font-dl-mono">About Axiom Protocol</p>
-        <h1 className="font-dl-serif text-3xl md:text-4xl text-dl-navy leading-tight mb-4">
+        <h1 className="font-dl-serif text-2xl sm:text-3xl md:text-4xl text-dl-navy leading-tight mb-4">
           Disciplined capital infrastructure for real asset ownership
         </h1>
         <p className="text-sm text-dl-gray max-w-3xl leading-relaxed mb-4">

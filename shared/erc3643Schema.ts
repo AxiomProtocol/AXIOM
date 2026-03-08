@@ -25,6 +25,14 @@ export const t3Identities = pgTable("t3_identities", {
   statusIdx: index("idx_t3_identities_status").on(table.status),
 }));
 
+export const CLAIM_VALIDITY_DAYS: Record<number, number> = {
+  1: 365,
+  2: 365,
+  3: 180,
+};
+
+export const CLAIM_REFRESH_WARNING_DAYS = 30;
+
 export const t3Claims = pgTable("t3_claims", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   identityId: varchar("identity_id").notNull().references(() => t3Identities.id),
@@ -34,6 +42,8 @@ export const t3Claims = pgTable("t3_claims", {
   signature: text("signature"),
   validFrom: timestamp("valid_from").defaultNow().notNull(),
   validUntil: timestamp("valid_until"),
+  expiresAt: timestamp("expires_at"),
+  refreshRequiredBy: timestamp("refresh_required_by"),
   revoked: boolean("revoked").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => ({
@@ -73,5 +83,27 @@ export type T3Claim = typeof t3Claims.$inferSelect;
 export type InsertT3Claim = typeof t3Claims.$inferInsert;
 export type T3ComplianceEvent = typeof t3ComplianceEvents.$inferSelect;
 export type InsertT3ComplianceEvent = typeof t3ComplianceEvents.$inferInsert;
+export const t3KycSubmissions = pgTable("t3_kyc_submissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  fullName: varchar("full_name", { length: 256 }).notNull(),
+  dateOfBirth: varchar("date_of_birth", { length: 10 }).notNull(),
+  country: varchar("country", { length: 3 }).notNull().default("US"),
+  documentType: varchar("document_type", { length: 32 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("submitted"),
+  reviewNote: text("review_note"),
+  reviewedBy: varchar("reviewed_by", { length: 42 }),
+  reviewedAt: timestamp("reviewed_at"),
+  bridgedAt: timestamp("bridged_at"),
+  bridgeError: text("bridge_error"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  walletIdx: index("idx_t3_kyc_wallet").on(table.walletAddress),
+  statusIdx: index("idx_t3_kyc_status").on(table.status),
+}));
+
 export type T3PlatformWhitelist = typeof t3PlatformWhitelist.$inferSelect;
 export type InsertT3PlatformWhitelist = typeof t3PlatformWhitelist.$inferInsert;
+export type T3KycSubmission = typeof t3KycSubmissions.$inferSelect;
+export type InsertT3KycSubmission = typeof t3KycSubmissions.$inferInsert;
