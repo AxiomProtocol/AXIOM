@@ -1674,6 +1674,356 @@ export async function register() {
       await exec(`CREATE INDEX IF NOT EXISTS ag_audit_log_created_idx ON ag_audit_log(created_at)`, 'idx ag_audit_log_created');
       await exec(`CREATE INDEX IF NOT EXISTS ag_audit_log_entity_idx ON ag_audit_log(entity_type, entity_id)`, 'idx ag_audit_log_entity');
 
+      await exec(`CREATE TABLE IF NOT EXISTS ame_metric_snapshot (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        environment TEXT NOT NULL DEFAULT 'PRODUCTION',
+        version TEXT NOT NULL DEFAULT 'AME-v2.0',
+        treasury_total_usd NUMERIC(18,8) NOT NULL,
+        treasury_liquid_usd NUMERIC(18,8) NOT NULL,
+        designated_reserves_usd NUMERIC(18,8) NOT NULL,
+        loss_buffer_usd NUMERIC(18,8) NOT NULL,
+        net_external_exposure_usd NUMERIC(18,8) NOT NULL,
+        gross_issuance_axusd NUMERIC(18,8) NOT NULL DEFAULT 0,
+        circulating_exposure_usd NUMERIC(18,8) NOT NULL,
+        coverage_ratio NUMERIC(18,8) NOT NULL,
+        reserve_ratio NUMERIC(18,8) NOT NULL,
+        liquidity_stability_ratio NUMERIC(18,8) NOT NULL,
+        redemption_stress_ratio NUMERIC(18,8) NOT NULL,
+        volatility_pressure_index NUMERIC(18,8) NOT NULL,
+        stability_score NUMERIC(6,2) NOT NULL,
+        policy_mode TEXT NOT NULL,
+        composition_json JSONB,
+        inputs_ref VARCHAR,
+        evaluation_id VARCHAR
+      )`, 'ame_metric_snapshot');
+      await exec(`CREATE INDEX IF NOT EXISTS ame_metric_snapshot_created_idx ON ame_metric_snapshot(created_at)`, 'idx ame_metric_snapshot_created');
+
+      await exec(`CREATE TABLE IF NOT EXISTS ame_stress_run (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        run_name TEXT NOT NULL,
+        base_snapshot_id VARCHAR,
+        scenarios_json JSONB NOT NULL,
+        results_json JSONB NOT NULL,
+        conclusion TEXT NOT NULL,
+        policy_mode_after TEXT NOT NULL,
+        evaluation_id VARCHAR
+      )`, 'ame_stress_run');
+      await exec(`CREATE INDEX IF NOT EXISTS ame_stress_run_created_idx ON ame_stress_run(created_at)`, 'idx ame_stress_run_created');
+
+      await exec(`CREATE TABLE IF NOT EXISTS scenario_runs (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        snapshot_id VARCHAR NOT NULL,
+        scenario_id VARCHAR NOT NULL,
+        scenario_label VARCHAR NOT NULL,
+        input_json JSONB NOT NULL,
+        result_json JSONB NOT NULL,
+        resulting_policy_mode VARCHAR NOT NULL,
+        breaches_threshold BOOLEAN NOT NULL DEFAULT false
+      )`, 'scenario_runs');
+      await exec(`CREATE INDEX IF NOT EXISTS scenario_runs_snapshot_idx ON scenario_runs(snapshot_id)`, 'idx scenario_runs_snapshot');
+
+      await exec(`CREATE TABLE IF NOT EXISTS axusd_alerts (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        alert_type VARCHAR(50) NOT NULL DEFAULT 'peg_deviation',
+        threshold NUMERIC(18,8),
+        is_active BOOLEAN DEFAULT true,
+        email_notify BOOLEAN DEFAULT true,
+        webhook_url VARCHAR,
+        last_triggered TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
+      )`, 'axusd_alerts');
+
+      await exec(`CREATE TABLE IF NOT EXISTS axusd_alert_history (
+        id SERIAL PRIMARY KEY,
+        alert_id INTEGER,
+        alert_type VARCHAR(50) NOT NULL,
+        message TEXT NOT NULL,
+        current_value NUMERIC(18,8),
+        threshold_value NUMERIC(18,8),
+        acknowledged BOOLEAN DEFAULT false,
+        tx_hash VARCHAR(66),
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 'axusd_alert_history');
+
+      await exec(`CREATE TABLE IF NOT EXISTS axusd_bridge_routes (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        source_chain VARCHAR(50) NOT NULL,
+        source_chain_id INTEGER NOT NULL,
+        dest_chain VARCHAR(50) NOT NULL,
+        dest_chain_id INTEGER NOT NULL,
+        bridge_provider VARCHAR(50) NOT NULL,
+        bridge_contract VARCHAR(42),
+        min_amount NUMERIC(24,8),
+        max_amount NUMERIC(24,8),
+        estimated_time_minutes INTEGER,
+        fee_percent NUMERIC(8,4),
+        flat_fee NUMERIC(24,8),
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 'axusd_bridge_routes');
+
+      await exec(`CREATE TABLE IF NOT EXISTS axusd_bridge_transactions (
+        id SERIAL PRIMARY KEY,
+        route_id INTEGER,
+        wallet_address VARCHAR(42) NOT NULL,
+        amount NUMERIC(24,8) NOT NULL,
+        fee NUMERIC(24,8),
+        status VARCHAR(20) DEFAULT 'pending',
+        source_tx_hash VARCHAR(66),
+        dest_tx_hash VARCHAR(66),
+        initiated_at TIMESTAMPTZ DEFAULT now(),
+        completed_at TIMESTAMPTZ
+      )`, 'axusd_bridge_transactions');
+
+      await exec(`CREATE TABLE IF NOT EXISTS axusd_snapshots (
+        id SERIAL PRIMARY KEY,
+        total_supply NUMERIC(24,8),
+        circulating_supply NUMERIC(24,8),
+        backing_ratio NUMERIC(18,8),
+        peg_price NUMERIC(18,8),
+        treasury_backing NUMERIC(24,8),
+        holder_count INTEGER,
+        transfer_volume_24h NUMERIC(24,8),
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 'axusd_snapshots');
+
+      await exec(`CREATE TABLE IF NOT EXISTS axusd_trading_pools (
+        id SERIAL PRIMARY KEY,
+        pool_address VARCHAR(42) NOT NULL,
+        dex_name VARCHAR(50) NOT NULL,
+        token0_symbol VARCHAR(20),
+        token1_symbol VARCHAR(20),
+        tvl NUMERIC(24,8),
+        volume_24h NUMERIC(24,8),
+        fee_tier NUMERIC(8,4),
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
+      )`, 'axusd_trading_pools');
+
+      await exec(`CREATE TABLE IF NOT EXISTS contracts (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        address VARCHAR(42) NOT NULL,
+        chain_id INTEGER DEFAULT 42161,
+        verified BOOLEAN DEFAULT false,
+        contract_type VARCHAR(50),
+        abi JSONB,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
+      )`, 'contracts');
+
+      await exec(`CREATE TABLE IF NOT EXISTS early_access_signups (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255),
+        wallet_address VARCHAR(42),
+        interest VARCHAR(100),
+        referral_source VARCHAR(100),
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 'early_access_signups');
+
+      await exec(`CREATE TABLE IF NOT EXISTS wallet_sessions (
+        id SERIAL PRIMARY KEY,
+        session_token VARCHAR(128) UNIQUE NOT NULL,
+        wallet_address VARCHAR(42) UNIQUE NOT NULL,
+        chain_id INTEGER NOT NULL,
+        domain VARCHAR(255),
+        authenticated_at TIMESTAMPTZ DEFAULT now(),
+        expires_at TIMESTAMPTZ NOT NULL,
+        last_activity_at TIMESTAMPTZ DEFAULT now()
+      )`, 'wallet_sessions');
+
+      await exec(`CREATE TABLE IF NOT EXISTS land_candidates (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        location VARCHAR(500),
+        state VARCHAR(2),
+        county VARCHAR(100),
+        acreage NUMERIC(10,2),
+        asking_price NUMERIC(18,2),
+        property_type VARCHAR(50),
+        zoning VARCHAR(50),
+        status VARCHAR(30) DEFAULT 'pipeline',
+        source VARCHAR(100),
+        description TEXT,
+        coordinates JSONB,
+        metadata JSONB,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
+      )`, 'land_candidates');
+
+      await exec(`CREATE TABLE IF NOT EXISTS land_acquisition_pools (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        candidate_id INTEGER,
+        target_amount NUMERIC(18,2) NOT NULL,
+        total_contributed NUMERIC(18,2) DEFAULT 0,
+        member_count INTEGER DEFAULT 0,
+        status VARCHAR(30) DEFAULT 'funding',
+        description TEXT,
+        metadata JSONB,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
+      )`, 'land_acquisition_pools');
+
+      await exec(`CREATE TABLE IF NOT EXISTS land_governance_proposals (
+        id SERIAL PRIMARY KEY,
+        candidate_id INTEGER,
+        pool_id INTEGER,
+        title VARCHAR(300) NOT NULL,
+        description TEXT,
+        proposal_type VARCHAR(50) DEFAULT 'acquisition',
+        proposer_wallet VARCHAR(42),
+        status VARCHAR(30) DEFAULT 'draft',
+        votes_for INTEGER DEFAULT 0,
+        votes_against INTEGER DEFAULT 0,
+        quorum_required INTEGER DEFAULT 10,
+        voting_deadline TIMESTAMPTZ,
+        executed_at TIMESTAMPTZ,
+        metadata JSONB,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
+      )`, 'land_governance_proposals');
+
+      await exec(`CREATE TABLE IF NOT EXISTS land_options (
+        id SERIAL PRIMARY KEY,
+        candidate_id INTEGER,
+        option_type VARCHAR(50),
+        strike_price NUMERIC(18,2),
+        premium NUMERIC(18,2),
+        expiration_date TIMESTAMPTZ,
+        status VARCHAR(30) DEFAULT 'active',
+        holder_wallet VARCHAR(42),
+        metadata JSONB,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 'land_options');
+
+      await exec(`CREATE TABLE IF NOT EXISTS lp_incentive_programs (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        pool_address VARCHAR(42) NOT NULL,
+        reward_token VARCHAR(42) NOT NULL,
+        reward_token_symbol VARCHAR(20) NOT NULL,
+        total_rewards NUMERIC(24,8) NOT NULL,
+        distributed_rewards NUMERIC(24,8) DEFAULT 0,
+        rewards_per_day NUMERIC(24,8),
+        bonus_multiplier NUMERIC(8,4) DEFAULT 1,
+        start_date TIMESTAMPTZ,
+        end_date TIMESTAMPTZ,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 'lp_incentive_programs');
+
+      await exec(`CREATE TABLE IF NOT EXISTS lp_positions (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) NOT NULL,
+        pool_address VARCHAR(42) NOT NULL,
+        liquidity NUMERIC(24,8) NOT NULL,
+        token0_amount NUMERIC(24,8),
+        token1_amount NUMERIC(24,8),
+        lower_tick INTEGER,
+        upper_tick INTEGER,
+        nft_id VARCHAR(100),
+        rewards_earned NUMERIC(24,8) DEFAULT 0,
+        rewards_claimed NUMERIC(24,8) DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
+      )`, 'lp_positions');
+
+      await exec(`CREATE TABLE IF NOT EXISTS private_credit_notes (
+        id SERIAL PRIMARY KEY,
+        note_id VARCHAR(50) UNIQUE,
+        borrower_name VARCHAR(200),
+        borrower_wallet VARCHAR(42),
+        principal_amount NUMERIC(18,2) NOT NULL,
+        interest_rate NUMERIC(8,4),
+        term_months INTEGER,
+        collateral_type VARCHAR(100),
+        collateral_description TEXT,
+        collateral_value NUMERIC(18,2),
+        ltv_ratio NUMERIC(5,4),
+        origination_date TIMESTAMPTZ,
+        maturity_date TIMESTAMPTZ,
+        first_payment_date TIMESTAMPTZ,
+        status VARCHAR(30) DEFAULT 'draft',
+        outstanding_principal NUMERIC(18,2),
+        accrued_interest NUMERIC(18,2) DEFAULT 0,
+        total_payments_received NUMERIC(18,2) DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
+      )`, 'private_credit_notes');
+
+      await exec(`CREATE TABLE IF NOT EXISTS dscr_loan_applications (
+        id SERIAL PRIMARY KEY,
+        borrower_wallet VARCHAR(42),
+        property_address TEXT,
+        loan_amount NUMERIC(18,2),
+        property_value NUMERIC(18,2),
+        monthly_rent NUMERIC(18,2),
+        monthly_expenses NUMERIC(18,2),
+        dscr_ratio NUMERIC(8,4),
+        status VARCHAR(30) DEFAULT 'submitted',
+        notes TEXT,
+        metadata JSONB,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
+      )`, 'dscr_loan_applications');
+
+      await exec(`CREATE TABLE IF NOT EXISTS dscr_investor_commitments (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) NOT NULL,
+        amount NUMERIC(18,2) NOT NULL,
+        commitment_type VARCHAR(50) DEFAULT 'equity',
+        status VARCHAR(30) DEFAULT 'committed',
+        metadata JSONB,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 'dscr_investor_commitments');
+
+      await exec(`CREATE TABLE IF NOT EXISTS produce_reservations (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) NOT NULL,
+        cycle_id VARCHAR(50) NOT NULL,
+        cycle_season VARCHAR(20) NOT NULL,
+        cycle_year INTEGER NOT NULL,
+        credits_used INTEGER DEFAULT 1,
+        tier INTEGER DEFAULT 0,
+        status VARCHAR(20) DEFAULT 'reserved',
+        reserved_at TIMESTAMPTZ DEFAULT now(),
+        confirmed_at TIMESTAMPTZ,
+        claimed_at TIMESTAMPTZ,
+        metadata JSONB
+      )`, 'produce_reservations');
+
+      await exec(`CREATE TABLE IF NOT EXISTS re_sale_history (
+        id SERIAL PRIMARY KEY,
+        property_id VARCHAR,
+        sale_date TIMESTAMPTZ,
+        sale_price NUMERIC(18,2),
+        buyer VARCHAR(200),
+        seller VARCHAR(200),
+        deed_type VARCHAR(50),
+        source VARCHAR(100),
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 're_sale_history');
+
+      await exec(`CREATE TABLE IF NOT EXISTS re_tax_history (
+        id SERIAL PRIMARY KEY,
+        property_id VARCHAR,
+        tax_year INTEGER,
+        assessed_value NUMERIC(18,2),
+        tax_amount NUMERIC(18,2),
+        status VARCHAR(30),
+        source VARCHAR(100),
+        created_at TIMESTAMPTZ DEFAULT now()
+      )`, 're_tax_history');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
