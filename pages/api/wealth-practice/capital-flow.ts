@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           COALESCE(SUM(member_count), 0)::int as total_members,
           COALESCE(SUM(contribution_amount::numeric * member_count), 0)::numeric as estimated_capital_committed
         FROM susu_purpose_groups
-      `),
+      `).catch(() => ({ rows: [{ total_groups: 0, graduated_groups: 0, total_members: 0, estimated_capital_committed: 0 }] })),
       pool.query(`
         SELECT 
           id, display_name, contribution_amount, member_count, 
@@ -29,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         WHERE graduated_at IS NOT NULL 
         ORDER BY graduated_at DESC 
         LIMIT 10
-      `),
+      `).catch(() => ({ rows: [] })),
       pool.query(`
         SELECT 
           COUNT(*)::int as total_pools,

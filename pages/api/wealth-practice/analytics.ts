@@ -7,22 +7,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const [hubsResult, groupsResult, eventsResult] = await Promise.all([
-      pool.query(`SELECT COUNT(*) as total FROM susu_interest_hubs WHERE is_active = true`),
-      pool.query(`
+    let hubsResult, groupsResult, eventsResult;
+
+    try {
+      hubsResult = await pool.query(`SELECT COUNT(*) as total FROM susu_interest_hubs WHERE is_active = true`);
+    } catch {
+      hubsResult = await pool.query(`SELECT COUNT(*) as total FROM susu_interest_hubs`).catch(() => ({ rows: [{ total: 0 }] }));
+    }
+
+    try {
+      groupsResult = await pool.query(`
         SELECT
           COUNT(*) as total_groups,
           COUNT(*) FILTER (WHERE member_count >= min_members_to_activate AND graduated_at IS NULL) as active_groups,
           COUNT(*) FILTER (WHERE graduated_at IS NOT NULL) as graduated_groups,
           COALESCE(SUM(member_count), 0) as total_members
         FROM susu_purpose_groups
-      `),
-      pool.query(`
+      `);
+    } catch {
+      try {
+        groupsResult = await pool.query(`
+          SELECT
+            COUNT(*) as total_groups,
+            0 as active_groups,
+            COUNT(*) FILTER (WHERE graduated_at IS NOT NULL) as graduated_groups,
+            COALESCE(SUM(COALESCE(member_count, 0)), 0) as total_members
+          FROM susu_purpose_groups
+        `);
+      } catch {
+        groupsResult = { rows: [{ total_groups: 0, active_groups: 0, graduated_groups: 0, total_members: 0 }] };
+      }
+    }
+
+    try {
+      eventsResult = await pool.query(`
         SELECT * FROM susu_analytics_events
         ORDER BY created_at DESC
         LIMIT 20
-      `),
-    ]);
+      `);
+    } catch {
+      eventsResult = { rows: [] };
+    }
 
     const groupStats = groupsResult.rows[0];
 

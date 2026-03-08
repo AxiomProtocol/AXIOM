@@ -1360,6 +1360,10 @@ export async function register() {
         rotation_method VARCHAR(20) DEFAULT 'round-robin'
       )`, 'susu_purpose_groups');
       await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS member_count INTEGER DEFAULT 0`, 'susu_groups add member_count');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS min_members_to_activate INTEGER DEFAULT 3`, 'susu_groups add min_members_to_activate');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS max_members INTEGER DEFAULT 12`, 'susu_groups add max_members');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`, 'susu_groups add is_active');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS graduated_at TIMESTAMPTZ`, 'susu_groups add graduated_at');
       await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS contribution_frequency VARCHAR(20) DEFAULT 'monthly'`, 'susu add contribution_frequency');
       await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS rotation_method VARCHAR(20) DEFAULT 'round-robin'`, 'susu add rotation_method');
 
