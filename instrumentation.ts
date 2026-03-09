@@ -1330,6 +1330,9 @@ export async function register() {
         member_count INTEGER DEFAULT 0,
         is_active BOOLEAN DEFAULT TRUE
       )`, 'susu_interest_hubs');
+      await exec(`ALTER TABLE susu_interest_hubs ADD COLUMN IF NOT EXISTS region_id VARCHAR(100)`, 'susu_hubs add region_id');
+      await exec(`ALTER TABLE susu_interest_hubs ADD COLUMN IF NOT EXISTS region_display VARCHAR(200)`, 'susu_hubs add region_display');
+      await exec(`ALTER TABLE susu_interest_hubs ADD COLUMN IF NOT EXISTS region_type VARCHAR(50) DEFAULT 'metro'`, 'susu_hubs add region_type');
       await exec(`ALTER TABLE susu_interest_hubs ADD COLUMN IF NOT EXISTS member_count INTEGER DEFAULT 0`, 'susu_hubs add member_count');
       await exec(`ALTER TABLE susu_interest_hubs ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`, 'susu_hubs add is_active');
 
