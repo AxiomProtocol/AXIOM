@@ -5,6 +5,10 @@ import Head from 'next/head';
 import Link from 'next/link';
 import IVCEEPanel from '../../../components/deal-intelligence/IVCEEPanel';
 import DocumentsPanel from '../../../components/deal-intelligence/DocumentsPanel';
+import DueDiligencePanel from '../../../components/deal-intelligence/DueDiligencePanel';
+import CapitalReadinessCard from '../../../components/deal-intelligence/CapitalReadinessCard';
+import StrategyComparison from '../../../components/deal-intelligence/StrategyComparison';
+import AcquisitionMemo from '../../../components/deal-intelligence/AcquisitionMemo';
 
 interface DealSummary {
   deal: Record<string, any>;
@@ -54,7 +58,7 @@ export default function DealWorkspacePage() {
   const [summary, setSummary] = useState<DealSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'comps' | 'analysis' | 'decisions' | 'ivcee' | 'documents'>('assumptions');
+  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'comps' | 'analysis' | 'decisions' | 'ivcee' | 'documents' | 'dueDiligence' | 'strategies' | 'memo'>('assumptions');
   const [assumptions, setAssumptions] = useState<AssumptionsState>(DEFAULT_ASSUMPTIONS);
   const [saving, setSaving] = useState(false);
   const [computing, setComputing] = useState(false);
@@ -382,9 +386,12 @@ export default function DealWorkspacePage() {
     { key: 'metrics' as const, label: 'Metrics' },
     { key: 'risks' as const, label: `Risks (${riskFlags.length})` },
     { key: 'comps' as const, label: `Comps (${comps.length})` },
+    { key: 'strategies' as const, label: 'Strategy Comparison' },
     { key: 'analysis' as const, label: 'Acquisition Advisory' },
     { key: 'ivcee' as const, label: 'IVCEE' },
     { key: 'documents' as const, label: 'Documents' },
+    { key: 'dueDiligence' as const, label: 'Due Diligence' },
+    { key: 'memo' as const, label: 'Acquisition Memo' },
     { key: 'decisions' as const, label: 'Decision Log' },
   ];
 
@@ -424,7 +431,31 @@ export default function DealWorkspacePage() {
 
         <div className="flex items-center justify-between mb-2">
           <h1 className="font-dl-serif text-2xl text-dl-navy">{deal?.dealName || 'Deal Workspace'}</h1>
-          <span className="font-dl-mono text-xs text-dl-muted border border-dl-border px-2 py-1 uppercase">{deal?.status}</span>
+          <div className="flex items-center gap-3">
+            {deal?.status && ['underwriting', 'approved', 'active'].includes(deal.status) && (
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/syndication/offerings/create-from-deal', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ dealId: id, offeringType: 'clubDeal' }),
+                    });
+                    const json = await res.json();
+                    if (json.success && json.offeringId) {
+                      router.push(`/syndication/offerings/${json.offeringId}`);
+                    }
+                  } catch (err) {
+                    console.error('Failed to create offering', err);
+                  }
+                }}
+                className="bg-dl-forest text-white px-4 py-1 font-dl-mono text-xs"
+              >
+                Create Offering
+              </button>
+            )}
+            <span className="font-dl-mono text-xs text-dl-muted border border-dl-border px-2 py-1 uppercase">{deal?.status}</span>
+          </div>
         </div>
         <p className="text-dl-muted font-dl-mono text-sm mb-6">
           Strategy: {deal?.strategy?.toUpperCase()} | {property?.addressRaw || 'Unknown property'}
@@ -562,6 +593,10 @@ export default function DealWorkspacePage() {
                     )}
                   </>
                 )}
+                <CapitalReadinessCard
+                  assumptions={assumptions}
+                  metrics={metrics || null}
+                />
               </div>
             )}
 
@@ -702,6 +737,10 @@ export default function DealWorkspacePage() {
                   </div>
                 )}
               </div>
+            )}
+
+            {activeTab === 'strategies' && id && (
+              <StrategyComparison dealId={id as string} />
             )}
 
             {activeTab === 'analysis' && (
@@ -963,6 +1002,14 @@ export default function DealWorkspacePage() {
                   });
                 }}
               />
+            )}
+
+            {activeTab === 'dueDiligence' && id && (
+              <DueDiligencePanel dealId={id as string} />
+            )}
+
+            {activeTab === 'memo' && id && activeScenarioId && (
+              <AcquisitionMemo dealId={id as string} scenarioId={activeScenarioId} />
             )}
 
             {activeTab === 'decisions' && (

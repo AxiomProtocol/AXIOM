@@ -1146,9 +1146,11 @@ export async function register() {
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         deal_id UUID NOT NULL,
         scenario_id UUID NOT NULL,
+        analysis_type VARCHAR(50) DEFAULT 'ai_advisory',
         analysis_data JSONB NOT NULL,
         saved_at TIMESTAMPTZ DEFAULT now()
       )`, 're_saved_analysis');
+      await exec(`ALTER TABLE re_saved_analysis ADD COLUMN IF NOT EXISTS analysis_type VARCHAR(50) DEFAULT 'ai_advisory'`, 'alter re_saved_analysis add analysis_type');
       await exec(`CREATE INDEX IF NOT EXISTS re_saved_analysis_deal_idx ON re_saved_analysis(deal_id)`, 'idx re_saved_analysis_deal');
       await exec(`CREATE INDEX IF NOT EXISTS re_saved_analysis_scenario_idx ON re_saved_analysis(deal_id, scenario_id)`, 'idx re_saved_analysis_scenario');
 
@@ -2059,6 +2061,314 @@ export async function register() {
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )`, 'doc_extraction_fields');
       await exec(`CREATE INDEX IF NOT EXISTS doc_fields_extraction_idx ON doc_extraction_fields(extraction_id)`, 'idx doc_fields_extraction');
+
+      // ═══════════════════════════════════════════
+      //  SYNDICATION TABLES (syn_)
+      // ═══════════════════════════════════════════
+
+      await exec(enumSafe('syn_offering_status', ['draft','structuring','raising','funded','closed','active','winding_down','dissolved']), 'enum syn_offering_status');
+      await exec(enumSafe('syn_offering_type', ['regD506b','regD506c','regCF','communityPool','clubDeal','pilotOffering']), 'enum syn_offering_type');
+      await exec(enumSafe('syn_pipeline_stage', ['lead','contacted','interested','softCircled','docsPending','underReview','approved','fundingPending','funded','closedLost','closedWon']), 'enum syn_pipeline_stage');
+      await exec(enumSafe('syn_subscription_status', ['draft','submitted','under_review','approved','rejected','funded','cancelled']), 'enum syn_subscription_status');
+      await exec(enumSafe('syn_funding_status', ['pending','processing','completed','failed','returned']), 'enum syn_funding_status');
+      await exec(enumSafe('syn_distribution_type', ['preferred_return','profit_share','return_of_capital','refinance_proceeds','sale_proceeds']), 'enum syn_distribution_type');
+      await exec(enumSafe('syn_distribution_status', ['draft','approved','processing','completed','failed']), 'enum syn_distribution_status');
+      await exec(enumSafe('syn_proposal_status', ['draft','active','passed','failed','executed','cancelled']), 'enum syn_proposal_status');
+
+      await exec(`CREATE TABLE IF NOT EXISTS syn_organizations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(255) NOT NULL,
+        legal_name VARCHAR(255),
+        entity_type VARCHAR(50),
+        ein VARCHAR(20),
+        state VARCHAR(50),
+        primary_contact VARCHAR(255),
+        contact_email VARCHAR(255),
+        wallet_address VARCHAR(42),
+        meta JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'syn_organizations');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_orgs_name_idx ON syn_organizations(name)`, 'idx syn_orgs_name');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_orgs_wallet_idx ON syn_organizations(wallet_address)`, 'idx syn_orgs_wallet');
+
+      await exec(`CREATE TABLE IF NOT EXISTS syn_offerings (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID REFERENCES syn_organizations(id),
+        deal_id UUID REFERENCES re_deals(id),
+        name VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) UNIQUE,
+        status syn_offering_status NOT NULL DEFAULT 'draft',
+        offering_type syn_offering_type NOT NULL,
+        entity_type VARCHAR(50),
+        description TEXT,
+        investment_highlights JSONB,
+        target_raise NUMERIC(14,2),
+        minimum_raise NUMERIC(14,2),
+        maximum_raise NUMERIC(14,2),
+        minimum_investment NUMERIC(14,2),
+        projected_cap_rate NUMERIC(8,4),
+        projected_cash_on_cash NUMERIC(8,4),
+        projected_irr NUMERIC(8,4),
+        projected_dscr NUMERIC(8,4),
+        preferred_return NUMERIC(5,2),
+        promote_split NUMERIC(5,2),
+        waterfall_terms JSONB,
+        fee_structure JSONB,
+        hold_period_years INTEGER,
+        governance_enabled BOOLEAN DEFAULT FALSE,
+        settlement_mode VARCHAR(30) DEFAULT 'offchain',
+        access_controls JSONB,
+        open_date TIMESTAMPTZ,
+        close_date TIMESTAMPTZ,
+        funded_date TIMESTAMPTZ,
+        meta JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'syn_offerings');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_offerings_org_idx ON syn_offerings(organization_id)`, 'idx syn_offerings_org');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_offerings_deal_idx ON syn_offerings(deal_id)`, 'idx syn_offerings_deal');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_offerings_status_idx ON syn_offerings(status)`, 'idx syn_offerings_status');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_offerings_slug_idx ON syn_offerings(slug)`, 'idx syn_offerings_slug');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_offerings_type_idx ON syn_offerings(offering_type)`, 'idx syn_offerings_type');
+
+      await exec(`CREATE TABLE IF NOT EXISTS syn_offering_documents (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        offering_id UUID NOT NULL REFERENCES syn_offerings(id),
+        name VARCHAR(255) NOT NULL,
+        doc_type VARCHAR(50) NOT NULL,
+        url TEXT,
+        file_size INTEGER,
+        mime_type VARCHAR(100),
+        visibility VARCHAR(30) NOT NULL DEFAULT 'private',
+        uploaded_by VARCHAR(42),
+        meta JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'syn_offering_documents');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_docs_offering_idx ON syn_offering_documents(offering_id)`, 'idx syn_docs_offering');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_docs_type_idx ON syn_offering_documents(doc_type)`, 'idx syn_docs_type');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_docs_visibility_idx ON syn_offering_documents(visibility)`, 'idx syn_docs_visibility');
+
+      await exec(`CREATE TABLE IF NOT EXISTS syn_investor_profiles (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        legal_name VARCHAR(255) NOT NULL,
+        email VARCHAR(255),
+        phone VARCHAR(30),
+        entity_name VARCHAR(255),
+        entity_type VARCHAR(50),
+        wallet_address VARCHAR(42),
+        accreditation_status VARCHAR(30) DEFAULT 'unverified',
+        kyc_status VARCHAR(30) DEFAULT 'pending',
+        aml_status VARCHAR(30) DEFAULT 'pending',
+        tax_id VARCHAR(30),
+        address TEXT,
+        meta JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'syn_investor_profiles');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_investor_wallet_idx ON syn_investor_profiles(wallet_address)`, 'idx syn_investor_wallet');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_investor_email_idx ON syn_investor_profiles(email)`, 'idx syn_investor_email');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_investor_accred_idx ON syn_investor_profiles(accreditation_status)`, 'idx syn_investor_accred');
+
+      await exec(`CREATE TABLE IF NOT EXISTS syn_pipeline (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        offering_id UUID NOT NULL REFERENCES syn_offerings(id),
+        investor_profile_id UUID NOT NULL REFERENCES syn_investor_profiles(id),
+        stage syn_pipeline_stage NOT NULL DEFAULT 'lead',
+        interest_amount NUMERIC(14,2),
+        soft_circle_amount NUMERIC(14,2),
+        committed_amount NUMERIC(14,2),
+        funded_amount NUMERIC(14,2),
+        assigned_rep VARCHAR(255),
+        notes TEXT,
+        last_contacted_at TIMESTAMPTZ,
+        meta JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'syn_pipeline');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_pipeline_offering_idx ON syn_pipeline(offering_id)`, 'idx syn_pipeline_offering');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_pipeline_investor_idx ON syn_pipeline(investor_profile_id)`, 'idx syn_pipeline_investor');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_pipeline_stage_idx ON syn_pipeline(stage)`, 'idx syn_pipeline_stage');
+
+      await exec(`CREATE TABLE IF NOT EXISTS syn_subscriptions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        offering_id UUID NOT NULL REFERENCES syn_offerings(id),
+        investor_profile_id UUID NOT NULL REFERENCES syn_investor_profiles(id),
+        amount NUMERIC(14,2) NOT NULL,
+        status syn_subscription_status NOT NULL DEFAULT 'draft',
+        signature_ref VARCHAR(255),
+        funding_method VARCHAR(50),
+        submitted_at TIMESTAMPTZ,
+        approved_at TIMESTAMPTZ,
+        funded_at TIMESTAMPTZ,
+        rejected_at TIMESTAMPTZ,
+        rejection_reason TEXT,
+        meta JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'syn_subscriptions');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_subs_offering_idx ON syn_subscriptions(offering_id)`, 'idx syn_subs_offering');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_subs_investor_idx ON syn_subscriptions(investor_profile_id)`, 'idx syn_subs_investor');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_subs_status_idx ON syn_subscriptions(status)`, 'idx syn_subs_status');
+
+      await exec(`CREATE TABLE IF NOT EXISTS syn_funding_records (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        subscription_id UUID NOT NULL REFERENCES syn_subscriptions(id),
+        funding_method VARCHAR(50) NOT NULL,
+        amount NUMERIC(14,2) NOT NULL,
+        status syn_funding_status NOT NULL DEFAULT 'pending',
+        settlement_mode VARCHAR(30),
+        external_ref VARCHAR(255),
+        processed_at TIMESTAMPTZ,
+        meta JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'syn_funding_records');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_funding_subscription_idx ON syn_funding_records(subscription_id)`, 'idx syn_funding_sub');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_funding_status_idx ON syn_funding_records(status)`, 'idx syn_funding_status');
+
+      await exec(`CREATE TABLE IF NOT EXISTS syn_cap_table (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        offering_id UUID NOT NULL REFERENCES syn_offerings(id),
+        investor_profile_id UUID NOT NULL REFERENCES syn_investor_profiles(id),
+        share_class VARCHAR(50) DEFAULT 'common',
+        units NUMERIC(14,4),
+        ownership_pct NUMERIC(8,4),
+        capital_contributed NUMERIC(14,2),
+        distributions_received NUMERIC(14,2) DEFAULT 0,
+        meta JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'syn_cap_table');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_cap_offering_idx ON syn_cap_table(offering_id)`, 'idx syn_cap_offering');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_cap_investor_idx ON syn_cap_table(investor_profile_id)`, 'idx syn_cap_investor');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_cap_class_idx ON syn_cap_table(share_class)`, 'idx syn_cap_class');
+
+      await exec(`CREATE TABLE IF NOT EXISTS syn_reports (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        offering_id UUID NOT NULL REFERENCES syn_offerings(id),
+        report_type VARCHAR(50) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        content TEXT,
+        report_data JSONB,
+        period_start TIMESTAMPTZ,
+        period_end TIMESTAMPTZ,
+        published_at TIMESTAMPTZ,
+        published_by VARCHAR(42),
+        meta JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'syn_reports');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_reports_offering_idx ON syn_reports(offering_id)`, 'idx syn_reports_offering');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_reports_type_idx ON syn_reports(report_type)`, 'idx syn_reports_type');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_reports_published_idx ON syn_reports(published_at)`, 'idx syn_reports_published');
+
+      await exec(`CREATE TABLE IF NOT EXISTS syn_distributions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        offering_id UUID NOT NULL REFERENCES syn_offerings(id),
+        cap_table_entry_id UUID REFERENCES syn_cap_table(id),
+        investor_profile_id UUID REFERENCES syn_investor_profiles(id),
+        distribution_type syn_distribution_type NOT NULL,
+        gross_amount NUMERIC(14,2) NOT NULL,
+        net_amount NUMERIC(14,2),
+        withholding_amount NUMERIC(14,2),
+        status syn_distribution_status NOT NULL DEFAULT 'draft',
+        payment_method VARCHAR(50),
+        paid_at TIMESTAMPTZ,
+        period_start TIMESTAMPTZ,
+        period_end TIMESTAMPTZ,
+        meta JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'syn_distributions');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_dist_offering_idx ON syn_distributions(offering_id)`, 'idx syn_dist_offering');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_dist_investor_idx ON syn_distributions(investor_profile_id)`, 'idx syn_dist_investor');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_dist_status_idx ON syn_distributions(status)`, 'idx syn_dist_status');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_dist_type_idx ON syn_distributions(distribution_type)`, 'idx syn_dist_type');
+
+      await exec(`CREATE TABLE IF NOT EXISTS syn_governance_proposals (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        offering_id UUID NOT NULL REFERENCES syn_offerings(id),
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        proposal_type VARCHAR(50) NOT NULL,
+        status syn_proposal_status NOT NULL DEFAULT 'draft',
+        quorum_pct NUMERIC(5,2) DEFAULT 50,
+        threshold_pct NUMERIC(5,2) DEFAULT 50,
+        proposed_by VARCHAR(42),
+        voting_opens_at TIMESTAMPTZ,
+        voting_closes_at TIMESTAMPTZ,
+        executed_at TIMESTAMPTZ,
+        meta JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'syn_governance_proposals');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_gov_offering_idx ON syn_governance_proposals(offering_id)`, 'idx syn_gov_offering');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_gov_status_idx ON syn_governance_proposals(status)`, 'idx syn_gov_status');
+
+      await exec(`CREATE TABLE IF NOT EXISTS syn_governance_votes (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        proposal_id UUID NOT NULL REFERENCES syn_governance_proposals(id),
+        investor_profile_id UUID NOT NULL REFERENCES syn_investor_profiles(id),
+        cap_table_entry_id UUID REFERENCES syn_cap_table(id),
+        vote VARCHAR(20) NOT NULL,
+        voting_power NUMERIC(14,4),
+        meta JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'syn_governance_votes');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_votes_proposal_idx ON syn_governance_votes(proposal_id)`, 'idx syn_votes_proposal');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_votes_investor_idx ON syn_governance_votes(investor_profile_id)`, 'idx syn_votes_investor');
+
+      await exec(`CREATE TABLE IF NOT EXISTS syn_notifications (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        offering_id UUID REFERENCES syn_offerings(id),
+        investor_profile_id UUID REFERENCES syn_investor_profiles(id),
+        recipient_wallet VARCHAR(42),
+        recipient_email VARCHAR(255),
+        action_type VARCHAR(50) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        body TEXT,
+        is_read BOOLEAN DEFAULT FALSE,
+        read_at TIMESTAMPTZ,
+        meta JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'syn_notifications');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_notif_offering_idx ON syn_notifications(offering_id)`, 'idx syn_notif_offering');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_notif_investor_idx ON syn_notifications(investor_profile_id)`, 'idx syn_notif_investor');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_notif_wallet_idx ON syn_notifications(recipient_wallet)`, 'idx syn_notif_wallet');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_notif_read_idx ON syn_notifications(is_read)`, 'idx syn_notif_read');
+
+      // ── Due Diligence Tables ──
+      await exec(enumSafe('dd_item_status', ['notStarted','inProgress','blocked','complete']), 'enum dd_item_status');
+
+      await exec(`CREATE TABLE IF NOT EXISTS dd_checklists (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        name VARCHAR(255) NOT NULL DEFAULT 'Due Diligence Checklist',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`, 'dd_checklists');
+      await exec(`CREATE INDEX IF NOT EXISTS dd_checklists_deal_idx ON dd_checklists(deal_id)`, 'idx dd_checklists_deal');
+
+      await exec(`CREATE TABLE IF NOT EXISTS dd_checklist_items (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        checklist_id UUID NOT NULL REFERENCES dd_checklists(id),
+        category VARCHAR(100) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        status dd_item_status NOT NULL DEFAULT 'notStarted',
+        priority VARCHAR(20) NOT NULL DEFAULT 'medium',
+        owner VARCHAR(255),
+        notes TEXT,
+        evidence_links JSONB,
+        completed_at TIMESTAMPTZ,
+        sort_order INTEGER DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`, 'dd_checklist_items');
+      await exec(`CREATE INDEX IF NOT EXISTS dd_items_checklist_idx ON dd_checklist_items(checklist_id)`, 'idx dd_items_checklist');
+      await exec(`CREATE INDEX IF NOT EXISTS dd_items_category_idx ON dd_checklist_items(category)`, 'idx dd_items_category');
+      await exec(`CREATE INDEX IF NOT EXISTS dd_items_status_idx ON dd_checklist_items(status)`, 'idx dd_items_status');
 
       console.log('[instrumentation] Database setup complete');
 
