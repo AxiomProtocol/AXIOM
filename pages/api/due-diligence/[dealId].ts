@@ -8,6 +8,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Deal ID is required' });
   }
 
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(dealId)) {
+    return res.status(400).json({ error: 'Invalid deal ID format' });
+  }
+
   if (req.method === 'GET') {
     try {
       const checklistResult = await pool.query(
