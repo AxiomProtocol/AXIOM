@@ -4,6 +4,7 @@ import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout'
 import Head from 'next/head';
 import Link from 'next/link';
 import IVCEEPanel from '../../../components/deal-intelligence/IVCEEPanel';
+import DocumentsPanel from '../../../components/deal-intelligence/DocumentsPanel';
 
 interface DealSummary {
   deal: Record<string, any>;
@@ -53,7 +54,7 @@ export default function DealWorkspacePage() {
   const [summary, setSummary] = useState<DealSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'comps' | 'analysis' | 'decisions' | 'ivcee'>('assumptions');
+  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'comps' | 'analysis' | 'decisions' | 'ivcee' | 'documents'>('assumptions');
   const [assumptions, setAssumptions] = useState<AssumptionsState>(DEFAULT_ASSUMPTIONS);
   const [saving, setSaving] = useState(false);
   const [computing, setComputing] = useState(false);
@@ -383,6 +384,7 @@ export default function DealWorkspacePage() {
     { key: 'comps' as const, label: `Comps (${comps.length})` },
     { key: 'analysis' as const, label: 'Acquisition Advisory' },
     { key: 'ivcee' as const, label: 'IVCEE' },
+    { key: 'documents' as const, label: 'Documents' },
     { key: 'decisions' as const, label: 'Decision Log' },
   ];
 
@@ -944,6 +946,23 @@ export default function DealWorkspacePage() {
 
             {activeTab === 'ivcee' && activeScenarioId && (
               <IVCEEPanel dealId={id as string} scenarioId={activeScenarioId} />
+            )}
+
+            {activeTab === 'documents' && id && (
+              <DocumentsPanel
+                dealId={id as string}
+                onApplyAssumptions={(mapped) => {
+                  setAssumptions(prev => {
+                    const updated = { ...prev };
+                    for (const [key, val] of Object.entries(mapped)) {
+                      if (key in updated) {
+                        (updated as any)[key] = val;
+                      }
+                    }
+                    return updated;
+                  });
+                }}
+              />
             )}
 
             {activeTab === 'decisions' && (

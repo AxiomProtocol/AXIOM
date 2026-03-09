@@ -2024,6 +2024,42 @@ export async function register() {
         created_at TIMESTAMPTZ DEFAULT now()
       )`, 're_tax_history');
 
+      await exec(`CREATE TABLE IF NOT EXISTS doc_extractions (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id VARCHAR,
+        property_id VARCHAR,
+        wallet_address VARCHAR(42),
+        doc_type VARCHAR(50) NOT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'uploaded',
+        original_filename VARCHAR(500) NOT NULL,
+        mime_type VARCHAR(100) NOT NULL,
+        file_size_bytes INTEGER,
+        extracted_data JSONB,
+        raw_text TEXT,
+        confidence NUMERIC(5,4),
+        field_count INTEGER,
+        applied_to_deal BOOLEAN DEFAULT false,
+        error_message TEXT,
+        processing_time_ms INTEGER,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'doc_extractions');
+      await exec(`CREATE INDEX IF NOT EXISTS doc_extractions_deal_idx ON doc_extractions(deal_id)`, 'idx doc_extractions_deal');
+      await exec(`CREATE INDEX IF NOT EXISTS doc_extractions_type_idx ON doc_extractions(doc_type)`, 'idx doc_extractions_type');
+
+      await exec(`CREATE TABLE IF NOT EXISTS doc_extraction_fields (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        extraction_id VARCHAR NOT NULL,
+        field_name VARCHAR(200) NOT NULL,
+        field_value TEXT,
+        field_type VARCHAR(50) NOT NULL DEFAULT 'string',
+        confidence NUMERIC(5,4),
+        source_location VARCHAR(200),
+        mapped_to VARCHAR(200),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'doc_extraction_fields');
+      await exec(`CREATE INDEX IF NOT EXISTS doc_fields_extraction_idx ON doc_extraction_fields(extraction_id)`, 'idx doc_fields_extraction');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
