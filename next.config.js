@@ -46,17 +46,6 @@ const nextConfig = {
       })
     );
 
-    if (!isServer) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        'porto': false,
-        'porto/internal': false,
-        '@safe-global/safe-apps-sdk': false,
-        '@safe-global/safe-apps-provider': false,
-        '@base-org/account': false,
-      };
-    }
-
     return config;
   },
 };

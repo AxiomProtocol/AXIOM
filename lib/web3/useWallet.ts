@@ -1,5 +1,6 @@
 import { useAccount, useBalance, useChainId } from 'wagmi';
-import { arbitrum } from 'wagmi/chains';
+import { arbitrum } from 'viem/chains';
+import { formatUnits } from 'viem';
 
 const ARBITRUM_CHAIN_ID = 42161;
 
@@ -26,7 +27,7 @@ export function useWallet() {
     address: address || null,
     chainId: chainId || null,
     isCorrectChain: chainId === ARBITRUM_CHAIN_ID,
-    balance: balanceData ? balanceData.formatted : '0',
+    balance: balanceData ? formatUnits(balanceData.value, balanceData.decimals) : '0',
     isConnecting,
     error: null,
   };

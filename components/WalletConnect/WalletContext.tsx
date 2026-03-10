@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
 import { useAccount, useBalance, useChainId, useDisconnect, useSwitchChain } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
-import { arbitrum } from 'wagmi/chains';
+import { arbitrum } from 'viem/chains';
+import { formatUnits } from 'viem';
 
 interface WalletState {
   isConnected: boolean;
@@ -81,7 +82,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     address: address || null,
     chainId: chainId || null,
     isCorrectNetwork: chainId === arbitrum.id,
-    ethBalance: ethBalanceData ? parseFloat(ethBalanceData.formatted).toFixed(4) : '0',
+    ethBalance: ethBalanceData ? parseFloat(formatUnits(ethBalanceData.value, ethBalanceData.decimals)).toFixed(4) : '0',
     axmBalance,
     axmUsdValue: '0'
   };
