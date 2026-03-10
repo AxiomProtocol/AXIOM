@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '../WalletConnect/WalletContext';
 
 interface ConnectWalletButtonProps {
@@ -24,6 +23,20 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
     }
   }, [walletState.isConnected, walletState.address]);
 
+  const openModal = useCallback(async (view?: string) => {
+    try {
+      const { useAppKit } = await import('@reown/appkit/react');
+      const appKit = useAppKit();
+      if (view) {
+        appKit.open({ view } as any);
+      } else {
+        appKit.open();
+      }
+    } catch (err) {
+      console.error('Failed to open wallet modal:', err);
+    }
+  }, []);
+
   if (!mounted) {
     return (
       <button className="bg-dl-navy text-white px-5 py-2 text-sm font-medium">
@@ -32,16 +45,10 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
     );
   }
 
-  return <MountedButton walletState={walletState} siweState={siweState} />;
-}
-
-function MountedButton({ walletState, siweState }: { walletState: any; siweState: any }) {
-  const { open } = useAppKit();
-
   if (!walletState.isConnected) {
     return (
       <button
-        onClick={() => open()}
+        onClick={() => openModal()}
         className="bg-dl-navy text-white px-5 py-2 text-sm font-medium"
       >
         {siweState.isAuthenticating ? 'Signing...' : 'Access Platform'}
@@ -82,7 +89,7 @@ function MountedButton({ walletState, siweState }: { walletState: any; siweState
           </span>
         </span>
         <button
-          onClick={() => open({ view: 'Account' })}
+          onClick={() => openModal('Account')}
           className="font-dl-mono text-xs text-dl-navy bg-dl-bg-alt border border-dl-border px-2 py-0.5"
         >
           {shortAddress}
