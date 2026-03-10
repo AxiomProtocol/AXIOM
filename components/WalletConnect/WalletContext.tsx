@@ -1,9 +1,7 @@
-/**
- * Axiom Smart City - Wallet Context Provider
- * Global wallet state management for React components with SIWE authentication
- */
-
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
+import { useAccount, useBalance, useChainId, useDisconnect, useSwitchChain } from 'wagmi';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { arbitrum } from 'wagmi/chains';
 
 interface WalletState {
   isConnected: boolean;
@@ -61,21 +59,66 @@ interface WalletProviderProps {
 }
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
-  const [walletState, setWalletState] = useState<WalletState>(defaultWalletState);
+  const { address, isConnected, isConnecting: wagmiConnecting } = useAccount();
+  const chainId = useChainId();
+  const { disconnect: wagmiDisconnect } = useDisconnect();
+  const { switchChain } = useSwitchChain();
+  const { openConnectModal } = useConnectModal();
+
+  const { data: ethBalanceData } = useBalance({
+    address: address as `0x${string}` | undefined,
+    query: { enabled: !!address },
+  });
+
   const [siweState, setSIWEState] = useState<SIWEState>(defaultSIWEState);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
   const autoSiweAttemptedForRef = useRef<string | null>(null);
-  const connectFlowActiveRef = useRef(false);
+  const siweInProgressRef = useRef(false);
+  const [axmBalance, setAxmBalance] = useState('0');
+
+  const walletState: WalletState = {
+    isConnected: !!isConnected && !!address,
+    address: address || null,
+    chainId: chainId || null,
+    isCorrectNetwork: chainId === arbitrum.id,
+    ethBalance: ethBalanceData ? parseFloat(ethBalanceData.formatted).toFixed(4) : '0',
+    axmBalance,
+    axmUsdValue: '0'
+  };
+
+  const fetchAxmBalance = useCallback(async (addr: string) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const { ethers } = await import('ethers');
+      const provider = (window as any).ethereum;
+      if (!provider) return;
+      const ethProvider = new ethers.BrowserProvider(provider);
+      const AXM_ADDRESS = '0xBa5C3b7b1C43A922d8c4e5C45aB0C0352C4FCA5a';
+      const AXM_ABI = ['function balanceOf(address) view returns (uint256)'];
+      const contract = new ethers.Contract(AXM_ADDRESS, AXM_ABI, ethProvider);
+      const balance = await contract.balanceOf(addr);
+      setAxmBalance(ethers.formatEther(balance));
+    } catch (err) {
+      console.error('AXM balance fetch error:', err);
+      if (process.env.NODE_ENV !== 'production') {
+        setAxmBalance('0');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isConnected && address) {
+      fetchAxmBalance(address);
+    } else {
+      setAxmBalance('0');
+    }
+  }, [isConnected, address, fetchAxmBalance]);
 
   const checkSIWESession = useCallback(async () => {
     if (typeof window === 'undefined') return;
-    
     try {
       const { siweService } = await import('../../lib/services/SIWEService');
       const session = await siweService.getSession(true);
-      
       setSIWEState(prev => ({
         ...prev,
         isAuthenticated: session.authenticated,
@@ -87,256 +130,139 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    setMounted(true);
-    
-    const initWallet = async () => {
-      if (typeof window === 'undefined') return;
-      
-      try {
-        const { walletService } = await import('../../lib/services/WalletService');
-        const { delegationService } = await import('../../lib/services/DelegationService');
-        
-        const mapServiceState = (serviceState: any): WalletState => ({
-          isConnected: serviceState.isConnected || false,
-          address: serviceState.address || null,
-          chainId: serviceState.chainId || null,
-          isCorrectNetwork: serviceState.chainId === 42161,
-          ethBalance: serviceState.balance || '0',
-          axmBalance: serviceState.axmBalance || '0',
-          axmUsdValue: '0'
-        });
-        
-        setWalletState(mapServiceState(walletService.getState()));
-        
-        const unsubscribe = walletService.subscribe((state: any) => {
-          setWalletState(mapServiceState(state));
-          
-          if (state.isConnected && state.address) {
-            const provider = walletService.getProvider();
-            const signer = walletService.getSigner();
-            
-            if (provider && signer) {
-              delegationService.initialize(provider, signer);
-            }
-          }
-        });
-
-        await checkSIWESession();
-
-        return unsubscribe;
-      } catch (err) {
-        console.error('Failed to initialize wallet service:', err);
-      }
-    };
-
-    initWallet();
+    checkSIWESession();
   }, [checkSIWESession]);
 
   useEffect(() => {
-    if (!walletState.isConnected || !walletState.address) {
+    if (!isConnected || !address) {
       autoSiweAttemptedForRef.current = null;
+      return;
     }
-  }, [walletState.isConnected, walletState.address]);
+
+    if (autoSiweAttemptedForRef.current === address) return;
+    if (siweInProgressRef.current) return;
+
+    const performAutoSIWE = async () => {
+      siweInProgressRef.current = true;
+      autoSiweAttemptedForRef.current = address;
+
+      setSIWEState(prev => ({
+        ...prev,
+        isAuthenticating: true,
+        authError: null
+      }));
+
+      try {
+        const { siweService } = await import('../../lib/services/SIWEService');
+        siweService.resetSigningState();
+
+        const { ethers } = await import('ethers');
+        const provider = (window as any).ethereum;
+        if (!provider) throw new Error('No provider available');
+        const ethProvider = new ethers.BrowserProvider(provider);
+        const signer = await ethProvider.getSigner();
+
+        const result = await siweService.signIn(
+          signer,
+          address,
+          chainId || arbitrum.id
+        );
+
+        if (result.success) {
+          setSIWEState({
+            isAuthenticated: true,
+            authenticatedAddress: result.address || address,
+            isAuthenticating: false,
+            authError: null
+          });
+        } else {
+          setSIWEState(prev => ({
+            ...prev,
+            isAuthenticating: false,
+            authError: result.error || 'Authentication failed'
+          }));
+        }
+      } catch (siweErr: any) {
+        console.error('SIWE auto sign-in error:', siweErr);
+        setSIWEState(prev => ({
+          ...prev,
+          isAuthenticating: false,
+          authError: siweErr.message || 'Signature request failed'
+        }));
+      } finally {
+        siweInProgressRef.current = false;
+      }
+    };
+
+    performAutoSIWE();
+  }, [isConnected, address, chainId]);
 
   const signInWithEthereum = async (): Promise<boolean> => {
     if (typeof window === 'undefined') return false;
-    
-    if (!walletState.isConnected || !walletState.address) {
-      setSIWEState(prev => ({
-        ...prev,
-        authError: 'Please connect your wallet first'
-      }));
+    if (!isConnected || !address) {
+      setSIWEState(prev => ({ ...prev, authError: 'Please connect your wallet first' }));
       return false;
     }
-    
-    setSIWEState(prev => ({
-      ...prev,
-      isAuthenticating: true,
-      authError: null
-    }));
-    
+
+    setSIWEState(prev => ({ ...prev, isAuthenticating: true, authError: null }));
+
     try {
-      const { walletService } = await import('../../lib/services/WalletService');
+      const { ethers } = await import('ethers');
       const { siweService } = await import('../../lib/services/SIWEService');
-      
-      const signer = walletService.getSigner();
-      if (!signer) {
-        throw new Error('No signer available');
-      }
-      
-      // Reset any stale signing state before attempting
+      const provider = (window as any).ethereum;
+      if (!provider) throw new Error('No provider');
+      const ethProvider = new ethers.BrowserProvider(provider);
+      const signer = await ethProvider.getSigner();
+
       siweService.resetSigningState();
-      
-      const result = await siweService.signIn(
-        signer,
-        walletState.address,
-        walletState.chainId || 42161
-      );
-      
+      const result = await siweService.signIn(signer, address, chainId || arbitrum.id);
+
       if (result.success) {
         setSIWEState({
           isAuthenticated: true,
-          authenticatedAddress: result.address || walletState.address,
+          authenticatedAddress: result.address || address,
           isAuthenticating: false,
           authError: null
         });
         return true;
       } else {
-        setSIWEState(prev => ({
-          ...prev,
-          isAuthenticating: false,
-          authError: result.error || 'Authentication failed'
-        }));
+        setSIWEState(prev => ({ ...prev, isAuthenticating: false, authError: result.error || 'Authentication failed' }));
         return false;
       }
     } catch (err: any) {
       console.error('SIWE sign-in error:', err);
-      setSIWEState(prev => ({
-        ...prev,
-        isAuthenticating: false,
-        authError: err.message || 'Sign-in failed'
-      }));
+      setSIWEState(prev => ({ ...prev, isAuthenticating: false, authError: err.message || 'Sign-in failed' }));
       return false;
     }
   };
 
   const signOutSIWE = async () => {
     if (typeof window === 'undefined') return;
-    
     try {
       const { siweService } = await import('../../lib/services/SIWEService');
       await siweService.logout();
-      
       setSIWEState(defaultSIWEState);
     } catch (err) {
       console.error('SIWE sign-out error:', err);
     }
   };
 
-  const performSIWESignIn = async (walletInstance: any, connectedAddress: string): Promise<void> => {
-    const signer = walletInstance.getSigner();
-    const state = walletInstance.getState();
-
-    if (!signer) {
-      console.error('❌ Signer not available after wallet connection');
-      return;
-    }
-
-    if (autoSiweAttemptedForRef.current === connectedAddress) {
-      console.log('⚠️ SIWE already attempted for this address, skipping');
-      return;
-    }
-
-    autoSiweAttemptedForRef.current = connectedAddress;
-
-    setSIWEState(prev => ({
-      ...prev,
-      isAuthenticating: true,
-      authError: null
-    }));
-
-    try {
-      const { siweService } = await import('../../lib/services/SIWEService');
-      siweService.resetSigningState();
-
-      console.log('📝 Requesting signature...');
-      const result = await siweService.signIn(
-        signer,
-        connectedAddress,
-        state.chainId || 42161
-      );
-
-      console.log('📝 Signature result:', result.success ? 'Success' : result.error);
-
-      if (result.success) {
-        setSIWEState({
-          isAuthenticated: true,
-          authenticatedAddress: result.address || connectedAddress,
-          isAuthenticating: false,
-          authError: null
-        });
-      } else {
-        setSIWEState(prev => ({
-          ...prev,
-          isAuthenticating: false,
-          authError: result.error || 'Authentication failed'
-        }));
-      }
-    } catch (siweErr: any) {
-      console.error('SIWE sign-in error:', siweErr);
-      setSIWEState(prev => ({
-        ...prev,
-        isAuthenticating: false,
-        authError: siweErr.message || 'Signature request failed'
-      }));
-    }
-  };
-
   const connectMetaMask = async () => {
-    if (typeof window === 'undefined') return;
-    if (connectFlowActiveRef.current) return;
-
-    connectFlowActiveRef.current = true;
-    setIsConnecting(true);
-    setError(null);
-
-    try {
-      const { WalletService } = await import('../../lib/services/WalletService');
-      const walletInstance = WalletService.getInstance();
-
-      const connectedAddress = await walletInstance.connectMetaMask();
-      console.log('✅ Wallet connected, address:', connectedAddress);
-
-      if (connectedAddress) {
-        await performSIWESignIn(walletInstance, connectedAddress);
-      }
-    } catch (err: any) {
-      console.error('❌ MetaMask connection error:', err);
-      setError(err.message || 'Failed to connect MetaMask');
-      throw err;
-    } finally {
-      connectFlowActiveRef.current = false;
-      setIsConnecting(false);
+    if (openConnectModal) {
+      openConnectModal();
     }
   };
 
   const connectInjected = async () => {
-    if (typeof window === 'undefined') return;
-    if (connectFlowActiveRef.current) return;
-
-    connectFlowActiveRef.current = true;
-    setIsConnecting(true);
-    setError(null);
-
-    try {
-      const { WalletService } = await import('../../lib/services/WalletService');
-      const walletInstance = WalletService.getInstance();
-
-      const connectedAddress = await walletInstance.connectInjected();
-      console.log('✅ Wallet connected (injected), address:', connectedAddress);
-
-      if (connectedAddress) {
-        await performSIWESignIn(walletInstance, connectedAddress);
-      }
-    } catch (err: any) {
-      console.error('❌ Injected wallet connection error:', err);
-      setError(err.message || 'Failed to connect wallet');
-      throw err;
-    } finally {
-      connectFlowActiveRef.current = false;
-      setIsConnecting(false);
+    if (openConnectModal) {
+      openConnectModal();
     }
   };
 
   const disconnect = async () => {
-    if (typeof window === 'undefined') return;
-    
     try {
-      const { walletService } = await import('../../lib/services/WalletService');
-      await walletService.disconnect();
-      
+      wagmiDisconnect();
       await signOutSIWE();
-      
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Failed to disconnect');
@@ -344,11 +270,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   };
 
   const switchToArbitrum = async () => {
-    if (typeof window === 'undefined') return;
-    
     try {
-      const { walletService } = await import('../../lib/services/WalletService');
-      await walletService.switchToArbitrum();
+      switchChain({ chainId: arbitrum.id });
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Failed to switch network');
@@ -357,20 +280,15 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   };
 
   const updateBalances = async () => {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      const { walletService } = await import('../../lib/services/WalletService');
-      await walletService.updateBalances();
-    } catch (err: any) {
-      console.error('Failed to update balances:', err);
+    if (address) {
+      await fetchAxmBalance(address);
     }
   };
 
   const value: WalletContextType = {
     walletState,
     siweState,
-    isConnecting,
+    isConnecting: wagmiConnecting,
     error,
     connectMetaMask,
     connectInjected,
@@ -391,11 +309,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
 export const useWallet = (): WalletContextType => {
   const context = useContext(WalletContext);
-  
   if (context === undefined) {
     throw new Error('useWallet must be used within a WalletProvider');
   }
-  
   return context;
 };
 

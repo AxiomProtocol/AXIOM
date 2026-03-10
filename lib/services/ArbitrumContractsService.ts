@@ -106,10 +106,54 @@ export class ArbitrumContractsService implements IContractsService {
   constructor() {
     this.isProduction = process.env.NODE_ENV === 'production';
     
-    // Initialize with existing ethers setup if available
-    if (typeof window !== 'undefined' && (window as any).ethers) {
-      this.ethers = (window as any).ethers;
-      this.initializeContracts();
+    if (typeof window !== 'undefined') {
+      import('ethers').then(mod => {
+        this.ethers = mod;
+        this.initializeContracts();
+      }).catch(() => {
+        if ((window as any).ethers) {
+          this.ethers = (window as any).ethers;
+          this.initializeContracts();
+        }
+      });
+    }
+  }
+
+  setProviderAndSigner(provider: any, signer: any) {
+    this.provider = provider;
+    this.signer = signer;
+    if (this.ethers) {
+      this.initializeContractsWithProvider();
+    }
+  }
+
+  private initializeContractsWithProvider() {
+    if (!this.ethers || !this.provider) return;
+    try {
+      const AXM_ABI = [
+        "function balanceOf(address owner) view returns (uint256)",
+        "function totalSupply() view returns (uint256)",
+        "function transfer(address to, uint256 amount) returns (bool)",
+        "function approve(address spender, uint256 amount) returns (bool)",
+        "function allowance(address owner, address spender) view returns (uint256)",
+        "function transferFrom(address from, address to, uint256 amount) returns (bool)",
+        "function decimals() view returns (uint8)",
+        "function symbol() view returns (string)",
+        "function name() view returns (string)"
+      ];
+      const STAKING_ABI = [
+        "function stake(uint256 poolId, uint256 amount) external",
+        "function withdraw(uint256 poolId, uint256 amount) external",
+        "function claimReward(uint256 poolId) external",
+        "function pools(uint256) view returns (address stakingToken, address rewardToken, uint256 rewardRate, uint256 totalStaked, bool isActive)",
+        "function userStakes(uint256 poolId, address user) view returns (uint256 amount, uint256 rewardDebt)",
+        "function pendingReward(uint256 poolId, address user) view returns (uint256)",
+        "function nextPoolId() view returns (uint256)"
+      ];
+      this.axmContract = new this.ethers.Contract(this.AXM_CONTRACT_ADDRESS, AXM_ABI, this.provider);
+      this.stakingContract = new this.ethers.Contract(this.STAKING_CONTRACT_ADDRESS, STAKING_ABI, this.provider);
+    } catch (error) {
+      console.error('Failed to initialize contracts with external provider:', error);
     }
   }
   

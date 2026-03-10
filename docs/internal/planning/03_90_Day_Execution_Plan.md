@@ -31,7 +31,8 @@ Sprint 1 (Days 1-15): Foundation Layer
   T001 - Wallet Connection Upgrade (Track A)
     Priority: Critical
     Rationale: Blocks T002, T005, T007, T013, T021, T025, T033. Highest-leverage prerequisite in the entire roadmap.
-    Status: Active
+    Status: COMPLETE (March 10, 2026)
+    Notes: Wagmi v3 + RainbowKit v2 integrated. WalletContext rewritten with Wagmi hooks. ConnectWalletButton uses RainbowKit Custom. Legacy useWallet.ts preserved as backward-compatible wrapper. SIWE auto-sign-in preserved. ArbitrumContractsService updated with setProviderAndSigner(). All routes verified 200.
 
   T004 - Error Monitoring / Sentry (Track A)
     Priority: Critical
