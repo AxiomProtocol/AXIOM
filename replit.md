@@ -74,3 +74,14 @@ The architecture uses a "Product Factory Approach" for scalability. The current 
 - **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image)
 - **Property Data:** RentCast API, Walk Score API
 - **Market Data:** Alpha Vantage, CoinGecko
+
+## Internal Planning System
+The Financial OS roadmap (49 capabilities) is organized into a gated execution system at `docs/internal/planning/`:
+- **00_Index.md** - Document index and usage guide
+- **01_Capability_Map.md** - All 49 capabilities by functional domain
+- **02_Execution_Tracks.md** - Three staged tracks: A (Institutional Core, 12 items), B (Capital Execution, 16 items), C (Consumer Rails, 21 items)
+- **03_90_Day_Execution_Plan.md** - NOW/NEXT/LATER horizons, max 10 active tasks
+- **04_Dependency_Matrix.md** - Full dependency graph with priority and risk-if-early analysis
+- **05_Sequencing_Rationale.md** - Why staged execution (7 risk factors)
+- **06_Execution_Gate_Framework.md** - 4 gates: Platform Integrity, Institutional Reliability, Capital Execution Readiness, Consumer Rails Readiness
+- **Master Roadmap** remains at `documents/Axiom_Financial_OS_Master_Roadmap.md` for detailed task specs
