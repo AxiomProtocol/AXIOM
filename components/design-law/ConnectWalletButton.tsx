@@ -9,8 +9,6 @@ interface ConnectWalletButtonProps {
 
 export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletButtonProps) {
   const { walletState, siweState } = useWallet();
-  const { open } = useAppKit();
-  const { address, isConnected } = useAppKitAccount();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -18,13 +16,13 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
   }, []);
 
   useEffect(() => {
-    if (isConnected && address && onConnect) {
-      onConnect(address);
+    if (walletState.isConnected && walletState.address && onConnect) {
+      onConnect(walletState.address);
     }
-    if (!isConnected && onDisconnect) {
+    if (!walletState.isConnected && onDisconnect) {
       onDisconnect();
     }
-  }, [isConnected, address]);
+  }, [walletState.isConnected, walletState.address]);
 
   if (!mounted) {
     return (
@@ -34,7 +32,13 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
     );
   }
 
-  if (!isConnected) {
+  return <MountedButton walletState={walletState} siweState={siweState} />;
+}
+
+function MountedButton({ walletState, siweState }: { walletState: any; siweState: any }) {
+  const { open } = useAppKit();
+
+  if (!walletState.isConnected) {
     return (
       <button
         onClick={() => open()}
@@ -53,8 +57,8 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
     return num.toFixed(2);
   };
 
-  const shortAddress = address
-    ? `${address.slice(0, 6)}...${address.slice(-4)}`
+  const shortAddress = walletState.address
+    ? `${walletState.address.slice(0, 6)}...${walletState.address.slice(-4)}`
     : '';
 
   return (
