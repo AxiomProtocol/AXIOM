@@ -8,7 +8,7 @@
 
 Welcome to the official Axiom Protocol documentation. This wiki contains comprehensive information about our technology, tokenomics, and ecosystem.
 
-> **NOTICE:** This is proprietary technology. All commercial use requires a paid license. Contact licensing@axiomprotocol.io
+> **NOTICE:** This is proprietary technology. All commercial use requires a paid license. Contact licensing@axiomprotocol.app
 
 ---
 
@@ -63,9 +63,9 @@ Axiom Protocol is building a 1,000-acre fintech smart city with comprehensive di
 
 ## Contact
 
-- **Website:** https://axiomprotocol.io
-- **Licensing:** licensing@axiomprotocol.io
-- **Security:** security@axiomprotocol.io
+- **Website:** https://axiomprotocol.app
+- **Licensing:** licensing@axiomprotocol.app
+- **Security:** security@axiomprotocol.app
 
 ---
 

@@ -113,6 +113,6 @@ See [docs/verify_axiom.md](../docs/verify_axiom.md) for step-by-step verificatio
 
 ---
 
-**Contact:** licensing@axiomprotocol.io
+**Contact:** licensing@axiomprotocol.app
 
 Copyright (c) 2024 Axiom Protocol. All Rights Reserved.

@@ -538,7 +538,7 @@ AXUSD is Axiom's stablecoin - a digital dollar built for our community. It provi
 - Insurance pool in AXUSD
 
 [QR CODE: AXUSD-TUTORIAL]
-*axiomprotocol.io/learn/axusd*
+*axiomprotocol.app/learn/axusd*
 
 ---
 
@@ -1050,7 +1050,7 @@ The Axiom Protocol provides unique investment opportunities:
 - Predictable returns
 
 [QR CODE: AXIOM-INVEST]
-*axiomprotocol.io/invest*
+*axiomprotocol.app/invest*
 
 ---
 

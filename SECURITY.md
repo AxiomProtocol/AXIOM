@@ -8,7 +8,7 @@ This repository contains proprietary software owned by Axiom Protocol. All secur
 
 If you discover a security vulnerability in this codebase, please report it responsibly:
 
-**Email:** security@axiomprotocol.io
+**Email:** security@axiomprotocol.app
 
 **Please include:**
 - Description of the vulnerability
@@ -27,13 +27,13 @@ We ask that you:
 
 ## Bug Bounty
 
-Axiom Protocol may offer rewards for qualifying security vulnerabilities. Contact security@axiomprotocol.io for details on our bug bounty program.
+Axiom Protocol may offer rewards for qualifying security vulnerabilities. Contact security@axiomprotocol.app for details on our bug bounty program.
 
 ## Authorization Required
 
 Security research on this codebase requires prior written authorization. Unauthorized access or testing may violate applicable laws and this license agreement.
 
-To request authorization for security research, contact: security@axiomprotocol.io
+To request authorization for security research, contact: security@axiomprotocol.app
 
 ## No Warranty
 

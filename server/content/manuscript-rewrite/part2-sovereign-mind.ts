@@ -216,7 +216,7 @@ _______________________________________________________
 ☐ **Step 5:** Identify one action you can take TODAY toward your aim.
 
 🎯 **PLATFORM LINK:** Scan to set up your Wealth Profile goals
-[QR CODE: https://axiomprotocol.io/profile/goals]
+[QR CODE: https://axiomprotocol.app/profile/goals]
 
 ---
 
@@ -450,7 +450,7 @@ When doubts arise, record them here and note how you handled them:
 ☐ **Step 5:** Share one doubt with your circle and ask for encouragement.
 
 🎯 **PLATFORM LINK:** Scan to access affirmation audio resources
-[QR CODE: https://axiomprotocol.io/academy/affirmations]
+[QR CODE: https://axiomprotocol.app/academy/affirmations]
 
 ---
 
@@ -708,7 +708,7 @@ _______________________________________________________
 ☐ **Step 5:** When obstacles arise, write "Adapt strategy, not decision" and adjust your approach.
 
 🎯 **PLATFORM LINK:** Scan to begin your Wealth Practice application
-[QR CODE: https://axiomprotocol.io/wealth-practice/apply]
+[QR CODE: https://axiomprotocol.app/wealth-practice/apply]
 
 ---
 

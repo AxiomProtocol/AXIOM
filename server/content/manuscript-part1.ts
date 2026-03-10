@@ -17,7 +17,7 @@ Copyright © 2026 Axiom Protocol. All rights reserved.
 
 No part of this publication may be reproduced, distributed, or transmitted in any form or by any means, including photocopying, recording, or other electronic or mechanical methods, without the prior written permission of the publisher, except in the case of brief quotations embodied in critical reviews and certain other noncommercial uses permitted by copyright law.
 
-For permission requests, contact: legal@axiomprotocol.io
+For permission requests, contact: legal@axiomprotocol.app
 
 First Edition: 2026
 
@@ -145,7 +145,7 @@ Throughout this manual, you'll see these symbols:
 
 This manual works alongside several digital resources:
 
-The Axiom Protocol Web Platform (axiomprotocol.io)
+The Axiom Protocol Web Platform (axiomprotocol.app)
 - Your primary interface for all Axiom activities
 - Real-time portfolio tracking and management
 - SUSU circle participation and management
@@ -169,7 +169,7 @@ Community Discord
 - Weekly office hours with experienced members
 - Study groups for working through this manual together
 
-The Axiom Knowledge Base (docs.axiomprotocol.io)
+The Axiom Knowledge Base (docs.axiomprotocol.app)
 - Technical documentation for advanced users
 - Video tutorials for visual learners
 - Updated guides as features evolve
@@ -1519,9 +1519,9 @@ Take your time with this chapter. Actually open the dashboard as you read and ex
 STEP 1: Navigate to the Platform
 
 1. Open your browser with MetaMask installed
-2. Type axiomprotocol.io directly into your address bar—never click links
+2. Type axiomprotocol.app directly into your address bar—never click links
 3. Verify you're on the real site:
-   - Check the URL is exactly axiomprotocol.io
+   - Check the URL is exactly axiomprotocol.app
    - Look for the padlock icon
    - The site should have the Axiom branding
 
@@ -1997,7 +1997,7 @@ For security issues:
 ### Common Dashboard Mistakes to Avoid
 
 MISTAKE 1: Not Verifying the URL
-Bookmark axiomprotocol.io and always use your bookmark. Scammers create similar-looking sites to steal credentials.
+Bookmark axiomprotocol.app and always use your bookmark. Scammers create similar-looking sites to steal credentials.
 
 MISTAKE 2: Ignoring Notifications
 Important information comes through notifications. Check them regularly. Don't let contribution deadlines sneak up on you.
@@ -2029,7 +2029,7 @@ Set up push notifications. A missed contribution or voting deadline can have rea
 
 [ ] I know where to find help (Help Center, Discord, Support)
 
-[ ] I have bookmarked axiomprotocol.io
+[ ] I have bookmarked axiomprotocol.app
 
 [ ] I have installed the mobile app (optional but recommended)
 

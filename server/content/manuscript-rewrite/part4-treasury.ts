@@ -97,7 +97,7 @@ Think about what happens if you die—does someone you trust have access to reco
 Transfer a small amount of crypto to your new wallet first. Practice sending and receiving. Make sure everything works before transferring large amounts.
 
 🎯 **PLATFORM LINK:** Scan for wallet setup guide
-[QR CODE: https://axiomprotocol.io/wallet-guide]
+[QR CODE: https://axiomprotocol.app/wallet-guide]
 
 ---
 
@@ -125,7 +125,7 @@ Self-custody comes with responsibility. Here's how to stay safe:
 
 Once your wallet is set up, connect it to Axiom:
 
-1. Navigate to axiomprotocol.io
+1. Navigate to axiomprotocol.app
 2. Click "Connect Wallet"
 3. Select your wallet type (MetaMask, WalletConnect, etc.)
 4. Approve the connection in your wallet
@@ -225,12 +225,12 @@ This is what Dr. Anderson meant about Group Economics with self-determination. E
 
 ☐ **Step 4:** Send a small test amount to your wallet.
 
-☐ **Step 5:** Connect wallet to axiomprotocol.io.
+☐ **Step 5:** Connect wallet to axiomprotocol.app.
 
 ☐ **Step 6:** Explore the platform with your connected wallet.
 
 🎯 **PLATFORM LINK:** Scan to connect your wallet
-[QR CODE: https://axiomprotocol.io/connect-wallet]
+[QR CODE: https://axiomprotocol.app/connect-wallet]
 
 ---
 
@@ -304,7 +304,7 @@ Example: 1,000 AXM locked for 4 years = 4,000 veAXM voting power
 
 **STEP 3: Lock your tokens**
 
-Navigate to the Wealth Engine on axiomprotocol.io/staking. Select your lock amount and duration. Confirm the transaction in your wallet.
+Navigate to the Wealth Engine on axiomprotocol.app/staking. Select your lock amount and duration. Confirm the transaction in your wallet.
 
 **STEP 4: Receive veAXM**
 
@@ -315,7 +315,7 @@ Your veAXM is automatically calculated. This voting power lets you participate i
 As time passes and tokens remain locked, track your position. veAXM decays as your lock gets closer to expiring (unless you extend).
 
 🎯 **PLATFORM LINK:** Scan to access the Wealth Engine
-[QR CODE: https://axiomprotocol.io/staking]
+[QR CODE: https://axiomprotocol.app/staking]
 
 ---
 
@@ -457,7 +457,7 @@ _______________________________________________________
 ☐ **Step 6:** Cast your first vote.
 
 🎯 **PLATFORM LINK:** Scan to start staking
-[QR CODE: https://axiomprotocol.io/staking]
+[QR CODE: https://axiomprotocol.app/staking]
 
 ---
 
@@ -687,7 +687,7 @@ _______________________________________________________
 ☐ **Step 5:** Vote on an active governance proposal.
 
 🎯 **PLATFORM LINK:** Scan to view your AxiomScore
-[QR CODE: https://axiomprotocol.io/profile/score]
+[QR CODE: https://axiomprotocol.app/profile/score]
 
 ---
 

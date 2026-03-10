@@ -638,7 +638,7 @@ export default function BorrowerGuide() {
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
                 <div style={{ fontSize: '16px' }}>
-                  Email: <strong>lending@axiomprotocol.io</strong>
+                  Email: <strong>lending@axiomprotocol.app</strong>
                 </div>
               </div>
             </div>

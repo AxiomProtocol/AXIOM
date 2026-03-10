@@ -656,13 +656,13 @@ This Gold Standard Edition will be updated as the Axiom ecosystem evolves. Premi
 
 **Support:**
 For questions about this manual or The Wealth Practice:
-- Community forum: axiomprotocol.io/community
-- Education center: axiomprotocol.io/learn
-- Support: support@axiomprotocol.io
+- Community forum: axiomprotocol.app/community
+- Education center: axiomprotocol.app/learn
+- Support: support@axiomprotocol.app
 
 **Connect:**
 [QR CODE: COMMUNITY]
-*Join the community at axiomprotocol.io*
+*Join the community at axiomprotocol.app*
 
 ---
 

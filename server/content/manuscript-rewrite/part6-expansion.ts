@@ -572,7 +572,7 @@ Graduates are equipped to:
 - Contribute to institutional development
 
 [QR CODE: STEWARD-CORPS]
-*axiomprotocol.io/steward-corps*
+*axiomprotocol.app/steward-corps*
 
 ---
 

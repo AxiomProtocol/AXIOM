@@ -147,7 +147,7 @@ The following require additional patent licensing:
 ## Licensing Process
 
 ### Step 1: Inquiry
-Contact licensing@axiomprotocol.io with:
+Contact licensing@axiomprotocol.app with:
 - Company information
 - Intended use case
 - Technical requirements
@@ -197,9 +197,9 @@ Enterprise licenses add:
 
 ## Contact
 
-**Email:** licensing@axiomprotocol.io
+**Email:** licensing@axiomprotocol.app
 
-**Website:** https://axiomprotocol.io/licensing
+**Website:** https://axiomprotocol.app/licensing
 
 **Response Time:** 24-48 business hours
 

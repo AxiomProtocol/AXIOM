@@ -1278,7 +1278,7 @@ Your next step is clear:
 Continue your journey:
 
 **Online Platform**
-axiomprotocol.io - Your dashboard for Wealth Circles, DeFi tools, and community
+axiomprotocol.app - Your dashboard for Wealth Circles, DeFi tools, and community
 
 **Community**
 Wealth Practice Community - Connect with fellow builders
@@ -1294,7 +1294,7 @@ Community Land - Collective acquisition opportunities
 Governance Forum - Shape community decisions
 
 [QR CODE: FULL-PLATFORM]
-*axiomprotocol.io/start*
+*axiomprotocol.app/start*
 
 ---
 
@@ -1343,7 +1343,7 @@ Welcome to your wealthy life.
 
 ### Quick Start Guide 1: Joining Your First Wealth Circle
 
-1. Create account at axiomprotocol.io
+1. Create account at axiomprotocol.app
 2. Complete onboarding and identity verification
 3. Browse available Circles
 4. Select Circle matching your contribution capacity

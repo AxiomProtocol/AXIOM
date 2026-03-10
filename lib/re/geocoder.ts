@@ -23,7 +23,7 @@ export interface GeocodeResult {
 }
 
 const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org';
-const USER_AGENT = 'AxiomProtocol-RE-Intelligence/1.0 (axiomprotocol.io)';
+const USER_AGENT = 'AxiomProtocol-RE-Intelligence/1.0 (axiomprotocol.app)';
 
 export async function geocodeAddress(rawAddress: string): Promise<GeocodeResult | null> {
   try {

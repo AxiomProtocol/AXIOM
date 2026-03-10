@@ -407,7 +407,7 @@ function CreateProposalModal({ onClose, onSubmit }: { onClose: () => void; onSub
               value={formData.discussionUrl}
               onChange={(e) => setFormData({ ...formData, discussionUrl: e.target.value })}
               className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-[#00D4AA]"
-              placeholder="https://forum.axiomprotocol.io/..."
+              placeholder="https://forum.axiomprotocol.app/..."
             />
           </div>
 

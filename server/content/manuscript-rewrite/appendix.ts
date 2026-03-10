@@ -9,14 +9,14 @@ export const appendix = `
 
 ## Quick Start: Creating Your Account
 
-1. Visit axiomprotocol.io
+1. Visit axiomprotocol.app
 2. Click "Sign Up" or "Get Started"
 3. Enter your email address
 4. Create a secure password
 5. Verify your email
 6. Complete your profile
 
-🎯 [QR CODE: https://axiomprotocol.io/signup]
+🎯 [QR CODE: https://axiomprotocol.app/signup]
 
 ---
 
@@ -36,14 +36,14 @@ export const appendix = `
 
 ## Quick Start: Connecting Your Wallet
 
-1. Log into axiomprotocol.io
+1. Log into axiomprotocol.app
 2. Click "Connect Wallet" 
 3. Select your wallet type (MetaMask, WalletConnect, etc.)
 4. Approve the connection in your wallet
 5. Sign the verification message
 6. Your wallet is now connected!
 
-🎯 [QR CODE: https://axiomprotocol.io/connect-wallet]
+🎯 [QR CODE: https://axiomprotocol.app/connect-wallet]
 
 ---
 
@@ -58,7 +58,7 @@ export const appendix = `
 7. Wait for approval
 8. Make your first contribution once approved
 
-🎯 [QR CODE: https://axiomprotocol.io/wealth-practice]
+🎯 [QR CODE: https://axiomprotocol.app/wealth-practice]
 
 ---
 
@@ -73,7 +73,7 @@ export const appendix = `
 7. Confirm the transaction in your wallet
 8. Your position is now active!
 
-🎯 [QR CODE: https://axiomprotocol.io/staking]
+🎯 [QR CODE: https://axiomprotocol.app/staking]
 
 ---
 
@@ -88,7 +88,7 @@ export const appendix = `
 7. Confirm the transaction in your wallet
 8. Your vote is recorded on-chain
 
-🎯 [QR CODE: https://axiomprotocol.io/governance]
+🎯 [QR CODE: https://axiomprotocol.app/governance]
 
 ---
 
@@ -103,7 +103,7 @@ export const appendix = `
 7. Complete verification process
 8. Begin your ownership journey
 
-🎯 [QR CODE: https://axiomprotocol.io/keygrow]
+🎯 [QR CODE: https://axiomprotocol.app/keygrow]
 
 ---
 
@@ -209,19 +209,19 @@ All platform links in one place:
 
 | Feature | URL | QR Code |
 |---------|-----|---------|
-| Sign Up | axiomprotocol.io/signup | [QR CODE] |
-| Connect Wallet | axiomprotocol.io/connect-wallet | [QR CODE] |
-| Wealth Practice | axiomprotocol.io/wealth-practice | [QR CODE] |
-| Join Circle | axiomprotocol.io/wealth-practice/join | [QR CODE] |
-| Staking | axiomprotocol.io/staking | [QR CODE] |
-| Governance | axiomprotocol.io/governance | [QR CODE] |
-| Academy | axiomprotocol.io/academy | [QR CODE] |
-| KeyGrow | axiomprotocol.io/keygrow | [QR CODE] |
-| Land Acquisition | axiomprotocol.io/land-acquisition | [QR CODE] |
-| Steward Corps | axiomprotocol.io/steward-corps | [QR CODE] |
-| Profile/Score | axiomprotocol.io/profile/score | [QR CODE] |
-| PMA Bylaws | axiomprotocol.io/pma/bylaws | [QR CODE] |
-| Support | axiomprotocol.io/support | [QR CODE] |
+| Sign Up | axiomprotocol.app/signup | [QR CODE] |
+| Connect Wallet | axiomprotocol.app/connect-wallet | [QR CODE] |
+| Wealth Practice | axiomprotocol.app/wealth-practice | [QR CODE] |
+| Join Circle | axiomprotocol.app/wealth-practice/join | [QR CODE] |
+| Staking | axiomprotocol.app/staking | [QR CODE] |
+| Governance | axiomprotocol.app/governance | [QR CODE] |
+| Academy | axiomprotocol.app/academy | [QR CODE] |
+| KeyGrow | axiomprotocol.app/keygrow | [QR CODE] |
+| Land Acquisition | axiomprotocol.app/land-acquisition | [QR CODE] |
+| Steward Corps | axiomprotocol.app/steward-corps | [QR CODE] |
+| Profile/Score | axiomprotocol.app/profile/score | [QR CODE] |
+| PMA Bylaws | axiomprotocol.app/pma/bylaws | [QR CODE] |
+| Support | axiomprotocol.app/support | [QR CODE] |
 
 ---
 
@@ -244,9 +244,9 @@ All Axiom smart contracts are deployed on Arbitrum One and verified on Blockscou
 | KeyGrow Registry | 0x... | Property tokenization |
 | Treasury | 0x... | Community funds |
 
-*Note: Exact addresses available at axiomprotocol.io/contracts*
+*Note: Exact addresses available at axiomprotocol.app/contracts*
 
-🎯 [QR CODE: https://axiomprotocol.io/contracts]
+🎯 [QR CODE: https://axiomprotocol.app/contracts]
 
 ---
 
@@ -256,13 +256,13 @@ All Axiom smart contracts are deployed on Arbitrum One and verified on Blockscou
 
 ## Official Channels
 
-**Website:** axiomprotocol.io
+**Website:** axiomprotocol.app
 
-**Documentation:** docs.axiomprotocol.io
+**Documentation:** docs.axiomprotocol.app
 
-**Support:** support@axiomprotocol.io
+**Support:** support@axiomprotocol.app
 
-🎯 [QR CODE: https://axiomprotocol.io]
+🎯 [QR CODE: https://axiomprotocol.app]
 
 ---
 

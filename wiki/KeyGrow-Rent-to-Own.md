@@ -171,6 +171,6 @@ KeyGrowStaking.sol
 
 ---
 
-**Contact:** licensing@axiomprotocol.io
+**Contact:** licensing@axiomprotocol.app
 
 Copyright (c) 2024 Axiom Protocol. All Rights Reserved.

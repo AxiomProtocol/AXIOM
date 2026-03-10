@@ -84,7 +84,7 @@ Configure MetaMask for Arbitrum One (our current network):
 - Explorer: arbiscan.io
 
 [QR CODE: WALLET-SETUP]
-*axiomprotocol.io/learn/wallet-setup*
+*axiomprotocol.app/learn/wallet-setup*
 
 ---
 

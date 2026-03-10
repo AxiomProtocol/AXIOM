@@ -178,7 +178,7 @@ _______________________________________________________
 ☐ **Step 5:** Review governance proposals and participate.
 
 🎯 **PLATFORM LINK:** Scan to view PMA bylaws
-[QR CODE: https://axiomprotocol.io/pma/bylaws]
+[QR CODE: https://axiomprotocol.app/pma/bylaws]
 
 ---
 
@@ -251,7 +251,7 @@ After discussion, voting opens. Members vote with their veAXM:
 Proposals that pass are implemented. Some execute automatically (smart contract changes). Others require team action (real-world implementations).
 
 🎯 **PLATFORM LINK:** Scan to view active proposals
-[QR CODE: https://axiomprotocol.io/governance]
+[QR CODE: https://axiomprotocol.app/governance]
 
 ---
 
@@ -400,7 +400,7 @@ _______________________________________________________
 ☐ **Step 5:** Consider creating a proposal if you see an improvement opportunity.
 
 🎯 **PLATFORM LINK:** Scan to vote on proposals
-[QR CODE: https://axiomprotocol.io/governance/vote]
+[QR CODE: https://axiomprotocol.app/governance/vote]
 
 ---
 
@@ -585,7 +585,7 @@ Ready to begin the Steward path?
 4. Begin Foundation phase training
 
 🎯 **PLATFORM LINK:** Scan to apply for Steward Corps
-[QR CODE: https://axiomprotocol.io/steward-corps/apply]
+[QR CODE: https://axiomprotocol.app/steward-corps/apply]
 
 ---
 
@@ -653,7 +653,7 @@ _______________________________________________________
 ☐ **Step 5:** Set a target date for application.
 
 🎯 **PLATFORM LINK:** Scan to learn about Steward Corps
-[QR CODE: https://axiomprotocol.io/steward-corps]
+[QR CODE: https://axiomprotocol.app/steward-corps]
 
 ---
 

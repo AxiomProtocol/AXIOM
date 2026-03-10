@@ -34,7 +34,7 @@ async function getResendClient() {
     
     return {
       client: new Resend(connectionSettings.settings.api_key),
-      fromEmail: connectionSettings.settings.from_email || 'partners@axiomprotocol.io'
+      fromEmail: connectionSettings.settings.from_email || 'partners@axiomprotocol.app'
     };
   } catch (error) {
     console.error('Failed to get Resend client:', error);

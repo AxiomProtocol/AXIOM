@@ -92,7 +92,7 @@ Each monthly payment:
 When your tokens represent 100% equity, you own the property outright. The tokens convert to deed ownership.
 
 🎯 **PLATFORM LINK:** Scan to explore KeyGrow properties
-[QR CODE: https://axiomprotocol.io/keygrow]
+[QR CODE: https://axiomprotocol.app/keygrow]
 
 ---
 
@@ -240,7 +240,7 @@ _______________________________________________________
 ☐ **Step 5:** Set a target date for KeyGrow application.
 
 🎯 **PLATFORM LINK:** Scan to learn more about KeyGrow
-[QR CODE: https://axiomprotocol.io/keygrow/learn]
+[QR CODE: https://axiomprotocol.app/keygrow/learn]
 
 ---
 
@@ -466,7 +466,7 @@ Set aside funds specifically for land investment. Be ready when opportunities ar
 ☐ **Step 5:** Set a target for first community land investment.
 
 🎯 **PLATFORM LINK:** Scan to view land opportunities
-[QR CODE: https://axiomprotocol.io/land-acquisition]
+[QR CODE: https://axiomprotocol.app/land-acquisition]
 
 ---
 
@@ -728,7 +728,7 @@ _______________________________________________________
 ☐ **Step 5:** Schedule consultation with estate planning professional.
 
 🎯 **PLATFORM LINK:** Scan for estate planning resources
-[QR CODE: https://axiomprotocol.io/resources/estate-planning]
+[QR CODE: https://axiomprotocol.app/resources/estate-planning]
 
 ---
 

@@ -1028,11 +1028,11 @@ Governance: Community decision-making system
 
 ### Important Links
 
-Platform Dashboard: app.axiomprotocol.io
-Documentation: docs.axiomprotocol.io
-Community Forum: forum.axiomprotocol.io
-Support: support@axiomprotocol.io
-Emergency Contact: security@axiomprotocol.io
+Platform Dashboard: app.axiomprotocol.app
+Documentation: docs.axiomprotocol.app
+Community Forum: forum.axiomprotocol.app
+Support: support@axiomprotocol.app
+Emergency Contact: security@axiomprotocol.app
 
 ---
 

@@ -153,7 +153,7 @@ After 5 Years:
 Result: Went from renter to owner with lower monthly cost.
 
 [QR CODE: KEYGROW]
-*axiomprotocol.io/keygrow*
+*axiomprotocol.app/keygrow*
 
 ---
 
@@ -338,7 +338,7 @@ The Land Reclamation Workbook helps you:
 This specialized tool is available to premium members.
 
 [QR CODE: LAND-RECLAMATION]
-*axiomprotocol.io/land-reclamation*
+*axiomprotocol.app/land-reclamation*
 
 ---
 

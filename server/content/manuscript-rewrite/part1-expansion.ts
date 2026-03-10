@@ -227,7 +227,7 @@ In our community, we've created specialized Healing Wealth Circles for those who
 If you recognize yourself in these trauma patterns and want specialized support, scan the QR code below to learn about Healing Wealth Circles:
 
 [QR CODE: HEALING-CIRCLES]
-*axiomprotocol.io/healing-circles*
+*axiomprotocol.app/healing-circles*
 
 ---
 

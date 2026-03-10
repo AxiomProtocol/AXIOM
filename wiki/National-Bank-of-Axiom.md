@@ -220,6 +220,6 @@ AxiomPayments.sol
 
 ---
 
-**Licensing Required:** licensing@axiomprotocol.io
+**Licensing Required:** licensing@axiomprotocol.app
 
 Copyright (c) 2024 Axiom Protocol. All Rights Reserved.

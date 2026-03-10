@@ -130,7 +130,7 @@ The core contracts are being prepared for third-party audits following TGE soft 
 
 Security vulnerabilities should be reported to:
 
-**Email:** security@axiomprotocol.io
+**Email:** security@axiomprotocol.app
 
 Please include:
 - Description of the vulnerability
@@ -166,7 +166,7 @@ A bug bounty program is planned for launch concurrent with external audits.
 
 Axiom Protocol smart contracts and architecture are proprietary and protected by copyright and patent-pending claims. While the code is visible on public block explorers for transparency and security review, all commercial use requires a paid license.
 
-For licensing inquiries, see [[Licensing]] or contact licensing@axiomprotocol.io.
+For licensing inquiries, see [[Licensing]] or contact licensing@axiomprotocol.app.
 
 ---
 
@@ -178,6 +178,6 @@ For licensing inquiries, see [[Licensing]] or contact licensing@axiomprotocol.io
 
 ---
 
-**Contact:** security@axiomprotocol.io
+**Contact:** security@axiomprotocol.app
 
 Copyright (c) 2024 Axiom Protocol. All Rights Reserved.

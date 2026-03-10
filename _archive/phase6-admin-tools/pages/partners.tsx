@@ -146,7 +146,7 @@ export default function PartnersPage() {
                 </div>
 
                 <a
-                  href="mailto:partners@axiomprotocol.io"
+                  href="mailto:partners@axiomprotocol.app"
                   style={{
                     display: 'inline-block',
                     padding: '14px 32px',

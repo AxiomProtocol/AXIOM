@@ -271,7 +271,7 @@ _______________________________________________________
 ☐ **Step 5:** Decide which mode (Community or Capital) fits your current situation.
 
 🎯 **PLATFORM LINK:** Scan to explore available Wealth Practice circles
-[QR CODE: https://axiomprotocol.io/wealth-practice/circles]
+[QR CODE: https://axiomprotocol.app/wealth-practice/circles]
 
 ---
 
@@ -326,12 +326,12 @@ Let me walk you through exactly how to do it.
 
 **STEP 1: Create Your Axiom Account**
 
-If you haven't already, go to axiomprotocol.io and create your account. You'll need:
+If you haven't already, go to axiomprotocol.app and create your account. You'll need:
 - Email address
 - Password
 - Wallet connection (MetaMask or similar)
 
-🎯 [QR CODE: https://axiomprotocol.io/signup]
+🎯 [QR CODE: https://axiomprotocol.app/signup]
 
 **STEP 2: Complete Your Profile**
 
@@ -356,7 +356,7 @@ Navigate to The Wealth Practice section and explore available circles:
 - Different interests (professionals, families, entrepreneurs, etc.)
 - Different frequencies (weekly, biweekly, monthly)
 
-🎯 [QR CODE: https://axiomprotocol.io/wealth-practice]
+🎯 [QR CODE: https://axiomprotocol.app/wealth-practice]
 
 **STEP 5: Evaluate Your Options**
 
@@ -535,7 +535,7 @@ Total payout expected: $________
 ☐ **Step 7:** Introduce yourself to your circle members.
 
 🎯 **PLATFORM LINK:** Scan to join your first circle
-[QR CODE: https://axiomprotocol.io/wealth-practice/join]
+[QR CODE: https://axiomprotocol.app/wealth-practice/join]
 
 ---
 
@@ -771,7 +771,7 @@ _______________________________________________________
 ☐ **Step 5:** Set a reminder to check on group members' commitments.
 
 🎯 **PLATFORM LINK:** Scan to access circle communication tools
-[QR CODE: https://axiomprotocol.io/circle/chat]
+[QR CODE: https://axiomprotocol.app/circle/chat]
 
 ---
 
@@ -1046,7 +1046,7 @@ Duration: ________ weeks/months
 ☐ **Step 5:** Identify 5 potential members for a future circle.
 
 🎯 **PLATFORM LINK:** Scan to learn about coordinator opportunities
-[QR CODE: https://axiomprotocol.io/coordinator-program]
+[QR CODE: https://axiomprotocol.app/coordinator-program]
 
 ---
 

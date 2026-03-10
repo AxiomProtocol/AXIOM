@@ -941,7 +941,7 @@ This window closes after 12 months.
 
 HOW TO JOIN
 
-1. Visit axiomprotocol.io/pma
+1. Visit axiomprotocol.app/pma
 2. Review the Declaration of Trust, Bylaws, and Membership Agreement
 3. Complete the membership application
 4. Receive your Membership Tokens
@@ -973,10 +973,10 @@ Let's build it that way.
 DOCUMENT RESOURCES
 ================================================================================
 
-Website: axiomprotocol.io
-PMA Information: axiomprotocol.io/pma
-Membership Application: axiomprotocol.io/pma/join
-Legal Documents: axiomprotocol.io/pma/declaration
+Website: axiomprotocol.app
+PMA Information: axiomprotocol.app/pma
+Membership Application: axiomprotocol.app/pma/join
+Legal Documents: axiomprotocol.app/pma/declaration
 
 GitHub: github.com/AxiomProtocol/AXIOM
 

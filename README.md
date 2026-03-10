@@ -81,19 +81,19 @@ Full list of 23+ verified contracts available in [docs/contract_registry.md](doc
 ### For Landowners
 Submit your property for community acquisition consideration:
 ```
-https://axiomprotocol.io/landowners/submit
+https://axiomprotocol.app/landowners/submit
 ```
 
 ### For Investors
 Browse active crowdfunding campaigns and SUSU pools:
 ```
-https://axiomprotocol.io/land-acquisition
+https://axiomprotocol.app/land-acquisition
 ```
 
 ### For Stewards
 Join the Steward Corps and lead land acquisition in your region:
 ```
-https://axiomprotocol.io/stewards/apply
+https://axiomprotocol.app/stewards/apply
 ```
 
 ---
@@ -124,7 +124,7 @@ The project uses Next.js standalone output. Run `prebuild.sh` before deploying t
 
 ## Documentation
 
-- [Whitepaper](https://axiomprotocol.io/whitepaper) - Land-first economic model
+- [Whitepaper](https://axiomprotocol.app/whitepaper) - Land-first economic model
 - [Contract Registry](docs/contract_registry.md) - All deployed contracts
 - [API Documentation](docs/api.md) - Backend API reference
 - [Steward Playbook](docs/steward-playbook.md) - Steward operations guide
@@ -133,7 +133,7 @@ The project uses Next.js standalone output. Run `prebuild.sh` before deploying t
 
 ## Security
 
-Security vulnerabilities should be reported to: **security@axiomprotocol.io**
+Security vulnerabilities should be reported to: **security@axiomprotocol.app**
 
 All smart contracts have undergone multi-AI security review. See [SECURITY.md](SECURITY.md) for details.
 
@@ -146,7 +146,7 @@ All smart contracts have undergone multi-AI security review. See [SECURITY.md](S
 Copyright (c) 2024-2025 Axiom Protocol. Unauthorized use, copying, modification, or distribution is strictly prohibited. See [LICENSE](LICENSE) for full terms.
 
 ### Commercial Licensing
-All commercial use requires a paid license. Contact: **licensing@axiomprotocol.io**
+All commercial use requires a paid license. Contact: **licensing@axiomprotocol.app**
 
 ---
 
@@ -163,6 +163,6 @@ All commercial use requires a paid license. Contact: **licensing@axiomprotocol.i
 
 ## Contact
 
-- **Website:** https://axiomprotocol.io
-- **Licensing:** licensing@axiomprotocol.io
-- **Security:** security@axiomprotocol.io
+- **Website:** https://axiomprotocol.app
+- **Licensing:** licensing@axiomprotocol.app
+- **Security:** security@axiomprotocol.app

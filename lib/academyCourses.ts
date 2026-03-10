@@ -1929,7 +1929,7 @@ Step-by-step:
 
 On-chain registration:
 
-1. Connect wallet to axiomprotocol.io
+1. Connect wallet to axiomprotocol.app
 2. Navigate to Node Operator portal
 3. Register node with generated credentials
 4. Stake AXM to activate node

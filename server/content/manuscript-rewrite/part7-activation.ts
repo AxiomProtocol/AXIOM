@@ -59,9 +59,9 @@ By the end of Week 1, you will have:
 
 **Action Step**
 
-Create (or finalize) your Axiom account at axiomprotocol.io
+Create (or finalize) your Axiom account at axiomprotocol.app
 
-🎯 [QR CODE: https://axiomprotocol.io/signup]
+🎯 [QR CODE: https://axiomprotocol.app/signup]
 
 **Evening Reflection**
 
@@ -105,9 +105,9 @@ Download and set up MetaMask (or your chosen wallet). Write down your seed phras
 
 **Action Step**
 
-Connect your wallet to axiomprotocol.io. Complete your Wealth Profile. Explore the platform.
+Connect your wallet to axiomprotocol.app. Complete your Wealth Profile. Explore the platform.
 
-🎯 [QR CODE: https://axiomprotocol.io/connect-wallet]
+🎯 [QR CODE: https://axiomprotocol.app/connect-wallet]
 
 **Evening Reflection**
 
@@ -130,7 +130,7 @@ Connect your wallet to axiomprotocol.io. Complete your Wealth Profile. Explore t
 
 Browse available Wealth Practice circles. Note 3 that interest you. Read their details carefully.
 
-🎯 [QR CODE: https://axiomprotocol.io/wealth-practice]
+🎯 [QR CODE: https://axiomprotocol.app/wealth-practice]
 
 **Evening Reflection**
 
@@ -180,7 +180,7 @@ Available for Wealth Practice: $_______
 
 Explore the Academy section. Complete at least one educational module. Note what you learned.
 
-🎯 [QR CODE: https://axiomprotocol.io/academy]
+🎯 [QR CODE: https://axiomprotocol.app/academy]
 
 **Evening Reflection**
 
@@ -203,7 +203,7 @@ Explore the Academy section. Complete at least one educational module. Note what
 
 Apply to join ONE Wealth Practice circle. Make the commitment. Submit your application.
 
-🎯 [QR CODE: https://axiomprotocol.io/wealth-practice/join]
+🎯 [QR CODE: https://axiomprotocol.app/wealth-practice/join]
 
 **Week 1 Reflection**
 
@@ -304,7 +304,7 @@ Check your circle application status. If accepted, celebrate! If pending, follow
 
 Make your FIRST contribution to your Wealth Practice circle. Record the transaction. Celebrate this milestone!
 
-🎯 [QR CODE: https://axiomprotocol.io/circle/contribute]
+🎯 [QR CODE: https://axiomprotocol.app/circle/contribute]
 
 **Evening Reflection**
 
@@ -491,7 +491,7 @@ By the end of Week 3, you will have:
 
 Make your first stake in the Wealth Engine. Even a small amount counts. Lock for as long as you're comfortable.
 
-🎯 [QR CODE: https://axiomprotocol.io/staking]
+🎯 [QR CODE: https://axiomprotocol.app/staking]
 
 **Evening Reflection**
 
@@ -514,7 +514,7 @@ Make your first stake in the Wealth Engine. Even a small amount counts. Lock for
 
 Review active governance proposals. Cast your first vote. Participate in your democracy.
 
-🎯 [QR CODE: https://axiomprotocol.io/governance]
+🎯 [QR CODE: https://axiomprotocol.app/governance]
 
 **Evening Reflection**
 
@@ -631,7 +631,7 @@ Write your 21-day transformation story. What changed? What did you learn? How ar
 
 Complete the 21-Day Activation Certificate on the platform. Celebrate with your circle. You have ARRIVED.
 
-🎯 [QR CODE: https://axiomprotocol.io/activation/complete]
+🎯 [QR CODE: https://axiomprotocol.app/activation/complete]
 
 **Final Reflection**
 

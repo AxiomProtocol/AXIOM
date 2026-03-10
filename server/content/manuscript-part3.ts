@@ -358,25 +358,25 @@ Strategies to maximize returns by moving assets between different DeFi protocols
 
 ### Official Axiom Resources
 
-WEBSITE: axiomprotocol.io
+WEBSITE: axiomprotocol.app
 Your primary interface for all Axiom activities.
 
-DOCUMENTATION: docs.axiomprotocol.io
+DOCUMENTATION: docs.axiomprotocol.app
 Technical documentation, guides, and FAQs.
 
 COMMUNITY DISCORD: discord.gg/axiomprotocol
 Real-time community support, discussion channels, study groups.
 
-GOVERNANCE FORUM: forum.axiomprotocol.io
+GOVERNANCE FORUM: forum.axiomprotocol.app
 Long-form discussions about proposals and protocol direction.
 
-BLOG: blog.axiomprotocol.io
+BLOG: blog.axiomprotocol.app
 Announcements, updates, and educational content.
 
-SUPPORT EMAIL: support@axiomprotocol.io
+SUPPORT EMAIL: support@axiomprotocol.app
 For issues requiring direct assistance.
 
-SECURITY: security@axiomprotocol.io
+SECURITY: security@axiomprotocol.app
 For reporting vulnerabilities or security concerns.
 
 ### Blockchain Resources
@@ -532,7 +532,7 @@ STEP 1: Complete All Manual Chapters
 Work through every chapter, complete all worksheets, and take all actions.
 
 STEP 2: Pass the Verification Quiz
-Navigate to axiomprotocol.io/certification
+Navigate to axiomprotocol.app/certification
 Take the 50-question quiz covering manual content
 Minimum 80% score required to pass
 You can retake the quiz after 24 hours if needed

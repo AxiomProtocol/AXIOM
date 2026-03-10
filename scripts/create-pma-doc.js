@@ -125,7 +125,7 @@ All governed by you through on-chain voting.
 
 This is not just another crypto project. This is America's first on-chain sovereign smart city economy.
 
-Ready to join? Visit axiomprotocol.io/pma to become a founding member today.
+Ready to join? Visit axiomprotocol.app/pma to become a founding member today.
 
 CAPTION: Discover the power of constitutional protection in the digital economy
 
@@ -169,7 +169,7 @@ No more throwing money away on rent. No more waiting decades to own a home.
 
 KeyGrow turns renters into owners, one payment at a time.
 
-Apply today at axiomprotocol.io/keygrow.
+Apply today at axiomprotocol.app/keygrow.
 
 CAPTION: Stop renting. Start owning. KeyGrow makes homeownership possible.
 
@@ -193,7 +193,7 @@ You can track every contribution, every payout, right on the blockchain.
 
 This is the future of community finance.
 
-Join a SUSU circle at axiomprotocol.io/susu.
+Join a SUSU circle at axiomprotocol.app/susu.
 
 CAPTION: Community savings circles, now on-chain and transparent
 
@@ -221,7 +221,7 @@ Founding members joining in the first twelve months get enhanced governance righ
 
 This is not just a membership. This is your ticket to the sovereign digital economy.
 
-Join now at axiomprotocol.io/pma.
+Join now at axiomprotocol.app/pma.
 
 CAPTION: One membership. Unlimited opportunity.
 
@@ -245,7 +245,7 @@ The Board of Trustees ensures fiduciary responsibility, while the Protector Coun
 
 This is democracy, decentralized.
 
-Get your voting power at axiomprotocol.io/pma.
+Get your voting power at axiomprotocol.app/pma.
 
 CAPTION: Decentralized governance. Your vote. Your future.
 
@@ -269,7 +269,7 @@ This structure has been used in professional settings for decades. It separates 
 
 Add our on-chain DAO layer, and you have a governance system built for the twenty-first century.
 
-Learn more at axiomprotocol.io/pma.
+Learn more at axiomprotocol.app/pma.
 
 CAPTION: Professional trust structure meets blockchain innovation
 
@@ -289,7 +289,7 @@ Constitutional protection. On-chain transparency. Real wealth-building tools.
 
 This is not someday. This is today.
 
-Visit axiomprotocol.io/pma and become a founding member.
+Visit axiomprotocol.app/pma and become a founding member.
 
 America's first on-chain smart city economy is waiting for you.
 
@@ -305,19 +305,19 @@ Legal Documents (Download ZIP):
 https://360622ba-3a08-49d5-b897-b1f3ae451373-00-3qltpf64rz19n.worf.replit.dev/api/download-trust-docs
 
 PMA Information Page:
-axiomprotocol.io/pma
+axiomprotocol.app/pma
 
 Membership Application:
-axiomprotocol.io/pma/join
+axiomprotocol.app/pma/join
 
 Declaration of Trust:
-axiomprotocol.io/pma/declaration
+axiomprotocol.app/pma/declaration
 
 Bylaws:
-axiomprotocol.io/pma/bylaws
+axiomprotocol.app/pma/bylaws
 
 Membership Agreement:
-axiomprotocol.io/pma/membership-agreement
+axiomprotocol.app/pma/membership-agreement
 
 ================================================================================
 END OF DOCUMENT

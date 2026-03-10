@@ -310,7 +310,7 @@ Complete these before moving to Chapter 2:
 ☐ **Step 4:** Visit the Axiom platform and create your account if you haven't already.
 
 🎯 **PLATFORM LINK:** Scan to create your Axiom account
-[QR CODE: https://axiomprotocol.io/signup]
+[QR CODE: https://axiomprotocol.app/signup]
 
 ---
 
@@ -637,7 +637,7 @@ _______________________________________________________
 ☐ **Step 5:** Join or identify your Wealth Practice circle for community support.
 
 🎯 **PLATFORM LINK:** Scan to explore The Wealth Practice
-[QR CODE: https://axiomprotocol.io/wealth-practice]
+[QR CODE: https://axiomprotocol.app/wealth-practice]
 
 ---
 
@@ -935,7 +935,7 @@ _______________________________________________________
 ☐ **Step 5:** Complete Parts I exercises and prepare for Part II: The Sovereign Mind.
 
 🎯 **PLATFORM LINK:** Scan to connect your wallet and begin
-[QR CODE: https://axiomprotocol.io/connect-wallet]
+[QR CODE: https://axiomprotocol.app/connect-wallet]
 
 ---
 

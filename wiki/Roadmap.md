@@ -157,6 +157,6 @@ Building America's first on-chain sovereign smart city economy.
 
 ---
 
-**Stay Updated:** https://axiomprotocol.io
+**Stay Updated:** https://axiomprotocol.app
 
 Copyright (c) 2024 Axiom Protocol. All Rights Reserved.
