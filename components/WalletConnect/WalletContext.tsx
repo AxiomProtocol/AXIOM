@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
 import { useAccount, useBalance, useChainId, useDisconnect, useSwitchChain } from 'wagmi';
-import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { arbitrum } from 'viem/chains';
 import { formatUnits } from 'viem';
 
@@ -64,7 +63,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const chainId = useChainId();
   const { disconnect: wagmiDisconnect } = useDisconnect();
   const { switchChain } = useSwitchChain();
-  const { openConnectModal } = useConnectModal();
 
   const { data: ethBalanceData } = useBalance({
     address: address as `0x${string}` | undefined,
@@ -101,9 +99,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       setAxmBalance(ethers.formatEther(balance));
     } catch (err) {
       console.error('AXM balance fetch error:', err);
-      if (process.env.NODE_ENV !== 'production') {
-        setAxmBalance('0');
-      }
+      setAxmBalance('0');
     }
   }, []);
 
@@ -249,15 +245,15 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   };
 
   const connectMetaMask = async () => {
-    if (openConnectModal) {
-      openConnectModal();
+    try {
+      const { useAppKit } = await import('@reown/appkit/react');
+    } catch {
+      console.warn('Use the Access Platform button to connect');
     }
   };
 
   const connectInjected = async () => {
-    if (openConnectModal) {
-      openConnectModal();
-    }
+    console.warn('Use the Access Platform button to connect');
   };
 
   const disconnect = async () => {

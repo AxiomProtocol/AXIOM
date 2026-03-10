@@ -1,11 +1,11 @@
 import '../styles/globals.css'
-import '@rainbow-me/rainbowkit/styles.css'
-import { useEffect, createContext, useContext } from 'react'
+import { useEffect, createContext, useContext, useState } from 'react'
 import { useRouter } from 'next/router'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
-import { wagmiConfig } from '../lib/web3/wagmiConfig'
+import { createAppKit } from '@reown/appkit/react'
+import { arbitrum } from '@reown/appkit/networks'
+import { wagmiAdapter, projectId, networks } from '../lib/web3/wagmiConfig'
 import { WalletProvider } from '../components/WalletConnect/WalletContext'
 import ErrorBoundary from '../components/ErrorBoundary'
 
@@ -16,8 +16,34 @@ export const useOnboarding = () => useContext(OnboardingContext)
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID
 
+if (typeof window !== 'undefined' && projectId) {
+  createAppKit({
+    adapters: [wagmiAdapter],
+    projectId,
+    networks,
+    defaultNetwork: arbitrum,
+    metadata: {
+      name: 'Axiom Protocol',
+      description: 'Sovereign Digital-Physical Economy',
+      url: typeof window !== 'undefined' ? window.location.origin : 'https://axiomprotocol.app',
+      icons: ['/favicon.ico'],
+    },
+    features: {
+      analytics: false,
+      swaps: false,
+      onramp: false,
+    },
+    themeMode: 'light',
+  })
+}
+
 export default function App({ Component, pageProps }) {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (!GA_ID) return
@@ -36,23 +62,13 @@ export default function App({ Component, pageProps }) {
 
   return (
     <ErrorBoundary>
-      <WagmiProvider config={wagmiConfig}>
+      <WagmiProvider config={wagmiAdapter.wagmiConfig}>
         <QueryClientProvider client={queryClient}>
-          <RainbowKitProvider
-            locale="en"
-            theme={darkTheme({
-              accentColor: '#1a2332',
-              accentColorForeground: 'white',
-              borderRadius: 'none',
-              fontStack: 'system',
-            })}
-          >
-            <WalletProvider>
-              <OnboardingContext.Provider value={{ triggerOnboarding: () => {} }}>
-                <Component {...pageProps} />
-              </OnboardingContext.Provider>
-            </WalletProvider>
-          </RainbowKitProvider>
+          <WalletProvider>
+            <OnboardingContext.Provider value={{ triggerOnboarding: () => {} }}>
+              {mounted ? <Component {...pageProps} /> : null}
+            </OnboardingContext.Provider>
+          </WalletProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </ErrorBoundary>

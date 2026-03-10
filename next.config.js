@@ -46,6 +46,13 @@ const nextConfig = {
       })
     );
 
+    if (!isServer) {
+      config.externals = config.externals || [];
+      if (Array.isArray(config.externals)) {
+        config.externals.push('pino-pretty', 'lokijs', 'encoding');
+      }
+    }
+
     return config;
   },
 };

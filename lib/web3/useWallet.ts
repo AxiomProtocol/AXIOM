@@ -1,5 +1,4 @@
 import { useAccount, useBalance, useChainId } from 'wagmi';
-import { arbitrum } from 'viem/chains';
 import { formatUnits } from 'viem';
 
 const ARBITRUM_CHAIN_ID = 42161;
@@ -37,14 +36,14 @@ export function useWallet() {
     provider: null,
     signer: null,
     connect: async () => {
-      console.warn('useWallet.connect() is deprecated. Use RainbowKit ConnectButton or useConnectModal() instead.');
+      console.warn('useWallet.connect() is deprecated. Use the Access Platform button instead.');
       return false;
     },
     disconnect: () => {
-      console.warn('useWallet.disconnect() is deprecated. Use RainbowKit account modal or wagmi useDisconnect() instead.');
+      console.warn('useWallet.disconnect() is deprecated. Use the account modal instead.');
     },
     switchToArbitrum: async () => {
-      console.warn('useWallet.switchToArbitrum() is deprecated. Use RainbowKit chain modal or wagmi useSwitchChain() instead.');
+      console.warn('useWallet.switchToArbitrum() is deprecated. Use the network modal instead.');
       return false;
     },
     refreshBalance: () => {},
