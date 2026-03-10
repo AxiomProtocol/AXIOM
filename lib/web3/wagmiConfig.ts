@@ -1,10 +1,9 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import {
-  metaMaskWallet,
   walletConnectWallet,
   coinbaseWallet,
   rainbowWallet,
-  injectedWallet,
+  metaMaskWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 import { arbitrum } from 'viem/chains';
 import { http } from 'wagmi';
@@ -21,19 +20,20 @@ if (!walletConnectProjectId) {
   console.warn('NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not set. WalletConnect will not be available.');
 }
 
+(coinbaseWallet as any).preference = 'all';
+
 export const wagmiConfig = getDefaultConfig({
   appName: 'Axiom Protocol',
   projectId: walletConnectProjectId || '',
   chains: [arbitrum],
   wallets: [
     {
-      groupName: 'Recommended',
+      groupName: 'Connect',
       wallets: [
-        metaMaskWallet,
         walletConnectWallet,
+        metaMaskWallet,
         coinbaseWallet,
         rainbowWallet,
-        injectedWallet,
       ],
     },
   ],
