@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '../WalletConnect/WalletContext';
+import { openAppKit } from '../../lib/web3/appKitModal';
 
 interface ConnectWalletButtonProps {
   onConnect?: (address: string) => void;
@@ -9,7 +9,6 @@ interface ConnectWalletButtonProps {
 
 export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletButtonProps) {
   const { walletState, siweState } = useWallet();
-  const { open } = useAppKit();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -25,6 +24,14 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
     }
   }, [walletState.isConnected, walletState.address]);
 
+  const handleConnect = useCallback(() => {
+    openAppKit();
+  }, []);
+
+  const handleOpenAccount = useCallback(() => {
+    openAppKit({ view: 'Account' });
+  }, []);
+
   if (!mounted) {
     return (
       <button className="bg-dl-navy text-white px-5 py-2 text-sm font-medium">
@@ -36,7 +43,7 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
   if (!walletState.isConnected) {
     return (
       <button
-        onClick={() => open()}
+        onClick={handleConnect}
         className="bg-dl-navy text-white px-5 py-2 text-sm font-medium"
       >
         {siweState.isAuthenticating ? 'Signing...' : 'Access Platform'}
@@ -77,7 +84,7 @@ export function ConnectWalletButton({ onConnect, onDisconnect }: ConnectWalletBu
           </span>
         </span>
         <button
-          onClick={() => open({ view: 'Account' })}
+          onClick={handleOpenAccount}
           className="font-dl-mono text-xs text-dl-navy bg-dl-bg-alt border border-dl-border px-2 py-0.5"
         >
           {shortAddress}

@@ -3,11 +3,15 @@ import { useEffect, createContext, useContext, useState } from 'react'
 import { useRouter } from 'next/router'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createAppKit } from '@reown/appkit/react'
-import { arbitrum } from '@reown/appkit/networks'
+import dynamic from 'next/dynamic'
 import { wagmiAdapter, projectId, networks } from '../lib/web3/wagmiConfig'
 import { WalletProvider } from '../components/WalletConnect/WalletContext'
 import ErrorBoundary from '../components/ErrorBoundary'
+
+const AppKitInitializer = dynamic(
+  () => import('../components/WalletConnect/AppKitInitializer'),
+  { ssr: false }
+)
 
 const queryClient = new QueryClient()
 
@@ -15,28 +19,6 @@ const OnboardingContext = createContext({ triggerOnboarding: () => {} })
 export const useOnboarding = () => useContext(OnboardingContext)
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID
-
-let appKitInstance = null
-if (typeof window !== 'undefined' && projectId) {
-  appKitInstance = createAppKit({
-    adapters: [wagmiAdapter],
-    projectId,
-    networks,
-    defaultNetwork: arbitrum,
-    metadata: {
-      name: 'Axiom Protocol',
-      description: 'Sovereign Digital-Physical Economy',
-      url: typeof window !== 'undefined' ? window.location.origin : 'https://axiomprotocol.app',
-      icons: ['/favicon.ico'],
-    },
-    features: {
-      analytics: false,
-      swaps: false,
-      onramp: false,
-    },
-    themeMode: 'light',
-  })
-}
 
 export default function App({ Component, pageProps }) {
   const router = useRouter()
@@ -65,6 +47,7 @@ export default function App({ Component, pageProps }) {
     <ErrorBoundary>
       <WagmiProvider config={wagmiAdapter.wagmiConfig}>
         <QueryClientProvider client={queryClient}>
+          <AppKitInitializer />
           <WalletProvider>
             <OnboardingContext.Provider value={{ triggerOnboarding: () => {} }}>
               {mounted ? <Component {...pageProps} /> : null}

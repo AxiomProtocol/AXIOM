@@ -245,11 +245,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   };
 
   const connectMetaMask = async () => {
-    try {
-      const { useAppKit } = await import('@reown/appkit/react');
-    } catch {
-      console.warn('Use the Access Platform button to connect');
-    }
+    console.warn('Use the Access Platform button to connect');
   };
 
   const connectInjected = async () => {
