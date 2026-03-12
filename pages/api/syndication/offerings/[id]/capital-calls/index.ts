@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { pool } from '../../../../../server/db';
+import { pool } from '../../../../../../server/db';
 import { ethers } from 'ethers';
 
 function parseCookies(cookieHeader: string | undefined): Record<string, string> {
@@ -38,15 +38,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return handleGet(req, res, id as string);
   } else if (req.method === 'POST') {
     return handlePost(req, res, id as string);
-  } else if (req.method === 'PATCH') {
-    return handlePatch(req, res, id as string);
   }
 
   return res.status(405).json({ success: false, error: 'Method not allowed' });
 }
 
 async function handleGet(req: NextApiRequest, res: NextApiResponse, offeringId: string) {
+  const wallet = await getAuthenticatedWallet(req);
+  if (!wallet) {
+    return res.status(401).json({ success: false, error: 'Authentication required.' });
+  }
+
   try {
+    const offeringCheck = await pool.query(
+      `SELECT created_by FROM syn_offerings WHERE id = $1`, [offeringId]
+    );
+    if (offeringCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Offering not found' });
+    }
+    const isOperator = offeringCheck.rows[0].created_by &&
+      offeringCheck.rows[0].created_by.toLowerCase() === wallet.toLowerCase();
+    if (!isOperator) {
+      return res.status(403).json({ success: false, error: 'Only the offering operator can view capital calls.' });
+    }
+
     const result = await pool.query(
       `SELECT cc.*, 
               s.amount AS subscription_amount, s.status AS subscription_status, s.payment_currency,
@@ -79,7 +94,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
 
   try {
     const offeringResult = await pool.query(
-      `SELECT o.id, o.name, o.slug, o.created_by FROM syn_offerings o WHERE o.id = $1`,
+      `SELECT o.id, o.name, o.slug, o.created_by, o.description FROM syn_offerings o WHERE o.id = $1`,
       [offeringId]
     );
     if (offeringResult.rows.length === 0) {
@@ -140,7 +155,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
       const unitCustomerId = sub.investor_meta?.unitCustomerId;
       if (unitCustomerId) {
         try {
-          const { UnitPaymentService } = await import('../../../../../lib/services/UnitPaymentService');
+          const { UnitPaymentService } = await import('../../../../../../lib/services/UnitPaymentService');
           const paymentService = new UnitPaymentService();
           const achResult = await paymentService.createAchDebit({
             walletAddress: wallet,
@@ -188,7 +203,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
     let emailSent = false;
     if (sub.email) {
       try {
-        const { getResendClient } = await import('../../../../../lib/email/resend');
+        const { getResendClient } = await import('../../../../../../lib/email/resend');
         const { client, fromEmail } = await getResendClient();
 
         const dueDateStr = dueDate ? new Date(dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Upon receipt';
@@ -240,6 +255,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
   <p style="color:#4b5563;font-size:15px;line-height:1.6;">
     A capital call has been issued for your subscription in <strong>${offering.name}</strong>.
   </p>
+  <p style="color:#6b7280;font-size:14px;line-height:1.5;">Property: ${offering.name}</p>
   <table width="100%" style="margin:16px 0;border-collapse:collapse;">
     <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:13px;">Amount Called</td>
         <td style="padding:8px;border-bottom:1px solid #e5e7eb;font-weight:bold;font-size:15px;">$${callAmount.toLocaleString()} ${callCurrency}</td></tr>
@@ -263,7 +279,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
 </td></tr></table>
 </body></html>`;
 
-        const text = `Capital Call Notice — ${offering.name}\n\nDear ${investorName},\n\nA capital call has been issued for your subscription.\n\nAmount: $${callAmount.toLocaleString()} ${callCurrency}\nDue: ${dueDateStr}\nReference: ${memoCode}\n${instructionsText}\n${achTriggered ? '\nAn ACH debit has been initiated from your linked bank account.\n' : ''}\nView: ${platformUrl}/syndication/offerings/${offeringId}`;
+        const text = `Capital Call Notice — ${offering.name}\n\nDear ${investorName},\n\nA capital call has been issued for your subscription.\nProperty: ${offering.name}\n\nAmount: $${callAmount.toLocaleString()} ${callCurrency}\nDue: ${dueDateStr}\nReference: ${memoCode}\n${instructionsText}\n${achTriggered ? '\nAn ACH debit has been initiated from your linked bank account.\n' : ''}\nView: ${platformUrl}/syndication/offerings/${offeringId}`;
 
         await client.emails.send({
           from: fromEmail,
@@ -292,57 +308,3 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
   }
 }
 
-async function handlePatch(req: NextApiRequest, res: NextApiResponse, offeringId: string) {
-  const wallet = await getAuthenticatedWallet(req);
-  if (!wallet) {
-    return res.status(401).json({ success: false, error: 'Authentication required.' });
-  }
-
-  const { callId, status } = req.body;
-
-  if (!callId || !status) {
-    return res.status(400).json({ success: false, error: 'callId and status are required.' });
-  }
-
-  const validStatuses = ['acknowledged', 'funded', 'cancelled'];
-  if (!validStatuses.includes(status)) {
-    return res.status(400).json({ success: false, error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
-  }
-
-  try {
-    const existing = await pool.query(
-      `SELECT cc.id, cc.status, o.created_by
-       FROM syn_capital_calls cc
-       JOIN syn_offerings o ON o.id = cc.offering_id
-       WHERE cc.id = $1 AND cc.offering_id = $2`,
-      [callId, offeringId]
-    );
-
-    if (existing.rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Capital call not found.' });
-    }
-
-    const call = existing.rows[0];
-    const isOperator = call.created_by && call.created_by.toLowerCase() === wallet.toLowerCase();
-    if (!isOperator) {
-      return res.status(403).json({ success: false, error: 'Only the offering operator can update capital call status.' });
-    }
-
-    const statusOrder: Record<string, number> = { sent: 0, acknowledged: 1, funded: 2, cancelled: 3 };
-    const currentOrder = statusOrder[call.status] ?? 0;
-    const newOrder = statusOrder[status] ?? 0;
-
-    if (status !== 'cancelled' && newOrder <= currentOrder) {
-      return res.status(400).json({ success: false, error: `Cannot transition from "${call.status}" to "${status}". Status must move forward.` });
-    }
-
-    await pool.query(
-      `UPDATE syn_capital_calls SET status = $1, updated_at = now() WHERE id = $2 AND offering_id = $3`,
-      [status, callId, offeringId]
-    );
-
-    return res.status(200).json({ success: true, message: `Capital call status updated to "${status}".` });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
-  }
-}

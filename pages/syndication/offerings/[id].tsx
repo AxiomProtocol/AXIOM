@@ -450,10 +450,10 @@ export default function OfferingBuilder() {
 
   const handleCapCallStatusUpdate = async (callId: string, status: string) => {
     try {
-      await fetch(`/api/syndication/offerings/${id}/capital-calls`, {
+      await fetch(`/api/syndication/offerings/${id}/capital-calls/${callId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ callId, status }),
+        body: JSON.stringify({ status }),
       });
       loadCapitalCalls();
     } catch (err) { console.error(err); }
