@@ -2212,6 +2212,8 @@ export async function register() {
         status syn_subscription_status NOT NULL DEFAULT 'draft',
         signature_ref VARCHAR(255),
         funding_method VARCHAR(50),
+        payment_currency VARCHAR(20) DEFAULT 'USD',
+        investor_wallet VARCHAR(42),
         submitted_at TIMESTAMPTZ,
         approved_at TIMESTAMPTZ,
         funded_at TIMESTAMPTZ,
@@ -2233,6 +2235,7 @@ export async function register() {
         status syn_funding_status NOT NULL DEFAULT 'pending',
         settlement_mode VARCHAR(30),
         external_ref VARCHAR(255),
+        tx_hash VARCHAR(66),
         processed_at TIMESTAMPTZ,
         meta JSONB,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -2288,6 +2291,8 @@ export async function register() {
         withholding_amount NUMERIC(14,2),
         status syn_distribution_status NOT NULL DEFAULT 'draft',
         payment_method VARCHAR(50),
+        currency VARCHAR(20) DEFAULT 'USD',
+        recipient_wallet VARCHAR(42),
         paid_at TIMESTAMPTZ,
         period_start TIMESTAMPTZ,
         period_end TIMESTAMPTZ,
@@ -2299,6 +2304,12 @@ export async function register() {
       await exec(`CREATE INDEX IF NOT EXISTS syn_dist_investor_idx ON syn_distributions(investor_profile_id)`, 'idx syn_dist_investor');
       await exec(`CREATE INDEX IF NOT EXISTS syn_dist_status_idx ON syn_distributions(status)`, 'idx syn_dist_status');
       await exec(`CREATE INDEX IF NOT EXISTS syn_dist_type_idx ON syn_distributions(distribution_type)`, 'idx syn_dist_type');
+
+      await exec(`ALTER TABLE syn_subscriptions ADD COLUMN IF NOT EXISTS payment_currency VARCHAR(20) DEFAULT 'USD'`, 'alter syn_subscriptions payment_currency');
+      await exec(`ALTER TABLE syn_subscriptions ADD COLUMN IF NOT EXISTS investor_wallet VARCHAR(42)`, 'alter syn_subscriptions investor_wallet');
+      await exec(`ALTER TABLE syn_funding_records ADD COLUMN IF NOT EXISTS tx_hash VARCHAR(66)`, 'alter syn_funding_records tx_hash');
+      await exec(`ALTER TABLE syn_distributions ADD COLUMN IF NOT EXISTS currency VARCHAR(20) DEFAULT 'USD'`, 'alter syn_distributions currency');
+      await exec(`ALTER TABLE syn_distributions ADD COLUMN IF NOT EXISTS recipient_wallet VARCHAR(42)`, 'alter syn_distributions recipient_wallet');
 
       await exec(`CREATE TABLE IF NOT EXISTS syn_governance_proposals (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

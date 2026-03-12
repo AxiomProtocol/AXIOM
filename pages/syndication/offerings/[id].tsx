@@ -194,7 +194,7 @@ export default function OfferingBuilder() {
   const [investorForm, setInvestorForm] = useState({ legalName: '', email: '', accreditationStatus: 'unverified', stage: 'lead', softCircleAmount: '' });
   const [addingInvestor, setAddingInvestor] = useState(false);
   const [showAddSub, setShowAddSub] = useState(false);
-  const [subForm, setSubForm] = useState({ investorProfileId: '', amount: '', shareClass: 'common', fundingMethod: 'wire', newInvestorName: '', newInvestorEmail: '' });
+  const [subForm, setSubForm] = useState({ investorProfileId: '', amount: '', shareClass: 'common', fundingMethod: 'wire', paymentCurrency: 'USD', investorWallet: '', newInvestorName: '', newInvestorEmail: '' });
   const [subMode, setSubMode] = useState<'existing' | 'new'>('existing');
   const [addingSub, setAddingSub] = useState(false);
   const [syncingCap, setSyncingCap] = useState(false);
@@ -202,13 +202,19 @@ export default function OfferingBuilder() {
   const [distributions, setDistributions] = useState<any[]>([]);
   const [distSummary, setDistSummary] = useState<any>(null);
   const [showCreateDist, setShowCreateDist] = useState(false);
-  const [distForm, setDistForm] = useState({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '' });
+  const [distForm, setDistForm] = useState({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD' });
   const [creatingDist, setCreatingDist] = useState(false);
   const [fundingRecords, setFundingRecords] = useState<any[]>([]);
   const [showReceiptForm, setShowReceiptForm] = useState<string | null>(null);
   const [receiptForm, setReceiptForm] = useState({ externalRef: '', amount: '', settlementDate: '', fundingMethod: 'wire' });
   const [recordingReceipt, setRecordingReceipt] = useState(false);
   const [closingOffering, setClosingOffering] = useState(false);
+  const [showFundingInstructions, setShowFundingInstructions] = useState<string | null>(null);
+  const [fundingInstructions, setFundingInstructions] = useState<any>(null);
+  const [loadingInstructions, setLoadingInstructions] = useState(false);
+  const [showReportForm, setShowReportForm] = useState(false);
+  const [reportForm, setReportForm] = useState({ title: '', reportType: 'quarterly', content: '' });
+  const [publishingReport, setPublishingReport] = useState(false);
 
   const loadSourceDeal = useCallback(async () => {
     if (!offering?.deal_id) return;
@@ -261,11 +267,18 @@ export default function OfferingBuilder() {
       const res = await fetch(`/api/syndication/offerings/${id}/subscriptions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ investorProfileId: profileId, amount: subForm.amount, shareClass: subForm.shareClass, fundingMethod: subForm.fundingMethod }),
+        body: JSON.stringify({
+          investorProfileId: profileId,
+          amount: subForm.amount,
+          shareClass: subForm.shareClass,
+          fundingMethod: subForm.fundingMethod,
+          paymentCurrency: subForm.paymentCurrency,
+          investorWallet: subForm.paymentCurrency === 'AXUSD' ? subForm.investorWallet : null,
+        }),
       });
       const json = await res.json();
       if (json.success) {
-        setSubForm({ investorProfileId: '', amount: '', shareClass: 'common', fundingMethod: 'wire', newInvestorName: '', newInvestorEmail: '' });
+        setSubForm({ investorProfileId: '', amount: '', shareClass: 'common', fundingMethod: 'wire', paymentCurrency: 'USD', investorWallet: '', newInvestorName: '', newInvestorEmail: '' });
         setShowAddSub(false);
         setSubMode('existing');
         loadTabData('subscriptions');
@@ -306,7 +319,7 @@ export default function OfferingBuilder() {
       });
       const json = await res.json();
       if (json.success) {
-        setDistForm({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '' });
+        setDistForm({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD' });
         setShowCreateDist(false);
         loadTabData('distributions');
       }
@@ -354,6 +367,44 @@ export default function OfferingBuilder() {
       }
     } catch (err) { console.error(err); }
     finally { setRecordingReceipt(false); }
+  };
+
+  const handleLoadFundingInstructions = async (subscriptionId: string) => {
+    if (showFundingInstructions === subscriptionId) {
+      setShowFundingInstructions(null);
+      return;
+    }
+    setShowFundingInstructions(subscriptionId);
+    setLoadingInstructions(true);
+    try {
+      const res = await fetch(`/api/syndication/offerings/${id}/funding-instructions?subscriptionId=${subscriptionId}`);
+      const json = await res.json();
+      if (json.success) setFundingInstructions(json);
+    } catch (err) { console.error(err); }
+    finally { setLoadingInstructions(false); }
+  };
+
+  const handlePublishReport = async () => {
+    if (!reportForm.title) return;
+    setPublishingReport(true);
+    try {
+      const res = await fetch(`/api/syndication/offerings/${id}/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reportForm),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setReportForm({ title: '', reportType: 'quarterly', content: '' });
+        setShowReportForm(false);
+        loadTabData('reports');
+      }
+    } catch (err) { console.error(err); }
+    finally { setPublishingReport(false); }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).catch(() => {});
   };
 
   const handleCloseOffering = async () => {
@@ -1047,6 +1098,31 @@ export default function OfferingBuilder() {
                     </select>
                   </div>
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Payment Currency</label>
+                    <select
+                      value={subForm.paymentCurrency}
+                      onChange={e => setSubForm(p => ({ ...p, paymentCurrency: e.target.value }))}
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm bg-white"
+                    >
+                      <option value="USD">USD (Fiat)</option>
+                      <option value="AXUSD">AXUSD (On-chain)</option>
+                    </select>
+                  </div>
+                  {subForm.paymentCurrency === 'AXUSD' && (
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-dl-mono text-dl-muted mb-1">Investor Wallet Address</label>
+                      <input
+                        value={subForm.investorWallet}
+                        onChange={e => setSubForm(p => ({ ...p, investorWallet: e.target.value }))}
+                        placeholder="0x..."
+                        className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                      />
+                      <p className="font-dl-mono text-[10px] text-dl-muted mt-0.5">Wallet must be KYC-verified for AXUSD transfers (ERC-3643).</p>
+                    </div>
+                  )}
+                </div>
                 <button
                   onClick={handleAddSubscription}
                   disabled={addingSub || !subForm.amount || (subMode === 'existing' ? !subForm.investorProfileId : !subForm.newInvestorName)}
@@ -1094,9 +1170,14 @@ export default function OfferingBuilder() {
                             'bg-yellow-50 text-yellow-700'
                           }`}>{s.status}</span>
                         </td>
-                        <td className="px-4 py-2 text-dl-muted text-xs">{s.funding_method || '—'}</td>
+                        <td className="px-4 py-2 text-dl-muted text-xs">
+                          {s.funding_method || '—'}
+                          {s.payment_currency === 'AXUSD' && (
+                            <span className="ml-1 px-1 py-0.5 text-[10px] bg-blue-50 text-blue-700">AXUSD</span>
+                          )}
+                        </td>
                         <td className="px-4 py-2">
-                          <div className="flex gap-1">
+                          <div className="flex gap-1 flex-wrap">
                             {s.status === 'draft' && (
                               <button onClick={() => handleSubAction(s.id, 'submitted')} className="px-2 py-0.5 text-xs bg-blue-50 text-blue-700 font-dl-mono">Submit</button>
                             )}
@@ -1107,22 +1188,126 @@ export default function OfferingBuilder() {
                               </>
                             )}
                             {s.status === 'approved' && (
-                              <button onClick={() => handleSubAction(s.id, 'funded')} className="px-2 py-0.5 text-xs bg-green-100 text-green-800 font-dl-mono">Mark Funded</button>
+                              <>
+                                <button onClick={() => handleSubAction(s.id, 'funded')} className="px-2 py-0.5 text-xs bg-green-100 text-green-800 font-dl-mono">Mark Funded</button>
+                                <button onClick={() => handleLoadFundingInstructions(s.id)} className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 font-dl-mono">
+                                  {showFundingInstructions === s.id ? 'Hide Instructions' : 'Funding Instructions'}
+                                </button>
+                              </>
                             )}
                             {s.status === 'funded' && (
-                              <button
-                                onClick={() => {
-                                  setShowReceiptForm(showReceiptForm === s.id ? null : s.id);
-                                  setReceiptForm({ externalRef: '', amount: s.amount || '', settlementDate: '', fundingMethod: s.funding_method || 'wire' });
-                                }}
-                                className="px-2 py-0.5 text-xs bg-green-100 text-green-800 font-dl-mono"
-                              >
-                                Record Receipt
-                              </button>
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setShowReceiptForm(showReceiptForm === s.id ? null : s.id);
+                                    setReceiptForm({ externalRef: '', amount: s.amount || '', settlementDate: '', fundingMethod: s.funding_method || 'wire' });
+                                  }}
+                                  className="px-2 py-0.5 text-xs bg-green-100 text-green-800 font-dl-mono"
+                                >
+                                  Record Receipt
+                                </button>
+                                <button onClick={() => handleLoadFundingInstructions(s.id)} className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 font-dl-mono">
+                                  {showFundingInstructions === s.id ? 'Hide Instructions' : 'Funding Instructions'}
+                                </button>
+                              </>
                             )}
                           </div>
                         </td>
                       </tr>
+                      {showFundingInstructions === s.id && (
+                        <tr className="bg-gray-50 border-b border-dl-border">
+                          <td colSpan={6} className="px-4 py-3">
+                            {loadingInstructions ? (
+                              <p className="font-dl-mono text-xs text-dl-muted">Loading funding instructions...</p>
+                            ) : fundingInstructions ? (
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-dl-mono text-xs text-dl-muted uppercase">Funding Instructions</h4>
+                                  <span className="font-dl-mono text-xs bg-dl-navy text-white px-2 py-0.5">{fundingInstructions.memoCode}</span>
+                                </div>
+                                {(!s.payment_currency || s.payment_currency === 'USD') ? (
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                      <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-0.5">Bank Name</p>
+                                      <p className="font-dl-mono text-sm text-dl-text">{fundingInstructions.bankDetails.bankName}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-0.5">Beneficiary</p>
+                                      <p className="font-dl-mono text-sm text-dl-text">{fundingInstructions.bankDetails.beneficiary}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-0.5">Routing Number</p>
+                                      <p className="font-dl-mono text-sm text-dl-text">{fundingInstructions.bankDetails.routingNumber || 'Contact operations'}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-0.5">Account Number</p>
+                                      <p className="font-dl-mono text-sm text-dl-text">{fundingInstructions.bankDetails.accountNumber || 'Contact operations'}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-0.5">Wire Memo</p>
+                                      <p className="font-dl-mono text-sm text-dl-text font-bold">{fundingInstructions.memoCode}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-0.5">Amount Due</p>
+                                      <p className="font-dl-mono text-sm text-dl-text">{fmt(parseFloat(s.amount || '0'))}</p>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                      <p className="font-dl-mono text-[10px] text-dl-muted">{fundingInstructions.bankDetails.note}</p>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className="md:col-span-2">
+                                      <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-0.5">Treasury Wallet (Arbitrum One)</p>
+                                      <div className="flex items-center gap-2">
+                                        <p className="font-dl-mono text-sm text-dl-text break-all">{fundingInstructions.treasuryWallet || 'Not configured'}</p>
+                                        {fundingInstructions.treasuryWallet && (
+                                          <button
+                                            onClick={() => copyToClipboard(fundingInstructions.treasuryWallet)}
+                                            className="px-2 py-0.5 text-[10px] bg-gray-200 text-gray-700 font-dl-mono flex-shrink-0"
+                                          >
+                                            Copy
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-0.5">AXUSD Contract</p>
+                                      <p className="font-dl-mono text-sm text-dl-text break-all">{fundingInstructions.axusdContract}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-0.5">Amount Due</p>
+                                      <p className="font-dl-mono text-sm text-dl-text">{parseFloat(s.amount || '0').toLocaleString()} AXUSD</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-0.5">Network</p>
+                                      <p className="font-dl-mono text-sm text-dl-text">{fundingInstructions.network}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-0.5">Memo</p>
+                                      <p className="font-dl-mono text-sm text-dl-text font-bold">{fundingInstructions.memoCode}</p>
+                                    </div>
+                                  </div>
+                                )}
+                                <button
+                                  onClick={() => {
+                                    const isAxusd = s.payment_currency === 'AXUSD';
+                                    const text = isAxusd
+                                      ? `AXUSD Payment Instructions\nWallet: ${fundingInstructions.treasuryWallet}\nNetwork: ${fundingInstructions.network}\nAmount: ${parseFloat(s.amount || '0').toLocaleString()} AXUSD\nMemo: ${fundingInstructions.memoCode}\nContract: ${fundingInstructions.axusdContract}`
+                                      : `Wire Instructions\nBank: ${fundingInstructions.bankDetails.bankName}\nBeneficiary: ${fundingInstructions.bankDetails.beneficiary}\nRouting: ${fundingInstructions.bankDetails.routingNumber}\nAccount: ${fundingInstructions.bankDetails.accountNumber}\nAmount: ${fmt(parseFloat(s.amount || '0'))}\nMemo: ${fundingInstructions.memoCode}`;
+                                    copyToClipboard(text);
+                                  }}
+                                  className="px-3 py-1 text-xs bg-dl-navy text-white font-dl-mono"
+                                >
+                                  Copy Instructions
+                                </button>
+                              </div>
+                            ) : (
+                              <p className="font-dl-mono text-xs text-red-600">Failed to load funding instructions.</p>
+                            )}
+                          </td>
+                        </tr>
+                      )}
                       {showReceiptForm === s.id && (
                         <tr className="bg-gray-50 border-b border-dl-border">
                           <td colSpan={6} className="px-4 py-3">
@@ -1323,7 +1508,24 @@ export default function OfferingBuilder() {
                       className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Currency</label>
+                    <select
+                      value={distForm.currency}
+                      onChange={e => setDistForm(p => ({ ...p, currency: e.target.value }))}
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm bg-white"
+                    >
+                      <option value="USD">USD (Fiat)</option>
+                      <option value="AXUSD">AXUSD (On-chain)</option>
+                    </select>
+                  </div>
                 </div>
+                {distForm.currency === 'AXUSD' && (
+                  <p className="font-dl-mono text-xs text-dl-muted mb-3">
+                    AXUSD distributions require recipient wallets to be KYC-verified on the Identity Registry (ERC-3643).
+                    Recipient wallets will be sourced from investor profiles.
+                  </p>
+                )}
                 <button
                   onClick={handleCreateDistribution}
                   disabled={creatingDist || !distForm.grossAmount}
@@ -1415,13 +1617,78 @@ export default function OfferingBuilder() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-dl-serif text-lg text-dl-navy">Offering Reports</h2>
-              <p className="font-dl-mono text-xs text-dl-muted">{reports.length} published</p>
-            </div>
-            {reports.length === 0 ? (
-              <div className="border border-dl-border p-8 text-center">
-                <p className="font-dl-mono text-sm text-dl-muted">No reports published yet.</p>
+              <div className="flex items-center gap-3">
+                <p className="font-dl-mono text-xs text-dl-muted">{reports.length} published</p>
+                <button
+                  onClick={() => setShowReportForm(!showReportForm)}
+                  className="bg-dl-navy text-white px-3 py-1 font-dl-mono text-xs"
+                >
+                  {showReportForm ? 'Cancel' : 'Publish Report'}
+                </button>
               </div>
-            ) : (
+            </div>
+
+            {showReportForm && (
+              <div className="border border-dl-navy p-4 bg-gray-50">
+                <h3 className="font-dl-mono text-xs text-dl-muted uppercase mb-3">New Report</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Title</label>
+                    <input
+                      value={reportForm.title}
+                      onChange={e => setReportForm(p => ({ ...p, title: e.target.value }))}
+                      placeholder="Q1 2026 Investor Update"
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Report Type</label>
+                    <select
+                      value={reportForm.reportType}
+                      onChange={e => setReportForm(p => ({ ...p, reportType: e.target.value }))}
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm bg-white"
+                    >
+                      <option value="quarterly">Quarterly Update</option>
+                      <option value="annual">Annual Report</option>
+                      <option value="tax">Tax Document (K-1)</option>
+                      <option value="operational">Operational Update</option>
+                      <option value="distribution">Distribution Notice</option>
+                      <option value="capital_call">Capital Call Notice</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <label className="block text-xs font-dl-mono text-dl-muted mb-1">Content</label>
+                  <textarea
+                    value={reportForm.content}
+                    onChange={e => setReportForm(p => ({ ...p, content: e.target.value }))}
+                    rows={4}
+                    placeholder="Report content..."
+                    className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                  />
+                </div>
+                <button
+                  onClick={handlePublishReport}
+                  disabled={publishingReport || !reportForm.title}
+                  className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                >
+                  {publishingReport ? 'Publishing...' : 'Publish Report'}
+                </button>
+              </div>
+            )}
+
+            {reports.length === 0 && !showReportForm ? (
+              <div className="border border-dl-border p-8 text-center">
+                <p className="font-dl-mono text-sm text-dl-muted mb-2">No reports published yet.</p>
+                <p className="font-dl-mono text-xs text-dl-muted mb-3">Use the Publish Report button to create your first investor update.</p>
+                <button
+                  onClick={() => setShowReportForm(true)}
+                  className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm"
+                >
+                  Publish First Report
+                </button>
+              </div>
+            ) : reports.length > 0 && (
               <div className="space-y-3">
                 {reports.map((r: any) => (
                   <div key={r.id} className="border border-dl-border p-4">

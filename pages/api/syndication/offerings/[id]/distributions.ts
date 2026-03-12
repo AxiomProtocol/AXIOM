@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
-      const { distributionType, grossAmount, periodStart, periodEnd, paymentMethod } = req.body;
+      const { distributionType, grossAmount, periodStart, periodEnd, paymentMethod, currency } = req.body;
       if (!distributionType || !grossAmount) {
         return res.status(400).json({ success: false, error: 'distributionType and grossAmount are required' });
       }
@@ -87,8 +87,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const insertResult = await client.query(
             `INSERT INTO syn_distributions
                (offering_id, cap_table_entry_id, investor_profile_id, distribution_type,
-                gross_amount, net_amount, payment_method, period_start, period_end)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+                gross_amount, net_amount, payment_method, currency, period_start, period_end)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
             [
               id,
               entry.id,
@@ -97,6 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               investorGross,
               investorNet,
               paymentMethod || 'wire',
+              currency || 'USD',
               periodStart || null,
               periodEnd || null,
             ]

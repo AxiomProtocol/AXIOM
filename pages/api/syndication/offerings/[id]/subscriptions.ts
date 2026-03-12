@@ -34,15 +34,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
-      const { investorProfileId, amount, fundingMethod, shareClass } = req.body;
+      const { investorProfileId, amount, fundingMethod, shareClass, paymentCurrency, investorWallet } = req.body;
       if (!investorProfileId || !amount) {
         return res.status(400).json({ success: false, error: 'investorProfileId and amount are required' });
       }
 
       const result = await pool.query(
-        `INSERT INTO syn_subscriptions (offering_id, investor_profile_id, amount, funding_method, meta)
-         VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-        [id, investorProfileId, amount, fundingMethod || 'wire', JSON.stringify({ share_class: shareClass || 'common' })]
+        `INSERT INTO syn_subscriptions (offering_id, investor_profile_id, amount, funding_method, payment_currency, investor_wallet, meta)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+        [id, investorProfileId, amount, fundingMethod || 'wire', paymentCurrency || 'USD', investorWallet || null, JSON.stringify({ share_class: shareClass || 'common' })]
       );
 
       return res.status(201).json({ success: true, subscriptionId: result.rows[0].id });
