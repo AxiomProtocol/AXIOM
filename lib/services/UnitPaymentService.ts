@@ -55,19 +55,17 @@ export class UnitPaymentService {
 
     try {
       const response = await client.payments.create({
-        data: {
-          type: 'bookPayment',
-          attributes: {
-            amount: params.amountCents,
-            description: params.description,
-            idempotencyKey,
-          },
-          relationships: {
-            account: { data: { type: 'depositAccount', id: params.fromAccountId } },
-            counterpartyAccount: { data: { type: 'depositAccount', id: params.toAccountId } },
-          },
+        type: 'bookPayment',
+        attributes: {
+          amount: params.amountCents,
+          description: params.description,
+          idempotencyKey,
         },
-      });
+        relationships: {
+          account: { data: { type: 'depositAccount', id: params.fromAccountId } },
+          counterpartyAccount: { data: { type: 'depositAccount', id: params.toAccountId } },
+        },
+      } as Parameters<typeof client.payments.create>[0]);
 
       const payment = response.data;
       const unitPaymentId = payment.id;
@@ -109,20 +107,18 @@ export class UnitPaymentService {
 
     try {
       const response = await client.payments.create({
-        data: {
-          type: 'achPayment',
-          attributes: {
-            amount: params.amountCents,
-            description: params.description,
-            direction: 'Debit',
-            idempotencyKey,
-          },
-          relationships: {
-            account: { data: { type: 'depositAccount', id: params.toAccountId } },
-            counterparty: { data: { type: 'counterparty', id: params.counterpartyId } },
-          },
+        type: 'achPayment',
+        attributes: {
+          amount: params.amountCents,
+          description: params.description,
+          direction: 'Debit',
+          idempotencyKey,
         },
-      });
+        relationships: {
+          account: { data: { type: 'depositAccount', id: params.toAccountId } },
+          counterparty: { data: { type: 'counterparty', id: params.counterpartyId } },
+        },
+      } as Parameters<typeof client.payments.create>[0]);
 
       const payment = response.data;
       const unitPaymentId = payment.id;
@@ -167,23 +163,21 @@ export class UnitPaymentService {
 
     try {
       const response = await client.recurringPayments.create({
-        data: {
-          type: 'recurringBookPayment',
-          attributes: {
-            amount: params.amountCents,
-            description: params.description,
-            schedule: {
-              interval: params.frequency,
-              ...(params.numberOfPayments ? { totalNumberOfPayments: params.numberOfPayments } : {}),
-            },
-            idempotencyKey,
+        type: 'recurringBookPayment',
+        attributes: {
+          amount: params.amountCents,
+          description: params.description,
+          schedule: {
+            interval: params.frequency,
+            ...(params.numberOfPayments ? { totalNumberOfPayments: params.numberOfPayments } : {}),
           },
-          relationships: {
-            account: { data: { type: 'depositAccount', id: params.fromAccountId } },
-            counterpartyAccount: { data: { type: 'depositAccount', id: params.toAccountId } },
-          },
+          idempotencyKey,
         },
-      });
+        relationships: {
+          account: { data: { type: 'depositAccount', id: params.fromAccountId } },
+          counterpartyAccount: { data: { type: 'depositAccount', id: params.toAccountId } },
+        },
+      } as Parameters<typeof client.recurringPayments.create>[0]);
 
       const recurring = response.data;
       const unitRecurringId = recurring.id;

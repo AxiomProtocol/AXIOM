@@ -34,14 +34,12 @@ export class UnitAccountService {
 
     try {
       const response = await client.accounts.create({
-        data: {
-          type: 'depositAccount',
-          attributes: { depositProduct: 'checking' },
-          relationships: {
-            customer: { data: { type: 'customer', id: unitCustomerId } },
-          },
+        type: 'depositAccount',
+        attributes: { depositProduct: 'checking' },
+        relationships: {
+          customer: { data: { type: 'customer', id: unitCustomerId } },
         },
-      });
+      } as Parameters<typeof client.accounts.create>[0]);
 
       const account = response.data;
       const unitAccountId = account.id;
@@ -101,14 +99,12 @@ export class UnitAccountService {
 
     try {
       const response = await client.accounts.create({
-        data: {
-          type: 'depositAccount',
-          attributes: { depositProduct: 'savings' },
-          relationships: {
-            customer: { data: { type: 'customer', id: unitCustomerId } },
-          },
+        type: 'depositAccount',
+        attributes: { depositProduct: 'savings' },
+        relationships: {
+          customer: { data: { type: 'customer', id: unitCustomerId } },
         },
-      });
+      } as Parameters<typeof client.accounts.create>[0]);
 
       const account = response.data;
       const unitAccountId = account.id;

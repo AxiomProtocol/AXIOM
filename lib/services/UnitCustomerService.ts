@@ -40,28 +40,26 @@ export class UnitCustomerService {
 
     try {
       const response = await client.applications.create({
-        data: {
-          type: 'individualApplication',
-          attributes: {
-            firstName: input.firstName.trim(),
-            lastName: input.lastName.trim(),
-            email: input.email.trim().toLowerCase(),
-            phone: { countryCode: '1', number: input.phone.replace(/\D/g, '') },
-            dateOfBirth: input.dateOfBirth,
-            ssn: normalizeSsn(input.ssn),
-            address: {
-              street: input.addressStreet.trim(),
-              city: input.addressCity.trim(),
-              state: input.addressState.toUpperCase(),
-              postalCode: input.addressPostalCode.trim(),
-              country: input.addressCountry ?? 'US',
-            },
-            soleProprietorship: false,
-            powerOfAttorneyAgent: 'Jeffrey Evan Shulman',
-            ip: '127.0.0.1',
+        type: 'individualApplication',
+        attributes: {
+          fullName: {
+            first: input.firstName.trim(),
+            last: input.lastName.trim(),
           },
+          email: input.email.trim().toLowerCase(),
+          phone: { countryCode: '1', number: input.phone.replace(/\D/g, '') },
+          dateOfBirth: input.dateOfBirth,
+          ssn: normalizeSsn(input.ssn),
+          address: {
+            street: input.addressStreet.trim(),
+            city: input.addressCity.trim(),
+            state: input.addressState.toUpperCase(),
+            postalCode: input.addressPostalCode.trim(),
+            country: 'US' as const,
+          },
+          ip: '127.0.0.1',
         },
-      });
+      } as Parameters<typeof client.applications.create>[0]);
 
       const appData = response.data;
       const applicationId = appData.id;
@@ -100,7 +98,8 @@ export class UnitCustomerService {
       return { success: true, applicationId, status };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error('[UnitCustomerService] createIndividualApplication error:', msg);
+      const axiosData = (err as { response?: { data?: unknown; status?: number } })?.response;
+      console.error('[UnitCustomerService] createIndividualApplication error:', msg, JSON.stringify(axiosData?.data ?? {}));
       return { success: false, error: 'Failed to submit identity verification. Please try again.' };
     }
   }

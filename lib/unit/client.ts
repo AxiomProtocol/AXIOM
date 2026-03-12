@@ -1,7 +1,22 @@
 import { Unit } from '@unit-finance/unit-node-sdk';
 
 const UNIT_API_TOKEN = process.env.UNIT_API_TOKEN;
-const UNIT_API_URL = process.env.UNIT_API_URL ?? 'https://api.s.unit.sh';
+
+function resolveBaseUrl(): string {
+  const raw = (process.env.UNIT_API_URL ?? 'https://api.s.unit.sh').trim().replace(/\/+$/, '');
+  try {
+    const parsed = new URL(raw);
+    const base = `${parsed.protocol}//${parsed.host}`;
+    if (base !== raw) {
+      console.warn(`[Unit] UNIT_API_URL contained a path ("${raw}") — using base origin "${base}" instead`);
+    }
+    return base;
+  } catch {
+    return 'https://api.s.unit.sh';
+  }
+}
+
+const UNIT_API_URL = resolveBaseUrl();
 
 let _client: Unit | null = null;
 

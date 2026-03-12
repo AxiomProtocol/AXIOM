@@ -35,15 +35,13 @@ export class UnitCardService {
 
     try {
       const response = await client.cards.create({
-        data: {
-          type: 'individualVirtualDebitCard',
-          attributes: {},
-          relationships: {
-            account: { data: { type: 'depositAccount', id: unitAccountId } },
-            customer: { data: { type: 'customer', id: unitCustomerId } },
-          },
+        type: 'individualVirtualDebitCard',
+        attributes: {},
+        relationships: {
+          account: { data: { type: 'depositAccount', id: unitAccountId } },
+          customer: { data: { type: 'customer', id: unitCustomerId } },
         },
-      });
+      } as Parameters<typeof client.cards.create>[0]);
 
       const card = response.data;
       const unitCardId = card.id;
@@ -95,24 +93,22 @@ export class UnitCardService {
 
     try {
       const response = await client.cards.create({
-        data: {
-          type: 'individualDebitCard',
-          attributes: {
-            shippingAddress: {
-              street: shippingAddress.street,
-              street2: shippingAddress.street2,
-              city: shippingAddress.city,
-              state: shippingAddress.state,
-              postalCode: shippingAddress.postalCode,
-              country: shippingAddress.country ?? 'US',
-            },
-          },
-          relationships: {
-            account: { data: { type: 'depositAccount', id: unitAccountId } },
-            customer: { data: { type: 'customer', id: unitCustomerId } },
+        type: 'individualDebitCard',
+        attributes: {
+          shippingAddress: {
+            street: shippingAddress.street,
+            street2: shippingAddress.street2,
+            city: shippingAddress.city,
+            state: shippingAddress.state,
+            postalCode: shippingAddress.postalCode,
+            country: shippingAddress.country ?? 'US',
           },
         },
-      });
+        relationships: {
+          account: { data: { type: 'depositAccount', id: unitAccountId } },
+          customer: { data: { type: 'customer', id: unitCustomerId } },
+        },
+      } as Parameters<typeof client.cards.create>[0]);
 
       const card = response.data;
       const unitCardId = card.id;
