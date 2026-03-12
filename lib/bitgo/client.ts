@@ -1,5 +1,5 @@
 const BITGO_ACCESS_TOKEN = process.env.BITGO_ACCESS_TOKEN;
-const BITGO_API_URL = process.env.BITGO_API_URL ?? 'https://app.bitgo-test.com';
+const BITGO_API_URL = process.env.BITGO_API_URL ?? 'https://app.bitgo.com';
 export const BITGO_ENTERPRISE_ID = process.env.BITGO_ENTERPRISE_ID ?? '';
 
 export const isTestnet = BITGO_API_URL.includes('bitgo-test.com');

@@ -56,6 +56,8 @@ export default function BankingPage() {
   const [custody, setCustody] = useState<CustodyData | null>(null);
   const [custodyLoading, setCustodyLoading] = useState(false);
   const [custodyCreating, setCustodyCreating] = useState(false);
+  const [custodyTxs, setCustodyTxs] = useState<unknown[]>([]);
+  const [custodyTxLoading, setCustodyTxLoading] = useState(false);
   const [transactions, setTransactions] = useState<unknown[]>([]);
   const [txLoading, setTxLoading] = useState(false);
   const [pendingApprovals, setPendingApprovals] = useState<unknown[]>([]);
@@ -98,6 +100,20 @@ export default function BankingPage() {
     }
   }, [isConnected]);
 
+  const fetchCustodyTxs = useCallback(async (walletId: string) => {
+    setCustodyTxLoading(true);
+    try {
+      const r = await fetch(`/api/bitgo/wallets/${walletId}/transactions`);
+      if (r.ok) {
+        const data = await r.json();
+        setCustodyTxs(data.transactions ?? []);
+      }
+    } catch {
+    } finally {
+      setCustodyTxLoading(false);
+    }
+  }, []);
+
   const fetchApprovals = useCallback(async () => {
     if (!isConnected) return;
     try {
@@ -137,6 +153,12 @@ export default function BankingPage() {
   const primaryAccount = status?.accounts?.find((a) => a.accountType === 'member');
   const poolAccounts = status?.accounts?.filter((a) => a.accountType === 'susu_pool') ?? [];
   const custodyWallet = custody?.wallets?.[0] ?? null;
+
+  useEffect(() => {
+    if (activeTab === 'custody' && custodyWallet?.bitgoWalletId) {
+      fetchCustodyTxs(custodyWallet.bitgoWalletId);
+    }
+  }, [activeTab, custodyWallet?.bitgoWalletId, fetchCustodyTxs]);
 
   const fetchTxForAccount = async (unitAccountId: string) => {
     setTxLoading(true);
@@ -480,6 +502,63 @@ export default function BankingPage() {
                 onApprove={handleApprove}
                 onReject={handleReject}
               />
+
+              {custodyWallet && (
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-sm font-dl-mono text-dl-muted uppercase tracking-widest">On-Chain Transfers</h3>
+                    <button
+                      onClick={() => fetchCustodyTxs(custodyWallet.bitgoWalletId)}
+                      disabled={custodyTxLoading}
+                      className="text-xs font-dl-mono text-dl-navy underline disabled:opacity-50"
+                    >
+                      {custodyTxLoading ? 'Syncing…' : 'Refresh'}
+                    </button>
+                  </div>
+                  {custodyTxLoading && custodyTxs.length === 0 ? (
+                    <div className="border border-dl-border p-6">
+                      <div className="h-4 bg-dl-border animate-pulse w-32 mb-2" />
+                      <div className="h-4 bg-dl-border animate-pulse w-48" />
+                    </div>
+                  ) : custodyTxs.length === 0 ? (
+                    <div className="border border-dl-border p-4">
+                      <p className="text-sm font-dl-mono text-dl-muted">No transfers yet.</p>
+                    </div>
+                  ) : (
+                    <div className="border border-dl-border divide-y divide-dl-border">
+                      {(custodyTxs as Array<{
+                        id: string;
+                        bitgoTxId: string;
+                        direction: string;
+                        state: string;
+                        amountStr: string;
+                        coin: string;
+                        fromAddress?: string;
+                        toAddress?: string;
+                        txHash?: string;
+                        createdAt: string;
+                      }>).map((tx) => (
+                        <div key={tx.id} className="p-4 flex justify-between items-center">
+                          <div>
+                            <p className="text-sm font-dl-mono text-dl-navy capitalize">
+                              {tx.direction} — {tx.state}
+                            </p>
+                            <p className="text-xs font-dl-mono text-dl-muted mt-0.5">
+                              {tx.txHash
+                                ? `${tx.txHash.slice(0, 10)}…${tx.txHash.slice(-6)}`
+                                : tx.bitgoTxId?.slice(0, 12)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-dl-mono text-dl-navy">{tx.amountStr}</p>
+                            <p className="text-xs font-dl-mono text-dl-muted">{tx.coin?.toUpperCase()}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

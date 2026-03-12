@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).json({ error: 'Wallet not found.' });
   }
 
-  await bitGoWalletService.getTransactionHistory(walletId);
+  await bitGoWalletService.syncTransactions(walletId).catch(() => {});
 
   const txs = await db
     .select()
