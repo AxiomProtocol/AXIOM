@@ -90,21 +90,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (status === 'funded') {
         try {
           const subResult = await pool.query(
-            `SELECT s.investor_profile_id, s.amount, COALESCE(s.meta->>'share_class', 'common') as share_class
-             FROM syn_subscriptions s WHERE s.id = $1`,
+            `SELECT investor_profile_id, COALESCE(meta->>'share_class', 'common') as share_class
+             FROM syn_subscriptions WHERE id = $1`,
             [subscriptionId]
           );
           if (subResult.rows.length > 0) {
             const sub = subResult.rows[0];
-            const amount = parseFloat(sub.amount || '0');
+
+            const aggResult = await pool.query(
+              `SELECT SUM(amount::numeric) as total_funded
+               FROM syn_subscriptions
+               WHERE offering_id = $1 AND investor_profile_id = $2 AND status = 'funded'`,
+              [id, sub.investor_profile_id]
+            );
+            const investorTotal = parseFloat(aggResult.rows[0]?.total_funded || '0');
+
             const offeringResult = await pool.query(
               `SELECT target_raise FROM syn_offerings WHERE id = $1`,
               [id]
             );
             const targetRaise = parseFloat(offeringResult.rows[0]?.target_raise || '0');
-            const denominator = targetRaise > 0 ? targetRaise : amount;
-            const ownershipPct = denominator > 0 ? (amount / denominator) * 100 : 0;
-            const units = amount / 100;
+
+            const allFundedResult = await pool.query(
+              `SELECT SUM(amount::numeric) as grand_total
+               FROM syn_subscriptions WHERE offering_id = $1 AND status = 'funded'`,
+              [id]
+            );
+            const grandTotal = parseFloat(allFundedResult.rows[0]?.grand_total || '0');
+            const denominator = targetRaise > 0 ? targetRaise : grandTotal;
+            const ownershipPct = denominator > 0 ? (investorTotal / denominator) * 100 : 0;
+            const units = investorTotal / 100;
 
             const existing = await pool.query(
               `SELECT id FROM syn_cap_table WHERE offering_id = $1 AND investor_profile_id = $2 LIMIT 1`,
@@ -113,18 +128,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             if (existing.rows.length > 0) {
               await pool.query(
                 `UPDATE syn_cap_table SET
-                   capital_contributed = capital_contributed::numeric + $1,
-                   units = units::numeric + $2,
+                   capital_contributed = $1,
+                   units = $2,
                    ownership_pct = $3,
                    updated_at = now()
                  WHERE id = $4`,
-                [amount, units, ownershipPct.toFixed(4), existing.rows[0].id]
+                [investorTotal, units, ownershipPct.toFixed(4), existing.rows[0].id]
               );
             } else {
               await pool.query(
                 `INSERT INTO syn_cap_table (offering_id, investor_profile_id, share_class, units, ownership_pct, capital_contributed)
                  VALUES ($1, $2, $3, $4, $5, $6)`,
-                [id, sub.investor_profile_id, sub.share_class, units, ownershipPct.toFixed(4), amount]
+                [id, sub.investor_profile_id, sub.share_class, units, ownershipPct.toFixed(4), investorTotal]
               );
             }
           }

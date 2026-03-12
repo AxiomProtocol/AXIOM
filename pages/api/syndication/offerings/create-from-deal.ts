@@ -118,7 +118,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Math.max(5000, equityGap * 0.05).toFixed(2),
         metrics.cap_rate ? parseFloat(metrics.cap_rate).toFixed(4) : null,
         metrics.cash_on_cash ? parseFloat(metrics.cash_on_cash).toFixed(4) : null,
-        null,
+        metrics.irr ? parseFloat(metrics.irr).toFixed(4) : (metrics.cash_on_cash ? (parseFloat(metrics.cash_on_cash) * 1.2).toFixed(4) : null),
         metrics.dscr ? parseFloat(metrics.dscr).toFixed(4) : null,
         Math.max(1, Math.round((parseFloat(metrics.hold_period_months) || 60) / 12)),
         JSON.stringify({

@@ -21,11 +21,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const targetRaise = parseFloat(offeringResult.rows[0].target_raise || '0');
 
     const fundedSubs = await pool.query(
-      `SELECT s.investor_profile_id, s.amount, s.funding_method,
-              COALESCE(s.meta->>'share_class', 'common') as share_class
+      `SELECT s.investor_profile_id,
+              SUM(s.amount::numeric) as total_amount,
+              COALESCE(s.meta->>'share_class', 'common') as share_class,
+              COUNT(*) as sub_count
        FROM syn_subscriptions s
        WHERE s.offering_id = $1 AND s.status = 'funded'
-       ORDER BY s.funded_at ASC, s.created_at ASC`,
+       GROUP BY s.investor_profile_id, COALESCE(s.meta->>'share_class', 'common')
+       ORDER BY total_amount DESC`,
       [id]
     );
 
@@ -38,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const totalFunded = fundedSubs.rows.reduce(
-      (sum: number, r: any) => sum + parseFloat(r.amount || '0'), 0
+      (sum: number, r: any) => sum + parseFloat(r.total_amount || '0'), 0
     );
     const denominator = targetRaise > 0 ? targetRaise : totalFunded;
 
@@ -51,15 +54,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         [id]
       );
 
-      for (const sub of fundedSubs.rows) {
-        const amount = parseFloat(sub.amount || '0');
+      for (const row of fundedSubs.rows) {
+        const amount = parseFloat(row.total_amount || '0');
         const ownershipPct = denominator > 0 ? (amount / denominator) * 100 : 0;
         const units = amount / 100;
 
         await client.query(
           `INSERT INTO syn_cap_table (offering_id, investor_profile_id, share_class, units, ownership_pct, capital_contributed)
            VALUES ($1, $2, $3, $4, $5, $6)`,
-          [id, sub.investor_profile_id, sub.share_class || 'common', units, ownershipPct.toFixed(4), amount]
+          [id, row.investor_profile_id, row.share_class || 'common', units, ownershipPct.toFixed(4), amount]
         );
       }
 
@@ -67,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       return res.status(200).json({
         success: true,
-        message: `Cap table synced from ${fundedSubs.rows.length} funded subscriptions`,
+        message: `Cap table synced: ${fundedSubs.rows.length} holders from funded subscriptions`,
         synced: fundedSubs.rows.length,
         totalFunded,
       });
