@@ -7,7 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'GET') {
     try {
       const result = await pool.query(
-        `SELECT s.*, ip.legal_name, ip.entity_name, ip.email, ip.wallet_address
+        `SELECT s.*, ip.legal_name, ip.entity_name, ip.email, ip.wallet_address, ip.meta AS investor_meta
          FROM syn_subscriptions s
          LEFT JOIN syn_investor_profiles ip ON s.investor_profile_id = ip.id
          WHERE s.offering_id = $1

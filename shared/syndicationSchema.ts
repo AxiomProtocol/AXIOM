@@ -354,5 +354,26 @@ export type SynGovernanceProposal = typeof synGovernanceProposals.$inferSelect;
 export type InsertSynGovernanceProposal = typeof synGovernanceProposals.$inferInsert;
 export type SynGovernanceVote = typeof synGovernanceVotes.$inferSelect;
 export type InsertSynGovernanceVote = typeof synGovernanceVotes.$inferInsert;
+export const synCapitalCalls = pgTable("syn_capital_calls", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  subscriptionId: uuid("subscription_id").references(() => synSubscriptions.id).notNull(),
+  offeringId: uuid("offering_id").references(() => synOfferings.id).notNull(),
+  amountCalled: decimal("amount_called", { precision: 14, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 20 }).default('USD'),
+  dueDate: timestamp("due_date"),
+  status: varchar("status", { length: 30 }).default('sent').notNull(),
+  unitPaymentId: varchar("unit_payment_id", { length: 255 }),
+  sentAt: timestamp("sent_at").defaultNow(),
+  meta: jsonb("meta"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  subscriptionIdx: index("syn_cc_subscription_idx").on(table.subscriptionId),
+  offeringIdx: index("syn_cc_offering_idx").on(table.offeringId),
+  statusIdx: index("syn_cc_status_idx").on(table.status),
+}));
+
 export type SynNotification = typeof synNotifications.$inferSelect;
 export type InsertSynNotification = typeof synNotifications.$inferInsert;
+export type SynCapitalCall = typeof synCapitalCalls.$inferSelect;
+export type InsertSynCapitalCall = typeof synCapitalCalls.$inferInsert;

@@ -2312,6 +2312,24 @@ export async function register() {
       await exec(`ALTER TABLE syn_distributions ADD COLUMN IF NOT EXISTS currency VARCHAR(20) DEFAULT 'USD'`, 'alter syn_distributions currency');
       await exec(`ALTER TABLE syn_distributions ADD COLUMN IF NOT EXISTS recipient_wallet VARCHAR(42)`, 'alter syn_distributions recipient_wallet');
 
+      await exec(`CREATE TABLE IF NOT EXISTS syn_capital_calls (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        subscription_id UUID NOT NULL REFERENCES syn_subscriptions(id),
+        offering_id UUID NOT NULL REFERENCES syn_offerings(id),
+        amount_called DECIMAL(14,2) NOT NULL,
+        currency VARCHAR(20) DEFAULT 'USD',
+        due_date TIMESTAMP,
+        status VARCHAR(30) DEFAULT 'sent' NOT NULL,
+        unit_payment_id VARCHAR(255),
+        sent_at TIMESTAMP DEFAULT now(),
+        meta JSONB,
+        created_at TIMESTAMP DEFAULT now() NOT NULL,
+        updated_at TIMESTAMP DEFAULT now() NOT NULL
+      )`, 'create syn_capital_calls');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_cc_subscription_idx ON syn_capital_calls(subscription_id)`, 'idx syn_cc_subscription');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_cc_offering_idx ON syn_capital_calls(offering_id)`, 'idx syn_cc_offering');
+      await exec(`CREATE INDEX IF NOT EXISTS syn_cc_status_idx ON syn_capital_calls(status)`, 'idx syn_cc_status');
+
       await exec(`CREATE TABLE IF NOT EXISTS syn_governance_proposals (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         offering_id UUID NOT NULL REFERENCES syn_offerings(id),

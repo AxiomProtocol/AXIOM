@@ -215,6 +215,12 @@ export default function OfferingBuilder() {
   const [showReportForm, setShowReportForm] = useState(true);
   const [reportForm, setReportForm] = useState({ title: '', reportType: 'quarterly', content: '' });
   const [publishingReport, setPublishingReport] = useState(false);
+  const [showCapCallForm, setShowCapCallForm] = useState<string | null>(null);
+  const [capCallForm, setCapCallForm] = useState({ amountCalled: '', dueDate: '', currency: 'USD', triggerACH: false });
+  const [sendingCapCall, setSendingCapCall] = useState(false);
+  const [capitalCalls, setCapitalCalls] = useState<any[]>([]);
+  const [showCapCallHistory, setShowCapCallHistory] = useState<string | null>(null);
+  const [capCallToast, setCapCallToast] = useState<string | null>(null);
 
   const loadSourceDeal = useCallback(async () => {
     if (!offering?.deal_id) return;
@@ -403,6 +409,60 @@ export default function OfferingBuilder() {
     finally { setPublishingReport(false); }
   };
 
+  const handleSendCapitalCall = async (subscriptionId: string) => {
+    if (!capCallForm.amountCalled) return;
+    setSendingCapCall(true);
+    try {
+      const res = await fetch(`/api/syndication/offerings/${id}/capital-calls`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscriptionId,
+          amountCalled: capCallForm.amountCalled,
+          dueDate: capCallForm.dueDate || null,
+          currency: capCallForm.currency,
+          triggerACH: capCallForm.triggerACH,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        const toastMsg = json.emailSent ? `Capital call sent. Email delivered to ${json.investorEmail}.` : 'Capital call recorded (no email on file).';
+        setCapCallToast(toastMsg);
+        setTimeout(() => setCapCallToast(null), 5000);
+        setShowCapCallForm(null);
+        setCapCallForm({ amountCalled: '', dueDate: '', currency: 'USD', triggerACH: false });
+        loadCapitalCalls();
+      } else {
+        alert(json.error || 'Failed to send capital call');
+      }
+    } catch (err) { console.error(err); }
+    finally { setSendingCapCall(false); }
+  };
+
+  const loadCapitalCalls = useCallback(async () => {
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/syndication/offerings/${id}/capital-calls`);
+      const json = await res.json();
+      if (json.success) setCapitalCalls(json.capitalCalls);
+    } catch {}
+  }, [id]);
+
+  const handleCapCallStatusUpdate = async (callId: string, status: string) => {
+    try {
+      await fetch(`/api/syndication/offerings/${id}/capital-calls`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ callId, status }),
+      });
+      loadCapitalCalls();
+    } catch (err) { console.error(err); }
+  };
+
+  useEffect(() => {
+    if (id && activeTab === 'subscriptions') loadCapitalCalls();
+  }, [id, activeTab, loadCapitalCalls]);
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).catch(() => {});
   };
@@ -465,7 +525,12 @@ export default function OfferingBuilder() {
       <Head>
         <title>{offering.name} | Syndication | AXIOM</title>
       </Head>
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 relative">
+        {capCallToast && (
+          <div className="fixed top-4 right-4 z-50 bg-green-50 border border-green-200 px-4 py-3 font-dl-mono text-sm text-green-800 max-w-md">
+            {capCallToast}
+          </div>
+        )}
         <div className="mb-2">
           <Link href="/syndication" className="font-dl-mono text-xs text-dl-muted hover:text-dl-navy">
             ← Capital Formation
@@ -1190,6 +1255,16 @@ export default function OfferingBuilder() {
                             {s.status === 'approved' && (
                               <>
                                 <button onClick={() => handleSubAction(s.id, 'funded')} className="px-2 py-0.5 text-xs bg-green-100 text-green-800 font-dl-mono">Mark Funded</button>
+                                <button
+                                  onClick={() => {
+                                    if (showCapCallForm === s.id) { setShowCapCallForm(null); return; }
+                                    setShowCapCallForm(s.id);
+                                    setCapCallForm({ amountCalled: s.amount || '', dueDate: '', currency: s.payment_currency || 'USD', triggerACH: false });
+                                  }}
+                                  className="px-2 py-0.5 text-xs bg-orange-50 text-orange-700 font-dl-mono"
+                                >
+                                  {showCapCallForm === s.id ? 'Cancel Call' : 'Capital Call'}
+                                </button>
                                 <button onClick={() => handleLoadFundingInstructions(s.id)} className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 font-dl-mono">
                                   {showFundingInstructions === s.id ? 'Hide Instructions' : 'Funding Instructions'}
                                 </button>
@@ -1371,6 +1446,117 @@ export default function OfferingBuilder() {
                           </td>
                         </tr>
                       )}
+                      {showCapCallForm === s.id && (
+                        <tr className="bg-orange-50 border-b border-dl-border">
+                          <td colSpan={6} className="px-4 py-3">
+                            <h4 className="font-dl-mono text-xs text-dl-muted uppercase mb-3">Issue Capital Call</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+                              <div>
+                                <label className="block text-xs font-dl-mono text-dl-muted mb-1">Amount Called ($)</label>
+                                <input
+                                  type="number"
+                                  value={capCallForm.amountCalled}
+                                  onChange={e => setCapCallForm(p => ({ ...p, amountCalled: e.target.value }))}
+                                  className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-dl-mono text-dl-muted mb-1">Due Date</label>
+                                <input
+                                  type="date"
+                                  value={capCallForm.dueDate}
+                                  onChange={e => setCapCallForm(p => ({ ...p, dueDate: e.target.value }))}
+                                  className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-dl-mono text-dl-muted mb-1">Currency</label>
+                                <select
+                                  value={capCallForm.currency}
+                                  onChange={e => setCapCallForm(p => ({ ...p, currency: e.target.value }))}
+                                  className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm bg-white"
+                                >
+                                  <option value="USD">USD</option>
+                                  <option value="AXUSD">AXUSD</option>
+                                </select>
+                              </div>
+                              {capCallForm.currency === 'USD' && s.investor_meta?.unitCustomerId && (
+                                <div className="flex items-center gap-2 pt-5">
+                                  <input
+                                    type="checkbox"
+                                    checked={capCallForm.triggerACH}
+                                    onChange={e => setCapCallForm(p => ({ ...p, triggerACH: e.target.checked }))}
+                                    id={`ach-${s.id}`}
+                                    className="accent-dl-navy"
+                                  />
+                                  <label htmlFor={`ach-${s.id}`} className="font-dl-mono text-xs text-dl-muted">Trigger ACH debit</label>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleSendCapitalCall(s.id)}
+                                disabled={sendingCapCall || !capCallForm.amountCalled}
+                                className="bg-orange-600 text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                              >
+                                {sendingCapCall ? 'Sending...' : 'Send Capital Call'}
+                              </button>
+                              <button
+                                onClick={() => setShowCapCallForm(null)}
+                                className="px-4 py-1.5 font-dl-mono text-sm text-dl-muted border border-dl-border"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      {(() => {
+                        const subCalls = capitalCalls.filter((cc: any) => cc.subscription_id === s.id);
+                        if (subCalls.length === 0) return null;
+                        return (
+                          <tr className="border-b border-dl-border">
+                            <td colSpan={6} className="px-4 py-1">
+                              <button
+                                onClick={() => setShowCapCallHistory(showCapCallHistory === s.id ? null : s.id)}
+                                className="font-dl-mono text-[10px] text-dl-muted hover:text-dl-navy"
+                              >
+                                {showCapCallHistory === s.id ? 'Hide' : 'Show'} Capital Calls ({subCalls.length})
+                              </button>
+                              {showCapCallHistory === s.id && (
+                                <div className="mt-2 mb-1 space-y-1">
+                                  {subCalls.map((cc: any) => (
+                                    <div key={cc.id} className="flex items-center justify-between bg-gray-50 px-3 py-1.5 text-xs font-dl-mono">
+                                      <div className="flex items-center gap-3">
+                                        <span className="text-dl-muted">{new Date(cc.sent_at || cc.created_at).toLocaleDateString()}</span>
+                                        <span className="text-dl-text">{fmt(parseFloat(cc.amount_called || '0'))} {cc.currency}</span>
+                                        <span className={`px-1.5 py-0.5 text-[10px] ${
+                                          cc.status === 'funded' ? 'bg-green-50 text-green-700' :
+                                          cc.status === 'cancelled' ? 'bg-red-50 text-red-600' :
+                                          cc.status === 'acknowledged' ? 'bg-blue-50 text-blue-700' :
+                                          'bg-yellow-50 text-yellow-700'
+                                        }`}>{cc.status}</span>
+                                        {cc.due_date && <span className="text-dl-muted">due {new Date(cc.due_date).toLocaleDateString()}</span>}
+                                      </div>
+                                      <div className="flex gap-1">
+                                        {cc.status === 'sent' && (
+                                          <button onClick={() => handleCapCallStatusUpdate(cc.id, 'acknowledged')} className="px-1.5 py-0.5 text-[10px] bg-blue-50 text-blue-700">Ack</button>
+                                        )}
+                                        {(cc.status === 'sent' || cc.status === 'acknowledged') && (
+                                          <button onClick={() => handleCapCallStatusUpdate(cc.id, 'funded')} className="px-1.5 py-0.5 text-[10px] bg-green-50 text-green-700">Funded</button>
+                                        )}
+                                        {cc.status !== 'funded' && cc.status !== 'cancelled' && (
+                                          <button onClick={() => handleCapCallStatusUpdate(cc.id, 'cancelled')} className="px-1.5 py-0.5 text-[10px] bg-red-50 text-red-600">Cancel</button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })()}
                     </React.Fragment>
                     ))}
                   </tbody>
