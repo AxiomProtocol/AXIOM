@@ -224,6 +224,12 @@ export default function OfferingBuilder() {
   const [capitalCalls, setCapitalCalls] = useState<any[]>([]);
   const [showCapCallHistory, setShowCapCallHistory] = useState<string | null>(null);
   const [capCallToast, setCapCallToast] = useState<string | null>(null);
+  const [showDocUpload, setShowDocUpload] = useState(false);
+  const [docForm, setDocForm] = useState({ name: '', docType: 'ppm', visibility: 'private' });
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [docUploadError, setDocUploadError] = useState<string | null>(null);
+  const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
 
   const loadSourceDeal = useCallback(async () => {
     if (!offering?.deal_id) return;
@@ -496,6 +502,59 @@ export default function OfferingBuilder() {
   useEffect(() => {
     if (id && activeTab === 'subscriptions') loadCapitalCalls();
   }, [id, activeTab, loadCapitalCalls]);
+
+  const handleDocUpload = async () => {
+    if (!docForm.name || !docFile || !id) return;
+    setUploadingDoc(true);
+    setDocUploadError(null);
+    try {
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(docFile);
+      });
+      const res = await fetch(`/api/syndication/offerings/${id}/documents/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file: base64,
+          filename: docFile.name,
+          mimeType: docFile.type,
+          name: docForm.name,
+          docType: docForm.docType,
+          visibility: docForm.visibility,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setDocForm({ name: '', docType: 'ppm', visibility: 'private' });
+        setDocFile(null);
+        setShowDocUpload(false);
+        loadTabData('documents');
+      } else {
+        setDocUploadError(json.error || 'Upload failed.');
+      }
+    } catch (err: any) {
+      setDocUploadError(err.message || 'Upload failed.');
+    } finally {
+      setUploadingDoc(false);
+    }
+  };
+
+  const handleDeleteDoc = async (documentId: string) => {
+    if (!confirm('Delete this document?')) return;
+    setDeletingDocId(documentId);
+    try {
+      await fetch(`/api/syndication/offerings/${id}/documents`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentId }),
+      });
+      loadTabData('documents');
+    } catch (err) { console.error(err); }
+    finally { setDeletingDocId(null); }
+  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).catch(() => {});
@@ -905,8 +964,87 @@ export default function OfferingBuilder() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-dl-serif text-lg text-dl-navy">Document Room</h2>
-              <p className="font-dl-mono text-xs text-dl-muted">{documents.length} documents</p>
+              <div className="flex items-center gap-3">
+                <p className="font-dl-mono text-xs text-dl-muted">{documents.length} documents</p>
+                <button
+                  onClick={() => setShowDocUpload(!showDocUpload)}
+                  className="px-3 py-1 bg-dl-navy text-white font-dl-mono text-xs"
+                >
+                  {showDocUpload ? 'Cancel' : 'Add Document'}
+                </button>
+              </div>
             </div>
+
+            {showDocUpload && (
+              <div className="border border-dl-border p-4 space-y-3">
+                <h3 className="font-dl-serif text-sm text-dl-navy">Upload Document</h3>
+                {docUploadError && (
+                  <div className="border border-red-200 bg-red-50 p-2 text-xs text-red-700">{docUploadError}</div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs text-dl-muted mb-1 font-dl-mono">Document Name</label>
+                    <input
+                      type="text"
+                      value={docForm.name}
+                      onChange={e => setDocForm({ ...docForm, name: e.target.value })}
+                      className="w-full border border-dl-border px-3 py-2 text-sm font-dl-mono"
+                      placeholder="Q4 2025 Financial Statement"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-dl-muted mb-1 font-dl-mono">Document Type</label>
+                    <select
+                      value={docForm.docType}
+                      onChange={e => setDocForm({ ...docForm, docType: e.target.value })}
+                      className="w-full border border-dl-border px-3 py-2 text-sm font-dl-mono bg-white"
+                    >
+                      <option value="ppm">PPM</option>
+                      <option value="subscription_agreement">Subscription Agreement</option>
+                      <option value="operating_agreement">Operating Agreement</option>
+                      <option value="k1">K-1</option>
+                      <option value="capital_call_notice">Capital Call Notice</option>
+                      <option value="distribution_notice">Distribution Notice</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-dl-muted mb-1 font-dl-mono">Visibility</label>
+                    <select
+                      value={docForm.visibility}
+                      onChange={e => setDocForm({ ...docForm, visibility: e.target.value })}
+                      className="w-full border border-dl-border px-3 py-2 text-sm font-dl-mono bg-white"
+                    >
+                      <option value="private">Private (Operators Only)</option>
+                      <option value="investor">Investor (Subscribed LPs)</option>
+                      <option value="public">Public</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-dl-muted mb-1 font-dl-mono">File (PDF, DOCX, XLSX, PNG, JPG — max 20MB)</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg"
+                    onChange={e => setDocFile(e.target.files?.[0] || null)}
+                    className="w-full text-sm font-dl-mono"
+                  />
+                  {docFile && (
+                    <p className="text-xs text-dl-muted mt-1 font-dl-mono">
+                      {docFile.name} ({(docFile.size / 1024 / 1024).toFixed(1)}MB)
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={handleDocUpload}
+                  disabled={uploadingDoc || !docForm.name || !docFile}
+                  className="px-4 py-2 bg-dl-navy text-white font-dl-mono text-sm disabled:opacity-50"
+                >
+                  {uploadingDoc ? 'Uploading...' : 'Upload Document'}
+                </button>
+              </div>
+            )}
+
             {documents.length === 0 ? (
               <div className="border border-dl-border p-8 text-center">
                 <p className="font-dl-mono text-sm text-dl-muted">No documents uploaded yet.</p>
@@ -919,16 +1057,51 @@ export default function OfferingBuilder() {
                       <th className="px-4 py-2 text-xs text-dl-muted uppercase">Name</th>
                       <th className="px-4 py-2 text-xs text-dl-muted uppercase">Type</th>
                       <th className="px-4 py-2 text-xs text-dl-muted uppercase">Visibility</th>
+                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Size</th>
                       <th className="px-4 py-2 text-xs text-dl-muted uppercase">Date</th>
+                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {documents.map((doc: any) => (
                       <tr key={doc.id} className="border-b border-dl-border">
-                        <td className="px-4 py-2 text-dl-text">{doc.name}</td>
-                        <td className="px-4 py-2 text-dl-muted text-xs uppercase">{doc.doc_type}</td>
-                        <td className="px-4 py-2 text-dl-muted text-xs">{doc.visibility}</td>
+                        <td className="px-4 py-2 text-dl-text">
+                          {doc.url ? (
+                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="underline text-dl-navy">
+                              {doc.name}
+                            </a>
+                          ) : doc.name}
+                        </td>
+                        <td className="px-4 py-2 text-dl-muted text-xs uppercase">{doc.doc_type?.replace(/_/g, ' ')}</td>
+                        <td className="px-4 py-2 text-xs">
+                          <span className={
+                            doc.visibility === 'public' ? 'text-green-600' :
+                            doc.visibility === 'investor' ? 'text-blue-600' :
+                            'text-dl-muted'
+                          }>
+                            {doc.visibility}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-dl-muted text-xs">
+                          {doc.file_size ? `${(doc.file_size / 1024).toFixed(0)}KB` : '\u2014'}
+                        </td>
                         <td className="px-4 py-2 text-dl-muted text-xs">{new Date(doc.created_at).toLocaleDateString()}</td>
+                        <td className="px-4 py-2 text-xs">
+                          <div className="flex items-center gap-2">
+                            {doc.url && (
+                              <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline">
+                                View
+                              </a>
+                            )}
+                            <button
+                              onClick={() => handleDeleteDoc(doc.id)}
+                              disabled={deletingDocId === doc.id}
+                              className="text-red-600 hover:underline disabled:opacity-50"
+                            >
+                              {deletingDocId === doc.id ? '...' : 'Delete'}
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
