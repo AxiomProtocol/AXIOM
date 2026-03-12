@@ -301,14 +301,42 @@ async function executeUsdPayment(
     const accountService = new UnitAccountService();
 
     const investorWallet = (dist.wallet_address || '').toLowerCase();
-    if (!investorWallet) {
-      await setDistFailed(distributionId, offeringId, 'Investor has no wallet address on file for account lookup.');
-      return res.status(200).json({ success: false, error: 'Investor has no wallet address on file.' });
+
+    if (investorWallet) {
+      await accountService.syncAccountsFromUnit(investorWallet, unitCustomerId);
     }
 
-    const accounts = await accountService.getAccountsForWallet(investorWallet);
-    const counterpartyAccount = accounts.find((a: any) => a.unitAccountId);
-    if (!counterpartyAccount || !counterpartyAccount.unitAccountId) {
+    const { isUnitConfigured } = await import('../../../../../lib/unit/client');
+    if (!isUnitConfigured()) {
+      await setDistFailed(distributionId, offeringId, 'Banking service is not configured.');
+      return res.status(200).json({ success: false, error: 'Banking service is not configured.' });
+    }
+
+    const { getUnitClient } = await import('../../../../../lib/unit/client');
+    const unitClient = getUnitClient();
+    if (!unitClient) {
+      await setDistFailed(distributionId, offeringId, 'Banking service unavailable.');
+      return res.status(200).json({ success: false, error: 'Banking service unavailable.' });
+    }
+
+    let counterpartyAccountId: string | null = null;
+    try {
+      const accountsResp = await unitClient.accounts.list({ customerId: unitCustomerId });
+      const remoteAccounts = accountsResp.data ?? [];
+      if (remoteAccounts.length > 0) {
+        counterpartyAccountId = remoteAccounts[0].id;
+      }
+    } catch (err) {
+      console.error('[Distributions] Failed to list accounts by customer ID:', err);
+    }
+
+    if (!counterpartyAccountId && investorWallet) {
+      const localAccounts = await accountService.getAccountsForWallet(investorWallet);
+      const found = localAccounts.find((a: any) => a.unitAccountId);
+      if (found) counterpartyAccountId = found.unitAccountId;
+    }
+
+    if (!counterpartyAccountId) {
       await setDistFailed(distributionId, offeringId, 'No linked deposit account found for investor.');
       return res.status(200).json({ success: false, error: 'No linked deposit account found for investor.' });
     }
