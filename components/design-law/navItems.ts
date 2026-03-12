@@ -46,6 +46,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/capital', label: 'Capital Accounting' },
       { href: '/solvency', label: 'Solvency' },
       { href: '/syndication', label: 'Syndication' },
+      { href: '/syndication/portal', label: 'Investor Portal' },
       { href: '/products', label: 'All Products' },
     ],
   },
