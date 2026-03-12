@@ -1,15 +1,25 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../../../server/db';
 
+function parseCookies(cookieHeader: string | undefined): Record<string, string> {
+  if (!cookieHeader) return {};
+  return Object.fromEntries(
+    cookieHeader.split(';')
+      .map(cookie => {
+        const [key, ...val] = cookie.trim().split('=');
+        return [key, decodeURIComponent(val.join('='))];
+      })
+  );
+}
+
 async function getAuthenticatedWallet(req: NextApiRequest): Promise<string | null> {
-  const cookies = req.headers.cookie || '';
-  const match = cookies.match(/siwe_session=([^;]+)/);
-  if (!match) return null;
-  const sessionId = decodeURIComponent(match[1]);
+  const cookies = parseCookies(req.headers.cookie);
+  const sessionToken = cookies['siwe_session'];
+  if (!sessionToken) return null;
   try {
     const result = await pool.query(
-      `SELECT wallet_address FROM wallet_sessions WHERE id = $1 AND expires_at > now()`,
-      [sessionId]
+      `SELECT wallet_address FROM wallet_sessions WHERE session_token = $1 AND expires_at > NOW()`,
+      [sessionToken]
     );
     return result.rows.length > 0 ? result.rows[0].wallet_address : null;
   } catch {

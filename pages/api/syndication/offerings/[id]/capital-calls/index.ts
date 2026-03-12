@@ -94,7 +94,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
 
   try {
     const offeringResult = await pool.query(
-      `SELECT o.id, o.name, o.slug, o.created_by, o.description FROM syn_offerings o WHERE o.id = $1`,
+      `SELECT o.id, o.name, o.slug, o.created_by, o.description, o.meta FROM syn_offerings o WHERE o.id = $1`,
       [offeringId]
     );
     if (offeringResult.rows.length === 0) {
@@ -255,7 +255,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
   <p style="color:#4b5563;font-size:15px;line-height:1.6;">
     A capital call has been issued for your subscription in <strong>${offering.name}</strong>.
   </p>
-  <p style="color:#6b7280;font-size:14px;line-height:1.5;">Property: ${offering.name}</p>
+  <p style="color:#6b7280;font-size:14px;line-height:1.5;">Property: ${offering.meta?.sourceDeal?.propertyAddress || offering.name}</p>
   <table width="100%" style="margin:16px 0;border-collapse:collapse;">
     <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:13px;">Amount Called</td>
         <td style="padding:8px;border-bottom:1px solid #e5e7eb;font-weight:bold;font-size:15px;">$${callAmount.toLocaleString()} ${callCurrency}</td></tr>
@@ -279,7 +279,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
 </td></tr></table>
 </body></html>`;
 
-        const text = `Capital Call Notice — ${offering.name}\n\nDear ${investorName},\n\nA capital call has been issued for your subscription.\nProperty: ${offering.name}\n\nAmount: $${callAmount.toLocaleString()} ${callCurrency}\nDue: ${dueDateStr}\nReference: ${memoCode}\n${instructionsText}\n${achTriggered ? '\nAn ACH debit has been initiated from your linked bank account.\n' : ''}\nView: ${platformUrl}/syndication/offerings/${offeringId}`;
+        const text = `Capital Call Notice — ${offering.name}\n\nDear ${investorName},\n\nA capital call has been issued for your subscription.\nProperty: ${offering.meta?.sourceDeal?.propertyAddress || offering.name}\n\nAmount: $${callAmount.toLocaleString()} ${callCurrency}\nDue: ${dueDateStr}\nReference: ${memoCode}\n${instructionsText}\n${achTriggered ? '\nAn ACH debit has been initiated from your linked bank account.\n' : ''}\nView: ${platformUrl}/syndication/offerings/${offeringId}`;
 
         await client.emails.send({
           from: fromEmail,
