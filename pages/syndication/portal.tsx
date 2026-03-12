@@ -233,6 +233,7 @@ function HoldingsTab({ holdings, subscriptions, documents }: { holdings: any[]; 
               <thead>
                 <tr className="bg-gray-50 text-left text-xs text-dl-gray uppercase tracking-wide">
                   <th className="px-3 py-2 border-b border-dl-border">Offering</th>
+                  <th className="px-3 py-2 border-b border-dl-border">Type</th>
                   <th className="px-3 py-2 border-b border-dl-border">Status</th>
                   <th className="px-3 py-2 border-b border-dl-border">Share Class</th>
                   <th className="px-3 py-2 border-b border-dl-border text-right">Ownership</th>
@@ -250,6 +251,7 @@ function HoldingsTab({ holdings, subscriptions, documents }: { holdings: any[]; 
                         {h.offering_name}
                       </Link>
                     </td>
+                    <td className="px-3 py-2 text-xs font-dl-mono">{h.offering_type || '\u2014'}</td>
                     <td className="px-3 py-2">
                       <span className={`inline-block px-2 py-0.5 text-xs ${STATUS_COLORS[h.offering_status] || 'bg-gray-100 text-gray-600'}`}>
                         {h.offering_status?.replace(/_/g, ' ')}
@@ -318,9 +320,13 @@ function HoldingsTab({ holdings, subscriptions, documents }: { holdings: any[]; 
         </div>
       )}
 
-      {holdings.length === 0 && subscriptions.length === 0 && documents.length === 0 && (
+      {holdings.length === 0 && subscriptions.length === 0 && (
         <div className="border border-dl-border p-8 text-center">
-          <p className="text-sm text-dl-gray">No holdings, subscriptions, or documents found.</p>
+          <p className="font-dl-serif text-base text-dl-navy mb-1">No Active Subscriptions</p>
+          <p className="text-sm text-dl-gray">
+            You do not have any active subscriptions or capital table positions.
+            Contact the offering operator if you believe this is an error.
+          </p>
         </div>
       )}
     </div>
