@@ -1260,7 +1260,7 @@ export default function OfferingBuilder() {
                                     <div className="md:col-span-2">
                                       <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-0.5">Treasury Wallet (Arbitrum One)</p>
                                       <div className="flex items-center gap-2">
-                                        <p className="font-dl-mono text-sm text-dl-text break-all">{fundingInstructions.treasuryWallet || 'Not configured'}</p>
+                                        <p className="font-dl-mono text-sm text-dl-text">{fundingInstructions.treasuryWallet ? `${fundingInstructions.treasuryWallet.slice(0, 6)}...${fundingInstructions.treasuryWallet.slice(-4)}` : 'Not configured'}</p>
                                         {fundingInstructions.treasuryWallet && (
                                           <button
                                             onClick={() => copyToClipboard(fundingInstructions.treasuryWallet)}
