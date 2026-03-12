@@ -48,6 +48,7 @@ export class BitGoWalletService {
           passphrase: params.passphrase ?? 'AxiomSecurePassphrase2025!',
           enterprise: BITGO_ENTERPRISE_ID,
           isCustodial: true,
+          walletVersion: 4,
           tags: [
             `axiom-wallet:${params.walletAddress.toLowerCase()}`,
             'platform:axiom-protocol',
@@ -69,7 +70,7 @@ export class BitGoWalletService {
         walletAddress: params.walletAddress.toLowerCase(),
         bitgoWalletId,
         bitgoEnterpriseId: BITGO_ENTERPRISE_ID,
-        coin: coin as 'arbitrum' | 'tarbitrum',
+        coin,
         label,
         receiveAddress,
       })

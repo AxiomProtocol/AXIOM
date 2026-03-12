@@ -4,6 +4,8 @@ import { sql } from 'drizzle-orm';
 export const bitgoWalletCoinEnum = pgEnum('bitgo_wallet_coin', [
   'eth',
   'teth',
+  'arbeth',
+  'tarbeth',
   'arbitrum',
   'tarbitrum',
   'usdc',
@@ -38,7 +40,7 @@ export const bitgoWallets = pgTable('bitgo_wallets', {
   walletAddress: varchar('wallet_address', { length: 42 }).notNull(),
   bitgoWalletId: varchar('bitgo_wallet_id', { length: 100 }).notNull().unique(),
   bitgoEnterpriseId: varchar('bitgo_enterprise_id', { length: 100 }),
-  coin: bitgoWalletCoinEnum('coin').default('arbitrum'),
+  coin: varchar('coin', { length: 50 }).default('arbeth'),
   label: varchar('label', { length: 255 }),
   receiveAddress: varchar('receive_address', { length: 100 }),
   confirmedBalanceStr: varchar('confirmed_balance_str', { length: 50 }).default('0'),

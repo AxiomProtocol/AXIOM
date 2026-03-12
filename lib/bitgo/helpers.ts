@@ -12,28 +12,30 @@ export function formatCryptoAmount(amount: number, symbol: string, decimals = 8)
 }
 
 const ARBITRUM_CHAIN_MAP: Record<string, string> = {
-  '42161': 'arbitrum',
-  arbitrum: 'arbitrum',
-  'arbitrum one': 'arbitrum',
+  '42161': 'arbeth',
+  arbitrum: 'arbeth',
+  'arbitrum one': 'arbeth',
+  arbeth: 'arbeth',
 };
 
 const ARBITRUM_TESTNET_MAP: Record<string, string> = {
-  '42161': 'tarbitrum',
-  arbitrum: 'tarbitrum',
-  'arbitrum one': 'tarbitrum',
+  '42161': 'tarbeth',
+  arbitrum: 'tarbeth',
+  'arbitrum one': 'tarbeth',
+  tarbeth: 'tarbeth',
 };
 
 export function mapChainId(chainIdOrName: string | number, testnet = false): string {
   const key = String(chainIdOrName).toLowerCase();
   const map = testnet ? ARBITRUM_TESTNET_MAP : ARBITRUM_CHAIN_MAP;
-  return map[key] ?? (testnet ? 'tarbitrum' : 'arbitrum');
+  return map[key] ?? (testnet ? 'tarbeth' : 'arbeth');
 }
 
 export const AXIOM_SUPPORTED_COINS = {
   ETH: { coin: 'eth', testCoin: 'teth', decimals: 18, symbol: 'ETH' },
-  AXM: { coin: 'arbitrum:0xYOUR_AXM_ADDRESS', testCoin: 'tarbitrum:0xYOUR_AXM_ADDRESS', decimals: 18, symbol: 'AXM' },
-  AXUSD: { coin: 'arbitrum:0xYOUR_AXUSD_ADDRESS', testCoin: 'tarbitrum:0xYOUR_AXUSD_ADDRESS', decimals: 6, symbol: 'AXUSD' },
-  USDC: { coin: 'arbitrum:0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', testCoin: 'tarbitrum:0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', decimals: 6, symbol: 'USDC' },
+  AXM: { coin: 'arbeth:0xYOUR_AXM_ADDRESS', testCoin: 'tarbeth:0xYOUR_AXM_ADDRESS', decimals: 18, symbol: 'AXM' },
+  AXUSD: { coin: 'arbeth:0xYOUR_AXUSD_ADDRESS', testCoin: 'tarbeth:0xYOUR_AXUSD_ADDRESS', decimals: 6, symbol: 'AXUSD' },
+  USDC: { coin: 'arbeth:0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', testCoin: 'tarbeth:0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', decimals: 6, symbol: 'USDC' },
 } as const;
 
 export type SupportedCoin = keyof typeof AXIOM_SUPPORTED_COINS;
