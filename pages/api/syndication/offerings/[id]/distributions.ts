@@ -1,10 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../../server/db';
+import { rateLimitDistPay } from '../../../../../lib/rateLimit';
 
 const AXUSD_CONTRACT = '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C';
 const IDENTITY_REGISTRY = '0x7856b3597389D34789512f43A0270a688846313B';
-
-const lastPaymentTimestamp = new Map<string, number>();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
@@ -48,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
-      const { distributionType, grossAmount, periodStart, periodEnd, paymentMethod, currency } = req.body;
+      const { distributionType, grossAmount, periodStart, periodEnd, paymentMethod, currency, recipientWallet: formRecipientWallet } = req.body;
       if (!distributionType || !grossAmount) {
         return res.status(400).json({ success: false, error: 'distributionType and grossAmount are required' });
       }
@@ -93,7 +92,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const investorGross = parseFloat((parseFloat(grossAmount) * proportion).toFixed(2));
           const investorNet = investorGross;
 
-          const recipientWallet = distCurrency === 'AXUSD' ? (entry.wallet_address || null) : null;
+          const recipientWallet = distCurrency === 'AXUSD' ? (formRecipientWallet || entry.wallet_address || null) : null;
 
           const insertResult = await client.query(
             `INSERT INTO syn_distributions
@@ -174,12 +173,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       if (status === 'completed' && currentStatus === 'processing') {
-        const rateLimitKey = `dist-pay:${id}`;
-        const lastTs = lastPaymentTimestamp.get(rateLimitKey) || 0;
-        if (Date.now() - lastTs < 5000) {
-          return res.status(429).json({ success: false, error: 'Rate limited. Wait 5 seconds between distribution payments.' });
-        }
-        lastPaymentTimestamp.set(rateLimitKey, Date.now());
+        if (!rateLimitDistPay(req, res)) return;
 
         const currency = dist.currency || 'USD';
         const netAmount = parseFloat(dist.net_amount || '0');
@@ -233,6 +227,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   return res.status(405).json({ success: false, error: 'Method not allowed' });
 }
 
+async function setDistFailed(distributionId: string, offeringId: string, errorMsg: string) {
+  await pool.query(
+    `UPDATE syn_distributions SET status = 'failed', meta = jsonb_set(COALESCE(meta, '{}'), '{error}', $1::jsonb), updated_at = now()
+     WHERE id = $2 AND offering_id = $3`,
+    [JSON.stringify(errorMsg), distributionId, offeringId]
+  );
+}
+
 async function executeUsdPayment(
   res: NextApiResponse,
   distributionId: string,
@@ -245,114 +247,83 @@ async function executeUsdPayment(
     const unitCustomerId = investorMeta.unitCustomerId;
 
     if (!unitCustomerId) {
-      await pool.query(
-        `UPDATE syn_distributions SET status = 'failed', meta = jsonb_set(COALESCE(meta, '{}'), '{error}', $1::jsonb), updated_at = now()
-         WHERE id = $2 AND offering_id = $3`,
-        [JSON.stringify('Investor has no linked Unit bank account. Cannot initiate ACH credit.'), distributionId, offeringId]
-      );
-      return res.status(200).json({
-        success: false,
-        error: 'Investor has no linked Unit bank account. Cannot initiate ACH credit.',
-      });
+      await setDistFailed(distributionId, offeringId, 'Investor has no linked Unit bank account. Cannot initiate ACH credit.');
+      return res.status(200).json({ success: false, error: 'Investor has no linked Unit bank account. Cannot initiate ACH credit.' });
     }
 
-    const { UnitAccountService } = await import('../../../../../lib/services/UnitAccountService');
-    const accountService = new UnitAccountService();
-
-    const { isUnitConfigured } = await import('../../../../../lib/unit/client');
+    const { isUnitConfigured, getUnitClient } = await import('../../../../../lib/unit/client');
     if (!isUnitConfigured()) {
-      await pool.query(
-        `UPDATE syn_distributions SET status = 'failed', meta = jsonb_set(COALESCE(meta, '{}'), '{error}', $1::jsonb), updated_at = now()
-         WHERE id = $2 AND offering_id = $3`,
-        [JSON.stringify('Banking service is not configured.'), distributionId, offeringId]
-      );
+      await setDistFailed(distributionId, offeringId, 'Banking service is not configured.');
       return res.status(200).json({ success: false, error: 'Banking service is not configured.' });
     }
 
-    const { getUnitClient } = await import('../../../../../lib/unit/client');
     const unitClient = getUnitClient();
     if (!unitClient) {
-      await pool.query(
-        `UPDATE syn_distributions SET status = 'failed', meta = jsonb_set(COALESCE(meta, '{}'), '{error}', $1::jsonb), updated_at = now()
-         WHERE id = $2 AND offering_id = $3`,
-        [JSON.stringify('Banking service unavailable.'), distributionId, offeringId]
-      );
+      await setDistFailed(distributionId, offeringId, 'Banking service unavailable.');
       return res.status(200).json({ success: false, error: 'Banking service unavailable.' });
     }
 
-    let investorAccountId: string | null = null;
+    let counterpartyAccountId: string | null = null;
     try {
       const accountsResp = await unitClient.accounts.list({ customerId: unitCustomerId });
       const accounts = accountsResp.data ?? [];
       if (accounts.length > 0) {
-        investorAccountId = accounts[0].id;
+        counterpartyAccountId = accounts[0].id;
       }
     } catch (err) {
       console.error('[Distributions] Failed to list investor accounts:', err);
     }
 
-    if (!investorAccountId) {
-      await pool.query(
-        `UPDATE syn_distributions SET status = 'failed', meta = jsonb_set(COALESCE(meta, '{}'), '{error}', $1::jsonb), updated_at = now()
-         WHERE id = $2 AND offering_id = $3`,
-        [JSON.stringify('No linked deposit account found for investor.'), distributionId, offeringId]
-      );
+    if (!counterpartyAccountId) {
+      await setDistFailed(distributionId, offeringId, 'No linked deposit account found for investor.');
       return res.status(200).json({ success: false, error: 'No linked deposit account found for investor.' });
     }
 
     const treasuryAccountId = process.env.UNIT_TREASURY_ACCOUNT_ID;
     if (!treasuryAccountId) {
-      await pool.query(
-        `UPDATE syn_distributions SET status = 'failed', meta = jsonb_set(COALESCE(meta, '{}'), '{error}', $1::jsonb), updated_at = now()
-         WHERE id = $2 AND offering_id = $3`,
-        [JSON.stringify('Treasury account not configured.'), distributionId, offeringId]
-      );
+      await setDistFailed(distributionId, offeringId, 'Treasury account not configured.');
       return res.status(200).json({ success: false, error: 'Treasury account not configured.' });
     }
 
-    const { UnitPaymentService } = await import('../../../../../lib/services/UnitPaymentService');
-    const paymentService = new UnitPaymentService();
+    const { generateIdempotencyKey } = await import('../../../../../lib/unit/helpers');
     const amountCents = Math.round(netAmount * 100);
+    const idempotencyKey = generateIdempotencyKey('ach-credit');
 
-    const payResult = await paymentService.createBookPayment({
-      walletAddress: 'system',
-      fromAccountId: treasuryAccountId,
-      toAccountId: investorAccountId,
-      amountCents,
-      description: `Distribution — ${dist.legal_name || 'Investor'} — $${netAmount.toLocaleString()}`,
-      purpose: 'distribution',
-    });
+    const response = await unitClient.payments.create({
+      type: 'achPayment',
+      attributes: {
+        amount: amountCents,
+        description: `Distribution — ${dist.legal_name || 'Investor'} — $${netAmount.toLocaleString()}`,
+        direction: 'Credit',
+        idempotencyKey,
+      },
+      relationships: {
+        account: { data: { type: 'depositAccount', id: treasuryAccountId } },
+        counterpartyAccount: { data: { type: 'depositAccount', id: counterpartyAccountId } },
+      },
+    } as Parameters<typeof unitClient.payments.create>[0]);
 
-    if (!payResult.success) {
-      await pool.query(
-        `UPDATE syn_distributions SET status = 'failed', meta = jsonb_set(COALESCE(meta, '{}'), '{error}', $1::jsonb), updated_at = now()
-         WHERE id = $2 AND offering_id = $3`,
-        [JSON.stringify(payResult.error || 'ACH payment failed'), distributionId, offeringId]
-      );
-      return res.status(200).json({ success: false, error: payResult.error || 'ACH payment failed.' });
-    }
+    const payment = response.data;
+    const unitPaymentId = payment.id;
 
     await pool.query(
       `UPDATE syn_distributions SET status = 'completed', paid_at = now(),
-       meta = jsonb_set(jsonb_set(COALESCE(meta, '{}'), '{unit_payment_id}', $1::jsonb), '{payment_method}', '"unit_book"'::jsonb),
+       meta = jsonb_set(jsonb_set(COALESCE(meta, '{}'), '{unit_payment_id}', $1::jsonb), '{payment_method}', '"ach_credit"'::jsonb),
        updated_at = now()
        WHERE id = $2 AND offering_id = $3`,
-      [JSON.stringify(payResult.unitPaymentId), distributionId, offeringId]
+      [JSON.stringify(unitPaymentId), distributionId, offeringId]
     );
 
     return res.status(200).json({
       success: true,
-      paymentMethod: 'unit_book',
-      unitPaymentId: payResult.unitPaymentId,
+      paymentMethod: 'ach_credit',
+      unitPaymentId,
     });
   } catch (error: any) {
-    console.error('[Distributions] USD payment error:', error);
-    await pool.query(
-      `UPDATE syn_distributions SET status = 'failed', meta = jsonb_set(COALESCE(meta, '{}'), '{error}', $1::jsonb), updated_at = now()
-       WHERE id = $2 AND offering_id = $3`,
-      [JSON.stringify(error.message || 'Unexpected error'), distributionId, offeringId]
-    );
-    return res.status(200).json({ success: false, error: error.message || 'Payment execution failed.' });
+    console.error('[Distributions] USD ACH credit error:', error);
+    const errorMsg = error.message || 'ACH credit payment failed';
+    await setDistFailed(distributionId, offeringId, errorMsg);
+    return res.status(200).json({ success: false, error: errorMsg });
   }
 }
 
@@ -364,25 +335,17 @@ async function executeAxusdPayment(
   netAmount: number
 ) {
   try {
-    const recipientWallet = dist.recipient_wallet || dist.wallet_address;
+    const recipientWallet = dist.recipient_wallet;
 
     if (!recipientWallet || !/^0x[a-fA-F0-9]{40}$/.test(recipientWallet)) {
-      await pool.query(
-        `UPDATE syn_distributions SET status = 'failed', meta = jsonb_set(COALESCE(meta, '{}'), '{error}', $1::jsonb), updated_at = now()
-         WHERE id = $2 AND offering_id = $3`,
-        [JSON.stringify('Invalid or missing recipient wallet address.'), distributionId, offeringId]
-      );
-      return res.status(200).json({ success: false, error: 'Invalid or missing recipient wallet address.' });
+      await setDistFailed(distributionId, offeringId, 'Recipient wallet address is required for AXUSD distributions. Set it when creating the distribution.');
+      return res.status(200).json({ success: false, error: 'Recipient wallet address is required for AXUSD distributions. Set it when creating the distribution.' });
     }
 
     const deployerKey = process.env.DEPLOYER_PRIVATE_KEY;
     const alchemyKey = process.env.ALCHEMY_API_KEY;
     if (!deployerKey || !alchemyKey) {
-      await pool.query(
-        `UPDATE syn_distributions SET status = 'failed', meta = jsonb_set(COALESCE(meta, '{}'), '{error}', $1::jsonb), updated_at = now()
-         WHERE id = $2 AND offering_id = $3`,
-        [JSON.stringify('On-chain payment infrastructure not configured.'), distributionId, offeringId]
-      );
+      await setDistFailed(distributionId, offeringId, 'On-chain payment infrastructure not configured.');
       return res.status(200).json({ success: false, error: 'On-chain payment infrastructure not configured.' });
     }
 
@@ -403,15 +366,8 @@ async function executeAxusdPayment(
     }
 
     if (!isVerified) {
-      await pool.query(
-        `UPDATE syn_distributions SET status = 'failed', meta = jsonb_set(COALESCE(meta, '{}'), '{error}', $1::jsonb), updated_at = now()
-         WHERE id = $2 AND offering_id = $3`,
-        [JSON.stringify('Recipient wallet not KYC-verified for AXUSD. Register at /axusd-3643 first.'), distributionId, offeringId]
-      );
-      return res.status(200).json({
-        success: false,
-        error: 'Recipient wallet not KYC-verified for AXUSD. Register at /axusd-3643 first.',
-      });
+      await setDistFailed(distributionId, offeringId, 'Recipient wallet not KYC-verified for AXUSD. Register at /axusd-3643 first.');
+      return res.status(200).json({ success: false, error: 'Recipient wallet not KYC-verified for AXUSD. Register at /axusd-3643 first.' });
     }
 
     const axusdAbi = ['function transfer(address to, uint256 amount) returns (bool)'];
@@ -440,11 +396,7 @@ async function executeAxusdPayment(
   } catch (error: any) {
     console.error('[Distributions] AXUSD payment error:', error);
     const errorMsg = error.reason || error.message || 'AXUSD transfer failed';
-    await pool.query(
-      `UPDATE syn_distributions SET status = 'failed', meta = jsonb_set(COALESCE(meta, '{}'), '{error}', $1::jsonb), updated_at = now()
-       WHERE id = $2 AND offering_id = $3`,
-      [JSON.stringify(errorMsg), distributionId, offeringId]
-    );
+    await setDistFailed(distributionId, offeringId, errorMsg);
     return res.status(200).json({ success: false, error: errorMsg });
   }
 }

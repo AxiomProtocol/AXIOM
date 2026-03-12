@@ -202,7 +202,7 @@ export default function OfferingBuilder() {
   const [distributions, setDistributions] = useState<any[]>([]);
   const [distSummary, setDistSummary] = useState<any>(null);
   const [showCreateDist, setShowCreateDist] = useState(false);
-  const [distForm, setDistForm] = useState({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD' });
+  const [distForm, setDistForm] = useState({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD', recipientWallet: '' });
   const [creatingDist, setCreatingDist] = useState(false);
   const [fundingRecords, setFundingRecords] = useState<any[]>([]);
   const [showReceiptForm, setShowReceiptForm] = useState<string | null>(null);
@@ -328,7 +328,7 @@ export default function OfferingBuilder() {
       });
       const json = await res.json();
       if (json.success) {
-        setDistForm({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD' });
+        setDistForm({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD', recipientWallet: '' });
         setShowCreateDist(false);
         loadTabData('distributions');
       }
@@ -1741,10 +1741,22 @@ export default function OfferingBuilder() {
                   </div>
                 </div>
                 {distForm.currency === 'AXUSD' && (
-                  <p className="font-dl-mono text-xs text-dl-muted mb-3">
-                    AXUSD distributions require recipient wallets to be KYC-verified on the Identity Registry (ERC-3643).
-                    Recipient wallets will be sourced from investor profiles.
-                  </p>
+                  <div className="mb-3">
+                    <p className="font-dl-mono text-xs text-dl-muted mb-2">
+                      AXUSD distributions require recipient wallets to be KYC-verified on the Identity Registry (ERC-3643).
+                    </p>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Recipient Wallet (0x address)</label>
+                    <input
+                      type="text"
+                      value={distForm.recipientWallet}
+                      onChange={e => setDistForm(p => ({ ...p, recipientWallet: e.target.value }))}
+                      placeholder="0x..."
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                    />
+                    <p className="font-dl-mono text-[10px] text-dl-muted mt-0.5">
+                      All distribution rows will use this wallet. Wallet must be KYC-verified for AXUSD transfers.
+                    </p>
+                  </div>
                 )}
                 <button
                   onClick={handleCreateDistribution}

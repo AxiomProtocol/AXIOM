@@ -56,3 +56,7 @@ export function rateLimitDefault(req: NextApiRequest, res: NextApiResponse): boo
 export function rateLimitAuth(req: NextApiRequest, res: NextApiResponse): boolean {
   return check(req, res, 'auth', 5, 60_000);
 }
+
+export function rateLimitDistPay(req: NextApiRequest, res: NextApiResponse): boolean {
+  return check(req, res, 'dist-pay', 1, 5_000);
+}
