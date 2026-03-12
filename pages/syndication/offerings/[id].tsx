@@ -1487,7 +1487,7 @@ export default function OfferingBuilder() {
                   <div className="border border-dl-border p-3">
                     <p className="font-dl-mono text-xs text-dl-muted uppercase">Funded Subscriptions</p>
                     <p className="font-dl-serif text-lg text-dl-navy">
-                      {subscriptions.filter((s: any) => s.status === 'funded').length || parseInt(offering.subscription_count || '0')}
+                      {subscriptions.filter((s: any) => s.status === 'funded').length}
                     </p>
                   </div>
                   <div className="border border-dl-border p-3">
