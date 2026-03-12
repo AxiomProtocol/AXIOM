@@ -432,7 +432,7 @@ export default function DealWorkspacePage() {
         <div className="flex items-center justify-between mb-2">
           <h1 className="font-dl-serif text-2xl text-dl-navy">{deal?.dealName || 'Deal Workspace'}</h1>
           <div className="flex items-center gap-3">
-            {deal?.status && ['underwriting', 'approved', 'active'].includes(deal.status) && (
+            {metrics && (
               <button
                 onClick={async () => {
                   try {
@@ -596,6 +596,7 @@ export default function DealWorkspacePage() {
                 <CapitalReadinessCard
                   assumptions={assumptions}
                   metrics={metrics || null}
+                  dealId={id as string}
                 />
               </div>
             )}

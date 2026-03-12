@@ -45,9 +45,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const downPaymentPct = parseFloat(metrics.down_payment_pct) || 20;
     const closingCostPct = parseFloat(metrics.closing_cost_pct) || 3;
 
-    const equityRequired = purchasePrice * (downPaymentPct / 100) + rehabBudget + purchasePrice * (closingCostPct / 100);
-    const debtAmount = purchasePrice * (1 - downPaymentPct / 100);
-    const totalCapital = equityRequired + debtAmount;
+    const downPayment = purchasePrice * (downPaymentPct / 100);
+    const closingCosts = purchasePrice * (closingCostPct / 100);
+    const sponsorContribution = downPayment + rehabBudget + closingCosts;
+    const debtAmount = purchasePrice - downPayment;
+    const totalCapitalRequired = purchasePrice + rehabBudget + closingCosts;
+    const equityGap = totalCapitalRequired - debtAmount;
+
+    let riskSummary: Record<string, number> = {};
+    try {
+      const riskResult = await pool.query(
+        `SELECT severity, COUNT(*) as cnt FROM re_risk_flags
+         WHERE scenario_id = (SELECT id FROM re_deal_scenarios WHERE deal_id = $1 ORDER BY is_primary DESC LIMIT 1)
+         GROUP BY severity`,
+        [dealId]
+      );
+      for (const r of riskResult.rows) {
+        riskSummary[r.severity] = parseInt(r.cnt);
+      }
+    } catch {}
+
+    let ivceeScore: number | null = null;
+    let viabilityProbability: number | null = null;
+    try {
+      const ivceeResult = await pool.query(
+        `SELECT analysis_data FROM re_saved_analysis
+         WHERE deal_id = $1 AND analysis_type = 'ivcee'
+         ORDER BY created_at DESC LIMIT 1`,
+        [dealId]
+      );
+      if (ivceeResult.rows.length > 0) {
+        const data = ivceeResult.rows[0].analysis_data;
+        if (data?.capitalEfficiency?.efficiencyScore) {
+          ivceeScore = data.capitalEfficiency.efficiencyScore;
+        }
+        if (data?.probability?.viabilityProbability) {
+          viabilityProbability = data.probability.viabilityProbability;
+        }
+      }
+    } catch {}
 
     const propertyAddress = deal.address_raw || '';
     const propertyInfo = [deal.property_type, deal.beds ? `${deal.beds}bd` : null, deal.baths ? `${deal.baths}ba` : null, deal.sqft ? `${deal.sqft}sqft` : null].filter(Boolean).join(' | ');
@@ -76,9 +112,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           deal.strategy ? `${deal.strategy} strategy` : null,
           metrics.noi_annual ? `Projected NOI: $${parseFloat(metrics.noi_annual).toLocaleString()}` : null,
           metrics.cap_rate ? `Cap Rate: ${(parseFloat(metrics.cap_rate) * 100).toFixed(1)}%` : null,
+          viabilityProbability ? `IVCEE Viability: ${(viabilityProbability * 100).toFixed(1)}%` : null,
         ].filter(Boolean)),
-        equityRequired.toFixed(2),
-        Math.max(5000, equityRequired * 0.05).toFixed(2),
+        equityGap.toFixed(2),
+        Math.max(5000, equityGap * 0.05).toFixed(2),
         metrics.cap_rate ? parseFloat(metrics.cap_rate).toFixed(4) : null,
         metrics.cash_on_cash ? parseFloat(metrics.cash_on_cash).toFixed(4) : null,
         null,
@@ -91,11 +128,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             status: deal.status,
             purchasePrice,
             rehabBudget,
-            totalCapital,
-            equityRequired,
+            totalCapital: totalCapitalRequired,
+            equityRequired: equityGap,
             debtAmount,
+            sponsorContribution,
+            equityGap,
             propertyAddress,
             propertyInfo,
+          },
+          capitalReadiness: {
+            totalCapitalRequired,
+            sponsorContribution,
+            debtAmount,
+            equityGap,
+            ltv: purchasePrice > 0 ? ((debtAmount / purchasePrice) * 100) : 0,
+          },
+          riskSummary,
+          ivcee: {
+            efficiencyScore: ivceeScore,
+            viabilityProbability,
           },
           createdByWallet: walletAddress || null,
         }),

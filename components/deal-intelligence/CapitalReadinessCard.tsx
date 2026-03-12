@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { useRouter } from 'next/router';
+
 interface CapitalReadinessProps {
   assumptions: {
     purchasePrice: string;
@@ -7,6 +10,7 @@ interface CapitalReadinessProps {
   };
   metrics: Record<string, any> | null;
   dealGrade?: string;
+  dealId?: string;
 }
 
 interface ReadinessChannel {
@@ -121,8 +125,30 @@ const BAR_COLORS: Record<string, string> = {
   weak: 'bg-red-500',
 };
 
-export default function CapitalReadinessCard({ assumptions, metrics }: CapitalReadinessProps) {
+export default function CapitalReadinessCard({ assumptions, metrics, dealId }: CapitalReadinessProps) {
   const readiness = computeCapitalReadiness(assumptions, metrics);
+  const router = useRouter();
+  const [creating, setCreating] = useState(false);
+
+  const handleCreateOffering = async () => {
+    if (!dealId) return;
+    setCreating(true);
+    try {
+      const res = await fetch('/api/syndication/offerings/create-from-deal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dealId, offeringType: 'clubDeal' }),
+      });
+      const json = await res.json();
+      if (json.success && json.offeringId) {
+        router.push(`/syndication/offerings/${json.offeringId}`);
+      }
+    } catch (err) {
+      console.error('Failed to create offering', err);
+    } finally {
+      setCreating(false);
+    }
+  };
 
   return (
     <div className="border border-dl-border p-6 mt-6">
@@ -170,6 +196,21 @@ export default function CapitalReadinessCard({ assumptions, metrics }: CapitalRe
           </div>
         ))}
       </div>
+
+      {dealId && metrics && (
+        <div className="mt-6 border-t border-dl-border pt-4">
+          <button
+            onClick={handleCreateOffering}
+            disabled={creating}
+            className="w-full bg-dl-forest text-white px-6 py-2.5 font-dl-mono text-sm disabled:opacity-50"
+          >
+            {creating ? 'Creating Offering...' : 'Proceed to Offering'}
+          </button>
+          <p className="font-dl-mono text-xs text-dl-muted text-center mt-2">
+            Create a capital formation offering from this deal and its underwriting data
+          </p>
+        </div>
+      )}
     </div>
   );
 }

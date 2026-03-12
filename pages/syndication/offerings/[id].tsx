@@ -177,14 +177,93 @@ export default function OfferingBuilder() {
     }
   };
 
+  const [showAddInvestor, setShowAddInvestor] = useState(false);
+  const [investorForm, setInvestorForm] = useState({ legalName: '', email: '', accreditationStatus: 'unverified', stage: 'lead', softCircleAmount: '' });
+  const [addingInvestor, setAddingInvestor] = useState(false);
+  const [showAddSub, setShowAddSub] = useState(false);
+  const [subForm, setSubForm] = useState({ investorProfileId: '', amount: '', shareClass: 'common', fundingMethod: 'wire' });
+  const [addingSub, setAddingSub] = useState(false);
+  const [syncingCap, setSyncingCap] = useState(false);
+  const [sourceDeal, setSourceDeal] = useState<any>(null);
+
+  const loadSourceDeal = useCallback(async () => {
+    if (!offering?.deal_id) return;
+    try {
+      const res = await fetch(`/api/real-estate/deals/${offering.deal_id}/summary`);
+      const json = await res.json();
+      if (json.data) setSourceDeal(json.data);
+    } catch {}
+  }, [offering?.deal_id]);
+
+  useEffect(() => { if (offering?.deal_id) loadSourceDeal(); }, [offering?.deal_id, loadSourceDeal]);
+
+  const handleAddInvestor = async () => {
+    if (!investorForm.legalName) return;
+    setAddingInvestor(true);
+    try {
+      const res = await fetch('/api/syndication/investor-profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...investorForm, offeringId: id }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setInvestorForm({ legalName: '', email: '', accreditationStatus: 'unverified', stage: 'lead', softCircleAmount: '' });
+        setShowAddInvestor(false);
+        loadTabData('investors');
+      }
+    } catch (err) { console.error(err); }
+    finally { setAddingInvestor(false); }
+  };
+
+  const handleAddSubscription = async () => {
+    if (!subForm.investorProfileId || !subForm.amount) return;
+    setAddingSub(true);
+    try {
+      const res = await fetch(`/api/syndication/offerings/${id}/subscriptions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(subForm),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setSubForm({ investorProfileId: '', amount: '', shareClass: 'common', fundingMethod: 'wire' });
+        setShowAddSub(false);
+        loadTabData('subscriptions');
+      }
+    } catch (err) { console.error(err); }
+    finally { setAddingSub(false); }
+  };
+
+  const handleSubAction = async (subscriptionId: string, status: string) => {
+    try {
+      await fetch(`/api/syndication/offerings/${id}/subscriptions`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriptionId, status }),
+      });
+      loadTabData('subscriptions');
+      if (status === 'funded') loadTabData('capTable');
+    } catch (err) { console.error(err); }
+  };
+
+  const handleSyncCapTable = async () => {
+    setSyncingCap(true);
+    try {
+      await fetch(`/api/syndication/offerings/${id}/sync-cap-table`, { method: 'POST' });
+      loadTabData('capTable');
+    } catch (err) { console.error(err); }
+    finally { setSyncingCap(false); }
+  };
+
   const TABS: { key: Tab; label: string }[] = [
     { key: 'overview', label: 'Overview' },
     { key: 'financials', label: 'Financials' },
     { key: 'documents', label: 'Documents' },
-    { key: 'investors', label: 'Investors' },
+    { key: 'investors', label: 'Investor Pipeline' },
     { key: 'subscriptions', label: 'Subscriptions' },
-    { key: 'capTable', label: 'Cap Table' },
-    { key: 'reports', label: 'Reports' },
+    { key: 'capTable', label: 'Capital Table' },
+    { key: 'reports', label: 'Offering Reports' },
     { key: 'settings', label: 'Settings' },
   ];
 
@@ -523,12 +602,89 @@ export default function OfferingBuilder() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-dl-serif text-lg text-dl-navy">Investor Pipeline</h2>
-              {pipelineSummary && (
-                <p className="font-dl-mono text-xs text-dl-muted">
-                  {pipelineSummary.total} investors | Soft Circle: {fmt(pipelineSummary.totalSoftCircle)} | Committed: {fmt(pipelineSummary.totalCommitted)}
-                </p>
-              )}
+              <div className="flex items-center gap-3">
+                {pipelineSummary && (
+                  <p className="font-dl-mono text-xs text-dl-muted">
+                    {pipelineSummary.total} investors | Soft Circle: {fmt(pipelineSummary.totalSoftCircle)} | Committed: {fmt(pipelineSummary.totalCommitted)}
+                  </p>
+                )}
+                <button
+                  onClick={() => setShowAddInvestor(!showAddInvestor)}
+                  className="bg-dl-navy text-white px-3 py-1 font-dl-mono text-xs"
+                >
+                  {showAddInvestor ? 'Cancel' : 'Add Investor'}
+                </button>
+              </div>
             </div>
+
+            {showAddInvestor && (
+              <div className="border border-dl-navy p-4 bg-gray-50">
+                <h3 className="font-dl-mono text-xs text-dl-muted uppercase mb-3">New Investor Profile</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Legal Name</label>
+                    <input
+                      value={investorForm.legalName}
+                      onChange={e => setInvestorForm(p => ({ ...p, legalName: e.target.value }))}
+                      placeholder="Full legal name"
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Email</label>
+                    <input
+                      value={investorForm.email}
+                      onChange={e => setInvestorForm(p => ({ ...p, email: e.target.value }))}
+                      placeholder="investor@email.com"
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Accreditation</label>
+                    <select
+                      value={investorForm.accreditationStatus}
+                      onChange={e => setInvestorForm(p => ({ ...p, accreditationStatus: e.target.value }))}
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm bg-white"
+                    >
+                      <option value="unverified">Unverified</option>
+                      <option value="accredited">Accredited</option>
+                      <option value="not_accredited">Not Accredited</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Pipeline Stage</label>
+                    <select
+                      value={investorForm.stage}
+                      onChange={e => setInvestorForm(p => ({ ...p, stage: e.target.value }))}
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm bg-white"
+                    >
+                      <option value="lead">Lead</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="interested">Interested</option>
+                      <option value="softCircled">Soft Circled</option>
+                      <option value="docsPending">Docs Pending</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Soft Circle Amount</label>
+                    <input
+                      type="number"
+                      value={investorForm.softCircleAmount}
+                      onChange={e => setInvestorForm(p => ({ ...p, softCircleAmount: e.target.value }))}
+                      placeholder="25000"
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={handleAddInvestor}
+                  disabled={addingInvestor || !investorForm.legalName}
+                  className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                >
+                  {addingInvestor ? 'Adding...' : 'Add to Pipeline'}
+                </button>
+              </div>
+            )}
 
             {pipelineSummary?.stageCounts && Object.keys(pipelineSummary.stageCounts).length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -540,11 +696,17 @@ export default function OfferingBuilder() {
               </div>
             )}
 
-            {pipeline.length === 0 ? (
+            {pipeline.length === 0 && !showAddInvestor ? (
               <div className="border border-dl-border p-8 text-center">
-                <p className="font-dl-mono text-sm text-dl-muted">No investors in pipeline yet.</p>
+                <p className="font-dl-mono text-sm text-dl-muted mb-2">No investors in pipeline yet.</p>
+                <button
+                  onClick={() => setShowAddInvestor(true)}
+                  className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm"
+                >
+                  Add First Investor
+                </button>
               </div>
-            ) : (
+            ) : pipeline.length > 0 && (
               <div className="border border-dl-border">
                 <table className="w-full font-dl-mono text-sm">
                   <thead>
@@ -586,18 +748,102 @@ export default function OfferingBuilder() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-dl-serif text-lg text-dl-navy">Subscriptions</h2>
-              {subSummary && (
-                <p className="font-dl-mono text-xs text-dl-muted">
-                  {subSummary.total} total | Committed: {fmt(subSummary.totalCommitted)} | Approved: {fmt(subSummary.totalApproved)}
-                </p>
-              )}
+              <div className="flex items-center gap-3">
+                {subSummary && (
+                  <p className="font-dl-mono text-xs text-dl-muted">
+                    {subSummary.total} total | Committed: {fmt(subSummary.totalCommitted)} | Approved: {fmt(subSummary.totalApproved)}
+                  </p>
+                )}
+                <button
+                  onClick={() => setShowAddSub(!showAddSub)}
+                  className="bg-dl-navy text-white px-3 py-1 font-dl-mono text-xs"
+                >
+                  {showAddSub ? 'Cancel' : 'Record Subscription'}
+                </button>
+              </div>
             </div>
 
-            {subscriptions.length === 0 ? (
-              <div className="border border-dl-border p-8 text-center">
-                <p className="font-dl-mono text-sm text-dl-muted">No subscriptions yet.</p>
+            {showAddSub && (
+              <div className="border border-dl-navy p-4 bg-gray-50">
+                <h3 className="font-dl-mono text-xs text-dl-muted uppercase mb-3">New Subscription</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Investor</label>
+                    <select
+                      value={subForm.investorProfileId}
+                      onChange={e => setSubForm(p => ({ ...p, investorProfileId: e.target.value }))}
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm bg-white"
+                    >
+                      <option value="">Select investor...</option>
+                      {pipeline.map((p: any) => (
+                        <option key={p.investor_profile_id} value={p.investor_profile_id}>
+                          {p.legal_name || p.entity_name || 'Unknown'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Amount ($)</label>
+                    <input
+                      type="number"
+                      value={subForm.amount}
+                      onChange={e => setSubForm(p => ({ ...p, amount: e.target.value }))}
+                      placeholder="50000"
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Share Class</label>
+                    <select
+                      value={subForm.shareClass}
+                      onChange={e => setSubForm(p => ({ ...p, shareClass: e.target.value }))}
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm bg-white"
+                    >
+                      <option value="common">Common</option>
+                      <option value="A">Class A</option>
+                      <option value="B">Class B</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Funding Method</label>
+                    <select
+                      value={subForm.fundingMethod}
+                      onChange={e => setSubForm(p => ({ ...p, fundingMethod: e.target.value }))}
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm bg-white"
+                    >
+                      <option value="wire">Wire Transfer</option>
+                      <option value="ach">ACH</option>
+                      <option value="crypto">Crypto (On-chain)</option>
+                      <option value="check">Check</option>
+                    </select>
+                  </div>
+                </div>
+                {pipeline.length === 0 && (
+                  <p className="font-dl-mono text-xs text-dl-muted mb-2">
+                    No investors in pipeline. Add investors in the Investor Pipeline tab first.
+                  </p>
+                )}
+                <button
+                  onClick={handleAddSubscription}
+                  disabled={addingSub || !subForm.investorProfileId || !subForm.amount}
+                  className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                >
+                  {addingSub ? 'Recording...' : 'Record Subscription'}
+                </button>
               </div>
-            ) : (
+            )}
+
+            {subscriptions.length === 0 && !showAddSub ? (
+              <div className="border border-dl-border p-8 text-center">
+                <p className="font-dl-mono text-sm text-dl-muted mb-2">No subscriptions yet.</p>
+                <button
+                  onClick={() => setShowAddSub(true)}
+                  className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm"
+                >
+                  Record First Subscription
+                </button>
+              </div>
+            ) : subscriptions.length > 0 && (
               <div className="border border-dl-border">
                 <table className="w-full font-dl-mono text-sm">
                   <thead>
@@ -607,7 +853,7 @@ export default function OfferingBuilder() {
                       <th className="px-4 py-2 text-xs text-dl-muted uppercase">Class</th>
                       <th className="px-4 py-2 text-xs text-dl-muted uppercase">Status</th>
                       <th className="px-4 py-2 text-xs text-dl-muted uppercase">Method</th>
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Date</th>
+                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -615,7 +861,7 @@ export default function OfferingBuilder() {
                       <tr key={s.id} className="border-b border-dl-border">
                         <td className="px-4 py-2 text-dl-text">{s.legal_name || s.entity_name || 'Unknown'}</td>
                         <td className="px-4 py-2 text-right">{fmt(parseFloat(s.amount || '0'))}</td>
-                        <td className="px-4 py-2 text-dl-muted text-xs">{s.share_class || 'A'}</td>
+                        <td className="px-4 py-2 text-dl-muted text-xs">{s.meta?.share_class || s.share_class || 'common'}</td>
                         <td className="px-4 py-2">
                           <span className={`px-2 py-0.5 text-xs ${
                             s.status === 'approved' || s.status === 'funded' ? 'bg-green-50 text-green-700' :
@@ -624,7 +870,25 @@ export default function OfferingBuilder() {
                           }`}>{s.status}</span>
                         </td>
                         <td className="px-4 py-2 text-dl-muted text-xs">{s.funding_method || '—'}</td>
-                        <td className="px-4 py-2 text-dl-muted text-xs">{new Date(s.created_at).toLocaleDateString()}</td>
+                        <td className="px-4 py-2">
+                          <div className="flex gap-1">
+                            {s.status === 'draft' && (
+                              <button onClick={() => handleSubAction(s.id, 'submitted')} className="px-2 py-0.5 text-xs bg-blue-50 text-blue-700 font-dl-mono">Submit</button>
+                            )}
+                            {(s.status === 'submitted' || s.status === 'under_review') && (
+                              <>
+                                <button onClick={() => handleSubAction(s.id, 'approved')} className="px-2 py-0.5 text-xs bg-green-50 text-green-700 font-dl-mono">Approve</button>
+                                <button onClick={() => handleSubAction(s.id, 'rejected')} className="px-2 py-0.5 text-xs bg-red-50 text-red-600 font-dl-mono">Reject</button>
+                              </>
+                            )}
+                            {s.status === 'approved' && (
+                              <button onClick={() => handleSubAction(s.id, 'funded')} className="px-2 py-0.5 text-xs bg-green-100 text-green-800 font-dl-mono">Mark Funded</button>
+                            )}
+                            {s.status === 'funded' && (
+                              <span className="px-2 py-0.5 text-xs bg-green-100 text-green-800 font-dl-mono">Funded</span>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -637,17 +901,33 @@ export default function OfferingBuilder() {
         {activeTab === 'capTable' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-dl-serif text-lg text-dl-navy">Cap Table</h2>
-              {capSummary && (
-                <p className="font-dl-mono text-xs text-dl-muted">
-                  {capSummary.holderCount} holders | Total Capital: {fmt(capSummary.totalCapital)}
-                </p>
-              )}
+              <h2 className="font-dl-serif text-lg text-dl-navy">Capital Table</h2>
+              <div className="flex items-center gap-3">
+                {capSummary && (
+                  <p className="font-dl-mono text-xs text-dl-muted">
+                    {capSummary.holderCount} holders | Total Capital: {fmt(capSummary.totalCapital)}
+                  </p>
+                )}
+                <button
+                  onClick={handleSyncCapTable}
+                  disabled={syncingCap}
+                  className="bg-dl-navy text-white px-3 py-1 font-dl-mono text-xs disabled:opacity-50"
+                >
+                  {syncingCap ? 'Syncing...' : 'Sync Capital Table'}
+                </button>
+              </div>
             </div>
 
             {capTable.length === 0 ? (
               <div className="border border-dl-border p-8 text-center">
-                <p className="font-dl-mono text-sm text-dl-muted">Cap table will populate when subscriptions are funded.</p>
+                <p className="font-dl-mono text-sm text-dl-muted mb-2">Capital table will populate when subscriptions are funded.</p>
+                <button
+                  onClick={handleSyncCapTable}
+                  disabled={syncingCap}
+                  className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                >
+                  {syncingCap ? 'Syncing...' : 'Rebuild from Funded Subscriptions'}
+                </button>
               </div>
             ) : (
               <div className="border border-dl-border">
