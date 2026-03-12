@@ -112,12 +112,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         deal_id, name, slug, status, offering_type, entity_type, description,
         investment_highlights, target_raise, minimum_investment,
         projected_cap_rate, projected_cash_on_cash, projected_irr, projected_dscr,
-        hold_period_years, meta, created_at, updated_at
+        hold_period_years, meta, created_by, created_at, updated_at
       ) VALUES (
         $1, $2, $3, 'draft', $4, 'spv', $5,
         $6, $7, $8,
         $9, $10, $11, $12,
-        $13, $14, now(), now()
+        $13, $14, $15, now(), now()
       ) RETURNING id`,
       [
         dealId,
@@ -170,6 +170,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           memoExcerpt,
           createdByWallet: walletAddress || null,
         }),
+        walletAddress || null,
       ]
     );
 

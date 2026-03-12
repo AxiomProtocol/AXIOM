@@ -93,20 +93,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } catch {}
     }
 
-    const routingNumber = process.env.UNIT_ROUTING_NUMBER || (process.env.UNIT_API_TOKEN ? '084106768' : null);
-    const accountNumber = process.env.UNIT_ACCOUNT_NUMBER || (process.env.UNIT_API_TOKEN ? '****pending-unit-setup' : null);
+    const routingNumber = process.env.UNIT_ROUTING_NUMBER || null;
+    const accountNumber = process.env.UNIT_ACCOUNT_NUMBER || null;
+    const bankConfigured = !!(routingNumber && accountNumber);
 
-    const bankDetails = {
-      bankName: 'Axiom Protocol Treasury',
-      routingNumber,
-      accountNumber,
-      accountType: 'Checking',
-      beneficiary: 'Axiom Protocol LLC',
-      bankAddress: 'Unit Finance / Evolve Bank & Trust',
-      note: routingNumber
-        ? 'Wire routing and account details provided via Unit Finance.'
-        : 'Banking rails not yet configured. Contact operations for wire instructions.',
-    };
+    const bankDetails = bankConfigured
+      ? {
+          bankName: 'Axiom Protocol Treasury',
+          routingNumber,
+          accountNumber,
+          accountType: 'Checking',
+          beneficiary: 'Axiom Protocol LLC',
+          bankAddress: 'Unit Finance / Evolve Bank & Trust',
+          note: 'Wire routing and account details provided via Unit Finance.',
+          configured: true,
+        }
+      : {
+          bankName: 'Axiom Protocol Treasury',
+          routingNumber: null,
+          accountNumber: null,
+          accountType: null,
+          beneficiary: 'Axiom Protocol LLC',
+          bankAddress: null,
+          note: 'USD wire instructions not yet configured. Contact operations for payment details.',
+          configured: false,
+        };
 
     return res.status(200).json({
       success: true,

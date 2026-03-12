@@ -2305,6 +2305,7 @@ export async function register() {
       await exec(`CREATE INDEX IF NOT EXISTS syn_dist_status_idx ON syn_distributions(status)`, 'idx syn_dist_status');
       await exec(`CREATE INDEX IF NOT EXISTS syn_dist_type_idx ON syn_distributions(distribution_type)`, 'idx syn_dist_type');
 
+      await exec(`ALTER TABLE syn_offerings ADD COLUMN IF NOT EXISTS created_by VARCHAR(42)`, 'alter syn_offerings created_by');
       await exec(`ALTER TABLE syn_subscriptions ADD COLUMN IF NOT EXISTS payment_currency VARCHAR(20) DEFAULT 'USD'`, 'alter syn_subscriptions payment_currency');
       await exec(`ALTER TABLE syn_subscriptions ADD COLUMN IF NOT EXISTS investor_wallet VARCHAR(42)`, 'alter syn_subscriptions investor_wallet');
       await exec(`ALTER TABLE syn_funding_records ADD COLUMN IF NOT EXISTS tx_hash VARCHAR(66)`, 'alter syn_funding_records tx_hash');

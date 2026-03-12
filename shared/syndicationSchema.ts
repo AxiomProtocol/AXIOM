@@ -96,6 +96,7 @@ export const synOfferings = pgTable("syn_offerings", {
   closeDate: timestamp("close_date"),
   fundedDate: timestamp("funded_date"),
   meta: jsonb("meta"),
+  createdBy: varchar("created_by", { length: 42 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => ({
