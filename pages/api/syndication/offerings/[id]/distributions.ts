@@ -290,37 +290,25 @@ async function executeUsdPayment(
 ) {
   try {
     const investorMeta = dist.investor_meta || {};
-    const unitCustomerId = investorMeta.unitCustomerId;
+    const unitCustomerId = investorMeta.unit_customer_id || investorMeta.unitCustomerId;
 
     if (!unitCustomerId) {
       await setDistFailed(distributionId, offeringId, 'Investor has no linked Unit bank account. Cannot initiate ACH credit.');
       return res.status(200).json({ success: false, error: 'Investor has no linked Unit bank account. Cannot initiate ACH credit.' });
     }
 
-    const { isUnitConfigured, getUnitClient } = await import('../../../../../lib/unit/client');
-    if (!isUnitConfigured()) {
-      await setDistFailed(distributionId, offeringId, 'Banking service is not configured.');
-      return res.status(200).json({ success: false, error: 'Banking service is not configured.' });
+    const { UnitAccountService } = await import('../../../../../lib/services/UnitAccountService');
+    const accountService = new UnitAccountService();
+
+    const investorWallet = (dist.wallet_address || '').toLowerCase();
+    if (!investorWallet) {
+      await setDistFailed(distributionId, offeringId, 'Investor has no wallet address on file for account lookup.');
+      return res.status(200).json({ success: false, error: 'Investor has no wallet address on file.' });
     }
 
-    const unitClient = getUnitClient();
-    if (!unitClient) {
-      await setDistFailed(distributionId, offeringId, 'Banking service unavailable.');
-      return res.status(200).json({ success: false, error: 'Banking service unavailable.' });
-    }
-
-    let counterpartyAccountId: string | null = null;
-    try {
-      const accountsResp = await unitClient.accounts.list({ customerId: unitCustomerId });
-      const accounts = accountsResp.data ?? [];
-      if (accounts.length > 0) {
-        counterpartyAccountId = accounts[0].id;
-      }
-    } catch (err) {
-      console.error('[Distributions] Failed to list investor accounts:', err);
-    }
-
-    if (!counterpartyAccountId) {
+    const accounts = await accountService.getAccountsForWallet(investorWallet);
+    const counterpartyAccount = accounts.find((a: any) => a.unitAccountId);
+    if (!counterpartyAccount || !counterpartyAccount.unitAccountId) {
       await setDistFailed(distributionId, offeringId, 'No linked deposit account found for investor.');
       return res.status(200).json({ success: false, error: 'No linked deposit account found for investor.' });
     }
@@ -331,39 +319,36 @@ async function executeUsdPayment(
       return res.status(200).json({ success: false, error: 'Treasury account not configured.' });
     }
 
-    const { generateIdempotencyKey } = await import('../../../../../lib/unit/helpers');
+    const { UnitPaymentService } = await import('../../../../../lib/services/UnitPaymentService');
+    const paymentService = new UnitPaymentService();
     const amountCents = Math.round(netAmount * 100);
-    const idempotencyKey = generateIdempotencyKey('ach-credit');
 
-    const response = await unitClient.payments.create({
-      type: 'achPayment',
-      attributes: {
-        amount: amountCents,
-        description: `Distribution — ${dist.legal_name || 'Investor'} — $${netAmount.toLocaleString()}`,
-        direction: 'Credit',
-        idempotencyKey,
-      },
-      relationships: {
-        account: { data: { type: 'depositAccount', id: treasuryAccountId } },
-        counterpartyAccount: { data: { type: 'depositAccount', id: counterpartyAccountId } },
-      },
-    } as Parameters<typeof unitClient.payments.create>[0]);
+    const payResult = await paymentService.createAchCredit({
+      walletAddress: investorWallet,
+      fromAccountId: treasuryAccountId,
+      counterpartyAccountId: counterpartyAccount.unitAccountId,
+      amountCents,
+      description: `Distribution — ${dist.legal_name || 'Investor'} — $${netAmount.toLocaleString()}`,
+      purpose: 'distribution',
+    });
 
-    const payment = response.data;
-    const unitPaymentId = payment.id;
+    if (!payResult.success) {
+      await setDistFailed(distributionId, offeringId, payResult.error || 'ACH credit payment failed');
+      return res.status(200).json({ success: false, error: payResult.error || 'ACH credit payment failed.' });
+    }
 
     await pool.query(
       `UPDATE syn_distributions SET status = 'completed', paid_at = now(),
        meta = jsonb_set(jsonb_set(COALESCE(meta, '{}'), '{unit_payment_id}', $1::jsonb), '{payment_method}', '"ach_credit"'::jsonb),
        updated_at = now()
        WHERE id = $2 AND offering_id = $3`,
-      [JSON.stringify(unitPaymentId), distributionId, offeringId]
+      [JSON.stringify(payResult.unitPaymentId), distributionId, offeringId]
     );
 
     return res.status(200).json({
       success: true,
       paymentMethod: 'ach_credit',
-      unitPaymentId,
+      unitPaymentId: payResult.unitPaymentId,
     });
   } catch (error: any) {
     console.error('[Distributions] USD ACH credit error:', error);

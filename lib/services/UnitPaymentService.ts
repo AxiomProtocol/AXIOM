@@ -23,6 +23,15 @@ export interface AchDebitParams {
   purpose?: string;
 }
 
+export interface AchCreditParams {
+  walletAddress: string;
+  fromAccountId: string;
+  counterpartyAccountId: string;
+  amountCents: number;
+  description: string;
+  purpose?: string;
+}
+
 export interface RecurringPaymentParams {
   walletAddress: string;
   fromAccountId: string;
@@ -144,6 +153,57 @@ export class UnitPaymentService {
       const msg = err instanceof Error ? err.message : String(err);
       console.error('[UnitPaymentService] createAchDebit error:', msg);
       return { success: false, error: 'ACH payment failed. Please try again.' };
+    }
+  }
+
+  async createAchCredit(params: AchCreditParams): Promise<PaymentResult> {
+    if (!isUnitConfigured()) {
+      return { success: false, error: 'Banking service is not configured.' };
+    }
+    const client = getUnitClient();
+    if (!client) return { success: false, error: 'Banking service unavailable.' };
+
+    const idempotencyKey = generateIdempotencyKey('ach-credit');
+
+    try {
+      const response = await client.payments.create({
+        type: 'achPayment',
+        attributes: {
+          amount: params.amountCents,
+          description: params.description,
+          direction: 'Credit',
+          idempotencyKey,
+        },
+        relationships: {
+          account: { data: { type: 'depositAccount', id: params.fromAccountId } },
+          counterpartyAccount: { data: { type: 'depositAccount', id: params.counterpartyAccountId } },
+        },
+      } as Parameters<typeof client.payments.create>[0]);
+
+      const payment = response.data;
+      const unitPaymentId = payment.id;
+      const attrs = payment.attributes as { status?: string };
+
+      const [inserted] = await db
+        .insert(unitPayments)
+        .values({
+          walletAddress: params.walletAddress.toLowerCase(),
+          unitPaymentId,
+          idempotencyKey,
+          paymentType: 'ach_credit',
+          status: (attrs.status ?? 'Pending') as 'Pending' | 'Sent' | 'Clearing' | 'Returned' | 'Rejected' | 'Canceled' | 'Cleared',
+          amountCents: params.amountCents,
+          description: params.description,
+          purpose: params.purpose ?? undefined,
+          toAccountId: params.counterpartyAccountId,
+        })
+        .returning({ id: unitPayments.id });
+
+      return { success: true, paymentId: inserted.id, unitPaymentId, status: attrs.status };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[UnitPaymentService] createAchCredit error:', msg);
+      return { success: false, error: 'ACH credit payment failed. Please try again.' };
     }
   }
 
