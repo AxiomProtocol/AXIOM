@@ -107,6 +107,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ success: false, error: `Invalid distribution type. Must be one of: ${validTypes.join(', ')}` });
       }
 
+      const distCurrency = currency || 'USD';
+      if (distCurrency === 'AXUSD' && formRecipientWallet) {
+        if (!/^0x[a-fA-F0-9]{40}$/.test(formRecipientWallet)) {
+          return res.status(400).json({ success: false, error: 'Invalid wallet address format. Must be a valid 0x Ethereum address.' });
+        }
+      }
+      if (distCurrency === 'AXUSD' && !formRecipientWallet) {
+        return res.status(400).json({ success: false, error: 'Recipient wallet address is required for AXUSD distributions.' });
+      }
+
       const capResult = await pool.query(
         `SELECT c.id, c.investor_profile_id, c.ownership_pct, c.capital_contributed,
                 ip.wallet_address
@@ -124,8 +134,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const totalOwnership = capResult.rows.reduce(
         (sum: number, r: any) => sum + parseFloat(r.ownership_pct || '0'), 0
       );
-
-      const distCurrency = currency || 'USD';
 
       const client = await pool.connect();
       try {
