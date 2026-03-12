@@ -49,10 +49,6 @@ export class BitGoWalletService {
           enterprise: BITGO_ENTERPRISE_ID,
           type: 'custodial',
           walletVersion: 4,
-          tags: [
-            `axiom-wallet:${params.walletAddress.toLowerCase()}`,
-            'platform:axiom-protocol',
-          ],
         },
       }
     );
