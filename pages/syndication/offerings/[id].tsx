@@ -1679,7 +1679,7 @@ export default function OfferingBuilder() {
 
             {reports.length === 0 ? (
               <div className="border border-dl-border p-6 text-center">
-                <p className="font-dl-mono text-sm text-dl-muted">No investor reports published yet. Use the form above to create your first update.</p>
+                <p className="font-dl-mono text-sm text-dl-muted">No reports published yet. Use the form above to publish your first report.</p>
               </div>
             ) : (
               <div className="space-y-3">

@@ -45,21 +45,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const offeringResult = await pool.query(
-      `SELECT o.slug, o.name FROM syn_offerings o WHERE o.id = $1`,
+      `SELECT o.slug, o.name, o.created_by FROM syn_offerings o WHERE o.id = $1`,
       [id]
     );
     if (offeringResult.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Offering not found' });
     }
 
+    const isOperator = offeringResult.rows[0].created_by &&
+      offeringResult.rows[0].created_by.toLowerCase() === wallet.toLowerCase();
+
     if (subscriptionId) {
       const subResult = await pool.query(
-        `SELECT id FROM syn_subscriptions WHERE id = $1 AND offering_id = $2`,
+        `SELECT s.id, s.investor_wallet FROM syn_subscriptions s WHERE s.id = $1 AND s.offering_id = $2`,
         [subscriptionId, id]
       );
       if (subResult.rows.length === 0) {
         return res.status(404).json({ success: false, error: 'Subscription not found for this offering' });
       }
+      const isSubOwner = subResult.rows[0].investor_wallet &&
+        subResult.rows[0].investor_wallet.toLowerCase() === wallet.toLowerCase();
+      if (!isOperator && !isSubOwner) {
+        return res.status(403).json({ success: false, error: 'Not authorized to view funding instructions for this subscription' });
+      }
+    } else if (!isOperator) {
+      return res.status(403).json({ success: false, error: 'Not authorized to view funding instructions for this offering' });
     }
 
     const offering = offeringResult.rows[0];
