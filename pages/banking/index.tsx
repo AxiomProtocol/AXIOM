@@ -63,6 +63,8 @@ export default function BankingPage() {
   const [pendingApprovals, setPendingApprovals] = useState<unknown[]>([]);
   const [bridgeHistory, setBridgeHistory] = useState<unknown[]>([]);
 
+  const [serverIp, setServerIp] = useState<string | null>(null);
+
   const [kycLoading, setKycLoading] = useState(false);
   const [kycError, setKycError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
@@ -159,6 +161,12 @@ export default function BankingPage() {
       fetchCustodyTxs(custodyWallet.bitgoWalletId);
     }
   }, [activeTab, custodyWallet?.bitgoWalletId, fetchCustodyTxs]);
+
+  useEffect(() => {
+    if (activeTab === 'custody' && !serverIp) {
+      fetch('/api/server-ip').then(r => r.json()).then(d => setServerIp(d.ip)).catch(() => {});
+    }
+  }, [activeTab, serverIp]);
 
   const fetchTxForAccount = async (unitAccountId: string) => {
     setTxLoading(true);
@@ -486,6 +494,21 @@ export default function BankingPage() {
 
           {activeTab === 'custody' && (
             <div className="space-y-6">
+              {serverIp && (
+                <div className="border border-dl-border bg-dl-surface p-3 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-dl-mono text-dl-muted uppercase tracking-widest mb-0.5">Server Outbound IP</p>
+                    <p className="text-sm font-dl-mono text-dl-navy">{serverIp}</p>
+                    <p className="text-xs font-dl-mono text-dl-muted mt-1">Add this IP to your BitGo token allowlist. It may change between sessions.</p>
+                  </div>
+                  <button
+                    onClick={() => fetch('/api/server-ip?refresh=1').then(r => r.json()).then(d => setServerIp(d.ip))}
+                    className="text-xs font-dl-mono text-dl-navy underline whitespace-nowrap"
+                  >
+                    Refresh IP
+                  </button>
+                </div>
+              )}
               <CustodyWalletCard
                 walletId={custodyWallet?.bitgoWalletId}
                 coin={custodyWallet?.coin}
