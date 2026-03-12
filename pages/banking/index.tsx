@@ -8,7 +8,9 @@ import { BridgeWidget } from '../../components/banking/BridgeWidget';
 import { CardDisplay } from '../../components/banking/CardDisplay';
 import { TransactionList } from '../../components/banking/TransactionList';
 import { PendingApprovals } from '../../components/banking/PendingApprovals';
+import { BankingLanding } from '../../components/banking/BankingLanding';
 import { useWallet } from '../../lib/web3/useWallet';
+import { openAppKit } from '../../lib/web3/appKitModal';
 
 type Tab = 'identity' | 'account' | 'wealth' | 'custody' | 'bridge';
 
@@ -309,11 +311,7 @@ export default function BankingPage() {
       </div>
 
       {!isConnected && (
-        <div className="border border-dl-border p-6 mb-6">
-          <p className="text-sm font-dl-mono text-dl-muted">
-            Connect your wallet to access banking features.
-          </p>
-        </div>
+        <BankingLanding onConnect={() => openAppKit()} />
       )}
 
       {isConnected && (
