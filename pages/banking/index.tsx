@@ -9,6 +9,7 @@ import { CardDisplay } from '../../components/banking/CardDisplay';
 import { TransactionList } from '../../components/banking/TransactionList';
 import { PendingApprovals } from '../../components/banking/PendingApprovals';
 import { BankingLanding } from '../../components/banking/BankingLanding';
+import { AchFundingFlow } from '../../components/banking/AchFundingFlow';
 import { useWallet } from '../../lib/web3/useWallet';
 import { openAppKit } from '../../lib/web3/appKitModal';
 
@@ -62,6 +63,7 @@ export default function BankingPage() {
   const [kycError, setKycError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [actionErr, setActionErr] = useState<string | null>(null);
+  const [showAchFlow, setShowAchFlow] = useState(false);
 
   const fetchStatus = useCallback(async () => {
     if (!isConnected) return;
@@ -400,7 +402,7 @@ export default function BankingPage() {
                 <>
                   <AccountCard
                     account={primaryAccount}
-                    onFundAccount={() => setActionMsg('ACH funding flow — connect your external bank account through the Unit-hosted form.')}
+                    onFundAccount={() => setShowAchFlow(true)}
                   />
                   <div>
                     <div className="flex justify-between items-center mb-3">
@@ -522,6 +524,10 @@ export default function BankingPage() {
             </div>
           )}
         </>
+      )}
+
+      {showAchFlow && (
+        <AchFundingFlow onClose={() => setShowAchFlow(false)} />
       )}
     </DesignLawLayout>
   );
