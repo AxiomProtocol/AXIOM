@@ -145,6 +145,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
+    "@auth0/nextjs-auth0": "^3.8.0",
     "@coinbase/cbpay-js": "^2.4.0",
     "@coinbase/cdp-sdk": "^1.40.1",
     "@coinbase/wallet-sdk": "^4.3.7",

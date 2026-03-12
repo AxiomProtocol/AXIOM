@@ -71,7 +71,7 @@ Key features include:
 - **Email Service:** Resend
 - **Payment Processing:** Stripe
 - **Cloud Storage:** Google Cloud Storage, Storacha (Web3 Storage/IPFS)
-- **Auth Provider:** Supabase
+- **Auth Provider:** Auth0 (`@auth0/nextjs-auth0` v3, Pages Router) + SIWE (wallet-based)
 - **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image)
 - **Property Data:** RentCast API, Walk Score API
 - **Market Data:** Alpha Vantage, CoinGecko

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, ReactNode } from 'react';
 import Link from 'next/link';
 import { ConnectWalletButton } from './ConnectWalletButton';
+import { AuthButton } from './AuthButton';
 import { NAV_ITEMS } from './navItems';
 import { NavDropdown } from './NavDropdown';
 
@@ -38,6 +39,9 @@ export function DesignLawLayout({ children }: DesignLawLayoutProps) {
             )}
           </div>
           <div className="flex items-center gap-3">
+            <div className="hidden lg:block">
+              <AuthButton />
+            </div>
             <div className="hidden lg:block">
               <ConnectWalletButton />
             </div>
@@ -93,7 +97,8 @@ export function DesignLawLayout({ children }: DesignLawLayoutProps) {
                 </Link>
               )
             )}
-            <div className="pt-3">
+            <div className="pt-3 space-y-2">
+              <AuthButton />
               <ConnectWalletButton />
             </div>
           </div>

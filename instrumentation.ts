@@ -93,6 +93,16 @@ export async function register() {
         created_at TIMESTAMPTZ DEFAULT NOW()
       )`, 'table siwe_nonces');
 
+      await exec(`CREATE TABLE IF NOT EXISTS auth0_users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        auth0_sub VARCHAR(255) NOT NULL UNIQUE,
+        email VARCHAR(255),
+        name VARCHAR(255),
+        picture TEXT,
+        wallet_address VARCHAR(42),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`, 'table auth0_users');
+
       await exec(`CREATE TABLE IF NOT EXISTS admin_proposals (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         action_type VARCHAR(50) NOT NULL,

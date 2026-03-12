@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
+import { UserProvider } from '@auth0/nextjs-auth0/client'
 import { wagmiAdapter, projectId, networks } from '../lib/web3/wagmiConfig'
 import { WalletProvider } from '../components/WalletConnect/WalletContext'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -44,17 +45,19 @@ export default function App({ Component, pageProps }) {
   }, [router.events])
 
   return (
-    <ErrorBoundary>
-      <WagmiProvider config={wagmiAdapter.wagmiConfig}>
-        <QueryClientProvider client={queryClient}>
-          <AppKitInitializer />
-          <WalletProvider>
-            <OnboardingContext.Provider value={{ triggerOnboarding: () => {} }}>
-              {mounted ? <Component {...pageProps} /> : null}
-            </OnboardingContext.Provider>
-          </WalletProvider>
-        </QueryClientProvider>
-      </WagmiProvider>
-    </ErrorBoundary>
+    <UserProvider>
+      <ErrorBoundary>
+        <WagmiProvider config={wagmiAdapter.wagmiConfig}>
+          <QueryClientProvider client={queryClient}>
+            <AppKitInitializer />
+            <WalletProvider>
+              <OnboardingContext.Provider value={{ triggerOnboarding: () => {} }}>
+                {mounted ? <Component {...pageProps} /> : null}
+              </OnboardingContext.Provider>
+            </WalletProvider>
+          </QueryClientProvider>
+        </WagmiProvider>
+      </ErrorBoundary>
+    </UserProvider>
   )
 }
