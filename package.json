@@ -10,7 +10,7 @@
     "lint": "next lint",
     "build": "bash prebuild.sh",
     "build:replit": "bash prebuild.sh",
-    "start": "HOSTNAME=0.0.0.0 PORT=5000 node .next/standalone/server.js",
+    "start": "HOSTNAME=0.0.0.0 PORT=3000 node .next/standalone/server.js",
     "snapshot": "node scripts/saveReserveSnapshot.js",
     "admin:reset-password": "node scripts/reset-admin-password.js",
     "test": "hardhat test",
