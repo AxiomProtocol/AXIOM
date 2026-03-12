@@ -4376,6 +4376,284 @@ export async function register() {
         updated_at TIMESTAMPTZ DEFAULT now()
       )`, 'yield_vault_positions');
 
+      // ── UNIT BANKING ──────────────────────────────────────────────────────────
+
+      await exec(enumSafe('unit_application_status', ['Pending','PendingReview','AwaitingDocuments','Approved','Denied','Canceled']), 'enum unit_application_status');
+      await exec(enumSafe('unit_account_type', ['member','susu_pool']), 'enum unit_account_type');
+      await exec(enumSafe('unit_payment_type', ['book','ach_debit','ach_credit','wire']), 'enum unit_payment_type');
+      await exec(enumSafe('unit_payment_status', ['Pending','Sent','Clearing','Returned','Rejected','Canceled','Cleared']), 'enum unit_payment_status');
+      await exec(enumSafe('unit_card_type', ['virtual','physical']), 'enum unit_card_type');
+      await exec(enumSafe('unit_card_status', ['Active','Inactive','Stolen','Lost','Frozen','ClosedByCustomer','SuspectedFraud']), 'enum unit_card_status');
+
+      await exec(`CREATE TABLE IF NOT EXISTS unit_customers (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        wallet_address VARCHAR(42) NOT NULL UNIQUE,
+        unit_customer_id VARCHAR(100),
+        unit_application_id VARCHAR(100),
+        application_status unit_application_status DEFAULT 'Pending',
+        first_name VARCHAR(100),
+        last_name VARCHAR(100),
+        email VARCHAR(255),
+        phone VARCHAR(30),
+        date_of_birth VARCHAR(10),
+        ssn_last_four VARCHAR(4),
+        address_street VARCHAR(255),
+        address_city VARCHAR(100),
+        address_state VARCHAR(2),
+        address_postal_code VARCHAR(10),
+        address_country VARCHAR(2) DEFAULT 'US',
+        is_approved BOOLEAN DEFAULT false,
+        approved_at TIMESTAMPTZ,
+        denied_at TIMESTAMPTZ,
+        denial_reason TEXT,
+        metadata JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'unit_customers');
+
+      await exec(`CREATE TABLE IF NOT EXISTS unit_accounts (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        wallet_address VARCHAR(42) NOT NULL,
+        unit_customer_id VARCHAR(100) NOT NULL,
+        unit_account_id VARCHAR(100) NOT NULL UNIQUE,
+        account_type unit_account_type DEFAULT 'member',
+        susu_group_id UUID,
+        name VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'Open',
+        balance_cents INTEGER DEFAULT 0,
+        hold_cents INTEGER DEFAULT 0,
+        available_cents INTEGER DEFAULT 0,
+        routing_number VARCHAR(9),
+        account_number VARCHAR(20),
+        currency VARCHAR(3) DEFAULT 'USD',
+        last_synced_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'unit_accounts');
+
+      await exec(`CREATE TABLE IF NOT EXISTS unit_payments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        wallet_address VARCHAR(42) NOT NULL,
+        unit_payment_id VARCHAR(100),
+        idempotency_key VARCHAR(100) UNIQUE,
+        payment_type unit_payment_type NOT NULL,
+        status unit_payment_status DEFAULT 'Pending',
+        amount_cents INTEGER NOT NULL,
+        currency VARCHAR(3) DEFAULT 'USD',
+        description TEXT,
+        purpose VARCHAR(100),
+        from_account_id VARCHAR(100),
+        to_account_id VARCHAR(100),
+        susu_group_id UUID,
+        settled_at TIMESTAMPTZ,
+        returned_at TIMESTAMPTZ,
+        return_reason TEXT,
+        metadata JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'unit_payments');
+
+      await exec(`CREATE TABLE IF NOT EXISTS unit_recurring_payments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        wallet_address VARCHAR(42) NOT NULL,
+        unit_recurring_id VARCHAR(100),
+        status VARCHAR(50) DEFAULT 'Active',
+        amount_cents INTEGER NOT NULL,
+        currency VARCHAR(3) DEFAULT 'USD',
+        description TEXT,
+        purpose VARCHAR(100),
+        from_account_id VARCHAR(100),
+        to_account_id VARCHAR(100),
+        susu_group_id UUID,
+        frequency VARCHAR(50),
+        next_payment_date VARCHAR(10),
+        total_payments_count INTEGER,
+        remaining_payments_count INTEGER,
+        canceled_at TIMESTAMPTZ,
+        metadata JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'unit_recurring_payments');
+
+      await exec(`CREATE TABLE IF NOT EXISTS unit_cards (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        wallet_address VARCHAR(42) NOT NULL,
+        unit_card_id VARCHAR(100) NOT NULL UNIQUE,
+        unit_account_id VARCHAR(100) NOT NULL,
+        card_type unit_card_type DEFAULT 'virtual',
+        status unit_card_status DEFAULT 'Active',
+        last_four VARCHAR(4),
+        expiration_date VARCHAR(7),
+        brand VARCHAR(20),
+        shipping_address JSONB,
+        metadata JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'unit_cards');
+
+      await exec(`CREATE TABLE IF NOT EXISTS unit_webhook_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        unit_event_id VARCHAR(100),
+        event_type VARCHAR(100) NOT NULL,
+        resource_id VARCHAR(100),
+        resource_type VARCHAR(100),
+        payload JSONB NOT NULL,
+        processed BOOLEAN DEFAULT false,
+        processed_at TIMESTAMPTZ,
+        processing_error TEXT,
+        received_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'unit_webhook_events');
+
+      await exec(`CREATE INDEX IF NOT EXISTS idx_unit_customers_wallet ON unit_customers(wallet_address)`, 'idx_unit_customers_wallet');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_unit_accounts_wallet ON unit_accounts(wallet_address)`, 'idx_unit_accounts_wallet');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_unit_payments_wallet ON unit_payments(wallet_address)`, 'idx_unit_payments_wallet');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_unit_payments_status ON unit_payments(status)`, 'idx_unit_payments_status');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_unit_webhook_processed ON unit_webhook_events(processed)`, 'idx_unit_webhook_processed');
+
+      // ── BITGO CUSTODY ─────────────────────────────────────────────────────────
+
+      await exec(enumSafe('bitgo_wallet_coin', ['eth','teth','arbitrum','tarbitrum','usdc','axm','axusd']), 'enum bitgo_wallet_coin');
+      await exec(enumSafe('bitgo_tx_direction', ['send','receive']), 'enum bitgo_tx_direction');
+      await exec(enumSafe('bitgo_tx_state', ['signed','unconfirmed','confirmed','rejected','pendingApproval','removed','failed']), 'enum bitgo_tx_state');
+      await exec(enumSafe('bitgo_policy_type', ['spending_limit','address_whitelist','velocity_limit','require_approval']), 'enum bitgo_policy_type');
+
+      await exec(`CREATE TABLE IF NOT EXISTS bitgo_wallets (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        wallet_address VARCHAR(42) NOT NULL,
+        bitgo_wallet_id VARCHAR(100) NOT NULL UNIQUE,
+        bitgo_enterprise_id VARCHAR(100),
+        coin bitgo_wallet_coin DEFAULT 'arbitrum',
+        label VARCHAR(255),
+        receive_address VARCHAR(100),
+        confirmed_balance_str VARCHAR(50) DEFAULT '0',
+        spendable_balance_str VARCHAR(50) DEFAULT '0',
+        is_active BOOLEAN DEFAULT true,
+        metadata JSONB,
+        last_synced_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'bitgo_wallets');
+
+      await exec(`CREATE TABLE IF NOT EXISTS bitgo_transactions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        wallet_address VARCHAR(42) NOT NULL,
+        bitgo_tx_id VARCHAR(200),
+        bitgo_wallet_id VARCHAR(100) NOT NULL,
+        coin VARCHAR(50),
+        direction bitgo_tx_direction NOT NULL,
+        state bitgo_tx_state DEFAULT 'unconfirmed',
+        amount_str VARCHAR(50),
+        fee_str VARCHAR(50),
+        from_address VARCHAR(100),
+        to_address VARCHAR(100),
+        tx_hash VARCHAR(200),
+        confirmations BIGINT DEFAULT 0,
+        block_height BIGINT,
+        label TEXT,
+        metadata JSONB,
+        confirmed_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'bitgo_transactions');
+
+      await exec(`CREATE TABLE IF NOT EXISTS bitgo_webhooks (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        bitgo_webhook_id VARCHAR(100),
+        event_type VARCHAR(100) NOT NULL,
+        coin VARCHAR(50),
+        wallet_id VARCHAR(100),
+        payload JSONB NOT NULL,
+        processed BOOLEAN DEFAULT false,
+        processed_at TIMESTAMPTZ,
+        processing_error TEXT,
+        received_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'bitgo_webhooks');
+
+      await exec(`CREATE TABLE IF NOT EXISTS bitgo_custody_policies (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        wallet_address VARCHAR(42) NOT NULL,
+        bitgo_wallet_id VARCHAR(100) NOT NULL,
+        bitgo_policy_id VARCHAR(100),
+        policy_type bitgo_policy_type NOT NULL,
+        label VARCHAR(255),
+        is_active BOOLEAN DEFAULT true,
+        config JSONB NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'bitgo_custody_policies');
+
+      await exec(`CREATE TABLE IF NOT EXISTS bitgo_staking_positions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        wallet_address VARCHAR(42) NOT NULL,
+        bitgo_wallet_id VARCHAR(100) NOT NULL,
+        bitgo_staking_id VARCHAR(100),
+        coin VARCHAR(50) NOT NULL,
+        amount_str VARCHAR(50) NOT NULL,
+        validator_address VARCHAR(200),
+        status VARCHAR(50) DEFAULT 'active',
+        rewards_str VARCHAR(50) DEFAULT '0',
+        unstaking_at TIMESTAMPTZ,
+        metadata JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'bitgo_staking_positions');
+
+      await exec(`CREATE INDEX IF NOT EXISTS idx_bitgo_wallets_wallet ON bitgo_wallets(wallet_address)`, 'idx_bitgo_wallets_wallet');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_bitgo_txs_wallet ON bitgo_transactions(wallet_address)`, 'idx_bitgo_txs_wallet');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_bitgo_txs_state ON bitgo_transactions(state)`, 'idx_bitgo_txs_state');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_bitgo_webhooks_processed ON bitgo_webhooks(processed)`, 'idx_bitgo_webhooks_processed');
+
+      // ── BRIDGE (FIAT <-> CRYPTO) ───────────────────────────────────────────────
+
+      await exec(enumSafe('bridge_direction', ['fiat_to_crypto','crypto_to_fiat']), 'enum bridge_direction');
+      await exec(enumSafe('bridge_status', ['initiated','ach_pending','ach_settled','crypto_pending','completed','failed','canceled']), 'enum bridge_status');
+      await exec(enumSafe('bridge_crypto_asset', ['AXM','AXUSD','ETH','USDC']), 'enum bridge_crypto_asset');
+
+      await exec(`CREATE TABLE IF NOT EXISTS bridge_transfers (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        wallet_address VARCHAR(42) NOT NULL,
+        direction bridge_direction NOT NULL,
+        status bridge_status NOT NULL DEFAULT 'initiated',
+        fiat_amount_cents INTEGER NOT NULL,
+        fiat_currency VARCHAR(3) DEFAULT 'USD',
+        crypto_asset bridge_crypto_asset NOT NULL,
+        crypto_amount_str VARCHAR(50),
+        exchange_rate_str VARCHAR(50),
+        fx_snapshot_id UUID,
+        fee_cents INTEGER DEFAULT 0,
+        estimated_settlement_minutes INTEGER,
+        unit_account_id VARCHAR(100),
+        unit_payment_id VARCHAR(100),
+        bitgo_wallet_id VARCHAR(100),
+        bitgo_tx_id VARCHAR(200),
+        error_message TEXT,
+        ach_settled_at TIMESTAMPTZ,
+        crypto_confirmed_at TIMESTAMPTZ,
+        completed_at TIMESTAMPTZ,
+        failed_at TIMESTAMPTZ,
+        metadata JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'bridge_transfers');
+
+      await exec(`CREATE TABLE IF NOT EXISTS bridge_fx_snapshots (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        bridge_transfer_id UUID,
+        fiat_currency VARCHAR(3) DEFAULT 'USD',
+        crypto_asset bridge_crypto_asset NOT NULL,
+        rate_str VARCHAR(50) NOT NULL,
+        bid_rate_str VARCHAR(50),
+        ask_rate_str VARCHAR(50),
+        spread_bps INTEGER,
+        source VARCHAR(100) DEFAULT 'coingecko',
+        valid_until TIMESTAMPTZ,
+        captured_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'bridge_fx_snapshots');
+
+      await exec(`CREATE INDEX IF NOT EXISTS idx_bridge_transfers_wallet ON bridge_transfers(wallet_address)`, 'idx_bridge_transfers_wallet');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_bridge_transfers_status ON bridge_transfers(status)`, 'idx_bridge_transfers_status');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_bridge_fx_transfer ON bridge_fx_snapshots(bridge_transfer_id)`, 'idx_bridge_fx_transfer');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
