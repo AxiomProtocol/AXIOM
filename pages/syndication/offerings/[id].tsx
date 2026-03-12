@@ -1501,13 +1501,26 @@ export default function OfferingBuilder() {
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={handleCloseOffering}
-                  disabled={closingOffering}
-                  className="px-6 py-2 bg-dl-navy text-white font-dl-mono text-sm disabled:opacity-50"
-                >
-                  {closingOffering ? 'Closing...' : 'Close Offering'}
-                </button>
+                {(() => {
+                  const fundedCount = subscriptions.filter((s: any) => s.status === 'funded').length;
+                  const noFunded = fundedCount === 0;
+                  return (
+                    <>
+                      <button
+                        onClick={handleCloseOffering}
+                        disabled={closingOffering || noFunded}
+                        className="px-6 py-2 bg-dl-navy text-white font-dl-mono text-sm disabled:opacity-50"
+                      >
+                        {closingOffering ? 'Closing...' : 'Close Offering'}
+                      </button>
+                      {noFunded && (
+                        <p className="font-dl-mono text-xs text-dl-muted mt-2">
+                          At least one funded subscription is required to close the offering.
+                        </p>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
 

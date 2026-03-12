@@ -48,6 +48,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ success: false, error: 'distributionType and grossAmount are required' });
       }
 
+      if (parseFloat(grossAmount) <= 0) {
+        return res.status(400).json({ success: false, error: 'grossAmount must be greater than zero' });
+      }
+
       const validTypes = ['preferred_return', 'profit_share', 'return_of_capital', 'refinance_proceeds', 'sale_proceeds'];
       if (!validTypes.includes(distributionType)) {
         return res.status(400).json({ success: false, error: `Invalid distribution type. Must be one of: ${validTypes.join(', ')}` });
@@ -122,13 +126,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'PATCH') {
     try {
       const { distributionId, status } = req.body;
-      if (!distributionId && !status) {
+      if (!distributionId || !status) {
         return res.status(400).json({ success: false, error: 'distributionId and status are required' });
       }
 
-      const validStatuses = ['draft', 'approved', 'processing', 'completed', 'failed'];
-      if (!validStatuses.includes(status)) {
-        return res.status(400).json({ success: false, error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+      const validTransitions: Record<string, string[]> = {
+        draft: ['approved'],
+        approved: ['processing'],
+        processing: ['completed', 'failed'],
+      };
+
+      const current = await pool.query(
+        `SELECT status FROM syn_distributions WHERE id = $1 AND offering_id = $2`,
+        [distributionId, id]
+      );
+
+      if (current.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Distribution not found' });
+      }
+
+      const currentStatus = current.rows[0].status;
+      const allowed = validTransitions[currentStatus] || [];
+      if (!allowed.includes(status)) {
+        return res.status(400).json({
+          success: false,
+          error: `Cannot transition from ${currentStatus} to ${status}. Allowed: ${allowed.join(', ') || 'none'}`,
+        });
       }
 
       const updates: string[] = ['status = $1', 'updated_at = now()'];
@@ -138,30 +161,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         updates.push('paid_at = now()');
       }
 
-      if (distributionId) {
-        params.push(distributionId);
-        params.push(id);
-        await pool.query(
-          `UPDATE syn_distributions SET ${updates.join(', ')} WHERE id = $${params.length - 1} AND offering_id = $${params.length}`,
-          params
-        );
-      } else {
-        const { distributionType, batchPeriodStart } = req.body;
-        params.push(id);
-        let whereClause = `offering_id = $${params.length}`;
-        if (distributionType) {
-          params.push(distributionType);
-          whereClause += ` AND distribution_type = $${params.length}`;
-        }
-        if (batchPeriodStart) {
-          params.push(batchPeriodStart);
-          whereClause += ` AND period_start = $${params.length}`;
-        }
-        await pool.query(
-          `UPDATE syn_distributions SET ${updates.join(', ')} WHERE ${whereClause}`,
-          params
-        );
-      }
+      params.push(distributionId);
+      params.push(id);
+      await pool.query(
+        `UPDATE syn_distributions SET ${updates.join(', ')} WHERE id = $${params.length - 1} AND offering_id = $${params.length}`,
+        params
+      );
 
       return res.status(200).json({ success: true });
     } catch (error: any) {

@@ -44,6 +44,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ success: false, error: 'subscriptionId and amount are required' });
       }
 
+      if (parseFloat(amount) <= 0) {
+        return res.status(400).json({ success: false, error: 'amount must be greater than zero' });
+      }
+
       const subCheck = await pool.query(
         `SELECT s.id, s.status, s.amount, s.funding_method
          FROM syn_subscriptions s
