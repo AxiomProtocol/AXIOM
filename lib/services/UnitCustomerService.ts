@@ -18,6 +18,9 @@ export interface KycApplicationInput {
   addressState: string;
   addressPostalCode: string;
   addressCountry?: string;
+  occupation: string;
+  annualIncome: string;
+  sourceOfIncome: string;
 }
 
 export interface KycApplicationResult {
@@ -57,6 +60,9 @@ export class UnitCustomerService {
             postalCode: input.addressPostalCode.trim(),
             country: 'US' as const,
           },
+          occupation: input.occupation as Parameters<typeof client.applications.create>[0]['attributes']['occupation'],
+          annualIncome: input.annualIncome as Parameters<typeof client.applications.create>[0]['attributes']['annualIncome'],
+          sourceOfIncome: input.sourceOfIncome as Parameters<typeof client.applications.create>[0]['attributes']['sourceOfIncome'],
           ip: '127.0.0.1',
         },
       } as Parameters<typeof client.applications.create>[0]);

@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Wallet authentication required.', code: 'SIWE_AUTH_REQUIRED' });
   }
 
-  const { firstName, lastName, email, phone, dateOfBirth, ssn, address } = req.body ?? {};
+  const { firstName, lastName, email, phone, dateOfBirth, ssn, address, occupation, annualIncome, sourceOfIncome } = req.body ?? {};
 
   const errors: string[] = [];
   const reqStr = (v: unknown, f: string) => { const e = validateRequiredString(v, f); if (e) errors.push(e); };
@@ -30,6 +30,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   reqStr(address?.city, 'City');
   reqStr(address?.state, 'State');
   reqStr(address?.postalCode, 'Postal code');
+  reqStr(occupation, 'Occupation');
+  reqStr(annualIncome, 'Annual income');
+  reqStr(sourceOfIncome, 'Source of income');
 
   if (errors.length > 0) {
     return res.status(400).json({ error: errors[0], errors });
@@ -48,6 +51,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     addressState: address.state,
     addressPostalCode: address.postalCode,
     addressCountry: address.country ?? 'US',
+    occupation,
+    annualIncome,
+    sourceOfIncome,
   });
 
   if (!result.success) {
