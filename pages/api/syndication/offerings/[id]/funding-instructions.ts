@@ -2,9 +2,43 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../../server/db';
 import { ethers } from 'ethers';
 
+function parseCookies(cookieHeader: string | undefined): Record<string, string> {
+  if (!cookieHeader) return {};
+  return Object.fromEntries(
+    cookieHeader.split(';')
+      .map(cookie => {
+        const [key, ...val] = cookie.trim().split('=');
+        const sanitizedKey = key.replace(/[^\w\-_.]/g, '');
+        const sanitizedVal = val.join('=').replace(/[^\w\-_.=]/g, '');
+        return [sanitizedKey, sanitizedVal];
+      })
+      .filter(([key]) => key.length > 0)
+  );
+}
+
+async function getAuthenticatedWallet(req: NextApiRequest): Promise<string | null> {
+  const cookies = parseCookies(req.headers.cookie);
+  const sessionToken = cookies['siwe_session'];
+  if (!sessionToken) return null;
+  try {
+    const result = await pool.query(
+      `SELECT wallet_address FROM wallet_sessions WHERE session_token = $1 AND expires_at > NOW()`,
+      [sessionToken]
+    );
+    return result.rows.length > 0 ? result.rows[0].wallet_address : null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
+  }
+
+  const wallet = await getAuthenticatedWallet(req);
+  if (!wallet) {
+    return res.status(401).json({ success: false, error: 'Authentication required. Connect your wallet and sign in.' });
   }
 
   const { id, subscriptionId } = req.query;
@@ -16,6 +50,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
     if (offeringResult.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Offering not found' });
+    }
+
+    if (subscriptionId) {
+      const subResult = await pool.query(
+        `SELECT id FROM syn_subscriptions WHERE id = $1 AND offering_id = $2`,
+        [subscriptionId, id]
+      );
+      if (subResult.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Subscription not found for this offering' });
+      }
     }
 
     const offering = offeringResult.rows[0];
@@ -31,14 +75,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     } catch {}
 
+    const routingNumber = process.env.UNIT_ROUTING_NUMBER || (process.env.UNIT_API_TOKEN ? '084106768' : null);
+    const accountNumber = process.env.UNIT_ACCOUNT_NUMBER || (process.env.UNIT_API_TOKEN ? '****pending-unit-setup' : null);
+
     const bankDetails = {
       bankName: 'Axiom Protocol Treasury',
-      routingNumber: process.env.UNIT_API_TOKEN ? '084106768' : null,
-      accountNumber: process.env.UNIT_API_TOKEN ? '****pending-unit-setup' : null,
+      routingNumber,
+      accountNumber,
       accountType: 'Checking',
       beneficiary: 'Axiom Protocol LLC',
       bankAddress: 'Unit Finance / Evolve Bank & Trust',
-      note: process.env.UNIT_API_TOKEN
+      note: routingNumber
         ? 'Wire routing and account details provided via Unit Finance.'
         : 'Banking rails not yet configured. Contact operations for wire instructions.',
     };

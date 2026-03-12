@@ -212,7 +212,7 @@ export default function OfferingBuilder() {
   const [showFundingInstructions, setShowFundingInstructions] = useState<string | null>(null);
   const [fundingInstructions, setFundingInstructions] = useState<any>(null);
   const [loadingInstructions, setLoadingInstructions] = useState(false);
-  const [showReportForm, setShowReportForm] = useState(false);
+  const [showReportForm, setShowReportForm] = useState(true);
   const [reportForm, setReportForm] = useState({ title: '', reportType: 'quarterly', content: '' });
   const [publishingReport, setPublishingReport] = useState(false);
 
@@ -1623,7 +1623,7 @@ export default function OfferingBuilder() {
                   onClick={() => setShowReportForm(!showReportForm)}
                   className="bg-dl-navy text-white px-3 py-1 font-dl-mono text-xs"
                 >
-                  {showReportForm ? 'Cancel' : 'Publish Report'}
+                  {showReportForm ? 'Collapse Form' : 'Expand Form'}
                 </button>
               </div>
             </div>
@@ -1677,18 +1677,11 @@ export default function OfferingBuilder() {
               </div>
             )}
 
-            {reports.length === 0 && !showReportForm ? (
-              <div className="border border-dl-border p-8 text-center">
-                <p className="font-dl-mono text-sm text-dl-muted mb-2">No reports published yet.</p>
-                <p className="font-dl-mono text-xs text-dl-muted mb-3">Use the Publish Report button to create your first investor update.</p>
-                <button
-                  onClick={() => setShowReportForm(true)}
-                  className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm"
-                >
-                  Publish First Report
-                </button>
+            {reports.length === 0 ? (
+              <div className="border border-dl-border p-6 text-center">
+                <p className="font-dl-mono text-sm text-dl-muted">No investor reports published yet. Use the form above to create your first update.</p>
               </div>
-            ) : reports.length > 0 && (
+            ) : (
               <div className="space-y-3">
                 {reports.map((r: any) => (
                   <div key={r.id} className="border border-dl-border p-4">
