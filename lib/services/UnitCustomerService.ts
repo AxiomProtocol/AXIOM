@@ -1,5 +1,5 @@
 import { getUnitClient, isUnitConfigured } from '../unit/client';
-import { isValidSsnFormat, normalizeSsn, lastFourSsn, mapApplicationStatus } from '../unit/helpers';
+import { isValidSsnFormat, normalizeSsn, lastFourSsn, mapApplicationStatus, normalizePhoneNumber, generateIdempotencyKey } from '../unit/helpers';
 import { db } from '../../server/db';
 import { unitCustomers } from '../../shared/unitSchema';
 import { eq } from 'drizzle-orm';
@@ -21,6 +21,7 @@ export interface KycApplicationInput {
   occupation: string;
   annualIncome: string;
   sourceOfIncome: string;
+  clientIp?: string;
 }
 
 export interface KycApplicationResult {
@@ -50,7 +51,7 @@ export class UnitCustomerService {
             last: input.lastName.trim(),
           },
           email: input.email.trim().toLowerCase(),
-          phone: { countryCode: '1', number: input.phone.replace(/\D/g, '') },
+          phone: { countryCode: '1', number: normalizePhoneNumber(input.phone) },
           dateOfBirth: input.dateOfBirth,
           ssn: normalizeSsn(input.ssn),
           address: {
@@ -63,7 +64,8 @@ export class UnitCustomerService {
           occupation: input.occupation as Parameters<typeof client.applications.create>[0]['attributes']['occupation'],
           annualIncome: input.annualIncome as Parameters<typeof client.applications.create>[0]['attributes']['annualIncome'],
           sourceOfIncome: input.sourceOfIncome as Parameters<typeof client.applications.create>[0]['attributes']['sourceOfIncome'],
-          ip: '127.0.0.1',
+          ip: input.clientIp ?? '127.0.0.1',
+          idempotencyKey: generateIdempotencyKey(`kyc-${input.walletAddress.toLowerCase().slice(2, 10)}`),
         },
       } as Parameters<typeof client.applications.create>[0]);
 

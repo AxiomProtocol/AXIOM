@@ -15,6 +15,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Wallet authentication required.', code: 'SIWE_AUTH_REQUIRED' });
   }
 
+  const clientIp =
+    (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
+    (req.headers['x-real-ip'] as string | undefined) ||
+    req.socket?.remoteAddress ||
+    undefined;
+
   const { firstName, lastName, email, phone, dateOfBirth, ssn, address, occupation, annualIncome, sourceOfIncome } = req.body ?? {};
 
   const errors: string[] = [];
@@ -54,6 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     occupation,
     annualIncome,
     sourceOfIncome,
+    clientIp,
   });
 
   if (!result.success) {

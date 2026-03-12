@@ -75,3 +75,11 @@ export function lastFourSsn(ssn: string): string {
   const clean = normalizeSsn(ssn);
   return clean.slice(-4);
 }
+
+export function normalizePhoneNumber(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return digits.slice(1);
+  }
+  return digits;
+}
