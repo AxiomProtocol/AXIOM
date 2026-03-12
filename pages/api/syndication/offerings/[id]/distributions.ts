@@ -93,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
-      const { distributionType, grossAmount, periodStart, periodEnd, paymentMethod, currency, recipientWallet: formRecipientWallet } = req.body;
+      const { distributionType, grossAmount, periodStart, periodEnd, paymentMethod, currency } = req.body;
       if (!distributionType || !grossAmount) {
         return res.status(400).json({ success: false, error: 'distributionType and grossAmount are required' });
       }
@@ -108,14 +108,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const distCurrency = currency || 'USD';
-      if (distCurrency === 'AXUSD' && formRecipientWallet) {
-        if (!/^0x[a-fA-F0-9]{40}$/.test(formRecipientWallet)) {
-          return res.status(400).json({ success: false, error: 'Invalid wallet address format. Must be a valid 0x Ethereum address.' });
-        }
-      }
-      if (distCurrency === 'AXUSD' && !formRecipientWallet) {
-        return res.status(400).json({ success: false, error: 'Recipient wallet address is required for AXUSD distributions.' });
-      }
 
       const capResult = await pool.query(
         `SELECT c.id, c.investor_profile_id, c.ownership_pct, c.capital_contributed,
@@ -129,6 +121,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (capResult.rows.length === 0) {
         return res.status(400).json({ success: false, error: 'No capital table entries found. Sync the capital table before creating distributions.' });
+      }
+
+      if (distCurrency === 'AXUSD') {
+        const missingWallets = capResult.rows.filter((r: any) => !r.wallet_address || !/^0x[a-fA-F0-9]{40}$/.test(r.wallet_address));
+        if (missingWallets.length > 0) {
+          return res.status(400).json({
+            success: false,
+            error: `Cannot create AXUSD distributions: ${missingWallets.length} investor(s) have no valid wallet address on file. Update investor profiles before creating AXUSD distributions.`,
+          });
+        }
       }
 
       const totalOwnership = capResult.rows.reduce(
@@ -146,7 +148,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const investorGross = parseFloat((parseFloat(grossAmount) * proportion).toFixed(2));
           const investorNet = investorGross;
 
-          const recipientWallet = distCurrency === 'AXUSD' ? (formRecipientWallet || entry.wallet_address || null) : null;
+          const recipientWallet = distCurrency === 'AXUSD' ? (entry.wallet_address || null) : null;
 
           const insertResult = await client.query(
             `INSERT INTO syn_distributions

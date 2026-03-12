@@ -202,7 +202,7 @@ export default function OfferingBuilder() {
   const [distributions, setDistributions] = useState<any[]>([]);
   const [distSummary, setDistSummary] = useState<any>(null);
   const [showCreateDist, setShowCreateDist] = useState(false);
-  const [distForm, setDistForm] = useState({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD', recipientWallet: '' });
+  const [distForm, setDistForm] = useState({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD' });
   const [creatingDist, setCreatingDist] = useState(false);
   const [fundingRecords, setFundingRecords] = useState<any[]>([]);
   const [showReceiptForm, setShowReceiptForm] = useState<string | null>(null);
@@ -328,7 +328,7 @@ export default function OfferingBuilder() {
       });
       const json = await res.json();
       if (json.success) {
-        setDistForm({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD', recipientWallet: '' });
+        setDistForm({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD' });
         setShowCreateDist(false);
         loadTabData('distributions');
       }
@@ -1742,19 +1742,10 @@ export default function OfferingBuilder() {
                 </div>
                 {distForm.currency === 'AXUSD' && (
                   <div className="mb-3">
-                    <p className="font-dl-mono text-xs text-dl-muted mb-2">
-                      AXUSD distributions require recipient wallets to be KYC-verified on the Identity Registry (ERC-3643).
-                    </p>
-                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Recipient Wallet (0x address)</label>
-                    <input
-                      type="text"
-                      value={distForm.recipientWallet}
-                      onChange={e => setDistForm(p => ({ ...p, recipientWallet: e.target.value }))}
-                      placeholder="0x..."
-                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
-                    />
-                    <p className="font-dl-mono text-[10px] text-dl-muted mt-0.5">
-                      All distribution rows will use this wallet. Wallet must be KYC-verified for AXUSD transfers.
+                    <p className="font-dl-mono text-xs text-dl-muted">
+                      AXUSD distributions use each investor's wallet address from their profile.
+                      All investor wallets must be KYC-verified on the Identity Registry (ERC-3643).
+                      Distributions will fail to create if any investor lacks a valid wallet address.
                     </p>
                   </div>
                 )}
