@@ -136,9 +136,14 @@ export default function OfferingBuilder() {
         const json = await res.json();
         if (json.success) { setPipeline(json.pipeline); setPipelineSummary(json.summary); }
       } else if (tab === 'subscriptions') {
-        const res = await fetch(`/api/syndication/offerings/${id}/subscriptions`);
-        const json = await res.json();
-        if (json.success) { setSubscriptions(json.subscriptions); setSubSummary(json.summary); }
+        const [subRes, pipeRes] = await Promise.all([
+          fetch(`/api/syndication/offerings/${id}/subscriptions`),
+          fetch(`/api/syndication/offerings/${id}/pipeline`),
+        ]);
+        const subJson = await subRes.json();
+        if (subJson.success) { setSubscriptions(subJson.subscriptions); setSubSummary(subJson.summary); }
+        const pipeJson = await pipeRes.json();
+        if (pipeJson.success) { setPipeline(pipeJson.pipeline); setPipelineSummary(pipeJson.summary); }
       } else if (tab === 'documents') {
         const res = await fetch(`/api/syndication/offerings/${id}/documents`);
         const json = await res.json();
@@ -497,7 +502,7 @@ export default function OfferingBuilder() {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       <div>
                         <p className="font-dl-mono text-xs text-dl-muted uppercase">Deal Name</p>
-                        <p className="font-dl-mono text-sm text-dl-text">{sourceDeal.deal?.name || sourceDeal.deal?.strategy || '—'}</p>
+                        <p className="font-dl-mono text-sm text-dl-text">{sourceDeal.deal?.name || sourceDeal.deal?.dealName || sourceDeal.deal?.strategy || '—'}</p>
                       </div>
                       {sourceDeal.property && (
                         <div>
@@ -1084,7 +1089,7 @@ export default function OfferingBuilder() {
         {activeTab === 'reports' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-dl-serif text-lg text-dl-navy">Investor Reports</h2>
+              <h2 className="font-dl-serif text-lg text-dl-navy">Offering Reports</h2>
               <p className="font-dl-mono text-xs text-dl-muted">{reports.length} published</p>
             </div>
             {reports.length === 0 ? (

@@ -67,6 +67,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     let ivceeScore: number | null = null;
     let viabilityProbability: number | null = null;
+    let readinessScore: number | null = null;
     try {
       const ivceeResult = await pool.query(
         `SELECT analysis_data FROM re_saved_analysis
@@ -82,6 +83,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (data?.probability?.viabilityProbability) {
           viabilityProbability = data.probability.viabilityProbability;
         }
+        if (data?.readinessScore) {
+          readinessScore = data.readinessScore;
+        }
+      }
+    } catch {}
+
+    let memoExcerpt: string | null = null;
+    try {
+      const memoResult = await pool.query(
+        `SELECT analysis_data FROM re_saved_analysis
+         WHERE deal_id = $1 AND analysis_type = 'memo'
+         ORDER BY created_at DESC LIMIT 1`,
+        [dealId]
+      );
+      if (memoResult.rows.length > 0) {
+        const memo = memoResult.rows[0].analysis_data;
+        memoExcerpt = memo?.executiveSummary || memo?.summary || (typeof memo?.sections?.[0]?.content === 'string' ? memo.sections[0].content.slice(0, 500) : null);
       }
     } catch {}
 
@@ -147,7 +165,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ivcee: {
             efficiencyScore: ivceeScore,
             viabilityProbability,
+            readinessScore,
           },
+          memoExcerpt,
           createdByWallet: walletAddress || null,
         }),
       ]

@@ -457,9 +457,24 @@ export default function DealWorkspacePage() {
             <span className="font-dl-mono text-xs text-dl-muted border border-dl-border px-2 py-1 uppercase">{deal?.status}</span>
           </div>
         </div>
-        <p className="text-dl-muted font-dl-mono text-sm mb-6">
-          Strategy: {deal?.strategy?.toUpperCase()} | {property?.addressRaw || 'Unknown property'}
-        </p>
+        <div className="flex items-center gap-2 mb-2">
+          <p className="text-dl-muted font-dl-mono text-sm">
+            Strategy: {deal?.strategy?.toUpperCase()} | {property?.addressRaw || 'Unknown property'}
+          </p>
+        </div>
+        <div className="flex items-center gap-1 mb-6">
+          {['Research', 'Underwriting', 'Offering Structuring', 'Capital Formation', 'Funded'].map((stage, i) => {
+            const stageMap: Record<string, number> = { sourced: 0, analyzing: 1, underwriting: 1, offering: 2, raising: 3, funded: 4, closed: 4 };
+            const current = stageMap[deal?.status || ''] ?? 0;
+            const isActive = i <= current;
+            const isCurrent = i === current;
+            return (
+              <span key={stage} className={`px-1.5 py-0.5 text-[10px] font-dl-mono ${isCurrent ? 'bg-dl-navy text-white' : isActive ? 'bg-gray-200 text-gray-600' : 'bg-gray-50 text-gray-400'}`}>
+                {stage}
+              </span>
+            );
+          })}
+        </div>
 
         {error && (
           <div className="border border-red-300 bg-red-50 p-3 mb-4">
