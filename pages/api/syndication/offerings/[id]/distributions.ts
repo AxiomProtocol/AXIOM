@@ -352,9 +352,9 @@ async function executeUsdPayment(
     const amountCents = Math.round(netAmount * 100);
 
     const payResult = await paymentService.createAchCredit({
-      walletAddress: investorWallet,
+      walletAddress: investorWallet || 'system',
       fromAccountId: treasuryAccountId,
-      counterpartyAccountId: counterpartyAccount.unitAccountId,
+      counterpartyAccountId,
       amountCents,
       description: `Distribution — ${dist.legal_name || 'Investor'} — $${netAmount.toLocaleString()}`,
       purpose: 'distribution',
