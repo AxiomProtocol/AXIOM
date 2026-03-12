@@ -1,5 +1,5 @@
-import { bitGoRequest, isBitGoConfigured, BITGO_ENTERPRISE_ID, isTestnet } from '../bitgo/client';
-import { mapChainId, isValidEthAddress, formatBitGoTxStatus } from '../bitgo/helpers';
+import { bitGoRequest, isBitGoConfigured, BITGO_ENTERPRISE_ID, bitgoCoin } from '../bitgo/client';
+import { isValidEthAddress, formatBitGoTxStatus } from '../bitgo/helpers';
 import { db } from '../../server/db';
 import { bitgoWallets, bitgoTransactions } from '../../shared/bitgoSchema';
 import { eq, and } from 'drizzle-orm';
@@ -26,10 +26,6 @@ export interface DepositAddressResult {
 }
 
 export class BitGoWalletService {
-  private getCoin(testnet = isTestnet): string {
-    return testnet ? 'tarbitrum' : 'arbitrum';
-  }
-
   async createUserWallet(params: CreateWalletParams): Promise<{
     success: boolean;
     walletId?: string;
@@ -40,7 +36,7 @@ export class BitGoWalletService {
       return { success: false, error: 'Crypto custody service is not configured.' };
     }
 
-    const coin = params.coin ?? this.getCoin();
+    const coin = params.coin ?? bitgoCoin;
     const label = params.label ?? `Axiom Wallet — ${params.walletAddress.slice(0, 8)}`;
 
     const result = await bitGoRequest<{ id: string; receiveAddress?: { address: string } }>(
