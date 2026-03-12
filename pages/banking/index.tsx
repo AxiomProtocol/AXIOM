@@ -79,7 +79,7 @@ export default function BankingPage() {
     if (!isConnected) return;
     setStatusLoading(true);
     try {
-      const r = await fetch('/api/unit/status');
+      const r = await fetch('/api/unit/status', { credentials: 'include' });
       if (r.ok) setStatus(await r.json());
     } catch {
     } finally {
@@ -91,7 +91,7 @@ export default function BankingPage() {
     if (!isConnected) return;
     setCustodyLoading(true);
     try {
-      const r = await fetch('/api/bitgo/wallets/list');
+      const r = await fetch('/api/bitgo/wallets/list', { credentials: 'include' });
       if (r.ok) {
         const data = await r.json();
         setCustody(data);
@@ -105,7 +105,7 @@ export default function BankingPage() {
   const fetchCustodyTxs = useCallback(async (walletId: string) => {
     setCustodyTxLoading(true);
     try {
-      const r = await fetch(`/api/bitgo/wallets/${walletId}/transactions`);
+      const r = await fetch(`/api/bitgo/wallets/${walletId}/transactions`, { credentials: 'include' });
       if (r.ok) {
         const data = await r.json();
         setCustodyTxs(data.transactions ?? []);
@@ -119,7 +119,7 @@ export default function BankingPage() {
   const fetchApprovals = useCallback(async () => {
     if (!isConnected) return;
     try {
-      const r = await fetch('/api/bitgo/treasury/pending');
+      const r = await fetch('/api/bitgo/treasury/pending', { credentials: 'include' });
       if (r.ok) {
         const data = await r.json();
         setPendingApprovals(data.pendingApprovals ?? []);
@@ -130,7 +130,7 @@ export default function BankingPage() {
   const fetchBridgeHistory = useCallback(async () => {
     if (!isConnected) return;
     try {
-      const r = await fetch('/api/bridge/history');
+      const r = await fetch('/api/bridge/history', { credentials: 'include' });
       if (r.ok) {
         const data = await r.json();
         setBridgeHistory(data.transfers ?? []);
@@ -191,6 +191,7 @@ export default function BankingPage() {
       const r = await fetch('/api/unit/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
       const json = await r.json();
@@ -209,6 +210,7 @@ export default function BankingPage() {
     const r = await fetch('/api/unit/accounts/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ accountType: 'member' }),
     });
     const json = await r.json();
@@ -224,6 +226,7 @@ export default function BankingPage() {
       const r = await fetch('/api/bitgo/wallets/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({}),
       });
       const json = await r.json();
@@ -243,6 +246,7 @@ export default function BankingPage() {
     const r = await fetch('/api/bitgo/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({
         walletId: custodyWallet.bitgoWalletId,
         toAddress: params.toAddress,
@@ -259,6 +263,7 @@ export default function BankingPage() {
     const r = await fetch('/api/bitgo/treasury/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ pendingApprovalId: approvalId, action: 'approve' }),
     });
     if (r.ok) { await fetchApprovals(); setActionMsg('Authorization approved.'); }
@@ -268,6 +273,7 @@ export default function BankingPage() {
     const r = await fetch('/api/bitgo/treasury/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ pendingApprovalId: approvalId, action: 'reject' }),
     });
     if (r.ok) { await fetchApprovals(); setActionMsg('Authorization rejected.'); }
@@ -281,6 +287,7 @@ export default function BankingPage() {
     const r = await fetch('/api/bridge/quote', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(params),
     });
     const json = await r.json();
@@ -297,6 +304,7 @@ export default function BankingPage() {
     const r = await fetch('/api/bridge/transfer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({
         ...params,
         unitAccountId: primaryAccount.unitAccountId,
@@ -696,6 +704,7 @@ export default function BankingPage() {
                     const r = await fetch('/api/unit/payments/send', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
                       body: JSON.stringify({
                         fromAccountId: primaryAccount.unitAccountId,
                         toAccountId: contributePool.poolAccountId,
