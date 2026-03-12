@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const dealResult = await pool.query(
-      `SELECT d.*, p.address_raw, p.city, p.state, p.zip, p.property_type, p.sqft, p.beds, p.baths, p.year_built
+      `SELECT d.*, p.address_raw, p.city, p.state, p.zip, p.property_type, p.sqft, p.bedrooms, p.bathrooms, p.year_built
        FROM re_deals d
        LEFT JOIN re_properties p ON d.property_id = p.id
        WHERE d.id = $1`,
@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const deal = dealResult.rows[0];
 
     const metricsResult = await pool.query(
-      `SELECT m.*, s.name as scenario_name, a.*
+      `SELECT m.*, s.scenario_name, a.*
        FROM re_deal_scenarios s
        LEFT JOIN re_deal_metrics m ON m.scenario_id = s.id
        LEFT JOIN re_deal_assumptions a ON a.scenario_id = s.id
@@ -104,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } catch {}
 
     const propertyAddress = deal.address_raw || '';
-    const propertyInfo = [deal.property_type, deal.beds ? `${deal.beds}bd` : null, deal.baths ? `${deal.baths}ba` : null, deal.sqft ? `${deal.sqft}sqft` : null].filter(Boolean).join(' | ');
+    const propertyInfo = [deal.property_type, deal.bedrooms ? `${deal.bedrooms}bd` : null, deal.bathrooms ? `${deal.bathrooms}ba` : null, deal.sqft ? `${deal.sqft}sqft` : null].filter(Boolean).join(' | ');
     const slug = `${deal.city || 'deal'}-${deal.state || ''}-${Date.now()}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
 
     const offeringResult = await pool.query(
