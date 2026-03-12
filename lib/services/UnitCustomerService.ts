@@ -98,8 +98,7 @@ export class UnitCustomerService {
       return { success: true, applicationId, status };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      const axiosData = (err as { response?: { data?: unknown; status?: number } })?.response;
-      console.error('[UnitCustomerService] createIndividualApplication error:', msg, JSON.stringify(axiosData?.data ?? {}));
+      console.error('[UnitCustomerService] createIndividualApplication error:', msg);
       return { success: false, error: 'Failed to submit identity verification. Please try again.' };
     }
   }
