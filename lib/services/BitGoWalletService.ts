@@ -47,7 +47,7 @@ export class BitGoWalletService {
           label,
           passphrase: params.passphrase ?? 'AxiomSecurePassphrase2025!',
           enterprise: BITGO_ENTERPRISE_ID,
-          isCustodial: true,
+          type: 'custodial',
           walletVersion: 4,
           tags: [
             `axiom-wallet:${params.walletAddress.toLowerCase()}`,
