@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
@@ -41,7 +41,7 @@ interface Offering {
   created_at: string;
 }
 
-type Tab = 'overview' | 'financials' | 'documents' | 'investors' | 'subscriptions' | 'capTable' | 'reports' | 'settings';
+type Tab = 'overview' | 'financials' | 'documents' | 'investors' | 'subscriptions' | 'capTable' | 'distributions' | 'reports' | 'settings';
 
 function fmt(n: number): string {
   if (isNaN(n) || n === 0) return '$0';
@@ -152,10 +152,18 @@ export default function OfferingBuilder() {
         const res = await fetch(`/api/syndication/offerings/${id}/cap-table`);
         const json = await res.json();
         if (json.success) { setCapTable(json.capTable); setCapSummary(json.summary); }
+      } else if (tab === 'distributions') {
+        const res = await fetch(`/api/syndication/offerings/${id}/distributions`);
+        const json = await res.json();
+        if (json.success) { setDistributions(json.distributions); setDistSummary(json.summary); }
       } else if (tab === 'reports') {
         const res = await fetch(`/api/syndication/offerings/${id}/reports`);
         const json = await res.json();
         if (json.success) setReports(json.reports);
+      } else if (tab === 'settings') {
+        const subRes = await fetch(`/api/syndication/offerings/${id}/subscriptions`);
+        const subJson = await subRes.json();
+        if (subJson.success) { setSubscriptions(subJson.subscriptions); setSubSummary(subJson.summary); }
       }
     } catch (err) {
       console.error(err);
@@ -191,6 +199,16 @@ export default function OfferingBuilder() {
   const [addingSub, setAddingSub] = useState(false);
   const [syncingCap, setSyncingCap] = useState(false);
   const [sourceDeal, setSourceDeal] = useState<any>(null);
+  const [distributions, setDistributions] = useState<any[]>([]);
+  const [distSummary, setDistSummary] = useState<any>(null);
+  const [showCreateDist, setShowCreateDist] = useState(false);
+  const [distForm, setDistForm] = useState({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '' });
+  const [creatingDist, setCreatingDist] = useState(false);
+  const [fundingRecords, setFundingRecords] = useState<any[]>([]);
+  const [showReceiptForm, setShowReceiptForm] = useState<string | null>(null);
+  const [receiptForm, setReceiptForm] = useState({ externalRef: '', amount: '', settlementDate: '', fundingMethod: 'wire' });
+  const [recordingReceipt, setRecordingReceipt] = useState(false);
+  const [closingOffering, setClosingOffering] = useState(false);
 
   const loadSourceDeal = useCallback(async () => {
     if (!offering?.deal_id) return;
@@ -277,6 +295,83 @@ export default function OfferingBuilder() {
     finally { setSyncingCap(false); }
   };
 
+  const handleCreateDistribution = async () => {
+    if (!distForm.grossAmount) return;
+    setCreatingDist(true);
+    try {
+      const res = await fetch(`/api/syndication/offerings/${id}/distributions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(distForm),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setDistForm({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '' });
+        setShowCreateDist(false);
+        loadTabData('distributions');
+      }
+    } catch (err) { console.error(err); }
+    finally { setCreatingDist(false); }
+  };
+
+  const handleDistAction = async (distributionId: string, status: string) => {
+    try {
+      await fetch(`/api/syndication/offerings/${id}/distributions`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ distributionId, status }),
+      });
+      loadTabData('distributions');
+    } catch (err) { console.error(err); }
+  };
+
+  const handleDeleteDist = async (distributionId: string) => {
+    try {
+      await fetch(`/api/syndication/offerings/${id}/distributions`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ distributionId }),
+      });
+      loadTabData('distributions');
+    } catch (err) { console.error(err); }
+  };
+
+  const handleRecordReceipt = async (subscriptionId: string) => {
+    if (!receiptForm.amount) return;
+    setRecordingReceipt(true);
+    try {
+      const res = await fetch(`/api/syndication/offerings/${id}/funding-records`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriptionId, ...receiptForm }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setReceiptForm({ externalRef: '', amount: '', settlementDate: '', fundingMethod: 'wire' });
+        setShowReceiptForm(null);
+        loadTabData('subscriptions');
+        loadOffering();
+      }
+    } catch (err) { console.error(err); }
+    finally { setRecordingReceipt(false); }
+  };
+
+  const handleCloseOffering = async () => {
+    if (!confirm('Close this offering? This will finalize the capital table and lock fundraising.')) return;
+    setClosingOffering(true);
+    try {
+      const res = await fetch(`/api/syndication/offerings/${id}/close`, { method: 'POST' });
+      const json = await res.json();
+      if (json.success) {
+        loadOffering();
+        loadTabData('capTable');
+      } else {
+        alert(json.error || 'Failed to close offering');
+      }
+    } catch (err) { console.error(err); }
+    finally { setClosingOffering(false); }
+  };
+
   const TABS: { key: Tab; label: string }[] = [
     { key: 'overview', label: 'Overview' },
     { key: 'financials', label: 'Financials' },
@@ -284,6 +379,7 @@ export default function OfferingBuilder() {
     { key: 'investors', label: 'Investor Pipeline' },
     { key: 'subscriptions', label: 'Subscriptions' },
     { key: 'capTable', label: 'Capital Table' },
+    { key: 'distributions', label: 'Distributions' },
     { key: 'reports', label: 'Offering Reports' },
     { key: 'settings', label: 'Settings' },
   ];
@@ -372,7 +468,7 @@ export default function OfferingBuilder() {
             )}
           </div>
           <div className="border border-dl-border p-3">
-            <p className="font-dl-mono text-xs text-dl-muted uppercase">Funded</p>
+            <p className="font-dl-mono text-xs text-dl-muted uppercase">Total Settled</p>
             <p className="font-dl-serif text-xl text-dl-navy">{fmt(totalFunded)}</p>
           </div>
           <div className="border border-dl-border p-3">
@@ -986,7 +1082,8 @@ export default function OfferingBuilder() {
                   </thead>
                   <tbody>
                     {subscriptions.map((s: any) => (
-                      <tr key={s.id} className="border-b border-dl-border">
+                      <React.Fragment key={s.id}>
+                      <tr className="border-b border-dl-border">
                         <td className="px-4 py-2 text-dl-text">{s.legal_name || s.entity_name || 'Unknown'}</td>
                         <td className="px-4 py-2 text-right">{fmt(parseFloat(s.amount || '0'))}</td>
                         <td className="px-4 py-2 text-dl-muted text-xs">{s.meta?.share_class || s.share_class || 'common'}</td>
@@ -1013,11 +1110,83 @@ export default function OfferingBuilder() {
                               <button onClick={() => handleSubAction(s.id, 'funded')} className="px-2 py-0.5 text-xs bg-green-100 text-green-800 font-dl-mono">Mark Funded</button>
                             )}
                             {s.status === 'funded' && (
-                              <span className="px-2 py-0.5 text-xs bg-green-100 text-green-800 font-dl-mono">Funded</span>
+                              <button
+                                onClick={() => {
+                                  setShowReceiptForm(showReceiptForm === s.id ? null : s.id);
+                                  setReceiptForm({ externalRef: '', amount: s.amount || '', settlementDate: '', fundingMethod: s.funding_method || 'wire' });
+                                }}
+                                className="px-2 py-0.5 text-xs bg-green-100 text-green-800 font-dl-mono"
+                              >
+                                Record Receipt
+                              </button>
                             )}
                           </div>
                         </td>
                       </tr>
+                      {showReceiptForm === s.id && (
+                        <tr className="bg-gray-50 border-b border-dl-border">
+                          <td colSpan={6} className="px-4 py-3">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+                              <div>
+                                <label className="block text-xs font-dl-mono text-dl-muted mb-1">External Reference</label>
+                                <input
+                                  value={receiptForm.externalRef}
+                                  onChange={e => setReceiptForm(p => ({ ...p, externalRef: e.target.value }))}
+                                  placeholder="Wire/ACH confirmation #"
+                                  className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-dl-mono text-dl-muted mb-1">Settled Amount ($)</label>
+                                <input
+                                  type="number"
+                                  value={receiptForm.amount}
+                                  onChange={e => setReceiptForm(p => ({ ...p, amount: e.target.value }))}
+                                  className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-dl-mono text-dl-muted mb-1">Settlement Date</label>
+                                <input
+                                  type="date"
+                                  value={receiptForm.settlementDate}
+                                  onChange={e => setReceiptForm(p => ({ ...p, settlementDate: e.target.value }))}
+                                  className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-dl-mono text-dl-muted mb-1">Method</label>
+                                <select
+                                  value={receiptForm.fundingMethod}
+                                  onChange={e => setReceiptForm(p => ({ ...p, fundingMethod: e.target.value }))}
+                                  className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm bg-white"
+                                >
+                                  <option value="wire">Wire Transfer</option>
+                                  <option value="ach">ACH</option>
+                                  <option value="crypto">Crypto (On-chain)</option>
+                                  <option value="check">Check</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleRecordReceipt(s.id)}
+                                disabled={recordingReceipt || !receiptForm.amount}
+                                className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                              >
+                                {recordingReceipt ? 'Recording...' : 'Confirm Receipt'}
+                              </button>
+                              <button
+                                onClick={() => setShowReceiptForm(null)}
+                                className="px-4 py-1.5 font-dl-mono text-sm text-dl-muted border border-dl-border"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -1077,6 +1246,162 @@ export default function OfferingBuilder() {
                         <td className="px-4 py-2 text-right">{parseFloat(c.units || '0').toLocaleString()}</td>
                         <td className="px-4 py-2 text-right">{parseFloat(c.ownership_pct || '0').toFixed(2)}%</td>
                         <td className="px-4 py-2 text-right">{fmt(parseFloat(c.capital_contributed || '0'))}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'distributions' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-dl-serif text-lg text-dl-navy">Distributions</h2>
+              <div className="flex items-center gap-3">
+                {distSummary && (
+                  <p className="font-dl-mono text-xs text-dl-muted">
+                    {distSummary.total} entries | Gross: {fmt(distSummary.totalGross)} | Paid: {distSummary.completedCount}
+                  </p>
+                )}
+                <button
+                  onClick={() => setShowCreateDist(!showCreateDist)}
+                  className="bg-dl-navy text-white px-3 py-1 font-dl-mono text-xs"
+                >
+                  {showCreateDist ? 'Cancel' : 'Create Distribution'}
+                </button>
+              </div>
+            </div>
+
+            {showCreateDist && (
+              <div className="border border-dl-navy p-4 bg-gray-50">
+                <h3 className="font-dl-mono text-xs text-dl-muted uppercase mb-3">New Distribution Event</h3>
+                <p className="font-dl-mono text-xs text-dl-muted mb-3">
+                  Per-investor amounts will be computed automatically from capital table ownership percentages.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Distribution Type</label>
+                    <select
+                      value={distForm.distributionType}
+                      onChange={e => setDistForm(p => ({ ...p, distributionType: e.target.value }))}
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm bg-white"
+                    >
+                      <option value="preferred_return">Preferred Return</option>
+                      <option value="profit_share">Profit Share</option>
+                      <option value="return_of_capital">Return of Capital</option>
+                      <option value="refinance_proceeds">Refinance Proceeds</option>
+                      <option value="sale_proceeds">Sale Proceeds</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Gross Amount ($)</label>
+                    <input
+                      type="number"
+                      value={distForm.grossAmount}
+                      onChange={e => setDistForm(p => ({ ...p, grossAmount: e.target.value }))}
+                      placeholder="50000"
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Period Start</label>
+                    <input
+                      type="date"
+                      value={distForm.periodStart}
+                      onChange={e => setDistForm(p => ({ ...p, periodStart: e.target.value }))}
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-dl-mono text-dl-muted mb-1">Period End</label>
+                    <input
+                      type="date"
+                      value={distForm.periodEnd}
+                      onChange={e => setDistForm(p => ({ ...p, periodEnd: e.target.value }))}
+                      className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={handleCreateDistribution}
+                  disabled={creatingDist || !distForm.grossAmount}
+                  className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                >
+                  {creatingDist ? 'Creating...' : 'Create Distribution'}
+                </button>
+              </div>
+            )}
+
+            {distributions.length === 0 && !showCreateDist ? (
+              <div className="border border-dl-border p-8 text-center">
+                <p className="font-dl-mono text-sm text-dl-muted mb-2">No distributions yet.</p>
+                <p className="font-dl-mono text-xs text-dl-muted mb-3">Create a distribution event to allocate returns to investors based on their capital table ownership.</p>
+                <button
+                  onClick={() => setShowCreateDist(true)}
+                  className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm"
+                >
+                  Create First Distribution
+                </button>
+              </div>
+            ) : distributions.length > 0 && (
+              <div className="border border-dl-border">
+                <table className="w-full font-dl-mono text-sm">
+                  <thead>
+                    <tr className="bg-dl-bg border-b border-dl-border text-left">
+                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Investor</th>
+                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Type</th>
+                      <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Gross</th>
+                      <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Net</th>
+                      <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Ownership</th>
+                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Period</th>
+                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Status</th>
+                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {distributions.map((d: any) => (
+                      <tr key={d.id} className="border-b border-dl-border">
+                        <td className="px-4 py-2 text-dl-text">{d.legal_name || d.entity_name || 'Unknown'}</td>
+                        <td className="px-4 py-2 text-dl-muted text-xs">{d.distribution_type.replace(/_/g, ' ')}</td>
+                        <td className="px-4 py-2 text-right">{fmt(parseFloat(d.gross_amount || '0'))}</td>
+                        <td className="px-4 py-2 text-right">{fmt(parseFloat(d.net_amount || '0'))}</td>
+                        <td className="px-4 py-2 text-right">{d.ownership_pct ? `${parseFloat(d.ownership_pct).toFixed(2)}%` : '—'}</td>
+                        <td className="px-4 py-2 text-dl-muted text-xs">
+                          {d.period_start ? new Date(d.period_start).toLocaleDateString() : '—'}
+                          {d.period_end ? ` — ${new Date(d.period_end).toLocaleDateString()}` : ''}
+                        </td>
+                        <td className="px-4 py-2">
+                          <span className={`px-2 py-0.5 text-xs ${
+                            d.status === 'completed' ? 'bg-green-50 text-green-700' :
+                            d.status === 'processing' ? 'bg-blue-50 text-blue-700' :
+                            d.status === 'approved' ? 'bg-yellow-50 text-yellow-700' :
+                            d.status === 'failed' ? 'bg-red-50 text-red-600' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>{d.status}</span>
+                        </td>
+                        <td className="px-4 py-2">
+                          <div className="flex gap-1">
+                            {d.status === 'draft' && (
+                              <>
+                                <button onClick={() => handleDistAction(d.id, 'approved')} className="px-2 py-0.5 text-xs bg-green-50 text-green-700 font-dl-mono">Approve</button>
+                                <button onClick={() => handleDeleteDist(d.id)} className="px-2 py-0.5 text-xs bg-red-50 text-red-600 font-dl-mono">Delete</button>
+                              </>
+                            )}
+                            {d.status === 'approved' && (
+                              <button onClick={() => handleDistAction(d.id, 'processing')} className="px-2 py-0.5 text-xs bg-blue-50 text-blue-700 font-dl-mono">Mark Processing</button>
+                            )}
+                            {d.status === 'processing' && (
+                              <button onClick={() => handleDistAction(d.id, 'completed')} className="px-2 py-0.5 text-xs bg-green-100 text-green-800 font-dl-mono">Mark Paid</button>
+                            )}
+                            {d.status === 'completed' && d.paid_at && (
+                              <span className="px-2 py-0.5 text-xs text-dl-muted font-dl-mono">
+                                Paid {new Date(d.paid_at).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1151,6 +1476,50 @@ export default function OfferingBuilder() {
                 {saving ? 'Saving...' : 'Save Settings'}
               </button>
             </div>
+
+            {['raising', 'funded'].includes(offering.status) && (
+              <div className="border border-dl-border p-6">
+                <h2 className="font-dl-serif text-lg text-dl-navy mb-4">Close Offering</h2>
+                <p className="font-dl-mono text-xs text-dl-muted mb-3">
+                  Closing the offering will finalize the capital table, lock fundraising, and set the close date. This action cannot be undone.
+                </p>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="border border-dl-border p-3">
+                    <p className="font-dl-mono text-xs text-dl-muted uppercase">Funded Subscriptions</p>
+                    <p className="font-dl-serif text-lg text-dl-navy">
+                      {subscriptions.filter((s: any) => s.status === 'funded').length || parseInt(offering.subscription_count || '0')}
+                    </p>
+                  </div>
+                  <div className="border border-dl-border p-3">
+                    <p className="font-dl-mono text-xs text-dl-muted uppercase">Total Committed</p>
+                    <p className="font-dl-serif text-lg text-green-700">{fmt(totalCommitted)}</p>
+                  </div>
+                  <div className="border border-dl-border p-3">
+                    <p className="font-dl-mono text-xs text-dl-muted uppercase">Gap to Target</p>
+                    <p className="font-dl-serif text-lg text-dl-navy">
+                      {targetRaise > 0 ? fmt(Math.max(0, targetRaise - totalCommitted)) : '—'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleCloseOffering}
+                  disabled={closingOffering}
+                  className="px-6 py-2 bg-dl-navy text-white font-dl-mono text-sm disabled:opacity-50"
+                >
+                  {closingOffering ? 'Closing...' : 'Close Offering'}
+                </button>
+              </div>
+            )}
+
+            {offering.status === 'closed' && offering.close_date && (
+              <div className="border border-green-200 bg-green-50 p-6">
+                <h2 className="font-dl-serif text-lg text-green-800 mb-2">Offering Closed</h2>
+                <p className="font-dl-mono text-sm text-green-700">
+                  This offering was closed on {new Date(offering.close_date).toLocaleDateString()}.
+                  Capital table has been finalized. Distributions can be created from the Distributions tab.
+                </p>
+              </div>
+            )}
 
             {offering.status === 'draft' && (
               <div className="border border-red-200 bg-red-50 p-6">
