@@ -54,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       balanceCents: a.balanceCents,
       availableBalanceCents: a.availableBalanceCents,
       routingNumber: a.routingNumber,
-      maskedAccountNumber: a.maskedAccountNumber,
+      maskedAccountNumber: a.accountNumber ? `••••${a.accountNumber.slice(-4)}` : null,
       susuGroupId: a.susuGroupId ?? null,
     })),
   });

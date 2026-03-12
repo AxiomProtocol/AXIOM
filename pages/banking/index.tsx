@@ -10,6 +10,7 @@ import { TransactionList } from '../../components/banking/TransactionList';
 import { PendingApprovals } from '../../components/banking/PendingApprovals';
 import { BankingLanding } from '../../components/banking/BankingLanding';
 import { AchFundingFlow } from '../../components/banking/AchFundingFlow';
+import { AchSendFlow } from '../../components/banking/AchSendFlow';
 import { useWallet } from '../../lib/web3/useWallet';
 import { openAppKit } from '../../lib/web3/appKitModal';
 
@@ -65,6 +66,10 @@ export default function BankingPage() {
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [actionErr, setActionErr] = useState<string | null>(null);
   const [showAchFlow, setShowAchFlow] = useState(false);
+  const [showAchSend, setShowAchSend] = useState(false);
+  const [contributePool, setContributePool] = useState<{ poolAccountId: string; label: string } | null>(null);
+  const [contributeAmount, setContributeAmount] = useState('');
+  const [contributeLoading, setContributeLoading] = useState(false);
 
   const fetchStatus = useCallback(async () => {
     if (!isConnected) return;
@@ -404,6 +409,7 @@ export default function BankingPage() {
                   <AccountCard
                     account={primaryAccount}
                     onFundAccount={() => setShowAchFlow(true)}
+                    onTransfer={() => setShowAchSend(true)}
                   />
                   <div>
                     <div className="flex justify-between items-center mb-3">
@@ -445,10 +451,12 @@ export default function BankingPage() {
               <WealthPoolCard
                 pools={poolAccounts}
                 onContribute={(accountId) => {
-                  setActionMsg(`To contribute, use Send from your main account to pool account ${accountId.slice(0, 8)}...`);
+                  setContributeAmount('');
+                  setContributePool({ poolAccountId: accountId, label: 'Wealth Practice Pool' });
                 }}
                 onAutoContribute={(accountId) => {
-                  setActionMsg(`To set up automatic contributions, use the recurring payment feature. Pool: ${accountId.slice(0, 8)}...`);
+                  setContributeAmount('');
+                  setContributePool({ poolAccountId: accountId, label: 'Wealth Practice Pool (Auto)' });
                 }}
               />
             </div>
@@ -533,6 +541,84 @@ export default function BankingPage() {
           onClose={() => setShowAchFlow(false)}
           onLinked={() => fetchStatus()}
         />
+      )}
+
+      {showAchSend && primaryAccount && (
+        <AchSendFlow
+          unitAccountId={primaryAccount.unitAccountId}
+          availableBalanceCents={primaryAccount.availableBalanceCents ?? primaryAccount.balanceCents}
+          onClose={() => setShowAchSend(false)}
+          onComplete={() => { fetchStatus(); if (primaryAccount) fetchTxForAccount(primaryAccount.unitAccountId); }}
+        />
+      )}
+
+      {contributePool && primaryAccount && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-sm border border-dl-border p-6">
+            <p className="text-xs font-dl-mono text-dl-muted uppercase tracking-widest mb-1">Contribute</p>
+            <h2 className="text-lg font-dl-serif text-dl-navy mb-4">{contributePool.label}</h2>
+            {actionErr && (
+              <div className="bg-red-50 border border-red-200 px-3 py-2 mb-4">
+                <p className="text-xs font-dl-mono text-red-700">{actionErr}</p>
+              </div>
+            )}
+            <label className="block text-xs font-dl-mono text-dl-muted uppercase tracking-widest mb-1">Amount (USD)</label>
+            <div className="relative mb-4">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-dl-mono text-dl-muted">$</span>
+              <input
+                type="number"
+                step="0.01"
+                min="1"
+                className="w-full border border-dl-border pl-7 pr-3 py-2 text-sm font-dl-mono focus:outline-none focus:border-dl-navy"
+                value={contributeAmount}
+                onChange={(e) => setContributeAmount(e.target.value)}
+                placeholder="0.00"
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setContributePool(null); setActionErr(null); }}
+                className="flex-1 border border-dl-border text-dl-muted text-sm font-dl-mono py-2 hover:border-dl-navy hover:text-dl-navy"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={contributeLoading || !contributeAmount}
+                onClick={async () => {
+                  const amountCents = Math.round(parseFloat(contributeAmount) * 100);
+                  if (!amountCents || amountCents < 100) { setActionErr('Minimum $1.00'); return; }
+                  setContributeLoading(true);
+                  setActionErr(null);
+                  try {
+                    const r = await fetch('/api/unit/payments/send', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        fromAccountId: primaryAccount.unitAccountId,
+                        toAccountId: contributePool.poolAccountId,
+                        amountCents,
+                        description: 'Pool contribution',
+                      }),
+                    });
+                    const json = await r.json();
+                    if (!r.ok) throw new Error(json.error);
+                    setContributePool(null);
+                    setActionMsg(`Contributed $${(amountCents / 100).toFixed(2)} to pool.`);
+                    fetchStatus();
+                  } catch (err) {
+                    setActionErr(err instanceof Error ? err.message : 'Contribution failed.');
+                  } finally {
+                    setContributeLoading(false);
+                  }
+                }}
+                className="flex-1 flex items-center justify-center gap-2 bg-dl-navy text-white text-sm font-dl-mono py-2 hover:opacity-90 disabled:opacity-50"
+              >
+                {contributeLoading ? 'Sending...' : 'Contribute'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </DesignLawLayout>
   );
