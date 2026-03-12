@@ -21,6 +21,7 @@ interface BankingStatus {
   applicationStatus: string | null;
   customerId: string | null;
   firstName: string | null;
+  lastName: string | null;
   accounts: Array<{
     id: string;
     unitAccountId: string;
@@ -527,7 +528,11 @@ export default function BankingPage() {
       )}
 
       {showAchFlow && (
-        <AchFundingFlow onClose={() => setShowAchFlow(false)} />
+        <AchFundingFlow
+          customerName={status ? `${status.firstName ?? ''} ${status.lastName ?? ''}`.trim() : undefined}
+          onClose={() => setShowAchFlow(false)}
+          onLinked={() => fetchStatus()}
+        />
       )}
     </DesignLawLayout>
   );
