@@ -57,14 +57,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (subscriptionId) {
       const subResult = await pool.query(
-        `SELECT s.id, s.investor_wallet FROM syn_subscriptions s WHERE s.id = $1 AND s.offering_id = $2`,
+        `SELECT s.id, s.investor_wallet, ip.wallet_address AS profile_wallet
+         FROM syn_subscriptions s
+         LEFT JOIN syn_investor_profiles ip ON ip.id = s.investor_profile_id
+         WHERE s.id = $1 AND s.offering_id = $2`,
         [subscriptionId, id]
       );
       if (subResult.rows.length === 0) {
         return res.status(404).json({ success: false, error: 'Subscription not found for this offering' });
       }
-      const isSubOwner = subResult.rows[0].investor_wallet &&
-        subResult.rows[0].investor_wallet.toLowerCase() === wallet.toLowerCase();
+      const sub = subResult.rows[0];
+      const walletLower = wallet.toLowerCase();
+      const isSubOwner =
+        (sub.investor_wallet && sub.investor_wallet.toLowerCase() === walletLower) ||
+        (sub.profile_wallet && sub.profile_wallet.toLowerCase() === walletLower);
       if (!isOperator && !isSubOwner) {
         return res.status(403).json({ success: false, error: 'Not authorized to view funding instructions for this subscription' });
       }
@@ -77,13 +83,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const subPart = subscriptionId ? String(subscriptionId).substring(0, 8).toUpperCase() : 'GENERAL';
     const memoCode = `AXIOM-${slugPart}-${subPart}`;
 
-    let treasuryWallet = null;
-    try {
-      if (process.env.DEPLOYER_PRIVATE_KEY) {
-        const wallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY);
-        treasuryWallet = wallet.address;
-      }
-    } catch {}
+    let treasuryWallet = process.env.TREASURY_WALLET_ADDRESS || null;
+    if (!treasuryWallet) {
+      try {
+        if (process.env.DEPLOYER_PRIVATE_KEY) {
+          const derivedWallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY);
+          treasuryWallet = derivedWallet.address;
+        }
+      } catch {}
+    }
 
     const routingNumber = process.env.UNIT_ROUTING_NUMBER || (process.env.UNIT_API_TOKEN ? '084106768' : null);
     const accountNumber = process.env.UNIT_ACCOUNT_NUMBER || (process.env.UNIT_API_TOKEN ? '****pending-unit-setup' : null);

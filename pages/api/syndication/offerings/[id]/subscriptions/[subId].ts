@@ -44,8 +44,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const existing = await pool.query(
-      `SELECT s.id, s.status, s.payment_currency, s.investor_wallet, s.investor_profile_id,
-              o.created_by
+      `SELECT s.id, s.status, s.payment_currency, s.investor_wallet,
+              o.created_by, ip.wallet_address AS profile_wallet
        FROM syn_subscriptions s
        JOIN syn_offerings o ON o.id = s.offering_id
        LEFT JOIN syn_investor_profiles ip ON ip.id = s.investor_profile_id
@@ -58,9 +58,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const sub = existing.rows[0];
+    const walletLower = wallet.toLowerCase();
 
-    const isOfferingOperator = sub.created_by && sub.created_by.toLowerCase() === wallet.toLowerCase();
-    const isSubscriptionOwner = sub.investor_wallet && sub.investor_wallet.toLowerCase() === wallet.toLowerCase();
+    const isOfferingOperator = sub.created_by && sub.created_by.toLowerCase() === walletLower;
+    const isSubscriptionOwner =
+      (sub.investor_wallet && sub.investor_wallet.toLowerCase() === walletLower) ||
+      (sub.profile_wallet && sub.profile_wallet.toLowerCase() === walletLower);
 
     if (!isOfferingOperator && !isSubscriptionOwner) {
       return res.status(403).json({ success: false, error: 'Not authorized to modify this subscription' });
