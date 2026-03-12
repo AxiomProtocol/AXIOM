@@ -25,7 +25,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/dex', label: 'Exchange' },
       { href: '/axusd-3643', label: 'Unified AXUSD' },
       { href: '/depin/denet', label: 'DePIN' },
-      { href: '/onramp', label: 'Fiat On-Ramp' },
+      { href: '/banking', label: 'Banking' },
     ],
   },
   {
