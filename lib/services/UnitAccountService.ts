@@ -185,6 +185,59 @@ export class UnitAccountService {
     }
   }
 
+  async syncAccountsFromUnit(walletAddress: string, unitCustomerId: string): Promise<void> {
+    if (!isUnitConfigured()) return;
+    const client = getUnitClient();
+    if (!client) return;
+    try {
+      const response = await client.accounts.list({ customerId: unitCustomerId });
+      const remoteAccounts = response.data ?? [];
+      for (const account of remoteAccounts) {
+        const unitAccountId = account.id;
+        const attrs = account.attributes as {
+          name?: string;
+          status?: string;
+          balance?: number;
+          hold?: number;
+          available?: number;
+          routingNumber?: string;
+          accountNumber?: string;
+          currency?: string;
+        };
+        await db
+          .insert(unitAccounts)
+          .values({
+            walletAddress: walletAddress.toLowerCase(),
+            unitCustomerId,
+            unitAccountId,
+            accountType: 'member',
+            name: attrs.name ?? 'Axiom Checking Account',
+            status: attrs.status ?? 'Open',
+            balanceCents: attrs.balance ?? 0,
+            holdCents: attrs.hold ?? 0,
+            availableCents: attrs.available ?? 0,
+            routingNumber: attrs.routingNumber ?? undefined,
+            accountNumber: attrs.accountNumber ?? undefined,
+            currency: attrs.currency ?? 'USD',
+            lastSyncedAt: new Date(),
+          })
+          .onConflictDoUpdate({
+            target: unitAccounts.unitAccountId,
+            set: {
+              status: attrs.status ?? 'Open',
+              balanceCents: attrs.balance ?? 0,
+              holdCents: attrs.hold ?? 0,
+              availableCents: attrs.available ?? 0,
+              lastSyncedAt: new Date(),
+              updatedAt: new Date(),
+            },
+          });
+      }
+    } catch (err) {
+      console.error('[UnitAccountService] syncAccountsFromUnit error:', err);
+    }
+  }
+
   async getAccountsForWallet(walletAddress: string): Promise<UnitAccount[]> {
     return db
       .select()

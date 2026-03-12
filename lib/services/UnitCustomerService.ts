@@ -128,7 +128,7 @@ export class UnitCustomerService {
       return { status: 'NotStarted', isApproved: false };
     }
 
-    if (customer.isApproved || customer.applicationStatus === 'Approved') {
+    if (customer.isApproved) {
       return {
         status: 'Approved',
         applicationId: customer.unitApplicationId ?? undefined,

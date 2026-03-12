@@ -21,19 +21,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   ]);
 
   let applicationStatus = customer?.applicationStatus ?? null;
+  let isApproved = customer?.isApproved ?? false;
+  let resolvedCustomerId = customer?.unitCustomerId ?? null;
+
   if (customer && !customer.isApproved && customer.unitApplicationId) {
     const refreshed = await unitCustomerService.getApplicationStatus(session.address);
-    applicationStatus = refreshed?.status ?? applicationStatus;
+    if (refreshed) {
+      applicationStatus = refreshed.status;
+      isApproved = refreshed.isApproved;
+      if (refreshed.customerId) resolvedCustomerId = refreshed.customerId;
+    }
+  }
+
+  let localAccounts = accounts;
+  if (isApproved && resolvedCustomerId && accounts.length === 0) {
+    await unitAccountService.syncAccountsFromUnit(session.address, resolvedCustomerId);
+    localAccounts = await unitAccountService.getAccountsForWallet(session.address);
   }
 
   return res.status(200).json({
     hasCustomer: Boolean(customer),
-    isApproved: customer?.isApproved ?? false,
+    isApproved,
     applicationStatus,
     customerId: customer?.unitCustomerId ?? null,
     firstName: customer?.firstName ?? null,
     lastName: customer?.lastName ?? null,
-    accounts: accounts.map((a) => ({
+    accounts: localAccounts.map((a) => ({
       id: a.id,
       unitAccountId: a.unitAccountId,
       accountType: a.accountType,
