@@ -1,5 +1,5 @@
 import { getUnitClient, isUnitConfigured } from '../unit/client';
-import { db } from '../db';
+import { db } from '../../server/db';
 import { unitCards } from '../../shared/unitSchema';
 import { eq } from 'drizzle-orm';
 import type { UnitCard } from '../../shared/unitSchema';

@@ -21,6 +21,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(403).json({ error: 'Identity verification required to issue a card.' });
   }
 
+  const customer = await unitCustomerService.getCustomer(session.address);
+  if (!customer?.unitCustomerId) {
+    return res.status(400).json({ error: 'Customer record not found.' });
+  }
+
   const { accountId, cardType, shippingAddress } = req.body ?? {};
 
   const account = await unitAccountService.getAccountWithBalance(accountId);
@@ -30,16 +35,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   let result;
   if (cardType === 'physical' && shippingAddress) {
-    result = await unitCardService.issuePhysicalCard({
-      walletAddress: session.address,
-      unitAccountId: account.unitAccountId,
-      shippingAddress,
-    });
+    result = await unitCardService.issuePhysicalCard(
+      session.address,
+      customer.unitCustomerId,
+      account.unitAccountId,
+      shippingAddress
+    );
   } else {
-    result = await unitCardService.issueVirtualCard({
-      walletAddress: session.address,
-      unitAccountId: account.unitAccountId,
-    });
+    result = await unitCardService.issueVirtualCard(
+      session.address,
+      customer.unitCustomerId,
+      account.unitAccountId
+    );
   }
 
   if (!result.success) return res.status(400).json({ error: result.error });

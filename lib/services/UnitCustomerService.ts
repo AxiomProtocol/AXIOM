@@ -1,6 +1,6 @@
 import { getUnitClient, isUnitConfigured } from '../unit/client';
 import { isValidSsnFormat, normalizeSsn, lastFourSsn, mapApplicationStatus } from '../unit/helpers';
-import { db } from '../db';
+import { db } from '../../server/db';
 import { unitCustomers } from '../../shared/unitSchema';
 import { eq } from 'drizzle-orm';
 import type { UnitCustomer } from '../../shared/unitSchema';

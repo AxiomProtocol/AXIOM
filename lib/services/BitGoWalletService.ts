@@ -1,6 +1,6 @@
 import { bitGoRequest, isBitGoConfigured, BITGO_ENTERPRISE_ID, isTestnet } from '../bitgo/client';
 import { mapChainId, isValidEthAddress, formatBitGoTxStatus } from '../bitgo/helpers';
-import { db } from '../db';
+import { db } from '../../server/db';
 import { bitgoWallets, bitgoTransactions } from '../../shared/bitgoSchema';
 import { eq, and } from 'drizzle-orm';
 import type { BitGoWallet, BitGoTransaction } from '../../shared/bitgoSchema';

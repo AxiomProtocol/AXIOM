@@ -3,7 +3,7 @@ import { bitGoWalletService } from './BitGoWalletService';
 import { bitGoTransactionService } from './BitGoTransactionService';
 import { isUnitConfigured } from '../unit/client';
 import { isBitGoConfigured } from '../bitgo/client';
-import { db } from '../db';
+import { db } from '../../server/db';
 import { bridgeTransfers, bridgeFxSnapshots } from '../../shared/bridgeSchema';
 import { eq, and, desc } from 'drizzle-orm';
 import type { BridgeTransfer, NewBridgeTransfer } from '../../shared/bridgeSchema';

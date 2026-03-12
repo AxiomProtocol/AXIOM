@@ -43,13 +43,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     phone,
     dateOfBirth,
     ssn,
-    address: {
-      street: address.street,
-      city: address.city,
-      state: address.state,
-      postalCode: address.postalCode,
-      country: address.country ?? 'US',
-    },
+    addressStreet: address.street,
+    addressCity: address.city,
+    addressState: address.state,
+    addressPostalCode: address.postalCode,
+    addressCountry: address.country ?? 'US',
   });
 
   if (!result.success) {

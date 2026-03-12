@@ -29,16 +29,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   let result;
   if (accountType === 'susu_pool' && susuGroupId) {
-    result = await unitAccountService.createSusuPoolAccount({
-      walletAddress: session.address,
-      unitCustomerId: customer.unitCustomerId,
-      susuGroupId,
-    });
+    result = await unitAccountService.createSusuPoolAccount(
+      session.address,
+      customer.unitCustomerId,
+      String(susuGroupId),
+      'Wealth Practice Pool'
+    );
   } else {
-    result = await unitAccountService.createMemberAccount({
-      walletAddress: session.address,
-      unitCustomerId: customer.unitCustomerId,
-    });
+    result = await unitAccountService.createMemberAccount(
+      session.address,
+      customer.unitCustomerId
+    );
   }
 
   if (!result.success) {

@@ -1,6 +1,6 @@
 import { getUnitClient, isUnitConfigured } from '../unit/client';
 import { generateIdempotencyKey } from '../unit/helpers';
-import { db } from '../db';
+import { db } from '../../server/db';
 import { unitPayments, unitRecurringPayments } from '../../shared/unitSchema';
 import { eq } from 'drizzle-orm';
 

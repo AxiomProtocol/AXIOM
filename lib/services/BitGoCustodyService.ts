@@ -1,5 +1,5 @@
 import { bitGoRequest, isBitGoConfigured } from '../bitgo/client';
-import { db } from '../db';
+import { db } from '../../server/db';
 import { bitgoCustodyPolicies, bitgoWallets } from '../../shared/bitgoSchema';
 import { eq, and } from 'drizzle-orm';
 import type { BitGoCustodyPolicy } from '../../shared/bitgoSchema';
