@@ -12,7 +12,7 @@ import { BankingLanding } from '../../components/banking/BankingLanding';
 import { useWallet } from '../../lib/web3/useWallet';
 import { openAppKit } from '../../lib/web3/appKitModal';
 
-type Tab = 'identity' | 'account' | 'wealth' | 'custody' | 'bridge';
+type Tab = 'overview' | 'identity' | 'account' | 'wealth' | 'custody' | 'bridge';
 
 interface BankingStatus {
   hasCustomer: boolean;
@@ -46,7 +46,7 @@ interface CustodyData {
 
 export default function BankingPage() {
   const { address, isConnected } = useWallet();
-  const [activeTab, setActiveTab] = useState<Tab>('identity');
+  const [activeTab, setActiveTab] = useState<Tab>('overview');
 
   const [status, setStatus] = useState<BankingStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
@@ -271,6 +271,7 @@ export default function BankingPage() {
   };
 
   const TABS: { id: Tab; label: string }[] = [
+    { id: 'overview', label: 'Overview' },
     { id: 'identity', label: 'Identity' },
     { id: 'account', label: 'Account' },
     { id: 'wealth', label: 'Wealth Practice' },
@@ -344,6 +345,10 @@ export default function BankingPage() {
               </button>
             ))}
           </div>
+
+          {activeTab === 'overview' && (
+            <BankingLanding />
+          )}
 
           {activeTab === 'identity' && (
             <div className="max-w-lg">
