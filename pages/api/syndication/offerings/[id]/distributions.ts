@@ -5,8 +5,54 @@ import { rateLimitDistPay } from '../../../../../lib/rateLimit';
 const AXUSD_CONTRACT = '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C';
 const IDENTITY_REGISTRY = '0x7856b3597389D34789512f43A0270a688846313B';
 
+const OPERATOR_WALLETS = [
+  '0xb0cefc7e3f1c7de3b98e8c39384e9e084c9eb75c',
+];
+
+function parseCookies(cookieHeader: string | undefined): Record<string, string> {
+  if (!cookieHeader) return {};
+  return Object.fromEntries(
+    cookieHeader.split(';')
+      .map(cookie => {
+        const [key, ...val] = cookie.trim().split('=');
+        const sanitizedKey = key.replace(/[^\w\-_.]/g, '');
+        const sanitizedVal = val.join('=').replace(/[^\w\-_.=]/g, '');
+        return [sanitizedKey, sanitizedVal];
+      })
+      .filter(([key]) => key.length > 0)
+  );
+}
+
+async function getAuthenticatedWallet(req: NextApiRequest): Promise<string | null> {
+  const cookies = parseCookies(req.headers.cookie);
+  const sessionToken = cookies['siwe_session'];
+  if (!sessionToken) return null;
+  try {
+    const result = await pool.query(
+      `SELECT wallet_address FROM wallet_sessions WHERE session_token = $1 AND expires_at > NOW()`,
+      [sessionToken]
+    );
+    return result.rows.length > 0 ? result.rows[0].wallet_address : null;
+  } catch {
+    return null;
+  }
+}
+
+function isOperator(wallet: string): boolean {
+  return OPERATOR_WALLETS.includes(wallet.toLowerCase());
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
+
+  const wallet = await getAuthenticatedWallet(req);
+  if (!wallet) {
+    return res.status(401).json({ success: false, error: 'Authentication required.' });
+  }
+
+  if (!isOperator(wallet)) {
+    return res.status(403).json({ success: false, error: 'Operator access required.' });
+  }
 
   if (req.method === 'GET') {
     try {
