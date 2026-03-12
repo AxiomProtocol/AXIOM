@@ -215,6 +215,9 @@ export default function OfferingBuilder() {
   const [showReportForm, setShowReportForm] = useState(true);
   const [reportForm, setReportForm] = useState({ title: '', reportType: 'quarterly', content: '' });
   const [publishingReport, setPublishingReport] = useState(false);
+  const [distPayConfirm, setDistPayConfirm] = useState<any | null>(null);
+  const [distPaying, setDistPaying] = useState<string | null>(null);
+  const [distPayError, setDistPayError] = useState<Record<string, string>>({});
   const [showCapCallForm, setShowCapCallForm] = useState<string | null>(null);
   const [capCallForm, setCapCallForm] = useState({ amountCalled: '', dueDate: '', currency: 'USD', triggerACH: false });
   const [sendingCapCall, setSendingCapCall] = useState(false);
@@ -334,6 +337,13 @@ export default function OfferingBuilder() {
   };
 
   const handleDistAction = async (distributionId: string, status: string) => {
+    if (status === 'completed') {
+      const dist = distributions.find((d: any) => d.id === distributionId);
+      if (dist) {
+        setDistPayConfirm(dist);
+        return;
+      }
+    }
     try {
       await fetch(`/api/syndication/offerings/${id}/distributions`, {
         method: 'PATCH',
@@ -342,6 +352,30 @@ export default function OfferingBuilder() {
       });
       loadTabData('distributions');
     } catch (err) { console.error(err); }
+  };
+
+  const handleDistPayConfirmed = async () => {
+    if (!distPayConfirm) return;
+    const distributionId = distPayConfirm.id;
+    setDistPayConfirm(null);
+    setDistPaying(distributionId);
+    setDistPayError(prev => { const n = { ...prev }; delete n[distributionId]; return n; });
+    try {
+      const resp = await fetch(`/api/syndication/offerings/${id}/distributions`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ distributionId, status: 'completed' }),
+      });
+      const json = await resp.json();
+      if (!json.success) {
+        setDistPayError(prev => ({ ...prev, [distributionId]: json.error || 'Payment failed.' }));
+      }
+      loadTabData('distributions');
+    } catch (err: any) {
+      setDistPayError(prev => ({ ...prev, [distributionId]: err.message || 'Payment failed.' }));
+    } finally {
+      setDistPaying(null);
+    }
   };
 
   const handleDeleteDist = async (distributionId: string) => {
@@ -1744,6 +1778,7 @@ export default function OfferingBuilder() {
                       <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Net</th>
                       <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Ownership</th>
                       <th className="px-4 py-2 text-xs text-dl-muted uppercase">Period</th>
+                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Currency</th>
                       <th className="px-4 py-2 text-xs text-dl-muted uppercase">Status</th>
                       <th className="px-4 py-2 text-xs text-dl-muted uppercase">Actions</th>
                     </tr>
@@ -1761,6 +1796,11 @@ export default function OfferingBuilder() {
                           {d.period_end ? ` — ${new Date(d.period_end).toLocaleDateString()}` : ''}
                         </td>
                         <td className="px-4 py-2">
+                          <span className={`px-1.5 py-0.5 text-xs font-dl-mono ${d.currency === 'AXUSD' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                            {d.currency || 'USD'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2">
                           <span className={`px-2 py-0.5 text-xs ${
                             d.status === 'completed' ? 'bg-green-50 text-green-700' :
                             d.status === 'processing' ? 'bg-blue-50 text-blue-700' :
@@ -1770,23 +1810,58 @@ export default function OfferingBuilder() {
                           }`}>{d.status}</span>
                         </td>
                         <td className="px-4 py-2">
-                          <div className="flex gap-1">
-                            {d.status === 'draft' && (
-                              <>
-                                <button onClick={() => handleDistAction(d.id, 'approved')} className="px-2 py-0.5 text-xs bg-green-50 text-green-700 font-dl-mono">Approve</button>
-                                <button onClick={() => handleDeleteDist(d.id)} className="px-2 py-0.5 text-xs bg-red-50 text-red-600 font-dl-mono">Delete</button>
-                              </>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex gap-1 items-center">
+                              {d.status === 'draft' && (
+                                <>
+                                  <button onClick={() => handleDistAction(d.id, 'approved')} className="px-2 py-0.5 text-xs bg-green-50 text-green-700 font-dl-mono">Approve</button>
+                                  <button onClick={() => handleDeleteDist(d.id)} className="px-2 py-0.5 text-xs bg-red-50 text-red-600 font-dl-mono">Delete</button>
+                                </>
+                              )}
+                              {d.status === 'approved' && (
+                                <button onClick={() => handleDistAction(d.id, 'processing')} className="px-2 py-0.5 text-xs bg-blue-50 text-blue-700 font-dl-mono">Mark Processing</button>
+                              )}
+                              {d.status === 'processing' && (
+                                distPaying === d.id ? (
+                                  <span className="px-2 py-0.5 text-xs bg-yellow-50 text-yellow-700 font-dl-mono">Processing payment...</span>
+                                ) : (
+                                  <button onClick={() => handleDistAction(d.id, 'completed')} className="px-2 py-0.5 text-xs bg-green-100 text-green-800 font-dl-mono">Mark Paid</button>
+                                )
+                              )}
+                              {d.status === 'completed' && d.paid_at && (
+                                <span className="px-2 py-0.5 text-xs text-dl-muted font-dl-mono">
+                                  Paid {new Date(d.paid_at).toLocaleDateString()}
+                                </span>
+                              )}
+                              {d.status === 'completed' && d.meta?.tx_hash && (
+                                <a
+                                  href={`https://arbiscan.io/tx/${d.meta.tx_hash}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-2 py-0.5 text-xs bg-blue-50 text-blue-700 font-dl-mono underline"
+                                >
+                                  {d.meta.tx_hash.slice(0, 10)}...
+                                </a>
+                              )}
+                              {d.status === 'completed' && d.meta?.unit_payment_id && (
+                                <span className="px-2 py-0.5 text-xs bg-gray-50 text-gray-600 font-dl-mono">
+                                  Unit: {d.meta.unit_payment_id}
+                                </span>
+                              )}
+                              {d.status === 'failed' && (
+                                <button onClick={() => handleDistAction(d.id, 'processing')} className="px-2 py-0.5 text-xs bg-orange-50 text-orange-700 font-dl-mono">Retry</button>
+                              )}
+                            </div>
+                            {distPayError[d.id] && (
+                              <p className="font-dl-mono text-[10px] text-red-600">{distPayError[d.id]}</p>
                             )}
-                            {d.status === 'approved' && (
-                              <button onClick={() => handleDistAction(d.id, 'processing')} className="px-2 py-0.5 text-xs bg-blue-50 text-blue-700 font-dl-mono">Mark Processing</button>
+                            {d.status === 'failed' && d.meta?.error && !distPayError[d.id] && (
+                              <p className="font-dl-mono text-[10px] text-red-600">{d.meta.error}</p>
                             )}
-                            {d.status === 'processing' && (
-                              <button onClick={() => handleDistAction(d.id, 'completed')} className="px-2 py-0.5 text-xs bg-green-100 text-green-800 font-dl-mono">Mark Paid</button>
-                            )}
-                            {d.status === 'completed' && d.paid_at && (
-                              <span className="px-2 py-0.5 text-xs text-dl-muted font-dl-mono">
-                                Paid {new Date(d.paid_at).toLocaleDateString()}
-                              </span>
+                            {d.currency === 'AXUSD' && d.status !== 'completed' && (
+                              <p className="font-dl-mono text-[10px] text-dl-muted">
+                                {d.recipient_wallet ? `Wallet: ${d.recipient_wallet.slice(0, 8)}...${d.recipient_wallet.slice(-6)}` : 'No recipient wallet'}
+                              </p>
                             )}
                           </div>
                         </td>
@@ -1794,6 +1869,40 @@ export default function OfferingBuilder() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {distPayConfirm && (
+              <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+                <div className="bg-white border border-dl-border p-6 max-w-md w-full mx-4">
+                  <h3 className="font-dl-serif text-lg text-dl-navy mb-3">Confirm Payment</h3>
+                  {(distPayConfirm.currency === 'AXUSD') ? (
+                    <p className="font-dl-mono text-sm text-dl-text mb-4">
+                      This will transfer {parseFloat(distPayConfirm.net_amount || '0').toLocaleString()} AXUSD on-chain to{' '}
+                      <span className="font-bold">{distPayConfirm.recipient_wallet || distPayConfirm.wallet_address || 'investor wallet'}</span>.
+                      Ensure the wallet is KYC-verified.
+                    </p>
+                  ) : (
+                    <p className="font-dl-mono text-sm text-dl-text mb-4">
+                      This will initiate a payment of ${parseFloat(distPayConfirm.net_amount || '0').toLocaleString()} to{' '}
+                      <span className="font-bold">{distPayConfirm.legal_name || distPayConfirm.entity_name || 'investor'}</span>&apos;s linked bank account.
+                    </p>
+                  )}
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      onClick={() => setDistPayConfirm(null)}
+                      className="px-4 py-1.5 font-dl-mono text-sm border border-dl-border"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDistPayConfirmed}
+                      className="px-4 py-1.5 font-dl-mono text-sm bg-dl-navy text-white"
+                    >
+                      Confirm Payment
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
