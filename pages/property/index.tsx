@@ -179,9 +179,9 @@ export default function PropertyAnalysis() {
         <title>Property Analysis Tool | Axiom Protocol</title>
       </Head>
 
-      <div className="relative w-full h-40 sm:h-52 lg:h-64 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
+      <div className="relative w-full h-32 sm:h-40 lg:h-48 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
         <Image
-          src="/images/realestate/property_hero.jpg"
+          src="/images/realestate/property_hero.png"
           alt="Property Analysis"
           fill
           className="object-cover"

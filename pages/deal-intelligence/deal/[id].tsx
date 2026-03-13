@@ -3,6 +3,14 @@ import { useRouter } from 'next/router';
 import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
 import Link from 'next/link';
+import Image from 'next/image';
+
+const STRATEGY_OPTIONS = [
+  { key: 'brrrr', label: 'BRRRR', icon: '/images/realestate/icon_brrrr.png' },
+  { key: 'flip', label: 'Flip', icon: '/images/realestate/icon_flip.png' },
+  { key: 'hold', label: 'Buy & Hold', icon: '/images/realestate/icon_hold.png' },
+  { key: 'multifamily', label: 'Multifamily', icon: '/images/realestate/icon_multifamily.png' },
+];
 import IVCEEPanel from '../../../components/deal-intelligence/IVCEEPanel';
 import DocumentsPanel from '../../../components/deal-intelligence/DocumentsPanel';
 import DueDiligencePanel from '../../../components/deal-intelligence/DueDiligencePanel';
@@ -520,6 +528,29 @@ export default function DealWorkspacePage() {
                     <button onClick={handleRecompute} disabled={computing} className="bg-dl-navy text-white px-4 py-2 min-h-[44px] font-dl-mono text-sm disabled:opacity-50">
                       {computing ? 'Computing...' : 'Run Underwriting'}
                     </button>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <h3 className="font-dl-mono text-xs text-dl-muted uppercase mb-3 border-b border-dl-border pb-1">Strategy</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {STRATEGY_OPTIONS.map((s) => (
+                      <button
+                        key={s.key}
+                        type="button"
+                        onClick={() => {}}
+                        className={`flex flex-col items-center p-3 border min-h-[44px] ${
+                          deal?.strategy === s.key
+                            ? 'border-dl-navy bg-blue-50'
+                            : 'border-dl-border hover:border-dl-navy'
+                        }`}
+                      >
+                        <div className="relative w-8 h-8 mb-1">
+                          <Image src={s.icon} alt="" fill className="object-contain" />
+                        </div>
+                        <span className="font-dl-mono text-xs text-dl-navy">{s.label}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
 

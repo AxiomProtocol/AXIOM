@@ -146,7 +146,7 @@ export default function DealIntelligenceSearch() {
         <title>Deal Intelligence - Property Search | AXIOM</title>
       </Head>
 
-      <div className="relative w-full h-40 sm:h-52 lg:h-64 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
+      <div className="relative w-full h-32 sm:h-40 lg:h-48 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
         <Image
           src="/images/realestate/deal_intelligence_hero.png"
           alt="Deal Intelligence"
@@ -163,10 +163,10 @@ export default function DealIntelligenceSearch() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {[
-          { icon: '/images/realestate/icon_search.png', label: 'Property Search', desc: 'Find and resolve addresses' },
-          { icon: '/images/realestate/icon_underwrite.png', label: 'Underwriting', desc: 'Run scenario analysis' },
-          { icon: '/images/realestate/icon_diligence.png', label: 'Due Diligence', desc: 'Structured DD checklists' },
-          { icon: '/images/realestate/icon_ai.png', label: 'AI Advisory', desc: 'Gemini-powered insights' },
+          { icon: '/images/realestate/icon_search.png', label: 'Search', desc: 'Find and resolve addresses' },
+          { icon: '/images/realestate/icon_ai.png', label: 'Analyze', desc: 'AI-powered deal analysis' },
+          { icon: '/images/realestate/icon_underwrite.png', label: 'Underwrite', desc: 'Run scenario models' },
+          { icon: '/images/realestate/icon_diligence.png', label: 'Decide', desc: 'Structured decision log' },
         ].map((cap) => (
           <div key={cap.label} className="border border-dl-border p-3 sm:p-4 flex flex-col items-center text-center">
             <div className="relative w-10 h-10 sm:w-12 sm:h-12 mb-2">
