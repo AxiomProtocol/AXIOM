@@ -240,7 +240,7 @@ export default function SyndicationDashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-8">
         <div className="border border-dl-border p-3 sm:p-4">
           <p className="font-dl-mono text-[10px] sm:text-xs text-dl-muted uppercase">Total Offerings</p>
           <p className="font-dl-serif text-xl sm:text-2xl text-dl-navy">{offerings.length}</p>
@@ -250,10 +250,14 @@ export default function SyndicationDashboard() {
           <p className="font-dl-serif text-xl sm:text-2xl text-green-700">{activeOfferings.length}</p>
         </div>
         <div className="border border-dl-border p-3 sm:p-4">
+          <p className="font-dl-mono text-[10px] sm:text-xs text-dl-muted uppercase">Funded</p>
+          <p className="font-dl-serif text-xl sm:text-2xl text-dl-navy">{offerings.filter(o => ['funded', 'closed'].includes(o.status)).length}</p>
+        </div>
+        <div className="border border-dl-border p-3 sm:p-4">
           <p className="font-dl-mono text-[10px] sm:text-xs text-dl-muted uppercase">Total Raise Target</p>
           <p className="font-dl-serif text-xl sm:text-2xl text-dl-navy">{fmt(totalRaiseTarget)}</p>
         </div>
-        <div className="border border-dl-border p-3 sm:p-4">
+        <div className="border border-dl-border p-3 sm:p-4 col-span-2 lg:col-span-1">
           <p className="font-dl-mono text-[10px] sm:text-xs text-dl-muted uppercase">Capital Committed</p>
           <p className="font-dl-serif text-xl sm:text-2xl text-green-700">{fmt(totalCommitted)}</p>
         </div>

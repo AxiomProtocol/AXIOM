@@ -1242,7 +1242,7 @@ export default function OfferingBuilder() {
                       </div>
                       <div className="flex items-center gap-2">
                         {doc.url && (
-                          <a href={doc.url} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 min-h-[36px] flex items-center border border-dl-navy text-dl-navy text-xs font-dl-mono">
+                          <a href={doc.url} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 min-h-[44px] flex items-center border border-dl-navy text-dl-navy text-xs font-dl-mono">
                             View
                           </a>
                         )}
@@ -1250,7 +1250,7 @@ export default function OfferingBuilder() {
                           <button
                             onClick={() => handleDeleteDoc(doc.id)}
                             disabled={deletingDocId === doc.id}
-                            className="px-3 py-1.5 min-h-[36px] text-xs text-red-600 font-dl-mono disabled:opacity-50"
+                            className="px-3 py-1.5 min-h-[44px] text-xs text-red-600 font-dl-mono disabled:opacity-50"
                           >
                             {deletingDocId === doc.id ? '...' : 'Delete'}
                           </button>
@@ -1624,16 +1624,16 @@ export default function OfferingBuilder() {
                     </div>
                     <div className="flex gap-1 flex-wrap">
                       {s.status === 'draft' && (
-                        <button onClick={() => handleSubAction(s.id, 'submitted')} className="px-2 py-1 min-h-[36px] text-xs bg-blue-50 text-blue-700 font-dl-mono">Submit</button>
+                        <button onClick={() => handleSubAction(s.id, 'submitted')} className="px-2 py-1 min-h-[44px] text-xs bg-blue-50 text-blue-700 font-dl-mono">Submit</button>
                       )}
                       {(s.status === 'submitted' || s.status === 'under_review') && (
                         <>
-                          <button onClick={() => handleSubAction(s.id, 'approved')} className="px-2 py-1 min-h-[36px] text-xs bg-green-50 text-green-700 font-dl-mono">Approve</button>
-                          <button onClick={() => handleSubAction(s.id, 'rejected')} className="px-2 py-1 min-h-[36px] text-xs bg-red-50 text-red-600 font-dl-mono">Reject</button>
+                          <button onClick={() => handleSubAction(s.id, 'approved')} className="px-2 py-1 min-h-[44px] text-xs bg-green-50 text-green-700 font-dl-mono">Approve</button>
+                          <button onClick={() => handleSubAction(s.id, 'rejected')} className="px-2 py-1 min-h-[44px] text-xs bg-red-50 text-red-600 font-dl-mono">Reject</button>
                         </>
                       )}
                       {s.status === 'approved' && (
-                        <button onClick={() => handleSubAction(s.id, 'funded')} className="px-2 py-1 min-h-[36px] text-xs bg-green-100 text-green-800 font-dl-mono">Mark Funded</button>
+                        <button onClick={() => handleSubAction(s.id, 'funded')} className="px-2 py-1 min-h-[44px] text-xs bg-green-100 text-green-800 font-dl-mono">Mark Funded</button>
                       )}
                     </div>
                   </div>
@@ -2366,15 +2366,15 @@ export default function OfferingBuilder() {
                     <div className="flex gap-1 flex-wrap">
                       {d.status === 'draft' && (
                         <>
-                          <button onClick={() => handleDistAction(d.id, 'approved')} className="px-2 py-1 min-h-[36px] text-xs bg-green-50 text-green-700 font-dl-mono">Approve</button>
-                          <button onClick={() => handleDeleteDist(d.id)} className="px-2 py-1 min-h-[36px] text-xs bg-red-50 text-red-600 font-dl-mono">Delete</button>
+                          <button onClick={() => handleDistAction(d.id, 'approved')} className="px-2 py-1 min-h-[44px] text-xs bg-green-50 text-green-700 font-dl-mono">Approve</button>
+                          <button onClick={() => handleDeleteDist(d.id)} className="px-2 py-1 min-h-[44px] text-xs bg-red-50 text-red-600 font-dl-mono">Delete</button>
                         </>
                       )}
                       {d.status === 'approved' && (
-                        <button onClick={() => handleDistAction(d.id, 'processing')} className="px-2 py-1 min-h-[36px] text-xs bg-blue-50 text-blue-700 font-dl-mono">Process</button>
+                        <button onClick={() => handleDistAction(d.id, 'processing')} className="px-2 py-1 min-h-[44px] text-xs bg-blue-50 text-blue-700 font-dl-mono">Process</button>
                       )}
                       {d.status === 'processing' && (
-                        <button onClick={() => handleDistAction(d.id, 'completed')} className="px-2 py-1 min-h-[36px] text-xs bg-green-100 text-green-800 font-dl-mono">Mark Paid</button>
+                        <button onClick={() => handleDistAction(d.id, 'completed')} className="px-2 py-1 min-h-[44px] text-xs bg-green-100 text-green-800 font-dl-mono">Mark Paid</button>
                       )}
                       {d.status === 'completed' && d.paid_at && (
                         <span className="px-2 py-1 text-[10px] text-dl-muted font-dl-mono">Paid {new Date(d.paid_at).toLocaleDateString()}</span>

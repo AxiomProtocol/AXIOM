@@ -483,7 +483,7 @@ function DocumentsSection({ documents }: { documents: any[] }) {
                     href={doc.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-shrink-0 border border-dl-navy text-dl-navy px-3 py-1.5 text-xs min-h-[36px] flex items-center hover:bg-dl-navy hover:text-white"
+                    className="flex-shrink-0 border border-dl-navy text-dl-navy px-3 py-2 text-xs min-h-[44px] flex items-center hover:bg-dl-navy hover:text-white"
                   >
                     View
                   </a>
