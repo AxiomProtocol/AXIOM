@@ -213,6 +213,10 @@ export default function OfferingBuilder() {
   const [distSummary, setDistSummary] = useState<any>(null);
   const [showCreateDist, setShowCreateDist] = useState(false);
   const [distForm, setDistForm] = useState({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD' });
+  const [showWaterfall, setShowWaterfall] = useState(false);
+  const [waterfallForm, setWaterfallForm] = useState({ grossAmount: '', periodStart: '', periodEnd: '', capitalDeployed: '' });
+  const [waterfallResult, setWaterfallResult] = useState<any>(null);
+  const [calculatingWaterfall, setCalculatingWaterfall] = useState(false);
   const [creatingDist, setCreatingDist] = useState(false);
   const [fundingRecords, setFundingRecords] = useState<any[]>([]);
   const [showReceiptForm, setShowReceiptForm] = useState<string | null>(null);
@@ -333,6 +337,38 @@ export default function OfferingBuilder() {
       loadTabData('capTable');
     } catch (err) { console.error(err); }
     finally { setSyncingCap(false); }
+  };
+
+  const handleCalculateWaterfall = async () => {
+    if (!waterfallForm.grossAmount) return;
+    setCalculatingWaterfall(true);
+    setWaterfallResult(null);
+    try {
+      const res = await fetch(`/api/syndication/offerings/${id}/waterfall`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(waterfallForm),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setWaterfallResult(json.waterfall);
+      }
+    } catch (err) { console.error(err); }
+    finally { setCalculatingWaterfall(false); }
+  };
+
+  const handleUseWaterfallNumbers = () => {
+    if (!waterfallResult) return;
+    const lpTotal = waterfallResult.totals.lpAmount;
+    const hasPrefReturn = waterfallResult.tranches.some((t: any) => t.name === 'Preferred Return');
+    setDistForm({
+      distributionType: hasPrefReturn ? 'preferred_return' : 'profit_share',
+      grossAmount: String(lpTotal),
+      periodStart: waterfallResult.periodStart || '',
+      periodEnd: waterfallResult.periodEnd || '',
+      currency: 'USD',
+    });
+    setShowCreateDist(true);
   };
 
   const handleCreateDistribution = async () => {
@@ -1872,6 +1908,134 @@ export default function OfferingBuilder() {
                   {showCreateDist ? 'Cancel' : 'Create Distribution'}
                 </button>
               </div>
+            </div>
+
+            <div className="border border-dl-border">
+              <button
+                onClick={() => { setShowWaterfall(!showWaterfall); if (!showWaterfall) setWaterfallResult(null); }}
+                className="w-full flex items-center justify-between px-4 py-2 bg-dl-bg font-dl-mono text-sm text-dl-navy"
+              >
+                <span>Waterfall Calculator</span>
+                <span className="text-xs text-dl-muted">{showWaterfall ? 'Collapse' : 'Expand'}</span>
+              </button>
+              {showWaterfall && (
+                <div className="p-4 space-y-3">
+                  <p className="font-dl-mono text-xs text-dl-muted">
+                    Compute LP/GP split using preferred return + promote structure from offering terms.
+                    {offering?.preferred_return && ` Preferred Return: ${offering.preferred_return}%.`}
+                    {offering?.promote_split && ` GP Promote: ${offering.promote_split}%.`}
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div>
+                      <label className="block text-xs font-dl-mono text-dl-muted mb-1">Gross Distributable ($)</label>
+                      <input
+                        type="number"
+                        value={waterfallForm.grossAmount}
+                        onChange={e => setWaterfallForm(p => ({ ...p, grossAmount: e.target.value }))}
+                        placeholder="100000"
+                        className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-dl-mono text-dl-muted mb-1">Capital Deployed ($)</label>
+                      <input
+                        type="number"
+                        value={waterfallForm.capitalDeployed}
+                        onChange={e => setWaterfallForm(p => ({ ...p, capitalDeployed: e.target.value }))}
+                        placeholder="Auto from cap table"
+                        className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-dl-mono text-dl-muted mb-1">Period Start</label>
+                      <input
+                        type="date"
+                        value={waterfallForm.periodStart}
+                        onChange={e => setWaterfallForm(p => ({ ...p, periodStart: e.target.value }))}
+                        className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-dl-mono text-dl-muted mb-1">Period End</label>
+                      <input
+                        type="date"
+                        value={waterfallForm.periodEnd}
+                        onChange={e => setWaterfallForm(p => ({ ...p, periodEnd: e.target.value }))}
+                        className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleCalculateWaterfall}
+                    disabled={calculatingWaterfall || !waterfallForm.grossAmount}
+                    className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                  >
+                    {calculatingWaterfall ? 'Calculating...' : 'Calculate'}
+                  </button>
+
+                  {waterfallResult && (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-dl-mono">
+                        <div className="border border-dl-border p-2">
+                          <p className="text-dl-muted">Gross Amount</p>
+                          <p className="text-dl-navy text-sm">{fmt(waterfallResult.grossAmount)}</p>
+                        </div>
+                        <div className="border border-dl-border p-2">
+                          <p className="text-dl-muted">Capital Deployed</p>
+                          <p className="text-dl-navy text-sm">{fmt(waterfallResult.capitalDeployed)}</p>
+                        </div>
+                        <div className="border border-dl-border p-2">
+                          <p className="text-dl-muted">Pref Return Rate</p>
+                          <p className="text-dl-navy text-sm">{waterfallResult.preferredRate}%</p>
+                        </div>
+                        <div className="border border-dl-border p-2">
+                          <p className="text-dl-muted">Period Fraction</p>
+                          <p className="text-dl-navy text-sm">{waterfallResult.fractionOfYear} yr</p>
+                        </div>
+                      </div>
+
+                      <div className="border border-dl-border">
+                        <table className="w-full font-dl-mono text-sm">
+                          <thead>
+                            <tr className="bg-dl-bg border-b border-dl-border text-left">
+                              <th className="px-4 py-2 text-xs text-dl-muted uppercase">Tranche</th>
+                              <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">LP Amount</th>
+                              <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">GP Amount</th>
+                              <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {waterfallResult.tranches.map((t: any, i: number) => (
+                              <tr key={i} className="border-b border-dl-border">
+                                <td className="px-4 py-2 text-dl-text">{t.name}</td>
+                                <td className="px-4 py-2 text-right text-green-700">{fmt(t.lpAmount)}</td>
+                                <td className="px-4 py-2 text-right text-blue-700">{fmt(t.gpAmount)}</td>
+                                <td className="px-4 py-2 text-right">{fmt(t.total)}</td>
+                              </tr>
+                            ))}
+                            <tr className="bg-dl-bg font-bold">
+                              <td className="px-4 py-2 text-dl-navy">Totals</td>
+                              <td className="px-4 py-2 text-right text-green-700">{fmt(waterfallResult.totals.lpAmount)}</td>
+                              <td className="px-4 py-2 text-right text-blue-700">{fmt(waterfallResult.totals.gpAmount)}</td>
+                              <td className="px-4 py-2 text-right">{fmt(waterfallResult.totals.total)}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <button
+                        onClick={handleUseWaterfallNumbers}
+                        className="bg-green-700 text-white px-4 py-1.5 font-dl-mono text-sm"
+                      >
+                        Use These Numbers — Create Distribution ({fmt(waterfallResult.totals.lpAmount)} LP)
+                      </button>
+                      <p className="font-dl-mono text-[10px] text-dl-muted">
+                        GP amount ({fmt(waterfallResult.totals.gpAmount)}) is informational. GP payment is handled separately.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {showCreateDist && (
