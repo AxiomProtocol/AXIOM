@@ -35,7 +35,7 @@ const PRODUCT_GRID = [
   { title: 'DePIN', description: 'Decentralized storage infrastructure through DeNet node integration.', href: '/depin/denet', icon: Radio },
   { title: 'Syndication', description: 'Full syndication operating system with offerings, capital calls, and distributions.', href: '/syndication', icon: Layers },
   { title: 'Investor Portal', description: 'Wallet-authenticated investor dashboard with holdings, capital calls, and distributions.', href: '/syndication/portal', icon: FileText },
-  { title: 'Execution Framework', description: 'Behavior-based qualification system with graduated access tiers.', href: '/execution', icon: Scale },
+  { title: 'GEF', description: 'Graduated Execution Framework — behavior-based qualification system with access tiers.', href: '/execution', icon: Scale },
 ];
 
 const INTELLIGENCE_GRID = [
