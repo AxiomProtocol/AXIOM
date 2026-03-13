@@ -44,8 +44,8 @@ async function isInvestorForOffering(wallet: string, offeringId: string): Promis
   try {
     const result = await pool.query(
       `SELECT 1 FROM syn_investor_profiles ip
-       JOIN syn_subscriptions s ON s.investor_id = ip.id
-       WHERE ip.wallet_address = $1 AND s.offering_id = $2 AND s.status IN ('confirmed', 'funded')
+       JOIN syn_subscriptions s ON s.investor_profile_id = ip.id
+       WHERE ip.wallet_address = $1 AND s.offering_id = $2 AND s.status IN ('approved', 'funded')
        LIMIT 1`,
       [wallet.toLowerCase(), offeringId]
     );

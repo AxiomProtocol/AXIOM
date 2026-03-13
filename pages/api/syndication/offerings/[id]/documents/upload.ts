@@ -174,13 +174,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await fs.promises.unlink(uploadedFile.filepath);
     } catch {}
 
-    const downloadUrl = `/api/syndication/offerings/${id}/documents/download?docId=`;
-
     const result = await pool.query(
       `INSERT INTO syn_offering_documents
          (offering_id, name, doc_type, stored_filename, file_size, mime_type, visibility, uploaded_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING id, name, doc_type, stored_filename, file_size, mime_type, visibility, uploaded_by, created_at`,
+       RETURNING id`,
       [
         id,
         name,
@@ -193,12 +191,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ]
     );
 
-    const doc = result.rows[0];
-    doc.url = `${downloadUrl}${doc.id}`;
+    const docId = result.rows[0].id;
+    const downloadUrl = `/api/syndication/offerings/${id}/documents/download?docId=${docId}`;
+
+    await pool.query(
+      `UPDATE syn_offering_documents SET url = $1 WHERE id = $2`,
+      [downloadUrl, docId]
+    );
+
+    const finalResult = await pool.query(
+      `SELECT id, name, doc_type, url, file_size, mime_type, visibility, uploaded_by, created_at
+       FROM syn_offering_documents WHERE id = $1`,
+      [docId]
+    );
 
     return res.status(201).json({
       success: true,
-      document: result.rows[0],
+      document: finalResult.rows[0],
     });
   } catch (error: any) {
     console.error('[DocumentUpload] Error:', error);
