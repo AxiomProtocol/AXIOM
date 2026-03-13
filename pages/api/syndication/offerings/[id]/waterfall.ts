@@ -63,11 +63,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { grossAmount, periodStart, periodEnd, capitalDeployed, preferredRate: overrideRate } = req.body;
 
-    if (!grossAmount || parseFloat(grossAmount) <= 0) {
+    const gross = parseFloat(grossAmount);
+    if (!grossAmount || !isFinite(gross) || gross <= 0) {
       return res.status(400).json({ success: false, error: 'grossAmount must be a positive number.' });
     }
 
-    const gross = parseFloat(grossAmount);
+    if (periodStart && periodEnd) {
+      const s = new Date(periodStart);
+      const e = new Date(periodEnd);
+      if (isNaN(s.getTime()) || isNaN(e.getTime())) {
+        return res.status(400).json({ success: false, error: 'Invalid date format for periodStart or periodEnd.' });
+      }
+      if (e < s) {
+        return res.status(400).json({ success: false, error: 'periodEnd must be on or after periodStart.' });
+      }
+    }
+
+    if (capitalDeployed && (!isFinite(parseFloat(capitalDeployed)) || parseFloat(capitalDeployed) < 0)) {
+      return res.status(400).json({ success: false, error: 'capitalDeployed must be a non-negative number.' });
+    }
+
+    if (overrideRate && (!isFinite(parseFloat(overrideRate)) || parseFloat(overrideRate) < 0)) {
+      return res.status(400).json({ success: false, error: 'preferredRate must be a non-negative number.' });
+    }
 
     const offeringRes = await pool.query(
       `SELECT preferred_return, promote_split, waterfall_terms FROM syn_offerings WHERE id = $1`,
