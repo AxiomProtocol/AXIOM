@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ConnectWalletButton } from './ConnectWalletButton';
 import { SectionHeading } from './SectionHeading';
 import { SolidButton } from './SolidButton';
