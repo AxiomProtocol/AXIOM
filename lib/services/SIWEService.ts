@@ -157,22 +157,19 @@ class SIWEService {
       console.log('🔐 SIWE signIn called with address:', checksumAddress, 'chainId:', chainId);
       
       const message = await this.createSiweMessage(checksumAddress, chainId);
-      console.log('🔐 SIWE message created, requesting signature via personal_sign...');
+      console.log('🔐 SIWE message created, requesting signature...');
       
       let signature: string;
       
-      // Try using direct personal_sign RPC call (most reliable with MetaMask SDK)
-      if (typeof window !== 'undefined' && (window as any).ethereum) {
+      if (signerOrProvider?.signMessage) {
+        console.log('🔐 Using signer.signMessage (cross-wallet compatible)');
+        signature = await signerOrProvider.signMessage(message);
+      } else if (typeof window !== 'undefined' && (window as any).ethereum) {
         console.log('🔐 Using direct personal_sign via window.ethereum');
-        const hexMessage = ethers.hexlify(ethers.toUtf8Bytes(message));
         signature = await (window as any).ethereum.request({
           method: 'personal_sign',
-          params: [hexMessage, checksumAddress]
+          params: [message, checksumAddress]
         });
-      } else if (signerOrProvider?.signMessage) {
-        // Fallback to signer if available
-        console.log('🔐 Using signer.signMessage fallback');
-        signature = await signerOrProvider.signMessage(message);
       } else {
         throw new Error('No signing method available');
       }
