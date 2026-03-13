@@ -10,7 +10,7 @@
     "lint": "next lint",
     "build": "next build",
     "build:replit": "next build",
-    "start": "next start -H 0.0.0.0 -p 5000",
+    "start": "next start",
     "snapshot": "node scripts/saveReserveSnapshot.js",
     "admin:reset-password": "node scripts/reset-admin-password.js",
     "test": "hardhat test",
