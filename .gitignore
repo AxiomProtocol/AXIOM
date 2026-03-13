@@ -102,3 +102,6 @@ cache/
 *denet-key*
 *activation-key*
 *.cid
+
+# Private file storage
+storage/

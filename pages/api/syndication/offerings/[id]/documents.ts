@@ -55,7 +55,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         `SELECT * FROM syn_offering_documents WHERE offering_id = $1 ORDER BY created_at DESC`,
         [id]
       );
-      return res.status(200).json({ success: true, documents: result.rows });
+      const docs = result.rows.map((doc: any) => ({
+        ...doc,
+        url: doc.stored_filename
+          ? `/api/syndication/offerings/${id}/documents/download?docId=${doc.id}`
+          : doc.url,
+      }));
+      return res.status(200).json({ success: true, documents: docs });
     } catch (error: any) {
       return res.status(500).json({ success: false, error: error.message });
     }

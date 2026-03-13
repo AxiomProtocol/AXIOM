@@ -160,13 +160,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'syndication', 'docs');
-    await fs.promises.mkdir(uploadsDir, { recursive: true });
+    const storageDir = path.join(process.cwd(), 'storage', 'syndication', 'docs');
+    await fs.promises.mkdir(storageDir, { recursive: true });
 
     const timestamp = Date.now();
     const safeFilename = originalName.replace(/[^a-zA-Z0-9._-]/g, '_');
     const storedFilename = `${timestamp}_${safeFilename}`;
-    const destPath = path.join(uploadsDir, storedFilename);
+    const destPath = path.join(storageDir, storedFilename);
 
     await fs.promises.copyFile(uploadedFile.filepath, destPath);
 
@@ -174,24 +174,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await fs.promises.unlink(uploadedFile.filepath);
     } catch {}
 
-    const fileUrl = `/uploads/syndication/docs/${storedFilename}`;
+    const downloadUrl = `/api/syndication/offerings/${id}/documents/download?docId=`;
 
     const result = await pool.query(
       `INSERT INTO syn_offering_documents
-         (offering_id, name, doc_type, url, file_size, mime_type, visibility, uploaded_by)
+         (offering_id, name, doc_type, stored_filename, file_size, mime_type, visibility, uploaded_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING id, name, doc_type, url, file_size, mime_type, visibility, uploaded_by, created_at`,
+       RETURNING id, name, doc_type, stored_filename, file_size, mime_type, visibility, uploaded_by, created_at`,
       [
         id,
         name,
         docType,
-        fileUrl,
+        storedFilename,
         fileSizeBytes,
         mimeType,
         visibility || 'private',
         wallet.toLowerCase(),
       ]
     );
+
+    const doc = result.rows[0];
+    doc.url = `${downloadUrl}${doc.id}`;
 
     return res.status(201).json({
       success: true,

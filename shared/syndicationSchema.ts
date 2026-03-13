@@ -113,6 +113,7 @@ export const synOfferingDocuments = pgTable("syn_offering_documents", {
   name: varchar("name", { length: 255 }).notNull(),
   docType: varchar("doc_type", { length: 50 }).notNull(),
   url: text("url"),
+  storedFilename: varchar("stored_filename", { length: 500 }),
   fileSize: integer("file_size"),
   mimeType: varchar("mime_type", { length: 100 }),
   visibility: varchar("visibility", { length: 30 }).default('private').notNull(),

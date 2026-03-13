@@ -116,7 +116,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ),
 
       pool.query(
-        `SELECT d.id, d.offering_id, d.name, d.doc_type, d.url, d.visibility, d.created_at,
+        `SELECT d.id, d.offering_id, d.name, d.doc_type, d.url, d.stored_filename, d.visibility, d.created_at,
                 o.name AS offering_name, o.slug AS offering_slug
          FROM syn_offering_documents d
          JOIN syn_offerings o ON o.id = d.offering_id
@@ -165,7 +165,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       subscriptions: subsRes.rows,
       distributions: distRes.rows,
       capitalCalls: ccRes.rows,
-      documents: docsRes.rows,
+      documents: docsRes.rows.map((doc: any) => ({
+        ...doc,
+        url: doc.stored_filename
+          ? `/api/syndication/offerings/${doc.offering_id}/documents/download?docId=${doc.id}`
+          : doc.url,
+      })),
     });
   } catch (error: any) {
     console.error('[Portal] Error:', error);
