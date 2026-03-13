@@ -230,6 +230,10 @@ export default function OfferingBuilder() {
   const [reportForm, setReportForm] = useState({ title: '', reportType: 'quarterly', content: '', notifyInvestors: true });
   const [reportToast, setReportToast] = useState<string | null>(null);
   const [publishingReport, setPublishingReport] = useState(false);
+  const [showK1Generator, setShowK1Generator] = useState(false);
+  const [k1Form, setK1Form] = useState({ taxYear: String(new Date().getFullYear()), notifyInvestors: false });
+  const [generatingK1, setGeneratingK1] = useState(false);
+  const [k1Result, setK1Result] = useState<any>(null);
   const [distPayConfirm, setDistPayConfirm] = useState<any | null>(null);
   const [distPaying, setDistPaying] = useState<string | null>(null);
   const [distPayError, setDistPayError] = useState<Record<string, string>>({});
@@ -519,6 +523,34 @@ export default function OfferingBuilder() {
       }
     } catch (err) { console.error(err); }
     finally { setPublishingReport(false); }
+  };
+
+  const handleGenerateK1 = async () => {
+    if (!k1Form.taxYear) return;
+    setGeneratingK1(true);
+    setK1Result(null);
+    setReportToast(null);
+    try {
+      const res = await fetch(`/api/syndication/offerings/${id}/k1-generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(k1Form),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setK1Result(json);
+        loadTabData('reports');
+        const emailNote = json.totalEmailed > 0
+          ? ` — ${json.totalEmailed} investor${json.totalEmailed === 1 ? '' : 's'} emailed.`
+          : '';
+        setReportToast(`Generated ${json.totalGenerated} K-1 summary${json.totalGenerated === 1 ? '' : 'ies'}${emailNote}`);
+        setTimeout(() => setReportToast(null), 8000);
+      } else {
+        setReportToast(json.error || 'K-1 generation failed.');
+        setTimeout(() => setReportToast(null), 6000);
+      }
+    } catch (err) { console.error(err); }
+    finally { setGeneratingK1(false); }
   };
 
   const handleSendCapitalCall = async (subscriptionId: string) => {
@@ -2375,6 +2407,105 @@ export default function OfferingBuilder() {
                 </button>
               </div>
             )}
+
+            <div className="border border-dl-border">
+              <button
+                onClick={() => {
+                  setShowK1Generator(!showK1Generator);
+                  if (!showK1Generator) setK1Result(null);
+                }}
+                className="w-full flex items-center justify-between px-4 py-2 bg-dl-bg font-dl-mono text-sm text-dl-navy"
+              >
+                <span>Generate K-1 Package</span>
+                <span className="text-xs text-dl-muted">{showK1Generator ? 'Collapse' : 'Expand'}</span>
+              </button>
+              {showK1Generator && (
+                <div className="p-4 space-y-3">
+                  <p className="font-dl-mono text-xs text-dl-muted">
+                    Generate AI-powered K-1 tax summary documents for each investor in this offering. Pulls distributions and capital contributions for the selected tax year.
+                  </p>
+                  <div className="flex items-end gap-3">
+                    <div>
+                      <label className="block text-xs font-dl-mono text-dl-muted mb-1">Tax Year</label>
+                      <select
+                        value={k1Form.taxYear}
+                        onChange={e => setK1Form(p => ({ ...p, taxYear: e.target.value }))}
+                        className="border border-dl-border px-2 py-1.5 font-dl-mono text-sm bg-white"
+                      >
+                        {[0, 1, 2, 3, 4].map(offset => {
+                          const y = new Date().getFullYear() - offset;
+                          return <option key={y} value={String(y)}>{y}</option>;
+                        })}
+                      </select>
+                    </div>
+                    <label className="flex items-center gap-2 font-dl-mono text-sm text-dl-text cursor-pointer pb-1">
+                      <input
+                        type="checkbox"
+                        checked={k1Form.notifyInvestors}
+                        onChange={e => setK1Form(p => ({ ...p, notifyInvestors: e.target.checked }))}
+                        className="w-4 h-4"
+                      />
+                      Email K-1 to Investors
+                    </label>
+                    <button
+                      onClick={handleGenerateK1}
+                      disabled={generatingK1}
+                      className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                    >
+                      {generatingK1 ? 'Generating...' : 'Generate'}
+                    </button>
+                  </div>
+
+                  {generatingK1 && (
+                    <div className="border border-dl-border p-3 bg-dl-bg">
+                      <p className="font-dl-mono text-xs text-dl-muted">Generating K-1 summaries via AI. This may take several seconds per investor...</p>
+                    </div>
+                  )}
+
+                  {k1Result && (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs font-dl-mono">
+                        <div className="border border-dl-border p-2">
+                          <p className="text-dl-muted">Tax Year</p>
+                          <p className="text-dl-navy text-base">{k1Result.taxYear}</p>
+                        </div>
+                        <div className="border border-dl-border p-2">
+                          <p className="text-dl-muted">K-1s Generated</p>
+                          <p className="text-dl-navy text-base">{k1Result.totalGenerated}</p>
+                        </div>
+                        <div className="border border-dl-border p-2">
+                          <p className="text-dl-muted">Emails Sent</p>
+                          <p className="text-dl-navy text-base">{k1Result.totalEmailed}</p>
+                        </div>
+                      </div>
+                      <table className="w-full font-dl-mono text-xs border border-dl-border">
+                        <thead>
+                          <tr className="bg-dl-bg border-b border-dl-border">
+                            <th className="text-left px-3 py-2 text-dl-muted">Investor</th>
+                            <th className="text-right px-3 py-2 text-dl-muted">Contributed</th>
+                            <th className="text-right px-3 py-2 text-dl-muted">Distributed</th>
+                            <th className="text-center px-3 py-2 text-dl-muted">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {k1Result.generated.map((g: any) => (
+                            <tr key={g.reportId} className="border-b border-dl-border">
+                              <td className="px-3 py-2 text-dl-navy">{g.investorName}</td>
+                              <td className="px-3 py-2 text-right">${g.totalContributed.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                              <td className="px-3 py-2 text-right">${g.totalDistributions.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                              <td className="px-3 py-2 text-center">
+                                <span className="text-green-700">Generated</span>
+                                {g.emailed && <span className="ml-1 text-dl-muted">(Emailed)</span>}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {reportToast && (
               <div className="border border-green-300 bg-green-50 px-4 py-2 font-dl-mono text-sm text-green-800">
