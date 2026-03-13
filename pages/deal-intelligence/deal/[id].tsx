@@ -538,7 +538,17 @@ export default function DealWorkspacePage() {
                       <button
                         key={s.key}
                         type="button"
-                        onClick={() => {}}
+                        onClick={async () => {
+                          if (!id || deal?.strategy === s.key) return;
+                          try {
+                            await fetch(`/api/real-estate/deals/${id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ strategy: s.key }),
+                            });
+                            await loadSummary();
+                          } catch {}
+                        }}
                         className={`flex flex-col items-center p-3 border min-h-[44px] ${
                           deal?.strategy === s.key
                             ? 'border-dl-navy bg-blue-50'
