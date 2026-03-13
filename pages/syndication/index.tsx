@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Offering {
   id: string;
@@ -44,6 +45,15 @@ const STATUS_COLORS: Record<string, string> = {
   active: 'bg-emerald-50 text-emerald-700',
   winding_down: 'bg-orange-50 text-orange-700',
   dissolved: 'bg-red-50 text-red-700',
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  regD506b: 'Reg D 506(b)',
+  regD506c: 'Reg D 506(c)',
+  regCF: 'Reg CF',
+  communityPool: 'Community Pool',
+  clubDeal: 'Club Deal',
+  pilotOffering: 'Pilot',
 };
 
 export default function SyndicationDashboard() {
@@ -111,165 +121,186 @@ export default function SyndicationDashboard() {
       <Head>
         <title>Syndication | AXIOM</title>
       </Head>
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="font-dl-serif text-2xl text-dl-navy">Capital Formation</h1>
-            <p className="font-dl-mono text-xs text-dl-muted mt-1">
-              Manage offerings, investor pipeline, subscriptions, and capital tables
+
+      <div className="relative w-full h-40 sm:h-52 lg:h-64 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
+        <Image
+          src="/images/syndication/syndication_hero.png"
+          alt="Capital Formation"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6">
+          <h1 className="font-dl-serif text-xl sm:text-2xl lg:text-3xl text-white">Private Capital Formation</h1>
+          <p className="font-dl-mono text-xs sm:text-sm text-gray-300 mt-1">Built for Community. Structured for Institutions.</p>
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+        <p className="font-dl-mono text-xs text-dl-muted">
+          Manage offerings, investor pipeline, subscriptions, and capital tables
+        </p>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => setShowNew(!showNew)}
+            className="flex-1 sm:flex-none px-4 py-2 min-h-[44px] bg-dl-navy text-white font-dl-mono text-xs"
+          >
+            {showNew ? 'Cancel' : 'New Offering'}
+          </button>
+          <Link href="/deal-intelligence" className="flex-1 sm:flex-none px-4 py-2 min-h-[44px] border border-dl-border text-dl-navy font-dl-mono text-xs text-center flex items-center justify-center">
+            Source Deals
+          </Link>
+        </div>
+      </div>
+
+      {showNew && (
+        <div className="border border-dl-navy p-4 sm:p-6 mb-6 bg-gray-50">
+          <h2 className="font-dl-serif text-lg text-dl-navy mb-4">Create New Offering</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-xs font-dl-mono text-dl-muted uppercase mb-1">Offering Name</label>
+              <input
+                value={newForm.name}
+                onChange={e => setNewForm(p => ({ ...p, name: e.target.value }))}
+                placeholder="e.g. Atlanta Multifamily Fund I"
+                className="w-full border border-dl-border px-3 py-2 min-h-[44px] font-dl-mono text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-dl-mono text-dl-muted uppercase mb-1">Offering Type</label>
+              <select
+                value={newForm.offeringType}
+                onChange={e => setNewForm(p => ({ ...p, offeringType: e.target.value }))}
+                className="w-full border border-dl-border px-3 py-2 min-h-[44px] font-dl-mono text-sm bg-white"
+              >
+                <option value="regD506b">Reg D 506(b)</option>
+                <option value="regD506c">Reg D 506(c)</option>
+                <option value="regCF">Reg CF</option>
+                <option value="communityPool">Community Pool</option>
+                <option value="clubDeal">Club Deal</option>
+                <option value="pilotOffering">Pilot Offering</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-dl-mono text-dl-muted uppercase mb-1">Entity Type</label>
+              <select
+                value={newForm.entityType}
+                onChange={e => setNewForm(p => ({ ...p, entityType: e.target.value }))}
+                className="w-full border border-dl-border px-3 py-2 min-h-[44px] font-dl-mono text-sm bg-white"
+              >
+                <option value="spv">SPV (Special Purpose Vehicle)</option>
+                <option value="llc">LLC</option>
+                <option value="lp">Limited Partnership</option>
+                <option value="trust">Trust</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-dl-mono text-dl-muted uppercase mb-1">Target Raise ($)</label>
+              <input
+                type="number"
+                value={newForm.targetRaise}
+                onChange={e => setNewForm(p => ({ ...p, targetRaise: e.target.value }))}
+                placeholder="500000"
+                className="w-full border border-dl-border px-3 py-2 min-h-[44px] font-dl-mono text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-dl-mono text-dl-muted uppercase mb-1">Minimum Investment ($)</label>
+              <input
+                type="number"
+                value={newForm.minimumInvestment}
+                onChange={e => setNewForm(p => ({ ...p, minimumInvestment: e.target.value }))}
+                placeholder="25000"
+                className="w-full border border-dl-border px-3 py-2 min-h-[44px] font-dl-mono text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-dl-mono text-dl-muted uppercase mb-1">Description</label>
+              <input
+                value={newForm.description}
+                onChange={e => setNewForm(p => ({ ...p, description: e.target.value }))}
+                placeholder="Brief offering description"
+                className="w-full border border-dl-border px-3 py-2 min-h-[44px] font-dl-mono text-sm"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <button
+              onClick={handleCreateOffering}
+              disabled={creating || !newForm.name}
+              className="w-full sm:w-auto bg-dl-navy text-white px-6 py-2 min-h-[44px] font-dl-mono text-sm disabled:opacity-50"
+            >
+              {creating ? 'Creating...' : 'Create Offering'}
+            </button>
+            <p className="font-dl-mono text-xs text-dl-muted">
+              Or create from an analyzed deal in the Deal Intelligence workspace.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+        <div className="border border-dl-border p-3 sm:p-4">
+          <p className="font-dl-mono text-[10px] sm:text-xs text-dl-muted uppercase">Total Offerings</p>
+          <p className="font-dl-serif text-xl sm:text-2xl text-dl-navy">{offerings.length}</p>
+        </div>
+        <div className="border border-dl-border p-3 sm:p-4">
+          <p className="font-dl-mono text-[10px] sm:text-xs text-dl-muted uppercase">Active</p>
+          <p className="font-dl-serif text-xl sm:text-2xl text-green-700">{activeOfferings.length}</p>
+        </div>
+        <div className="border border-dl-border p-3 sm:p-4">
+          <p className="font-dl-mono text-[10px] sm:text-xs text-dl-muted uppercase">Total Raise Target</p>
+          <p className="font-dl-serif text-xl sm:text-2xl text-dl-navy">{fmt(totalRaiseTarget)}</p>
+        </div>
+        <div className="border border-dl-border p-3 sm:p-4">
+          <p className="font-dl-mono text-[10px] sm:text-xs text-dl-muted uppercase">Capital Committed</p>
+          <p className="font-dl-serif text-xl sm:text-2xl text-green-700">{fmt(totalCommitted)}</p>
+        </div>
+      </div>
+
+      {loading && (
+        <div className="border border-dl-border p-8 text-center">
+          <p className="font-dl-mono text-sm text-dl-muted">Loading offerings...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="border border-red-300 bg-red-50 p-4 mb-4">
+          <p className="font-dl-mono text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
+      {!loading && offerings.length === 0 && !showNew && (
+        <div className="border border-dl-border p-6 sm:p-8 text-center">
+          <div className="mx-auto w-16 h-16 mb-4 border-2 border-dl-border flex items-center justify-center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-dl-muted">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+          </div>
+          <p className="font-dl-serif text-base text-dl-navy mb-1">No offerings yet</p>
+          <p className="font-dl-mono text-sm text-dl-muted mb-4">
+            Create one directly or from an analyzed deal.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
-              onClick={() => setShowNew(!showNew)}
-              className="px-4 py-2 bg-dl-navy text-white font-dl-mono text-xs"
+              onClick={() => setShowNew(true)}
+              className="w-full sm:w-auto px-6 py-2 min-h-[44px] bg-dl-navy text-white font-dl-mono text-sm"
             >
-              {showNew ? 'Cancel' : 'New Offering'}
+              New Offering
             </button>
-            <Link href="/deal-intelligence" className="px-4 py-2 border border-dl-border text-dl-navy font-dl-mono text-xs">
-              Source Deals
+            <Link href="/deal-intelligence" className="w-full sm:w-auto inline-block px-6 py-2 min-h-[44px] border border-dl-border text-dl-navy font-dl-mono text-sm text-center leading-[28px]">
+              Source from Deal Intelligence
             </Link>
           </div>
         </div>
+      )}
 
-        {showNew && (
-          <div className="border border-dl-navy p-6 mb-6 bg-gray-50">
-            <h2 className="font-dl-serif text-lg text-dl-navy mb-4">Create New Offering</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-xs font-dl-mono text-dl-muted uppercase mb-1">Offering Name</label>
-                <input
-                  value={newForm.name}
-                  onChange={e => setNewForm(p => ({ ...p, name: e.target.value }))}
-                  placeholder="e.g. Atlanta Multifamily Fund I"
-                  className="w-full border border-dl-border px-3 py-2 font-dl-mono text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-dl-mono text-dl-muted uppercase mb-1">Offering Type</label>
-                <select
-                  value={newForm.offeringType}
-                  onChange={e => setNewForm(p => ({ ...p, offeringType: e.target.value }))}
-                  className="w-full border border-dl-border px-3 py-2 font-dl-mono text-sm bg-white"
-                >
-                  <option value="regD506b">Reg D 506(b)</option>
-                  <option value="regD506c">Reg D 506(c)</option>
-                  <option value="regCF">Reg CF</option>
-                  <option value="communityPool">Community Pool</option>
-                  <option value="clubDeal">Club Deal</option>
-                  <option value="pilotOffering">Pilot Offering</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-dl-mono text-dl-muted uppercase mb-1">Entity Type</label>
-                <select
-                  value={newForm.entityType}
-                  onChange={e => setNewForm(p => ({ ...p, entityType: e.target.value }))}
-                  className="w-full border border-dl-border px-3 py-2 font-dl-mono text-sm bg-white"
-                >
-                  <option value="spv">SPV (Special Purpose Vehicle)</option>
-                  <option value="llc">LLC</option>
-                  <option value="lp">Limited Partnership</option>
-                  <option value="trust">Trust</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-dl-mono text-dl-muted uppercase mb-1">Target Raise ($)</label>
-                <input
-                  type="number"
-                  value={newForm.targetRaise}
-                  onChange={e => setNewForm(p => ({ ...p, targetRaise: e.target.value }))}
-                  placeholder="500000"
-                  className="w-full border border-dl-border px-3 py-2 font-dl-mono text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-dl-mono text-dl-muted uppercase mb-1">Minimum Investment ($)</label>
-                <input
-                  type="number"
-                  value={newForm.minimumInvestment}
-                  onChange={e => setNewForm(p => ({ ...p, minimumInvestment: e.target.value }))}
-                  placeholder="25000"
-                  className="w-full border border-dl-border px-3 py-2 font-dl-mono text-sm"
-                />
-              </div>
-              <div className="md:col-span-1">
-                <label className="block text-xs font-dl-mono text-dl-muted uppercase mb-1">Description</label>
-                <input
-                  value={newForm.description}
-                  onChange={e => setNewForm(p => ({ ...p, description: e.target.value }))}
-                  placeholder="Brief offering description"
-                  className="w-full border border-dl-border px-3 py-2 font-dl-mono text-sm"
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleCreateOffering}
-                disabled={creating || !newForm.name}
-                className="bg-dl-navy text-white px-6 py-2 font-dl-mono text-sm disabled:opacity-50"
-              >
-                {creating ? 'Creating...' : 'Create Offering'}
-              </button>
-              <p className="font-dl-mono text-xs text-dl-muted">
-                Or create from an analyzed deal in the Deal Intelligence workspace.
-              </p>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="border border-dl-border p-4">
-            <p className="font-dl-mono text-xs text-dl-muted uppercase">Total Offerings</p>
-            <p className="font-dl-serif text-2xl text-dl-navy">{offerings.length}</p>
-          </div>
-          <div className="border border-dl-border p-4">
-            <p className="font-dl-mono text-xs text-dl-muted uppercase">Active</p>
-            <p className="font-dl-serif text-2xl text-green-700">{activeOfferings.length}</p>
-          </div>
-          <div className="border border-dl-border p-4">
-            <p className="font-dl-mono text-xs text-dl-muted uppercase">Total Raise Target</p>
-            <p className="font-dl-serif text-2xl text-dl-navy">{fmt(totalRaiseTarget)}</p>
-          </div>
-          <div className="border border-dl-border p-4">
-            <p className="font-dl-mono text-xs text-dl-muted uppercase">Capital Committed</p>
-            <p className="font-dl-serif text-2xl text-green-700">{fmt(totalCommitted)}</p>
-          </div>
-        </div>
-
-        {loading && (
-          <div className="border border-dl-border p-8 text-center">
-            <p className="font-dl-mono text-sm text-dl-muted">Loading offerings...</p>
-          </div>
-        )}
-
-        {error && (
-          <div className="border border-red-300 bg-red-50 p-4 mb-4">
-            <p className="font-dl-mono text-sm text-red-700">{error}</p>
-          </div>
-        )}
-
-        {!loading && offerings.length === 0 && !showNew && (
-          <div className="border border-dl-border p-8 text-center">
-            <p className="font-dl-mono text-sm text-dl-muted mb-3">
-              No offerings yet. Create one directly or from an analyzed deal.
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <button
-                onClick={() => setShowNew(true)}
-                className="px-6 py-2 bg-dl-navy text-white font-dl-mono text-sm"
-              >
-                New Offering
-              </button>
-              <Link href="/deal-intelligence" className="inline-block px-6 py-2 border border-dl-border text-dl-navy font-dl-mono text-sm">
-                Source from Deal Intelligence
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {offerings.length > 0 && (
-          <div className="border border-dl-border">
+      {offerings.length > 0 && (
+        <>
+          <div className="hidden md:block border border-dl-border">
             <table className="w-full font-dl-mono text-sm">
               <thead>
                 <tr className="bg-dl-bg border-b border-dl-border text-left">
@@ -279,7 +310,7 @@ export default function SyndicationDashboard() {
                   <th className="px-4 py-3 text-xs text-dl-muted uppercase text-right">Target Raise</th>
                   <th className="px-4 py-3 text-xs text-dl-muted uppercase text-right">Committed</th>
                   <th className="px-4 py-3 text-xs text-dl-muted uppercase text-right">Pipeline</th>
-                  <th className="px-4 py-3 text-xs text-dl-muted uppercase text-right">Subscriptions</th>
+                  <th className="px-4 py-3 text-xs text-dl-muted uppercase text-right">Subs</th>
                   <th className="px-4 py-3 text-xs text-dl-muted uppercase">Created</th>
                 </tr>
               </thead>
@@ -296,13 +327,13 @@ export default function SyndicationDashboard() {
                           {o.name}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-dl-muted text-xs uppercase">{o.offering_type}</td>
+                      <td className="px-4 py-3 text-dl-muted text-xs uppercase">{TYPE_LABELS[o.offering_type] || o.offering_type}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 text-xs ${STATUS_COLORS[o.status] || 'bg-gray-100 text-gray-600'}`}>
                           {STATUS_LABELS[o.status] || o.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right">{target > 0 ? fmt(target) : '—'}</td>
+                      <td className="px-4 py-3 text-right">{target > 0 ? fmt(target) : '\u2014'}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {target > 0 && (
@@ -310,7 +341,7 @@ export default function SyndicationDashboard() {
                               <div className="h-full bg-green-600" style={{ width: `${pct}%` }} />
                             </div>
                           )}
-                          <span>{committed > 0 ? fmt(committed) : '—'}</span>
+                          <span>{committed > 0 ? fmt(committed) : '\u2014'}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right">{o.pipeline_count}</td>
@@ -324,7 +355,73 @@ export default function SyndicationDashboard() {
               </tbody>
             </table>
           </div>
-        )}
+
+          <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {offerings.map(o => {
+              const target = parseFloat(o.target_raise || '0');
+              const committed = parseFloat(o.total_committed || '0');
+              const pct = target > 0 ? Math.min(100, (committed / target) * 100) : 0;
+
+              return (
+                <Link key={o.id} href={`/syndication/offerings/${o.id}`} className="block border border-dl-border p-4 hover:bg-gray-50">
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-dl-serif text-base text-dl-navy leading-tight pr-2">{o.name}</h3>
+                    <span className={`px-2 py-0.5 text-[10px] whitespace-nowrap ${STATUS_COLORS[o.status] || 'bg-gray-100 text-gray-600'}`}>
+                      {STATUS_LABELS[o.status] || o.status}
+                    </span>
+                  </div>
+                  <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-3">
+                    {TYPE_LABELS[o.offering_type] || o.offering_type}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div>
+                      <p className="font-dl-mono text-[10px] text-dl-muted uppercase">Target</p>
+                      <p className="font-dl-mono text-sm text-dl-navy">{target > 0 ? fmt(target) : '\u2014'}</p>
+                    </div>
+                    <div>
+                      <p className="font-dl-mono text-[10px] text-dl-muted uppercase">Committed</p>
+                      <p className="font-dl-mono text-sm text-green-700">{committed > 0 ? fmt(committed) : '\u2014'}</p>
+                    </div>
+                  </div>
+                  {target > 0 && (
+                    <div className="w-full h-1.5 bg-gray-200 mb-2">
+                      <div className="h-full bg-green-600" style={{ width: `${pct}%` }} />
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="font-dl-mono text-[10px] text-dl-muted">
+                      {o.pipeline_count} pipeline | {o.subscription_count} subs
+                    </span>
+                    <span className="font-dl-mono text-[10px] text-dl-muted">
+                      {new Date(o.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      <div className="mt-12 mb-4 border-t border-dl-border pt-8">
+        <h2 className="font-dl-serif text-lg sm:text-xl text-dl-navy text-center mb-6">How It Works</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+          <div className="border border-dl-border p-4 sm:p-6 text-center">
+            <div className="w-10 h-10 mx-auto mb-3 border border-dl-border flex items-center justify-center font-dl-serif text-lg text-dl-navy">1</div>
+            <h3 className="font-dl-serif text-base text-dl-navy mb-1">Structure</h3>
+            <p className="font-dl-mono text-xs text-dl-muted">Define your offering type, entity structure, target raise, and waterfall terms.</p>
+          </div>
+          <div className="border border-dl-border p-4 sm:p-6 text-center">
+            <div className="w-10 h-10 mx-auto mb-3 border border-dl-border flex items-center justify-center font-dl-serif text-lg text-dl-navy">2</div>
+            <h3 className="font-dl-serif text-base text-dl-navy mb-1">Raise</h3>
+            <p className="font-dl-mono text-xs text-dl-muted">Build your investor pipeline, manage subscriptions, and track capital commitments.</p>
+          </div>
+          <div className="border border-dl-border p-4 sm:p-6 text-center">
+            <div className="w-10 h-10 mx-auto mb-3 border border-dl-border flex items-center justify-center font-dl-serif text-lg text-dl-navy">3</div>
+            <h3 className="font-dl-serif text-base text-dl-navy mb-1">Operate</h3>
+            <p className="font-dl-mono text-xs text-dl-muted">Close offerings, distribute returns via waterfall, generate K-1 reports, and settle on-chain.</p>
+          </div>
+        </div>
       </div>
     </DesignLawLayout>
   );

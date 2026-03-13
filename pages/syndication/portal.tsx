@@ -3,6 +3,7 @@ import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
 import { ConnectWalletButton } from '../../components/design-law/ConnectWalletButton';
 import Head from 'next/head';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useWallet } from '../../lib/web3/useWallet';
 
 type Tab = 'holdings' | 'capitalCalls' | 'distributions';
@@ -63,6 +64,14 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   other: 'Other',
 };
 
+const DOC_TYPE_ICONS: Record<string, string> = {
+  ppm: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z',
+  operating_agreement: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z',
+  subscription_agreement: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z',
+  k1: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z',
+  quarterly_report: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z',
+};
+
 export default function InvestorPortal() {
   const { isConnected, address } = useWallet();
   const [loading, setLoading] = useState(true);
@@ -108,19 +117,36 @@ export default function InvestorPortal() {
         <title>Investor Portal | Axiom Protocol</title>
       </Head>
 
-      <div className="border-b border-dl-border pb-4 mb-6">
-        <h1 className="font-dl-serif text-2xl text-dl-navy">Investor Portal</h1>
-        <p className="text-sm text-dl-gray mt-1 font-dl-mono">
-          {isConnected && address
-            ? `${address.slice(0, 6)}...${address.slice(-4)}`
-            : 'Not connected'}
-        </p>
+      <div className="relative w-full h-32 sm:h-40 lg:h-48 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
+        <Image
+          src="/images/syndication/portal_welcome.png"
+          alt="Investor Portal"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6">
+          <h1 className="font-dl-serif text-xl sm:text-2xl text-white">Investor Portal</h1>
+          <p className="font-dl-mono text-xs text-gray-300 mt-1">
+            {isConnected && address
+              ? `${address.slice(0, 6)}...${address.slice(-4)}`
+              : 'Connect your wallet to view your portfolio'}
+          </p>
+        </div>
       </div>
 
       {!isConnected && (
-        <div className="border border-dl-border p-8 text-center">
+        <div className="border border-dl-border p-6 sm:p-8 text-center">
+          <div className="mx-auto w-16 h-16 mb-4 border-2 border-dl-border flex items-center justify-center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-dl-muted">
+              <rect x="2" y="6" width="20" height="12" rx="2" />
+              <path d="M2 10h20" />
+              <path d="M6 14h.01" />
+            </svg>
+          </div>
           <p className="font-dl-serif text-lg text-dl-navy mb-2">Connect Your Wallet</p>
-          <p className="text-sm text-dl-gray mb-6">
+          <p className="text-sm text-dl-gray mb-6 max-w-md mx-auto">
             Connect and sign in with your wallet to view your investment portfolio,
             distributions, capital calls, and documents.
           </p>
@@ -143,9 +169,15 @@ export default function InvestorPortal() {
       )}
 
       {isConnected && !loading && !error && data && !data.profile && (
-        <div className="border border-dl-border p-8 text-center">
+        <div className="border border-dl-border p-6 sm:p-8 text-center">
+          <div className="mx-auto w-16 h-16 mb-4 border-2 border-dl-border flex items-center justify-center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-dl-muted">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
+            </svg>
+          </div>
           <p className="font-dl-serif text-lg text-dl-navy mb-2">No Investor Profile Found</p>
-          <p className="text-sm text-dl-gray">
+          <p className="text-sm text-dl-gray max-w-md mx-auto">
             Your connected wallet is not linked to any investor profile.
             If you believe this is an error, contact the offering operator to link your wallet address.
           </p>
@@ -155,45 +187,45 @@ export default function InvestorPortal() {
 
       {isConnected && !loading && !error && data?.profile && (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <div className="border border-dl-border p-4">
-              <p className="text-xs text-dl-gray uppercase tracking-wide">Total Invested</p>
-              <p className="font-dl-mono text-lg text-dl-navy mt-1">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
+            <div className="border border-dl-border p-3 sm:p-4">
+              <p className="text-[10px] sm:text-xs text-dl-gray uppercase tracking-wide">Total Invested</p>
+              <p className="font-dl-mono text-base sm:text-lg text-dl-navy mt-1">
                 {fmtFull(data.summary?.totalInvested || 0)}
               </p>
             </div>
-            <div className="border border-dl-border p-4">
-              <p className="text-xs text-dl-gray uppercase tracking-wide">Distributions Received</p>
-              <p className="font-dl-mono text-lg text-dl-navy mt-1">
+            <div className="border border-dl-border p-3 sm:p-4">
+              <p className="text-[10px] sm:text-xs text-dl-gray uppercase tracking-wide">Distributions</p>
+              <p className="font-dl-mono text-base sm:text-lg text-dl-navy mt-1">
                 {fmtFull(data.summary?.totalDistributed || 0)}
               </p>
             </div>
-            <div className="border border-dl-border p-4">
-              <p className="text-xs text-dl-gray uppercase tracking-wide">Pending Calls</p>
-              <p className="font-dl-mono text-lg text-dl-navy mt-1">
+            <div className="border border-dl-border p-3 sm:p-4">
+              <p className="text-[10px] sm:text-xs text-dl-gray uppercase tracking-wide">Pending Calls</p>
+              <p className="font-dl-mono text-base sm:text-lg text-dl-navy mt-1">
                 {fmtFull(data.summary?.pendingCalls || 0)}
               </p>
             </div>
-            <div className="border border-dl-border p-4">
-              <p className="text-xs text-dl-gray uppercase tracking-wide">Holdings</p>
-              <p className="font-dl-mono text-lg text-dl-navy mt-1">
+            <div className="border border-dl-border p-3 sm:p-4">
+              <p className="text-[10px] sm:text-xs text-dl-gray uppercase tracking-wide">Holdings</p>
+              <p className="font-dl-mono text-base sm:text-lg text-dl-navy mt-1">
                 {data.summary?.holdingCount || 0}
               </p>
             </div>
-            <div className="border border-dl-border p-4">
-              <p className="text-xs text-dl-gray uppercase tracking-wide">Active Offerings</p>
-              <p className="font-dl-mono text-lg text-dl-navy mt-1">
+            <div className="border border-dl-border p-3 sm:p-4 col-span-2 lg:col-span-1">
+              <p className="text-[10px] sm:text-xs text-dl-gray uppercase tracking-wide">Active Offerings</p>
+              <p className="font-dl-mono text-base sm:text-lg text-dl-navy mt-1">
                 {data.summary?.activeOfferings || 0}
               </p>
             </div>
           </div>
 
-          <div className="border-b border-dl-border mb-6 flex gap-0 overflow-x-auto">
+          <div className="border-b border-dl-border mb-6 flex gap-0 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
             {tabs.map(tab => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-2 text-sm border-b-2 whitespace-nowrap ${
+                className={`px-4 py-3 text-sm border-b-2 whitespace-nowrap min-h-[44px] ${
                   activeTab === tab.key
                     ? 'border-dl-navy text-dl-navy font-medium'
                     : 'border-transparent text-dl-gray hover:text-dl-navy'
@@ -228,7 +260,8 @@ function HoldingsTab({ holdings, subscriptions, documents }: { holdings: any[]; 
       {holdings.length > 0 && (
         <div>
           <h2 className="font-dl-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-2">Capital Table Positions</h2>
-          <div className="overflow-x-auto">
+
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-sm border border-dl-border">
               <thead>
                 <tr className="bg-gray-50 text-left text-xs text-dl-gray uppercase tracking-wide">
@@ -268,13 +301,47 @@ function HoldingsTab({ holdings, subscriptions, documents }: { holdings: any[]; 
               </tbody>
             </table>
           </div>
+
+          <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {holdings.map((h: any) => (
+              <div key={h.id} className="border border-dl-border p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <Link href={`/syndication/offerings/${h.offering_id}`} className="font-dl-serif text-base text-dl-navy underline leading-tight pr-2">
+                    {h.offering_name}
+                  </Link>
+                  <span className={`inline-block px-2 py-0.5 text-[10px] whitespace-nowrap ${STATUS_COLORS[h.offering_status] || 'bg-gray-100 text-gray-600'}`}>
+                    {h.offering_status?.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs font-dl-mono">
+                  <div>
+                    <p className="text-dl-muted text-[10px] uppercase">Ownership</p>
+                    <p className="text-dl-navy">{pct(h.ownership_pct)}</p>
+                  </div>
+                  <div>
+                    <p className="text-dl-muted text-[10px] uppercase">Contributed</p>
+                    <p className="text-dl-navy">{fmtFull(parseFloat(h.capital_contributed || '0'))}</p>
+                  </div>
+                  <div>
+                    <p className="text-dl-muted text-[10px] uppercase">Distributions</p>
+                    <p className="text-green-700">{fmtFull(parseFloat(h.distributions_received || '0'))}</p>
+                  </div>
+                  <div>
+                    <p className="text-dl-muted text-[10px] uppercase">Pref Return</p>
+                    <p className="text-dl-navy">{pct(h.preferred_return)}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {subscriptions.length > 0 && (
         <div>
           <h2 className="font-dl-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-2">Subscriptions</h2>
-          <div className="overflow-x-auto">
+
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm border border-dl-border">
               <thead>
                 <tr className="bg-gray-50 text-left text-xs text-dl-gray uppercase tracking-wide">
@@ -310,6 +377,39 @@ function HoldingsTab({ holdings, subscriptions, documents }: { holdings: any[]; 
               </tbody>
             </table>
           </div>
+
+          <div className="md:hidden grid grid-cols-1 gap-3">
+            {subscriptions.map((s: any) => (
+              <div key={s.id} className="border border-dl-border p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <Link href={`/syndication/offerings/${s.offering_id}`} className="font-dl-serif text-sm text-dl-navy underline pr-2">
+                    {s.offering_name}
+                  </Link>
+                  <span className={`inline-block px-2 py-0.5 text-[10px] whitespace-nowrap ${STATUS_COLORS[s.status] || 'bg-gray-100 text-gray-600'}`}>
+                    {s.status?.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs font-dl-mono">
+                  <div>
+                    <p className="text-dl-muted text-[10px] uppercase">Amount</p>
+                    <p className="text-dl-navy">{fmtFull(parseFloat(s.amount || '0'))}</p>
+                  </div>
+                  <div>
+                    <p className="text-dl-muted text-[10px] uppercase">Currency</p>
+                    <p className="text-dl-navy">{s.payment_currency || 'USD'}</p>
+                  </div>
+                  <div>
+                    <p className="text-dl-muted text-[10px] uppercase">Submitted</p>
+                    <p className="text-dl-navy">{fmtDate(s.submitted_at)}</p>
+                  </div>
+                  <div>
+                    <p className="text-dl-muted text-[10px] uppercase">Funded</p>
+                    <p className="text-dl-navy">{fmtDate(s.funded_at)}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -321,9 +421,16 @@ function HoldingsTab({ holdings, subscriptions, documents }: { holdings: any[]; 
       )}
 
       {holdings.length === 0 && subscriptions.length === 0 && (
-        <div className="border border-dl-border p-8 text-center">
+        <div className="border border-dl-border p-6 sm:p-8 text-center">
+          <div className="mx-auto w-16 h-16 mb-4 border-2 border-dl-border flex items-center justify-center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-dl-muted">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
+            </svg>
+          </div>
           <p className="font-dl-serif text-base text-dl-navy mb-1">No Active Subscriptions</p>
-          <p className="text-sm text-dl-gray">
+          <p className="text-sm text-dl-gray max-w-md mx-auto">
             You do not have any active subscriptions or capital table positions.
             Contact the offering operator if you believe this is an error.
           </p>
@@ -348,25 +455,33 @@ function DocumentsSection({ documents }: { documents: any[] }) {
           <h3 className="font-dl-serif text-base text-dl-navy mb-2">{offeringName}</h3>
           <div className="border border-dl-border divide-y divide-gray-100">
             {(docs as any[]).map((doc: any) => (
-              <div key={doc.id} className="px-4 py-3 flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-dl-navy">{doc.name}</p>
-                  <p className="text-xs text-dl-gray mt-0.5">
-                    {DOC_TYPE_LABELS[doc.doc_type] || doc.doc_type}
-                    <span className="mx-2">{'\u00B7'}</span>
-                    {fmtDate(doc.created_at)}
-                    <span className="mx-2">{'\u00B7'}</span>
-                    <span className={doc.visibility === 'public' ? 'text-green-600' : 'text-blue-600'}>
-                      {doc.visibility}
-                    </span>
-                  </p>
+              <div key={doc.id} className="px-4 py-3 flex items-center justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="flex-shrink-0 w-8 h-8 border border-dl-border flex items-center justify-center mt-0.5">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-dl-muted">
+                      <path d={DOC_TYPE_ICONS[doc.doc_type] || DOC_TYPE_ICONS.ppm} />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm text-dl-navy truncate">{doc.name}</p>
+                    <p className="text-xs text-dl-gray mt-0.5">
+                      {DOC_TYPE_LABELS[doc.doc_type] || doc.doc_type}
+                      <span className="mx-2">{'\u00B7'}</span>
+                      {fmtDate(doc.created_at)}
+                      <span className="mx-2 hidden sm:inline">{'\u00B7'}</span>
+                      <span className={`hidden sm:inline ${doc.visibility === 'public' ? 'text-green-600' : 'text-blue-600'}`}>
+                        {doc.visibility}
+                      </span>
+                    </p>
+                  </div>
                 </div>
                 {doc.url && (
                   <a
                     href={doc.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="border border-dl-navy text-dl-navy px-3 py-1 text-xs hover:bg-dl-navy hover:text-white"
+                    className="flex-shrink-0 border border-dl-navy text-dl-navy px-3 py-1.5 text-xs min-h-[36px] flex items-center hover:bg-dl-navy hover:text-white"
                   >
                     View
                   </a>
@@ -383,8 +498,14 @@ function DocumentsSection({ documents }: { documents: any[] }) {
 function CapitalCallsTab({ capitalCalls }: { capitalCalls: any[] }) {
   if (capitalCalls.length === 0) {
     return (
-      <div className="border border-dl-border p-8 text-center">
-        <p className="text-sm text-dl-gray">No capital calls issued.</p>
+      <div className="border border-dl-border p-6 sm:p-8 text-center">
+        <div className="mx-auto w-16 h-16 mb-4 border-2 border-dl-border flex items-center justify-center">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-dl-muted">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+          </svg>
+        </div>
+        <p className="font-dl-serif text-base text-dl-navy mb-1">No Capital Calls</p>
+        <p className="text-sm text-dl-gray">No capital calls have been issued.</p>
       </div>
     );
   }
@@ -392,7 +513,8 @@ function CapitalCallsTab({ capitalCalls }: { capitalCalls: any[] }) {
   return (
     <div>
       <h2 className="font-dl-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-2">Capital Calls</h2>
-      <div className="overflow-x-auto">
+
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm border border-dl-border">
           <thead>
             <tr className="bg-gray-50 text-left text-xs text-dl-gray uppercase tracking-wide">
@@ -433,6 +555,46 @@ function CapitalCallsTab({ capitalCalls }: { capitalCalls: any[] }) {
           </tbody>
         </table>
       </div>
+
+      <div className="md:hidden grid grid-cols-1 gap-3">
+        {capitalCalls.map((cc: any) => {
+          const meta = cc.meta || {};
+          const isOverdue = cc.due_date && cc.status === 'sent' && new Date(cc.due_date) < new Date();
+          return (
+            <div key={cc.id} className={`border p-4 ${isOverdue ? 'border-red-300 bg-red-50' : 'border-dl-border'}`}>
+              <div className="flex items-start justify-between mb-2">
+                <Link href={`/syndication/offerings/${cc.offering_id}`} className="font-dl-serif text-sm text-dl-navy underline pr-2">
+                  {cc.offering_name}
+                </Link>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <span className={`inline-block px-2 py-0.5 text-[10px] ${STATUS_COLORS[cc.status] || 'bg-gray-100 text-gray-600'}`}>
+                    {cc.status}
+                  </span>
+                  {isOverdue && <span className="text-[10px] text-red-600 font-bold">OVERDUE</span>}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs font-dl-mono">
+                <div>
+                  <p className="text-dl-muted text-[10px] uppercase">Amount</p>
+                  <p className="text-dl-navy">{fmtFull(parseFloat(cc.amount_called || '0'))}</p>
+                </div>
+                <div>
+                  <p className="text-dl-muted text-[10px] uppercase">Currency</p>
+                  <p className="text-dl-navy">{cc.currency || 'USD'}</p>
+                </div>
+                <div>
+                  <p className="text-dl-muted text-[10px] uppercase">Due Date</p>
+                  <p className={isOverdue ? 'text-red-600' : 'text-dl-navy'}>{fmtDate(cc.due_date)}</p>
+                </div>
+                <div>
+                  <p className="text-dl-muted text-[10px] uppercase">Ref</p>
+                  <p className="text-dl-navy">{meta.memoCode || '\u2014'}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -440,8 +602,15 @@ function CapitalCallsTab({ capitalCalls }: { capitalCalls: any[] }) {
 function DistributionsTab({ distributions }: { distributions: any[] }) {
   if (distributions.length === 0) {
     return (
-      <div className="border border-dl-border p-8 text-center">
-        <p className="text-sm text-dl-gray">No distributions received yet.</p>
+      <div className="border border-dl-border p-6 sm:p-8 text-center">
+        <div className="mx-auto w-16 h-16 mb-4 border-2 border-dl-border flex items-center justify-center">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-dl-muted">
+            <line x1="12" y1="1" x2="12" y2="23" />
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
+        </div>
+        <p className="font-dl-serif text-base text-dl-navy mb-1">No Distributions Yet</p>
+        <p className="text-sm text-dl-gray">No distributions have been received yet.</p>
       </div>
     );
   }
@@ -452,13 +621,14 @@ function DistributionsTab({ distributions }: { distributions: any[] }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3 border-b border-dl-border pb-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 border-b border-dl-border pb-2 gap-1">
         <h2 className="font-dl-serif text-lg text-dl-navy">Distributions</h2>
         <p className="text-sm text-dl-gray">
           Total received: <span className="font-dl-mono text-dl-navy">{fmtFull(totalNet)}</span>
         </p>
       </div>
-      <div className="overflow-x-auto">
+
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm border border-dl-border">
           <thead>
             <tr className="bg-gray-50 text-left text-xs text-dl-gray uppercase tracking-wide">
@@ -521,6 +691,57 @@ function DistributionsTab({ distributions }: { distributions: any[] }) {
             })}
           </tbody>
         </table>
+      </div>
+
+      <div className="md:hidden grid grid-cols-1 gap-3">
+        {distributions.map((d: any) => {
+          const meta = d.meta || {};
+          const txHash = meta.tx_hash;
+          const unitPaymentId = meta.unit_payment_id;
+          return (
+            <div key={d.id} className="border border-dl-border p-4">
+              <div className="flex items-start justify-between mb-2">
+                <Link href={`/syndication/offerings/${d.offering_id}`} className="font-dl-serif text-sm text-dl-navy underline pr-2">
+                  {d.offering_name}
+                </Link>
+                <span className={`inline-block px-2 py-0.5 text-[10px] whitespace-nowrap ${STATUS_COLORS[d.status] || 'bg-gray-100 text-gray-600'}`}>
+                  {d.status}
+                </span>
+              </div>
+              <p className="text-[10px] text-dl-muted uppercase mb-2 font-dl-mono">
+                {DIST_TYPE_LABELS[d.distribution_type] || d.distribution_type}
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-xs font-dl-mono">
+                <div>
+                  <p className="text-dl-muted text-[10px] uppercase">Gross</p>
+                  <p className="text-dl-navy">{fmtFull(parseFloat(d.gross_amount || '0'))}</p>
+                </div>
+                <div>
+                  <p className="text-dl-muted text-[10px] uppercase">Net</p>
+                  <p className="text-green-700">{fmtFull(parseFloat(d.net_amount || '0'))}</p>
+                </div>
+                <div>
+                  <p className="text-dl-muted text-[10px] uppercase">Period</p>
+                  <p className="text-dl-navy text-[10px]">
+                    {d.period_start || d.period_end
+                      ? `${fmtDate(d.period_start)} - ${fmtDate(d.period_end)}`
+                      : '\u2014'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-dl-muted text-[10px] uppercase">Tx</p>
+                  {txHash ? (
+                    <a href={`https://arbiscan.io/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-[10px]">
+                      {String(txHash).slice(0, 10)}...
+                    </a>
+                  ) : unitPaymentId ? (
+                    <span className="text-dl-gray text-[10px]">ACH {String(unitPaymentId).slice(0, 8)}</span>
+                  ) : <span className="text-dl-navy">{'\u2014'}</span>}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

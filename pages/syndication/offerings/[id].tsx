@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useWallet } from '../../../lib/web3/useWallet';
 
 const OPERATOR_WALLETS = [
@@ -687,9 +688,7 @@ export default function OfferingBuilder() {
   if (loading) {
     return (
       <DesignLawLayout>
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <p className="font-dl-mono text-sm text-dl-muted">Loading offering...</p>
-        </div>
+        <p className="font-dl-mono text-sm text-dl-muted">Loading offering...</p>
       </DesignLawLayout>
     );
   }
@@ -697,9 +696,7 @@ export default function OfferingBuilder() {
   if (!offering) {
     return (
       <DesignLawLayout>
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <p className="font-dl-mono text-sm text-red-700">Offering not found.</p>
-        </div>
+        <p className="font-dl-mono text-sm text-red-700">Offering not found.</p>
       </DesignLawLayout>
     );
   }
@@ -714,58 +711,71 @@ export default function OfferingBuilder() {
       <Head>
         <title>{offering.name} | Syndication | AXIOM</title>
       </Head>
-      <div className="max-w-7xl mx-auto px-6 py-8 relative">
+      <div className="relative">
         {capCallToast && (
-          <div className="fixed top-4 right-4 z-50 bg-green-50 border border-green-200 px-4 py-3 font-dl-mono text-sm text-green-800 max-w-md">
+          <div className="fixed top-4 right-4 z-50 bg-green-50 border border-green-200 px-4 py-3 font-dl-mono text-sm text-green-800 max-w-[90vw] sm:max-w-md">
             {capCallToast}
           </div>
         )}
-        <div className="mb-2">
-          <Link href="/syndication" className="font-dl-mono text-xs text-dl-muted hover:text-dl-navy">
-            ← Capital Formation
-          </Link>
-        </div>
 
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="font-dl-serif text-2xl text-dl-navy">{offering.name}</h1>
-            <div className="flex items-center gap-2 mt-1">
-              <p className="font-dl-mono text-xs text-dl-muted">
-                {offering.offering_type.toUpperCase()} | {offering.entity_type?.toUpperCase() || 'SPV'}
-              </p>
-              {offering.deal_id && (
-                <Link href={`/deal-intelligence/deal/${offering.deal_id}`} className="font-dl-mono text-xs text-dl-navy hover:underline">
-                  View Source Deal
-                </Link>
-              )}
-            </div>
-            <div className="flex items-center gap-1 mt-1">
-              {['Research', 'Underwriting', 'Offering Structuring', 'Capital Formation', 'Funded'].map((stage, i) => {
-                const stageMap: Record<string, number> = { draft: 2, structuring: 2, raising: 3, funded: 4, active: 4, closed: 4, winding_down: 4, dissolved: 4 };
-                const current = stageMap[offering.status] ?? 0;
-                const isActive = i <= current;
-                const isCurrent = i === current;
-                return (
-                  <span key={stage} className={`px-1.5 py-0.5 text-[10px] font-dl-mono ${isCurrent ? 'bg-dl-navy text-white' : isActive ? 'bg-gray-200 text-gray-600' : 'bg-gray-50 text-gray-400'}`}>
-                    {stage}
-                  </span>
-                );
-              })}
+        <div className="relative w-full h-32 sm:h-40 lg:h-48 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-4 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
+          <Image
+            src="/images/syndication/offering_hero.png"
+            alt={offering.name}
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent" />
+          <div className="absolute top-3 left-4 sm:left-6">
+            <Link href="/syndication" className="font-dl-mono text-xs text-gray-300 hover:text-white">
+              ← Capital Formation
+            </Link>
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-3 sm:pb-5">
+            <div className="flex items-end justify-between gap-2">
+              <div>
+                <h1 className="font-dl-serif text-lg sm:text-2xl lg:text-3xl text-white leading-tight">{offering.name}</h1>
+                <div className="flex flex-wrap items-center gap-2 mt-1">
+                  <p className="font-dl-mono text-[10px] sm:text-xs text-gray-300">
+                    {offering.offering_type.toUpperCase()} | {offering.entity_type?.toUpperCase() || 'SPV'}
+                  </p>
+                  {offering.deal_id && (
+                    <Link href={`/deal-intelligence/deal/${offering.deal_id}`} className="font-dl-mono text-[10px] sm:text-xs text-gray-300 hover:text-white underline">
+                      View Source Deal
+                    </Link>
+                  )}
+                </div>
+              </div>
+              <span className={`px-2 sm:px-3 py-1 font-dl-mono text-[10px] sm:text-xs flex-shrink-0 ${STATUS_COLORS[offering.status] || 'bg-gray-100 text-gray-600'}`}>
+                {offering.status.toUpperCase()}
+              </span>
             </div>
           </div>
-          <span className={`px-3 py-1 font-dl-mono text-xs ${STATUS_COLORS[offering.status] || 'bg-gray-100 text-gray-600'}`}>
-            {offering.status.toUpperCase()}
-          </span>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="flex flex-wrap items-center gap-1 mb-4 overflow-x-auto">
+          {['Research', 'Underwriting', 'Structuring', 'Formation', 'Funded'].map((stage, i) => {
+            const stageMap: Record<string, number> = { draft: 2, structuring: 2, raising: 3, funded: 4, active: 4, closed: 4, winding_down: 4, dissolved: 4 };
+            const current = stageMap[offering.status] ?? 0;
+            const isActive = i <= current;
+            const isCurrent = i === current;
+            return (
+              <span key={stage} className={`px-1.5 py-0.5 text-[10px] font-dl-mono ${isCurrent ? 'bg-dl-navy text-white' : isActive ? 'bg-gray-200 text-gray-600' : 'bg-gray-50 text-gray-400'}`}>
+                {stage}
+              </span>
+            );
+          })}
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
           <div className="border border-dl-border p-3">
-            <p className="font-dl-mono text-xs text-dl-muted uppercase">Target Raise</p>
-            <p className="font-dl-serif text-xl text-dl-navy">{fmt(targetRaise)}</p>
+            <p className="font-dl-mono text-[10px] sm:text-xs text-dl-muted uppercase">Target Raise</p>
+            <p className="font-dl-serif text-lg sm:text-xl text-dl-navy">{fmt(targetRaise)}</p>
           </div>
           <div className="border border-dl-border p-3">
-            <p className="font-dl-mono text-xs text-dl-muted uppercase">Committed</p>
-            <p className="font-dl-serif text-xl text-green-700">{fmt(totalCommitted)}</p>
+            <p className="font-dl-mono text-[10px] sm:text-xs text-dl-muted uppercase">Committed</p>
+            <p className="font-dl-serif text-lg sm:text-xl text-green-700">{fmt(totalCommitted)}</p>
             {targetRaise > 0 && (
               <div className="mt-1 w-full h-1.5 bg-gray-200">
                 <div className="h-full bg-green-600" style={{ width: `${raisePct}%` }} />
@@ -773,21 +783,21 @@ export default function OfferingBuilder() {
             )}
           </div>
           <div className="border border-dl-border p-3">
-            <p className="font-dl-mono text-xs text-dl-muted uppercase">Total Settled</p>
-            <p className="font-dl-serif text-xl text-dl-navy">{fmt(totalFunded)}</p>
+            <p className="font-dl-mono text-[10px] sm:text-xs text-dl-muted uppercase">Total Settled</p>
+            <p className="font-dl-serif text-lg sm:text-xl text-dl-navy">{fmt(totalFunded)}</p>
           </div>
           <div className="border border-dl-border p-3">
-            <p className="font-dl-mono text-xs text-dl-muted uppercase">Pipeline / Subs</p>
-            <p className="font-dl-serif text-xl text-dl-navy">{offering.pipeline_count} / {offering.subscription_count}</p>
+            <p className="font-dl-mono text-[10px] sm:text-xs text-dl-muted uppercase">Pipeline / Subs</p>
+            <p className="font-dl-serif text-lg sm:text-xl text-dl-navy">{offering.pipeline_count} / {offering.subscription_count}</p>
           </div>
         </div>
 
-        <div className="flex border-b border-dl-border mb-6 overflow-x-auto">
+        <div className="flex border-b border-dl-border mb-6 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
           {TABS.map(tab => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2 font-dl-mono text-sm border-b-2 -mb-px whitespace-nowrap ${
+              className={`px-3 sm:px-4 py-2.5 font-dl-mono text-xs sm:text-sm border-b-2 -mb-px whitespace-nowrap min-h-[44px] ${
                 activeTab === tab.key
                   ? 'border-dl-navy text-dl-navy'
                   : 'border-transparent text-dl-muted hover:text-dl-text'
@@ -1145,86 +1155,128 @@ export default function OfferingBuilder() {
             )}
 
             {documents.length === 0 ? (
-              <div className="border border-dl-border p-8 text-center">
+              <div className="border border-dl-border p-6 sm:p-8 text-center">
                 <p className="font-dl-mono text-sm text-dl-muted">No documents uploaded yet.</p>
               </div>
             ) : (
-              <div className="border border-dl-border">
-                <table className="w-full font-dl-mono text-sm">
-                  <thead>
-                    <tr className="bg-dl-bg border-b border-dl-border text-left">
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Name</th>
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Type</th>
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Visibility</th>
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Size</th>
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Date</th>
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {documents.map((doc: any) => (
-                      <tr key={doc.id} className="border-b border-dl-border">
-                        <td className="px-4 py-2 text-dl-text">
+              <>
+                <div className="hidden md:block border border-dl-border">
+                  <table className="w-full font-dl-mono text-sm">
+                    <thead>
+                      <tr className="bg-dl-bg border-b border-dl-border text-left">
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase">Name</th>
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase">Type</th>
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase">Visibility</th>
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase">Size</th>
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase">Date</th>
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {documents.map((doc: any) => (
+                        <tr key={doc.id} className="border-b border-dl-border">
+                          <td className="px-4 py-2 text-dl-text">
+                            {doc.url ? (
+                              <a href={doc.url} target="_blank" rel="noopener noreferrer" className="underline text-dl-navy">
+                                {doc.name}
+                              </a>
+                            ) : doc.name}
+                          </td>
+                          <td className="px-4 py-2 text-dl-muted text-xs uppercase">{doc.doc_type?.replace(/_/g, ' ')}</td>
+                          <td className="px-4 py-2 text-xs">
+                            <span className={
+                              doc.visibility === 'public' ? 'text-green-600' :
+                              doc.visibility === 'investor' ? 'text-blue-600' :
+                              'text-dl-muted'
+                            }>
+                              {doc.visibility}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2 text-dl-muted text-xs">
+                            {doc.file_size ? `${(doc.file_size / 1024).toFixed(0)}KB` : '\u2014'}
+                          </td>
+                          <td className="px-4 py-2 text-dl-muted text-xs">{new Date(doc.created_at).toLocaleDateString()}</td>
+                          <td className="px-4 py-2 text-xs">
+                            <div className="flex items-center gap-2">
+                              {doc.url && (
+                                <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline">
+                                  View
+                                </a>
+                              )}
+                              {isOperator && (
+                                <button
+                                  onClick={() => handleDeleteDoc(doc.id)}
+                                  disabled={deletingDocId === doc.id}
+                                  className="text-red-600 hover:underline disabled:opacity-50"
+                                >
+                                  {deletingDocId === doc.id ? '...' : 'Delete'}
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="md:hidden grid grid-cols-1 gap-3">
+                  {documents.map((doc: any) => (
+                    <div key={doc.id} className="border border-dl-border p-4">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="min-w-0">
                           {doc.url ? (
-                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="underline text-dl-navy">
+                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="font-dl-mono text-sm text-dl-navy underline truncate block">
                               {doc.name}
                             </a>
-                          ) : doc.name}
-                        </td>
-                        <td className="px-4 py-2 text-dl-muted text-xs uppercase">{doc.doc_type?.replace(/_/g, ' ')}</td>
-                        <td className="px-4 py-2 text-xs">
-                          <span className={
-                            doc.visibility === 'public' ? 'text-green-600' :
-                            doc.visibility === 'investor' ? 'text-blue-600' :
-                            'text-dl-muted'
-                          }>
-                            {doc.visibility}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2 text-dl-muted text-xs">
-                          {doc.file_size ? `${(doc.file_size / 1024).toFixed(0)}KB` : '\u2014'}
-                        </td>
-                        <td className="px-4 py-2 text-dl-muted text-xs">{new Date(doc.created_at).toLocaleDateString()}</td>
-                        <td className="px-4 py-2 text-xs">
-                          <div className="flex items-center gap-2">
-                            {doc.url && (
-                              <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline">
-                                View
-                              </a>
-                            )}
-                            {isOperator && (
-                              <button
-                                onClick={() => handleDeleteDoc(doc.id)}
-                                disabled={deletingDocId === doc.id}
-                                className="text-red-600 hover:underline disabled:opacity-50"
-                              >
-                                {deletingDocId === doc.id ? '...' : 'Delete'}
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          ) : <p className="font-dl-mono text-sm text-dl-text truncate">{doc.name}</p>}
+                          <p className="font-dl-mono text-[10px] text-dl-muted mt-0.5">
+                            {doc.doc_type?.replace(/_/g, ' ')} | {new Date(doc.created_at).toLocaleDateString()}
+                            {doc.file_size ? ` | ${(doc.file_size / 1024).toFixed(0)}KB` : ''}
+                          </p>
+                        </div>
+                        <span className={`text-[10px] px-1.5 py-0.5 flex-shrink-0 ${
+                          doc.visibility === 'public' ? 'text-green-600 bg-green-50' :
+                          doc.visibility === 'investor' ? 'text-blue-600 bg-blue-50' :
+                          'text-dl-muted bg-gray-50'
+                        }`}>{doc.visibility}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {doc.url && (
+                          <a href={doc.url} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 min-h-[36px] flex items-center border border-dl-navy text-dl-navy text-xs font-dl-mono">
+                            View
+                          </a>
+                        )}
+                        {isOperator && (
+                          <button
+                            onClick={() => handleDeleteDoc(doc.id)}
+                            disabled={deletingDocId === doc.id}
+                            className="px-3 py-1.5 min-h-[36px] text-xs text-red-600 font-dl-mono disabled:opacity-50"
+                          >
+                            {deletingDocId === doc.id ? '...' : 'Delete'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}
 
         {activeTab === 'investors' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <h2 className="font-dl-serif text-lg text-dl-navy">Investor Pipeline</h2>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 {pipelineSummary && (
                   <p className="font-dl-mono text-xs text-dl-muted">
-                    {pipelineSummary.total} investors | Soft Circle: {fmt(pipelineSummary.totalSoftCircle)} | Committed: {fmt(pipelineSummary.totalCommitted)}
+                    {pipelineSummary.total} investors | {fmt(pipelineSummary.totalSoftCircle)} soft | {fmt(pipelineSummary.totalCommitted)} committed
                   </p>
                 )}
                 <button
                   onClick={() => setShowAddInvestor(!showAddInvestor)}
-                  className="bg-dl-navy text-white px-3 py-1 font-dl-mono text-xs"
+                  className="bg-dl-navy text-white px-3 py-2 min-h-[44px] font-dl-mono text-xs w-full sm:w-auto"
                 >
                   {showAddInvestor ? 'Cancel' : 'Add Investor'}
                 </button>
@@ -1311,66 +1363,93 @@ export default function OfferingBuilder() {
             )}
 
             {pipeline.length === 0 && !showAddInvestor ? (
-              <div className="border border-dl-border p-8 text-center">
+              <div className="border border-dl-border p-6 sm:p-8 text-center">
                 <p className="font-dl-mono text-sm text-dl-muted mb-2">No investors in pipeline yet.</p>
                 <button
                   onClick={() => setShowAddInvestor(true)}
-                  className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm"
+                  className="bg-dl-navy text-white px-4 py-2 min-h-[44px] font-dl-mono text-sm"
                 >
                   Add First Investor
                 </button>
               </div>
             ) : pipeline.length > 0 && (
-              <div className="border border-dl-border">
-                <table className="w-full font-dl-mono text-sm">
-                  <thead>
-                    <tr className="bg-dl-bg border-b border-dl-border text-left">
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Investor</th>
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Stage</th>
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Soft Circle</th>
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Committed</th>
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Rep</th>
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Updated</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pipeline.map((p: any) => (
-                      <tr key={p.id} className="border-b border-dl-border">
-                        <td className="px-4 py-2">
-                          <div className="text-dl-text">{p.legal_name || p.entity_name || 'Unknown'}</div>
-                          {p.email && <div className="text-xs text-dl-muted">{p.email}</div>}
-                        </td>
-                        <td className="px-4 py-2">
-                          <span className={`px-2 py-0.5 text-xs ${STAGE_COLORS[p.stage] || 'bg-gray-100 text-gray-600'}`}>
-                            {p.stage}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2 text-right">{p.soft_circle_amount ? fmt(parseFloat(p.soft_circle_amount)) : '—'}</td>
-                        <td className="px-4 py-2 text-right">{p.committed_amount ? fmt(parseFloat(p.committed_amount)) : '—'}</td>
-                        <td className="px-4 py-2 text-dl-muted text-xs">{p.assigned_rep || '—'}</td>
-                        <td className="px-4 py-2 text-dl-muted text-xs">{new Date(p.updated_at).toLocaleDateString()}</td>
+              <>
+                <div className="hidden md:block border border-dl-border">
+                  <table className="w-full font-dl-mono text-sm">
+                    <thead>
+                      <tr className="bg-dl-bg border-b border-dl-border text-left">
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase">Investor</th>
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase">Stage</th>
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Soft Circle</th>
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Committed</th>
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase">Rep</th>
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase">Updated</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {pipeline.map((p: any) => (
+                        <tr key={p.id} className="border-b border-dl-border">
+                          <td className="px-4 py-2">
+                            <div className="text-dl-text">{p.legal_name || p.entity_name || 'Unknown'}</div>
+                            {p.email && <div className="text-xs text-dl-muted">{p.email}</div>}
+                          </td>
+                          <td className="px-4 py-2">
+                            <span className={`px-2 py-0.5 text-xs ${STAGE_COLORS[p.stage] || 'bg-gray-100 text-gray-600'}`}>
+                              {p.stage}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2 text-right">{p.soft_circle_amount ? fmt(parseFloat(p.soft_circle_amount)) : '—'}</td>
+                          <td className="px-4 py-2 text-right">{p.committed_amount ? fmt(parseFloat(p.committed_amount)) : '—'}</td>
+                          <td className="px-4 py-2 text-dl-muted text-xs">{p.assigned_rep || '—'}</td>
+                          <td className="px-4 py-2 text-dl-muted text-xs">{new Date(p.updated_at).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="md:hidden grid grid-cols-1 gap-3">
+                  {pipeline.map((p: any) => (
+                    <div key={p.id} className="border border-dl-border p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <p className="font-dl-mono text-sm text-dl-text">{p.legal_name || p.entity_name || 'Unknown'}</p>
+                          {p.email && <p className="font-dl-mono text-[10px] text-dl-muted">{p.email}</p>}
+                        </div>
+                        <span className={`px-2 py-0.5 text-[10px] font-dl-mono ${STAGE_COLORS[p.stage] || 'bg-gray-100 text-gray-600'}`}>
+                          {p.stage}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs font-dl-mono">
+                        <div>
+                          <p className="text-[10px] text-dl-muted uppercase">Soft Circle</p>
+                          <p className="text-dl-navy">{p.soft_circle_amount ? fmt(parseFloat(p.soft_circle_amount)) : '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-dl-muted uppercase">Committed</p>
+                          <p className="text-dl-navy">{p.committed_amount ? fmt(parseFloat(p.committed_amount)) : '—'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}
 
         {activeTab === 'subscriptions' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <h2 className="font-dl-serif text-lg text-dl-navy">Subscriptions</h2>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 {subSummary && (
                   <p className="font-dl-mono text-xs text-dl-muted">
-                    {subSummary.total} total | Committed: {fmt(subSummary.totalCommitted)} | Approved: {fmt(subSummary.totalApproved)}
+                    {subSummary.total} total | {fmt(subSummary.totalCommitted)} committed
                   </p>
                 )}
                 <button
                   onClick={() => setShowAddSub(!showAddSub)}
-                  className="bg-dl-navy text-white px-3 py-1 font-dl-mono text-xs"
+                  className="bg-dl-navy text-white px-3 py-2 min-h-[44px] font-dl-mono text-xs w-full sm:w-auto"
                 >
                   {showAddSub ? 'Cancel' : 'Record Subscription'}
                 </button>
@@ -1507,17 +1586,60 @@ export default function OfferingBuilder() {
             )}
 
             {subscriptions.length === 0 && !showAddSub ? (
-              <div className="border border-dl-border p-8 text-center">
+              <div className="border border-dl-border p-6 sm:p-8 text-center">
                 <p className="font-dl-mono text-sm text-dl-muted mb-2">No subscriptions yet.</p>
                 <button
                   onClick={() => setShowAddSub(true)}
-                  className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm"
+                  className="bg-dl-navy text-white px-4 py-2 min-h-[44px] font-dl-mono text-sm"
                 >
                   Record First Subscription
                 </button>
               </div>
             ) : subscriptions.length > 0 && (
-              <div className="border border-dl-border">
+              <>
+              <div className="md:hidden grid grid-cols-1 gap-3">
+                {subscriptions.map((s: any) => (
+                  <div key={`mobile-sub-${s.id}`} className="border border-dl-border p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="font-dl-mono text-sm text-dl-text pr-2">{s.legal_name || s.entity_name || 'Unknown'}</p>
+                      <span className={`px-2 py-0.5 text-[10px] flex-shrink-0 ${
+                        s.status === 'approved' || s.status === 'funded' ? 'bg-green-50 text-green-700' :
+                        s.status === 'rejected' || s.status === 'cancelled' ? 'bg-red-50 text-red-600' :
+                        'bg-yellow-50 text-yellow-700'
+                      }`}>{s.status}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs font-dl-mono mb-3">
+                      <div>
+                        <p className="text-[10px] text-dl-muted uppercase">Amount</p>
+                        <p className="text-dl-navy">{fmt(parseFloat(s.amount || '0'))}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-dl-muted uppercase">Class</p>
+                        <p className="text-dl-navy">{s.meta?.share_class || s.share_class || 'common'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-dl-muted uppercase">Method</p>
+                        <p className="text-dl-navy">{s.funding_method || '—'}{s.payment_currency === 'AXUSD' ? ' (AXUSD)' : ''}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1 flex-wrap">
+                      {s.status === 'draft' && (
+                        <button onClick={() => handleSubAction(s.id, 'submitted')} className="px-2 py-1 min-h-[36px] text-xs bg-blue-50 text-blue-700 font-dl-mono">Submit</button>
+                      )}
+                      {(s.status === 'submitted' || s.status === 'under_review') && (
+                        <>
+                          <button onClick={() => handleSubAction(s.id, 'approved')} className="px-2 py-1 min-h-[36px] text-xs bg-green-50 text-green-700 font-dl-mono">Approve</button>
+                          <button onClick={() => handleSubAction(s.id, 'rejected')} className="px-2 py-1 min-h-[36px] text-xs bg-red-50 text-red-600 font-dl-mono">Reject</button>
+                        </>
+                      )}
+                      {s.status === 'approved' && (
+                        <button onClick={() => handleSubAction(s.id, 'funded')} className="px-2 py-1 min-h-[36px] text-xs bg-green-100 text-green-800 font-dl-mono">Mark Funded</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden md:block border border-dl-border">
                 <table className="w-full font-dl-mono text-sm">
                   <thead>
                     <tr className="bg-dl-bg border-b border-dl-border text-left">
@@ -1870,18 +1992,19 @@ export default function OfferingBuilder() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </div>
         )}
 
         {activeTab === 'capTable' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <h2 className="font-dl-serif text-lg text-dl-navy">Capital Table</h2>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 {capSummary && (
                   <p className="font-dl-mono text-xs text-dl-muted">
-                    {capSummary.holderCount} holders | Total Capital: {fmt(capSummary.totalCapital)}
+                    {capSummary.holderCount} holders | {fmt(capSummary.totalCapital)} capital
                   </p>
                 )}
                 <button
@@ -1895,58 +2018,81 @@ export default function OfferingBuilder() {
             </div>
 
             {capTable.length === 0 ? (
-              <div className="border border-dl-border p-8 text-center">
+              <div className="border border-dl-border p-6 sm:p-8 text-center">
                 <p className="font-dl-mono text-sm text-dl-muted mb-2">Capital table will populate when subscriptions are funded.</p>
                 <button
                   onClick={handleSyncCapTable}
                   disabled={syncingCap}
-                  className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                  className="bg-dl-navy text-white px-4 py-2 min-h-[44px] font-dl-mono text-sm disabled:opacity-50"
                 >
                   {syncingCap ? 'Syncing...' : 'Rebuild from Funded Subscriptions'}
                 </button>
               </div>
             ) : (
-              <div className="border border-dl-border">
-                <table className="w-full font-dl-mono text-sm">
-                  <thead>
-                    <tr className="bg-dl-bg border-b border-dl-border text-left">
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Holder</th>
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase">Class</th>
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Units</th>
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Ownership</th>
-                      <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Capital</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {capTable.map((c: any) => (
-                      <tr key={c.id} className="border-b border-dl-border">
-                        <td className="px-4 py-2 text-dl-text">{c.legal_name || c.entity_name || 'Unknown'}</td>
-                        <td className="px-4 py-2 text-dl-muted text-xs">{c.share_class || 'A'}</td>
-                        <td className="px-4 py-2 text-right">{parseFloat(c.units || '0').toLocaleString()}</td>
-                        <td className="px-4 py-2 text-right">{parseFloat(c.ownership_pct || '0').toFixed(2)}%</td>
-                        <td className="px-4 py-2 text-right">{fmt(parseFloat(c.capital_contributed || '0'))}</td>
+              <>
+                <div className="hidden md:block border border-dl-border">
+                  <table className="w-full font-dl-mono text-sm">
+                    <thead>
+                      <tr className="bg-dl-bg border-b border-dl-border text-left">
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase">Holder</th>
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase">Class</th>
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Units</th>
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Ownership</th>
+                        <th className="px-4 py-2 text-xs text-dl-muted uppercase text-right">Capital</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {capTable.map((c: any) => (
+                        <tr key={c.id} className="border-b border-dl-border">
+                          <td className="px-4 py-2 text-dl-text">{c.legal_name || c.entity_name || 'Unknown'}</td>
+                          <td className="px-4 py-2 text-dl-muted text-xs">{c.share_class || 'A'}</td>
+                          <td className="px-4 py-2 text-right">{parseFloat(c.units || '0').toLocaleString()}</td>
+                          <td className="px-4 py-2 text-right">{parseFloat(c.ownership_pct || '0').toFixed(2)}%</td>
+                          <td className="px-4 py-2 text-right">{fmt(parseFloat(c.capital_contributed || '0'))}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="md:hidden grid grid-cols-1 gap-3">
+                  {capTable.map((c: any) => (
+                    <div key={c.id} className="border border-dl-border p-4">
+                      <p className="font-dl-mono text-sm text-dl-text mb-2">{c.legal_name || c.entity_name || 'Unknown'}</p>
+                      <div className="grid grid-cols-3 gap-2 text-xs font-dl-mono">
+                        <div>
+                          <p className="text-[10px] text-dl-muted uppercase">Class</p>
+                          <p className="text-dl-navy">{c.share_class || 'A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-dl-muted uppercase">Ownership</p>
+                          <p className="text-dl-navy">{parseFloat(c.ownership_pct || '0').toFixed(2)}%</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-dl-muted uppercase">Capital</p>
+                          <p className="text-dl-navy">{fmt(parseFloat(c.capital_contributed || '0'))}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}
 
         {activeTab === 'distributions' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <h2 className="font-dl-serif text-lg text-dl-navy">Distributions</h2>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 {distSummary && (
                   <p className="font-dl-mono text-xs text-dl-muted">
-                    {distSummary.total} entries | Gross: {fmt(distSummary.totalGross)} | Paid: {distSummary.completedCount}
+                    {distSummary.total} entries | {fmt(distSummary.totalGross)} gross | {distSummary.completedCount} paid
                   </p>
                 )}
                 <button
                   onClick={() => setShowCreateDist(!showCreateDist)}
-                  className="bg-dl-navy text-white px-3 py-1 font-dl-mono text-xs"
+                  className="bg-dl-navy text-white px-3 py-2 min-h-[44px] font-dl-mono text-xs w-full sm:w-auto"
                 >
                   {showCreateDist ? 'Cancel' : 'Create Distribution'}
                 </button>
@@ -2193,7 +2339,51 @@ export default function OfferingBuilder() {
                 </button>
               </div>
             ) : distributions.length > 0 && (
-              <div className="border border-dl-border">
+              <>
+              <div className="md:hidden grid grid-cols-1 gap-3">
+                {distributions.map((d: any) => (
+                  <div key={`mobile-dist-${d.id}`} className="border border-dl-border p-4">
+                    <div className="flex items-start justify-between mb-1">
+                      <p className="font-dl-mono text-sm text-dl-text pr-2">{d.legal_name || d.entity_name || 'Unknown'}</p>
+                      <span className={`px-2 py-0.5 text-[10px] flex-shrink-0 ${
+                        d.status === 'completed' ? 'bg-green-50 text-green-700' :
+                        d.status === 'processing' ? 'bg-blue-50 text-blue-700' :
+                        d.status === 'failed' ? 'bg-red-50 text-red-600' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>{d.status}</span>
+                    </div>
+                    <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-2">{d.distribution_type.replace(/_/g, ' ')}</p>
+                    <div className="grid grid-cols-2 gap-2 text-xs font-dl-mono mb-2">
+                      <div>
+                        <p className="text-[10px] text-dl-muted uppercase">Gross</p>
+                        <p className="text-dl-navy">{fmt(parseFloat(d.gross_amount || '0'))}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-dl-muted uppercase">Net</p>
+                        <p className="text-green-700">{fmt(parseFloat(d.net_amount || '0'))}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1 flex-wrap">
+                      {d.status === 'draft' && (
+                        <>
+                          <button onClick={() => handleDistAction(d.id, 'approved')} className="px-2 py-1 min-h-[36px] text-xs bg-green-50 text-green-700 font-dl-mono">Approve</button>
+                          <button onClick={() => handleDeleteDist(d.id)} className="px-2 py-1 min-h-[36px] text-xs bg-red-50 text-red-600 font-dl-mono">Delete</button>
+                        </>
+                      )}
+                      {d.status === 'approved' && (
+                        <button onClick={() => handleDistAction(d.id, 'processing')} className="px-2 py-1 min-h-[36px] text-xs bg-blue-50 text-blue-700 font-dl-mono">Process</button>
+                      )}
+                      {d.status === 'processing' && (
+                        <button onClick={() => handleDistAction(d.id, 'completed')} className="px-2 py-1 min-h-[36px] text-xs bg-green-100 text-green-800 font-dl-mono">Mark Paid</button>
+                      )}
+                      {d.status === 'completed' && d.paid_at && (
+                        <span className="px-2 py-1 text-[10px] text-dl-muted font-dl-mono">Paid {new Date(d.paid_at).toLocaleDateString()}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden md:block border border-dl-border">
                 <table className="w-full font-dl-mono text-sm">
                   <thead>
                     <tr className="bg-dl-bg border-b border-dl-border text-left">
@@ -2295,6 +2485,7 @@ export default function OfferingBuilder() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
 
             {distPayConfirm && (
