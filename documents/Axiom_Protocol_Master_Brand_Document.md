@@ -305,7 +305,7 @@ Key contracts (all live on Arbitrum One):
 - Identity Factory: 0x1A7c55AC9A4AB318039f8E2BDfA82500332c86B9
 - Lending Platform Module: 0xC0177120Fb5922813031a5857f4dF7F01750Bb6F
 
-Who it is for: Institutional allocators requiring compliance-aware stablecoin infrastructure, on-chain financial rail participants, lending market participants, KYC-cleared investors.
+Who it is for: Institutional allocators requiring compliance-aware stablecoin infrastructure, DeFi participants, lending market participants, KYC-cleared investors.
 
 ---
 
