@@ -429,8 +429,8 @@ export default function DealWorkspacePage() {
           )}
         </div>
 
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="font-dl-serif text-2xl text-dl-navy">{deal?.dealName || 'Deal Workspace'}</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+          <h1 className="font-dl-serif text-xl sm:text-2xl text-dl-navy">{deal?.dealName || 'Deal Workspace'}</h1>
           <div className="flex items-center gap-3">
             {metrics && (
               <button
@@ -449,7 +449,7 @@ export default function DealWorkspacePage() {
                     console.error('Failed to create offering', err);
                   }
                 }}
-                className="bg-dl-forest text-white px-4 py-1 font-dl-mono text-xs"
+                className="bg-dl-forest text-white px-4 py-2 min-h-[44px] font-dl-mono text-xs"
               >
                 Create Offering
               </button>
@@ -493,12 +493,12 @@ export default function DealWorkspacePage() {
 
         {activeScenarioId && (
           <>
-            <div className="flex border-b border-dl-border mb-6">
+            <div className="flex border-b border-dl-border mb-6 overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 scrollbar-hide">
               {TABS.map(tab => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`px-4 py-2 font-dl-mono text-sm border-b-2 -mb-px ${
+                  className={`px-3 sm:px-4 py-2 min-h-[44px] font-dl-mono text-xs sm:text-sm border-b-2 -mb-px whitespace-nowrap ${
                     activeTab === tab.key
                       ? 'border-dl-navy text-dl-navy'
                       : 'border-transparent text-dl-muted hover:text-dl-text'
@@ -511,13 +511,13 @@ export default function DealWorkspacePage() {
 
             {activeTab === 'assumptions' && (
               <div className="border border-dl-border p-6">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                   <h2 className="font-dl-serif text-lg text-dl-navy">Financial Assumptions</h2>
                   <div className="flex gap-2">
-                    <button onClick={handleSaveAssumptions} disabled={saving} className="border border-dl-navy text-dl-navy px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50">
+                    <button onClick={handleSaveAssumptions} disabled={saving} className="border border-dl-navy text-dl-navy px-4 py-2 min-h-[44px] font-dl-mono text-sm disabled:opacity-50">
                       {saving ? 'Saving...' : 'Save'}
                     </button>
-                    <button onClick={handleRecompute} disabled={computing} className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50">
+                    <button onClick={handleRecompute} disabled={computing} className="bg-dl-navy text-white px-4 py-2 min-h-[44px] font-dl-mono text-sm disabled:opacity-50">
                       {computing ? 'Computing...' : 'Run Underwriting'}
                     </button>
                   </div>
@@ -639,12 +639,12 @@ export default function DealWorkspacePage() {
 
             {activeTab === 'comps' && (
               <div className="border border-dl-border p-6">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                   <h2 className="font-dl-serif text-lg text-dl-navy">Comparable Sales</h2>
                   <button
                     onClick={handleFetchComps}
                     disabled={fetchingComps}
-                    className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                    className="bg-dl-navy text-white px-4 py-2 min-h-[44px] font-dl-mono text-sm disabled:opacity-50"
                   >
                     {fetchingComps ? 'Fetching...' : comps.length > 0 ? 'Refresh Comps' : 'Fetch Comps'}
                   </button>
@@ -690,7 +690,7 @@ export default function DealWorkspacePage() {
                 {comps.length > 0 && !fetchingComps && (
                   <div>
                     <p className="font-dl-mono text-xs text-dl-muted mb-3">{comps.length} comparable sales loaded</p>
-                    <div className="overflow-x-auto">
+                    <div className="hidden md:block overflow-x-auto">
                       <table className="w-full font-dl-mono text-sm">
                         <thead>
                           <tr className="border-b border-dl-border">
@@ -717,6 +717,21 @@ export default function DealWorkspacePage() {
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                    <div className="md:hidden grid grid-cols-1 gap-3">
+                      {comps.map((c: any, i: number) => (
+                        <div key={c.id || i} className="border border-dl-border p-3">
+                          <p className="font-dl-mono text-xs text-dl-text mb-2">{c.address}</p>
+                          <div className="grid grid-cols-2 gap-2 text-xs font-dl-mono">
+                            <div><span className="text-dl-muted">Price: </span><span className="text-dl-navy font-bold">${Number(c.sale_price || 0).toLocaleString()}</span></div>
+                            <div><span className="text-dl-muted">$/SqFt: </span><span>{c.price_per_sqft ? `$${Number(c.price_per_sqft).toFixed(0)}` : '-'}</span></div>
+                            <div><span className="text-dl-muted">SqFt: </span><span>{c.sqft ? Number(c.sqft).toLocaleString() : '-'}</span></div>
+                            <div><span className="text-dl-muted">Bed/Bath: </span><span>{c.bedrooms || '-'}/{c.bathrooms || '-'}</span></div>
+                            <div><span className="text-dl-muted">Distance: </span><span>{c.distance_miles ? `${Number(c.distance_miles).toFixed(1)} mi` : '-'}</span></div>
+                            <div><span className="text-dl-muted">Sold: </span><span>{c.sale_date ? new Date(c.sale_date).toLocaleDateString() : '-'}</span></div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
 
                     {comps.length >= 3 && (
@@ -761,7 +776,7 @@ export default function DealWorkspacePage() {
 
             {activeTab === 'analysis' && (
               <div className="border border-dl-border p-6">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                   <div>
                     <h2 className="font-dl-serif text-lg text-dl-navy">Acquisition Advisory</h2>
                     {analysisSavedAt && (
@@ -776,7 +791,7 @@ export default function DealWorkspacePage() {
                       <button
                         onClick={handleSaveAnalysis}
                         disabled={savingAnalysis}
-                        className="border border-dl-navy text-dl-navy px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                        className="border border-dl-navy text-dl-navy px-4 py-2 min-h-[44px] font-dl-mono text-sm disabled:opacity-50"
                       >
                         {savingAnalysis ? 'Saving...' : 'Save Results'}
                       </button>
@@ -784,7 +799,7 @@ export default function DealWorkspacePage() {
                     <button
                       onClick={handleAiAnalysis}
                       disabled={analyzingDeal || !metrics}
-                      className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                      className="bg-dl-navy text-white px-4 py-2 min-h-[44px] font-dl-mono text-sm disabled:opacity-50"
                     >
                       {analyzingDeal ? 'Analyzing...' : 'Run Acquisition Analysis'}
                     </button>
@@ -1065,7 +1080,7 @@ export default function DealWorkspacePage() {
                   <button
                     onClick={handleAddDecision}
                     disabled={!newDecision || submittingDecision}
-                    className="bg-dl-navy text-white px-4 py-1.5 font-dl-mono text-sm disabled:opacity-50"
+                    className="bg-dl-navy text-white px-4 py-2 min-h-[44px] font-dl-mono text-sm disabled:opacity-50"
                   >
                     {submittingDecision ? 'Recording...' : 'Record Decision'}
                   </button>

@@ -82,20 +82,20 @@ export default function ReportHistory() {
           </p>
         </div>
 
-        <form onSubmit={handleSearch} className="border border-dl-border p-6 mb-8">
+        <form onSubmit={handleSearch} className="border border-dl-border p-4 sm:p-6 mb-8">
           <h2 className="font-dl-serif text-lg text-dl-navy mb-4">Find Your Reports</h2>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email address"
-              className="flex-1 border border-dl-border px-4 py-3 text-sm font-dl-mono bg-white text-dl-navy focus:outline-none focus:border-dl-navy"
+              className="flex-1 border border-dl-border px-4 py-3 min-h-[44px] text-sm font-dl-mono bg-white text-dl-navy focus:outline-none focus:border-dl-navy"
             />
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-3 text-sm font-dl-mono bg-dl-navy text-white border border-dl-navy hover:bg-opacity-90 disabled:opacity-60"
+              className="px-6 py-3 min-h-[44px] text-sm font-dl-mono bg-dl-navy text-white border border-dl-navy hover:bg-opacity-90 disabled:opacity-60"
             >
               {loading ? 'Searching...' : 'Search'}
             </button>
@@ -185,7 +185,7 @@ export default function ReportHistory() {
                   <button
                     key={p}
                     onClick={() => fetchReports(searchEmail, p)}
-                    className={`w-8 h-8 text-xs font-dl-mono border ${
+                    className={`w-10 h-10 min-h-[44px] text-xs font-dl-mono border ${
                       p === pagination.page
                         ? 'bg-dl-navy text-white border-dl-navy'
                         : 'bg-white text-dl-navy border-dl-border hover:border-dl-navy'

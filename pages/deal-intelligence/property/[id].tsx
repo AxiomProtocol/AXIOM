@@ -134,9 +134,9 @@ export default function PropertyProfilePage() {
           </Link>
         </div>
 
-        <div className="flex items-start justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
           <div>
-            <h1 className="font-dl-serif text-2xl text-dl-navy mb-1">{property.addressRaw || property.addressNormalized}</h1>
+            <h1 className="font-dl-serif text-xl sm:text-2xl text-dl-navy mb-1">{property.addressRaw || property.addressNormalized}</h1>
             <p className="text-dl-muted font-dl-mono text-sm">
               {[property.city, property.state, property.zip].filter(Boolean).join(', ')}
               {property.county ? ` | ${property.county} County` : ''}
@@ -145,7 +145,7 @@ export default function PropertyProfilePage() {
           <button
             onClick={handleEnrich}
             disabled={enriching}
-            className="border border-dl-navy text-dl-navy px-4 py-2 font-dl-mono text-xs hover:bg-dl-navy hover:text-white disabled:opacity-50"
+            className="border border-dl-navy text-dl-navy px-4 py-2 min-h-[44px] font-dl-mono text-xs hover:bg-dl-navy hover:text-white disabled:opacity-50 shrink-0"
           >
             {enriching ? 'Fetching Data...' : hasData ? 'Refresh Data' : 'Fetch Property Data'}
           </button>
@@ -219,54 +219,82 @@ export default function PropertyProfilePage() {
             </div>
 
             {sales.length > 0 && (
-              <div className="border border-dl-border p-6 mb-6">
+              <div className="border border-dl-border p-4 sm:p-6 mb-6">
                 <h2 className="font-dl-serif text-lg text-dl-navy mb-4">Sale History ({sales.length})</h2>
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-dl-border">
-                      <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Date</th>
-                      <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Price</th>
-                      <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">$/Sqft</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sales.map((sale: any) => (
-                      <tr key={sale.id} className="border-b border-dl-border">
-                        <td className="px-2 py-2 font-dl-mono text-sm">{sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : '-'}</td>
-                        <td className="px-2 py-2 font-dl-mono text-sm">{sale.salePrice ? `$${Number(sale.salePrice).toLocaleString()}` : '-'}</td>
-                        <td className="px-2 py-2 font-dl-mono text-sm">{sale.pricePerSqft ? `$${Number(sale.pricePerSqft).toFixed(0)}` : '-'}</td>
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-dl-border">
+                        <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Date</th>
+                        <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Price</th>
+                        <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">$/Sqft</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {sales.map((sale: any) => (
+                        <tr key={sale.id} className="border-b border-dl-border">
+                          <td className="px-2 py-2 font-dl-mono text-sm">{sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : '-'}</td>
+                          <td className="px-2 py-2 font-dl-mono text-sm">{sale.salePrice ? `$${Number(sale.salePrice).toLocaleString()}` : '-'}</td>
+                          <td className="px-2 py-2 font-dl-mono text-sm">{sale.pricePerSqft ? `$${Number(sale.pricePerSqft).toFixed(0)}` : '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="sm:hidden grid grid-cols-1 gap-3">
+                  {sales.map((sale: any) => (
+                    <div key={sale.id} className="border border-dl-border p-3">
+                      <div className="grid grid-cols-3 gap-2 text-xs font-dl-mono">
+                        <div><span className="text-dl-muted block">Date</span>{sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : '-'}</div>
+                        <div><span className="text-dl-muted block">Price</span>{sale.salePrice ? `$${Number(sale.salePrice).toLocaleString()}` : '-'}</div>
+                        <div><span className="text-dl-muted block">$/SqFt</span>{sale.pricePerSqft ? `$${Number(sale.pricePerSqft).toFixed(0)}` : '-'}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
             {taxes.length > 0 && (
-              <div className="border border-dl-border p-6 mb-6">
+              <div className="border border-dl-border p-4 sm:p-6 mb-6">
                 <h2 className="font-dl-serif text-lg text-dl-navy mb-4">Tax History ({taxes.length})</h2>
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-dl-border">
-                      <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Year</th>
-                      <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Assessed</th>
-                      <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Tax Amount</th>
-                      <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Land</th>
-                      <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Improvements</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {taxes.map((tax: any) => (
-                      <tr key={tax.id} className="border-b border-dl-border">
-                        <td className="px-2 py-2 font-dl-mono text-sm">{tax.taxYear}</td>
-                        <td className="px-2 py-2 font-dl-mono text-sm">{tax.assessedTotal ? `$${Number(tax.assessedTotal).toLocaleString()}` : '-'}</td>
-                        <td className="px-2 py-2 font-dl-mono text-sm">{tax.taxAmount ? `$${Number(tax.taxAmount).toLocaleString()}` : '-'}</td>
-                        <td className="px-2 py-2 font-dl-mono text-sm">{tax.assessedLand ? `$${Number(tax.assessedLand).toLocaleString()}` : '-'}</td>
-                        <td className="px-2 py-2 font-dl-mono text-sm">{tax.assessedImprovement ? `$${Number(tax.assessedImprovement).toLocaleString()}` : '-'}</td>
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-dl-border">
+                        <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Year</th>
+                        <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Assessed</th>
+                        <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Tax Amount</th>
+                        <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Land</th>
+                        <th className="text-left px-2 py-1 font-dl-mono text-xs text-dl-muted uppercase">Improvements</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {taxes.map((tax: any) => (
+                        <tr key={tax.id} className="border-b border-dl-border">
+                          <td className="px-2 py-2 font-dl-mono text-sm">{tax.taxYear}</td>
+                          <td className="px-2 py-2 font-dl-mono text-sm">{tax.assessedTotal ? `$${Number(tax.assessedTotal).toLocaleString()}` : '-'}</td>
+                          <td className="px-2 py-2 font-dl-mono text-sm">{tax.taxAmount ? `$${Number(tax.taxAmount).toLocaleString()}` : '-'}</td>
+                          <td className="px-2 py-2 font-dl-mono text-sm">{tax.assessedLand ? `$${Number(tax.assessedLand).toLocaleString()}` : '-'}</td>
+                          <td className="px-2 py-2 font-dl-mono text-sm">{tax.assessedImprovement ? `$${Number(tax.assessedImprovement).toLocaleString()}` : '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="md:hidden grid grid-cols-1 gap-3">
+                  {taxes.map((tax: any) => (
+                    <div key={tax.id} className="border border-dl-border p-3">
+                      <div className="font-dl-mono text-sm text-dl-navy font-bold mb-2">{tax.taxYear}</div>
+                      <div className="grid grid-cols-2 gap-2 text-xs font-dl-mono">
+                        <div><span className="text-dl-muted block">Assessed</span>{tax.assessedTotal ? `$${Number(tax.assessedTotal).toLocaleString()}` : '-'}</div>
+                        <div><span className="text-dl-muted block">Tax</span>{tax.taxAmount ? `$${Number(tax.taxAmount).toLocaleString()}` : '-'}</div>
+                        <div><span className="text-dl-muted block">Land</span>{tax.assessedLand ? `$${Number(tax.assessedLand).toLocaleString()}` : '-'}</div>
+                        <div><span className="text-dl-muted block">Improvements</span>{tax.assessedImprovement ? `$${Number(tax.assessedImprovement).toLocaleString()}` : '-'}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -313,7 +341,7 @@ export default function PropertyProfilePage() {
               <button
                 onClick={handleCreateDeal}
                 disabled={creating}
-                className="w-full bg-dl-navy text-white px-4 py-2 font-dl-mono text-sm hover:bg-dl-navy/90 disabled:opacity-50"
+                className="w-full bg-dl-navy text-white px-4 py-2 min-h-[44px] font-dl-mono text-sm hover:bg-dl-navy/90 disabled:opacity-50"
               >
                 {creating ? 'Creating...' : 'Create Deal Workspace'}
               </button>

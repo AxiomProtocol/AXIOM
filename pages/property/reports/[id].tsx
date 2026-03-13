@@ -205,33 +205,53 @@ export default function ReportDetail() {
 
         {rehabItems.length > 0 && (
           <Section title="Rehab Cost Breakdown">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-dl-border">
-                  <th className="text-left py-2 font-dl-mono text-dl-gray">Category</th>
-                  <th className="text-left py-2 font-dl-mono text-dl-gray">Description</th>
-                  <th className="text-right py-2 font-dl-mono text-dl-gray">Low</th>
-                  <th className="text-right py-2 font-dl-mono text-dl-gray">High</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rehabItems.map((item: any, i: number) => (
-                  <tr key={i} className="border-b border-dl-border">
-                    <td className="py-2 font-dl-mono text-dl-navy">{item.category}</td>
-                    <td className="py-2 text-dl-gray">{item.description}</td>
-                    <td className="py-2 text-right font-dl-mono text-dl-gray">{formatCurrency(item.low)}</td>
-                    <td className="py-2 text-right font-dl-mono text-dl-gray">{formatCurrency(item.high)}</td>
+            <div className="hidden md:block">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-dl-border">
+                    <th className="text-left py-2 font-dl-mono text-dl-gray">Category</th>
+                    <th className="text-left py-2 font-dl-mono text-dl-gray">Description</th>
+                    <th className="text-right py-2 font-dl-mono text-dl-gray">Low</th>
+                    <th className="text-right py-2 font-dl-mono text-dl-gray">High</th>
                   </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-dl-navy">
-                  <td colSpan={2} className="py-2 font-dl-mono text-dl-navy font-bold">Total</td>
-                  <td className="py-2 text-right font-dl-mono text-dl-navy font-bold">{formatCurrency(report.rehabLow)}</td>
-                  <td className="py-2 text-right font-dl-mono text-dl-navy font-bold">{formatCurrency(report.rehabHigh)}</td>
-                </tr>
-              </tfoot>
-            </table>
+                </thead>
+                <tbody>
+                  {rehabItems.map((item: any, i: number) => (
+                    <tr key={i} className="border-b border-dl-border">
+                      <td className="py-2 font-dl-mono text-dl-navy">{item.category}</td>
+                      <td className="py-2 text-dl-gray">{item.description}</td>
+                      <td className="py-2 text-right font-dl-mono text-dl-gray">{formatCurrency(item.low)}</td>
+                      <td className="py-2 text-right font-dl-mono text-dl-gray">{formatCurrency(item.high)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-dl-navy">
+                    <td colSpan={2} className="py-2 font-dl-mono text-dl-navy font-bold">Total</td>
+                    <td className="py-2 text-right font-dl-mono text-dl-navy font-bold">{formatCurrency(report.rehabLow)}</td>
+                    <td className="py-2 text-right font-dl-mono text-dl-navy font-bold">{formatCurrency(report.rehabHigh)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            <div className="md:hidden grid grid-cols-1 gap-3">
+              {rehabItems.map((item: any, i: number) => (
+                <div key={i} className="border border-dl-border p-3">
+                  <p className="font-dl-mono text-xs text-dl-navy font-bold">{item.category}</p>
+                  <p className="text-xs text-dl-gray mb-2">{item.description}</p>
+                  <div className="flex justify-between font-dl-mono text-xs">
+                    <span className="text-dl-muted">Low: {formatCurrency(item.low)}</span>
+                    <span className="text-dl-muted">High: {formatCurrency(item.high)}</span>
+                  </div>
+                </div>
+              ))}
+              <div className="border-t-2 border-dl-navy pt-2">
+                <div className="flex justify-between font-dl-mono text-xs font-bold text-dl-navy">
+                  <span>Total Low: {formatCurrency(report.rehabLow)}</span>
+                  <span>Total High: {formatCurrency(report.rehabHigh)}</span>
+                </div>
+              </div>
+            </div>
           </Section>
         )}
 
@@ -262,7 +282,7 @@ export default function ReportDetail() {
         )}
 
         <div className="mt-8 pt-6 border-t border-dl-border flex flex-col md:flex-row gap-3">
-          <a href="/property" className="font-dl-mono text-xs text-dl-navy border border-dl-navy px-4 py-2 hover:bg-dl-navy hover:text-white text-center">
+          <a href="/property" className="font-dl-mono text-xs text-dl-navy border border-dl-navy px-4 py-2 min-h-[44px] flex items-center justify-center hover:bg-dl-navy hover:text-white text-center">
             Analyze Another Property
           </a>
         </div>

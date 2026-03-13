@@ -626,7 +626,7 @@ function GovernanceTab({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h2 className="font-dl-serif text-xl text-dl-navy font-bold">Governance Proposals</h2>
           <p className="text-dl-gray text-xs font-dl-mono mt-1">
@@ -635,7 +635,7 @@ function GovernanceTab({
         </div>
         <button
           onClick={() => setShowCreateForm(!showCreateForm)}
-          className="px-4 py-2 text-sm font-dl-mono bg-dl-navy text-white border border-dl-navy hover:bg-dl-forest transition-colors"
+          className="px-4 py-2 min-h-[44px] text-sm font-dl-mono bg-dl-navy text-white border border-dl-navy hover:bg-dl-forest"
         >
           {showCreateForm ? 'Cancel' : '+ New Proposal'}
         </button>
@@ -849,16 +849,16 @@ function GovernanceTab({
                     <button
                       onClick={() => handleVote(p.id, 'for')}
                       disabled={votingId === p.id}
-                      className="flex-1 px-3 py-2 text-xs font-dl-mono bg-green-50 text-green-700 border border-green-300 hover:bg-green-100 transition-colors disabled:opacity-50"
+                      className="flex-1 px-3 py-2 min-h-[44px] text-xs font-dl-mono bg-green-50 text-green-700 border border-green-300 hover:bg-green-100 disabled:opacity-50"
                     >
-                      {votingId === p.id ? '...' : '👍 Vote For'}
+                      {votingId === p.id ? '...' : 'Vote For'}
                     </button>
                     <button
                       onClick={() => handleVote(p.id, 'against')}
                       disabled={votingId === p.id}
-                      className="flex-1 px-3 py-2 text-xs font-dl-mono bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 transition-colors disabled:opacity-50"
+                      className="flex-1 px-3 py-2 min-h-[44px] text-xs font-dl-mono bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 disabled:opacity-50"
                     >
-                      {votingId === p.id ? '...' : '👎 Vote Against'}
+                      {votingId === p.id ? '...' : 'Vote Against'}
                     </button>
                   </div>
                 )}
