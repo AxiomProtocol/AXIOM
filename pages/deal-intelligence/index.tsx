@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface SearchResult {
   id: string;
@@ -145,11 +146,39 @@ export default function DealIntelligenceSearch() {
         <title>Deal Intelligence - Property Search | AXIOM</title>
       </Head>
 
+      <div className="relative w-full h-40 sm:h-52 lg:h-64 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
+        <Image
+          src="/images/realestate/deal_intelligence_hero.png"
+          alt="Deal Intelligence"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6">
+          <h1 className="font-dl-serif text-xl sm:text-2xl lg:text-3xl text-white">Deal Intelligence</h1>
+          <p className="font-dl-mono text-xs sm:text-sm text-gray-300 mt-1">Search properties, analyze deals, and run underwriting scenarios</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        {[
+          { icon: '/images/realestate/icon_search.png', label: 'Property Search', desc: 'Find and resolve addresses' },
+          { icon: '/images/realestate/icon_underwrite.png', label: 'Underwriting', desc: 'Run scenario analysis' },
+          { icon: '/images/realestate/icon_diligence.png', label: 'Due Diligence', desc: 'Structured DD checklists' },
+          { icon: '/images/realestate/icon_ai.png', label: 'AI Advisory', desc: 'Gemini-powered insights' },
+        ].map((cap) => (
+          <div key={cap.label} className="border border-dl-border p-3 sm:p-4 flex flex-col items-center text-center">
+            <div className="relative w-10 h-10 sm:w-12 sm:h-12 mb-2">
+              <Image src={cap.icon} alt="" fill className="object-contain" />
+            </div>
+            <p className="font-dl-serif text-xs sm:text-sm text-dl-navy font-bold">{cap.label}</p>
+            <p className="font-dl-mono text-[10px] sm:text-xs text-dl-muted mt-0.5">{cap.desc}</p>
+          </div>
+        ))}
+      </div>
+
       <div className="max-w-7xl mx-auto">
-        <h1 className="font-dl-serif text-2xl sm:text-3xl text-dl-navy mb-2">Deal Intelligence</h1>
-        <p className="text-dl-muted font-dl-mono text-sm mb-8">
-          Search properties, analyze deals, and run underwriting scenarios
-        </p>
 
         <div className="border border-dl-border p-6 mb-8">
           <h2 className="font-dl-serif text-xl text-dl-navy mb-4">Property Search</h2>

@@ -1,6 +1,7 @@
 import { useState, useCallback, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import Image from 'next/image';
 import {
   DesignLawLayout,
   PageShell,
@@ -153,6 +154,22 @@ export default function REPropertiesSearch() {
         <title>RE Intelligence – Property Search | Axiom Protocol</title>
         <meta name="description" content="Search property records for deal analysis." />
       </Head>
+
+      <div className="relative w-full h-40 sm:h-52 lg:h-64 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
+        <Image
+          src="/images/realestate/re_hero.png"
+          alt="RE Intelligence"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6">
+          <h1 className="font-dl-serif text-xl sm:text-2xl lg:text-3xl text-white">RE Intelligence</h1>
+          <p className="font-dl-mono text-xs sm:text-sm text-gray-300 mt-1">Property records and deal analysis pipeline</p>
+        </div>
+      </div>
+
       <PageShell
         title="Property Search"
         subtitle="Search property records by address, city, state, or ZIP code."

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DesignLawLayout } from '../components/design-law/DesignLawLayout';
+import Image from 'next/image';
+import Head from 'next/head';
 
 type Tab = 'feed' | 'submit' | 'buybox';
 
@@ -1023,16 +1025,42 @@ export default function DistressedFeedPage() {
 
   return (
     <DesignLawLayout>
-      <div className="max-w-7xl mx-auto pb-20 sm:pb-8">
-        <div className="mb-8">
-          <h1 className="font-serif text-2xl sm:text-3xl text-[#2c3e50] mb-2">DEAL FLOW</h1>
-          <h2 className="font-serif text-lg sm:text-xl text-[#5a6c7d] mb-4">Distressed Property Acquisition Pipeline</h2>
-          <p className="font-mono text-sm text-[#5a6c7d] max-w-3xl">
-            Aggregated feed of distressed, foreclosed, REO, and wholesale properties from government
-            agencies and verified wholesalers. Each listing can be instantly analyzed through Deal Intelligence
-            for institutional-grade underwriting. Set your buy box criteria to receive matched deals automatically.
-          </p>
+      <Head>
+        <title>Deal Flow | AXIOM</title>
+      </Head>
+      <div className="relative w-full h-40 sm:h-52 lg:h-64 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
+        <Image
+          src="/images/realestate/distressed_hero.png"
+          alt="Distressed Property Pipeline"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6">
+          <h1 className="font-dl-serif text-xl sm:text-2xl lg:text-3xl text-white">Deal Flow</h1>
+          <p className="font-dl-mono text-xs sm:text-sm text-gray-300 mt-1">Distressed Property Acquisition Pipeline</p>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+        {[
+          { icon: '/images/realestate/icon_foreclosure.png', label: 'Foreclosure', desc: 'HUD, Fannie, Freddie' },
+          { icon: '/images/realestate/icon_tax_lien.png', label: 'Tax Lien', desc: 'County tax sales' },
+          { icon: '/images/realestate/icon_flip.png', label: 'Wholesale', desc: 'Verified wholesalers' },
+          { icon: '/images/realestate/icon_search.png', label: 'Buy Box', desc: 'Automated matching' },
+        ].map((cap) => (
+          <div key={cap.label} className="border border-dl-border p-3 flex flex-col items-center text-center">
+            <div className="relative w-8 h-8 sm:w-10 sm:h-10 mb-1.5">
+              <Image src={cap.icon} alt="" fill className="object-contain" />
+            </div>
+            <p className="font-dl-serif text-xs sm:text-sm text-dl-navy font-bold">{cap.label}</p>
+            <p className="font-dl-mono text-[10px] text-dl-muted mt-0.5">{cap.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="max-w-7xl mx-auto pb-20 sm:pb-8">
 
         <div className="flex overflow-x-auto border-b border-[#2c3e50] mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
           {tabs.map(tab => (

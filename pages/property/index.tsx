@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
+import Image from 'next/image';
 
 const TIERS: Array<{ id: string; label: string; price: string; priceNote: string; features: string[]; sources: string; cta: string; highlight?: boolean }> = [
   {
@@ -177,15 +178,23 @@ export default function PropertyAnalysis() {
       <Head>
         <title>Property Analysis Tool | Axiom Protocol</title>
       </Head>
-      <div className="max-w-7xl mx-auto pb-20 sm:pb-8">
-        <div className="border-b border-dl-border pb-6 mb-8">
-          <h1 className="font-dl-serif text-xl sm:text-2xl text-dl-navy">Property Analysis Tool</h1>
-          <p className="text-sm text-dl-gray mt-2 max-w-3xl">
-            Enter a US property address to receive a structured analysis report with value range, rent range,
-            rehab estimates, confidence scores, risk flags, and neighborhood context. All estimates use
-            probabilistic ranges — no guaranteed outcomes.
-          </p>
+
+      <div className="relative w-full h-40 sm:h-52 lg:h-64 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
+        <Image
+          src="/images/realestate/property_hero.jpg"
+          alt="Property Analysis"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6">
+          <h1 className="font-dl-serif text-xl sm:text-2xl lg:text-3xl text-white">Property Analysis Tool</h1>
+          <p className="font-dl-mono text-xs sm:text-sm text-gray-300 mt-1">Structured reports with probabilistic ranges</p>
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto pb-20 sm:pb-8">
 
         {cancelled && (
           <div className="border border-yellow-300 bg-yellow-50 p-4 mb-6 text-sm text-yellow-800">

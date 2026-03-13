@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
+import Image from 'next/image';
 import { DesignLawLayout } from '../components/design-law/DesignLawLayout';
 
 interface LandCandidate {
@@ -274,9 +275,19 @@ export default function LandPage() {
         <meta name="description" content="Community Land Acquisition Pipeline — from submission to community activation." />
       </Head>
       <DesignLawLayout>
-        <div className="mb-8">
-          <h1 className="font-dl-serif text-3xl text-dl-navy font-bold mb-1">Physical-Digital Bridge</h1>
-          <p className="text-dl-gray text-sm font-dl-mono">Community Land Acquisition Pipeline</p>
+        <div className="relative w-full h-40 sm:h-52 lg:h-64 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
+          <Image
+            src="/images/realestate/land_hero.jpg"
+            alt="Land Acquisition Pipeline"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6">
+            <h1 className="font-dl-serif text-xl sm:text-2xl lg:text-3xl text-white">Physical-Digital Bridge</h1>
+            <p className="font-dl-mono text-xs sm:text-sm text-gray-300 mt-1">Community Land Acquisition Pipeline</p>
+          </div>
         </div>
 
         <div className="border-b border-dl-border mb-8">
