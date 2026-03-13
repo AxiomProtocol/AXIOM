@@ -87,11 +87,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const offering = offeringRes.rows[0];
 
     const investorsRes = await pool.query(
-      `SELECT DISTINCT ip.id, ip.legal_name, ip.entity_name, ip.email, ip.tax_id,
-              ct.ownership_pct, ct.capital_contributed, ct.share_class
+      `SELECT ip.id, ip.legal_name, ip.entity_name, ip.email, ip.tax_id,
+              SUM(CAST(ct.ownership_pct AS numeric)) AS ownership_pct,
+              SUM(CAST(ct.capital_contributed AS numeric)) AS capital_contributed,
+              (ARRAY_AGG(ct.share_class))[1] AS share_class
        FROM syn_investor_profiles ip
        JOIN syn_cap_table ct ON ct.investor_profile_id = ip.id
        WHERE ct.offering_id = $1
+       GROUP BY ip.id, ip.legal_name, ip.entity_name, ip.email, ip.tax_id
        ORDER BY ip.legal_name`,
       [id]
     );

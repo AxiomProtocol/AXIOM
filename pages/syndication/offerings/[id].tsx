@@ -543,7 +543,7 @@ export default function OfferingBuilder() {
         const emailNote = json.totalEmailed > 0
           ? ` — ${json.totalEmailed} investor${json.totalEmailed === 1 ? '' : 's'} emailed.`
           : '';
-        setReportToast(`Generated ${json.totalGenerated} K-1 summary${json.totalGenerated === 1 ? '' : 'ies'}${emailNote}`);
+        setReportToast(`Generated ${json.totalGenerated} K-1 ${json.totalGenerated === 1 ? 'summary' : 'summaries'}${emailNote}`);
         setTimeout(() => setReportToast(null), 8000);
       } else {
         setReportToast(json.error || 'K-1 generation failed.');
