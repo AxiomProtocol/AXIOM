@@ -61,7 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { id } = req.query;
 
   try {
-    const { grossAmount, periodStart, periodEnd, capitalDeployed } = req.body;
+    const { grossAmount, periodStart, periodEnd, capitalDeployed, preferredRate: overrideRate } = req.body;
 
     if (!grossAmount || parseFloat(grossAmount) <= 0) {
       return res.status(400).json({ success: false, error: 'grossAmount must be a positive number.' });
@@ -79,7 +79,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const offering = offeringRes.rows[0];
-    const preferredRate = parseFloat(offering.preferred_return || '0') / 100;
+    const preferredRate = overrideRate && parseFloat(overrideRate) >= 0
+      ? parseFloat(overrideRate) / 100
+      : parseFloat(offering.preferred_return || '0') / 100;
     const gpPromotePct = parseFloat(offering.promote_split || '20') / 100;
     const lpSplitPct = 1 - gpPromotePct;
 

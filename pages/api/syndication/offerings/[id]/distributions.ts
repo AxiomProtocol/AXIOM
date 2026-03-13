@@ -93,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
-      const { distributionType, grossAmount, periodStart, periodEnd, paymentMethod, currency } = req.body;
+      const { distributionType, grossAmount, periodStart, periodEnd, paymentMethod, currency, waterfallMeta } = req.body;
       if (!distributionType || !grossAmount) {
         return res.status(400).json({ success: false, error: 'distributionType and grossAmount are required' });
       }
@@ -150,11 +150,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
           const recipientWallet = distCurrency === 'AXUSD' ? (entry.wallet_address || null) : null;
 
+          const distMeta = waterfallMeta ? JSON.stringify({
+            waterfall: {
+              gpPromoteAmount: waterfallMeta.gpPromoteAmount,
+              grossDistributable: waterfallMeta.grossDistributable,
+              preferredRate: waterfallMeta.preferredRate,
+              gpPromotePct: waterfallMeta.gpPromotePct,
+              capitalDeployed: waterfallMeta.capitalDeployed,
+              fractionOfYear: waterfallMeta.fractionOfYear,
+              tranches: waterfallMeta.tranches,
+            },
+          }) : null;
+
           const insertResult = await client.query(
             `INSERT INTO syn_distributions
                (offering_id, cap_table_entry_id, investor_profile_id, distribution_type,
-                gross_amount, net_amount, payment_method, currency, recipient_wallet, period_start, period_end)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+                gross_amount, net_amount, payment_method, currency, recipient_wallet, period_start, period_end, meta)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb) RETURNING id`,
             [
               id,
               entry.id,
@@ -167,6 +179,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               recipientWallet,
               periodStart || null,
               periodEnd || null,
+              distMeta,
             ]
           );
           createdIds.push(insertResult.rows[0].id);

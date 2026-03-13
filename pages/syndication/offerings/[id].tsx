@@ -212,9 +212,9 @@ export default function OfferingBuilder() {
   const [distributions, setDistributions] = useState<any[]>([]);
   const [distSummary, setDistSummary] = useState<any>(null);
   const [showCreateDist, setShowCreateDist] = useState(false);
-  const [distForm, setDistForm] = useState({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD' });
+  const [distForm, setDistForm] = useState<any>({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD' });
   const [showWaterfall, setShowWaterfall] = useState(false);
-  const [waterfallForm, setWaterfallForm] = useState({ grossAmount: '', periodStart: '', periodEnd: '', capitalDeployed: '' });
+  const [waterfallForm, setWaterfallForm] = useState({ grossAmount: '', periodStart: '', periodEnd: '', capitalDeployed: '', preferredRate: '' });
   const [waterfallResult, setWaterfallResult] = useState<any>(null);
   const [calculatingWaterfall, setCalculatingWaterfall] = useState(false);
   const [creatingDist, setCreatingDist] = useState(false);
@@ -367,6 +367,16 @@ export default function OfferingBuilder() {
       periodStart: waterfallResult.periodStart || '',
       periodEnd: waterfallResult.periodEnd || '',
       currency: 'USD',
+      waterfallMeta: {
+        gpPromoteAmount: waterfallResult.totals.gpAmount,
+        lpAmount: waterfallResult.totals.lpAmount,
+        grossDistributable: waterfallResult.grossAmount,
+        preferredRate: waterfallResult.preferredRate,
+        gpPromotePct: waterfallResult.gpPromotePct,
+        capitalDeployed: waterfallResult.capitalDeployed,
+        fractionOfYear: waterfallResult.fractionOfYear,
+        tranches: waterfallResult.tranches,
+      },
     });
     setShowCreateDist(true);
   };
@@ -384,6 +394,7 @@ export default function OfferingBuilder() {
       if (json.success) {
         setDistForm({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD' });
         setShowCreateDist(false);
+        setWaterfallResult(null);
         loadTabData('distributions');
       }
     } catch (err) { console.error(err); }
@@ -1912,7 +1923,14 @@ export default function OfferingBuilder() {
 
             <div className="border border-dl-border">
               <button
-                onClick={() => { setShowWaterfall(!showWaterfall); if (!showWaterfall) setWaterfallResult(null); }}
+                onClick={() => {
+                  const opening = !showWaterfall;
+                  setShowWaterfall(opening);
+                  if (opening) {
+                    setWaterfallResult(null);
+                    setWaterfallForm(p => ({ ...p, preferredRate: offering?.preferred_return || '' }));
+                  }
+                }}
                 className="w-full flex items-center justify-between px-4 py-2 bg-dl-bg font-dl-mono text-sm text-dl-navy"
               >
                 <span>Waterfall Calculator</span>
@@ -1946,6 +1964,19 @@ export default function OfferingBuilder() {
                         className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
                       />
                     </div>
+                    <div>
+                      <label className="block text-xs font-dl-mono text-dl-muted mb-1">Preferred Return Rate (%)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={waterfallForm.preferredRate}
+                        onChange={e => setWaterfallForm(p => ({ ...p, preferredRate: e.target.value }))}
+                        placeholder={offering?.preferred_return || '8'}
+                        className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div>
                       <label className="block text-xs font-dl-mono text-dl-muted mb-1">Period Start</label>
                       <input
