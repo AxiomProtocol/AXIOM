@@ -273,6 +273,17 @@ export default function AboutUsPage() {
       <div className="h-px w-full mb-12" style={{ backgroundColor: '#2d5016' }} />
 
       <div className="mb-12">
+        <div className="w-full border border-dl-border border-l-4 border-l-dl-forest" style={{ height: '260px', overflow: 'hidden' }}>
+          <img
+            src="/images/about-community.png"
+            alt="Aerial view of community farmland at sunrise"
+            className="w-full h-full object-cover"
+            style={{ display: 'block' }}
+          />
+        </div>
+      </div>
+
+      <div className="mb-12">
         <SectionHeading>Timeline</SectionHeading>
         <div className="border border-dl-border">
           {MILESTONES.map((m, i) => {

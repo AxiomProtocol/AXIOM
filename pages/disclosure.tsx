@@ -55,7 +55,7 @@ function StatusPill({ status }: { status: string }) {
   const colors: Record<string, string> = {
     'Live': 'bg-green-100 text-green-800 border-green-300',
     'Configured-Inactive': 'bg-yellow-50 text-yellow-800 border-yellow-300',
-    'Planned': 'bg-blue-50 text-blue-800 border-blue-300',
+    'Planned': 'bg-gray-50 text-gray-600 border-gray-300',
     'Deprecated': 'bg-gray-100 text-gray-500 border-gray-300',
   };
   return (
@@ -294,34 +294,27 @@ export default function DisclosurePage() {
               <p className="text-sm font-dl-mono text-dl-navy">Current State: Bootstrap Phase (Week 5 of 52-Week Operational Playbook)</p>
             </div>
             {snapshot && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border border-dl-border">
-                <div className="px-5 py-4 border-r border-b sm:border-b lg:border-b-0 border-dl-border border-t-4 border-t-dl-forest">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 border border-dl-border">
+                <div className="px-5 py-4 border-r border-b sm:border-b-0 border-dl-border border-t-4 border-t-dl-forest">
                   <div className="flex items-center gap-2 mb-2">
                     <Landmark className="w-4 h-4 text-dl-forest" />
                     <p className="text-xs text-dl-gray">Treasury Total</p>
                   </div>
                   <p className="text-lg font-dl-mono text-dl-forest font-bold">{fmtUsd(snapshot.treasuryTotalUsd)}</p>
                 </div>
-                <div className="px-5 py-4 sm:border-r border-b lg:border-b-0 border-dl-border border-t-4 border-t-dl-gold">
+                <div className="px-5 py-4 sm:border-r border-b sm:border-b-0 border-dl-border border-t-4 border-t-dl-gold">
                   <div className="flex items-center gap-2 mb-2">
                     <AlertTriangle className="w-4 h-4 text-dl-gold" />
                     <p className="text-xs text-dl-gray">AXUSD Outstanding</p>
                   </div>
                   <p className="text-lg font-dl-mono text-dl-gold font-bold">{fmtUsd(snapshot.liabilitiesTotalUsd)}</p>
                 </div>
-                <div className="px-5 py-4 border-r border-b sm:border-b-0 border-dl-border border-t-4 border-t-dl-navy">
+                <div className="px-5 py-4 border-t-4 border-t-dl-navy">
                   <div className="flex items-center gap-2 mb-2">
                     <ShieldCheck className="w-4 h-4 text-dl-navy" />
                     <p className="text-xs text-dl-gray">Coverage Ratio</p>
                   </div>
                   <p className="text-lg font-dl-mono text-dl-navy font-bold">{fmtPct(snapshot.coverageRatio)}</p>
-                </div>
-                <div className="px-5 py-4 border-t-4 border-t-dl-gray">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Activity className="w-4 h-4 text-dl-gray" />
-                    <p className="text-xs text-dl-gray">Policy Mode</p>
-                  </div>
-                  <p className="text-lg font-dl-mono text-dl-gray font-bold">{snapshot.policyMode}</p>
                 </div>
               </div>
             )}
