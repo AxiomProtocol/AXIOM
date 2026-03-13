@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "tL1EpEhSaHtM21rjEYEfD"
+uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
+type = "text"
+title = "Axiom Protocol — Master Brand & Communications Document"
