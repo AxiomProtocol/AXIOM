@@ -77,7 +77,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const offeringRes = await pool.query(
-      `SELECT id, name, entity_name, reg_type, preferred_return, promote_split
+      `SELECT id, name, entity_type, offering_type, preferred_return, promote_split
        FROM syn_offerings WHERE id = $1`,
       [id]
     );
@@ -87,7 +87,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const offering = offeringRes.rows[0];
 
     const investorsRes = await pool.query(
-      `SELECT DISTINCT ip.id, ip.legal_name, ip.entity_name, ip.email, ip.tax_id_type,
+      `SELECT DISTINCT ip.id, ip.legal_name, ip.entity_name, ip.email, ip.tax_id,
               ct.ownership_pct, ct.capital_contributed, ct.share_class
        FROM syn_investor_profiles ip
        JOIN syn_cap_table ct ON ct.investor_profile_id = ip.id
@@ -111,7 +111,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     const subRes = await pool.query(
-      `SELECT s.investor_profile_id, s.subscription_amount, s.status, s.funded_at
+      `SELECT s.investor_profile_id, s.amount, s.status, s.funded_at
        FROM syn_subscriptions s
        WHERE s.offering_id = $1
          AND s.status = 'funded'
@@ -152,7 +152,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       let totalContributed = 0;
       for (const s of investorSubs) {
-        totalContributed += parseFloat(s.subscription_amount || '0');
+        totalContributed += parseFloat(s.amount || '0');
       }
 
       if (totalContributed === 0) {
@@ -170,8 +170,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 OFFERING INFORMATION:
 - Offering Name: ${offering.name}
-- Entity Name: ${offering.entity_name || offering.name}
-- Registration Type: ${offering.reg_type || 'Reg D 506(c)'}
+- Entity Name: ${offering.name}
+- Entity Type: ${offering.entity_type || 'LLC'}
+- Registration Type: ${offering.offering_type || 'Reg D 506(c)'}
 - Tax Year: ${year}
 
 INVESTOR INFORMATION:
