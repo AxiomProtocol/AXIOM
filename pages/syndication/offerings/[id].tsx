@@ -1,8 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useWallet } from '../../../lib/web3/useWallet';
+
+const OPERATOR_WALLETS = [
+  '0xb0cefc7e3f1c7de3b98e8c39384e9e084c9eb75c',
+];
 
 interface Offering {
   id: string;
@@ -84,6 +89,11 @@ const STAGE_COLORS: Record<string, string> = {
 export default function OfferingBuilder() {
   const router = useRouter();
   const { id } = router.query;
+  const { isConnected, address } = useWallet();
+  const isOperator = useMemo(() => {
+    if (!isConnected || !address) return false;
+    return OPERATOR_WALLETS.includes(address.toLowerCase());
+  }, [isConnected, address]);
 
   const [offering, setOffering] = useState<Offering | null>(null);
   const [loading, setLoading] = useState(true);
@@ -508,29 +518,22 @@ export default function OfferingBuilder() {
     setUploadingDoc(true);
     setDocUploadError(null);
     try {
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(docFile);
-      });
+      const formData = new FormData();
+      formData.append('file', docFile);
+      formData.append('name', docForm.name);
+      formData.append('docType', docForm.docType);
+      formData.append('visibility', docForm.visibility);
       const res = await fetch(`/api/syndication/offerings/${id}/documents/upload`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          file: base64,
-          filename: docFile.name,
-          mimeType: docFile.type,
-          name: docForm.name,
-          docType: docForm.docType,
-          visibility: docForm.visibility,
-        }),
+        body: formData,
       });
       const json = await res.json();
       if (json.success) {
         setDocForm({ name: '', docType: 'ppm', visibility: 'private' });
         setDocFile(null);
         setShowDocUpload(false);
+        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
         loadTabData('documents');
       } else {
         setDocUploadError(json.error || 'Upload failed.');
@@ -966,12 +969,14 @@ export default function OfferingBuilder() {
               <h2 className="font-dl-serif text-lg text-dl-navy">Document Room</h2>
               <div className="flex items-center gap-3">
                 <p className="font-dl-mono text-xs text-dl-muted">{documents.length} documents</p>
-                <button
-                  onClick={() => setShowDocUpload(!showDocUpload)}
-                  className="px-3 py-1 bg-dl-navy text-white font-dl-mono text-xs"
-                >
-                  {showDocUpload ? 'Cancel' : 'Add Document'}
-                </button>
+                {isOperator && (
+                  <button
+                    onClick={() => setShowDocUpload(!showDocUpload)}
+                    className="px-3 py-1 bg-dl-navy text-white font-dl-mono text-xs"
+                  >
+                    {showDocUpload ? 'Cancel' : 'Add Document'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1093,13 +1098,15 @@ export default function OfferingBuilder() {
                                 View
                               </a>
                             )}
-                            <button
-                              onClick={() => handleDeleteDoc(doc.id)}
-                              disabled={deletingDocId === doc.id}
-                              className="text-red-600 hover:underline disabled:opacity-50"
-                            >
-                              {deletingDocId === doc.id ? '...' : 'Delete'}
-                            </button>
+                            {isOperator && (
+                              <button
+                                onClick={() => handleDeleteDoc(doc.id)}
+                                disabled={deletingDocId === doc.id}
+                                className="text-red-600 hover:underline disabled:opacity-50"
+                              >
+                                {deletingDocId === doc.id ? '...' : 'Delete'}
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

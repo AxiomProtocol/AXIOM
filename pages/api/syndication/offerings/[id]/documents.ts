@@ -41,6 +41,14 @@ function isOperator(wallet: string): boolean {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
 
+  const wallet = await getAuthenticatedWallet(req);
+  if (!wallet) {
+    return res.status(401).json({ success: false, error: 'Authentication required.' });
+  }
+  if (!isOperator(wallet)) {
+    return res.status(403).json({ success: false, error: 'Operator access required.' });
+  }
+
   if (req.method === 'GET') {
     try {
       const result = await pool.query(
@@ -51,14 +59,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } catch (error: any) {
       return res.status(500).json({ success: false, error: error.message });
     }
-  }
-
-  const wallet = await getAuthenticatedWallet(req);
-  if (!wallet) {
-    return res.status(401).json({ success: false, error: 'Authentication required.' });
-  }
-  if (!isOperator(wallet)) {
-    return res.status(403).json({ success: false, error: 'Operator access required.' });
   }
 
   if (req.method === 'POST') {

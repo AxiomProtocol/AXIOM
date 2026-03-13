@@ -2,12 +2,11 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../../../server/db';
 import fs from 'fs';
 import path from 'path';
+import formidable from 'formidable';
 
 export const config = {
   api: {
-    bodyParser: {
-      sizeLimit: '25mb',
-    },
+    bodyParser: false,
   },
 };
 
@@ -68,6 +67,28 @@ function isOperator(wallet: string): boolean {
   return OPERATOR_WALLETS.includes(wallet.toLowerCase());
 }
 
+function parseForm(req: NextApiRequest): Promise<{ fields: formidable.Fields; files: formidable.Files }> {
+  const form = formidable({
+    maxFileSize: MAX_FILE_SIZE,
+    maxFields: 10,
+    allowEmptyFiles: false,
+  });
+
+  return new Promise((resolve, reject) => {
+    form.parse(req, (err, fields, files) => {
+      if (err) {
+        if (err.code === 1009 || err.message?.includes('maxFileSize')) {
+          reject(new Error(`File too large. Maximum size is 20MB.`));
+        } else {
+          reject(err);
+        }
+      } else {
+        resolve({ fields, files });
+      }
+    });
+  });
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
@@ -84,14 +105,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { id } = req.query;
 
   try {
-    const { file, filename, mimeType, name, docType, visibility } = req.body;
+    const { fields, files } = await parseForm(req);
 
-    if (!file || !filename || !mimeType) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required fields: file (base64), filename, mimeType',
-      });
+    const fileArr = files.file;
+    const uploadedFile = Array.isArray(fileArr) ? fileArr[0] : fileArr;
+    if (!uploadedFile) {
+      return res.status(400).json({ success: false, error: 'No file uploaded.' });
     }
+
+    const name = Array.isArray(fields.name) ? fields.name[0] : fields.name;
+    const docType = Array.isArray(fields.docType) ? fields.docType[0] : fields.docType;
+    const visibility = Array.isArray(fields.visibility) ? fields.visibility[0] : fields.visibility;
 
     if (!name) {
       return res.status(400).json({ success: false, error: 'Document name is required.' });
@@ -111,6 +135,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
+    const mimeType = uploadedFile.mimetype || '';
     if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
       return res.status(400).json({
         success: false,
@@ -118,7 +143,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const ext = path.extname(filename).toLowerCase();
+    const originalName = uploadedFile.originalFilename || 'file';
+    const ext = path.extname(originalName).toLowerCase();
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
       return res.status(400).json({
         success: false,
@@ -126,10 +152,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const base64Data = file.replace(/^data:[^;]+;base64,/, '');
-    const fileBuffer = Buffer.from(base64Data, 'base64');
-    const fileSizeBytes = fileBuffer.length;
-
+    const fileSizeBytes = uploadedFile.size;
     if (fileSizeBytes > MAX_FILE_SIZE) {
       return res.status(400).json({
         success: false,
@@ -141,11 +164,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await fs.promises.mkdir(uploadsDir, { recursive: true });
 
     const timestamp = Date.now();
-    const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const safeFilename = originalName.replace(/[^a-zA-Z0-9._-]/g, '_');
     const storedFilename = `${timestamp}_${safeFilename}`;
-    const filePath = path.join(uploadsDir, storedFilename);
+    const destPath = path.join(uploadsDir, storedFilename);
 
-    await fs.promises.writeFile(filePath, fileBuffer);
+    await fs.promises.copyFile(uploadedFile.filepath, destPath);
+
+    try {
+      await fs.promises.unlink(uploadedFile.filepath);
+    } catch {}
 
     const fileUrl = `/uploads/syndication/docs/${storedFilename}`;
 
@@ -172,6 +199,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   } catch (error: any) {
     console.error('[DocumentUpload] Error:', error);
-    return res.status(500).json({ success: false, error: error.message });
+    const errorMsg = error.message || 'Upload failed.';
+    if (errorMsg.includes('maxFileSize') || errorMsg.includes('File too large')) {
+      return res.status(400).json({ success: false, error: 'File too large. Maximum size is 20MB.' });
+    }
+    return res.status(500).json({ success: false, error: errorMsg });
   }
 }
