@@ -56,6 +56,15 @@ const TYPE_LABELS: Record<string, string> = {
   pilotOffering: 'Pilot',
 };
 
+const TYPE_ICONS: Record<string, string> = {
+  clubDeal: '/images/syndication/icon_club_deal.png',
+  regD506b: '/images/syndication/icon_fund_spv.png',
+  regD506c: '/images/syndication/icon_fund_spv.png',
+  regCF: '/images/syndication/icon_fund_spv.png',
+  communityPool: '/images/syndication/icon_joint_venture.png',
+  pilotOffering: '/images/syndication/icon_club_deal.png',
+};
+
 export default function SyndicationDashboard() {
   const router = useRouter();
   const [offerings, setOfferings] = useState<Offering[]>([]);
@@ -317,9 +326,14 @@ export default function SyndicationDashboard() {
                     {STATUS_LABELS[o.status] || o.status}
                   </span>
                 </div>
-                <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-3">
-                  {TYPE_LABELS[o.offering_type] || o.offering_type}
-                </p>
+                <div className="flex items-center gap-2 mb-3">
+                  {TYPE_ICONS[o.offering_type] && (
+                    <Image src={TYPE_ICONS[o.offering_type]} alt="" width={20} height={20} className="opacity-60" />
+                  )}
+                  <p className="font-dl-mono text-[10px] text-dl-muted uppercase">
+                    {TYPE_LABELS[o.offering_type] || o.offering_type}
+                  </p>
+                </div>
                 <div className="grid grid-cols-2 gap-2 mb-2">
                   <div>
                     <p className="font-dl-mono text-[10px] text-dl-muted uppercase">Target</p>

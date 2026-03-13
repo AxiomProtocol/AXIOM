@@ -768,7 +768,7 @@ export default function OfferingBuilder() {
           })}
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
           <div className="border border-dl-border p-3">
             <p className="font-dl-mono text-[10px] sm:text-xs text-dl-muted uppercase">Target Raise</p>
             <p className="font-dl-serif text-lg sm:text-xl text-dl-navy">{fmt(targetRaise)}</p>
