@@ -73,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const year = parseInt(taxYear);
   const yearStart = `${year}-01-01`;
-  const yearEnd = `${year}-12-31`;
+  const nextYearStart = `${year + 1}-01-01`;
 
   try {
     const offeringRes = await pool.query(
@@ -105,19 +105,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        FROM syn_distributions d
        WHERE d.offering_id = $1
          AND d.status = 'completed'
-         AND (d.paid_at >= $2 AND d.paid_at <= $3)
+         AND d.paid_at >= $2 AND d.paid_at < $3
        ORDER BY d.investor_profile_id`,
-      [id, yearStart, yearEnd]
+      [id, yearStart, nextYearStart]
     );
 
     const subRes = await pool.query(
       `SELECT s.investor_profile_id, s.subscription_amount, s.status, s.funded_at
        FROM syn_subscriptions s
        WHERE s.offering_id = $1
-         AND s.status IN ('approved', 'funded')
-         AND (s.funded_at >= $2 AND s.funded_at <= $3)
+         AND s.status = 'funded'
+         AND s.funded_at >= $2 AND s.funded_at < $3
        ORDER BY s.investor_profile_id`,
-      [id, yearStart, yearEnd]
+      [id, yearStart, nextYearStart]
     );
 
     const distByInvestor: Record<string, any[]> = {};
@@ -218,7 +218,7 @@ FORMAT REQUIREMENTS:
           reportTitle,
           k1Content,
           yearStart,
-          yearEnd,
+          `${year}-12-31`,
           wallet.toLowerCase(),
           JSON.stringify({
             k1: true,
