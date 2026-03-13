@@ -1,11 +1,20 @@
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { Request, Response, NextFunction } from 'express';
-import { db } from './db';
+import type { NextApiRequest } from 'next';
+import { db, pool } from './db';
 import { users } from '../shared/schema';
 import { eq } from 'drizzle-orm';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-change-in-production';
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error('[Auth] FATAL: JWT_SECRET environment variable is not set');
+    throw new Error('Server misconfiguration: JWT_SECRET is not set');
+  }
+  return secret;
+}
+
 const SALT_ROUNDS = 12;
 
 export interface AuthenticatedRequest extends Request {
@@ -25,15 +34,19 @@ export function generateToken(user: { id: string; email: string; role: string })
       email: user.email, 
       role: user.role 
     },
-    JWT_SECRET,
+    getJwtSecret(),
     { expiresIn: '7d' }
   );
+}
+
+export function signTokenForKyc(payload: { userId: number; email: string; role: string }): string {
+  return jwt.sign(payload, getJwtSecret(), { expiresIn: '24h' });
 }
 
 // Verify JWT token
 export function verifyToken(token: string): any {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, getJwtSecret());
   } catch (error) {
     return null;
   }
@@ -136,4 +149,68 @@ export function requireRole(roles: string[]) {
 // Admin authorization
 export function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   return requireRole(['admin', 'super_admin'])(req, res, next);
+}
+
+export interface KycAuthUser {
+  userId: number;
+  email: string;
+  role?: string;
+}
+
+export function getUserFromBearerToken(req: NextApiRequest): KycAuthUser | null {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  try {
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, getJwtSecret()) as Record<string, unknown>;
+
+    if (typeof decoded.userId !== 'number' || typeof decoded.email !== 'string') {
+      return null;
+    }
+
+    return {
+      userId: decoded.userId,
+      email: decoded.email,
+      role: typeof decoded.role === 'string' ? decoded.role : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function getVerifiedUserFromToken(req: NextApiRequest): Promise<KycAuthUser | null> {
+  const tokenUser = getUserFromBearerToken(req);
+  if (!tokenUser) return null;
+
+  try {
+    const result = await pool.query(
+      `SELECT id, account_status FROM users WHERE id = $1 LIMIT 1`,
+      [tokenUser.userId]
+    );
+
+    if (result.rows.length === 0) return null;
+
+    const user = result.rows[0];
+    if (user.account_status === 'suspended' || user.account_status === 'deactivated') {
+      return null;
+    }
+
+    return tokenUser;
+  } catch {
+    return null;
+  }
+}
+
+export function getClientIp(req: NextApiRequest): string | null {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    const raw = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+    const firstIp = raw.split(',')[0].trim();
+    return firstIp.substring(0, 45);
+  }
+  const remote = req.socket?.remoteAddress;
+  return remote ? remote.substring(0, 45) : null;
 }
