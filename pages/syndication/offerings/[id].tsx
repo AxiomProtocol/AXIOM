@@ -2845,6 +2845,20 @@ export default function OfferingBuilder() {
             )}
           </div>
         )}
+        {['raising', 'active'].includes(offering.status) && !isOperator && (
+          <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-dl-border px-4 py-3">
+            <button
+              onClick={() => setActiveTab('subscriptions')}
+              className="w-full bg-dl-navy text-white font-dl-mono text-sm py-3 min-h-[48px]"
+            >
+              Subscribe to This Offering
+            </button>
+          </div>
+        )}
+
+        {['raising', 'active'].includes(offering.status) && !isOperator && (
+          <div className="md:hidden h-16" />
+        )}
       </div>
     </DesignLawLayout>
   );

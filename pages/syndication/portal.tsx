@@ -129,7 +129,9 @@ export default function InvestorPortal() {
         <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6">
           <h1 className="font-dl-serif text-xl sm:text-2xl text-white">Investor Portal</h1>
           <p className="font-dl-mono text-xs text-gray-300 mt-1">
-            {isConnected && address
+            {isConnected && data?.profile
+              ? `Welcome, ${data.profile.legal_name || data.profile.entity_name || address?.slice(0, 6) + '...' + address?.slice(-4)}`
+              : isConnected && address
               ? `${address.slice(0, 6)}...${address.slice(-4)}`
               : 'Connect your wallet to view your portfolio'}
           </p>
@@ -514,49 +516,7 @@ function CapitalCallsTab({ capitalCalls }: { capitalCalls: any[] }) {
     <div>
       <h2 className="font-dl-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-2">Capital Calls</h2>
 
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-sm border border-dl-border">
-          <thead>
-            <tr className="bg-gray-50 text-left text-xs text-dl-gray uppercase tracking-wide">
-              <th className="px-3 py-2 border-b border-dl-border">Offering</th>
-              <th className="px-3 py-2 border-b border-dl-border">Status</th>
-              <th className="px-3 py-2 border-b border-dl-border text-right">Amount Called</th>
-              <th className="px-3 py-2 border-b border-dl-border">Currency</th>
-              <th className="px-3 py-2 border-b border-dl-border">Due Date</th>
-              <th className="px-3 py-2 border-b border-dl-border">Sent</th>
-              <th className="px-3 py-2 border-b border-dl-border">Reference</th>
-            </tr>
-          </thead>
-          <tbody>
-            {capitalCalls.map((cc: any) => {
-              const meta = cc.meta || {};
-              const isOverdue = cc.due_date && cc.status === 'sent' && new Date(cc.due_date) < new Date();
-              return (
-                <tr key={cc.id} className={`border-b border-gray-100 ${isOverdue ? 'bg-red-50' : 'hover:bg-gray-50'}`}>
-                  <td className="px-3 py-2">
-                    <Link href={`/syndication/offerings/${cc.offering_id}`} className="text-dl-navy underline">
-                      {cc.offering_name}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2">
-                    <span className={`inline-block px-2 py-0.5 text-xs ${STATUS_COLORS[cc.status] || 'bg-gray-100 text-gray-600'}`}>
-                      {cc.status}
-                    </span>
-                    {isOverdue && <span className="ml-1 text-xs text-red-600">OVERDUE</span>}
-                  </td>
-                  <td className="px-3 py-2 text-right font-dl-mono">{fmtFull(parseFloat(cc.amount_called || '0'))}</td>
-                  <td className="px-3 py-2 font-dl-mono">{cc.currency || 'USD'}</td>
-                  <td className="px-3 py-2 font-dl-mono text-xs">{fmtDate(cc.due_date)}</td>
-                  <td className="px-3 py-2 font-dl-mono text-xs">{fmtDate(cc.sent_at)}</td>
-                  <td className="px-3 py-2 font-dl-mono text-xs">{meta.memoCode || '\u2014'}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="md:hidden grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {capitalCalls.map((cc: any) => {
           const meta = cc.meta || {};
           const isOverdue = cc.due_date && cc.status === 'sent' && new Date(cc.due_date) < new Date();
@@ -628,72 +588,7 @@ function DistributionsTab({ distributions }: { distributions: any[] }) {
         </p>
       </div>
 
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-sm border border-dl-border">
-          <thead>
-            <tr className="bg-gray-50 text-left text-xs text-dl-gray uppercase tracking-wide">
-              <th className="px-3 py-2 border-b border-dl-border">Offering</th>
-              <th className="px-3 py-2 border-b border-dl-border">Type</th>
-              <th className="px-3 py-2 border-b border-dl-border">Status</th>
-              <th className="px-3 py-2 border-b border-dl-border text-right">Gross</th>
-              <th className="px-3 py-2 border-b border-dl-border text-right">Net</th>
-              <th className="px-3 py-2 border-b border-dl-border">Currency</th>
-              <th className="px-3 py-2 border-b border-dl-border">Period</th>
-              <th className="px-3 py-2 border-b border-dl-border">Paid</th>
-              <th className="px-3 py-2 border-b border-dl-border">Tx</th>
-            </tr>
-          </thead>
-          <tbody>
-            {distributions.map((d: any) => {
-              const meta = d.meta || {};
-              const txHash = meta.tx_hash;
-              const unitPaymentId = meta.unit_payment_id;
-              return (
-                <tr key={d.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="px-3 py-2">
-                    <Link href={`/syndication/offerings/${d.offering_id}`} className="text-dl-navy underline">
-                      {d.offering_name}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2 text-xs">
-                    {DIST_TYPE_LABELS[d.distribution_type] || d.distribution_type}
-                  </td>
-                  <td className="px-3 py-2">
-                    <span className={`inline-block px-2 py-0.5 text-xs ${STATUS_COLORS[d.status] || 'bg-gray-100 text-gray-600'}`}>
-                      {d.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-right font-dl-mono">{fmtFull(parseFloat(d.gross_amount || '0'))}</td>
-                  <td className="px-3 py-2 text-right font-dl-mono">{fmtFull(parseFloat(d.net_amount || '0'))}</td>
-                  <td className="px-3 py-2 font-dl-mono">{d.currency || 'USD'}</td>
-                  <td className="px-3 py-2 font-dl-mono text-xs">
-                    {d.period_start || d.period_end
-                      ? `${fmtDate(d.period_start)} - ${fmtDate(d.period_end)}`
-                      : '\u2014'}
-                  </td>
-                  <td className="px-3 py-2 font-dl-mono text-xs">{fmtDate(d.paid_at)}</td>
-                  <td className="px-3 py-2 font-dl-mono text-xs">
-                    {txHash ? (
-                      <a
-                        href={`https://arbiscan.io/tx/${txHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline"
-                      >
-                        {String(txHash).slice(0, 8)}...
-                      </a>
-                    ) : unitPaymentId ? (
-                      <span className="text-dl-gray">ACH {String(unitPaymentId).slice(0, 8)}</span>
-                    ) : '\u2014'}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="md:hidden grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {distributions.map((d: any) => {
           const meta = d.meta || {};
           const txHash = meta.tx_hash;

@@ -299,108 +299,50 @@ export default function SyndicationDashboard() {
       )}
 
       {offerings.length > 0 && (
-        <>
-          <div className="hidden md:block border border-dl-border">
-            <table className="w-full font-dl-mono text-sm">
-              <thead>
-                <tr className="bg-dl-bg border-b border-dl-border text-left">
-                  <th className="px-4 py-3 text-xs text-dl-muted uppercase">Offering</th>
-                  <th className="px-4 py-3 text-xs text-dl-muted uppercase">Type</th>
-                  <th className="px-4 py-3 text-xs text-dl-muted uppercase">Status</th>
-                  <th className="px-4 py-3 text-xs text-dl-muted uppercase text-right">Target Raise</th>
-                  <th className="px-4 py-3 text-xs text-dl-muted uppercase text-right">Committed</th>
-                  <th className="px-4 py-3 text-xs text-dl-muted uppercase text-right">Pipeline</th>
-                  <th className="px-4 py-3 text-xs text-dl-muted uppercase text-right">Subs</th>
-                  <th className="px-4 py-3 text-xs text-dl-muted uppercase">Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {offerings.map(o => {
-                  const target = parseFloat(o.target_raise || '0');
-                  const committed = parseFloat(o.total_committed || '0');
-                  const pct = target > 0 ? Math.min(100, (committed / target) * 100) : 0;
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          {offerings.map(o => {
+            const target = parseFloat(o.target_raise || '0');
+            const committed = parseFloat(o.total_committed || '0');
+            const pct = target > 0 ? Math.min(100, (committed / target) * 100) : 0;
 
-                  return (
-                    <tr key={o.id} className="border-b border-dl-border hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <Link href={`/syndication/offerings/${o.id}`} className="text-dl-navy hover:underline">
-                          {o.name}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3 text-dl-muted text-xs uppercase">{TYPE_LABELS[o.offering_type] || o.offering_type}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 text-xs ${STATUS_COLORS[o.status] || 'bg-gray-100 text-gray-600'}`}>
-                          {STATUS_LABELS[o.status] || o.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">{target > 0 ? fmt(target) : '\u2014'}</td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {target > 0 && (
-                            <div className="w-16 h-1.5 bg-gray-200">
-                              <div className="h-full bg-green-600" style={{ width: `${pct}%` }} />
-                            </div>
-                          )}
-                          <span>{committed > 0 ? fmt(committed) : '\u2014'}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">{o.pipeline_count}</td>
-                      <td className="px-4 py-3 text-right">{o.subscription_count}</td>
-                      <td className="px-4 py-3 text-dl-muted text-xs">
-                        {new Date(o.created_at).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {offerings.map(o => {
-              const target = parseFloat(o.target_raise || '0');
-              const committed = parseFloat(o.total_committed || '0');
-              const pct = target > 0 ? Math.min(100, (committed / target) * 100) : 0;
-
-              return (
-                <Link key={o.id} href={`/syndication/offerings/${o.id}`} className="block border border-dl-border p-4 hover:bg-gray-50">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-dl-serif text-base text-dl-navy leading-tight pr-2">{o.name}</h3>
-                    <span className={`px-2 py-0.5 text-[10px] whitespace-nowrap ${STATUS_COLORS[o.status] || 'bg-gray-100 text-gray-600'}`}>
-                      {STATUS_LABELS[o.status] || o.status}
-                    </span>
+            return (
+              <Link key={o.id} href={`/syndication/offerings/${o.id}`} className="block border border-dl-border p-4 hover:bg-gray-50">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-dl-serif text-base text-dl-navy leading-tight pr-2">{o.name}</h3>
+                  <span className={`px-2 py-0.5 text-[10px] whitespace-nowrap ${STATUS_COLORS[o.status] || 'bg-gray-100 text-gray-600'}`}>
+                    {STATUS_LABELS[o.status] || o.status}
+                  </span>
+                </div>
+                <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-3">
+                  {TYPE_LABELS[o.offering_type] || o.offering_type}
+                </p>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div>
+                    <p className="font-dl-mono text-[10px] text-dl-muted uppercase">Target</p>
+                    <p className="font-dl-mono text-sm text-dl-navy">{target > 0 ? fmt(target) : '\u2014'}</p>
                   </div>
-                  <p className="font-dl-mono text-[10px] text-dl-muted uppercase mb-3">
-                    {TYPE_LABELS[o.offering_type] || o.offering_type}
-                  </p>
-                  <div className="grid grid-cols-2 gap-2 mb-2">
-                    <div>
-                      <p className="font-dl-mono text-[10px] text-dl-muted uppercase">Target</p>
-                      <p className="font-dl-mono text-sm text-dl-navy">{target > 0 ? fmt(target) : '\u2014'}</p>
-                    </div>
-                    <div>
-                      <p className="font-dl-mono text-[10px] text-dl-muted uppercase">Committed</p>
-                      <p className="font-dl-mono text-sm text-green-700">{committed > 0 ? fmt(committed) : '\u2014'}</p>
-                    </div>
+                  <div>
+                    <p className="font-dl-mono text-[10px] text-dl-muted uppercase">Committed</p>
+                    <p className="font-dl-mono text-sm text-green-700">{committed > 0 ? fmt(committed) : '\u2014'}</p>
                   </div>
-                  {target > 0 && (
-                    <div className="w-full h-1.5 bg-gray-200 mb-2">
-                      <div className="h-full bg-green-600" style={{ width: `${pct}%` }} />
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <span className="font-dl-mono text-[10px] text-dl-muted">
-                      {o.pipeline_count} pipeline | {o.subscription_count} subs
-                    </span>
-                    <span className="font-dl-mono text-[10px] text-dl-muted">
-                      {new Date(o.created_at).toLocaleDateString()}
-                    </span>
+                </div>
+                {target > 0 && (
+                  <div className="w-full h-1.5 bg-gray-200 mb-2">
+                    <div className="h-full bg-green-600" style={{ width: `${pct}%` }} />
                   </div>
-                </Link>
-              );
-            })}
-          </div>
-        </>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="font-dl-mono text-[10px] text-dl-muted">
+                    {o.pipeline_count} pipeline | {o.subscription_count} subs
+                  </span>
+                  <span className="font-dl-mono text-[10px] text-dl-muted">
+                    {new Date(o.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       )}
 
       <div className="mt-12 mb-4 border-t border-dl-border pt-8">
