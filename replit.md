@@ -26,6 +26,9 @@ Wallet connection utilizes Wagmi v2.19 + Reown AppKit v1.8 (WalletConnect's offi
 ### Technical Implementations
 The core Axiom Protocol Token (AXM) is an ERC20 governance token on Arbitrum One, with a planned migration to Universe Blockchain (L3). The multi-phase Smart Contract Architecture on Arbitrum One includes identity, treasury, staking, emissions, and asset registries, supported by 72 verified smart contracts. The platform utilizes a HYBRID CUSTODY model for its Complete DeFi Treasury Suite. An "Active Contract Verification System" ensures the integrity of AXUSD and PSM contract addresses.
 
+### Deployment
+Production deployment uses Replit VM (Reserved VM) — always-running persistent server with a stable outbound IP. This is required for BitGo's IP-restricted API tokens and eliminates serverless cold-start issues. Build: `npm run build` (`next build`). Run: `npm run start` (`next start -H 0.0.0.0`). Production port: 3000. Custom domain: `axiomprotocol.app`. The in-memory rate limiter (`lib/rateLimit.ts`) works correctly because the process stays running (would not work in serverless/autoscale).
+
 ### System Design Choices
 The architecture employs a "Product Factory Approach" for scalability. The current blockchain network is Arbitrum One, with a planned migration to Universe Blockchain (L3). Data is managed using PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend features centralized contract configuration, a dedicated contract service, and chain validation middleware. New table groups use separate schema files to avoid export failures.
 
