@@ -51,12 +51,27 @@ function Addr({ address }: { address: string }) {
   );
 }
 
-function ContractRow({ name, address, purpose, alt }: { name: string; address: string; purpose: string; alt: boolean }) {
+function StatusPill({ status }: { status: string }) {
+  const colors: Record<string, string> = {
+    'Live': 'bg-green-100 text-green-800 border-green-300',
+    'Configured-Inactive': 'bg-yellow-50 text-yellow-800 border-yellow-300',
+    'Planned': 'bg-blue-50 text-blue-800 border-blue-300',
+    'Deprecated': 'bg-gray-100 text-gray-500 border-gray-300',
+  };
   return (
-    <div className={`grid grid-cols-1 sm:grid-cols-3 px-6 py-3 border-b border-dl-border ${alt ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
+    <span className={`inline-block px-2 py-0.5 text-xs font-dl-mono border ${colors[status] || colors['Planned']}`}>
+      {status}
+    </span>
+  );
+}
+
+function ContractRow({ name, address, purpose, alt, status }: { name: string; address: string; purpose: string; alt: boolean; status: string }) {
+  return (
+    <div className={`grid grid-cols-1 sm:grid-cols-4 px-6 py-3 border-b border-dl-border ${alt ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
       <p className="text-sm text-dl-navy font-semibold">{name}</p>
       <p className="text-xs"><Addr address={address} /></p>
       <p className="text-sm text-dl-gray">{purpose}</p>
+      <p className="text-sm"><StatusPill status={status} /></p>
     </div>
   );
 }
@@ -190,38 +205,38 @@ export default function DisclosurePage() {
   ];
 
   const coreContracts = [
-    { name: 'AXM Token', address: '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D', purpose: 'Governance and coordination token (ERC20)' },
-    { name: 'Identity and Compliance Hub', address: '0xf88bb44511E5752Ee69953166C5d5dC0cfC8B3ED', purpose: 'KYC/AML identity management' },
-    { name: 'Treasury and Revenue Hub', address: '0x3fD63728288546AC41dAe3bf25ca383061c3A929', purpose: 'Multi-party treasury authorization' },
-    { name: 'Emissions Hub', address: '0x8b99cDeefB3116cA87AF24A9E10D5580dA07B885', purpose: 'Token emissions and distribution' },
-    { name: 'Citizen Credential Registry', address: '0x8EF87e0ab34d5088fcBc4cD2E2943eAD9085C344', purpose: 'On-chain credential management' },
-    { name: 'Land and Asset Registry', address: '0xaB15907b124620E165aB6E464eE45b178d8a6591', purpose: 'Real estate asset registry' },
-    { name: 'Lease and Rent Engine', address: '0x00591d360416dE7b016bBedbC6AA1AE798eA873B', purpose: 'Lease management and rent collection' },
-    { name: 'DePIN Node Suite', address: '0x223dF824B320beD4A8Fd0648b242621e4d01aAEF', purpose: 'Decentralized infrastructure nodes' },
-    { name: 'Exchange Hub', address: '0xF660d260a0bBC690a8ab0f1e6A41049FC919A34D', purpose: 'Token exchange and liquidity' },
+    { name: 'AXM Token', address: '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D', purpose: 'Governance and coordination token (ERC20)', status: 'Live' },
+    { name: 'Identity and Compliance Hub', address: '0xf88bb44511E5752Ee69953166C5d5dC0cfC8B3ED', purpose: 'KYC/AML identity management', status: 'Live' },
+    { name: 'Treasury and Revenue Hub', address: '0x3fD63728288546AC41dAe3bf25ca383061c3A929', purpose: 'Multi-party treasury authorization', status: 'Live' },
+    { name: 'Emissions Hub', address: '0x8b99cDeefB3116cA87AF24A9E10D5580dA07B885', purpose: 'Token emissions and distribution', status: 'Configured-Inactive' },
+    { name: 'Citizen Credential Registry', address: '0x8EF87e0ab34d5088fcBc4cD2E2943eAD9085C344', purpose: 'On-chain credential management', status: 'Live' },
+    { name: 'Land and Asset Registry', address: '0xaB15907b124620E165aB6E464eE45b178d8a6591', purpose: 'Real estate asset registry', status: 'Configured-Inactive' },
+    { name: 'Lease and Rent Engine', address: '0x00591d360416dE7b016bBedbC6AA1AE798eA873B', purpose: 'Lease management and rent collection', status: 'Configured-Inactive' },
+    { name: 'DePIN Node Suite', address: '0x223dF824B320beD4A8Fd0648b242621e4d01aAEF', purpose: 'Decentralized infrastructure nodes', status: 'Live' },
+    { name: 'Exchange Hub', address: '0xF660d260a0bBC690a8ab0f1e6A41049FC919A34D', purpose: 'Token exchange and liquidity', status: 'Live' },
   ];
 
   const axusdContracts = [
-    { name: 'Unified AXUSD (ERC-3643)', address: '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7', purpose: 'T-REX compliant stablecoin (replaces dual ecosystem)' },
-    { name: 'Identity Registry', address: '0x58f64a1262d5434d6C7637a2309b0999bB6D1970', purpose: 'ONCHAINID investor identity management' },
-    { name: 'Modular Compliance', address: '0xaC9E1A91D1C7F584C9FC04E283fae30Ae2F636DD', purpose: 'Four-module compliance enforcement' },
-    { name: 'Identity Factory', address: '0x1A7c55AC9A4AB318039f8E2BDfA82500332c86B9', purpose: 'EIP-1167 ONCHAINID deployment' },
-    { name: 'Lending Platform Module', address: '0xC0177120Fb5922813031a5857f4dF7F01750Bb6F', purpose: 'DeFi platform whitelist for compliant lending' },
-    { name: 'Legacy Primary AXUSD', address: '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C', purpose: 'Deprecated — migrated to ERC-3643' },
-    { name: 'Legacy Euler AXUSD', address: '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c', purpose: 'Deprecated — migrated to ERC-3643' },
+    { name: 'Unified AXUSD (ERC-3643)', address: '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7', purpose: 'T-REX compliant stablecoin (replaces dual ecosystem)', status: 'Live' },
+    { name: 'Identity Registry', address: '0x58f64a1262d5434d6C7637a2309b0999bB6D1970', purpose: 'ONCHAINID investor identity management', status: 'Live' },
+    { name: 'Modular Compliance', address: '0xaC9E1A91D1C7F584C9FC04E283fae30Ae2F636DD', purpose: 'Four-module compliance enforcement', status: 'Live' },
+    { name: 'Identity Factory', address: '0x1A7c55AC9A4AB318039f8E2BDfA82500332c86B9', purpose: 'EIP-1167 ONCHAINID deployment', status: 'Live' },
+    { name: 'Lending Platform Module', address: '0xC0177120Fb5922813031a5857f4dF7F01750Bb6F', purpose: 'DeFi platform whitelist for compliant lending', status: 'Live' },
+    { name: 'Legacy Primary AXUSD', address: '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C', purpose: 'Deprecated — migrated to ERC-3643', status: 'Deprecated' },
+    { name: 'Legacy Euler AXUSD', address: '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c', purpose: 'Deprecated — migrated to ERC-3643', status: 'Deprecated' },
   ];
 
   const finContracts = [
-    { name: 'Euler Vault', address: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059', purpose: 'ERC4626 lending vault (eAXUSD-4)' },
-    { name: 'Revenue Router', address: '0x39A9Ca593d350450d93aF7F24dC1A682df47F30a', purpose: 'Fee distribution (50/30/20)' },
-    { name: 'SEED Contract', address: '0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046', purpose: 'Participation lockup program' },
-    { name: 'Lending Fund Vault', address: '0xF4AcD4B7EaBfDA7E1b96D3abA1C6340557aa93E5', purpose: 'SEC Reg D 506(c) vault' },
-    { name: 'Lending Fund Manager', address: '0xD6ebaBEAEf4B263fa10cc0E630Ab2B9A2e478958', purpose: 'Loan origination and management' },
-    { name: 'Lending Fund Risk Config', address: '0xD9a53c691B688351283Fecc33D8D9AF964A9a078', purpose: 'Risk parameters and governance' },
+    { name: 'Euler Vault', address: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059', purpose: 'ERC4626 lending vault (eAXUSD-4)', status: 'Live' },
+    { name: 'Revenue Router', address: '0x39A9Ca593d350450d93aF7F24dC1A682df47F30a', purpose: 'Fee distribution (50/30/20)', status: 'Live' },
+    { name: 'SEED Contract', address: '0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046', purpose: 'Participation lockup program', status: 'Live' },
+    { name: 'Lending Fund Vault', address: '0xF4AcD4B7EaBfDA7E1b96D3abA1C6340557aa93E5', purpose: 'SEC Reg D 506(c) vault', status: 'Live' },
+    { name: 'Lending Fund Manager', address: '0xD6ebaBEAEf4B263fa10cc0E630Ab2B9A2e478958', purpose: 'Loan origination and management', status: 'Live' },
+    { name: 'Lending Fund Risk Config', address: '0xD9a53c691B688351283Fecc33D8D9AF964A9a078', purpose: 'Risk parameters and governance', status: 'Live' },
   ];
 
   const operationalContracts = [
-    { name: 'Deployer', address: '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96', purpose: 'Contract deployment authority' },
+    { name: 'Deployer', address: '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96', purpose: 'Contract deployment authority', status: 'Live' },
   ];
 
   return (
@@ -270,7 +285,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>Executive Summary</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><FileText className="w-5 h-5 text-dl-navy" />Executive Summary</span></SectionHeading>
           <div className="text-dl-navy leading-relaxed space-y-4">
             <p>
               Axiom Protocol is a sovereign digital-physical economy built on Arbitrum One (Chain ID 42161), designed to create a community-governed financial infrastructure bridging on-chain capital coordination with physical asset acquisition.
@@ -318,7 +333,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>Definitions and Measurement Basis</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><BookOpen className="w-5 h-5 text-dl-navy" />Definitions and Measurement Basis</span></SectionHeading>
           <div className="border border-dl-border">
             <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-3 bg-dl-bg border-b border-dl-border">
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Term</p>
@@ -344,7 +359,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>Protocol Architecture</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><Layers className="w-5 h-5 text-dl-navy" />Protocol Architecture</span></SectionHeading>
           <div className="border border-dl-border">
             <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-3 bg-dl-bg border-b border-dl-border">
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Layer</p>
@@ -361,7 +376,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>Operational Status</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><Activity className="w-5 h-5 text-dl-navy" />Operational Status</span></SectionHeading>
 
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
@@ -417,7 +432,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>Core Token {'\u2014'} AXM</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><Coins className="w-5 h-5 text-dl-navy" />Core Token {'\u2014'} AXM</span></SectionHeading>
           <div className="border border-dl-border">
             <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
               <p className="text-xs text-dl-gray mb-1">Contract</p>
@@ -451,7 +466,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>AXUSD Stablecoin System</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-dl-navy" />AXUSD Stablecoin System</span></SectionHeading>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 sm:gap-6">
             <div className="border border-dl-border mb-6 sm:mb-0">
               <div className="px-6 py-3 bg-dl-bg-alt border-b border-dl-border">
@@ -516,7 +531,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>Euler V2 Lending Markets</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><Landmark className="w-5 h-5 text-dl-navy" />Euler V2 Lending Markets</span></SectionHeading>
           <div className="border border-dl-border">
             <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
               <p className="text-xs text-dl-gray mb-1">Vault Address</p>
@@ -556,7 +571,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>Revenue Distribution Engine</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><TrendingUp className="w-5 h-5 text-dl-navy" />Revenue Distribution Engine</span></SectionHeading>
           <div className="border border-dl-border">
             <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
               <p className="text-xs text-dl-gray mb-1">Contract</p>
@@ -588,7 +603,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>Lending Fund (SEC Reg D 506(c))</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><Scale className="w-5 h-5 text-dl-navy" />Lending Fund (SEC Reg D 506(c))</span></SectionHeading>
           <div className="border border-dl-border">
             <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
               <p className="text-xs text-dl-gray mb-1">Vault</p>
@@ -625,7 +640,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>Sentinel {'\u2014'} Capital Decision Layer</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><Shield className="w-5 h-5 text-dl-navy" />Sentinel {'\u2014'} Capital Decision Layer</span></SectionHeading>
           <div className="border border-dl-border">
             <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
               <p className="text-xs text-dl-gray mb-1">Current Authority Mode</p>
@@ -640,7 +655,7 @@ export default function DisclosurePage() {
         </section>
 
         <section className="mb-12">
-          <SectionHeading>MIRDT Execution Model</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><BarChart3 className="w-5 h-5 text-dl-navy" />MIRDT Execution Model</span></SectionHeading>
           <div className="border border-dl-border">
             <div className="grid grid-cols-1 sm:grid-cols-2 px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
               <div>
@@ -686,7 +701,7 @@ export default function DisclosurePage() {
         </section>
 
         <section className="mb-12">
-          <SectionHeading>Graduated Execution Framework (GEF)</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><Target className="w-5 h-5 text-dl-navy" />Graduated Execution Framework (GEF)</span></SectionHeading>
           <div className="border border-dl-border">
             <div className="grid grid-cols-1 sm:grid-cols-2 px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
               <div>
@@ -774,7 +789,7 @@ export default function DisclosurePage() {
         </section>
 
         <section className="mb-12">
-          <SectionHeading>Proof of Execution Playbook</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><Eye className="w-5 h-5 text-dl-navy" />Proof of Execution Playbook</span></SectionHeading>
           <div className="border border-dl-border">
             <div className="grid grid-cols-1 sm:grid-cols-2 px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
               <div>
@@ -807,7 +822,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>Adaptive Metrics Engine (AME)</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><Activity className="w-5 h-5 text-dl-navy" />Adaptive Metrics Engine (AME)</span></SectionHeading>
           <div className="border border-dl-border">
             <div className="grid grid-cols-1 sm:grid-cols-2 px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
               <div>
@@ -859,7 +874,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>Solvency and Reserve Transparency</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><Lock className="w-5 h-5 text-dl-navy" />Solvency and Reserve Transparency</span></SectionHeading>
           <div className="border border-dl-border">
             <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
               <p className="text-sm text-dl-navy">
@@ -894,7 +909,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>52-Week Operational Playbook</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><Target className="w-5 h-5 text-dl-navy" />52-Week Operational Playbook</span></SectionHeading>
           <div className="border border-dl-border">
             <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-3 bg-dl-bg border-b border-dl-border">
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Phase</p>
@@ -931,7 +946,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>7 Mandatory Guard Rails</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><AlertCircle className="w-5 h-5 text-dl-error" />7 Mandatory Guard Rails</span></SectionHeading>
           <div className="border border-dl-border border-l-4 border-l-dl-error">
             {guardRails.map((gr, i) => (
               <div key={i} className={`px-6 py-3 ${i < guardRails.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
@@ -950,7 +965,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>Risk Factors</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-dl-gold" />Risk Factors</span></SectionHeading>
           <div className="border border-dl-border border-l-4 border-l-dl-gold">
             {riskFactors.map((rf, i) => (
               <div key={i} className={`px-6 py-3 ${i < riskFactors.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
@@ -968,20 +983,21 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>Contract Registry</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><Layers className="w-5 h-5 text-dl-forest" />Contract Registry</span></SectionHeading>
 
           <div className="flex items-center gap-2 mb-3">
             <Layers className="w-4 h-4 text-dl-forest" />
             <h3 className="font-dl-serif text-dl-navy text-lg">Core Protocol</h3>
           </div>
           <div className="border border-dl-border mb-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-2 bg-dl-bg border-b border-dl-border">
+            <div className="grid grid-cols-1 sm:grid-cols-4 px-6 py-2 bg-dl-bg border-b border-dl-border">
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Name</p>
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Address</p>
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Purpose</p>
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Status</p>
             </div>
             {coreContracts.map((c, i) => (
-              <ContractRow key={i} name={c.name} address={c.address} purpose={c.purpose} alt={i % 2 === 0} />
+              <ContractRow key={i} name={c.name} address={c.address} purpose={c.purpose} status={c.status} alt={i % 2 === 0} />
             ))}
           </div>
 
@@ -990,13 +1006,14 @@ export default function DisclosurePage() {
             <h3 className="font-dl-serif text-dl-navy text-lg">AXUSD Ecosystem</h3>
           </div>
           <div className="border border-dl-border mb-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-2 bg-dl-bg border-b border-dl-border">
+            <div className="grid grid-cols-1 sm:grid-cols-4 px-6 py-2 bg-dl-bg border-b border-dl-border">
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Name</p>
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Address</p>
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Purpose</p>
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Status</p>
             </div>
             {axusdContracts.map((c, i) => (
-              <ContractRow key={i} name={c.name} address={c.address} purpose={c.purpose} alt={i % 2 === 0} />
+              <ContractRow key={i} name={c.name} address={c.address} purpose={c.purpose} status={c.status} alt={i % 2 === 0} />
             ))}
           </div>
 
@@ -1005,13 +1022,14 @@ export default function DisclosurePage() {
             <h3 className="font-dl-serif text-dl-navy text-lg">Financial Infrastructure</h3>
           </div>
           <div className="border border-dl-border mb-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-2 bg-dl-bg border-b border-dl-border">
+            <div className="grid grid-cols-1 sm:grid-cols-4 px-6 py-2 bg-dl-bg border-b border-dl-border">
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Name</p>
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Address</p>
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Purpose</p>
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Status</p>
             </div>
             {finContracts.map((c, i) => (
-              <ContractRow key={i} name={c.name} address={c.address} purpose={c.purpose} alt={i % 2 === 0} />
+              <ContractRow key={i} name={c.name} address={c.address} purpose={c.purpose} status={c.status} alt={i % 2 === 0} />
             ))}
           </div>
 
@@ -1020,20 +1038,21 @@ export default function DisclosurePage() {
             <h3 className="font-dl-serif text-dl-navy text-lg">Operational</h3>
           </div>
           <div className="border border-dl-border">
-            <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-2 bg-dl-bg border-b border-dl-border">
+            <div className="grid grid-cols-1 sm:grid-cols-4 px-6 py-2 bg-dl-bg border-b border-dl-border">
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Name</p>
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Address</p>
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Purpose</p>
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Status</p>
             </div>
             {operationalContracts.map((c, i) => (
-              <ContractRow key={i} name={c.name} address={c.address} purpose={c.purpose} alt={i % 2 === 0} />
+              <ContractRow key={i} name={c.name} address={c.address} purpose={c.purpose} status={c.status} alt={i % 2 === 0} />
             ))}
           </div>
         </section>
 
         
         <section className="mb-12">
-          <SectionHeading>Appendix {'\u2014'} Technical References</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><FileText className="w-5 h-5 text-dl-navy" />Appendix {'\u2014'} Technical References</span></SectionHeading>
 
           <h3 className="font-dl-serif text-dl-navy text-lg mb-3">PSM Function Selectors</h3>
           <div className="border border-dl-border mb-6">
@@ -1077,7 +1096,7 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
-          <SectionHeading>Glossary {'\u2014'} Vocabulary Reference</SectionHeading>
+          <SectionHeading><span className="inline-flex items-center gap-2"><BookOpen className="w-5 h-5 text-dl-navy" />Glossary {'\u2014'} Vocabulary Reference</span></SectionHeading>
           <div className="border border-dl-border">
             <div className="grid grid-cols-2 px-6 py-3 bg-dl-bg border-b border-dl-border">
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Institutional Term</p>

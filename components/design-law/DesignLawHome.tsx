@@ -34,6 +34,8 @@ const PRODUCT_GRID = [
   { title: 'Land Pipeline', description: 'Full land acquisition lifecycle with live governance and voting.', href: '/land', icon: Globe },
   { title: 'DePIN', description: 'Decentralized storage infrastructure through DeNet node integration.', href: '/depin/denet', icon: Radio },
   { title: 'Syndication', description: 'Full syndication operating system with offerings, capital calls, and distributions.', href: '/syndication', icon: Layers },
+  { title: 'Investor Portal', description: 'Wallet-authenticated investor dashboard with holdings, capital calls, and distributions.', href: '/syndication/portal', icon: FileText },
+  { title: 'Execution Framework', description: 'Behavior-based qualification system with graduated access tiers.', href: '/gef', icon: Scale },
 ];
 
 const INTELLIGENCE_GRID = [

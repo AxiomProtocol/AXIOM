@@ -75,10 +75,10 @@ export default function AboutUsPage() {
       </div>
 
       <div className="mb-12">
-        <div className="w-full border border-dl-border" style={{ height: '300px', overflow: 'hidden' }}>
+        <div className="w-full border border-dl-border border-l-4 border-l-dl-navy" style={{ height: '300px', overflow: 'hidden' }}>
           <img
-            src="/images/about-community.png"
-            alt="Aerial view of community farmland at sunrise"
+            src="/images/about-hero.png"
+            alt="Axiom Protocol institutional infrastructure"
             className="w-full h-full object-cover"
             style={{ display: 'block' }}
           />
