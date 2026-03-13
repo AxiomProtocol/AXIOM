@@ -4,18 +4,18 @@ import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout'
 import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
-
-const STRATEGY_OPTIONS = [
-  { key: 'brrrr', label: 'BRRRR', icon: '/images/realestate/icon_brrrr.png' },
-  { key: 'flip', label: 'Flip', icon: '/images/realestate/icon_flip.png' },
-  { key: 'hold', label: 'Buy & Hold', icon: '/images/realestate/icon_hold.png' },
-];
 import IVCEEPanel from '../../../components/deal-intelligence/IVCEEPanel';
 import DocumentsPanel from '../../../components/deal-intelligence/DocumentsPanel';
 import DueDiligencePanel from '../../../components/deal-intelligence/DueDiligencePanel';
 import CapitalReadinessCard from '../../../components/deal-intelligence/CapitalReadinessCard';
 import StrategyComparison from '../../../components/deal-intelligence/StrategyComparison';
 import AcquisitionMemo from '../../../components/deal-intelligence/AcquisitionMemo';
+
+const STRATEGY_OPTIONS = [
+  { key: 'brrrr', label: 'BRRRR', icon: '/images/realestate/icon_brrrr.png' },
+  { key: 'flip', label: 'Flip', icon: '/images/realestate/icon_flip.png' },
+  { key: 'hold', label: 'Buy & Hold', icon: '/images/realestate/icon_hold.png' },
+];
 
 interface DealSummary {
   deal: Record<string, any>;
