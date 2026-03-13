@@ -223,7 +223,8 @@ export default function OfferingBuilder() {
   const [fundingInstructions, setFundingInstructions] = useState<any>(null);
   const [loadingInstructions, setLoadingInstructions] = useState(false);
   const [showReportForm, setShowReportForm] = useState(true);
-  const [reportForm, setReportForm] = useState({ title: '', reportType: 'quarterly', content: '' });
+  const [reportForm, setReportForm] = useState({ title: '', reportType: 'quarterly', content: '', notifyInvestors: true });
+  const [reportToast, setReportToast] = useState<string | null>(null);
   const [publishingReport, setPublishingReport] = useState(false);
   const [distPayConfirm, setDistPayConfirm] = useState<any | null>(null);
   const [distPaying, setDistPaying] = useState<string | null>(null);
@@ -444,6 +445,7 @@ export default function OfferingBuilder() {
   const handlePublishReport = async () => {
     if (!reportForm.title) return;
     setPublishingReport(true);
+    setReportToast(null);
     try {
       const res = await fetch(`/api/syndication/offerings/${id}/reports`, {
         method: 'POST',
@@ -452,9 +454,19 @@ export default function OfferingBuilder() {
       });
       const json = await res.json();
       if (json.success) {
-        setReportForm({ title: '', reportType: 'quarterly', content: '' });
+        setReportForm({ title: '', reportType: 'quarterly', content: '', notifyInvestors: true });
         setShowReportForm(false);
         loadTabData('reports');
+        if (reportForm.notifyInvestors) {
+          if (json.notifiedCount > 0) {
+            setReportToast(`Report published — ${json.notifiedCount} investor${json.notifiedCount === 1 ? '' : 's'} notified by email.`);
+          } else {
+            setReportToast('Report published — no investor emails found.');
+          }
+        } else {
+          setReportToast('Report published.');
+        }
+        setTimeout(() => setReportToast(null), 6000);
       }
     } catch (err) { console.error(err); }
     finally { setPublishingReport(false); }
@@ -2146,6 +2158,17 @@ export default function OfferingBuilder() {
                     className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm"
                   />
                 </div>
+                <div className="flex items-center gap-4 mb-3">
+                  <label className="flex items-center gap-2 font-dl-mono text-sm text-dl-text cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={reportForm.notifyInvestors}
+                      onChange={e => setReportForm(p => ({ ...p, notifyInvestors: e.target.checked }))}
+                      className="w-4 h-4"
+                    />
+                    Notify Investors by Email
+                  </label>
+                </div>
                 <button
                   onClick={handlePublishReport}
                   disabled={publishingReport || !reportForm.title}
@@ -2153,6 +2176,12 @@ export default function OfferingBuilder() {
                 >
                   {publishingReport ? 'Publishing...' : 'Publish Report'}
                 </button>
+              </div>
+            )}
+
+            {reportToast && (
+              <div className="border border-green-300 bg-green-50 px-4 py-2 font-dl-mono text-sm text-green-800">
+                {reportToast}
               </div>
             )}
 
