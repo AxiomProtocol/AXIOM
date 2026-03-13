@@ -458,7 +458,9 @@ export default function OfferingBuilder() {
         setShowReportForm(false);
         loadTabData('reports');
         if (reportForm.notifyInvestors) {
-          if (json.notifiedCount > 0) {
+          if (json.emailSkipped) {
+            setReportToast('Report published — email service unavailable, notifications skipped.');
+          } else if (json.notifiedCount > 0) {
             setReportToast(`Report published — ${json.notifiedCount} investor${json.notifiedCount === 1 ? '' : 's'} notified by email.`);
           } else {
             setReportToast('Report published — no investor emails found.');

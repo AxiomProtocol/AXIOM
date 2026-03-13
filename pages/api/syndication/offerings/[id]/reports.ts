@@ -133,6 +133,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }
         } catch (resendErr) {
           console.error('[Reports] Email delivery skipped (Resend not configured):', resendErr);
+          return res.status(201).json({ success: true, reportId: result.rows[0].id, notifiedCount: 0, emailSkipped: true });
         }
       }
 
