@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
+import {
+  Landmark, AlertTriangle, ShieldCheck, FileText, Layers, Shield,
+  BookOpen, Lock, BarChart3, Scale, Eye, Target, Coins, Radio,
+  TrendingUp, Building2, Activity, Clock, AlertCircle
+} from 'lucide-react';
 
 interface SnapshotData {
   snapshotId: string;
@@ -228,19 +233,33 @@ export default function DisclosurePage() {
 
       <div className="max-w-4xl mx-auto">
 
-        
         <div className="mb-10">
+          <div className="w-full border border-dl-border mb-6" style={{ height: '220px', overflow: 'hidden' }}>
+            <img
+              src="/images/disclosure-hero.png"
+              alt="Institutional financial terminal with treasury dashboards"
+              className="w-full h-full object-cover"
+              style={{ display: 'block' }}
+            />
+          </div>
+
           <h1 className="font-dl-serif text-3xl text-dl-navy">Axiom Protocol</h1>
           <p className="text-dl-gray mt-1 text-lg">Sovereign Infrastructure Disclosure and Capital Framework</p>
-          <div className="border border-dl-border mt-4 px-6 py-3 bg-dl-bg-alt">
-            <p className="text-sm text-dl-navy">Document Classification: Institutional Disclosure {'\u2014'} Not Investment Advice</p>
+          <div className="border border-dl-border mt-4 px-6 py-3 bg-dl-bg-alt border-l-4 border-l-dl-navy">
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-dl-navy flex-shrink-0" />
+              <p className="text-sm text-dl-navy">Document Classification: Institutional Disclosure {'\u2014'} Not Investment Advice</p>
+            </div>
           </div>
           <div className="border border-dl-border border-t-0 px-6 py-3">
             {loading ? (
               <p className="text-sm text-dl-gray font-dl-mono">Loading snapshot data...</p>
             ) : snapshot ? (
               <div className="flex flex-col sm:flex-row sm:justify-between gap-2">
-                <p className="text-sm text-dl-gray font-dl-mono">Snapshot ID: {snapshot.snapshotId}</p>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-3 h-3 text-dl-gray flex-shrink-0" />
+                  <p className="text-sm text-dl-gray font-dl-mono">Snapshot ID: {snapshot.snapshotId}</p>
+                </div>
                 <p className="text-sm text-dl-gray font-dl-mono">As of: {fmtTimestamp(snapshot.asOfUtc)}</p>
               </div>
             ) : (
@@ -260,22 +279,34 @@ export default function DisclosurePage() {
               <p className="text-sm font-dl-mono text-dl-navy">Current State: Bootstrap Phase (Week 5 of 52-Week Operational Playbook)</p>
             </div>
             {snapshot && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 border border-dl-border">
-                <div className="px-4 py-3 border-r border-b sm:border-b-0 border-dl-border">
-                  <p className="text-xs text-dl-gray mb-1">Treasury Total</p>
-                  <p className="text-sm font-dl-mono text-dl-navy">{fmtUsd(snapshot.treasuryTotalUsd)}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border border-dl-border">
+                <div className="px-5 py-4 border-r border-b sm:border-b lg:border-b-0 border-dl-border border-t-4 border-t-dl-forest">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Landmark className="w-4 h-4 text-dl-forest" />
+                    <p className="text-xs text-dl-gray">Treasury Total</p>
+                  </div>
+                  <p className="text-lg font-dl-mono text-dl-forest font-bold">{fmtUsd(snapshot.treasuryTotalUsd)}</p>
                 </div>
-                <div className="px-4 py-3 sm:border-r border-b sm:border-b-0 border-dl-border">
-                  <p className="text-xs text-dl-gray mb-1">AXUSD Outstanding</p>
-                  <p className="text-sm font-dl-mono text-dl-navy">{fmtUsd(snapshot.liabilitiesTotalUsd)}</p>
+                <div className="px-5 py-4 sm:border-r border-b lg:border-b-0 border-dl-border border-t-4 border-t-dl-gold">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="w-4 h-4 text-dl-gold" />
+                    <p className="text-xs text-dl-gray">AXUSD Outstanding</p>
+                  </div>
+                  <p className="text-lg font-dl-mono text-dl-gold font-bold">{fmtUsd(snapshot.liabilitiesTotalUsd)}</p>
                 </div>
-                <div className="px-4 py-3 border-r border-dl-border">
-                  <p className="text-xs text-dl-gray mb-1">Coverage Ratio</p>
-                  <p className="text-sm font-dl-mono text-dl-navy">{fmtPct(snapshot.coverageRatio)}</p>
+                <div className="px-5 py-4 border-r border-b sm:border-b-0 border-dl-border border-t-4 border-t-dl-navy">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ShieldCheck className="w-4 h-4 text-dl-navy" />
+                    <p className="text-xs text-dl-gray">Coverage Ratio</p>
+                  </div>
+                  <p className="text-lg font-dl-mono text-dl-navy font-bold">{fmtPct(snapshot.coverageRatio)}</p>
                 </div>
-                <div className="px-4 py-3">
-                  <p className="text-xs text-dl-gray mb-1">Policy Mode</p>
-                  <p className="text-sm font-dl-mono text-dl-gray">{snapshot.policyMode}</p>
+                <div className="px-5 py-4 border-t-4 border-t-dl-gray">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Activity className="w-4 h-4 text-dl-gray" />
+                    <p className="text-xs text-dl-gray">Policy Mode</p>
+                  </div>
+                  <p className="text-lg font-dl-mono text-dl-gray font-bold">{snapshot.policyMode}</p>
                 </div>
               </div>
             )}
@@ -333,11 +364,14 @@ export default function DisclosurePage() {
           <SectionHeading>Operational Status</SectionHeading>
 
           <div className="mb-6">
-            <h3 className="font-dl-serif text-dl-navy text-lg mb-3">Live and Deployed</h3>
-            <div className="border border-dl-border">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-3 h-3 flex-shrink-0" style={{ backgroundColor: '#2d5016' }} />
+              <h3 className="font-dl-serif text-dl-navy text-lg">Live and Deployed</h3>
+            </div>
+            <div className="border border-dl-border border-l-4 border-l-dl-forest">
               {liveItems.map((item, i) => (
                 <div key={i} className={`flex items-start gap-3 px-6 py-2 ${i < liveItems.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
-                  <span className="w-2 h-2 rounded-full bg-dl-forest mt-1.5 flex-shrink-0" />
+                  <ShieldCheck className="w-3 h-3 text-dl-forest mt-1 flex-shrink-0" />
                   <p className="text-sm text-dl-navy">{item}</p>
                 </div>
               ))}
@@ -345,11 +379,14 @@ export default function DisclosurePage() {
           </div>
 
           <div className="mb-6">
-            <h3 className="font-dl-serif text-dl-navy text-lg mb-3">Configured but Inactive</h3>
-            <div className="border border-dl-border">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-3 h-3 flex-shrink-0" style={{ backgroundColor: '#b8860b' }} />
+              <h3 className="font-dl-serif text-dl-navy text-lg">Configured but Inactive</h3>
+            </div>
+            <div className="border border-dl-border border-l-4 border-l-dl-gold">
               {configuredItems.map((item, i) => (
                 <div key={i} className={`flex items-start gap-3 px-6 py-2 ${i < configuredItems.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
-                  <span className="w-2 h-2 rounded-full bg-dl-gold mt-1.5 flex-shrink-0" />
+                  <Clock className="w-3 h-3 text-dl-gold mt-1 flex-shrink-0" />
                   <p className="text-sm text-dl-navy">{item}</p>
                 </div>
               ))}
@@ -357,11 +394,14 @@ export default function DisclosurePage() {
           </div>
 
           <div className="mb-6">
-            <h3 className="font-dl-serif text-dl-navy text-lg mb-3">Planned {'\u2014'} Not Yet Deployed</h3>
-            <div className="border border-dl-border">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-3 h-3 flex-shrink-0" style={{ backgroundColor: '#6b7280' }} />
+              <h3 className="font-dl-serif text-dl-navy text-lg">Planned {'\u2014'} Not Yet Deployed</h3>
+            </div>
+            <div className="border border-dl-border border-l-4 border-l-dl-gray">
               {plannedItems.map((item, i) => (
                 <div key={i} className={`flex items-start gap-3 px-6 py-2 ${i < plannedItems.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
-                  <span className="w-2 h-2 rounded-full bg-dl-gray mt-1.5 flex-shrink-0" />
+                  <Target className="w-3 h-3 text-dl-gray mt-1 flex-shrink-0" />
                   <p className="text-sm text-dl-navy">{item}</p>
                 </div>
               ))}
@@ -892,14 +932,17 @@ export default function DisclosurePage() {
         
         <section className="mb-12">
           <SectionHeading>7 Mandatory Guard Rails</SectionHeading>
-          <div className="border border-dl-border">
+          <div className="border border-dl-border border-l-4 border-l-dl-error">
             {guardRails.map((gr, i) => (
               <div key={i} className={`px-6 py-3 ${i < guardRails.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
-                <p className="text-sm text-dl-navy">
-                  <span className="font-dl-mono font-semibold">{gr.num}.</span>{' '}
-                  <span className="font-semibold">{gr.title}</span>{' '}{'\u2014'}{' '}
-                  {gr.desc}
-                </p>
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-4 h-4 text-dl-error mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-dl-navy">
+                    <span className="font-dl-mono font-semibold text-dl-error">{gr.num}.</span>{' '}
+                    <span className="font-semibold">{gr.title}</span>{' '}{'\u2014'}{' '}
+                    {gr.desc}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -908,11 +951,16 @@ export default function DisclosurePage() {
         
         <section className="mb-12">
           <SectionHeading>Risk Factors</SectionHeading>
-          <div className="border border-dl-border">
+          <div className="border border-dl-border border-l-4 border-l-dl-gold">
             {riskFactors.map((rf, i) => (
               <div key={i} className={`px-6 py-3 ${i < riskFactors.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
-                <p className="text-sm font-semibold text-dl-navy mb-1">{rf.label}</p>
-                <p className="text-sm text-dl-navy">{rf.text}</p>
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-4 h-4 text-dl-gold mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-dl-navy mb-1">{rf.label}</p>
+                    <p className="text-sm text-dl-navy">{rf.text}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -922,7 +970,10 @@ export default function DisclosurePage() {
         <section className="mb-12">
           <SectionHeading>Contract Registry</SectionHeading>
 
-          <h3 className="font-dl-serif text-dl-navy text-lg mb-3">Core Protocol</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <Layers className="w-4 h-4 text-dl-forest" />
+            <h3 className="font-dl-serif text-dl-navy text-lg">Core Protocol</h3>
+          </div>
           <div className="border border-dl-border mb-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-2 bg-dl-bg border-b border-dl-border">
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Name</p>
@@ -934,7 +985,10 @@ export default function DisclosurePage() {
             ))}
           </div>
 
-          <h3 className="font-dl-serif text-dl-navy text-lg mb-3">AXUSD Ecosystem</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <Coins className="w-4 h-4 text-dl-gold" />
+            <h3 className="font-dl-serif text-dl-navy text-lg">AXUSD Ecosystem</h3>
+          </div>
           <div className="border border-dl-border mb-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-2 bg-dl-bg border-b border-dl-border">
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Name</p>
@@ -946,7 +1000,10 @@ export default function DisclosurePage() {
             ))}
           </div>
 
-          <h3 className="font-dl-serif text-dl-navy text-lg mb-3">Financial Infrastructure</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <BarChart3 className="w-4 h-4 text-dl-navy" />
+            <h3 className="font-dl-serif text-dl-navy text-lg">Financial Infrastructure</h3>
+          </div>
           <div className="border border-dl-border mb-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-2 bg-dl-bg border-b border-dl-border">
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Name</p>
@@ -958,7 +1015,10 @@ export default function DisclosurePage() {
             ))}
           </div>
 
-          <h3 className="font-dl-serif text-dl-navy text-lg mb-3">Operational</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <Building2 className="w-4 h-4 text-dl-forest" />
+            <h3 className="font-dl-serif text-dl-navy text-lg">Operational</h3>
+          </div>
           <div className="border border-dl-border">
             <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-2 bg-dl-bg border-b border-dl-border">
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Name</p>
