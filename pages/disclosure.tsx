@@ -293,31 +293,29 @@ export default function DisclosurePage() {
             <div className="border border-dl-border px-6 py-3 bg-dl-bg-alt">
               <p className="text-sm font-dl-mono text-dl-navy">Current State: Bootstrap Phase (Week 5 of 52-Week Operational Playbook)</p>
             </div>
-            {snapshot && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 border border-dl-border">
-                <div className="px-5 py-4 border-r border-b sm:border-b-0 border-dl-border border-t-4 border-t-dl-forest">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Landmark className="w-4 h-4 text-dl-forest" />
-                    <p className="text-xs text-dl-gray">Treasury Total</p>
-                  </div>
-                  <p className="text-lg font-dl-mono text-dl-forest font-bold">{fmtUsd(snapshot.treasuryTotalUsd)}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 border border-dl-border">
+              <div className="px-5 py-4 border-r border-b sm:border-b-0 border-dl-border border-t-4 border-t-dl-forest">
+                <div className="flex items-center gap-2 mb-2">
+                  <Landmark className="w-4 h-4 text-dl-forest" />
+                  <p className="text-xs text-dl-gray">Treasury Total</p>
                 </div>
-                <div className="px-5 py-4 sm:border-r border-b sm:border-b-0 border-dl-border border-t-4 border-t-dl-gold">
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="w-4 h-4 text-dl-gold" />
-                    <p className="text-xs text-dl-gray">AXUSD Outstanding</p>
-                  </div>
-                  <p className="text-lg font-dl-mono text-dl-gold font-bold">{fmtUsd(snapshot.liabilitiesTotalUsd)}</p>
-                </div>
-                <div className="px-5 py-4 border-t-4 border-t-dl-navy">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ShieldCheck className="w-4 h-4 text-dl-navy" />
-                    <p className="text-xs text-dl-gray">Coverage Ratio</p>
-                  </div>
-                  <p className="text-lg font-dl-mono text-dl-navy font-bold">{fmtPct(snapshot.coverageRatio)}</p>
-                </div>
+                <p className="text-lg font-dl-mono text-dl-forest font-bold">{snapshot ? fmtUsd(snapshot.treasuryTotalUsd) : '--'}</p>
               </div>
-            )}
+              <div className="px-5 py-4 sm:border-r border-b sm:border-b-0 border-dl-border border-t-4 border-t-dl-gold">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="w-4 h-4 text-dl-gold" />
+                  <p className="text-xs text-dl-gray">AXUSD Outstanding</p>
+                </div>
+                <p className="text-lg font-dl-mono text-dl-gold font-bold">{snapshot ? fmtUsd(snapshot.liabilitiesTotalUsd) : '--'}</p>
+              </div>
+              <div className="px-5 py-4 border-t-4 border-t-dl-navy">
+                <div className="flex items-center gap-2 mb-2">
+                  <ShieldCheck className="w-4 h-4 text-dl-navy" />
+                  <p className="text-xs text-dl-gray">Coverage Ratio</p>
+                </div>
+                <p className="text-lg font-dl-mono text-dl-navy font-bold">{snapshot ? fmtPct(snapshot.coverageRatio) : '--'}</p>
+              </div>
+            </div>
             <p className="text-sm text-dl-gray leading-relaxed">
               The protocol is in early bootstrap with minimal capital deployment. Every metric shown here is derived from a single reconciliation snapshot identified above. This document prioritizes disclosure, controls, reconciliation, and operational reality over marketing.
             </p>

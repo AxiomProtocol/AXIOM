@@ -5,7 +5,7 @@ import { DesignLawLayout, SectionHeading, SolidButton } from '../components/desi
 import {
   ShieldCheck, Users, Lock, TrendingUp,
   Crown, Shield, FileText, Target, Layers,
-  Building2, BarChart3, Globe, ArrowRight
+  Building2, BarChart3, Globe
 } from 'lucide-react';
 
 const THESIS_CARDS = [
