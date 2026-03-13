@@ -163,10 +163,10 @@ export default function DealIntelligenceSearch() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {[
-          { icon: '/images/realestate/icon_search.png', label: 'Search', desc: 'Find and resolve addresses' },
-          { icon: '/images/realestate/icon_ai.png', label: 'Analyze', desc: 'AI-powered deal analysis' },
+          { icon: '/images/realestate/icon_property_search.png', label: 'Search', desc: 'Find and resolve addresses' },
+          { icon: '/images/realestate/icon_deal_analyze.png', label: 'Analyze', desc: 'AI-powered deal analysis' },
           { icon: '/images/realestate/icon_underwrite.png', label: 'Underwrite', desc: 'Run scenario models' },
-          { icon: '/images/realestate/icon_diligence.png', label: 'Decide', desc: 'Structured decision log' },
+          { icon: '/images/realestate/icon_decision.png', label: 'Decide', desc: 'Structured decision log' },
         ].map((cap) => (
           <div key={cap.label} className="border border-dl-border p-3 sm:p-4 flex flex-col items-center text-center">
             <div className="relative w-10 h-10 sm:w-12 sm:h-12 mb-2">

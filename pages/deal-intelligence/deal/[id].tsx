@@ -9,7 +9,6 @@ const STRATEGY_OPTIONS = [
   { key: 'brrrr', label: 'BRRRR', icon: '/images/realestate/icon_brrrr.png' },
   { key: 'flip', label: 'Flip', icon: '/images/realestate/icon_flip.png' },
   { key: 'hold', label: 'Buy & Hold', icon: '/images/realestate/icon_hold.png' },
-  { key: 'multifamily', label: 'Multifamily', icon: '/images/realestate/icon_multifamily.png' },
 ];
 import IVCEEPanel from '../../../components/deal-intelligence/IVCEEPanel';
 import DocumentsPanel from '../../../components/deal-intelligence/DocumentsPanel';

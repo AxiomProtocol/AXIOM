@@ -277,7 +277,7 @@ export default function LandPage() {
       <DesignLawLayout>
         <div className="relative w-full h-32 sm:h-40 lg:h-48 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
           <Image
-            src="/images/realestate/land_hero.png"
+            src="/images/realestate/land_bridge_hero.png"
             alt="Land Acquisition Pipeline"
             fill
             className="object-cover"

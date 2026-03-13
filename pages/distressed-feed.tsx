@@ -1030,7 +1030,7 @@ export default function DistressedFeedPage() {
       </Head>
       <div className="relative w-full h-32 sm:h-40 lg:h-48 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
         <Image
-          src="/images/realestate/distressed_hero.png"
+          src="/images/realestate/distressed_feed_hero.png"
           alt="Distressed Property Pipeline"
           fill
           className="object-cover"
@@ -1048,7 +1048,7 @@ export default function DistressedFeedPage() {
           { icon: '/images/realestate/icon_foreclosure.png', label: 'Foreclosure', desc: 'HUD, Fannie, Freddie' },
           { icon: '/images/realestate/icon_tax_lien.png', label: 'Tax Lien', desc: 'County tax sales' },
           { icon: '/images/realestate/icon_flip.png', label: 'Wholesale', desc: 'Verified wholesalers' },
-          { icon: '/images/realestate/icon_search.png', label: 'Buy Box', desc: 'Automated matching' },
+          { icon: '/images/realestate/icon_property_search.png', label: 'Buy Box', desc: 'Automated matching' },
         ].map((cap) => (
           <div key={cap.label} className="border border-dl-border p-3 flex flex-col items-center text-center">
             <div className="relative w-8 h-8 sm:w-10 sm:h-10 mb-1.5">

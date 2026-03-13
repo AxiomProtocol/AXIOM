@@ -181,7 +181,7 @@ export default function PropertyAnalysis() {
 
       <div className="relative w-full h-32 sm:h-40 lg:h-48 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
         <Image
-          src="/images/realestate/property_hero.png"
+          src="/images/realestate/property_analysis_hero.png"
           alt="Property Analysis"
           fill
           className="object-cover"
