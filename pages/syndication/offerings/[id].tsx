@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
@@ -235,6 +235,7 @@ export default function OfferingBuilder() {
   const [showCapCallHistory, setShowCapCallHistory] = useState<string | null>(null);
   const [capCallToast, setCapCallToast] = useState<string | null>(null);
   const [showDocUpload, setShowDocUpload] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [docForm, setDocForm] = useState({ name: '', docType: 'ppm', visibility: 'private' });
   const [docFile, setDocFile] = useState<File | null>(null);
   const [uploadingDoc, setUploadingDoc] = useState(false);
@@ -532,8 +533,7 @@ export default function OfferingBuilder() {
         setDocForm({ name: '', docType: 'ppm', visibility: 'private' });
         setDocFile(null);
         setShowDocUpload(false);
-        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-        if (fileInput) fileInput.value = '';
+        if (fileInputRef.current) fileInputRef.current.value = '';
         loadTabData('documents');
       } else {
         setDocUploadError(json.error || 'Upload failed.');
@@ -1029,6 +1029,7 @@ export default function OfferingBuilder() {
                 <div>
                   <label className="block text-xs text-dl-muted mb-1 font-dl-mono">File (PDF, DOCX, XLSX, PNG, JPG — max 20MB)</label>
                   <input
+                    ref={fileInputRef}
                     type="file"
                     accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg"
                     onChange={e => setDocFile(e.target.files?.[0] || null)}
