@@ -11,7 +11,7 @@ import { PendingApprovals } from '../../components/banking/PendingApprovals';
 import { BankingLanding } from '../../components/banking/BankingLanding';
 import { AchFundingFlow } from '../../components/banking/AchFundingFlow';
 import { AchSendFlow } from '../../components/banking/AchSendFlow';
-import { useWallet } from '../../lib/web3/useWallet';
+import { useWallet } from '../../components/WalletConnect/WalletContext';
 import { openAppKit } from '../../lib/web3/appKitModal';
 
 type Tab = 'overview' | 'identity' | 'account' | 'wealth' | 'custody' | 'bridge';
@@ -48,7 +48,8 @@ interface CustodyData {
 }
 
 export default function BankingPage() {
-  const { address, isConnected } = useWallet();
+  const { walletState, siweState, signInWithEthereum } = useWallet();
+  const { address, isConnected } = walletState;
   const [activeTab, setActiveTab] = useState<Tab>('overview');
 
   const [status, setStatus] = useState<BankingStatus | null>(null);
@@ -422,6 +423,31 @@ export default function BankingPage() {
                   >
                     Refresh status
                   </button>
+                </div>
+              ) : !siweState.isAuthenticated ? (
+                <div>
+                  <p className="text-sm font-dl-mono text-dl-muted mb-6">
+                    Complete identity verification to open an FDIC-insured bank account. Required by our banking partner under US regulations.
+                  </p>
+                  <div className="border border-dl-border p-6">
+                    <p className="text-xs font-dl-mono text-dl-muted uppercase tracking-widest mb-2">Wallet Verification Required</p>
+                    <p className="text-base font-dl-serif text-dl-navy mb-3">
+                      Sign in with your wallet to continue
+                    </p>
+                    <p className="text-sm font-dl-mono text-dl-muted mb-4">
+                      Before submitting your identity verification, you must sign a message to prove wallet ownership. This does not cost any gas fees.
+                    </p>
+                    {siweState.authError && (
+                      <p className="text-sm font-dl-mono text-red-600 mb-4">{siweState.authError}</p>
+                    )}
+                    <button
+                      onClick={signInWithEthereum}
+                      disabled={siweState.isAuthenticating}
+                      className="min-h-[44px] px-6 py-3 bg-dl-navy text-white font-dl-mono text-sm border border-dl-navy hover:bg-opacity-90 disabled:opacity-50"
+                    >
+                      {siweState.isAuthenticating ? 'Awaiting Signature...' : 'Sign In with Ethereum'}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div>
