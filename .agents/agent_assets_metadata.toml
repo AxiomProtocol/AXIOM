@@ -18,3 +18,9 @@ id = "bseXYKc_c_4F_Q4SE9g7w"
 uri = "file://documents/Axiom_Banking_RealEstate_Podcast.mp3"
 type = "audio"
 title = "Podcast Audio (10.8 min - partial, 70% complete)"
+
+[[outputs]]
+id = "sPq0RwOjMRLNDaxE4pCR4"
+uri = "file://documents/Construction_Cost_Database_Research_Report.md"
+type = "text"
+title = "Construction Cost Database — Research Report & Build Roadmap"
