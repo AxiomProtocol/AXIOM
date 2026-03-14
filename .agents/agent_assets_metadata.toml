@@ -6,3 +6,15 @@ id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
 type = "text"
 title = "Axiom Protocol — Master Brand & Communications Document"
+
+[[outputs]]
+id = "mqgxNkzWNeQNj9y6L3_AJ"
+uri = "file://documents/Axiom_Banking_RealEstate_Podcast_Script.md"
+type = "text"
+title = "Podcast Script - Your Bank, Your Deals, Your Land"
+
+[[outputs]]
+id = "bseXYKc_c_4F_Q4SE9g7w"
+uri = "file://documents/Axiom_Banking_RealEstate_Podcast.mp3"
+type = "audio"
+title = "Podcast Audio (10.8 min - partial, 70% complete)"

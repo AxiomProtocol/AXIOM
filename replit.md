@@ -1,7 +1,7 @@
 # Axiom Protocol - Sovereign Digital-Physical Economy
 
 ## Overview
-The Axiom Protocol is a governance-first wealth infrastructure focused on land acquisition to build a sovereign digital-physical economy. Its core purpose is to build wealth together, on-chain, through self-custody and a non-custodial approach, with a vision to build a new financial operating system for digital-physical economies. Key capabilities include a governance token (AXM), treasury tools, real estate asset onboarding, DePIN infrastructure, cross-chain interoperability, and sustainability initiatives. The project aims to be a reference architecture for future sovereign digital-physical economies.
+The Axiom Protocol is a governance-first wealth infrastructure focused on land acquisition to build a sovereign digital-physical economy. Its core purpose is to build wealth together, on-chain, through self-custody and a non-custodial approach. The project aims to be a reference architecture for future sovereign digital-physical economies, offering a new financial operating system for digital-physical economies with capabilities including a governance token (AXM), treasury tools, real estate asset onboarding, DePIN infrastructure, cross-chain interoperability, and sustainability initiatives.
 
 ## User Preferences
 - **Communication style**: Simple, everyday language explaining technical concepts.
@@ -21,16 +21,16 @@ The Axiom Protocol is a governance-first wealth infrastructure focused on land a
 The frontend uses a modular, responsive design adhering to the "Axiom Protocol Design Law," featuring serif headings, monospace data, a navy/forest green/muted gold palette, light mode only, and specific UI patterns like pagination and flat solid buttons.
 
 ### Wallet Connection Architecture
-Wallet connection utilizes Wagmi v2.19 + Reown AppKit v1.8 (WalletConnect's official SDK) with SIWE (Sign-In With Ethereum) for authentication, configured for the Arbitrum One chain. AppKit provides a built-in modal supporting WalletConnect QR, MetaMask, Coinbase, Rainbow, and injected wallets. Key files: `lib/web3/wagmiConfig.ts` (WagmiAdapter + AppKit config), `components/WalletConnect/WalletContext.tsx` (main context with Wagmi hooks + auto-SIWE), `components/design-law/ConnectWalletButton.tsx` (uses `useAppKit().open()` and `useAppKitAccount()`), `lib/web3/useWallet.ts` (legacy backward-compat wrapper), `pages/_app.js` (createAppKit init + WagmiProvider + QueryClientProvider + WalletProvider stack). Webpack externals include `pino-pretty`, `lokijs`, `encoding` for WalletConnect compatibility.
+Wallet connection utilizes Wagmi v2.19 + Reown AppKit v1.8 with SIWE for authentication, configured for the Arbitrum One chain. AppKit provides a built-in modal supporting various wallets.
 
 ### Technical Implementations
 The core Axiom Protocol Token (AXM) is an ERC20 governance token on Arbitrum One, with a planned migration to Universe Blockchain (L3). The multi-phase Smart Contract Architecture on Arbitrum One includes identity, treasury, staking, emissions, and asset registries, supported by 72 verified smart contracts. The platform utilizes a HYBRID CUSTODY model for its Complete DeFi Treasury Suite. An "Active Contract Verification System" ensures the integrity of AXUSD and PSM contract addresses.
 
 ### Deployment
-Production deployment uses Replit Autoscale (Vercel) — serverless, scales with traffic. Build: `npm run build` (`next build`). Run: `npm run start` (`next start`). Dev server: `npm run dev` (`next dev -H 0.0.0.0 -p 5000`). Custom domain: `axiomprotocol.app`. BitGo API requires a static outbound IP for token whitelisting — user will configure a static IP add-on (e.g. QuotaGuard/Fixie) externally. Note: the in-memory rate limiter (`lib/rateLimit.ts`) may not persist across cold starts in autoscale; consider external rate limiting if needed.
+Production deployment uses Replit Autoscale (Vercel) for serverless scaling. A custom domain `axiomprotocol.app` is used. BitGo API integration requires a static outbound IP.
 
 ### System Design Choices
-The architecture employs a "Product Factory Approach" for scalability. The current blockchain network is Arbitrum One, with a planned migration to Universe Blockchain (L3). Data is managed using PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend features centralized contract configuration, a dedicated contract service, and chain validation middleware. New table groups use separate schema files to avoid export failures.
+The architecture employs a "Product Factory Approach" for scalability. The current blockchain network is Arbitrum One, with a planned migration to Universe Blockchain (L3). Data is managed using PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend features centralized contract configuration, a dedicated contract service, and chain validation middleware.
 
 Key features include:
 - **DEX V2 Ecosystem** and **Institutional Observer Dashboard**.
@@ -55,19 +55,19 @@ Key features include:
 - **Distressed Property Feed (Deal Flow)**: Aggregates distressed properties from government sources and a wholesaler submission portal.
 - **Agent Governance System**: Policy-based autonomous agent authorization.
 - **ERC-3643 Unified AXUSD (T-REX Compliant)**: A unified ERC-3643 compliant stablecoin with a frontend dashboard and automated KYC.
-- **Banking Infrastructure (Unit + BitGo)**: Unified banking layer at `/banking`. Unit provides FDIC-insured deposit accounts, ACH payments, debit cards, and KYC. BitGo provides institutional crypto custody wallets (AXM, AXUSD, ETH on Arbitrum). A Bridge Service connects fiat↔crypto with live CoinGecko quotes and full status tracking. Services: `UnitCustomerService`, `UnitAccountService`, `UnitPaymentService`, `UnitCardService`, `BitGoWalletService`, `BitGoTransactionService`, `BitGoCustodyService`, `BridgeService`. API routes: `pages/api/unit/*`, `pages/api/bitgo/*`, `pages/api/bridge/*`. DB schemas: `shared/unitSchema.ts` (6 tables), `shared/bitgoSchema.ts` (5 tables), `shared/bridgeSchema.ts` (2 tables). Rate limiting: `lib/rateLimit.ts`. Validation: `lib/validation.ts`. Credentials: `UNIT_API_TOKEN`, `UNIT_API_URL`, `UNIT_WEBHOOK_SECRET`, `UNIT_ORG_ID` (Unit); `BITGO_ACCESS_TOKEN`, `BITGO_API_URL`, `BITGO_ENTERPRISE_ID` (BitGo) — all gated, services gracefully no-op if not set.
+- **Banking Infrastructure (Unit + BitGo)**: Unified banking layer at `/banking`. Unit provides FDIC-insured deposit accounts, ACH payments, debit cards, and KYC. BitGo provides institutional crypto custody wallets (AXM, AXUSD, ETH on Arbitrum). A Bridge Service connects fiat↔crypto with live CoinGecko quotes and full status tracking.
 - **Multi-Exit Strategy Engine**: Provides 8 underwriting strategies with comparison and ranking.
 - **Due Diligence Checklist System**: Structured DD workflow.
 - **Capital Readiness Card**: Computes capital analysis for funding sources.
 - **AI Acquisition Memo Builder**: Gemini-powered institutional acquisition memo generator.
 - **Syndication Module**: Full syndication operating system.
-- **LP Investor Portal**: Wallet-authenticated investor dashboard at `/syndication/portal`. Shows holdings (cap table positions), subscriptions, capital calls (with overdue flagging), distributions (with on-chain tx links), and offering documents (public/investor visibility). API: `GET /api/syndication/portal` authenticates via SIWE session cookie, looks up `syn_investor_profiles` by wallet address, and returns all related data across offerings.
+- **LP Investor Portal**: Wallet-authenticated investor dashboard at `/syndication/portal`. Shows holdings, subscriptions, capital calls, distributions, and offering documents.
 - **Mobile Optimization**: All key pages optimized for mobile screens.
 
 ## External Dependencies
 - **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)
 - **Blockchain RPC Provider:** Alchemy API
-- **Wallet Integration:** MetaMask SDK
+- **Wallet Integration:** MetaMask SDK, Wagmi, Reown AppKit
 - **Smart Contract Development:** Hardhat, OpenZeppelin Contracts, @onchain-id/solidity
 - **Libraries:** Ethers.js, viem + TypeScript
 - **Databases:** PostgreSQL, Neon Database, MongoDB
@@ -75,10 +75,10 @@ Key features include:
 - **Email Service:** Resend
 - **Payment Processing:** Stripe
 - **Cloud Storage:** Google Cloud Storage, Storacha (Web3 Storage/IPFS)
-- **Auth Provider:** Auth0 (`@auth0/nextjs-auth0` v3, Pages Router) + SIWE (wallet-based)
-- **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-image)
+- **Auth Provider:** Auth0 (`@auth0/nextjs-auth0` v3) + SIWE
+- **Google AI Stack:** Gemini AI Integration via Replit AI Integrations (various Gemini models)
 - **Property Data:** RentCast API, Walk Score API
 - **Market Data:** Alpha Vantage, CoinGecko
-- **Banking Rails:** Unit Finance (`@unit-finance/unit-node-sdk` v1.4.1) — FDIC-insured deposits, ACH, debit cards, KYC. Env vars: `UNIT_API_TOKEN`, `UNIT_API_URL`, `UNIT_WEBHOOK_SECRET`, `UNIT_ORG_ID`
-- **Crypto Custody:** BitGo CaaS (REST API, no npm SDK) — institutional wallets, multi-sig treasury, spending policies. Env vars: `BITGO_ACCESS_TOKEN`, `BITGO_API_URL`, `BITGO_ENTERPRISE_ID`
-- **Auth Provider (Auth0):** `@auth0/nextjs-auth0` v3 (Pages Router). Env vars: `AUTH0_BASE_URL`, `AUTH0_ISSUER_BASE_URL`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET` (secret), `AUTH0_SECRET` (secret). Catch-all: `pages/api/auth/[...auth0].ts`. Domain: `axiomprotocol.us.auth0.com`
+- **Banking Rails:** Unit Finance (`@unit-finance/unit-node-sdk` v1.4.1)
+- **Crypto Custody:** BitGo CaaS (REST API)
+- **Text-to-Speech:** ElevenLabs API
