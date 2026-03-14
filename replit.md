@@ -81,4 +81,5 @@ Key features include:
 - **Market Data:** Alpha Vantage, CoinGecko
 - **Banking Rails:** Unit Finance (`@unit-finance/unit-node-sdk` v1.4.1)
 - **Crypto Custody:** BitGo CaaS (REST API)
-- **Text-to-Speech:** ElevenLabs API
+- **Text-to-Speech:** ElevenLabs API (env: `ELEVENLABS_API_KEY`). Voices: George (`JBFqnCBsd6RMkjVDRZzb`) for MARCUS, Rachel (`21m00Tcm4TlvDq8ikWAM`) for ISHA. Model: `eleven_multilingual_v2`. Rachel requires paid plan; Alice (`Xb7hH8MSUJpSbSDYk0k2`) is free-tier fallback. Script: `scripts/generate_podcast.py` (resumable, normalizes to -16 LUFS).
+- **Podcast content:** `documents/Axiom_Banking_RealEstate_Podcast_Script.md` (full script), `documents/Axiom_Banking_RealEstate_Podcast.mp3` (partial audio — 73/103 utterances, -16 LUFS normalized). Re-run `python scripts/generate_podcast.py` after ElevenLabs plan upgrade or quota reset.
