@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useWallet } from '../contexts/WalletContext';
 import { ALL_CONTRACTS } from '../shared/contracts';
+import { useBankingStatus } from '../hooks/useBankingStatus';
 
 const PersonalBankingPage: React.FC = () => {
   const { account, connectWallet } = useWallet();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const { status: bankingStatus, loading: bankingLoading, refetch: refetchBanking } = useBankingStatus(account ?? undefined);
 
   const depositProducts = [
     {
@@ -297,6 +299,76 @@ const PersonalBankingPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Live Account Dashboard (shown when wallet is connected) */}
+      {account && (
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          {bankingLoading ? (
+            <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center text-gray-400 animate-pulse">
+              Loading your account…
+            </div>
+          ) : bankingStatus?.accounts && bankingStatus.accounts.length > 0 ? (
+            <div className="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 border border-blue-500/30 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-white">My Account</h2>
+                <div className="flex items-center gap-3">
+                  {bankingStatus.customer && (
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      bankingStatus.customer.kyc_status === 'approved'
+                        ? 'bg-green-500/20 text-green-300'
+                        : bankingStatus.customer.kyc_status === 'denied'
+                        ? 'bg-red-500/20 text-red-300'
+                        : 'bg-yellow-500/20 text-yellow-300'
+                    }`}>
+                      KYC: {bankingStatus.customer.kyc_status}
+                    </span>
+                  )}
+                  <button
+                    onClick={refetchBanking}
+                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    ↻ Refresh
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {bankingStatus.accounts.map((acct) => (
+                  <div key={acct.unit_account_id} className="bg-white/10 rounded-lg p-4">
+                    <div className="text-sm text-gray-400 mb-1 capitalize">{acct.account_type.replace(/_/g, ' ')} Account</div>
+                    <div className="text-2xl font-bold text-white">
+                      ${(acct.available_balance_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      Available · Total ${(acct.balance_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </div>
+                    {acct.masked_account_number && (
+                      <div className="text-xs text-gray-500 mt-2">{acct.masked_account_number}</div>
+                    )}
+                    <div className={`mt-2 text-xs font-semibold ${acct.status === 'Open' ? 'text-green-400' : 'text-yellow-400'}`}>
+                      ● {acct.status}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : bankingStatus?.customer?.kyc_status === 'pending' ? (
+            <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-6 text-center">
+              <div className="text-yellow-400 font-semibold mb-2">⏳ KYC Under Review</div>
+              <p className="text-gray-400 text-sm">Your identity verification is in progress. You'll be notified when complete.</p>
+            </div>
+          ) : (
+            <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
+              <p className="text-gray-400 mb-4">No bank account found. Open one to get started.</p>
+              <a
+                href="/api/unit/onboard"
+                className="inline-block bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-bold py-2 px-6 rounded-lg text-sm"
+              >
+                Open Account
+              </a>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Category Filters */}
       <div className="max-w-7xl mx-auto px-6 py-8">
