@@ -335,6 +335,321 @@ export const reComparables = pgTable("re_comparables", {
   saleDateIdx: index("re_comparables_sale_date_idx").on(table.saleDate),
 }));
 
+export const fieldInspectionStatusEnum = pgEnum('field_inspection_status', ['draft', 'in_progress', 'submitted', 'verified', 'archived']);
+export const fieldConditionEnum = pgEnum('field_condition', ['good', 'light_rehab', 'medium_rehab', 'full_replace', 'not_inspected']);
+export const verificationStatusEnum = pgEnum('verification_status', ['submitted', 'under_review', 'approved', 'rejected']);
+export const strategyTypeEnum = pgEnum('strategy_type', ['light_turn', 'classic_value_add', 'heavy_reposition', 'systems_only_stabilization', 'premium_interior_upgrade', 'exterior_common_reposition']);
+
+export const fieldInspectionSessions = pgTable('field_inspection_sessions', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  dealId: uuid('deal_id').references(() => reDeals.id).notNull(),
+  propertyId: uuid('property_id').references(() => reProperties.id).notNull(),
+  sessionName: varchar('session_name', { length: 255 }).notNull(),
+  status: fieldInspectionStatusEnum('status').notNull().default('draft'),
+  propertyMetadata: jsonb('property_metadata'),
+  totalUnits: integer('total_units').default(0).notNull(),
+  unitsWalked: integer('units_walked').default(0).notNull(),
+  sampleConfidence: decimal('sample_confidence', { precision: 6, scale: 4 }).default('0'),
+  matrixRoomId: varchar('matrix_room_id', { length: 255 }),
+  startedAt: timestamp('started_at'),
+  submittedAt: timestamp('submitted_at'),
+  createdBy: varchar('created_by', { length: 42 }),
+  meta: jsonb('meta'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  dealIdx: index('field_inspection_sessions_deal_idx').on(table.dealId),
+  propertyIdx: index('field_inspection_sessions_property_idx').on(table.propertyId),
+  statusIdx: index('field_inspection_sessions_status_idx').on(table.status),
+}));
+
+export const fieldUnitWalkRows = pgTable('field_unit_walk_rows', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: uuid('session_id').references(() => fieldInspectionSessions.id).notNull(),
+  unitLabel: varchar('unit_label', { length: 120 }).notNull(),
+  bedroomCount: integer('bedroom_count'),
+  bathroomCount: decimal('bathroom_count', { precision: 4, scale: 1 }),
+  sqft: integer('sqft'),
+  kitchen: fieldConditionEnum('kitchen').default('not_inspected').notNull(),
+  flooring: fieldConditionEnum('flooring').default('not_inspected').notNull(),
+  appliances: fieldConditionEnum('appliances').default('not_inspected').notNull(),
+  bathroom: fieldConditionEnum('bathroom').default('not_inspected').notNull(),
+  hvac: fieldConditionEnum('hvac').default('not_inspected').notNull(),
+  windows: fieldConditionEnum('windows').default('not_inspected').notNull(),
+  paint: fieldConditionEnum('paint').default('not_inspected').notNull(),
+  plumbing: fieldConditionEnum('plumbing').default('not_inspected').notNull(),
+  electrical: fieldConditionEnum('electrical').default('not_inspected').notNull(),
+  doors: fieldConditionEnum('doors').default('not_inspected').notNull(),
+  exterior: fieldConditionEnum('exterior').default('not_inspected').notNull(),
+  commonArea: fieldConditionEnum('common_area').default('not_inspected').notNull(),
+  siteParking: fieldConditionEnum('site_parking').default('not_inspected').notNull(),
+  other: fieldConditionEnum('other').default('not_inspected').notNull(),
+  inspected: boolean('inspected').default(true).notNull(),
+  deficiencyFlags: jsonb('deficiency_flags'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  sessionIdx: index('field_unit_walk_rows_session_idx').on(table.sessionId),
+  unitLabelIdx: index('field_unit_walk_rows_unit_label_idx').on(table.unitLabel),
+}));
+
+export const fieldUnitWalkPhotos = pgTable('field_unit_walk_photos', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: uuid('session_id').references(() => fieldInspectionSessions.id).notNull(),
+  rowId: uuid('row_id').references(() => fieldUnitWalkRows.id),
+  systemKey: varchar('system_key', { length: 50 }),
+  photoUrl: text('photo_url').notNull(),
+  deficiencyFlag: varchar('deficiency_flag', { length: 100 }),
+  capturedAt: timestamp('captured_at').defaultNow().notNull(),
+  meta: jsonb('meta'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  sessionIdx: index('field_unit_walk_photos_session_idx').on(table.sessionId),
+  rowIdx: index('field_unit_walk_photos_row_idx').on(table.rowId),
+}));
+
+export const reRehabScopes = pgTable('re_rehab_scopes', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  dealId: uuid('deal_id').references(() => reDeals.id).notNull(),
+  scenarioId: uuid('scenario_id').references(() => reDealScenarios.id),
+  inspectionSessionId: uuid('inspection_session_id').references(() => fieldInspectionSessions.id),
+  scopeName: varchar('scope_name', { length: 255 }).notNull(),
+  lineItems: jsonb('line_items').notNull(),
+  packageMix: jsonb('package_mix'),
+  recommendedBudget: decimal('recommended_budget', { precision: 14, scale: 2 }),
+  confidence: decimal('confidence', { precision: 6, scale: 4 }),
+  generatedBy: varchar('generated_by', { length: 42 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  dealIdx: index('re_rehab_scopes_deal_idx').on(table.dealId),
+  scenarioIdx: index('re_rehab_scopes_scenario_idx').on(table.scenarioId),
+}));
+
+export const verifiedProjectOutcomes = pgTable('verified_project_outcomes', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  dealId: uuid('deal_id').references(() => reDeals.id).notNull(),
+  scenarioId: uuid('scenario_id').references(() => reDealScenarios.id),
+  status: verificationStatusEnum('status').notNull().default('submitted'),
+  actualRehabCost: decimal('actual_rehab_cost', { precision: 14, scale: 2 }).notNull(),
+  actualTimelineDays: integer('actual_timeline_days').notNull(),
+  actualSalePrice: decimal('actual_sale_price', { precision: 14, scale: 2 }),
+  actualRent: decimal('actual_rent', { precision: 10, scale: 2 }),
+  actualDscr: decimal('actual_dscr', { precision: 8, scale: 4 }),
+  actualMonthlyCashFlow: decimal('actual_monthly_cash_flow', { precision: 12, scale: 2 }),
+  fundingPath: varchar('funding_path', { length: 60 }),
+  capitalSourceType: varchar('capital_source_type', { length: 60 }),
+  lenderPathChosen: varchar('lender_path_chosen', { length: 120 }),
+  refiOutcome: varchar('refi_outcome', { length: 120 }),
+  matrixRoomId: varchar('matrix_room_id', { length: 255 }),
+  axmRewardEligible: boolean('axm_reward_eligible').default(false).notNull(),
+  axusdSettlementRef: varchar('axusd_settlement_ref', { length: 255 }),
+  arbitrumOutcomeHash: varchar('arbitrum_outcome_hash', { length: 100 }),
+  arbitrumVerificationHash: varchar('arbitrum_verification_hash', { length: 100 }),
+  arbitrumCostSignalHash: varchar('arbitrum_cost_signal_hash', { length: 100 }),
+  arbitrumProofRef: varchar('arbitrum_proof_ref', { length: 255 }),
+  verificationTimestamp: timestamp('verification_timestamp'),
+  submittedBy: varchar('submitted_by', { length: 42 }),
+  reviewedBy: varchar('reviewed_by', { length: 42 }),
+  submittedAt: timestamp('submitted_at').defaultNow().notNull(),
+  reviewedAt: timestamp('reviewed_at'),
+  interpretation: text('interpretation'),
+  meta: jsonb('meta'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  dealIdx: index('verified_project_outcomes_deal_idx').on(table.dealId),
+  scenarioIdx: index('verified_project_outcomes_scenario_idx').on(table.scenarioId),
+  statusIdx: index('verified_project_outcomes_status_idx').on(table.status),
+}));
+
+export const projectOutcomeCostItems = pgTable('project_outcome_cost_items', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  outcomeId: uuid('outcome_id').references(() => verifiedProjectOutcomes.id).notNull(),
+  category: varchar('category', { length: 80 }).notNull(),
+  lineItem: varchar('line_item', { length: 255 }).notNull(),
+  amount: decimal('amount', { precision: 12, scale: 2 }).notNull(),
+  invoiceRef: varchar('invoice_ref', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  outcomeIdx: index('project_outcome_cost_items_outcome_idx').on(table.outcomeId),
+}));
+
+export const projectOutcomeDocuments = pgTable('project_outcome_documents', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  outcomeId: uuid('outcome_id').references(() => verifiedProjectOutcomes.id).notNull(),
+  documentType: varchar('document_type', { length: 50 }).notNull(),
+  url: text('url').notNull(),
+  sourceTag: varchar('source_tag', { length: 50 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  outcomeIdx: index('project_outcome_documents_outcome_idx').on(table.outcomeId),
+  typeIdx: index('project_outcome_documents_type_idx').on(table.documentType),
+}));
+
+export const predictionActualVariances = pgTable('prediction_actual_variances', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  dealId: uuid('deal_id').references(() => reDeals.id).notNull(),
+  scenarioId: uuid('scenario_id').references(() => reDealScenarios.id),
+  outcomeId: uuid('outcome_id').references(() => verifiedProjectOutcomes.id).notNull(),
+  metricKey: varchar('metric_key', { length: 80 }).notNull(),
+  predictedValue: decimal('predicted_value', { precision: 16, scale: 4 }).notNull(),
+  actualValue: decimal('actual_value', { precision: 16, scale: 4 }).notNull(),
+  varianceValue: decimal('variance_value', { precision: 16, scale: 4 }).notNull(),
+  variancePct: decimal('variance_pct', { precision: 10, scale: 4 }).notNull(),
+  interpretation: text('interpretation'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  dealIdx: index('prediction_actual_variances_deal_idx').on(table.dealId),
+  outcomeIdx: index('prediction_actual_variances_outcome_idx').on(table.outcomeId),
+  metricIdx: index('prediction_actual_variances_metric_idx').on(table.metricKey),
+}));
+
+export const operatorStrategyProfiles = pgTable('operator_strategy_profiles', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  operatorWallet: varchar('operator_wallet', { length: 42 }).notNull(),
+  strategyType: strategyTypeEnum('strategy_type').notNull(),
+  assetClass: varchar('asset_class', { length: 80 }),
+  vintageBand: varchar('vintage_band', { length: 40 }),
+  market: varchar('market', { length: 120 }),
+  unitMix: jsonb('unit_mix'),
+  observations: integer('observations').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  operatorIdx: index('operator_strategy_profiles_operator_idx').on(table.operatorWallet),
+  strategyIdx: index('operator_strategy_profiles_strategy_idx').on(table.strategyType),
+}));
+
+export const operatorStrategySignals = pgTable('operator_strategy_signals', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  profileId: uuid('profile_id').references(() => operatorStrategyProfiles.id).notNull(),
+  dealId: uuid('deal_id').references(() => reDeals.id),
+  outcomeId: uuid('outcome_id').references(() => verifiedProjectOutcomes.id),
+  capexPerUnit: decimal('capex_per_unit', { precision: 12, scale: 2 }),
+  rentLift: decimal('rent_lift', { precision: 12, scale: 2 }),
+  noiLift: decimal('noi_lift', { precision: 14, scale: 2 }),
+  stabilizationDays: integer('stabilization_days'),
+  confidence: decimal('confidence', { precision: 6, scale: 4 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  profileIdx: index('operator_strategy_signals_profile_idx').on(table.profileId),
+  outcomeIdx: index('operator_strategy_signals_outcome_idx').on(table.outcomeId),
+}));
+
+export const capitalIntelligenceEvents = pgTable('capital_intelligence_events', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  dealId: uuid('deal_id').references(() => reDeals.id),
+  offeringId: uuid('offering_id'),
+  eventType: varchar('event_type', { length: 80 }).notNull(),
+  capitalSourceType: varchar('capital_source_type', { length: 60 }),
+  raiseVelocity: decimal('raise_velocity', { precision: 12, scale: 4 }),
+  minimumCapitalMet: boolean('minimum_capital_met'),
+  investorDemandScore: decimal('investor_demand_score', { precision: 8, scale: 4 }),
+  lenderPathChosen: varchar('lender_path_chosen', { length: 120 }),
+  refiOutcome: varchar('refi_outcome', { length: 120 }),
+  payload: jsonb('payload'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  dealIdx: index('capital_intelligence_events_deal_idx').on(table.dealId),
+  typeIdx: index('capital_intelligence_events_type_idx').on(table.eventType),
+}));
+
+export const marketCostSignals = pgTable('market_cost_signals', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  zip: varchar('zip', { length: 20 }),
+  market: varchar('market', { length: 120 }),
+  strategyType: strategyTypeEnum('strategy_type'),
+  sourceLayer: varchar('source_layer', { length: 50 }).notNull(),
+  capexPerUnit: decimal('capex_per_unit', { precision: 12, scale: 2 }),
+  confidence: decimal('confidence', { precision: 6, scale: 4 }).default('0').notNull(),
+  sampleSize: integer('sample_size').default(0).notNull(),
+  payload: jsonb('payload'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  zipIdx: index('market_cost_signals_zip_idx').on(table.zip),
+  marketIdx: index('market_cost_signals_market_idx').on(table.market),
+  strategyIdx: index('market_cost_signals_strategy_idx').on(table.strategyType),
+}));
+
+export const networkIntelligenceSnapshots = pgTable('network_intelligence_snapshots', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  snapshotDate: date('snapshot_date').notNull(),
+  scope: varchar('scope', { length: 80 }).default('global').notNull(),
+  seededBaselineWeight: decimal('seeded_baseline_weight', { precision: 6, scale: 4 }).default('0.2'),
+  regionalBenchmarkWeight: decimal('regional_benchmark_weight', { precision: 6, scale: 4 }).default('0.2'),
+  verifiedLocalWeight: decimal('verified_local_weight', { precision: 6, scale: 4 }).default('0.2'),
+  operatorOutcomeWeight: decimal('operator_outcome_weight', { precision: 6, scale: 4 }).default('0.2'),
+  capitalOutcomeWeight: decimal('capital_outcome_weight', { precision: 6, scale: 4 }).default('0.2'),
+  aggregatedSignals: jsonb('aggregated_signals').notNull(),
+  confidenceScore: decimal('confidence_score', { precision: 6, scale: 4 }).default('0').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  dateIdx: index('network_intelligence_snapshots_date_idx').on(table.snapshotDate),
+  scopeIdx: index('network_intelligence_snapshots_scope_idx').on(table.scope),
+}));
+
+export const verificationReviews = pgTable('verification_reviews', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  outcomeId: uuid('outcome_id').references(() => verifiedProjectOutcomes.id).notNull(),
+  reviewer: varchar('reviewer', { length: 42 }).notNull(),
+  decision: varchar('decision', { length: 20 }).notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  outcomeIdx: index('verification_reviews_outcome_idx').on(table.outcomeId),
+}));
+
+export const verifiedDataRewards = pgTable('verified_data_rewards', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  outcomeId: uuid('outcome_id').references(() => verifiedProjectOutcomes.id),
+  sessionId: uuid('session_id').references(() => fieldInspectionSessions.id),
+  walletAddress: varchar('wallet_address', { length: 42 }).notNull(),
+  rewardType: varchar('reward_type', { length: 50 }).notNull(),
+  rewardAmountAxm: decimal('reward_amount_axm', { precision: 18, scale: 8 }),
+  rewardRef: varchar('reward_ref', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  walletIdx: index('verified_data_rewards_wallet_idx').on(table.walletAddress),
+}));
+
+export const matrixRooms = pgTable('matrix_rooms', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  matrixRoomId: varchar('matrix_room_id', { length: 255 }).notNull().unique(),
+  entityType: varchar('entity_type', { length: 50 }).notNull(),
+  entityId: uuid('entity_id').notNull(),
+  configured: boolean('configured').default(false).notNull(),
+  meta: jsonb('meta'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  entityIdx: index('matrix_rooms_entity_idx').on(table.entityType, table.entityId),
+}));
+
+export const matrixRoomMemberships = pgTable('matrix_room_memberships', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  roomId: uuid('room_id').references(() => matrixRooms.id).notNull(),
+  userRef: varchar('user_ref', { length: 120 }).notNull(),
+  role: varchar('role', { length: 40 }).default('member').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  roomIdx: index('matrix_room_memberships_room_idx').on(table.roomId),
+  userIdx: index('matrix_room_memberships_user_idx').on(table.userRef),
+}));
+
+export const matrixEventLinks = pgTable('matrix_event_links', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  roomId: uuid('room_id').references(() => matrixRooms.id).notNull(),
+  entityType: varchar('entity_type', { length: 50 }).notNull(),
+  entityId: uuid('entity_id').notNull(),
+  eventType: varchar('event_type', { length: 80 }).notNull(),
+  matrixEventId: varchar('matrix_event_id', { length: 255 }),
+  payload: jsonb('payload'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  roomIdx: index('matrix_event_links_room_idx').on(table.roomId),
+  entityIdx: index('matrix_event_links_entity_idx').on(table.entityType, table.entityId),
+}));
+
 export type ReSource = typeof reSources.$inferSelect;
 export type InsertReSource = typeof reSources.$inferInsert;
 export type ReIngestRun = typeof reIngestRuns.$inferSelect;
@@ -367,3 +682,15 @@ export type ReRiskFlag = typeof reRiskFlags.$inferSelect;
 export type InsertReRiskFlag = typeof reRiskFlags.$inferInsert;
 export type ReComparable = typeof reComparables.$inferSelect;
 export type InsertReComparable = typeof reComparables.$inferInsert;
+export type FieldInspectionSession = typeof fieldInspectionSessions.$inferSelect;
+export type InsertFieldInspectionSession = typeof fieldInspectionSessions.$inferInsert;
+export type FieldUnitWalkRow = typeof fieldUnitWalkRows.$inferSelect;
+export type InsertFieldUnitWalkRow = typeof fieldUnitWalkRows.$inferInsert;
+export type FieldUnitWalkPhoto = typeof fieldUnitWalkPhotos.$inferSelect;
+export type InsertFieldUnitWalkPhoto = typeof fieldUnitWalkPhotos.$inferInsert;
+export type ReRehabScope = typeof reRehabScopes.$inferSelect;
+export type InsertReRehabScope = typeof reRehabScopes.$inferInsert;
+export type VerifiedProjectOutcome = typeof verifiedProjectOutcomes.$inferSelect;
+export type InsertVerifiedProjectOutcome = typeof verifiedProjectOutcomes.$inferInsert;
+export type PredictionActualVariance = typeof predictionActualVariances.$inferSelect;
+export type InsertPredictionActualVariance = typeof predictionActualVariances.$inferInsert;

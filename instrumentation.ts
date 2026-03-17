@@ -62,6 +62,12 @@ export async function register() {
       await exec(enumSafe('prop_report_status', ['pending','paid','generating','ready','failed','expired']), 'enum prop_report_status');
       await exec(enumSafe('prop_report_tier', ['free','base','premium']), 'enum prop_report_tier');
 
+      // ── Enums: Field Intelligence (Layer 5) ──
+      await exec(enumSafe('inspection_session_status', ['planned','in_progress','submitted','reviewed','completed','cancelled']), 'enum inspection_session_status');
+      await exec(enumSafe('unit_condition', ['good','light_rehab','medium_rehab','full_replace','not_inspected']), 'enum unit_condition');
+      await exec(enumSafe('system_type', ['kitchen','bathroom','flooring','appliances','hvac','windows','paint','plumbing','electrical','doors','exterior','common_area','site_parking','other']), 'enum system_type');
+      await exec(enumSafe('deficiency_severity', ['minor','moderate','major','critical']), 'enum deficiency_severity');
+
       // ── Enums: Other ──
       await exec(enumSafe('treasury_transaction_type', ['deposit','withdrawal','commitment','release','disbursement','fee','adjustment']), 'enum treasury_transaction_type');
 
@@ -274,6 +280,135 @@ export async function register() {
         expires_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`, 'table idempotency_keys');
+
+      // ═══════════════════════════════════════════
+      //  FIELD INTELLIGENCE CAPTURE (Layer 5)
+      // ═══════════════════════════════════════════
+
+      await exec(\`CREATE TABLE IF NOT EXISTS field_inspection_sessions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        property_id UUID NOT NULL,
+        session_name VARCHAR(255),
+        status inspection_session_status NOT NULL DEFAULT 'planned',
+        inspection_date TIMESTAMP,
+        total_units INTEGER NOT NULL,
+        units_walked INTEGER DEFAULT 0,
+        sampling_confidence_score DECIMAL(5,4),
+        inspected_by VARCHAR(255),
+        reviewed_by VARCHAR(255),
+        submitted_by VARCHAR(255),
+        submitted_at TIMESTAMP,
+        reviewed_at TIMESTAMP,
+        review_notes TEXT,
+        summary_json JSONB,
+        meta JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )\`, 'table field_inspection_sessions');
+
+      await exec(\`CREATE INDEX IF NOT EXISTS field_insp_deal_idx ON field_inspection_sessions(deal_id)\`, 'index field_insp_deal_idx');
+      await exec(\`CREATE INDEX IF NOT EXISTS field_insp_property_idx ON field_inspection_sessions(property_id)\`, 'index field_insp_property_idx');
+      await exec(\`CREATE INDEX IF NOT EXISTS field_insp_status_idx ON field_inspection_sessions(status)\`, 'index field_insp_status_idx');
+
+      await exec(\`CREATE TABLE IF NOT EXISTS field_unit_walk_rows (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        session_id UUID NOT NULL,
+        unit_number VARCHAR(50) NOT NULL,
+        unit_type VARCHAR(50),
+        occupancy_status VARCHAR(30),
+        kitchen unit_condition NOT NULL DEFAULT 'not_inspected',
+        bathroom unit_condition NOT NULL DEFAULT 'not_inspected',
+        flooring unit_condition NOT NULL DEFAULT 'not_inspected',
+        appliances unit_condition NOT NULL DEFAULT 'not_inspected',
+        hvac unit_condition NOT NULL DEFAULT 'not_inspected',
+        windows unit_condition NOT NULL DEFAULT 'not_inspected',
+        paint unit_condition NOT NULL DEFAULT 'not_inspected',
+        plumbing unit_condition NOT NULL DEFAULT 'not_inspected',
+        electrical unit_condition NOT NULL DEFAULT 'not_inspected',
+        doors unit_condition NOT NULL DEFAULT 'not_inspected',
+        exterior unit_condition NOT NULL DEFAULT 'not_inspected',
+        common_area unit_condition NOT NULL DEFAULT 'not_inspected',
+        site_parking unit_condition NOT NULL DEFAULT 'not_inspected',
+        other unit_condition NOT NULL DEFAULT 'not_inspected',
+        general_notes TEXT,
+        inspection_completed BOOLEAN DEFAULT FALSE,
+        inspection_time INTEGER,
+        meta JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )\`, 'table field_unit_walk_rows');
+
+      await exec(\`CREATE INDEX IF NOT EXISTS field_walk_session_idx ON field_unit_walk_rows(session_id)\`, 'index field_walk_session_idx');
+      await exec(\`CREATE INDEX IF NOT EXISTS field_walk_unit_number_idx ON field_unit_walk_rows(unit_number)\`, 'index field_walk_unit_number_idx');
+
+      await exec(\`CREATE TABLE IF NOT EXISTS field_unit_walk_deficiencies (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        unit_walk_id UUID NOT NULL,
+        system system_type NOT NULL,
+        severity deficiency_severity NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        estimated_repair_cost DECIMAL(12,2),
+        estimated_days_to_fix INTEGER,
+        needs_immediate_attention BOOLEAN DEFAULT FALSE,
+        affects_tenancy BOOLEAN DEFAULT FALSE,
+        meta JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )\`, 'table field_unit_walk_deficiencies');
+
+      await exec(\`CREATE INDEX IF NOT EXISTS field_deficiency_walk_idx ON field_unit_walk_deficiencies(unit_walk_id)\`, 'index field_deficiency_walk_idx');
+      await exec(\`CREATE INDEX IF NOT EXISTS field_deficiency_system_idx ON field_unit_walk_deficiencies(system)\`, 'index field_deficiency_system_idx');
+      await exec(\`CREATE INDEX IF NOT EXISTS field_deficiency_severity_idx ON field_unit_walk_deficiencies(severity)\`, 'index field_deficiency_severity_idx');
+
+      await exec(\`CREATE TABLE IF NOT EXISTS field_unit_walk_photos (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        unit_walk_id UUID NOT NULL,
+        photo_type VARCHAR(50),
+        system system_type,
+        is_before BOOLEAN DEFAULT TRUE,
+        file_name VARCHAR(255) NOT NULL,
+        file_url TEXT NOT NULL,
+        file_size INTEGER,
+        mime_type VARCHAR(100),
+        caption TEXT,
+        timestamp TIMESTAMP,
+        gps_coordinates JSONB,
+        meta JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )\`, 'table field_unit_walk_photos');
+
+      await exec(\`CREATE INDEX IF NOT EXISTS field_photos_walk_idx ON field_unit_walk_photos(unit_walk_id)\`, 'index field_photos_walk_idx');
+      await exec(\`CREATE INDEX IF NOT EXISTS field_photos_type_idx ON field_unit_walk_photos(photo_type)\`, 'index field_photos_type_idx');
+
+      await exec(\`CREATE TABLE IF NOT EXISTS field_inspection_summaries (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        session_id UUID NOT NULL,
+        total_units_in_property INTEGER NOT NULL,
+        units_inspected INTEGER NOT NULL,
+        sampling_percentage DECIMAL(5,2),
+        sampling_confidence_percentage DECIMAL(5,2),
+        system_issue_distribution JSONB,
+        units_in_good_condition INTEGER,
+        units_needing_light_rehab INTEGER,
+        units_needing_medium_rehab INTEGER,
+        units_needing_full_rehab INTEGER,
+        units_not_inspected INTEGER,
+        total_deficiencies INTEGER DEFAULT 0,
+        critical_deficiencies INTEGER DEFAULT 0,
+        deficiencies_by_system JSONB,
+        estimated_total_rehab_cost DECIMAL(14,2),
+        estimated_avg_cost_per_unit DECIMAL(12,2),
+        likely_rehab_package VARCHAR(100),
+        rehab_package_breakdown JSONB,
+        system_condition_patterns JSONB,
+        computed_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        meta JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )\`, 'table field_inspection_summaries');
+
+      await exec(\`CREATE INDEX IF NOT EXISTS field_summary_session_idx ON field_inspection_summaries(session_id)\`, 'index field_summary_session_idx');
 
       // ═══════════════════════════════════════════
       //  MIRDT TABLES
