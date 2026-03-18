@@ -71,6 +71,13 @@ interface Decision {
   decided_at: string;
 }
 
+interface ContractEntityMeta {
+  id: string;
+  currentStatus: string;
+  version: number;
+  updatedAt: string;
+}
+
 type AssumptionKey =
   | 'purchase_price' | 'rehab_budget' | 'arv_estimate' | 'monthly_rent'
   | 'down_payment_pct' | 'interest_rate' | 'loan_term_years' | 'closing_cost_pct'
@@ -169,6 +176,10 @@ export default function DealWorkspace() {
   const [decisionRationale, setDecisionRationale] = useState('');
   const [decisionSubmitting, setDecisionSubmitting] = useState(false);
   const [decisionError, setDecisionError] = useState<string | null>(null);
+  const [contractMeta, setContractMeta] = useState<ContractEntityMeta | null>(null);
+  const [contractTargetStatus, setContractTargetStatus] = useState('under_review');
+  const [contractStatusError, setContractStatusError] = useState<string | null>(null);
+  const [contractStatusSaving, setContractStatusSaving] = useState(false);
 
   const loadDeal = useCallback(async () => {
     if (!id) return;
@@ -189,6 +200,19 @@ export default function DealWorkspace() {
         if (json.data.scenarios?.length > 0) {
           setSelectedScenarioId((prev) => prev || json.data.scenarios[0].id);
         }
+
+        const contractRes = await fetch(`/api/real-estate/deals/${id}/contract-entity`);
+        const contractJson = await contractRes.json();
+        if (contractRes.ok && !contractJson.error) {
+          setContractMeta({
+            id: contractJson.id,
+            currentStatus: contractJson.currentStatus,
+            version: Number(contractJson.version || 1),
+            updatedAt: contractJson.updatedAt,
+          });
+        } else {
+          setContractMeta(null);
+        }
       }
     } catch {
       setErrorMsg('Network error loading deal.');
@@ -196,6 +220,59 @@ export default function DealWorkspace() {
       setLoading(false);
     }
   }, [id]);
+
+  const handleContractStatusUpdate = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!contractMeta || !id) return;
+
+    setContractStatusSaving(true);
+    setContractStatusError(null);
+    try {
+      const requestId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random()}`;
+
+      const response = await fetch(`/api/contracts/v1/entities/${contractMeta.id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestId,
+          idempotencyKey: `${contractMeta.id}:${contractTargetStatus}:${Date.now()}`,
+          concurrency: { version: contractMeta.version },
+          reasonCode: 'status_transition_requested',
+          payload: {
+            entity: {
+              id: contractMeta.id,
+              domain: 'real_estate',
+              entityType: 'deal',
+            },
+            toStatus: contractTargetStatus,
+            substatus: deal?.status || null,
+          },
+        }),
+      });
+
+      const json = await response.json();
+      if (!response.ok) {
+        setContractStatusError(json?.message || json?.error || 'Failed to update contract status');
+        return;
+      }
+
+      setContractMeta((prev) => prev
+        ? {
+            ...prev,
+            currentStatus: json.current_status || contractTargetStatus,
+            version: Number(json.version || prev.version + 1),
+            updatedAt: json.updated_at || prev.updatedAt,
+          }
+        : prev);
+      await loadDeal();
+    } catch {
+      setContractStatusError('Network error updating status.');
+    } finally {
+      setContractStatusSaving(false);
+    }
+  };
 
   useEffect(() => {
     loadDeal();
@@ -443,6 +520,38 @@ export default function DealWorkspace() {
             { label: 'Bedrooms', value: deal.bedrooms },
           ]}
         />
+
+        {contractMeta && (
+          <form onSubmit={handleContractStatusUpdate} className="mt-4 mb-8 border border-dl-border bg-dl-bg-alt p-4 max-w-xl">
+            <SectionHeading>Contract Status</SectionHeading>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+              <div>
+                <p className="text-xs text-dl-gray mb-1">Current</p>
+                <StatusBadge status={contractMeta.currentStatus} />
+              </div>
+              <FormField label="Target Status">
+                <select
+                  value={contractTargetStatus}
+                  onChange={(e) => setContractTargetStatus(e.target.value)}
+                  className="w-full border border-dl-border bg-white px-3 py-2 text-sm"
+                >
+                  <option value="intake">intake</option>
+                  <option value="under_review">under_review</option>
+                  <option value="approved">approved</option>
+                  <option value="rejected">rejected</option>
+                  <option value="in_execution">in_execution</option>
+                  <option value="completed">completed</option>
+                  <option value="blocked">blocked</option>
+                  <option value="archived">archived</option>
+                </select>
+              </FormField>
+              <SolidButton type="submit" disabled={contractStatusSaving} size="sm">
+                {contractStatusSaving ? 'Updating...' : 'Update Status'}
+              </SolidButton>
+            </div>
+            {contractStatusError && <p className="text-xs text-dl-error mt-2">{contractStatusError}</p>}
+          </form>
+        )}
 
         <SectionHeading>Scenarios</SectionHeading>
         <DataTable

@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "../shared/schema";
+import * as contractSchema from '../shared/contractSchema';
 import {
   index,
   pgTable,
@@ -16,6 +17,11 @@ import {
 
 let _pool: Pool | null = null;
 let _db: ReturnType<typeof drizzle> | null = null;
+
+const dbSchema = {
+  ...schema,
+  ...contractSchema,
+};
 
 function getPool(): Pool {
   if (!_pool) {
@@ -53,7 +59,7 @@ function getPool(): Pool {
 
 function getDb() {
   if (!_db) {
-    _db = drizzle(getPool(), { schema });
+    _db = drizzle(getPool(), { schema: dbSchema });
   }
   return _db;
 }

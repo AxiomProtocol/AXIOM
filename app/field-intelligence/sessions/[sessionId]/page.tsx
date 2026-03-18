@@ -27,6 +27,9 @@ interface SessionData {
   unitsWalked: number;
   samplingConfidenceScore: number;
   createdAt: string;
+  contractEntityId?: string | null;
+  contractVersion?: number | null;
+  contractUpdatedAt?: string | null;
 }
 
 export default function InspectionPage() {
@@ -132,15 +135,42 @@ export default function InspectionPage() {
 
   const handleSessionComplete = async () => {
     try {
-      // Mark session as submitted
-      const response = await fetch(`/api/field-intelligence/sessions`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: sessionId,
-          status: "submitted",
-        }),
-      });
+      let response: Response;
+
+      if (session?.contractEntityId && session.contractUpdatedAt) {
+        // Preferred path: mutate through canonical contract endpoint.
+        response = await fetch(`/api/contracts/v1/entities/${session.contractEntityId}/status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            requestId: crypto.randomUUID(),
+            idempotencyKey: `${session.contractEntityId}:submit:${Date.now()}`,
+            concurrency: session.contractVersion
+              ? { version: session.contractVersion }
+              : { updatedAt: session.contractUpdatedAt },
+            reasonCode: "status_transition_requested",
+            payload: {
+              entity: {
+                id: session.contractEntityId,
+                domain: "field_intelligence",
+                entityType: "inspection_session",
+              },
+              toStatus: "under_review",
+              substatus: "submitted",
+            },
+          }),
+        });
+      } else {
+        // Fallback path for sessions not yet linked to canonical contracts.
+        response = await fetch(`/api/field-intelligence/sessions`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: sessionId,
+            status: "submitted",
+          }),
+        });
+      }
 
       if (response.ok) {
         router.push(`/field-intelligence/sessions/${sessionId}/summary`);
