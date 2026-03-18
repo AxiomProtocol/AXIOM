@@ -20,6 +20,7 @@
     "test:readiness-gate": "npm run test:lexicon",
     "test:note-portal": "npx tsx tests/capital-compute.test.ts",
     "test:smoke": "npx tsx scripts/smoke-test.ts",
+    "test:contracts": "npx tsx tests/contracts-policy-and-validators.test.ts",
     "test:all": "npm run test:lexicon && npx tsx tests/capital-compute.test.ts",
     "test:invariants": "hardhat test test/invariants/*.test.ts --config hardhat.config.ts",
     "test:scenarios": "hardhat test test/scenarios/*.test.ts --config hardhat.config.ts",
