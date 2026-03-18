@@ -7,15 +7,14 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import InspectionWalkthrough, {
-  UnitWalkData,
-} from "@/components/InspectionWalkthrough";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import InspectionWalkthrough, { UnitWalkData } from "../../../../components/InspectionWalkthrough";
+import { Card, CardContent, CardHeader, CardTitle } from "../../../../components/ui/card";
+import { Button } from "../../../../components/ui/button";
 import { Loader2, Check, AlertCircle, ChevronRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { createPortal } from "react-dom";
+import { Badge } from "../../../../components/ui/badge";
 
 interface SessionData {
   id: string;
@@ -33,6 +32,59 @@ interface SessionData {
 }
 
 export default function InspectionPage() {
+    // --- Contract Status History & Event Timeline ---
+    const [statusHistory, setStatusHistory] = useState<any[]>([]);
+    const [eventTimeline, setEventTimeline] = useState<any[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [eventLoading, setEventLoading] = useState(false);
+    const [historyError, setHistoryError] = useState<string | null>(null);
+    const [eventError, setEventError] = useState<string | null>(null);
+
+    useEffect(() => {
+      if (!session?.contractEntityId) return;
+      setHistoryLoading(true);
+      setHistoryError(null);
+      fetch(`/api/contracts/v1/entities/${session.contractEntityId}/history`)
+        .then(res => res.ok ? res.json() : Promise.reject(res))
+        .then(data => setStatusHistory(data))
+        .catch(() => setHistoryError("Failed to load status history."))
+        .finally(() => setHistoryLoading(false));
+      setEventLoading(true);
+      setEventError(null);
+      fetch(`/api/contracts/v1/entities/${session.contractEntityId}/events`)
+        .then(res => res.ok ? res.json() : Promise.reject(res))
+        .then(data => setEventTimeline(data))
+        .catch(() => setEventError("Failed to load event timeline."))
+        .finally(() => setEventLoading(false));
+    }, [session?.contractEntityId]);
+
+    const statusBadge = (status: string) => {
+      const color = {
+        draft: "bg-gray-200 text-gray-800",
+        intake: "bg-blue-100 text-blue-800",
+        under_review: "bg-yellow-100 text-yellow-800",
+        approved: "bg-green-100 text-green-800",
+        in_execution: "bg-purple-100 text-purple-800",
+        completed: "bg-green-200 text-green-900",
+        blocked: "bg-red-100 text-red-800",
+        rejected: "bg-red-200 text-red-900",
+        archived: "bg-gray-300 text-gray-900",
+        "Not Linked": "bg-gray-100 text-gray-500",
+      }[status] || "bg-gray-100 text-gray-500";
+      return <span className={`px-2 py-1 rounded text-xs font-semibold ${color}`} title={status}>{status}</span>;
+    };
+
+    const eventBadge = (type: string) => {
+      const color = {
+        status_changed: "bg-blue-100 text-blue-800",
+        approval_requested: "bg-yellow-100 text-yellow-800",
+        approval_granted: "bg-green-100 text-green-800",
+        approval_rejected: "bg-red-100 text-red-800",
+        comment_added: "bg-gray-200 text-gray-800",
+        assignment_changed: "bg-purple-100 text-purple-800",
+      }[type] || "bg-gray-100 text-gray-500";
+      return <span className={`px-2 py-1 rounded text-xs font-semibold ${color}`} title={type}>{type}</span>;
+    };
   const params = useParams();
   const router = useRouter();
   const sessionId = params.sessionId as string;
@@ -209,6 +261,195 @@ export default function InspectionPage() {
       </Card>
     );
   }
+
+  // --- Contract Status Panel ---
+  const contractStatus = session.contractEntityId ? session.status : "Not Linked";
+  const contractStatusColor = {
+    draft: "bg-gray-200 text-gray-800",
+    intake: "bg-blue-100 text-blue-800",
+    under_review: "bg-yellow-100 text-yellow-800",
+    approved: "bg-green-100 text-green-800",
+    in_execution: "bg-purple-100 text-purple-800",
+    completed: "bg-green-200 text-green-900",
+    blocked: "bg-red-100 text-red-800",
+    rejected: "bg-red-200 text-red-900",
+    archived: "bg-gray-300 text-gray-900",
+    "Not Linked": "bg-gray-100 text-gray-500",
+  }[contractStatus] || "bg-gray-100 text-gray-500";
+
+  const statusOptions = [
+    "draft",
+    "intake",
+    "under_review",
+    "approved",
+    "in_execution",
+    "completed",
+    "blocked",
+    "rejected",
+    "archived",
+  ];
+
+  const [transitionTarget, setTransitionTarget] = useState<string>("");
+  const [transitionError, setTransitionError] = useState<string | null>(null);
+  const [transitionLoading, setTransitionLoading] = useState(false);
+
+  const handleStatusTransition = async () => {
+    setTransitionLoading(true);
+    setTransitionError(null);
+    try {
+      if (!session.contractEntityId) {
+        setTransitionError("Session is not linked to a contract entity.");
+        setTransitionLoading(false);
+        return;
+      }
+      const response = await fetch(`/api/contracts/v1/entities/${session.contractEntityId}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId: crypto.randomUUID(),
+          idempotencyKey: `${session.contractEntityId}:transition:${Date.now()}`,
+          concurrency: session.contractVersion
+            ? { version: session.contractVersion }
+            : { updatedAt: session.contractUpdatedAt },
+          reasonCode: "status_transition_requested",
+          payload: {
+            entity: {
+              id: session.contractEntityId,
+              domain: "field_intelligence",
+              entityType: "inspection_session",
+            },
+            toStatus: transitionTarget,
+            substatus: null,
+          },
+        }),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        setTransitionError(err.error || "Transition failed.");
+      } else {
+        setTransitionTarget("");
+        setTransitionError(null);
+        // Refresh session data
+        const refreshed = await fetch(`/api/field-intelligence/sessions?sessionId=${sessionId}`);
+        if (refreshed.ok) {
+          const data = await refreshed.json();
+          setSession(Array.isArray(data) ? data[0] : data);
+        }
+      }
+    } catch (err) {
+      setTransitionError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setTransitionLoading(false);
+    }
+  };
+
+  // --- Main UI ---
+  return (
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
+      {/* Contract Status History Panel */}
+      {session.contractEntityId && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Contract Status History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {historyLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+            ) : historyError ? (
+              <div className="text-red-600 text-sm">{historyError}</div>
+            ) : statusHistory.length === 0 ? (
+              <div className="text-gray-500 text-sm">No history found.</div>
+            ) : (
+              <ul className="space-y-2">
+                {statusHistory.map((h, idx) => (
+                  <li key={h.id || idx} className="flex items-center gap-3">
+                    {statusBadge(h.status)}
+                    <span className="text-xs text-gray-600">{h.substatus || ""}</span>
+                    <span className="text-xs text-gray-500">{new Date(h.createdAt || h.created_at).toLocaleString()}</span>
+                    <span className="text-xs text-gray-400">by {h.changedByDisplayName || h.changed_by_display_name || h.changedByActorId || h.changed_by_actor_id}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Contract Event Timeline Panel */}
+      {session.contractEntityId && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Contract Event Timeline</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {eventLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+            ) : eventError ? (
+              <div className="text-red-600 text-sm">{eventError}</div>
+            ) : eventTimeline.length === 0 ? (
+              <div className="text-gray-500 text-sm">No events found.</div>
+            ) : (
+              <ul className="space-y-2">
+                {eventTimeline.map((ev, idx) => (
+                  <li key={ev.id || idx} className="flex items-center gap-3">
+                    {eventBadge(ev.eventType || ev.event_type)}
+                    <span className="text-xs text-gray-600">{ev.payload?.toStatus || ev.payload?.eventType || ""}</span>
+                    <span className="text-xs text-gray-500">{new Date(ev.occurredAt || ev.occurred_at).toLocaleString()}</span>
+                    <span className="text-xs text-gray-400">by {ev.payload?.actorId || "system"}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
+      {/* Contract Status Panel */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            Contract Status
+            <Badge className={contractStatusColor}>{contractStatus}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-500">Contract Entity ID:</span>
+            <span className="font-mono text-xs text-gray-700">
+              {session.contractEntityId || "Not Linked"}
+            </span>
+          </div>
+          <div className="mt-4 flex items-center gap-2">
+            <select
+              className="border rounded px-2 py-1 text-sm"
+              value={transitionTarget}
+              onChange={e => setTransitionTarget(e.target.value)}
+              disabled={transitionLoading}
+            >
+              <option value="">Select status...</option>
+              {statusOptions.map(opt => (
+                <option key={opt} value={opt} disabled={opt === contractStatus}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+            <Button
+              disabled={!transitionTarget || transitionLoading}
+              onClick={handleStatusTransition}
+              variant="primary"
+            >
+              {transitionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Change Status"}
+            </Button>
+          </div>
+          {transitionError && (
+            <div className="mt-2 text-red-600 text-sm">{transitionError}</div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ...existing code... */}
+      {/* Session walkthrough and completion logic below remains unchanged */}
+    </div>
+  );
 
   // Show walkthrough if not started
   if (isWalkthrough) {

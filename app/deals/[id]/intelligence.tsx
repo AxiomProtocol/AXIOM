@@ -24,6 +24,107 @@ interface DealIntelligence {
 }
 
 export default function EnhancedDealIntelligencePage() {
+    // --- Contract Status Panel State ---
+    const [contractEntity, setContractEntity] = useState<any | null>(null);
+    const [contractLoading, setContractLoading] = useState(true);
+    const [contractError, setContractError] = useState<string | null>(null);
+    const [transitionTarget, setTransitionTarget] = useState<string>("");
+    const [transitionLoading, setTransitionLoading] = useState(false);
+    const [transitionError, setTransitionError] = useState<string | null>(null);
+
+    useEffect(() => {
+      const fetchContractEntity = async () => {
+        setContractLoading(true);
+        setContractError(null);
+        try {
+          const response = await fetch(`/api/real-estate/deals/${dealId}/contract-entity`);
+          if (!response.ok) throw new Error("Failed to load contract entity");
+          const data = await response.json();
+          setContractEntity(data);
+        } catch (err) {
+          setContractError(err instanceof Error ? err.message : "Unknown error");
+        } finally {
+          setContractLoading(false);
+        }
+      };
+      if (dealId) fetchContractEntity();
+    }, [dealId]);
+
+    const statusOptions = [
+      "draft",
+      "intake",
+      "under_review",
+      "approved",
+      "in_execution",
+      "completed",
+      "blocked",
+      "rejected",
+      "archived",
+    ];
+
+    const contractStatus = contractEntity?.currentStatus || "Not Linked";
+    const contractStatusColor = {
+      draft: "bg-gray-200 text-gray-800",
+      intake: "bg-blue-100 text-blue-800",
+      under_review: "bg-yellow-100 text-yellow-800",
+      approved: "bg-green-100 text-green-800",
+      in_execution: "bg-purple-100 text-purple-800",
+      completed: "bg-green-200 text-green-900",
+      blocked: "bg-red-100 text-red-800",
+      rejected: "bg-red-200 text-red-900",
+      archived: "bg-gray-300 text-gray-900",
+      "Not Linked": "bg-gray-100 text-gray-500",
+    }[contractStatus] || "bg-gray-100 text-gray-500";
+
+    const handleStatusTransition = async () => {
+      setTransitionLoading(true);
+      setTransitionError(null);
+      try {
+        if (!contractEntity?.id) {
+          setTransitionError("Deal is not linked to a contract entity.");
+          setTransitionLoading(false);
+          return;
+        }
+        const response = await fetch(`/api/contracts/v1/entities/${contractEntity.id}/status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            requestId: crypto.randomUUID(),
+            idempotencyKey: `${contractEntity.id}:transition:${Date.now()}`,
+            concurrency: contractEntity.version
+              ? { version: contractEntity.version }
+              : { updatedAt: contractEntity.updatedAt },
+            reasonCode: "status_transition_requested",
+            payload: {
+              entity: {
+                id: contractEntity.id,
+                domain: "real_estate",
+                entityType: "deal",
+              },
+              toStatus: transitionTarget,
+              substatus: null,
+            },
+          }),
+        });
+        if (!response.ok) {
+          const err = await response.json();
+          setTransitionError(err.error || "Transition failed.");
+        } else {
+          setTransitionTarget("");
+          setTransitionError(null);
+          // Refresh contract entity
+          const refreshed = await fetch(`/api/real-estate/deals/${dealId}/contract-entity`);
+          if (refreshed.ok) {
+            const data = await refreshed.json();
+            setContractEntity(data);
+          }
+        }
+      } catch (err) {
+        setTransitionError(err instanceof Error ? err.message : "Unknown error");
+      } finally {
+        setTransitionLoading(false);
+      }
+    };
   const params = useParams();
   const dealId = params.id as string;
   const [intelligence, setIntelligence] = useState<DealIntelligence | null>(null);
@@ -69,6 +170,56 @@ export default function EnhancedDealIntelligencePage() {
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
+      {/* Contract Status Panel */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            Contract Status
+            <Badge className={contractStatusColor}>{contractStatus}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {contractLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+          ) : contractError ? (
+            <div className="text-red-600 text-sm">{contractError}</div>
+          ) : (
+            <>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-500">Contract Entity ID:</span>
+                <span className="font-mono text-xs text-gray-700">
+                  {contractEntity?.id || "Not Linked"}
+                </span>
+              </div>
+              <div className="mt-4 flex items-center gap-2">
+                <select
+                  className="border rounded px-2 py-1 text-sm"
+                  value={transitionTarget}
+                  onChange={e => setTransitionTarget(e.target.value)}
+                  disabled={transitionLoading}
+                >
+                  <option value="">Select status...</option>
+                  {statusOptions.map(opt => (
+                    <option key={opt} value={opt} disabled={opt === contractStatus}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  disabled={!transitionTarget || transitionLoading}
+                  onClick={handleStatusTransition}
+                  variant="primary"
+                >
+                  {transitionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Change Status"}
+                </Button>
+              </div>
+              {transitionError && (
+                <div className="mt-2 text-red-600 text-sm">{transitionError}</div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">{intelligence.dealName}</h1>

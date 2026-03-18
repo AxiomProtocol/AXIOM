@@ -1,3 +1,4 @@
+import ContractStatusBadge from "./ContractStatusBadge";
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
@@ -177,6 +178,28 @@ export default function DealIntelligenceSearch() {
           </div>
         ))}
       </div>
+
+      {/* Contract Status Summary Widget for Search Results */}
+      {results.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-lg font-bold mb-2">Search Results</h2>
+          <ul className="space-y-2">
+            {results.map((result) => (
+              <li key={result.id} className="border rounded p-3 flex items-center gap-4">
+                <div className="flex-1">
+                  <Link href={`/deal-intelligence/property/${result.id}`} className="text-blue-700 font-semibold hover:underline">
+                    {result.addressRaw || result.addressNormalized}
+                  </Link>
+                  <div className="text-xs text-gray-500">{result.city}, {result.state} {result.zip}</div>
+                  <div className="text-xs text-gray-400">{result.propertyType} | {result.sqft} sqft | {result.bedrooms} beds | {result.bathrooms} baths</div>
+                </div>
+                {/* Contract Status Badge (async fetch) */}
+                <ContractStatusBadge propertyId={result.id} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto">
 
