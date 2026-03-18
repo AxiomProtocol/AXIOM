@@ -105,3 +105,4 @@ cache/
 
 # Private file storage
 storage/
+.vercel
