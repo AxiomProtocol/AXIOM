@@ -285,7 +285,7 @@ export async function register() {
       //  FIELD INTELLIGENCE CAPTURE (Layer 5)
       // ═══════════════════════════════════════════
 
-      await exec(\`CREATE TABLE IF NOT EXISTS field_inspection_sessions (
+      await exec(`CREATE TABLE IF NOT EXISTS field_inspection_sessions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         deal_id UUID NOT NULL,
         property_id UUID NOT NULL,
@@ -305,13 +305,13 @@ export async function register() {
         meta JSONB,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-      )\`, 'table field_inspection_sessions');
+      )`, 'table field_inspection_sessions');
 
-      await exec(\`CREATE INDEX IF NOT EXISTS field_insp_deal_idx ON field_inspection_sessions(deal_id)\`, 'index field_insp_deal_idx');
-      await exec(\`CREATE INDEX IF NOT EXISTS field_insp_property_idx ON field_inspection_sessions(property_id)\`, 'index field_insp_property_idx');
-      await exec(\`CREATE INDEX IF NOT EXISTS field_insp_status_idx ON field_inspection_sessions(status)\`, 'index field_insp_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS field_insp_deal_idx ON field_inspection_sessions(deal_id)`, 'index field_insp_deal_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS field_insp_property_idx ON field_inspection_sessions(property_id)`, 'index field_insp_property_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS field_insp_status_idx ON field_inspection_sessions(status)`, 'index field_insp_status_idx');
 
-      await exec(\`CREATE TABLE IF NOT EXISTS field_unit_walk_rows (
+      await exec(`CREATE TABLE IF NOT EXISTS field_unit_walk_rows (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         session_id UUID NOT NULL,
         unit_number VARCHAR(50) NOT NULL,
@@ -337,12 +337,12 @@ export async function register() {
         meta JSONB,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-      )\`, 'table field_unit_walk_rows');
+      )`, 'table field_unit_walk_rows');
 
-      await exec(\`CREATE INDEX IF NOT EXISTS field_walk_session_idx ON field_unit_walk_rows(session_id)\`, 'index field_walk_session_idx');
-      await exec(\`CREATE INDEX IF NOT EXISTS field_walk_unit_number_idx ON field_unit_walk_rows(unit_number)\`, 'index field_walk_unit_number_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS field_walk_session_idx ON field_unit_walk_rows(session_id)`, 'index field_walk_session_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS field_walk_unit_number_idx ON field_unit_walk_rows(unit_number)`, 'index field_walk_unit_number_idx');
 
-      await exec(\`CREATE TABLE IF NOT EXISTS field_unit_walk_deficiencies (
+      await exec(`CREATE TABLE IF NOT EXISTS field_unit_walk_deficiencies (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         unit_walk_id UUID NOT NULL,
         system system_type NOT NULL,
@@ -355,13 +355,13 @@ export async function register() {
         affects_tenancy BOOLEAN DEFAULT FALSE,
         meta JSONB,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
-      )\`, 'table field_unit_walk_deficiencies');
+      )`, 'table field_unit_walk_deficiencies');
 
-      await exec(\`CREATE INDEX IF NOT EXISTS field_deficiency_walk_idx ON field_unit_walk_deficiencies(unit_walk_id)\`, 'index field_deficiency_walk_idx');
-      await exec(\`CREATE INDEX IF NOT EXISTS field_deficiency_system_idx ON field_unit_walk_deficiencies(system)\`, 'index field_deficiency_system_idx');
-      await exec(\`CREATE INDEX IF NOT EXISTS field_deficiency_severity_idx ON field_unit_walk_deficiencies(severity)\`, 'index field_deficiency_severity_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS field_deficiency_walk_idx ON field_unit_walk_deficiencies(unit_walk_id)`, 'index field_deficiency_walk_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS field_deficiency_system_idx ON field_unit_walk_deficiencies(system)`, 'index field_deficiency_system_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS field_deficiency_severity_idx ON field_unit_walk_deficiencies(severity)`, 'index field_deficiency_severity_idx');
 
-      await exec(\`CREATE TABLE IF NOT EXISTS field_unit_walk_photos (
+      await exec(`CREATE TABLE IF NOT EXISTS field_unit_walk_photos (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         unit_walk_id UUID NOT NULL,
         photo_type VARCHAR(50),
@@ -376,12 +376,12 @@ export async function register() {
         gps_coordinates JSONB,
         meta JSONB,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
-      )\`, 'table field_unit_walk_photos');
+      )`, 'table field_unit_walk_photos');
 
-      await exec(\`CREATE INDEX IF NOT EXISTS field_photos_walk_idx ON field_unit_walk_photos(unit_walk_id)\`, 'index field_photos_walk_idx');
-      await exec(\`CREATE INDEX IF NOT EXISTS field_photos_type_idx ON field_unit_walk_photos(photo_type)\`, 'index field_photos_type_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS field_photos_walk_idx ON field_unit_walk_photos(unit_walk_id)`, 'index field_photos_walk_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS field_photos_type_idx ON field_unit_walk_photos(photo_type)`, 'index field_photos_type_idx');
 
-      await exec(\`CREATE TABLE IF NOT EXISTS field_inspection_summaries (
+      await exec(`CREATE TABLE IF NOT EXISTS field_inspection_summaries (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         session_id UUID NOT NULL,
         total_units_in_property INTEGER NOT NULL,
@@ -406,9 +406,9 @@ export async function register() {
         meta JSONB,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-      )\`, 'table field_inspection_summaries');
+      )`, 'table field_inspection_summaries');
 
-      await exec(\`CREATE INDEX IF NOT EXISTS field_summary_session_idx ON field_inspection_summaries(session_id)\`, 'index field_summary_session_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS field_summary_session_idx ON field_inspection_summaries(session_id)`, 'index field_summary_session_idx');
 
       // ═══════════════════════════════════════════
       //  MIRDT TABLES

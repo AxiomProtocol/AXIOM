@@ -9,6 +9,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return errorResponse(res, 405, 'METHOD_NOT_ALLOWED', 'Only GET is accepted');
   }
 
+  if (!process.env.DATABASE_URL) {
+    return errorResponse(res, 404, 'NOT_FOUND', 'Property not found');
+  }
+
   try {
     const { id } = req.query;
     if (!id || typeof id !== 'string') {

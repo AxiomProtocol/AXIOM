@@ -9,6 +9,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return errorResponse(res, 405, 'METHOD_NOT_ALLOWED', 'Only GET is accepted');
   }
 
+  if (!process.env.DATABASE_URL) {
+    return successResponse(res, {
+      properties: [],
+      pagination: {
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 0,
+      },
+    }, buildMeta(['internal_db'], 0.1));
+  }
+
   try {
     const { q, city, state, zip, property_type, min_sqft, max_sqft, page = '1', limit = '20' } = req.query;
     const pageNum = Math.max(1, parseNumeric(page, 1));
