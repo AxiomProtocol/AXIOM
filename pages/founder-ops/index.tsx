@@ -78,6 +78,57 @@ interface LogEntry {
   protocol_change: string | null;
 }
 
+interface OperatorStrategyProfile {
+  operator_wallet: string;
+  strategy_type: string;
+  asset_class: string | null;
+  market: string | null;
+  observations: number;
+  signal_count: number;
+  avg_capex_per_unit: string | null;
+  avg_rent_lift: string | null;
+  avg_noi_lift: string | null;
+  avg_stabilization_days: string | null;
+  avg_confidence: string | null;
+  deal_count: number;
+  last_signal_at: string | null;
+}
+
+interface NetworkSignal {
+  strategy_type: string;
+  market: string;
+  avg_capex_per_unit: string | null;
+  avg_confidence: string;
+  total_sample_size: number;
+  signal_count: number;
+}
+
+interface NetworkSnapshot {
+  id: string;
+  snapshot_date: string;
+  scope: string;
+  confidence_score: string;
+  created_at: string;
+  aggregated_signals: NetworkSignal[];
+}
+
+interface CapitalEvent {
+  id: string;
+  deal_id: string | null;
+  offering_id: string | null;
+  event_type: string;
+  capital_source_type: string | null;
+  raise_velocity: string | null;
+  minimum_capital_met: boolean | null;
+  investor_demand_score: string | null;
+  lender_path_chosen: string | null;
+  refi_outcome: string | null;
+  payload: Record<string, unknown> | null;
+  created_at: string;
+  deal_address: string | null;
+  offering_name: string | null;
+}
+
 const REGIME_COLORS: Record<string, string> = {
   TREND_UP: 'text-dl-forest',
   TREND_DOWN: 'text-dl-error',
@@ -140,13 +191,21 @@ export default function FounderOpsPage() {
   ]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'allocation' | 'checkpoints' | 'log' | 'outcomes'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'allocation' | 'checkpoints' | 'log' | 'outcomes' | 'intelligence'>('overview');
   const [pendingOutcomes, setPendingOutcomes] = useState<any[]>([]);
   const [outcomesLoading, setOutcomesLoading] = useState(false);
   const [outcomesUnauthorized, setOutcomesUnauthorized] = useState(false);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
   const [reviewError, setReviewError] = useState<string | null>(null);
+
+  const [operatorProfiles, setOperatorProfiles] = useState<OperatorStrategyProfile[]>([]);
+  const [networkSnapshot, setNetworkSnapshot] = useState<NetworkSnapshot | null>(null);
+  const [networkSignals, setNetworkSignals] = useState<NetworkSignal[]>([]);
+  const [capitalEvents, setCapitalEvents] = useState<CapitalEvent[]>([]);
+  const [intelligenceLoading, setIntelligenceLoading] = useState(false);
+  const [snapshotRefreshing, setSnapshotRefreshing] = useState(false);
+  const [snapshotError, setSnapshotError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -208,6 +267,58 @@ export default function FounderOpsPage() {
       .catch(() => setError('Failed to connect to server'))
       .finally(() => setLoading(false));
   }, []);
+
+  const loadIntelligence = async () => {
+    setIntelligenceLoading(true);
+    try {
+      const [profilesRes, latestRes, eventsRes] = await Promise.all([
+        fetch('/api/operator-strategy/profiles').then(r => r.json()).catch(() => ({ profiles: [] })),
+        fetch('/api/network-intelligence/latest').then(r => r.json()).catch(() => ({ snapshot: null, currentSignals: [] })),
+        fetch('/api/capital-intelligence/events?limit=50').then(r => r.json()).catch(() => ({ events: [] })),
+      ]);
+      setOperatorProfiles(profilesRes.profiles || []);
+      if (latestRes.snapshot) {
+        const snap = latestRes.snapshot;
+        setNetworkSnapshot({
+          ...snap,
+          aggregated_signals: typeof snap.aggregated_signals === 'string'
+            ? JSON.parse(snap.aggregated_signals)
+            : (snap.aggregated_signals || []),
+        });
+      } else {
+        setNetworkSnapshot(null);
+      }
+      setNetworkSignals(latestRes.currentSignals || []);
+      setCapitalEvents(eventsRes.events || []);
+    } catch {
+    } finally {
+      setIntelligenceLoading(false);
+    }
+  };
+
+  const handleRefreshSnapshot = async () => {
+    setSnapshotRefreshing(true);
+    setSnapshotError(null);
+    try {
+      const res = await fetch('/api/network-intelligence/generate-snapshot', { method: 'POST' });
+      const json = await res.json();
+      if (!res.ok) {
+        setSnapshotError(json.error || 'Snapshot generation failed');
+      } else {
+        const snap = json.snapshot;
+        setNetworkSnapshot({
+          ...snap,
+          aggregated_signals: typeof snap.aggregated_signals === 'string'
+            ? JSON.parse(snap.aggregated_signals)
+            : (snap.aggregated_signals || []),
+        });
+      }
+    } catch {
+      setSnapshotError('Snapshot generation failed — check connection');
+    } finally {
+      setSnapshotRefreshing(false);
+    }
+  };
 
   const loadPendingOutcomes = async () => {
     setOutcomesLoading(true);
@@ -311,6 +422,7 @@ export default function FounderOpsPage() {
     { id: 'checkpoints' as const, label: 'Risk Checkpoints' },
     { id: 'log' as const, label: 'Operations Log' },
     { id: 'outcomes' as const, label: `Outcomes${pendingOutcomes.length > 0 ? ` (${pendingOutcomes.length})` : ''}` },
+    { id: 'intelligence' as const, label: 'Intelligence' },
   ];
 
   return (
@@ -343,6 +455,7 @@ export default function FounderOpsPage() {
                   onClick={() => {
                     setActiveTab(tab.id);
                     if (tab.id === 'outcomes') loadPendingOutcomes();
+                    if (tab.id === 'intelligence') loadIntelligence();
                   }}
                   className={`px-4 py-2 text-sm border-b-2 -mb-px transition-none ${
                     activeTab === tab.id
@@ -663,6 +776,207 @@ export default function FounderOpsPage() {
                   keyExtractor={(e) => e.id}
                   emptyMessage="No operations logged yet. Log your first action via POST /api/founder-ops/log"
                 />
+              </>
+            )}
+
+            {activeTab === 'intelligence' && (
+              <>
+                <div className="mb-10">
+                  <SectionHeading>Operator Strategy Profiles</SectionHeading>
+                  <p className="text-sm text-dl-gray mb-4">
+                    Aggregated execution signals per operator and strategy type. Populated as verified outcomes are approved and signals are recorded.
+                  </p>
+                  {intelligenceLoading ? (
+                    <p className="font-dl-mono text-sm text-dl-gray py-8 text-center">Loading intelligence data...</p>
+                  ) : operatorProfiles.length === 0 ? (
+                    <div className="border border-dl-border p-6 text-center">
+                      <p className="font-dl-mono text-sm text-dl-muted">No operator strategy signals recorded yet.</p>
+                      <p className="font-dl-mono text-xs text-dl-muted mt-1">
+                        Profiles populate after verified outcomes are approved and operator signals are written to the DB.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="border border-dl-border overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-dl-border">
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Operator</th>
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Strategy</th>
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Market</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Deals</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Avg Capex/Unit</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Avg Rent Lift</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Avg NOI Lift</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Stab. Days</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Confidence</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {operatorProfiles.map((p, i) => (
+                            <tr key={`${p.operator_wallet}-${p.strategy_type}-${i}`} className="border-b border-dl-border last:border-0">
+                              <td className="p-3 font-dl-mono text-xs text-dl-navy">{truncateAddr(p.operator_wallet)}</td>
+                              <td className="p-3 text-xs text-dl-navy capitalize">{p.strategy_type.replace(/_/g, ' ')}</td>
+                              <td className="p-3 text-xs text-dl-gray">{p.market || '—'}</td>
+                              <td className="p-3 text-right font-dl-mono text-xs">{p.deal_count}</td>
+                              <td className="p-3 text-right font-dl-mono text-xs">
+                                {p.avg_capex_per_unit ? `$${Number(p.avg_capex_per_unit).toLocaleString()}` : '—'}
+                              </td>
+                              <td className="p-3 text-right font-dl-mono text-xs">
+                                {p.avg_rent_lift ? `$${Number(p.avg_rent_lift).toLocaleString()}` : '—'}
+                              </td>
+                              <td className="p-3 text-right font-dl-mono text-xs">
+                                {p.avg_noi_lift ? `$${Number(p.avg_noi_lift).toLocaleString()}` : '—'}
+                              </td>
+                              <td className="p-3 text-right font-dl-mono text-xs">
+                                {p.avg_stabilization_days ? Number(p.avg_stabilization_days).toFixed(0) : '—'}
+                              </td>
+                              <td className="p-3 text-right font-dl-mono text-xs">
+                                {p.avg_confidence ? `${(Number(p.avg_confidence) * 100).toFixed(1)}%` : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mb-10">
+                  <div className="flex items-center justify-between mb-2">
+                    <SectionHeading>Network Intelligence</SectionHeading>
+                    <button
+                      onClick={handleRefreshSnapshot}
+                      disabled={snapshotRefreshing}
+                      className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-3 py-1.5 hover:bg-dl-navy hover:text-white disabled:opacity-50"
+                    >
+                      {snapshotRefreshing ? 'Generating...' : 'Refresh Snapshot'}
+                    </button>
+                  </div>
+                  {snapshotError && (
+                    <div className="border border-dl-error p-2 mb-3">
+                      <p className="font-dl-mono text-xs text-dl-error">{snapshotError}</p>
+                    </div>
+                  )}
+                  {networkSnapshot && (
+                    <div className="border border-dl-border p-3 mb-4 flex gap-6 text-xs font-dl-mono">
+                      <span className="text-dl-muted">Snapshot: <span className="text-dl-navy">{networkSnapshot.snapshot_date}</span></span>
+                      <span className="text-dl-muted">Scope: <span className="text-dl-navy capitalize">{networkSnapshot.scope}</span></span>
+                      <span className="text-dl-muted">Confidence: <span className="text-dl-navy">{(Number(networkSnapshot.confidence_score) * 100).toFixed(1)}%</span></span>
+                      <span className="text-dl-muted">ID: <span className="text-dl-navy">{networkSnapshot.id.slice(0, 8)}…</span></span>
+                    </div>
+                  )}
+                  <p className="text-sm text-dl-gray mb-4">
+                    Market cost benchmarks by strategy type. Computed from verified local signals via the market cost signals table.
+                  </p>
+                  {!intelligenceLoading && networkSignals.length === 0 ? (
+                    <div className="border border-dl-border p-6 text-center">
+                      <p className="font-dl-mono text-sm text-dl-muted">No market cost signals recorded yet.</p>
+                      <p className="font-dl-mono text-xs text-dl-muted mt-1">
+                        Signals populate as verified deal outcomes feed into the market cost signals table.
+                        Click "Refresh Snapshot" to generate a snapshot from any available data.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="border border-dl-border overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-dl-border">
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Strategy Type</th>
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Market</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Avg Capex/Unit</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Confidence</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Sample Size</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Signal Count</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {networkSignals.map((s, i) => (
+                            <tr key={`${s.strategy_type}-${s.market}-${i}`} className="border-b border-dl-border last:border-0">
+                              <td className="p-3 text-xs text-dl-navy capitalize">{s.strategy_type ? s.strategy_type.replace(/_/g, ' ') : '—'}</td>
+                              <td className="p-3 text-xs text-dl-gray">{s.market || '—'}</td>
+                              <td className="p-3 text-right font-dl-mono text-xs">
+                                {s.avg_capex_per_unit ? `$${Number(s.avg_capex_per_unit).toLocaleString()}` : '—'}
+                              </td>
+                              <td className="p-3 text-right font-dl-mono text-xs">
+                                {(Number(s.avg_confidence) * 100).toFixed(1)}%
+                              </td>
+                              <td className="p-3 text-right font-dl-mono text-xs">{s.total_sample_size}</td>
+                              <td className="p-3 text-right font-dl-mono text-xs">{s.signal_count}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mb-6">
+                  <SectionHeading>Capital Intelligence Events</SectionHeading>
+                  <p className="text-sm text-dl-gray mb-4">
+                    Automated capital behavior log. Events are written when subscriptions are submitted, capital calls are paid, and offerings are closed.
+                  </p>
+                  {!intelligenceLoading && capitalEvents.length === 0 ? (
+                    <div className="border border-dl-border p-6 text-center">
+                      <p className="font-dl-mono text-sm text-dl-muted">No capital intelligence events recorded yet.</p>
+                      <p className="font-dl-mono text-xs text-dl-muted mt-1">
+                        Events are automatically written when syndication actions occur (commitment submitted, capital call paid, offering closed).
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="border border-dl-border overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-dl-border">
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Event</th>
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Deal / Offering</th>
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Source</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Raise Velocity</th>
+                            <th className="text-center p-3 text-xs uppercase tracking-wider text-dl-gray">Min Met</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Demand Score</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {capitalEvents.map((e) => (
+                            <tr key={e.id} className="border-b border-dl-border last:border-0">
+                              <td className="p-3">
+                                <span className={`font-dl-mono text-xs uppercase ${
+                                  e.event_type === 'offering_closed' ? 'text-dl-forest' :
+                                  e.event_type === 'capital_call_paid' ? 'text-dl-navy' :
+                                  'text-dl-gray'
+                                }`}>
+                                  {e.event_type.replace(/_/g, ' ')}
+                                </span>
+                              </td>
+                              <td className="p-3 text-xs text-dl-navy">
+                                {e.offering_name || e.deal_address || (e.offering_id ? e.offering_id.slice(0, 8) + '…' : '—')}
+                              </td>
+                              <td className="p-3 text-xs text-dl-gray capitalize">
+                                {e.capital_source_type || '—'}
+                              </td>
+                              <td className="p-3 text-right font-dl-mono text-xs">
+                                {e.raise_velocity ? `$${Number(e.raise_velocity).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '—'}
+                              </td>
+                              <td className="p-3 text-center font-dl-mono text-xs">
+                                {e.minimum_capital_met === null ? '—' :
+                                  <span className={e.minimum_capital_met ? 'text-dl-forest' : 'text-dl-error'}>
+                                    {e.minimum_capital_met ? 'YES' : 'NO'}
+                                  </span>
+                                }
+                              </td>
+                              <td className="p-3 text-right font-dl-mono text-xs">
+                                {e.investor_demand_score ? `${(Number(e.investor_demand_score) * 100).toFixed(1)}%` : '—'}
+                              </td>
+                              <td className="p-3 text-right font-dl-mono text-xs text-dl-gray">
+                                {formatUTC(e.created_at)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </>
             )}
 

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../../server/db';
+import { recordCapitalIntelligenceEvent } from '../../../../../lib/capitalIntelligence';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -82,6 +83,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       );
 
       await client.query('COMMIT');
+
+      const minimumMet = targetRaise > 0 ? fundedTotal >= targetRaise : null;
+      const raiseVelocity = fundedTotal > 0 && fundedCount > 0 ? fundedTotal / fundedCount : null;
+      const demandScore = targetRaise > 0 ? Math.min(fundedTotal / targetRaise, 1) : null;
+
+      await recordCapitalIntelligenceEvent({
+        offeringId: id as string,
+        eventType: 'offering_closed',
+        capitalSourceType: 'equity',
+        raiseVelocity,
+        minimumCapitalMet: minimumMet,
+        investorDemandScore: demandScore,
+        payload: {
+          fundedSubscriptions: fundedCount,
+          totalFunded: fundedTotal,
+          targetRaise,
+          capTableEntries: fundedSubs.rows.length,
+        },
+      });
 
       return res.status(200).json({
         success: true,

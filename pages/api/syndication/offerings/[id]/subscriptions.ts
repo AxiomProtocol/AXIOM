@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../../server/db';
+import { recordCapitalIntelligenceEvent } from '../../../../../lib/capitalIntelligence';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
@@ -45,7 +46,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         [id, investorProfileId, amount, fundingMethod || 'wire', paymentCurrency || 'USD', investorWallet || null, JSON.stringify({ share_class: shareClass || 'common' })]
       );
 
-      return res.status(201).json({ success: true, subscriptionId: result.rows[0].id });
+      const subscriptionId = result.rows[0].id;
+
+      await recordCapitalIntelligenceEvent({
+        offeringId: id as string,
+        eventType: 'commitment_submitted',
+        capitalSourceType: fundingMethod || 'wire',
+        payload: {
+          subscriptionId,
+          amount: parseFloat(amount),
+          shareClass: shareClass || 'common',
+          paymentCurrency: paymentCurrency || 'USD',
+        },
+      });
+
+      return res.status(201).json({ success: true, subscriptionId });
     } catch (error: any) {
       return res.status(500).json({ success: false, error: error.message });
     }
@@ -146,6 +161,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         } catch (capErr) {
           console.error('[syndication] Auto-sync cap table error (non-fatal):', capErr);
         }
+
+        await recordCapitalIntelligenceEvent({
+          offeringId: id as string,
+          eventType: 'capital_call_paid',
+          capitalSourceType: 'subscription',
+          minimumCapitalMet: null,
+          payload: {
+            subscriptionId,
+            status: 'funded',
+          },
+        });
       }
 
       return res.status(200).json({ success: true });
