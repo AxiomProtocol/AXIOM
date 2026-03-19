@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
 import { ensureContractEntityForSession } from '../../../server/services/contracts/fieldIntelligenceAdapter';
+import { ensureMatrixRoomForInspection, postStructuredMatrixEvent } from '../../../server/services/matrix/workflow';
 
 type SessionRow = {
   id: string;
@@ -101,6 +102,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         await ensureContractEntityForSession(newSession.id);
       } catch (_) {}
 
+      setImmediate(async () => {
+        try {
+          const room = await ensureMatrixRoomForInspection(newSession.id, sessionName);
+          await postStructuredMatrixEvent(room.roomId, {
+            eventType: 'axiom.inspection.started',
+            payload: {
+              inspectionId: newSession.id,
+              dealId,
+              sessionName,
+              totalUnits: Number(totalUnits),
+              inspectedBy: inspectedBy || null,
+            },
+            actor: inspectedBy || null,
+          }, 'inspection', newSession.id);
+        } catch (_) {}
+      });
+
       return res.status(201).json(newSession);
     }
 
@@ -122,6 +140,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!row) return res.status(404).json({ error: 'Session not found' });
 
       await ensureContractEntityForSession(id);
+
+      if (status === 'submitted') {
+        setImmediate(async () => {
+          try {
+            const room = await ensureMatrixRoomForInspection(id, row.session_name);
+            await postStructuredMatrixEvent(room.roomId, {
+              eventType: 'axiom.inspection.submitted',
+              payload: {
+                inspectionId: id,
+                dealId: row.deal_id,
+                totalUnits: row.total_units,
+                unitsInspected: row.units_walked || 0,
+                confidenceScore: Number(row.sampling_confidence_score || 0),
+                status: 'submitted',
+              },
+            }, 'inspection', id);
+          } catch (_) {}
+        });
+      }
+
       return res.status(200).json(row);
     }
 

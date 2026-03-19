@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../lib/db';
 import { getSIWESession } from '../../../lib/middleware/siweAuth';
 import { computeVarianceSnapshot } from '../../../server/services/real-estate/verifiedOutcomes';
+import { ensureMatrixRoomForProjectOutcome, postStructuredMatrixEvent } from '../../../server/services/matrix/workflow';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
@@ -277,6 +278,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         `SELECT * FROM prediction_actual_variances WHERE outcome_id = $1 ORDER BY metric_key`,
         [outcome.id]
       );
+
+      setImmediate(async () => {
+        try {
+          const room = await ensureMatrixRoomForProjectOutcome(outcome.id, actorAddress);
+          await postStructuredMatrixEvent(room.roomId, {
+            eventType: 'axiom.outcome.submitted',
+            payload: {
+              outcomeId: outcome.id,
+              dealId,
+              submittedBy: actorAddress,
+              actualRehabCost: Number(actualRehabCost),
+              actualTimelineDays: Number(actualTimelineDays),
+              actualSalePrice: actualSalePrice ? Number(actualSalePrice) : null,
+              actualRent: actualRent ? Number(actualRent) : null,
+              actualDscr: actualDscr ? Number(actualDscr) : null,
+              varianceCount: varianceRes.rows.length,
+              status: 'submitted',
+            },
+            actor: actorAddress,
+          }, 'project_outcome', outcome.id);
+        } catch (_) {}
+      });
 
       return res.status(201).json({ outcome, variances: varianceRes.rows });
     } catch (err: any) {

@@ -3,6 +3,7 @@ import { db, pool } from '../../../../server/db';
 import { reProperties } from '../../../../shared/realEstateSchema';
 import { eq } from 'drizzle-orm';
 import { successResponse, errorResponse, buildMeta, safePropertyColumns } from '../../../../server/services/real-estate/helpers';
+import { ensureMatrixRoomForDeal, postStructuredMatrixEvent } from '../../../../server/services/matrix/workflow';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -75,6 +76,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        VALUES (gen_random_uuid(), $1, 'DEAL_CREATED', 'system', $2, now())`,
       [deal.id, `Deal workspace created for ${property.addressRaw || property.addressNormalized}. Strategy: ${strategy.toUpperCase()}. Base Case scenario with default assumptions ready for underwriting.`]
     );
+
+    setImmediate(async () => {
+      try {
+        const room = await ensureMatrixRoomForDeal(deal.id, dealName);
+        await postStructuredMatrixEvent(room.roomId, {
+          eventType: 'axiom.deal.created',
+          payload: {
+            dealId: deal.id,
+            dealName,
+            strategy,
+            propertyAddress: property.addressRaw || property.addressNormalized || '',
+            status: 'draft',
+          },
+        }, 'deal', deal.id);
+      } catch (_) {}
+    });
 
     return successResponse(res, { deal, scenario }, buildMeta(['internal_db', 'user_input'], 0.7));
 

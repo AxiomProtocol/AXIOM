@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../lib/db';
 import { getSIWESession } from '../../../../lib/middleware/siweAuth';
 import { isAuthorizedReviewer } from '../../../../lib/reviewerAuth';
+import { postStructuredMatrixEvent, getRoomByEntity } from '../../../../server/services/matrix/workflow';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -70,8 +71,53 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `SELECT * FROM verified_project_outcomes WHERE id = $1`,
       [id]
     );
+    const outcome = updated.rows[0];
 
-    return res.status(200).json({ outcome: updated.rows[0] });
+    setImmediate(async () => {
+      try {
+        const room = await getRoomByEntity('project_outcome', id);
+        if (room) {
+          if (decision === 'approved') {
+            await postStructuredMatrixEvent(room.matrixRoomId, {
+              eventType: 'axiom.outcome.verified',
+              payload: {
+                outcomeId: id,
+                dealId: outcome?.deal_id || null,
+                reviewedBy: reviewerAddress,
+                actualRehabCost: outcome?.actual_rehab_cost || null,
+                actualTimelineDays: outcome?.actual_timeline_days || null,
+                axmRewardEligible: outcome?.axm_reward_eligible || false,
+              },
+              actor: reviewerAddress,
+            }, 'project_outcome', id);
+            await postStructuredMatrixEvent(room.matrixRoomId, {
+              eventType: 'axiom.cost_signal.created',
+              payload: {
+                outcomeId: id,
+                dealId: outcome?.deal_id || null,
+                signalSource: 'verified_outcome',
+                rehabCost: outcome?.actual_rehab_cost || null,
+                timelineDays: outcome?.actual_timeline_days || null,
+              },
+              actor: 'system',
+            }, 'project_outcome', id);
+          } else {
+            await postStructuredMatrixEvent(room.matrixRoomId, {
+              eventType: 'axiom.outcome.rejected',
+              payload: {
+                outcomeId: id,
+                dealId: outcome?.deal_id || null,
+                reviewedBy: reviewerAddress,
+                notes: notes || null,
+              },
+              actor: reviewerAddress,
+            }, 'project_outcome', id);
+          }
+        }
+      } catch (_) {}
+    });
+
+    return res.status(200).json({ outcome });
   } catch (err: any) {
     console.error('POST /api/verified-outcomes/[id]/review error:', err.message);
     return res.status(500).json({ error: err.message });

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../server/db';
+import { ensureMatrixRoomForOffering, postStructuredMatrixEvent } from '../../../../server/services/matrix/workflow';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -175,6 +176,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     const offeringId = offeringResult.rows[0].id;
+
+    setImmediate(async () => {
+      try {
+        const offeringName = `${deal.address_raw || 'Offering'} — ${deal.strategy || 'Acquisition'}`;
+        const room = await ensureMatrixRoomForOffering(offeringId, offeringName, walletAddress || null);
+        await postStructuredMatrixEvent(room.roomId, {
+          eventType: 'axiom.offering.created',
+          payload: {
+            offeringId,
+            dealId,
+            offeringType: offeringType || 'clubDeal',
+            propertyAddress: deal.address_raw || '',
+            strategy: deal.strategy || '',
+            targetRaise: equityGap,
+            createdBy: walletAddress || null,
+          },
+          actor: walletAddress || null,
+        }, 'offering', offeringId);
+      } catch (_) {}
+    });
 
     return res.status(201).json({
       success: true,

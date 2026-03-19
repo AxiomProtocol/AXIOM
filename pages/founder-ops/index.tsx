@@ -213,6 +213,8 @@ export default function FounderOpsPage() {
   const [intelligenceUnauthorized, setIntelligenceUnauthorized] = useState(false);
   const [snapshotRefreshing, setSnapshotRefreshing] = useState(false);
   const [snapshotError, setSnapshotError] = useState<string | null>(null);
+  const [matrixEvents, setMatrixEvents] = useState<any[]>([]);
+  const [matrixRooms, setMatrixRooms] = useState<any[]>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -279,10 +281,11 @@ export default function FounderOpsPage() {
     setIntelligenceLoading(true);
     setIntelligenceUnauthorized(false);
     try {
-      const [profilesRes, latestRes, eventsRes] = await Promise.all([
+      const [profilesRes, latestRes, eventsRes, matrixRes] = await Promise.all([
         fetch('/api/operator-strategy/profiles').then(r => r.json()).catch(() => ({ profiles: [] })),
         fetch('/api/network-intelligence/latest').then(r => r.json()).catch(() => ({ snapshot: null, currentSignals: [] })),
         fetch('/api/capital-intelligence/events?limit=50').then(r => r.json()).catch(() => ({ events: [] })),
+        fetch('/api/matrix/events?limit=50').then(r => r.json()).catch(() => ({ events: [], rooms: [] })),
       ]);
 
       if (profilesRes.code === 'SIWE_AUTH_REQUIRED' || latestRes.code === 'SIWE_AUTH_REQUIRED' || eventsRes.code === 'SIWE_AUTH_REQUIRED') {
@@ -304,6 +307,8 @@ export default function FounderOpsPage() {
       }
       setNetworkSignals(latestRes.currentSignals || []);
       setCapitalEvents(eventsRes.events || []);
+      setMatrixEvents(matrixRes.events || []);
+      setMatrixRooms(matrixRes.rooms || []);
     } catch {
     } finally {
       setIntelligenceLoading(false);
@@ -936,6 +941,101 @@ export default function FounderOpsPage() {
                               <td className="p-3 text-right font-dl-mono text-xs">{s.signal_count}</td>
                             </tr>
                           ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mb-6">
+                  <SectionHeading>Matrix Coordination Layer</SectionHeading>
+                  <p className="text-sm text-dl-gray mb-4">
+                    Structured coordination events across all six intelligence layers. Each room is tied to a real entity (deal, inspection, outcome, offering). Events are written automatically at every workflow step.
+                  </p>
+
+                  {matrixRooms.length > 0 && (
+                    <div className="mb-4">
+                      <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray mb-2">Active Coordination Rooms</p>
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
+                        {(['deal', 'inspection', 'project_outcome', 'offering'] as const).map((et) => {
+                          const count = matrixRooms.filter(r => r.entityType === et).length;
+                          return (
+                            <div key={et} className="border border-dl-border p-3">
+                              <p className="font-dl-mono text-xs text-dl-muted uppercase">{et.replace(/_/g, ' ')}</p>
+                              <p className="font-dl-mono text-2xl text-dl-navy mt-1">{count}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {matrixEvents.length === 0 ? (
+                    <div className="border border-dl-border p-6 text-center">
+                      <p className="font-dl-mono text-sm text-dl-muted">No coordination events recorded yet.</p>
+                      <p className="font-dl-mono text-xs text-dl-muted mt-1">
+                        Events are written automatically when deals are created, inspections start, outcomes are submitted, and capital moves.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="border border-dl-border overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-dl-border">
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Event Type</th>
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Layer</th>
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Entity</th>
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Room</th>
+                            <th className="text-center p-3 text-xs uppercase tracking-wider text-dl-gray">Anchored</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {matrixEvents.map((e) => {
+                            const eventColor =
+                              e.eventType?.includes('created') ? 'text-dl-forest' :
+                              e.eventType?.includes('verified') || e.eventType?.includes('funded') ? 'text-dl-navy' :
+                              e.eventType?.includes('rejected') ? 'text-dl-error' :
+                              e.eventType?.includes('submitted') ? 'text-dl-gold' :
+                              'text-dl-gray';
+                            const layerLabel =
+                              e.entityType === 'deal' ? 'L1 — Deal' :
+                              e.entityType === 'inspection' ? 'L5 — Field' :
+                              e.entityType === 'project_outcome' ? 'L2 — Execution' :
+                              e.entityType === 'offering' ? 'L4 — Capital' :
+                              e.entityType;
+                            const hash = e.payload?._hash as string | undefined;
+                            return (
+                              <tr key={e.id} className="border-b border-dl-border last:border-0">
+                                <td className="p-3">
+                                  <span className={`font-dl-mono text-xs ${eventColor}`}>
+                                    {e.eventType?.replace('axiom.', '').replace(/\./g, ' ') || '—'}
+                                  </span>
+                                </td>
+                                <td className="p-3 font-dl-mono text-xs text-dl-muted">{layerLabel}</td>
+                                <td className="p-3 font-dl-mono text-xs text-dl-gray">
+                                  {e.entityId ? e.entityId.slice(0, 8) + '…' : '—'}
+                                </td>
+                                <td className="p-3 font-dl-mono text-xs text-dl-muted">
+                                  {e.matrixRoomId
+                                    ? e.matrixRoomId.startsWith('axiom-unconfigured:')
+                                      ? <span className="text-dl-muted">Synthetic</span>
+                                      : <span className="text-dl-forest">Live</span>
+                                    : '—'}
+                                </td>
+                                <td className="p-3 text-center font-dl-mono text-xs">
+                                  {hash ? (
+                                    <span className="text-dl-gold" title={hash}>SHA-256</span>
+                                  ) : (
+                                    <span className="text-dl-muted">—</span>
+                                  )}
+                                </td>
+                                <td className="p-3 text-right font-dl-mono text-xs text-dl-gray">
+                                  {formatUTC(e.createdAt)}
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>

@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../server/db';
 import { generateText } from '../../../../lib/server/gemini';
+import { postStructuredMatrixEvent, getRoomByEntity } from '../../../../server/services/matrix/workflow';
 
 const SYSTEMS = [
   'kitchen', 'bathroom', 'flooring', 'appliances', 'hvac',
@@ -198,6 +199,28 @@ Base scope selection on actual system conditions. BRRRR and hold strategies typi
       );
       scopeRow = insertResult.rows[0];
     }
+
+    setImmediate(async () => {
+      try {
+        const room = await getRoomByEntity('inspection', sessionId);
+        if (room) {
+          await postStructuredMatrixEvent(room.matrixRoomId, {
+            eventType: 'axiom.scope.generated',
+            payload: {
+              scopeId: scopeRow?.id || null,
+              inspectionId: sessionId,
+              dealId: session.deal_id,
+              unitsInspected: unitsCount,
+              totalUnits: session.total_units,
+              samplingPct,
+              recommendedBudget: scopeData.strategies?.[scopeData.recommended_strategy || 'flip']?.[scopeData.recommended_tier || 'standard']?.total || 0,
+              confidence: scopeData.confidence || 0.7,
+            },
+            actor: 'system',
+          }, 'inspection', sessionId);
+        }
+      } catch (_) {}
+    });
 
     return res.status(200).json({
       scopeId: scopeRow?.id,
