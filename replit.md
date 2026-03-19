@@ -38,7 +38,7 @@ Key features include:
 - **Euler V2 AXUSD Lending Markets**.
 - **MIRDT (Market Intelligence & Risk Disclosure Terminal)** for probabilistic trend-following analysis.
 - **Axiom Sentinel**: A unified capital decision and risk authorization layer.
-- **Founder Operations Dashboard**: Internal dashboard for system overview and operations.
+- **Founder Operations Dashboard**: Internal dashboard for system overview and operations. Includes an "Outcomes" tab showing outcomes pending verification review with approve/reject buttons calling the review API.
 - **Solvency and Reserve Transparency**: A page providing a three-mode institutional solvency console.
 - **Adaptive Metrics Engine (AME)**: A deterministic financial computation engine.
 - **AME AI Oracle**: A Gemini-powered interpretation layer for AME metrics.

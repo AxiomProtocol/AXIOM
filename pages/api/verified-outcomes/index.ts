@@ -66,12 +66,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (scenRes.rows.length > 0) resolvedScenarioId = scenRes.rows[0].id;
       }
 
+      let metrics: any = null;
       if (resolvedScenarioId) {
         const asmRes = await pool.query(
           `SELECT * FROM re_deal_assumptions WHERE scenario_id = $1 LIMIT 1`,
           [resolvedScenarioId]
         );
         if (asmRes.rows.length > 0) assumptions = asmRes.rows[0];
+
+        const metRes = await pool.query(
+          `SELECT * FROM re_deal_metrics WHERE scenario_id = $1 ORDER BY computed_at DESC LIMIT 1`,
+          [resolvedScenarioId]
+        );
+        if (metRes.rows.length > 0) metrics = metRes.rows[0];
       }
 
       const metaPayload = JSON.stringify({ dispositionType: dispositionType || 'sale', contractorName: contractorName || null });
@@ -111,57 +118,63 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const outcome = insertRes.rows[0];
 
       if (assumptions) {
+        const predictedDscr = metrics ? Number(metrics.dscr) || 0 : 0;
+        const predictedCashFlow = metrics ? Number(metrics.monthly_cash_flow) || 0 : 0;
+        const predictedTotalReturn = metrics ? Number(metrics.total_return) || 0 : 0;
+
         const predicted = {
           rehabBudget: Number(assumptions.rehab_budget) || 0,
           holdPeriodMonths: Number(assumptions.hold_period_months) || 6,
           arvEstimate: Number(assumptions.arv_estimate) || 0,
           monthlyRent: Number(assumptions.monthly_rent) || 0,
-          dscr: 0,
-          monthlyCashFlow: 0,
+          dscr: predictedDscr,
+          monthlyCashFlow: predictedCashFlow,
         };
 
         const actual = {
           rehabCost: Number(actualRehabCost),
           timelineDays: Number(actualTimelineDays),
           salePrice: actualSalePrice != null ? Number(actualSalePrice) : Number(assumptions.arv_estimate) || 0,
-          rent: actualRent != null ? Number(actualRent) : 0,
+          rent: actualRent != null ? Number(actualRent) : Number(assumptions.monthly_rent) || 0,
           dscr: actualDscr != null ? Number(actualDscr) : 0,
           monthlyCashFlow: actualMonthlyCashFlow != null ? Number(actualMonthlyCashFlow) : 0,
         };
 
         const snapshot = computeVarianceSnapshot(predicted, actual);
 
-        const varianceRows = Object.entries(snapshot).map(([key, v]) => [
-          dealId,
-          resolvedScenarioId,
-          outcome.id,
-          key,
-          v.predicted,
-          v.actual,
-          v.variance,
-          v.variancePct,
-        ]);
+        const actualTotalReturn = actualSalePrice != null
+          ? Number(actualSalePrice) - Number(assumptions.arv_estimate || 0) + (actual.monthlyCashFlow * Number(assumptions.hold_period_months || 6))
+          : actual.monthlyCashFlow * Number(assumptions.hold_period_months || 6);
 
-        for (const row of varianceRows) {
+        const allVarianceRows: Array<[string, number, number, number, number]> = [
+          ...Object.entries(snapshot).map(([key, v]) => [key, v.predicted, v.actual, v.variance, v.variancePct] as [string, number, number, number, number]),
+          [
+            'total_return',
+            predictedTotalReturn,
+            actualTotalReturn,
+            Number((actualTotalReturn - predictedTotalReturn).toFixed(2)),
+            predictedTotalReturn !== 0 ? Number((((actualTotalReturn - predictedTotalReturn) / predictedTotalReturn) * 100).toFixed(4)) : 0,
+          ],
+        ];
+
+        for (const [key, predicted_value, actual_value, variance_value, variance_pct] of allVarianceRows) {
           await pool.query(
             `INSERT INTO prediction_actual_variances (
               deal_id, scenario_id, outcome_id, metric_key,
               predicted_value, actual_value, variance_value, variance_pct,
               created_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
-            row
+            [dealId, resolvedScenarioId, outcome.id, key, predicted_value, actual_value, variance_value, variance_pct]
           );
         }
       }
 
-      if (submittedBy && submittedBy !== 'unknown') {
-        await pool.query(
-          `INSERT INTO verified_data_rewards (
-            outcome_id, wallet_address, reward_type, reward_ref, created_at
-          ) VALUES ($1, $2, 'outcome_submission', 'eligible_pending_review', NOW())`,
-          [outcome.id, submittedBy]
-        );
-      }
+      await pool.query(
+        `INSERT INTO verified_data_rewards (
+          outcome_id, wallet_address, reward_type, reward_ref, created_at
+        ) VALUES ($1, $2, 'outcome_submission', 'eligible_pending_review', NOW())`,
+        [outcome.id, submittedBy && submittedBy !== 'unknown' ? submittedBy : 'system']
+      );
 
       try {
         const profileRes = await pool.query(

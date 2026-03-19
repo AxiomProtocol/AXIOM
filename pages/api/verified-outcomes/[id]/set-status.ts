@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Outcome ID is required' });
   }
 
-  const { status } = req.body;
+  const { status, requestedBy, notes } = req.body;
   if (!status || typeof status !== 'string') {
     return res.status(400).json({ error: 'status is required' });
   }
@@ -39,6 +39,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `UPDATE verified_project_outcomes SET status = $1, updated_at = NOW() WHERE id = $2`,
       [status, id]
     );
+
+    if (status === 'under_review') {
+      await pool.query(
+        `INSERT INTO verification_reviews (outcome_id, reviewer, decision, notes, created_at)
+         VALUES ($1, $2, 'under_review', $3, NOW())`,
+        [id, requestedBy || 'operator', notes || 'Requested by operator for founder review']
+      );
+    }
 
     const updated = await pool.query(
       `SELECT * FROM verified_project_outcomes WHERE id = $1`,

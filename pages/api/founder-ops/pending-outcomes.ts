@@ -8,12 +8,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const outcomesRes = await pool.query(
-      `SELECT vpo.*, rd.deal_name, rp.address as property_address
+      `SELECT vpo.*, rd.deal_name, rp.address_raw as property_address
        FROM verified_project_outcomes vpo
        LEFT JOIN re_deals rd ON rd.id = vpo.deal_id
-       LEFT JOIN re_properties rp ON rp.id = (
-         SELECT property_id FROM re_deal_scenarios WHERE deal_id = vpo.deal_id LIMIT 1
-       )
+       LEFT JOIN re_properties rp ON rp.id = rd.property_id
        WHERE vpo.status = 'under_review'
        ORDER BY vpo.submitted_at DESC
        LIMIT 50`
