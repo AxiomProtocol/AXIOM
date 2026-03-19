@@ -65,6 +65,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'sessionId or dealId is required' });
     }
 
+    if (req.method === 'POST') {
+      const { dealId, propertyId, sessionName, totalUnits, inspectedBy } = req.body || {};
+      if (!dealId || !sessionName || !totalUnits) {
+        return res.status(400).json({ error: 'dealId, sessionName, and totalUnits are required' });
+      }
+
+      let resolvedPropertyId = propertyId;
+      if (!resolvedPropertyId) {
+        const propResult = await pool.query(
+          `SELECT property_id FROM re_deals WHERE id = $1 LIMIT 1`,
+          [dealId],
+        );
+        resolvedPropertyId = propResult.rows[0]?.property_id || null;
+      }
+      if (!resolvedPropertyId) {
+        return res.status(400).json({ error: 'propertyId is required and could not be resolved from the deal' });
+      }
+
+      const insertResult = await pool.query(
+        `INSERT INTO field_inspection_sessions (
+           deal_id, property_id, session_name, status,
+           total_units, units_walked, inspected_by,
+           created_at, updated_at
+         ) VALUES (
+           $1, $2, $3, 'planned',
+           $4, 0, $5,
+           NOW(), NOW()
+         ) RETURNING *`,
+        [dealId, resolvedPropertyId, sessionName, Number(totalUnits), inspectedBy || null],
+      );
+
+      const newSession = insertResult.rows[0];
+      try {
+        await ensureContractEntityForSession(newSession.id);
+      } catch (_) {}
+
+      return res.status(201).json(newSession);
+    }
+
     if (req.method === 'PATCH') {
       const { id, status } = req.body || {};
       if (!id || !status) {

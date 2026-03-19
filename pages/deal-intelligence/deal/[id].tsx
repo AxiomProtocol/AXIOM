@@ -10,6 +10,7 @@ import DueDiligencePanel from '../../../components/deal-intelligence/DueDiligenc
 import CapitalReadinessCard from '../../../components/deal-intelligence/CapitalReadinessCard';
 import StrategyComparison from '../../../components/deal-intelligence/StrategyComparison';
 import AcquisitionMemo from '../../../components/deal-intelligence/AcquisitionMemo';
+import FieldIntelligencePanel from '../../../components/deal-intelligence/FieldIntelligencePanel';
 
 const STRATEGY_OPTIONS = [
   { key: 'brrrr', label: 'BRRRR', icon: '/images/realestate/icon_brrrr.png' },
@@ -65,7 +66,7 @@ export default function DealWorkspacePage() {
   const [summary, setSummary] = useState<DealSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'comps' | 'analysis' | 'decisions' | 'ivcee' | 'documents' | 'dueDiligence' | 'strategies' | 'memo'>('assumptions');
+  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'comps' | 'analysis' | 'decisions' | 'ivcee' | 'documents' | 'dueDiligence' | 'strategies' | 'memo' | 'fieldIntelligence'>('assumptions');
   const [assumptions, setAssumptions] = useState<AssumptionsState>(DEFAULT_ASSUMPTIONS);
   const [saving, setSaving] = useState(false);
   const [computing, setComputing] = useState(false);
@@ -400,6 +401,7 @@ export default function DealWorkspacePage() {
     { key: 'dueDiligence' as const, label: 'Due Diligence' },
     { key: 'memo' as const, label: 'Acquisition Memo' },
     { key: 'decisions' as const, label: 'Decision Log' },
+    { key: 'fieldIntelligence' as const, label: 'Field Intelligence' },
   ];
 
   const inputField = (label: string, field: keyof AssumptionsState, prefix = '', suffix = '') => (
@@ -1081,6 +1083,14 @@ export default function DealWorkspacePage() {
 
             {activeTab === 'memo' && id && activeScenarioId && (
               <AcquisitionMemo dealId={id as string} scenarioId={activeScenarioId} />
+            )}
+
+            {activeTab === 'fieldIntelligence' && id && (
+              <FieldIntelligencePanel
+                dealId={id as string}
+                propertyId={summary?.property?.id}
+                arvEstimate={Number(assumptions.arvEstimate) || 0}
+              />
             )}
 
             {activeTab === 'decisions' && (
