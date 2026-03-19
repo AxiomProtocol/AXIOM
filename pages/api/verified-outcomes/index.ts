@@ -62,6 +62,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
+      const dealCheck = await pool.query(
+        `SELECT id, created_by_wallet FROM re_deals WHERE id = $1 LIMIT 1`,
+        [dealId]
+      );
+      if (dealCheck.rows.length === 0) {
+        return res.status(404).json({ error: 'Deal not found.' });
+      }
+      const dealOwner = dealCheck.rows[0].created_by_wallet;
+      if (dealOwner && dealOwner.toLowerCase() !== actorAddress.toLowerCase()) {
+        return res.status(403).json({
+          error: 'Only the deal operator can submit outcomes for this deal.',
+          code: 'DEAL_OPERATOR_ONLY',
+        });
+      }
+
       let resolvedScenarioId = scenarioId || null;
       let assumptions: any = null;
 
@@ -164,14 +179,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ],
         ];
 
-        for (const [key, predicted_value, actual_value, variance_value, variance_pct] of allVarianceRows) {
+        if (allVarianceRows.length > 0) {
+          const valuePlaceholders = allVarianceRows
+            .map((_, i) => {
+              const base = i * 8;
+              return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, NOW())`;
+            })
+            .join(', ');
+
+          const flatValues = allVarianceRows.flatMap(([key, predicted_value, actual_value, variance_value, variance_pct]) => [
+            dealId, resolvedScenarioId, outcome.id, key, predicted_value, actual_value, variance_value, variance_pct,
+          ]);
+
           await pool.query(
             `INSERT INTO prediction_actual_variances (
               deal_id, scenario_id, outcome_id, metric_key,
               predicted_value, actual_value, variance_value, variance_pct,
               created_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
-            [dealId, resolvedScenarioId, outcome.id, key, predicted_value, actual_value, variance_value, variance_pct]
+            ) VALUES ${valuePlaceholders}`,
+            flatValues
           );
         }
       }
