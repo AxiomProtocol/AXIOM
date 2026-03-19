@@ -9,13 +9,6 @@ export function getAuthorizedReviewers(): string[] {
 
 export function isAuthorizedReviewer(address: string): boolean {
   const list = getAuthorizedReviewers();
-  if (list.length === 0) {
-    return false;
-  }
+  if (list.length === 0) return false;
   return list.includes(address.toLowerCase());
-}
-
-export function reviewAuthorizationEnabled(): boolean {
-  const list = getAuthorizedReviewers();
-  return list.length > 0;
 }

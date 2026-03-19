@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../lib/db';
 import { getSIWESession } from '../../../../lib/middleware/siweAuth';
-import { isAuthorizedReviewer, reviewAuthorizationEnabled } from '../../../../lib/reviewerAuth';
+import { isAuthorizedReviewer } from '../../../../lib/reviewerAuth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const reviewerAddress = session.address;
 
-  if (reviewAuthorizationEnabled() && !isAuthorizedReviewer(reviewerAddress)) {
+  if (!isAuthorizedReviewer(reviewerAddress)) {
     return res.status(403).json({
       error: 'This wallet is not authorized to review outcomes.',
       code: 'REVIEWER_NOT_AUTHORIZED',

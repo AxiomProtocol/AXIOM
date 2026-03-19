@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../lib/db';
 import { getSIWESession } from '../../../lib/middleware/siweAuth';
-import { isAuthorizedReviewer, reviewAuthorizationEnabled } from '../../../lib/reviewerAuth';
+import { isAuthorizedReviewer } from '../../../lib/reviewerAuth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Wallet authentication required.', code: 'SIWE_AUTH_REQUIRED' });
   }
 
-  if (reviewAuthorizationEnabled() && !isAuthorizedReviewer(session.address)) {
+  if (!isAuthorizedReviewer(session.address)) {
     return res.status(403).json({
       error: 'This wallet is not authorized to view the review queue.',
       code: 'REVIEWER_NOT_AUTHORIZED',
