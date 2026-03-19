@@ -154,11 +154,13 @@ export default function FounderOpsPage() {
       fetch('/api/founder-ops/fee-plumbing-preflight').then(r => r.json()).catch(() => null),
       fetch('/api/euler/vault-stats').then(r => r.json()).catch(() => null),
       fetch('/api/sentinel/overview').then(r => r.json()).catch(() => null),
+      fetch('/api/founder-ops/pending-outcomes').then(r => r.ok ? r.json() : { outcomes: [], count: 0 }).catch(() => ({ outcomes: [], count: 0 })),
     ])
-      .then(([overviewRes, logRes, preflightRes, vaultRes, sentinelRes]) => {
+      .then(([overviewRes, logRes, preflightRes, vaultRes, sentinelRes, pendingRes]) => {
         if (overviewRes.success) setData(overviewRes.data);
         else setError(overviewRes.error || 'Failed to load overview');
         if (logRes.success) setLogs(logRes.entries || []);
+        setPendingOutcomes(pendingRes.outcomes || []);
 
         setGuardRails(prev => {
           const updated = [...prev];
@@ -221,7 +223,7 @@ export default function FounderOpsPage() {
       await fetch(`/api/verified-outcomes/${id}/review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decision, reviewer: 'founder', notes: reviewNotes[id] || '' }),
+        body: JSON.stringify({ decision, notes: reviewNotes[id] || '' }),
       });
       await loadPendingOutcomes();
     } catch {

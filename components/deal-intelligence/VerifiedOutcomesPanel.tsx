@@ -107,7 +107,6 @@ export default function VerifiedOutcomesPanel({ dealId, scenarioId }: VerifiedOu
     contractorName: '',
     fundingPath: 'hard_money',
     lenderPathChosen: '',
-    submittedBy: '',
   });
 
   const loadOutcome = useCallback(async () => {
@@ -147,7 +146,6 @@ export default function VerifiedOutcomesPanel({ dealId, scenarioId }: VerifiedOu
         fundingPath: form.fundingPath || null,
         lenderPathChosen: form.lenderPathChosen || null,
         contractorName: form.contractorName || null,
-        submittedBy: form.submittedBy || 'operator',
       };
       if (form.actualSalePrice) body.actualSalePrice = parseFloat(form.actualSalePrice);
       if (form.actualRent) body.actualRent = parseFloat(form.actualRent);
@@ -457,12 +455,6 @@ export default function VerifiedOutcomesPanel({ dealId, scenarioId }: VerifiedOu
                 value={form.contractorName}
                 onChange={v => setFormField('contractorName', v)}
                 placeholder="ABC Contractors LLC"
-              />
-              <FormField
-                label="Operator Wallet / ID"
-                value={form.submittedBy}
-                onChange={v => setFormField('submittedBy', v)}
-                placeholder="0x... or operator handle"
               />
             </div>
 

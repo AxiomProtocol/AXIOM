@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../lib/db';
+import { getSIWESession } from '../../../lib/middleware/siweAuth';
 import { computeVarianceSnapshot } from '../../../server/services/real-estate/verifiedOutcomes';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -34,6 +35,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'POST') {
+    const session = await getSIWESession(req);
+    if (!session) {
+      return res.status(401).json({ error: 'Wallet authentication required.', code: 'SIWE_AUTH_REQUIRED' });
+    }
+
+    const actorAddress = session.address;
+
     const {
       dealId,
       scenarioId,
@@ -47,7 +55,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       contractorName,
       fundingPath,
       lenderPathChosen,
-      submittedBy,
     } = req.body;
 
     if (!dealId || actualRehabCost == null || actualTimelineDays == null) {
@@ -110,7 +117,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           actualMonthlyCashFlow != null ? Number(actualMonthlyCashFlow) : null,
           fundingPath || null,
           lenderPathChosen || null,
-          submittedBy || 'unknown',
+          actorAddress,
           metaPayload,
         ]
       );
@@ -173,13 +180,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         `INSERT INTO verified_data_rewards (
           outcome_id, wallet_address, reward_type, reward_ref, created_at
         ) VALUES ($1, $2, 'outcome_submission', 'eligible_pending_review', NOW())`,
-        [outcome.id, submittedBy && submittedBy !== 'unknown' ? submittedBy : 'system']
+        [outcome.id, actorAddress]
       );
 
       try {
         const profileRes = await pool.query(
           `SELECT id FROM operator_strategy_profiles WHERE operator_wallet = $1 LIMIT 1`,
-          [submittedBy || 'unknown']
+          [actorAddress]
         );
 
         let profileId: string;
@@ -194,7 +201,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             `INSERT INTO operator_strategy_profiles (
               operator_wallet, strategy_type, observations, created_at, updated_at
             ) VALUES ($1, 'classic_value_add', 1, NOW(), NOW()) RETURNING id`,
-            [submittedBy || 'unknown']
+            [actorAddress]
           );
           profileId = newProfile.rows[0].id;
         }
