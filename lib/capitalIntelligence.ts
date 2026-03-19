@@ -33,7 +33,12 @@ export async function recordCapitalIntelligenceEvent(event: CapitalIntelligenceE
         event.payload ? JSON.stringify(event.payload) : null,
       ]
     );
-  } catch (err) {
-    console.error('[capitalIntelligence] recordCapitalIntelligenceEvent error (non-fatal):', err);
+  } catch (err: any) {
+    console.error('[capitalIntelligence] recordCapitalIntelligenceEvent DROPPED event:', JSON.stringify({
+      event_type: event.eventType,
+      offering_id: event.offeringId ?? null,
+      deal_id: event.dealId ?? null,
+      error: err?.message ?? String(err),
+    }));
   }
 }

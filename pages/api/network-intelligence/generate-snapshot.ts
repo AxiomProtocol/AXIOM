@@ -68,7 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     for (const row of rows) {
       const key = `${row.strategy_type || ''}||${row.market || 'global'}`;
-      const sample = parseInt(row.sample_size) || 1;
+      const sample = Math.max(parseInt(row.sample_size) || 0, 0);
       const capex = parseFloat(row.capex_per_unit) || 0;
       const conf = parseFloat(row.confidence) || 0;
 
