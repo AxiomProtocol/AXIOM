@@ -1,9 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../lib/db';
+import { getSIWESession } from '../../../lib/middleware/siweAuth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
+  }
+
+  const session = await getSIWESession(req);
+  if (!session) {
+    return res.status(401).json({ success: false, error: 'Wallet authentication required.', code: 'SIWE_AUTH_REQUIRED' });
   }
 
   const { dealId, offeringId, limit: limitParam } = req.query;

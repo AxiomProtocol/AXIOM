@@ -92,6 +92,12 @@ interface OperatorStrategyProfile {
   avg_confidence: string | null;
   deal_count: number;
   last_signal_at: string | null;
+  approved_outcomes: number;
+  reviewed_outcomes: number;
+  success_rate_pct: string | null;
+  avg_cost_error_pct: string | null;
+  avg_timeline_error_pct: string | null;
+  avg_roi_variance_pct: string | null;
 }
 
 interface NetworkSignal {
@@ -204,6 +210,7 @@ export default function FounderOpsPage() {
   const [networkSignals, setNetworkSignals] = useState<NetworkSignal[]>([]);
   const [capitalEvents, setCapitalEvents] = useState<CapitalEvent[]>([]);
   const [intelligenceLoading, setIntelligenceLoading] = useState(false);
+  const [intelligenceUnauthorized, setIntelligenceUnauthorized] = useState(false);
   const [snapshotRefreshing, setSnapshotRefreshing] = useState(false);
   const [snapshotError, setSnapshotError] = useState<string | null>(null);
 
@@ -270,12 +277,19 @@ export default function FounderOpsPage() {
 
   const loadIntelligence = async () => {
     setIntelligenceLoading(true);
+    setIntelligenceUnauthorized(false);
     try {
       const [profilesRes, latestRes, eventsRes] = await Promise.all([
         fetch('/api/operator-strategy/profiles').then(r => r.json()).catch(() => ({ profiles: [] })),
         fetch('/api/network-intelligence/latest').then(r => r.json()).catch(() => ({ snapshot: null, currentSignals: [] })),
         fetch('/api/capital-intelligence/events?limit=50').then(r => r.json()).catch(() => ({ events: [] })),
       ]);
+
+      if (profilesRes.code === 'SIWE_AUTH_REQUIRED' || latestRes.code === 'SIWE_AUTH_REQUIRED' || eventsRes.code === 'SIWE_AUTH_REQUIRED') {
+        setIntelligenceUnauthorized(true);
+        return;
+      }
+
       setOperatorProfiles(profilesRes.profiles || []);
       if (latestRes.snapshot) {
         const snap = latestRes.snapshot;
@@ -781,6 +795,12 @@ export default function FounderOpsPage() {
 
             {activeTab === 'intelligence' && (
               <>
+                {intelligenceUnauthorized && (
+                  <div className="border border-dl-border p-8 text-center mb-8">
+                    <p className="font-dl-mono text-sm text-dl-muted">Intelligence data requires wallet authentication.</p>
+                    <p className="font-dl-mono text-xs text-dl-muted mt-1">Connect your wallet and sign in to access operator strategy, network intelligence, and capital event data.</p>
+                  </div>
+                )}
                 <div className="mb-10">
                   <SectionHeading>Operator Strategy Profiles</SectionHeading>
                   <p className="text-sm text-dl-gray mb-4">
@@ -788,7 +808,7 @@ export default function FounderOpsPage() {
                   </p>
                   {intelligenceLoading ? (
                     <p className="font-dl-mono text-sm text-dl-gray py-8 text-center">Loading intelligence data...</p>
-                  ) : operatorProfiles.length === 0 ? (
+                  ) : intelligenceUnauthorized ? null : operatorProfiles.length === 0 ? (
                     <div className="border border-dl-border p-6 text-center">
                       <p className="font-dl-mono text-sm text-dl-muted">No operator strategy signals recorded yet.</p>
                       <p className="font-dl-mono text-xs text-dl-muted mt-1">
@@ -804,11 +824,12 @@ export default function FounderOpsPage() {
                             <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Strategy</th>
                             <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Market</th>
                             <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Deals</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Avg Capex/Unit</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Avg Rent Lift</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Avg NOI Lift</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Success Rate</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Avg ROI Var.</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Cost Err %</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Timeline Err %</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Capex/Unit</th>
                             <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Stab. Days</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Confidence</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -819,19 +840,30 @@ export default function FounderOpsPage() {
                               <td className="p-3 text-xs text-dl-gray">{p.market || '—'}</td>
                               <td className="p-3 text-right font-dl-mono text-xs">{p.deal_count}</td>
                               <td className="p-3 text-right font-dl-mono text-xs">
+                                {p.success_rate_pct != null
+                                  ? <span className={Number(p.success_rate_pct) >= 70 ? 'text-dl-forest' : Number(p.success_rate_pct) >= 50 ? 'text-dl-gold' : 'text-dl-error'}>
+                                      {Number(p.success_rate_pct).toFixed(1)}%
+                                    </span>
+                                  : '—'}
+                              </td>
+                              <td className="p-3 text-right font-dl-mono text-xs">
+                                {p.avg_roi_variance_pct != null
+                                  ? <span className={Number(p.avg_roi_variance_pct) >= 0 ? 'text-dl-forest' : 'text-dl-error'}>
+                                      {Number(p.avg_roi_variance_pct) > 0 ? '+' : ''}{Number(p.avg_roi_variance_pct).toFixed(2)}%
+                                    </span>
+                                  : '—'}
+                              </td>
+                              <td className="p-3 text-right font-dl-mono text-xs">
+                                {p.avg_cost_error_pct != null ? `${Number(p.avg_cost_error_pct).toFixed(1)}%` : '—'}
+                              </td>
+                              <td className="p-3 text-right font-dl-mono text-xs">
+                                {p.avg_timeline_error_pct != null ? `${Number(p.avg_timeline_error_pct).toFixed(1)}%` : '—'}
+                              </td>
+                              <td className="p-3 text-right font-dl-mono text-xs">
                                 {p.avg_capex_per_unit ? `$${Number(p.avg_capex_per_unit).toLocaleString()}` : '—'}
                               </td>
                               <td className="p-3 text-right font-dl-mono text-xs">
-                                {p.avg_rent_lift ? `$${Number(p.avg_rent_lift).toLocaleString()}` : '—'}
-                              </td>
-                              <td className="p-3 text-right font-dl-mono text-xs">
-                                {p.avg_noi_lift ? `$${Number(p.avg_noi_lift).toLocaleString()}` : '—'}
-                              </td>
-                              <td className="p-3 text-right font-dl-mono text-xs">
                                 {p.avg_stabilization_days ? Number(p.avg_stabilization_days).toFixed(0) : '—'}
-                              </td>
-                              <td className="p-3 text-right font-dl-mono text-xs">
-                                {p.avg_confidence ? `${(Number(p.avg_confidence) * 100).toFixed(1)}%` : '—'}
                               </td>
                             </tr>
                           ))}

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../../../server/db';
+import { recordCapitalIntelligenceEvent } from '../../../../../../lib/capitalIntelligence';
 
 function parseCookies(cookieHeader: string | undefined): Record<string, string> {
   if (!cookieHeader) return {};
@@ -85,6 +86,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `UPDATE syn_capital_calls SET status = $1, updated_at = now() WHERE id = $2 AND offering_id = $3`,
       [status, callId, offeringId]
     );
+
+    if (status === 'funded') {
+      await recordCapitalIntelligenceEvent({
+        offeringId: offeringId as string,
+        eventType: 'capital_call_paid',
+        capitalSourceType: 'capital_call',
+        payload: {
+          callId,
+          previousStatus: call.status,
+          markedFundedBy: wallet,
+        },
+      });
+    }
 
     return res.status(200).json({ success: true, message: `Capital call status updated to "${status}".` });
   } catch (error: any) {

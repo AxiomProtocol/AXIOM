@@ -1,9 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../lib/db';
+import { getSIWESession } from '../../../lib/middleware/siweAuth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
+  }
+
+  const session = await getSIWESession(req);
+  if (!session) {
+    return res.status(401).json({ success: false, error: 'Wallet authentication required.', code: 'SIWE_AUTH_REQUIRED' });
   }
 
   try {
@@ -11,13 +17,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       SELECT
         strategy_type,
         market,
-        ROUND(AVG(capex_per_unit)::numeric, 2)  AS avg_capex_per_unit,
-        ROUND(AVG(confidence)::numeric, 4)       AS avg_confidence,
-        SUM(sample_size)::int                    AS total_sample_size,
-        COUNT(*)::int                            AS signal_count
+        capex_per_unit,
+        confidence,
+        sample_size
       FROM market_cost_signals
       WHERE capex_per_unit IS NOT NULL
-      GROUP BY strategy_type, market
       ORDER BY strategy_type, market
     `);
 
@@ -52,22 +56,65 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const totalSamples = rows.reduce((sum: number, r: any) => sum + (parseInt(r.total_sample_size) || 0), 0);
-    const overallConfidence = totalSamples > 0
-      ? rows.reduce((sum: number, r: any) => {
-          const weight = (parseInt(r.total_sample_size) || 0) / totalSamples;
-          return sum + weight * parseFloat(r.avg_confidence || '0');
-        }, 0)
-      : 0;
+    interface GroupKey { strategy_type: string; market: string }
+    interface GroupAccum {
+      capexWeightedSum: number;
+      confidenceWeightedSum: number;
+      totalSamples: number;
+      signalCount: number;
+    }
 
-    const aggregatedSignals = rows.map((r: any) => ({
-      strategy_type: r.strategy_type,
-      market: r.market || 'global',
-      avg_capex_per_unit: parseFloat(r.avg_capex_per_unit) || null,
-      avg_confidence: parseFloat(r.avg_confidence) || 0,
-      total_sample_size: parseInt(r.total_sample_size) || 0,
-      signal_count: parseInt(r.signal_count) || 0,
-    }));
+    const groupMap = new Map<string, GroupAccum>();
+
+    for (const row of rows) {
+      const key = `${row.strategy_type || ''}||${row.market || 'global'}`;
+      const sample = parseInt(row.sample_size) || 1;
+      const capex = parseFloat(row.capex_per_unit) || 0;
+      const conf = parseFloat(row.confidence) || 0;
+
+      if (!groupMap.has(key)) {
+        groupMap.set(key, { capexWeightedSum: 0, confidenceWeightedSum: 0, totalSamples: 0, signalCount: 0 });
+      }
+      const g = groupMap.get(key)!;
+      g.capexWeightedSum += capex * sample;
+      g.confidenceWeightedSum += conf * sample;
+      g.totalSamples += sample;
+      g.signalCount += 1;
+    }
+
+    const aggregatedSignals: Array<{
+      strategy_type: string;
+      market: string;
+      avg_capex_per_unit: number | null;
+      avg_confidence: number;
+      total_sample_size: number;
+      signal_count: number;
+    }> = [];
+
+    let networkWeightedConfidenceSum = 0;
+    let networkTotalSamples = 0;
+
+    for (const [key, g] of groupMap.entries()) {
+      const [strategyType, market] = key.split('||');
+      const avgCapex = g.totalSamples > 0 ? Math.round((g.capexWeightedSum / g.totalSamples) * 100) / 100 : null;
+      const avgConf = g.totalSamples > 0 ? Math.round((g.confidenceWeightedSum / g.totalSamples) * 10000) / 10000 : 0;
+
+      aggregatedSignals.push({
+        strategy_type: strategyType,
+        market: market || 'global',
+        avg_capex_per_unit: avgCapex,
+        avg_confidence: avgConf,
+        total_sample_size: g.totalSamples,
+        signal_count: g.signalCount,
+      });
+
+      networkWeightedConfidenceSum += avgConf * g.totalSamples;
+      networkTotalSamples += g.totalSamples;
+    }
+
+    const overallConfidence = networkTotalSamples > 0
+      ? Math.round((networkWeightedConfidenceSum / networkTotalSamples) * 10000) / 10000
+      : 0;
 
     const snapshotDate = new Date().toISOString().split('T')[0];
 
@@ -88,7 +135,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true,
       snapshot: insertResult.rows[0],
       signalCount: rows.length,
-      totalSampleSize: totalSamples,
+      groupCount: aggregatedSignals.length,
+      totalSampleSize: networkTotalSamples,
+      overallConfidence,
     });
   } catch (error: any) {
     console.error('[network-intelligence/generate-snapshot] Error:', error);
