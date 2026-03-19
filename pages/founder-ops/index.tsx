@@ -140,7 +140,11 @@ export default function FounderOpsPage() {
   ]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'allocation' | 'checkpoints' | 'log'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'allocation' | 'checkpoints' | 'log' | 'outcomes'>('overview');
+  const [pendingOutcomes, setPendingOutcomes] = useState<any[]>([]);
+  const [outcomesLoading, setOutcomesLoading] = useState(false);
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
+  const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setLoading(true);
@@ -196,6 +200,35 @@ export default function FounderOpsPage() {
       .catch(() => setError('Failed to connect to server'))
       .finally(() => setLoading(false));
   }, []);
+
+  const loadPendingOutcomes = async () => {
+    setOutcomesLoading(true);
+    try {
+      const res = await fetch('/api/founder-ops/pending-outcomes');
+      if (res.ok) {
+        const json = await res.json();
+        setPendingOutcomes(json.outcomes || []);
+      }
+    } catch {
+    } finally {
+      setOutcomesLoading(false);
+    }
+  };
+
+  const handleReview = async (id: string, decision: 'approved' | 'rejected') => {
+    setReviewingId(id);
+    try {
+      await fetch(`/api/verified-outcomes/${id}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision, reviewer: 'founder', notes: reviewNotes[id] || '' }),
+      });
+      await loadPendingOutcomes();
+    } catch {
+    } finally {
+      setReviewingId(null);
+    }
+  };
 
   const logColumns: Column<LogEntry>[] = [
     {
@@ -258,6 +291,7 @@ export default function FounderOpsPage() {
     { id: 'allocation' as const, label: 'Capital Allocation' },
     { id: 'checkpoints' as const, label: 'Risk Checkpoints' },
     { id: 'log' as const, label: 'Operations Log' },
+    { id: 'outcomes' as const, label: `Outcomes${pendingOutcomes.length > 0 ? ` (${pendingOutcomes.length})` : ''}` },
   ];
 
   return (
@@ -287,7 +321,10 @@ export default function FounderOpsPage() {
               {tabs.map(tab => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    if (tab.id === 'outcomes') loadPendingOutcomes();
+                  }}
                   className={`px-4 py-2 text-sm border-b-2 -mb-px transition-none ${
                     activeTab === tab.id
                       ? 'border-dl-navy text-dl-navy font-medium'
@@ -607,6 +644,125 @@ export default function FounderOpsPage() {
                   keyExtractor={(e) => e.id}
                   emptyMessage="No operations logged yet. Log your first action via POST /api/founder-ops/log"
                 />
+              </>
+            )}
+
+            {activeTab === 'outcomes' && (
+              <>
+                <SectionHeading>Outcome Verification Queue</SectionHeading>
+                <p className="text-sm text-dl-gray mb-6">
+                  Deal outcomes submitted for verification review. Approve to confirm the record and mark rewards eligible. Reject to return for correction.
+                </p>
+                {outcomesLoading ? (
+                  <p className="font-dl-mono text-sm text-dl-gray text-center py-8">Loading pending outcomes...</p>
+                ) : pendingOutcomes.length === 0 ? (
+                  <div className="border border-dl-border p-8 text-center">
+                    <p className="font-dl-mono text-sm text-dl-muted">No outcomes pending review.</p>
+                    <p className="font-dl-mono text-xs text-dl-muted mt-1">
+                      Outcomes appear here after operators submit and request verification from the deal workspace.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {pendingOutcomes.map((outcome: any) => (
+                      <div key={outcome.id} className="border border-dl-border p-5">
+                        <div className="flex items-start justify-between mb-4">
+                          <div>
+                            <p className="font-dl-serif text-base text-dl-navy">{outcome.deal_name || 'Deal'}</p>
+                            <p className="font-dl-mono text-xs text-dl-muted mt-0.5">
+                              ID: {outcome.id.slice(0, 8)}… · Submitted: {new Date(outcome.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </p>
+                          </div>
+                          <span className="font-dl-mono text-xs text-dl-navy border border-dl-navy px-2 py-0.5">UNDER REVIEW</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                          <div>
+                            <p className="text-xs uppercase tracking-wider text-dl-muted font-dl-mono mb-0.5">Rehab Cost</p>
+                            <p className="font-dl-mono text-sm text-dl-navy">
+                              ${Number(outcome.actual_rehab_cost).toLocaleString()}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs uppercase tracking-wider text-dl-muted font-dl-mono mb-0.5">Timeline</p>
+                            <p className="font-dl-mono text-sm text-dl-navy">{outcome.actual_timeline_days} days</p>
+                          </div>
+                          {outcome.actual_sale_price && (
+                            <div>
+                              <p className="text-xs uppercase tracking-wider text-dl-muted font-dl-mono mb-0.5">Sale Price</p>
+                              <p className="font-dl-mono text-sm text-dl-navy">
+                                ${Number(outcome.actual_sale_price).toLocaleString()}
+                              </p>
+                            </div>
+                          )}
+                          {outcome.actual_monthly_cash_flow && (
+                            <div>
+                              <p className="text-xs uppercase tracking-wider text-dl-muted font-dl-mono mb-0.5">Cash Flow/mo</p>
+                              <p className="font-dl-mono text-sm text-dl-navy">
+                                ${Number(outcome.actual_monthly_cash_flow).toLocaleString()}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {outcome.variances && outcome.variances.length > 0 && (
+                          <div className="border border-dl-border mb-4 overflow-x-auto">
+                            <table className="w-full font-dl-mono text-xs">
+                              <thead>
+                                <tr className="border-b border-dl-border">
+                                  <th className="text-left p-2 text-dl-muted uppercase">Metric</th>
+                                  <th className="text-right p-2 text-dl-muted uppercase">Predicted</th>
+                                  <th className="text-right p-2 text-dl-muted uppercase">Actual</th>
+                                  <th className="text-right p-2 text-dl-muted uppercase">Var %</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {outcome.variances.slice(0, 4).map((v: any) => (
+                                  <tr key={v.metric_key} className="border-b border-dl-border last:border-0">
+                                    <td className="p-2 text-dl-navy capitalize">{v.metric_key.replace(/_/g, ' ')}</td>
+                                    <td className="p-2 text-right text-dl-muted">{Number(v.predicted_value).toFixed(2)}</td>
+                                    <td className="p-2 text-right text-dl-navy">{Number(v.actual_value).toFixed(2)}</td>
+                                    <td className={`p-2 text-right font-bold ${Number(v.variance_pct) > 10 ? 'text-dl-error' : Number(v.variance_pct) < -10 ? 'text-dl-forest' : 'text-dl-navy'}`}>
+                                      {Number(v.variance_pct) > 0 ? '+' : ''}{Number(v.variance_pct).toFixed(2)}%
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
+                        <div className="mb-3">
+                          <label className="block text-xs font-dl-mono text-dl-muted uppercase mb-1">Review Notes</label>
+                          <input
+                            type="text"
+                            value={reviewNotes[outcome.id] || ''}
+                            onChange={e => setReviewNotes(prev => ({ ...prev, [outcome.id]: e.target.value }))}
+                            placeholder="Optional notes for the record..."
+                            className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm text-dl-text bg-white focus:outline-none"
+                          />
+                        </div>
+
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => handleReview(outcome.id, 'approved')}
+                            disabled={reviewingId === outcome.id}
+                            className="bg-dl-forest text-white px-5 py-2 font-dl-mono text-sm disabled:opacity-50"
+                          >
+                            {reviewingId === outcome.id ? 'Processing...' : 'Approve'}
+                          </button>
+                          <button
+                            onClick={() => handleReview(outcome.id, 'rejected')}
+                            disabled={reviewingId === outcome.id}
+                            className="border border-dl-error text-dl-error px-5 py-2 font-dl-mono text-sm disabled:opacity-50"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </>
