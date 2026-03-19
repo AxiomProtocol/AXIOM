@@ -143,8 +143,10 @@ export default function FounderOpsPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'allocation' | 'checkpoints' | 'log' | 'outcomes'>('overview');
   const [pendingOutcomes, setPendingOutcomes] = useState<any[]>([]);
   const [outcomesLoading, setOutcomesLoading] = useState(false);
+  const [outcomesUnauthorized, setOutcomesUnauthorized] = useState(false);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -160,7 +162,11 @@ export default function FounderOpsPage() {
         if (overviewRes.success) setData(overviewRes.data);
         else setError(overviewRes.error || 'Failed to load overview');
         if (logRes.success) setLogs(logRes.entries || []);
-        setPendingOutcomes(pendingRes.outcomes || []);
+        if (pendingRes.outcomes) {
+          setPendingOutcomes(pendingRes.outcomes);
+        } else if (pendingRes.code === 'REVIEWER_NOT_AUTHORIZED' || pendingRes.code === 'SIWE_AUTH_REQUIRED') {
+          setOutcomesUnauthorized(true);
+        }
 
         setGuardRails(prev => {
           const updated = [...prev];
@@ -207,8 +213,12 @@ export default function FounderOpsPage() {
     setOutcomesLoading(true);
     try {
       const res = await fetch('/api/founder-ops/pending-outcomes');
-      if (res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        setOutcomesUnauthorized(true);
+        setPendingOutcomes([]);
+      } else if (res.ok) {
         const json = await res.json();
+        setOutcomesUnauthorized(false);
         setPendingOutcomes(json.outcomes || []);
       }
     } catch {
@@ -219,14 +229,21 @@ export default function FounderOpsPage() {
 
   const handleReview = async (id: string, decision: 'approved' | 'rejected') => {
     setReviewingId(id);
+    setReviewError(null);
     try {
-      await fetch(`/api/verified-outcomes/${id}/review`, {
+      const res = await fetch(`/api/verified-outcomes/${id}/review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ decision, notes: reviewNotes[id] || '' }),
       });
-      await loadPendingOutcomes();
+      const json = await res.json();
+      if (!res.ok) {
+        setReviewError(json.error || 'Review failed');
+      } else {
+        await loadPendingOutcomes();
+      }
     } catch {
+      setReviewError('Review failed — check connection');
     } finally {
       setReviewingId(null);
     }
@@ -655,8 +672,20 @@ export default function FounderOpsPage() {
                 <p className="text-sm text-dl-gray mb-6">
                   Deal outcomes submitted for verification review. Approve to confirm the record and mark rewards eligible. Reject to return for correction.
                 </p>
+                {reviewError && (
+                  <div className="border border-dl-error p-3 mb-4">
+                    <p className="font-dl-mono text-xs text-dl-error">{reviewError}</p>
+                  </div>
+                )}
                 {outcomesLoading ? (
                   <p className="font-dl-mono text-sm text-dl-gray text-center py-8">Loading pending outcomes...</p>
+                ) : outcomesUnauthorized ? (
+                  <div className="border border-dl-border p-8 text-center">
+                    <p className="font-dl-mono text-sm text-dl-muted">Review queue restricted.</p>
+                    <p className="font-dl-mono text-xs text-dl-muted mt-1">
+                      This wallet is not on the authorized reviewer list. Connect as a reviewer wallet or contact the protocol operator.
+                    </p>
+                  </div>
                 ) : pendingOutcomes.length === 0 ? (
                   <div className="border border-dl-border p-8 text-center">
                     <p className="font-dl-mono text-sm text-dl-muted">No outcomes pending review.</p>
@@ -671,6 +700,9 @@ export default function FounderOpsPage() {
                         <div className="flex items-start justify-between mb-4">
                           <div>
                             <p className="font-dl-serif text-base text-dl-navy">{outcome.deal_name || 'Deal'}</p>
+                            {outcome.property_address && (
+                              <p className="font-dl-mono text-xs text-dl-forest mt-0.5">{outcome.property_address}</p>
+                            )}
                             <p className="font-dl-mono text-xs text-dl-muted mt-0.5">
                               ID: {outcome.id.slice(0, 8)}… · Submitted: {new Date(outcome.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </p>
