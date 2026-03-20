@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
+import { useWallet } from '../../components/WalletConnect/WalletContext';
+import { openAppKit } from '../../lib/web3/appKitModal';
 
 interface Position {
   id: string;
@@ -99,6 +101,7 @@ function fmtCurrency(n: string | number | null | undefined): string {
 }
 
 export default function SecondaryPortfolio() {
+  const { siweState, walletState } = useWallet();
   const [investor, setInvestor] = useState<Investor | null>(null);
   const [compliance, setCompliance] = useState<ComplianceProfile | null>(null);
   const [positions, setPositions] = useState<Position[]>([]);
@@ -108,40 +111,49 @@ export default function SecondaryPortfolio() {
   const [walletAddress, setWalletAddress] = useState('');
   const [roles, setRoles] = useState<string[]>([]);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [meRes, posRes] = await Promise.all([
-          fetch('/api/secondary/me'),
-          fetch('/api/secondary/positions'),
-        ]);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [meRes, posRes] = await Promise.all([
+        fetch('/api/secondary/me'),
+        fetch('/api/secondary/positions'),
+      ]);
 
-        if (!meRes.ok) {
-          setError('Connect your wallet to access the Secondary Network.');
-          setLoading(false);
-          return;
-        }
-
-        const meData = await meRes.json();
-        if (meData.success) {
-          setInvestor(meData.investor);
-          setCompliance(meData.compliance);
-          setWalletAddress(meData.walletAddress || '');
-          setRoles(meData.roles || []);
-        }
-
-        if (posRes.ok) {
-          const posData = await posRes.json();
-          if (posData.success) setPositions(posData.positions || []);
-        }
-      } catch {
-        setError('Failed to load portfolio data.');
-      } finally {
+      if (!meRes.ok) {
+        setError('not_authenticated');
         setLoading(false);
+        return;
       }
+
+      const meData = await meRes.json();
+      if (meData.success) {
+        setInvestor(meData.investor);
+        setCompliance(meData.compliance);
+        setWalletAddress(meData.walletAddress || '');
+        setRoles(meData.roles || []);
+      }
+
+      if (posRes.ok) {
+        const posData = await posRes.json();
+        if (posData.success) setPositions(posData.positions || []);
+      }
+    } catch {
+      setError('Failed to load portfolio data.');
+    } finally {
+      setLoading(false);
     }
-    load();
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (siweState.isAuthenticated) {
+      load();
+    }
+  }, [siweState.isAuthenticated, load]);
 
   const totalPortfolioValue = positions.reduce((sum, p) => {
     const units = parseFloat(p.total_units || '0');
@@ -183,10 +195,26 @@ export default function SecondaryPortfolio() {
         <div className="font-mono text-sm text-dl-muted">Loading portfolio...</div>
       )}
 
-      {!loading && error && (
-        <div className="border border-dl-error bg-red-50 p-6">
+      {!loading && error === 'not_authenticated' && (
+        <div className="border border-gray-200 p-8 text-center">
+          <div className="font-mono text-xs text-dl-muted uppercase tracking-wider mb-3">Authentication Required</div>
+          <p className="text-sm text-dl-navy mb-2">Sign in with your wallet to access your Secondary Network portfolio.</p>
+          <p className="font-mono text-xs text-dl-muted mb-6">Use the "Access Platform" button above to connect and sign with MetaMask or another supported wallet.</p>
+          <button
+            onClick={() => openAppKit()}
+            className="px-6 py-3 bg-dl-navy text-white text-sm font-mono"
+          >
+            {siweState.isAuthenticating ? 'Signing in...' : 'Connect Wallet'}
+          </button>
+          {walletState.isConnected && !siweState.isAuthenticated && (
+            <p className="font-mono text-xs text-amber-600 mt-3">Wallet connected but not signed in. Click "Connect Wallet" to sign the authentication request.</p>
+          )}
+        </div>
+      )}
+
+      {!loading && error && error !== 'not_authenticated' && (
+        <div className="border border-dl-error bg-red-50 p-4">
           <p className="font-mono text-sm text-dl-error">{error}</p>
-          <p className="text-sm text-dl-muted mt-2">You must sign in with your wallet to access this section.</p>
         </div>
       )}
 

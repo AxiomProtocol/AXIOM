@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
+import { useWallet } from '../../components/WalletConnect/WalletContext';
 
 interface AdminDashboard {
   flaggedTrades: any[];
@@ -79,23 +80,26 @@ export default function AdminConsole() {
   const [resolving, setResolving] = useState('');
   const [resolveResult, setResolveResult] = useState('');
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch('/api/secondary/admin/dashboard');
-        if (!res.ok) { setError('Access denied. Admin role required.'); setLoading(false); return; }
-        const data = await res.json();
-        if (data.success) {
-          setDashboard(data.dashboard);
-          setInvestorStats(data.investorStats);
-          setComplianceFlags(data.complianceFlags || []);
-          setRecentAudit(data.recentAudit || []);
-        }
-      } catch { setError('Failed to load admin data.'); }
-      finally { setLoading(false); }
-    }
-    load();
+  const { siweState } = useWallet();
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/secondary/admin/dashboard');
+      if (!res.ok) { setError('Access denied. Admin role required.'); setLoading(false); return; }
+      const data = await res.json();
+      if (data.success) {
+        setDashboard(data.dashboard);
+        setInvestorStats(data.investorStats);
+        setComplianceFlags(data.complianceFlags || []);
+        setRecentAudit(data.recentAudit || []);
+      }
+    } catch { setError('Failed to load admin data.'); }
+    finally { setLoading(false); }
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (siweState.isAuthenticated) load(); }, [siweState.isAuthenticated, load]);
 
   async function handleApproval(approvalRequestId: string) {
     const form = approvalDecision[approvalRequestId];

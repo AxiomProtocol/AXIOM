@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
+import { useWallet } from '../../components/WalletConnect/WalletContext';
 
 interface ApprovalRequest {
   id: string;
@@ -79,18 +80,21 @@ export default function IssuerConsole() {
   const [newSeries, setNewSeries] = useState({ name: '', assetClass: 'fund_interest', holdPeriodDays: '180', totalUnitsIssued: '', unitPrice: '' });
   const [creatingResult, setCreatingResult] = useState('');
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch('/api/secondary/issuer/dashboard');
-        if (!res.ok) { setError('Access denied or not authenticated.'); setLoading(false); return; }
-        const data = await res.json();
-        if (data.success) { setSeries(data.series || []); setApprovals(data.pendingApprovals || []); }
-      } catch { setError('Failed to load issuer data.'); }
-      finally { setLoading(false); }
-    }
-    load();
+  const { siweState } = useWallet();
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/secondary/issuer/dashboard');
+      if (!res.ok) { setError('Access denied or not authenticated.'); setLoading(false); return; }
+      const data = await res.json();
+      if (data.success) { setSeries(data.series || []); setApprovals(data.pendingApprovals || []); }
+    } catch { setError('Failed to load issuer data.'); }
+    finally { setLoading(false); }
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (siweState.isAuthenticated) load(); }, [siweState.isAuthenticated, load]);
 
   async function handleResolveApproval(approvalRequestId: string) {
     const form = approvalDecision[approvalRequestId];
