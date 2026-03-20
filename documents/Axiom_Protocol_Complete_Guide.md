@@ -43,7 +43,7 @@ Navigate to axiomprotocol.app in any browser.
 
 To connect a wallet:
 1. Click Connect Wallet in the top navigation.
-2. Select MetaMask, Coinbase Wallet, Rainbow, or any WalletConnect-compatible wallet.
+2. Select MetaMask, Coinbase Wallet, Rainbow, or any compatible wallet. The platform uses Reown AppKit for wallet connection.
 3. Confirm the wallet is set to Arbitrum One (Chain ID 42161). The platform prompts a network switch if needed.
 4. Sign the SIWE authentication message when prompted — no gas required.
 
@@ -63,11 +63,11 @@ To acquire AXM:
 1. Navigate to `/dex` and connect your wallet.
 2. Select the AXM trading pair, enter the amount, review the quote, and confirm the transaction.
 
-AXM distribution pathways include DEX acquisition, Proof of Execution completion incentives (verified project outcomes trigger AXM rewards), and community program milestones through the Wealth Practice graduation pathway. Future pathways include governance participation incentives tied to Universe Blockchain migration.
+AXM distribution pathways: DEX acquisition, Proof of Execution completion incentives, and Wealth Practice community program milestones. Future pathways include governance participation incentives tied to Universe Blockchain migration.
 
-AXM holders govern by locking tokens through the participation lockup mechanism. Locked AXM earns governance weight and contributes to Graduated Execution Framework (GEF) scoring, which gates access to advanced platform features based on demonstrated on-chain participation.
+AXM holders govern by locking tokens through the participation lockup mechanism. Locked AXM earns governance weight and contributes to Graduated Execution Framework (GEF) scoring, which gates access to advanced platform features.
 
-AXM is a governance and fee-routing token. It is not an investment contract, security, or yield-bearing instrument. No returns are guaranteed.
+AXM is a governance and fee-routing token. It is not an investment contract, security, or yield-bearing instrument. All rates are variable.
 
 ---
 
@@ -118,7 +118,7 @@ To participate in land governance:
 3. Cast your AXM-weighted vote within the proposal window.
 4. Contribute to the community funding pool — progress is tracked in real time.
 
-Specific acquisitions are subject to market conditions, governance approval, and regulatory requirements.
+Axiom's active initiative targets a 6+ acre pipeline with USDA Rural Development-aligned planning support. Specific acquisitions are subject to market conditions, governance approval, and regulatory requirements.
 
 ---
 
@@ -376,21 +376,21 @@ This glossary is the canonical reference drawn from the platform's `lib/glossary
 | Savings Circle | The Wealth Practice |
 | Savings Circles (plural) | Wealth Practice groups |
 | ROSCA | Structured group savings framework |
-| APY | Not used — rates are variable; no yield is guaranteed |
-| Guaranteed returns | Not used — variable and disclosed |
-| Profit / wealth promises | Expand structural wealth-building capacity |
+| APY | Not used — rates are variable; all yield references use variable language |
+| Yield / profit outcome promises | Not used — replaced with "expand structural wealth-building capacity" |
+| Profit / wealth promises | Not used — replaced with "strengthen community capital formation" |
 
 ### Canonical Term Definitions
 
 | Term | Definition | Maturity |
 |---|---|---|
-| Axiom Protocol | Governance-first wealth infrastructure with disclosure-grade transparency. Not a bank, broker-dealer, or registered investment advisor. | Bootstrap Phase |
+| Axiom Protocol | Governance-first wealth infrastructure. Not a bank, broker-dealer, or registered investment advisor. | Bootstrap Phase |
 | AXM | ERC-20 governance and fee-routing token on Arbitrum One | Live |
 | AXUSD | Protocol stablecoin, ERC-3643/T-REX compliant with on-chain identity compliance | Live |
-| The Wealth Practice | Structured group savings and allocation practice with transparent controls, scheduling, and audit trails. Not an investment product. | Staged Rollout |
-| Solvency Console | Three-mode institutional solvency disclosure interface (Allocator, Clearinghouse, Regulatory) | Live |
-| Adaptive Metrics Engine (AME) | Deterministic financial computation engine for regime scoring, adaptive targets, and policy multipliers | Live |
-| MIRDT | Probabilistic trend-following analysis with full audit trail. Paper trading only with human confirmation gates. | Live |
+| The Wealth Practice | Structured group savings and allocation practice. Not an investment product. | Staged Rollout |
+| Solvency Console | Three-mode solvency disclosure interface (Allocator, Clearinghouse, Regulatory) | Live |
+| Adaptive Metrics Engine (AME) | Deterministic computation engine for regime scoring, adaptive targets, and policy multipliers | Live |
+| MIRDT | Probabilistic trend-following analysis with full audit trail. Paper trading with human confirmation gates. | Live |
 | Axiom Sentinel | Unified capital decision and risk authorization layer with cryptographic audit trails | Live |
 | Physical Asset Pipeline | Framework for bridging digital capital to real-world assets. Not a claim of current ownership. | Planned |
 
@@ -412,9 +412,9 @@ This phrasing is required for all references to regulatory alignment. Definitive
 
 ### Language Guidance
 
-Platform communications avoid absolutist positioning claims, unqualified physical asset ownership statements, and yield or profit outcome promises. Rate references use variable language. All regulatory alignment references use the approved GENIUS Act phrasing above.
+Platform communications avoid absolutist positioning claims, unqualified physical asset statements, and outcome promises. Rate references use variable language. All regulatory alignment uses the approved GENIUS Act phrasing above.
 
-Approved positioning language: "reference architecture," "governance-first wealth infrastructure," "disclosure-first capital framework." Approved outcome language: "improve capital efficiency," "expand structural wealth-building capacity," "strengthen community capital formation."
+Approved positioning: "reference architecture," "governance-first wealth infrastructure," "disclosure-first capital framework." Approved outcome language: "improve capital efficiency," "expand structural wealth-building capacity," "strengthen community capital formation."
 
 ---
 
