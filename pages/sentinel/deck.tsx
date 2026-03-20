@@ -74,8 +74,8 @@ export default function SentinelDeck() {
               <div className="space-y-3 text-sm text-dl-gray leading-relaxed">
                 <p>
                   Axiom Sentinel is the unified capital decision and risk authorization layer for all Axiom Protocol
-                  products. It converts market intelligence signals from the MIRDT (Market Intelligence & Risk Disclosure
-                  Terminal) into authorized capital actions with cryptographic audit trails.
+                  products. It converts market intelligence signals from the signal scanning layer into authorized
+                  capital actions with cryptographic audit trails.
                 </p>
                 <p>
                   The system operates under the principle: <span className="font-medium text-dl-navy">&ldquo;Strategy proposes.
@@ -193,7 +193,7 @@ export default function SentinelDeck() {
                       { category: 'Audit Trail / Compliance', status: 'Implemented', evidence: 'SHA-256 hash chain, append-only audit log' },
                       { category: 'Operational Resilience', status: 'Implemented', evidence: '4-state circuit breaker, notification hooks' },
                       { category: 'Capital Governance', status: 'Implemented', evidence: 'Action classification (HIGH/MEDIUM/LOW), authorization gating' },
-                      { category: 'Market Intelligence', status: 'Active', evidence: 'MIRDT scan universe: equities + digital assets' },
+                      { category: 'Market Intelligence', status: 'Active', evidence: 'Signal scanning: equities + digital assets' },
                       { category: 'Treasury Policy Enforcement', status: 'Hardcoded', evidence: '35% distributions, 35% reserves, 20% growth, 10% operating' },
                       { category: 'Automated Execution', status: 'Advisory Only', evidence: 'Guard Rail #5: No execution until post-public governance vote' },
                     ].map((row, i) => (

@@ -7,7 +7,7 @@ import { SolidButton } from './SolidButton';
 import { NAV_ITEMS } from './navItems';
 import { NavDropdown } from './NavDropdown';
 import {
-  Building2, Landmark, TrendingUp, BarChart3, Eye, Coins,
+  Building2, Landmark, TrendingUp, Eye, Coins,
   Wallet, Radio, CreditCard, ShieldCheck, Users, FileText,
   Search, BrainCircuit, Layers, Scale, BookOpen, ArrowRight,
   Target, Globe, Lock
@@ -34,11 +34,9 @@ const PRODUCT_GRID = [
   { title: 'DePIN', description: 'Decentralized storage infrastructure through DeNet node integration.', href: '/depin/denet', icon: Radio },
   { title: 'Syndication', description: 'Full syndication operating system with offerings, capital calls, and distributions.', href: '/syndication', icon: Layers },
   { title: 'Investor Portal', description: 'Wallet-authenticated investor dashboard with holdings, capital calls, and distributions.', href: '/syndication/portal', icon: FileText },
-  { title: 'GEF', description: 'Graduated Execution Framework — behavior-based qualification system with access tiers.', href: '/execution', icon: Scale },
 ];
 
 const INTELLIGENCE_GRID = [
-  { title: 'MIRDT', description: 'Probabilistic trend-following analysis for digital assets and US equities.', href: '/mirdt', icon: BarChart3 },
   { title: 'Sentinel', description: 'Unified capital decision and risk authorization layer.', href: '/sentinel', icon: Lock },
   { title: 'Observer', description: 'Read-only transparency dashboard for treasury and governance activity.', href: '/observer', icon: Eye },
   { title: 'RE Intelligence', description: 'Real estate market intelligence and property data analysis.', href: '/re', icon: TrendingUp },
