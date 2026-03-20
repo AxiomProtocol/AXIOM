@@ -412,9 +412,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       engine: 'deterministic_v1',
     };
 
-    // ── 9. Persist scope ──────────────────────────────────
     const recommendedBudget =
       scopeData.strategies?.[recommended_strategy]?.[recommended_tier]?.total || 0;
+
+    // ── 9. Anomaly detection: compare per-unit cost to historical scopes ──
+    let anomaly: { flag: boolean; direction: string; pctDiff: number; sampleCount: number } | null = null;
+    try {
+      const histResult = await pool.query(
+        `SELECT
+           PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY rs.recommended_budget / NULLIF(fis.total_units, 0)) AS median_per_unit,
+           COUNT(*) AS sample_count
+         FROM re_rehab_scopes rs
+         JOIN field_inspection_sessions fis ON fis.id = rs.inspection_session_id
+         WHERE fis.property_type = $1
+           AND fis.total_units > 0
+           AND rs.recommended_budget > 0
+           AND rs.inspection_session_id != $2`,
+        [propertyType, sessionId],
+      );
+      const hist = histResult.rows[0];
+      const sampleCount = parseInt(hist?.sample_count || '0', 10);
+      const medianPerUnit = parseFloat(hist?.median_per_unit || '0');
+      if (sampleCount >= 2 && medianPerUnit > 0) {
+        const currentPerUnit = recommendedBudget / totalUnits;
+        const pctDiff = ((currentPerUnit - medianPerUnit) / medianPerUnit) * 100;
+        if (Math.abs(pctDiff) >= 35) {
+          anomaly = {
+            flag: true,
+            direction: pctDiff > 0 ? 'above' : 'below',
+            pctDiff: Math.round(Math.abs(pctDiff)),
+            sampleCount,
+          };
+        }
+      }
+    } catch (_) {}
+
+    // ── 10. Persist scope ──────────────────────────────────
 
     const existingResult = await pool.query(
       `SELECT id FROM re_rehab_scopes WHERE inspection_session_id = $1 LIMIT 1`,
@@ -490,6 +523,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       totalUnits,
       samplingPct: Math.round(samplingPct),
       region: scopeData.region,
+      anomaly,
     });
   } catch (error: any) {
     return res.status(500).json({

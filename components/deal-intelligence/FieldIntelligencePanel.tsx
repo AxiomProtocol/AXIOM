@@ -127,6 +127,7 @@ type ScopeResult = {
   unitsInspected: number;
   totalUnits: number;
   region?: { code: string; name: string; factor: number };
+  anomaly?: { flag: boolean; direction: string; pctDiff: number; sampleCount: number } | null;
 };
 
 type Summary = {
@@ -180,6 +181,8 @@ export default function FieldIntelligencePanel({ dealId, propertyId, arvEstimate
 
   const [computingSummary, setComputingSummary] = useState(false);
   const [generatingScope, setGeneratingScope] = useState(false);
+  const [briefText, setBriefText] = useState('');
+  const [generatingBrief, setGeneratingBrief] = useState(false);
   const [scopeArv, setScopeArv] = useState(arvEstimate > 0 ? String(arvEstimate) : '');
   const [activeStrategyTab, setActiveStrategyTab] = useState<'flip' | 'brrrr' | 'hold'>('flip');
 
@@ -333,6 +336,23 @@ export default function FieldIntelligencePanel({ dealId, propertyId, arvEstimate
       setView('scope');
     } finally {
       setGeneratingScope(false);
+    }
+  };
+
+  const handleGenerateBrief = async () => {
+    if (!activeSession || !scopeResult) return;
+    setGeneratingBrief(true);
+    setBriefText('');
+    try {
+      const res = await fetch(`/api/field-intelligence/${activeSession.id}/scope-brief`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (!res.ok) { return; }
+      setBriefText(data.brief || '');
+    } finally {
+      setGeneratingBrief(false);
     }
   };
 
@@ -868,7 +888,7 @@ export default function FieldIntelligencePanel({ dealId, propertyId, arvEstimate
             — ARV ${(scopeResult.arvEstimate || 0).toLocaleString()}
           </p>
           {scopeResult.region && (
-            <div className="mt-2 flex items-center gap-3">
+            <div className="mt-2 flex flex-wrap items-center gap-3">
               <span className="font-dl-mono text-xs border border-dl-forest px-2 py-0.5 text-dl-forest uppercase tracking-wide">
                 {scopeResult.region.name}
               </span>
@@ -880,6 +900,11 @@ export default function FieldIntelligencePanel({ dealId, propertyId, arvEstimate
                   : 'National average pricing'
                 }
               </span>
+              {scopeResult.anomaly?.flag && (
+                <span className="font-dl-mono text-xs border border-dl-gold px-2 py-0.5 text-dl-gold uppercase tracking-wide">
+                  ⚑ {scopeResult.anomaly.pctDiff}% {scopeResult.anomaly.direction} portfolio median ({scopeResult.anomaly.sampleCount} deals)
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -948,6 +973,28 @@ export default function FieldIntelligencePanel({ dealId, propertyId, arvEstimate
             <p className="font-dl-mono text-xs text-dl-text">{scopeResult.scope.notes}</p>
           </div>
         )}
+
+        <div className="mt-4 border border-dl-border p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="font-dl-mono text-xs text-dl-muted uppercase">Scope Brief</p>
+              <p className="font-dl-mono text-xs text-dl-muted mt-0.5">AI-written field report narrative — numbers sourced from the scope above</p>
+            </div>
+            <button
+              onClick={handleGenerateBrief}
+              disabled={generatingBrief}
+              className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-3 py-1.5 disabled:opacity-50 min-h-[36px]"
+            >
+              {generatingBrief ? 'Writing...' : briefText ? 'Regenerate' : 'Generate Brief'}
+            </button>
+          </div>
+          {briefText && (
+            <p className="font-dl-mono text-sm text-dl-text leading-relaxed border-t border-dl-border pt-3">{briefText}</p>
+          )}
+          {!briefText && !generatingBrief && (
+            <p className="font-dl-mono text-xs text-dl-muted">Click Generate Brief to produce a professional field report narrative for this scope.</p>
+          )}
+        </div>
       </div>
     );
   }

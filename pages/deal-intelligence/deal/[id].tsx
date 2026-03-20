@@ -13,6 +13,7 @@ import AcquisitionMemo from '../../../components/deal-intelligence/AcquisitionMe
 import FieldIntelligencePanel from '../../../components/deal-intelligence/FieldIntelligencePanel';
 import VerifiedOutcomesPanel from '../../../components/deal-intelligence/VerifiedOutcomesPanel';
 import CostIntelligencePanel from '../../../components/deal-intelligence/CostIntelligencePanel';
+import DealAssistantPanel from '../../../components/deal-intelligence/DealAssistantPanel';
 
 const STRATEGY_OPTIONS = [
   { key: 'brrrr', label: 'BRRRR', icon: '/images/realestate/icon_brrrr.png' },
@@ -68,7 +69,7 @@ export default function DealWorkspacePage() {
   const [summary, setSummary] = useState<DealSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'comps' | 'analysis' | 'decisions' | 'ivcee' | 'documents' | 'dueDiligence' | 'strategies' | 'memo' | 'fieldIntelligence' | 'outcomes' | 'costIntelligence'>('assumptions');
+  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'comps' | 'analysis' | 'decisions' | 'ivcee' | 'documents' | 'dueDiligence' | 'strategies' | 'memo' | 'fieldIntelligence' | 'outcomes' | 'costIntelligence' | 'dealAssistant'>('assumptions');
   const [assumptions, setAssumptions] = useState<AssumptionsState>(DEFAULT_ASSUMPTIONS);
   const [saving, setSaving] = useState(false);
   const [computing, setComputing] = useState(false);
@@ -406,6 +407,7 @@ export default function DealWorkspacePage() {
     { key: 'fieldIntelligence' as const, label: 'Field Intelligence' },
     { key: 'costIntelligence' as const, label: 'Cost Intelligence' },
     { key: 'outcomes' as const, label: 'Outcomes' },
+    { key: 'dealAssistant' as const, label: 'Deal Assistant' },
   ];
 
   const inputField = (label: string, field: keyof AssumptionsState, prefix = '', suffix = '') => (
@@ -1109,6 +1111,14 @@ export default function DealWorkspacePage() {
               <VerifiedOutcomesPanel
                 dealId={id as string}
                 scenarioId={activeScenarioId}
+              />
+            )}
+
+            {activeTab === 'dealAssistant' && id && (
+              <DealAssistantPanel
+                dealId={id as string}
+                scenarioId={activeScenarioId}
+                dealName={summary?.deal?.deal_name}
               />
             )}
 
