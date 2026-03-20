@@ -527,95 +527,14 @@ export default function BankingPage() {
           )}
 
           {activeTab === 'custody' && (
-            <div className="space-y-6">
-              {serverIp && (
-                <div className="border border-dl-border bg-dl-surface p-3 flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-dl-mono text-dl-muted uppercase tracking-widest mb-0.5">Server Outbound IP</p>
-                    <p className="text-sm font-dl-mono text-dl-navy">{serverIp}</p>
-                    <p className="text-xs font-dl-mono text-dl-muted mt-1">Add this IP to your BitGo token allowlist. It may change between sessions.</p>
-                  </div>
-                  <button
-                    onClick={() => fetch('/api/server-ip?refresh=1').then(r => r.json()).then(d => setServerIp(d.ip))}
-                    className="text-xs font-dl-mono text-dl-navy underline whitespace-nowrap"
-                  >
-                    Refresh IP
-                  </button>
-                </div>
-              )}
-              <CustodyWalletCard
-                walletId={custodyWallet?.bitgoWalletId}
-                coin={custodyWallet?.coin}
-                receiveAddress={custodyWallet?.receiveAddress}
-                confirmedBalance={custodyWallet?.confirmedBalanceStr}
-                spendableBalance={custodyWallet?.spendableBalanceStr}
-                onCreateWallet={handleCreateWallet}
-                onSend={handleSend}
-                loading={custodyLoading}
-                creating={custodyCreating}
-              />
-              <PendingApprovals
-                approvals={pendingApprovals as never[]}
-                onApprove={handleApprove}
-                onReject={handleReject}
-              />
-
-              {custodyWallet && (
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-sm font-dl-mono text-dl-muted uppercase tracking-widest">On-Chain Transfers</h3>
-                    <button
-                      onClick={() => fetchCustodyTxs(custodyWallet.bitgoWalletId)}
-                      disabled={custodyTxLoading}
-                      className="text-xs font-dl-mono text-dl-navy underline disabled:opacity-50"
-                    >
-                      {custodyTxLoading ? 'Syncing…' : 'Refresh'}
-                    </button>
-                  </div>
-                  {custodyTxLoading && custodyTxs.length === 0 ? (
-                    <div className="border border-dl-border p-6">
-                      <div className="h-4 bg-dl-border animate-pulse w-32 mb-2" />
-                      <div className="h-4 bg-dl-border animate-pulse w-48" />
-                    </div>
-                  ) : custodyTxs.length === 0 ? (
-                    <div className="border border-dl-border p-4">
-                      <p className="text-sm font-dl-mono text-dl-muted">No transfers yet.</p>
-                    </div>
-                  ) : (
-                    <div className="border border-dl-border divide-y divide-dl-border">
-                      {(custodyTxs as Array<{
-                        id: string;
-                        bitgoTxId: string;
-                        direction: string;
-                        state: string;
-                        amountStr: string;
-                        coin: string;
-                        fromAddress?: string;
-                        toAddress?: string;
-                        txHash?: string;
-                        createdAt: string;
-                      }>).map((tx) => (
-                        <div key={tx.id} className="p-4 flex justify-between items-center">
-                          <div>
-                            <p className="text-sm font-dl-mono text-dl-navy capitalize">
-                              {tx.direction} — {tx.state}
-                            </p>
-                            <p className="text-xs font-dl-mono text-dl-muted mt-0.5">
-                              {tx.txHash
-                                ? `${tx.txHash.slice(0, 10)}…${tx.txHash.slice(-6)}`
-                                : tx.bitgoTxId?.slice(0, 12)}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-dl-mono text-dl-navy">{tx.amountStr}</p>
-                            <p className="text-xs font-dl-mono text-dl-muted">{tx.coin?.toUpperCase()}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+            <div className="border border-dl-border p-8">
+              <p className="text-xs font-dl-mono text-dl-muted uppercase tracking-widest mb-3">Institutional Custody</p>
+              <p className="font-dl-serif text-xl text-dl-navy mb-3">Crypto Custody — Available Shortly</p>
+              <p className="text-sm font-dl-mono text-dl-muted leading-relaxed max-w-xl">
+                BitGo institutional custody wallets (AXM, AXUSD, ETH on Arbitrum) are being configured for
+                production infrastructure. This feature will be active within two weeks. FDIC-insured banking,
+                ACH transfers, and debit cards are fully operational now.
+              </p>
             </div>
           )}
 

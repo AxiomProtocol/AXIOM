@@ -18,13 +18,17 @@ async function comparePasswords(suppliedPassword, storedPassword) {
 
 // Configure session middleware
 function setupSession(app) {
+  const sessionSecret = process.env.SESSION_SECRET;
+  if (!sessionSecret) {
+    throw new Error('[FATAL] SESSION_SECRET environment variable is not set. Set a long random string before starting the server.');
+  }
   app.use(session({
     store: new pgSession({
       pool,
       tableName: 'session',
       createTableIfMissing: true
     }),
-    secret: process.env.SESSION_SECRET || 'swf_secret_key_change_in_production',
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     cookie: { 

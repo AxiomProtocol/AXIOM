@@ -17,7 +17,6 @@ async function getRawBody(req: NextApiRequest): Promise<Buffer> {
 }
 
 function verifySignature(rawBody: Buffer, signature: string, secret: string): boolean {
-  if (!secret) return true;
   const expected = crypto
     .createHmac('sha256', secret)
     .update(rawBody)
@@ -37,10 +36,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  if (!UNIT_WEBHOOK_SECRET) {
+    console.error('[Unit webhook] UNIT_WEBHOOK_SECRET is not configured — rejecting all inbound webhook calls');
+    return res.status(503).json({ error: 'Webhook validation not configured' });
+  }
+
   const rawBody = await getRawBody(req);
   const signature = (req.headers['x-unit-signature'] as string) ?? '';
 
-  if (UNIT_WEBHOOK_SECRET && !verifySignature(rawBody, signature, UNIT_WEBHOOK_SECRET)) {
+  if (!verifySignature(rawBody, signature, UNIT_WEBHOOK_SECRET)) {
     return res.status(401).json({ error: 'Invalid webhook signature' });
   }
 

@@ -3,9 +3,8 @@ import { runExecutionBatch } from '../../../../server/services/mirdtExecution/en
 
 function isAuthorized(req: NextApiRequest): boolean {
   const adminKey = process.env.ADMIN_SOLVENCY_KEY;
-  if (req.headers['x-admin-key'] === adminKey && adminKey) return true;
-  if (!adminKey && process.env.NODE_ENV === 'development') return true;
-  return false;
+  if (!adminKey) return false;
+  return req.headers['x-admin-key'] === adminKey;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
