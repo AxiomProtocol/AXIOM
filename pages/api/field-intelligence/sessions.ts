@@ -32,7 +32,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const session = result.rows[0] as SessionRow | undefined;
         if (!session) return res.status(404).json({ error: 'Session not found' });
 
-        const contractEntity = await ensureContractEntityForSession(session.id);
+        let contractEntity: any = null;
+        try { contractEntity = await ensureContractEntityForSession(session.id); } catch (_) {}
 
         return res.status(200).json({
           id: session.id,
@@ -141,8 +142,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const row = result.rows[0];
       if (!row) return res.status(404).json({ error: 'Session not found' });
 
-      await ensureContractEntityForSession(id);
-
       if (status === 'submitted') {
         setImmediate(async () => {
           try {
@@ -161,6 +160,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           } catch (_) {}
         });
       }
+
+      try { await ensureContractEntityForSession(id); } catch (_) {}
 
       return res.status(200).json(row);
     }
