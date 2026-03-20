@@ -12,6 +12,7 @@ import StrategyComparison from '../../../components/deal-intelligence/StrategyCo
 import AcquisitionMemo from '../../../components/deal-intelligence/AcquisitionMemo';
 import FieldIntelligencePanel from '../../../components/deal-intelligence/FieldIntelligencePanel';
 import VerifiedOutcomesPanel from '../../../components/deal-intelligence/VerifiedOutcomesPanel';
+import CostIntelligencePanel from '../../../components/deal-intelligence/CostIntelligencePanel';
 
 const STRATEGY_OPTIONS = [
   { key: 'brrrr', label: 'BRRRR', icon: '/images/realestate/icon_brrrr.png' },
@@ -67,7 +68,7 @@ export default function DealWorkspacePage() {
   const [summary, setSummary] = useState<DealSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'comps' | 'analysis' | 'decisions' | 'ivcee' | 'documents' | 'dueDiligence' | 'strategies' | 'memo' | 'fieldIntelligence' | 'outcomes'>('assumptions');
+  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'comps' | 'analysis' | 'decisions' | 'ivcee' | 'documents' | 'dueDiligence' | 'strategies' | 'memo' | 'fieldIntelligence' | 'outcomes' | 'costIntelligence'>('assumptions');
   const [assumptions, setAssumptions] = useState<AssumptionsState>(DEFAULT_ASSUMPTIONS);
   const [saving, setSaving] = useState(false);
   const [computing, setComputing] = useState(false);
@@ -403,6 +404,7 @@ export default function DealWorkspacePage() {
     { key: 'memo' as const, label: 'Acquisition Memo' },
     { key: 'decisions' as const, label: 'Decision Log' },
     { key: 'fieldIntelligence' as const, label: 'Field Intelligence' },
+    { key: 'costIntelligence' as const, label: 'Cost Intelligence' },
     { key: 'outcomes' as const, label: 'Outcomes' },
   ];
 
@@ -1089,6 +1091,14 @@ export default function DealWorkspacePage() {
 
             {activeTab === 'fieldIntelligence' && id && (
               <FieldIntelligencePanel
+                dealId={id as string}
+                propertyId={summary?.property?.id}
+                arvEstimate={Number(assumptions.arvEstimate) || 0}
+              />
+            )}
+
+            {activeTab === 'costIntelligence' && id && (
+              <CostIntelligencePanel
                 dealId={id as string}
                 propertyId={summary?.property?.id}
                 arvEstimate={Number(assumptions.arvEstimate) || 0}
