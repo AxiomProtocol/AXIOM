@@ -119,6 +119,8 @@ function FeedTab() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [promoting, setPromoting] = useState<string | null>(null);
+  const [promoteError, setPromoteError] = useState<string | null>(null);
 
   const [filterState, setFilterState] = useState('');
   const [filterCity, setFilterCity] = useState('');
@@ -127,6 +129,24 @@ function FeedTab() {
   const [filterMinPrice, setFilterMinPrice] = useState('');
   const [filterMaxPrice, setFilterMaxPrice] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+
+  async function promoteToDeal(listingId: string) {
+    setPromoting(listingId);
+    setPromoteError(null);
+    try {
+      const res = await fetch(`/api/distressed-feed/listings/${listingId}/promote-to-deal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ strategy: 'brrrr' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create deal');
+      window.location.href = `/deal-intelligence/deal/${data.dealId}`;
+    } catch (err: any) {
+      setPromoteError(err.message);
+      setPromoting(null);
+    }
+  }
 
   const fetchListings = useCallback(async () => {
     setLoading(true);
@@ -502,13 +522,19 @@ function FeedTab() {
                         View Source
                       </a>
                     )}
-                    <a
-                      href={`/deal-intelligence?address=${encodeURIComponent(listing.address + ', ' + listing.city + ', ' + listing.state + ' ' + listing.zip)}`}
-                      className="border border-[#2d5016] text-[#2d5016] px-4 py-3 min-h-[44px] flex items-center justify-center font-mono text-sm hover:bg-[#2d5016] hover:text-white transition-colors"
+                    <button
+                      onClick={() => promoteToDeal(listing.id)}
+                      disabled={promoting === listing.id}
+                      className="border border-[#2d5016] text-[#2d5016] px-4 py-3 min-h-[44px] flex items-center justify-center font-mono text-sm hover:bg-[#2d5016] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Analyze with Deal Intelligence
-                    </a>
+                      {promoting === listing.id ? 'Creating Deal Workspace...' : 'Analyze with Deal Intelligence'}
+                    </button>
                   </div>
+                  {promoteError && promoting !== listing.id && expanded === listing.id && (
+                    <div className="mt-2 font-mono text-xs text-[#8b1a1a] border border-[#8b1a1a] px-3 py-2">
+                      {promoteError}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

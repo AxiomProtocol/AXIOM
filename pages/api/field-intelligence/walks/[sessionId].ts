@@ -170,6 +170,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
            other         = $22::unit_condition,
            general_notes = COALESCE($23, general_notes),
            inspection_time = COALESCE($24, inspection_time),
+           voice_note    = COALESCE($25, voice_note),
+           unit_class    = COALESCE($26, unit_class),
            inspection_completed = TRUE,
            updated_at    = NOW()
          WHERE id = $1
@@ -199,6 +201,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           condVal(body.other),
           body.generalNotes || null,
           body.inspectionTime || null,
+          body.voiceNote || body.voice_note || null,
+          body.unitClass || body.unit_class || null,
         ],
       );
 

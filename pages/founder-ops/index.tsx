@@ -197,7 +197,7 @@ export default function FounderOpsPage() {
   ]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'allocation' | 'checkpoints' | 'log' | 'outcomes' | 'intelligence'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'allocation' | 'checkpoints' | 'log' | 'outcomes' | 'intelligence' | 'variance'>('overview');
   const [pendingOutcomes, setPendingOutcomes] = useState<any[]>([]);
   const [outcomesLoading, setOutcomesLoading] = useState(false);
   const [outcomesUnauthorized, setOutcomesUnauthorized] = useState(false);
@@ -215,6 +215,13 @@ export default function FounderOpsPage() {
   const [snapshotError, setSnapshotError] = useState<string | null>(null);
   const [matrixEvents, setMatrixEvents] = useState<any[]>([]);
   const [matrixRooms, setMatrixRooms] = useState<any[]>([]);
+
+  const [variances, setVariances] = useState<any[]>([]);
+  const [regionFactors, setRegionFactors] = useState<any[]>([]);
+  const [varianceLoading, setVarianceLoading] = useState(false);
+  const [calibrating, setCalibrating] = useState(false);
+  const [calibrationResult, setCalibrationResult] = useState<any>(null);
+  const [calibrationError, setCalibrationError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -435,6 +442,44 @@ export default function FounderOpsPage() {
     },
   ];
 
+  const loadVariances = async () => {
+    setVarianceLoading(true);
+    try {
+      const [varRes, regRes] = await Promise.all([
+        fetch('/api/founder-ops/variances').then(r => r.json()).catch(() => ({ variances: [] })),
+        fetch('/api/cost-intelligence/catalog').then(r => r.json()).catch(() => ({ regions: [] })),
+      ]);
+      setVariances(varRes.variances || []);
+      setRegionFactors(regRes.regions || []);
+    } finally {
+      setVarianceLoading(false);
+    }
+  };
+
+  const runCalibration = async (dryRun: boolean) => {
+    setCalibrating(true);
+    setCalibrationResult(null);
+    setCalibrationError(null);
+    try {
+      const res = await fetch('/api/cost-intelligence/calibrate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dryRun }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setCalibrationError(json.error || 'Calibration failed');
+      } else {
+        setCalibrationResult(json);
+        if (!dryRun) loadVariances();
+      }
+    } catch (err: any) {
+      setCalibrationError(err.message);
+    } finally {
+      setCalibrating(false);
+    }
+  };
+
   const tabs = [
     { id: 'overview' as const, label: 'System Overview' },
     { id: 'allocation' as const, label: 'Capital Allocation' },
@@ -442,6 +487,7 @@ export default function FounderOpsPage() {
     { id: 'log' as const, label: 'Operations Log' },
     { id: 'outcomes' as const, label: `Outcomes${pendingOutcomes.length > 0 ? ` (${pendingOutcomes.length})` : ''}` },
     { id: 'intelligence' as const, label: 'Intelligence' },
+    { id: 'variance' as const, label: 'Variance Tracking' },
   ];
 
   return (
@@ -475,6 +521,7 @@ export default function FounderOpsPage() {
                     setActiveTab(tab.id);
                     if (tab.id === 'outcomes') loadPendingOutcomes();
                     if (tab.id === 'intelligence') loadIntelligence();
+                    if (tab.id === 'variance') loadVariances();
                   }}
                   className={`px-4 py-2 text-sm border-b-2 -mb-px transition-none ${
                     activeTab === tab.id
@@ -1109,6 +1156,155 @@ export default function FounderOpsPage() {
                     </div>
                   )}
                 </div>
+              </>
+            )}
+
+            {activeTab === 'variance' && (
+              <>
+                <SectionHeading>Variance Tracking</SectionHeading>
+                <p className="text-sm text-dl-gray mb-6">
+                  Predicted vs actual metrics from approved project outcomes. Drives Bayesian calibration of regional cost multipliers in the Cost Intelligence Engine.
+                </p>
+
+                <div className="flex gap-3 mb-6">
+                  <button
+                    onClick={() => runCalibration(true)}
+                    disabled={calibrating}
+                    className="border border-dl-navy text-dl-navy px-4 py-2 font-dl-mono text-sm disabled:opacity-50"
+                  >
+                    {calibrating ? 'Running...' : 'Preview Calibration (Dry Run)'}
+                  </button>
+                  <button
+                    onClick={() => runCalibration(false)}
+                    disabled={calibrating}
+                    className="bg-dl-navy text-white px-4 py-2 font-dl-mono text-sm disabled:opacity-50"
+                  >
+                    {calibrating ? 'Applying...' : 'Apply Calibration'}
+                  </button>
+                </div>
+
+                {calibrationError && (
+                  <div className="border border-dl-error p-3 mb-4 font-dl-mono text-xs text-dl-error">{calibrationError}</div>
+                )}
+
+                {calibrationResult && (
+                  <div className="border border-dl-border p-4 mb-6">
+                    <p className="font-dl-mono text-xs text-dl-muted uppercase tracking-wider mb-3">
+                      {calibrationResult.dryRun ? 'Dry Run Result' : 'Calibration Applied'} — {calibrationResult.signalsProcessed} signals processed, {calibrationResult.regionsUpdated} regions updated
+                    </p>
+                    {calibrationResult.updates && calibrationResult.updates.length > 0 ? (
+                      <table className="w-full font-dl-mono text-xs">
+                        <thead>
+                          <tr className="border-b border-dl-border">
+                            <th className="text-left p-2 text-dl-muted uppercase">Region</th>
+                            <th className="text-right p-2 text-dl-muted uppercase">Prior Factor</th>
+                            <th className="text-right p-2 text-dl-muted uppercase">New Factor</th>
+                            <th className="text-right p-2 text-dl-muted uppercase">Avg Var %</th>
+                            <th className="text-right p-2 text-dl-muted uppercase">Sample</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {calibrationResult.updates.map((u: any) => (
+                            <tr key={u.regionCode} className="border-b border-dl-border last:border-0">
+                              <td className="p-2 text-dl-navy">{u.regionName} ({u.regionCode})</td>
+                              <td className="p-2 text-right text-dl-muted">{u.previousFactor.toFixed(4)}x</td>
+                              <td className={`p-2 text-right font-bold ${u.newFactor > u.previousFactor ? 'text-dl-error' : 'text-dl-forest'}`}>
+                                {u.newFactor.toFixed(4)}x
+                              </td>
+                              <td className={`p-2 text-right ${u.avgVariancePct > 0 ? 'text-dl-error' : 'text-dl-forest'}`}>
+                                {u.avgVariancePct > 0 ? '+' : ''}{u.avgVariancePct}%
+                              </td>
+                              <td className="p-2 text-right text-dl-muted">{u.sampleSize}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <p className="text-sm text-dl-muted">No regions with sufficient signal ({'>'}= 3 approved outcomes) to calibrate yet.</p>
+                    )}
+                  </div>
+                )}
+
+                {varianceLoading ? (
+                  <p className="font-dl-mono text-sm text-dl-gray text-center py-8">Loading variance data...</p>
+                ) : variances.length === 0 ? (
+                  <div className="border border-dl-border p-6 text-center mb-8">
+                    <p className="font-dl-mono text-sm text-dl-muted">No variance records yet.</p>
+                    <p className="font-dl-mono text-xs text-dl-muted mt-1">
+                      Variance records are created when project outcomes are submitted with Cost Intelligence estimates on record for the same deal.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="border border-dl-border overflow-x-auto mb-8">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-dl-border">
+                          <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Deal</th>
+                          <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Metric</th>
+                          <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Predicted</th>
+                          <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Actual</th>
+                          <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Var %</th>
+                          <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {variances.map((v: any) => (
+                          <tr key={v.id} className="border-b border-dl-border last:border-0">
+                            <td className="p-3 font-dl-mono text-xs text-dl-navy truncate max-w-[180px]">
+                              {v.deal_name || v.deal_id?.slice(0, 8) + '…'}
+                            </td>
+                            <td className="p-3 font-dl-mono text-xs text-dl-gray capitalize">
+                              {v.metric_key.replace(/_/g, ' ')}
+                            </td>
+                            <td className="p-3 text-right font-dl-mono text-xs text-dl-muted">
+                              {Number(v.predicted_value).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                            </td>
+                            <td className="p-3 text-right font-dl-mono text-xs text-dl-navy">
+                              {Number(v.actual_value).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                            </td>
+                            <td className={`p-3 text-right font-dl-mono text-xs font-bold ${Number(v.variance_pct) > 15 ? 'text-dl-error' : Number(v.variance_pct) < -15 ? 'text-dl-forest' : 'text-dl-navy'}`}>
+                              {Number(v.variance_pct) > 0 ? '+' : ''}{Number(v.variance_pct).toFixed(2)}%
+                            </td>
+                            <td className="p-3 font-dl-mono text-xs text-dl-gray">
+                              {new Date(v.created_at).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {regionFactors.length > 0 && (
+                  <div className="mb-8">
+                    <SectionHeading>Current Regional Cost Factors</SectionHeading>
+                    <p className="text-sm text-dl-gray mb-4">
+                      Live multipliers applied to Craftsman NCE benchmarks by market. Calibration adjusts these based on verified outcome variance.
+                    </p>
+                    <div className="border border-dl-border overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-dl-border">
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Region</th>
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Code</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Overall Factor</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {regionFactors.map((r: any) => (
+                            <tr key={r.region_code} className="border-b border-dl-border last:border-0">
+                              <td className="p-3 font-dl-mono text-xs text-dl-navy">{r.region_name}</td>
+                              <td className="p-3 font-dl-mono text-xs text-dl-gray">{r.region_code}</td>
+                              <td className={`p-3 text-right font-dl-mono text-xs font-bold ${Number(r.overall_factor) > 1.1 ? 'text-dl-error' : Number(r.overall_factor) < 0.95 ? 'text-dl-forest' : 'text-dl-navy'}`}>
+                                {Number(r.overall_factor).toFixed(4)}x
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </>
             )}
 

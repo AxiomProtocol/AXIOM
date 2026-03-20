@@ -3,6 +3,7 @@ import { pool } from '../../../../lib/db';
 import { getSIWESession } from '../../../../lib/middleware/siweAuth';
 import { isAuthorizedReviewer } from '../../../../lib/reviewerAuth';
 import { postStructuredMatrixEvent, getRoomByEntity } from '../../../../server/services/matrix/workflow';
+import { runBenchmarkCalibration } from '../../../../server/services/cost-intelligence/calibrator';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -115,6 +116,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }
         }
       } catch (_) {}
+
+      if (decision === 'approved') {
+        try {
+          await runBenchmarkCalibration({ dryRun: false });
+        } catch (calibErr: any) {
+          console.warn('Benchmark calibration (non-blocking):', calibErr.message);
+        }
+      }
     });
 
     return res.status(200).json({ outcome });

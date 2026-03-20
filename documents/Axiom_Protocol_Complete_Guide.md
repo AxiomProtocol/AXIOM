@@ -29,15 +29,9 @@ Network: Arbitrum One (Chain ID 42161)
 
 Axiom Protocol is governance-first wealth infrastructure for real asset acquisition through community capital formation. The platform provides tools, data, and on-chain financial infrastructure for institutional-grade real estate participation — from initial property discovery through community-governed land ownership. It runs on Arbitrum One, supported by 72 verified automated control layers auditable at arbiscan.io.
 
-Axiom was designed for Black and Latino W-2 earners aged 25-40 in Atlanta, Houston, and Charlotte who are ready to build real wealth through disciplined participation in real estate — and have historically been excluded from institutional-grade capital structures. The platform also serves real estate professionals building deal pipelines, accredited investors seeking structured real asset exposure, syndicators managing LP offerings, institutional allocators evaluating the protocol, and community organizers building shared capital infrastructure.
+Axiom was designed for Black and Latino W-2 earners aged 25-40 in Atlanta, Houston, and Charlotte who are ready to build real wealth through disciplined real estate participation. The platform also serves real estate professionals, accredited investors, syndicators, institutional allocators, and community organizers building shared capital infrastructure.
 
-Most community wealth-building groups fail not because of bad intentions but because they lack the infrastructure to succeed. Axiom replaces informal spreadsheets and group chats with programmable, auditable financial infrastructure built on three principles:
-
-Transparency — every capital movement, governance decision, and operational action is recorded on-chain. Verifiable records replace informal trust.
-
-Coordination — structure and shared rules create reliable collaboration. Defined roles and accountability loops replace ad-hoc decision making.
-
-Discipline — fixed treasury allocation policies and institutional-grade reporting. Execution over narrative.
+Axiom replaces informal spreadsheets and group chats with programmable, auditable financial infrastructure built on three principles: Transparency (every capital movement recorded on-chain), Coordination (defined roles and accountability loops), and Discipline (fixed treasury policies and institutional-grade reporting).
 
 Axiom Protocol is not a bank, broker-dealer, or registered investment advisor. Participation requires independent evaluation of all disclosures at `/disclosure`.
 
@@ -71,7 +65,7 @@ To acquire AXM:
 
 AXM distribution pathways include DEX acquisition, Proof of Execution completion incentives (verified project outcomes trigger AXM rewards), and community program milestones through the Wealth Practice graduation pathway. Future pathways include governance participation incentives tied to Universe Blockchain migration.
 
-AXM holders govern by locking tokens through the participation lockup mechanism. Locked AXM earns governance weight and contributes to Graduated Execution Framework (GEF) qualification scoring. GEF scoring gates access to advanced platform features based on demonstrated on-chain participation.
+AXM holders govern by locking tokens through the participation lockup mechanism. Locked AXM earns governance weight and contributes to Graduated Execution Framework (GEF) scoring, which gates access to advanced platform features based on demonstrated on-chain participation.
 
 AXM is a governance and fee-routing token. It is not an investment contract, security, or yield-bearing instrument. No returns are guaranteed.
 
@@ -91,7 +85,7 @@ To access AXUSD:
 
 AXUSD is used for Lending Fund subscriptions, Capital Program participation, syndication offering subscriptions, protocol settlement, and Euler V2 lending vault deposits.
 
-Key contracts (Arbitrum One): Token `0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7`, Identity Registry `0x58f64a1262d5434d6C7637a2309b0999bB6D1970`, Modular Compliance `0xaC9E1A91D1C7F584C9FC04E283fae30Ae2F636DD`, Identity Factory `0x1A7c55AC9A4AB318039f8E2BDfA82500332c86B9`, Euler V2 Vault: `0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059`.
+Key contracts (Arbitrum One): Token `0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7`, Identity Registry `0x58f64a1262d5434d6C7637a2309b0999bB6D1970`, Euler V2 Vault `0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059`. Full registry at `/disclosure`.
 
 ---
 
@@ -120,11 +114,11 @@ A real estate acquisition lifecycle platform with on-chain governance. Propertie
 
 To participate in land governance:
 1. Navigate to `/land` and connect your wallet.
-2. Review active property candidates with their public summaries and due diligence status.
-3. When a proposal is open, cast your AXM-weighted vote within the proposal window.
-4. Contribute to the community funding pool for candidates you support — progress is tracked in real time.
+2. Review active property candidates and their due diligence status.
+3. Cast your AXM-weighted vote within the proposal window.
+4. Contribute to the community funding pool — progress is tracked in real time.
 
-Axiom's active initiative targets a pipeline of 6+ acres with USDA-supported development planning. Specific acquisitions are subject to market conditions, governance approval, and regulatory requirements.
+Specific acquisitions are subject to market conditions, governance approval, and regulatory requirements.
 
 ---
 
@@ -150,9 +144,9 @@ To create and analyze a deal:
 2. Select a strategy: BRRRR, Fix and Flip, Buy and Hold, Note, or Multifamily.
 3. In the Scenarios tab, enter acquisition price, financing terms, rent, vacancy, and expense assumptions.
 4. Review computed metrics: NOI, cap rate, DSCR, cash-on-cash return, monthly cash flow, and break-even months.
-5. Review IVCEE risk analysis: probability model, stress tests, sensitivity matrix, refinance risk, downside protection, and capital efficiency score versus the portfolio.
-6. Review the AI advisory verdict (Strong Proceed / Conditional Proceed / Hold / Reject) with offer strategy, creative structures, and risk management plan.
-7. Use the remaining tabs: Overview (deal summary and key metrics), Field Intelligence (walk inspection), Cost Intelligence (Craftsman NCE estimate), Deal Assistant (AI chat grounded in deal data), Documents (AI extraction and analysis), and Due Diligence (structured DD checklist).
+5. Review IVCEE risk analysis: probability model, stress tests, sensitivity matrix, refinance risk, and capital efficiency score versus the portfolio.
+6. Review the AI advisory verdict (Strong Proceed / Conditional Proceed / Hold / Reject) with offer strategy and risk management plan.
+7. Use the remaining tabs: Overview (deal summary), Field Intelligence (walk inspection), Cost Intelligence (Craftsman NCE estimate), Deal Assistant (AI chat), Documents (AI extraction), and Due Diligence (DD checklist).
 
 ### 6c. Deal Flow
 
@@ -182,16 +176,9 @@ To review program details:
 
 Route: `/lending-fund` — Status: Configured — Structure: SEC Reg D 506(c), accredited investors only
 
-To invest in the fund:
-1. Navigate to `/lending-fund`, connect your wallet, and click Apply to Lend.
-2. Review and acknowledge the PPM and Risk Disclosure Supplement.
-3. Complete the accredited investor verification questionnaire.
-4. Submit your AXUSD subscription through the on-chain vault.
+To invest: navigate to `/lending-fund`, click Apply to Lend, review and acknowledge the PPM and Risk Disclosure Supplement, complete accredited investor verification, and submit your AXUSD subscription through the on-chain vault.
 
-To apply for a loan:
-1. Submit a loan application with property address, purchase price, rehab budget, and ARV.
-2. The underwriting engine calculates DSCR and LTV. Applications below 1.25 DSCR are flagged for additional review.
-3. Approved loans fund at a maximum 70% LTV with terms up to 12 months. Rates are variable.
+To borrow: submit a loan application with address, purchase price, rehab budget, and ARV. Approved loans fund at a maximum 70% LTV, up to 12 months. Applications below 1.25 DSCR are flagged for review. Rates are variable.
 
 Vault: `0xF4AcD4B7EaBfDA7E1b96D3abA1C6340557aa93E5`.
 
@@ -220,12 +207,7 @@ To set up a DeNet storage node:
 
 Route: `/banking` — Status: Configured
 
-To set up banking (Unit Finance):
-1. Navigate to `/banking` and complete KYC with a government-issued ID.
-2. Fund via ACH from an external bank account.
-3. Use the debit card or ACH send for transfers. Link a Wealth Pool account for group-linked banking.
-
-To access crypto custody (BitGo): view receive addresses for AXM, AXUSD, and ETH on Arbitrum. Use the Bridge Service for fiat-to-crypto conversion with live CoinGecko price quotes and full status tracking.
+To set up banking: complete KYC with a government-issued ID, fund via ACH, and use the debit card or ACH send for transfers. For crypto custody (BitGo): view receive addresses for AXM, AXUSD, and ETH on Arbitrum and use the Bridge Service for fiat-to-crypto conversion with live price quotes.
 
 ---
 
@@ -239,19 +221,16 @@ MIRDT is a probabilistic trend-following analysis system for digital assets and 
 
 To read a MIRDT signal:
 1. Navigate to the MIRDT terminal and select an asset type.
-2. Review the entry zone — conditions must fall in this range for the thesis to apply.
-3. Note the invalidation price — if price reaches this level, the thesis is void.
-4. Read the confidence score and signal Z-score to assess signal strength.
-5. Review the P5/P50/P95 probability range — potential outcome prices at three probability levels.
-6. Check the immutable data snapshot reference for independent auditability.
+2. Review the entry zone — conditions must fall in this range for the thesis to apply. Note the invalidation price — if price reaches this level, the thesis is void.
+3. Read the confidence score and signal Z-score to assess signal strength.
+4. Review the P5/P50/P95 probability range and the immutable data snapshot reference for auditability.
 
 All MIRDT outputs are explicitly probabilistic — not investment advice.
 
-To run a paper trade through the MIRDT Execution Model:
-1. Select an active MIRDT setup and review entry zone and invalidation price.
-2. Configure your paper trade: size, entry price within the zone, stop at invalidation.
-3. Submit — the engine logs the trade deterministically with no discretion applied.
-4. Track the trade in the Proof of Execution Playbook with full SHA-256 hash chain.
+To run a paper trade:
+1. Select an active MIRDT setup, configure size, entry price within the zone, and stop at invalidation.
+2. Submit — the engine logs the trade deterministically with no discretion.
+3. Track the trade in the Proof of Execution Playbook with full SHA-256 hash chain.
 
 ### Sentinel — Capital Decision Layer
 
@@ -337,9 +316,9 @@ To review the solvency console:
 3. Review the headline metrics and policy mode.
 4. Verify the snapshot using the SHA-256 checksum displayed at the top.
 
-Syndication (`/syndication`) — Full offering lifecycle across six types: Reg D 506(b), Reg D 506(c), Reg CF, Community Pool, Club Deal, Pilot Offering. Lifecycle: Draft, Structuring, Raising, Funded, Active, Winding Down. Dashboard tracks subscriptions, capital calls, distributions, and document vault per offering.
+Syndication (`/syndication`) — Full offering lifecycle: Reg D 506(b/c), Reg CF, Community Pool, Club Deal, and Pilot Offering. Tracks subscriptions, capital calls, distributions, and document vault per offering through six lifecycle stages.
 
-Investor Portal (`/syndication/portal`) — Wallet-authenticated LP dashboard. Connect wallet, sign SIWE, then review holdings, subscriptions, capital calls (with overdue flagging), distribution records with on-chain verification links, and offering documents.
+Investor Portal (`/syndication/portal`) — Wallet-authenticated LP dashboard showing holdings, subscriptions, capital calls, distribution records with on-chain verification links, and offering documents.
 
 ---
 
@@ -364,9 +343,7 @@ Route: `/disclosure` — Status: Live
 
 The `/disclosure` page is the canonical institutional disclosure document. Every disclosure is tied to a specific, timestamped solvency snapshot — the Snapshot ID and SHA-256 checksum are displayed at the top.
 
-The disclosure page covers: treasury and liability headline numbers derived from the latest snapshot; formulas for CR (Coverage Ratio = Treasury / Liabilities), RR (Reserve Ratio), LBR (Loss Buffer), and LD (Liquid Deficit); operational status for every module (Live / Configured-Inactive / Planned); the full contract address registry; and GENIUS Act alignment language.
-
-72 verified automated control layers on Arbitrum One. Contract standards: ERC-20 (AXM), ERC-3643/T-REX (AXUSD), ERC-4626 (Euler vault), ERC-1167 (Identity Factory), ONCHAINID (wallet identity), SIWE (authentication).
+The disclosure page covers: treasury and liability headline numbers; formulas for CR (Treasury / Liabilities), RR (Reserve Ratio), LBR (Loss Buffer), and LD (Liquid Deficit); operational status per module (Live / Configured-Inactive / Planned); the full contract address registry; and GENIUS Act alignment language. 72 verified automated control layers. Contract standards: ERC-20 (AXM), ERC-3643/T-REX (AXUSD), ERC-4626 (Euler vault), ONCHAINID, SIWE.
 
 ---
 
@@ -374,7 +351,7 @@ The disclosure page covers: treasury and liability headline numbers derived from
 
 Axiom Protocol is in its Bootstrap Phase.
 
-Completed (2023-2025): Community farmland initiative with USDA development planning. 72 automated control layers deployed on Arbitrum One. AXM governance token and DEX V2 live on mainnet. Capital Program ($1M dual-SPV) launched. ERC-3643 Unified AXUSD deployed. SEC Reg D 506(c) Lending Fund structured. FDIC-insured banking operational via Unit Finance. Cost Intelligence Engine with Craftsman NCE deployed. MIRDT, Sentinel, Observer, Deal Intelligence with IVCEE, Syndication, Field Intelligence, and Investor Portal all live.
+Completed (2023-2025): Community farmland initiative. 72 automated control layers on Arbitrum One. AXM governance token and DEX V2 on mainnet. Capital Program ($1M dual-SPV). ERC-3643 Unified AXUSD. SEC Reg D 506(c) Lending Fund. FDIC-insured banking via Unit Finance. Cost Intelligence Engine with Craftsman NCE. MIRDT, Sentinel, Observer, Deal Intelligence with IVCEE, Syndication, Field Intelligence, and Investor Portal all live.
 
 In Progress (2026): Proof of Execution outcome verification pipeline. Expanded Craftsman benchmark validation from live project actuals. Wealth Practice staged rollout with Capital Program access pathway. Land Acquisition Pipeline governance deployment.
 
@@ -435,13 +412,9 @@ This phrasing is required for all references to regulatory alignment. Definitive
 
 ### Language Guidance
 
-Platform communications avoid absolutist positioning claims about market exclusivity or superiority. Physical asset references use pipeline, framework, and targeted acquisition language rather than specific acreage claims without documented evidence. Rate and yield references consistently use variable language — no yield or profit outcomes are implied or stated. All regulatory alignment references use the approved GENIUS Act phrasing above.
+Platform communications avoid absolutist positioning claims, unqualified physical asset ownership statements, and yield or profit outcome promises. Rate references use variable language. All regulatory alignment references use the approved GENIUS Act phrasing above.
 
-Safe positioning language includes: "reference architecture," "governance-first wealth infrastructure," "preferred infrastructure layer," and "disclosure-first capital framework."
-
-Safe asset language includes: "land acquisition and asset onboarding framework," "targeted land acquisition roadmap," and "physical asset pipeline designed to bridge digital capital and real assets."
-
-Safe outcome language includes: "improve capital efficiency," "increase financial resilience," "expand structural wealth-building capacity," and "strengthen community capital formation."
+Approved positioning language: "reference architecture," "governance-first wealth infrastructure," "disclosure-first capital framework." Approved outcome language: "improve capital efficiency," "expand structural wealth-building capacity," "strengthen community capital formation."
 
 ---
 
