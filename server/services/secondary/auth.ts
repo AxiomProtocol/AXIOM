@@ -36,9 +36,7 @@ export async function getSecSession(req: NextApiRequest): Promise<SecSession | n
        FROM sec_investors i
        LEFT JOIN sec_wallets w ON w.investor_id = i.id AND LOWER(w.wallet_address) = $1
        LEFT JOIN sec_roles r ON r.investor_id = i.id AND r.revoked_at IS NULL
-       WHERE LOWER(i.email) = LOWER((
-         SELECT email FROM users WHERE LOWER(wallet_address) = $1 LIMIT 1
-       )) OR w.id IS NOT NULL
+       WHERE w.id IS NOT NULL
        LIMIT 10`,
       [walletAddress]
     );
@@ -77,6 +75,7 @@ export async function requireRole(req: NextApiRequest, role: string): Promise<Se
 export async function ensureSecInvestor(walletAddress: string, email?: string): Promise<string> {
   const lower = walletAddress.toLowerCase();
 
+  // Check if already registered via wallet
   const existing = await pool.query(
     `SELECT i.id FROM sec_investors i
      JOIN sec_wallets w ON w.investor_id = i.id
@@ -85,29 +84,23 @@ export async function ensureSecInvestor(walletAddress: string, email?: string): 
   );
   if (existing.rows.length > 0) return existing.rows[0].id;
 
-  const userResult = await pool.query(
-    `SELECT email, first_name, last_name FROM users WHERE LOWER(wallet_address) = $1 LIMIT 1`,
-    [lower]
-  );
+  // Auto-generate investor profile from wallet address — no users table dependency
+  const walletEmail = email || `${lower.slice(2, 12)}@wallet.axiom`;
 
-  const userEmail = email || userResult.rows[0]?.email || `${lower.slice(0, 10)}@wallet.axiom`;
-  const legalName = userResult.rows.length > 0
-    ? `${userResult.rows[0].first_name || ''} ${userResult.rows[0].last_name || ''}`.trim() || null
-    : null;
-
+  // Upsert investor record
   const investorResult = await pool.query(
     `INSERT INTO sec_investors (email, legal_name, status, investor_category)
-     VALUES ($1, $2, 'active', 'unverified')
-     ON CONFLICT DO NOTHING
+     VALUES ($1, NULL, 'active', 'unverified')
+     ON CONFLICT (email) DO UPDATE SET updated_at = NOW()
      RETURNING id`,
-    [userEmail, legalName]
+    [walletEmail]
   );
 
   let investorId: string;
   if (investorResult.rows.length > 0) {
     investorId = investorResult.rows[0].id;
   } else {
-    const sel = await pool.query(`SELECT id FROM sec_investors WHERE email = $1 LIMIT 1`, [userEmail]);
+    const sel = await pool.query(`SELECT id FROM sec_investors WHERE email = $1 LIMIT 1`, [walletEmail]);
     investorId = sel.rows[0].id;
   }
 

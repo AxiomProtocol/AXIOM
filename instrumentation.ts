@@ -5986,7 +5986,7 @@ export async function register() {
       )`, 'table sec_document_access_logs');
 
       // Indexes for common query paths
-      await exec(`CREATE INDEX IF NOT EXISTS sec_investors_email_idx ON sec_investors(email)`, 'index sec_investors_email');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS sec_investors_email_unique ON sec_investors(email)`, 'unique index sec_investors_email');
       await exec(`CREATE INDEX IF NOT EXISTS sec_wallets_investor_idx ON sec_wallets(investor_id)`, 'index sec_wallets_investor');
       await exec(`CREATE INDEX IF NOT EXISTS sec_compliance_profiles_investor_idx ON sec_compliance_profiles(investor_id)`, 'index sec_compliance_profiles_investor');
       await exec(`CREATE INDEX IF NOT EXISTS sec_positions_investor_idx ON sec_positions(investor_id)`, 'index sec_positions_investor');
