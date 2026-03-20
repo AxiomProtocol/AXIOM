@@ -115,7 +115,7 @@ export function inferConditionLevel(scopeItem: ScopeItem): ConditionLevel | null
     return scopeItem.condition as ConditionLevel;
   }
 
-  const text = `${scopeItem.itemName} ${scopeItem.scopeNote || ''} ${scopeItem.repairOrReplace}`.toLowerCase();
+  const text = `${scopeItem.itemName} ${scopeItem.scopeNote || ''}`.toLowerCase();
 
   for (const [level, keywords] of Object.entries(CONDITION_KEYWORDS)) {
     for (const kw of keywords) {

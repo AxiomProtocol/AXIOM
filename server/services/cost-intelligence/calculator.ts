@@ -60,7 +60,7 @@ export function calculateLineItem(input: CalculatorInput): CalculatorOutput {
   const subtotalPreAdj = subtotalMaterial + subtotalLabor;
 
   const subtotalRegional = subtotalPreAdj * regionalFactor;
-  const wasteTotal = subtotalRegional * (scopeItem.wasteFactor || 0.05);
+  const wasteTotal = subtotalRegional * (scopeItem.wasteFactor ?? 0.05);
   const lineTotal = subtotalRegional + wasteTotal;
 
   const costLow = baseLowPerUnit * effectiveQty * regionalFactor;
@@ -204,7 +204,12 @@ function resolveEffectiveQuantity(
 ): number {
   const qty = scopeItem.quantity;
 
-  if (scopeItem.unit === costUnit) return qty;
+  if (costUnit === 'flat') return 1;
+
+  if (scopeItem.unit === costUnit) {
+    if (costUnit === 'per_unit' && scopeItem.appliesToAllUnits) return totalUnits;
+    return qty;
+  }
 
   if (costUnit === 'per_unit') {
     if (scopeItem.appliesToAllUnits) return totalUnits;
@@ -218,8 +223,6 @@ function resolveEffectiveQuantity(
     }
     if (scopeItem.unit === 'per_sqft') return qty;
   }
-
-  if (costUnit === 'flat') return 1;
 
   return qty;
 }

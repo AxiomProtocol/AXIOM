@@ -93,7 +93,10 @@
     "admin:list-notes": "./scripts/cli/admin-ops.sh list-notes",
     "admin:credits-summary": "./scripts/cli/admin-ops.sh credits-summary",
     "admin:db-stats": "./scripts/cli/admin-ops.sh db-stats",
-    "admin:audit-logs": "./scripts/cli/admin-ops.sh audit-logs"
+    "admin:audit-logs": "./scripts/cli/admin-ops.sh audit-logs",
+    "test:cost-intelligence": "vitest run tests/cost-intelligence",
+    "test:ivcee": "vitest run lib/ivcee",
+    "test:vitest": "vitest run"
   },
   "keywords": [],
   "author": "",
