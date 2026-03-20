@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { DesignLawLayout } from '../components/design-law/DesignLawLayout';
 
 interface AnalyticsStats {
@@ -428,6 +429,36 @@ export default function WealthPracticePage() {
                 View Land Acquisition Pipeline &rarr;
               </a>
             </div>
+          </div>
+
+          <div className="mt-8 border border-dl-navy p-6">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+              <div>
+                <div className="font-dl-mono text-xs text-dl-navy uppercase mb-1">Capital Pathway</div>
+                <h3 className="font-dl-serif text-lg text-dl-navy font-bold">Where This Leads</h3>
+              </div>
+              <span className="font-dl-mono text-[10px] border border-dl-navy px-2 py-0.5 text-dl-navy uppercase self-start">Stage 1 of 2</span>
+            </div>
+            <p className="text-dl-gray text-sm mb-5">
+              The Wealth Practice is the community foundation layer of the Axiom capital stack. Groups that complete the three-stage trust pipeline — Interest Hub, Purpose Group, On-Chain Pool — qualify for consideration in the Syndication program. No accreditation is required to begin.
+            </p>
+            <div className="flex flex-col md:flex-row items-stretch gap-0 md:gap-0 mb-5">
+              <div className="flex-1 border border-dl-forest p-4">
+                <div className="font-dl-mono text-[10px] text-dl-forest uppercase mb-1">Stage 1</div>
+                <div className="font-dl-serif text-sm text-dl-navy font-bold">The Wealth Practice</div>
+                <p className="text-dl-gray text-xs mt-1">Community savings groups. Three-stage trust pipeline. No accreditation required. Open to any participant.</p>
+              </div>
+              <div className="hidden md:flex items-center px-3 text-dl-navy text-xl">&rarr;</div>
+              <div className="md:hidden flex justify-center py-2 text-dl-navy text-xl">&darr;</div>
+              <div className="flex-1 border border-dl-navy p-4">
+                <div className="font-dl-mono text-[10px] text-dl-navy uppercase mb-1">Stage 2</div>
+                <div className="font-dl-serif text-sm text-dl-navy font-bold">Syndication</div>
+                <p className="text-dl-gray text-xs mt-1">Institutional capital formation. Structured offerings (Reg D 506(c)). Graduated groups surface as qualified pipeline candidates.</p>
+              </div>
+            </div>
+            <Link href="/syndication" className="font-dl-mono text-xs text-dl-navy font-bold border-b border-dl-navy hover:text-dl-forest">
+              View Syndication Offerings &rarr;
+            </Link>
           </div>
         </div>
       )}

@@ -146,7 +146,7 @@ export default function SyndicationDashboard() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <p className="font-dl-mono text-xs text-dl-muted">
           Manage offerings, investor pipeline, subscriptions, and capital tables
         </p>
@@ -161,6 +161,16 @@ export default function SyndicationDashboard() {
             Source Deals
           </Link>
         </div>
+      </div>
+
+      <div className="flex items-start justify-between border border-dl-border px-4 py-3 mb-6">
+        <p className="font-dl-mono text-xs text-dl-muted leading-relaxed">
+          <span className="text-dl-navy font-bold">Community Foundation:</span>{' '}
+          Syndication draws from the Wealth Practice pipeline — community savings groups that complete the three-stage trust cycle surface here as qualified deal candidates.{' '}
+          <Link href="/wealth-practice" className="text-dl-navy border-b border-dl-navy hover:text-dl-forest">
+            Start in the Wealth Practice &rarr;
+          </Link>
+        </p>
       </div>
 
       {showNew && (
