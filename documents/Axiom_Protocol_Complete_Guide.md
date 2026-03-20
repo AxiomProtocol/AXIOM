@@ -148,6 +148,18 @@ To create and analyze a deal:
 6. Review the AI advisory verdict (Strong Proceed / Conditional Proceed / Hold / Reject) with offer strategy and risk management plan.
 7. Use the remaining tabs: Overview (deal summary), Field Intelligence (walk inspection), Cost Intelligence (Craftsman NCE estimate), Deal Assistant (AI chat), Documents (AI extraction), and Due Diligence (DD checklist).
 
+### Multi-Exit Strategy Engine
+
+Within any deal, navigate to the Exit Strategies tab. The engine generates and ranks eight underwriting strategies simultaneously: BRRRR, Fix and Flip, Buy and Hold, Wholesale, Subject-To, Seller Finance, Note Purchase, and Multifamily Value-Add. Each strategy displays acquisition cost, projected exit proceeds, net profit, return on capital, recommended holding period, and capital at risk. Strategies are ranked by risk-adjusted return with color-coded confidence bands. Use the Compare view to place two strategies side-by-side with full metric breakdowns.
+
+### AI Acquisition Memo Builder
+
+Navigate to a deal and open the Memo tab. Enter deal context if not already auto-populated from the workspace, then click Generate Memo. The Gemini-powered engine produces an institutional-grade acquisition memo covering: executive summary, property and market overview, investment thesis, financial projections, risk factors, and recommended action. The memo follows allocator-grade formatting suitable for LP review, lender packages, or internal investment committee submissions. All financial figures are pulled directly from the deal workspace — the AI handles narrative only; no AI-generated numbers enter the output.
+
+### Capital Readiness Card
+
+Within any deal, the Capital Readiness Card computes funding source analysis for the subject property. It evaluates available capital by source type (AXUSD, institutional debt, community pool, Lending Fund), coverage percentage versus total project cost, funding gap if any, and required reserve buffer per the protocol's conservative underwriting standard. The card outputs a readiness classification: Fully Funded, Partially Funded, or Funding Gap — with actionable next steps for each state.
+
 ### 6c. Deal Flow
 
 Route: `/distressed-feed` — Status: Live
@@ -264,6 +276,21 @@ To use RE Intelligence:
 3. Review the market summary: comparable sales, active inventory, median price trends, and absorption rate.
 4. Apply market intelligence as context when building assumptions in the Deal Intelligence workspace for the same geography.
 
+### AME — Adaptive Metrics Engine
+
+Route: `/founder-ops` (AME tab) — Status: Live
+
+The Adaptive Metrics Engine is a deterministic computation engine for regime scoring, adaptive target-setting, and policy multipliers. It is not an AI system — all outputs are mathematically derived from treasury and governance data with no model inference.
+
+To review AME output:
+1. Navigate to Founder Ops and select the AME tab.
+2. Review the current regime score — computed from treasury composition, coverage ratio, capital velocity, and governance participation rate.
+3. Review adaptive targets: the engine adjusts capital deployment thresholds and reserve requirements based on the active regime classification.
+4. Review policy multipliers — values that modulate GEF tier thresholds, Sentinel advisory weights, and Capital Program deployment pacing.
+5. Inspect the immutable data snapshot for any evaluation: every AME run is stored with a SHA-256 reference for full auditability.
+
+AME powers the AME AI Oracle — a Gemini-powered narrative layer that translates deterministic AME output into plain-language interpretation for non-technical stakeholders. The Oracle reads AME output only; it does not influence or alter any computed values.
+
 ---
 
 ## 8. Cost Intelligence Engine
@@ -319,6 +346,16 @@ To review the solvency console:
 Syndication (`/syndication`) — Full offering lifecycle: Reg D 506(b/c), Reg CF, Community Pool, Club Deal, and Pilot Offering. Tracks subscriptions, capital calls, distributions, and document vault per offering through six lifecycle stages.
 
 Investor Portal (`/syndication/portal`) — Wallet-authenticated LP dashboard showing holdings, subscriptions, capital calls, distribution records with on-chain verification links, and offering documents.
+
+Graduated Execution Framework (`/gef`) — A behavior-based qualification system that gates access to advanced platform features based on verified on-chain activity. Participants progress through five tiers: Observer, Participant, Operator, Steward, and Architect. Tier advancement is computed deterministically from: Wealth Practice cycle completions, Deal Intelligence workspace submissions, Proof of Execution approvals, governance vote participation, and Capital Program contribution history — not capital commitment alone. GEF tier directly determines Capital Program eligibility, Lending Fund borrowing limits, and Syndication offering access. Every tier transition is recorded in the GEF audit hash chain with a SHA-256 reference.
+
+To review your GEF status:
+1. Navigate to `/gef` and connect your wallet.
+2. Review your current tier, execution score, and the specific behaviors required for the next tier.
+3. Review the regime multiplier applied to your tier — this scales with the active AME regime classification.
+4. Review the violation log — any policy breach resets relevant score components with a documented reason.
+
+Execution Framework (`/execution-framework`) — The Execution Framework is the operational playbook governing how the protocol deploys capital, manages risk, and authorizes decisions across all system layers. It defines deployment pacing rules (how much capital can move per regime), authorization thresholds (which actions require multi-party authorization versus single-signer), escalation protocols (what triggers Sentinel review), and policy mode transitions (Bootstrap to Operational to Stress). All rules are coded and deterministic — no discretion. Operators and Stewards can review the current framework state, active policy mode, and full enforcement event history.
 
 ---
 
