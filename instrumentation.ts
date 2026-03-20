@@ -5155,6 +5155,222 @@ export async function register() {
       await exec(`CREATE INDEX IF NOT EXISTS contract_adapter_links_entity_idx ON contract_adapter_links(contract_entity_id)`, 'index contract_adapter_links_entity_idx');
       await exec(`CREATE UNIQUE INDEX IF NOT EXISTS contract_adapter_links_native_idx ON contract_adapter_links(native_table, native_entity_id)`, 'index contract_adapter_links_native_idx');
 
+      // ═══════════════════════════════════════════
+      //  MISSING TABLE PATCH (production hardening)
+      // ═══════════════════════════════════════════
+
+      // -- Enums required by missing tables --
+      await exec(`DO $$ BEGIN CREATE TYPE strategy_type AS ENUM ('light_turn','classic_value_add','heavy_reposition','systems_only_stabilization','premium_interior_upgrade','exterior_common_reposition'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`, 'enum strategy_type');
+      await exec(`DO $$ BEGIN CREATE TYPE verification_status AS ENUM ('submitted','under_review','approved','rejected'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`, 'enum verification_status');
+
+      // -- Matrix coordination --
+      await exec(`CREATE TABLE IF NOT EXISTS matrix_rooms (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        matrix_room_id VARCHAR(255) NOT NULL,
+        entity_type VARCHAR(50) NOT NULL,
+        entity_id UUID NOT NULL,
+        configured BOOLEAN NOT NULL DEFAULT false,
+        meta JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table matrix_rooms');
+
+      await exec(`CREATE TABLE IF NOT EXISTS matrix_room_memberships (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        room_id UUID NOT NULL,
+        user_ref VARCHAR(120) NOT NULL,
+        role VARCHAR(40) NOT NULL DEFAULT 'member',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table matrix_room_memberships');
+
+      await exec(`CREATE TABLE IF NOT EXISTS matrix_event_links (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        room_id UUID NOT NULL,
+        entity_type VARCHAR(50) NOT NULL,
+        entity_id UUID NOT NULL,
+        event_type VARCHAR(80) NOT NULL,
+        matrix_event_id VARCHAR(255),
+        payload JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table matrix_event_links');
+
+      // -- Proof of Execution / Verified Outcomes --
+      await exec(`CREATE TABLE IF NOT EXISTS verified_project_outcomes (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        scenario_id UUID,
+        status verification_status NOT NULL DEFAULT 'submitted',
+        actual_rehab_cost NUMERIC NOT NULL,
+        actual_timeline_days INTEGER NOT NULL,
+        actual_sale_price NUMERIC,
+        actual_rent NUMERIC,
+        actual_dscr NUMERIC,
+        actual_monthly_cash_flow NUMERIC,
+        funding_path VARCHAR(60),
+        capital_source_type VARCHAR(60),
+        lender_path_chosen VARCHAR(120),
+        refi_outcome VARCHAR(120),
+        matrix_room_id VARCHAR(255),
+        axm_reward_eligible BOOLEAN NOT NULL DEFAULT false,
+        axusd_settlement_ref VARCHAR(255),
+        arbitrum_outcome_hash VARCHAR(100),
+        arbitrum_verification_hash VARCHAR(100),
+        arbitrum_cost_signal_hash VARCHAR(100),
+        arbitrum_proof_ref VARCHAR(255),
+        verification_timestamp TIMESTAMP,
+        submitted_by VARCHAR(42),
+        reviewed_by VARCHAR(42),
+        submitted_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        reviewed_at TIMESTAMP,
+        interpretation TEXT,
+        meta JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table verified_project_outcomes');
+
+      await exec(`CREATE TABLE IF NOT EXISTS verification_reviews (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        outcome_id UUID NOT NULL,
+        reviewer VARCHAR(42) NOT NULL,
+        decision VARCHAR(20) NOT NULL,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table verification_reviews');
+
+      await exec(`CREATE TABLE IF NOT EXISTS verified_data_rewards (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        outcome_id UUID,
+        session_id UUID,
+        wallet_address VARCHAR(42) NOT NULL,
+        reward_type VARCHAR(50) NOT NULL,
+        reward_amount_axm NUMERIC,
+        reward_ref VARCHAR(255),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table verified_data_rewards');
+
+      await exec(`CREATE TABLE IF NOT EXISTS project_outcome_cost_items (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        outcome_id UUID NOT NULL,
+        category VARCHAR(80) NOT NULL,
+        line_item VARCHAR(255) NOT NULL,
+        amount NUMERIC NOT NULL,
+        invoice_ref VARCHAR(255),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table project_outcome_cost_items');
+
+      await exec(`CREATE TABLE IF NOT EXISTS project_outcome_documents (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        outcome_id UUID NOT NULL,
+        document_type VARCHAR(50) NOT NULL,
+        url TEXT NOT NULL,
+        source_tag VARCHAR(50),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table project_outcome_documents');
+
+      // -- Prediction variance tracking --
+      await exec(`CREATE TABLE IF NOT EXISTS prediction_actual_variances (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        scenario_id UUID,
+        outcome_id UUID NOT NULL,
+        metric_key VARCHAR(80) NOT NULL,
+        predicted_value NUMERIC NOT NULL,
+        actual_value NUMERIC NOT NULL,
+        variance_value NUMERIC NOT NULL,
+        variance_pct NUMERIC NOT NULL,
+        interpretation TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table prediction_actual_variances');
+
+      // -- Capital intelligence --
+      await exec(`CREATE TABLE IF NOT EXISTS capital_intelligence_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID,
+        offering_id UUID,
+        event_type VARCHAR(80) NOT NULL,
+        capital_source_type VARCHAR(60),
+        raise_velocity NUMERIC,
+        minimum_capital_met BOOLEAN,
+        investor_demand_score NUMERIC,
+        lender_path_chosen VARCHAR(120),
+        refi_outcome VARCHAR(120),
+        payload JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table capital_intelligence_events');
+
+      // -- Contract status history --
+      await exec(`CREATE TABLE IF NOT EXISTS contract_status_history (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        contract_entity_id UUID NOT NULL,
+        status contract_status NOT NULL,
+        substatus VARCHAR(120),
+        status_reason_code VARCHAR(100),
+        changed_by_actor_id VARCHAR(255) NOT NULL,
+        changed_by_actor_type contract_actor_type NOT NULL,
+        changed_by_display_name VARCHAR(255),
+        changed_by_wallet VARCHAR(255),
+        request_id VARCHAR(255) NOT NULL,
+        idempotency_key VARCHAR(255) NOT NULL,
+        correlation_id VARCHAR(255) NOT NULL,
+        details JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table contract_status_history');
+
+      // -- Market cost signals (requires strategy_type enum) --
+      await exec(`CREATE TABLE IF NOT EXISTS market_cost_signals (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        zip VARCHAR(20),
+        market VARCHAR(120),
+        strategy_type strategy_type,
+        source_layer VARCHAR(50) NOT NULL,
+        capex_per_unit NUMERIC,
+        confidence NUMERIC NOT NULL DEFAULT 0,
+        sample_size INTEGER NOT NULL DEFAULT 0,
+        payload JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table market_cost_signals');
+
+      // -- Operator strategy intelligence --
+      await exec(`CREATE TABLE IF NOT EXISTS operator_strategy_profiles (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        operator_wallet VARCHAR(42) NOT NULL,
+        strategy_type strategy_type NOT NULL,
+        asset_class VARCHAR(80),
+        vintage_band VARCHAR(40),
+        market VARCHAR(120),
+        unit_mix JSONB,
+        observations INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table operator_strategy_profiles');
+
+      await exec(`CREATE TABLE IF NOT EXISTS operator_strategy_signals (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        profile_id UUID NOT NULL,
+        deal_id UUID,
+        outcome_id UUID,
+        capex_per_unit NUMERIC,
+        rent_lift NUMERIC,
+        noi_lift NUMERIC,
+        stabilization_days INTEGER,
+        confidence NUMERIC,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table operator_strategy_signals');
+
+      // -- Network intelligence --
+      await exec(`CREATE TABLE IF NOT EXISTS network_intelligence_snapshots (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        snapshot_date DATE NOT NULL,
+        scope VARCHAR(80) NOT NULL DEFAULT 'global',
+        seeded_baseline_weight NUMERIC DEFAULT 0.2,
+        regional_benchmark_weight NUMERIC DEFAULT 0.2,
+        verified_local_weight NUMERIC DEFAULT 0.2,
+        operator_outcome_weight NUMERIC DEFAULT 0.2,
+        capital_outcome_weight NUMERIC DEFAULT 0.2,
+        aggregated_signals JSONB NOT NULL,
+        confidence_score NUMERIC NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table network_intelligence_snapshots');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
