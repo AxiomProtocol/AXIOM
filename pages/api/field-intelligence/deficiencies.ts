@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
            affects_tenancy,
            meta,
            created_at
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW())
+         ) VALUES ($1,$2::system_type,$3::deficiency_severity,$4,$5,$6,$7,$8,$9,$10,NOW())
          RETURNING *`,
         [
           unitWalkId,

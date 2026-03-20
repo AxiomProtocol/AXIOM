@@ -95,7 +95,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             model_version, data_snapshot_ref, rationale_trace_json,
             status, expires_at
           ) VALUES (
-            gen_random_uuid(), NOW(), $1, $2, $3, $4,
+            gen_random_uuid(), NOW(), $1::mirdt_asset_type, $2, $3, $4,
             $5, $6, $7,
             $8, $9, $10,
             $11, $12, $13,

@@ -166,7 +166,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             `INSERT INTO syn_distributions
                (offering_id, cap_table_entry_id, investor_profile_id, distribution_type,
                 gross_amount, net_amount, payment_method, currency, recipient_wallet, period_start, period_end, meta)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb) RETURNING id`,
+             VALUES ($1, $2, $3, $4::syn_distribution_type, $5, $6, $7, $8, $9, $10, $11, $12::jsonb) RETURNING id`,
             [
               id,
               entry.id,
@@ -258,7 +258,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
 
-      const updates: string[] = ['status = $1', 'updated_at = now()'];
+      const updates: string[] = ['status = $1::syn_distribution_status', 'updated_at = now()'];
       const params: any[] = [status];
 
       params.push(distributionId);

@@ -88,7 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const result = await pool.query(
         `UPDATE mirdt_paper_trades
-         SET exit_price = $1, pnl = $2, pnl_pct = $3, outcome = $4, closed_at = NOW(), status = 'CLOSED', notes = $5
+         SET exit_price = $1, pnl = $2, pnl_pct = $3, outcome = $4::mirdt_trade_outcome, closed_at = NOW(), status = 'CLOSED', notes = $5
          WHERE id = $6 AND closed_at IS NULL
          RETURNING *`,
         [exit, rawPnl, rawPnlPct, outcome, notes !== undefined ? notes : trade.notes, id]

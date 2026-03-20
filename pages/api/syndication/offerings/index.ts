@@ -61,7 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         `INSERT INTO syn_offerings (
           organization_id, name, slug, status, offering_type, entity_type,
           description, target_raise, minimum_investment, hold_period_years
-        ) VALUES ($1, $2, $3, 'draft', $4, $5, $6, $7, $8, $9)
+        ) VALUES ($1, $2, $3, 'draft', $4::syn_offering_type, $5, $6, $7, $8, $9)
         RETURNING id`,
         [
           organizationId || null, name, slug, offeringType,

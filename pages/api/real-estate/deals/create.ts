@@ -38,7 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await pool.query(
       `INSERT INTO re_deals (id, property_id, strategy, status, deal_name, notes, created_at, updated_at)
-       VALUES ($1, $2, $3, 'draft', $4, $5, now(), now())`,
+       VALUES ($1, $2, $3::deal_strategy, 'draft', $4, $5, now(), now())`,
       [dealId, propertyId, strategy, dealName, notes || null]
     );
     const dealFetch = await pool.query(

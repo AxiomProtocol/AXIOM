@@ -47,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       await pool.query(
         `INSERT INTO sentinel_decisions (scope, action_type, subject, max_notional, expires_at, decision, reason_code, plain_language, log_hash, prev_hash, nonce, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())`,
+         VALUES ($1, $2::sentinel_action_type, $3, $4, $5, $6::sentinel_decision_outcome, $7, $8, $9, $10, $11, NOW())`,
         [scope, actionType, subject, result.maxNotional, expiresAt, result.decision, result.reasonCode, result.plainLanguage, logHash, prevHash, nextNonce]
       );
     } catch (dbErr: any) {

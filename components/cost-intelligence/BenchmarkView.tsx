@@ -107,7 +107,7 @@ export default function BenchmarkView({
             <div>
               <p className="font-dl-mono text-xs text-dl-muted uppercase mb-1">Bid vs. Estimate</p>
               <p className={`font-dl-mono text-sm font-bold ${bidVariance && bidVariance > 0.1 ? 'text-red-600' : bidVariance && bidVariance < -0.05 ? 'text-dl-forest' : 'text-dl-navy'}`}>
-                {fmtPct(bidVariance)}
+                {fmtPct(bidVariance ?? undefined)}
               </p>
               <p className="font-dl-mono text-xs text-dl-muted">{fmt(contractorBidNum)} contractor bid</p>
             </div>

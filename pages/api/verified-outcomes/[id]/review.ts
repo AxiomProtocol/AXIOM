@@ -52,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await pool.query(
       `UPDATE verified_project_outcomes SET
-        status = $1,
+        status = $1::verification_status,
         reviewed_by = $2,
         reviewed_at = NOW(),
         verification_timestamp = CASE WHEN $1 = 'approved' THEN NOW() ELSE verification_timestamp END,

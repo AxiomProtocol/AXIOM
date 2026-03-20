@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const result = await pool.query(
         `INSERT INTO syn_pipeline (offering_id, investor_profile_id, stage, soft_circle_amount, notes, assigned_rep)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+         VALUES ($1, $2, $3::syn_pipeline_stage, $4, $5, $6) RETURNING id`,
         [id, investorProfileId, stage || 'lead', softCircleAmount || null, notes || null, assignedRep || null]
       );
 
@@ -62,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       await pool.query(
         `UPDATE syn_pipeline SET
-          stage = COALESCE($1, stage),
+          stage = COALESCE($1::syn_pipeline_stage, stage),
           soft_circle_amount = COALESCE($2, soft_circle_amount),
           committed_amount = COALESCE($3, committed_amount),
           notes = COALESCE($4, notes),

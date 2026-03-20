@@ -132,7 +132,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const result = await pool.query(
         `UPDATE field_inspection_sessions
-         SET status = $2,
+         SET status = $2::inspection_session_status,
              updated_at = NOW()
          WHERE id = $1
          RETURNING *`,

@@ -78,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ success: false, error: 'Invalid status' });
       }
 
-      const updates: string[] = ['status = $1', 'updated_at = now()'];
+      const updates: string[] = ['status = $1::syn_subscription_status', 'updated_at = now()'];
       const params: any[] = [status];
 
       if (status === 'approved') {

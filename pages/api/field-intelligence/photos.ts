@@ -86,12 +86,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
            gps_coordinates,
            meta,
            created_at
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW())
+         ) VALUES ($1,$2,$3::system_type,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW())
          RETURNING *`,
         [
           unitWalkId,
           photoType,
-          system,
+          system || null,
           isBefore,
           generatedName,
           fileUrl,

@@ -91,8 +91,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           qualified, qualified_at
         ) VALUES (
           gen_random_uuid(), NOW(), $1, $2, $3, $4,
-          $5, $6, $7, $8, $9,
-          $10, $11, $12, $13, $14,
+          $5::sentinel_signal_direction, $6, $7, $8, $9,
+          $10, $11, $12::sentinel_regime, $13, $14,
           $15, $16, $17, $18,
           false, NULL
         )`,
@@ -125,7 +125,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           id, created_at, regime, confidence, sma20_slope, sma50_slope,
           volatility_20d, volatility_ratio, breadth_score, snapshot_json
         ) VALUES (
-          gen_random_uuid(), NOW(), $1, $2, $3, $4,
+          gen_random_uuid(), NOW(), $1::sentinel_regime, $2, $3, $4,
           $5, $6, $7, $8
         )`,
         [
