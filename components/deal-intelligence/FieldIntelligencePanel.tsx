@@ -121,10 +121,12 @@ type ScopeResult = {
     recommended_strategy: string;
     confidence: number;
     notes: string;
+    region?: { code: string; name: string; factor: number };
   };
   arvEstimate: number;
   unitsInspected: number;
   totalUnits: number;
+  region?: { code: string; name: string; factor: number };
 };
 
 type Summary = {
@@ -310,10 +312,20 @@ export default function FieldIntelligencePanel({ dealId, propertyId, arvEstimate
     setGeneratingScope(true);
     setError('');
     try {
+      // Compute average sqft from walked units that recorded sqft
+      const sqftValues = walkRows.map((r) => Number(r.sqft)).filter((v) => v > 0);
+      const avgSqft = sqftValues.length > 0
+        ? Math.round(sqftValues.reduce((a, b) => a + b, 0) / sqftValues.length)
+        : null;
+
       const res = await fetch(`/api/field-intelligence/${activeSession.id}/generate-scope`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ arvEstimate: Number(scopeArv) || arvEstimate, propertyType: activeSession.property_type }),
+        body: JSON.stringify({
+          arvEstimate: Number(scopeArv) || arvEstimate,
+          propertyType: activeSession.property_type,
+          ...(avgSqft ? { sqft: avgSqft } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Scope generation failed'); return; }
@@ -855,6 +867,21 @@ export default function FieldIntelligencePanel({ dealId, propertyId, arvEstimate
             {scopeResult.unitsInspected} of {scopeResult.totalUnits} units inspected
             — ARV ${(scopeResult.arvEstimate || 0).toLocaleString()}
           </p>
+          {scopeResult.region && (
+            <div className="mt-2 flex items-center gap-3">
+              <span className="font-dl-mono text-xs border border-dl-forest px-2 py-0.5 text-dl-forest uppercase tracking-wide">
+                {scopeResult.region.name}
+              </span>
+              <span className="font-dl-mono text-xs text-dl-muted">
+                {scopeResult.region.factor < 1
+                  ? `${Math.round((1 - scopeResult.region.factor) * 100)}% below national`
+                  : scopeResult.region.factor > 1
+                  ? `${Math.round((scopeResult.region.factor - 1) * 100)}% above national`
+                  : 'National average pricing'
+                }
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2 mb-5">
@@ -896,7 +923,7 @@ export default function FieldIntelligencePanel({ dealId, propertyId, arvEstimate
                       <div className="space-y-1">
                         {data.line_items.map((item, i) => (
                           <div key={i} className="flex justify-between font-dl-mono text-xs">
-                            <span className="text-dl-text">{item.system} — {item.description}</span>
+                            <span className="text-dl-text">{item.description}</span>
                             <span className="text-dl-navy font-medium ml-4 shrink-0">${(item.cost || 0).toLocaleString()}</span>
                           </div>
                         ))}
