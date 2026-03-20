@@ -1,6 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../server/db';
 
+const VALID_CONDITIONS = new Set(['good', 'light_rehab', 'medium_rehab', 'full_replace', 'not_inspected']);
+
+function condVal(v: unknown): string {
+  if (typeof v === 'string' && VALID_CONDITIONS.has(v)) return v;
+  return 'not_inspected';
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const rawSessionId = req.query.sessionId;
   const sessionId = Array.isArray(rawSessionId) ? rawSessionId[0] : rawSessionId;
@@ -30,6 +37,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
            electrical,
            doors,
            exterior,
+           roof,
+           foundation,
+           garage,
+           landscaping,
+           laundry_room,
            common_area,
            site_parking,
            other,
@@ -39,49 +51,55 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
            created_at,
            updated_at
          ) VALUES (
-           $1,$2,$3,$4,
-           COALESCE($5, 'not_inspected'),
-           COALESCE($6, 'not_inspected'),
-           COALESCE($7, 'not_inspected'),
-           COALESCE($8, 'not_inspected'),
-           COALESCE($9, 'not_inspected'),
-           COALESCE($10, 'not_inspected'),
-           COALESCE($11, 'not_inspected'),
-           COALESCE($12, 'not_inspected'),
-           COALESCE($13, 'not_inspected'),
-           COALESCE($14, 'not_inspected'),
-           COALESCE($15, 'not_inspected'),
-           COALESCE($16, 'not_inspected'),
-           COALESCE($17, 'not_inspected'),
-           COALESCE($18, 'not_inspected'),
-           $19,
-           TRUE,
-           $20,
-           NOW(),
-           NOW()
+           $1, $2, $3, $4,
+           $5::unit_condition,
+           $6::unit_condition,
+           $7::unit_condition,
+           $8::unit_condition,
+           $9::unit_condition,
+           $10::unit_condition,
+           $11::unit_condition,
+           $12::unit_condition,
+           $13::unit_condition,
+           $14::unit_condition,
+           $15::unit_condition,
+           $16::unit_condition,
+           $17::unit_condition,
+           $18::unit_condition,
+           $19::unit_condition,
+           $20::unit_condition,
+           $21::unit_condition,
+           $22::unit_condition,
+           $23::unit_condition,
+           $24, TRUE, $25, NOW(), NOW()
          )
          RETURNING *`,
         [
-          sessionId,
-          body.unitNumber,
-          body.unitType || null,
-          body.occupancyStatus || null,
-          body.kitchen,
-          body.bathroom,
-          body.flooring,
-          body.appliances,
-          body.hvac,
-          body.windows,
-          body.paint,
-          body.plumbing,
-          body.electrical,
-          body.doors,
-          body.exterior,
-          body.commonArea,
-          body.siteParking,
-          body.other,
-          body.generalNotes || null,
-          body.inspectionTime || null,
+          sessionId,                                              // $1
+          body.unitNumber,                                        // $2
+          body.unitType || null,                                  // $3
+          body.occupancyStatus || null,                          // $4
+          condVal(body.kitchen),                                  // $5
+          condVal(body.bathroom),                                 // $6
+          condVal(body.flooring),                                 // $7
+          condVal(body.appliances),                               // $8
+          condVal(body.hvac),                                     // $9
+          condVal(body.windows),                                  // $10
+          condVal(body.paint),                                    // $11
+          condVal(body.plumbing),                                 // $12
+          condVal(body.electrical),                               // $13
+          condVal(body.doors),                                    // $14
+          condVal(body.exterior),                                 // $15
+          condVal(body.roof),                                     // $16
+          condVal(body.foundation),                               // $17
+          condVal(body.garage),                                   // $18
+          condVal(body.landscaping),                              // $19
+          condVal(body.laundry_room ?? body.laundryRoom),         // $20
+          condVal(body.common_area ?? body.commonArea),           // $21
+          condVal(body.site_parking ?? body.siteParking),         // $22
+          condVal(body.other),                                    // $23
+          body.generalNotes || null,                             // $24
+          body.inspectionTime || null,                           // $25
         ],
       );
 
@@ -114,6 +132,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error: any) {
+    console.error('[walks/[sessionId]] error:', error?.message, error?.stack);
     return res.status(500).json({
       error: 'Failed to process unit walk request',
       details: error?.message || String(error),
