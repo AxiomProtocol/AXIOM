@@ -3,10 +3,17 @@ import { pool } from '../../../../server/db';
 import { generateText } from '../../../../lib/server/gemini';
 import { postStructuredMatrixEvent, getRoomByEntity } from '../../../../server/services/matrix/workflow';
 
-const SYSTEMS = [
+const SFR_SYSTEMS = [
   'kitchen', 'bathroom', 'flooring', 'appliances', 'hvac',
   'windows', 'paint', 'plumbing', 'electrical', 'doors',
-  'exterior', 'common_area', 'site_parking', 'other',
+  'exterior', 'roof', 'foundation', 'garage', 'landscaping', 'other',
+];
+
+const MF_SYSTEMS = [
+  'kitchen', 'bathroom', 'flooring', 'appliances', 'hvac',
+  'windows', 'paint', 'plumbing', 'electrical', 'doors',
+  'exterior', 'roof', 'common_area', 'laundry_room', 'site_parking',
+  'foundation', 'landscaping', 'other',
 ];
 
 const CONDITION_WEIGHT: Record<string, number> = {
@@ -17,16 +24,16 @@ const CONDITION_WEIGHT: Record<string, number> = {
   not_inspected: 0,
 };
 
-function buildConditionSummary(rows: any[]) {
+function buildConditionSummary(rows: any[], systems: string[]) {
   const dist: Record<string, Record<string, number>> = {};
-  for (const sys of SYSTEMS) {
+  for (const sys of systems) {
     dist[sys] = { good: 0, light_rehab: 0, medium_rehab: 0, full_replace: 0, not_inspected: 0 };
   }
   let totalSeverity = 0;
   let totalScoredSystems = 0;
 
   for (const row of rows) {
-    for (const sys of SYSTEMS) {
+    for (const sys of systems) {
       const cond = row[sys] || 'not_inspected';
       dist[sys][cond] = (dist[sys][cond] || 0) + 1;
       if (cond !== 'not_inspected') {
@@ -38,7 +45,7 @@ function buildConditionSummary(rows: any[]) {
 
   const avgSeverity = totalScoredSystems > 0 ? totalSeverity / totalScoredSystems : 0;
   const unitsCount = rows.length;
-  const systemLines = SYSTEMS.map((sys) => {
+  const systemLines = systems.map((sys) => {
     const d = dist[sys];
     const inspected = d.good + d.light_rehab + d.medium_rehab + d.full_replace;
     const upgradePct = inspected > 0 ? Math.round(((d.light_rehab + d.medium_rehab + d.full_replace) / inspected) * 100) : 0;
@@ -82,55 +89,84 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       [session.deal_id],
     );
     const assumptions = assumptionsResult.rows[0] || {};
-    const { avgSeverity, unitsCount, systemLines } = buildConditionSummary(rows);
+
+    const propertyType = req.body?.propertyType || session.property_type || 'multifamily';
+    const activeSystems = propertyType === 'sfr' ? SFR_SYSTEMS : MF_SYSTEMS;
+
+    const { avgSeverity, unitsCount, systemLines } = buildConditionSummary(rows, activeSystems);
     const arvEstimate = req.body?.arvEstimate || Number(assumptions.arv_estimate) || 0;
-    const sqft = Number(req.body?.sqft) || 1200;
+    const sqft = Number(req.body?.sqft) || (propertyType === 'sfr' ? 1400 : 1200);
     const dealName = session.deal_name || 'Subject Property';
     const samplingPct = session.total_units > 0 ? Math.round((rows.length / session.total_units) * 100) : 100;
 
-    const prompt = `You are an expert real estate rehab estimator. Analyze the following property inspection data and generate a structured rehab scope estimate.
+    const costResult = await pool.query(
+      `SELECT system, condition_level, cost_unit, cost_low, cost_mid, cost_high
+       FROM rehab_cost_benchmarks
+       WHERE property_type = $1 OR property_type = 'both'
+       ORDER BY system, condition_level`,
+      [propertyType],
+    );
+    const craftsman: Record<string, Record<string, any>> = {};
+    for (const cr of costResult.rows) {
+      if (!craftsman[cr.system]) craftsman[cr.system] = {};
+      craftsman[cr.system][cr.condition_level] = {
+        unit: cr.cost_unit,
+        low: parseFloat(cr.cost_low),
+        mid: parseFloat(cr.cost_mid),
+        high: parseFloat(cr.cost_high),
+      };
+    }
+    const craftsmanLines = Object.entries(craftsman).map(([sys, conds]) => {
+      const parts = Object.entries(conds).map(([c, v]) =>
+        `    ${c}: $${v.low.toLocaleString()}–$${v.high.toLocaleString()} ${v.unit}`
+      ).join('\n');
+      return `  ${sys}:\n${parts}`;
+    });
+
+    const prompt = `You are an expert real estate rehab estimator. Analyze this property inspection data and generate a structured rehab scope using the provided Craftsman reference costs.
 
 PROPERTY: ${dealName}
+TYPE: ${propertyType === 'sfr' ? 'Single Family Residence (SFR)' : 'Multi-Family'}
 TOTAL UNITS: ${session.total_units} | UNITS INSPECTED: ${unitsCount} (${samplingPct}% sample)
-ESTIMATED SQFT: ${sqft} (use this for per-sqft calculations)
+ESTIMATED SQFT PER UNIT: ${sqft}
 ARV ESTIMATE: $${arvEstimate.toLocaleString()}
-AVERAGE CONDITION SEVERITY SCORE: ${avgSeverity.toFixed(2)} / 3.0 (0=good, 1=light, 2=medium, 3=full replace)
+AVERAGE CONDITION SEVERITY: ${avgSeverity.toFixed(2)} / 3.0 (0=good, 3=full replace)
 
 SYSTEM CONDITIONS (% of inspected units needing work):
 ${systemLines.join('\n')}
 
-NAHB 2024 BENCHMARKS:
-- Cosmetic / Light Turn: $10-15/sqft
-- Standard / Classic Value-Add: $20-30/sqft
-- Full Gut / Heavy Reposition: $40-60+/sqft
+CRAFTSMAN NATIONAL CONSTRUCTION ESTIMATOR — REFERENCE COSTS (use these as cost basis):
+${craftsmanLines.join('\n')}
 
 Generate a rehab scope for THREE exit strategies (flip, brrrr, hold) × THREE scope tiers (cosmetic, standard, full_gut).
+- Use the Craftsman mid-range costs as your base cost for each line item
+- Scale per_unit costs by total units, per_sqft by sqft × units
+- Only include systems that actually need work based on inspection data
+- BRRRR/hold: prioritize mechanical systems (HVAC, plumbing, electrical), rent-impacting items
+- Flip: prioritize high-ROI cosmetic systems (kitchen, bathroom, flooring, paint)
+- Do not exceed 10 line items per tier
 
-Return ONLY valid JSON matching this exact structure:
+Return ONLY valid JSON:
 {
   "strategies": {
     "flip": {
       "cosmetic": {
         "total": <number>,
         "sqft_rate": <number>,
-        "line_items": [
-          {"system": "<string>", "description": "<string>", "cost": <number>}
-        ],
+        "line_items": [{"system": "<string>", "description": "<string>", "cost": <number>}],
         "rationale": "<1 sentence>"
       },
       "standard": { same structure },
       "full_gut": { same structure }
     },
-    "brrrr": { same structure as flip },
-    "hold": { same structure as flip }
+    "brrrr": { same as flip },
+    "hold": { same as flip }
   },
   "recommended_tier": "<cosmetic|standard|full_gut>",
   "recommended_strategy": "<flip|brrrr|hold>",
   "confidence": <number 0-1>,
-  "notes": "<2-3 sentences of key observations>"
-}
-
-Base scope selection on actual system conditions. BRRRR and hold strategies typically prioritize systems affecting rent and occupancy. Flip prioritizes cosmetic and resale impact. Scale costs to total units and sqft provided. Do not exceed 12 line items per tier.`;
+  "notes": "<2-3 sentences citing specific system conditions>"
+}`;
 
     const rawText = await generateText(prompt, { model: 'gemini-3-flash', temperature: 0.2 });
 

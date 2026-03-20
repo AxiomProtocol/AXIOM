@@ -67,7 +67,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'POST') {
-      const { dealId, propertyId, sessionName, totalUnits, inspectedBy } = req.body || {};
+      const { dealId, propertyId, sessionName, totalUnits, inspectedBy, propertyType } = req.body || {};
       if (!dealId || !sessionName || !totalUnits) {
         return res.status(400).json({ error: 'dealId, sessionName, and totalUnits are required' });
       }
@@ -84,17 +84,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: 'propertyId is required and could not be resolved from the deal' });
       }
 
+      const resolvedPropertyType = propertyType === 'sfr' ? 'sfr' : 'multifamily';
+
       const insertResult = await pool.query(
         `INSERT INTO field_inspection_sessions (
            deal_id, property_id, session_name, status,
            total_units, units_walked, inspected_by,
-           created_at, updated_at
+           property_type, created_at, updated_at
          ) VALUES (
            $1, $2, $3, 'planned',
            $4, 0, $5,
-           NOW(), NOW()
+           $6, NOW(), NOW()
          ) RETURNING *`,
-        [dealId, resolvedPropertyId, sessionName, Number(totalUnits), inspectedBy || null],
+        [dealId, resolvedPropertyId, sessionName, Number(totalUnits), inspectedBy || null, resolvedPropertyType],
       );
 
       const newSession = insertResult.rows[0];

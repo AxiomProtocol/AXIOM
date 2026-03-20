@@ -58,6 +58,8 @@ Key features include:
 - **Banking Infrastructure (Unit + BitGo)**: Unified banking layer at `/banking`. Unit provides FDIC-insured deposit accounts, ACH payments, debit cards, and KYC. BitGo provides institutional crypto custody wallets (AXM, AXUSD, ETH on Arbitrum). A Bridge Service connects fiat↔crypto with live CoinGecko quotes and full status tracking.
 - **Multi-Exit Strategy Engine**: Provides 8 underwriting strategies with comparison and ranking.
 - **Due Diligence Checklist System**: Structured DD workflow.
+- **Craftsman Cost Database**: `rehab_cost_benchmarks` table seeded with 57 reference costs from Craftsman National Construction Estimator (NCE). Covers 18 systems × 3 condition levels (light/medium/full_replace) × property type (sfr/multifamily/both). Cost units: per_unit, per_sqft, per_door, per_window, flat. API at `/api/rehab-costs?property_type=sfr|multifamily`. Scope generation loads DB costs and embeds them as grounding context in the AI prompt.
+- **Property-type discrimination in inspection**: `field_inspection_sessions.property_type` column (sfr/multifamily). SFR form: 16 systems (adds roof, foundation, garage, landscaping; removes common_area, laundry_room). MF form: 18 systems. Session creation UI includes property type toggle. Walk form shows Craftsman mid-range cost per system dynamically as conditions are selected. Craftsman Cost Reference table is toggleable in the walk view.
 - **Capital Readiness Card**: Computes capital analysis for funding sources.
 - **AI Acquisition Memo Builder**: Gemini-powered institutional acquisition memo generator.
 - **Syndication Module**: Full syndication operating system.
