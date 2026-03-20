@@ -5373,6 +5373,634 @@ export async function register() {
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )`, 'table network_intelligence_snapshots');
 
+      // ─── AXIOM SECONDARY NETWORK V1 ───────────────────────────────────────────
+
+      // Enums
+      await exec(`DO $$ BEGIN CREATE TYPE sec_user_status AS ENUM ('active','suspended','pending_verification','deactivated'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_user_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_auth_provider AS ENUM ('siwe','email','auth0'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_auth_provider');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_role_code AS ENUM ('investor','issuer','admin','compliance_officer','broker'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_role_code');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_entity_type AS ENUM ('individual','llc','lp','corporation','trust','family_office','fund'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_entity_type');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_investor_category AS ENUM ('accredited_individual','accredited_entity','qualified_purchaser','qualified_institutional_buyer','non_accredited','unverified'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_investor_category');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_investor_status AS ENUM ('pending','active','restricted','suspended','offboarded'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_investor_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_wallet_verification_status AS ENUM ('unverified','pending','verified','revoked'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_wallet_verification_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_kyc_status AS ENUM ('not_started','pending','approved','rejected','expired','manual_review'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_kyc_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_kyb_status AS ENUM ('not_required','not_started','pending','approved','rejected','manual_review'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_kyb_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_aml_status AS ENUM ('clear','flagged','blocked','pending_review'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_aml_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_sanctions_status AS ENUM ('clear','flagged','blocked'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_sanctions_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_accreditation_status AS ENUM ('not_verified','pending','verified','expired','rejected'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_accreditation_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_compliance_decision AS ENUM ('eligible','conditionally_eligible','manual_review_required','blocked'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_compliance_decision');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_risk_tier AS ENUM ('low','medium','high','very_high'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_risk_tier');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_asset_class AS ENUM ('fund_interest','private_credit','mortgage_note','dscr_loan','fix_flip_debt','rent_stream','land_interest','treasury_yield'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_asset_class');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_offering_status AS ENUM ('draft','structuring','raising','funded','closed','active','winding_down','dissolved'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_offering_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_series_status AS ENUM ('draft','active','paused','closed','redeemed'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_series_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_nav_method AS ENUM ('cost_basis','appraisal','mark_to_model','mark_to_market','par'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_nav_method');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_distribution_frequency AS ENUM ('none','monthly','quarterly','semi_annual','annual','event_driven'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_distribution_frequency');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_transferability_status AS ENUM ('not_transferable','issuer_approval_required','compliance_only','open_within_platform'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_transferability_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_settlement_asset_type AS ENUM ('axusd','usdc','usdt','manual_wire'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_settlement_asset_type');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_token_standard AS ENUM ('erc20','erc1155','erc3643','erc4626','off_chain'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_token_standard');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_position_status AS ENUM ('active','partially_transferred','fully_transferred','redeemed','frozen'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_position_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_lot_source_type AS ENUM ('primary_subscription','secondary_purchase','distribution_reinvestment','transfer_in'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_lot_source_type');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_registry_status AS ENUM ('current','superseded','pending_update'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_registry_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_reconciliation_status AS ENUM ('reconciled','discrepancy','pending'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_reconciliation_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_listing_type AS ENUM ('direct_transfer','bulletin_board','issuer_assisted','broker_assisted'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_listing_type');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_listing_status AS ENUM ('draft','active','under_review','paused','matched','cancelled','expired'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_listing_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_price_type AS ENUM ('fixed','negotiable','minimum_ask'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_price_type');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_visibility_scope AS ENUM ('all_eligible','invited_only','issuer_curated','admin_curated'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_visibility_scope');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_buyer_interest_status AS ENUM ('submitted','acknowledged','converted_to_bid','withdrawn','declined'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_buyer_interest_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_bid_status AS ENUM ('submitted','counter_offered','accepted','rejected','withdrawn','expired'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_bid_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_matched_trade_status AS ENUM ('matched','awaiting_approvals','approved','settlement_pending','settling','settled','failed','cancelled'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_matched_trade_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_transfer_request_type AS ENUM ('direct','listing','issuer_assisted','broker_assisted'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_transfer_request_type');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_transfer_request_status AS ENUM ('draft','submitted','checks_running','blocked','awaiting_buyer','awaiting_pricing','awaiting_approvals','approved','settlement_pending','settling','settled','rejected','cancelled','failed'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_transfer_request_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_transfer_check_type AS ENUM ('available_units','buyer_eligibility','wallet_verification','sanctions_aml','hold_period','registry_reconciliation','concentration_limit','nav_discount_threshold','series_transferability','jurisdiction'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_transfer_check_type');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_transfer_check_result AS ENUM ('pass','fail','warning','review_required'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_transfer_check_result');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_approval_type AS ENUM ('issuer_approval','admin_approval','compliance_approval'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_approval_type');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_approval_status AS ENUM ('pending','approved','rejected','overridden','expired'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_approval_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_settlement_status AS ENUM ('instruction_created','awaiting_funding','funded','delivery_in_progress','ownership_updated','funds_released','settled','failed','refunded','cancelled'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_settlement_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_payment_confirmation_status AS ENUM ('pending','confirmed','failed','refunded'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_payment_confirmation_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_fee_type AS ENUM ('platform_fee','transfer_fee','issuer_fee','broker_fee','settlement_fee'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_fee_type');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_nav_status AS ENUM ('current','stale','provisional','final'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_nav_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_trade_mark_status AS ENUM ('confirmed','pending','voided'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_trade_mark_status');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_analytics_event_type AS ENUM ('listing_created','listing_activated','interest_submitted','bid_submitted','bid_accepted','trade_matched','approval_granted','approval_rejected','settlement_funded','settlement_completed','settlement_failed','transfer_blocked','capital_redeployed','position_viewed','series_viewed'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_analytics_event_type');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_actor_type AS ENUM ('investor','issuer','admin','compliance_officer','system','broker'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_actor_type');
+      await exec(`DO $$ BEGIN CREATE TYPE sec_object_type AS ENUM ('wallet','compliance_profile','position','listing','bid','matched_trade','transfer_request','approval_request','settlement_instruction','beneficial_ownership_record','series','offering'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum sec_object_type');
+
+      // Identity tables
+      await exec(`CREATE TABLE IF NOT EXISTS sec_investors (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id INTEGER,
+        legal_name VARCHAR(255),
+        email VARCHAR(255) NOT NULL,
+        entity_type sec_entity_type NOT NULL DEFAULT 'individual',
+        investor_category sec_investor_category NOT NULL DEFAULT 'unverified',
+        status sec_investor_status NOT NULL DEFAULT 'pending',
+        primary_wallet_id UUID,
+        syn_investor_profile_id UUID,
+        phone VARCHAR(30),
+        jurisdiction VARCHAR(10),
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_investors');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_wallets (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        investor_id UUID NOT NULL,
+        wallet_address VARCHAR(42) NOT NULL,
+        chain_id INTEGER NOT NULL DEFAULT 42161,
+        verification_status sec_wallet_verification_status NOT NULL DEFAULT 'unverified',
+        signed_message TEXT,
+        signed_at TIMESTAMP,
+        is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+        revoked_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        UNIQUE (wallet_address, chain_id)
+      )`, 'table sec_wallets');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_roles (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        investor_id UUID NOT NULL,
+        role_code sec_role_code NOT NULL,
+        granted_by UUID,
+        granted_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        revoked_at TIMESTAMP
+      )`, 'table sec_roles');
+
+      // Compliance tables
+      await exec(`CREATE TABLE IF NOT EXISTS sec_compliance_profiles (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        investor_id UUID NOT NULL UNIQUE,
+        kyc_status sec_kyc_status NOT NULL DEFAULT 'not_started',
+        kyb_status sec_kyb_status NOT NULL DEFAULT 'not_required',
+        aml_status sec_aml_status NOT NULL DEFAULT 'pending_review',
+        sanctions_status sec_sanctions_status NOT NULL DEFAULT 'clear',
+        accreditation_status sec_accreditation_status NOT NULL DEFAULT 'not_verified',
+        risk_tier sec_risk_tier NOT NULL DEFAULT 'medium',
+        last_reviewed_at TIMESTAMP,
+        reviewed_by UUID,
+        notes TEXT,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_compliance_profiles');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_accreditation_records (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        investor_id UUID NOT NULL,
+        status sec_accreditation_status NOT NULL,
+        method VARCHAR(100),
+        verified_by VARCHAR(255),
+        verified_at TIMESTAMP,
+        expires_at TIMESTAMP,
+        document_refs JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_accreditation_records');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_sanctions_flags (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        investor_id UUID NOT NULL,
+        flag_source VARCHAR(100),
+        flag_reason TEXT,
+        resolved_at TIMESTAMP,
+        resolved_by UUID,
+        resolution_note TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_sanctions_flags');
+
+      // Series tables
+      await exec(`CREATE TABLE IF NOT EXISTS sec_series (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        syn_offering_id VARCHAR(255),
+        name VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) NOT NULL UNIQUE,
+        asset_class sec_asset_class NOT NULL,
+        status sec_series_status NOT NULL DEFAULT 'draft',
+        description TEXT,
+        legal_wrapper VARCHAR(255),
+        token_contract_address VARCHAR(42),
+        token_standard sec_token_standard NOT NULL DEFAULT 'off_chain',
+        chain_id INTEGER NOT NULL DEFAULT 42161,
+        nav_method sec_nav_method NOT NULL DEFAULT 'cost_basis',
+        distribution_frequency sec_distribution_frequency NOT NULL DEFAULT 'quarterly',
+        transferability_status sec_transferability_status NOT NULL DEFAULT 'issuer_approval_required',
+        settlement_asset sec_settlement_asset_type NOT NULL DEFAULT 'axusd',
+        minimum_investment_units NUMERIC(18,6) NOT NULL DEFAULT 1,
+        minimum_transfer_units NUMERIC(18,6) NOT NULL DEFAULT 1,
+        total_units_issued NUMERIC(18,6) NOT NULL DEFAULT 0,
+        unit_price NUMERIC(18,6),
+        current_nav NUMERIC(18,6),
+        hold_period_days INTEGER NOT NULL DEFAULT 0,
+        allowed_investor_categories JSONB,
+        restricted_jurisdictions JSONB,
+        max_holder_percent NUMERIC(5,4),
+        max_transfer_percent_per_tx NUMERIC(5,4),
+        nav_discount_review_threshold NUMERIC(5,4) NOT NULL DEFAULT 0.10,
+        requires_issuer_approval BOOLEAN NOT NULL DEFAULT TRUE,
+        requires_compliance_approval BOOLEAN NOT NULL DEFAULT FALSE,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_series');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_series_rules (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        series_id UUID NOT NULL,
+        rule_type VARCHAR(100) NOT NULL,
+        rule_value JSONB NOT NULL,
+        description TEXT,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_series_rules');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_valuation_policies (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        series_id UUID NOT NULL,
+        nav_method sec_nav_method NOT NULL,
+        update_frequency VARCHAR(50),
+        external_appraisal_required BOOLEAN NOT NULL DEFAULT FALSE,
+        stale_after_days INTEGER NOT NULL DEFAULT 90,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_valuation_policies');
+
+      // Position tables
+      await exec(`CREATE TABLE IF NOT EXISTS sec_positions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        investor_id UUID NOT NULL,
+        series_id UUID NOT NULL,
+        status sec_position_status NOT NULL DEFAULT 'active',
+        total_units NUMERIC(18,6) NOT NULL DEFAULT 0,
+        available_units NUMERIC(18,6) NOT NULL DEFAULT 0,
+        locked_units NUMERIC(18,6) NOT NULL DEFAULT 0,
+        cost_basis NUMERIC(18,6),
+        wallet_address VARCHAR(42),
+        reconciliation_status sec_reconciliation_status NOT NULL DEFAULT 'reconciled',
+        last_reconciled_at TIMESTAMP,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        UNIQUE (investor_id, series_id),
+        CHECK (available_units >= 0),
+        CHECK (locked_units >= 0),
+        CHECK (total_units >= 0)
+      )`, 'table sec_positions');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_position_lots (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        position_id UUID NOT NULL,
+        investor_id UUID NOT NULL,
+        series_id UUID NOT NULL,
+        source_type sec_lot_source_type NOT NULL,
+        units NUMERIC(18,6) NOT NULL,
+        price_per_unit NUMERIC(18,6),
+        acquired_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        hold_releases_at TIMESTAMP,
+        is_locked BOOLEAN NOT NULL DEFAULT FALSE,
+        source_transaction_id VARCHAR(255),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_position_lots');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_beneficial_ownership_records (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        series_id UUID NOT NULL,
+        investor_id UUID NOT NULL,
+        wallet_address VARCHAR(42),
+        units NUMERIC(18,6) NOT NULL,
+        ownership_percent NUMERIC(10,8),
+        status sec_registry_status NOT NULL DEFAULT 'current',
+        superseded_by_id UUID,
+        effective_date TIMESTAMP NOT NULL DEFAULT NOW(),
+        end_date TIMESTAMP,
+        settlement_id VARCHAR(255),
+        legal_entity_ref VARCHAR(255),
+        document_refs JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_beneficial_ownership_records');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_position_balances (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        position_id UUID NOT NULL,
+        snapshot_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        total_units NUMERIC(18,6) NOT NULL,
+        available_units NUMERIC(18,6) NOT NULL,
+        locked_units NUMERIC(18,6) NOT NULL,
+        nav_per_unit NUMERIC(18,6),
+        total_value NUMERIC(18,6),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_position_balances');
+
+      // Transfer workflow tables
+      await exec(`CREATE TABLE IF NOT EXISTS sec_transfer_requests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        request_type sec_transfer_request_type NOT NULL DEFAULT 'listing',
+        status sec_transfer_request_status NOT NULL DEFAULT 'draft',
+        series_id UUID NOT NULL,
+        seller_id UUID NOT NULL,
+        seller_wallet_address VARCHAR(42),
+        buyer_id UUID,
+        buyer_wallet_address VARCHAR(42),
+        units_requested NUMERIC(18,6) NOT NULL,
+        requested_price_per_unit NUMERIC(18,6),
+        agreed_price_per_unit NUMERIC(18,6),
+        gross_amount NUMERIC(18,6),
+        fees_amount NUMERIC(18,6) NOT NULL DEFAULT 0,
+        net_amount NUMERIC(18,6),
+        settlement_asset sec_settlement_asset_type NOT NULL DEFAULT 'axusd',
+        listing_id UUID,
+        matched_trade_id UUID,
+        blocked_reason TEXT,
+        submitted_at TIMESTAMP,
+        completed_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        CHECK (units_requested > 0)
+      )`, 'table sec_transfer_requests');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_transfer_checks (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        transfer_request_id UUID NOT NULL,
+        check_type sec_transfer_check_type NOT NULL,
+        result sec_transfer_check_result NOT NULL,
+        detail TEXT,
+        run_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_transfer_checks');
+
+      // Marketplace tables
+      await exec(`CREATE TABLE IF NOT EXISTS sec_listings (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        series_id UUID NOT NULL,
+        seller_id UUID NOT NULL,
+        position_id UUID NOT NULL,
+        listing_type sec_listing_type NOT NULL DEFAULT 'bulletin_board',
+        status sec_listing_status NOT NULL DEFAULT 'draft',
+        units_offered NUMERIC(18,6) NOT NULL,
+        units_remaining NUMERIC(18,6) NOT NULL,
+        price_type sec_price_type NOT NULL DEFAULT 'negotiable',
+        ask_price_per_unit NUMERIC(18,6),
+        minimum_bid_units NUMERIC(18,6) NOT NULL DEFAULT 1,
+        visibility_scope sec_visibility_scope NOT NULL DEFAULT 'all_eligible',
+        requires_issuer_approval BOOLEAN NOT NULL DEFAULT TRUE,
+        settlement_window_days INTEGER NOT NULL DEFAULT 5,
+        description TEXT,
+        expires_at TIMESTAMP,
+        activated_at TIMESTAMP,
+        transfer_request_id UUID,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_listings');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_buyer_interests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        listing_id UUID NOT NULL,
+        buyer_id UUID NOT NULL,
+        intended_units NUMERIC(18,6),
+        status sec_buyer_interest_status NOT NULL DEFAULT 'submitted',
+        message TEXT,
+        submitted_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_buyer_interests');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_bids (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        listing_id UUID NOT NULL,
+        buyer_id UUID NOT NULL,
+        buyer_wallet_address VARCHAR(42),
+        units_requested NUMERIC(18,6) NOT NULL,
+        bid_price_per_unit NUMERIC(18,6) NOT NULL,
+        total_bid_amount NUMERIC(18,6) NOT NULL,
+        status sec_bid_status NOT NULL DEFAULT 'submitted',
+        counter_price_per_unit NUMERIC(18,6),
+        expires_at TIMESTAMP,
+        responded_at TIMESTAMP,
+        submitted_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        CHECK (units_requested > 0)
+      )`, 'table sec_bids');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_matched_trades (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        series_id UUID NOT NULL,
+        listing_id UUID NOT NULL,
+        bid_id UUID,
+        seller_id UUID NOT NULL,
+        buyer_id UUID NOT NULL,
+        units_traded NUMERIC(18,6) NOT NULL,
+        agreed_price_per_unit NUMERIC(18,6) NOT NULL,
+        gross_amount NUMERIC(18,6) NOT NULL,
+        fees_amount NUMERIC(18,6) NOT NULL DEFAULT 0,
+        net_seller_proceeds NUMERIC(18,6),
+        settlement_asset sec_settlement_asset_type NOT NULL DEFAULT 'axusd',
+        status sec_matched_trade_status NOT NULL DEFAULT 'matched',
+        matched_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        transfer_request_id UUID,
+        settlement_instruction_id UUID,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        CHECK (gross_amount >= fees_amount)
+      )`, 'table sec_matched_trades');
+
+      // Approval tables
+      await exec(`CREATE TABLE IF NOT EXISTS sec_approval_policies (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        series_id UUID NOT NULL,
+        approval_type sec_approval_type NOT NULL,
+        is_required BOOLEAN NOT NULL DEFAULT TRUE,
+        timeout_hours INTEGER NOT NULL DEFAULT 72,
+        auto_approve_on_timeout BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_approval_policies');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_approval_requests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        transfer_request_id UUID NOT NULL,
+        matched_trade_id UUID,
+        approval_type sec_approval_type NOT NULL,
+        status sec_approval_status NOT NULL DEFAULT 'pending',
+        requested_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        resolved_at TIMESTAMP,
+        resolved_by UUID,
+        expires_at TIMESTAMP,
+        override_reason TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_approval_requests');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_approval_decisions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        approval_request_id UUID NOT NULL,
+        actor_id UUID NOT NULL,
+        actor_type sec_actor_type NOT NULL,
+        decision sec_approval_status NOT NULL,
+        reason TEXT,
+        decided_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_approval_decisions');
+
+      // Settlement tables
+      await exec(`CREATE TABLE IF NOT EXISTS sec_settlement_instructions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        matched_trade_id UUID NOT NULL,
+        transfer_request_id UUID NOT NULL,
+        status sec_settlement_status NOT NULL DEFAULT 'instruction_created',
+        settlement_asset sec_settlement_asset_type NOT NULL DEFAULT 'axusd',
+        gross_amount NUMERIC(18,6) NOT NULL,
+        fees_amount NUMERIC(18,6) NOT NULL DEFAULT 0,
+        net_seller_amount NUMERIC(18,6),
+        buyer_wallet_address VARCHAR(42),
+        seller_wallet_address VARCHAR(42),
+        escrow_address VARCHAR(42),
+        escrow_tx_hash VARCHAR(66),
+        delivery_tx_hash VARCHAR(66),
+        funds_release_tx_hash VARCHAR(66),
+        funding_deadline TIMESTAMP,
+        settled_at TIMESTAMP,
+        failed_at TIMESTAMP,
+        failure_reason TEXT,
+        refunded_at TIMESTAMP,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_settlement_instructions');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_payment_confirmations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        settlement_instruction_id UUID NOT NULL,
+        status sec_payment_confirmation_status NOT NULL DEFAULT 'pending',
+        tx_hash VARCHAR(66),
+        amount NUMERIC(18,6),
+        confirmed_at TIMESTAMP,
+        failed_at TIMESTAMP,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_payment_confirmations');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_fee_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        settlement_instruction_id UUID NOT NULL,
+        fee_type sec_fee_type NOT NULL,
+        amount NUMERIC(18,6) NOT NULL,
+        recipient_wallet VARCHAR(42),
+        tx_hash VARCHAR(66),
+        settled_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_fee_events');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_settlement_failures (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        settlement_instruction_id UUID NOT NULL,
+        reason TEXT NOT NULL,
+        failed_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        resolved_at TIMESTAMP,
+        resolution_type VARCHAR(50),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_settlement_failures');
+
+      // Pricing tables
+      await exec(`CREATE TABLE IF NOT EXISTS sec_nav_marks (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        series_id UUID NOT NULL,
+        nav_per_unit NUMERIC(18,6) NOT NULL,
+        nav_status sec_nav_status NOT NULL DEFAULT 'current',
+        effective_date TIMESTAMP NOT NULL,
+        method_used sec_nav_method NOT NULL,
+        issued_by UUID,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_nav_marks');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_trade_marks (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        series_id UUID NOT NULL,
+        matched_trade_id UUID NOT NULL,
+        price_per_unit NUMERIC(18,6) NOT NULL,
+        units_traded NUMERIC(18,6) NOT NULL,
+        premium_discount_to_nav NUMERIC(8,6),
+        status sec_trade_mark_status NOT NULL DEFAULT 'confirmed',
+        traded_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_trade_marks');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_series_metrics (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        series_id UUID NOT NULL,
+        snapshot_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        active_listings_count INTEGER NOT NULL DEFAULT 0,
+        total_bids_count INTEGER NOT NULL DEFAULT 0,
+        active_holder_count INTEGER NOT NULL DEFAULT 0,
+        avg_days_to_match NUMERIC(8,2),
+        avg_days_to_settle NUMERIC(8,2),
+        completion_rate NUMERIC(5,4),
+        avg_premium_discount_to_nav NUMERIC(8,6),
+        rolling_30d_volume_units NUMERIC(18,6),
+        rolling_30d_volume_value NUMERIC(18,6),
+        yield_rate NUMERIC(8,6),
+        distribution_rate NUMERIC(8,6),
+        ltv NUMERIC(5,4),
+        dscr NUMERIC(8,4),
+        delinquency_rate NUMERIC(5,4),
+        occupancy_rate NUMERIC(5,4),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_series_metrics');
+
+      // Analytics tables
+      await exec(`CREATE TABLE IF NOT EXISTS sec_analytics_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        series_id UUID,
+        investor_id UUID,
+        event_type sec_analytics_event_type NOT NULL,
+        actor_type sec_actor_type NOT NULL DEFAULT 'investor',
+        object_id VARCHAR(255),
+        object_type sec_object_type,
+        value_units NUMERIC(18,6),
+        value_currency NUMERIC(18,6),
+        metadata JSONB,
+        occurred_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_analytics_events');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_liquidity_scores (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        series_id UUID NOT NULL,
+        score NUMERIC(5,2) NOT NULL,
+        score_label VARCHAR(50),
+        demand_score NUMERIC(5,2),
+        supply_score NUMERIC(5,2),
+        velocity_score NUMERIC(5,2),
+        computed_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_liquidity_scores');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_investor_redeployment (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        investor_id UUID NOT NULL,
+        exit_series_id UUID NOT NULL,
+        entry_series_id UUID,
+        exit_amount NUMERIC(18,6) NOT NULL,
+        redeployed_amount NUMERIC(18,6),
+        redeployed_at TIMESTAMP,
+        settlement_instruction_id UUID,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_investor_redeployment');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_series_demand_snapshots (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        series_id UUID NOT NULL,
+        snapshot_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        buyer_interest_count INTEGER NOT NULL DEFAULT 0,
+        active_bids_count INTEGER NOT NULL DEFAULT 0,
+        total_bid_units NUMERIC(18,6) NOT NULL DEFAULT 0,
+        active_listings_count INTEGER NOT NULL DEFAULT 0,
+        total_listing_units NUMERIC(18,6) NOT NULL DEFAULT 0,
+        supply_demand_ratio NUMERIC(8,4),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_series_demand_snapshots');
+
+      // Notification table
+      await exec(`CREATE TABLE IF NOT EXISTS sec_notifications (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        investor_id UUID,
+        recipient_email VARCHAR(255),
+        event_type VARCHAR(100) NOT NULL,
+        channel VARCHAR(20) NOT NULL DEFAULT 'in_app',
+        subject VARCHAR(255),
+        body TEXT,
+        metadata JSONB,
+        sent_at TIMESTAMP,
+        read_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_notifications');
+
+      // Audit tables
+      await exec(`CREATE TABLE IF NOT EXISTS sec_audit_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        actor_id UUID,
+        actor_type sec_actor_type NOT NULL,
+        actor_wallet VARCHAR(42),
+        object_type sec_object_type NOT NULL,
+        object_id VARCHAR(255) NOT NULL,
+        action VARCHAR(100) NOT NULL,
+        previous_state JSONB,
+        new_state JSONB,
+        metadata JSONB,
+        ip_address VARCHAR(45),
+        occurred_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_audit_logs');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_admin_actions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        admin_id UUID NOT NULL,
+        action_type VARCHAR(100) NOT NULL,
+        target_object_type sec_object_type NOT NULL,
+        target_object_id VARCHAR(255) NOT NULL,
+        reason TEXT NOT NULL,
+        previous_value JSONB,
+        new_value JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_admin_actions');
+
+      await exec(`CREATE TABLE IF NOT EXISTS sec_document_access_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        investor_id UUID NOT NULL,
+        document_ref VARCHAR(500) NOT NULL,
+        series_id UUID,
+        access_type VARCHAR(50) NOT NULL DEFAULT 'view',
+        accessed_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sec_document_access_logs');
+
+      // Indexes for common query paths
+      await exec(`CREATE INDEX IF NOT EXISTS sec_investors_email_idx ON sec_investors(email)`, 'index sec_investors_email');
+      await exec(`CREATE INDEX IF NOT EXISTS sec_wallets_investor_idx ON sec_wallets(investor_id)`, 'index sec_wallets_investor');
+      await exec(`CREATE INDEX IF NOT EXISTS sec_compliance_profiles_investor_idx ON sec_compliance_profiles(investor_id)`, 'index sec_compliance_profiles_investor');
+      await exec(`CREATE INDEX IF NOT EXISTS sec_positions_investor_idx ON sec_positions(investor_id)`, 'index sec_positions_investor');
+      await exec(`CREATE INDEX IF NOT EXISTS sec_positions_series_idx ON sec_positions(series_id)`, 'index sec_positions_series');
+      await exec(`CREATE INDEX IF NOT EXISTS sec_listings_series_status_idx ON sec_listings(series_id, status, created_at DESC)`, 'index sec_listings_series_status');
+      await exec(`CREATE INDEX IF NOT EXISTS sec_bids_listing_status_idx ON sec_bids(listing_id, status, submitted_at DESC)`, 'index sec_bids_listing_status');
+      await exec(`CREATE INDEX IF NOT EXISTS sec_matched_trades_series_status_idx ON sec_matched_trades(series_id, status, matched_at DESC)`, 'index sec_matched_trades_series_status');
+      await exec(`CREATE INDEX IF NOT EXISTS sec_transfer_requests_series_status_idx ON sec_transfer_requests(series_id, status, created_at DESC)`, 'index sec_transfer_requests_series_status');
+      await exec(`CREATE INDEX IF NOT EXISTS sec_audit_logs_object_idx ON sec_audit_logs(object_type, object_id, occurred_at DESC)`, 'index sec_audit_logs_object');
+      await exec(`CREATE INDEX IF NOT EXISTS sec_analytics_events_series_event_idx ON sec_analytics_events(series_id, event_type, occurred_at DESC)`, 'index sec_analytics_events_series_event');
+      await exec(`CREATE INDEX IF NOT EXISTS sec_nav_marks_series_date_idx ON sec_nav_marks(series_id, effective_date DESC)`, 'index sec_nav_marks_series_date');
+
+      // ─── END AXIOM SECONDARY NETWORK V1 ──────────────────────────────────────
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
