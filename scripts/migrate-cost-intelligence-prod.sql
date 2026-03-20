@@ -274,3 +274,76 @@ SELECT * FROM (VALUES
   ('NATIONAL','National Average',1.00,1.00,1.00,ARRAY[]::text[],ARRAY[]::text[])
 ) AS v(region_code, region_name, labor_factor, material_factor, overall_factor, metro_areas, states)
 WHERE NOT EXISTS (SELECT 1 FROM regional_cost_modifiers LIMIT 1);
+
+-- ============================================================
+-- PATCH: field_inspection_sessions + field_unit_walk_rows
+-- Added 2026-03-20 to sync prod with dev schema
+-- ============================================================
+
+-- Sessions: property type toggle (sfr / multifamily)
+ALTER TABLE field_inspection_sessions
+  ADD COLUMN IF NOT EXISTS property_type VARCHAR(20) NOT NULL DEFAULT 'multifamily';
+
+-- Walk rows: SFR systems (roof, foundation, garage, landscaping)
+-- and extended MF system (laundry_room)
+ALTER TABLE field_unit_walk_rows
+  ADD COLUMN IF NOT EXISTS roof         unit_condition DEFAULT 'not_inspected',
+  ADD COLUMN IF NOT EXISTS foundation   unit_condition DEFAULT 'not_inspected',
+  ADD COLUMN IF NOT EXISTS garage       unit_condition DEFAULT 'not_inspected',
+  ADD COLUMN IF NOT EXISTS landscaping  unit_condition DEFAULT 'not_inspected',
+  ADD COLUMN IF NOT EXISTS laundry_room unit_condition DEFAULT 'not_inspected';
+
+-- Contract tracking tables (required by field intelligence session handler)
+DO $$ BEGIN
+  CREATE TYPE contract_domain AS ENUM ('field_intelligence','real_estate');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE TYPE contract_entity_type AS ENUM ('inspection_session','property','deal');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE TYPE contract_status AS ENUM ('draft','intake','under_review','approved','in_execution','completed','blocked','rejected','archived');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE TYPE contract_actor_type AS ENUM ('admin','operator','system','investor');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE TYPE contract_event_type AS ENUM ('status_changed','approval_requested','approval_granted','approval_rejected','comment_added','assignment_changed');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS contract_entities (
+  id                         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  external_id                VARCHAR(255),
+  domain                     contract_domain      NOT NULL,
+  entity_type                contract_entity_type NOT NULL,
+  title                      VARCHAR(255)         NOT NULL,
+  owner_org_id               VARCHAR(255),
+  operator_id                VARCHAR(255),
+  current_status             contract_status      NOT NULL DEFAULT 'draft',
+  current_substatus          VARCHAR(120),
+  current_status_reason_code VARCHAR(100),
+  version                    INTEGER              NOT NULL DEFAULT 1,
+  meta                       JSONB,
+  created_at                 TIMESTAMP            NOT NULL DEFAULT now(),
+  updated_at                 TIMESTAMP            NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS contract_entities_domain_entity_idx ON contract_entities(domain, entity_type);
+CREATE INDEX IF NOT EXISTS contract_entities_status_idx        ON contract_entities(current_status);
+CREATE INDEX IF NOT EXISTS contract_entities_external_idx      ON contract_entities(external_id);
+
+CREATE TABLE IF NOT EXISTS contract_adapter_links (
+  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  contract_entity_id UUID         NOT NULL REFERENCES contract_entities(id),
+  native_table       VARCHAR(120) NOT NULL,
+  native_entity_id   VARCHAR(255) NOT NULL,
+  native_status      VARCHAR(120),
+  meta               JSONB,
+  created_at         TIMESTAMP    NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS contract_adapter_links_contract_entity_idx ON contract_adapter_links(contract_entity_id);
+CREATE UNIQUE INDEX IF NOT EXISTS contract_adapter_links_native_lookup_idx ON contract_adapter_links(native_table, native_entity_id);
