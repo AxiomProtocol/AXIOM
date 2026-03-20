@@ -350,6 +350,8 @@ export async function register() {
       await exec(`ALTER TABLE field_unit_walk_rows ADD COLUMN IF NOT EXISTS garage unit_condition DEFAULT 'not_inspected'`, 'alter walk_rows.garage');
       await exec(`ALTER TABLE field_unit_walk_rows ADD COLUMN IF NOT EXISTS landscaping unit_condition DEFAULT 'not_inspected'`, 'alter walk_rows.landscaping');
       await exec(`ALTER TABLE field_unit_walk_rows ADD COLUMN IF NOT EXISTS laundry_room unit_condition DEFAULT 'not_inspected'`, 'alter walk_rows.laundry_room');
+      await exec(`ALTER TABLE field_unit_walk_rows ADD COLUMN IF NOT EXISTS voice_note TEXT`, 'alter walk_rows.voice_note');
+      await exec(`ALTER TABLE field_unit_walk_rows ADD COLUMN IF NOT EXISTS unit_class VARCHAR(30) DEFAULT 'classic'`, 'alter walk_rows.unit_class');
 
       await exec(`CREATE INDEX IF NOT EXISTS field_walk_session_idx ON field_unit_walk_rows(session_id)`, 'index field_walk_session_idx');
       await exec(`CREATE INDEX IF NOT EXISTS field_walk_unit_number_idx ON field_unit_walk_rows(unit_number)`, 'index field_walk_unit_number_idx');

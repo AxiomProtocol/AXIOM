@@ -479,12 +479,8 @@ export default function FieldIntelligencePanel({ dealId, propertyId, arvEstimate
                 completed: 'text-dl-forest',
               };
               return (
-                <button
-                  key={session.id}
-                  onClick={() => openSession(session)}
-                  className="w-full border border-dl-border p-4 text-left hover:border-dl-navy flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
-                >
-                  <div>
+                <div key={session.id} className="border border-dl-border p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <button onClick={() => openSession(session)} className="text-left flex-1 min-w-0">
                     <p className="font-dl-serif text-base text-dl-navy">{session.session_name}</p>
                     <div className="flex items-center gap-3 mt-0.5">
                       <p className="font-dl-mono text-xs text-dl-muted">
@@ -494,8 +490,8 @@ export default function FieldIntelligencePanel({ dealId, propertyId, arvEstimate
                         {pt === 'sfr' ? 'SFR' : 'Multi-Family'}
                       </span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4">
+                  </button>
+                  <div className="flex items-center gap-4 flex-shrink-0">
                     <div className="text-right">
                       <p className="font-dl-mono text-xs text-dl-muted">Units</p>
                       <p className="font-dl-mono text-sm font-bold text-dl-navy">
@@ -509,8 +505,17 @@ export default function FieldIntelligencePanel({ dealId, propertyId, arvEstimate
                     <span className={`font-dl-mono text-xs uppercase ${statusColors[session.status] || 'text-dl-muted'}`}>
                       {session.status.replace('_', ' ')}
                     </span>
+                    <a
+                      href={`/field-capture/${session.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-dl-mono text-xs px-2 py-1 border border-dl-navy text-dl-navy hover:bg-dl-navy hover:text-white whitespace-nowrap"
+                      title="Open mobile-optimized capture view"
+                    >
+                      📱 Mobile
+                    </a>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -540,10 +545,18 @@ export default function FieldIntelligencePanel({ dealId, propertyId, arvEstimate
               {pt === 'sfr' ? 'Single Family' : 'Multi-Family'}
             </span>
           </div>
-          <div className="text-right">
+          <div className="text-right flex flex-col items-end gap-1">
             <p className="font-dl-mono text-xs text-dl-muted">Progress</p>
             <p className="font-dl-mono text-sm font-bold text-dl-navy">{unitsWalked} / {totalUnits} units ({pctWalked}%)</p>
             <p className="font-dl-mono text-xs text-dl-muted">Confidence: {confidence}%</p>
+            <a
+              href={`/field-capture/${activeSession.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-dl-mono text-xs px-2 py-1 border border-dl-navy text-dl-navy hover:bg-dl-navy hover:text-white whitespace-nowrap mt-1"
+            >
+              📱 Open Mobile Capture
+            </a>
           </div>
         </div>
 

@@ -44,6 +44,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           totalUnits: session.total_units,
           unitsWalked: session.units_walked || 0,
           samplingConfidenceScore: Number(session.sampling_confidence_score || 0),
+          propertyType: (session as any).property_type || 'multifamily',
+          inspectedBy: (session as any).inspected_by || null,
           createdAt: session.created_at,
           contractEntityId: contractEntity?.id || null,
           contractStatus: contractEntity?.current_status || null,

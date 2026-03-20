@@ -130,6 +130,81 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(rows.rows);
     }
 
+    if (req.method === 'PATCH') {
+      const body = req.body || {};
+      const { unitWalkId } = body;
+      if (!unitWalkId) {
+        return res.status(400).json({ error: 'unitWalkId is required for PATCH' });
+      }
+
+      const existing = await pool.query(
+        `SELECT id FROM field_unit_walk_rows WHERE id = $1 AND session_id = $2 LIMIT 1`,
+        [unitWalkId, sessionId],
+      );
+      if (!existing.rows[0]) {
+        return res.status(404).json({ error: 'Unit walk row not found in this session' });
+      }
+
+      const result = await pool.query(
+        `UPDATE field_unit_walk_rows SET
+           unit_type     = COALESCE($2, unit_type),
+           occupancy_status = COALESCE($3, occupancy_status),
+           kitchen       = $4::unit_condition,
+           bathroom      = $5::unit_condition,
+           flooring      = $6::unit_condition,
+           appliances    = $7::unit_condition,
+           hvac          = $8::unit_condition,
+           windows       = $9::unit_condition,
+           paint         = $10::unit_condition,
+           plumbing      = $11::unit_condition,
+           electrical    = $12::unit_condition,
+           doors         = $13::unit_condition,
+           exterior      = $14::unit_condition,
+           roof          = $15::unit_condition,
+           foundation    = $16::unit_condition,
+           garage        = $17::unit_condition,
+           landscaping   = $18::unit_condition,
+           laundry_room  = $19::unit_condition,
+           common_area   = $20::unit_condition,
+           site_parking  = $21::unit_condition,
+           other         = $22::unit_condition,
+           general_notes = COALESCE($23, general_notes),
+           inspection_time = COALESCE($24, inspection_time),
+           inspection_completed = TRUE,
+           updated_at    = NOW()
+         WHERE id = $1
+         RETURNING *`,
+        [
+          unitWalkId,
+          body.unitType || null,
+          body.occupancyStatus || null,
+          condVal(body.kitchen),
+          condVal(body.bathroom),
+          condVal(body.flooring),
+          condVal(body.appliances),
+          condVal(body.hvac),
+          condVal(body.windows),
+          condVal(body.paint),
+          condVal(body.plumbing),
+          condVal(body.electrical),
+          condVal(body.doors),
+          condVal(body.exterior),
+          condVal(body.roof),
+          condVal(body.foundation),
+          condVal(body.garage),
+          condVal(body.landscaping),
+          condVal(body.laundry_room ?? body.laundryRoom),
+          condVal(body.common_area ?? body.commonArea),
+          condVal(body.site_parking ?? body.siteParking),
+          condVal(body.other),
+          body.generalNotes || null,
+          body.inspectionTime || null,
+        ],
+      );
+
+      return res.status(200).json(result.rows[0]);
+    }
+
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error: any) {
     console.error('[walks/[sessionId]] error:', error?.message, error?.stack);
