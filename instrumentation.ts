@@ -303,9 +303,11 @@ export async function register() {
         review_notes TEXT,
         summary_json JSONB,
         meta JSONB,
+        property_type VARCHAR(20) NOT NULL DEFAULT 'multifamily',
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )`, 'table field_inspection_sessions');
+      await exec(`ALTER TABLE field_inspection_sessions ADD COLUMN IF NOT EXISTS property_type VARCHAR(20) NOT NULL DEFAULT 'multifamily'`, 'alter field_inspection_sessions.property_type');
 
       await exec(`CREATE INDEX IF NOT EXISTS field_insp_deal_idx ON field_inspection_sessions(deal_id)`, 'index field_insp_deal_idx');
       await exec(`CREATE INDEX IF NOT EXISTS field_insp_property_idx ON field_inspection_sessions(property_id)`, 'index field_insp_property_idx');
@@ -331,6 +333,11 @@ export async function register() {
         common_area unit_condition NOT NULL DEFAULT 'not_inspected',
         site_parking unit_condition NOT NULL DEFAULT 'not_inspected',
         other unit_condition NOT NULL DEFAULT 'not_inspected',
+        roof unit_condition DEFAULT 'not_inspected',
+        foundation unit_condition DEFAULT 'not_inspected',
+        garage unit_condition DEFAULT 'not_inspected',
+        landscaping unit_condition DEFAULT 'not_inspected',
+        laundry_room unit_condition DEFAULT 'not_inspected',
         general_notes TEXT,
         inspection_completed BOOLEAN DEFAULT FALSE,
         inspection_time INTEGER,
@@ -338,6 +345,11 @@ export async function register() {
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )`, 'table field_unit_walk_rows');
+      await exec(`ALTER TABLE field_unit_walk_rows ADD COLUMN IF NOT EXISTS roof unit_condition DEFAULT 'not_inspected'`, 'alter walk_rows.roof');
+      await exec(`ALTER TABLE field_unit_walk_rows ADD COLUMN IF NOT EXISTS foundation unit_condition DEFAULT 'not_inspected'`, 'alter walk_rows.foundation');
+      await exec(`ALTER TABLE field_unit_walk_rows ADD COLUMN IF NOT EXISTS garage unit_condition DEFAULT 'not_inspected'`, 'alter walk_rows.garage');
+      await exec(`ALTER TABLE field_unit_walk_rows ADD COLUMN IF NOT EXISTS landscaping unit_condition DEFAULT 'not_inspected'`, 'alter walk_rows.landscaping');
+      await exec(`ALTER TABLE field_unit_walk_rows ADD COLUMN IF NOT EXISTS laundry_room unit_condition DEFAULT 'not_inspected'`, 'alter walk_rows.laundry_room');
 
       await exec(`CREATE INDEX IF NOT EXISTS field_walk_session_idx ON field_unit_walk_rows(session_id)`, 'index field_walk_session_idx');
       await exec(`CREATE INDEX IF NOT EXISTS field_walk_unit_number_idx ON field_unit_walk_rows(unit_number)`, 'index field_walk_unit_number_idx');
@@ -4828,6 +4840,320 @@ export async function register() {
       await exec(`CREATE INDEX IF NOT EXISTS idx_bridge_transfers_wallet ON bridge_transfers(wallet_address)`, 'idx_bridge_transfers_wallet');
       await exec(`CREATE INDEX IF NOT EXISTS idx_bridge_transfers_status ON bridge_transfers(status)`, 'idx_bridge_transfers_status');
       await exec(`CREATE INDEX IF NOT EXISTS idx_bridge_fx_transfer ON bridge_fx_snapshots(bridge_transfer_id)`, 'idx_bridge_fx_transfer');
+
+      // ═══════════════════════════════════════════
+      //  COST INTELLIGENCE ENGINE (Layer 6)
+      // ═══════════════════════════════════════════
+
+      await exec(`CREATE TABLE IF NOT EXISTS regional_cost_modifiers (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        region_code VARCHAR(20) NOT NULL,
+        region_name VARCHAR(100) NOT NULL,
+        labor_factor NUMERIC NOT NULL DEFAULT 1.0000,
+        material_factor NUMERIC NOT NULL DEFAULT 1.0000,
+        overall_factor NUMERIC NOT NULL DEFAULT 1.0000,
+        metro_areas TEXT[],
+        states TEXT[],
+        source VARCHAR(80) DEFAULT 'RSMeans City Cost Index',
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table regional_cost_modifiers');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cost_estimate_templates (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        template_name VARCHAR(100) NOT NULL,
+        template_slug VARCHAR(60) NOT NULL,
+        description TEXT,
+        property_type VARCHAR(20) NOT NULL DEFAULT 'both',
+        rehab_category VARCHAR(40) NOT NULL,
+        scope_items_json JSONB NOT NULL,
+        is_system BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cost_estimate_templates');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cost_estimates (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID,
+        property_id UUID,
+        inspection_session_id UUID,
+        estimate_name VARCHAR(255) NOT NULL,
+        property_type VARCHAR(20) NOT NULL DEFAULT 'multifamily',
+        status VARCHAR(30) NOT NULL DEFAULT 'draft',
+        region_code VARCHAR(20),
+        total_units INTEGER NOT NULL DEFAULT 1,
+        avg_unit_sqft NUMERIC,
+        total_sqft NUMERIC,
+        contingency_pct NUMERIC NOT NULL DEFAULT 0.1000,
+        soft_cost_pct NUMERIC NOT NULL DEFAULT 0.05,
+        labor_adj_pct NUMERIC NOT NULL DEFAULT 0.0000,
+        material_adj_pct NUMERIC NOT NULL DEFAULT 0.0000,
+        provider VARCHAR(40) NOT NULL DEFAULT 'craftsman_local',
+        arv_estimate NUMERIC,
+        hard_cost_total NUMERIC,
+        soft_cost_total NUMERIC,
+        contingency_total NUMERIC,
+        grand_total NUMERIC,
+        per_unit_cost NUMERIC,
+        per_sqft_cost NUMERIC,
+        cost_low NUMERIC,
+        cost_high NUMERIC,
+        confidence NUMERIC,
+        version INTEGER NOT NULL DEFAULT 1,
+        generated_at TIMESTAMP,
+        notes TEXT,
+        created_by VARCHAR(255),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cost_estimates');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cost_estimate_versions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        estimate_id UUID NOT NULL REFERENCES cost_estimates(id) ON DELETE CASCADE,
+        version INTEGER NOT NULL,
+        snapshot_json JSONB NOT NULL,
+        triggered_by VARCHAR(60),
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cost_estimate_versions');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cost_estimate_scope_items (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        estimate_id UUID NOT NULL REFERENCES cost_estimates(id) ON DELETE CASCADE,
+        area_label VARCHAR(100),
+        trade VARCHAR(60) NOT NULL,
+        item_name VARCHAR(255) NOT NULL,
+        quantity NUMERIC NOT NULL DEFAULT 1,
+        unit VARCHAR(30) NOT NULL DEFAULT 'each',
+        condition VARCHAR(30),
+        severity VARCHAR(20),
+        repair_or_replace VARCHAR(20) NOT NULL DEFAULT 'replace',
+        scope_note TEXT,
+        photo_refs TEXT[],
+        voice_note_ref VARCHAR(255),
+        room_observation TEXT,
+        applies_to_all_units BOOLEAN NOT NULL DEFAULT FALSE,
+        unit_labels TEXT[],
+        mapped_benchmark_id UUID,
+        mapped_provider VARCHAR(40),
+        mapping_confidence NUMERIC,
+        mapping_method VARCHAR(30) DEFAULT 'auto',
+        regional_factor NUMERIC,
+        labor_factor NUMERIC,
+        material_factor NUMERIC,
+        waste_factor NUMERIC NOT NULL DEFAULT 0.05,
+        contingency_factor NUMERIC NOT NULL DEFAULT 0.10,
+        cv_inference_ready BOOLEAN NOT NULL DEFAULT FALSE,
+        cv_inference_ref VARCHAR(255),
+        sort_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cost_estimate_scope_items');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cost_estimate_line_items (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        estimate_id UUID NOT NULL REFERENCES cost_estimates(id) ON DELETE CASCADE,
+        scope_item_id UUID REFERENCES cost_estimate_scope_items(id) ON DELETE SET NULL,
+        trade VARCHAR(60) NOT NULL,
+        description VARCHAR(255) NOT NULL,
+        quantity NUMERIC NOT NULL,
+        unit VARCHAR(30) NOT NULL,
+        unit_material_cost NUMERIC,
+        unit_labor_cost NUMERIC,
+        unit_equipment_cost NUMERIC,
+        unit_total_cost NUMERIC,
+        subtotal_material NUMERIC,
+        subtotal_labor NUMERIC,
+        subtotal_equipment NUMERIC,
+        subtotal_pre_adj NUMERIC,
+        regional_factor_applied NUMERIC,
+        labor_adj_applied NUMERIC,
+        material_adj_applied NUMERIC,
+        waste_total NUMERIC,
+        line_total NUMERIC,
+        cost_low NUMERIC,
+        cost_high NUMERIC,
+        confidence NUMERIC,
+        provider VARCHAR(40),
+        benchmark_id UUID,
+        assumptions_json JSONB,
+        is_contingency BOOLEAN NOT NULL DEFAULT FALSE,
+        is_soft_cost BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cost_estimate_line_items');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cost_estimate_benchmarks (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        estimate_id UUID NOT NULL REFERENCES cost_estimates(id) ON DELETE CASCADE,
+        deal_id UUID,
+        property_type VARCHAR(20),
+        region_code VARCHAR(20),
+        provider_estimate NUMERIC,
+        adjusted_estimate NUMERIC,
+        contractor_bid NUMERIC,
+        approved_budget NUMERIC,
+        actual_cost NUMERIC,
+        variance_bid NUMERIC,
+        variance_bid_pct NUMERIC,
+        variance_actual NUMERIC,
+        variance_actual_pct NUMERIC,
+        trade_variances_json JSONB,
+        project_status VARCHAR(30) DEFAULT 'pending',
+        geography VARCHAR(100),
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cost_estimate_benchmarks');
+
+      await exec(`CREATE TABLE IF NOT EXISTS rehab_cost_benchmarks (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        system VARCHAR(60) NOT NULL,
+        condition_level VARCHAR(30) NOT NULL,
+        property_type VARCHAR(20) NOT NULL DEFAULT 'both',
+        cost_unit VARCHAR(20) NOT NULL DEFAULT 'per_unit',
+        cost_low NUMERIC NOT NULL,
+        cost_mid NUMERIC NOT NULL,
+        cost_high NUMERIC NOT NULL,
+        region VARCHAR(30) NOT NULL DEFAULT 'national',
+        source VARCHAR(80) NOT NULL DEFAULT 'Craftsman National Construction Estimator',
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table rehab_cost_benchmarks');
+
+      await exec(`CREATE TABLE IF NOT EXISTS re_rehab_scopes (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        scenario_id UUID,
+        inspection_session_id UUID,
+        scope_name VARCHAR(255) NOT NULL,
+        line_items JSONB NOT NULL,
+        package_mix JSONB,
+        recommended_budget NUMERIC,
+        confidence NUMERIC,
+        generated_by VARCHAR(42),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table re_rehab_scopes');
+
+      // Seed Craftsman NCE reference costs (57 rows) — idempotent
+      await exec(`
+        INSERT INTO rehab_cost_benchmarks (system, condition_level, property_type, cost_unit, cost_low, cost_mid, cost_high, region, source, notes)
+        SELECT * FROM (VALUES
+          ('appliances','full_replace','both','per_unit',2800,4200,6500,'national','Craftsman National Construction Estimator','Full suite — range, refrigerator, dishwasher, microwave, washer/dryer.'),
+          ('appliances','light_rehab','both','per_unit',150,350,600,'national','Craftsman National Construction Estimator','Clean, service, minor repair.'),
+          ('appliances','medium_rehab','both','per_unit',1200,2200,3500,'national','Craftsman National Construction Estimator','Replace 1-2 major appliances.'),
+          ('bathroom','full_replace','both','per_unit',8500,13000,20000,'national','Craftsman National Construction Estimator','Full gut — tile, tub/shower, vanity, toilet, plumbing rough.'),
+          ('bathroom','light_rehab','both','per_unit',1200,2200,3200,'national','Craftsman National Construction Estimator','Recaulk, fixtures, accessories, paint.'),
+          ('bathroom','medium_rehab','both','per_unit',4000,6000,9500,'national','Craftsman National Construction Estimator','Vanity, toilet, tub surround, tile, paint.'),
+          ('common_area','full_replace','multifamily','per_unit',8000,16000,30000,'national','Craftsman National Construction Estimator','Full common area renovation.'),
+          ('common_area','light_rehab','multifamily','per_unit',500,1000,2000,'national','Craftsman National Construction Estimator','Paint corridors, touch up, cleaning.'),
+          ('common_area','medium_rehab','multifamily','per_unit',2000,4500,8000,'national','Craftsman National Construction Estimator','Flooring, lighting, mailboxes, paint.'),
+          ('doors','full_replace','both','per_door',750,1200,2200,'national','Craftsman National Construction Estimator','Exterior door replace with frame and hardware.'),
+          ('doors','light_rehab','both','per_door',150,280,450,'national','Craftsman National Construction Estimator','Hardware replace, paint, adjustment.'),
+          ('doors','medium_rehab','both','per_door',280,450,700,'national','Craftsman National Construction Estimator','Interior door replace with hardware and trim.'),
+          ('electrical','full_replace','both','per_unit',8000,14000,25000,'national','Craftsman National Construction Estimator','Full rewire — panel, all circuits, fixtures, code compliance.'),
+          ('electrical','light_rehab','both','per_unit',400,900,1600,'national','Craftsman National Construction Estimator','Outlets, switches, fixtures, GFCI.'),
+          ('electrical','medium_rehab','both','per_unit',2500,4500,7500,'national','Craftsman National Construction Estimator','Panel upgrade, circuit additions, smoke detectors.'),
+          ('exterior','full_replace','both','per_sqft',6,10.5,16,'national','Craftsman National Construction Estimator','Full siding replace — vinyl, fiber cement.'),
+          ('exterior','light_rehab','both','per_sqft',1.25,2,3,'national','Craftsman National Construction Estimator','Caulk, paint, minor repairs.'),
+          ('exterior','medium_rehab','both','per_sqft',2.75,5,8,'national','Craftsman National Construction Estimator','Siding sections, soffit, fascia repair.'),
+          ('flooring','full_replace','both','per_sqft',7,10.5,15,'national','Craftsman National Construction Estimator','Hardwood, porcelain tile, subfloor repair included.'),
+          ('flooring','light_rehab','both','per_sqft',1.5,2.5,3.75,'national','Craftsman National Construction Estimator','Refinish hardwood, deep clean carpet, repair vinyl.'),
+          ('flooring','medium_rehab','both','per_sqft',3.5,5,7,'national','Craftsman National Construction Estimator','LVP/LVT install, new carpet, laminate.'),
+          ('foundation','full_replace','both','flat',15000,35000,75000,'national','Craftsman National Construction Estimator','Structural repair, pier and beam, underpinning.'),
+          ('foundation','light_rehab','both','flat',500,1500,3500,'national','Craftsman National Construction Estimator','Crack injection, seal, drainage.'),
+          ('foundation','medium_rehab','both','flat',3000,7000,15000,'national','Craftsman National Construction Estimator','Waterproofing, French drain, crawlspace encapsulation.'),
+          ('garage','full_replace','sfr','flat',3000,7000,18000,'national','Craftsman National Construction Estimator','Structural repair, full conversion or rebuild.'),
+          ('garage','light_rehab','sfr','flat',300,700,1200,'national','Craftsman National Construction Estimator','Clean, paint, minor repairs.'),
+          ('garage','medium_rehab','sfr','flat',900,1800,3200,'national','Craftsman National Construction Estimator','Door replace, opener, epoxy floor.'),
+          ('hvac','full_replace','both','per_unit',6000,9500,16000,'national','Craftsman National Construction Estimator','Full system replace — split system, ductwork repair.'),
+          ('hvac','light_rehab','both','per_unit',350,700,1200,'national','Craftsman National Construction Estimator','Service, tune-up, filter, minor repairs.'),
+          ('hvac','medium_rehab','both','per_unit',3000,5000,7500,'national','Craftsman National Construction Estimator','Replace condenser, air handler, or major component.'),
+          ('kitchen','full_replace','both','per_unit',14000,20000,30000,'national','Craftsman National Construction Estimator','Full gut — cabinets, countertops, appliances, flooring, plumbing rough.'),
+          ('kitchen','light_rehab','both','per_unit',2500,3500,4800,'national','Craftsman National Construction Estimator','Paint cabinets, hardware, caulk, minor repairs.'),
+          ('kitchen','medium_rehab','both','per_unit',7500,10500,14500,'national','Craftsman National Construction Estimator','New cabinets, countertops, sink, basic appliances.'),
+          ('landscaping','full_replace','both','flat',3500,8000,18000,'national','Craftsman National Construction Estimator','Full regrading, irrigation, landscaping design.'),
+          ('landscaping','light_rehab','both','flat',300,700,1500,'national','Craftsman National Construction Estimator','Clean, mulch, mow.'),
+          ('landscaping','medium_rehab','both','flat',1000,2500,5000,'national','Craftsman National Construction Estimator','Sod, beds, shrubs, irrigation repair.'),
+          ('laundry_room','full_replace','multifamily','flat',5000,10000,20000,'national','Craftsman National Construction Estimator','New machines, room build-out, plumbing/electrical.'),
+          ('laundry_room','light_rehab','multifamily','flat',200,500,900,'national','Craftsman National Construction Estimator','Machine service, dryer vent clean.'),
+          ('laundry_room','medium_rehab','multifamily','flat',1500,2800,5000,'national','Craftsman National Construction Estimator','Machine replace, paint, flooring.'),
+          ('other','full_replace','both','flat',5000,12000,25000,'national','Craftsman National Construction Estimator','Major unlisted scope — permits, engineering, contingency.'),
+          ('other','light_rehab','both','flat',500,1000,2500,'national','Craftsman National Construction Estimator','General cleanup, haul-out, touch-up items.'),
+          ('other','medium_rehab','both','flat',2000,4000,8000,'national','Craftsman National Construction Estimator','Miscellaneous scope items, permits, general conditions.'),
+          ('paint','full_replace','both','per_sqft',2,3,4.5,'national','Craftsman National Construction Estimator','Interior + exterior paint, primer, texture repair.'),
+          ('paint','light_rehab','both','per_sqft',0.6,0.9,1.25,'national','Craftsman National Construction Estimator','Touch up, patch, spot repaint.'),
+          ('paint','medium_rehab','both','per_sqft',1,1.5,2,'national','Craftsman National Construction Estimator','Full interior repaint — walls, ceilings, trim.'),
+          ('plumbing','full_replace','both','per_unit',8000,14000,22000,'national','Craftsman National Construction Estimator','Full rough-in — supply, drain, water heater, all fixtures.'),
+          ('plumbing','light_rehab','both','per_unit',450,900,1600,'national','Craftsman National Construction Estimator','Fixture repairs, drain cleaning, minor leaks.'),
+          ('plumbing','medium_rehab','both','per_unit',1800,3200,5500,'national','Craftsman National Construction Estimator','Fixture replace, water heater, supply lines.'),
+          ('roof','full_replace','both','per_sqft',5,8,14,'national','Craftsman National Construction Estimator','Full reroof — tear off and replace.'),
+          ('roof','light_rehab','both','per_sqft',0.5,1,2,'national','Craftsman National Construction Estimator','Patch, seal, flashing repair.'),
+          ('roof','medium_rehab','both','per_sqft',2.5,4.5,7,'national','Craftsman National Construction Estimator','Partial shingle replace, section reroof.'),
+          ('site_parking','full_replace','multifamily','flat',15000,35000,75000,'national','Craftsman National Construction Estimator','Full lot resurface, curbing, lighting.'),
+          ('site_parking','light_rehab','both','flat',500,1200,2500,'national','Craftsman National Construction Estimator','Restripe, minor patch, clean.'),
+          ('site_parking','medium_rehab','both','flat',3500,8000,16000,'national','Craftsman National Construction Estimator','Section repaving, drainage repair.'),
+          ('windows','full_replace','both','per_window',550,850,1400,'national','Craftsman National Construction Estimator','Full window replace — impact or double-pane vinyl.'),
+          ('windows','light_rehab','both','per_window',75,175,300,'national','Craftsman National Construction Estimator','Caulk, weather strip, hardware, repair.'),
+          ('windows','medium_rehab','both','per_window',350,550,750,'national','Craftsman National Construction Estimator','Partial replace — vinyl double pane.')
+        ) AS v(system, condition_level, property_type, cost_unit, cost_low, cost_mid, cost_high, region, source, notes)
+        WHERE NOT EXISTS (SELECT 1 FROM rehab_cost_benchmarks LIMIT 1)
+      `, 'seed rehab_cost_benchmarks');
+
+      await exec(`
+        INSERT INTO regional_cost_modifiers (region_code, region_name, labor_factor, material_factor, overall_factor, metro_areas, states)
+        SELECT * FROM (VALUES
+          ('SOUTH_ATL','Atlanta Metro',0.88,0.92,0.90,ARRAY['Atlanta','Marietta','Sandy Springs'],ARRAY['GA']),
+          ('SOUTH_CLT','Charlotte Metro',0.86,0.90,0.88,ARRAY['Charlotte','Concord','Gastonia'],ARRAY['NC','SC']),
+          ('SOUTH_HOU','Houston Metro',0.86,0.90,0.88,ARRAY['Houston','Sugar Land','The Woodlands'],ARRAY['TX']),
+          ('SOUTH_DAL','Dallas Metro',0.88,0.92,0.90,ARRAY['Dallas','Fort Worth','Irving'],ARRAY['TX']),
+          ('MID_CHI','Chicago Metro',1.02,1.08,1.05,ARRAY['Chicago','Naperville','Joliet'],ARRAY['IL']),
+          ('NE_NYC','New York Metro',1.25,1.35,1.30,ARRAY['New York','Newark','Jersey City'],ARRAY['NY','NJ']),
+          ('NATIONAL','National Average',1.00,1.00,1.00,ARRAY[]::text[],ARRAY[]::text[])
+        ) AS v(region_code, region_name, labor_factor, material_factor, overall_factor, metro_areas, states)
+        WHERE NOT EXISTS (SELECT 1 FROM regional_cost_modifiers LIMIT 1)
+      `, 'seed regional_cost_modifiers');
+
+      // ═══════════════════════════════════════════
+      //  CONTRACT TRACKING TABLES
+      // ═══════════════════════════════════════════
+
+      await exec(`DO $$ BEGIN CREATE TYPE contract_domain AS ENUM ('field_intelligence','real_estate'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`, 'enum contract_domain');
+      await exec(`DO $$ BEGIN CREATE TYPE contract_entity_type AS ENUM ('inspection_session','property','deal'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`, 'enum contract_entity_type');
+      await exec(`DO $$ BEGIN CREATE TYPE contract_status AS ENUM ('draft','intake','under_review','approved','in_execution','completed','blocked','rejected','archived'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`, 'enum contract_status');
+      await exec(`DO $$ BEGIN CREATE TYPE contract_actor_type AS ENUM ('admin','operator','system','investor'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`, 'enum contract_actor_type');
+      await exec(`DO $$ BEGIN CREATE TYPE contract_event_type AS ENUM ('status_changed','approval_requested','approval_granted','approval_rejected','comment_added','assignment_changed'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`, 'enum contract_event_type');
+
+      await exec(`CREATE TABLE IF NOT EXISTS contract_entities (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        external_id VARCHAR(255),
+        domain contract_domain NOT NULL,
+        entity_type contract_entity_type NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        owner_org_id VARCHAR(255),
+        operator_id VARCHAR(255),
+        current_status contract_status NOT NULL DEFAULT 'draft',
+        current_substatus VARCHAR(120),
+        current_status_reason_code VARCHAR(100),
+        version INTEGER NOT NULL DEFAULT 1,
+        meta JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table contract_entities');
+
+      await exec(`CREATE INDEX IF NOT EXISTS contract_entities_domain_entity_idx ON contract_entities(domain, entity_type)`, 'index contract_entities_domain_entity_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS contract_entities_status_idx ON contract_entities(current_status)`, 'index contract_entities_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS contract_entities_external_idx ON contract_entities(external_id)`, 'index contract_entities_external_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS contract_adapter_links (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        contract_entity_id UUID NOT NULL REFERENCES contract_entities(id),
+        native_table VARCHAR(120) NOT NULL,
+        native_entity_id VARCHAR(255) NOT NULL,
+        native_status VARCHAR(120),
+        meta JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table contract_adapter_links');
+
+      await exec(`CREATE INDEX IF NOT EXISTS contract_adapter_links_entity_idx ON contract_adapter_links(contract_entity_id)`, 'index contract_adapter_links_entity_idx');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS contract_adapter_links_native_idx ON contract_adapter_links(native_table, native_entity_id)`, 'index contract_adapter_links_native_idx');
 
       console.log('[instrumentation] Database setup complete');
 
