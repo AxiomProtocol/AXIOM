@@ -1,6 +1,6 @@
 # Axiom Protocol — Complete Platform Guide
 
-Version 1.0 — March 2026
+Version 1.1 — March 2026
 Platform: axiomprotocol.app
 Network: Arbitrum One (Chain ID 42161)
 
@@ -18,10 +18,11 @@ Network: Arbitrum One (Chain ID 42161)
 8. Cost Intelligence Engine
 9. Field Intelligence
 10. Operations
-11. Proof of Execution
-12. Disclosure and Compliance
-13. The Roadmap
-14. Institutional Vocabulary Glossary
+11. Axiom Secondary Network V1
+12. Proof of Execution
+13. Disclosure and Compliance
+14. The Roadmap
+15. Institutional Vocabulary Glossary
 
 ---
 
@@ -49,7 +50,7 @@ To connect a wallet:
 
 Some features are accessible without a wallet: the Observer dashboard, Deal Flow feed, and free Property Analysis tier. Capital, governance, and syndication features require an authenticated wallet.
 
-The top navigation covers seven sections: About, Disclosure, Community (Wealth Practice and Land), Products (Property Analysis, Deal Intelligence, Deal Flow, Capital Program, Lending Fund, Exchange, Unified AXUSD, DePIN, Banking), Intelligence (MIRDT, Sentinel, Observer, RE Intelligence), Operations (Founder Ops, Proof of Execution, Capital Accounting, Solvency, Syndication, Investor Portal, All Products), and Contact.
+The top navigation covers seven sections: About, Disclosure, Community (Wealth Practice and Land), Products (Property Analysis, Deal Intelligence, Deal Flow, Capital Program, Lending Fund, Exchange, Unified AXUSD, DePIN, Banking), Intelligence (MIRDT, Sentinel, Observer, RE Intelligence), Operations (Founder Ops, Proof of Execution, Execution Framework, Capital Accounting, Solvency, Syndication, Investor Portal, All Products), and Contact.
 
 ---
 
@@ -97,12 +98,16 @@ Route: `/wealth-practice` — Status: Staged Rollout
 
 A structured group savings and allocation program with governance controls and audit trails. Members form groups, make regular contributions, and receive rotating capital access through three stages: Forming (group organizing), Active (contributions collected, rotations executed), and Graduated (full cycle complete — unlocks Capital Program access).
 
+The Wealth Practice is Stage 1 of the Axiom capital pathway. No accreditation is required to participate. Groups that complete the three-stage trust pipeline — Interest Hub, Purpose Group, On-Chain Pool — qualify for consideration in the Syndication program as Stage 2. This is the community on-ramp to institutional capital formation.
+
 To join or start a group:
 1. Navigate to `/wealth-practice` and connect your wallet.
-2. Browse existing groups or click New Group to define contribution amount, cycle length, and rotation method.
+2. Browse existing groups under the Discover tab or click New Group to define contribution amount, cycle length, and rotation method.
 3. Apply to an existing group or configure your new group with minimum membership requirements.
 4. Once the group activates, contributions begin on the defined schedule.
 5. Capital is disbursed per the agreed rotation with every event recorded on-chain.
+
+The Overview tab displays the trust pipeline stages, live key metrics (total hubs, active and graduated groups, total members), the Physical-Digital Bridge flow (Wealth Practice capital → Land Acquisition Pools → community produce and housing), and the "Where This Leads" progression panel showing the path from Stage 1 (Wealth Practice) to Stage 2 (Syndication).
 
 Not an investment product. Not FDIC insured. No yield is guaranteed.
 
@@ -343,7 +348,7 @@ To review the solvency console:
 3. Review the headline metrics and policy mode.
 4. Verify the snapshot using the SHA-256 checksum displayed at the top.
 
-Syndication (`/syndication`) — Full offering lifecycle: Reg D 506(b/c), Reg CF, Community Pool, Club Deal, and Pilot Offering. Tracks subscriptions, capital calls, distributions, and document vault per offering through six lifecycle stages.
+Syndication (`/syndication`) — Full offering lifecycle: Reg D 506(b/c), Reg CF, Community Pool, Club Deal, and Pilot Offering. Tracks subscriptions, capital calls, distributions, and document vault per offering through six lifecycle stages. A "Pathway" note on the Syndication page connects it to the Wealth Practice — community groups that graduate the three-stage trust cycle surface here as qualified deal candidates.
 
 Investor Portal (`/syndication/portal`) — Wallet-authenticated LP dashboard showing holdings, subscriptions, capital calls, distribution records with on-chain verification links, and offering documents.
 
@@ -359,7 +364,61 @@ Execution Framework (`/execution-framework`) — The Execution Framework is the 
 
 ---
 
-## 11. Proof of Execution
+## 11. Axiom Secondary Network V1
+
+Status: Live — Authentication: SIWE wallet sign-in required
+
+The Axiom Secondary Network is a permissioned secondary transfer, settlement, registry, and intelligence layer for Axiom-issued private market products. It enables LP position holders to access secondary liquidity within a controlled, compliance-gated environment — without compromising investor registry integrity or settlement finality.
+
+Routes:
+- `/secondary` — Investor portfolio: wallet-authenticated view of secondary position lots, holdings, and transfer history
+- `/secondary/marketplace` — Public listings and bidding: browse active secondary listings, review per-unit NAV, bid on available lots
+- `/secondary/issuer` — Issuer console: NAV marks, transfer approvals, registry oversight (issuer access only)
+- `/secondary/admin` — Admin oversight: compliance flags, settlement management, audit trail (admin access only)
+
+### How It Works
+
+When a wallet signs in via SIWE, the system automatically creates a secondary investor profile linked to the wallet address. No email registration is required.
+
+Secondary positions are created in lots — each lot represents a fixed unit count of a specific series. Every lot is subject to a 180-day hold period from the date of original issuance before it becomes eligible for secondary transfer.
+
+To browse listings (no wallet required):
+1. Navigate to `/secondary/marketplace`.
+2. Review active listings: series name, available units, price per unit, and NAV.
+3. Connect your wallet and sign in to submit a bid or express interest.
+
+To view your portfolio (wallet required):
+1. Navigate to `/secondary` and click Access Platform to sign in.
+2. After SIWE authentication, your secondary position lots load automatically.
+3. Review each lot: series, units held, current NAV mark, hold status, and transfer eligibility.
+
+### Compliance Gate
+
+Every secondary transfer passes a 10-point compliance check before execution:
+1. Seller has an active investor record
+2. Buyer has an active investor record
+3. Buyer has a verified wallet linked
+4. Lot exists and belongs to the seller
+5. Lot is not already in a pending transfer
+6. Hold period of 180 days has elapsed
+7. Neither party is flagged on the sanctions list
+8. Both parties have active compliance profiles
+9. Transfer amount does not exceed seller's available balance
+10. Buyer's jurisdiction is not restricted for the series
+
+All 10 checks must pass. Any failure blocks the transfer with a documented reason. The compliance gate cannot be bypassed.
+
+### Settlement and Fees
+
+Settlement is atomic: the beneficial ownership registry, position balances, and the audit trail are updated in a single transaction. A 0.5% platform fee on gross settlement amount is applied at the time of settlement. If a NAV mark falls more than a configurable discount threshold below the last verified NAV, the transfer is flagged for issuer review before proceeding.
+
+### Schema and Infrastructure
+
+The Secondary Network is backed by 44 database enums and 29 tables (all with the `sec_` prefix), 11 backend services covering authentication, compliance, positions, marketplace, transfers, approvals, settlement, pricing, analytics, audit, and notifications, and 13 API routes.
+
+---
+
+## 12. Proof of Execution
 
 Status: Live
 
@@ -374,7 +433,7 @@ Verified outcomes refine Cost Intelligence Engine regional accuracy, calibrate M
 
 ---
 
-## 12. Disclosure and Compliance
+## 13. Disclosure and Compliance
 
 Route: `/disclosure` — Status: Live
 
@@ -384,19 +443,21 @@ The disclosure page covers: treasury and liability headline numbers; formulas fo
 
 ---
 
-## 13. The Roadmap
+## 14. The Roadmap
 
 Axiom Protocol is in its Bootstrap Phase.
 
 Completed (2023-2025): Community farmland initiative. 72 automated control layers on Arbitrum One. AXM governance token and DEX V2 on mainnet. Capital Program ($1M dual-SPV). ERC-3643 Unified AXUSD. SEC Reg D 506(c) Lending Fund. FDIC-insured banking via Unit Finance. Cost Intelligence Engine with Craftsman NCE. MIRDT, Sentinel, Observer, Deal Intelligence with IVCEE, Syndication, Field Intelligence, and Investor Portal all live.
 
-In Progress (2026): Proof of Execution outcome verification pipeline. Expanded Craftsman benchmark validation from live project actuals. Wealth Practice staged rollout with Capital Program access pathway. Land Acquisition Pipeline governance deployment.
+Completed (2026 Q1): Axiom Secondary Network V1 — permissioned secondary transfer, settlement, registry, and intelligence layer for private market products. Wealth Practice → Syndication two-stage capital pathway framing. SIWE wallet authentication across all secondary network routes.
+
+In Progress (2026): Proof of Execution outcome verification pipeline. Expanded Craftsman benchmark validation from live project actuals. Wealth Practice staged rollout with Capital Program access pathway. Land Acquisition Pipeline governance deployment. Secondary Network V2 with enhanced issuer tools and automated settlement triggers.
 
 Planned — Universe Blockchain (L3): A dedicated Arbitrum Orbit L3 chain with lower transaction costs, native AXM-denominated gas fees, a direct bridge from Arbitrum One, and sovereign chain governance aligned with AXM token holders.
 
 ---
 
-## 14. Institutional Vocabulary Glossary
+## 15. Institutional Vocabulary Glossary
 
 This glossary is the canonical reference drawn from the platform's `lib/glossary.ts` source. It governs all disclosure-facing communications.
 
@@ -424,7 +485,9 @@ This glossary is the canonical reference drawn from the platform's `lib/glossary
 | Axiom Protocol | Governance-first wealth infrastructure. Not a bank, broker-dealer, or registered investment advisor. | Bootstrap Phase |
 | AXM | ERC-20 governance and fee-routing token on Arbitrum One | Live |
 | AXUSD | Protocol stablecoin, ERC-3643/T-REX compliant with on-chain identity compliance | Live |
-| The Wealth Practice | Structured group savings and allocation practice. Not an investment product. | Staged Rollout |
+| The Wealth Practice | Structured group savings and allocation practice. Stage 1 of the capital pathway. Not an investment product. | Staged Rollout |
+| Syndication | Institutional capital formation program. Stage 2 of the capital pathway. Reg D 506(c). Accredited investors. | Live |
+| Axiom Secondary Network | Permissioned secondary transfer, settlement, and registry layer for Axiom-issued private market products | Live |
 | Solvency Console | Three-mode solvency disclosure interface (Allocator, Clearinghouse, Regulatory) | Live |
 | Adaptive Metrics Engine (AME) | Deterministic computation engine for regime scoring, adaptive targets, and policy multipliers | Live |
 | MIRDT | Probabilistic trend-following analysis with full audit trail. Paper trading with human confirmation gates. | Live |
