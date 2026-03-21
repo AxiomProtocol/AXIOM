@@ -24,3 +24,9 @@ id = "sPq0RwOjMRLNDaxE4pCR4"
 uri = "file://documents/Construction_Cost_Database_Research_Report.md"
 type = "text"
 title = "Construction Cost Database — Research Report & Build Roadmap"
+
+[[outputs]]
+id = "cZ48CzGA7o-92xxyj64_H"
+uri = "file://documents/Axiom_Protocol_Institutional_Pitch_Deck.md"
+type = "text"
+title = "Axiom Protocol — Institutional Pitch Deck"
