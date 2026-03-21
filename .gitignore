@@ -106,3 +106,6 @@ cache/
 # Private file storage
 storage/
 .vercel
+wallet-private-keys.txt
+wallet-private-keys-env.txt
+new-wallet-env-values.txt
