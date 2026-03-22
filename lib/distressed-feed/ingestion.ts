@@ -8,6 +8,7 @@ import { fetchFreddieListings } from './sources/freddie';
 import { fetchUsdaListings } from './sources/usda';
 import { fetchTaxLienListings } from './sources/tax-liens';
 import { fetchSheriffSaleListings } from './sources/sheriff-sales';
+import { fetchAttomListings } from './sources/attom';
 
 const TARGET_STATES = ['GA', 'TX', 'NC', 'MS', 'AL', 'TN', 'SC', 'FL'];
 
@@ -32,6 +33,7 @@ async function upsertListing(listing: NormalizedListing): Promise<'inserted' | '
         photos: listing.photos,
         auctionDate: listing.auctionDate || undefined,
         expiresAt: listing.expiresAt || undefined,
+        metadata: listing.metadata || null,
       })
       .where(eq(dpListings.id, existing[0].id));
     return 'updated';
@@ -64,6 +66,7 @@ async function upsertListing(listing: NormalizedListing): Promise<'inserted' | '
       status: 'active',
       auctionDate: listing.auctionDate || null,
       expiresAt: listing.expiresAt || null,
+      metadata: listing.metadata || null,
     });
     return 'inserted';
   } catch (err) {
@@ -92,6 +95,7 @@ export async function runIngestion(states?: string[]): Promise<IngestionResult> 
     { name: 'Fannie Mae', fn: () => fetchFannieListings(targetStates) },
     { name: 'Freddie Mac', fn: () => fetchFreddieListings(targetStates) },
     { name: 'USDA', fn: () => fetchUsdaListings(targetStates) },
+    { name: 'ATTOM Pre-Foreclosure', fn: () => fetchAttomListings(targetStates) },
     ...(taxLienStates.length > 0 ? [{ name: 'Tax Liens', fn: () => fetchTaxLienListings(taxLienStates).then(r => ({ source: r.source, listings: r.listings, errors: r.errors, fetchedAt: r.fetchedAt } as SourceResult)) }] : []),
     ...(sheriffStates.length > 0 ? [{ name: 'Sheriff Sales', fn: () => fetchSheriffSaleListings(sheriffStates).then(r => ({ source: r.source, listings: r.listings, errors: r.errors, fetchedAt: r.fetchedAt } as SourceResult)) }] : []),
   ];

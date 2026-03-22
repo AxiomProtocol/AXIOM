@@ -1,5 +1,16 @@
+export interface AttomListingMetadata {
+  filingType?: string;
+  nodDate?: string;
+  defaultAmount?: number;
+  lenderName?: string;
+  auctionOpeningBid?: number;
+  totalDebt?: number;
+  apn?: string;
+  fips?: string;
+}
+
 export interface NormalizedListing {
-  source: 'hud' | 'fannie_mae' | 'freddie_mac' | 'usda' | 'wholesaler' | 'tax_sale' | 'manual';
+  source: 'hud' | 'fannie_mae' | 'freddie_mac' | 'usda' | 'wholesaler' | 'tax_sale' | 'manual' | 'attom';
   sourceId: string;
   address: string;
   city: string;
@@ -17,12 +28,13 @@ export interface NormalizedListing {
   listPrice: number;
   estimatedValue?: number;
   discountPct?: number;
-  distressType: 'foreclosure' | 'tax_lien' | 'reo' | 'wholesale' | 'short_sale' | 'auction' | 'government';
+  distressType: 'foreclosure' | 'tax_lien' | 'reo' | 'wholesale' | 'short_sale' | 'auction' | 'government' | 'pre_foreclosure' | 'lis_pendens';
   sourceUrl?: string;
   photos: string[];
   description?: string;
   auctionDate?: Date;
   expiresAt?: Date;
+  metadata?: AttomListingMetadata;
 }
 
 export interface SourceResult {

@@ -394,7 +394,44 @@ export default function BankingPage() {
           </div>
 
           {activeTab === 'overview' && (
-            <BankingLanding />
+            <div>
+              <BankingLanding />
+              <div className="mt-8">
+                <div className="border border-[#2c3e50]">
+                  <div className="border-b border-[#2c3e50] px-5 py-3">
+                    <span className="font-mono text-xs uppercase tracking-widest text-[#5a6c7d]">System Architecture</span>
+                    <h3 className="font-serif text-lg text-[#2c3e50] mt-0.5">Banking as the Capital Rail</h3>
+                  </div>
+                  <div className="p-5">
+                    <p className="font-mono text-sm text-[#5a6c7d] mb-5 leading-relaxed">
+                      Your Axiom bank account is not a standalone product — it is the foundation all other products run on.
+                      FDIC-insured deposits ($250K protection), ACH rails, and a single KYC verification cover your participation
+                      in every Axiom capital product. Capital moves in once, and routes automatically to wherever you deploy it.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 border border-[#2c3e50]">
+                      {[
+                        { product: 'Wealth Practice', desc: 'Monthly contributions auto-debit from your account. Rotation payouts deposit directly back.', step: '01' },
+                        { product: 'Syndications', desc: 'Capital calls draw from your account balance. LP distributions settle back in via ACH.', step: '02' },
+                        { product: 'Lending Fund', desc: 'Loan disbursements route through your account. Repayments are scheduled ACH debits.', step: '03' },
+                      ].map((item, i) => (
+                        <div key={i} className={`p-4 ${i < 2 ? 'border-b sm:border-b-0 sm:border-r border-[#2c3e50]' : ''}`}>
+                          <div className="font-mono text-xs text-[#5a6c7d] mb-1">{item.step}</div>
+                          <div className="font-serif text-[#2c3e50] mb-1">{item.product}</div>
+                          <div className="font-mono text-xs text-[#5a6c7d] leading-relaxed">{item.desc}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 border border-[#2d5016] bg-[#f0f5ec] p-4">
+                      <div className="font-mono text-xs text-[#2d5016] leading-relaxed">
+                        <span className="font-bold">Why FDIC insurance matters for community capital:</span>{' '}
+                        When 10 members pool contributions into a Wealth Practice group, their individual shares stay protected up to $250,000 per depositor.
+                        Members can participate in community wealth-building without exposing their principal to uninsured risk.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {activeTab === 'identity' && (

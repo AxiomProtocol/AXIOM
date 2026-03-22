@@ -4,6 +4,7 @@ import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
+import { BankingRequiredGate } from '../../components/banking/BankingRequiredGate';
 
 interface Offering {
   id: string;
@@ -174,6 +175,7 @@ export default function SyndicationDashboard() {
       </div>
 
       {showNew && (
+        <BankingRequiredGate action="Create a New Syndication Offering">
         <div className="border border-dl-navy p-4 sm:p-6 mb-6 bg-gray-50">
           <h2 className="font-dl-serif text-lg text-dl-navy mb-4">Create New Offering</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
@@ -257,6 +259,7 @@ export default function SyndicationDashboard() {
             </p>
           </div>
         </div>
+        </BankingRequiredGate>
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-8">

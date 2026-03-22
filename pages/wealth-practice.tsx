@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout } from '../components/design-law/DesignLawLayout';
+import { BankingRequiredGate } from '../components/banking/BankingRequiredGate';
 
 interface AnalyticsStats {
   totalHubs: number;
@@ -797,6 +798,7 @@ export default function WealthPracticePage() {
       )}
 
       {activeTab === 'create' && (
+        <BankingRequiredGate action="Create a Wealth Practice Group">
         <div>
           <h2 className="font-dl-serif text-xl text-dl-navy font-bold mb-4">Create a Wealth Practice Group</h2>
           <p className="text-dl-gray text-sm mb-6">
@@ -939,6 +941,7 @@ export default function WealthPracticePage() {
             </button>
           </div>
         </div>
+        </BankingRequiredGate>
       )}
     </DesignLawLayout>
   );

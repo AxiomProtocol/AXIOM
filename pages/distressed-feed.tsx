@@ -5,6 +5,15 @@ import Head from 'next/head';
 
 type Tab = 'feed' | 'submit' | 'buybox';
 
+interface AttomMeta {
+  filingType?: string;
+  nodDate?: string;
+  defaultAmount?: number;
+  lenderName?: string;
+  auctionOpeningBid?: number;
+  totalDebt?: number;
+}
+
 interface Listing {
   id: string;
   source: string;
@@ -25,6 +34,7 @@ interface Listing {
   description: string | null;
   auctionDate: string | null;
   photos: string[] | null;
+  metadata: AttomMeta | null;
   ingestedAt: string;
   status: string;
 }
@@ -46,6 +56,8 @@ const DISTRESS_LABELS: Record<string, string> = {
   short_sale: 'Short Sale',
   auction: 'Auction',
   government: 'Government',
+  pre_foreclosure: 'Pre-Foreclosure',
+  lis_pendens: 'Lis Pendens',
 };
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -57,6 +69,7 @@ const SOURCE_LABELS: Record<string, string> = {
   tax_sale: 'Tax Sale',
   sheriff_sale: 'Sheriff Sale',
   manual: 'Manual',
+  attom: 'ATTOM',
 };
 
 interface SourceStatusInfo {
@@ -81,6 +94,7 @@ const GOVERNMENT_SOURCES = [
   { name: 'Fannie Mae HomePath', type: 'fannie_mae', status: 'active' as const, description: 'Fannie Mae REO properties via HomePath' },
   { name: 'Freddie Mac HomeSteps', type: 'freddie_mac', status: 'active' as const, description: 'Freddie Mac REO properties via HomeSteps' },
   { name: 'USDA Rural Development', type: 'usda', status: 'active' as const, description: 'USDA foreclosed rural properties' },
+  { name: 'ATTOM Pre-Foreclosure', type: 'attom', status: 'active' as const, description: 'ATTOM pre-foreclosure filings: NOD, Lis Pendens, Notice of Trustee Sale (90-day lookback)' },
 ];
 
 const EXPANSION_SOURCES = [
@@ -509,6 +523,49 @@ function FeedTab() {
                     <div className="mb-4">
                       <div className="text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Auction Date</div>
                       <div className="font-mono text-sm text-[#8b6914]">{new Date(listing.auctionDate).toLocaleDateString()}</div>
+                    </div>
+                  )}
+                  {listing.source === 'attom' && listing.metadata && (
+                    <div className="border border-[#2c3e50] bg-[#f5f0e8] p-3 mb-4">
+                      <div className="text-xs uppercase tracking-wider text-[#5a6c7d] mb-2">Pre-Foreclosure Filing Details</div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {listing.metadata.filingType && (
+                          <div>
+                            <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Filing Type</div>
+                            <div className="font-mono text-sm text-[#2c3e50]">{listing.metadata.filingType}</div>
+                          </div>
+                        )}
+                        {listing.metadata.nodDate && (
+                          <div>
+                            <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">NOD / Filing Date</div>
+                            <div className="font-mono text-sm text-[#2c3e50]">{listing.metadata.nodDate}</div>
+                          </div>
+                        )}
+                        {listing.metadata.lenderName && (
+                          <div>
+                            <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Lender</div>
+                            <div className="font-mono text-sm text-[#2c3e50]">{listing.metadata.lenderName}</div>
+                          </div>
+                        )}
+                        {listing.metadata.defaultAmount && listing.metadata.defaultAmount > 0 && (
+                          <div>
+                            <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Default Amount</div>
+                            <div className="font-mono text-sm text-[#8b1a1a]">{formatCurrency(listing.metadata.defaultAmount)}</div>
+                          </div>
+                        )}
+                        {listing.metadata.totalDebt && listing.metadata.totalDebt > 0 && (
+                          <div>
+                            <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Total Debt</div>
+                            <div className="font-mono text-sm text-[#2c3e50]">{formatCurrency(listing.metadata.totalDebt)}</div>
+                          </div>
+                        )}
+                        {listing.metadata.auctionOpeningBid && listing.metadata.auctionOpeningBid > 0 && (
+                          <div>
+                            <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Opening Bid</div>
+                            <div className="font-mono text-sm text-[#8b6914]">{formatCurrency(listing.metadata.auctionOpeningBid)}</div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                   <div className="flex flex-col sm:flex-row gap-3">
