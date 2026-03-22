@@ -56,15 +56,15 @@ export const ACTIVE_CONTRACTS = {
   treasuryHub: '0x3fD63728288546AC41dAe3bf25ca383061c3A929' as const,
   deployer: '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96' as const,
 
-  // ── Lending Fund Contracts (deployed 2026-03-22, v2 with LP allowlist) ────
-  // AXIOMCreditMarket: LP vault + on-chain loan lifecycle registry + LP allowlist gate
-  // AXIOMFixedLoan:    ERC-721 loan receipt NFT (1 per funded loan)
-  creditMarket: '0x701BB67B22275bb395642C66f18a26d65E374917' as const,
-  fixedLoanNFT: '0x8190C1cf5b50BdCa8f18A1fF1b211ffc78750b81' as const,
+  // ── Lending Fund Contracts (v4 deployed 2026-03-22, ERC-3643 + draw schedule) ────
+  // AXIOMFixedLoan:    Fixed-term loan engine (draw tranches, amortized/interest-only, prepayment)
+  // AXIOMCreditMarket: LP pool with ERC-3643 IdentityRegistry gating (Wildcat V2 pattern)
+  creditMarket: '0x42b0e50593ae6d6595F33448058074F88A4958C8' as const,
+  fixedLoanNFT: '0xc4d12133f74c0f46F6aD00Bd930DAA75BF68801a' as const,
 } as const;
 
-export const CREDIT_MARKET_ADDRESS = '0xE9d74BB7ffC09D2a63a35D7d3F85976659Fe388D' as const;
-export const FIXED_LOAN_NFT_ADDRESS = '0xc40a4433706C82Dbc51Dc4dcfEf9ef51235349E9' as const;
+export const CREDIT_MARKET_ADDRESS = '0x42b0e50593ae6d6595F33448058074F88A4958C8' as const;
+export const FIXED_LOAN_NFT_ADDRESS = '0xc4d12133f74c0f46F6aD00Bd930DAA75BF68801a' as const;
 
 export const LEGACY_ADDRESSES = [
   { address: '0x8616E8EA83f048ab9A5eC513c9412dd2993bcE3F', reason: 'handleUSD (fxUSD) — NOT Axiom, false reference' },

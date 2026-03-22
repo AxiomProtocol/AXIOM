@@ -215,6 +215,21 @@ export default function BorrowPage() {
     }
     setRepayLoading(true);
     try {
+      // Step 1: Call repayLoan() on-chain from borrower wallet
+      // The contract does safeTransferFrom(msg.sender, ...) so the borrower must sign.
+      const ethers = (await import('ethers')).ethers;
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      const signer = await provider.getSigner();
+      const { CREDIT_MARKET_ABI } = await import('../../src/config/creditMarket.generated');
+      const { CREDIT_MARKET_ADDRESS } = await import('../../src/config/activeContracts.generated');
+      const market = new ethers.Contract(CREDIT_MARKET_ADDRESS, CREDIT_MARKET_ABI as string[], signer);
+      const loanId32 = ethers.encodeBytes32String(loanId.replace(/-/g, '').slice(0, 31));
+      const paymentWei = ethers.parseUnits(amount.toFixed(6), 18);
+      const tx = await market.repayLoan(loanId32, paymentWei);
+      const receipt = await tx.wait(1);
+      const chainTxHash: string = receipt?.hash ?? tx.hash;
+
+      // Step 2: Submit txHash to API for DB projection
       const headers = await getSignedHeaders(wallet, (window as any).ethereum);
       const r = await fetch('/api/realestate/loan-lifecycle', {
         method: 'PATCH',
@@ -224,14 +239,15 @@ export default function BorrowPage() {
           action: 'repay',
           walletAddress: wallet,
           paymentUsd: amount,
+          txHash: chainTxHash,
         }),
       });
       const data = await r.json();
       if (!r.ok || !data.success) {
-        setRepayError(data.error ?? 'Repayment failed');
+        setRepayError(data.error ?? 'Repayment recording failed (on-chain tx succeeded)');
         return;
       }
-      setRepaySuccess(`Payment of ${formatUSD(amount)} recorded. Remaining principal: ${formatUSD(data.remainingPrincipalUsd)}`);
+      setRepaySuccess(`Payment of ${formatUSD(amount)} confirmed on-chain. Remaining: ${formatUSD(data.remainingPrincipalUsd)}`);
       setRepayAmount('');
       setRepayLoanId(null);
       await fetchLoans(wallet);

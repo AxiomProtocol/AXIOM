@@ -9,28 +9,19 @@ const ARBITRUM_RPC = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY
 const CREDIT_MARKET_ABI = CM_ABI as readonly string[];
 const FIXED_LOAN_ABI    = FL_ABI as readonly string[];
 
-// Maps DB action → contract method
-const CHAIN_ACTION_MAP: Record<string, string> = {
-  approve:         'approveLoan',
-  mark_delinquent: 'markDelinquent',
-  cure_delinquent: 'cureDelinquent',
-  default:         'defaultLoan',
-};
-
-async function getCreditMarketSigner() {
+async function getFixedLoanSigner() {
   const ethersModule = await import('ethers');
   const ethers = ethersModule.ethers;
   const deployerKey = process.env.DEPLOYER_PRIVATE_KEY;
   if (!deployerKey) throw new Error('DEPLOYER_PRIVATE_KEY not set');
   const provider  = new ethers.JsonRpcProvider(ARBITRUM_RPC);
   const signer    = new ethers.Wallet(deployerKey, provider);
-  const market    = new ethers.Contract(CREDIT_MARKET_ADDRESS, CREDIT_MARKET_ABI, signer);
   const fixedLoan = new ethers.Contract(FIXED_LOAN_NFT_ADDRESS, FIXED_LOAN_ABI, signer);
-  return { signer, market, fixedLoan, ethers };
+  const market    = new ethers.Contract(CREDIT_MARKET_ADDRESS, CREDIT_MARKET_ABI, signer);
+  return { signer, fixedLoan, market, ethers };
 }
 
 function toLoanId32(loanId: string): string {
-  // ethers is a CJS-compatible package; direct require is safe in Next.js API routes
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { ethers } = require('ethers') as { ethers: typeof import('ethers') };
   return ethers.encodeBytes32String(loanId.replace(/-/g, '').slice(0, 31));
@@ -40,6 +31,9 @@ const GEF_OPERATOR_TIERS = new Set(['Operator', 'Steward', 'Architect']);
 
 const LOAN_RATE_BPS = 1400;
 const ORIGINATION_FEE_BPS = 300;
+const PREPAY_PENALTY_BPS = 200;
+const GRACE_PERIOD_DAYS = 15;
+const DEFAULT_TERM_MONTHS = 12;
 
 interface LoanRow {
   loan_id: string;
@@ -62,6 +56,7 @@ interface LoanRow {
   created_at: string;
   last_payment_at: string | null;
   last_interest_accrual_at: string | null;
+  disbursement_tx_hash: string | null;
 }
 
 async function ensureTable(): Promise<void> {
@@ -92,15 +87,10 @@ async function ensureTable(): Promise<void> {
     )
   `);
 
-  await pool.query(`
-    ALTER TABLE real_estate_loans
-      ADD COLUMN IF NOT EXISTS total_interest_paid_usd NUMERIC(18,6) NOT NULL DEFAULT 0
-  `).catch(() => {});
-
-  await pool.query(`
-    ALTER TABLE real_estate_loans
-      ADD COLUMN IF NOT EXISTS last_interest_accrual_at TIMESTAMP WITH TIME ZONE
-  `).catch(() => {});
+  // Idempotent column additions
+  await pool.query(`ALTER TABLE real_estate_loans ADD COLUMN IF NOT EXISTS total_interest_paid_usd NUMERIC(18,6) NOT NULL DEFAULT 0`).catch(() => {});
+  await pool.query(`ALTER TABLE real_estate_loans ADD COLUMN IF NOT EXISTS last_interest_accrual_at TIMESTAMP WITH TIME ZONE`).catch(() => {});
+  await pool.query(`ALTER TABLE real_estate_loans ADD COLUMN IF NOT EXISTS disbursement_tx_hash VARCHAR(66)`).catch(() => {});
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS real_estate_loan_payments (
@@ -157,8 +147,7 @@ function buildPaymentSchedule(
   principal: number,
   rateBps: number,
   termMonths: number,
-  fundedAtStr: string | null,
-  totalRepaidUsd: number
+  fundedAtStr: string | null
 ): Array<{ month: number; dueDate: string; payment: string; interest: string; principalPortion: string; balance: string }> {
   if (!fundedAtStr || principal <= 0) return [];
   const monthlyPayment = computeMonthlyPayment(principal, rateBps, termMonths);
@@ -202,7 +191,6 @@ function enrichLoan(loan: LoanRow) {
     loan.interest_rate_bps,
     accrualStart
   );
-
   const principal = parseFloat(loan.outstanding_principal_usd);
   const totalDue = principal + liveAccrued;
   const daysDelinquent = computeDaysDelinquent(loan.due_date, loan.status);
@@ -285,66 +273,74 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
       [loanId]
     );
 
-    const principal = parseFloat(loan.outstanding_principal_usd);
     const paymentSchedule = buildPaymentSchedule(
-      principal,
+      parseFloat(loan.outstanding_principal_usd),
       loan.interest_rate_bps,
       loan.loan_term_months,
-      loan.funded_at,
-      parseFloat(loan.total_repaid_usd)
+      loan.funded_at
     );
 
-    // ── On-chain state enrichment for active/delinquent loans ───────────
+    // ── On-chain state enrichment via AXIOMFixedLoan ────────────────────────
     let chainState: {
       onChainStatus: string | null;
       onChainAccruedInterestUsd: string | null;
       onChainPrincipalUsd: string | null;
-      nftTokenId: string | null;
-      explorerUrl: string | null;
+      onChainNextPaymentDue: { amountUsd: string; dueTimestamp: number } | null;
+      onChainDaysDelinquent: number | null;
+      explorerFixedLoan: string | null;
+      explorerMarket: string | null;
     } = {
       onChainStatus: null,
       onChainAccruedInterestUsd: null,
       onChainPrincipalUsd: null,
-      nftTokenId: null,
-      explorerUrl: null,
+      onChainNextPaymentDue: null,
+      onChainDaysDelinquent: null,
+      explorerFixedLoan: `https://arbitrum.blockscout.com/address/${FIXED_LOAN_NFT_ADDRESS}`,
+      explorerMarket: `https://arbitrum.blockscout.com/address/${CREDIT_MARKET_ADDRESS}`,
     };
 
     if (loan.status === 'active' || loan.status === 'delinquent' || loan.status === 'approved') {
       try {
         const { ethers } = await import('ethers');
         const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
-        const market   = new ethers.Contract(CREDIT_MARKET_ADDRESS, CREDIT_MARKET_ABI, provider);
         const fixedLoanContract = new ethers.Contract(FIXED_LOAN_NFT_ADDRESS, FIXED_LOAN_ABI, provider);
         const { CREDIT_MARKET_DEPLOYMENT } = await import('../../../src/config/creditMarket.generated');
 
         const loanId32 = toLoanId32(loan.loan_id);
 
-        const [chainLoan, accruedWei] = await Promise.all([
-          market.getLoan(loanId32) as Promise<{
-            status: bigint;
-            principalUsd6: bigint;
-            totalRepaidUsd6: bigint;
-          }>,
-          market.accruedInterest(loanId32) as Promise<bigint>,
+        const [chainLoan, accruedWei, nextPayment, daysDeliq] = await Promise.allSettled([
+          fixedLoanContract.getLoan(loanId32),
+          fixedLoanContract.accruedInterest(loanId32),
+          fixedLoanContract.nextPaymentDue(loanId32),
+          fixedLoanContract.daysDelinquent(loanId32),
         ]);
 
-        const statusNum = Number(chainLoan.status);
-        const onChainStatusStr = CREDIT_MARKET_DEPLOYMENT.loanStatusMap[statusNum] ?? `STATUS_${statusNum}`;
+        if (chainLoan.status === 'fulfilled') {
+          const cl = chainLoan.value as {
+            state: bigint;
+            outstandingPrincipal: bigint;
+            drawnPrincipal: bigint;
+          };
+          const statusNum = Number(cl.state);
+          chainState.onChainStatus = CREDIT_MARKET_DEPLOYMENT.loanStatusMap[statusNum] ?? `STATUS_${statusNum}`;
+          chainState.onChainPrincipalUsd = ethers.formatUnits(cl.outstandingPrincipal, 6);
+        }
 
-        const principalWei = BigInt(chainLoan.principalUsd6) - BigInt(chainLoan.totalRepaidUsd6);
-        chainState = {
-          onChainStatus: onChainStatusStr,
-          onChainAccruedInterestUsd: ethers.formatUnits(accruedWei, 18),
-          onChainPrincipalUsd: ethers.formatUnits(principalWei < 0n ? 0n : principalWei, 18),
-          nftTokenId: null,
-          explorerUrl: `${CREDIT_MARKET_DEPLOYMENT.explorerBase}/address/${CREDIT_MARKET_ADDRESS}`,
-        };
+        if (accruedWei.status === 'fulfilled') {
+          chainState.onChainAccruedInterestUsd = ethers.formatUnits(accruedWei.value as bigint, 6);
+        }
 
-        // Fetch NFT token ID if funded
-        try {
-          const tokenId = await fixedLoanContract.loanIdToTokenId(loanId32) as bigint;
-          if (tokenId > 0n) chainState.nftTokenId = tokenId.toString();
-        } catch { /* idempotent */ }
+        if (nextPayment.status === 'fulfilled') {
+          const np = nextPayment.value as { amount: bigint; dueTimestamp: bigint };
+          chainState.onChainNextPaymentDue = {
+            amountUsd: ethers.formatUnits(np.amount, 6),
+            dueTimestamp: Number(np.dueTimestamp),
+          };
+        }
+
+        if (daysDeliq.status === 'fulfilled') {
+          chainState.onChainDaysDelinquent = Number(daysDeliq.value as bigint);
+        }
 
       } catch (chainReadErr: unknown) {
         const msg = chainReadErr instanceof Error ? chainReadErr.message : String(chainReadErr);
@@ -368,7 +364,7 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
       if (!sig || !msg) {
         return res.status(401).json({
           success: false,
-          error: 'Wallet ownership proof required to view loan history. Provide x-wallet-signature and x-wallet-message headers.',
+          error: 'Wallet ownership proof required. Provide x-wallet-signature and x-wallet-message headers.',
         });
       }
       const authResult = verifyCreditAuth(req, walletAddress);
@@ -392,7 +388,6 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
   }
 
   // Public portfolio view: ?status=active,delinquent,approved
-  // Returns anonymized loan records (no borrower PII) for the fund portfolio display.
   const { status: statusFilter } = req.query;
   if (statusFilter && typeof statusFilter === 'string') {
     const allowed = ['active', 'delinquent', 'approved', 'repaid', 'defaulted', 'pending'];
@@ -477,7 +472,7 @@ async function handleOriginate(req: NextApiRequest, res: NextApiResponse) {
   if (!GEF_OPERATOR_TIERS.has(gefTier)) {
     return res.status(403).json({
       success: false,
-      error: `GEF Operator tier required for real estate credit. Your current tier: ${gefTier}. Advance through the Graduated Execution Framework.`,
+      error: `GEF Operator tier required for real estate credit. Your current tier: ${gefTier}.`,
       gefTier,
     });
   }
@@ -487,7 +482,7 @@ async function handleOriginate(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ success: false, error: 'Loan amount must be between $50,000 and $500,000' });
   }
 
-  const termMonths = parseInt(String(loanTermMonths || 12), 10);
+  const termMonths = parseInt(String(loanTermMonths || DEFAULT_TERM_MONTHS), 10);
   if (isNaN(termMonths) || termMonths < 1 || termMonths > 24) {
     return res.status(400).json({ success: false, error: 'Loan term must be 1 to 24 months' });
   }
@@ -517,7 +512,8 @@ async function handleOriginate(req: NextApiRequest, res: NextApiResponse) {
 
   const loanId = dbResult.rows[0].loan_id;
 
-  // Anchor origination on-chain: register the loan in AXIOMCreditMarket
+  // Anchor on-chain: originateLoan() on AXIOMFixedLoan
+  // Single AMORTIZED tranche covering full principal amount
   let chainTxHash: string | null = null;
   try {
     const { ethers } = await import('ethers');
@@ -525,20 +521,28 @@ async function handleOriginate(req: NextApiRequest, res: NextApiResponse) {
     if (deployerKey) {
       const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
       const signer   = new ethers.Wallet(deployerKey, provider);
-      const market   = new ethers.Contract(CREDIT_MARKET_ADDRESS, CREDIT_MARKET_ABI, signer);
+      const fixedLoan = new ethers.Contract(FIXED_LOAN_NFT_ADDRESS, FIXED_LOAN_ABI, signer);
 
-      const loanId32   = ethers.encodeBytes32String(loanId.replace(/-/g, '').slice(0, 31));
-      const principalWei = ethers.parseUnits(principal.toFixed(6), 18);
-      const termDays     = BigInt(Math.round((termMonths * 365) / 12));
+      const loanId32    = ethers.encodeBytes32String(loanId.replace(/-/g, '').slice(0, 31));
+      const principalWei = ethers.parseUnits(principal.toFixed(6), 6);
+      const termSecs    = BigInt(Math.round((termMonths * 365 * 24 * 3600) / 12));
+      const graceSecs   = BigInt(GRACE_PERIOD_DAYS * 24 * 3600);
+      const paymentMode = 0n; // AMORTIZED
+      const rateBps     = BigInt(LOAN_RATE_BPS);
+      const prepayBps   = BigInt(PREPAY_PENALTY_BPS);
+      const releaseNow  = BigInt(Math.floor(Date.now() / 1000)); // immediately releasable
 
-      const tx = await market.originateLoan(
+      const tx = await fixedLoan.originateLoan(
         loanId32,
         auth.verifiedAddress,
-        principalWei,
-        BigInt(LOAN_RATE_BPS),
-        BigInt(ORIGINATION_FEE_BPS),
-        termDays,
-        propertyAddress
+        paymentMode,
+        rateBps,
+        prepayBps,
+        graceSecs,
+        termSecs,
+        propertyAddress,
+        [principalWei],
+        [releaseNow]
       );
       const receipt = await tx.wait(1);
       chainTxHash = receipt?.hash ?? tx.hash;
@@ -561,7 +565,7 @@ async function handleOriginate(req: NextApiRequest, res: NextApiResponse) {
     originationFeeUsd: originationFee.toFixed(2),
     annualRateBps: LOAN_RATE_BPS,
     monthlyPaymentEstimate: computeMonthlyPayment(principal, LOAN_RATE_BPS, termMonths).toFixed(2),
-    message: 'Loan application recorded on-chain. Under review — approval typically within 24-48 hours.',
+    message: 'Loan application anchored on-chain. Under review — approval typically within 24-48 hours.',
   });
 }
 
@@ -610,12 +614,12 @@ async function handlePatch(req: NextApiRequest, res: NextApiResponse) {
 
 async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: string) {
   const VALID_TRANSITIONS: Record<string, { from: string[]; to: string }> = {
-    approve:          { from: ['pending_review'],       to: 'approved'    },
-    fund:             { from: ['approved'],              to: 'active'      },
-    mark_delinquent:  { from: ['active'],                to: 'delinquent'  },
-    cure_delinquent:  { from: ['delinquent'],            to: 'active'      },
-    close:            { from: ['active', 'delinquent'],  to: 'repaid'      },
-    default:          { from: ['active', 'delinquent'],  to: 'defaulted'   },
+    approve:          { from: ['pending_review'],       to: 'approved'   },
+    fund:             { from: ['approved'],              to: 'active'     },
+    mark_delinquent:  { from: ['active'],                to: 'delinquent' },
+    cure_delinquent:  { from: ['delinquent'],            to: 'active'     },
+    close:            { from: ['active', 'delinquent'],  to: 'repaid'     },
+    default:          { from: ['active', 'delinquent'],  to: 'defaulted'  },
   };
 
   const transition = VALID_TRANSITIONS[action];
@@ -629,42 +633,29 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
     });
   }
 
-  // ── fund: call fundLoan() on-chain, then mintReceipt NFT ────────────────
+  const loanId32 = toLoanId32(loan.loan_id);
+
+  // ── fund: approveLoan() then disburseTranche(0) on AXIOMFixedLoan ─────────
   if (action === 'fund') {
     const dueDate = new Date();
     dueDate.setMonth(dueDate.getMonth() + loan.loan_term_months);
 
-    const { ethers, market, fixedLoan } = await getCreditMarketSigner();
-    const loanId32     = toLoanId32(loan.loan_id);
-    const principalWei = ethers.parseUnits(loan.loan_amount_usd, 18);
-    const termDays     = BigInt(Math.round((loan.loan_term_months * 365) / 12));
-    const dueAtUnix    = BigInt(Math.floor(dueDate.getTime() / 1000));
+    const { fixedLoan } = await getFixedLoanSigner();
 
-    // 1. fundLoan — AUTHORITATIVE: reverts if loan not in APPROVED state on-chain
-    const fundTx = await market.fundLoan(loanId32);
-    const fundReceipt = await fundTx.wait(1);
-    const fundTxHash: string = fundReceipt?.hash ?? fundTx.hash;
-
-    // 2. Mint ERC-721 loan receipt NFT to borrower
-    let nftTokenId: string | null = null;
-    const mintTx = await fixedLoan.mintReceipt(
-      loanId32,
-      loan.wallet_address,
-      principalWei,
-      BigInt(loan.interest_rate_bps),
-      termDays,
-      dueAtUnix,
-      loan.property_address
-    );
-    const mintReceipt = await mintTx.wait(1);
-    const transferEvent = (mintReceipt?.logs ?? []).find(
-      (l: { topics?: string[] }) =>
-        l.topics &&
-        l.topics[1] === '0x0000000000000000000000000000000000000000000000000000000000000000'
-    );
-    if (transferEvent?.topics?.[3]) {
-      nftTokenId = BigInt(transferEvent.topics[3]).toString();
+    // First approve (if not already approved on-chain)
+    try {
+      const approveTx = await fixedLoan.approveLoan(loanId32);
+      await approveTx.wait(1);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // Ignore if already approved (state machine revert)
+      if (!msg.includes('revert') && !msg.includes('APPROVED')) throw e;
     }
+
+    // Disburse tranche 0 (the single-tranche origination)
+    const disburseTx = await fixedLoan.disburseTranche(loanId32, 0);
+    const disburseReceipt = await disburseTx.wait(1);
+    const fundTxHash: string = disburseReceipt?.hash ?? disburseTx.hash;
 
     await pool.query(
       `UPDATE real_estate_loans
@@ -675,95 +666,85 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
     );
     return res.status(200).json({
       success: true,
-      message: 'Loan funded on-chain and now active',
+      message: 'Loan funded on-chain via AXIOMFixedLoan.disburseTranche(0)',
       newStatus: transition.to,
       chainTxHash: fundTxHash,
-      nftTokenId,
+      explorerUrl: `https://arbitrum.blockscout.com/tx/${fundTxHash}`,
     });
   }
 
-  // ── close (admin reconciliation): closeLoan() on-chain, burn NFT ────────
-  // Uses the operator-gated closeLoan() which marks STATUS_REPAID without AXUSD transfer.
+  // ── approve: approveLoan() on AXIOMFixedLoan ──────────────────────────────
+  if (action === 'approve') {
+    const { fixedLoan } = await getFixedLoanSigner();
+    const tx = await fixedLoan.approveLoan(loanId32);
+    const receipt = await tx.wait(1);
+    const chainTxHash: string = receipt?.hash ?? tx.hash;
+    await pool.query(`UPDATE real_estate_loans SET status = $2, updated_at = NOW() WHERE loan_id = $1`, [loan.loan_id, transition.to]);
+    return res.status(200).json({ success: true, message: `Loan approved on-chain`, newStatus: transition.to, chainTxHash });
+  }
+
+  // ── mark_delinquent: markDelinquent() on AXIOMFixedLoan ──────────────────
+  if (action === 'mark_delinquent') {
+    const { fixedLoan } = await getFixedLoanSigner();
+    const tx = await fixedLoan.markDelinquent(loanId32);
+    const receipt = await tx.wait(1);
+    const chainTxHash: string = receipt?.hash ?? tx.hash;
+    await pool.query(`UPDATE real_estate_loans SET status = $2, updated_at = NOW() WHERE loan_id = $1`, [loan.loan_id, transition.to]);
+    return res.status(200).json({ success: true, message: `Loan marked delinquent on-chain`, newStatus: transition.to, chainTxHash });
+  }
+
+  // ── cure_delinquent: cureDelinquent() on AXIOMFixedLoan ──────────────────
+  if (action === 'cure_delinquent') {
+    const { fixedLoan } = await getFixedLoanSigner();
+    const tx = await fixedLoan.cureDelinquent(loanId32);
+    const receipt = await tx.wait(1);
+    const chainTxHash: string = receipt?.hash ?? tx.hash;
+    await pool.query(`UPDATE real_estate_loans SET status = $2, updated_at = NOW() WHERE loan_id = $1`, [loan.loan_id, transition.to]);
+    return res.status(200).json({ success: true, message: `Loan delinquency cured on-chain`, newStatus: transition.to, chainTxHash });
+  }
+
+  // ── close (admin reconciliation): closeLoan() on AXIOMFixedLoan ──────────
   if (action === 'close') {
-    const { market, fixedLoan } = await getCreditMarketSigner();
-    const loanId32 = toLoanId32(loan.loan_id);
-
-    // closeLoan() marks the loan STATUS_REPAID on-chain without AXUSD transfer —
-    // this is the admin reconciliation path (off-chain receipt or full payoff received).
-    const closeTx = await market.closeLoan(loanId32);
-    await closeTx.wait(1);
-    const closeHash: string = closeTx.hash;
-
-    // Burn NFT receipt — idempotent (no-ops if already burned by auto-repay in contract)
-    try {
-      const burnTx = await fixedLoan.burnReceipt(loanId32);
-      await burnTx.wait(1);
-    } catch { /* idempotent — may already be burned */ }
+    const { fixedLoan } = await getFixedLoanSigner();
+    const tx = await fixedLoan.closeLoan(loanId32);
+    const receipt = await tx.wait(1);
+    const chainTxHash: string = receipt?.hash ?? tx.hash;
 
     await pool.query(
       `UPDATE real_estate_loans
          SET status = $2, outstanding_principal_usd = 0, accrued_interest_usd = 0,
              disbursement_tx_hash = $3, last_payment_at = NOW(), updated_at = NOW()
        WHERE loan_id = $1`,
-      [loan.loan_id, transition.to, closeHash]
+      [loan.loan_id, transition.to, chainTxHash]
     );
     return res.status(200).json({
       success: true,
-      message: 'Loan administratively closed on-chain (STATUS_REPAID), NFT receipt burned',
+      message: 'Loan administratively closed on-chain (AXIOMFixedLoan.closeLoan)',
       newStatus: transition.to,
-      chainTxHash: closeHash,
+      chainTxHash,
     });
   }
 
-  // ── default: call defaultLoan() on-chain, burn NFT ───────────────────────
+  // ── default: defaultLoan() on AXIOMFixedLoan ─────────────────────────────
   if (action === 'default') {
-    const { market, fixedLoan } = await getCreditMarketSigner();
-    const loanId32 = toLoanId32(loan.loan_id);
-
-    const defaultTx = await market.defaultLoan(loanId32);
-    await defaultTx.wait(1);
-
-    const burnTx = await fixedLoan.burnReceipt(loanId32);
-    await burnTx.wait(1);
+    const { fixedLoan } = await getFixedLoanSigner();
+    const tx = await fixedLoan.defaultLoan(loanId32);
+    const receipt = await tx.wait(1);
+    const chainTxHash: string = receipt?.hash ?? tx.hash;
 
     await pool.query(
       `UPDATE real_estate_loans SET status = $2, disbursement_tx_hash = $3, updated_at = NOW() WHERE loan_id = $1`,
-      [loan.loan_id, transition.to, defaultTx.hash]
+      [loan.loan_id, transition.to, chainTxHash]
     );
     return res.status(200).json({
       success: true,
-      message: 'Loan defaulted on-chain and NFT receipt burned',
+      message: 'Loan defaulted on-chain (AXIOMFixedLoan.defaultLoan)',
       newStatus: transition.to,
-      chainTxHash: defaultTx.hash,
+      chainTxHash,
     });
   }
 
-  // ── approve / mark_delinquent / cure_delinquent: call matching contract method ──
-  const contractMethod = CHAIN_ACTION_MAP[action];
-  if (!contractMethod) {
-    return res.status(400).json({ success: false, error: `No on-chain handler for action: ${action}` });
-  }
-
-  const { market } = await getCreditMarketSigner();
-  const loanId32 = toLoanId32(loan.loan_id);
-
-  // Authoritative on-chain call — reverts if state machine disallows it
-  type ContractTx = { wait: (n: number) => Promise<{ hash?: string } | null>; hash: string };
-  const contractFn = market[contractMethod] as (id: string) => Promise<ContractTx>;
-  const tx: ContractTx = await contractFn(loanId32);
-  const receipt = await tx.wait(1);
-  const chainTxHash: string = receipt?.hash ?? tx.hash;
-
-  await pool.query(
-    `UPDATE real_estate_loans SET status = $2, updated_at = NOW() WHERE loan_id = $1`,
-    [loan.loan_id, transition.to]
-  );
-  return res.status(200).json({
-    success: true,
-    message: `Loan transitioned to '${transition.to}' (anchored on-chain)`,
-    newStatus: transition.to,
-    chainTxHash,
-  });
+  return res.status(400).json({ success: false, error: `Unhandled admin action: ${action}` });
 }
 
 async function handleRepay(
@@ -781,13 +762,11 @@ async function handleRepay(
     return res.status(400).json({ success: false, error: 'paymentUsd must be a positive number' });
   }
 
-  // txHash is required: borrower must call AXIOMCreditMarket.repayLoan() directly
-  // from their wallet (msg.sender = borrower — the contract does safeTransferFrom(msg.sender)).
-  // The API records the payment as a DB projection after the borrower submits their on-chain tx.
+  // txHash required: borrower calls AXIOMFixedLoan.repayLoan() from their wallet first
   if (!txHash || !txHash.match(/^0x[0-9a-fA-F]{64}$/)) {
     return res.status(400).json({
       success: false,
-      error: 'txHash is required for on-chain repayments. Borrower must call repayLoan() directly from their wallet and submit the resulting tx hash.',
+      error: 'txHash is required for on-chain repayments. Borrower must call repayLoan() from their wallet and submit the resulting tx hash.',
     });
   }
 
@@ -799,19 +778,17 @@ async function handleRepay(
   if (paymentUsd > totalDue + 0.01) {
     return res.status(400).json({
       success: false,
-      error: `Overpayment guard: total outstanding is $${totalDue.toFixed(2)} (principal $${principal.toFixed(2)} + accrued interest $${accrued.toFixed(6)}). Payment of $${paymentUsd.toFixed(2)} exceeds this.`,
+      error: `Overpayment guard: total outstanding is $${totalDue.toFixed(2)}. Payment $${paymentUsd.toFixed(2)} exceeds this.`,
     });
   }
 
-  // ── DB projection of borrower's on-chain repayLoan() call ──────────────
-  // Mirrors interest-first allocation math in the contract.
-  // The borrower already called repayLoan() on-chain; we record the outcome here.
+  // Interest-first allocation (mirrors AXIOMFixedLoan.repayLoan() logic)
   const interestPortion  = Math.min(paymentUsd, accrued);
   const principalPortion = paymentUsd - interestPortion;
   const newPrincipal     = Math.max(0, principal - principalPortion);
   const newTotalRepaid   = parseFloat(loan.total_repaid_usd) + paymentUsd;
   const newTotalInterestPaid = parseFloat(loan.total_interest_paid_usd) + interestPortion;
-  // Dust threshold: < $0.01 remaining = fully repaid (mirrors contract's 1e15 wei threshold)
+  // Dust threshold < $0.01 = fully repaid (mirrors contract 1e4 wei threshold on 6-decimal AXUSD)
   const newStatus: string = newPrincipal < 0.01 ? 'repaid' : 'active';
 
   await pool.query(
@@ -854,6 +831,6 @@ async function handleRepay(
     loanStatus: newStatus,
     message: newStatus === 'repaid'
       ? 'Loan fully repaid. Status updated to Repaid.'
-      : 'Payment recorded. Interest-first allocation applied.',
+      : 'Payment recorded. Interest-first allocation applied (mirrors AXIOMFixedLoan.repayLoan).',
   });
 }
