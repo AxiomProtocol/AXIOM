@@ -71,18 +71,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const interestUsd = drawAmount * interestRate * (repaymentDueDays / 365);
     const totalOwed = drawAmount + interestUsd;
 
-    await pool.query(
-      `UPDATE income_credit_lines
-       SET status = 'drawn'::income_credit_line_status,
-           drawn_amount_usd = $1,
-           available_balance_usd = 0,
-           outstanding_balance_usd = $2,
-           repayment_due_date = $3,
-           drawn_at = NOW(),
-           updated_at = NOW()
-       WHERE id = $4`,
-      [drawAmount, totalOwed.toFixed(6), repaymentDueDate.toISOString(), line.id]
-    );
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      await client.query(
+        `UPDATE income_credit_lines
+         SET status = 'drawn'::income_credit_line_status,
+             drawn_amount_usd = $1,
+             available_balance_usd = 0,
+             outstanding_balance_usd = $2,
+             repayment_due_date = $3,
+             drawn_at = NOW(),
+             updated_at = NOW()
+         WHERE id = $4`,
+        [drawAmount, totalOwed.toFixed(6), repaymentDueDate.toISOString(), line.id]
+      );
+
+      await client.query(
+        `INSERT INTO community_credit_treasury_ledger
+         (event_type, credit_line_id, wallet_address, amount_usd, direction, tranche, notes)
+         VALUES ('disbursement'::treasury_ledger_event_type, $1, $2, $3, 'out', 'senior',
+                 $4)`,
+        [
+          creditLineId,
+          auth.verifiedAddress,
+          drawAmount.toFixed(6),
+          `V1 AXUSD disbursement from senior tranche — purpose: ${line.purpose}, repayment due: ${repaymentDueDate.toISOString()}`,
+        ]
+      );
+
+      await client.query('COMMIT');
+    } catch (txErr) {
+      await client.query('ROLLBACK');
+      throw txErr;
+    } finally {
+      client.release();
+    }
 
     return res.status(200).json({
       success: true,
@@ -94,7 +119,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       totalOwedUsd: parseFloat(totalOwed.toFixed(6)),
       repaymentDueDate: repaymentDueDate.toISOString(),
       purpose: line.purpose,
-      disbursementNote: 'AXUSD disbursement is processed from the protocol treasury senior tranche. Operator records this obligation on-chain.',
+      treasuryEvent: 'disbursement',
+      tranche: 'senior',
+      disbursementNote: 'AXUSD disbursement from senior tranche recorded in treasury ledger. On-chain settlement pending protocol treasury authorization.',
       message: `Draw-down of $${drawAmount.toLocaleString()} recorded for purpose '${line.purpose}'. Total repayment of $${totalOwed.toFixed(2)} is due by ${repaymentDueDate.toLocaleDateString()}.`,
     });
   } catch (err: any) {

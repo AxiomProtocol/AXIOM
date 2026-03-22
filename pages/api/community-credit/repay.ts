@@ -73,6 +73,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ]
       );
 
+      await client.query(
+        `INSERT INTO community_credit_treasury_ledger
+         (event_type, credit_line_id, wallet_address, amount_usd, direction, tranche, notes)
+         VALUES ('repayment_received'::treasury_ledger_event_type, $1, $2, $3, 'in', 'senior', $4)`,
+        [
+          creditLineId,
+          auth.verifiedAddress,
+          principalRepaid.toFixed(6),
+          `Principal repayment — outstanding before: $${outstandingBefore.toFixed(2)}, after: $${newOutstanding.toFixed(2)}`,
+        ]
+      );
+
+      if (interestRepaid > 0.000001) {
+        await client.query(
+          `INSERT INTO community_credit_treasury_ledger
+           (event_type, credit_line_id, wallet_address, amount_usd, direction, tranche, notes)
+           VALUES ('interest_distribution'::treasury_ledger_event_type, $1, $2, $3, 'in', 'junior', $4)`,
+          [
+            creditLineId,
+            auth.verifiedAddress,
+            interestRepaid.toFixed(6),
+            `Interest distributed to junior tranche (Wealth Practice LP pool) — 500 bps prorated`,
+          ]
+        );
+      }
+
       if (isFullyRepaid) {
         await client.query(
           `UPDATE income_credit_lines
@@ -119,12 +145,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       principalRepaidUsd: parseFloat(principalRepaid.toFixed(6)),
       interestRepaidUsd: parseFloat(interestRepaid.toFixed(6)),
       remainingOutstandingUsd: parseFloat(newOutstanding.toFixed(6)),
-      interestDistributedToJuniorPoolUsd: parseFloat(interestRepaid.toFixed(6)),
+      treasuryEvents: [
+        { type: 'repayment_received', tranche: 'senior', amountUsd: parseFloat(principalRepaid.toFixed(6)) },
+        ...(interestRepaid > 0.000001 ? [{ type: 'interest_distribution', tranche: 'junior', amountUsd: parseFloat(interestRepaid.toFixed(6)) }] : []),
+      ],
       fullyRepaid: isFullyRepaid,
       gefViolationCleared: isFullyRepaid,
       message: isFullyRepaid
-        ? `Repayment complete. Credit line closed. $${interestRepaid.toFixed(2)} in interest distributed to the community junior pool. GEF violation flag cleared if set.`
-        : `Partial repayment of $${repayAmount.toLocaleString()} recorded. Remaining balance: $${newOutstanding.toFixed(2)}.`,
+        ? `Repayment complete. Credit line closed. $${interestRepaid.toFixed(6)} distributed to community junior LP pool (treasury ledger). GEF violation flag cleared.`
+        : `Partial repayment of $${repayAmount.toLocaleString()} recorded. $${interestRepaid.toFixed(6)} interest distributed to junior pool. Remaining: $${newOutstanding.toFixed(2)}.`,
     });
   } catch (err: any) {
     console.error('[community-credit/repay]', err);

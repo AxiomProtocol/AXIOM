@@ -107,7 +107,7 @@ export default function StartPage() {
 
   const fetchGefTier = async (addr: string) => {
     try {
-      const res = await fetch(`/api/community-credit/status?walletAddress=${encodeURIComponent(addr)}`);
+      const res = await fetch(`/api/community-credit/gef-tier?walletAddress=${encodeURIComponent(addr)}`);
       const data = await res.json();
       if (data.success) {
         setGefTier(data.gefTier);

@@ -89,3 +89,29 @@ CREATE TABLE IF NOT EXISTS income_credit_repayment_history (
 
 CREATE INDEX IF NOT EXISTS ic_repay_hist_line_idx   ON income_credit_repayment_history(credit_line_id);
 CREATE INDEX IF NOT EXISTS ic_repay_hist_wallet_idx ON income_credit_repayment_history(wallet_address);
+
+DO $$ BEGIN
+  CREATE TYPE treasury_ledger_event_type AS ENUM (
+    'disbursement',
+    'repayment_received',
+    'interest_distribution',
+    'reserve_allocation'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS community_credit_treasury_ledger (
+  id              SERIAL PRIMARY KEY,
+  event_type      treasury_ledger_event_type NOT NULL,
+  credit_line_id  VARCHAR(66),
+  wallet_address  VARCHAR(42) NOT NULL,
+  amount_usd      DECIMAL(18,6) NOT NULL,
+  direction       VARCHAR(4) NOT NULL CHECK (direction IN ('out', 'in')),
+  tranche         VARCHAR(20) NOT NULL CHECK (tranche IN ('senior', 'junior', 'reserve')),
+  axusd_tx_ref    VARCHAR(255),
+  notes           TEXT,
+  created_at      TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS cc_treasury_ledger_line_idx   ON community_credit_treasury_ledger(credit_line_id);
+CREATE INDEX IF NOT EXISTS cc_treasury_ledger_wallet_idx ON community_credit_treasury_ledger(wallet_address);
+CREATE INDEX IF NOT EXISTS cc_treasury_ledger_type_idx   ON community_credit_treasury_ledger(event_type);

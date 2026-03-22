@@ -315,3 +315,30 @@ export type IncomeCreditLine = typeof incomeCreditLines.$inferSelect;
 export type InsertIncomeCreditLine = typeof incomeCreditLines.$inferInsert;
 export type IncomeCreditRepaymentHistory = typeof incomeCreditRepaymentHistory.$inferSelect;
 export type InsertIncomeCreditRepaymentHistory = typeof incomeCreditRepaymentHistory.$inferInsert;
+
+export const communityTreasuryLedgerEventTypeEnum = pgEnum('treasury_ledger_event_type', [
+  'disbursement',
+  'repayment_received',
+  'interest_distribution',
+  'reserve_allocation',
+]);
+
+export const communityTreasuryLedger = pgTable('community_credit_treasury_ledger', {
+  id: serial('id').primaryKey(),
+  eventType: communityTreasuryLedgerEventTypeEnum('event_type').notNull(),
+  creditLineId: varchar('credit_line_id', { length: 66 }),
+  walletAddress: varchar('wallet_address', { length: 42 }).notNull(),
+  amountUsd: decimal('amount_usd', { precision: 18, scale: 6 }).notNull(),
+  direction: varchar('direction', { length: 4 }).notNull(),
+  tranche: varchar('tranche', { length: 20 }).notNull(),
+  axusdTxRef: varchar('axusd_tx_ref', { length: 255 }),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  lineIdx: index('cc_treasury_ledger_line_idx').on(table.creditLineId),
+  walletIdx: index('cc_treasury_ledger_wallet_idx').on(table.walletAddress),
+  typeIdx: index('cc_treasury_ledger_type_idx').on(table.eventType),
+}));
+
+export type CommunityTreasuryLedger = typeof communityTreasuryLedger.$inferSelect;
+export type InsertCommunityTreasuryLedger = typeof communityTreasuryLedger.$inferInsert;

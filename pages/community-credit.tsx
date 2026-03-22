@@ -52,21 +52,21 @@ const STATUS_STYLES: Record<string, string> = {
   expired: 'border border-dl-gray text-dl-gray',
 };
 
-const SIGN_MSG = (addr: string) =>
-  `Axiom Protocol Community Entry Credit — wallet ownership proof\nWallet: ${addr}\nTimestamp: ${Math.floor(Date.now() / 60000)}`;
-
 async function getSignedHeaders(walletAddress: string): Promise<Record<string, string> | null> {
   try {
     const eth = (window as any).ethereum;
     if (!eth) return null;
-    const msg = SIGN_MSG(walletAddress);
+    const nonceRes = await fetch(`/api/community-credit/nonce?walletAddress=${encodeURIComponent(walletAddress)}`);
+    if (!nonceRes.ok) return null;
+    const { message } = await nonceRes.json();
+    if (!message) return null;
     const sig = await eth.request({
       method: 'personal_sign',
-      params: [msg, walletAddress],
+      params: [message, walletAddress],
     });
     return {
       'x-wallet-signature': sig,
-      'x-wallet-message': msg,
+      'x-wallet-message': message,
     };
   } catch {
     return null;
