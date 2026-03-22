@@ -118,6 +118,22 @@ function normalizeHudApiListing(raw: HudApiListing): NormalizedListing | null {
   };
 }
 
+async function isHudOnline(): Promise<boolean> {
+  try {
+    const res = await fetch(`${HUD_BASE_URL}/searchresult?sState=GA`, {
+      method: 'GET',
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      redirect: 'manual',
+      signal: AbortSignal.timeout(10000),
+    });
+    const location = res.headers.get('location') || '';
+    if (location.includes('/app_offline') || location.includes('app_offline')) return false;
+    return res.status < 400;
+  } catch {
+    return false;
+  }
+}
+
 async function getSessionAndToken(): Promise<{ cookies: string; token: string } | null> {
   try {
     const response = await fetch(`${HUD_BASE_URL}/searchresult?sState=GA`, {
@@ -168,6 +184,12 @@ async function getSessionAndToken(): Promise<{ cookies: string; token: string } 
 export async function fetchHudListings(states: string[] = ['GA', 'TX', 'NC', 'MS', 'AL', 'TN', 'SC', 'FL']): Promise<SourceResult> {
   const errors: string[] = [];
   const allListings: NormalizedListing[] = [];
+
+  const online = await isHudOnline();
+  if (!online) {
+    errors.push('HUD HomeStore is currently offline for maintenance (redirects to /app_offline). Skipping ingestion — will retry on next scheduled run.');
+    return { source: 'hud', listings: [], errors, fetchedAt: new Date() };
+  }
 
   for (const state of states) {
     try {

@@ -82,6 +82,18 @@ interface SourceStatusInfo {
   lastAttempt: string;
 }
 
+type SourceAccessStatus = 'active' | 'api_key_required' | 'service_offline' | 'api_blocked' | 'no_public_api' | 'js_rendered';
+
+interface SourceStatusEntry {
+  source: string;
+  name: string;
+  accessStatus: SourceAccessStatus;
+  reason: string;
+  note?: string;
+  inventoryHint?: string;
+  lastChecked: string;
+}
+
 const SOURCE_STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   active: { bg: 'bg-[#f0f5ec]', text: 'text-[#2d5016]', label: 'Active' },
   unavailable: { bg: 'bg-[#fdf0f0]', text: 'text-[#8b1a1a]', label: 'Unavailable' },
@@ -128,6 +140,8 @@ function formatCurrency(val: string | number | null | undefined): string {
 function FeedTab() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [stats, setStats] = useState<FeedStats | null>(null);
+  const [sourceStatus, setSourceStatus] = useState<SourceStatusEntry[] | null>(null);
+  const [sourceStatusLoading, setSourceStatusLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -196,6 +210,15 @@ function FeedTab() {
       .catch(() => {});
   }, []);
 
+  function checkSourceStatus() {
+    setSourceStatusLoading(true);
+    fetch('/api/distressed-feed/source-status')
+      .then(r => r.json())
+      .then(d => setSourceStatus(d.sources || []))
+      .catch(() => setSourceStatus([]))
+      .finally(() => setSourceStatusLoading(false));
+  }
+
   return (
     <div>
       <div className="border border-[#2c3e50] p-4 mb-6">
@@ -242,32 +265,92 @@ function FeedTab() {
       </div>
 
       <div className="border border-[#2c3e50] p-4 mb-6">
-        <h3 className="font-serif text-lg text-[#2c3e50] mb-3">DATA SOURCES</h3>
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="font-serif text-lg text-[#2c3e50]">DATA SOURCES</h3>
+          <button
+            onClick={checkSourceStatus}
+            disabled={sourceStatusLoading}
+            className="border border-[#2c3e50] px-3 py-1 font-mono text-xs text-[#2c3e50] hover:bg-[#2c3e50] hover:text-white disabled:opacity-50"
+          >
+            {sourceStatusLoading ? 'Checking...' : 'Run Diagnostics'}
+          </button>
+        </div>
+
         <div className="mb-4">
           <div className="text-xs uppercase tracking-wider text-[#5a6c7d] mb-2">Government Feeds (Automated)</div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {GOVERNMENT_SOURCES.map(src => {
-              const count = stats?.bySource[src.type] || 0;
-              const colors = SOURCE_STATUS_COLORS[count > 0 ? 'active' : 'manual_only'];
-              return (
-                <div key={src.type} className={`border border-[#2c3e50] px-3 py-2 ${colors.bg}`}>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="font-mono text-sm text-[#2c3e50]">{src.name}</span>
-                      <span className={`ml-2 font-mono text-xs ${colors.text}`}>
-                        [{count > 0 ? `${count} listings` : 'Attempted'}]
-                      </span>
-                    </div>
-                    <div className={`border px-2 py-0.5 font-mono text-xs ${colors.text} border-current`}>
-                      {count > 0 ? 'Active' : 'Pending'}
+
+          {sourceStatus ? (
+            <div className="grid grid-cols-1 gap-2">
+              {sourceStatus.map(entry => {
+                const count = stats?.bySource[entry.source] || 0;
+                const hasListings = count > 0;
+                const statusMap: Record<SourceAccessStatus, { bg: string; textColor: string; badge: string }> = {
+                  active: { bg: hasListings ? 'bg-[#f0f5ec]' : 'bg-[#f0f5f8]', textColor: hasListings ? 'text-[#2d5016]' : 'text-[#2c3e50]', badge: hasListings ? 'Active' : 'Ready' },
+                  api_key_required: { bg: 'bg-[#fff8e1]', textColor: 'text-[#8b6914]', badge: 'Key Required' },
+                  service_offline: { bg: 'bg-[#fdf0f0]', textColor: 'text-[#8b1a1a]', badge: 'Offline' },
+                  api_blocked: { bg: 'bg-[#fff8e1]', textColor: 'text-[#8b6914]', badge: 'API Blocked' },
+                  no_public_api: { bg: 'bg-[#f0f0f5]', textColor: 'text-[#5a5a7d]', badge: 'No Public API' },
+                  js_rendered: { bg: 'bg-[#f5f0e8]', textColor: 'text-[#6b4c2a]', badge: 'JS Rendered' },
+                };
+                const style = statusMap[entry.accessStatus];
+                return (
+                  <div key={entry.source} className={`border border-[#2c3e50] px-3 py-3 ${style.bg}`}>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono text-sm font-medium text-[#2c3e50]">{entry.name}</span>
+                          {hasListings && (
+                            <span className="font-mono text-xs text-[#2d5016]">[{count} listings]</span>
+                          )}
+                        </div>
+                        <div className={`font-mono text-xs ${style.textColor} mt-1`}>{entry.reason}</div>
+                        {entry.note && (
+                          <div className="font-mono text-xs text-[#5a6c7d] mt-1 italic">{entry.note}</div>
+                        )}
+                        {entry.inventoryHint && (
+                          <div className="font-mono text-xs text-[#2c5a6c] mt-1">{entry.inventoryHint}</div>
+                        )}
+                      </div>
+                      <div className={`ml-3 flex-shrink-0 border px-2 py-0.5 font-mono text-xs ${style.textColor} border-current`}>
+                        {style.badge}
+                      </div>
                     </div>
                   </div>
-                  <div className="font-mono text-xs text-[#5a6c7d] mt-1">{src.description}</div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {GOVERNMENT_SOURCES.map(src => {
+                const count = stats?.bySource[src.type] || 0;
+                const colors = SOURCE_STATUS_COLORS[count > 0 ? 'active' : 'manual_only'];
+                return (
+                  <div key={src.type} className={`border border-[#2c3e50] px-3 py-2 ${colors.bg}`}>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="font-mono text-sm text-[#2c3e50]">{src.name}</span>
+                        <span className={`ml-2 font-mono text-xs ${colors.text}`}>
+                          [{count > 0 ? `${count} listings` : 'Attempted'}]
+                        </span>
+                      </div>
+                      <div className={`border px-2 py-0.5 font-mono text-xs ${colors.text} border-current`}>
+                        {count > 0 ? 'Active' : 'Pending'}
+                      </div>
+                    </div>
+                    <div className="font-mono text-xs text-[#5a6c7d] mt-1">{src.description}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {!sourceStatus && (
+            <div className="font-mono text-xs text-[#5a6c7d] mt-2 italic">
+              Run Diagnostics to check live API access status for each source.
+            </div>
+          )}
         </div>
+
         <div>
           <div className="text-xs uppercase tracking-wider text-[#5a6c7d] mb-2">Expansion Sources (GA, TX, NC)</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
