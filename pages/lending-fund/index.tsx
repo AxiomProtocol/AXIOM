@@ -42,6 +42,22 @@ function formatPercent(bps: number) {
   return (bps / 100).toFixed(1) + '%';
 }
 
+interface JuniorPoolStats {
+  totalLoansOriginated: number;
+  totalVolumeOriginatedUsd: number;
+  currentOutstandingUsd: number;
+  totalInterestCollectedUsd: number;
+  recentInterestDistributed30dUsd: number;
+  recentRepaymentEvents30d: number;
+  repaidCount: number;
+  defaultedCount: number;
+  overdueCount: number;
+  activeLinesUnfunded: number;
+  repaymentRatePct: string | null;
+  interestRateBps: number;
+  poolNote: string;
+}
+
 export default function LendingFundPage() {
   const [stats, setStats] = useState<FundStats | null>(null);
   const [riskParams, setRiskParams] = useState<ProductRisk | null>(null);
@@ -49,13 +65,15 @@ export default function LendingFundPage() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [lpPosition, setLpPosition] = useState<LPPosition | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'lp-dashboard'>('overview');
+  const [juniorPoolStats, setJuniorPoolStats] = useState<JuniorPoolStats | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [statsRes, riskRes] = await Promise.all([
+        const [statsRes, riskRes, juniorRes] = await Promise.all([
           fetch('/api/realestate/fund-stats'),
-          fetch('/api/realestate/risk-params?productId=1')
+          fetch('/api/realestate/risk-params?productId=1'),
+          fetch('/api/community-credit/junior-pool-stats'),
         ]);
         if (statsRes.ok) {
           const data = await statsRes.json();
@@ -63,6 +81,10 @@ export default function LendingFundPage() {
           if (data.riskParams) setRiskParams(data.riskParams);
         }
         if (riskRes.ok) setRiskParams(await riskRes.json());
+        if (juniorRes.ok) {
+          const jpData = await juniorRes.json();
+          if (jpData.success) setJuniorPoolStats(jpData);
+        }
       } catch {} finally {
         setLoading(false);
       }
@@ -376,18 +398,48 @@ export default function LendingFundPage() {
               Wealth Practice members who have completed at least one full cycle are eligible to participate.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-b border-dl-border">
-            <div className="px-5 py-4 bg-dl-bg-alt md:border-r border-b md:border-b-0 border-dl-border">
-              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Yield Source</p>
-              <p className="text-sm text-dl-navy font-bold">5% APR on drawn balances</p>
-              <p className="text-xs text-dl-gray mt-1">500 bps on Community Entry Credit loans, prorated by day</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border-b border-dl-border">
+            <div className="px-5 py-4 bg-dl-bg-alt border-r border-dl-border border-b md:border-b-0">
+              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Interest Rate</p>
+              <p className="font-dl-mono text-lg font-bold text-dl-navy">500 bps</p>
+              <p className="text-xs text-dl-gray mt-0.5">5% APR on drawn balances</p>
             </div>
+            <div className="px-5 py-4 bg-dl-bg border-r border-dl-border border-b md:border-b-0">
+              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Interest Collected</p>
+              <p className="font-dl-mono text-lg font-bold text-dl-navy">
+                {juniorPoolStats ? `$${juniorPoolStats.totalInterestCollectedUsd.toFixed(4)}` : '—'}
+              </p>
+              <p className="text-xs text-dl-gray mt-0.5">Total lifetime</p>
+            </div>
+            <div className="px-5 py-4 bg-dl-bg-alt border-r border-dl-border">
+              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">30-Day Distributions</p>
+              <p className="font-dl-mono text-lg font-bold text-dl-navy">
+                {juniorPoolStats ? `$${juniorPoolStats.recentInterestDistributed30dUsd.toFixed(4)}` : '—'}
+              </p>
+              <p className="text-xs text-dl-gray mt-0.5">{juniorPoolStats?.recentRepaymentEvents30d ?? 0} repayment events</p>
+            </div>
+            <div className="px-5 py-4 bg-dl-bg">
+              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Repayment Rate</p>
+              <p className="font-dl-mono text-lg font-bold text-dl-navy">
+                {juniorPoolStats?.repaymentRatePct != null ? `${juniorPoolStats.repaymentRatePct}%` : 'N/A'}
+              </p>
+              <p className="text-xs text-dl-gray mt-0.5">{juniorPoolStats?.repaidCount ?? 0} repaid / {juniorPoolStats?.totalLoansOriginated ?? 0} originated</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-b border-dl-border">
             <div className="px-5 py-4 bg-dl-bg md:border-r border-b md:border-b-0 border-dl-border">
               <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Eligibility</p>
               <p className="text-sm text-dl-navy font-bold">Wealth Practice graduate</p>
               <p className="text-xs text-dl-gray mt-1">Minimum one completed Wealth Practice cycle (GEF Participant+)</p>
             </div>
-            <div className="px-5 py-4 bg-dl-bg-alt">
+            <div className="px-5 py-4 bg-dl-bg-alt md:border-r border-b md:border-b-0 border-dl-border">
+              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Current Outstanding</p>
+              <p className="font-dl-mono text-sm font-bold text-dl-navy">
+                {juniorPoolStats ? `$${juniorPoolStats.currentOutstandingUsd.toFixed(2)}` : '—'}
+              </p>
+              <p className="text-xs text-dl-gray mt-1">Drawn balances currently outstanding</p>
+            </div>
+            <div className="px-5 py-4 bg-dl-bg">
               <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Distribution</p>
               <p className="text-sm text-dl-navy font-bold">On repayment</p>
               <p className="text-xs text-dl-gray mt-1">Interest distributed atomically when borrowers repay credit lines</p>
@@ -397,6 +449,8 @@ export default function LendingFundPage() {
             <p className="text-xs text-dl-gray">
               V1 junior tranche LP invitations are manual. Complete the Wealth Practice and signal interest through the Investor Portal.{' '}
               <Link href="/wealth-practice" className="text-dl-navy underline">Join a Wealth Practice group &rarr;</Link>
+              {' | '}
+              <Link href="/community-credit" className="text-dl-navy underline">View Community Entry Credit &rarr;</Link>
             </p>
           </div>
         </div>

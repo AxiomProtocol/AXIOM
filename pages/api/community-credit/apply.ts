@@ -13,7 +13,7 @@ const GEF_TIER_CREDIT_LIMITS: Record<string, number> = {
 
 const REPAYMENT_DAYS: Record<string, number> = {
   wealth_practice_entry: 30,
-  contribution_smoothing: 30,
+  contribution_smoothing: 60,
   earnest_money: 90,
 };
 
@@ -59,6 +59,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const requestedAmount = parseFloat(requestedAmountUsd);
   if (isNaN(requestedAmount) || requestedAmount <= 0) {
     return res.status(400).json({ success: false, error: 'requestedAmountUsd must be a positive number' });
+  }
+
+  if (statedMonthlyIncomeUsd !== undefined && statedMonthlyIncomeUsd !== null && statedMonthlyIncomeUsd !== '') {
+    const monthlyIncome = parseFloat(statedMonthlyIncomeUsd);
+    if (isNaN(monthlyIncome) || monthlyIncome <= 0) {
+      return res.status(400).json({ success: false, error: 'statedMonthlyIncomeUsd must be a positive number if provided' });
+    }
+    if (monthlyIncome < 1000) {
+      return res.status(200).json({
+        success: false,
+        approved: false,
+        rejectionReason: 'Stated monthly income below $1,000. Community Entry Credit is designed for W-2 earners with stable employment income.',
+      });
+    }
+    const debtToIncomeEstimate = requestedAmount / monthlyIncome;
+    if (debtToIncomeEstimate > 3.0) {
+      return res.status(200).json({
+        success: false,
+        approved: false,
+        rejectionReason: `Requested amount ($${requestedAmount.toLocaleString()}) is more than 3x stated monthly income ($${monthlyIncome.toLocaleString()}). Reduce requested amount or provide updated income information.`,
+      });
+    }
   }
 
   try {

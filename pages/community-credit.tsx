@@ -24,8 +24,8 @@ const USE_CASES = [
     id: 'contribution_smoothing',
     title: 'Contribution Smoothing',
     range: '$50 – $500',
-    repayment: '30 days',
-    desc: 'A payroll timing mismatch means you would miss a cycle. A micro credit line keeps your Wealth Practice group active and your record clean. Repaid when your next direct deposit clears.',
+    repayment: '60 days',
+    desc: 'A payroll timing mismatch means you would miss a cycle. A micro credit line keeps your Wealth Practice group active and your record clean. Repaid within 60 days.',
     tier: 'Participant+',
   },
   {
@@ -51,6 +51,27 @@ const STATUS_STYLES: Record<string, string> = {
   defaulted: 'border border-red-600 text-red-600',
   expired: 'border border-dl-gray text-dl-gray',
 };
+
+const SIGN_MSG = (addr: string) =>
+  `Axiom Protocol Community Entry Credit — wallet ownership proof\nWallet: ${addr}\nTimestamp: ${Math.floor(Date.now() / 60000)}`;
+
+async function getSignedHeaders(walletAddress: string): Promise<Record<string, string> | null> {
+  try {
+    const eth = (window as any).ethereum;
+    if (!eth) return null;
+    const msg = SIGN_MSG(walletAddress);
+    const sig = await eth.request({
+      method: 'personal_sign',
+      params: [msg, walletAddress],
+    });
+    return {
+      'x-wallet-signature': sig,
+      'x-wallet-message': msg,
+    };
+  } catch {
+    return null;
+  }
+}
 
 export default function CommunityCreditPage() {
   const [walletAddress, setWalletAddress] = useState('');
@@ -85,7 +106,15 @@ export default function CommunityCreditPage() {
     setStatusError('');
     setStatus(null);
     try {
-      const res = await fetch(`/api/community-credit/status?walletAddress=${encodeURIComponent(addr)}`);
+      const authHeaders = await getSignedHeaders(addr);
+      if (!authHeaders) {
+        setStatusError('Connect a wallet with MetaMask to view your credit status. Signature required.');
+        setStatusLoading(false);
+        return;
+      }
+      const res = await fetch(`/api/community-credit/status?walletAddress=${encodeURIComponent(addr)}`, {
+        headers: authHeaders,
+      });
       const data = await res.json();
       if (data.success) {
         setStatus(data);
@@ -119,9 +148,15 @@ export default function CommunityCreditPage() {
     setApplyError('');
     setApplyResult(null);
     try {
+      const authHeaders = await getSignedHeaders(walletAddress);
+      if (!authHeaders) {
+        setApplyError('Wallet signature required. Connect MetaMask and approve the signature request to continue.');
+        setApplying(false);
+        return;
+      }
       const res = await fetch('/api/community-credit/apply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           walletAddress,
           statedMonthlyIncomeUsd: form.statedMonthlyIncomeUsd || undefined,
@@ -140,8 +175,6 @@ export default function CommunityCreditPage() {
       setApplying(false);
     }
   };
-
-  const activeLine = status?.creditLines?.find((l: any) => ['active', 'drawn'].includes(l.status));
 
   return (
     <DesignLawLayout>
@@ -174,9 +207,9 @@ export default function CommunityCreditPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-0 border border-dl-border">
           {[
             { num: '1', title: 'Qualify', desc: 'Your GEF tier determines your credit limit. No bank check, no collateral, no crypto overcollateralization.' },
-            { num: '2', title: 'Apply', desc: 'State your monthly W-2 income and request a credit line. The Evaluation Agent reviews your GEF tier and purpose instantly.' },
+            { num: '2', title: 'Apply', desc: 'Connect your wallet, sign a proof of ownership, state your W-2 income, and request a credit line. The Evaluation Agent reviews instantly.' },
             { num: '3', title: 'Draw', desc: 'Once approved, draw down your credit line. AXUSD is disbursed from the protocol treasury to your wallet.' },
-            { num: '4', title: 'Repay', desc: 'Repay within 30 or 90 days depending on purpose. Interest is distributed to the community junior pool — Wealth Practice graduates earn from new member credit.' },
+            { num: '4', title: 'Repay', desc: 'Repay within 30, 60, or 90 days depending on purpose. Interest is distributed to the community junior pool.' },
           ].map((step, i) => (
             <div key={step.num} className={`px-5 py-5 border-t-4 border-t-dl-forest ${i < 3 ? 'md:border-r border-b md:border-b-0 border-dl-border' : ''}`}>
               <p className="font-dl-mono text-2xl text-dl-forest font-bold mb-2">{step.num}</p>
@@ -226,7 +259,7 @@ export default function CommunityCreditPage() {
           ))}
         </div>
         <p className="text-xs text-dl-gray mt-3">
-          GEF tier is your cumulative participation record in the Graduated Execution Framework. Advance tiers by completing cycles, contributing on time, and participating in governance.{' '}
+          GEF tier is your cumulative participation record in the Graduated Execution Framework.{' '}
           <Link href="/start" className="text-dl-navy underline">Learn how to advance your tier &rarr;</Link>
         </p>
       </div>
@@ -240,6 +273,7 @@ export default function CommunityCreditPage() {
           </p>
           <p className="text-sm text-dl-gray leading-relaxed mb-3">
             A GEF violation flag pauses tier advancement — you cannot advance from Participant to Operator while a balance is outstanding.
+            Lines more than 60 days past due are marked as defaulted.
             The flag is automatically cleared when the outstanding balance is fully repaid.
           </p>
           <p className="text-sm text-dl-gray leading-relaxed">
@@ -268,7 +302,7 @@ export default function CommunityCreditPage() {
           <div className="border-t border-dl-border px-5 py-3 bg-dl-bg-alt">
             <p className="text-xs text-dl-gray">
               Graduated Wealth Practice members can participate in the community junior LP pool. Interest distributions are processed on repayment.{' '}
-              <Link href="/lending-fund" className="text-dl-navy underline">View the Lending Fund LP dashboard &rarr;</Link>
+              <Link href="/lending-fund" className="text-dl-navy underline">View the community junior tranche &rarr;</Link>
             </p>
           </div>
         </div>
@@ -277,6 +311,9 @@ export default function CommunityCreditPage() {
       <div className="mb-12">
         <SectionHeading>Check Your Credit Status</SectionHeading>
         <div className="border border-dl-border p-6">
+          <p className="text-xs text-dl-gray mb-4 border border-dl-border px-3 py-2 bg-dl-bg-alt">
+            Wallet signature required to view credit status. Your signature proves wallet ownership and protects your financial data.
+          </p>
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <input
               type="text"
@@ -288,13 +325,13 @@ export default function CommunityCreditPage() {
             />
             <button
               onClick={handleLookup}
-              className="border border-dl-navy bg-dl-bg text-dl-navy px-6 py-2.5 min-h-[44px] text-sm font-bold hover:bg-dl-navy hover:text-white transition-none"
+              className="border border-dl-navy bg-dl-bg text-dl-navy px-6 py-2.5 min-h-[44px] text-sm font-bold hover:bg-dl-navy hover:text-white"
             >
-              Look Up
+              Sign &amp; Look Up
             </button>
           </div>
 
-          {statusLoading && <p className="text-sm text-dl-gray">Loading...</p>}
+          {statusLoading && <p className="text-sm text-dl-gray">Requesting wallet signature...</p>}
           {statusError && <p className="text-sm" style={{ color: '#991b1b' }}>{statusError}</p>}
 
           {status && (
@@ -341,6 +378,11 @@ export default function CommunityCreditPage() {
                             Repayment due: {new Date(line.repayment_due_date).toLocaleDateString()}
                           </p>
                         )}
+                        {line.gef_violation_flagged && (
+                          <p className="text-xs mt-1" style={{ color: '#991b1b' }}>
+                            GEF violation flag active — tier advancement paused until balance is repaid
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -363,9 +405,9 @@ export default function CommunityCreditPage() {
                   onChange={(e) => setForm((f) => ({ ...f, requestedPurpose: e.target.value }))}
                   className="w-full border border-dl-border bg-dl-bg px-3 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
                 >
-                  <option value="wealth_practice_entry">Wealth Practice Entry Bridge</option>
-                  <option value="contribution_smoothing">Contribution Smoothing</option>
-                  <option value="earnest_money">Earnest Money Deposit</option>
+                  <option value="wealth_practice_entry">Wealth Practice Entry Bridge (30-day repayment)</option>
+                  <option value="contribution_smoothing">Contribution Smoothing (60-day repayment)</option>
+                  <option value="earnest_money">Earnest Money Deposit (90-day repayment)</option>
                 </select>
               </div>
               <div>
@@ -380,7 +422,7 @@ export default function CommunityCreditPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-dl-mono text-dl-gray uppercase mb-1">Stated Monthly W-2 Income (optional)</label>
+                <label className="block text-xs font-dl-mono text-dl-gray uppercase mb-1">Monthly W-2 Income (USD, optional)</label>
                 <input
                   type="number"
                   value={form.statedMonthlyIncomeUsd}
@@ -427,11 +469,10 @@ export default function CommunityCreditPage() {
               disabled={applying}
               className="border border-dl-navy bg-dl-navy text-white px-6 py-2.5 min-h-[44px] text-sm font-bold hover:opacity-90 disabled:opacity-50"
             >
-              {applying ? 'Submitting...' : 'Submit Application'}
+              {applying ? 'Signing & Submitting...' : 'Sign & Submit Application'}
             </button>
             <p className="text-xs text-dl-gray mt-2">
-              By applying, you acknowledge that this credit line is governed by the GEF violation mechanism.
-              Outstanding balances past the due date will pause GEF tier advancement until repaid.
+              Your wallet will be asked to sign a message proving ownership. No gas is spent. By submitting, you acknowledge the GEF violation mechanism governs repayment enforcement.
             </p>
           </div>
         </div>
