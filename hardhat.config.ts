@@ -222,6 +222,20 @@ const config: HardhatUserConfig = {
           viaIR: true,
         },
       },
+      "contracts/lending/AXIOMCreditMarket.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
+        },
+      },
+      "contracts/lending/AXIOMFixedLoan.sol": {
+        version: "0.8.20",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
+        },
+      },
     },
   },
   networks: {
@@ -239,7 +253,13 @@ const config: HardhatUserConfig = {
     arbitrum: {
       url: process.env.ARBITRUM_RPC_URL || `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
       chainId: 42161,
-      accounts: process.env.DEPLOYER_PK ? [process.env.DEPLOYER_PK] : (process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []),
+      accounts: process.env.DEPLOYER_PK
+        ? [process.env.DEPLOYER_PK]
+        : process.env.DEPLOYER_PRIVATE_KEY
+          ? [process.env.DEPLOYER_PRIVATE_KEY]
+          : process.env.PRIVATE_KEY
+            ? [process.env.PRIVATE_KEY]
+            : [],
     },
     arbitrumSepolia: {
       url: "https://sepolia-rollup.arbitrum.io/rpc",

@@ -1,6 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
 import { verifyCreditAuth, isAdminRequest } from '../../../lib/community-credit-auth';
+import { ACTIVE_AXUSD } from '../../../src/config/activeContracts.generated';
+
+const ARBITRUM_RPC = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY ?? ''}`;
+const ERC20_TRANSFER_ABI = ['function transfer(address to, uint256 amount) returns (bool)'] as const;
 
 const GEF_OPERATOR_TIERS = new Set(['Operator', 'Steward', 'Architect']);
 
@@ -52,6 +56,7 @@ async function ensureTable(): Promise<void> {
       due_date                  TIMESTAMP WITH TIME ZONE,
       last_payment_at           TIMESTAMP WITH TIME ZONE,
       last_interest_accrual_at  TIMESTAMP WITH TIME ZONE,
+      disbursement_tx_hash      VARCHAR(66),
       created_at                TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
       updated_at                TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
     )
