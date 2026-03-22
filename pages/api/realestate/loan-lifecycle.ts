@@ -637,71 +637,83 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
 
   // ── fund: approve on FixedLoan → commit + disburse from CreditMarket ─────
   // Flow: approveLoan() → commitLiquidity() → disburseLoan() → disburseTranche() (state update)
+  // ALL chain steps must succeed before the DB is updated. Failures return 502.
   if (action === 'fund') {
     const dueDate = new Date();
     dueDate.setMonth(dueDate.getMonth() + loan.loan_term_months);
 
     const { fixedLoan, market: creditMarket, ethers } = await getFixedLoanSigner();
+    const principalWei = ethers.parseUnits(loan.loan_amount_usd, 6);
 
     // 1. Approve the loan on FixedLoan (state: PENDING → APPROVED)
+    // Idempotent: if already approved on-chain, the revert is safe to ignore.
     try {
       const approveTx = await fixedLoan.approveLoan(loanId32);
       await approveTx.wait(1);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      if (!msg.includes('revert') && !msg.includes('APPROVED') && !msg.includes('execution reverted')) throw e;
+      const alreadyApproved = msg.includes('APPROVED') || msg.includes('execution reverted') || msg.includes('revert');
+      if (!alreadyApproved) {
+        return res.status(502).json({ success: false, error: `approveLoan failed: ${msg}` });
+      }
     }
 
-    // 2. Commit CreditMarket liquidity for this loan (AXUSD must be in CreditMarket)
-    const principalWei = ethers.parseUnits(loan.loan_amount_usd, 6);
+    // 2. Commit CreditMarket liquidity for this loan (pool must have sufficient AXUSD)
     try {
       const commitTx = await creditMarket.commitLiquidity(loanId32, principalWei);
       await commitTx.wait(1);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      // If insufficient liquidity, proceed with DB update but note chain state
-      console.warn('[loan-lifecycle] commitLiquidity failed (may be insufficient pool):', msg);
+      return res.status(502).json({
+        success: false,
+        error: `commitLiquidity failed (insufficient pool liquidity or auth): ${msg}`,
+        chainStep: 'commitLiquidity',
+      });
     }
 
-    // 3. Disburse from CreditMarket to borrower (actual AXUSD transfer)
-    let disburseTxHash: string | null = null;
+    // 3. Disburse from CreditMarket to borrower (actual AXUSD transfer — must succeed)
+    let disburseTxHash: string;
     try {
-      const disburseTx = await creditMarket.disburseLoan(
-        loanId32,
-        loan.wallet_address,
-        principalWei
-      );
+      const disburseTx = await creditMarket.disburseLoan(loanId32, loan.wallet_address, principalWei);
       const disburseReceipt = await disburseTx.wait(1);
       disburseTxHash = disburseReceipt?.hash ?? disburseTx.hash;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      console.warn('[loan-lifecycle] disburseLoan failed (likely insufficient pool liquidity):', msg);
+      return res.status(502).json({
+        success: false,
+        error: `disburseLoan failed: ${msg}`,
+        chainStep: 'disburseLoan',
+      });
     }
 
     // 4. Record tranche disbursement on FixedLoan (state: APPROVED → ACTIVE, starts interest clock)
-    let fundTxHash: string = disburseTxHash ?? '';
+    let fundTxHash: string = disburseTxHash;
     try {
       const stateUpdateTx = await fixedLoan.disburseTranche(loanId32, 0);
       const stateReceipt = await stateUpdateTx.wait(1);
       fundTxHash = stateReceipt?.hash ?? stateUpdateTx.hash;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      console.warn('[loan-lifecycle] disburseTranche state update failed:', msg);
+      // Tranche state update failure is non-fatal if disbursement already happened —
+      // log prominently but record the disburse tx hash and set status active.
+      console.error(`[loan-lifecycle] WARN: disburseTranche state update failed after successful disburse: ${msg}`);
+      // Continue — AXUSD was transferred; we must record the DB update.
     }
 
+    // DB update only after all chain operations have confirmed
     await pool.query(
       `UPDATE real_estate_loans
          SET status = $2, funded_at = NOW(), last_interest_accrual_at = NOW(), due_date = $3,
              disbursement_tx_hash = $4, updated_at = NOW()
        WHERE loan_id = $1`,
-      [loan.loan_id, transition.to, dueDate.toISOString(), fundTxHash || disburseTxHash]
+      [loan.loan_id, transition.to, dueDate.toISOString(), fundTxHash]
     );
     return res.status(200).json({
       success: true,
       message: 'Loan funded: AXUSD committed from CreditMarket pool and disbursed to borrower',
       newStatus: transition.to,
-      chainTxHash: fundTxHash || disburseTxHash,
-      explorerUrl: fundTxHash ? `https://arbitrum.blockscout.com/tx/${fundTxHash}` : null,
+      chainTxHash: fundTxHash,
+      explorerUrl: `https://arbitrum.blockscout.com/tx/${fundTxHash}`,
     });
   }
 
@@ -799,6 +811,52 @@ async function handleRepay(
     return res.status(400).json({
       success: false,
       error: 'txHash is required for on-chain repayments. Borrower must call repayLoan() from their wallet and submit the resulting tx hash.',
+    });
+  }
+
+  // Validate txHash on-chain: confirm it is a successful tx to AXIOMFixedLoan
+  // that contains a LoanPayment event matching this loanId.
+  try {
+    const ethersModule = await import('ethers');
+    const ethers = ethersModule.ethers;
+    const provider = new ethers.JsonRpcProvider(
+      `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY ?? ''}`
+    );
+    const receipt = await provider.getTransactionReceipt(txHash);
+    if (!receipt) {
+      return res.status(422).json({ success: false, error: 'Transaction not found on-chain. Wait for confirmation or check the tx hash.' });
+    }
+    if (receipt.status !== 1) {
+      return res.status(422).json({ success: false, error: 'On-chain transaction failed (status=0). Repayment cannot be recorded.' });
+    }
+    if (receipt.to?.toLowerCase() !== FIXED_LOAN_NFT_ADDRESS.toLowerCase()) {
+      return res.status(422).json({
+        success: false,
+        error: `Transaction target (${receipt.to}) does not match AXIOMFixedLoan contract (${FIXED_LOAN_NFT_ADDRESS}).`,
+      });
+    }
+    // Verify LoanPayment event: topic[0] = keccak256("LoanPayment(bytes32,address,uint256,uint256,uint256,uint256)")
+    const LOAN_PAYMENT_TOPIC = ethers.id('LoanPayment(bytes32,address,uint256,uint256,uint256,uint256)');
+    const loanId32 = toLoanId32(loan.loan_id);
+    const hasEvent = receipt.logs.some(
+      (log) =>
+        log.address.toLowerCase() === FIXED_LOAN_NFT_ADDRESS.toLowerCase() &&
+        log.topics[0] === LOAN_PAYMENT_TOPIC &&
+        log.topics[1]?.toLowerCase() === loanId32.toLowerCase()
+    );
+    if (!hasEvent) {
+      return res.status(422).json({
+        success: false,
+        error: 'LoanPayment event not found in transaction logs. Verify the loanId and txHash match.',
+      });
+    }
+  } catch (validationErr: unknown) {
+    const msg = validationErr instanceof Error ? validationErr.message : String(validationErr);
+    // If RPC is unavailable, log the issue but do NOT update the DB
+    console.error('[loan-lifecycle] On-chain tx validation failed:', msg);
+    return res.status(503).json({
+      success: false,
+      error: `On-chain verification unavailable: ${msg}. Please retry after RPC recovers.`,
     });
   }
 

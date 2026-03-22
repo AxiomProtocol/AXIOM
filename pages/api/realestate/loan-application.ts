@@ -103,16 +103,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       }
 
-      // GEF gate: require Operator tier or above when wallet is connected
-      if (walletAddress) {
-        const tier = await getGefTier(walletAddress);
-        if (!GEF_OPERATOR_TIERS.has(tier)) {
-          return res.status(403).json({
-            error: 'GEF Operator tier required to submit a loan application. Your current tier does not qualify.',
-            gefTier: tier,
-            requiredTier: 'Operator',
-          });
-        }
+      // GEF gate: walletAddress is required for loan applications (enables on-chain loan origination later).
+      // Gate is unconditional — anonymous submissions without a wallet are rejected.
+      if (!walletAddress || !walletAddress.match(/^0x[0-9a-fA-F]{40}$/)) {
+        return res.status(403).json({
+          error: 'A connected wallet address is required to submit a loan application. Please connect your wallet.',
+          requiredTier: 'Operator',
+        });
+      }
+
+      const tier = await getGefTier(walletAddress);
+      if (!GEF_OPERATOR_TIERS.has(tier)) {
+        return res.status(403).json({
+          error: 'GEF Operator tier required to submit a loan application. Your current tier does not qualify.',
+          gefTier: tier,
+          requiredTier: 'Operator',
+        });
       }
 
       const [application] = await db.insert(loanApplications)

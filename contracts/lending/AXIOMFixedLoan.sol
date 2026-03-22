@@ -74,12 +74,13 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
         uint256  startedAt;
         uint256  dueAt;
         uint8    state;
-        uint256  totalPrincipal;     // sum of all tranches (6 dec)
-        uint256  drawnPrincipal;     // disbursed so far (6 dec)
+        uint256  totalPrincipal;       // sum of all tranches (6 dec)
+        uint256  drawnPrincipal;       // disbursed so far (6 dec)
         uint256  outstandingPrincipal; // remaining unpaid principal (6 dec)
+        uint256  pendingInterest;      // accrued-but-unpaid interest (6 dec) — PERSISTED so partial payments cannot erase debt
         uint256  lastAccrualAt;
-        uint256  totalInterestPaid;  // cumulative (6 dec)
-        uint256  totalPrincipalPaid; // cumulative (6 dec)
+        uint256  totalInterestPaid;    // cumulative interest collected (6 dec)
+        uint256  totalPrincipalPaid;   // cumulative principal collected (6 dec)
         uint8    numTranches;
         DrawTranche tranche0;
         DrawTranche tranche1;
@@ -247,17 +248,26 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
             revert NotAuthorized(msg.sender);
         }
 
-        uint256 accrued = _accrueNow(loan);
-        uint256 maxDue  = loan.outstandingPrincipal + accrued;
+        // Accrue new interest and persist it to loan.pendingInterest bucket
+        _accrueNow(loan);
+
+        // Total debt = persisted unpaid interest + outstanding principal
+        uint256 totalInterestDue = loan.pendingInterest;
+        uint256 maxDue           = loan.outstandingPrincipal + totalInterestDue;
+
         if (paymentAmt > maxDue + 1e4) revert Overpayment(maxDue, paymentAmt); // dust: 1e4 = $0.000001
 
         uint256 payment = paymentAmt > maxDue ? maxDue : paymentAmt;
-        uint256 interestPortion  = accrued > payment ? payment : accrued;
+
+        // Interest-first allocation: pay pending interest first, then principal
+        uint256 interestPortion  = totalInterestDue > payment ? payment : totalInterestDue;
         uint256 principalPortion = payment - interestPortion;
 
-        loan.totalInterestPaid    += interestPortion;
-        loan.totalPrincipalPaid   += principalPortion;
-        loan.outstandingPrincipal  = loan.outstandingPrincipal > principalPortion
+        // Reduce the persisted interest bucket — partial payments leave remainder for next payment
+        loan.pendingInterest      = totalInterestDue - interestPortion;
+        loan.totalInterestPaid   += interestPortion;
+        loan.totalPrincipalPaid  += principalPortion;
+        loan.outstandingPrincipal = loan.outstandingPrincipal > principalPortion
             ? loan.outstandingPrincipal - principalPortion : 0;
 
         // Pull AXUSD from borrower into this contract
@@ -272,8 +282,10 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
 
         emit LoanPayment(loanId, msg.sender, payment, interestPortion, principalPortion, loan.outstandingPrincipal);
 
-        if (loan.outstandingPrincipal < 1e4) {
+        // Loan is fully repaid when principal and pending interest are both dust-level
+        if (loan.outstandingPrincipal < 1e4 && loan.pendingInterest < 1e4) {
             loan.outstandingPrincipal = 0;
+            loan.pendingInterest      = 0;
             loan.state = STATE_REPAID;
             emit LoanRepaid(loanId);
         }
@@ -291,17 +303,21 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
             revert NotAuthorized(msg.sender);
         }
 
-        uint256 accrued = _accrueNow(loan);
-        uint256 penalty = (loan.outstandingPrincipal * loan.prepayPenaltyBps) / 10000;
-        uint256 totalDue = loan.outstandingPrincipal + accrued + penalty;
+        // Accrue and persist any new interest into pendingInterest
+        _accrueNow(loan);
+
+        uint256 penalty  = (loan.outstandingPrincipal * loan.prepayPenaltyBps) / 10000;
+        // Full payoff: all persisted pending interest + principal + penalty
+        uint256 totalDue = loan.outstandingPrincipal + loan.pendingInterest + penalty;
 
         axusd.safeTransferFrom(msg.sender, address(this), totalDue);
 
         uint256 principalReturned = loan.outstandingPrincipal;
-        uint256 interestTotal     = accrued + penalty;
+        uint256 interestTotal     = loan.pendingInterest + penalty;
         loan.totalInterestPaid   += interestTotal;
         loan.totalPrincipalPaid  += principalReturned;
         loan.outstandingPrincipal = 0;
+        loan.pendingInterest      = 0;
         loan.state = STATE_REPAID;
 
         // Forward to CreditMarket
@@ -350,6 +366,7 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
             loan.state != STATE_APPROVED
         ) revert InvalidState(loan.state, "ACTIVE, DELINQUENT or APPROVED");
         loan.outstandingPrincipal = 0;
+        loan.pendingInterest      = 0;
         loan.state = STATE_REPAID;
         emit LoanAdminClosed(loanId);
     }
@@ -363,20 +380,25 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice Live accrued interest (not yet collected) for an active loan.
+     * @notice Total outstanding interest owed (persisted pendingInterest + newly accrued since last checkpoint).
+     *         Read-only view — does not modify state.
      */
     function accruedInterest(bytes32 loanId) external view returns (uint256) {
         LoanRecord storage loan = _loans[loanId];
-        if (loan.loanId == bytes32(0) || loan.outstandingPrincipal == 0) return 0;
-        if (loan.state != STATE_ACTIVE && loan.state != STATE_DELINQUENT) return 0;
+        if (loan.loanId == bytes32(0)) return 0;
+        if (loan.state != STATE_ACTIVE && loan.state != STATE_DELINQUENT) return loan.pendingInterest;
+        if (loan.outstandingPrincipal == 0) return loan.pendingInterest;
         // slither-disable-next-line timestamp
         uint256 elapsed = block.timestamp - loan.lastAccrualAt;
-        return (loan.outstandingPrincipal * loan.interestRateBps * elapsed) / (365 days * 10000);
+        uint256 newlyAccrued = (loan.outstandingPrincipal * loan.interestRateBps * elapsed) / (365 days * 10000);
+        // Return persisted interest + not-yet-checkpointed interest
+        return loan.pendingInterest + newlyAccrued;
     }
 
     /**
      * @notice Next payment due amount and due timestamp.
      *         Returns (0, dueAt) for interest-only; full amortized payment for AMORTIZED mode.
+     *         Includes persisted pendingInterest in the total.
      */
     function nextPaymentDue(bytes32 loanId)
         external view returns (uint256 amount, uint256 dueTimestamp)
@@ -387,15 +409,16 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
 
         // slither-disable-next-line timestamp
         uint256 elapsed = block.timestamp - loan.lastAccrualAt;
-        uint256 accrued = (loan.outstandingPrincipal * loan.interestRateBps * elapsed) / (365 days * 10000);
+        uint256 newlyAccrued = (loan.outstandingPrincipal * loan.interestRateBps * elapsed) / (365 days * 10000);
+        uint256 totalInterestOwed = loan.pendingInterest + newlyAccrued;
 
         if (loan.paymentMode == MODE_INTEREST_ONLY) {
             // Monthly interest payment
             uint256 monthlyInterest = (loan.outstandingPrincipal * loan.interestRateBps) / (12 * 10000);
-            return (monthlyInterest + accrued, loan.dueAt);
+            return (monthlyInterest + totalInterestOwed, loan.dueAt);
         } else {
-            // Full amortized: estimated total due at term end
-            return (loan.outstandingPrincipal + accrued, loan.dueAt);
+            // Full amortized: principal + all accrued interest due at term end
+            return (loan.outstandingPrincipal + totalInterestOwed, loan.dueAt);
         }
     }
 
@@ -477,9 +500,13 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice Accrue interest and update lastAccrualAt. Returns accrued amount.
+     * @notice Accrue interest since lastAccrualAt, persist it to pendingInterest,
+     *         and advance lastAccrualAt. Returns the newly accrued increment.
+     *
+     * IMPORTANT: accrued interest is written to loan.pendingInterest so partial
+     * payments cannot erase it — the debt bucket persists until paid off.
      */
-    function _accrueNow(LoanRecord storage loan) internal returns (uint256 accrued) {
+    function _accrueNow(LoanRecord storage loan) internal returns (uint256 newlyAccrued) {
         if (loan.outstandingPrincipal == 0) {
             // slither-disable-next-line timestamp
             loan.lastAccrualAt = block.timestamp;
@@ -487,7 +514,9 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
         }
         // slither-disable-next-line timestamp
         uint256 elapsed = block.timestamp - loan.lastAccrualAt;
-        accrued = (loan.outstandingPrincipal * loan.interestRateBps * elapsed) / (365 days * 10000);
+        newlyAccrued = (loan.outstandingPrincipal * loan.interestRateBps * elapsed) / (365 days * 10000);
+        // Persist newly accrued interest into pendingInterest bucket
+        loan.pendingInterest += newlyAccrued;
         // slither-disable-next-line timestamp
         loan.lastAccrualAt = block.timestamp;
     }
