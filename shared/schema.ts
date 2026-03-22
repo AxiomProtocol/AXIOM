@@ -9522,10 +9522,10 @@ export type InsertAgExecution = typeof agExecutions.$inferInsert;
 export type AgAuditLogEntry = typeof agAuditLog.$inferSelect;
 export type InsertAgAuditLogEntry = typeof agAuditLog.$inferInsert;
 
-export const dpDistressTypeEnum = pgEnum('dp_distress_type', ['foreclosure', 'tax_lien', 'reo', 'wholesale', 'short_sale', 'auction', 'government']);
+export const dpDistressTypeEnum = pgEnum('dp_distress_type', ['foreclosure', 'tax_lien', 'reo', 'wholesale', 'short_sale', 'auction', 'government', 'pre_foreclosure', 'lis_pendens']);
 export const dpListingStatusEnum = pgEnum('dp_listing_status', ['active', 'under_contract', 'sold', 'expired', 'pending_review']);
 export const dpSubmissionStatusEnum = pgEnum('dp_submission_status', ['pending', 'approved', 'rejected', 'expired']);
-export const dpSourceEnum = pgEnum('dp_source', ['hud', 'fannie_mae', 'freddie_mac', 'usda', 'wholesaler', 'tax_sale', 'manual']);
+export const dpSourceEnum = pgEnum('dp_source', ['hud', 'fannie_mae', 'freddie_mac', 'usda', 'wholesaler', 'tax_sale', 'manual', 'attom']);
 
 export const dpListings = pgTable("dp_listings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -9553,6 +9553,7 @@ export const dpListings = pgTable("dp_listings", {
   description: text("description"),
   status: dpListingStatusEnum("status").notNull().default('active'),
   auctionDate: timestamp("auction_date"),
+  metadata: jsonb("metadata"),
   ingestedAt: timestamp("ingested_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   expiresAt: timestamp("expires_at"),

@@ -94,6 +94,9 @@ function mapPropertyType(attomType: string | undefined): string {
   return 'single_family';
 }
 
+// ATTOM's /preforeclosure/detail endpoint returns both pre-foreclosure (NOD, NOS, NFS, NTS)
+// and lis pendens filings in a single response, differentiated by foreclosure.filing.type.
+// There is no separate lis pendens endpoint in ATTOM's property API v1.0.0.
 function filingTypeToDistressType(
   filingType: string | undefined
 ): 'pre_foreclosure' | 'lis_pendens' {
@@ -183,9 +186,9 @@ function normalizePreForeclosureListing(
 
   const nodDate = filing?.date || filing?.recordingDate;
   const lenderName = foreclosure?.lender?.name;
-  const auctionDate = foreclosure?.auction?.date
-    ? (() => { try { return new Date(foreclosure.auction!.date!); } catch { return undefined; } })()
-    : undefined;
+  const auctionDateRaw = foreclosure?.auction?.date;
+  const auctionDateParsed = auctionDateRaw ? new Date(auctionDateRaw) : undefined;
+  const auctionDate = auctionDateParsed && !isNaN(auctionDateParsed.getTime()) ? auctionDateParsed : undefined;
   const openingBid = foreclosure?.auction?.openingBid || foreclosure?.amount?.openingBid;
 
   const metadata: AttomListingMetadata = {
