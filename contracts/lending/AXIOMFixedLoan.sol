@@ -1,190 +1,260 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.20;
 
-/**
- * @title AXIOMFixedLoan
- * @notice Fixed-term loan engine for the Axiom Protocol Lending Fund (Task #31).
- *
- * Adapted from Maple Finance `fixed-term-loan` patterns:
- *   - Configurable draw-down schedule (up to 3 tranches)
- *   - Two payment modes: AMORTIZED or INTEREST_ONLY
- *   - Prepayment math: flat penalty on remaining principal
- *   - Six states: PENDING / APPROVED / ACTIVE / DELINQUENT / DEFAULTED / REPAID
- *   - Configurable grace period (seconds) before delinquency
- *
- * Integration with AXIOMCreditMarket:
- *   - Operator calls commitLiquidity() on CreditMarket, then disburseLoan() which
- *     sends AXUSD directly from CreditMarket to the borrower.
- *   - This contract tracks state only; AXUSD custody lives in CreditMarket.
- *   - On repayment: borrower calls repayLoan() here; AXUSD is collected by this
- *     contract and immediately forwarded to CreditMarket via receiveRepayment().
- *   - CreditMarket.fixedLoan must be set to this contract's address post-deploy.
- *
- * AXUSD uses 6 decimal places.
- * Dust threshold: < 1e4 (= $0.000001 in 6-decimal AXUSD) = fully repaid.
- */
+interface IERC20 {
+    function transfer(address to, uint256 amount) external returns (bool);
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+}
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+library SafeERC20Lite {
+    function safeTransfer(IERC20 token, address to, uint256 amount) internal {
+        require(token.transfer(to, amount), "TRANSFER_FAILED");
+    }
+
+    function safeTransferFrom(IERC20 token, address from, address to, uint256 amount) internal {
+        require(token.transferFrom(from, to, amount), "TRANSFER_FROM_FAILED");
+    }
+}
+
+abstract contract ReentrancyGuard {
+    uint256 private constant _NOT_ENTERED = 1;
+    uint256 private constant _ENTERED = 2;
+    uint256 private _status = _NOT_ENTERED;
+
+    modifier nonReentrant() {
+        require(_status != _ENTERED, "REENTRANCY");
+        _status = _ENTERED;
+        _;
+        _status = _NOT_ENTERED;
+    }
+}
+
+abstract contract AccessControlLite {
+    mapping(bytes32 => mapping(address => bool)) private _roles;
+    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
+
+    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
+    event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
+
+    modifier onlyRole(bytes32 role) {
+        require(hasRole(role, msg.sender), "MISSING_ROLE");
+        _;
+    }
+
+    function hasRole(bytes32 role, address account) public view returns (bool) {
+        return _roles[role][account];
+    }
+
+    function grantRole(bytes32 role, address account) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (!_roles[role][account]) {
+            _roles[role][account] = true;
+            emit RoleGranted(role, account, msg.sender);
+        }
+    }
+
+    function revokeRole(bytes32 role, address account) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_roles[role][account]) {
+            _roles[role][account] = false;
+            emit RoleRevoked(role, account, msg.sender);
+        }
+    }
+
+    function _grantRole(bytes32 role, address account) internal {
+        if (!_roles[role][account]) {
+            _roles[role][account] = true;
+            emit RoleGranted(role, account, msg.sender);
+        }
+    }
+}
 
 interface IAxiomIdentityRegistry {
-    function isVerified(address _userAddress) external view returns (bool);
+    function isVerified(address user) external view returns (bool);
 }
 
 interface IAXIOMCreditMarket {
     function receiveRepayment(bytes32 loanId, uint256 principalReturned, uint256 interestAmount) external;
-    /// @notice Release a committed-but-written-off principal from the pool's receivables accounting.
-    function releaseCommitment(bytes32 loanId, uint256 amount) external;
+    function releaseUndrawnCommitment(bytes32 loanId, uint256 amount) external;
+    function writeDownOutstanding(bytes32 loanId, uint256 amount) external;
+    function disburseCommittedLiquidity(bytes32 loanId, address borrower, uint256 amount) external;
 }
 
-contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
-    using SafeERC20 for IERC20;
+contract AXIOMFixedLoan is AccessControlLite, ReentrancyGuard {
+    using SafeERC20Lite for IERC20;
 
-    // ─── Roles ───────────────────────────────────────────────────────────────
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
-    // ─── Payment modes ────────────────────────────────────────────────────────
-    uint8 public constant MODE_AMORTIZED     = 0;
+    uint8 public constant MODE_AMORTIZED = 0;
     uint8 public constant MODE_INTEREST_ONLY = 1;
 
-    // ─── Loan states ──────────────────────────────────────────────────────────
-    uint8 public constant STATE_PENDING    = 0;
-    uint8 public constant STATE_APPROVED   = 1;
-    uint8 public constant STATE_ACTIVE     = 2;
+    uint8 public constant STATE_PENDING = 0;
+    uint8 public constant STATE_APPROVED = 1;
+    uint8 public constant STATE_ACTIVE = 2;
     uint8 public constant STATE_DELINQUENT = 3;
-    uint8 public constant STATE_DEFAULTED  = 4;
-    uint8 public constant STATE_REPAID     = 5;
+    uint8 public constant STATE_DEFAULTED = 4;
+    uint8 public constant STATE_REPAID = 5;
+    uint8 public constant STATE_CLOSED = 6;
+    uint8 public constant STATE_CHARGED_OFF = 7;
 
-    // ─── Draw tranche ─────────────────────────────────────────────────────────
+    uint256 public constant BPS_DENOMINATOR = 10_000;
+    uint256 public constant YEAR_SECONDS = 365 days;
+    uint256 public constant PAYMENT_INTERVAL = 30 days;
+    uint256 public constant DUST_THRESHOLD = 1;
+    uint256 public constant MAX_RATE_BPS = 100_000;
+    uint256 public constant MAX_PREPAY_BPS = 10_000;
+
+    IERC20 public immutable axusd;
+    IAxiomIdentityRegistry public immutable identityRegistry;
+    IAXIOMCreditMarket public creditMarket;
+
+    bool public immutable accrueAfterMaturity;
+
     struct DrawTranche {
-        uint256 amount;      // AXUSD wei (6 decimals)
-        uint256 releaseAt;   // earliest disbursement timestamp (0 = immediate)
-        bool    drawn;
+        uint256 amount;
+        uint256 releaseAt;
+        bool drawn;
     }
 
-    // ─── Loan record ──────────────────────────────────────────────────────────
     struct LoanRecord {
-        bytes32  loanId;
-        address  borrower;
-        uint8    paymentMode;
-        uint256  interestRateBps;
-        uint256  prepayPenaltyBps;
-        uint256  gracePeriodSeconds;
-        uint256  termSeconds;
-        uint256  startedAt;
-        uint256  dueAt;
-        uint8    state;
-        uint256  totalPrincipal;       // sum of all tranches (6 dec)
-        uint256  drawnPrincipal;       // disbursed so far (6 dec)
-        uint256  outstandingPrincipal; // remaining unpaid principal (6 dec)
-        uint256  pendingInterest;      // accrued-but-unpaid interest (6 dec) — PERSISTED so partial payments cannot erase debt
-        uint256  lastAccrualAt;
-        uint256  totalInterestPaid;    // cumulative interest collected (6 dec)
-        uint256  totalPrincipalPaid;   // cumulative principal collected (6 dec)
-        uint8    numTranches;
+        bytes32 loanId;
+        address borrower;
+        uint8 paymentMode;
+        uint256 interestRateBps;
+        uint256 prepayPenaltyBps;
+        uint256 gracePeriodSeconds;
+        uint256 termSeconds;
+        uint256 startedAt;
+        uint256 dueAt;
+        uint8 state;
+
+        uint256 totalPrincipal;
+        uint256 drawnPrincipal;
+        uint256 outstandingPrincipal;
+
+        uint256 pendingInterest;
+        uint256 lastAccrualAt;
+
+        uint256 totalInterestPaid;
+        uint256 totalPrincipalPaid;
+
+        uint8 numTranches;
         DrawTranche tranche0;
         DrawTranche tranche1;
         DrawTranche tranche2;
-        string   propertyAddress;
-    }
 
-    // ─── Storage ──────────────────────────────────────────────────────────────
-    IERC20                  public axusd;
-    IAxiomIdentityRegistry  public identityRegistry;
-    IAXIOMCreditMarket      public creditMarket; // set post-deploy
+        string propertyAddress;
+
+        uint256 delinquentAt;
+
+        uint256 totalInstallments;
+        uint256 installmentIntervalSeconds;
+        uint256 installmentAmount;
+        uint256 nextInstallmentDueAt;
+        uint256 currentInstallmentPaid;
+        uint256 installmentsSatisfied;
+    }
 
     mapping(bytes32 => LoanRecord) private _loans;
     bytes32[] public allLoanIds;
 
-    // ─── Events ───────────────────────────────────────────────────────────────
+    event CreditMarketSet(address indexed creditMarket);
     event LoanOriginated(bytes32 indexed loanId, address indexed borrower, uint256 totalPrincipal, string propertyAddress);
     event LoanApproved(bytes32 indexed loanId);
     event DrawDisbursed(bytes32 indexed loanId, uint8 trancheIndex, uint256 amount);
-    event LoanPayment(bytes32 indexed loanId, address indexed payer, uint256 paymentAmount, uint256 interestPortion, uint256 principalPortion, uint256 remainingPrincipal);
+    event LoanPayment(
+        bytes32 indexed loanId,
+        address indexed payer,
+        uint256 paymentAmount,
+        uint256 interestPortion,
+        uint256 principalPortion,
+        uint256 remainingPrincipal
+    );
     event LoanPrepaid(bytes32 indexed loanId, uint256 penaltyAmount);
-    event LoanDelinquent(bytes32 indexed loanId);
+    event LoanDelinquent(bytes32 indexed loanId, uint256 delinquentAt);
     event LoanCured(bytes32 indexed loanId);
     event LoanDefaulted(bytes32 indexed loanId);
     event LoanRepaid(bytes32 indexed loanId);
-    event LoanAdminClosed(bytes32 indexed loanId);
-    event CreditMarketSet(address indexed creditMarket);
+    event LoanClosed(bytes32 indexed loanId, uint256 releasedCommitment);
+    event LoanChargedOff(bytes32 indexed loanId, uint256 principalWrittenOff, uint256 interestCleared);
 
-    // ─── Errors ───────────────────────────────────────────────────────────────
     error LoanNotFound(bytes32 loanId);
     error InvalidState(uint8 current, string expected);
+    error InvalidConfig(string reason);
     error TrancheAlreadyDrawn(uint8 index);
     error TrancheNotReleased(uint8 index, uint256 releaseAt);
     error Overpayment(uint256 maxDue, uint256 attempted);
     error NotAuthorized(address caller);
+    error CreditMarketNotSet();
+    error UnverifiedBorrower(address borrower);
+    error InstallmentNotDue();
+    error InsufficientInstallmentPayment(uint256 requiredMinimum, uint256 actualPayment);
+    error PastDueInstallment(uint256 dueTimestamp);
 
-    // ─── Constructor ──────────────────────────────────────────────────────────
-    constructor(address _axusd, address _identityRegistry) {
+    constructor(address _axusd, address _identityRegistry, bool _accrueAfterMaturity) {
+        require(_axusd != address(0), "ZERO_AXUSD");
+        require(_identityRegistry != address(0), "ZERO_IDENTITY");
+
         axusd = IERC20(_axusd);
         identityRegistry = IAxiomIdentityRegistry(_identityRegistry);
+        accrueAfterMaturity = _accrueAfterMaturity;
+
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(OPERATOR_ROLE, msg.sender);
     }
 
-    // ─── Admin: register CreditMarket ─────────────────────────────────────────
-
-    /**
-     * @notice Set the CreditMarket contract that will receive repayments.
-     *         Must be called after both contracts are deployed.
-     */
     function setCreditMarket(address _creditMarket) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_creditMarket != address(0), "Zero address");
+        require(_creditMarket != address(0), "ZERO_CREDIT_MARKET");
         creditMarket = IAXIOMCreditMarket(_creditMarket);
         emit CreditMarketSet(_creditMarket);
     }
 
-    // ─── Operator: Originate ──────────────────────────────────────────────────
-
-    /**
-     * @notice Originate a fixed-term loan (state record only; AXUSD custody in CreditMarket).
-     * @param tranchAmts    Array of draw amounts in AXUSD (1-3 elements, 6 decimals)
-     * @param tranchRelease Earliest timestamp each tranche can be disbursed (0 = immediate)
-     */
     function originateLoan(
         bytes32 loanId,
         address borrower,
-        uint8   paymentMode,
+        uint8 paymentMode,
         uint256 rateBps,
         uint256 prepayBps,
         uint256 graceSecs,
         uint256 termSecs,
         string calldata propAddress,
-        uint256[] calldata tranchAmts,
-        uint256[] calldata tranchRelease
+        uint256[] calldata trancheAmounts,
+        uint256[] calldata trancheRelease
     ) external onlyRole(OPERATOR_ROLE) {
-        require(_loans[loanId].loanId == bytes32(0), "Loan exists");
-        require(tranchAmts.length >= 1 && tranchAmts.length <= 3, "1-3 tranches");
-        require(tranchAmts.length == tranchRelease.length, "Mismatched tranche arrays");
-        require(paymentMode <= MODE_INTEREST_ONLY, "Invalid payment mode");
+        _validateOriginationArgs(
+            loanId,
+            borrower,
+            paymentMode,
+            rateBps,
+            prepayBps,
+            termSecs,
+            trancheAmounts,
+            trancheRelease
+        );
 
-        uint256 total = 0;
-        for (uint8 i = 0; i < tranchAmts.length; i++) {
-            total += tranchAmts[i];
-        }
-        require(total > 0, "Zero principal");
+        uint256 total = _sumTranches(trancheAmounts);
 
         LoanRecord storage loan = _loans[loanId];
-        loan.loanId             = loanId;
-        loan.borrower           = borrower;
-        loan.paymentMode        = paymentMode;
-        loan.interestRateBps    = rateBps;
-        loan.prepayPenaltyBps   = prepayBps;
+        loan.loanId = loanId;
+        loan.borrower = borrower;
+        loan.paymentMode = paymentMode;
+        loan.interestRateBps = rateBps;
+        loan.prepayPenaltyBps = prepayBps;
         loan.gracePeriodSeconds = graceSecs;
-        loan.termSeconds        = termSecs;
-        loan.state              = STATE_PENDING;
-        loan.totalPrincipal     = total;
-        loan.numTranches        = uint8(tranchAmts.length);
-        loan.propertyAddress    = propAddress;
+        loan.termSeconds = termSecs;
+        loan.state = STATE_PENDING;
+        loan.totalPrincipal = total;
+        loan.numTranches = uint8(trancheAmounts.length);
+        loan.propertyAddress = propAddress;
 
-        if (tranchAmts.length >= 1) loan.tranche0 = DrawTranche(tranchAmts[0], tranchRelease[0], false);
-        if (tranchAmts.length >= 2) loan.tranche1 = DrawTranche(tranchAmts[1], tranchRelease[1], false);
-        if (tranchAmts.length >= 3) loan.tranche2 = DrawTranche(tranchAmts[2], tranchRelease[2], false);
+        if (loan.numTranches >= 1) loan.tranche0 = DrawTranche(trancheAmounts[0], trancheRelease[0], false);
+        if (loan.numTranches >= 2) loan.tranche1 = DrawTranche(trancheAmounts[1], trancheRelease[1], false);
+        if (loan.numTranches >= 3) loan.tranche2 = DrawTranche(trancheAmounts[2], trancheRelease[2], false);
+
+        if (paymentMode == MODE_AMORTIZED) {
+            require(loan.numTranches == 1, "AMORTIZED_ONE_TRANCHE_ONLY");
+            loan.installmentIntervalSeconds = PAYMENT_INTERVAL;
+            loan.totalInstallments = _ceilDiv(termSecs, PAYMENT_INTERVAL);
+            loan.installmentAmount = _computeInstallmentAmount(total, rateBps, loan.totalInstallments);
+        }
 
         allLoanIds.push(loanId);
         emit LoanOriginated(loanId, borrower, total, propAddress);
@@ -193,56 +263,53 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
     function approveLoan(bytes32 loanId) external onlyRole(OPERATOR_ROLE) {
         LoanRecord storage loan = _requireLoan(loanId);
         if (loan.state != STATE_PENDING) revert InvalidState(loan.state, "PENDING");
+        if (address(creditMarket) == address(0)) revert CreditMarketNotSet();
+        if (!identityRegistry.isVerified(loan.borrower)) revert UnverifiedBorrower(loan.borrower);
+
         loan.state = STATE_APPROVED;
         emit LoanApproved(loanId);
     }
 
-    /**
-     * @notice Record that a tranche disbursement occurred.
-     *         Actual AXUSD transfer is handled by CreditMarket.disburseLoan().
-     *         Operator must call CreditMarket.disburseLoan() BEFORE or AFTER this call.
-     *         This call updates the loan state machine (starts clock on first tranche).
-     */
-    function disburseTranche(bytes32 loanId, uint8 ti) external onlyRole(OPERATOR_ROLE) {
+    function disburseTranche(bytes32 loanId, uint8 trancheIndex) external onlyRole(OPERATOR_ROLE) nonReentrant {
         LoanRecord storage loan = _requireLoan(loanId);
+        if (address(creditMarket) == address(0)) revert CreditMarketNotSet();
         if (loan.state != STATE_APPROVED && loan.state != STATE_ACTIVE) {
             revert InvalidState(loan.state, "APPROVED or ACTIVE");
         }
-        require(ti < loan.numTranches, "Invalid tranche");
+        require(trancheIndex < loan.numTranches, "INVALID_TRANCHE");
 
-        DrawTranche storage t = _tranche(loan, ti);
-        if (t.drawn) revert TrancheAlreadyDrawn(ti);
-        // slither-disable-next-line timestamp
-        if (t.releaseAt > 0 && block.timestamp < t.releaseAt) revert TrancheNotReleased(ti, t.releaseAt);
+        DrawTranche storage tranche = _tranche(loan, trancheIndex);
+        if (tranche.drawn) revert TrancheAlreadyDrawn(trancheIndex);
+        if (tranche.releaseAt != 0 && block.timestamp < tranche.releaseAt) {
+            revert TrancheNotReleased(trancheIndex, tranche.releaseAt);
+        }
 
-        t.drawn = true;
-        loan.drawnPrincipal       += t.amount;
-        loan.outstandingPrincipal += t.amount;
-
-        if (loan.state == STATE_APPROVED) {
-            // First draw: start the clock
-            // slither-disable-next-line timestamp
-            loan.startedAt     = block.timestamp;
-            // slither-disable-next-line timestamp
-            loan.dueAt         = block.timestamp + loan.termSeconds;
-            // slither-disable-next-line timestamp
-            loan.lastAccrualAt = block.timestamp;
-            loan.state         = STATE_ACTIVE;
-        } else {
+        if (loan.state == STATE_ACTIVE) {
             _accrueNow(loan);
         }
 
-        emit DrawDisbursed(loanId, ti, t.amount);
+        tranche.drawn = true;
+        loan.drawnPrincipal += tranche.amount;
+        loan.outstandingPrincipal += tranche.amount;
+
+        if (loan.state == STATE_APPROVED) {
+            loan.startedAt = block.timestamp;
+            loan.dueAt = block.timestamp + loan.termSeconds;
+            loan.lastAccrualAt = block.timestamp;
+            loan.state = STATE_ACTIVE;
+
+            if (loan.paymentMode == MODE_AMORTIZED) {
+                loan.nextInstallmentDueAt = block.timestamp + loan.installmentIntervalSeconds;
+            }
+        }
+
+        creditMarket.disburseCommittedLiquidity(loanId, loan.borrower, tranche.amount);
+        emit DrawDisbursed(loanId, trancheIndex, tranche.amount);
     }
 
-    /**
-     * @notice Repay — borrower calls directly (interest-first allocation).
-     *         Repaid AXUSD is forwarded to CreditMarket for LP distribution.
-     * @param loanId     Loan identifier
-     * @param paymentAmt AXUSD amount (6 decimals)
-     */
-    function repayLoan(bytes32 loanId, uint256 paymentAmt) external nonReentrant {
+    function repayLoan(bytes32 loanId, uint256 paymentAmount) external nonReentrant {
         LoanRecord storage loan = _requireLoan(loanId);
+        if (address(creditMarket) == address(0)) revert CreditMarketNotSet();
         if (loan.state != STATE_ACTIVE && loan.state != STATE_DELINQUENT) {
             revert InvalidState(loan.state, "ACTIVE or DELINQUENT");
         }
@@ -250,62 +317,60 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
             revert NotAuthorized(msg.sender);
         }
 
-        // Accrue new interest and persist it to loan.pendingInterest bucket
         _accrueNow(loan);
 
-        // Total debt = persisted unpaid interest + outstanding principal
+        if (loan.paymentMode == MODE_AMORTIZED) {
+            _enforceAmortizedPastDueRules(loan);
+
+            if (loan.nextInstallmentDueAt != 0 && block.timestamp >= loan.nextInstallmentDueAt) {
+                uint256 dueNow = _currentInstallmentDue(loan);
+                if (dueNow > DUST_THRESHOLD && paymentAmount + DUST_THRESHOLD < dueNow) {
+                    revert InsufficientInstallmentPayment(dueNow, paymentAmount);
+                }
+            }
+        }
+
         uint256 totalInterestDue = loan.pendingInterest;
-        uint256 maxDue           = loan.outstandingPrincipal + totalInterestDue;
+        uint256 maxDue = loan.outstandingPrincipal + totalInterestDue;
 
-        if (paymentAmt > maxDue + 1e4) revert Overpayment(maxDue, paymentAmt); // dust: 1e4 = $0.000001
+        if (paymentAmount > maxDue + DUST_THRESHOLD) revert Overpayment(maxDue, paymentAmount);
+        uint256 payment = paymentAmount > maxDue ? maxDue : paymentAmount;
 
-        uint256 payment = paymentAmt > maxDue ? maxDue : paymentAmt;
-
-        // Interest-first allocation: pay pending interest first, then principal
-        uint256 interestPortion  = totalInterestDue > payment ? payment : totalInterestDue;
+        uint256 interestPortion = totalInterestDue > payment ? payment : totalInterestDue;
         uint256 principalPortion = payment - interestPortion;
 
-        // EFFECTS — all state updated before any external call (full CEI compliance)
-        loan.pendingInterest      = totalInterestDue - interestPortion;
-        loan.totalInterestPaid   += interestPortion;
-        loan.totalPrincipalPaid  += principalPortion;
+        loan.pendingInterest = totalInterestDue - interestPortion;
+        loan.totalInterestPaid += interestPortion;
+        loan.totalPrincipalPaid += principalPortion;
         loan.outstandingPrincipal = loan.outstandingPrincipal > principalPortion
-            ? loan.outstandingPrincipal - principalPortion : 0;
+            ? loan.outstandingPrincipal - principalPortion
+            : 0;
 
-        // Determine final state BEFORE any interaction — prevents re-entering repayLoan
-        // after safeTransferFrom hook fires while loan is still ACTIVE.
-        bool fullyRepaid = loan.outstandingPrincipal < 1e4 && loan.pendingInterest < 1e4;
+        if (loan.paymentMode == MODE_AMORTIZED) {
+            loan.currentInstallmentPaid += payment;
+            _advanceInstallmentsIfSatisfied(loan);
+        }
+
+        bool fullyRepaid = loan.outstandingPrincipal <= DUST_THRESHOLD && loan.pendingInterest <= DUST_THRESHOLD;
         if (fullyRepaid) {
             loan.outstandingPrincipal = 0;
-            loan.pendingInterest      = 0;
-            loan.state                = STATE_REPAID;
+            loan.pendingInterest = 0;
+            loan.currentInstallmentPaid = 0;
+            loan.nextInstallmentDueAt = 0;
+            loan.state = STATE_REPAID;
         }
 
-        // INTERACTIONS — external calls after all state is finalized
         axusd.safeTransferFrom(msg.sender, address(this), payment);
-
-        if (address(creditMarket) != address(0)) {
-            axusd.safeTransfer(address(creditMarket), payment);
-            creditMarket.receiveRepayment(loanId, principalPortion, interestPortion);
-        }
+        axusd.safeTransfer(address(creditMarket), payment);
+        creditMarket.receiveRepayment(loanId, principalPortion, interestPortion);
 
         emit LoanPayment(loanId, msg.sender, payment, interestPortion, principalPortion, loan.outstandingPrincipal);
         if (fullyRepaid) emit LoanRepaid(loanId);
     }
 
-    /**
-     * @notice Prepay in full with penalty. Borrower pays principal + accrued + penalty.
-     *
-     * CEI order:
-     *   1. CHECKS  — state, authorization
-     *   2. EFFECTS — all storage writes (amounts, state = REPAID)
-     *   3. INTERACTIONS — safeTransferFrom, safeTransfer, receiveRepayment
-     *
-     * This prevents a cross-function reentrancy attack where a hook on the AXUSD token
-     * could call repayLoan() between the pull and the state update.
-     */
     function prepayLoan(bytes32 loanId) external nonReentrant {
         LoanRecord storage loan = _requireLoan(loanId);
+        if (address(creditMarket) == address(0)) revert CreditMarketNotSet();
         if (loan.state != STATE_ACTIVE && loan.state != STATE_DELINQUENT) {
             revert InvalidState(loan.state, "ACTIVE or DELINQUENT");
         }
@@ -313,111 +378,120 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
             revert NotAuthorized(msg.sender);
         }
 
-        // Accrue and persist any new interest into pendingInterest
         _accrueNow(loan);
 
-        uint256 penalty           = (loan.outstandingPrincipal * loan.prepayPenaltyBps) / 10000;
+        uint256 penalty = (loan.outstandingPrincipal * loan.prepayPenaltyBps) / BPS_DENOMINATOR;
         uint256 principalReturned = loan.outstandingPrincipal;
-        uint256 interestTotal     = loan.pendingInterest + penalty;
-        // Full payoff: all persisted pending interest + principal + penalty
-        uint256 totalDue          = principalReturned + interestTotal;
+        uint256 interestTotal = loan.pendingInterest + penalty;
+        uint256 totalDue = principalReturned + interestTotal;
 
-        // EFFECTS: update all state before any external call (CEI pattern)
-        loan.totalInterestPaid   += interestTotal;
-        loan.totalPrincipalPaid  += principalReturned;
+        loan.totalInterestPaid += interestTotal;
+        loan.totalPrincipalPaid += principalReturned;
         loan.outstandingPrincipal = 0;
-        loan.pendingInterest      = 0;
-        loan.state                = STATE_REPAID;
+        loan.pendingInterest = 0;
+        loan.currentInstallmentPaid = 0;
+        loan.nextInstallmentDueAt = 0;
+        loan.state = STATE_REPAID;
 
-        // INTERACTIONS: external calls after all state changes
         axusd.safeTransferFrom(msg.sender, address(this), totalDue);
-
-        // Forward to CreditMarket — explicit call (no try/catch); revert on failure
-        if (address(creditMarket) != address(0)) {
-            axusd.safeTransfer(address(creditMarket), totalDue);
-            creditMarket.receiveRepayment(loanId, principalReturned, interestTotal);
-        }
+        axusd.safeTransfer(address(creditMarket), totalDue);
+        creditMarket.receiveRepayment(loanId, principalReturned, interestTotal);
 
         emit LoanPrepaid(loanId, penalty);
         emit LoanRepaid(loanId);
     }
 
-    // ─── Operator: State transitions ──────────────────────────────────────────
-
-    /**
-     * @notice Mark a loan delinquent once it is past its maturity date.
-     *         Grace period applies to the DEFAULT transition, not the delinquency declaration —
-     *         the loan must simply be past maturity (dueAt) before the operator can flag it.
-     *         This mirrors Maple Finance's delinquency state machine.
-     */
     function markDelinquent(bytes32 loanId) external onlyRole(OPERATOR_ROLE) {
         LoanRecord storage loan = _requireLoan(loanId);
         if (loan.state != STATE_ACTIVE) revert InvalidState(loan.state, "ACTIVE");
-        // slither-disable-next-line timestamp
-        require(block.timestamp >= loan.dueAt, "Loan not yet past maturity");
+        _accrueNow(loan);
+
+        bool maturePastGrace = block.timestamp >= loan.dueAt + loan.gracePeriodSeconds;
+        bool installmentPastGrace = false;
+
+        if (loan.paymentMode == MODE_AMORTIZED && loan.nextInstallmentDueAt != 0) {
+            uint256 dueNow = _currentInstallmentDue(loan);
+            installmentPastGrace =
+                dueNow > DUST_THRESHOLD &&
+                block.timestamp > loan.nextInstallmentDueAt + loan.gracePeriodSeconds;
+        }
+
+        require(maturePastGrace || installmentPastGrace, "NOT_DELINQUENT_YET");
+
         loan.state = STATE_DELINQUENT;
-        emit LoanDelinquent(loanId);
+        loan.delinquentAt = block.timestamp;
+        emit LoanDelinquent(loanId, loan.delinquentAt);
     }
 
     function cureDelinquent(bytes32 loanId) external onlyRole(OPERATOR_ROLE) {
         LoanRecord storage loan = _requireLoan(loanId);
         if (loan.state != STATE_DELINQUENT) revert InvalidState(loan.state, "DELINQUENT");
+        _accrueNow(loan);
+
+        if (loan.paymentMode == MODE_AMORTIZED && loan.nextInstallmentDueAt != 0) {
+            uint256 dueNow = _currentInstallmentDue(loan);
+            require(dueNow <= DUST_THRESHOLD, "INSTALLMENT_STILL_DUE");
+        }
+
         loan.state = STATE_ACTIVE;
+        loan.delinquentAt = 0;
         emit LoanCured(loanId);
     }
 
-    /**
-     * @notice Declare a loan in default. Only callable after grace period has expired
-     *         (dueAt + gracePeriodSeconds). The grace period gives borrowers time to cure
-     *         after maturity before the operator can escalate to DEFAULT, aligning with
-     *         Maple Finance's configurable grace-period state machine.
-     */
     function defaultLoan(bytes32 loanId) external onlyRole(OPERATOR_ROLE) {
         LoanRecord storage loan = _requireLoan(loanId);
-        if (loan.state != STATE_ACTIVE && loan.state != STATE_DELINQUENT) {
-            revert InvalidState(loan.state, "ACTIVE or DELINQUENT");
-        }
-        // slither-disable-next-line timestamp
-        require(
-            block.timestamp >= loan.dueAt + loan.gracePeriodSeconds,
-            "Grace period has not expired"
-        );
+        if (loan.state != STATE_DELINQUENT) revert InvalidState(loan.state, "DELINQUENT");
+        require(loan.delinquentAt != 0, "MISSING_DELINQUENT_AT");
+        require(block.timestamp >= loan.delinquentAt + loan.gracePeriodSeconds, "POST_DELINQUENT_GRACE_ACTIVE");
+
         loan.state = STATE_DEFAULTED;
         emit LoanDefaulted(loanId);
     }
 
-    /**
-     * @notice Admin close (reconciliation path — for off-chain settled or written-off loans).
-     *         Notifies CreditMarket to release the outstanding principal from committed
-     *         receivables accounting. Without this, totalCommitted remains inflated permanently,
-     *         causing an artificial share price increase and LP accounting errors.
-     */
-    function closeLoan(bytes32 loanId) external onlyRole(OPERATOR_ROLE) {
+    function closeUndrawnApprovedLoan(bytes32 loanId) external onlyRole(OPERATOR_ROLE) nonReentrant {
         LoanRecord storage loan = _requireLoan(loanId);
-        if (
-            loan.state != STATE_ACTIVE &&
-            loan.state != STATE_DELINQUENT &&
-            loan.state != STATE_APPROVED
-        ) revert InvalidState(loan.state, "ACTIVE, DELINQUENT or APPROVED");
+        if (loan.state != STATE_APPROVED) revert InvalidState(loan.state, "APPROVED");
+        if (address(creditMarket) == address(0)) revert CreditMarketNotSet();
 
-        uint256 principalToRelease = loan.outstandingPrincipal;
+        uint256 undrawnCommitment = loan.totalPrincipal > loan.drawnPrincipal
+            ? loan.totalPrincipal - loan.drawnPrincipal
+            : 0;
 
-        // EFFECTS first
-        loan.outstandingPrincipal = 0;
-        loan.pendingInterest      = 0;
-        loan.state                = STATE_REPAID;
+        loan.state = STATE_CLOSED;
+        creditMarket.releaseUndrawnCommitment(loanId, undrawnCommitment);
 
-        // INTERACTIONS: notify CreditMarket to release receivable / pre-disbursement commitment.
-        // Always call even when principalToRelease=0 (APPROVED loan closed before disbursal) so
-        // that releaseCommitment can clean up loanCommitment[loanId] and totalCommitted.
-        if (address(creditMarket) != address(0)) {
-            creditMarket.releaseCommitment(loanId, principalToRelease);
-        }
-
-        emit LoanAdminClosed(loanId);
+        emit LoanClosed(loanId, undrawnCommitment);
     }
 
-    // ─── View functions ───────────────────────────────────────────────────────
+    function chargeOffLoan(bytes32 loanId) external onlyRole(OPERATOR_ROLE) nonReentrant {
+        LoanRecord storage loan = _requireLoan(loanId);
+        if (loan.state != STATE_DEFAULTED && loan.state != STATE_DELINQUENT) {
+            revert InvalidState(loan.state, "DEFAULTED or DELINQUENT");
+        }
+        if (address(creditMarket) == address(0)) revert CreditMarketNotSet();
+
+        uint256 undrawnCommitment = loan.totalPrincipal > loan.drawnPrincipal
+            ? loan.totalPrincipal - loan.drawnPrincipal
+            : 0;
+
+        uint256 principalWrittenOff = loan.outstandingPrincipal;
+        uint256 interestCleared = loan.pendingInterest;
+
+        loan.outstandingPrincipal = 0;
+        loan.pendingInterest = 0;
+        loan.currentInstallmentPaid = 0;
+        loan.nextInstallmentDueAt = 0;
+        loan.state = STATE_CHARGED_OFF;
+
+        if (undrawnCommitment > 0) {
+            creditMarket.releaseUndrawnCommitment(loanId, undrawnCommitment);
+        }
+        if (principalWrittenOff > 0) {
+            creditMarket.writeDownOutstanding(loanId, principalWrittenOff);
+        }
+
+        emit LoanChargedOff(loanId, principalWrittenOff, interestCleared);
+    }
 
     function getLoan(bytes32 loanId) external view returns (LoanRecord memory) {
         LoanRecord storage loan = _loans[loanId];
@@ -425,164 +499,244 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
         return loan;
     }
 
-    /**
-     * @notice Total outstanding interest owed (persisted pendingInterest + newly accrued since last checkpoint).
-     *         Read-only view — does not modify state.
-     */
+    function loanCount() external view returns (uint256) {
+        return allLoanIds.length;
+    }
+
     function accruedInterest(bytes32 loanId) external view returns (uint256) {
         LoanRecord storage loan = _loans[loanId];
         if (loan.loanId == bytes32(0)) return 0;
-        if (loan.state != STATE_ACTIVE && loan.state != STATE_DELINQUENT) return loan.pendingInterest;
-        if (loan.outstandingPrincipal == 0) return loan.pendingInterest;
-        // slither-disable-next-line timestamp
-        uint256 elapsed = block.timestamp - loan.lastAccrualAt;
-        uint256 newlyAccrued = (loan.outstandingPrincipal * loan.interestRateBps * elapsed) / (365 days * 10000);
-        // Return persisted interest + not-yet-checkpointed interest
-        return loan.pendingInterest + newlyAccrued;
+        return _accruedInterestView(loan);
     }
 
-    /**
-     * @notice Next payment due amount and due timestamp.
-     *         Returns (0, dueAt) for interest-only; full amortized payment for AMORTIZED mode.
-     *         Includes persisted pendingInterest in the total.
-     */
-    function nextPaymentDue(bytes32 loanId)
-        external view returns (uint256 amount, uint256 dueTimestamp)
-    {
+    function nextPaymentDue(bytes32 loanId) external view returns (uint256 amount, uint256 dueTimestamp) {
         LoanRecord storage loan = _loans[loanId];
         if (loan.loanId == bytes32(0)) return (0, 0);
         if (loan.state != STATE_ACTIVE && loan.state != STATE_DELINQUENT) return (0, loan.dueAt);
 
-        // slither-disable-next-line timestamp
-        uint256 elapsed = block.timestamp - loan.lastAccrualAt;
-        uint256 newlyAccrued = (loan.outstandingPrincipal * loan.interestRateBps * elapsed) / (365 days * 10000);
-        uint256 totalInterestOwed = loan.pendingInterest + newlyAccrued;
+        uint256 interestOwed = _accruedInterestView(loan);
 
         if (loan.paymentMode == MODE_INTEREST_ONLY) {
-            // For interest-only loans the next payment = all currently owed interest.
-            // Do NOT add a separate monthlyInterest estimate — totalInterestOwed already
-            // includes this period's accrued amount; adding again would double-count.
-            return (totalInterestOwed, loan.dueAt);
-        } else {
-            // Full amortized: total principal + all accrued interest due at maturity
-            return (loan.outstandingPrincipal + totalInterestOwed, loan.dueAt);
+            return (interestOwed, loan.dueAt);
         }
+
+        if (loan.nextInstallmentDueAt == 0) return (0, 0);
+        return (_currentInstallmentDueView(loan, interestOwed), loan.nextInstallmentDueAt);
     }
 
-    /**
-     * @notice Simplified monthly amortized payment schedule.
-     *         Returns arrays of payment amounts and timestamps.
-     */
     function paymentSchedule(bytes32 loanId)
-        external view returns (uint256[] memory amounts, uint256[] memory dueDates)
+        external
+        view
+        returns (uint256[] memory amounts, uint256[] memory dueDates)
     {
         LoanRecord storage loan = _loans[loanId];
+
         if (loan.loanId == bytes32(0) || loan.startedAt == 0) {
             return (new uint256[](0), new uint256[](0));
         }
 
-        uint256 termMonths = loan.termSeconds / 30 days;
-        if (termMonths == 0) termMonths = 1;
-
-        amounts  = new uint256[](termMonths);
-        dueDates = new uint256[](termMonths);
-
-        uint256 monthlyRate = loan.interestRateBps * 1e18 / (12 * 10000);
-
         if (loan.paymentMode == MODE_INTEREST_ONLY) {
-            uint256 monthlyInterest = (loan.totalPrincipal * loan.interestRateBps) / (12 * 10000);
-            for (uint256 i = 0; i < termMonths; i++) {
-                amounts[i]  = monthlyInterest;
-                dueDates[i] = loan.startedAt + (i + 1) * 30 days;
-            }
+            amounts = new uint256[](1);
+            dueDates = new uint256[](1);
+            amounts[0] = loan.outstandingPrincipal + _accruedInterestView(loan);
+            dueDates[0] = loan.dueAt;
             return (amounts, dueDates);
         }
 
-        // Amortized: M = P × r(1+r)^n / ((1+r)^n − 1)
-        uint256 r = monthlyRate;
-        uint256 onePlusR = 1e18 + r;
-        uint256 n = termMonths;
-        uint256 onePlusRn = _powWad(onePlusR, n);
-        uint256 monthlyPayment;
-        // Standard amortization formula: M = P × r × (1+r)^n / ((1+r)^n − 1)
-        // All scalars in WAD (1e18). r is the monthly rate in WAD, onePlusRn = (1+r)^n in WAD.
-        if (onePlusRn <= 1e18 || r == 0) {
-            // Zero or near-zero rate: equal principal payments per period
-            monthlyPayment = loan.totalPrincipal / n;
-        } else {
-            // M = P * r * (1+r)^n / ((1+r)^n - 1)
-            // r and onePlusRn are WAD; totalPrincipal is 6-dec AXUSD.
-            // Multiply first by r (WAD), then divide by 1e18 to return to 6-dec scale.
-            monthlyPayment = (loan.totalPrincipal * r / 1e18 * onePlusRn / 1e18)
-                * 1e18 / (onePlusRn - 1e18);
-        }
+        uint256 n = loan.totalInstallments;
+        amounts = new uint256[](n);
+        dueDates = new uint256[](n);
 
-        for (uint256 i = 0; i < termMonths; i++) {
-            amounts[i]  = monthlyPayment;
-            dueDates[i] = loan.startedAt + (i + 1) * 30 days;
+        for (uint256 i = 0; i < n; i++) {
+            amounts[i] = loan.installmentAmount;
+            dueDates[i] = loan.startedAt + ((i + 1) * loan.installmentIntervalSeconds);
         }
     }
 
-    /**
-     * @notice Days overdue (0 if not delinquent).
-     */
     function daysDelinquent(bytes32 loanId) external view returns (uint256) {
         LoanRecord storage loan = _loans[loanId];
         if (loan.loanId == bytes32(0)) return 0;
-        if (loan.state != STATE_ACTIVE && loan.state != STATE_DELINQUENT) return 0;
-        if (loan.dueAt == 0) return 0;
-        // slither-disable-next-line timestamp
-        if (block.timestamp <= loan.dueAt) return 0;
-        // slither-disable-next-line timestamp
-        return (block.timestamp - loan.dueAt) / 1 days;
+        if ((loan.state != STATE_DELINQUENT && loan.state != STATE_DEFAULTED) || loan.delinquentAt == 0) return 0;
+        return (block.timestamp - loan.delinquentAt) / 1 days;
     }
 
-    // ─── Internal ─────────────────────────────────────────────────────────────
+    function _validateOriginationArgs(
+        bytes32 loanId,
+        address borrower,
+        uint8 paymentMode,
+        uint256 rateBps,
+        uint256 prepayBps,
+        uint256 termSecs,
+        uint256[] calldata trancheAmounts,
+        uint256[] calldata trancheRelease
+    ) internal view {
+        require(loanId != bytes32(0), "ZERO_LOAN_ID");
+        require(_loans[loanId].loanId == bytes32(0), "LOAN_EXISTS");
+        require(borrower != address(0), "ZERO_BORROWER");
+        if (!identityRegistry.isVerified(borrower)) revert UnverifiedBorrower(borrower);
+        require(paymentMode <= MODE_INTEREST_ONLY, "INVALID_PAYMENT_MODE");
+        require(rateBps <= MAX_RATE_BPS, "RATE_TOO_HIGH");
+        require(prepayBps <= MAX_PREPAY_BPS, "PREPAY_TOO_HIGH");
+        require(termSecs > 0, "ZERO_TERM");
+        require(trancheAmounts.length >= 1 && trancheAmounts.length <= 3, "TRANCHE_COUNT");
+        require(trancheAmounts.length == trancheRelease.length, "TRANCHE_ARRAY_MISMATCH");
+
+        uint256 prevRelease;
+        uint256 total;
+        for (uint256 i = 0; i < trancheAmounts.length; i++) {
+            require(trancheAmounts[i] > 0, "ZERO_TRANCHE_AMOUNT");
+            if (i > 0) require(trancheRelease[i] >= prevRelease, "UNSORTED_RELEASE");
+            prevRelease = trancheRelease[i];
+            total += trancheAmounts[i];
+        }
+        require(total > 0, "ZERO_PRINCIPAL");
+
+        if (paymentMode == MODE_AMORTIZED && trancheAmounts.length != 1) {
+            revert InvalidConfig("AMORTIZED_ONE_TRANCHE_ONLY");
+        }
+    }
+
+    function _sumTranches(uint256[] calldata amounts) internal pure returns (uint256 total) {
+        for (uint256 i = 0; i < amounts.length; i++) {
+            total += amounts[i];
+        }
+    }
 
     function _requireLoan(bytes32 loanId) internal view returns (LoanRecord storage loan) {
         loan = _loans[loanId];
         if (loan.loanId == bytes32(0)) revert LoanNotFound(loanId);
     }
 
-    function _tranche(LoanRecord storage loan, uint8 ti) internal view returns (DrawTranche storage) {
-        if (ti == 0) return loan.tranche0;
-        if (ti == 1) return loan.tranche1;
+    function _tranche(LoanRecord storage loan, uint8 index) internal view returns (DrawTranche storage) {
+        if (index == 0) return loan.tranche0;
+        if (index == 1) return loan.tranche1;
         return loan.tranche2;
     }
 
-    /**
-     * @notice Accrue interest since lastAccrualAt, persist it to pendingInterest,
-     *         and advance lastAccrualAt. Returns the newly accrued increment.
-     *
-     * IMPORTANT: accrued interest is written to loan.pendingInterest so partial
-     * payments cannot erase it — the debt bucket persists until paid off.
-     */
-    function _accrueNow(LoanRecord storage loan) internal returns (uint256 newlyAccrued) {
-        if (loan.outstandingPrincipal == 0) {
-            // slither-disable-next-line timestamp
-            loan.lastAccrualAt = block.timestamp;
-            return 0;
-        }
-        // slither-disable-next-line timestamp
-        uint256 elapsed = block.timestamp - loan.lastAccrualAt;
-        newlyAccrued = (loan.outstandingPrincipal * loan.interestRateBps * elapsed) / (365 days * 10000);
-        // Persist newly accrued interest into pendingInterest bucket
-        loan.pendingInterest += newlyAccrued;
-        // slither-disable-next-line timestamp
-        loan.lastAccrualAt = block.timestamp;
+    function _accrualEnd(LoanRecord storage loan) internal view returns (uint256) {
+        if (accrueAfterMaturity) return block.timestamp;
+        return block.timestamp < loan.dueAt ? block.timestamp : loan.dueAt;
     }
 
-    /**
-     * @notice Integer power in wad (1e18) arithmetic for amortized schedule computation.
-     */
-    function _powWad(uint256 base, uint256 exp) internal pure returns (uint256 result) {
+    function _accruedInterestView(LoanRecord storage loan) internal view returns (uint256) {
+        if ((loan.state != STATE_ACTIVE && loan.state != STATE_DELINQUENT) || loan.outstandingPrincipal == 0) {
+            return loan.pendingInterest;
+        }
+
+        uint256 accrualEnd = _accrualEnd(loan);
+        if (accrualEnd <= loan.lastAccrualAt) return loan.pendingInterest;
+
+        uint256 elapsed = accrualEnd - loan.lastAccrualAt;
+        uint256 newlyAccrued = (loan.outstandingPrincipal * loan.interestRateBps * elapsed)
+            / (YEAR_SECONDS * BPS_DENOMINATOR);
+
+        return loan.pendingInterest + newlyAccrued;
+    }
+
+    function _accrueNow(LoanRecord storage loan) internal {
+        if (loan.outstandingPrincipal == 0) {
+            loan.lastAccrualAt = block.timestamp;
+            return;
+        }
+
+        uint256 accrualEnd = _accrualEnd(loan);
+        if (accrualEnd <= loan.lastAccrualAt) return;
+
+        uint256 elapsed = accrualEnd - loan.lastAccrualAt;
+        uint256 newlyAccrued = (loan.outstandingPrincipal * loan.interestRateBps * elapsed)
+            / (YEAR_SECONDS * BPS_DENOMINATOR);
+
+        loan.pendingInterest += newlyAccrued;
+        loan.lastAccrualAt = accrualEnd;
+    }
+
+    function _computeInstallmentAmount(
+        uint256 principal,
+        uint256 annualRateBps,
+        uint256 periods
+    ) internal pure returns (uint256) {
+        if (periods == 0) revert InvalidConfig("ZERO_INSTALLMENTS");
+        if (annualRateBps == 0) return _ceilDiv(principal, periods);
+
+        uint256 monthlyRateRay = (annualRateBps * 1e18) / (12 * BPS_DENOMINATOR);
+        uint256 onePlusR = 1e18 + monthlyRateRay;
+        uint256 powN = _pow18(onePlusR, periods);
+        uint256 numerator = principal * ((monthlyRateRay * powN) / 1e18);
+        uint256 denominator = powN - 1e18;
+
+        return _ceilDiv(numerator, denominator);
+    }
+
+    function _pow18(uint256 base, uint256 exp) internal pure returns (uint256 result) {
         result = 1e18;
         while (exp > 0) {
-            if (exp % 2 == 1) {
-                result = result * base / 1e18;
+            if ((exp & 1) == 1) {
+                result = (result * base) / 1e18;
             }
-            base = base * base / 1e18;
-            exp /= 2;
+            base = (base * base) / 1e18;
+            exp >>= 1;
+        }
+    }
+
+    function _ceilDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a == 0 ? 0 : ((a - 1) / b) + 1;
+    }
+
+    function _currentInstallmentDue(LoanRecord storage loan) internal view returns (uint256) {
+        return _currentInstallmentDueView(loan, _accruedInterestView(loan));
+    }
+
+    function _currentInstallmentDueView(
+        LoanRecord storage loan,
+        uint256 interestOwed
+    ) internal view returns (uint256) {
+        if (loan.paymentMode != MODE_AMORTIZED || loan.nextInstallmentDueAt == 0) return 0;
+
+        uint256 scheduled = loan.installmentAmount;
+        uint256 remainingForThisInstallment = scheduled > loan.currentInstallmentPaid
+            ? scheduled - loan.currentInstallmentPaid
+            : 0;
+
+        uint256 totalOutstandingDebt = loan.outstandingPrincipal + interestOwed;
+        if (remainingForThisInstallment > totalOutstandingDebt) {
+            remainingForThisInstallment = totalOutstandingDebt;
+        }
+
+        return remainingForThisInstallment;
+    }
+
+    function _enforceAmortizedPastDueRules(LoanRecord storage loan) internal view {
+        if (loan.paymentMode != MODE_AMORTIZED || loan.nextInstallmentDueAt == 0) return;
+
+        uint256 dueNow = _currentInstallmentDue(loan);
+        if (
+            dueNow > DUST_THRESHOLD &&
+            block.timestamp > loan.nextInstallmentDueAt + loan.gracePeriodSeconds
+        ) {
+            revert PastDueInstallment(loan.nextInstallmentDueAt);
+        }
+    }
+
+    function _advanceInstallmentsIfSatisfied(LoanRecord storage loan) internal {
+        if (loan.paymentMode != MODE_AMORTIZED || loan.nextInstallmentDueAt == 0) return;
+
+        while (loan.currentInstallmentPaid + DUST_THRESHOLD >= loan.installmentAmount) {
+            if (loan.installmentsSatisfied >= loan.totalInstallments) {
+                loan.currentInstallmentPaid = 0;
+                loan.nextInstallmentDueAt = 0;
+                return;
+            }
+
+            loan.currentInstallmentPaid -= loan.installmentAmount;
+            loan.installmentsSatisfied += 1;
+
+            if (loan.installmentsSatisfied >= loan.totalInstallments || loan.outstandingPrincipal == 0) {
+                loan.currentInstallmentPaid = 0;
+                loan.nextInstallmentDueAt = 0;
+                return;
+            } else {
+                loan.nextInstallmentDueAt += loan.installmentIntervalSeconds;
+            }
         }
     }
 }

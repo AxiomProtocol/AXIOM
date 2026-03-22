@@ -659,9 +659,16 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
 
   const loanId32 = toLoanId32(loan.loan_id);
 
-  // ── fund: approve on FixedLoan → commit + disburse from CreditMarket ─────
-  // Flow: approveLoan() → commitLiquidity() → disburseLoan() → disburseTranche() (state update)
-  // ALL chain steps must succeed before the DB is updated. Failures return 502.
+  // ── fund: state-checked approve → commit → disburseTranche (atomic) ────────
+  // Architecture note (v8 contracts): disburseTranche() now internally calls
+  // creditMarket.disburseCommittedLiquidity() via onlyFixedLoan gate — so there
+  // is no longer a separate operator-callable disburseLoan() step. The two-step
+  // flow is: commitLiquidity() → disburseTranche() (which triggers the transfer).
+  //
+  // Fail-closed design: approveLoan() is ONLY skipped if the on-chain state is
+  // already STATE_APPROVED (1) — determined via getLoan() view call. Any other
+  // unexpected state returns 400. This eliminates the "revert = already approved"
+  // broad catch that allowed the old code to disburse on a partially-failed approve.
   if (action === 'fund') {
     const dueDate = new Date();
     dueDate.setMonth(dueDate.getMonth() + loan.loan_term_months);
@@ -669,20 +676,38 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
     const { fixedLoan, market: creditMarket, ethers } = await getFixedLoanSigner();
     const principalWei = ethers.parseUnits(loan.loan_amount_usd, 6);
 
-    // 1. Approve the loan on FixedLoan (state: PENDING → APPROVED)
-    // Idempotent: if already approved on-chain, the revert is safe to ignore.
+    // 1. Deterministic on-chain state check — fail closed
+    let onChainState: number;
     try {
-      const approveTx = await fixedLoan.approveLoan(loanId32);
-      await approveTx.wait(1);
+      const onChainLoan = await fixedLoan.getLoan(loanId32);
+      onChainState = Number(onChainLoan.state);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      const alreadyApproved = msg.includes('APPROVED') || msg.includes('execution reverted') || msg.includes('revert');
-      if (!alreadyApproved) {
-        return res.status(502).json({ success: false, error: `approveLoan failed: ${msg}` });
+      return res.status(502).json({ success: false, error: `getLoan() failed — loan may not be originated on-chain: ${msg}` });
+    }
+
+    const STATE_PENDING  = 0;
+    const STATE_APPROVED = 1;
+
+    if (onChainState !== STATE_PENDING && onChainState !== STATE_APPROVED) {
+      return res.status(400).json({
+        success: false,
+        error: `Cannot fund loan: on-chain state is ${onChainState} (must be PENDING=0 or APPROVED=1). Current DB status: ${loan.status}.`,
+      });
+    }
+
+    // 2. approveLoan() — only if still PENDING on-chain
+    if (onChainState === STATE_PENDING) {
+      try {
+        const approveTx = await fixedLoan.approveLoan(loanId32);
+        await approveTx.wait(1);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return res.status(502).json({ success: false, error: `approveLoan failed: ${msg}`, chainStep: 'approveLoan' });
       }
     }
 
-    // 2. Commit CreditMarket liquidity for this loan (pool must have sufficient AXUSD)
+    // 3. Commit CreditMarket liquidity (earmarks pool funds for this loan)
     try {
       const commitTx = await creditMarket.commitLiquidity(loanId32, principalWei);
       await commitTx.wait(1);
@@ -695,39 +720,24 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
       });
     }
 
-    // 3. Disburse from CreditMarket to borrower (actual AXUSD transfer — must succeed)
-    let disburseTxHash: string;
-    try {
-      const disburseTx = await creditMarket.disburseLoan(loanId32, loan.wallet_address, principalWei);
-      const disburseReceipt = await disburseTx.wait(1);
-      disburseTxHash = disburseReceipt?.hash ?? disburseTx.hash;
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      return res.status(502).json({
-        success: false,
-        error: `disburseLoan failed: ${msg}`,
-        chainStep: 'disburseLoan',
-      });
-    }
-
-    // 4. Record tranche disbursement on FixedLoan (state: APPROVED → ACTIVE, starts interest clock)
-    // This MUST succeed — if it fails, the on-chain loan remains APPROVED and normal
-    // repayment is blocked. Fail hard so operator knows to retry or investigate.
+    // 4. disburseTranche() — transitions FixedLoan APPROVED→ACTIVE and internally
+    //    calls creditMarket.disburseCommittedLiquidity() to send AXUSD to borrower.
+    //    This is now an atomic single call; no separate disburseLoan() operator step.
     let fundTxHash: string;
     try {
-      const stateUpdateTx = await fixedLoan.disburseTranche(loanId32, 0);
-      const stateReceipt = await stateUpdateTx.wait(1);
-      fundTxHash = stateReceipt?.hash ?? stateUpdateTx.hash;
+      const disburseTx = await fixedLoan.disburseTranche(loanId32, 0);
+      const disburseReceipt = await disburseTx.wait(1);
+      fundTxHash = disburseReceipt?.hash ?? disburseTx.hash;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      // AXUSD was already transferred (step 3 succeeded) — alert operator to reconcile.
-      // DB is NOT updated; loan stays at 'approved' in DB until manually resolved.
-      console.error(`[loan-lifecycle] CRITICAL: disburseLoan succeeded but disburseTranche failed. AXUSD moved but FixedLoan state stuck at APPROVED. Manual reconciliation required. Error: ${msg}`);
+      // commitLiquidity succeeded but disburseTranche failed — funds are earmarked
+      // but not sent. Loan stays APPROVED on-chain; DB not updated. Operator can
+      // retry disburseTranche() directly without re-committing liquidity.
+      console.error(`[loan-lifecycle] disburseTranche failed after commitLiquidity. Loan ${loan.loan_id} is APPROVED with committed liquidity. Operator must retry disburseTranche. Error: ${msg}`);
       return res.status(502).json({
         success: false,
-        error: `CRITICAL: AXUSD disbursed (tx: ${disburseTxHash}) but FixedLoan state update failed: ${msg}. Loan is partially funded on-chain. Operator must manually call disburseTranche(loanId32, 0).`,
+        error: `disburseTranche failed after commitLiquidity: ${msg}. Loan is APPROVED with liquidity committed. Retry disburseTranche to complete funding.`,
         chainStep: 'disburseTranche',
-        disburseTxHash,
       });
     }
 
@@ -778,10 +788,15 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
     return res.status(200).json({ success: true, message: `Loan delinquency cured on-chain`, newStatus: transition.to, chainTxHash });
   }
 
-  // ── close (admin reconciliation): closeLoan() on AXIOMFixedLoan ──────────
+  // ── close (admin write-off): chargeOffLoan() on AXIOMFixedLoan ───────────
+  // v8 contract: closeLoan() has been split into:
+  //   closeUndrawnApprovedLoan() — for APPROVED loans not yet disbursed
+  //   chargeOffLoan()            — for DELINQUENT or DEFAULTED loans (principal write-down)
+  // The API 'close' action covers active/delinquent → operator must first call
+  // 'default' to reach DEFAULTED state, then 'close' to charge off.
   if (action === 'close') {
     const { fixedLoan } = await getFixedLoanSigner();
-    const tx = await fixedLoan.closeLoan(loanId32);
+    const tx = await fixedLoan.chargeOffLoan(loanId32);
     const receipt = await tx.wait(1);
     const chainTxHash: string = receipt?.hash ?? tx.hash;
 
@@ -794,7 +809,7 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
     );
     return res.status(200).json({
       success: true,
-      message: 'Loan administratively closed on-chain (AXIOMFixedLoan.closeLoan)',
+      message: 'Loan charged off on-chain (principal written down via AXIOMFixedLoan.chargeOffLoan)',
       newStatus: transition.to,
       chainTxHash,
     });
@@ -837,6 +852,21 @@ async function handleRepay(
     return res.status(400).json({
       success: false,
       error: 'txHash is required for on-chain repayments. Borrower must call repayLoan() from their wallet and submit the resulting tx hash.',
+    });
+  }
+
+  // ── Idempotency: reject already-processed transactions ────────────────────
+  // Prevents replay attacks where the same confirmed tx is submitted multiple
+  // times, which would corrupt principal/interest totals in the DB.
+  const existingPayment = await pool.query(
+    `SELECT id FROM real_estate_loan_payments WHERE loan_id = $1 AND tx_hash = $2 LIMIT 1`,
+    [loan.loan_id, txHash]
+  );
+  if (existingPayment.rows.length > 0) {
+    return res.status(409).json({
+      success: false,
+      error: `Transaction ${txHash} has already been recorded for loan ${loan.loan_id}. Duplicate submissions are rejected.`,
+      alreadyProcessed: true,
     });
   }
 

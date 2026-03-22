@@ -1,226 +1,250 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.20;
 
-/**
- * @title AXIOMCreditMarket
- * @notice Permissioned LP pool for the Axiom Protocol Lending Fund (Task #31).
- *
- * Adapted from Wildcat Protocol V2 patterns:
- *   - LP deposits gated by ERC-3643 IdentityRegistry (accredited investors only)
- *   - Pro-rata LP share accounting via interestPerShare (compounding model)
- *   - Interest distribution pro-rata to LP shares on each repayment
- *   - Borrower capital committed from pool; disbursed from here to borrower via FixedLoan
- *   - Configurable reserve ratio
- *
- * Integration flow:
- *   1. Operator calls commitLiquidity(loanId, amount) — marks pool funds for a loan
- *   2. Operator calls disburseLoan(loanId, borrower, trancheAmount) — sends AXUSD to borrower
- *      (CreditMarket holds the funds; FixedLoan authorizes disbursement via OPERATOR_ROLE)
- *   3. Borrower calls AXIOMFixedLoan.repayLoan() — AXUSD goes to FixedLoan
- *   4. FixedLoan calls this.receiveRepayment(loanId, principal, interest) — routes funds here
- *   5. LPs call claimInterest() — withdraw accrued interest
- *
- * FixedLoan address is set post-deploy via setFixedLoan() (admin only).
- * Only the registered FixedLoan contract can call receiveRepayment().
- */
-
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-interface IIdentityRegistry {
-    function isVerified(address _userAddress) external view returns (bool);
+interface IERC20 {
+    function transfer(address to, uint256 amount) external returns (bool);
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+    function balanceOf(address account) external view returns (uint256);
 }
 
-contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
-    using SafeERC20 for IERC20;
+library SafeERC20Lite {
+    function safeTransfer(IERC20 token, address to, uint256 amount) internal {
+        require(token.transfer(to, amount), "TRANSFER_FAILED");
+    }
 
-    // ─── Roles ───────────────────────────────────────────────────────────────
+    function safeTransferFrom(IERC20 token, address from, address to, uint256 amount) internal {
+        require(token.transferFrom(from, to, amount), "TRANSFER_FROM_FAILED");
+    }
+}
+
+abstract contract ReentrancyGuard {
+    uint256 private constant _NOT_ENTERED = 1;
+    uint256 private constant _ENTERED = 2;
+    uint256 private _status = _NOT_ENTERED;
+
+    modifier nonReentrant() {
+        require(_status != _ENTERED, "REENTRANCY");
+        _status = _ENTERED;
+        _;
+        _status = _NOT_ENTERED;
+    }
+}
+
+abstract contract AccessControlLite {
+    mapping(bytes32 => mapping(address => bool)) private _roles;
+    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
+
+    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
+    event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
+
+    modifier onlyRole(bytes32 role) {
+        require(hasRole(role, msg.sender), "MISSING_ROLE");
+        _;
+    }
+
+    function hasRole(bytes32 role, address account) public view returns (bool) {
+        return _roles[role][account];
+    }
+
+    function grantRole(bytes32 role, address account) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (!_roles[role][account]) {
+            _roles[role][account] = true;
+            emit RoleGranted(role, account, msg.sender);
+        }
+    }
+
+    function revokeRole(bytes32 role, address account) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_roles[role][account]) {
+            _roles[role][account] = false;
+            emit RoleRevoked(role, account, msg.sender);
+        }
+    }
+
+    function _grantRole(bytes32 role, address account) internal {
+        if (!_roles[role][account]) {
+            _roles[role][account] = true;
+            emit RoleGranted(role, account, msg.sender);
+        }
+    }
+}
+
+interface IIdentityRegistry {
+    function isVerified(address user) external view returns (bool);
+}
+
+contract AXIOMCreditMarket is AccessControlLite, ReentrancyGuard {
+    using SafeERC20Lite for IERC20;
+
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
-    // ─── Storage ──────────────────────────────────────────────────────────────
-    IERC20            public axusd;
-    IIdentityRegistry public identityRegistry;
+    uint256 public constant BPS_DENOMINATOR = 10_000;
+    uint256 public constant SHARE_PRECISION = 1e18;
+    uint256 public constant MAX_RESERVE_RATIO_BPS = 5_000;
 
-    // Registered FixedLoan contract — only it may call receiveRepayment()
+    IERC20 public immutable axusd;
+    IIdentityRegistry public immutable identityRegistry;
     address public fixedLoan;
 
-    // LP shares: tracks each LP's proportional claim on pool assets.
-    // Shares issued 1:1 with AXUSD on first deposit; price appreciates with interest.
     mapping(address => uint256) public lpShares;
     uint256 public totalLpShares;
+
     uint256 public totalDeposited;
     uint256 public totalWithdrawn;
 
-    // Capital committed to specific loans (pre-disbursement reservation — funds still in this contract)
-    // Used to prevent double-deploying the same liquid funds to two loans.
-    mapping(bytes32 => uint256) public loanCommitment; // loanId => AXUSD amount
+    mapping(bytes32 => uint256) public loanCommitment;
     uint256 public totalCommitted;
-
-    // Outstanding loan receivables (post-disbursement — funds outside this contract, owed by borrowers).
-    // Added to pool value so LP share price reflects full economic exposure.
-    // Incremented by disburseLoan(), decremented by receiveRepayment() / releaseCommitment().
     uint256 public totalOutstanding;
-
-    // Cumulative interest received from loan repayments
     uint256 public totalInterestReceived;
+    uint256 public totalPrincipalWrittenDown;
 
-    // Per-LP interest accounting (scaled 1e18 per share unit)
     mapping(address => uint256) public lpInterestDebt;
+    mapping(address => uint256) public lpInterestResidual;
     uint256 public interestPerShare;
 
-    // Per-LP residual interest: unpaid interest that accumulated when pool was illiquid.
-    // Preserved across settlements — NEVER discarded. Paid out when liquidity is restored.
-    mapping(address => uint256) public lpInterestResidual;
-
-    // Reserve ratio: minimum fraction of deposits kept liquid (basis points)
     uint256 public reserveRatioBps;
 
-    // ─── Events ───────────────────────────────────────────────────────────────
     event LiquidityDeposited(address indexed lp, uint256 amountUsd, uint256 sharesIssued);
     event LiquidityWithdrawn(address indexed lp, uint256 axusdOut, uint256 sharesBurned);
     event LiquidityCommitted(bytes32 indexed loanId, uint256 amount);
     event LoanDisbursed(bytes32 indexed loanId, address indexed borrower, uint256 amount);
     event RepaymentReceived(bytes32 indexed loanId, uint256 principalReturned, uint256 interestReceived);
+    event UndrawnCommitmentReleased(bytes32 indexed loanId, uint256 amount);
+    event OutstandingWrittenDown(bytes32 indexed loanId, uint256 amount);
     event InterestClaimed(address indexed lp, uint256 amount);
     event ReserveRatioUpdated(uint256 newBps);
     event FixedLoanSet(address indexed fixedLoan);
 
-    // ─── Errors ───────────────────────────────────────────────────────────────
+    error ZeroAddress();
+    error ZeroAmount();
     error LpNotVerified(address lp);
+    error OnlyFixedLoan();
+    error FixedLoanNotSet();
     error InsufficientLiquidity(uint256 available, uint256 requested);
     error InsufficientShares(uint256 held, uint256 requested);
-    error ReserveRatioViolation(uint256 available, uint256 minimum);
-    error ZeroAmount();
-    error OnlyFixedLoan();
+    error ReserveRatioViolation(uint256 availableAfter, uint256 minimumRequired);
+    error MintedZeroShares(uint256 depositAmount, uint256 poolValue, uint256 totalShares);
+    error BurnReturnsZeroAssets(uint256 sharesToBurn, uint256 poolValue, uint256 totalShares);
+    error ExceedsCommitment(uint256 committed, uint256 requested);
+    error InvalidReserveRatio(uint256 requestedBps);
+    error ArithmeticInvariantViolation();
 
-    // ─── Constructor ──────────────────────────────────────────────────────────
     constructor(address _axusd, address _identityRegistry) {
+        if (_axusd == address(0) || _identityRegistry == address(0)) revert ZeroAddress();
+
         axusd = IERC20(_axusd);
         identityRegistry = IIdentityRegistry(_identityRegistry);
-        reserveRatioBps  = 1000; // 10% default reserve ratio
+        reserveRatioBps = 1_000;
+
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(OPERATOR_ROLE, msg.sender);
     }
 
-    // ─── Admin: register FixedLoan contract ───────────────────────────────────
+    modifier onlyFixedLoan() {
+        if (fixedLoan == address(0)) revert FixedLoanNotSet();
+        if (msg.sender != fixedLoan) revert OnlyFixedLoan();
+        _;
+    }
 
-    /**
-     * @notice Register the AXIOMFixedLoan contract address.
-     *         Only this address may call receiveRepayment().
-     */
     function setFixedLoan(address _fixedLoan) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_fixedLoan != address(0), "Zero address");
+        if (_fixedLoan == address(0)) revert ZeroAddress();
         fixedLoan = _fixedLoan;
         emit FixedLoanSet(_fixedLoan);
     }
 
-    // ─── LP Deposit ───────────────────────────────────────────────────────────
-
-    /**
-     * @notice Deposit AXUSD into the lending pool.
-     *         Caller must be verified in the ERC-3643 IdentityRegistry
-     *         (accredited investor gate — Reg-D / Wildcat V2 LP permissioning pattern).
-     * @param amountUsd AXUSD amount to deposit (6 decimals, matching AXUSD decimals)
-     */
     function depositLiquidity(uint256 amountUsd) external nonReentrant {
         if (amountUsd == 0) revert ZeroAmount();
         if (!identityRegistry.isVerified(msg.sender)) revert LpNotVerified(msg.sender);
 
-        // Settle any pending interest before recalculating shares
         _settleInterest(msg.sender);
 
-        // Share issuance: new shares = deposit × totalLpShares / totalPoolValue
-        // First deposit: 1:1 share issuance
         uint256 shares;
         uint256 poolValue = _totalPoolValue();
+
         if (totalLpShares == 0 || poolValue == 0) {
-            shares = amountUsd;
+            shares = amountUsd * SHARE_PRECISION;
         } else {
             shares = (amountUsd * totalLpShares) / poolValue;
+            if (shares == 0) revert MintedZeroShares(amountUsd, poolValue, totalLpShares);
         }
 
         lpShares[msg.sender] += shares;
-        totalLpShares        += shares;
-        totalDeposited       += amountUsd;
+        totalLpShares += shares;
+        totalDeposited += amountUsd;
         lpInterestDebt[msg.sender] = interestPerShare;
 
         axusd.safeTransferFrom(msg.sender, address(this), amountUsd);
         emit LiquidityDeposited(msg.sender, amountUsd, shares);
     }
 
-    /**
-     * @notice Withdraw AXUSD by burning LP shares. Respects reserve ratio.
-     * @param sharesToBurn Number of LP shares to redeem
-     */
     function withdrawLiquidity(uint256 sharesToBurn) external nonReentrant {
         if (sharesToBurn == 0) revert ZeroAmount();
-        if (lpShares[msg.sender] < sharesToBurn) revert InsufficientShares(lpShares[msg.sender], sharesToBurn);
+
+        uint256 held = lpShares[msg.sender];
+        if (held < sharesToBurn) revert InsufficientShares(held, sharesToBurn);
 
         _settleInterest(msg.sender);
 
-        uint256 axusdOut = (sharesToBurn * _totalPoolValue()) / totalLpShares;
-        uint256 liquid   = _liquidBalance();
+        uint256 currentTotalLpShares = totalLpShares;
+        uint256 poolValue = _totalPoolValue();
+        uint256 axusdOut = (sharesToBurn * poolValue) / currentTotalLpShares;
+        if (axusdOut == 0) revert BurnReturnsZeroAssets(sharesToBurn, poolValue, currentTotalLpShares);
 
-        // Explicit liquidity guard: share value may include totalOutstanding (receivables outside
-        // this contract). If axusdOut exceeds what is physically held, revert with a clear error
-        // rather than letting safeTransfer fail with an opaque ERC-20 error.
+        uint256 liquid = _liquidBalance();
         if (axusdOut > liquid) revert InsufficientLiquidity(liquid, axusdOut);
 
-        uint256 remainingDeposits = totalDeposited > axusdOut ? totalDeposited - axusdOut : 0;
-        uint256 minReserve        = (remainingDeposits * reserveRatioBps) / 10000;
-        uint256 availableAfter    = liquid - axusdOut; // safe: axusdOut <= liquid checked above
-        if (availableAfter < minReserve) revert ReserveRatioViolation(liquid, minReserve + axusdOut);
+        uint256 remainingPoolValue = poolValue > axusdOut ? poolValue - axusdOut : 0;
+        uint256 minReserve = (remainingPoolValue * reserveRatioBps) / BPS_DENOMINATOR;
+        uint256 availableAfter = liquid - axusdOut;
 
-        lpShares[msg.sender] -= sharesToBurn;
-        totalLpShares        -= sharesToBurn;
-        totalWithdrawn       += axusdOut;
+        if (availableAfter < minReserve) {
+            revert ReserveRatioViolation(availableAfter, minReserve);
+        }
+
+        lpShares[msg.sender] = held - sharesToBurn;
+        totalLpShares = currentTotalLpShares - sharesToBurn;
+        totalWithdrawn += axusdOut;
+        lpInterestDebt[msg.sender] = interestPerShare;
 
         axusd.safeTransfer(msg.sender, axusdOut);
         emit LiquidityWithdrawn(msg.sender, axusdOut, sharesToBurn);
     }
 
-    // ─── Operator: Capital management ─────────────────────────────────────────
-
-    /**
-     * @notice Reserve pool liquidity for a specific loan.
-     *         After committing, call disburseLoan() to send funds to borrower.
-     */
     function commitLiquidity(bytes32 loanId, uint256 amountUsd) external onlyRole(OPERATOR_ROLE) {
         if (amountUsd == 0) revert ZeroAmount();
-        // Check against available (unreserved) liquidity to prevent double-committing
-        uint256 liquid    = _liquidBalance();
-        uint256 available = liquid > totalCommitted ? liquid - totalCommitted : 0;
+        require(loanId != bytes32(0), "ZERO_LOAN_ID");
+
+        uint256 available = _availableLiquidity();
         if (available < amountUsd) revert InsufficientLiquidity(available, amountUsd);
 
         loanCommitment[loanId] += amountUsd;
-        totalCommitted         += amountUsd;
+        totalCommitted += amountUsd;
+
         emit LiquidityCommitted(loanId, amountUsd);
     }
 
     /**
-     * @notice Disburse committed capital to borrower for a specific loan.
-     *         Called by operator after AXIOMFixedLoan.disburseTranche() is authorized.
-     *         This contract holds the AXUSD and sends it directly to the borrower.
-     * @param loanId   Loan identifier
-     * @param borrower Borrower address to receive funds
-     * @param amount   AXUSD amount to disburse (must be <= commitment)
+     * @notice Disburse committed liquidity to the borrower.
+     *         Called exclusively by AXIOMFixedLoan.disburseTranche() — the onlyFixedLoan
+     *         modifier enforces this, so no separate OPERATOR_ROLE call is needed.
+     *         This eliminates the previous "fund flow fail-open" risk where the operator
+     *         could call disburseLoan() independently of a verified loan state.
      */
-    function disburseLoan(
+    function disburseCommittedLiquidity(
         bytes32 loanId,
         address borrower,
         uint256 amount
-    ) external onlyRole(OPERATOR_ROLE) nonReentrant {
-        require(loanCommitment[loanId] >= amount, "Exceeds commitment");
-        require(borrower != address(0), "Zero borrower");
+    ) external onlyFixedLoan nonReentrant {
+        if (borrower == address(0)) revert ZeroAddress();
+        if (amount == 0) revert ZeroAmount();
 
-        // Consume pre-disbursement reservation
-        loanCommitment[loanId] -= amount;
-        totalCommitted         -= amount;
+        uint256 committed = loanCommitment[loanId];
+        if (committed < amount) revert ExceedsCommitment(committed, amount);
 
-        // Create post-disbursement receivable: funds leave this contract but remain part
-        // of pool value as an outstanding loan receivable owed by the borrower.
+        uint256 liquid = _liquidBalance();
+        if (liquid < amount) revert InsufficientLiquidity(liquid, amount);
+
+        loanCommitment[loanId] = committed - amount;
+        totalCommitted -= amount;
         totalOutstanding += amount;
 
         axusd.safeTransfer(borrower, amount);
@@ -228,24 +252,19 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice Receive a repayment notification from AXIOMFixedLoan and update LP accounting.
-     *         ONLY callable by the registered fixedLoan contract.
-     *         AXUSD has already been transferred to this contract by FixedLoan prior to this call.
-     *         This function ONLY updates accounting — no token transfer occurs here.
-     * @param loanId            Loan identifier (for event tracking)
-     * @param principalReturned AXUSD principal amount returned (already in this contract's balance)
-     * @param interestAmount    AXUSD interest earned on this repayment (already in balance)
+     * @notice Receive repayment accounting from AXIOMFixedLoan.
+     *         AXUSD must already be transferred into this contract before this call.
+     *         Includes an arithmetic invariant check to detect any discrepancy.
      */
     function receiveRepayment(
         bytes32 loanId,
         uint256 principalReturned,
         uint256 interestAmount
-    ) external nonReentrant {
-        if (msg.sender != fixedLoan) revert OnlyFixedLoan();
+    ) external onlyFixedLoan nonReentrant {
+        if (principalReturned == 0 && interestAmount == 0) revert ZeroAmount();
 
-        // Decrement totalOutstanding: the receivable is now collected — principal has returned
-        // to _liquidBalance(). Without this, _totalPoolValue() would double-count returned principal
-        // (once in _liquidBalance() and again in totalOutstanding), inflating share price.
+        uint256 balanceBefore = _liquidBalance();
+
         if (totalOutstanding >= principalReturned) {
             totalOutstanding -= principalReturned;
         } else {
@@ -254,68 +273,57 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
 
         totalInterestReceived += interestAmount;
 
-        // Update interest-per-share: each existing LP share earns proportional interest
         if (totalLpShares > 0 && interestAmount > 0) {
-            interestPerShare += (interestAmount * 1e18) / totalLpShares;
+            interestPerShare += (interestAmount * SHARE_PRECISION) / totalLpShares;
+        }
+
+        uint256 expectedMinimumIncrease = principalReturned + interestAmount;
+        uint256 balanceAfter = _liquidBalance();
+        if (balanceAfter < balanceBefore || (balanceAfter - balanceBefore) < expectedMinimumIncrease) {
+            revert ArithmeticInvariantViolation();
         }
 
         emit RepaymentReceived(loanId, principalReturned, interestAmount);
     }
 
-    /**
-     * @notice Release a loan commitment without receiving repayment (admin write-off path).
-     *         Called by AXIOMFixedLoan.closeLoan() when a loan is administratively closed
-     *         (written off or off-chain settled). Decrements totalCommitted so pool value
-     *         is not permanently inflated by the lost principal.
-     *         ONLY callable by the registered fixedLoan contract.
-     */
-    function releaseCommitment(bytes32 loanId, uint256 amount) external nonReentrant {
-        if (msg.sender != fixedLoan) revert OnlyFixedLoan();
-        // A written-off loan's outstanding receivable is removed from pool value.
-        // Uses totalOutstanding (not totalCommitted) because disbursed loans are receivables,
-        // and totalCommitted was already decremented at disbursement time.
+    function releaseUndrawnCommitment(bytes32 loanId, uint256 amount) external onlyFixedLoan nonReentrant {
+        if (amount == 0) revert ZeroAmount();
+
+        uint256 committed = loanCommitment[loanId];
+        if (committed < amount) revert ExceedsCommitment(committed, amount);
+
+        loanCommitment[loanId] = committed - amount;
+        totalCommitted -= amount;
+
+        emit UndrawnCommitmentReleased(loanId, amount);
+    }
+
+    function writeDownOutstanding(bytes32 loanId, uint256 amount) external onlyFixedLoan nonReentrant {
+        if (amount == 0) revert ZeroAmount();
+
         if (totalOutstanding >= amount) {
             totalOutstanding -= amount;
         } else {
+            amount = totalOutstanding;
             totalOutstanding = 0;
         }
-        // Also clear any remaining pre-disbursement reservation (edge case: loan closed before disbursal)
-        if (loanCommitment[loanId] > 0) {
-            uint256 preDisburse = loanCommitment[loanId];
-            loanCommitment[loanId] = 0;
-            if (totalCommitted >= preDisburse) {
-                totalCommitted -= preDisburse;
-            } else {
-                totalCommitted = 0;
-            }
-        }
-        emit RepaymentReceived(loanId, amount, 0); // principal=amount written off, interest=0
+
+        totalPrincipalWrittenDown += amount;
+        emit OutstandingWrittenDown(loanId, amount);
     }
 
-    /**
-     * @notice LP claims their accrued interest.
-     */
     function claimInterest() external nonReentrant {
         _settleInterest(msg.sender);
     }
 
-    // ─── Admin ────────────────────────────────────────────────────────────────
-
     function setReserveRatio(uint256 newBps) external onlyRole(OPERATOR_ROLE) {
-        require(newBps <= 5000, "Max 50% reserve");
+        if (newBps > MAX_RESERVE_RATIO_BPS) revert InvalidReserveRatio(newBps);
         reserveRatioBps = newBps;
         emit ReserveRatioUpdated(newBps);
     }
 
-    // ─── View functions ───────────────────────────────────────────────────────
-
-    /**
-     * @notice AXUSD available to commit to new loans (excludes already-reserved funds).
-     *         = liquid balance − pre-disbursement commitments (still in contract but earmarked)
-     */
     function availableLiquidity() external view returns (uint256) {
-        uint256 liquid = _liquidBalance();
-        return liquid > totalCommitted ? liquid - totalCommitted : 0;
+        return _availableLiquidity();
     }
 
     function totalPoolValue() external view returns (uint256) {
@@ -323,72 +331,52 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
     }
 
     function sharePrice() external view returns (uint256) {
-        if (totalLpShares == 0) return 1e6; // 1 AXUSD (6 decimals)
-        return (_totalPoolValue() * 1e18) / totalLpShares;
+        if (totalLpShares == 0) return 1e6;
+        return (_totalPoolValue() * SHARE_PRECISION) / totalLpShares;
     }
 
-    /**
-     * @notice Accrued interest available to LP (not yet claimed).
-     *         Includes both newly accrued pro-rata interest AND any accumulated residual
-     *         from prior settlements when pool liquidity was insufficient.
-     */
     function pendingInterest(address lp) external view returns (uint256) {
-        if (lpShares[lp] == 0) return lpInterestResidual[lp]; // residual even if shares burned
-        uint256 newInterest = (lpShares[lp] * (interestPerShare - lpInterestDebt[lp])) / 1e18;
-        return newInterest + lpInterestResidual[lp];
+        uint256 residual = lpInterestResidual[lp];
+        uint256 shares = lpShares[lp];
+        if (shares == 0) return residual;
+
+        uint256 debt = lpInterestDebt[lp];
+        if (interestPerShare <= debt) return residual;
+
+        uint256 newInterest = (shares * (interestPerShare - debt)) / SHARE_PRECISION;
+        return newInterest + residual;
     }
 
     function isLpVerified(address lp) external view returns (bool) {
         return identityRegistry.isVerified(lp);
     }
 
-    // ─── Internal ─────────────────────────────────────────────────────────────
+    function _availableLiquidity() internal view returns (uint256) {
+        uint256 liquid = _liquidBalance();
+        return liquid > totalCommitted ? liquid - totalCommitted : 0;
+    }
 
     function _liquidBalance() internal view returns (uint256) {
         return axusd.balanceOf(address(this));
     }
 
-    /**
-     * @notice Total economic value of the pool:
-     *         liquid AXUSD in contract + outstanding loan receivables (totalOutstanding).
-     *
-     * Accounting invariants:
-     *   - totalCommitted: pre-disbursement reservations — funds still in _liquidBalance().
-     *     NOT added to pool value; already counted in _liquidBalance().
-     *     Used only to compute available (un-reserved) liquidity for new commitments.
-     *   - totalOutstanding: post-disbursement receivables — funds outside this contract,
-     *     owed by borrowers. Added here so share price reflects full economic exposure.
-     *
-     * Lifecycle:
-     *   commitLiquidity  → totalCommitted += amount  (reserved, still liquid)
-     *   disburseLoan     → totalCommitted -= amount, totalOutstanding += amount  (sent out)
-     *   receiveRepayment → totalOutstanding -= principal  (returned to liquid)
-     *   releaseCommitment → totalOutstanding -= principal  (write-off)
-     */
     function _totalPoolValue() internal view returns (uint256) {
         return _liquidBalance() + totalOutstanding;
     }
 
-    /**
-     * @notice Settle accrued interest for an LP.
-     *         Key invariant: residual unpaid interest (when pool is illiquid)
-     *         is preserved in a per-LP residual bucket — NEVER silently discarded.
-     *         The LP's interestPerShare debt is only advanced by the fraction paid.
-     *
-     *         lpInterestResidual: accumulated interest owed but not yet transferred
-     *                             due to insufficient pool liquidity.
-     */
     function _settleInterest(address lp) internal {
-        if (lpShares[lp] == 0) {
+        uint256 shares = lpShares[lp];
+        uint256 debt = lpInterestDebt[lp];
+        uint256 residual = lpInterestResidual[lp];
+
+        if (shares == 0) {
             lpInterestDebt[lp] = interestPerShare;
-            // Even with zero shares the LP may still have a residual from when they held shares.
-            // Pay it out now rather than leaving it permanently stuck (unreachable via claimInterest).
-            if (lpInterestResidual[lp] > 0) {
-                uint256 residualOwed  = lpInterestResidual[lp];
+
+            if (residual > 0) {
                 uint256 liquidBalance = _liquidBalance();
-                uint256 residualPay   = residualOwed > liquidBalance ? liquidBalance : residualOwed;
+                uint256 residualPay = residual > liquidBalance ? liquidBalance : residual;
                 if (residualPay > 0) {
-                    lpInterestResidual[lp] = residualOwed - residualPay;
+                    lpInterestResidual[lp] = residual - residualPay;
                     axusd.safeTransfer(lp, residualPay);
                     emit InterestClaimed(lp, residualPay);
                 }
@@ -396,26 +384,24 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
             return;
         }
 
-        // New interest accrued since last settlement
-        uint256 newInterest = (lpShares[lp] * (interestPerShare - lpInterestDebt[lp])) / 1e18;
+        uint256 newInterest = 0;
+        if (interestPerShare > debt) {
+            newInterest = (shares * (interestPerShare - debt)) / SHARE_PRECISION;
+        }
 
-        // Advance the debt marker — we track residual separately
         lpInterestDebt[lp] = interestPerShare;
 
-        // Total outstanding = newly accrued + any previously unpaid residual
-        uint256 totalOwed = newInterest + lpInterestResidual[lp];
+        uint256 totalOwed = newInterest + residual;
         if (totalOwed == 0) return;
 
-        uint256 liquid   = _liquidBalance();
-        uint256 transfer = totalOwed > liquid ? liquid : totalOwed;
+        uint256 liquid = _liquidBalance();
+        uint256 payout = totalOwed > liquid ? liquid : totalOwed;
 
-        if (transfer > 0) {
-            // Preserve unpaid residual — do NOT discard it
-            lpInterestResidual[lp] = totalOwed - transfer;
-            axusd.safeTransfer(lp, transfer);
-            emit InterestClaimed(lp, transfer);
+        if (payout > 0) {
+            lpInterestResidual[lp] = totalOwed - payout;
+            axusd.safeTransfer(lp, payout);
+            emit InterestClaimed(lp, payout);
         } else {
-            // Pool is illiquid — accumulate full owed amount as residual for later
             lpInterestResidual[lp] = totalOwed;
         }
     }
