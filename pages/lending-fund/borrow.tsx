@@ -32,6 +32,44 @@ interface GefInfo {
   hasActiveLine: boolean;
 }
 
+interface ScheduleRow {
+  month: number;
+  dueDate: string;
+  paymentUsd: string;
+}
+
+interface LoanDetail {
+  loan: LoanRow & {
+    live_accrued_interest_usd: string;
+    total_due_usd: string;
+    days_delinquent: number;
+    monthly_payment_estimate: string;
+    next_due_date: string | null;
+    cumulative_interest_paid_usd: string;
+  };
+  chainState: {
+    onChainStatus: string | null;
+    onChainAccruedInterestUsd: string | null;
+    onChainPrincipalUsd: string | null;
+    onChainNextPaymentDue: { amountUsd: string; dueTimestamp: number } | null;
+    onChainDaysDelinquent: number | null;
+    onChainDueAt?: number;
+    onChainGracePeriodSeconds?: number;
+    onChainDefaultEligibleAt?: number;
+    onChainPaymentSchedule?: ScheduleRow[];
+    explorerFixedLoan: string | null;
+    explorerMarket: string | null;
+  };
+  paymentSchedule: Array<{
+    month: number;
+    dueDate: string;
+    payment: string;
+    interest: string;
+    principalPortion: string;
+    balance: string;
+  }>;
+}
+
 type PagePhase =
   | 'connect'
   | 'checking_tier'
@@ -117,6 +155,25 @@ export default function BorrowPage() {
   const [repayError, setRepayError] = useState('');
   const [repayLoading, setRepayLoading] = useState(false);
   const [repaySuccess, setRepaySuccess] = useState('');
+
+  const [detailLoanId, setDetailLoanId] = useState<string | null>(null);
+  const [loanDetail, setLoanDetail] = useState<LoanDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
+  const fetchLoanDetail = useCallback(async (loanId: string) => {
+    if (!wallet) return;
+    setLoadingDetail(true);
+    setLoanDetail(null);
+    try {
+      const eth = (window as any).ethereum;
+      if (!eth) return;
+      const headers = await getSignedHeaders(wallet, eth);
+      const r = await fetch(`/api/realestate/loan-lifecycle?loanId=${encodeURIComponent(loanId)}`, { headers });
+      const data = await r.json();
+      if (data.success) setLoanDetail(data as LoanDetail);
+    } catch {}
+    setLoadingDetail(false);
+  }, [wallet]);
 
   const fetchLoans = useCallback(async (addr: string) => {
     setLoadingLoans(true);
@@ -426,15 +483,32 @@ export default function BorrowPage() {
                         <div className="px-4 py-2">{loan.due_date ? `Due: ${new Date(loan.due_date).toLocaleDateString()}` : ''}</div>
                       </div>
                       <div className="px-5 py-4 bg-dl-bg-alt">
-                        {!isRepaying ? (
+                        <div className="flex flex-wrap gap-2">
+                          {!isRepaying && (
+                            <button
+                              onClick={() => { setRepayLoanId(loan.loan_id); setRepayAmount(''); setRepayError(''); setRepaySuccess(''); }}
+                              className="px-5 py-2 bg-dl-navy text-white text-xs font-medium"
+                            >
+                              Make a Payment
+                            </button>
+                          )}
                           <button
-                            onClick={() => { setRepayLoanId(loan.loan_id); setRepayAmount(''); setRepayError(''); setRepaySuccess(''); }}
-                            className="px-5 py-2 bg-dl-navy text-white text-xs font-medium"
+                            onClick={() => {
+                              if (detailLoanId === loan.loan_id) {
+                                setDetailLoanId(null);
+                                setLoanDetail(null);
+                              } else {
+                                setDetailLoanId(loan.loan_id);
+                                fetchLoanDetail(loan.loan_id);
+                              }
+                            }}
+                            className="px-5 py-2 border border-dl-border text-dl-navy text-xs font-medium"
                           >
-                            Make a Payment
+                            {detailLoanId === loan.loan_id ? 'Hide Schedule' : 'View Payment Schedule'}
                           </button>
-                        ) : (
-                          <div>
+                        </div>
+                        {isRepaying && (
+                          <div className="mt-4">
                             <p className="text-xs text-dl-gray mb-2 font-dl-mono uppercase tracking-wider">Record Payment</p>
                             <div className="flex flex-wrap gap-2 items-end">
                               <div>
@@ -471,6 +545,133 @@ export default function BorrowPage() {
                           </div>
                         )}
                       </div>
+
+                      {/* ─── Per-Loan Lifecycle Panel ─────────────────────── */}
+                      {detailLoanId === loan.loan_id && (
+                        <div className="border-t border-dl-border bg-dl-bg">
+                          {loadingDetail ? (
+                            <p className="px-5 py-6 text-xs text-dl-gray font-dl-mono">Loading on-chain lifecycle data...</p>
+                          ) : loanDetail ? (
+                            <div className="px-5 py-5">
+                              {/* On-chain State Badge Row */}
+                              <div className="flex flex-wrap gap-6 mb-5 pb-4 border-b border-dl-border">
+                                <div>
+                                  <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-wider mb-1">On-Chain State</p>
+                                  <span className={`font-dl-mono text-sm font-semibold ${
+                                    loanDetail.chainState.onChainStatus === 'ACTIVE' ? 'text-dl-navy' :
+                                    loanDetail.chainState.onChainStatus === 'DELINQUENT' ? 'text-dl-error' :
+                                    loanDetail.chainState.onChainStatus === 'REPAID' ? 'text-dl-forest' :
+                                    'text-dl-gold'
+                                  }`}>
+                                    {loanDetail.chainState.onChainStatus ?? 'PENDING'}
+                                  </span>
+                                </div>
+                                {loanDetail.chainState.onChainPrincipalUsd && (
+                                  <div>
+                                    <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-wider mb-1">Chain Principal</p>
+                                    <p className="font-dl-mono text-sm text-dl-navy font-semibold">{formatUSD(loanDetail.chainState.onChainPrincipalUsd)}</p>
+                                  </div>
+                                )}
+                                {loanDetail.chainState.onChainAccruedInterestUsd && (
+                                  <div>
+                                    <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-wider mb-1">Accrued Interest</p>
+                                    <p className="font-dl-mono text-sm text-dl-navy">{formatUSD(loanDetail.chainState.onChainAccruedInterestUsd)}</p>
+                                  </div>
+                                )}
+                                {loanDetail.chainState.onChainNextPaymentDue && (
+                                  <div>
+                                    <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-wider mb-1">Next Payment Due</p>
+                                    <p className="font-dl-mono text-sm text-dl-navy font-semibold">{formatUSD(loanDetail.chainState.onChainNextPaymentDue.amountUsd)}</p>
+                                    {loanDetail.chainState.onChainNextPaymentDue.dueTimestamp > 0 && (
+                                      <p className="text-xs text-dl-gray">{new Date(loanDetail.chainState.onChainNextPaymentDue.dueTimestamp * 1000).toLocaleDateString()}</p>
+                                    )}
+                                  </div>
+                                )}
+                                {(loanDetail.chainState.onChainDaysDelinquent ?? 0) > 0 && (
+                                  <div>
+                                    <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-wider mb-1">Days Past Due</p>
+                                    <p className="font-dl-mono text-sm text-dl-error font-semibold">{loanDetail.chainState.onChainDaysDelinquent} days</p>
+                                  </div>
+                                )}
+                                {loanDetail.chainState.onChainDueAt && (
+                                  <div>
+                                    <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-wider mb-1">Maturity Date</p>
+                                    <p className="font-dl-mono text-xs text-dl-gray">{new Date(loanDetail.chainState.onChainDueAt * 1000).toLocaleDateString()}</p>
+                                  </div>
+                                )}
+                                {loanDetail.chainState.onChainDefaultEligibleAt && (
+                                  <div>
+                                    <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-wider mb-1">Default Eligible After</p>
+                                    <p className="font-dl-mono text-xs text-dl-gray">{new Date(loanDetail.chainState.onChainDefaultEligibleAt * 1000).toLocaleDateString()}</p>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Payment Schedule Table */}
+                              <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-wider mb-3">
+                                Payment Schedule
+                                {loanDetail.chainState.onChainPaymentSchedule ? ' — from on-chain contract' : ' — projected'}
+                              </p>
+                              {(() => {
+                                const schedule = loanDetail.chainState.onChainPaymentSchedule ?? loanDetail.paymentSchedule.map(row => ({
+                                  month: row.month,
+                                  dueDate: row.dueDate,
+                                  paymentUsd: row.payment,
+                                }));
+                                if (schedule.length === 0) {
+                                  return <p className="text-xs text-dl-gray">Schedule unavailable — loan not yet disbursed.</p>;
+                                }
+                                const today = new Date().toISOString().slice(0, 10);
+                                return (
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-xs font-dl-mono border-collapse">
+                                      <thead>
+                                        <tr className="border-b border-dl-border text-dl-gray">
+                                          <th className="text-left py-2 pr-4">Mo.</th>
+                                          <th className="text-left py-2 pr-4">Due Date</th>
+                                          <th className="text-right py-2">Payment (AXUSD)</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {schedule.map((row) => {
+                                          const isPast = row.dueDate < today;
+                                          return (
+                                            <tr
+                                              key={row.month}
+                                              className={`border-b border-dl-border ${isPast ? 'text-dl-gray' : 'text-dl-navy'}`}
+                                            >
+                                              <td className="py-1.5 pr-4">{row.month}</td>
+                                              <td className="py-1.5 pr-4">
+                                                {row.dueDate}
+                                                {isPast && <span className="ml-2 text-dl-gold text-xs">past</span>}
+                                              </td>
+                                              <td className="py-1.5 text-right">{formatUSD(row.paymentUsd)}</td>
+                                            </tr>
+                                          );
+                                        })}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                );
+                              })()}
+                              {loanDetail.chainState.explorerFixedLoan && (
+                                <p className="mt-4 text-xs text-dl-gray">
+                                  <a
+                                    href={`${loanDetail.chainState.explorerFixedLoan}#code`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-dl-navy underline"
+                                  >
+                                    View loan contract on Blockscout
+                                  </a>
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="px-5 py-6 text-xs text-dl-error">Failed to load lifecycle data.</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

@@ -11,13 +11,13 @@
  * AXIOMCreditMarket: Permissioned LP pool (ERC-3643 IdentityRegistry gating)
  *
  * Post-deploy wiring (all completed in deploy script):
- *   fixedLoan.setCreditMarket(creditMarket) — tx: 0x426433c9880bc3dedd1f5f51ef31b011eaecaaf409367e072676eaaa32c5f9dc
- *   creditMarket.setFixedLoan(fixedLoan)    — tx: 0x67949349788c1467dd0daa9fa478e4d887c791c5ff2f8f77e1ed75d71ddb2b8b
- *   fixedLoan.grantRole(OPERATOR_ROLE, creditMarket) — tx: 0x05f2a4cc932b45e4793b1572152cbcd45984314c8ea83e3621558a22feec8176
+ *   fixedLoan.setCreditMarket(creditMarket) — tx: 0x38a956a54e46fef9fac026d038dbaf7843b12ae486a88de8df28edae382b27fd
+ *   creditMarket.setFixedLoan(fixedLoan)    — tx: 0x8d00ac283940fb0a597f318fc8c253a556adbd3c1ef09469902cd2ec9dfa032e
+ *   fixedLoan.grantRole(OPERATOR_ROLE, creditMarket) — tx: 0xa1ec9c9695a984408656d37d71f510cecdb8ec37c5cf6a79492e9929f63c54e8
  *
  * Verification:
- *   AXIOMFixedLoan:    https://arbitrum.blockscout.com/address/0x6D406aE27988DF24a61B6222481FF1aadfF21C7b#code
- *   AXIOMCreditMarket: https://arbitrum.blockscout.com/address/0x3518C77368c6cC3966adA1896711b7749597Acd2#code
+ *   AXIOMFixedLoan:    https://arbitrum.blockscout.com/address/0x96634c2E1E80Fa51d45F0e9aB9F49B7dB3e9c859#code
+ *   AXIOMCreditMarket: https://arbitrum.blockscout.com/address/0xeE21B3C0D89b8EfD9eD61A7FD0B98A637eA9ab37#code
  */
 
 export const CREDIT_MARKET_DEPLOYMENT = {
@@ -28,14 +28,14 @@ export const CREDIT_MARKET_DEPLOYMENT = {
 
   axusd:             '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C',
   identityRegistry:  '0x58f64a1262d5434d6C7637a2309b0999bB6D1970',
-  creditMarket:      '0x3518C77368c6cC3966adA1896711b7749597Acd2',
-  fixedLoan:         '0x6D406aE27988DF24a61B6222481FF1aadfF21C7b',
+  creditMarket:      '0xeE21B3C0D89b8EfD9eD61A7FD0B98A637eA9ab37',
+  fixedLoan:         '0x96634c2E1E80Fa51d45F0e9aB9F49B7dB3e9c859',
 
   explorerBase:      'https://arbitrum.blockscout.com',
 
-  wireTxSetCreditMarket: '0x426433c9880bc3dedd1f5f51ef31b011eaecaaf409367e072676eaaa32c5f9dc',
-  wireTxSetFixedLoan:    '0x67949349788c1467dd0daa9fa478e4d887c791c5ff2f8f77e1ed75d71ddb2b8b',
-  wireTxGrantRole:       '0x05f2a4cc932b45e4793b1572152cbcd45984314c8ea83e3621558a22feec8176',
+  wireTxSetCreditMarket: '0x38a956a54e46fef9fac026d038dbaf7843b12ae486a88de8df28edae382b27fd',
+  wireTxSetFixedLoan:    '0x8d00ac283940fb0a597f318fc8c253a556adbd3c1ef09469902cd2ec9dfa032e',
+  wireTxGrantRole:       '0xa1ec9c9695a984408656d37d71f510cecdb8ec37c5cf6a79492e9929f63c54e8',
 
   roles: {
     operatorRole:    '0x97667070c54ef182b0f5858b034beac1b6f3089aa2d3188bb1e8929f4fa9b929',

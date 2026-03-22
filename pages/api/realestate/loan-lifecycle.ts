@@ -308,11 +308,13 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
 
         const loanId32 = toLoanId32(loan.loan_id);
 
-        const [chainLoan, accruedWei, nextPayment, daysDeliq] = await Promise.allSettled([
+        const [chainLoan, accruedWei, nextPayment, daysDeliq, onChainSchedule] = await Promise.allSettled([
           fixedLoanContract.getLoan(loanId32),
           fixedLoanContract.accruedInterest(loanId32),
           fixedLoanContract.nextPaymentDue(loanId32),
           fixedLoanContract.daysDelinquent(loanId32),
+          // Canonical payment schedule directly from the contract's amortization engine
+          fixedLoanContract.paymentSchedule(loanId32),
         ]);
 
         if (chainLoan.status === 'fulfilled') {
@@ -320,10 +322,16 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
             state: bigint;
             outstandingPrincipal: bigint;
             drawnPrincipal: bigint;
+            dueAt: bigint;
+            gracePeriodSeconds: bigint;
           };
           const statusNum = Number(cl.state);
           chainState.onChainStatus = CREDIT_MARKET_DEPLOYMENT.loanStatusMap[statusNum] ?? `STATUS_${statusNum}`;
           chainState.onChainPrincipalUsd = ethers.formatUnits(cl.outstandingPrincipal, 6);
+          // Surface maturity + grace period expiry so UI can compute delinquency eligibility
+          (chainState as Record<string, unknown>).onChainDueAt = Number(cl.dueAt);
+          (chainState as Record<string, unknown>).onChainGracePeriodSeconds = Number(cl.gracePeriodSeconds);
+          (chainState as Record<string, unknown>).onChainDefaultEligibleAt = Number(cl.dueAt) + Number(cl.gracePeriodSeconds);
         }
 
         if (accruedWei.status === 'fulfilled') {
@@ -340,6 +348,16 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
 
         if (daysDeliq.status === 'fulfilled') {
           chainState.onChainDaysDelinquent = Number(daysDeliq.value as bigint);
+        }
+
+        // On-chain payment schedule (amounts are in AXUSD wei, 6 decimals; dueDates are Unix timestamps)
+        if (onChainSchedule.status === 'fulfilled') {
+          const [schedAmounts, schedDates] = onChainSchedule.value as [bigint[], bigint[]];
+          (chainState as Record<string, unknown>).onChainPaymentSchedule = schedAmounts.map((amt: bigint, i: number) => ({
+            month: i + 1,
+            dueDate: new Date(Number(schedDates[i]) * 1000).toISOString().slice(0, 10),
+            paymentUsd: ethers.formatUnits(amt, 6),
+          }));
         }
 
       } catch (chainReadErr: unknown) {

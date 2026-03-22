@@ -344,9 +344,17 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
 
     // ─── Operator: State transitions ──────────────────────────────────────────
 
+    /**
+     * @notice Mark a loan delinquent once it is past its maturity date.
+     *         Grace period applies to the DEFAULT transition, not the delinquency declaration —
+     *         the loan must simply be past maturity (dueAt) before the operator can flag it.
+     *         This mirrors Maple Finance's delinquency state machine.
+     */
     function markDelinquent(bytes32 loanId) external onlyRole(OPERATOR_ROLE) {
         LoanRecord storage loan = _requireLoan(loanId);
         if (loan.state != STATE_ACTIVE) revert InvalidState(loan.state, "ACTIVE");
+        // slither-disable-next-line timestamp
+        require(block.timestamp >= loan.dueAt, "Loan not yet past maturity");
         loan.state = STATE_DELINQUENT;
         emit LoanDelinquent(loanId);
     }
@@ -358,11 +366,22 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
         emit LoanCured(loanId);
     }
 
+    /**
+     * @notice Declare a loan in default. Only callable after grace period has expired
+     *         (dueAt + gracePeriodSeconds). The grace period gives borrowers time to cure
+     *         after maturity before the operator can escalate to DEFAULT, aligning with
+     *         Maple Finance's configurable grace-period state machine.
+     */
     function defaultLoan(bytes32 loanId) external onlyRole(OPERATOR_ROLE) {
         LoanRecord storage loan = _requireLoan(loanId);
         if (loan.state != STATE_ACTIVE && loan.state != STATE_DELINQUENT) {
             revert InvalidState(loan.state, "ACTIVE or DELINQUENT");
         }
+        // slither-disable-next-line timestamp
+        require(
+            block.timestamp >= loan.dueAt + loan.gracePeriodSeconds,
+            "Grace period has not expired"
+        );
         loan.state = STATE_DEFAULTED;
         emit LoanDefaulted(loanId);
     }

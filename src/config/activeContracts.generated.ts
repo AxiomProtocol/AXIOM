@@ -63,8 +63,8 @@ export const ACTIVE_CONTRACTS = {
   fixedLoanNFT: '0xc4d12133f74c0f46F6aD00Bd930DAA75BF68801a' as const,
 } as const;
 
-export const CREDIT_MARKET_ADDRESS = '0x3518C77368c6cC3966adA1896711b7749597Acd2' as const;
-export const FIXED_LOAN_NFT_ADDRESS = '0x6D406aE27988DF24a61B6222481FF1aadfF21C7b' as const;
+export const CREDIT_MARKET_ADDRESS = '0xeE21B3C0D89b8EfD9eD61A7FD0B98A637eA9ab37' as const;
+export const FIXED_LOAN_NFT_ADDRESS = '0x96634c2E1E80Fa51d45F0e9aB9F49B7dB3e9c859' as const;
 
 export const LEGACY_ADDRESSES = [
   { address: '0x8616E8EA83f048ab9A5eC513c9412dd2993bcE3F', reason: 'handleUSD (fxUSD) — NOT Axiom, false reference' },
