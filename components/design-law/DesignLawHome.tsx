@@ -3,14 +3,12 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { ConnectWalletButton } from './ConnectWalletButton';
 import { SectionHeading } from './SectionHeading';
-import { SolidButton } from './SolidButton';
 import { NAV_ITEMS } from './navItems';
 import { NavDropdown } from './NavDropdown';
 import {
-  Building2, Landmark, TrendingUp, Eye, Coins,
-  Wallet, Radio, CreditCard, ShieldCheck, Users, FileText,
-  Search, BrainCircuit, Layers, Scale, BookOpen, ArrowRight,
-  Target, Globe, Lock, CheckCircle2, ChevronRight
+  Landmark, Users, FileText,
+  Wallet, Scale, BookOpen, ArrowRight,
+  Target, Search, BrainCircuit, CheckCircle2, ChevronRight
 } from 'lucide-react';
 
 const PLATFORM_STATS = [
@@ -68,19 +66,6 @@ const FEATURED_PRODUCTS = [
   },
 ];
 
-const ALL_PRODUCTS = [
-  { title: 'Exchange', href: '/dex', icon: Coins },
-  { title: 'Unified AXUSD', href: '/axusd-3643', icon: ShieldCheck },
-  { title: 'Banking', href: '/banking', icon: CreditCard },
-  { title: 'Deal Flow', href: '/distressed-feed', icon: Building2 },
-  { title: 'Land Pipeline', href: '/land', icon: Globe },
-  { title: 'DePIN', href: '/depin/denet', icon: Radio },
-  { title: 'Syndication', href: '/syndication', icon: Layers },
-  { title: 'Investor Portal', href: '/syndication/portal', icon: FileText },
-  { title: 'Sentinel', href: '/sentinel', icon: Lock },
-  { title: 'Observer', href: '/observer', icon: Eye },
-  { title: 'RE Intelligence', href: '/re', icon: TrendingUp },
-];
 
 const PARTICIPATION_STEPS = [
   {
@@ -154,7 +139,6 @@ export function DesignLawHome() {
       </Head>
       <div className="design-law-root min-h-screen bg-dl-bg">
 
-        {/* ── Navigation ── */}
         <nav className="border-b border-dl-border bg-dl-bg sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
             <Link href="/" className="font-dl-serif text-lg text-dl-navy font-bold">
@@ -230,7 +214,6 @@ export function DesignLawHome() {
           )}
         </nav>
 
-        {/* ── 1. HERO — plain-language headline + 3 identity CTAs ── */}
         <div className="border-t-4 border-dl-gold">
           <div className="relative w-full" style={{ height: '440px' }}>
             <img
@@ -274,7 +257,6 @@ export function DesignLawHome() {
 
         <div className="max-w-7xl mx-auto px-6 py-12">
 
-          {/* ── 2. START HERE — entry profiles (moved from near-bottom) ── */}
           <div className="mb-12">
             <div className="mb-6">
               <SectionHeading>Where Do You Start?</SectionHeading>
@@ -317,7 +299,6 @@ export function DesignLawHome() {
             </div>
           </div>
 
-          {/* ── 3. HOW IT WORKS — participation steps ── */}
           <div className="mb-12">
             <SectionHeading>How It Works</SectionHeading>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border">
@@ -340,7 +321,6 @@ export function DesignLawHome() {
             </div>
           </div>
 
-          {/* ── 4. PLATFORM STATS — trust signals (moved lower) ── */}
           <div className="mb-12">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border">
               {PLATFORM_STATS.map((stat, i) => (
@@ -358,7 +338,6 @@ export function DesignLawHome() {
 
           <div className="h-px w-full mb-12" style={{ backgroundColor: '#b8860b' }} />
 
-          {/* ── 5. FEATURED PRODUCTS — 5 key products ── */}
           <div className="mb-12">
             <SectionHeading>Featured Products</SectionHeading>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
@@ -387,27 +366,15 @@ export function DesignLawHome() {
                 );
               })}
             </div>
-            <div className="border border-t-0 border-dl-border bg-dl-bg-alt">
-              <div className="px-5 py-4">
-                <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-wider mb-2">All Platform Products</p>
-                <div className="flex flex-wrap gap-x-5 gap-y-1">
-                  {ALL_PRODUCTS.map((p) => {
-                    const Icon = p.icon;
-                    return (
-                      <Link key={p.title} href={p.href} className="flex items-center gap-1.5 text-xs text-dl-navy hover:underline py-0.5">
-                        <Icon className="w-3 h-3 text-dl-gray" />
-                        {p.title}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
+            <div className="border border-t-0 border-dl-border px-5 py-3 bg-dl-bg-alt text-right">
+              <Link href="/products" className="text-xs text-dl-navy underline font-dl-mono">
+                Browse all products &rarr;
+              </Link>
             </div>
           </div>
 
           <div className="h-px w-full mb-12" style={{ backgroundColor: '#2d5016' }} />
 
-          {/* ── 6. CAPITAL PROGRAM STRUCTURE — moved lower ── */}
           <div className="mb-12">
             <SectionHeading>Capital Program Structure</SectionHeading>
             <div className="border border-dl-border mb-6">
@@ -490,7 +457,6 @@ export function DesignLawHome() {
 
           <div className="h-px w-full mb-12" style={{ backgroundColor: '#2d5016' }} />
 
-          {/* ── 7. COMMUNITY-LED EXECUTION ── */}
           <div className="mb-12">
             <SectionHeading>Community-Led Execution</SectionHeading>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
@@ -524,7 +490,6 @@ export function DesignLawHome() {
             </div>
           </div>
 
-          {/* ── 8. ADDITIONAL RESOURCES ── */}
           <div className="mb-12">
             <SectionHeading>Additional Resources</SectionHeading>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border">
@@ -549,7 +514,6 @@ export function DesignLawHome() {
             </div>
           </div>
 
-          {/* ── 9. RISK DISCLOSURE ── */}
           <div className="mb-12">
             <SectionHeading>Risk Disclosure</SectionHeading>
             <div className="border border-dl-border p-6 bg-dl-bg-alt border-l-4 border-l-dl-error">
@@ -565,7 +529,6 @@ export function DesignLawHome() {
             </div>
           </div>
 
-          {/* ── Footer ── */}
           <div className="border-t border-dl-border pt-6 mb-8">
             <div className="flex flex-col md:flex-row md:justify-between gap-4 text-xs text-dl-gray">
               <div>
