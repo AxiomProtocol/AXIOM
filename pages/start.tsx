@@ -90,6 +90,27 @@ const PROFILES = [
   },
 ];
 
+const COLOR_BORDER_LEFT: Record<string, string> = {
+  'dl-forest': 'border-l-dl-forest',
+  'dl-gold': 'border-l-dl-gold',
+  'dl-navy': 'border-l-dl-navy',
+};
+const COLOR_BORDER: Record<string, string> = {
+  'dl-forest': 'border-dl-forest',
+  'dl-gold': 'border-dl-gold',
+  'dl-navy': 'border-dl-navy',
+};
+const COLOR_TEXT: Record<string, string> = {
+  'dl-forest': 'text-dl-forest',
+  'dl-gold': 'text-dl-gold',
+  'dl-navy': 'text-dl-navy',
+};
+const COLOR_BORDER_TOP: Record<string, string> = {
+  'dl-forest': 'border-t-dl-forest',
+  'dl-gold': 'border-t-dl-gold',
+  'dl-navy': 'border-t-dl-navy',
+};
+
 const GEF_TIERS = [
   { tier: 'Observer', desc: 'Platform access. No contribution record yet.', creditLimit: '$0', unlocks: 'Deal Flow, Property Analysis, community browsing' },
   { tier: 'Participant', desc: 'Completed first Wealth Practice cycle.', creditLimit: '$1,500', unlocks: 'Community Entry Credit, deeper Deal Intelligence tools' },
@@ -187,11 +208,11 @@ export default function StartPage() {
             const isCurrentStage = walletAddress && i === currentStageIndex;
             const isPast = walletAddress && i < currentStageIndex;
             return (
-              <div key={stage.num} className={`px-6 py-6 border-l-4 border-l-${stage.color} ${i < STAGES.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'} ${isCurrentStage ? 'ring-1 ring-inset ring-dl-forest' : ''}`}>
+              <div key={stage.num} className={`px-6 py-6 border-l-4 ${COLOR_BORDER_LEFT[stage.color] ?? ''} ${i < STAGES.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'} ${isCurrentStage ? 'ring-1 ring-inset ring-dl-forest' : ''}`}>
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <span className={`font-dl-mono text-xs px-2 py-0.5 border border-${stage.color} text-${stage.color}`}>
+                      <span className={`font-dl-mono text-xs px-2 py-0.5 border ${COLOR_BORDER[stage.color] ?? ''} ${COLOR_TEXT[stage.color] ?? ''}`}>
                         {stage.num}
                       </span>
                       <span className="font-dl-mono text-xs text-dl-gray">{stage.gef}</span>
@@ -240,13 +261,13 @@ export default function StartPage() {
         <SectionHeading>Where Do You Start?</SectionHeading>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border">
           {PROFILES.map((profile, i) => (
-            <div key={profile.label} className={`p-6 border-t-4 border-t-${profile.color} ${i < PROFILES.length - 1 ? 'md:border-r border-b md:border-b-0 border-dl-border' : ''}`}>
+            <div key={profile.label} className={`p-6 border-t-4 ${COLOR_BORDER_TOP[profile.color] ?? ''} ${i < PROFILES.length - 1 ? 'md:border-r border-b md:border-b-0 border-dl-border' : ''}`}>
               <h3 className="font-dl-serif text-base text-dl-navy font-bold mb-1">{profile.label}</h3>
               <p className="text-xs text-dl-gray mb-4">{profile.subLabel}</p>
               <ol className="space-y-2 mb-6">
                 {profile.steps.map((step, si) => (
                   <li key={si} className="flex items-start gap-2">
-                    <span className={`font-dl-mono text-xs text-${profile.color} font-bold mt-0.5 flex-shrink-0`}>{si + 1}.</span>
+                    <span className={`font-dl-mono text-xs ${COLOR_TEXT[profile.color] ?? ''} font-bold mt-0.5 flex-shrink-0`}>{si + 1}.</span>
                     <p className="text-xs text-dl-gray leading-relaxed">{step}</p>
                   </li>
                 ))}

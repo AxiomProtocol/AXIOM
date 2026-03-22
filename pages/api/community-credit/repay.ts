@@ -7,7 +7,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const { walletAddress, creditLineId, repaymentAmountUsd } = req.body;
+  const { walletAddress, creditLineId, repaymentAmountUsd } = req.body as {
+    walletAddress?: string;
+    creditLineId?: string;
+    repaymentAmountUsd?: string | number;
+  };
 
   if (!walletAddress || !creditLineId || !repaymentAmountUsd) {
     return res.status(400).json({ success: false, error: 'walletAddress, creditLineId, and repaymentAmountUsd are required' });
@@ -18,14 +22,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ success: false, error: auth.reason });
   }
 
-  const repayAmount = parseFloat(repaymentAmountUsd);
+  const repayAmount = parseFloat(String(repaymentAmountUsd));
   if (isNaN(repayAmount) || repayAmount <= 0) {
     return res.status(400).json({ success: false, error: 'repaymentAmountUsd must be a positive number' });
   }
 
   try {
-    const lineResult = await pool.query(
-      `SELECT * FROM income_credit_lines
+    const lineResult = await pool.query<{
+      id: number;
+      status: string;
+      outstanding_balance_usd: string;
+      drawn_amount_usd: string;
+      interest_earned_usd: string | null;
+    }>(
+      `SELECT id, status, outstanding_balance_usd, drawn_amount_usd, interest_earned_usd
+       FROM income_credit_lines
        WHERE credit_line_id = $1 AND LOWER(wallet_address) = LOWER($2)
        LIMIT 1`,
       [creditLineId, auth.verifiedAddress]
@@ -42,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const outstanding = parseFloat(line.outstanding_balance_usd || '0');
-    const drawnAmount = parseFloat(line.drawn_amount_usd || '0');
+    const drawnPrincipal = parseFloat(line.drawn_amount_usd || '0');
 
     if (repayAmount > outstanding + 0.01) {
       return res.status(400).json({
@@ -55,9 +66,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const effectiveRepay = Math.min(repayAmount, outstanding);
     const outstandingBefore = outstanding;
 
-    const principalRatio = outstanding > 0 ? drawnAmount / outstanding : 1;
-    const principalRepaid = effectiveRepay * principalRatio;
-    const interestRepaid = effectiveRepay - principalRepaid;
+    // Interest-first repayment model:
+    // outstanding_balance_usd = principal + accrued interest at drawdown.
+    // interestRemaining = outstanding - drawnPrincipal (always >= 0 since outstanding starts >= drawn).
+    // Pay interest first, then principal from remaining payment.
+    // After a partial repayment, outstanding decreases; next call recomputes from fresh outstanding.
+    const interestRemaining = Math.max(0, outstanding - drawnPrincipal);
+    const interestRepaid = Math.min(effectiveRepay, interestRemaining);
+    const principalRepaid = effectiveRepay - interestRepaid;
 
     const newOutstanding = Math.max(0, outstanding - effectiveRepay);
     const isFullyRepaid = newOutstanding < 0.01;
@@ -104,7 +120,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             creditLineId,
             auth.verifiedAddress,
             interestRepaid.toFixed(6),
-            `Interest distributed to junior tranche (Wealth Practice LP pool) — 500 bps prorated`,
+            `Interest distributed to junior tranche (Wealth Practice LP pool) — interest-first allocation`,
           ]
         );
       }
@@ -162,8 +178,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       fullyRepaid: isFullyRepaid,
       gefViolationCleared: isFullyRepaid,
       message: isFullyRepaid
-        ? `Repayment complete. Credit line closed. $${interestRepaid.toFixed(6)} distributed to community junior LP pool (treasury ledger). GEF violation flag cleared.`
-        : `Partial repayment of $${effectiveRepay.toLocaleString()} recorded. $${interestRepaid.toFixed(6)} interest distributed to junior pool. Remaining: $${newOutstanding.toFixed(2)}.`,
+        ? `Repayment complete. Credit line closed. $${interestRepaid.toFixed(2)} distributed to community junior LP pool (treasury ledger). GEF violation flag cleared.`
+        : `Partial repayment of $${effectiveRepay.toFixed(2)} recorded. Interest: $${interestRepaid.toFixed(2)}, Principal: $${principalRepaid.toFixed(2)}. Remaining: $${newOutstanding.toFixed(2)}.`,
     });
   } catch (_err) {
     console.error('[community-credit/repay]', _err);
