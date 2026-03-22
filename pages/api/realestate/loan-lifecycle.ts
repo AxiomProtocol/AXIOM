@@ -2,24 +2,39 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
 import { verifyCreditAuth, isAdminRequest } from '../../../lib/community-credit-auth';
 import { CREDIT_MARKET_ADDRESS, FIXED_LOAN_NFT_ADDRESS } from '../../../src/config/activeContracts.generated';
+import { CREDIT_MARKET_ABI as CM_ABI, FIXED_LOAN_ABI as FL_ABI } from '../../../src/config/creditMarket.generated';
 
 const ARBITRUM_RPC = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY ?? ''}`;
 
-const CREDIT_MARKET_ABI = [
-  'function originateLoan(bytes32 loanId, address borrower, uint256 principal, uint256 rateBps, uint256 feeBps, uint256 termDays, string calldata propAddress) external',
-  'function approveLoan(bytes32 loanId) external',
-  'function fundLoan(bytes32 loanId) external',
-  'function markDelinquent(bytes32 loanId) external',
-  'function cureDelinquent(bytes32 loanId) external',
-  'function defaultLoan(bytes32 loanId) external',
-  'function getLoan(bytes32 loanId) view returns (tuple(bytes32 loanId, address borrower, uint256 principalUsd6, uint256 interestRateBps, uint256 originationFeeUsd6, uint256 termSeconds, uint8 status, uint256 fundedAt, uint256 dueAt, uint256 lastAccrualAt, uint256 totalRepaidUsd6, uint256 totalInterestPaidUsd6, string propertyAddress))',
-  'function accruedInterest(bytes32 loanId) view returns (uint256)',
-] as const;
+const CREDIT_MARKET_ABI = CM_ABI as readonly string[];
+const FIXED_LOAN_ABI    = FL_ABI as readonly string[];
 
-const FIXED_LOAN_ABI = [
-  'function mintReceipt(bytes32 loanId, address borrower, uint256 principalUsd6, uint256 rateBps, uint256 termDays, uint256 dueAt, string calldata propAddress) external returns (uint256)',
-  'function burnReceipt(bytes32 loanId) external',
-] as const;
+// Maps DB action → contract method
+const CHAIN_ACTION_MAP: Record<string, string> = {
+  approve:         'approveLoan',
+  mark_delinquent: 'markDelinquent',
+  cure_delinquent: 'cureDelinquent',
+  default:         'defaultLoan',
+};
+
+async function getCreditMarketSigner() {
+  const ethersModule = await import('ethers');
+  const ethers = ethersModule.ethers;
+  const deployerKey = process.env.DEPLOYER_PRIVATE_KEY;
+  if (!deployerKey) throw new Error('DEPLOYER_PRIVATE_KEY not set');
+  const provider  = new ethers.JsonRpcProvider(ARBITRUM_RPC);
+  const signer    = new ethers.Wallet(deployerKey, provider);
+  const market    = new ethers.Contract(CREDIT_MARKET_ADDRESS, CREDIT_MARKET_ABI, signer);
+  const fixedLoan = new ethers.Contract(FIXED_LOAN_NFT_ADDRESS, FIXED_LOAN_ABI, signer);
+  return { signer, market, fixedLoan, ethers };
+}
+
+function toLoanId32(loanId: string): string {
+  // ethers is a CJS-compatible package; direct require is safe in Next.js API routes
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { ethers } = require('ethers') as { ethers: typeof import('ethers') };
+  return ethers.encodeBytes32String(loanId.replace(/-/g, '').slice(0, 31));
+}
 
 const GEF_OPERATOR_TIERS = new Set(['Operator', 'Steward', 'Architect']);
 
@@ -279,9 +294,68 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
       parseFloat(loan.total_repaid_usd)
     );
 
+    // ── On-chain state enrichment for active/delinquent loans ───────────
+    let chainState: {
+      onChainStatus: string | null;
+      onChainAccruedInterestUsd: string | null;
+      onChainPrincipalUsd: string | null;
+      nftTokenId: string | null;
+      explorerUrl: string | null;
+    } = {
+      onChainStatus: null,
+      onChainAccruedInterestUsd: null,
+      onChainPrincipalUsd: null,
+      nftTokenId: null,
+      explorerUrl: null,
+    };
+
+    if (loan.status === 'active' || loan.status === 'delinquent' || loan.status === 'approved') {
+      try {
+        const { ethers } = await import('ethers');
+        const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
+        const market   = new ethers.Contract(CREDIT_MARKET_ADDRESS, CREDIT_MARKET_ABI, provider);
+        const fixedLoanContract = new ethers.Contract(FIXED_LOAN_NFT_ADDRESS, FIXED_LOAN_ABI, provider);
+        const { CREDIT_MARKET_DEPLOYMENT } = await import('../../../src/config/creditMarket.generated');
+
+        const loanId32 = toLoanId32(loan.loan_id);
+
+        const [chainLoan, accruedWei] = await Promise.all([
+          market.getLoan(loanId32) as Promise<{
+            status: bigint;
+            principalUsd6: bigint;
+            totalRepaidUsd6: bigint;
+          }>,
+          market.accruedInterest(loanId32) as Promise<bigint>,
+        ]);
+
+        const statusNum = Number(chainLoan.status);
+        const onChainStatusStr = CREDIT_MARKET_DEPLOYMENT.loanStatusMap[statusNum] ?? `STATUS_${statusNum}`;
+
+        const principalWei = BigInt(chainLoan.principalUsd6) - BigInt(chainLoan.totalRepaidUsd6);
+        chainState = {
+          onChainStatus: onChainStatusStr,
+          onChainAccruedInterestUsd: ethers.formatUnits(accruedWei, 18),
+          onChainPrincipalUsd: ethers.formatUnits(principalWei < 0n ? 0n : principalWei, 18),
+          nftTokenId: null,
+          explorerUrl: `${CREDIT_MARKET_DEPLOYMENT.explorerBase}/address/${CREDIT_MARKET_ADDRESS}`,
+        };
+
+        // Fetch NFT token ID if funded
+        try {
+          const tokenId = await fixedLoanContract.loanIdToTokenId(loanId32) as bigint;
+          if (tokenId > 0n) chainState.nftTokenId = tokenId.toString();
+        } catch { /* idempotent */ }
+
+      } catch (chainReadErr: unknown) {
+        const msg = chainReadErr instanceof Error ? chainReadErr.message : String(chainReadErr);
+        console.warn('[loan-lifecycle] GET chain read failed (non-fatal):', msg);
+      }
+    }
+
     return res.status(200).json({
       success: true,
       loan: enrichLoan(loan),
+      chainState,
       paymentSchedule,
       payments: payments.rows,
     });
@@ -511,56 +585,41 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
     });
   }
 
+  // ── fund: call fundLoan() on-chain, then mintReceipt NFT ────────────────
   if (action === 'fund') {
     const dueDate = new Date();
     dueDate.setMonth(dueDate.getMonth() + loan.loan_term_months);
 
-    // On-chain: call AXIOMCreditMarket.fundLoan() — disburses AXUSD to borrower
-    // and mint AXIOMFixedLoan NFT receipt
-    let fundTxHash: string | null = null;
+    const { ethers, market, fixedLoan } = await getCreditMarketSigner();
+    const loanId32     = toLoanId32(loan.loan_id);
+    const principalWei = ethers.parseUnits(loan.loan_amount_usd, 18);
+    const termDays     = BigInt(Math.round((loan.loan_term_months * 365) / 12));
+    const dueAtUnix    = BigInt(Math.floor(dueDate.getTime() / 1000));
+
+    // 1. fundLoan — AUTHORITATIVE: reverts if loan not in APPROVED state on-chain
+    const fundTx = await market.fundLoan(loanId32);
+    const fundReceipt = await fundTx.wait(1);
+    const fundTxHash: string = fundReceipt?.hash ?? fundTx.hash;
+
+    // 2. Mint ERC-721 loan receipt NFT to borrower
     let nftTokenId: string | null = null;
-    try {
-      const { ethers } = await import('ethers');
-      const deployerKey = process.env.DEPLOYER_PRIVATE_KEY;
-      if (deployerKey) {
-        const provider   = new ethers.JsonRpcProvider(ARBITRUM_RPC);
-        const signer     = new ethers.Wallet(deployerKey, provider);
-        const market     = new ethers.Contract(CREDIT_MARKET_ADDRESS, CREDIT_MARKET_ABI, signer);
-        const fixedLoan  = new ethers.Contract(FIXED_LOAN_NFT_ADDRESS, FIXED_LOAN_ABI, signer);
-
-        const loanId32 = ethers.encodeBytes32String(loan.loan_id.replace(/-/g, '').slice(0, 31));
-
-        // 1. Call fundLoan on-chain (sends AXUSD principal to borrower)
-        const fundTx = await market.fundLoan(loanId32);
-        const fundReceipt = await fundTx.wait(1);
-        fundTxHash = fundReceipt?.hash ?? fundTx.hash;
-
-        // 2. Mint loan receipt NFT to borrower
-        const principalWei = ethers.parseUnits(loan.loan_amount_usd, 18);
-        const termDays = BigInt(Math.round((loan.loan_term_months * 365) / 12));
-        const dueAtUnix = BigInt(Math.floor(dueDate.getTime() / 1000));
-
-        const mintTx = await fixedLoan.mintReceipt(
-          loanId32,
-          loan.wallet_address,
-          principalWei,
-          BigInt(loan.interest_rate_bps),
-          termDays,
-          dueAtUnix,
-          loan.property_address
-        );
-        const mintReceipt = await mintTx.wait(1);
-        // Extract tokenId from event log (Transfer from zero address)
-        const transferEvent = mintReceipt?.logs?.find(
-          (l: { topics?: string[] }) => l.topics && l.topics[1] === '0x0000000000000000000000000000000000000000000000000000000000000000'
-        );
-        if (transferEvent?.topics?.[3]) {
-          nftTokenId = BigInt(transferEvent.topics[3]).toString();
-        }
-      }
-    } catch (chainErr: unknown) {
-      const msg = chainErr instanceof Error ? chainErr.message : String(chainErr);
-      console.error('[loan-lifecycle] Chain fund failed (non-fatal):', msg);
+    const mintTx = await fixedLoan.mintReceipt(
+      loanId32,
+      loan.wallet_address,
+      principalWei,
+      BigInt(loan.interest_rate_bps),
+      termDays,
+      dueAtUnix,
+      loan.property_address
+    );
+    const mintReceipt = await mintTx.wait(1);
+    const transferEvent = (mintReceipt?.logs ?? []).find(
+      (l: { topics?: string[] }) =>
+        l.topics &&
+        l.topics[1] === '0x0000000000000000000000000000000000000000000000000000000000000000'
+    );
+    if (transferEvent?.topics?.[3]) {
+      nftTokenId = BigInt(transferEvent.topics[3]).toString();
     }
 
     await pool.query(
@@ -579,32 +638,74 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
     });
   }
 
-  // All other admin state transitions (approve, mark_delinquent, cure_delinquent, close, default)
+  // ── close (manual repaid): admin manually marks as repaid, burns NFT ────
+  if (action === 'close') {
+    const { fixedLoan } = await getCreditMarketSigner();
+    const loanId32 = toLoanId32(loan.loan_id);
+    const burnTx   = await fixedLoan.burnReceipt(loanId32);
+    await burnTx.wait(1);
+    const burnHash: string = burnTx.hash;
+
+    await pool.query(
+      `UPDATE real_estate_loans SET status = $2, disbursement_tx_hash = $3, updated_at = NOW() WHERE loan_id = $1`,
+      [loan.loan_id, transition.to, burnHash]
+    );
+    return res.status(200).json({
+      success: true,
+      message: 'Loan closed and NFT receipt burned on-chain',
+      newStatus: transition.to,
+      chainTxHash: burnHash,
+    });
+  }
+
+  // ── default: call defaultLoan() on-chain, burn NFT ───────────────────────
+  if (action === 'default') {
+    const { market, fixedLoan } = await getCreditMarketSigner();
+    const loanId32 = toLoanId32(loan.loan_id);
+
+    const defaultTx = await market.defaultLoan(loanId32);
+    await defaultTx.wait(1);
+
+    const burnTx = await fixedLoan.burnReceipt(loanId32);
+    await burnTx.wait(1);
+
+    await pool.query(
+      `UPDATE real_estate_loans SET status = $2, disbursement_tx_hash = $3, updated_at = NOW() WHERE loan_id = $1`,
+      [loan.loan_id, transition.to, defaultTx.hash]
+    );
+    return res.status(200).json({
+      success: true,
+      message: 'Loan defaulted on-chain and NFT receipt burned',
+      newStatus: transition.to,
+      chainTxHash: defaultTx.hash,
+    });
+  }
+
+  // ── approve / mark_delinquent / cure_delinquent: call matching contract method ──
+  const contractMethod = CHAIN_ACTION_MAP[action];
+  if (!contractMethod) {
+    return res.status(400).json({ success: false, error: `No on-chain handler for action: ${action}` });
+  }
+
+  const { market } = await getCreditMarketSigner();
+  const loanId32 = toLoanId32(loan.loan_id);
+
+  // Authoritative on-chain call — reverts if state machine disallows it
+  const tx: { wait: (n: number) => Promise<{ hash?: string } | null>; hash: string } =
+    await (market[contractMethod] as (id: string) => Promise<typeof tx>)(loanId32);
+  const receipt = await tx.wait(1);
+  const chainTxHash: string = receipt?.hash ?? tx.hash;
+
   await pool.query(
     `UPDATE real_estate_loans SET status = $2, updated_at = NOW() WHERE loan_id = $1`,
     [loan.loan_id, transition.to]
   );
-
-  // For terminal states (repaid/defaulted), burn the NFT receipt on-chain
-  if (transition.to === 'repaid' || transition.to === 'defaulted') {
-    try {
-      const { ethers } = await import('ethers');
-      const deployerKey = process.env.DEPLOYER_PRIVATE_KEY;
-      if (deployerKey) {
-        const provider  = new ethers.JsonRpcProvider(ARBITRUM_RPC);
-        const signer    = new ethers.Wallet(deployerKey, provider);
-        const fixedLoan = new ethers.Contract(FIXED_LOAN_NFT_ADDRESS, FIXED_LOAN_ABI, signer);
-        const loanId32  = ethers.encodeBytes32String(loan.loan_id.replace(/-/g, '').slice(0, 31));
-        const burnTx    = await fixedLoan.burnReceipt(loanId32);
-        await burnTx.wait(1);
-      }
-    } catch (chainErr: unknown) {
-      const msg = chainErr instanceof Error ? chainErr.message : String(chainErr);
-      console.error('[loan-lifecycle] Chain burn NFT failed (non-fatal):', msg);
-    }
-  }
-
-  return res.status(200).json({ success: true, message: `Loan transitioned to '${transition.to}'`, newStatus: transition.to });
+  return res.status(200).json({
+    success: true,
+    message: `Loan transitioned to '${transition.to}' (anchored on-chain)`,
+    newStatus: transition.to,
+    chainTxHash,
+  });
 }
 
 async function handleRepay(

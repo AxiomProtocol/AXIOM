@@ -65,6 +65,15 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
 
     address public fixedLoanNFT;      // AXIOMFixedLoan contract (set post-deploy)
 
+    /**
+     * @dev LP Allowlist — permissioned LP access gate.
+     *      In production, only Reg-D verified / KYC-passed wallets are added.
+     *      The operator role manages additions/removals; admin can override.
+     *      Mirrors ERC-3643 identity-registry semantics: only allowed wallets
+     *      may call depositLiquidity.
+     */
+    mapping(address => bool) public lpAllowlist;
+
     event LoanOriginated(bytes32 indexed loanId, address indexed borrower, uint256 principalUsd6, string propertyAddress);
     event LoanApproved(bytes32 indexed loanId);
     event LoanFunded(bytes32 indexed loanId, address indexed borrower, uint256 principalUsd6);
@@ -76,6 +85,7 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
     event LiquidityDeposited(address indexed lp, uint256 amountUsd6, uint256 sharesIssued);
     event LiquidityWithdrawn(address indexed lp, uint256 amountUsd6, uint256 sharesBurned);
     event FixedLoanNFTSet(address indexed nftContract);
+    event LpAllowlistUpdated(address indexed lp, bool allowed);
 
     error LoanNotFound();
     error InvalidTransition(uint8 currentStatus, string action);
@@ -84,6 +94,7 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
     error ZeroAmount();
     error InsufficientShares();
     error Unauthorized();
+    error LpNotAllowed(address lp);
 
     constructor(address _axusd, address _admin) {
         require(_axusd != address(0), "Zero AXUSD");
@@ -98,10 +109,41 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
     // ─────────────────────────────────────────────
 
     /**
+     * @notice Operator/admin adds a wallet to the LP allowlist (permissioned LP gate).
+     *         Only KYC/Reg-D verified wallets should be added.
+     *         Mirrors ERC-3643 identity-registry pattern for accredited-investor pools.
+     * @param lp The LP wallet address to authorize.
+     */
+    function addLpAllowlist(address lp) external onlyRole(OPERATOR_ROLE) {
+        require(lp != address(0), "Zero LP address");
+        lpAllowlist[lp] = true;
+        emit LpAllowlistUpdated(lp, true);
+    }
+
+    /**
+     * @notice Operator/admin removes a wallet from the LP allowlist.
+     * @param lp The LP wallet address to revoke.
+     */
+    function removeLpAllowlist(address lp) external onlyRole(OPERATOR_ROLE) {
+        lpAllowlist[lp] = false;
+        emit LpAllowlistUpdated(lp, false);
+    }
+
+    /**
+     * @notice Returns whether an address is an authorized LP.
+     * @param lp The LP wallet address to check.
+     */
+    function isLpAllowed(address lp) external view returns (bool) {
+        return lpAllowlist[lp];
+    }
+
+    /**
      * @notice LP deposits AXUSD into the lending vault and receives share tokens.
+     *         Caller must be on the LP allowlist (KYC/Reg-D gate).
      * @param amountUsd6 Amount of AXUSD (18 decimals) to deposit.
      */
     function depositLiquidity(uint256 amountUsd6) external nonReentrant {
+        if (!lpAllowlist[msg.sender]) revert LpNotAllowed(msg.sender);
         if (amountUsd6 == 0) revert ZeroAmount();
         uint256 shares = _computeShares(amountUsd6);
         axusd.safeTransferFrom(msg.sender, address(this), amountUsd6);
