@@ -56,15 +56,21 @@ export const ACTIVE_CONTRACTS = {
   treasuryHub: '0x3fD63728288546AC41dAe3bf25ca383061c3A929' as const,
   deployer: '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96' as const,
 
-  // ── Lending Fund Contracts (v4 deployed 2026-03-22, ERC-3643 + draw schedule) ────
+  // ── Lending Fund Contracts (v7 deployed 2026-03-22, Maple-style grace period, keccak loanId) ──
   // AXIOMFixedLoan:    Fixed-term loan engine (draw tranches, amortized/interest-only, prepayment)
   // AXIOMCreditMarket: LP pool with ERC-3643 IdentityRegistry gating (Wildcat V2 pattern)
-  creditMarket: '0x42b0e50593ae6d6595F33448058074F88A4958C8' as const,
-  fixedLoanNFT: '0xc4d12133f74c0f46F6aD00Bd930DAA75BF68801a' as const,
+  // NOTE: creditMarket and fixedLoanNFT are IDENTICAL to the exported CREDIT_MARKET_ADDRESS /
+  // FIXED_LOAN_NFT_ADDRESS constants below — both sources must stay in sync.
+  creditMarket: '0xeE21B3C0D89b8EfD9eD61A7FD0B98A637eA9ab37' as const,
+  fixedLoanNFT: '0x96634c2E1E80Fa51d45F0e9aB9F49B7dB3e9c859' as const,
 } as const;
 
+/** v7 CreditMarket — deployed + verified Arbitrum Blockscout 2026-03-22 */
 export const CREDIT_MARKET_ADDRESS = '0xeE21B3C0D89b8EfD9eD61A7FD0B98A637eA9ab37' as const;
+/** v7 FixedLoan NFT — deployed + verified Arbitrum Blockscout 2026-03-22 */
 export const FIXED_LOAN_NFT_ADDRESS = '0x96634c2E1E80Fa51d45F0e9aB9F49B7dB3e9c859' as const;
+/** ERC-3643 IdentityRegistry — canonical Axiom protocol registry (Arbitrum One) */
+export const IDENTITY_REGISTRY_ADDRESS = '0x58f64a1262d5434d6C7637a2309b0999bB6D1970' as const;
 
 export const LEGACY_ADDRESSES = [
   { address: '0x8616E8EA83f048ab9A5eC513c9412dd2993bcE3F', reason: 'handleUSD (fxUSD) — NOT Axiom, false reference' },

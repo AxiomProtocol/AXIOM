@@ -1,5 +1,5 @@
 /**
- * Deploy: AXIOMFixedLoan + AXIOMCreditMarket (v6 — post-interest-fix)
+ * Deploy: AXIOMFixedLoan + AXIOMCreditMarket (v7 — Maple-style grace period, keccak loanId)
  * Network: Arbitrum One
  * Run: npx hardhat run scripts/deploy-credit-market.ts --network arbitrum
  *
@@ -19,10 +19,10 @@ import { ethers, run } from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
 
-import { ACTIVE_AXUSD } from "../src/config/activeContracts.generated";
+import { ACTIVE_AXUSD, IDENTITY_REGISTRY_ADDRESS } from "../src/config/activeContracts.generated";
 
-// Deployed ERC-3643 IdentityRegistry on Arbitrum One (from shared/contracts-3643.ts)
-const IDENTITY_REGISTRY = "0x58f64a1262d5434d6C7637a2309b0999bB6D1970";
+// IdentityRegistry is now sourced from activeContracts.generated.ts — single canonical source.
+const IDENTITY_REGISTRY = IDENTITY_REGISTRY_ADDRESS;
 
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

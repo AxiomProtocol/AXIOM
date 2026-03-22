@@ -29,9 +29,8 @@ async function getFixedLoanSigner() {
  * This function must be used consistently on every on-chain call (originate, repay, read).
  */
 function toLoanId32(loanId: string): string {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { ethers } = require('ethers') as { ethers: typeof import('ethers') };
-  return ethers.keccak256(ethers.toUtf8Bytes(loanId));
+  const ethersLib = require('ethers') as { ethers: typeof import('ethers') }; // sync require — Node.js server only
+  return ethersLib.ethers.keccak256(ethersLib.ethers.toUtf8Bytes(loanId));
 }
 
 const GEF_OPERATOR_TIERS = new Set(['Operator', 'Steward', 'Architect']);
