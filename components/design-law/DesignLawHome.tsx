@@ -343,15 +343,21 @@ export function DesignLawHome() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
               {FEATURED_PRODUCTS.map((product, i) => {
                 const Icon = product.icon;
-                const isLast = i === FEATURED_PRODUCTS.length - 1;
-                const isOdd = FEATURED_PRODUCTS.length % 2 !== 0;
+                const last = i === FEATURED_PRODUCTS.length - 1;
+                const secondToLast = i === FEATURED_PRODUCTS.length - 2;
+                const spanFull = last && FEATURED_PRODUCTS.length % 2 !== 0;
+                const bottomBorder = i < FEATURED_PRODUCTS.length - 2
+                  ? 'border-b'
+                  : secondToLast
+                  ? 'border-b md:border-b-0'
+                  : '';
                 return (
                   <Link
                     key={product.title}
                     href={product.href}
                     className={`flex items-start gap-4 px-6 py-5 border-dl-border hover:bg-dl-bg-alt border-l-4 ${product.accent} ${
                       i % 2 === 0 ? 'md:border-r' : ''
-                    } ${isLast && isOdd ? 'md:col-span-2 md:border-r-0' : ''} ${i < FEATURED_PRODUCTS.length - (isOdd ? 2 : 2) ? 'border-b' : i < FEATURED_PRODUCTS.length - 1 ? 'border-b md:border-b-0' : ''}`}
+                    } ${spanFull ? 'md:col-span-2 md:border-r-0' : ''} ${bottomBorder}`}
                   >
                     <Icon className="w-5 h-5 text-dl-forest flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
