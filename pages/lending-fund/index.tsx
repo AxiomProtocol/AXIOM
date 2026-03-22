@@ -2,7 +2,12 @@ import { useState, useEffect, Fragment } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading, SolidButton } from '../../components/design-law';
-import { getVaultPosition, PRODUCT_VAULTS } from '../../lib/web3/vaultService';
+import {
+  getCreditMarketPosition,
+  claimInterestFromCreditMarket,
+  type CreditMarketPosition,
+} from '../../lib/web3/creditMarketService';
+import { CREDIT_MARKET_ADDRESS } from '../../src/config/activeContracts.generated';
 
 /** EIP-1193 browser provider — typed to avoid `any` escape. */
 interface EthProvider {
@@ -38,11 +43,6 @@ interface ProductRisk {
   maxLoanSize: string;
 }
 
-interface LPPosition {
-  shares: string;
-  assetBalance: string;
-  positionValue: string;
-}
 
 function formatUSD(value: string) {
   const num = parseFloat(value);
@@ -125,7 +125,10 @@ export default function LendingFundPage() {
   const [riskParams, setRiskParams] = useState<ProductRisk | null>(null);
   const [loading, setLoading] = useState(true);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [lpPosition, setLpPosition] = useState<LPPosition | null>(null);
+  const [lpPosition, setLpPosition] = useState<CreditMarketPosition | null>(null);
+  const [claimStatus, setClaimStatus] = useState<'idle' | 'claiming' | 'success' | 'error'>('idle');
+  const [claimTxHash, setClaimTxHash] = useState<string | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'lp-dashboard'>('overview');
   const [juniorPoolStats, setJuniorPoolStats] = useState<JuniorPoolStats | null>(null);
   const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([]);
@@ -179,9 +182,23 @@ export default function LendingFundPage() {
 
   const fetchLPPosition = async (address: string) => {
     try {
-      const position = await getVaultPosition('lending-fund', address);
+      const position = await getCreditMarketPosition(address);
       setLpPosition(position);
     } catch {}
+  };
+
+  const handleClaimInterest = async () => {
+    setClaimStatus('claiming');
+    setClaimError(null);
+    try {
+      const result = await claimInterestFromCreditMarket();
+      setClaimTxHash(result.txHash);
+      setClaimStatus('success');
+      if (walletAddress) await fetchLPPosition(walletAddress);
+    } catch (err: any) {
+      setClaimError(err.message || 'Claim failed');
+      setClaimStatus('error');
+    }
   };
 
   const totalAssets = parseFloat(stats?.totalAssets || '0');
@@ -189,8 +206,8 @@ export default function LendingFundPage() {
   const utilizationRate = totalAssets > 0 ? ((lockedInLoans / totalAssets) * 100).toFixed(1) : '0.0';
   const idleCapital = totalAssets - lockedInLoans;
   const positionShares = parseFloat(lpPosition?.shares || '0');
-  const positionValue = parseFloat(lpPosition?.positionValue || '0');
-  const yieldEarned = positionValue - positionShares;
+  const positionValue = parseFloat(lpPosition?.positionValueUsd || '0');
+  const yieldEarned = parseFloat(lpPosition?.pendingInterestUsd || '0');
 
   return (
     <DesignLawLayout>
@@ -568,11 +585,11 @@ export default function LendingFundPage() {
                   <div className="px-4 py-4 bg-dl-bg-alt border-r border-dl-border">
                     <p className="text-xs text-dl-gray mb-1">Current Value</p>
                     <p className="font-dl-mono text-lg font-bold text-dl-navy">
-                      {lpPosition ? formatUSD(lpPosition.positionValue) : '—'}
+                      {lpPosition ? formatUSD(positionValue.toString()) : '—'}
                     </p>
                   </div>
                   <div className="px-4 py-4 bg-dl-bg border-r border-dl-border">
-                    <p className="text-xs text-dl-gray mb-1">Yield Earned</p>
+                    <p className="text-xs text-dl-gray mb-1">Claimable Interest</p>
                     <p className="font-dl-mono text-lg font-bold text-green-700">
                       {lpPosition ? (yieldEarned > 0 ? `+${formatUSD(yieldEarned.toString())}` : '$0') : '—'}
                     </p>
@@ -580,7 +597,7 @@ export default function LendingFundPage() {
                   <div className="px-4 py-4 bg-dl-bg-alt">
                     <p className="text-xs text-dl-gray mb-1">AXUSD Balance</p>
                     <p className="font-dl-mono text-lg font-bold text-dl-navy">
-                      {lpPosition ? formatUSD(lpPosition.assetBalance) : '—'}
+                      {lpPosition ? formatUSD(lpPosition.axusdBalanceUsd) : '—'}
                     </p>
                   </div>
                 </div>
@@ -620,6 +637,41 @@ export default function LendingFundPage() {
                 </div>
               </div>
 
+              {lpPosition && parseFloat(lpPosition.pendingInterestUsd) > 0 && (
+                <div className="mb-6 border border-dl-border bg-dl-bg-alt p-5">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                      <h4 className="font-dl-serif text-base text-dl-navy font-medium">Claimable Interest</h4>
+                      <p className="text-xs text-dl-gray mt-0.5">
+                        {formatUSD(lpPosition.pendingInterestUsd)} AXUSD available to claim on-chain
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <button
+                        onClick={handleClaimInterest}
+                        disabled={claimStatus === 'claiming'}
+                        className="px-6 py-2 bg-dl-forest text-white text-sm font-medium disabled:opacity-50"
+                      >
+                        {claimStatus === 'claiming' ? 'Claiming...' : `Claim ${formatUSD(lpPosition.pendingInterestUsd)}`}
+                      </button>
+                      {claimStatus === 'success' && claimTxHash && (
+                        <a
+                          href={`https://arbitrum.blockscout.com/tx/${claimTxHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-dl-forest underline"
+                        >
+                          Claimed — View tx
+                        </a>
+                      )}
+                      {claimStatus === 'error' && (
+                        <p className="text-xs text-dl-error">{claimError}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-wrap gap-3 mb-8">
                 <Link href="/lending-fund/invest">
                   <SolidButton>Deposit More</SolidButton>
@@ -627,6 +679,14 @@ export default function LendingFundPage() {
                 <Link href="/lending-fund/invest">
                   <SolidButton variant="secondary">Withdraw</SolidButton>
                 </Link>
+                <a
+                  href={`https://arbitrum.blockscout.com/address/${CREDIT_MARKET_ADDRESS}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 border border-dl-border text-sm text-dl-gray hover:text-dl-navy"
+                >
+                  View Pool Contract
+                </a>
               </div>
 
               <div className="mb-8 border border-dl-border bg-dl-bg-alt p-4">

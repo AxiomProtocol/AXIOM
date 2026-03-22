@@ -3,8 +3,14 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading } from '../../components/design-law';
-import { getVaultPosition, approveVault, depositToVault, PRODUCT_VAULTS } from '../../lib/web3/vaultService';
+import {
+  getCreditMarketPosition,
+  approveCreditMarket,
+  depositToCreditMarket,
+  type CreditMarketPosition,
+} from '../../lib/web3/creditMarketService';
 import { NETWORK_CONFIG } from '../../shared/contracts';
+import { CREDIT_MARKET_ADDRESS } from '../../src/config/activeContracts.generated';
 
 /** EIP-1193 browser provider — typed to avoid `any` escape. */
 interface EthProvider {
@@ -25,16 +31,6 @@ interface InvestmentStep {
   completed: boolean;
 }
 
-interface VaultPosition {
-  shares: string;
-  assetBalance: string;
-  positionValue: string;
-  allowance: string;
-  minDeposit: string;
-  needsApproval: boolean;
-  decimals: number;
-}
-
 export default function InvestPage() {
   const router = useRouter();
   const [walletConnected, setWalletConnected] = useState(false);
@@ -43,7 +39,7 @@ export default function InvestPage() {
   const [axusdBalance, setAxusdBalance] = useState('0');
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const [vaultPosition, setVaultPosition] = useState<VaultPosition | null>(null);
+  const [vaultPosition, setVaultPosition] = useState<CreditMarketPosition | null>(null);
   const [txStatus, setTxStatus] = useState<'idle' | 'approving' | 'depositing' | 'success' | 'error'>('idle');
   const [txHash, setTxHash] = useState<string | null>(null);
   const [txError, setTxError] = useState<string | null>(null);
@@ -120,11 +116,11 @@ export default function InvestPage() {
 
   const fetchVaultPosition = async (address: string) => {
     try {
-      const position = await getVaultPosition(productKey, address);
+      const position = await getCreditMarketPosition(address);
       setVaultPosition(position);
-      setAxusdBalance(position.assetBalance);
+      setAxusdBalance(position.axusdBalanceUsd);
     } catch (error) {
-      console.error('Failed to fetch vault position:', error);
+      console.error('Failed to fetch credit market position:', error);
     }
   };
 
@@ -133,7 +129,7 @@ export default function InvestPage() {
     setTxStatus('approving');
     setTxError(null);
     try {
-      const result = await approveVault(productKey, amount);
+      const result = await approveCreditMarket(amount);
       setTxHash(result.txHash);
       await fetchVaultPosition(walletAddress);
       setTxStatus('idle');
@@ -148,7 +144,7 @@ export default function InvestPage() {
     setTxStatus('depositing');
     setTxError(null);
     try {
-      const result = await depositToVault(productKey, amount, walletAddress);
+      const result = await depositToCreditMarket(amount, walletAddress);
       setTxHash(result.txHash);
       setTxStatus('success');
       updateStep(5, true);
@@ -185,7 +181,7 @@ export default function InvestPage() {
   const checkNeedsApproval = () => {
     if (!vaultPosition) return true;
     const currentAmount = parseFloat(amount) || 0;
-    const currentAllowance = parseFloat(vaultPosition.allowance) || 0;
+    const currentAllowance = parseFloat(vaultPosition.allowanceUsd) || 0;
     return currentAllowance < currentAmount;
   };
 
@@ -324,6 +320,9 @@ export default function InvestPage() {
               <div className="mt-6 pt-6 border-t border-dl-border">
                 <div className="text-sm mb-1 text-dl-gray">Your AXUSD Balance</div>
                 <div className="text-xl font-bold text-dl-navy">{formatUSD(axusdBalance)}</div>
+                {vaultPosition?.isVerified === false && (
+                  <p className="text-xs text-dl-error mt-1">Wallet not KYC-verified for this pool</p>
+                )}
               </div>
             )}
 
@@ -657,7 +656,7 @@ export default function InvestPage() {
           {currentStep === 4 && (
             <StepCard title="Step 4: Investment Amount">
               <p className="mb-6 text-dl-gray">
-                Enter the amount you wish to invest. Minimum investment is {formatUSD(vaultPosition?.minDeposit || '100')} AXUSD.
+                Enter the amount you wish to invest. Minimum investment is {formatUSD('100')} AXUSD.
               </p>
 
               <div className="mb-6">
@@ -669,11 +668,11 @@ export default function InvestPage() {
                     value={amount}
                     onChange={(e) => handleAmountChange(e.target.value)}
                     className="w-full py-4 pl-10 pr-4 text-2xl font-bold border border-dl-border bg-dl-bg text-dl-navy focus:outline-none"
-                    placeholder={vaultPosition?.minDeposit || '100'}
+                    placeholder="100"
                   />
                 </div>
-                {parseFloat(amount) < parseFloat(vaultPosition?.minDeposit || '100') && (
-                  <p className="text-sm mt-2 text-dl-error">Minimum investment is {formatUSD(vaultPosition?.minDeposit || '100')}</p>
+                {parseFloat(amount) < 100 && (
+                  <p className="text-sm mt-2 text-dl-error">Minimum investment is {formatUSD('100')}</p>
                 )}
               </div>
 
@@ -769,7 +768,7 @@ export default function InvestPage() {
 
               <button
                 onClick={proceedToDeposit}
-                disabled={parseFloat(amount) < parseFloat(vaultPosition?.minDeposit || '100')}
+                disabled={parseFloat(amount) < 100}
                 className="w-full py-4 bg-dl-navy text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Proceed to Deposit
@@ -816,8 +815,8 @@ export default function InvestPage() {
                         <span className="font-bold text-xl text-dl-navy">{formatUSD(amount)}</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-dl-border">
-                        <span className="text-dl-gray">Vault</span>
-                        <span className="text-dl-navy">{PRODUCT_VAULTS[productKey]?.name || 'Lending Fund'}</span>
+                        <span className="text-dl-gray">Pool</span>
+                        <span className="text-dl-navy">AXIOMCreditMarket — Fix &amp; Flip Lending Fund</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-dl-border">
                         <span className="text-dl-gray">Wallet</span>
@@ -830,7 +829,7 @@ export default function InvestPage() {
                       {vaultPosition && (
                         <div className="flex justify-between py-2">
                           <span className="text-dl-gray">Your AXUSD Balance</span>
-                          <span className="text-dl-navy">${parseFloat(vaultPosition.assetBalance).toLocaleString()}</span>
+                          <span className="text-dl-navy">${parseFloat(vaultPosition.axusdBalanceUsd).toLocaleString()}</span>
                         </div>
                       )}
                     </div>
@@ -846,11 +845,11 @@ export default function InvestPage() {
                     <div className="border border-dl-border bg-dl-bg-alt p-4 mb-6">
                       <p className="text-sm text-dl-navy">Loading wallet position...</p>
                     </div>
-                  ) : parseFloat(vaultPosition.assetBalance) < parseFloat(amount) ? (
+                  ) : parseFloat(vaultPosition.axusdBalanceUsd) < parseFloat(amount) ? (
                     <div className="border border-dl-border bg-dl-bg-alt p-6 mb-6">
                       <h4 className="font-medium text-dl-navy mb-2">Insufficient AXUSD Balance</h4>
                       <p className="text-sm mb-4 text-dl-gray">
-                        You need {formatUSD(amount)} AXUSD to invest, but your balance is ${parseFloat(vaultPosition.assetBalance).toLocaleString()}.
+                        You need {formatUSD(amount)} AXUSD to invest, but your balance is ${parseFloat(vaultPosition.axusdBalanceUsd).toLocaleString()}.
                       </p>
                       <p className="text-sm mb-4 text-dl-gray">
                         <strong>How to get AXUSD:</strong>
@@ -871,7 +870,7 @@ export default function InvestPage() {
                       <div className="border border-dl-border bg-dl-bg-alt p-4 mb-6">
                         <p className="text-sm text-dl-navy">
                           {checkNeedsApproval()
-                            ? "Step 1: Approve the vault to spend your AXUSD, then deposit."
+                            ? "Step 1: Approve AXIOMCreditMarket to spend your AXUSD, then deposit."
                             : "Your AXUSD is approved. Click below to complete the deposit."}
                         </p>
                       </div>
@@ -897,7 +896,16 @@ export default function InvestPage() {
                   )}
 
                   <p className="text-sm text-center mt-4 text-dl-gray">
-                    Deposits are made to ERC-4626 vaults on Arbitrum One
+                    Deposits go directly to AXIOMCreditMarket on Arbitrum One
+                    {' · '}
+                    <a
+                      href={`https://arbitrum.blockscout.com/address/${CREDIT_MARKET_ADDRESS}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline text-dl-navy"
+                    >
+                      View contract
+                    </a>
                   </p>
                 </>
               )}
