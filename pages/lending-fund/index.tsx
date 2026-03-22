@@ -184,6 +184,12 @@ export default function LendingFundPage() {
         >
           LP Dashboard
         </button>
+        <Link
+          href="/lending-fund/borrow"
+          className="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-dl-gray hover:text-dl-navy"
+        >
+          Borrow
+        </Link>
       </div>
 
       {activeTab === 'overview' && (
