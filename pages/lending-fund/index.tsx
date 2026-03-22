@@ -2,6 +2,70 @@ import { useState, useEffect, Fragment } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading, SolidButton } from '../../components/design-law';
+
+function IconShield({ className = 'w-7 h-7' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+    </svg>
+  );
+}
+function IconChart({ className = 'w-7 h-7' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+    </svg>
+  );
+}
+function IconBuilding({ className = 'w-7 h-7' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
+    </svg>
+  );
+}
+function IconCoin({ className = 'w-7 h-7' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+function IconDeposit({ className = 'w-7 h-7' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+    </svg>
+  );
+}
+function IconLock({ className = 'w-7 h-7' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+    </svg>
+  );
+}
+function IconGlobe({ className = 'w-7 h-7' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+    </svg>
+  );
+}
+function IconArrowUp({ className = 'w-7 h-7' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+    </svg>
+  );
+}
+function IconCheck({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+    </svg>
+  );
+}
 import {
   getCreditMarketPosition,
   claimInterestFromCreditMarket,
@@ -216,22 +280,68 @@ export default function LendingFundPage() {
         <meta name="description" content="SEC Reg D 506(c) compliant bridge loan fund providing short-term capital for real asset acquisition." />
       </Head>
 
-      <div className="border-b border-dl-border pb-8 mb-10">
-        <p className="text-xs text-dl-gray uppercase tracking-widest mb-4 font-dl-mono">SEC Reg D 506(c) | Accredited Participants Only</p>
-        <h1 className="font-dl-serif text-3xl md:text-4xl text-dl-navy leading-tight mb-4">
-          Axiom Lending Fund
-        </h1>
-        <p className="text-sm text-dl-gray max-w-3xl leading-relaxed mb-6">
-          Short-term bridge capital for real asset acquisition and development.
-          Property-secured lending with conservative underwriting, on-chain settlement, and full audit trails.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <Link href="/lending-fund/invest">
-            <SolidButton>Participate in Fund</SolidButton>
-          </Link>
-          <Link href="/lending-fund/apply">
-            <SolidButton variant="secondary">Apply for Capital</SolidButton>
-          </Link>
+      <div className="border-b border-dl-border mb-10 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-2">
+          <div className="py-10 pr-0 lg:pr-10">
+            <p className="text-xs text-dl-gray uppercase tracking-widest mb-4 font-dl-mono">SEC Reg D 506(c) | Accredited Participants Only</p>
+            <h1 className="font-dl-serif text-3xl md:text-5xl text-dl-navy leading-tight mb-4">
+              Axiom<br />Lending Fund
+            </h1>
+            <p className="text-sm text-dl-gray max-w-xl leading-relaxed mb-5">
+              Institutional-grade bridge capital for real asset acquisition and development.
+              Every loan is secured by real property with conservative 70% LTV underwriting,
+              on-chain settlement, and a complete audit trail on Arbitrum One.
+            </p>
+            <div className="flex flex-wrap gap-2 mb-6">
+              {[
+                '50% APR Hard Cap',
+                'Max 70% LTV',
+                'Arbitrum One',
+                'SEC Reg D 506(c)',
+                'AXUSD Denominated',
+              ].map(tag => (
+                <span key={tag} className="px-3 py-1 text-xs font-dl-mono text-dl-gray border border-dl-border bg-dl-bg">
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-3 mb-8">
+              <Link href="/lending-fund/invest">
+                <SolidButton>Participate in Fund</SolidButton>
+              </Link>
+              <Link href="/lending-fund/borrow">
+                <SolidButton variant="secondary">Apply for Capital</SolidButton>
+              </Link>
+            </div>
+            <div className="grid grid-cols-3 gap-0 border border-dl-border">
+              <div className="px-4 py-3 border-r border-dl-border text-center">
+                <p className="font-dl-mono text-xs text-dl-gray mb-1">Target Return</p>
+                <p className="font-dl-serif text-lg text-dl-navy font-semibold">10–14%</p>
+                <p className="text-xs text-dl-gray">Variable / Annual</p>
+              </div>
+              <div className="px-4 py-3 border-r border-dl-border text-center">
+                <p className="font-dl-mono text-xs text-dl-gray mb-1">Max LTV</p>
+                <p className="font-dl-serif text-lg text-dl-navy font-semibold">70%</p>
+                <p className="text-xs text-dl-gray">After-Repair Value</p>
+              </div>
+              <div className="px-4 py-3 text-center">
+                <p className="font-dl-mono text-xs text-dl-gray mb-1">Settlement</p>
+                <p className="font-dl-serif text-lg text-dl-navy font-semibold">On-Chain</p>
+                <p className="text-xs text-dl-gray">Arbitrum One</p>
+              </div>
+            </div>
+          </div>
+          <div className="hidden lg:block border-l border-dl-border relative">
+            <img
+              src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80"
+              alt="Residential property secured by Axiom Lending Fund"
+              className="w-full h-full object-cover"
+              style={{ minHeight: '420px', maxHeight: '520px' }}
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-dl-navy px-5 py-3">
+              <p className="text-xs text-white font-dl-mono opacity-80">Fund Asset Class: Single-Family &amp; Multi-Family Residential Bridge</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -324,14 +434,31 @@ export default function LendingFundPage() {
             <SectionHeading>How It Works</SectionHeading>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-0 border border-dl-border">
               {[
-                { num: '1', title: 'Deposit', desc: 'Contribute AXUSD into the lending pool. Minimum participation: $100.' },
-                { num: '2', title: 'Pool Funds', desc: 'Capital backs short-term bridge loans to qualified real estate operators.' },
-                { num: '3', title: 'Earn Income', desc: 'Receive periodic distributions from loan interest payments.' },
-                { num: '4', title: 'Property Secured', desc: 'All loans secured by real property at maximum 70% loan-to-value.' },
+                {
+                  num: '01', title: 'Deposit AXUSD',
+                  desc: 'Accredited participants deposit AXUSD into the lending pool. Capital is committed to the on-chain credit market.',
+                  icon: <IconDeposit className="w-8 h-8" />,
+                },
+                {
+                  num: '02', title: 'Fund Bridge Loans',
+                  desc: 'Pooled capital is deployed as short-term bridge loans to GEF Operator-tier real estate operators.',
+                  icon: <IconBuilding className="w-8 h-8" />,
+                },
+                {
+                  num: '03', title: 'Earn Interest',
+                  desc: 'Interest paid by borrowers flows back to the pool. Your pro-rata share accumulates as claimable AXUSD.',
+                  icon: <IconCoin className="w-8 h-8" />,
+                },
+                {
+                  num: '04', title: 'Property Secured',
+                  desc: 'Every loan is collateralized by real property at a maximum 70% LTV — capital protected by hard assets.',
+                  icon: <IconShield className="w-8 h-8" />,
+                },
               ].map((step, i) => (
-                <div key={step.num} className={`px-5 py-5 ${i < 3 ? 'md:border-r border-b md:border-b-0 border-dl-border' : ''}`}>
-                  <p className="font-dl-mono text-xl text-dl-navy font-bold mb-2">{step.num}</p>
-                  <h3 className="font-dl-serif text-sm text-dl-navy font-medium mb-1">{step.title}</h3>
+                <div key={step.num} className={`px-5 py-6 ${i < 3 ? 'md:border-r border-b md:border-b-0 border-dl-border' : ''}`}>
+                  <div className="text-dl-forest mb-3">{step.icon}</div>
+                  <p className="font-dl-mono text-xs text-dl-gray mb-1">STEP {step.num}</p>
+                  <h3 className="font-dl-serif text-base text-dl-navy font-semibold mb-2">{step.title}</h3>
                   <p className="text-xs text-dl-gray leading-relaxed">{step.desc}</p>
                 </div>
               ))}
@@ -536,15 +663,109 @@ export default function LendingFundPage() {
             <SectionHeading>Fund Characteristics</SectionHeading>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border">
               {[
-                { title: 'Property Secured', desc: 'Every loan is secured by real property with conservative 70% maximum LTV on after-repair value.' },
-                { title: 'On-Chain Transparency', desc: 'All fund operations are recorded on Arbitrum One for full auditability and independent verification.' },
-                { title: 'Periodic Distributions', desc: 'Loan interest income distributed periodically to fund participants via AXUSD.' },
+                {
+                  title: 'Hard Asset Collateral',
+                  desc: 'Every loan is secured by a recorded first-lien position on real property. Maximum LTV of 70% on after-repair value provides a meaningful collateral cushion.',
+                  icon: <IconShield className="w-6 h-6" />,
+                  detail: '70% Max LTV',
+                },
+                {
+                  title: 'On-Chain Settlement',
+                  desc: 'Loan origination, disbursement, and repayment are executed on Arbitrum One. Every transaction is independently verifiable via block explorer.',
+                  icon: <IconGlobe className="w-6 h-6" />,
+                  detail: 'Arbitrum One',
+                },
+                {
+                  title: 'Pro-Rata Interest',
+                  desc: 'Interest paid by borrowers is tracked per LP share. Your claimable interest accumulates automatically — claim at any time via the LP Dashboard.',
+                  icon: <IconCoin className="w-6 h-6" />,
+                  detail: '10–14% Variable',
+                },
               ].map((feature, i) => (
-                <div key={feature.title} className={`px-6 py-5 ${i < 2 ? 'md:border-r border-b md:border-b-0 border-dl-border' : ''}`}>
-                  <h3 className="font-dl-serif text-sm text-dl-navy font-medium mb-2">{feature.title}</h3>
+                <div key={feature.title} className={`px-6 py-6 ${i < 2 ? 'md:border-r border-b md:border-b-0 border-dl-border' : ''}`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="text-dl-navy">{feature.icon}</div>
+                    <span className="font-dl-mono text-xs text-dl-forest font-semibold border border-dl-forest px-2 py-0.5">{feature.detail}</span>
+                  </div>
+                  <h3 className="font-dl-serif text-base text-dl-navy font-semibold mb-2">{feature.title}</h3>
                   <p className="text-xs text-dl-gray leading-relaxed">{feature.desc}</p>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="mb-12">
+            <SectionHeading>Who Can Participate</SectionHeading>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
+              <div className="px-8 py-8 border-b md:border-b-0 md:border-r border-dl-border">
+                <div className="flex items-center gap-3 mb-4">
+                  <IconArrowUp className="w-7 h-7 text-dl-navy" />
+                  <div>
+                    <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest">For Capital Providers</p>
+                    <h3 className="font-dl-serif text-xl text-dl-navy font-semibold">LP Investors</h3>
+                  </div>
+                </div>
+                <div className="relative mb-6 border border-dl-border overflow-hidden">
+                  <img
+                    src="https://images.unsplash.com/photo-1560520653-9e0e4c89eb11?auto=format&fit=crop&w=700&q=80"
+                    alt="Real estate investment"
+                    className="w-full object-cover"
+                    style={{ height: '180px' }}
+                  />
+                </div>
+                <ul className="space-y-2 mb-5">
+                  {[
+                    'Accredited investors only (SEC Reg D 506(c))',
+                    'Minimum participation: $100 AXUSD',
+                    'ERC-3643 identity verification required',
+                    'Interest accrues daily, claim at any time',
+                    'On-chain LP position — fully auditable',
+                  ].map(item => (
+                    <li key={item} className="flex items-start gap-2 text-xs text-dl-gray">
+                      <IconCheck className="w-4 h-4 text-dl-forest flex-shrink-0 mt-0.5" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/lending-fund/invest">
+                  <SolidButton>Invest in Fund</SolidButton>
+                </Link>
+              </div>
+              <div className="px-8 py-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <IconBuilding className="w-7 h-7 text-dl-navy" />
+                  <div>
+                    <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest">For Real Estate Operators</p>
+                    <h3 className="font-dl-serif text-xl text-dl-navy font-semibold">Borrowers</h3>
+                  </div>
+                </div>
+                <div className="relative mb-6 border border-dl-border overflow-hidden">
+                  <img
+                    src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=700&q=80"
+                    alt="Property construction and renovation"
+                    className="w-full object-cover"
+                    style={{ height: '180px' }}
+                  />
+                </div>
+                <ul className="space-y-2 mb-5">
+                  {[
+                    'GEF Operator tier or higher required',
+                    'Loan range: $50,000 – $500,000',
+                    'Terms up to 24 months',
+                    '14% annual rate (1,400 bps)',
+                    'Draw tranches — receive capital in stages',
+                    '3% origination fee, collected at closing',
+                  ].map(item => (
+                    <li key={item} className="flex items-start gap-2 text-xs text-dl-gray">
+                      <IconCheck className="w-4 h-4 text-dl-forest flex-shrink-0 mt-0.5" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/lending-fund/borrow">
+                  <SolidButton variant="secondary">Apply for Capital</SolidButton>
+                </Link>
+              </div>
             </div>
           </div>
         </>

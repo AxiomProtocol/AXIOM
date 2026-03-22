@@ -3,6 +3,56 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading } from '../../components/design-law';
 
+function BIcoKey() {
+  return (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+    </svg>
+  );
+}
+function BIcoShield() {
+  return (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+    </svg>
+  );
+}
+function BIcoClock() {
+  return (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+function BIcoBuilding() {
+  return (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
+    </svg>
+  );
+}
+function BIcoChart() {
+  return (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+    </svg>
+  );
+}
+function BIcoWrench() {
+  return (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
+    </svg>
+  );
+}
+function BIcoCheck() {
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+    </svg>
+  );
+}
+
 /** Typed subset of the EIP-1193 browser provider injected by MetaMask and compatible wallets. */
 interface EthereumProvider {
   request(args: { method: 'eth_requestAccounts' }): Promise<string[]>;
@@ -363,21 +413,152 @@ export default function BorrowPage() {
         <meta name="description" content="GEF Operator-grade real estate bridge capital. Apply, manage, and repay loans from the Axiom Lending Fund." />
       </Head>
 
-      <div className="mb-8 border-b border-dl-border pb-6">
-        <Link href="/lending-fund" className="text-xs text-dl-gray uppercase tracking-widest mb-4 inline-block">
-          ← Lending Fund
-        </Link>
-        <h1 className="font-dl-serif text-3xl text-dl-navy">Borrow Capital</h1>
-        <p className="mt-2 text-sm text-dl-gray max-w-2xl">
-          Short-term bridge capital for real estate operators. Requires GEF Operator tier or higher.
-          Maximum 70% LTV, 14% annual rate, terms up to 24 months.
-        </p>
+      <div className="border-b border-dl-border mb-10 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-2">
+          <div className="py-10 pr-0 lg:pr-10">
+            <Link href="/lending-fund" className="text-xs text-dl-gray uppercase tracking-widest mb-5 inline-block font-dl-mono">
+              ← Lending Fund
+            </Link>
+            <h1 className="font-dl-serif text-3xl md:text-5xl text-dl-navy leading-tight mb-3">
+              Borrow<br />Capital
+            </h1>
+            <p className="text-sm text-dl-gray max-w-xl leading-relaxed mb-5">
+              Short-term bridge capital for qualified real estate operators. Property-secured loans
+              with competitive rates, flexible terms, and on-chain settlement on Arbitrum One.
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-6">
+              <div className="px-4 py-3 border-r border-dl-border">
+                <p className="text-xs text-dl-gray font-dl-mono mb-1">Rate</p>
+                <p className="font-dl-serif text-lg text-dl-navy font-semibold">14%</p>
+                <p className="text-xs text-dl-gray">Annual</p>
+              </div>
+              <div className="px-4 py-3 border-r border-dl-border">
+                <p className="text-xs text-dl-gray font-dl-mono mb-1">Max LTV</p>
+                <p className="font-dl-serif text-lg text-dl-navy font-semibold">70%</p>
+                <p className="text-xs text-dl-gray">ARV Basis</p>
+              </div>
+              <div className="px-4 py-3 border-r border-dl-border">
+                <p className="text-xs text-dl-gray font-dl-mono mb-1">Max Term</p>
+                <p className="font-dl-serif text-lg text-dl-navy font-semibold">24 mo.</p>
+                <p className="text-xs text-dl-gray">Bridge</p>
+              </div>
+              <div className="px-4 py-3">
+                <p className="text-xs text-dl-gray font-dl-mono mb-1">Max Loan</p>
+                <p className="font-dl-serif text-lg text-dl-navy font-semibold">$500K</p>
+                <p className="text-xs text-dl-gray">Per Property</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {['GEF Operator+', 'First-Lien Position', 'Draw Tranches', 'AXUSD Settlement'].map(tag => (
+                <span key={tag} className="px-3 py-1 text-xs font-dl-mono text-dl-gray border border-dl-border bg-dl-bg">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="hidden lg:block border-l border-dl-border relative">
+            <img
+              src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=700&q=80"
+              alt="Construction and renovation project financed by Axiom Lending Fund"
+              className="w-full h-full object-cover"
+              style={{ minHeight: '400px', maxHeight: '520px' }}
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-dl-navy px-5 py-3">
+              <p className="text-xs text-white font-dl-mono opacity-80">Fix &amp; Flip · Acquisition Bridge · Ground-Up Construction</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-12">
+        <SectionHeading>Use Cases</SectionHeading>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border">
+          {[
+            {
+              icon: <BIcoWrench />,
+              title: 'Fix & Flip',
+              desc: 'Acquire and rehabilitate distressed residential properties. Capital released in tranches as renovation milestones are met.',
+              detail: 'Up to 90% of rehab costs funded',
+            },
+            {
+              icon: <BIcoBuilding />,
+              title: 'Acquisition Bridge',
+              desc: 'Secure time-sensitive acquisition opportunities before conventional financing closes. Short terms from 6 to 24 months.',
+              detail: 'Close in days, not weeks',
+            },
+            {
+              icon: <BIcoChart />,
+              title: 'Value-Add Multifamily',
+              desc: 'Fund light renovations and stabilization of small multifamily assets. Refinance into permanent debt on stabilization.',
+              detail: '2–20 unit eligible',
+            },
+          ].map((uc, i) => (
+            <div key={uc.title} className={`px-6 py-6 ${i < 2 ? 'md:border-r border-b md:border-b-0 border-dl-border' : ''}`}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="text-dl-forest">{uc.icon}</div>
+                <span className="font-dl-mono text-xs text-dl-gray border border-dl-border px-2 py-0.5">{uc.detail}</span>
+              </div>
+              <h3 className="font-dl-serif text-base text-dl-navy font-semibold mb-2">{uc.title}</h3>
+              <p className="text-xs text-dl-gray leading-relaxed">{uc.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-12">
+        <SectionHeading>Eligibility Requirements</SectionHeading>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
+          <div className="px-6 py-6 border-b md:border-b-0 md:border-r border-dl-border">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-dl-navy"><BIcoKey /></span>
+              <h3 className="font-dl-serif text-base text-dl-navy font-semibold">GEF Tier Requirements</h3>
+            </div>
+            <ul className="space-y-2">
+              {[
+                'GEF Operator tier or higher (verified on-chain)',
+                'Active Wealth Practice membership required',
+                'Completed GEF execution milestones',
+                'Wallet connected on Arbitrum One',
+                'Clean credit record within the Axiom network',
+              ].map(item => (
+                <li key={item} className="flex items-start gap-2 text-xs text-dl-gray">
+                  <span className="text-dl-forest flex-shrink-0 mt-0.5"><BIcoCheck /></span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="px-6 py-6">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-dl-navy"><BIcoShield /></span>
+              <h3 className="font-dl-serif text-base text-dl-navy font-semibold">Property Requirements</h3>
+            </div>
+            <ul className="space-y-2">
+              {[
+                'Residential or small multifamily (1–20 units)',
+                'US-located, marketable title',
+                'First-lien collateral position required',
+                'Maximum 70% LTV on after-repair value (ARV)',
+                'Independent appraisal may be required',
+                'Property insurance required at closing',
+              ].map(item => (
+                <li key={item} className="flex items-start gap-2 text-xs text-dl-gray">
+                  <span className="text-dl-forest flex-shrink-0 mt-0.5"><BIcoCheck /></span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
 
       {phase === 'connect' && (
-        <div className="border border-dl-border bg-dl-bg-alt p-10 text-center max-w-lg mx-auto">
+        <div className="mb-12 border border-dl-border bg-dl-bg-alt p-10 text-center max-w-lg mx-auto">
+          <div className="w-12 h-12 bg-dl-navy text-white flex items-center justify-center mx-auto mb-4">
+            <BIcoKey />
+          </div>
           <h2 className="font-dl-serif text-xl text-dl-navy mb-3">Connect Your Wallet</h2>
-          <p className="text-sm text-dl-gray mb-6 leading-relaxed">
+          <p className="text-sm text-dl-gray mb-6 leading-relaxed max-w-sm mx-auto">
             Connect your wallet to verify your GEF tier and access borrower tools.
             GEF Operator tier or higher is required.
           </p>

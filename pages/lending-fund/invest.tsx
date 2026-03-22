@@ -12,6 +12,51 @@ import {
 import { NETWORK_CONFIG } from '../../shared/contracts';
 import { CREDIT_MARKET_ADDRESS } from '../../src/config/activeContracts.generated';
 
+function IcoWallet() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
+    </svg>
+  );
+}
+function IcoDocument() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+    </svg>
+  );
+}
+function IcoVerify() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+    </svg>
+  );
+}
+function IcoAmount() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+function IcoDeposit() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+    </svg>
+  );
+}
+function IcoShield() {
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+    </svg>
+  );
+}
+
+const STEP_ICONS = [<IcoWallet key="1" />, <IcoDocument key="2" />, <IcoVerify key="3" />, <IcoAmount key="4" />, <IcoDeposit key="5" />];
+
 /** EIP-1193 browser provider — typed to avoid `any` escape. */
 interface EthProvider {
   request(args: { method: 'eth_accounts' }): Promise<string[]>;
@@ -266,68 +311,133 @@ export default function InvestPage() {
         <meta name="description" content="Invest in the AXUSD Fix & Flip Lending Fund - Accredited investors only" />
       </Head>
 
-      <div className="mb-8">
-        <Link href="/lending-fund" className="text-sm text-dl-navy mb-4 inline-block">
-          ← Back to Fund Overview
-        </Link>
-        <h1 className="font-dl-serif text-3xl text-dl-navy">Invest in the Fund</h1>
-        <p className="mt-2 text-dl-gray">
-          Complete the steps below to invest in the AXUSD Fix & Flip Lending Fund
-        </p>
+      <div className="mb-8 border-b border-dl-border pb-0">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+          <div className="py-8 pr-0 lg:pr-10">
+            <Link href="/lending-fund" className="text-xs text-dl-gray uppercase tracking-widest mb-5 inline-block font-dl-mono">
+              ← Back to Fund Overview
+            </Link>
+            <h1 className="font-dl-serif text-3xl md:text-4xl text-dl-navy mb-3">Invest in the Fund</h1>
+            <p className="text-sm text-dl-gray leading-relaxed mb-6 max-w-lg">
+              Accredited investors can provide capital to the Axiom Bridge Lending Pool.
+              Your AXUSD is deployed as property-secured bridge loans and earns pro-rata interest that accumulates daily.
+            </p>
+            <div className="grid grid-cols-3 gap-0 border border-dl-border mb-6">
+              <div className="px-4 py-3 border-r border-dl-border">
+                <p className="text-xs text-dl-gray font-dl-mono mb-1">Target Rate</p>
+                <p className="font-dl-serif text-lg text-dl-navy font-semibold">
+                  {fundRateBps !== null ? `${(fundRateBps / 100).toFixed(0)}%` : '10–14%'}
+                </p>
+                <p className="text-xs text-dl-gray">Variable / Annual</p>
+              </div>
+              <div className="px-4 py-3 border-r border-dl-border">
+                <p className="text-xs text-dl-gray font-dl-mono mb-1">Utilization</p>
+                <p className="font-dl-serif text-lg text-dl-navy font-semibold">
+                  {poolUtilizationPct !== null ? `${poolUtilizationPct}%` : '—'}
+                </p>
+                <p className="text-xs text-dl-gray">Pool Deployed</p>
+              </div>
+              <div className="px-4 py-3">
+                <p className="text-xs text-dl-gray font-dl-mono mb-1">Network</p>
+                <p className="font-dl-serif text-lg text-dl-navy font-semibold">Arbitrum</p>
+                <p className="text-xs text-dl-gray">On-Chain Settlement</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { icon: <IcoShield />, label: 'SEC Reg D 506(c)' },
+                { icon: <IcoShield />, label: 'ERC-3643 Gated' },
+                { icon: <IcoShield />, label: 'Max 70% LTV' },
+              ].map(item => (
+                <span key={item.label} className="flex items-center gap-1.5 px-3 py-1 text-xs font-dl-mono text-dl-gray border border-dl-border bg-dl-bg">
+                  <span className="text-dl-forest">{item.icon}</span>
+                  {item.label}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="hidden lg:block border-l border-dl-border relative overflow-hidden">
+            <img
+              src="https://images.unsplash.com/photo-1560520653-9e0e4c89eb11?auto=format&fit=crop&w=700&q=80"
+              alt="Real estate investment and property acquisition"
+              className="w-full h-full object-cover"
+              style={{ minHeight: '320px', maxHeight: '420px' }}
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-dl-navy px-5 py-3">
+              <p className="text-xs text-white font-dl-mono opacity-80">Bridge Lending · First-Lien Position · Property Secured</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
-          <div className="p-6 sticky top-6 bg-dl-bg-alt border border-dl-border">
-            <h3 className="font-dl-serif text-lg text-dl-navy font-bold mb-4">Investment Steps</h3>
-            <div className="space-y-4">
-              {steps.map((step) => (
+          <div className="sticky top-6 bg-dl-bg-alt border border-dl-border">
+            <div className="px-5 py-4 border-b border-dl-border bg-dl-navy">
+              <p className="font-dl-mono text-xs text-white opacity-70 uppercase tracking-widest mb-0.5">Onboarding</p>
+              <h3 className="font-dl-serif text-base text-white font-semibold">Investment Steps</h3>
+            </div>
+            <div className="p-4 space-y-1">
+              {steps.map((step, idx) => (
                 <div
                   key={step.id}
-                  className={`flex items-center gap-3 p-3 border ${
+                  className={`flex items-center gap-3 px-3 py-3 border ${
                     currentStep === step.id
-                      ? 'bg-dl-bg-alt border-dl-navy'
+                      ? 'bg-white border-dl-navy'
                       : step.completed
-                      ? 'bg-dl-bg-alt border-dl-border'
-                      : 'bg-dl-bg border-dl-border'
+                      ? 'bg-dl-bg border-dl-border'
+                      : 'bg-dl-bg-alt border-transparent'
                   }`}
                 >
                   <div
-                    className={`w-8 h-8 flex items-center justify-center flex-shrink-0 font-bold text-sm ${
+                    className={`w-8 h-8 flex items-center justify-center flex-shrink-0 text-sm ${
                       step.completed
                         ? 'bg-dl-forest text-white'
                         : currentStep === step.id
                         ? 'bg-dl-navy text-white'
-                        : 'bg-dl-bg-alt text-dl-gray'
+                        : 'bg-dl-border text-dl-gray'
                     }`}
                   >
-                    {step.completed ? '✓' : step.id}
+                    {step.completed ? '✓' : <span className="w-5 h-5 flex items-center justify-center">{STEP_ICONS[idx]}</span>}
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <div
-                      className={`font-medium text-sm ${
+                      className={`font-medium text-sm leading-tight ${
                         step.completed ? 'text-dl-forest' : currentStep === step.id ? 'text-dl-navy' : 'text-dl-gray'
                       }`}
                     >
                       {step.title}
                     </div>
+                    {currentStep === step.id && (
+                      <div className="text-xs text-dl-gray mt-0.5">{step.description}</div>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
 
             {walletConnected && (
-              <div className="mt-6 pt-6 border-t border-dl-border">
-                <div className="text-sm mb-1 text-dl-gray">Your AXUSD Balance</div>
-                <div className="text-xl font-bold text-dl-navy">{formatUSD(axusdBalance)}</div>
+              <div className="border-t border-dl-border px-4 py-4 bg-dl-bg">
+                <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-widest mb-2">Your Position</p>
+                <div className="flex items-baseline gap-2">
+                  <div className="font-dl-mono text-xl font-bold text-dl-navy">{formatUSD(axusdBalance)}</div>
+                  <div className="text-xs text-dl-gray">AXUSD Balance</div>
+                </div>
                 {vaultPosition?.isVerified === false && (
-                  <p className="text-xs text-dl-error mt-1">Wallet not KYC-verified for this pool</p>
+                  <div className="flex items-center gap-1.5 mt-2 text-xs text-dl-error">
+                    <IcoShield /> Wallet not KYC-verified for this pool
+                  </div>
+                )}
+                {vaultPosition?.isVerified === true && (
+                  <div className="flex items-center gap-1.5 mt-2 text-xs text-dl-forest">
+                    <IcoShield /> Identity verified for this pool
+                  </div>
                 )}
               </div>
             )}
 
-            <div className="mt-6 pt-6 border-t border-dl-border">
-              <h4 className="text-xs text-dl-gray uppercase tracking-wider mb-3">LP Onboarding Status</h4>
+            <div className="border-t border-dl-border px-4 py-4">
+              <h4 className="text-xs text-dl-gray font-dl-mono uppercase tracking-widest mb-3">Completion Status</h4>
               <div className="space-y-2">
                 {[
                   { label: 'Wallet Connected', done: walletConnected },
@@ -337,8 +447,9 @@ export default function InvestPage() {
                   { label: 'Deposited', done: steps[4]?.completed || false },
                 ].map((stage, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs">
-                    <div className={`w-3 h-3 rounded-full flex-shrink-0 ${stage.done ? 'bg-green-500' : 'bg-dl-border'}`} />
+                    <div className={`w-2.5 h-2.5 flex-shrink-0 border ${stage.done ? 'bg-dl-forest border-dl-forest' : 'border-dl-border bg-dl-bg'}`} />
                     <span className={stage.done ? 'text-dl-navy' : 'text-dl-gray'}>{stage.label}</span>
+                    {stage.done && <span className="text-dl-forest ml-auto">✓</span>}
                   </div>
                 ))}
               </div>
