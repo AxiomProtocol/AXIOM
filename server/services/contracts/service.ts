@@ -2,10 +2,22 @@ import { randomUUID } from 'crypto';
 import { pool } from '../../db';
 import type { NextApiRequest } from 'next';
 import type {
-  ContractEntity,
   ContractReasonCode,
   ContractStatus,
 } from '../../../shared/contracts/identityStatus';
+
+type ContractEntity = {
+  id: string;
+  entity_type: string;
+  status: string;
+  domain: string;
+  actor_wallet?: string | null;
+  reason_code?: string | null;
+  metadata?: Record<string, unknown> | null;
+  created_at?: Date | null;
+  updated_at?: Date | null;
+  [key: string]: unknown;
+};
 import { contractWriteEnvelopeSchema } from '../../../shared/contracts/validators';
 import { resolveCanonicalAuthContext } from './authContext';
 import { assertDomainAccess, assertTransitionAllowed } from './policy';

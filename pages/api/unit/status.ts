@@ -52,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       accountType: a.accountType,
       status: a.status,
       balanceCents: a.balanceCents,
-      availableBalanceCents: a.availableBalanceCents,
+      availableBalanceCents: a.availableCents,
       routingNumber: a.routingNumber,
       maskedAccountNumber: a.accountNumber ? `••••${a.accountNumber.slice(-4)}` : null,
       susuGroupId: a.susuGroupId ?? null,

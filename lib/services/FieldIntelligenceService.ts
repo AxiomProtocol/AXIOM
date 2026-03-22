@@ -4,14 +4,14 @@
  * Layer 5 → Layer 1 (Predictive Deal Intelligence) integration
  */
 
-import { db } from "@/lib/db";
+import { db } from "@/server/db";
 import { eq, and } from "drizzle-orm";
 import {
   fieldInspectionSummaries,
   fieldInspectionSessions,
   fieldUnitWalkRows,
   fieldUnitWalkDeficiencies,
-} from "@/shared/schema";
+} from "@/shared/fieldIntelligenceSchema";
 
 export interface FieldSignals {
   // Sampling confidence (0-1)

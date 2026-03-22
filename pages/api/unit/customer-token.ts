@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const response = await client.customerTokens.createToken(customer.unitCustomerId, {
+    const response = await client.customerToken.createToken(customer.unitCustomerId, {
       type: 'customerToken',
       attributes: {
         scope: 'accounts transactions counterparties counterparties-write',

@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (!result.success) return res.status(400).json({ error: result.error });
-    return res.status(200).json({ success: true, paymentId: result.paymentId });
+    return res.status(200).json({ success: true, recurringId: result.recurringId });
   }
 
   if (req.method === 'DELETE') {

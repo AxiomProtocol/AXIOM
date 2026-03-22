@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).json({ error: 'Account not found.' });
   }
 
-  const transactions = await unitAccountService.getTransactions(account.unitAccountId, limit, offset);
+  const transactions = await unitAccountService.getTransactions(account.unitAccountId, limit);
 
   return res.status(200).json({ transactions, limit, offset });
 }

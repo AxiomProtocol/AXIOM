@@ -37,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!account || account.walletAddress.toLowerCase() !== session.address.toLowerCase()) {
     return res.status(403).json({ error: 'You do not own this account.' });
   }
-  if (direction === 'Credit' && account.availableBalanceCents !== undefined && account.availableBalanceCents < amountCents) {
+  if (direction === 'Credit' && account.availableCents !== undefined && account.availableCents < amountCents) {
     return res.status(400).json({ error: 'Insufficient available balance.' });
   }
 

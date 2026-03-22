@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import crypto from 'crypto';
 import { UNIT_WEBHOOK_SECRET } from '../../../lib/unit/client';
 import { bridgeService } from '../../../lib/services/BridgeService';
-import { db } from '../../../lib/db';
+import { db } from '../../../server/db';
 import { unitWebhookEvents } from '../../../shared/unitSchema';
 
 export const config = { api: { bodyParser: false } };
