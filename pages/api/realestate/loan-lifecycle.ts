@@ -1,10 +1,25 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
 import { verifyCreditAuth, isAdminRequest } from '../../../lib/community-credit-auth';
-import { ACTIVE_AXUSD } from '../../../src/config/activeContracts.generated';
+import { CREDIT_MARKET_ADDRESS, FIXED_LOAN_NFT_ADDRESS } from '../../../src/config/activeContracts.generated';
 
 const ARBITRUM_RPC = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY ?? ''}`;
-const ERC20_TRANSFER_ABI = ['function transfer(address to, uint256 amount) returns (bool)'] as const;
+
+const CREDIT_MARKET_ABI = [
+  'function originateLoan(bytes32 loanId, address borrower, uint256 principal, uint256 rateBps, uint256 feeBps, uint256 termDays, string calldata propAddress) external',
+  'function approveLoan(bytes32 loanId) external',
+  'function fundLoan(bytes32 loanId) external',
+  'function markDelinquent(bytes32 loanId) external',
+  'function cureDelinquent(bytes32 loanId) external',
+  'function defaultLoan(bytes32 loanId) external',
+  'function getLoan(bytes32 loanId) view returns (tuple(bytes32 loanId, address borrower, uint256 principalUsd6, uint256 interestRateBps, uint256 originationFeeUsd6, uint256 termSeconds, uint8 status, uint256 fundedAt, uint256 dueAt, uint256 lastAccrualAt, uint256 totalRepaidUsd6, uint256 totalInterestPaidUsd6, string propertyAddress))',
+  'function accruedInterest(bytes32 loanId) view returns (uint256)',
+] as const;
+
+const FIXED_LOAN_ABI = [
+  'function mintReceipt(bytes32 loanId, address borrower, uint256 principalUsd6, uint256 rateBps, uint256 termDays, uint256 dueAt, string calldata propAddress) external returns (uint256)',
+  'function burnReceipt(bytes32 loanId) external',
+] as const;
 
 const GEF_OPERATOR_TIERS = new Set(['Operator', 'Steward', 'Architect']);
 
@@ -362,7 +377,7 @@ async function handleOriginate(req: NextApiRequest, res: NextApiResponse) {
   const originationFee = principal * (ORIGINATION_FEE_BPS / 10000);
   const appIdNum = applicationId ? parseInt(String(applicationId), 10) : null;
 
-  const r = await pool.query<{ loan_id: string }>(
+  const dbResult = await pool.query<{ loan_id: string }>(
     `INSERT INTO real_estate_loans
        (wallet_address, application_id, borrower_name, property_address,
         loan_amount_usd, origination_fee_usd, outstanding_principal_usd,
@@ -382,14 +397,53 @@ async function handleOriginate(req: NextApiRequest, res: NextApiResponse) {
     ]
   );
 
+  const loanId = dbResult.rows[0].loan_id;
+
+  // Anchor origination on-chain: register the loan in AXIOMCreditMarket
+  let chainTxHash: string | null = null;
+  try {
+    const { ethers } = await import('ethers');
+    const deployerKey = process.env.DEPLOYER_PRIVATE_KEY;
+    if (deployerKey) {
+      const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
+      const signer   = new ethers.Wallet(deployerKey, provider);
+      const market   = new ethers.Contract(CREDIT_MARKET_ADDRESS, CREDIT_MARKET_ABI, signer);
+
+      const loanId32   = ethers.encodeBytes32String(loanId.replace(/-/g, '').slice(0, 31));
+      const principalWei = ethers.parseUnits(principal.toFixed(6), 18);
+      const termDays     = BigInt(Math.round((termMonths * 365) / 12));
+
+      const tx = await market.originateLoan(
+        loanId32,
+        auth.verifiedAddress,
+        principalWei,
+        BigInt(LOAN_RATE_BPS),
+        BigInt(ORIGINATION_FEE_BPS),
+        termDays,
+        propertyAddress
+      );
+      const receipt = await tx.wait(1);
+      chainTxHash = receipt?.hash ?? tx.hash;
+
+      await pool.query(
+        `UPDATE real_estate_loans SET disbursement_tx_hash = $2, updated_at = NOW() WHERE loan_id = $1`,
+        [loanId, chainTxHash]
+      );
+    }
+  } catch (chainErr: unknown) {
+    const msg = chainErr instanceof Error ? chainErr.message : String(chainErr);
+    console.error('[loan-lifecycle] Chain originate failed (non-fatal):', msg);
+  }
+
   return res.status(201).json({
     success: true,
-    loanId: r.rows[0].loan_id,
+    loanId,
+    chainTxHash,
     gefTier,
     originationFeeUsd: originationFee.toFixed(2),
     annualRateBps: LOAN_RATE_BPS,
     monthlyPaymentEstimate: computeMonthlyPayment(principal, LOAN_RATE_BPS, termMonths).toFixed(2),
-    message: 'Loan application recorded. Under review — approval typically within 24-48 hours.',
+    message: 'Loan application recorded on-chain. Under review — approval typically within 24-48 hours.',
   });
 }
 
@@ -457,25 +511,99 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
     });
   }
 
-  const extraFields: Record<string, string> = {};
   if (action === 'fund') {
     const dueDate = new Date();
     dueDate.setMonth(dueDate.getMonth() + loan.loan_term_months);
-    extraFields.funded_at = 'NOW()';
-    extraFields.last_interest_accrual_at = 'NOW()';
-    const r = await pool.query(
+
+    // On-chain: call AXIOMCreditMarket.fundLoan() — disburses AXUSD to borrower
+    // and mint AXIOMFixedLoan NFT receipt
+    let fundTxHash: string | null = null;
+    let nftTokenId: string | null = null;
+    try {
+      const { ethers } = await import('ethers');
+      const deployerKey = process.env.DEPLOYER_PRIVATE_KEY;
+      if (deployerKey) {
+        const provider   = new ethers.JsonRpcProvider(ARBITRUM_RPC);
+        const signer     = new ethers.Wallet(deployerKey, provider);
+        const market     = new ethers.Contract(CREDIT_MARKET_ADDRESS, CREDIT_MARKET_ABI, signer);
+        const fixedLoan  = new ethers.Contract(FIXED_LOAN_NFT_ADDRESS, FIXED_LOAN_ABI, signer);
+
+        const loanId32 = ethers.encodeBytes32String(loan.loan_id.replace(/-/g, '').slice(0, 31));
+
+        // 1. Call fundLoan on-chain (sends AXUSD principal to borrower)
+        const fundTx = await market.fundLoan(loanId32);
+        const fundReceipt = await fundTx.wait(1);
+        fundTxHash = fundReceipt?.hash ?? fundTx.hash;
+
+        // 2. Mint loan receipt NFT to borrower
+        const principalWei = ethers.parseUnits(loan.loan_amount_usd, 18);
+        const termDays = BigInt(Math.round((loan.loan_term_months * 365) / 12));
+        const dueAtUnix = BigInt(Math.floor(dueDate.getTime() / 1000));
+
+        const mintTx = await fixedLoan.mintReceipt(
+          loanId32,
+          loan.wallet_address,
+          principalWei,
+          BigInt(loan.interest_rate_bps),
+          termDays,
+          dueAtUnix,
+          loan.property_address
+        );
+        const mintReceipt = await mintTx.wait(1);
+        // Extract tokenId from event log (Transfer from zero address)
+        const transferEvent = mintReceipt?.logs?.find(
+          (l: { topics?: string[] }) => l.topics && l.topics[1] === '0x0000000000000000000000000000000000000000000000000000000000000000'
+        );
+        if (transferEvent?.topics?.[3]) {
+          nftTokenId = BigInt(transferEvent.topics[3]).toString();
+        }
+      }
+    } catch (chainErr: unknown) {
+      const msg = chainErr instanceof Error ? chainErr.message : String(chainErr);
+      console.error('[loan-lifecycle] Chain fund failed (non-fatal):', msg);
+    }
+
+    await pool.query(
       `UPDATE real_estate_loans
-         SET status = $2, funded_at = NOW(), last_interest_accrual_at = NOW(), due_date = $3, updated_at = NOW()
+         SET status = $2, funded_at = NOW(), last_interest_accrual_at = NOW(), due_date = $3,
+             disbursement_tx_hash = $4, updated_at = NOW()
        WHERE loan_id = $1`,
-      [loan.loan_id, transition.to, dueDate.toISOString()]
+      [loan.loan_id, transition.to, dueDate.toISOString(), fundTxHash]
     );
-    return res.status(200).json({ success: true, message: 'Loan funded and now active', newStatus: transition.to });
+    return res.status(200).json({
+      success: true,
+      message: 'Loan funded on-chain and now active',
+      newStatus: transition.to,
+      chainTxHash: fundTxHash,
+      nftTokenId,
+    });
   }
 
+  // All other admin state transitions (approve, mark_delinquent, cure_delinquent, close, default)
   await pool.query(
     `UPDATE real_estate_loans SET status = $2, updated_at = NOW() WHERE loan_id = $1`,
     [loan.loan_id, transition.to]
   );
+
+  // For terminal states (repaid/defaulted), burn the NFT receipt on-chain
+  if (transition.to === 'repaid' || transition.to === 'defaulted') {
+    try {
+      const { ethers } = await import('ethers');
+      const deployerKey = process.env.DEPLOYER_PRIVATE_KEY;
+      if (deployerKey) {
+        const provider  = new ethers.JsonRpcProvider(ARBITRUM_RPC);
+        const signer    = new ethers.Wallet(deployerKey, provider);
+        const fixedLoan = new ethers.Contract(FIXED_LOAN_NFT_ADDRESS, FIXED_LOAN_ABI, signer);
+        const loanId32  = ethers.encodeBytes32String(loan.loan_id.replace(/-/g, '').slice(0, 31));
+        const burnTx    = await fixedLoan.burnReceipt(loanId32);
+        await burnTx.wait(1);
+      }
+    } catch (chainErr: unknown) {
+      const msg = chainErr instanceof Error ? chainErr.message : String(chainErr);
+      console.error('[loan-lifecycle] Chain burn NFT failed (non-fatal):', msg);
+    }
+  }
+
   return res.status(200).json({ success: true, message: `Loan transitioned to '${transition.to}'`, newStatus: transition.to });
 }
 
