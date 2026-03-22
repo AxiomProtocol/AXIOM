@@ -99,7 +99,7 @@ contract AXIOMFixedLoan is AccessControlLite, ReentrancyGuard {
     uint256 public constant YEAR_SECONDS = 365 days;
     uint256 public constant PAYMENT_INTERVAL = 30 days;
     uint256 public constant DUST_THRESHOLD = 1;
-    uint256 public constant MAX_RATE_BPS = 100_000;
+    uint256 public constant MAX_RATE_BPS = 5_000;
     uint256 public constant MAX_PREPAY_BPS = 10_000;
 
     IERC20 public immutable axusd;

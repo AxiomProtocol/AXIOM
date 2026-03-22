@@ -16,28 +16,28 @@ export const PRODUCT_VAULTS: Record<string, VaultInfo> = {
     name: 'Fix & Flip Lending Vault',
     assetAddress: AXUSD_STABLECOIN_CONTRACTS.AXUSD,
     assetSymbol: 'AXUSD',
-    assetDecimals: 18
+    assetDecimals: 6
   },
   'savings': {
     address: REALESTATE_LENDING_CONTRACTS.DSCR_POOL_VAULT,
     name: 'DSCR Pool Vault',
     assetAddress: AXUSD_STABLECOIN_CONTRACTS.AXUSD,
     assetSymbol: 'AXUSD',
-    assetDecimals: 18
+    assetDecimals: 6
   },
   'rent-streams': {
     address: REALESTATE_LENDING_CONTRACTS.DSCR_POOL_VAULT,
     name: 'Rent Streams Vault',
     assetAddress: AXUSD_STABLECOIN_CONTRACTS.AXUSD,
     assetSymbol: 'AXUSD',
-    assetDecimals: 18
+    assetDecimals: 6
   },
   'lending-fund': {
     address: REALESTATE_LENDING_CONTRACTS.FIXFLIP_VAULT,
     name: 'Fix & Flip Lending Fund',
     assetAddress: AXUSD_STABLECOIN_CONTRACTS.AXUSD,
     assetSymbol: 'AXUSD',
-    assetDecimals: 18
+    assetDecimals: 6
   }
 };
 
