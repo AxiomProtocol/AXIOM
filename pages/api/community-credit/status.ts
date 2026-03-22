@@ -2,6 +2,35 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
 import { verifyCreditAuth } from '../../../lib/community-credit-auth';
 
+interface CreditLineRow {
+  id: number;
+  credit_line_id: string;
+  status: string;
+  credit_limit_usd: string;
+  drawn_amount_usd: string;
+  available_balance_usd: string;
+  outstanding_balance_usd: string;
+  purpose: string;
+  repayment_due_days: number;
+  repayment_due_date: string | null;
+  drawn_at: string | null;
+  repaid_at: string | null;
+  expires_at: string;
+  gef_violation_flagged: boolean;
+  interest_earned_usd: string | null;
+  created_at: string;
+  gef_tier_at_application: string;
+  app_reference: string;
+}
+
+const GEF_TIER_CREDIT_LIMITS: Record<string, number> = {
+  Observer: 0,
+  Participant: 1500,
+  Operator: 5000,
+  Steward: 10000,
+  Architect: 25000,
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
@@ -19,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const lineResult = await pool.query(
+    const lineResult = await pool.query<CreditLineRow>(
       `SELECT icl.id, icl.credit_line_id, icl.status, icl.credit_limit_usd,
               icl.drawn_amount_usd, icl.available_balance_usd, icl.outstanding_balance_usd,
               icl.purpose, icl.repayment_due_days, icl.repayment_due_date,
@@ -47,7 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     let gefTier = 'Observer';
     try {
-      const gefResult = await pool.query(
+      const gefResult = await pool.query<{ tier_name: string }>(
         `SELECT gef_tier_thresholds.tier_name
          FROM gef_user_execution_profiles
          JOIN gef_tier_thresholds ON gef_user_execution_profiles.current_tier_id = gef_tier_thresholds.tier_id
@@ -58,15 +87,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (gefResult.rows.length > 0 && gefResult.rows[0].tier_name) {
         gefTier = gefResult.rows[0].tier_name;
       }
-    } catch {}
-
-    const GEF_TIER_CREDIT_LIMITS: Record<string, number> = {
-      Observer: 0,
-      Participant: 1500,
-      Operator: 5000,
-      Steward: 10000,
-      Architect: 25000,
-    };
+    } catch (_err) {
+      // Wallet not found in GEF profiles — default to Observer
+    }
 
     return res.status(200).json({
       success: true,
@@ -75,10 +98,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       creditLimit: GEF_TIER_CREDIT_LIMITS[gefTier] ?? 0,
       creditLines: lineResult.rows,
       applications: appResult.rows,
-      hasActiveLine: lineResult.rows.some((l: any) => ['active', 'drawn'].includes(l.status)),
+      hasActiveLine: lineResult.rows.some((l) => ['active', 'drawn'].includes(l.status)),
     });
-  } catch (err: any) {
-    console.error('[community-credit/status]', err);
+  } catch (_err) {
+    console.error('[community-credit/status]', _err);
     return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }

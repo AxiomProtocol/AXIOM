@@ -3,6 +3,55 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading, SolidButton } from '../components/design-law';
 
+interface EthereumProvider {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+}
+
+interface CreditLine {
+  credit_line_id: string;
+  status: string;
+  credit_limit_usd: string;
+  drawn_amount_usd: string;
+  available_balance_usd: string;
+  outstanding_balance_usd: string;
+  purpose: string;
+  repayment_due_days: number;
+  repayment_due_date: string | null;
+  drawn_at: string | null;
+  repaid_at: string | null;
+  expires_at: string;
+  gef_violation_flagged: boolean;
+  interest_earned_usd: string | null;
+  created_at: string;
+  gef_tier_at_application: string;
+  app_reference: string;
+}
+
+interface StatusResponse {
+  success: boolean;
+  walletAddress: string;
+  gefTier: string;
+  creditLimit: number;
+  creditLines: CreditLine[];
+  applications: unknown[];
+  hasActiveLine: boolean;
+}
+
+interface ApplyResponse {
+  success: boolean;
+  approved?: boolean;
+  applicationId?: string;
+  creditLineId?: string;
+  gefTier?: string;
+  creditLimit?: number;
+  approvedAmount?: number;
+  purpose?: string;
+  repaymentDueDays?: number;
+  expiresAt?: string;
+  rejectionReason?: string;
+  message?: string;
+}
+
 const GEF_TIER_TABLE = [
   { tier: 'Observer', limit: '$0', eligible: false, desc: 'Complete the GEF qualification pathway to advance.' },
   { tier: 'Participant', limit: '$1,500', eligible: true, desc: 'First-cycle contributors. Entry bridge + contribution smoothing.' },
@@ -52,9 +101,14 @@ const STATUS_STYLES: Record<string, string> = {
   expired: 'border border-dl-gray text-dl-gray',
 };
 
+function getEthereum(): EthereumProvider | null {
+  if (typeof window === 'undefined') return null;
+  return (window as Window & { ethereum?: EthereumProvider }).ethereum ?? null;
+}
+
 async function getSignedHeaders(walletAddress: string): Promise<Record<string, string> | null> {
   try {
-    const eth = (window as any).ethereum;
+    const eth = getEthereum();
     if (!eth) return null;
     const nonceRes = await fetch(`/api/community-credit/nonce?walletAddress=${encodeURIComponent(walletAddress)}`);
     if (!nonceRes.ok) return null;
@@ -76,7 +130,7 @@ async function getSignedHeaders(walletAddress: string): Promise<Record<string, s
 export default function CommunityCreditPage() {
   const [walletAddress, setWalletAddress] = useState('');
   const [walletInput, setWalletInput] = useState('');
-  const [status, setStatus] = useState<any>(null);
+  const [status, setStatus] = useState<StatusResponse | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState('');
 
@@ -86,12 +140,14 @@ export default function CommunityCreditPage() {
     requestedPurpose: 'wealth_practice_entry',
   });
   const [applying, setApplying] = useState(false);
-  const [applyResult, setApplyResult] = useState<any>(null);
+  const [applyResult, setApplyResult] = useState<ApplyResponse | null>(null);
   const [applyError, setApplyError] = useState('');
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).ethereum) {
-      (window as any).ethereum.request({ method: 'eth_accounts' }).then((accounts: string[]) => {
+    const eth = getEthereum();
+    if (eth) {
+      eth.request({ method: 'eth_accounts' }).then((result) => {
+        const accounts = result as string[];
         if (accounts.length > 0) {
           setWalletAddress(accounts[0]);
           setWalletInput(accounts[0]);
@@ -357,7 +413,7 @@ export default function CommunityCreditPage() {
                 <div>
                   <p className="text-xs text-dl-gray uppercase font-dl-mono tracking-wider mb-2">Credit Lines</p>
                   <div className="border border-dl-border">
-                    {status.creditLines.map((line: any, i: number) => (
+                    {status.creditLines.map((line, i) => (
                       <div key={line.credit_line_id} className={`px-4 py-3 ${i < status.creditLines.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div>

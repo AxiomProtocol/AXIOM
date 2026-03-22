@@ -124,8 +124,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       disbursementNote: 'AXUSD disbursement from senior tranche recorded in treasury ledger. On-chain settlement pending protocol treasury authorization.',
       message: `Draw-down of $${drawAmount.toLocaleString()} recorded for purpose '${line.purpose}'. Total repayment of $${totalOwed.toFixed(2)} is due by ${repaymentDueDate.toLocaleDateString()}.`,
     });
-  } catch (err: any) {
-    console.error('[community-credit/drawdown]', err);
+  } catch (_err) {
+    console.error('[community-credit/drawdown]', _err);
     return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }

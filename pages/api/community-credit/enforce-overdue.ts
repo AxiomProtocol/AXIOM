@@ -2,6 +2,13 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
 import { isAdminRequest } from '../../../lib/community-credit-auth';
 
+interface OverdueLine {
+  id: number;
+  credit_line_id: string;
+  wallet_address: string;
+  repayment_due_date: string;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
@@ -12,10 +19,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const overdueResult = await pool.query(
-      `SELECT icl.*, ica.wallet_address as app_wallet
+    const overdueResult = await pool.query<OverdueLine>(
+      `SELECT icl.id, icl.credit_line_id, icl.wallet_address, icl.repayment_due_date
        FROM income_credit_lines icl
-       JOIN income_credit_applications ica ON icl.application_id = ica.id
        WHERE icl.status = 'drawn'
          AND icl.repayment_due_date IS NOT NULL
          AND icl.repayment_due_date < NOW()
@@ -64,8 +70,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       markedDefaulted: defaulted,
       message: `Overdue enforcement complete. ${flagged.length} lines flagged for GEF violation. ${defaulted.length} lines moved to defaulted status (60+ days past due).`,
     });
-  } catch (err: any) {
-    console.error('[community-credit/enforce-overdue]', err);
+  } catch (_err) {
+    console.error('[community-credit/enforce-overdue]', _err);
     return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }

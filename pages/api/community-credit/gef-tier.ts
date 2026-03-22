@@ -49,8 +49,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       creditLimit: GEF_TIER_CREDIT_LIMITS[gefTier] ?? 0,
       hasActiveLine,
     });
-  } catch (err: any) {
-    console.error('[community-credit/gef-tier]', err);
+  } catch (_err) {
+    console.error('[community-credit/gef-tier]', _err);
     return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }

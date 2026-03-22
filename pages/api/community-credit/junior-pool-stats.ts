@@ -59,8 +59,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       interestRateBps: 500,
       poolNote: 'V1 junior tranche LP positions are managed manually. Interest is distributed atomically on repayment events.',
     });
-  } catch (err: any) {
-    console.error('[community-credit/junior-pool-stats]', err);
+  } catch (_err) {
+    console.error('[community-credit/junior-pool-stats]', _err);
     return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }

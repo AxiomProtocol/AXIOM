@@ -155,8 +155,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ? `Repayment complete. Credit line closed. $${interestRepaid.toFixed(6)} distributed to community junior LP pool (treasury ledger). GEF violation flag cleared.`
         : `Partial repayment of $${repayAmount.toLocaleString()} recorded. $${interestRepaid.toFixed(6)} interest distributed to junior pool. Remaining: $${newOutstanding.toFixed(2)}.`,
     });
-  } catch (err: any) {
-    console.error('[community-credit/repay]', err);
+  } catch (_err) {
+    console.error('[community-credit/repay]', _err);
     return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }

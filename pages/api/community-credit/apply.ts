@@ -21,7 +21,7 @@ const VALID_PURPOSES = ['wealth_practice_entry', 'contribution_smoothing', 'earn
 
 async function getGefTier(walletAddress: string): Promise<string> {
   try {
-    const result = await pool.query(
+    const result = await pool.query<{ tier_name: string }>(
       `SELECT gef_tier_thresholds.tier_name
        FROM gef_user_execution_profiles
        JOIN gef_tier_thresholds ON gef_user_execution_profiles.current_tier_id = gef_tier_thresholds.tier_id
@@ -32,7 +32,9 @@ async function getGefTier(walletAddress: string): Promise<string> {
     if (result.rows.length > 0 && result.rows[0].tier_name) {
       return result.rows[0].tier_name;
     }
-  } catch {}
+  } catch (_err) {
+    // Wallet not found in GEF — default to Observer
+  }
   return 'Observer';
 }
 
@@ -41,7 +43,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const { walletAddress, statedMonthlyIncomeUsd, requestedAmountUsd, requestedPurpose } = req.body;
+  const { walletAddress, statedMonthlyIncomeUsd, requestedAmountUsd, requestedPurpose } = req.body as {
+    walletAddress?: string;
+    statedMonthlyIncomeUsd?: string | number;
+    requestedAmountUsd?: string | number;
+    requestedPurpose?: string;
+  };
 
   if (!walletAddress || !requestedAmountUsd || !requestedPurpose) {
     return res.status(400).json({ success: false, error: 'walletAddress, requestedAmountUsd, and requestedPurpose are required' });
@@ -56,35 +63,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ success: false, error: 'Invalid purpose. Must be one of: wealth_practice_entry, contribution_smoothing, earnest_money' });
   }
 
-  const requestedAmount = parseFloat(requestedAmountUsd);
+  const requestedAmount = parseFloat(String(requestedAmountUsd));
   if (isNaN(requestedAmount) || requestedAmount <= 0) {
     return res.status(400).json({ success: false, error: 'requestedAmountUsd must be a positive number' });
   }
 
+  let capturedIncomeUsd: number | null = null;
   if (statedMonthlyIncomeUsd !== undefined && statedMonthlyIncomeUsd !== null && statedMonthlyIncomeUsd !== '') {
-    const monthlyIncome = parseFloat(statedMonthlyIncomeUsd);
-    if (isNaN(monthlyIncome) || monthlyIncome <= 0) {
-      return res.status(400).json({ success: false, error: 'statedMonthlyIncomeUsd must be a positive number if provided' });
-    }
-    if (monthlyIncome < 1000) {
-      return res.status(200).json({
-        success: false,
-        approved: false,
-        rejectionReason: 'Stated monthly income below $1,000. Community Entry Credit is designed for W-2 earners with stable employment income.',
-      });
-    }
-    const debtToIncomeEstimate = requestedAmount / monthlyIncome;
-    if (debtToIncomeEstimate > 3.0) {
-      return res.status(200).json({
-        success: false,
-        approved: false,
-        rejectionReason: `Requested amount ($${requestedAmount.toLocaleString()}) is more than 3x stated monthly income ($${monthlyIncome.toLocaleString()}). Reduce requested amount or provide updated income information.`,
-      });
+    const parsed = parseFloat(String(statedMonthlyIncomeUsd));
+    if (!isNaN(parsed) && parsed > 0) {
+      capturedIncomeUsd = parsed;
     }
   }
 
   try {
-    const existingLine = await pool.query(
+    const existingLine = await pool.query<{ id: number }>(
       `SELECT id FROM income_credit_lines
        WHERE LOWER(wallet_address) = LOWER($1) AND status IN ('active', 'drawn')
        LIMIT 1`,
@@ -119,7 +112,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const applicationId = `ica_${randomBytes(16).toString('hex')}`;
-    const repaymentDays = REPAYMENT_DAYS[requestedPurpose] || 30;
+    const repaymentDays = REPAYMENT_DAYS[requestedPurpose] ?? 30;
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 90);
 
@@ -132,14 +125,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         applicationId,
         auth.verifiedAddress,
         gefTier,
-        statedMonthlyIncomeUsd || null,
+        capturedIncomeUsd,
         requestedAmount,
         requestedPurpose,
         creditLimit,
       ]
     );
 
-    const appRow = await pool.query(
+    const appRow = await pool.query<{ id: number }>(
       `SELECT id FROM income_credit_applications WHERE application_id = $1`,
       [applicationId]
     );
@@ -177,8 +170,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       expiresAt: expiresAt.toISOString(),
       message: `Approved. Your $${requestedAmount.toLocaleString()} credit line expires in 90 days if not drawn. Once drawn, repayment is due within ${repaymentDays} days.`,
     });
-  } catch (err: any) {
-    console.error('[community-credit/apply]', err);
+  } catch (_err) {
+    console.error('[community-credit/apply]', _err);
     return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }
