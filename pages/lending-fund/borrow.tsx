@@ -119,7 +119,10 @@ export default function BorrowPage() {
   const fetchLoans = useCallback(async (addr: string) => {
     setLoadingLoans(true);
     try {
-      const r = await fetch(`/api/realestate/loan-lifecycle?walletAddress=${encodeURIComponent(addr)}`);
+      const eth = (window as any).ethereum;
+      if (!eth) return;
+      const headers = await getSignedHeaders(addr, eth);
+      const r = await fetch(`/api/realestate/loan-lifecycle?walletAddress=${encodeURIComponent(addr)}`, { headers });
       const data = await r.json();
       if (data.success) setLoans(data.loans ?? []);
     } catch {}

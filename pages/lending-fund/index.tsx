@@ -270,6 +270,28 @@ export default function LendingFundPage() {
           </div>
 
           <div className="mb-12">
+            <SectionHeading>Borrower Lifecycle States</SectionHeading>
+            <div className="border border-dl-border">
+              {[
+                { state: 'Pending Review', desc: 'Application submitted, under underwriter review (24-48 hrs)', color: 'text-dl-gold' },
+                { state: 'Approved', desc: 'Application approved, awaiting fund disbursement', color: 'text-dl-forest' },
+                { state: 'Active', desc: 'Loan funded and in repayment. Daily interest accrues on outstanding principal.', color: 'text-dl-navy' },
+                { state: 'Delinquent', desc: 'Past due date with outstanding balance. Late fees may apply.', color: 'text-dl-error' },
+                { state: 'Repaid', desc: 'Loan fully repaid. All principal and interest cleared.', color: 'text-dl-forest' },
+                { state: 'Defaulted', desc: 'Loan in default. Collateral recovery process initiated.', color: 'text-dl-error' },
+              ].map((s, i) => (
+                <div key={s.state} className={`flex flex-col md:flex-row md:items-center md:gap-4 px-5 py-3 ${i < 5 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                  <span className={`font-dl-mono text-xs font-semibold w-32 flex-shrink-0 ${s.color}`}>{s.state}</span>
+                  <span className="text-xs text-dl-gray">{s.desc}</span>
+                </div>
+              ))}
+              <div className="px-5 py-3 bg-dl-bg-alt border-t border-dl-border text-center">
+                <Link href="/lending-fund/borrow" className="text-xs text-dl-navy underline">Access borrower dashboard (GEF Operator tier required) →</Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-12">
             <SectionHeading>Fund Characteristics</SectionHeading>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border">
               {[

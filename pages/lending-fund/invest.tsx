@@ -681,6 +681,46 @@ export default function InvestPage() {
                 </div>
               </div>
 
+              {parseFloat(amount) >= 100 && (
+                <div className="border border-dl-border bg-dl-bg mb-6">
+                  <div className="px-4 py-3 border-b border-dl-border">
+                    <h4 className="font-medium text-dl-navy text-sm">Projected Yield Schedule (Illustrative)</h4>
+                    <p className="text-xs text-dl-gray mt-0.5">Based on 14% gross borrower rate, 10% net target LP distribution. Actual returns variable.</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs font-dl-mono">
+                      <thead>
+                        <tr className="bg-dl-bg-alt">
+                          <th className="px-3 py-2 text-left text-dl-gray font-normal">Period</th>
+                          <th className="px-3 py-2 text-right text-dl-gray font-normal">Gross (14%)</th>
+                          <th className="px-3 py-2 text-right text-dl-gray font-normal">Net (10%)</th>
+                          <th className="px-3 py-2 text-right text-dl-gray font-normal">Cumulative</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[3, 6, 9, 12].map((months) => {
+                          const inv = parseFloat(amount);
+                          const grossYield = inv * 0.14 * (months / 12);
+                          const netYield = inv * 0.10 * (months / 12);
+                          const cumulative = inv + netYield;
+                          return (
+                            <tr key={months} className={months % 6 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}>
+                              <td className="px-3 py-2 text-dl-gray">{months}mo</td>
+                              <td className="px-3 py-2 text-right text-dl-navy">+{grossYield.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</td>
+                              <td className="px-3 py-2 text-right text-dl-forest">+{netYield.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</td>
+                              <td className="px-3 py-2 text-right text-dl-navy font-semibold">{cumulative.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="px-4 py-2 border-t border-dl-border">
+                    <p className="text-xs text-dl-gray">Gross = 14% borrower rate. Net = estimated LP distribution after fees and reserves. Not a guarantee of returns.</p>
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={proceedToDeposit}
                 disabled={parseFloat(amount) < parseFloat(vaultPosition?.minDeposit || '100')}
