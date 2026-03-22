@@ -21,10 +21,17 @@ async function getFixedLoanSigner() {
   return { signer, fixedLoan, market, ethers };
 }
 
+/**
+ * Deterministic bytes32 ID derived from the PostgreSQL loan UUID.
+ * Uses keccak256(utf8(loanId)) to produce a collision-safe 32-byte hash from the full
+ * UUID string. The old approach (encodeBytes32String + 31-char slice) lost the last character
+ * of a 32-hex-char UUID, creating a collision domain across loans.
+ * This function must be used consistently on every on-chain call (originate, repay, read).
+ */
 function toLoanId32(loanId: string): string {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { ethers } = require('ethers') as { ethers: typeof import('ethers') };
-  return ethers.encodeBytes32String(loanId.replace(/-/g, '').slice(0, 31));
+  return ethers.keccak256(ethers.toUtf8Bytes(loanId));
 }
 
 const GEF_OPERATOR_TIERS = new Set(['Operator', 'Steward', 'Architect']);
@@ -541,7 +548,7 @@ async function handleOriginate(req: NextApiRequest, res: NextApiResponse) {
       const signer   = new ethers.Wallet(deployerKey, provider);
       const fixedLoan = new ethers.Contract(FIXED_LOAN_NFT_ADDRESS, FIXED_LOAN_ABI, signer);
 
-      const loanId32    = ethers.encodeBytes32String(loanId.replace(/-/g, '').slice(0, 31));
+      const loanId32    = ethers.keccak256(ethers.toUtf8Bytes(loanId)); // collision-safe — full UUID hashed to bytes32
       const principalWei = ethers.parseUnits(principal.toFixed(6), 6);
       const termSecs    = BigInt(Math.round((termMonths * 365 * 24 * 3600) / 12));
       const graceSecs   = BigInt(GRACE_PERIOD_DAYS * 24 * 3600);

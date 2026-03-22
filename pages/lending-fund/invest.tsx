@@ -6,6 +6,18 @@ import { DesignLawLayout, SectionHeading } from '../../components/design-law';
 import { getVaultPosition, approveVault, depositToVault, PRODUCT_VAULTS } from '../../lib/web3/vaultService';
 import { NETWORK_CONFIG } from '../../shared/contracts';
 
+/** EIP-1193 browser provider — typed to avoid `any` escape. */
+interface EthProvider {
+  request(args: { method: 'eth_accounts' }): Promise<string[]>;
+  request(args: { method: 'eth_requestAccounts' }): Promise<string[]>;
+  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
+}
+
+function getEth(): EthProvider | null {
+  if (typeof window === 'undefined') return null;
+  return (window as Window & { ethereum?: EthProvider }).ethereum ?? null;
+}
+
 interface InvestmentStep {
   id: number;
   title: string;
@@ -65,27 +77,44 @@ export default function InvestPage() {
     noGuarantees: false
   });
 
+  /** Live protocol rate from fund-stats API (basis points). Null while loading. */
+  const [fundRateBps, setFundRateBps] = useState<number | null>(null);
+  /** Pool utilization % for context display. */
+  const [poolUtilizationPct, setPoolUtilizationPct] = useState<string | null>(null);
+
   const { product } = router.query;
   const productKey = (product as string) || 'lending-fund';
 
   useEffect(() => {
     checkWalletConnection();
+    // Fetch real fund rate from live loan book so the yield table is grounded in actual data
+    fetch('/api/realestate/fund-stats')
+      .then(r => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data) return;
+        const bps = data?.riskParams?.interestRateBps ?? null;
+        if (typeof bps === 'number') setFundRateBps(bps);
+        const totalAssets = parseFloat(data?.totalAssets || '0');
+        const locked = parseFloat(data?.lockedInLoans || '0');
+        if (totalAssets > 0) setPoolUtilizationPct(((locked / totalAssets) * 100).toFixed(1));
+      })
+      .catch(() => {/* non-critical — yield table falls back to protocol floor */});
   }, []);
 
   const checkWalletConnection = async () => {
-    if (typeof window !== 'undefined' && (window as any).ethereum) {
-      try {
-        const accounts = await (window as any).ethereum.request({ method: 'eth_accounts' });
-        if (accounts.length > 0) {
-          setWalletAddress(accounts[0]);
-          setWalletConnected(true);
-          updateStep(1, true);
-          setCurrentStep(2);
-          fetchVaultPosition(accounts[0]);
-        }
-      } catch (error) {
-        console.error('Wallet check error:', error);
+    const eth = getEth();
+    if (!eth) return;
+    try {
+      const accounts = await eth.request({ method: 'eth_accounts' });
+      if (accounts.length > 0) {
+        setWalletAddress(accounts[0]);
+        setWalletConnected(true);
+        updateStep(1, true);
+        setCurrentStep(2);
+        fetchVaultPosition(accounts[0]);
       }
+    } catch (error) {
+      console.error('Wallet check error:', error);
     }
   };
 
@@ -131,24 +160,25 @@ export default function InvestPage() {
   };
 
   const connectWallet = async () => {
-    if (typeof window !== 'undefined' && (window as any).ethereum) {
-      try {
-        setLoading(true);
-        const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
-        if (accounts.length > 0) {
-          setWalletAddress(accounts[0]);
-          setWalletConnected(true);
-          updateStep(1, true);
-          setCurrentStep(2);
-          fetchVaultPosition(accounts[0]);
-        }
-      } catch (error) {
-        console.error('Failed to connect wallet:', error);
-      } finally {
-        setLoading(false);
-      }
-    } else {
+    const eth = getEth();
+    if (!eth) {
       alert('Please install MetaMask or another Web3 wallet');
+      return;
+    }
+    try {
+      setLoading(true);
+      const accounts = await eth.request({ method: 'eth_requestAccounts' });
+      if (accounts.length > 0) {
+        setWalletAddress(accounts[0]);
+        setWalletConnected(true);
+        updateStep(1, true);
+        setCurrentStep(2);
+        fetchVaultPosition(accounts[0]);
+      }
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -681,45 +711,61 @@ export default function InvestPage() {
                 </div>
               </div>
 
-              {parseFloat(amount) >= 100 && (
-                <div className="border border-dl-border bg-dl-bg mb-6">
-                  <div className="px-4 py-3 border-b border-dl-border">
-                    <h4 className="font-medium text-dl-navy text-sm">Projected Yield Schedule (Illustrative)</h4>
-                    <p className="text-xs text-dl-gray mt-0.5">Based on 14% gross borrower rate, 10% net target LP distribution. Actual returns variable.</p>
+              {parseFloat(amount) >= 100 && (() => {
+                // Live rate: protocol configured rate from fund-stats API (riskParams.interestRateBps).
+                // Gross = actual configured borrower rate. Net ≈ 70% of gross (after reserve, protocol fees, servicing).
+                // Falls back to the protocol floor (14% / 1400 bps) if the API hasn't responded yet.
+                const grossRateAnnual = fundRateBps != null ? fundRateBps / 10000 : 0.14;
+                const netRateAnnual = grossRateAnnual * 0.70; // conservative LP yield after deductions
+                const grossPct = (grossRateAnnual * 100).toFixed(1);
+                const netPct = (netRateAnnual * 100).toFixed(1);
+                const dataSource = fundRateBps != null
+                  ? `Live loan book rate (${poolUtilizationPct ?? '?'}% pool utilization)`
+                  : 'Protocol floor rate (pending live data)';
+                return (
+                  <div className="border border-dl-border bg-dl-bg mb-6">
+                    <div className="px-4 py-3 border-b border-dl-border">
+                      <h4 className="font-medium text-dl-navy text-sm">Projected Yield Schedule — Illustrative</h4>
+                      <p className="text-xs text-dl-gray mt-0.5">
+                        Source: {dataSource}. Gross = configured borrower rate ({grossPct}%); Net = estimated LP distribution after reserve and protocol fees ({netPct}%). Actual returns variable.
+                      </p>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs font-dl-mono">
+                        <thead>
+                          <tr className="bg-dl-bg-alt">
+                            <th className="px-3 py-2 text-left text-dl-gray font-normal">Period</th>
+                            <th className="px-3 py-2 text-right text-dl-gray font-normal">Gross ({grossPct}%)</th>
+                            <th className="px-3 py-2 text-right text-dl-gray font-normal">Net ({netPct}%)</th>
+                            <th className="px-3 py-2 text-right text-dl-gray font-normal">Cumulative</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[3, 6, 9, 12].map((months) => {
+                            const inv = parseFloat(amount);
+                            const grossYield = inv * grossRateAnnual * (months / 12);
+                            const netYield = inv * netRateAnnual * (months / 12);
+                            const cumulative = inv + netYield;
+                            return (
+                              <tr key={months} className={months % 6 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}>
+                                <td className="px-3 py-2 text-dl-gray">{months}mo</td>
+                                <td className="px-3 py-2 text-right text-dl-navy">+{grossYield.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</td>
+                                <td className="px-3 py-2 text-right text-dl-forest">+{netYield.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</td>
+                                <td className="px-3 py-2 text-right text-dl-navy font-semibold">{cumulative.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="px-4 py-2 border-t border-dl-border">
+                      <p className="text-xs text-dl-gray">
+                        Rate sourced from live protocol configuration. Net = gross less ~30% for reserves, protocol fees, and servicing. Not a guarantee of returns.
+                      </p>
+                    </div>
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs font-dl-mono">
-                      <thead>
-                        <tr className="bg-dl-bg-alt">
-                          <th className="px-3 py-2 text-left text-dl-gray font-normal">Period</th>
-                          <th className="px-3 py-2 text-right text-dl-gray font-normal">Gross (14%)</th>
-                          <th className="px-3 py-2 text-right text-dl-gray font-normal">Net (10%)</th>
-                          <th className="px-3 py-2 text-right text-dl-gray font-normal">Cumulative</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[3, 6, 9, 12].map((months) => {
-                          const inv = parseFloat(amount);
-                          const grossYield = inv * 0.14 * (months / 12);
-                          const netYield = inv * 0.10 * (months / 12);
-                          const cumulative = inv + netYield;
-                          return (
-                            <tr key={months} className={months % 6 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}>
-                              <td className="px-3 py-2 text-dl-gray">{months}mo</td>
-                              <td className="px-3 py-2 text-right text-dl-navy">+{grossYield.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</td>
-                              <td className="px-3 py-2 text-right text-dl-forest">+{netYield.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</td>
-                              <td className="px-3 py-2 text-right text-dl-navy font-semibold">{cumulative.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="px-4 py-2 border-t border-dl-border">
-                    <p className="text-xs text-dl-gray">Gross = 14% borrower rate. Net = estimated LP distribution after fees and reserves. Not a guarantee of returns.</p>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
 
               <button
                 onClick={proceedToDeposit}

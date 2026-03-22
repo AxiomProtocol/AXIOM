@@ -3,6 +3,22 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading } from '../../components/design-law';
 
+/** Typed subset of the EIP-1193 browser provider injected by MetaMask and compatible wallets. */
+interface EthereumProvider {
+  request(args: { method: 'eth_requestAccounts' }): Promise<string[]>;
+  request(args: { method: 'eth_accounts' }): Promise<string[]>;
+  request(args: { method: 'eth_chainId' }): Promise<string>;
+  request(args: { method: 'personal_sign'; params: [string, string] }): Promise<string>;
+  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
+}
+
+/** Safely retrieves the injected EIP-1193 provider or returns null when unavailable. */
+function getEthereum(): EthereumProvider | null {
+  if (typeof window === 'undefined') return null;
+  const w = window as Window & { ethereum?: EthereumProvider };
+  return w.ethereum ?? null;
+}
+
 const MIN_LOAN = 50000;
 const MAX_LOAN = 500000;
 const RATE_BPS = 1400;
@@ -119,7 +135,7 @@ async function getNonce(wallet: string): Promise<{ message: string }> {
 
 async function getSignedHeaders(
   wallet: string,
-  ethereum: any
+  ethereum: EthereumProvider
 ): Promise<Record<string, string>> {
   const { message } = await getNonce(wallet);
   const sig: string = await ethereum.request({
@@ -165,7 +181,7 @@ export default function BorrowPage() {
     setLoadingDetail(true);
     setLoanDetail(null);
     try {
-      const eth = (window as any).ethereum;
+      const eth = getEthereum();
       if (!eth) return;
       const headers = await getSignedHeaders(wallet, eth);
       const r = await fetch(`/api/realestate/loan-lifecycle?loanId=${encodeURIComponent(loanId)}`, { headers });
@@ -178,7 +194,7 @@ export default function BorrowPage() {
   const fetchLoans = useCallback(async (addr: string) => {
     setLoadingLoans(true);
     try {
-      const eth = (window as any).ethereum;
+      const eth = getEthereum();
       if (!eth) return;
       const headers = await getSignedHeaders(addr, eth);
       const r = await fetch(`/api/realestate/loan-lifecycle?walletAddress=${encodeURIComponent(addr)}`, { headers });
@@ -189,7 +205,7 @@ export default function BorrowPage() {
   }, []);
 
   const connectWallet = async () => {
-    const eth = (window as any).ethereum;
+    const eth = getEthereum();
     if (!eth) {
       alert('Please install MetaMask or another Web3 wallet to continue.');
       return;
@@ -233,7 +249,7 @@ export default function BorrowPage() {
     }
     setApplying(true);
     try {
-      const headers = await getSignedHeaders(wallet, (window as any).ethereum);
+      const headers = await getSignedHeaders(wallet, getEthereum()!);
       const r = await fetch('/api/realestate/loan-lifecycle', {
         method: 'POST',
         headers,
@@ -276,13 +292,19 @@ export default function BorrowPage() {
       // The contract does safeTransferFrom(msg.sender) — borrower must approve AXUSD first,
       // then repayLoan collects AXUSD and forwards to CreditMarket automatically.
       // AXUSD uses 6 decimal places.
+      const eth = getEthereum();
+      if (!eth) throw new Error('Web3 wallet not found. Please install MetaMask.');
       const ethers = (await import('ethers')).ethers;
-      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      // eth conforms to Eip1193Provider structurally; cast is safe — ethers BrowserProvider only calls eth.request()
+      const { BrowserProvider } = ethers;
+      const provider = new BrowserProvider(eth as { request(...args: unknown[]): Promise<unknown> });
       const signer = await provider.getSigner();
       const { FIXED_LOAN_ABI } = await import('../../src/config/creditMarket.generated');
       const { FIXED_LOAN_NFT_ADDRESS, ACTIVE_AXUSD } = await import('../../src/config/activeContracts.generated');
-      const fixedLoan = new ethers.Contract(FIXED_LOAN_NFT_ADDRESS, FIXED_LOAN_ABI as unknown as string[], signer);
-      const loanId32 = ethers.encodeBytes32String(loanId.replace(/-/g, '').slice(0, 31));
+      // Spread to remove readonly — ethers v6 InterfaceAbi accepts string[]
+      const fixedLoan = new ethers.Contract(FIXED_LOAN_NFT_ADDRESS, [...FIXED_LOAN_ABI], signer);
+      // keccak256(utf8(loanId)) — collision-safe bytes32 (consistent with API toLoanId32)
+      const loanId32 = ethers.keccak256(ethers.toUtf8Bytes(loanId));
       // AXUSD has 6 decimals (like USDC)
       const paymentWei = ethers.parseUnits(amount.toFixed(6), 6);
       // Approve AXUSD spend on FixedLoan contract first
@@ -294,7 +316,7 @@ export default function BorrowPage() {
       const chainTxHash: string = receipt?.hash ?? tx.hash;
 
       // Step 2: Submit txHash to API for DB projection
-      const headers = await getSignedHeaders(wallet, (window as any).ethereum);
+      const headers = await getSignedHeaders(wallet, eth);
       const r = await fetch('/api/realestate/loan-lifecycle', {
         method: 'PATCH',
         headers,

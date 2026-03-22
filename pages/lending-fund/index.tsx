@@ -1,8 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading, SolidButton } from '../../components/design-law';
 import { getVaultPosition, PRODUCT_VAULTS } from '../../lib/web3/vaultService';
+
+/** EIP-1193 browser provider — typed to avoid `any` escape. */
+interface EthProvider {
+  request(args: { method: 'eth_accounts' }): Promise<string[]>;
+  request(args: { method: 'eth_requestAccounts' }): Promise<string[]>;
+  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
+}
+
+function getEth(): EthProvider | null {
+  if (typeof window === 'undefined') return null;
+  return (window as Window & { ethereum?: EthProvider }).ethereum ?? null;
+}
 
 interface FundStats {
   totalAssets: string;
@@ -74,6 +86,40 @@ interface JuniorPoolStats {
   poolNote: string;
 }
 
+/**
+ * Compute an amortization schedule from loan fields already available in ActiveLoan.
+ * Used in the LP overview panel so no additional API call is required for schedule display.
+ */
+function computeAmortizationSchedule(
+  principalUsd: string,
+  rateBps: number,
+  termDays: number,
+  fundedAt: string | null,
+): Array<{ month: number; dueDate: string; payment: number; interest: number; principalPmt: number; balance: number }> {
+  const P = parseFloat(principalUsd);
+  if (!P || P <= 0 || !rateBps || !termDays) return [];
+  const r = rateBps / 10000 / 12; // monthly rate
+  const n = Math.round(termDays / 30); // term in months
+  const M = r > 0 ? P * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1) : P / n;
+  const rows: Array<{ month: number; dueDate: string; payment: number; interest: number; principalPmt: number; balance: number }> = [];
+  let balance = P;
+  for (let m = 1; m <= Math.min(n, 36); m++) {
+    const interest = balance * r;
+    const principalPmt = Math.min(M - interest, balance);
+    balance = Math.max(0, balance - principalPmt);
+    const payment = m === n ? principalPmt + interest + balance : M;
+    let dueDate = '—';
+    if (fundedAt) {
+      const d = new Date(fundedAt);
+      d.setMonth(d.getMonth() + m);
+      dueDate = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+    }
+    rows.push({ month: m, dueDate, payment, interest, principalPmt, balance });
+    if (balance <= 0) break;
+  }
+  return rows;
+}
+
 export default function LendingFundPage() {
   const [stats, setStats] = useState<FundStats | null>(null);
   const [riskParams, setRiskParams] = useState<ProductRisk | null>(null);
@@ -84,6 +130,8 @@ export default function LendingFundPage() {
   const [juniorPoolStats, setJuniorPoolStats] = useState<JuniorPoolStats | null>(null);
   const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([]);
   const [loansLoading, setLoansLoading] = useState(true);
+  /** ID of the loan row currently expanded to show lifecycle detail + payment schedule. */
+  const [expandedLoanId, setExpandedLoanId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -118,15 +166,15 @@ export default function LendingFundPage() {
   }, []);
 
   const checkWallet = async () => {
-    if (typeof window !== 'undefined' && (window as any).ethereum) {
-      try {
-        const accounts = await (window as any).ethereum.request({ method: 'eth_accounts' });
-        if (accounts.length > 0) {
-          setWalletAddress(accounts[0]);
-          fetchLPPosition(accounts[0]);
-        }
-      } catch {}
-    }
+    const eth = getEth();
+    if (!eth) return;
+    try {
+      const accounts = await eth.request({ method: 'eth_accounts' });
+      if (accounts.length > 0) {
+        setWalletAddress(accounts[0]);
+        fetchLPPosition(accounts[0]);
+      }
+    } catch {}
   };
 
   const fetchLPPosition = async (address: string) => {
@@ -338,6 +386,7 @@ export default function LendingFundPage() {
                       <th className="text-right px-4 py-3 text-dl-gray font-medium">LP Interest</th>
                       <th className="text-left px-4 py-3 text-dl-gray font-medium">Due Date</th>
                       <th className="text-left px-4 py-3 text-dl-gray font-medium">State</th>
+                      <th className="px-4 py-3"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -349,22 +398,111 @@ export default function LendingFundPage() {
                         repaid: 'text-dl-muted',
                         defaulted: 'text-dl-error',
                       };
+                      const stateBg: Record<string, string> = {
+                        active: 'bg-green-50 text-dl-forest border-green-200',
+                        approved: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+                        delinquent: 'bg-red-50 text-dl-error border-red-200',
+                        repaid: 'bg-gray-50 text-dl-muted border-gray-200',
+                        defaulted: 'bg-red-50 text-dl-error border-red-200',
+                      };
                       const dueDate = loan.due_at ? new Date(loan.due_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) : '—';
+                      const isExpanded = expandedLoanId === loan.loan_id;
+                      const schedule = isExpanded
+                        ? computeAmortizationSchedule(
+                            loan.loan_amount_usd,
+                            loan.interest_rate_bps,
+                            loan.term_days,
+                            loan.funded_at,
+                          )
+                        : [];
                       return (
-                        <tr key={loan.loan_id} className={`border-b border-dl-border ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
-                          <td className="px-4 py-3 text-dl-navy">{loan.loan_id.slice(0, 8)}…</td>
-                          <td className="px-4 py-3 text-dl-gray">{loan.property_address || '—'}</td>
-                          <td className="px-4 py-3 text-right text-dl-navy">{formatUSD(loan.loan_amount_usd)}</td>
-                          <td className="px-4 py-3 text-right text-dl-navy">{formatUSD(loan.outstanding_principal_usd)}</td>
-                          <td className="px-4 py-3 text-right text-dl-navy">{formatPercent(loan.interest_rate_bps)}</td>
-                          <td className="px-4 py-3 text-right text-dl-forest">
-                            ${loan.lpInterestEarnedUsd || '0.0000'}
-                          </td>
-                          <td className="px-4 py-3 text-dl-gray">{dueDate}</td>
-                          <td className={`px-4 py-3 font-semibold uppercase text-xs ${statusColor[loan.status] || 'text-dl-navy'}`}>
-                            {loan.status}
-                          </td>
-                        </tr>
+                        <Fragment key={loan.loan_id}>
+                          <tr className={`border-b border-dl-border ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                            <td className="px-4 py-3 text-dl-navy">{loan.loan_id.slice(0, 8)}…</td>
+                            <td className="px-4 py-3 text-dl-gray">{loan.property_address || '—'}</td>
+                            <td className="px-4 py-3 text-right text-dl-navy">{formatUSD(loan.loan_amount_usd)}</td>
+                            <td className="px-4 py-3 text-right text-dl-navy">{formatUSD(loan.outstanding_principal_usd)}</td>
+                            <td className="px-4 py-3 text-right text-dl-navy">{formatPercent(loan.interest_rate_bps)}</td>
+                            <td className="px-4 py-3 text-right text-dl-forest">
+                              ${loan.lpInterestEarnedUsd || '0.0000'}
+                            </td>
+                            <td className="px-4 py-3 text-dl-gray">{dueDate}</td>
+                            <td className={`px-4 py-3 font-semibold uppercase text-xs ${statusColor[loan.status] || 'text-dl-navy'}`}>
+                              {loan.status}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <button
+                                onClick={() => setExpandedLoanId(isExpanded ? null : loan.loan_id)}
+                                className="text-dl-navy underline text-xs"
+                              >
+                                {isExpanded ? 'Close' : 'Details'}
+                              </button>
+                            </td>
+                          </tr>
+                          {isExpanded && (
+                            <tr key={`${loan.loan_id}-panel`} className="bg-dl-bg border-b border-dl-border">
+                              <td colSpan={9} className="px-4 py-4">
+                                {/* On-chain state badge + loan metrics */}
+                                <div className="flex flex-wrap gap-3 items-center mb-4">
+                                  <span className={`px-3 py-1 text-xs font-semibold uppercase border font-dl-mono ${stateBg[loan.status] || 'bg-dl-bg text-dl-navy border-dl-border'}`}>
+                                    State: {loan.status.toUpperCase()}
+                                  </span>
+                                  <span className="text-xs text-dl-gray font-dl-mono">
+                                    Rate: {formatPercent(loan.interest_rate_bps)} · Term: {Math.round(loan.term_days / 30)}mo · LP Interest Earned: ${loan.lpInterestEarnedUsd || '0.0000'}
+                                  </span>
+                                  {loan.due_at && (
+                                    <span className="text-xs text-dl-gray font-dl-mono">
+                                      Maturity: {dueDate}
+                                    </span>
+                                  )}
+                                </div>
+                                {/* Payment schedule sourced from on-chain amortization formula */}
+                                {schedule.length > 0 ? (
+                                  <div className="border border-dl-border overflow-x-auto">
+                                    <div className="px-3 py-2 bg-dl-bg-alt border-b border-dl-border">
+                                      <p className="text-xs text-dl-gray font-dl-mono">
+                                        Payment Schedule — Amortized ({Math.round(loan.term_days / 30)} months, {formatPercent(loan.interest_rate_bps)} p.a.)
+                                      </p>
+                                    </div>
+                                    <table className="w-full text-xs font-dl-mono">
+                                      <thead>
+                                        <tr className="bg-dl-bg-alt">
+                                          <th className="px-3 py-2 text-left text-dl-gray font-normal">Mo.</th>
+                                          <th className="px-3 py-2 text-left text-dl-gray font-normal">Due</th>
+                                          <th className="px-3 py-2 text-right text-dl-gray font-normal">Payment</th>
+                                          <th className="px-3 py-2 text-right text-dl-gray font-normal">Interest</th>
+                                          <th className="px-3 py-2 text-right text-dl-gray font-normal">Principal</th>
+                                          <th className="px-3 py-2 text-right text-dl-gray font-normal">Balance</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {schedule.slice(0, 12).map((row) => (
+                                          <tr key={row.month} className={row.month % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}>
+                                            <td className="px-3 py-1.5 text-dl-gray">{row.month}</td>
+                                            <td className="px-3 py-1.5 text-dl-gray">{row.dueDate}</td>
+                                            <td className="px-3 py-1.5 text-right text-dl-navy">{formatUSD(row.payment.toFixed(2))}</td>
+                                            <td className="px-3 py-1.5 text-right text-dl-gold">{formatUSD(row.interest.toFixed(2))}</td>
+                                            <td className="px-3 py-1.5 text-right text-dl-forest">{formatUSD(row.principalPmt.toFixed(2))}</td>
+                                            <td className="px-3 py-1.5 text-right text-dl-navy">{formatUSD(row.balance.toFixed(2))}</td>
+                                          </tr>
+                                        ))}
+                                        {schedule.length > 12 && (
+                                          <tr className="bg-dl-bg-alt">
+                                            <td colSpan={6} className="px-3 py-1.5 text-dl-muted text-center">
+                                              +{schedule.length - 12} more payments · see borrower dashboard for full schedule
+                                            </td>
+                                          </tr>
+                                        )}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-dl-gray">Schedule unavailable — loan not yet funded.</p>
+                                )}
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
                       );
                     })}
                   </tbody>
@@ -403,12 +541,12 @@ export default function LendingFundPage() {
               <p className="text-sm text-dl-gray mb-6">Connect your Web3 wallet to see your vault position, yield earned, and transaction history.</p>
               <button
                 onClick={async () => {
-                  if (typeof window !== 'undefined' && (window as any).ethereum) {
-                    const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
-                    if (accounts.length > 0) {
-                      setWalletAddress(accounts[0]);
-                      fetchLPPosition(accounts[0]);
-                    }
+                  const eth = getEth();
+                  if (!eth) { alert('Please install MetaMask or another Web3 wallet.'); return; }
+                  const accounts = await eth.request({ method: 'eth_requestAccounts' });
+                  if (accounts.length > 0) {
+                    setWalletAddress(accounts[0]);
+                    fetchLPPosition(accounts[0]);
                   }
                 }}
                 className="px-6 py-3 bg-dl-navy text-white font-medium"
