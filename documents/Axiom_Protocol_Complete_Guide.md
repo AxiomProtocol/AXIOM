@@ -1,6 +1,6 @@
 # Axiom Protocol — Complete Platform Guide
 
-Version 1.1 — March 2026
+Version 1.2 — March 2026
 Platform: axiomprotocol.app
 Network: Arbitrum One (Chain ID 42161)
 
@@ -28,7 +28,7 @@ Network: Arbitrum One (Chain ID 42161)
 
 ## 1. Overview
 
-Axiom Protocol is governance-first wealth infrastructure for real asset acquisition through community capital formation. The platform provides tools, data, and on-chain financial infrastructure for institutional-grade real estate participation — from initial property discovery through community-governed land ownership. It runs on Arbitrum One, supported by 72 verified automated control layers auditable at arbiscan.io.
+Axiom Protocol is governance-first wealth infrastructure for real asset acquisition through community capital formation. The platform provides tools, data, and on-chain financial infrastructure for institutional-grade real estate participation — from initial property discovery through community-governed land ownership. It runs on Arbitrum One, supported by 74 verified automated control layers auditable at arbiscan.io.
 
 Axiom was designed for Black and Latino W-2 earners aged 25-40 in Atlanta, Houston, and Charlotte who are ready to build real wealth through disciplined real estate participation. The platform also serves real estate professionals, accredited investors, syndicators, institutional allocators, and community organizers building shared capital infrastructure.
 
@@ -191,13 +191,28 @@ To review program details:
 
 ### 6e. Lending Fund
 
-Route: `/lending-fund` — Status: Configured — Structure: SEC Reg D 506(c), accredited investors only
+Route: `/lending-fund` — Status: Live — Structure: SEC Reg D 506(c), accredited investors only
 
-To invest: navigate to `/lending-fund`, click Apply to Lend, review and acknowledge the PPM and Risk Disclosure Supplement, complete accredited investor verification, and submit your AXUSD subscription through the on-chain vault.
+The Lending Fund provides fixed-term debt capital to qualified borrowers secured by real estate collateral. Two production smart contracts govern all fund mechanics on Arbitrum One, deployed and verified March 22, 2026:
 
-To borrow: submit a loan application with address, purchase price, rehab budget, and ARV. Approved loans fund at a maximum 70% LTV, up to 12 months. Applications below 1.25 DSCR are flagged for review. Rates are variable.
+**AXIOMFixedLoan** (`0x511A0cD642532585dc87e41C84f7f499a9755511`) — Fixed-term loan engine. Supports AMORTIZED and INTEREST_ONLY payment modes. Up to three draw tranches per loan. Eight loan states: PENDING, APPROVED, ACTIVE, DELINQUENT, DEFAULTED, REPAID, CLOSED, CHARGED_OFF. Contractual maximum rate: 5,000 BPS (50% APR). On-chain views: `paymentSchedule()`, `nextPaymentDue()`, `daysDelinquent()`. Supports `chargeOffLoan()` and `closeUndrawnApprovedLoan()` for lifecycle management.
 
-Vault: `0xF4AcD4B7EaBfDA7E1b96D3abA1C6340557aa93E5`.
+**AXIOMCreditMarket** (`0x85074a74774568692128eE97Da661Fe49dcF5fE4`) — ERC-3643 identity-gated LP capital pool. Pro-rata interest distribution via `interestPerShare`. Reserve ratio enforcement. Liquidity disbursement is gated exclusively to the FixedLoan contract — no operator-callable direct disbursement. `writeDownOutstanding()` supports charge-off accounting with arithmetic invariant guard on repayment receipt.
+
+To invest:
+1. Navigate to `/lending-fund/invest` and connect your wallet.
+2. Review and acknowledge the PPM and Risk Disclosure Supplement.
+3. Complete accredited investor verification.
+4. Submit your AXUSD subscription through the AXIOMCreditMarket LP pool.
+5. Monitor your position: shares held, position value, pending interest, and current share price — all derived from on-chain state.
+
+To borrow:
+1. Navigate to `/lending-fund/borrow` and connect your wallet.
+2. Submit a loan application: property address, purchase price, rehab budget, and ARV.
+3. Approved loans fund at a maximum 70% LTV, up to 12 months.
+4. Applications below 1.25 DSCR are flagged for review.
+5. Once approved, draw tranches are available as needed up to the committed amount.
+6. Payment schedules, next due dates, and delinquency counts are computed on-chain in real time. Rates are variable with a contractual maximum of 50% APR.
 
 ### 6f. Exchange (DEX)
 
@@ -439,7 +454,7 @@ Route: `/disclosure` — Status: Live
 
 The `/disclosure` page is the canonical institutional disclosure document. Every disclosure is tied to a specific, timestamped solvency snapshot — the Snapshot ID and SHA-256 checksum are displayed at the top.
 
-The disclosure page covers: treasury and liability headline numbers; formulas for CR (Treasury / Liabilities), RR (Reserve Ratio), LBR (Loss Buffer), and LD (Liquid Deficit); operational status per module (Live / Configured-Inactive / Planned); the full contract address registry; and GENIUS Act alignment language. 72 verified automated control layers. Contract standards: ERC-20 (AXM), ERC-3643/T-REX (AXUSD), ERC-4626 (Euler vault), ONCHAINID, SIWE.
+The disclosure page covers: treasury and liability headline numbers; formulas for CR (Treasury / Liabilities), RR (Reserve Ratio), LBR (Loss Buffer), and LD (Liquid Deficit); operational status per module (Live / Configured-Inactive / Planned); the full contract address registry; and GENIUS Act alignment language. 74 verified automated control layers. Contract standards: ERC-20 (AXM), ERC-3643/T-REX (AXUSD), ERC-4626 (Euler vault), ONCHAINID, SIWE.
 
 ---
 
@@ -449,7 +464,7 @@ Axiom Protocol is in its Bootstrap Phase.
 
 Completed (2023-2025): Community farmland initiative. 72 automated control layers on Arbitrum One. AXM governance token and DEX V2 on mainnet. Capital Program ($1M dual-SPV). ERC-3643 Unified AXUSD. SEC Reg D 506(c) Lending Fund. FDIC-insured banking via Unit Finance. Cost Intelligence Engine with Craftsman NCE. MIRDT, Sentinel, Observer, Deal Intelligence with IVCEE, Syndication, Field Intelligence, and Investor Portal all live.
 
-Completed (2026 Q1): Axiom Secondary Network V1 — permissioned secondary transfer, settlement, registry, and intelligence layer for private market products. Wealth Practice → Syndication two-stage capital pathway framing. SIWE wallet authentication across all secondary network routes.
+Completed (2026 Q1): Axiom Secondary Network V1 — permissioned secondary transfer, settlement, registry, and intelligence layer for private market products. Wealth Practice → Syndication two-stage capital pathway framing. SIWE wallet authentication across all secondary network routes. Field Capture System (mobile-first walkthrough) live. AXIOMFixedLoan (`0x511A0cD642532585dc87e41C84f7f499a9755511`) and AXIOMCreditMarket (`0x85074a74774568692128eE97Da661Fe49dcF5fE4`) deployed and verified on Arbitrum One — on-chain Lending Fund engine live with 8-state loan lifecycle, draw tranches, AMORTIZED/INTEREST_ONLY modes, and ERC-3643 gated LP pool.
 
 In Progress (2026): Proof of Execution outcome verification pipeline. Expanded Craftsman benchmark validation from live project actuals. Wealth Practice staged rollout with Capital Program access pathway. Land Acquisition Pipeline governance deployment. Secondary Network V2 with enhanced issuer tools and automated settlement triggers.
 
@@ -459,67 +474,27 @@ Planned — Universe Blockchain (L3): A dedicated Arbitrum Orbit L3 chain with l
 
 ## 15. Institutional Vocabulary Glossary
 
-This glossary is the canonical reference drawn from the platform's `lib/glossary.ts` source. It governs all disclosure-facing communications.
+These terms are used throughout the platform in disclosure-facing and allocator-facing contexts.
 
-### Institutional Vocabulary Replacements
-
-| Common Term | Axiom Terminology |
-|---|---|
-| Smart contracts | Automated control layers |
-| Multi-sig | Multi-party authorization |
-| DeFi / Decentralized finance | On-chain financial rails |
-| Tokenization | Asset onboarding and issuance |
-| Staking | Participation lockup |
-| SUSU | The Wealth Practice |
-| Savings Circle | The Wealth Practice |
-| Savings Circles (plural) | Wealth Practice groups |
-| ROSCA | Structured group savings framework |
-| APY | Not used — rates are variable; all yield references use variable language |
-| Yield / profit outcome promises | Not used — replaced with "expand structural wealth-building capacity" |
-| Profit / wealth promises | Not used — replaced with "strengthen community capital formation" |
-
-### Canonical Term Definitions
-
-| Term | Definition | Maturity |
+| Platform Term | Traditional Equivalent | Notes |
 |---|---|---|
-| Axiom Protocol | Governance-first wealth infrastructure. Not a bank, broker-dealer, or registered investment advisor. | Bootstrap Phase |
-| AXM | ERC-20 governance and fee-routing token on Arbitrum One | Live |
-| AXUSD | Protocol stablecoin, ERC-3643/T-REX compliant with on-chain identity compliance | Live |
-| The Wealth Practice | Structured group savings and allocation practice. Stage 1 of the capital pathway. Not an investment product. | Staged Rollout |
-| Syndication | Institutional capital formation program. Stage 2 of the capital pathway. Reg D 506(c). Accredited investors. | Live |
-| Axiom Secondary Network | Permissioned secondary transfer, settlement, and registry layer for Axiom-issued private market products | Live |
-| Solvency Console | Three-mode solvency disclosure interface (Allocator, Clearinghouse, Regulatory) | Live |
-| Adaptive Metrics Engine (AME) | Deterministic computation engine for regime scoring, adaptive targets, and policy multipliers | Live |
-| MIRDT | Probabilistic trend-following analysis with full audit trail. Paper trading with human confirmation gates. | Live |
-| Axiom Sentinel | Unified capital decision and risk authorization layer with cryptographic audit trails | Live |
-| Physical Asset Pipeline | Framework for bridging digital capital to real-world assets. Not a claim of current ownership. | Planned |
+| Automated control layer | Smart contract | Deployed on Arbitrum One, verifiable on arbiscan.io |
+| Multi-party authorization | Multi-sig | Requires multiple on-chain signers for high-value actions |
+| On-chain financial rails | DeFi / blockchain finance | Settlement infrastructure, not yield products |
+| Asset onboarding / issuance | Tokenization | Process of registering real-world asset rights on-chain |
+| Participation lockup | Staking | Locking AXM tokens for governance weight — no yield promise |
+| Unified AXUSD | Stablecoin | ERC-3643 identity-gated, GENIUS Act aligned |
+| The Wealth Practice | SUSU / Savings Circle / ROSCA | Community savings and allocation program. No informal-finance comparisons in allocator materials. |
+| Lending Fund | Private credit fund | SEC Reg D 506(c). Accredited investors only. Governed by AXIOMFixedLoan + AXIOMCreditMarket contracts. |
+| Coverage Ratio (CR) | Capital adequacy ratio | CR = Treasury / Liabilities. Floor enforced by protocol policy. |
+| Reserve Ratio (RR) | Liquidity ratio | Liquid assets as a percentage of short-term liabilities. |
+| Loss Buffer (LBR) | Stress buffer | USD amount above minimum threshold before policy escalation. |
+| Bootstrap Phase | Early stage / pre-scale | Current operating phase. Governance parameters are conservative by design. |
 
-### GENIUS Act Language Rule
+Forbidden terms in all platform copy: "smart contract," "DeFi," "multi-sig," "staking" (when implying yield), "APY" (as a claim), "guaranteed returns," "the only platform," "compliant" (without qualification), specific acreage without evidence.
 
-Permitted phrase: "designed to align with the GENIUS Act framework"
-
-This phrasing is required for all references to regulatory alignment. Definitive compliance assertions and classification language are not used.
-
-### Maturity Labels
-
-| Label | Meaning |
-|---|---|
-| Live | Operational and active |
-| Staged Rollout | Available but rolling out in phases |
-| Bootstrap Phase | Early operational phase |
-| Configured (Inactive) | Built and configured; not yet activated |
-| Planned | On the roadmap, not yet built |
-
-### Language Guidance
-
-Platform communications avoid absolutist positioning claims, unqualified physical asset statements, and outcome promises. Rate references use variable language. All regulatory alignment uses the approved GENIUS Act phrasing above.
-
-Approved positioning: "reference architecture," "governance-first wealth infrastructure," "disclosure-first capital framework." Approved outcome language: "improve capital efficiency," "expand structural wealth-building capacity," "strengthen community capital formation."
+All rates referenced in this document are variable. This document is for informational purposes only and does not constitute investment advice, legal advice, or an offer to sell or solicitation to buy any security or financial instrument.
 
 ---
 
-Platform: axiomprotocol.app
-Network: Arbitrum One (Chain ID 42161)
-Contact: axiomprotocol.app/contact
-
-This document is for informational purposes only. Nothing in this document constitutes investment advice, legal advice, or a solicitation to buy or sell any security or digital asset. All rates described as variable.
+*Axiom Protocol — axiomprotocol.app — Arbitrum One (Chain ID 42161)*

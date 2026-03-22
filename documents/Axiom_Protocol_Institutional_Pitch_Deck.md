@@ -19,7 +19,7 @@ for the Digital-Physical Economy
 > "The new financial operating system for community-governed real asset acquisition — transparent by design, institutional by architecture."
 
 Network: Arbitrum One
-Contracts: 72 verified automated control layers
+Contracts: 74 verified automated control layers
 Platform: axiomprotocol.app
 
 ---
@@ -135,7 +135,7 @@ NAV mark oversight by issuer console.
 
 ### Layer 3 — Capital Formation
 - **Capital Program** `/pilot` — $1M dual-SPV structure. Live with institutional reporting.
-- **Lending Fund** `/lending-fund` — SEC Reg D 506(c). AXUSD-denominated subscriptions. Max 70% LTV. Vault: `0xF4AcD4B7EaBfDA7E1b96D3abA1C6340557aa93E5`.
+- **Lending Fund** `/lending-fund` — SEC Reg D 506(c). AXUSD-denominated. On-chain loan engine: AXIOMFixedLoan (`0x511A0cD642532585dc87e41C84f7f499a9755511`) + AXIOMCreditMarket (`0x85074a74774568692128eE97Da661Fe49dcF5fE4`). Max 70% LTV. 50% APR contractual cap. 8-state on-chain loan lifecycle.
 - **Syndication** `/syndication` — Full offering lifecycle. Six stages. Capital table, capital calls, waterfall distributions.
 
 ### Layer 4 — On-Chain Financial Rails
@@ -167,22 +167,24 @@ NAV mark oversight by issuer console.
 | Identity Registry | ONCHAINID | Live |
 | Euler V2 AXUSD Lending Vault | ERC-4626 | Live |
 | DEX V2 Exchange Hub | Camelot V2 | Live |
-| Total Verified Contracts | — | 72 |
+| AXIOMFixedLoan | Custom — 8-state lifecycle | Live — deployed 2026-03-22 |
+| AXIOMCreditMarket | ERC-3643 gated LP pool | Live — deployed 2026-03-22 |
+| Total Verified Contracts | — | 74 |
 
 ### Data Layer
 
 | System | Technology | Purpose |
 |---|---|---|
-| Primary Database | PostgreSQL (Neon) | All operational data — 393 tables |
+| Primary Database | PostgreSQL (Neon) | All operational data |
 | ORM | Drizzle | Type-safe schema management |
-| Secondary Schema | 29 tables (sec_ prefix) | Secondary Network — 44 enums |
+| Secondary Network Schema | 29 tables (sec_ prefix) | Secondary Network — 44 enums |
 | Blockchain RPC | Alchemy API | Arbitrum One node access |
 | Document Storage | IPFS / Storacha | Offering documents, deal files |
 
 ### Authentication and Identity
 - **SIWE (Sign-In with Ethereum)** — All capital and governance features require on-chain identity verification
 - **Auth0** — Platform authentication layer
-- **ERC-3643 Identity Registry** — On-chain KYC credential for AXUSD participation
+- **ERC-3643 Identity Registry** — On-chain KYC credential for AXUSD and Lending Fund participation
 
 ### AI Stack
 - **Gemini (Google AI)** — AME Oracle narrative layer, AI Acquisition Memo Builder, Deal Assistant
@@ -193,6 +195,7 @@ NAV mark oversight by issuer console.
 - SHA-256 checksums on every AME evaluation, solvency snapshot, and Proof of Execution record
 - GEF audit hash chain for every tier transition
 - Sanctions flag system in Secondary Network compliance engine
+- Arithmetic invariant guard on AXIOMCreditMarket repayment receipt
 
 ---
 
@@ -201,16 +204,19 @@ NAV mark oversight by issuer console.
 **What is live as of March 2026.**
 
 ### On-Chain
-- 72 verified automated control layers deployed and auditable on Arbitrum One (arbiscan.io)
+- 74 verified automated control layers deployed and auditable on Arbitrum One (arbiscan.io)
 - AXM governance token and DEX V2 live on mainnet
 - ERC-3643 Unified AXUSD deployed — 13 contracts verified
 - Euler V2 AXUSD Lending Vault active
+- **AXIOMFixedLoan** deployed and verified March 22, 2026 — 8-state on-chain loan engine, AMORTIZED/INTEREST_ONLY modes, draw tranches, 50% APR cap
+- **AXIOMCreditMarket** deployed and verified March 22, 2026 — ERC-3643 gated LP pool, pro-rata interest distribution, reserve ratio enforcement
 
 ### Platform (Live Features)
 - Property Analysis: real reports, three tiers, live data stack
 - Deal Intelligence Workspace: full underwriting suite including IVCEE, MIRDT, Cost Intelligence Engine (Craftsman NCE, 57 cost benchmarks, 14 regional modifiers), and AI Acquisition Memo
 - Distressed Deal Flow: multi-source government feed with live listings
 - Capital Program: $1M dual-SPV with institutional reporting
+- Lending Fund: on-chain loan engine live — borrower and LP investor flows fully operational
 - Banking: FDIC-insured accounts (Unit Finance) + BitGo custody configured
 - Axiom Secondary Network V1: permissioned transfer, settlement, registry fully operational
 - Observer: public treasury transparency dashboard — no wallet required
@@ -234,7 +240,8 @@ NAV mark oversight by issuer console.
 | Revenue Stream | Mechanism | Status |
 |---|---|---|
 | Property Analysis Reports | Pay-per-report: Free / $4.99 / $14.99 | Live |
-| Lending Fund Management Fee | Variable — Reg D 506(c) fund structure | Configured |
+| Lending Fund Management Fee | Variable — Reg D 506(c) fund structure | Live |
+| Lending Fund Origination Fee | Per-loan origination on funded loans | Live |
 | Syndication Platform Fee | Per-offering fee on capital raised | Live |
 | Secondary Network Settlement Fee | 0.5% of gross settlement amount | Live |
 | AXM DEX Liquidity Fees | LP fee share from exchange volume | Live |
@@ -242,7 +249,7 @@ NAV mark oversight by issuer console.
 | Banking Interchange | ACH and debit card interchange (Unit Finance) | Configured |
 | Proof of Execution AXM Rewards | Protocol-funded incentive for verified outcomes | Live |
 
-**Business model design principle:** Revenue is generated by activity (reports, settlements, raises, volume) — not by token price appreciation, staking yield promises, or speculative positioning. Every fee is disclosed at the point of activity. All rates are variable.
+**Business model design principle:** Revenue is generated by activity (reports, settlements, raises, volume, originations) — not by token price appreciation, participation lockup yield promises, or speculative positioning. Every fee is disclosed at the point of activity. All rates are variable.
 
 ---
 
@@ -262,13 +269,14 @@ NAV mark oversight by issuer console.
 - Agent Governance System: policy-based autonomous agent authorization with documented audit trail
 - Graduated Execution Framework (GEF): five-tier behavior-based qualification system. No capital commitment alone advances tier.
 - Execution Framework: deployment pacing, authorization thresholds, escalation protocols, and policy mode transitions — all deterministic
+- AXIOMCreditMarket: liquidity disbursement gated exclusively to AXIOMFixedLoan — no operator override path
 
 ### Transparency Infrastructure
 - Solvency Console with three institutional view modes (Allocator, Clearinghouse, Regulatory)
 - Coverage Ratio floor enforced by protocol: CR = Treasury / Liabilities
 - AME regime classification (Bootstrap → Operational → Stress) controls capital deployment pacing
 - Every solvency snapshot: SHA-256 verified and timestamped
-- 72 contracts auditable at arbiscan.io
+- 74 contracts auditable at arbiscan.io
 
 ### Institutional Vocabulary
 Axiom does not use: "smart contracts," "DeFi," "multi-sig," "staking," "APY," "guaranteed returns," or outcome-promise language. See full glossary in the Complete Platform Guide.
@@ -294,7 +302,7 @@ INTELLIGENCE LAYER (Open access)
 
 CAPITAL FORMATION LAYER (Qualified participation)
 ├── Capital Program — $1M dual-SPV (Live)
-├── Lending Fund — Reg D 506(c), accredited investors (Configured)
+├── Lending Fund — Reg D 506(c) | AXIOMFixedLoan + AXIOMCreditMarket (Live)
 └── Syndication — Full offering lifecycle (Live)
 
 ON-CHAIN RAILS (Identity-gated)
@@ -313,7 +321,7 @@ GOVERNANCE AND OPERATIONS
 └── Proof of Execution — SHA-256 verified track record
 ```
 
-**72 verified automated control layers. 393 database tables. Arbitrum One.**
+**74 verified automated control layers. Arbitrum One.**
 
 ---
 
@@ -323,7 +331,7 @@ GOVERNANCE AND OPERATIONS
 Community farmland initiative. 72 automated control layers on Arbitrum One. AXM governance token and DEX V2 on mainnet. Capital Program ($1M dual-SPV). ERC-3643 Unified AXUSD. SEC Reg D 506(c) Lending Fund. FDIC-insured banking via Unit Finance. Cost Intelligence Engine with Craftsman NCE. MIRDT, Sentinel, Observer, Deal Intelligence with IVCEE, Syndication, Field Intelligence, and Investor Portal all live.
 
 ### Completed (2026 Q1)
-Axiom Secondary Network V1 — full permissioned secondary transfer, settlement, registry, and intelligence layer. Wealth Practice → Syndication two-stage capital pathway formalized and deployed. SIWE wallet authentication across all secondary network routes. Field Capture System (mobile-first walkthrough) live.
+Axiom Secondary Network V1 — full permissioned secondary transfer, settlement, registry, and intelligence layer. Wealth Practice → Syndication two-stage capital pathway formalized and deployed. SIWE wallet authentication across all secondary network routes. Field Capture System (mobile-first walkthrough) live. AXIOMFixedLoan + AXIOMCreditMarket v8 deployed and verified on Arbitrum One (March 22, 2026) — on-chain Lending Fund engine with 8-state loan lifecycle, AMORTIZED/INTEREST_ONLY payment modes, draw tranches, ERC-3643 gated LP pool, and contractual 50% APR cap.
 
 ### In Progress (2026)
 Proof of Execution outcome verification pipeline expansion. Craftsman benchmark calibration from live project actuals. Wealth Practice staged rollout — Atlanta, Houston, Charlotte community hub activation. Land Acquisition Pipeline full governance deployment. Secondary Network V2 — automated settlement triggers and enhanced issuer tooling. Universe Blockchain (L3) migration planning.
@@ -366,7 +374,7 @@ The current cycle has produced thousands of consumer applications on fragile inf
 - Strategic partners in real estate, banking, or compliance technology
 
 ### What We Are Not Looking For
-- Speculative crypto fund capital seeking APY or token price appreciation
+- Speculative crypto fund capital seeking token price appreciation
 - Partners seeking control over governance parameters (AXM holders govern — not investors)
 - Short-duration capital with less than 24-month horizon
 
@@ -386,7 +394,7 @@ AXUSD is designed to align with the GENIUS Act framework. This phrasing does not
 
 Axiom Protocol is not a bank, broker-dealer, registered investment advisor, or money services business. FDIC insurance coverage applies to fiat deposits held through Unit Finance's program bank partnerships, not to digital assets.
 
-The Lending Fund offering is made under SEC Regulation D, Rule 506(c). Participation is limited to verified accredited investors only. A private placement memorandum (PPM) governs all participation terms.
+The Lending Fund offering is made under SEC Regulation D, Rule 506(c). Participation is limited to verified accredited investors only. A private placement memorandum (PPM) governs all participation terms. On-chain loan mechanics are governed by AXIOMFixedLoan and AXIOMCreditMarket contracts deployed on Arbitrum One. The contractual maximum rate is 5,000 basis points (50% APR). All rates are variable within this cap.
 
 All contract addresses and operational metrics are current as of March 2026 and subject to change. Verify current contract addresses at `/disclosure` before any interaction.
 
