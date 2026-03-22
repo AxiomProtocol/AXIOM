@@ -118,6 +118,7 @@ async function getSignedHeaders(walletAddress: string): Promise<Record<string, s
       method: 'personal_sign',
       params: [message, walletAddress],
     });
+    if (typeof sig !== 'string') return null;
     return {
       'x-wallet-signature': sig,
       'x-wallet-message': message,
@@ -501,7 +502,7 @@ export default function CommunityCreditPage() {
                   <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-dl-mono">
                     <div>
                       <p className="text-dl-gray">Approved Amount</p>
-                      <p className="text-dl-navy font-bold">${parseFloat(applyResult.approvedAmount).toLocaleString()}</p>
+                      <p className="text-dl-navy font-bold">${applyResult.approvedAmount != null ? applyResult.approvedAmount.toLocaleString() : '—'}</p>
                     </div>
                     <div>
                       <p className="text-dl-gray">Repayment Period</p>
@@ -513,7 +514,7 @@ export default function CommunityCreditPage() {
                     </div>
                     <div>
                       <p className="text-dl-gray">Expires</p>
-                      <p className="text-dl-navy font-bold">{new Date(applyResult.expiresAt).toLocaleDateString()}</p>
+                      <p className="text-dl-navy font-bold">{applyResult.expiresAt ? new Date(applyResult.expiresAt).toLocaleDateString() : '—'}</p>
                     </div>
                   </div>
                 )}

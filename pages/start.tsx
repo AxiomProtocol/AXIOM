@@ -3,6 +3,15 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading, SolidButton } from '../components/design-law';
 
+interface EthereumProvider {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+}
+
+function getEthereum(): EthereumProvider | null {
+  if (typeof window === 'undefined') return null;
+  return (window as Window & { ethereum?: EthereumProvider }).ethereum ?? null;
+}
+
 const STAGES = [
   {
     num: 'Stage 0',
@@ -95,8 +104,10 @@ export default function StartPage() {
   const [creditLimit, setCreditLimit] = useState<number | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).ethereum) {
-      (window as any).ethereum.request({ method: 'eth_accounts' }).then((accounts: string[]) => {
+    const eth = getEthereum();
+    if (eth) {
+      eth.request({ method: 'eth_accounts' }).then((result) => {
+        const accounts = result as string[];
         if (accounts.length > 0) {
           setWalletAddress(accounts[0]);
           fetchGefTier(accounts[0]);

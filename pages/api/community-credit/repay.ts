@@ -43,13 +43,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const outstanding = parseFloat(line.outstanding_balance_usd || '0');
     const drawnAmount = parseFloat(line.drawn_amount_usd || '0');
+
+    if (repayAmount > outstanding + 0.01) {
+      return res.status(400).json({
+        success: false,
+        error: `Repayment amount ($${repayAmount.toFixed(2)}) exceeds outstanding balance ($${outstanding.toFixed(2)}). Submit the exact outstanding amount or less.`,
+        outstandingBalanceUsd: outstanding,
+      });
+    }
+
+    const effectiveRepay = Math.min(repayAmount, outstanding);
     const outstandingBefore = outstanding;
 
-    const principalRatio = drawnAmount > 0 ? drawnAmount / outstanding : 1;
-    const principalRepaid = repayAmount * principalRatio;
-    const interestRepaid = repayAmount - principalRepaid;
+    const principalRatio = outstanding > 0 ? drawnAmount / outstanding : 1;
+    const principalRepaid = effectiveRepay * principalRatio;
+    const interestRepaid = effectiveRepay - principalRepaid;
 
-    const newOutstanding = Math.max(0, outstanding - repayAmount);
+    const newOutstanding = Math.max(0, outstanding - effectiveRepay);
     const isFullyRepaid = newOutstanding < 0.01;
 
     const client = await pool.connect();
@@ -64,7 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         [
           creditLineId,
           auth.verifiedAddress,
-          repayAmount.toFixed(6),
+          effectiveRepay.toFixed(6),
           principalRepaid.toFixed(6),
           interestRepaid.toFixed(6),
           outstandingBefore.toFixed(6),
@@ -141,7 +151,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true,
       creditLineId,
       walletAddress: auth.verifiedAddress,
-      repaymentAmountUsd: repayAmount,
+      repaymentAmountUsd: effectiveRepay,
       principalRepaidUsd: parseFloat(principalRepaid.toFixed(6)),
       interestRepaidUsd: parseFloat(interestRepaid.toFixed(6)),
       remainingOutstandingUsd: parseFloat(newOutstanding.toFixed(6)),
@@ -153,7 +163,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       gefViolationCleared: isFullyRepaid,
       message: isFullyRepaid
         ? `Repayment complete. Credit line closed. $${interestRepaid.toFixed(6)} distributed to community junior LP pool (treasury ledger). GEF violation flag cleared.`
-        : `Partial repayment of $${repayAmount.toLocaleString()} recorded. $${interestRepaid.toFixed(6)} interest distributed to junior pool. Remaining: $${newOutstanding.toFixed(2)}.`,
+        : `Partial repayment of $${effectiveRepay.toLocaleString()} recorded. $${interestRepaid.toFixed(6)} interest distributed to junior pool. Remaining: $${newOutstanding.toFixed(2)}.`,
     });
   } catch (_err) {
     console.error('[community-credit/repay]', _err);
