@@ -197,6 +197,14 @@ export default function StartPage() {
               <p className="text-xs text-dl-gray">Current Stage</p>
               <p className="font-dl-mono text-sm font-bold text-dl-navy">{STAGES[currentStageIndex]?.num}</p>
             </div>
+            <div>
+              <p className="text-xs text-dl-gray">Next Milestone</p>
+              <p className="font-dl-mono text-sm text-dl-forest">
+                {currentStageIndex < STAGES.length - 1
+                  ? STAGES[currentStageIndex]?.milestone ?? '—'
+                  : 'Full operator stack unlocked'}
+              </p>
+            </div>
           </div>
         </div>
       )}

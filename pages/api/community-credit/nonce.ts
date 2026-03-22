@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { randomBytes } from 'crypto';
 
+// V1: In-memory nonce store. Works correctly in single-instance deployments.
+// For horizontal scaling or serverless environments, replace with a shared durable
+// store (e.g. Redis SETEX, or a database-backed nonce table with TTL cleanup).
 const nonceStore = new Map<string, { nonce: string; expiresAt: number }>();
 
 const NONCE_TTL_MS = 5 * 60 * 1000;
