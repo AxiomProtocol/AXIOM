@@ -35,6 +35,8 @@ interface IAxiomIdentityRegistry {
 
 interface IAXIOMCreditMarket {
     function receiveRepayment(bytes32 loanId, uint256 principalReturned, uint256 interestAmount) external;
+    /// @notice Release a committed-but-written-off principal from the pool's receivables accounting.
+    function releaseCommitment(bytes32 loanId, uint256 amount) external;
 }
 
 contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
@@ -273,11 +275,13 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
         // Pull AXUSD from borrower into this contract
         axusd.safeTransferFrom(msg.sender, address(this), payment);
 
-        // Forward AXUSD to CreditMarket for LP accounting
-        // Transfer first, then notify CreditMarket so it records the amounts
+        // Transfer AXUSD to CreditMarket, then call receiveRepayment() for LP accounting.
+        // If the CreditMarket is set and the accounting call reverts, the entire repayment
+        // reverts — funds and accounting stay synchronized (no silent discrepancy).
         if (address(creditMarket) != address(0)) {
             axusd.safeTransfer(address(creditMarket), payment);
-            try creditMarket.receiveRepayment(loanId, principalPortion, interestPortion) {} catch {}
+            // Explicit call (no try/catch): revert on failure to prevent fund-accounting split
+            creditMarket.receiveRepayment(loanId, principalPortion, interestPortion);
         }
 
         emit LoanPayment(loanId, msg.sender, payment, interestPortion, principalPortion, loan.outstandingPrincipal);
@@ -293,6 +297,14 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
 
     /**
      * @notice Prepay in full with penalty. Borrower pays principal + accrued + penalty.
+     *
+     * CEI order:
+     *   1. CHECKS  — state, authorization
+     *   2. EFFECTS — all storage writes (amounts, state = REPAID)
+     *   3. INTERACTIONS — safeTransferFrom, safeTransfer, receiveRepayment
+     *
+     * This prevents a cross-function reentrancy attack where a hook on the AXUSD token
+     * could call repayLoan() between the pull and the state update.
      */
     function prepayLoan(bytes32 loanId) external nonReentrant {
         LoanRecord storage loan = _requireLoan(loanId);
@@ -306,24 +318,26 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
         // Accrue and persist any new interest into pendingInterest
         _accrueNow(loan);
 
-        uint256 penalty  = (loan.outstandingPrincipal * loan.prepayPenaltyBps) / 10000;
-        // Full payoff: all persisted pending interest + principal + penalty
-        uint256 totalDue = loan.outstandingPrincipal + loan.pendingInterest + penalty;
-
-        axusd.safeTransferFrom(msg.sender, address(this), totalDue);
-
+        uint256 penalty           = (loan.outstandingPrincipal * loan.prepayPenaltyBps) / 10000;
         uint256 principalReturned = loan.outstandingPrincipal;
         uint256 interestTotal     = loan.pendingInterest + penalty;
+        // Full payoff: all persisted pending interest + principal + penalty
+        uint256 totalDue          = principalReturned + interestTotal;
+
+        // EFFECTS: update all state before any external call (CEI pattern)
         loan.totalInterestPaid   += interestTotal;
         loan.totalPrincipalPaid  += principalReturned;
         loan.outstandingPrincipal = 0;
         loan.pendingInterest      = 0;
-        loan.state = STATE_REPAID;
+        loan.state                = STATE_REPAID;
 
-        // Forward to CreditMarket
+        // INTERACTIONS: external calls after all state changes
+        axusd.safeTransferFrom(msg.sender, address(this), totalDue);
+
+        // Forward to CreditMarket — explicit call (no try/catch); revert on failure
         if (address(creditMarket) != address(0)) {
             axusd.safeTransfer(address(creditMarket), totalDue);
-            try creditMarket.receiveRepayment(loanId, principalReturned, interestTotal) {} catch {}
+            creditMarket.receiveRepayment(loanId, principalReturned, interestTotal);
         }
 
         emit LoanPrepaid(loanId, penalty);
@@ -357,6 +371,9 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
 
     /**
      * @notice Admin close (reconciliation path — for off-chain settled or written-off loans).
+     *         Notifies CreditMarket to release the outstanding principal from committed
+     *         receivables accounting. Without this, totalCommitted remains inflated permanently,
+     *         causing an artificial share price increase and LP accounting errors.
      */
     function closeLoan(bytes32 loanId) external onlyRole(OPERATOR_ROLE) {
         LoanRecord storage loan = _requireLoan(loanId);
@@ -365,9 +382,19 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
             loan.state != STATE_DELINQUENT &&
             loan.state != STATE_APPROVED
         ) revert InvalidState(loan.state, "ACTIVE, DELINQUENT or APPROVED");
+
+        uint256 principalToRelease = loan.outstandingPrincipal;
+
+        // EFFECTS first
         loan.outstandingPrincipal = 0;
         loan.pendingInterest      = 0;
-        loan.state = STATE_REPAID;
+        loan.state                = STATE_REPAID;
+
+        // INTERACTIONS: notify CreditMarket to release receivable so pool value is correct
+        if (address(creditMarket) != address(0) && principalToRelease > 0) {
+            creditMarket.releaseCommitment(loanId, principalToRelease);
+        }
+
         emit LoanAdminClosed(loanId);
     }
 

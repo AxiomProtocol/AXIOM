@@ -64,6 +64,10 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
     mapping(address => uint256) public lpInterestDebt;
     uint256 public interestPerShare;
 
+    // Per-LP residual interest: unpaid interest that accumulated when pool was illiquid.
+    // Preserved across settlements — NEVER discarded. Paid out when liquidity is restored.
+    mapping(address => uint256) public lpInterestResidual;
+
     // Reserve ratio: minimum fraction of deposits kept liquid (basis points)
     uint256 public reserveRatioBps;
 
@@ -221,6 +225,16 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
     ) external nonReentrant {
         if (msg.sender != fixedLoan) revert OnlyFixedLoan();
 
+        // Decrement totalCommitted by the principal returned: once repaid, the receivable
+        // is no longer outstanding. Without this, _totalPoolValue() double-counts the returned
+        // principal (once in _liquidBalance() and again in totalCommitted), inflating share price
+        // and enabling early-LP fund theft.
+        if (totalCommitted >= principalReturned) {
+            totalCommitted -= principalReturned;
+        } else {
+            totalCommitted = 0;
+        }
+
         totalInterestReceived += interestAmount;
 
         // Update interest-per-share: each existing LP share earns proportional interest
@@ -229,6 +243,25 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
         }
 
         emit RepaymentReceived(loanId, principalReturned, interestAmount);
+    }
+
+    /**
+     * @notice Release a loan commitment without receiving repayment (admin write-off path).
+     *         Called by AXIOMFixedLoan.closeLoan() when a loan is administratively closed
+     *         (written off or off-chain settled). Decrements totalCommitted so pool value
+     *         is not permanently inflated by the lost principal.
+     *         ONLY callable by the registered fixedLoan contract.
+     */
+    function releaseCommitment(bytes32 loanId, uint256 amount) external nonReentrant {
+        if (msg.sender != fixedLoan) revert OnlyFixedLoan();
+        if (totalCommitted >= amount) {
+            totalCommitted -= amount;
+        } else {
+            totalCommitted = 0;
+        }
+        // Clear per-loan commitment record
+        loanCommitment[loanId] = 0;
+        emit RepaymentReceived(loanId, amount, 0); // principal=amount written off, interest=0
     }
 
     /**
@@ -263,11 +296,13 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
 
     /**
      * @notice Accrued interest available to LP (not yet claimed).
+     *         Includes both newly accrued pro-rata interest AND any accumulated residual
+     *         from prior settlements when pool liquidity was insufficient.
      */
     function pendingInterest(address lp) external view returns (uint256) {
-        if (lpShares[lp] == 0) return 0;
-        uint256 owed = (lpShares[lp] * (interestPerShare - lpInterestDebt[lp])) / 1e18;
-        return owed;
+        if (lpShares[lp] == 0) return lpInterestResidual[lp]; // residual even if shares burned
+        uint256 newInterest = (lpShares[lp] * (interestPerShare - lpInterestDebt[lp])) / 1e18;
+        return newInterest + lpInterestResidual[lp];
     }
 
     function isLpVerified(address lp) external view returns (bool) {
@@ -280,24 +315,52 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
         return axusd.balanceOf(address(this));
     }
 
+    /**
+     * @notice Total economic value of the pool:
+     *         liquid AXUSD balance + outstanding loan receivables (totalCommitted).
+     *         This ensures share price is not artificially depressed after disbursements
+     *         — loaned principal remains part of pool value as a receivable.
+     */
     function _totalPoolValue() internal view returns (uint256) {
-        return _liquidBalance();
+        return _liquidBalance() + totalCommitted;
     }
 
+    /**
+     * @notice Settle accrued interest for an LP.
+     *         Key invariant: residual unpaid interest (when pool is illiquid)
+     *         is preserved in a per-LP residual bucket — NEVER silently discarded.
+     *         The LP's interestPerShare debt is only advanced by the fraction paid.
+     *
+     *         lpInterestResidual: accumulated interest owed but not yet transferred
+     *                             due to insufficient pool liquidity.
+     */
     function _settleInterest(address lp) internal {
         if (lpShares[lp] == 0) {
             lpInterestDebt[lp] = interestPerShare;
             return;
         }
-        uint256 owed = (lpShares[lp] * (interestPerShare - lpInterestDebt[lp])) / 1e18;
+
+        // New interest accrued since last settlement
+        uint256 newInterest = (lpShares[lp] * (interestPerShare - lpInterestDebt[lp])) / 1e18;
+
+        // Advance the debt marker — we track residual separately
         lpInterestDebt[lp] = interestPerShare;
-        if (owed > 0) {
-            uint256 liquid = _liquidBalance();
-            uint256 transfer = owed > liquid ? liquid : owed;
-            if (transfer > 0) {
-                axusd.safeTransfer(lp, transfer);
-                emit InterestClaimed(lp, transfer);
-            }
+
+        // Total outstanding = newly accrued + any previously unpaid residual
+        uint256 totalOwed = newInterest + lpInterestResidual[lp];
+        if (totalOwed == 0) return;
+
+        uint256 liquid   = _liquidBalance();
+        uint256 transfer = totalOwed > liquid ? liquid : totalOwed;
+
+        if (transfer > 0) {
+            // Preserve unpaid residual — do NOT discard it
+            lpInterestResidual[lp] = totalOwed - transfer;
+            axusd.safeTransfer(lp, transfer);
+            emit InterestClaimed(lp, transfer);
+        } else {
+            // Pool is illiquid — accumulate full owed amount as residual for later
+            lpInterestResidual[lp] = totalOwed;
         }
     }
 }

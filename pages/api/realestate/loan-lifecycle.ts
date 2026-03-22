@@ -687,17 +687,24 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
     }
 
     // 4. Record tranche disbursement on FixedLoan (state: APPROVED → ACTIVE, starts interest clock)
-    let fundTxHash: string = disburseTxHash;
+    // This MUST succeed — if it fails, the on-chain loan remains APPROVED and normal
+    // repayment is blocked. Fail hard so operator knows to retry or investigate.
+    let fundTxHash: string;
     try {
       const stateUpdateTx = await fixedLoan.disburseTranche(loanId32, 0);
       const stateReceipt = await stateUpdateTx.wait(1);
       fundTxHash = stateReceipt?.hash ?? stateUpdateTx.hash;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      // Tranche state update failure is non-fatal if disbursement already happened —
-      // log prominently but record the disburse tx hash and set status active.
-      console.error(`[loan-lifecycle] WARN: disburseTranche state update failed after successful disburse: ${msg}`);
-      // Continue — AXUSD was transferred; we must record the DB update.
+      // AXUSD was already transferred (step 3 succeeded) — alert operator to reconcile.
+      // DB is NOT updated; loan stays at 'approved' in DB until manually resolved.
+      console.error(`[loan-lifecycle] CRITICAL: disburseLoan succeeded but disburseTranche failed. AXUSD moved but FixedLoan state stuck at APPROVED. Manual reconciliation required. Error: ${msg}`);
+      return res.status(502).json({
+        success: false,
+        error: `CRITICAL: AXUSD disbursed (tx: ${disburseTxHash}) but FixedLoan state update failed: ${msg}. Loan is partially funded on-chain. Operator must manually call disburseTranche(loanId32, 0).`,
+        chainStep: 'disburseTranche',
+        disburseTxHash,
+      });
     }
 
     // DB update only after all chain operations have confirmed
@@ -794,16 +801,11 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
 async function handleRepay(
   res: NextApiResponse,
   loan: LoanRow,
-  paymentUsdRaw: number | string | undefined,
+  _paymentUsdRaw: number | string | undefined, // kept for API compat; actual amounts decoded from chain
   txHash: string | undefined
 ) {
   if (loan.status !== 'active' && loan.status !== 'delinquent') {
     return res.status(400).json({ success: false, error: `Cannot repay loan in status: ${loan.status}` });
-  }
-
-  const paymentUsd = parseFloat(String(paymentUsdRaw ?? 0));
-  if (isNaN(paymentUsd) || paymentUsd <= 0) {
-    return res.status(400).json({ success: false, error: 'paymentUsd must be a positive number' });
   }
 
   // txHash required: borrower calls AXIOMFixedLoan.repayLoan() from their wallet first
@@ -814,8 +816,12 @@ async function handleRepay(
     });
   }
 
-  // Validate txHash on-chain: confirm it is a successful tx to AXIOMFixedLoan
-  // that contains a LoanPayment event matching this loanId.
+  // Validate txHash on-chain AND decode actual payment amounts from the LoanPayment event.
+  // DB projection is derived entirely from on-chain event data — client-provided paymentUsd is ignored.
+  let paymentUsd: number;
+  let interestPortion: number;
+  let principalPortion: number;
+
   try {
     const ethersModule = await import('ethers');
     const ethers = ethersModule.ethers;
@@ -835,24 +841,39 @@ async function handleRepay(
         error: `Transaction target (${receipt.to}) does not match AXIOMFixedLoan contract (${FIXED_LOAN_NFT_ADDRESS}).`,
       });
     }
-    // Verify LoanPayment event: topic[0] = keccak256("LoanPayment(bytes32,address,uint256,uint256,uint256,uint256)")
+
+    // LoanPayment(bytes32 indexed loanId, address indexed payer, uint256 paymentAmount, uint256 interestPortion, uint256 principalPortion, uint256 remainingPrincipal)
+    // topics: [0]=eventSig [1]=loanId [2]=payer
+    // data: [paymentAmount, interestPortion, principalPortion, remainingPrincipal] — non-indexed, ABI-encoded
     const LOAN_PAYMENT_TOPIC = ethers.id('LoanPayment(bytes32,address,uint256,uint256,uint256,uint256)');
     const loanId32 = toLoanId32(loan.loan_id);
-    const hasEvent = receipt.logs.some(
+
+    const paymentLog = receipt.logs.find(
       (log) =>
         log.address.toLowerCase() === FIXED_LOAN_NFT_ADDRESS.toLowerCase() &&
         log.topics[0] === LOAN_PAYMENT_TOPIC &&
         log.topics[1]?.toLowerCase() === loanId32.toLowerCase()
     );
-    if (!hasEvent) {
+
+    if (!paymentLog) {
       return res.status(422).json({
         success: false,
         error: 'LoanPayment event not found in transaction logs. Verify the loanId and txHash match.',
       });
     }
+
+    // Decode non-indexed event data (paymentAmount, interestPortion, principalPortion, remainingPrincipal)
+    const decoded = ethers.AbiCoder.defaultAbiCoder().decode(
+      ['uint256', 'uint256', 'uint256', 'uint256'],
+      paymentLog.data
+    );
+    // AXUSD uses 6 decimals — convert to USD float
+    paymentUsd      = parseFloat(ethers.formatUnits(decoded[0], 6));
+    interestPortion = parseFloat(ethers.formatUnits(decoded[1], 6));
+    principalPortion = parseFloat(ethers.formatUnits(decoded[2], 6));
+
   } catch (validationErr: unknown) {
     const msg = validationErr instanceof Error ? validationErr.message : String(validationErr);
-    // If RPC is unavailable, log the issue but do NOT update the DB
     console.error('[loan-lifecycle] On-chain tx validation failed:', msg);
     return res.status(503).json({
       success: false,
@@ -861,20 +882,6 @@ async function handleRepay(
   }
 
   const principal = parseFloat(loan.outstanding_principal_usd);
-  const accrualStart = loan.last_payment_at ?? loan.funded_at;
-  const accrued = computeAccruedInterest(principal, loan.interest_rate_bps, accrualStart);
-  const totalDue = principal + accrued;
-
-  if (paymentUsd > totalDue + 0.01) {
-    return res.status(400).json({
-      success: false,
-      error: `Overpayment guard: total outstanding is $${totalDue.toFixed(2)}. Payment $${paymentUsd.toFixed(2)} exceeds this.`,
-    });
-  }
-
-  // Interest-first allocation (mirrors AXIOMFixedLoan.repayLoan() logic)
-  const interestPortion  = Math.min(paymentUsd, accrued);
-  const principalPortion = paymentUsd - interestPortion;
   const newPrincipal     = Math.max(0, principal - principalPortion);
   const newTotalRepaid   = parseFloat(loan.total_repaid_usd) + paymentUsd;
   const newTotalInterestPaid = parseFloat(loan.total_interest_paid_usd) + interestPortion;
