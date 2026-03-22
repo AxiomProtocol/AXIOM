@@ -226,3 +226,74 @@ export type KeygrowEnrollment = typeof keygrowEnrollments.$inferSelect;
 export type InsertKeygrowEnrollment = typeof keygrowEnrollments.$inferInsert;
 export type KeygrowPayment = typeof keygrowPayments.$inferSelect;
 export type InsertKeygrowPayment = typeof keygrowPayments.$inferInsert;
+
+export const incomeCreditPurposeEnum = pgEnum('income_credit_purpose', [
+  'wealth_practice_entry',
+  'contribution_smoothing',
+  'earnest_money',
+]);
+
+export const incomeCreditApplicationStatusEnum = pgEnum('income_credit_application_status', [
+  'pending',
+  'approved',
+  'rejected',
+]);
+
+export const incomeCreditLineStatusEnum = pgEnum('income_credit_line_status', [
+  'active',
+  'drawn',
+  'repaid',
+  'defaulted',
+  'expired',
+]);
+
+export const incomeCreditApplications = pgTable('income_credit_applications', {
+  id: serial('id').primaryKey(),
+  applicationId: varchar('application_id', { length: 66 }).unique().notNull(),
+  walletAddress: varchar('wallet_address', { length: 42 }).notNull(),
+  gefTierAtApplication: varchar('gef_tier_at_application', { length: 50 }).notNull().default('Observer'),
+  statedMonthlyIncomeUsd: decimal('stated_monthly_income_usd', { precision: 18, scale: 2 }),
+  requestedAmountUsd: decimal('requested_amount_usd', { precision: 18, scale: 2 }).notNull(),
+  requestedPurpose: incomeCreditPurposeEnum('requested_purpose').notNull(),
+  approvedCreditLimitUsd: decimal('approved_credit_limit_usd', { precision: 18, scale: 2 }),
+  rejectionReason: text('rejection_reason'),
+  status: incomeCreditApplicationStatusEnum('status').default('pending'),
+  reviewedAt: timestamp('reviewed_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  walletIdx: index('ic_app_wallet_idx').on(table.walletAddress),
+  statusIdx: index('ic_app_status_idx').on(table.status),
+}));
+
+export const incomeCreditLines = pgTable('income_credit_lines', {
+  id: serial('id').primaryKey(),
+  creditLineId: varchar('credit_line_id', { length: 66 }).unique().notNull(),
+  applicationId: integer('application_id').references(() => incomeCreditApplications.id).notNull(),
+  walletAddress: varchar('wallet_address', { length: 42 }).notNull(),
+  creditLimitUsd: decimal('credit_limit_usd', { precision: 18, scale: 2 }).notNull(),
+  drawnAmountUsd: decimal('drawn_amount_usd', { precision: 18, scale: 2 }).default('0'),
+  availableBalanceUsd: decimal('available_balance_usd', { precision: 18, scale: 2 }).notNull(),
+  outstandingBalanceUsd: decimal('outstanding_balance_usd', { precision: 18, scale: 2 }).default('0'),
+  interestRateBps: integer('interest_rate_bps').default(500),
+  purpose: incomeCreditPurposeEnum('purpose').notNull(),
+  repaymentDueDays: integer('repayment_due_days').notNull(),
+  repaymentDueDate: timestamp('repayment_due_date'),
+  drawnAt: timestamp('drawn_at'),
+  repaidAt: timestamp('repaid_at'),
+  expiresAt: timestamp('expires_at').notNull(),
+  gefViolationFlagged: boolean('gef_violation_flagged').default(false),
+  interestEarnedUsd: decimal('interest_earned_usd', { precision: 18, scale: 6 }).default('0'),
+  status: incomeCreditLineStatusEnum('status').default('active'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  walletIdx: index('ic_line_wallet_idx').on(table.walletAddress),
+  statusIdx: index('ic_line_status_idx').on(table.status),
+  appIdx: index('ic_line_app_idx').on(table.applicationId),
+}));
+
+export type IncomeCreditApplication = typeof incomeCreditApplications.$inferSelect;
+export type InsertIncomeCreditApplication = typeof incomeCreditApplications.$inferInsert;
+export type IncomeCreditLine = typeof incomeCreditLines.$inferSelect;
+export type InsertIncomeCreditLine = typeof incomeCreditLines.$inferInsert;

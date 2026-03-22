@@ -48,6 +48,36 @@ const PARTICIPATION_STEPS = [
   { step: '03', title: 'Participate', description: 'Engage with the Capital Program, Lending Fund, or Exchange based on your qualification and intent.', icon: Scale },
 ];
 
+const ENTRY_PROFILES = [
+  {
+    label: 'I have no capital yet',
+    subLabel: 'W-2 income, no savings buffer',
+    route: 'Community Entry Credit → Wealth Practice',
+    desc: 'An income-backed credit line covers your first contribution. No crypto collateral required.',
+    href: '/community-credit',
+    cta: 'Apply for Credit',
+    accent: 'border-l-dl-forest',
+  },
+  {
+    label: 'I have savings to contribute',
+    subLabel: 'Ready to start with a group',
+    route: 'Wealth Practice → Syndication',
+    desc: 'Join a community savings group in Atlanta, Houston, or Charlotte. Build your record. Access real estate deals.',
+    href: '/wealth-practice',
+    cta: 'Browse Groups',
+    accent: 'border-l-dl-gold',
+  },
+  {
+    label: "I'm an accredited investor",
+    subLabel: 'Institutional real estate exposure',
+    route: 'Syndication → Lending Fund',
+    desc: 'Structured offerings (Reg D 506(c)), bridge loan fund participation, and on-chain settlement.',
+    href: '/syndication',
+    cta: 'View Syndication',
+    accent: 'border-l-dl-navy',
+  },
+];
+
 
 export function DesignLawHome() {
   const [timestamp, setTimestamp] = useState('');
@@ -320,6 +350,28 @@ export function DesignLawHome() {
           </div>
 
           <div className="h-px w-full mb-12" style={{ backgroundColor: '#2d5016' }} />
+
+          <div className="mb-12">
+            <SectionHeading>Where Do You Start?</SectionHeading>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border">
+              {ENTRY_PROFILES.map((profile, i) => (
+                <div key={profile.label} className={`p-6 border-l-4 ${profile.accent} ${i < ENTRY_PROFILES.length - 1 ? 'md:border-r border-b md:border-b-0 border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                  <h3 className="font-dl-serif text-base text-dl-navy font-bold mb-1">{profile.label}</h3>
+                  <p className="text-xs text-dl-gray mb-2">{profile.subLabel}</p>
+                  <p className="font-dl-mono text-xs text-dl-forest mb-3">{profile.route}</p>
+                  <p className="text-sm text-dl-gray leading-relaxed mb-5">{profile.desc}</p>
+                  <Link href={profile.href} className="inline-block border border-dl-navy bg-dl-bg text-dl-navy px-4 py-2 text-xs font-bold hover:bg-dl-navy hover:text-white">
+                    {profile.cta}
+                  </Link>
+                </div>
+              ))}
+            </div>
+            <div className="border border-t-0 border-dl-border px-5 py-3 bg-dl-bg-alt text-center">
+              <Link href="/start" className="text-xs text-dl-navy underline font-dl-mono">
+                View the full four-stage journey &rarr;
+              </Link>
+            </div>
+          </div>
 
           <div className="mb-12">
             <SectionHeading>Participation Path</SectionHeading>
