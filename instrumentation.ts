@@ -6001,6 +6001,155 @@ export async function register() {
 
       // ─── END AXIOM SECONDARY NETWORK V1 ──────────────────────────────────────
 
+      // ═══════════════════════════════════════════
+      //  LENDING FUND — ON-CHAIN LOAN TABLES
+      // ═══════════════════════════════════════════
+
+      await exec(`CREATE TABLE IF NOT EXISTS real_estate_loans (
+        loan_id                   VARCHAR(36)   PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        wallet_address            VARCHAR(42)   NOT NULL,
+        application_id            INTEGER,
+        borrower_name             VARCHAR(200)  NOT NULL,
+        property_address          VARCHAR(500)  NOT NULL,
+        loan_amount_usd           NUMERIC(18,2) NOT NULL,
+        origination_fee_usd       NUMERIC(18,2) NOT NULL DEFAULT 0,
+        outstanding_principal_usd NUMERIC(18,2) NOT NULL,
+        accrued_interest_usd      NUMERIC(18,6) NOT NULL DEFAULT 0,
+        total_interest_paid_usd   NUMERIC(18,6) NOT NULL DEFAULT 0,
+        total_repaid_usd          NUMERIC(18,2) NOT NULL DEFAULT 0,
+        interest_rate_bps         INTEGER       NOT NULL DEFAULT 1400,
+        loan_term_months          INTEGER       NOT NULL DEFAULT 12,
+        status                    VARCHAR(30)   NOT NULL DEFAULT 'pending_review',
+        gef_tier_at_origination   VARCHAR(30)   NOT NULL DEFAULT 'Operator',
+        funded_at                 TIMESTAMPTZ,
+        due_date                  TIMESTAMPTZ,
+        last_payment_at           TIMESTAMPTZ,
+        last_interest_accrual_at  TIMESTAMPTZ,
+        disbursement_tx_hash      VARCHAR(66),
+        created_at                TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at                TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`, 'table real_estate_loans');
+      await exec(`ALTER TABLE real_estate_loans ADD COLUMN IF NOT EXISTS total_interest_paid_usd NUMERIC(18,6) NOT NULL DEFAULT 0`, 'alter real_estate_loans total_interest_paid_usd');
+      await exec(`ALTER TABLE real_estate_loans ADD COLUMN IF NOT EXISTS last_interest_accrual_at TIMESTAMPTZ`, 'alter real_estate_loans last_interest_accrual_at');
+      await exec(`ALTER TABLE real_estate_loans ADD COLUMN IF NOT EXISTS disbursement_tx_hash VARCHAR(66)`, 'alter real_estate_loans disbursement_tx_hash');
+      await exec(`CREATE INDEX IF NOT EXISTS real_estate_loans_wallet_idx ON real_estate_loans(wallet_address)`, 'idx real_estate_loans_wallet');
+      await exec(`CREATE INDEX IF NOT EXISTS real_estate_loans_status_idx ON real_estate_loans(status)`, 'idx real_estate_loans_status');
+
+      await exec(`CREATE TABLE IF NOT EXISTS real_estate_loan_payments (
+        payment_id              VARCHAR(36)   PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        loan_id                 VARCHAR(36)   NOT NULL REFERENCES real_estate_loans(loan_id) ON DELETE CASCADE,
+        wallet_address          VARCHAR(42)   NOT NULL,
+        payment_usd             NUMERIC(18,2) NOT NULL,
+        interest_portion_usd    NUMERIC(18,6) NOT NULL DEFAULT 0,
+        principal_portion_usd   NUMERIC(18,2) NOT NULL DEFAULT 0,
+        remaining_principal_usd NUMERIC(18,2) NOT NULL DEFAULT 0,
+        tx_hash                 VARCHAR(66),
+        paid_at                 TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`, 'table real_estate_loan_payments');
+      await exec(`CREATE INDEX IF NOT EXISTS real_estate_loan_payments_loan_idx ON real_estate_loan_payments(loan_id)`, 'idx real_estate_loan_payments_loan');
+      await exec(`CREATE INDEX IF NOT EXISTS real_estate_loan_payments_wallet_idx ON real_estate_loan_payments(wallet_address)`, 'idx real_estate_loan_payments_wallet');
+
+      // ═══════════════════════════════════════════
+      //  BANKING BRIDGE — LOCAL MIRROR TABLES
+      // ═══════════════════════════════════════════
+
+      await exec(`CREATE TABLE IF NOT EXISTS banking_customers (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) UNIQUE NOT NULL,
+        unit_customer_id TEXT UNIQUE,
+        kyc_status TEXT NOT NULL DEFAULT 'pending',
+        first_name TEXT,
+        last_name TEXT,
+        email TEXT,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table banking_customers');
+
+      await exec(`CREATE TABLE IF NOT EXISTS banking_accounts (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) NOT NULL,
+        unit_account_id TEXT UNIQUE NOT NULL,
+        account_type TEXT NOT NULL DEFAULT 'member',
+        status TEXT NOT NULL DEFAULT 'Open',
+        balance_cents INTEGER NOT NULL DEFAULT 0,
+        available_balance_cents INTEGER NOT NULL DEFAULT 0,
+        routing_number TEXT,
+        account_number_last4 TEXT,
+        masked_account_number TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table banking_accounts');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_banking_member_account ON banking_accounts(wallet_address, account_type) WHERE account_type = 'member'`, 'idx banking_member_account');
+
+      await exec(`CREATE TABLE IF NOT EXISTS banking_counterparties (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) NOT NULL,
+        counterparty_id TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        routing_number TEXT NOT NULL,
+        masked_account_number TEXT NOT NULL,
+        account_type TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'Active',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table banking_counterparties');
+
+      await exec(`CREATE TABLE IF NOT EXISTS custody_wallets (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) UNIQUE NOT NULL,
+        bitgo_wallet_id TEXT UNIQUE NOT NULL,
+        coin TEXT NOT NULL,
+        receive_address TEXT,
+        confirmed_balance_str TEXT NOT NULL DEFAULT '0',
+        spendable_balance_str TEXT NOT NULL DEFAULT '0',
+        status TEXT NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table custody_wallets');
+
+      await exec(`CREATE TABLE IF NOT EXISTS custody_transactions (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) NOT NULL,
+        bitgo_wallet_id TEXT NOT NULL,
+        direction TEXT NOT NULL,
+        amount_str TEXT,
+        coin TEXT,
+        to_address TEXT,
+        tx_id TEXT,
+        tx_hash TEXT,
+        state TEXT NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table custody_transactions');
+
+      await exec(`CREATE TABLE IF NOT EXISTS treasury_approvals (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) NOT NULL,
+        pending_approval_id TEXT UNIQUE NOT NULL,
+        type TEXT,
+        description TEXT,
+        amount TEXT,
+        to_address TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        requested_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        acted_at TIMESTAMP
+      )`, 'table treasury_approvals');
+
+      await exec(`CREATE TABLE IF NOT EXISTS bridge_quotes (
+        id SERIAL PRIMARY KEY,
+        snapshot_id TEXT UNIQUE NOT NULL,
+        wallet_address VARCHAR(42) NOT NULL,
+        direction TEXT NOT NULL,
+        fiat_amount_cents INTEGER NOT NULL,
+        crypto_asset TEXT NOT NULL,
+        exchange_rate_str TEXT NOT NULL,
+        crypto_amount_str TEXT NOT NULL,
+        fee_percent TEXT NOT NULL,
+        fee_cents INTEGER NOT NULL,
+        estimated_settlement_minutes INTEGER NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table bridge_quotes');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
