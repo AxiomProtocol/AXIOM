@@ -53,9 +53,15 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
     uint256 public totalDeposited;
     uint256 public totalWithdrawn;
 
-    // Capital committed to specific loans (reserve from available liquidity)
+    // Capital committed to specific loans (pre-disbursement reservation — funds still in this contract)
+    // Used to prevent double-deploying the same liquid funds to two loans.
     mapping(bytes32 => uint256) public loanCommitment; // loanId => AXUSD amount
     uint256 public totalCommitted;
+
+    // Outstanding loan receivables (post-disbursement — funds outside this contract, owed by borrowers).
+    // Added to pool value so LP share price reflects full economic exposure.
+    // Incremented by disburseLoan(), decremented by receiveRepayment() / releaseCommitment().
+    uint256 public totalOutstanding;
 
     // Cumulative interest received from loan repayments
     uint256 public totalInterestReceived;
@@ -157,9 +163,14 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
         uint256 axusdOut = (sharesToBurn * _totalPoolValue()) / totalLpShares;
         uint256 liquid   = _liquidBalance();
 
+        // Explicit liquidity guard: share value may include totalOutstanding (receivables outside
+        // this contract). If axusdOut exceeds what is physically held, revert with a clear error
+        // rather than letting safeTransfer fail with an opaque ERC-20 error.
+        if (axusdOut > liquid) revert InsufficientLiquidity(liquid, axusdOut);
+
         uint256 remainingDeposits = totalDeposited > axusdOut ? totalDeposited - axusdOut : 0;
         uint256 minReserve        = (remainingDeposits * reserveRatioBps) / 10000;
-        uint256 availableAfter    = liquid > axusdOut ? liquid - axusdOut : 0;
+        uint256 availableAfter    = liquid - axusdOut; // safe: axusdOut <= liquid checked above
         if (availableAfter < minReserve) revert ReserveRatioViolation(liquid, minReserve + axusdOut);
 
         lpShares[msg.sender] -= sharesToBurn;
@@ -178,8 +189,10 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
      */
     function commitLiquidity(bytes32 loanId, uint256 amountUsd) external onlyRole(OPERATOR_ROLE) {
         if (amountUsd == 0) revert ZeroAmount();
-        uint256 liquid = _liquidBalance();
-        if (liquid < amountUsd) revert InsufficientLiquidity(liquid, amountUsd);
+        // Check against available (unreserved) liquidity to prevent double-committing
+        uint256 liquid    = _liquidBalance();
+        uint256 available = liquid > totalCommitted ? liquid - totalCommitted : 0;
+        if (available < amountUsd) revert InsufficientLiquidity(available, amountUsd);
 
         loanCommitment[loanId] += amountUsd;
         totalCommitted         += amountUsd;
@@ -202,8 +215,13 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
         require(loanCommitment[loanId] >= amount, "Exceeds commitment");
         require(borrower != address(0), "Zero borrower");
 
+        // Consume pre-disbursement reservation
         loanCommitment[loanId] -= amount;
         totalCommitted         -= amount;
+
+        // Create post-disbursement receivable: funds leave this contract but remain part
+        // of pool value as an outstanding loan receivable owed by the borrower.
+        totalOutstanding += amount;
 
         axusd.safeTransfer(borrower, amount);
         emit LoanDisbursed(loanId, borrower, amount);
@@ -225,14 +243,13 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
     ) external nonReentrant {
         if (msg.sender != fixedLoan) revert OnlyFixedLoan();
 
-        // Decrement totalCommitted by the principal returned: once repaid, the receivable
-        // is no longer outstanding. Without this, _totalPoolValue() double-counts the returned
-        // principal (once in _liquidBalance() and again in totalCommitted), inflating share price
-        // and enabling early-LP fund theft.
-        if (totalCommitted >= principalReturned) {
-            totalCommitted -= principalReturned;
+        // Decrement totalOutstanding: the receivable is now collected — principal has returned
+        // to _liquidBalance(). Without this, _totalPoolValue() would double-count returned principal
+        // (once in _liquidBalance() and again in totalOutstanding), inflating share price.
+        if (totalOutstanding >= principalReturned) {
+            totalOutstanding -= principalReturned;
         } else {
-            totalCommitted = 0;
+            totalOutstanding = 0;
         }
 
         totalInterestReceived += interestAmount;
@@ -254,13 +271,24 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
      */
     function releaseCommitment(bytes32 loanId, uint256 amount) external nonReentrant {
         if (msg.sender != fixedLoan) revert OnlyFixedLoan();
-        if (totalCommitted >= amount) {
-            totalCommitted -= amount;
+        // A written-off loan's outstanding receivable is removed from pool value.
+        // Uses totalOutstanding (not totalCommitted) because disbursed loans are receivables,
+        // and totalCommitted was already decremented at disbursement time.
+        if (totalOutstanding >= amount) {
+            totalOutstanding -= amount;
         } else {
-            totalCommitted = 0;
+            totalOutstanding = 0;
         }
-        // Clear per-loan commitment record
-        loanCommitment[loanId] = 0;
+        // Also clear any remaining pre-disbursement reservation (edge case: loan closed before disbursal)
+        if (loanCommitment[loanId] > 0) {
+            uint256 preDisburse = loanCommitment[loanId];
+            loanCommitment[loanId] = 0;
+            if (totalCommitted >= preDisburse) {
+                totalCommitted -= preDisburse;
+            } else {
+                totalCommitted = 0;
+            }
+        }
         emit RepaymentReceived(loanId, amount, 0); // principal=amount written off, interest=0
     }
 
@@ -281,8 +309,13 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
 
     // ─── View functions ───────────────────────────────────────────────────────
 
+    /**
+     * @notice AXUSD available to commit to new loans (excludes already-reserved funds).
+     *         = liquid balance − pre-disbursement commitments (still in contract but earmarked)
+     */
     function availableLiquidity() external view returns (uint256) {
-        return _liquidBalance();
+        uint256 liquid = _liquidBalance();
+        return liquid > totalCommitted ? liquid - totalCommitted : 0;
     }
 
     function totalPoolValue() external view returns (uint256) {
@@ -317,12 +350,23 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
 
     /**
      * @notice Total economic value of the pool:
-     *         liquid AXUSD balance + outstanding loan receivables (totalCommitted).
-     *         This ensures share price is not artificially depressed after disbursements
-     *         — loaned principal remains part of pool value as a receivable.
+     *         liquid AXUSD in contract + outstanding loan receivables (totalOutstanding).
+     *
+     * Accounting invariants:
+     *   - totalCommitted: pre-disbursement reservations — funds still in _liquidBalance().
+     *     NOT added to pool value; already counted in _liquidBalance().
+     *     Used only to compute available (un-reserved) liquidity for new commitments.
+     *   - totalOutstanding: post-disbursement receivables — funds outside this contract,
+     *     owed by borrowers. Added here so share price reflects full economic exposure.
+     *
+     * Lifecycle:
+     *   commitLiquidity  → totalCommitted += amount  (reserved, still liquid)
+     *   disburseLoan     → totalCommitted -= amount, totalOutstanding += amount  (sent out)
+     *   receiveRepayment → totalOutstanding -= principal  (returned to liquid)
+     *   releaseCommitment → totalOutstanding -= principal  (write-off)
      */
     function _totalPoolValue() internal view returns (uint256) {
-        return _liquidBalance() + totalCommitted;
+        return _liquidBalance() + totalOutstanding;
     }
 
     /**
@@ -337,6 +381,18 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
     function _settleInterest(address lp) internal {
         if (lpShares[lp] == 0) {
             lpInterestDebt[lp] = interestPerShare;
+            // Even with zero shares the LP may still have a residual from when they held shares.
+            // Pay it out now rather than leaving it permanently stuck (unreachable via claimInterest).
+            if (lpInterestResidual[lp] > 0) {
+                uint256 residualOwed  = lpInterestResidual[lp];
+                uint256 liquidBalance = _liquidBalance();
+                uint256 residualPay   = residualOwed > liquidBalance ? liquidBalance : residualOwed;
+                if (residualPay > 0) {
+                    lpInterestResidual[lp] = residualOwed - residualPay;
+                    axusd.safeTransfer(lp, residualPay);
+                    emit InterestClaimed(lp, residualPay);
+                }
+            }
             return;
         }
 

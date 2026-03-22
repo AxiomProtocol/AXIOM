@@ -30,40 +30,39 @@ The core Axiom Protocol Token (AXM) is an ERC20 governance token on Arbitrum One
 The architecture employs a "Product Factory Approach" for scalability. The current blockchain network is Arbitrum One, with a planned migration to Universe Blockchain (L3). Data is managed using PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend features centralized contract configuration, a dedicated contract service, and chain validation middleware.
 
 Key features include:
-- **DEX V2 Ecosystem** and **Institutional Observer Dashboard**.
-- **Lending Fund** (SEC Reg D 506(c)).
-- **Euler V2 AXUSD Lending Markets**.
-- **MIRDT (Market Intelligence & Risk Disclosure Terminal)** for probabilistic trend-following analysis.
-- **Axiom Sentinel**: A unified capital decision and risk authorization layer.
-- **Founder Operations Dashboard**: Internal dashboard for system overview and operations, including an "Outcomes" tab.
-- **Solvency and Reserve Transparency**: A page providing a three-mode institutional solvency console.
-- **Adaptive Metrics Engine (AME)**: A deterministic financial computation engine with an **AME AI Oracle** (Gemini-powered interpretation).
-- **MIRDT Execution Model**: A deterministic, auditable engine for paper trading.
-- **Proof of Execution Playbook**: Internal dashboard tracking paper trading P&L.
-- **The Wealth Practice**: Manages community group economics with a three-stage trust pipeline.
-- **Physical-Digital Bridge (Land Acquisition Pipeline)**: Full land acquisition lifecycle with live governance.
-- **Property Analysis Tool**: Pay-per-report property analysis tool with free, base, and premium tiers.
-- **Graduated Execution Framework (GEF)**: A behavior-based qualification system.
-- **Capital Accounting and Performance Intelligence System**: A full-stack capital ledger.
-- **DeNet DePIN Node Integration**: Provides decentralized storage infrastructure.
-- **IVCEE (Institutional Viability & Capital Efficiency Engine)**: An allocator-grade underwriting intelligence engine.
-- **Document Ingestion & Extraction**: AI-powered document analysis in the Deal Intelligence workspace.
-- **Distressed Property Feed (Deal Flow)**: Aggregates distressed properties from government sources and a wholesaler submission portal.
-- **Agent Governance System**: Policy-based autonomous agent authorization.
-- **ERC-3643 Unified AXUSD (T-REX Compliant)**: A unified ERC-3643 compliant stablecoin with a frontend dashboard and automated KYC.
-- **Banking Infrastructure (Unit + BitGo)**: Unified banking layer at `/banking` providing FDIC-insured deposit accounts, ACH, debit cards, KYC, and institutional crypto custody. A Bridge Service connects fiat↔crypto.
-- **Multi-Exit Strategy Engine**: Provides 8 underwriting strategies with comparison and ranking.
-- **Due Diligence Checklist System**: Structured DD workflow.
-- **Craftsman Cost Database**: `rehab_cost_benchmarks` table seeded with 57 reference costs from Craftsman National Construction Estimator (NCE), used for deterministic scope generation. Regional pricing modifiers are applied.
-- **Property-type discrimination in inspection**: `field_inspection_sessions.property_type` column (sfr/multifamily) dictates form structure and cost calculations.
-- **Cost Intelligence Engine**: Production-grade rehab underwriting engine grounded in Craftsman NCE data, integrated as "Cost Intelligence" tab in deal workspace.
-- **Capital Readiness Card**: Computes capital analysis for funding sources.
-- **AI Acquisition Memo Builder**: Gemini-powered institutional acquisition memo generator.
-- **Syndication Module**: Full syndication operating system with an **LP Investor Portal** at `/syndication/portal`.
-- **Axiom Secondary Network V1**: Permissioned secondary transfer, settlement, registry, and intelligence layer for Axiom-issued private market products. Routes: `/secondary` (investor portfolio), `/secondary/marketplace` (listings + bidding), `/secondary/issuer` (issuer console: NAV marks, approvals, registry), `/secondary/admin` (admin: compliance flags, settlement oversight, audit trail). Schema: 44 enums + 29 tables (`sec_` prefix) in `shared/secondarySchema.ts`. Services: `server/services/secondary/` (auth, compliance, positions, marketplace, transfers, approvals, settlement, pricing, analytics, audit, notifications). API: `pages/api/secondary/` (13 routes). Key business rules: 10-check compliance gate before every transfer, 0.5% platform fee at settlement, 180-day hold on secondary lots, NAV discount threshold triggers review, beneficial ownership registry updated atomically at settlement. Seed: `scripts/seed-secondary.ts` (3 series, 2 test investors, 3 positions, 1 active listing).
-- **Mobile Optimization**: All key pages optimized for mobile screens.
-- **Field Capture System (Layer 5)**: Mobile-first walkthrough system for real-world property inspections at `/field-capture/[sessionId]`. Features include tap-optimized condition buttons, real-time rehab cost binding, unit type designation, offline-first draft save, voice note capture, unit replication engine, and session completion summary with recommendations.
-- **On-Chain Lending Credit Market (Task #31, v5)**: Two production smart contracts deployed and verified on Arbitrum One (2026-03-22). `AXIOMFixedLoan` (`0x4De489Ec2215e727de608A7016C2933967b3F33b`) — fixed-term loan engine with draw tranches (up to 3 tranches), AMORTIZED/INTEREST_ONLY payment modes, prepayment penalty math, 5 states (PENDING→APPROVED→ACTIVE→DELINQUENT→DEFAULTED/REPAID), grace period, `paymentSchedule()`, `nextPaymentDue()`, `daysDelinquent()`. `AXIOMCreditMarket` (`0x491E519c7377EcdE720d861f759ccBD6486A59F2`) — LP pool with ERC-3643 `IIdentityRegistry.isVerified()` gating, `interestPerShare` pro-rata distribution, reserve ratio, `commitLiquidity()`, `disburseLoan()`, `receiveRepayment()`, `claimInterest()`. Both contracts verified on Arbitrum Blockscout. Capital flow: AXUSD custody in CreditMarket → operator calls `commitLiquidity()` + `disburseLoan()` to fund borrower; borrower calls `AXIOMFixedLoan.repayLoan()` (AXUSD 6 decimals) which auto-forwards to CreditMarket for LP pro-rata accounting. Wired: `FixedLoan.setCreditMarket(CreditMarket)`, `CreditMarket.setFixedLoan(FixedLoan)`, CreditMarket holds OPERATOR_ROLE on FixedLoan. GEF Operator tier gate on both `loan-application.ts` (wallet check) and `loan-lifecycle.ts` originate action. Wire scripts removed (wiring complete). Slither audit: 0 HIGH/MEDIUM findings. Addresses in `src/config/activeContracts.generated.ts` as `CREDIT_MARKET_ADDRESS` + `FIXED_LOAN_NFT_ADDRESS`; ABIs in `src/config/creditMarket.generated.ts`.
+- DEX V2 Ecosystem and Institutional Observer Dashboard.
+- Lending Fund (SEC Reg D 506(c)).
+- Euler V2 AXUSD Lending Markets.
+- MIRDT (Market Intelligence & Risk Disclosure Terminal) for probabilistic trend-following analysis.
+- Axiom Sentinel: A unified capital decision and risk authorization layer.
+- Founder Operations Dashboard: Internal dashboard for system overview and operations.
+- Solvency and Reserve Transparency: A page providing a three-mode institutional solvency console.
+- Adaptive Metrics Engine (AME): A deterministic financial computation engine with an AME AI Oracle.
+- MIRDT Execution Model: A deterministic, auditable engine for paper trading.
+- Proof of Execution Playbook: Internal dashboard tracking paper trading P&L.
+- The Wealth Practice: Manages community group economics with a three-stage trust pipeline.
+- Physical-Digital Bridge (Land Acquisition Pipeline): Full land acquisition lifecycle with live governance.
+- Property Analysis Tool: Pay-per-report property analysis tool with free, base, and premium tiers.
+- Graduated Execution Framework (GEF): A behavior-based qualification system.
+- Capital Accounting and Performance Intelligence System: A full-stack capital ledger.
+- DeNet DePIN Node Integration: Provides decentralized storage infrastructure.
+- IVCEE (Institutional Viability & Capital Efficiency Engine): An allocator-grade underwriting intelligence engine.
+- Document Ingestion & Extraction: AI-powered document analysis in the Deal Intelligence workspace.
+- Distressed Property Feed (Deal Flow): Aggregates distressed properties from government sources and a wholesaler submission portal.
+- Agent Governance System: Policy-based autonomous agent authorization.
+- ERC-3643 Unified AXUSD (T-REX Compliant): A unified ERC-3643 compliant stablecoin with a frontend dashboard and automated KYC.
+- Banking Infrastructure (Unit + BitGo): Unified banking layer providing FDIC-insured deposit accounts, ACH, debit cards, KYC, and institutional crypto custody. A Bridge Service connects fiat↔crypto.
+- Multi-Exit Strategy Engine: Provides 8 underwriting strategies with comparison and ranking.
+- Due Diligence Checklist System: Structured DD workflow.
+- Craftsman Cost Database: `rehab_cost_benchmarks` table seeded with 57 reference costs from Craftsman National Construction Estimator (NCE), used for deterministic scope generation.
+- Cost Intelligence Engine: Production-grade rehab underwriting engine grounded in Craftsman NCE data.
+- Capital Readiness Card: Computes capital analysis for funding sources.
+- AI Acquisition Memo Builder: Gemini-powered institutional acquisition memo generator.
+- Syndication Module: Full syndication operating system with an LP Investor Portal.
+- Axiom Secondary Network V1: Permissioned secondary transfer, settlement, registry, and intelligence layer for Axiom-issued private market products. It includes investor portfolio, marketplace, issuer console, and admin functionalities. Key business rules include 10-check compliance gate, 0.5% platform fee, 180-day hold, NAV discount review, and atomic beneficial ownership registry updates.
+- Mobile Optimization: All key pages optimized for mobile screens.
+- Field Capture System (Layer 5): Mobile-first walkthrough system for real-world property inspections with features like tap-optimized condition buttons, real-time rehab cost binding, unit type designation, offline-first draft save, voice note capture, unit replication engine, and session completion summary.
+- On-Chain Lending Credit Market: Two production smart contracts (`AXIOMFixedLoan` and `AXIOMCreditMarket`) deployed and verified on Arbitrum One, providing fixed-term loans with tranches and payment modes, and an LP pool with ERC-3643 `IIdentityRegistry.isVerified()` gating and pro-rata interest distribution.
 
 ## External Dependencies
 - **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)

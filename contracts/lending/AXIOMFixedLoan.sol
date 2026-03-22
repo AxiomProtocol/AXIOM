@@ -265,34 +265,32 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
         uint256 interestPortion  = totalInterestDue > payment ? payment : totalInterestDue;
         uint256 principalPortion = payment - interestPortion;
 
-        // Reduce the persisted interest bucket — partial payments leave remainder for next payment
+        // EFFECTS — all state updated before any external call (full CEI compliance)
         loan.pendingInterest      = totalInterestDue - interestPortion;
         loan.totalInterestPaid   += interestPortion;
         loan.totalPrincipalPaid  += principalPortion;
         loan.outstandingPrincipal = loan.outstandingPrincipal > principalPortion
             ? loan.outstandingPrincipal - principalPortion : 0;
 
-        // Pull AXUSD from borrower into this contract
+        // Determine final state BEFORE any interaction — prevents re-entering repayLoan
+        // after safeTransferFrom hook fires while loan is still ACTIVE.
+        bool fullyRepaid = loan.outstandingPrincipal < 1e4 && loan.pendingInterest < 1e4;
+        if (fullyRepaid) {
+            loan.outstandingPrincipal = 0;
+            loan.pendingInterest      = 0;
+            loan.state                = STATE_REPAID;
+        }
+
+        // INTERACTIONS — external calls after all state is finalized
         axusd.safeTransferFrom(msg.sender, address(this), payment);
 
-        // Transfer AXUSD to CreditMarket, then call receiveRepayment() for LP accounting.
-        // If the CreditMarket is set and the accounting call reverts, the entire repayment
-        // reverts — funds and accounting stay synchronized (no silent discrepancy).
         if (address(creditMarket) != address(0)) {
             axusd.safeTransfer(address(creditMarket), payment);
-            // Explicit call (no try/catch): revert on failure to prevent fund-accounting split
             creditMarket.receiveRepayment(loanId, principalPortion, interestPortion);
         }
 
         emit LoanPayment(loanId, msg.sender, payment, interestPortion, principalPortion, loan.outstandingPrincipal);
-
-        // Loan is fully repaid when principal and pending interest are both dust-level
-        if (loan.outstandingPrincipal < 1e4 && loan.pendingInterest < 1e4) {
-            loan.outstandingPrincipal = 0;
-            loan.pendingInterest      = 0;
-            loan.state = STATE_REPAID;
-            emit LoanRepaid(loanId);
-        }
+        if (fullyRepaid) emit LoanRepaid(loanId);
     }
 
     /**
@@ -390,8 +388,10 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
         loan.pendingInterest      = 0;
         loan.state                = STATE_REPAID;
 
-        // INTERACTIONS: notify CreditMarket to release receivable so pool value is correct
-        if (address(creditMarket) != address(0) && principalToRelease > 0) {
+        // INTERACTIONS: notify CreditMarket to release receivable / pre-disbursement commitment.
+        // Always call even when principalToRelease=0 (APPROVED loan closed before disbursal) so
+        // that releaseCommitment can clean up loanCommitment[loanId] and totalCommitted.
+        if (address(creditMarket) != address(0)) {
             creditMarket.releaseCommitment(loanId, principalToRelease);
         }
 
@@ -440,11 +440,12 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
         uint256 totalInterestOwed = loan.pendingInterest + newlyAccrued;
 
         if (loan.paymentMode == MODE_INTEREST_ONLY) {
-            // Monthly interest payment
-            uint256 monthlyInterest = (loan.outstandingPrincipal * loan.interestRateBps) / (12 * 10000);
-            return (monthlyInterest + totalInterestOwed, loan.dueAt);
+            // For interest-only loans the next payment = all currently owed interest.
+            // Do NOT add a separate monthlyInterest estimate — totalInterestOwed already
+            // includes this period's accrued amount; adding again would double-count.
+            return (totalInterestOwed, loan.dueAt);
         } else {
-            // Full amortized: principal + all accrued interest due at term end
+            // Full amortized: total principal + all accrued interest due at maturity
             return (loan.outstandingPrincipal + totalInterestOwed, loan.dueAt);
         }
     }
@@ -484,13 +485,17 @@ contract AXIOMFixedLoan is AccessControl, ReentrancyGuard {
         uint256 n = termMonths;
         uint256 onePlusRn = _powWad(onePlusR, n);
         uint256 monthlyPayment;
-        if (onePlusRn <= 1e18) {
+        // Standard amortization formula: M = P × r × (1+r)^n / ((1+r)^n − 1)
+        // All scalars in WAD (1e18). r is the monthly rate in WAD, onePlusRn = (1+r)^n in WAD.
+        if (onePlusRn <= 1e18 || r == 0) {
+            // Zero or near-zero rate: equal principal payments per period
             monthlyPayment = loan.totalPrincipal / n;
         } else {
-            monthlyPayment = (loan.totalPrincipal * r * onePlusRn) /
-                ((onePlusRn - 1e18) * 1e18 / 1e18);
-            // Simplify: approximate
-            monthlyPayment = (loan.totalPrincipal * (r + 1e18 / n)) / 1e18;
+            // M = P * r * (1+r)^n / ((1+r)^n - 1)
+            // r and onePlusRn are WAD; totalPrincipal is 6-dec AXUSD.
+            // Multiply first by r (WAD), then divide by 1e18 to return to 6-dec scale.
+            monthlyPayment = (loan.totalPrincipal * r / 1e18 * onePlusRn / 1e18)
+                * 1e18 / (onePlusRn - 1e18);
         }
 
         for (uint256 i = 0; i < termMonths; i++) {
