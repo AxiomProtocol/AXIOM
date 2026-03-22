@@ -1,7 +1,26 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../server/db';
+import { db, pool } from '../../../server/db';
 import { eq, desc } from 'drizzle-orm';
 import { pgTable, serial, varchar, text, timestamp, boolean, integer, numeric } from 'drizzle-orm/pg-core';
+
+// GEF tier check — same logic as loan-lifecycle.ts
+const GEF_OPERATOR_TIERS = new Set(['Operator', 'Steward', 'Architect']);
+
+async function getGefTier(wallet: string): Promise<string> {
+  try {
+    const r = await pool.query<{ tier_name: string }>(
+      `SELECT gef_tier_thresholds.tier_name
+       FROM gef_user_execution_profiles
+       JOIN gef_tier_thresholds ON gef_user_execution_profiles.current_tier_id = gef_tier_thresholds.tier_id
+       WHERE LOWER(gef_user_execution_profiles.wallet_address) = LOWER($1)
+       LIMIT 1`,
+      [wallet]
+    );
+    return r.rows[0]?.tier_name ?? 'Observer';
+  } catch {
+    return 'Observer';
+  }
+}
 
 const loanApplications = pgTable("loan_applications", {
   id: serial("id").primaryKey(),
@@ -82,6 +101,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ 
           error: 'Required fields: borrower name, email, property address, and loan amount' 
         });
+      }
+
+      // GEF gate: require Operator tier or above when wallet is connected
+      if (walletAddress) {
+        const tier = await getGefTier(walletAddress);
+        if (!GEF_OPERATOR_TIERS.has(tier)) {
+          return res.status(403).json({
+            error: 'GEF Operator tier required to submit a loan application. Your current tier does not qualify.',
+            gefTier: tier,
+            requiredTier: 'Operator',
+          });
+        }
       }
 
       const [application] = await db.insert(loanApplications)

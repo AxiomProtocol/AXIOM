@@ -215,17 +215,24 @@ export default function BorrowPage() {
     }
     setRepayLoading(true);
     try {
-      // Step 1: Call repayLoan() on-chain from borrower wallet
-      // The contract does safeTransferFrom(msg.sender, ...) so the borrower must sign.
+      // Step 1: Call repayLoan() on AXIOMFixedLoan from borrower wallet.
+      // The contract does safeTransferFrom(msg.sender) — borrower must approve AXUSD first,
+      // then repayLoan collects AXUSD and forwards to CreditMarket automatically.
+      // AXUSD uses 6 decimal places.
       const ethers = (await import('ethers')).ethers;
       const provider = new ethers.BrowserProvider((window as any).ethereum);
       const signer = await provider.getSigner();
-      const { CREDIT_MARKET_ABI } = await import('../../src/config/creditMarket.generated');
-      const { CREDIT_MARKET_ADDRESS } = await import('../../src/config/activeContracts.generated');
-      const market = new ethers.Contract(CREDIT_MARKET_ADDRESS, CREDIT_MARKET_ABI as string[], signer);
+      const { FIXED_LOAN_ABI } = await import('../../src/config/creditMarket.generated');
+      const { FIXED_LOAN_NFT_ADDRESS, ACTIVE_AXUSD } = await import('../../src/config/activeContracts.generated');
+      const fixedLoan = new ethers.Contract(FIXED_LOAN_NFT_ADDRESS, FIXED_LOAN_ABI as unknown as string[], signer);
       const loanId32 = ethers.encodeBytes32String(loanId.replace(/-/g, '').slice(0, 31));
-      const paymentWei = ethers.parseUnits(amount.toFixed(6), 18);
-      const tx = await market.repayLoan(loanId32, paymentWei);
+      // AXUSD has 6 decimals (like USDC)
+      const paymentWei = ethers.parseUnits(amount.toFixed(6), 6);
+      // Approve AXUSD spend on FixedLoan contract first
+      const axusdAbi = ['function approve(address spender, uint256 amount) returns (bool)'];
+      const axusd = new ethers.Contract(ACTIVE_AXUSD, axusdAbi, signer);
+      await (await axusd.approve(FIXED_LOAN_NFT_ADDRESS, paymentWei)).wait(1);
+      const tx = await fixedLoan.repayLoan(loanId32, paymentWei);
       const receipt = await tx.wait(1);
       const chainTxHash: string = receipt?.hash ?? tx.hash;
 

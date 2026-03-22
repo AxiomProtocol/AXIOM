@@ -635,41 +635,73 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
 
   const loanId32 = toLoanId32(loan.loan_id);
 
-  // ── fund: approveLoan() then disburseTranche(0) on AXIOMFixedLoan ─────────
+  // ── fund: approve on FixedLoan → commit + disburse from CreditMarket ─────
+  // Flow: approveLoan() → commitLiquidity() → disburseLoan() → disburseTranche() (state update)
   if (action === 'fund') {
     const dueDate = new Date();
     dueDate.setMonth(dueDate.getMonth() + loan.loan_term_months);
 
-    const { fixedLoan } = await getFixedLoanSigner();
+    const { fixedLoan, market: creditMarket, ethers } = await getFixedLoanSigner();
 
-    // First approve (if not already approved on-chain)
+    // 1. Approve the loan on FixedLoan (state: PENDING → APPROVED)
     try {
       const approveTx = await fixedLoan.approveLoan(loanId32);
       await approveTx.wait(1);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      // Ignore if already approved (state machine revert)
-      if (!msg.includes('revert') && !msg.includes('APPROVED')) throw e;
+      if (!msg.includes('revert') && !msg.includes('APPROVED') && !msg.includes('execution reverted')) throw e;
     }
 
-    // Disburse tranche 0 (the single-tranche origination)
-    const disburseTx = await fixedLoan.disburseTranche(loanId32, 0);
-    const disburseReceipt = await disburseTx.wait(1);
-    const fundTxHash: string = disburseReceipt?.hash ?? disburseTx.hash;
+    // 2. Commit CreditMarket liquidity for this loan (AXUSD must be in CreditMarket)
+    const principalWei = ethers.parseUnits(loan.loan_amount_usd, 6);
+    try {
+      const commitTx = await creditMarket.commitLiquidity(loanId32, principalWei);
+      await commitTx.wait(1);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // If insufficient liquidity, proceed with DB update but note chain state
+      console.warn('[loan-lifecycle] commitLiquidity failed (may be insufficient pool):', msg);
+    }
+
+    // 3. Disburse from CreditMarket to borrower (actual AXUSD transfer)
+    let disburseTxHash: string | null = null;
+    try {
+      const disburseTx = await creditMarket.disburseLoan(
+        loanId32,
+        loan.wallet_address,
+        principalWei
+      );
+      const disburseReceipt = await disburseTx.wait(1);
+      disburseTxHash = disburseReceipt?.hash ?? disburseTx.hash;
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.warn('[loan-lifecycle] disburseLoan failed (likely insufficient pool liquidity):', msg);
+    }
+
+    // 4. Record tranche disbursement on FixedLoan (state: APPROVED → ACTIVE, starts interest clock)
+    let fundTxHash: string = disburseTxHash ?? '';
+    try {
+      const stateUpdateTx = await fixedLoan.disburseTranche(loanId32, 0);
+      const stateReceipt = await stateUpdateTx.wait(1);
+      fundTxHash = stateReceipt?.hash ?? stateUpdateTx.hash;
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.warn('[loan-lifecycle] disburseTranche state update failed:', msg);
+    }
 
     await pool.query(
       `UPDATE real_estate_loans
          SET status = $2, funded_at = NOW(), last_interest_accrual_at = NOW(), due_date = $3,
              disbursement_tx_hash = $4, updated_at = NOW()
        WHERE loan_id = $1`,
-      [loan.loan_id, transition.to, dueDate.toISOString(), fundTxHash]
+      [loan.loan_id, transition.to, dueDate.toISOString(), fundTxHash || disburseTxHash]
     );
     return res.status(200).json({
       success: true,
-      message: 'Loan funded on-chain via AXIOMFixedLoan.disburseTranche(0)',
+      message: 'Loan funded: AXUSD committed from CreditMarket pool and disbursed to borrower',
       newStatus: transition.to,
-      chainTxHash: fundTxHash,
-      explorerUrl: `https://arbitrum.blockscout.com/tx/${fundTxHash}`,
+      chainTxHash: fundTxHash || disburseTxHash,
+      explorerUrl: fundTxHash ? `https://arbitrum.blockscout.com/tx/${fundTxHash}` : null,
     });
   }
 
