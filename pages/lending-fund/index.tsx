@@ -42,6 +42,22 @@ function formatPercent(bps: number) {
   return (bps / 100).toFixed(1) + '%';
 }
 
+interface ActiveLoan {
+  loan_id: string;
+  loan_amount_usd: string;
+  outstanding_principal_usd: string;
+  interest_rate_bps: number;
+  term_days: number;
+  status: string;
+  funded_at: string | null;
+  due_at: string | null;
+  last_payment_at: string | null;
+  property_address: string | null;
+  total_repaid_usd: string;
+  total_interest_paid_usd: string;
+  lpInterestEarnedUsd: string;
+}
+
 interface JuniorPoolStats {
   totalLoansOriginated: number;
   totalVolumeOriginatedUsd: number;
@@ -66,14 +82,17 @@ export default function LendingFundPage() {
   const [lpPosition, setLpPosition] = useState<LPPosition | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'lp-dashboard'>('overview');
   const [juniorPoolStats, setJuniorPoolStats] = useState<JuniorPoolStats | null>(null);
+  const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([]);
+  const [loansLoading, setLoansLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [statsRes, riskRes, juniorRes] = await Promise.all([
+        const [statsRes, riskRes, juniorRes, loansRes] = await Promise.all([
           fetch('/api/realestate/fund-stats'),
           fetch('/api/realestate/risk-params?productId=1'),
           fetch('/api/community-credit/junior-pool-stats'),
+          fetch('/api/realestate/loan-lifecycle?status=active,delinquent,approved'),
         ]);
         if (statsRes.ok) {
           const data = await statsRes.json();
@@ -85,8 +104,13 @@ export default function LendingFundPage() {
           const jpData = await juniorRes.json();
           if (jpData.success) setJuniorPoolStats(jpData);
         }
+        if (loansRes.ok) {
+          const loansData = await loansRes.json();
+          if (loansData.loans) setActiveLoans(loansData.loans);
+        }
       } catch {} finally {
         setLoading(false);
+        setLoansLoading(false);
       }
     }
     fetchData();
@@ -289,6 +313,68 @@ export default function LendingFundPage() {
                 <Link href="/lending-fund/borrow" className="text-xs text-dl-navy underline">Access borrower dashboard (GEF Operator tier required) →</Link>
               </div>
             </div>
+          </div>
+
+          <div className="mb-12">
+            <SectionHeading>Live Loan Portfolio</SectionHeading>
+            {loansLoading ? (
+              <div className="border border-dl-border bg-dl-bg p-6 text-center">
+                <p className="text-sm text-dl-gray font-dl-mono">Loading active loans...</p>
+              </div>
+            ) : activeLoans.length === 0 ? (
+              <div className="border border-dl-border bg-dl-bg p-6 text-center">
+                <p className="text-sm text-dl-gray">No active loans in portfolio at this time.</p>
+              </div>
+            ) : (
+              <div className="border border-dl-border overflow-x-auto">
+                <table className="w-full text-xs font-dl-mono">
+                  <thead>
+                    <tr className="bg-dl-bg-alt border-b border-dl-border">
+                      <th className="text-left px-4 py-3 text-dl-gray font-medium">Loan ID</th>
+                      <th className="text-left px-4 py-3 text-dl-gray font-medium">Location</th>
+                      <th className="text-right px-4 py-3 text-dl-gray font-medium">Principal</th>
+                      <th className="text-right px-4 py-3 text-dl-gray font-medium">Outstanding</th>
+                      <th className="text-right px-4 py-3 text-dl-gray font-medium">Rate</th>
+                      <th className="text-right px-4 py-3 text-dl-gray font-medium">LP Interest</th>
+                      <th className="text-left px-4 py-3 text-dl-gray font-medium">Due Date</th>
+                      <th className="text-left px-4 py-3 text-dl-gray font-medium">State</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activeLoans.map((loan, i) => {
+                      const statusColor: Record<string, string> = {
+                        active: 'text-dl-forest',
+                        approved: 'text-dl-gold',
+                        delinquent: 'text-dl-error',
+                        repaid: 'text-dl-muted',
+                        defaulted: 'text-dl-error',
+                      };
+                      const dueDate = loan.due_at ? new Date(loan.due_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) : '—';
+                      return (
+                        <tr key={loan.loan_id} className={`border-b border-dl-border ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                          <td className="px-4 py-3 text-dl-navy">{loan.loan_id.slice(0, 8)}…</td>
+                          <td className="px-4 py-3 text-dl-gray">{loan.property_address || '—'}</td>
+                          <td className="px-4 py-3 text-right text-dl-navy">{formatUSD(loan.loan_amount_usd)}</td>
+                          <td className="px-4 py-3 text-right text-dl-navy">{formatUSD(loan.outstanding_principal_usd)}</td>
+                          <td className="px-4 py-3 text-right text-dl-navy">{formatPercent(loan.interest_rate_bps)}</td>
+                          <td className="px-4 py-3 text-right text-dl-forest">
+                            ${loan.lpInterestEarnedUsd || '0.0000'}
+                          </td>
+                          <td className="px-4 py-3 text-dl-gray">{dueDate}</td>
+                          <td className={`px-4 py-3 font-semibold uppercase text-xs ${statusColor[loan.status] || 'text-dl-navy'}`}>
+                            {loan.status}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                <div className="px-4 py-3 bg-dl-bg-alt border-t border-dl-border text-xs text-dl-gray">
+                  {activeLoans.length} loan{activeLoans.length !== 1 ? 's' : ''} shown. LP Interest Earned = accrued interest since last payment.
+                  Property addresses truncated for privacy.
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mb-12">

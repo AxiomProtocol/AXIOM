@@ -391,6 +391,50 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
     return res.status(200).json({ success: true, loans: r.rows.map(enrichLoan) });
   }
 
+  // Public portfolio view: ?status=active,delinquent,approved
+  // Returns anonymized loan records (no borrower PII) for the fund portfolio display.
+  const { status: statusFilter } = req.query;
+  if (statusFilter && typeof statusFilter === 'string') {
+    const allowed = ['active', 'delinquent', 'approved', 'repaid', 'defaulted', 'pending'];
+    const requested = statusFilter.split(',').map(s => s.trim()).filter(s => allowed.includes(s));
+    if (requested.length === 0) {
+      return res.status(400).json({ success: false, error: 'No valid status values provided' });
+    }
+    const placeholders = requested.map((_, i) => `$${i + 1}`).join(', ');
+    const r = await pool.query<LoanRow>(
+      `SELECT loan_id, loan_amount_usd, outstanding_principal_usd, interest_rate_bps,
+              loan_term_months, status, funded_at, due_date, last_payment_at,
+              property_address, total_repaid_usd, total_interest_paid_usd, created_at
+       FROM real_estate_loans
+       WHERE status IN (${placeholders})
+       ORDER BY funded_at DESC NULLS LAST, created_at DESC
+       LIMIT 50`,
+      requested
+    );
+    return res.status(200).json({
+      success: true,
+      loans: r.rows.map(loan => ({
+        loan_id: loan.loan_id,
+        loan_amount_usd: loan.loan_amount_usd,
+        outstanding_principal_usd: loan.outstanding_principal_usd,
+        interest_rate_bps: loan.interest_rate_bps,
+        term_days: loan.loan_term_months * 30,
+        status: loan.status,
+        funded_at: loan.funded_at,
+        due_at: loan.due_date,
+        last_payment_at: loan.last_payment_at,
+        property_address: loan.property_address ? `${loan.property_address.split(',')[0].trim()}, ...` : null,
+        total_repaid_usd: loan.total_repaid_usd,
+        total_interest_paid_usd: loan.total_interest_paid_usd,
+        lpInterestEarnedUsd: computeAccruedInterest(
+          parseFloat(loan.outstanding_principal_usd),
+          loan.interest_rate_bps,
+          loan.last_payment_at ?? loan.funded_at
+        ).toFixed(4),
+      })),
+    });
+  }
+
   return res.status(400).json({ success: false, error: 'walletAddress or loanId query param required' });
 }
 
@@ -638,21 +682,17 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
     });
   }
 
-  // ── close (manual repaid): zero-balance repayment on-chain, burn NFT ────
-  // The contract `repayLoan` with full remaining balance marks the loan REPAID on-chain.
+  // ── close (admin reconciliation): closeLoan() on-chain, burn NFT ────────
+  // Uses the operator-gated closeLoan() which marks STATUS_REPAID without AXUSD transfer.
   if (action === 'close') {
-    const { ethers, market, fixedLoan } = await getCreditMarketSigner();
+    const { market, fixedLoan } = await getCreditMarketSigner();
     const loanId32 = toLoanId32(loan.loan_id);
 
-    // Compute remaining balance and call repayLoan() on-chain
-    const principal = parseFloat(loan.outstanding_principal_usd);
-    const accrualStart = loan.last_payment_at ?? loan.funded_at;
-    const accrued = computeAccruedInterest(principal, loan.interest_rate_bps, accrualStart);
-    const totalDueWei = ethers.parseUnits((principal + accrued).toFixed(6), 18);
-
-    const repayTx = await market.repayLoan(loanId32, totalDueWei);
-    await repayTx.wait(1);
-    const repayHash: string = repayTx.hash;
+    // closeLoan() marks the loan STATUS_REPAID on-chain without AXUSD transfer —
+    // this is the admin reconciliation path (off-chain receipt or full payoff received).
+    const closeTx = await market.closeLoan(loanId32);
+    await closeTx.wait(1);
+    const closeHash: string = closeTx.hash;
 
     // Burn NFT receipt — idempotent (no-ops if already burned by auto-repay in contract)
     try {
@@ -665,13 +705,13 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
          SET status = $2, outstanding_principal_usd = 0, accrued_interest_usd = 0,
              disbursement_tx_hash = $3, last_payment_at = NOW(), updated_at = NOW()
        WHERE loan_id = $1`,
-      [loan.loan_id, transition.to, repayHash]
+      [loan.loan_id, transition.to, closeHash]
     );
     return res.status(200).json({
       success: true,
-      message: 'Loan fully closed on-chain (repaid), NFT receipt burned',
+      message: 'Loan administratively closed on-chain (STATUS_REPAID), NFT receipt burned',
       newStatus: transition.to,
-      chainTxHash: repayHash,
+      chainTxHash: closeHash,
     });
   }
 
@@ -730,7 +770,7 @@ async function handleRepay(
   res: NextApiResponse,
   loan: LoanRow,
   paymentUsdRaw: number | string | undefined,
-  _txHash: string | undefined
+  txHash: string | undefined
 ) {
   if (loan.status !== 'active' && loan.status !== 'delinquent') {
     return res.status(400).json({ success: false, error: `Cannot repay loan in status: ${loan.status}` });
@@ -739,6 +779,16 @@ async function handleRepay(
   const paymentUsd = parseFloat(String(paymentUsdRaw ?? 0));
   if (isNaN(paymentUsd) || paymentUsd <= 0) {
     return res.status(400).json({ success: false, error: 'paymentUsd must be a positive number' });
+  }
+
+  // txHash is required: borrower must call AXIOMCreditMarket.repayLoan() directly
+  // from their wallet (msg.sender = borrower — the contract does safeTransferFrom(msg.sender)).
+  // The API records the payment as a DB projection after the borrower submits their on-chain tx.
+  if (!txHash || !txHash.match(/^0x[0-9a-fA-F]{64}$/)) {
+    return res.status(400).json({
+      success: false,
+      error: 'txHash is required for on-chain repayments. Borrower must call repayLoan() directly from their wallet and submit the resulting tx hash.',
+    });
   }
 
   const principal = parseFloat(loan.outstanding_principal_usd);
@@ -753,24 +803,16 @@ async function handleRepay(
     });
   }
 
-  // ── On-chain first: call AXIOMCreditMarket.repayLoan() ─────────────────
-  // The contract applies interest-first allocation and dust-threshold repaid transition.
-  const { ethers, market } = await getCreditMarketSigner();
-  const loanId32    = toLoanId32(loan.loan_id);
-  const paymentWei  = ethers.parseUnits(paymentUsd.toFixed(6), 18);
-
-  const repayTx = await market.repayLoan(loanId32, paymentWei);
-  const repayReceipt = await repayTx.wait(1);
-  const chainTxHash: string = repayReceipt?.hash ?? repayTx.hash;
-
-  // ── DB projection ─────────────────────────────────────────────────────
-  // Mirrors the interest-first allocation math in the contract
+  // ── DB projection of borrower's on-chain repayLoan() call ──────────────
+  // Mirrors interest-first allocation math in the contract.
+  // The borrower already called repayLoan() on-chain; we record the outcome here.
   const interestPortion  = Math.min(paymentUsd, accrued);
   const principalPortion = paymentUsd - interestPortion;
   const newPrincipal     = Math.max(0, principal - principalPortion);
   const newTotalRepaid   = parseFloat(loan.total_repaid_usd) + paymentUsd;
   const newTotalInterestPaid = parseFloat(loan.total_interest_paid_usd) + interestPortion;
-  const newStatus: string    = newPrincipal < 0.01 ? 'repaid' : 'active';
+  // Dust threshold: < $0.01 remaining = fully repaid (mirrors contract's 1e15 wei threshold)
+  const newStatus: string = newPrincipal < 0.01 ? 'repaid' : 'active';
 
   await pool.query(
     `UPDATE real_estate_loans
@@ -797,13 +839,13 @@ async function handleRepay(
       interestPortion.toFixed(6),
       principalPortion.toFixed(2),
       newPrincipal.toFixed(2),
-      chainTxHash,
+      txHash,
     ]
   );
 
   return res.status(200).json({
     success: true,
-    chainTxHash,
+    chainTxHash: txHash,
     paymentRecorded: paymentUsd.toFixed(2),
     interestPortionUsd: interestPortion.toFixed(6),
     principalPortionUsd: principalPortion.toFixed(2),
@@ -811,7 +853,7 @@ async function handleRepay(
     totalInterestPaidUsd: newTotalInterestPaid.toFixed(6),
     loanStatus: newStatus,
     message: newStatus === 'repaid'
-      ? 'Loan fully repaid on-chain. Status updated to Repaid.'
-      : 'Payment recorded on-chain. Interest-first allocation applied.',
+      ? 'Loan fully repaid. Status updated to Repaid.'
+      : 'Payment recorded. Interest-first allocation applied.',
   });
 }

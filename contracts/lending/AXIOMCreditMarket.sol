@@ -338,6 +338,27 @@ contract AXIOMCreditMarket is AccessControl, ReentrancyGuard {
         emit LoanDefaulted(loanId);
     }
 
+    /**
+     * @notice Operator administratively closes an active or delinquent loan as REPAID.
+     *         Used when the borrower's repayment was received off-chain or when
+     *         the operator is manually reconciling the loan. Marks loan STATUS_REPAID
+     *         on-chain without requiring AXUSD transfer — the off-chain accounting
+     *         is the source of truth for the payment itself.
+     * @param loanId The loan identifier to close.
+     */
+    function closeLoan(bytes32 loanId) external onlyRole(OPERATOR_ROLE) {
+        LoanRecord storage loan = _requireLoan(loanId);
+        if (loan.status != STATUS_ACTIVE && loan.status != STATUS_DELINQUENT) {
+            revert InvalidTransition(loan.status, "close");
+        }
+        uint256 outstanding = loan.principalUsd6 - loan.totalRepaidUsd6;
+        loan.totalRepaidUsd6 = loan.principalUsd6; // mark as fully repaid in records
+        loan.status = STATUS_REPAID;
+        // slither-disable-next-line timestamp
+        totalDeployed = totalDeployed >= outstanding ? totalDeployed - outstanding : 0; // underflow guard
+        emit LoanRepaid(loanId);
+    }
+
     // ─────────────────────────────────────────────
     // VIEW FUNCTIONS
     // ─────────────────────────────────────────────
