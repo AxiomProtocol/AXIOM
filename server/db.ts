@@ -293,7 +293,25 @@ export const incomeCreditLines = pgTable('income_credit_lines', {
   appIdx: index('ic_line_app_idx').on(table.applicationId),
 }));
 
+export const incomeCreditRepaymentHistory = pgTable('income_credit_repayment_history', {
+  id: serial('id').primaryKey(),
+  creditLineId: varchar('credit_line_id', { length: 66 }).notNull(),
+  walletAddress: varchar('wallet_address', { length: 42 }).notNull(),
+  repaymentAmountUsd: decimal('repayment_amount_usd', { precision: 18, scale: 6 }).notNull(),
+  principalRepaidUsd: decimal('principal_repaid_usd', { precision: 18, scale: 6 }).notNull(),
+  interestRepaidUsd: decimal('interest_repaid_usd', { precision: 18, scale: 6 }).notNull(),
+  outstandingBeforeUsd: decimal('outstanding_before_usd', { precision: 18, scale: 6 }).notNull(),
+  outstandingAfterUsd: decimal('outstanding_after_usd', { precision: 18, scale: 6 }).notNull(),
+  fullyRepaid: boolean('fully_repaid').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  lineIdx: index('ic_repay_hist_line_idx').on(table.creditLineId),
+  walletIdx: index('ic_repay_hist_wallet_idx').on(table.walletAddress),
+}));
+
 export type IncomeCreditApplication = typeof incomeCreditApplications.$inferSelect;
 export type InsertIncomeCreditApplication = typeof incomeCreditApplications.$inferInsert;
 export type IncomeCreditLine = typeof incomeCreditLines.$inferSelect;
 export type InsertIncomeCreditLine = typeof incomeCreditLines.$inferInsert;
+export type IncomeCreditRepaymentHistory = typeof incomeCreditRepaymentHistory.$inferSelect;
+export type InsertIncomeCreditRepaymentHistory = typeof incomeCreditRepaymentHistory.$inferInsert;

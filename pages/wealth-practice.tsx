@@ -463,21 +463,23 @@ export default function WealthPracticePage() {
         </div>
       )}
 
-      <div className="mb-10 border border-dl-forest bg-dl-bg border-l-4 border-l-dl-forest px-6 py-5">
-        <p className="text-xs font-dl-mono text-dl-forest uppercase tracking-wider mb-2">No Capital to Start?</p>
-        <p className="text-sm text-dl-gray leading-relaxed mb-3">
-          If you have a steady W-2 income but need short-term liquidity to cover your first Wealth Practice contribution,
-          Community Entry Credit provides an income-backed credit line — no crypto collateral required. Your GEF participation record is the signal.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <Link href="/community-credit" className="inline-block border border-dl-forest text-dl-forest px-4 py-2 text-xs font-bold hover:bg-dl-forest hover:text-white">
-            Apply for Community Entry Credit
-          </Link>
-          <Link href="/start" className="inline-block border border-dl-navy text-dl-navy px-4 py-2 text-xs font-bold hover:bg-dl-navy hover:text-white">
-            View the Full Journey
-          </Link>
+      {(!practiceAddress || (!myPracticeLoading && myGroups.length === 0)) && (
+        <div className="mb-10 border border-dl-forest bg-dl-bg border-l-4 border-l-dl-forest px-6 py-5">
+          <p className="text-xs font-dl-mono text-dl-forest uppercase tracking-wider mb-2">No Capital to Start?</p>
+          <p className="text-sm text-dl-gray leading-relaxed mb-3">
+            If you have a steady W-2 income but need short-term liquidity to cover your first Wealth Practice contribution,
+            Community Entry Credit provides an income-backed credit line — no crypto collateral required. Your GEF participation record is the signal.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/community-credit" className="inline-block border border-dl-forest text-dl-forest px-4 py-2 text-xs font-bold hover:bg-dl-forest hover:text-white">
+              Apply for Community Entry Credit
+            </Link>
+            <Link href="/start" className="inline-block border border-dl-navy text-dl-navy px-4 py-2 text-xs font-bold hover:bg-dl-navy hover:text-white">
+              View the Full Journey
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
 
       {activeTab === 'discover' && (
         <div>

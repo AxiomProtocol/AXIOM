@@ -1,15 +1,27 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
+import { verifyCreditAuth } from '../../../lib/community-credit-auth';
+
+const VALID_PURPOSES = ['wealth_practice_entry', 'contribution_smoothing', 'earnest_money'];
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const { walletAddress, creditLineId, purpose } = req.body;
+  const { walletAddress, creditLineId, confirmedPurpose } = req.body;
 
   if (!walletAddress || !creditLineId) {
     return res.status(400).json({ success: false, error: 'walletAddress and creditLineId are required' });
+  }
+
+  const auth = verifyCreditAuth(req, walletAddress);
+  if (!auth.ok) {
+    return res.status(401).json({ success: false, error: auth.reason });
+  }
+
+  if (confirmedPurpose && !VALID_PURPOSES.includes(confirmedPurpose)) {
+    return res.status(400).json({ success: false, error: 'Invalid confirmedPurpose value' });
   }
 
   try {
@@ -17,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `SELECT * FROM income_credit_lines
        WHERE credit_line_id = $1 AND LOWER(wallet_address) = LOWER($2)
        LIMIT 1`,
-      [creditLineId, walletAddress]
+      [creditLineId, auth.verifiedAddress]
     );
 
     if (lineResult.rows.length === 0) {
@@ -39,7 +51,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(409).json({ success: false, error: 'Credit line has expired. Please submit a new application.' });
     }
 
+    if (confirmedPurpose && confirmedPurpose !== line.purpose) {
+      return res.status(400).json({
+        success: false,
+        error: `Purpose mismatch. This credit line was approved for '${line.purpose}' but confirmedPurpose was '${confirmedPurpose}'. Credit lines are single-purpose instruments.`,
+      });
+    }
+
     const drawAmount = parseFloat(line.available_balance_usd);
+    if (drawAmount <= 0) {
+      return res.status(409).json({ success: false, error: 'No available balance to draw.' });
+    }
+
     const repaymentDueDays = line.repayment_due_days || 30;
     const repaymentDueDate = new Date();
     repaymentDueDate.setDate(repaymentDueDate.getDate() + repaymentDueDays);
@@ -64,13 +87,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       success: true,
       creditLineId,
-      walletAddress: walletAddress.toLowerCase(),
+      walletAddress: auth.verifiedAddress,
       drawnAmountUsd: drawAmount,
+      interestRateBps: line.interest_rate_bps || 500,
       interestUsd: parseFloat(interestUsd.toFixed(6)),
       totalOwedUsd: parseFloat(totalOwed.toFixed(6)),
       repaymentDueDate: repaymentDueDate.toISOString(),
       purpose: line.purpose,
-      message: `Draw-down of $${drawAmount.toLocaleString()} recorded. Total repayment of $${totalOwed.toFixed(2)} is due by ${repaymentDueDate.toLocaleDateString()}. Disbursement is processed by the protocol treasury (AXUSD).`,
+      disbursementNote: 'AXUSD disbursement is processed from the protocol treasury senior tranche. Operator records this obligation on-chain.',
+      message: `Draw-down of $${drawAmount.toLocaleString()} recorded for purpose '${line.purpose}'. Total repayment of $${totalOwed.toFixed(2)} is due by ${repaymentDueDate.toLocaleDateString()}.`,
     });
   } catch (err: any) {
     console.error('[community-credit/drawdown]', err);

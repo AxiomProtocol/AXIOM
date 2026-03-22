@@ -365,6 +365,43 @@ export default function LendingFundPage() {
         </>
       )}
 
+      <div className="mb-10">
+        <SectionHeading>Community Junior Tranche — Wealth Practice Graduates</SectionHeading>
+        <div className="border border-dl-border">
+          <div className="px-6 py-5 bg-dl-bg border-b border-dl-border border-l-4 border-l-dl-forest">
+            <h3 className="font-dl-serif text-base text-dl-navy font-medium mb-2">What Is the Community Junior Tranche?</h3>
+            <p className="text-sm text-dl-gray leading-relaxed">
+              Community Entry Credit interest payments are distributed to a community junior pool funded by Wealth Practice graduates.
+              This is the first yield-generating mechanism in the Axiom capital stack available to non-accredited participants.
+              Wealth Practice members who have completed at least one full cycle are eligible to participate.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-b border-dl-border">
+            <div className="px-5 py-4 bg-dl-bg-alt md:border-r border-b md:border-b-0 border-dl-border">
+              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Yield Source</p>
+              <p className="text-sm text-dl-navy font-bold">5% APR on drawn balances</p>
+              <p className="text-xs text-dl-gray mt-1">500 bps on Community Entry Credit loans, prorated by day</p>
+            </div>
+            <div className="px-5 py-4 bg-dl-bg md:border-r border-b md:border-b-0 border-dl-border">
+              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Eligibility</p>
+              <p className="text-sm text-dl-navy font-bold">Wealth Practice graduate</p>
+              <p className="text-xs text-dl-gray mt-1">Minimum one completed Wealth Practice cycle (GEF Participant+)</p>
+            </div>
+            <div className="px-5 py-4 bg-dl-bg-alt">
+              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Distribution</p>
+              <p className="text-sm text-dl-navy font-bold">On repayment</p>
+              <p className="text-xs text-dl-gray mt-1">Interest distributed atomically when borrowers repay credit lines</p>
+            </div>
+          </div>
+          <div className="px-6 py-4 bg-dl-bg-alt text-center">
+            <p className="text-xs text-dl-gray">
+              V1 junior tranche LP invitations are manual. Complete the Wealth Practice and signal interest through the Investor Portal.{' '}
+              <Link href="/wealth-practice" className="text-dl-navy underline">Join a Wealth Practice group &rarr;</Link>
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="mb-8">
         <SectionHeading>Disclosure</SectionHeading>
         <div className="border border-dl-border p-6 bg-dl-bg-alt">

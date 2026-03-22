@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
+import { verifyCreditAuth } from '../../../lib/community-credit-auth';
 import { randomBytes } from 'crypto';
 
 const GEF_TIER_CREDIT_LIMITS: Record<string, number> = {
@@ -31,8 +32,7 @@ async function getGefTier(walletAddress: string): Promise<string> {
     if (result.rows.length > 0 && result.rows[0].tier_name) {
       return result.rows[0].tier_name;
     }
-  } catch {
-  }
+  } catch {}
   return 'Observer';
 }
 
@@ -47,6 +47,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ success: false, error: 'walletAddress, requestedAmountUsd, and requestedPurpose are required' });
   }
 
+  const auth = verifyCreditAuth(req, walletAddress);
+  if (!auth.ok) {
+    return res.status(401).json({ success: false, error: auth.reason });
+  }
+
   if (!VALID_PURPOSES.includes(requestedPurpose)) {
     return res.status(400).json({ success: false, error: 'Invalid purpose. Must be one of: wealth_practice_entry, contribution_smoothing, earnest_money' });
   }
@@ -57,25 +62,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const existingApp = await pool.query(
-      `SELECT id FROM income_credit_applications
-       WHERE LOWER(wallet_address) = LOWER($1) AND status = 'approved'
-       LIMIT 1`,
-      [walletAddress]
-    );
-
     const existingLine = await pool.query(
       `SELECT id FROM income_credit_lines
        WHERE LOWER(wallet_address) = LOWER($1) AND status IN ('active', 'drawn')
        LIMIT 1`,
-      [walletAddress]
+      [auth.verifiedAddress]
     );
 
     if (existingLine.rows.length > 0) {
       return res.status(409).json({ success: false, error: 'You already have an active credit line. Repay the existing balance before applying again.' });
     }
 
-    const gefTier = await getGefTier(walletAddress);
+    const gefTier = await getGefTier(auth.verifiedAddress);
     const creditLimit = GEF_TIER_CREDIT_LIMITS[gefTier] ?? 0;
 
     if (creditLimit === 0) {
@@ -110,7 +108,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        VALUES ($1, $2, $3, $4, $5, $6::income_credit_purpose, $7, 'approved'::income_credit_application_status, NOW())`,
       [
         applicationId,
-        walletAddress.toLowerCase(),
+        auth.verifiedAddress,
         gefTier,
         statedMonthlyIncomeUsd || null,
         requestedAmount,
@@ -136,7 +134,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       [
         creditLineId,
         appDbId,
-        walletAddress.toLowerCase(),
+        auth.verifiedAddress,
         requestedAmount,
         requestedPurpose,
         repaymentDays,
