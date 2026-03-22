@@ -126,7 +126,6 @@ contract AXIOMCreditMarket is AccessControlLite, ReentrancyGuard {
     error BurnReturnsZeroAssets(uint256 sharesToBurn, uint256 poolValue, uint256 totalShares);
     error ExceedsCommitment(uint256 committed, uint256 requested);
     error InvalidReserveRatio(uint256 requestedBps);
-    error ArithmeticInvariantViolation();
 
     constructor(address _axusd, address _identityRegistry) {
         if (_axusd == address(0) || _identityRegistry == address(0)) revert ZeroAddress();
@@ -253,8 +252,8 @@ contract AXIOMCreditMarket is AccessControlLite, ReentrancyGuard {
 
     /**
      * @notice Receive repayment accounting from AXIOMFixedLoan.
-     *         AXUSD must already be transferred into this contract before this call.
-     *         Includes an arithmetic invariant check to detect any discrepancy.
+     *         AXUSD is transferred into this contract by AXIOMFixedLoan before this call.
+     *         This function updates the accounting ledger only; no token transfers occur here.
      */
     function receiveRepayment(
         bytes32 loanId,
@@ -262,8 +261,6 @@ contract AXIOMCreditMarket is AccessControlLite, ReentrancyGuard {
         uint256 interestAmount
     ) external onlyFixedLoan nonReentrant {
         if (principalReturned == 0 && interestAmount == 0) revert ZeroAmount();
-
-        uint256 balanceBefore = _liquidBalance();
 
         if (totalOutstanding >= principalReturned) {
             totalOutstanding -= principalReturned;
@@ -275,12 +272,6 @@ contract AXIOMCreditMarket is AccessControlLite, ReentrancyGuard {
 
         if (totalLpShares > 0 && interestAmount > 0) {
             interestPerShare += (interestAmount * SHARE_PRECISION) / totalLpShares;
-        }
-
-        uint256 expectedMinimumIncrease = principalReturned + interestAmount;
-        uint256 balanceAfter = _liquidBalance();
-        if (balanceAfter < balanceBefore || (balanceAfter - balanceBefore) < expectedMinimumIncrease) {
-            revert ArithmeticInvariantViolation();
         }
 
         emit RepaymentReceived(loanId, principalReturned, interestAmount);

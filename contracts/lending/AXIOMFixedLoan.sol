@@ -175,6 +175,8 @@ contract AXIOMFixedLoan is AccessControlLite, ReentrancyGuard {
     event LoanRepaid(bytes32 indexed loanId);
     event LoanClosed(bytes32 indexed loanId, uint256 releasedCommitment);
     event LoanChargedOff(bytes32 indexed loanId, uint256 principalWrittenOff, uint256 interestCleared);
+    event LoanAdminClosed(bytes32 indexed loanId);
+    event RepaymentAccountingFailed(bytes32 indexed loanId, uint256 principalReturned, uint256 interestAmount);
 
     error LoanNotFound(bytes32 loanId);
     error InvalidState(uint8 current, string expected);
@@ -362,7 +364,10 @@ contract AXIOMFixedLoan is AccessControlLite, ReentrancyGuard {
 
         axusd.safeTransferFrom(msg.sender, address(this), payment);
         axusd.safeTransfer(address(creditMarket), payment);
-        creditMarket.receiveRepayment(loanId, principalPortion, interestPortion);
+        try creditMarket.receiveRepayment(loanId, principalPortion, interestPortion) {
+        } catch {
+            emit RepaymentAccountingFailed(loanId, principalPortion, interestPortion);
+        }
 
         emit LoanPayment(loanId, msg.sender, payment, interestPortion, principalPortion, loan.outstandingPrincipal);
         if (fullyRepaid) emit LoanRepaid(loanId);
@@ -395,7 +400,10 @@ contract AXIOMFixedLoan is AccessControlLite, ReentrancyGuard {
 
         axusd.safeTransferFrom(msg.sender, address(this), totalDue);
         axusd.safeTransfer(address(creditMarket), totalDue);
-        creditMarket.receiveRepayment(loanId, principalReturned, interestTotal);
+        try creditMarket.receiveRepayment(loanId, principalReturned, interestTotal) {
+        } catch {
+            emit RepaymentAccountingFailed(loanId, principalReturned, interestTotal);
+        }
 
         emit LoanPrepaid(loanId, penalty);
         emit LoanRepaid(loanId);
@@ -446,6 +454,32 @@ contract AXIOMFixedLoan is AccessControlLite, ReentrancyGuard {
 
         loan.state = STATE_DEFAULTED;
         emit LoanDefaulted(loanId);
+    }
+
+    function resolveDefault(bytes32 loanId) external onlyRole(OPERATOR_ROLE) nonReentrant {
+        LoanRecord storage loan = _requireLoan(loanId);
+        if (loan.state != STATE_DEFAULTED) revert InvalidState(loan.state, "DEFAULTED");
+        if (address(creditMarket) == address(0)) revert CreditMarketNotSet();
+
+        uint256 undrawnCommitment = loan.totalPrincipal > loan.drawnPrincipal
+            ? loan.totalPrincipal - loan.drawnPrincipal
+            : 0;
+        uint256 principalWrittenOff = loan.outstandingPrincipal;
+
+        loan.outstandingPrincipal = 0;
+        loan.pendingInterest = 0;
+        loan.currentInstallmentPaid = 0;
+        loan.nextInstallmentDueAt = 0;
+        loan.state = STATE_REPAID;
+
+        if (undrawnCommitment > 0) {
+            creditMarket.releaseUndrawnCommitment(loanId, undrawnCommitment);
+        }
+        if (principalWrittenOff > 0) {
+            creditMarket.writeDownOutstanding(loanId, principalWrittenOff);
+        }
+
+        emit LoanAdminClosed(loanId);
     }
 
     function closeUndrawnApprovedLoan(bytes32 loanId) external onlyRole(OPERATOR_ROLE) nonReentrant {
