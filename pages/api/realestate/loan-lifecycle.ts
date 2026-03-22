@@ -236,11 +236,12 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
     const loan = r.rows[0];
 
     if (!isAdminRequest(req)) {
-      const sig = req.headers['x-wallet-signature'] as string;
-      const msg = req.headers['x-wallet-message'] as string;
-      const authResult = verifyCreditAuth({ headers: { 'x-wallet-signature': sig, 'x-wallet-message': msg } } as any, loan.wallet_address);
+      const authResult = verifyCreditAuth(req, loan.wallet_address);
       if (!authResult.ok) {
         return res.status(403).json({ success: false, error: 'Access denied: you do not own this loan' });
+      }
+      if (authResult.verifiedAddress.toLowerCase() !== loan.wallet_address.toLowerCase()) {
+        return res.status(403).json({ success: false, error: 'Signature verified but does not match loan owner' });
       }
     }
 
@@ -421,7 +422,7 @@ async function handlePatch(req: NextApiRequest, res: NextApiResponse) {
     }
     const auth = verifyCreditAuth(req, walletAddress);
     if (!auth.ok) return res.status(401).json({ success: false, error: auth.reason });
-    if (auth.verifiedAddress !== loan.wallet_address.toLowerCase()) {
+    if (auth.verifiedAddress.toLowerCase() !== loan.wallet_address.toLowerCase()) {
       return res.status(403).json({ success: false, error: 'You do not own this loan' });
     }
     return handleRepay(res, loan, paymentUsd, txHash);

@@ -59,7 +59,8 @@ const STATUS_LABELS: Record<string, string> = {
   pending_review: 'Under Review',
   approved: 'Approved',
   active: 'Active',
-  closed: 'Paid Off',
+  delinquent: 'Delinquent',
+  repaid: 'Paid Off',
   defaulted: 'Defaulted',
 };
 
@@ -67,7 +68,8 @@ const STATUS_COLORS: Record<string, string> = {
   pending_review: 'text-dl-gold',
   approved: 'text-dl-forest',
   active: 'text-dl-navy',
-  closed: 'text-dl-gray',
+  delinquent: 'text-dl-error',
+  repaid: 'text-dl-gray',
   defaulted: 'text-dl-error',
 };
 
@@ -250,7 +252,7 @@ export default function BorrowPage() {
 
   const activeLoans = loans.filter(l => l.status === 'active');
   const pendingLoans = loans.filter(l => l.status === 'pending_review' || l.status === 'approved');
-  const closedLoans = loans.filter(l => l.status === 'closed' || l.status === 'defaulted');
+  const closedLoans = loans.filter(l => l.status === 'repaid' || l.status === 'defaulted');
 
   return (
     <DesignLawLayout>
