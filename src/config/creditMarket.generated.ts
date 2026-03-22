@@ -14,19 +14,19 @@
  *   - ArithmeticInvariantViolation guard on receiveRepayment
  *
  * Post-deploy wiring (completed in deploy script):
- *   fixedLoan.setCreditMarket(creditMarket) — tx: 0x38a956a54e46fef9fac026d038dbaf7843b12ae486a88de8df28edae382b27fd
- *   creditMarket.setFixedLoan(fixedLoan)    — tx: 0x8d00ac283940fb0a597f318fc8c253a556adbd3c1ef09469902cd2ec9dfa032e
+ *   fixedLoan.setCreditMarket(creditMarket) — tx: 0x781d8686ac490ba9909c12797e44f98c29040d11a185a20072e5fe2aea610025
+ *   creditMarket.setFixedLoan(fixedLoan)    — tx: 0x5fcf950676100cf939269c317b0bcb01ac7e82f8c36f179f8871b6770ccb605b
  *
  * OPERATOR_ROLE authority path:
  *   Both contracts grant OPERATOR_ROLE to msg.sender (deployer) at construction.
  *   The deployer address is the Axiom Protocol multisig / operator wallet.
  *   Grant OPERATOR_ROLE to additional signers via grantRole(OPERATOR_ROLE, address).
- *   CreditMarket.disburseCommittedLiquidity() uses onlyFixedLoan (address check),
+ *   CreditMarket.disburseCommittedLiquidity() uses onlyFixedLoan (not OPERATOR_ROLE)
  *   so no cross-contract role grant is needed between the two contracts.
  *
- * NOTE: Addresses below are pending v8 redeployment. Run deploy-credit-market.ts to update.
- *   AXIOMFixedLoan:    https://arbitrum.blockscout.com/address/0x96634c2E1E80Fa51d45F0e9aB9F49B7dB3e9c859#code
- *   AXIOMCreditMarket: https://arbitrum.blockscout.com/address/0xeE21B3C0D89b8EfD9eD61A7FD0B98A637eA9ab37#code
+ * Verification:
+ *   AXIOMFixedLoan:    https://arbitrum.blockscout.com/address/0x511A0cD642532585dc87e41C84f7f499a9755511#code
+ *   AXIOMCreditMarket: https://arbitrum.blockscout.com/address/0x85074a74774568692128eE97Da661Fe49dcF5fE4#code
  */
 
 export const CREDIT_MARKET_DEPLOYMENT = {
@@ -37,13 +37,13 @@ export const CREDIT_MARKET_DEPLOYMENT = {
 
   axusd:             '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C',
   identityRegistry:  '0x58f64a1262d5434d6C7637a2309b0999bB6D1970',
-  creditMarket:      '0xeE21B3C0D89b8EfD9eD61A7FD0B98A637eA9ab37',
-  fixedLoan:         '0x96634c2E1E80Fa51d45F0e9aB9F49B7dB3e9c859',
+  creditMarket:      '0x85074a74774568692128eE97Da661Fe49dcF5fE4',
+  fixedLoan:         '0x511A0cD642532585dc87e41C84f7f499a9755511',
 
   explorerBase:      'https://arbitrum.blockscout.com',
 
-  wireTxSetCreditMarket: '0x38a956a54e46fef9fac026d038dbaf7843b12ae486a88de8df28edae382b27fd',
-  wireTxSetFixedLoan:    '0x8d00ac283940fb0a597f318fc8c253a556adbd3c1ef09469902cd2ec9dfa032e',
+  wireTxSetCreditMarket: '0x8b8ed97d5c9bd5371459b96b2a24cd74ccc4133cc66bb5ead9f50073fbafc17a',
+  wireTxSetFixedLoan:    '0xdd684dad6a7c38611270a0c49f23fd093ebf30a181b6009c6db49dc00af9bdfe',
 
   roles: {
     operatorRole:    '0x97667070c54ef182b0f5858b034beac1b6f3089aa2d3188bb1e8929f4fa9b929',

@@ -66,9 +66,9 @@ export const ACTIVE_CONTRACTS = {
 } as const;
 
 /** v7 CreditMarket — deployed + verified Arbitrum Blockscout 2026-03-22 */
-export const CREDIT_MARKET_ADDRESS = '0xeE21B3C0D89b8EfD9eD61A7FD0B98A637eA9ab37' as const;
+export const CREDIT_MARKET_ADDRESS = '0x85074a74774568692128eE97Da661Fe49dcF5fE4' as const;
 /** v7 FixedLoan NFT — deployed + verified Arbitrum Blockscout 2026-03-22 */
-export const FIXED_LOAN_NFT_ADDRESS = '0x96634c2E1E80Fa51d45F0e9aB9F49B7dB3e9c859' as const;
+export const FIXED_LOAN_NFT_ADDRESS = '0x511A0cD642532585dc87e41C84f7f499a9755511' as const;
 /** ERC-3643 IdentityRegistry — canonical Axiom protocol registry (Arbitrum One) */
 export const IDENTITY_REGISTRY_ADDRESS = '0x58f64a1262d5434d6C7637a2309b0999bB6D1970' as const;
 
