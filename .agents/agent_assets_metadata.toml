@@ -36,3 +36,9 @@ id = "1hgO3EK8VG0r3Eba0mFpz"
 uri = "file://documents/Axiom_Protocol_White_Paper_v3.docx"
 type = "word_document"
 title = "Axiom Protocol — White Paper v3.0 (March 23, 2026)"
+
+[[outputs]]
+id = "3SB3oX7uowPTxHViht5D_"
+uri = "file://documents/Axiom_Protocol_White_Paper_v3.md"
+type = "text"
+title = "Axiom Protocol — White Paper v3.0 (Markdown)"
