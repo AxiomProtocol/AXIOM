@@ -33,8 +33,20 @@ const EVK_ABI = [
 const SWAP_FEE_BPS = EULER_SWAP.SWAP_FEE_BPS;
 const ESTIMATED_VOLUME_MULTIPLIER = 0.15;
 
+// Decimal map for known tokens used in EulerSwap pools
+const TOKEN_DECIMALS: Record<string, number> = {
+  [AXUSD_TOKEN.toLowerCase()]: 6,  // ERC-3643 AXUSD — 6 decimals (confirmed via EVK vault totalAssets)
+  [USDC_TOKEN.toLowerCase()]:  6,  // USDC — 6 decimals
+  [AXM_TOKEN.toLowerCase()]:  18,  // AXM governance token — 18 decimals
+};
+
+function tokenDecimals(addr: string): number {
+  return TOKEN_DECIMALS[addr.toLowerCase()] ?? 18;
+}
+
 async function fetchPoolData(poolAddress: string, label: string): Promise<{
   tvlUsd: number;
+  axusdReserveUsd: number;
   reserve0: number;
   reserve1: number;
   totalSupply: number;
@@ -52,18 +64,30 @@ async function fetchPoolData(poolAddress: string, label: string): Promise<{
       pool.token1(),
       pool.totalSupply(),
     ]);
-    let feeBps = SWAP_FEE_BPS;
+    let feeBps: number = SWAP_FEE_BPS;
     try { feeBps = Number(await pool.fee()); } catch {}
 
+    const dec0 = tokenDecimals(token0);
+    const dec1 = tokenDecimals(token1);
+
+    const r0 = Number(ethers.formatUnits(reserves[0], dec0));
+    const r1 = Number(ethers.formatUnits(reserves[1], dec1));
+
     const isAxusdToken0 = token0.toLowerCase() === AXUSD_TOKEN.toLowerCase();
-    const axusdReserve = isAxusdToken0 ? Number(ethers.formatUnits(reserves[0], 6)) : Number(ethers.formatUnits(reserves[1], 6));
-    const otherReserve = isAxusdToken0 ? Number(ethers.formatUnits(reserves[1], 6)) : Number(ethers.formatUnits(reserves[0], 6));
-    const tvlUsd = axusdReserve + otherReserve;
+    const axusdReserve = isAxusdToken0 ? r0 : r1;
+
+    // TVL estimate: for stablecoin pairs (AXUSD/USDC), sum directly.
+    // For token pairs (AXUSD/AXM), use AXUSD reserve × 2 as a balanced-pool proxy
+    // (avoids needing an AXM/USD oracle at this layer).
+    const isStablePair = (isAxusdToken0 ? dec1 : dec0) === 6;
+    const otherReserve = isAxusdToken0 ? r1 : r0;
+    const tvlUsd = isStablePair ? axusdReserve + otherReserve : axusdReserve * 2;
 
     return {
       tvlUsd,
-      reserve0: Number(ethers.formatUnits(reserves[0], 6)),
-      reserve1: Number(ethers.formatUnits(reserves[1], 6)),
+      axusdReserveUsd: axusdReserve,
+      reserve0: r0,
+      reserve1: r1,
       totalSupply: Number(ethers.formatUnits(totalSupply, 18)),
       feeBps,
       token0: token0.toLowerCase(),

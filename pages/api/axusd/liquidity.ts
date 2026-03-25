@@ -89,8 +89,12 @@ async function fetchEulerSwapLiquidity(provider: ethers.JsonRpcProvider, deploye
       pool.totalSupply(),
     ]);
 
-    const axusdReserve = Number(ethers.formatUnits(reserves[0], 6));
-    const usdcReserve  = Number(ethers.formatUnits(reserves[1], 6));
+    // Both ERC-3643 AXUSD and USDC are 6 decimals, but we must respect pool ordering
+    // (token0 / token1 order is deterministic by address sort, not by our preference)
+    const AXUSD_ADDR = AXUSD_GENIUS_CONTRACTS.AXUSD.toLowerCase();
+    const isAxusdToken0 = token0.toLowerCase() === AXUSD_ADDR;
+    const axusdReserve = Number(ethers.formatUnits(isAxusdToken0 ? reserves[0] : reserves[1], 6));
+    const usdcReserve  = Number(ethers.formatUnits(isAxusdToken0 ? reserves[1] : reserves[0], 6));
     const tvl = axusdReserve + usdcReserve;
 
     return {
@@ -100,7 +104,7 @@ async function fetchEulerSwapLiquidity(provider: ethers.JsonRpcProvider, deploye
       usdcReserve: usdcReserve.toFixed(4),
       totalLiquidity: Number(ethers.formatUnits(totalSupply, 18)).toFixed(6),
       totalValueUsd: tvl,
-      tokens: { token0, token1 },
+      tokens: { token0, token1, axusdIsToken0: isAxusdToken0 },
       note: 'Primary venue — LP earns swap fees + EVK vault lending yield.',
     };
   } catch {

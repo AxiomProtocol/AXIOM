@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import {
   EULER_SWAP_AXUSD_USDC_POOL_ADDRESS,
+  EULER_SWAP_AXUSD_AXM_POOL_ADDRESS,
   isEulerSwapDeployed,
 } from '../../../src/config/activeContracts.generated';
 import { EULER_SWAP } from '../../../shared/contracts';
@@ -13,6 +14,18 @@ const USDC          = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831'.toLowerCase()
 const AXM           = '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D'.toLowerCase();
 const ZERO          = '0x0000000000000000000000000000000000000000';
 
+// Per-token decimal map for EulerSwap pools
+const POOL_TOKEN_DECIMALS: Record<string, number> = {
+  [AXUSD_ERC3643]: 6,  // ERC-3643 AXUSD — 6 decimals
+  [AXUSD_ORIG]:    18, // Original AXUSD (Camelot only) — 18 decimals
+  [USDC]:          6,  // USDC — 6 decimals
+  [AXM]:           18, // AXM governance token — 18 decimals
+};
+
+function poolTokenDecimals(addr: string): number {
+  return POOL_TOKEN_DECIMALS[addr.toLowerCase()] ?? 18;
+}
+
 const CAMELOT_PAIR_ABI = [
   'function getReserves() view returns (uint112, uint112, uint16)',
   'function token0() view returns (address)',
@@ -21,6 +34,7 @@ const CAMELOT_PAIR_ABI = [
 const EULERSWAP_POOL_ABI = [
   'function getReserves() view returns (uint256 reserve0, uint256 reserve1)',
   'function token0() view returns (address)',
+  'function token1() view returns (address)',
   'function fee() view returns (uint256)',
 ];
 
@@ -43,18 +57,36 @@ async function quoteFromEulerSwap(
   if (poolAddress === ZERO) return null;
   try {
     const pool = new ethers.Contract(poolAddress, EULERSWAP_POOL_ABI, provider);
-    const [reserves, token0Raw] = await Promise.all([pool.getReserves(), pool.token0()]);
-    let feeBps = EULER_SWAP.SWAP_FEE_BPS;
+    const [reserves, token0Raw, token1Raw] = await Promise.all([
+      pool.getReserves(),
+      pool.token0(),
+      pool.token1(),
+    ]);
+    let feeBps: number = EULER_SWAP.SWAP_FEE_BPS;
     try { feeBps = Number(await pool.fee()); } catch {}
 
     const feeMultiplier = 1 - feeBps / 10000;
     const token0Lower = token0Raw.toLowerCase();
-    const isTokenInToken0 = tokenInLower === token0Lower || isAxusd(tokenInLower) && isAxusd(token0Lower);
+    const token1Lower = token1Raw.toLowerCase();
 
-    const reserveIn  = isTokenInToken0 ? Number(ethers.formatUnits(reserves[0], 6)) : Number(ethers.formatUnits(reserves[1], 6));
-    const reserveOut = isTokenInToken0 ? Number(ethers.formatUnits(reserves[1], 6)) : Number(ethers.formatUnits(reserves[0], 6));
+    // Look up correct decimals per token using the known-decimal map
+    // This prevents 1e12 errors when one side is AXM (18 decimals) vs USDC/AXUSD (6 decimals)
+    const dec0 = poolTokenDecimals(token0Lower);
+    const dec1 = poolTokenDecimals(token1Lower);
+
+    // Convert raw reserves to human-readable units with correct per-token decimals
+    const r0 = Number(ethers.formatUnits(reserves[0], dec0));
+    const r1 = Number(ethers.formatUnits(reserves[1], dec1));
+
+    // Match tokenIn to its pool side
+    const isTokenInToken0 = tokenInLower === token0Lower ||
+      (isAxusd(tokenInLower) && isAxusd(token0Lower));
+
+    const reserveIn  = isTokenInToken0 ? r0 : r1;
+    const reserveOut = isTokenInToken0 ? r1 : r0;
 
     if (reserveIn <= 0 || reserveOut <= 0) return null;
+    // amountIn is already in human-readable units; AMM math works correctly in those units
     const amountOut = ammOut(amountIn, reserveIn, reserveOut, feeMultiplier);
     const fee = amountIn * (feeBps / 10000);
     return { amountOut, fee, feeBps };
