@@ -162,8 +162,10 @@ function truncateAddr(addr: string): string {
 
 // ── EVK Whitelist constants ────────────────────────────────────────────────
 const LPM_ADDR     = '0xC0177120Fb5922813031a5857f4dF7F01750Bb6F';
-const EVK_FACTORY  = '0x29a56a1b8214D9Cf7c5561811750D5cBDb45CC8e';
-const EVC_ADDR     = '0x0C9a3dd6b8F28529d72d7f9cE918D493519EE383';
+// Verified: these are whitelisted in LPM (confirmed via deploy-axusd-evk-vault.js audit)
+const EVK_FACTORY  = '0x78Df1CF5bf06a7f27f2ACc580B934238C1b80D50'; // Real Euler V2 factory
+const EVC_ADDR     = '0x6302ef0F34100CDDFb5489fbcB6eE1AA95CD1066'; // Real Euler V2 EVC
+const EVK_VAULT    = '0xacdA87801f6409bB5157BA78aF1BD9631d6609B2'; // eAXUSD-6 (deployed ✓)
 
 interface EvkWhitelistTabProps {
   lpmPlatforms: string[];
@@ -180,7 +182,7 @@ function EvkWhitelistTab({ lpmPlatforms, lpmLoading, onRefresh }: EvkWhitelistTa
   const REQUIRED = [
     { label: 'EVC', addr: EVC_ADDR, sub: 'Euler Vault Connector — routes all vault calls' },
     { label: 'EVK Factory', addr: EVK_FACTORY, sub: 'Creates EVK vault proxies; must hold AXUSD during deployment' },
-    { label: 'EVK Vault', addr: 'PENDING DEPLOYMENT', sub: 'EVK_OPEN_MARKET_VAULT — update after deploy' },
+    { label: 'EVK Vault', addr: EVK_VAULT, sub: 'eAXUSD-6 — open money market, oracle immutable (v2)' },
   ];
 
   const handleAddPlatform = async () => {
@@ -315,6 +317,7 @@ function EvkWhitelistTab({ lpmPlatforms, lpmLoading, onRefresh }: EvkWhitelistTa
             {[
               { label: 'Quick: EVC', addr: EVC_ADDR },
               { label: 'Quick: EVK Factory', addr: EVK_FACTORY },
+              { label: 'Quick: EVK Vault (eAXUSD-6)', addr: EVK_VAULT },
             ].map(q => (
               <button
                 key={q.addr}
@@ -329,23 +332,25 @@ function EvkWhitelistTab({ lpmPlatforms, lpmLoading, onRefresh }: EvkWhitelistTa
       </div>
 
       <div className="border border-dl-border mb-6">
-        <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+        <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border flex items-center justify-between">
           <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">Deployment Sequence (Task #38)</p>
+          <span className="font-dl-mono text-xs font-semibold text-dl-forest border border-dl-forest px-2 py-0.5">DEPLOYED</span>
         </div>
         {[
-          { n: '01', cmd: 'npx hardhat run scripts/deploy-axusd-oracle.js --network arbitrumOne', desc: 'Deploy ERC-7726 AXIOMOracleAdapter. Update AXUSD_ERC7726_ORACLE_ADAPTER in oracleConfig.ts.' },
-          { n: '02', cmd: 'AXUSD_ORACLE_ADAPTER=<addr> npx hardhat run scripts/deploy-axusd-evk-vault.js --network arbitrumOne', desc: 'Deploy LinearKink IRM + EVK vault. Script auto-whitelists EVC + EVK Factory + vault in LPM. Supply cap 1M, borrow cap 500K set at launch.' },
-          { n: '03', cmd: 'Update shared/contracts.ts + src/config/activeContracts.generated.ts', desc: 'Set EVK_OPEN_MARKET_VAULT, EVK_OPEN_MARKET_IRM, EVK_OPEN_MARKET_GOVERNOR to deployed addresses.' },
-          { n: '04', cmd: 'Verify whitelist here → click Refresh above', desc: 'Confirm EVC, EVK Factory, and vault all appear in the live LPM platform list.' },
-          { n: '05', cmd: 'vault.deposit(initialAmount, receiverAddr)', desc: 'Seed initial AXUSD liquidity. Governor transfers to multisig after seeding.' },
+          { n: '01', done: true, cmd: 'AXIOMOracleAdapter v2 deployed', desc: '0xc894d1500CB1FBf8F045e87bd357A51345197c4e — primaryAxusd = ERC-3643 AXUSD. getQuote verified: 1 AXUSD = $1.00 USDC.' },
+          { n: '02', done: true, cmd: 'eAXUSD-6 EVK vault deployed + configured', desc: '0xacdA87801f6409bB5157BA78aF1BD9631d6609B2 — IRM set, USDC LTV 90%/95%, 1M supply cap / 500K borrow cap. Oracle immutable in MetaProxy trailing data.' },
+          { n: '03', done: true, cmd: 'shared/contracts.ts + activeContracts.generated.ts updated', desc: 'EVK_OPEN_MARKET_VAULT, EVK_OPEN_MARKET_IRM, AXUSD_ERC7726_ORACLE_ADAPTER, EVK_FACTORY, EVC all set to live addresses.' },
+          { n: '04', done: true, cmd: 'LPM whitelist verified', desc: 'EVC (0x6302ef0F…), EVK Factory (0x78Df1CF5…), and eAXUSD-6 vault (0xacdA878…) all confirmed in LendingPlatformModule platform list.' },
+          { n: '05', done: false, cmd: 'vault.deposit(initialAmount, receiverAddr)', desc: 'Seed initial AXUSD liquidity. Governor transfers to multisig after seeding.' },
         ].map((step, i) => (
           <div key={step.n} className={`px-4 py-3 ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'} ${i < 4 ? 'border-b border-dl-border' : ''}`}>
             <div className="flex items-start gap-3">
-              <span className="font-dl-mono text-xs font-bold text-dl-navy w-5 flex-shrink-0">{step.n}</span>
-              <div>
-                <p className="font-dl-mono text-xs text-dl-navy mb-1">{step.cmd}</p>
+              <span className={`font-dl-mono text-xs font-bold w-5 flex-shrink-0 ${step.done ? 'text-dl-forest' : 'text-dl-navy'}`}>{step.done ? '✓' : step.n}</span>
+              <div className="flex-1">
+                <p className={`font-dl-mono text-xs mb-1 ${step.done ? 'text-dl-forest' : 'text-dl-navy'}`}>{step.cmd}</p>
                 <p className="text-xs text-dl-gray">{step.desc}</p>
               </div>
+              {step.done && <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-1.5 py-0.5 flex-shrink-0">DONE</span>}
             </div>
           </div>
         ))}
