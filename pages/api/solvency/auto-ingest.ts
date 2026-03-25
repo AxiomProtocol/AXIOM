@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { pool } from '../../../server/db';
 import crypto from 'crypto';
-import { ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM, EVK_OPEN_MARKET_VAULT_ADDRESS, isEvkVaultDeployed } from '../../../src/config/activeContracts.generated';
+import { ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM, EVK_OPEN_MARKET_VAULT_ADDRESS, isEvkVaultDeployed, EULER_EARN_VAULT_ADDRESS, isEulerEarnDeployed } from '../../../src/config/activeContracts.generated';
 import { AXUSD_ORACLE_ADAPTER, isOracleDeployed } from '../../../src/config/oracleConfig';
 import { EULER_LENDING_CONTRACTS } from '../../../shared/contracts';
 
@@ -107,17 +107,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const deployerEthUsd = Math.round(deployerEth * ethPrice * 100) / 100;
     const psmReservesTotal = Math.round((primaryPsmUsdc + eulerPsmUsdc) * 100) / 100;
 
+    const VAULT_ABI_SIMPLE = ['function totalAssets() view returns (uint256)'];
+
     // ── EVK Open Market vault TVL (Task #38) ─────────────────────────────────
     // Reports zero when vault is PENDING_DEPLOYMENT; updates automatically after deploy.
     let evkVaultTvlAxusd = 0;
-    const EVK_VAULT_ABI_SIMPLE = ['function totalAssets() view returns (uint256)'];
     if (isEvkVaultDeployed()) {
       try {
-        const evkVault = new ethers.Contract(EVK_OPEN_MARKET_VAULT_ADDRESS, EVK_VAULT_ABI_SIMPLE, provider);
+        const evkVault = new ethers.Contract(EVK_OPEN_MARKET_VAULT_ADDRESS, VAULT_ABI_SIMPLE, provider);
         const tvlRaw: bigint = await evkVault.totalAssets();
         evkVaultTvlAxusd = parseFloat(ethers.formatEther(tvlRaw));
       } catch {
         // Non-fatal — EVK vault may be in initialization state
+      }
+    }
+
+    // ── Euler Earn AXUSD vault TVL (Task #39) ────────────────────────────────
+    // Multi-strategy yield aggregation vault. Reports zero until on-chain deploy.
+    let eulerEarnTvlAxusd = 0;
+    if (isEulerEarnDeployed()) {
+      try {
+        const eulerEarnVault = new ethers.Contract(EULER_EARN_VAULT_ADDRESS, VAULT_ABI_SIMPLE, provider);
+        const tvlRaw: bigint = await eulerEarnVault.totalAssets();
+        eulerEarnTvlAxusd = parseFloat(ethers.formatUnits(tvlRaw, 6));
+      } catch {
+        // Non-fatal — Euler Earn vault may be in initialization state
       }
     }
 
@@ -172,6 +186,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ? `EVK Open Money Market live — ${evkVaultTvlAxusd.toFixed(2)} AXUSD TVL`
           : 'EVK Open Money Market vault pending on-chain deployment (Task #38)',
       },
+      eulerEarn: {
+        vaultAddress: EULER_EARN_VAULT_ADDRESS,
+        deployed: isEulerEarnDeployed(),
+        tvlAxusd: eulerEarnTvlAxusd,
+        strategies: ['Phase 6 Credit Market (40%)', 'EVK Open Money Market (40%)', 'T-Bill Reserve (20%)'],
+        perfFeeBps: 1000,
+        smearingPeriodDays: 14,
+        status: isEulerEarnDeployed() ? 'LIVE' : 'PENDING_DEPLOYMENT',
+        note: isEulerEarnDeployed()
+          ? `Euler Earn AXUSD yield aggregation vault live — ${eulerEarnTvlAxusd.toFixed(2)} AXUSD TVL`
+          : 'Euler Earn AXUSD vault pending on-chain deployment (Task #39)',
+      },
       oracle: {
         axusdUsdPrice: axusdOraclePrice,
         axusdOracleSource,
@@ -187,6 +213,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         { label: 'CoinGecko', detail: `ETH/USD spot price: $${ethPrice}` },
         { label: 'Contract Registry', detail: 'activeContracts.generated.ts — PSM, deployer addresses' },
         { label: 'ERC-7726 Oracle', detail: axusdOraclePrice ? `AXUSD/USD: $${axusdOraclePrice.toFixed(6)} via ${axusdOracleSource}` : 'Oracle price unavailable' },
+        { label: 'Euler Earn AXUSD', detail: isEulerEarnDeployed() ? `Multi-strategy vault live — ${eulerEarnTvlAxusd.toFixed(2)} AXUSD TVL` : 'Pending deployment (Task #39)' },
       ],
     };
 
