@@ -387,7 +387,8 @@ interface EarnStats {
   blendedApyLabel: string;
   perfFeeBps: number;
   perfFeeRecipient: string;
-  perfFeeCollectedUsd: number;
+  perfFeeCollectedUsd: number | null;
+  perfFeeNote?: string;
   strategies: EarnStrategy[];
   lastRebalanceAt: string | null;
   ameRegime: string | null;

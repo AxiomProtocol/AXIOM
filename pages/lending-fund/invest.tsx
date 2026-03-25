@@ -127,6 +127,7 @@ export default function InvestPage() {
   const [investMode, setInvestMode] = useState<'earn-vault' | 'phase6'>('earn-vault');
 
   interface EarnStatsData {
+    vaultAddress: string;
     deployed: boolean;
     status: string;
     tvlUsd: number;
@@ -134,6 +135,8 @@ export default function InvestPage() {
     blendedApyLabel: string;
     perfFeeBps: number;
     perfFeeRecipient: string;
+    perfFeeCollectedUsd: number | null;
+    perfFeeNote?: string;
     ameRegime: string | null;
     ameConfidence: number | null;
     smearingPeriodDays: number;

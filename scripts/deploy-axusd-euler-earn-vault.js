@@ -45,6 +45,11 @@ const EULER_EARN_FACTORY = process.env.EULER_EARN_FACTORY_ADDR ?? ZERO_ADDR;
 // Update this after running deploy-axusd-evk-vault.js
 const EVK_OPEN_MARKET_VAULT = process.env.EVK_VAULT_ADDR ?? ZERO_ADDR;
 
+// Curator address — the on-chain agent authorized to trigger Euler Earn rebalances.
+// Set CURATOR_ADDR to the Axiom Sentinel multisig / operator EOA.
+// If not set, the deployer EOA is the curator (acceptable for launch; update post-deploy).
+const CURATOR_ADDR = process.env.CURATOR_ADDR ?? ZERO_ADDR;
+
 const STRATEGY_CAPS_BPS = {
   creditMarket: 4000,
   evkVault:     4000,
@@ -135,6 +140,16 @@ async function main() {
   const recipientTx = await vault.setFeeRecipient(AXIOM_FEE_BURNER);
   await recipientTx.wait();
   console.log('Fee recipient set:', AXIOM_FEE_BURNER, '(AxiomFeeBurner)');
+
+  console.log('\n--- Setting Curator ---');
+  if (CURATOR_ADDR !== ZERO_ADDR && CURATOR_ADDR.toLowerCase() !== deployer.address.toLowerCase()) {
+    const curatorTx = await vault.setCurator(CURATOR_ADDR);
+    await curatorTx.wait();
+    console.log('Curator set to CURATOR_ADDR:', CURATOR_ADDR);
+  } else {
+    console.log('[INFO] Curator = deployer EOA:', deployer.address);
+    console.log('  To set a different curator, re-run with CURATOR_ADDR=<axiom-sentinel-addr>');
+  }
 
   console.log('\n--- Registering Strategies ---');
 
