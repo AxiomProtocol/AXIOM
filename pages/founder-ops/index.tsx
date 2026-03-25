@@ -364,6 +364,280 @@ function EvkWhitelistTab({ lpmPlatforms, lpmLoading, onRefresh }: EvkWhitelistTa
   );
 }
 
+// ── Euler Earn Curator Tab ─────────────────────────────────────────────────
+interface EarnStrategy {
+  id: string;
+  label: string;
+  address: string;
+  targetWeightBps: number;
+  weightPct: string;
+  isDeployed: boolean;
+  tvlUsd: number;
+  description: string;
+  riskTier: string;
+}
+
+interface EarnStats {
+  vaultAddress: string;
+  deployed: boolean;
+  status: string;
+  tvlUsd: number;
+  blendedApyBps: number;
+  blendedApyPct: string;
+  blendedApyLabel: string;
+  perfFeeBps: number;
+  perfFeeRecipient: string;
+  perfFeeCollectedUsd: number;
+  strategies: EarnStrategy[];
+  lastRebalanceAt: string | null;
+  ameRegime: string | null;
+  ameConfidence: number | null;
+  smearingPeriodDays: number;
+  deployInstructions: string | null;
+}
+
+function EulerEarnCuratorTab() {
+  const [stats, setStats] = useState<EarnStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+  const [adminKey, setAdminKey] = useState('');
+  const [rebalancing, setRebalancing] = useState(false);
+  const [rebalanceResult, setRebalanceResult] = useState<string | null>(null);
+
+  const loadStats = () => {
+    setLoading(true);
+    setErr(null);
+    fetch('/api/euler/earn-stats')
+      .then(r => r.json())
+      .then((d: EarnStats) => setStats(d))
+      .catch(e => setErr(String(e)))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { loadStats(); }, []);
+
+  const handleRebalance = async () => {
+    if (!adminKey) { setRebalanceResult('Admin key required.'); return; }
+    setRebalancing(true);
+    setRebalanceResult(null);
+    try {
+      const r = await fetch('/api/sentinel/euler-earn-rebalance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-scan-key': adminKey },
+        body: JSON.stringify({ tvlUsd: stats?.tvlUsd ?? 0, note: 'Manual curator rebalance from Founder Ops' }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        const dec = d.authorization?.decision ?? 'APPROVED';
+        setRebalanceResult(`Sentinel ${dec} — ${d.authorization?.plainLanguage ?? 'Rebalance recorded.'}`);
+        loadStats();
+      } else {
+        setRebalanceResult('Error: ' + (d.error ?? 'Unknown error'));
+      }
+    } catch {
+      setRebalanceResult('Request failed.');
+    } finally {
+      setRebalancing(false);
+    }
+  };
+
+  const RISK_COLORS: Record<string, string> = { LOW: 'text-dl-forest', MEDIUM: 'text-dl-gold', HIGH: 'text-dl-error' };
+
+  return (
+    <div className="mb-8">
+      <SectionHeading>Euler Earn AXUSD — Yield Aggregation Curator Panel</SectionHeading>
+      <p className="text-xs text-dl-gray max-w-2xl leading-relaxed mb-6">
+        Axiom Sentinel acts as the curator of the Euler Earn AXUSD vault. This panel shows the
+        current strategy allocation, blended yield, AME regime context, and provides a Sentinel-authorized
+        rebalance trigger. All rebalance decisions are logged in the sentinel decision chain.
+      </p>
+
+      {loading && <p className="text-sm text-dl-gray py-8">Loading vault data...</p>}
+      {err && <p className="text-sm text-dl-error py-4">{err}</p>}
+
+      {stats && (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-6">
+            <div className="px-4 py-3 border-r border-dl-border bg-dl-bg">
+              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Vault Status</p>
+              <p className={`font-dl-mono text-sm font-bold ${stats.deployed ? 'text-dl-forest' : 'text-dl-gold'}`}>
+                {stats.status}
+              </p>
+            </div>
+            <div className="px-4 py-3 border-r border-dl-border bg-dl-bg">
+              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">TVL</p>
+              <p className="font-dl-mono text-sm font-bold text-dl-navy">
+                ${stats.tvlUsd.toLocaleString()} AXUSD
+              </p>
+            </div>
+            <div className="px-4 py-3 border-r border-dl-border bg-dl-bg">
+              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Blended APY</p>
+              <p className="font-dl-mono text-sm font-bold text-dl-forest">
+                {stats.blendedApyPct}% <span className="text-dl-gray font-normal text-xs">({stats.blendedApyLabel})</span>
+              </p>
+            </div>
+            <div className="px-4 py-3 bg-dl-bg">
+              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">AME Regime</p>
+              <p className={`font-dl-mono text-sm font-bold ${REGIME_COLORS[stats.ameRegime ?? ''] ?? 'text-dl-navy'}`}>
+                {stats.ameRegime ?? '—'}
+              </p>
+              {stats.ameConfidence != null && (
+                <p className="font-dl-mono text-xs text-dl-gray">
+                  conf {(stats.ameConfidence * 100).toFixed(0)}%
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="border border-dl-border mb-6">
+            <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+              <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">
+                Strategy Allocation — Target Caps
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs font-dl-mono">
+                <thead>
+                  <tr className="bg-dl-bg-alt border-b border-dl-border">
+                    <th className="px-4 py-2 text-left text-dl-gray font-normal">Strategy</th>
+                    <th className="px-4 py-2 text-right text-dl-gray font-normal">Weight</th>
+                    <th className="px-4 py-2 text-right text-dl-gray font-normal">TVL</th>
+                    <th className="px-4 py-2 text-left text-dl-gray font-normal">Risk</th>
+                    <th className="px-4 py-2 text-left text-dl-gray font-normal">Address</th>
+                    <th className="px-4 py-2 text-left text-dl-gray font-normal">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.strategies.map((s, i) => (
+                    <tr key={s.id} className={`border-b border-dl-border ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                      <td className="px-4 py-3">
+                        <p className="text-dl-navy font-semibold">{s.label}</p>
+                        <p className="text-dl-gray text-xs mt-0.5 leading-relaxed">{s.description}</p>
+                      </td>
+                      <td className="px-4 py-3 text-right text-dl-navy font-bold">{s.weightPct}%</td>
+                      <td className="px-4 py-3 text-right text-dl-navy">${s.tvlUsd.toLocaleString()}</td>
+                      <td className="px-4 py-3">
+                        <span className={RISK_COLORS[s.riskTier] ?? 'text-dl-navy'}>{s.riskTier}</span>
+                      </td>
+                      <td className="px-4 py-3 break-all">
+                        {s.isDeployed ? (
+                          <a href={`https://arbiscan.io/address/${s.address}`} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline">
+                            {truncateAddr(s.address)}
+                          </a>
+                        ) : (
+                          <span className="text-dl-gold">PENDING DEPLOYMENT</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={s.isDeployed ? 'text-dl-forest' : 'text-dl-gold'}>
+                          {s.isDeployed ? 'LIVE' : 'PENDING'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-4 py-3 border-t border-dl-border bg-dl-bg-alt flex flex-col md:flex-row md:items-center justify-between gap-2">
+              <div className="text-xs text-dl-gray">
+                <span className="text-dl-navy font-semibold">Performance Fee:</span>{' '}
+                {stats.perfFeeBps / 100}% → {truncateAddr(stats.perfFeeRecipient)} (AxiomFeeBurner)
+                {' '}|{' '}
+                <span className="text-dl-navy font-semibold">Smearing:</span> {stats.smearingPeriodDays}-day window
+              </div>
+              <div className="text-xs text-dl-gray">
+                Last rebalance: <span className="text-dl-navy">{stats.lastRebalanceAt ? formatUTC(stats.lastRebalanceAt) : 'Never'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="border border-dl-border mb-6">
+            <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+              <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">
+                Sentinel-Authorized Rebalance
+              </p>
+            </div>
+            <div className="px-4 py-4 bg-dl-bg">
+              <p className="text-xs text-dl-gray mb-3 leading-relaxed">
+                Trigger a Sentinel authorization record for a curator rebalance. The decision is logged
+                in the sentinel chain with current AME regime context. On-chain execution requires
+                calling <span className="font-dl-mono">vault.rebalance(strategies)</span> post-authorization.
+              </p>
+              <div className="flex flex-col gap-2 mb-3">
+                <input
+                  type="password"
+                  value={adminKey}
+                  onChange={e => setAdminKey(e.target.value)}
+                  placeholder="Sentinel scan key (MIRDT_SCAN_KEY)"
+                  autoComplete="off"
+                  className="w-full border border-dl-border px-3 py-2 font-dl-mono text-xs text-dl-text bg-white focus:outline-none"
+                />
+              </div>
+              <button
+                onClick={handleRebalance}
+                disabled={rebalancing || !adminKey || !stats.deployed}
+                className="bg-dl-forest text-white px-6 py-2 font-dl-mono text-xs disabled:opacity-50"
+              >
+                {rebalancing ? 'Submitting...' : stats.deployed ? 'Authorize Rebalance' : 'Vault Not Deployed'}
+              </button>
+              {rebalanceResult && (
+                <p className={`mt-2 font-dl-mono text-xs ${rebalanceResult.startsWith('Error') || rebalanceResult.startsWith('Request') ? 'text-dl-error' : 'text-dl-forest'}`}>
+                  {rebalanceResult}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {stats.deployInstructions && (
+            <div className="border border-dl-border mb-6">
+              <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+                <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">Deployment Sequence (Task #39)</p>
+              </div>
+              {[
+                { n: '01', cmd: 'npx hardhat run scripts/deploy-axusd-oracle.js --network arbitrumOne', desc: 'Deploy ERC-7726 oracle (Task #37 prerequisite).' },
+                { n: '02', cmd: 'npx hardhat run scripts/deploy-axusd-evk-vault.js --network arbitrumOne', desc: 'Deploy EVK Open Market vault (Task #38 prerequisite). Note address.' },
+                { n: '03', cmd: 'Confirm EULER_EARN_FACTORY at euler.finance/earn (Arbitrum One)', desc: 'Verify the canonical Euler Earn factory address before deployment.' },
+                { n: '04', cmd: 'EVK_VAULT_ADDR=0x... EULER_EARN_FACTORY_ADDR=0x... npx hardhat run scripts/deploy-axusd-euler-earn-vault.js --network arbitrumOne', desc: 'Deploy vault, register 3 strategies, set 10% perf fee → AxiomFeeBurner.' },
+                { n: '05', cmd: 'Update shared/contracts.ts + src/config/activeContracts.generated.ts', desc: 'Set EULER_EARN_VAULT, EULER_EARN_FACTORY to deployed addresses.' },
+                { n: '06', cmd: 'POST /api/erc3643/whitelist/add-platform { "platform": "<vault-addr>" }', desc: 'Whitelist vault in ERC-3643 LPM so it can receive AXUSD.' },
+              ].map((step, i) => (
+                <div key={step.n} className={`px-4 py-3 ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'} ${i < 5 ? 'border-b border-dl-border' : ''}`}>
+                  <div className="flex items-start gap-3">
+                    <span className="font-dl-mono text-xs font-bold text-dl-navy w-5 flex-shrink-0">{step.n}</span>
+                    <div>
+                      <p className="font-dl-mono text-xs text-dl-navy mb-1">{step.cmd}</p>
+                      <p className="text-xs text-dl-gray">{step.desc}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="border border-dl-border bg-dl-bg-alt p-4">
+            <p className="text-xs text-dl-gray leading-relaxed">
+              <span className="font-semibold text-dl-navy">Architecture:</span> Euler Earn acts as a yield router.
+              Depositors receive <span className="font-dl-mono">earnAXUSD</span> shares. The vault
+              rebalances across AXIOMCreditMarket (fix-and-flip loans), EVK Open Market (secured lending),
+              and T-Bill Reserve (treasury). The 14-day smearing window distributes harvested yield gradually to
+              prevent front-running. All rebalances require Sentinel authorization before on-chain execution.
+            </p>
+          </div>
+        </>
+      )}
+
+      {!loading && !stats && (
+        <div className="border border-dl-border p-6 text-center">
+          <p className="text-sm text-dl-gray">
+            Vault data unavailable.{' '}
+            <button onClick={loadStats} className="underline text-dl-navy">Try again</button>
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const ALLOCATION_TABLE = [
   { bucket: 'AXUSD (via PSM)', amount: '$40', purpose: 'Euler Vault + Lending Vault deposits' },
   { bucket: 'AXM (via Camelot)', amount: '$25', purpose: 'SEED lock — governance + revenue share' },
@@ -401,7 +675,7 @@ export default function FounderOpsPage() {
   ]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'allocation' | 'checkpoints' | 'log' | 'outcomes' | 'intelligence' | 'variance' | 'evk-whitelist'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'allocation' | 'checkpoints' | 'log' | 'outcomes' | 'intelligence' | 'variance' | 'evk-whitelist' | 'euler-earn-curator'>('overview');
   const [lpmPlatforms, setLpmPlatforms] = useState<string[]>([]);
   const [lpmLoading, setLpmLoading] = useState(false);
   const [pendingOutcomes, setPendingOutcomes] = useState<any[]>([]);
@@ -695,6 +969,7 @@ export default function FounderOpsPage() {
     { id: 'intelligence' as const, label: 'Intelligence' },
     { id: 'variance' as const, label: 'Variance Tracking' },
     { id: 'evk-whitelist' as const, label: 'EVK Whitelist' },
+    { id: 'euler-earn-curator' as const, label: 'Euler Earn Curator' },
   ];
 
   return (
@@ -1670,6 +1945,10 @@ export default function FounderOpsPage() {
                     .finally(() => setLpmLoading(false));
                 }}
               />
+            )}
+
+            {activeTab === 'euler-earn-curator' && (
+              <EulerEarnCuratorTab />
             )}
           </>
         )}

@@ -351,7 +351,23 @@ export const EULER_LENDING_CONTRACTS = {
   COLLATERAL_USDC_VAULT: '0x0a1eCC5Fe8C9be3C809844fcBe615B46A869b899',
   COLLATERAL_USDT_VAULT: '0x37512F45B4ba8808910632323b73783Ca938CD51',
   COLLATERAL_WETH_VAULT: '0x78E3E051D32157AACD550fBB78458762d8f7edFF',
-  COLLATERAL_ARB_VAULT: '0x7eD866D2D66c3149FaFE854C30C68a8BA7ceE8B9'
+  COLLATERAL_ARB_VAULT: '0x7eD866D2D66c3149FaFE854C30C68a8BA7ceE8B9',
+
+  // ── Euler Earn AXUSD Vault (Task #39) — Multi-Strategy Yield Aggregation ──
+  // Status: PENDING_DEPLOYMENT | Arbitrum One
+  // Asset: ERC-3643 AXUSD (0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7)
+  // Strategies: AXIOMCreditMarket 40%, EVK Open Market 40%, T-Bill Vault 20%
+  // Performance Fee: 10% routed to AXIOM_FEE_BURNER
+  // Curator: Axiom Sentinel (Axiom deployer EOA at launch; transfer to multisig post-seeding)
+  // Smearing Period: 2 weeks (rewards smoothed to prevent front-running)
+  // Deploy: npx hardhat run scripts/deploy-axusd-euler-earn-vault.js --network arbitrumOne
+  // After deploying: update EULER_EARN_VAULT + EULER_EARN_FACTORY in this file and
+  //   src/config/activeContracts.generated.ts, then whitelist vault in LPM.
+  EULER_EARN_VAULT: '0x0000000000000000000000000000000000000000',
+  // Euler Earn Factory — verify canonical address at euler.finance/earn before deployment
+  EULER_EARN_FACTORY: '0x0000000000000000000000000000000000000000',
+  // AxiomFeeBurner — destination for Euler Earn performance fee stream (10%)
+  AXIOM_FEE_BURNER: '0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94'
 } as const;
 
 // ERC-7726 Oracle Infrastructure

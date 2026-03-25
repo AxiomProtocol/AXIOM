@@ -34,6 +34,7 @@ const NOTIONAL_LIMITS: Record<string, number> = {
   InspectionCompleted: 0,
   DocumentUploaded: 0,
   ReportGenerated: 0,
+  EulerEarnRebalance: 500000,
 };
 
 function getActionRiskLevel(actionType: string): 'HIGH' | 'MEDIUM' | 'LOW' {

@@ -123,12 +123,40 @@ export default function InvestPage() {
   /** Pool utilization % for context display. */
   const [poolUtilizationPct, setPoolUtilizationPct] = useState<string | null>(null);
 
+  /** Primary entry mode: Euler Earn vault or Phase 6 direct deposit */
+  const [investMode, setInvestMode] = useState<'earn-vault' | 'phase6'>('earn-vault');
+
+  interface EarnStatsData {
+    deployed: boolean;
+    status: string;
+    tvlUsd: number;
+    blendedApyPct: string;
+    blendedApyLabel: string;
+    perfFeeBps: number;
+    perfFeeRecipient: string;
+    ameRegime: string | null;
+    ameConfidence: number | null;
+    smearingPeriodDays: number;
+    deployInstructions: string | null;
+    strategies: Array<{
+      id: string;
+      label: string;
+      address: string;
+      weightPct: string;
+      isDeployed: boolean;
+      tvlUsd: number;
+      description: string;
+      riskTier: string;
+    }>;
+  }
+  const [earnStats, setEarnStats] = useState<EarnStatsData | null>(null);
+  const [earnLoading, setEarnLoading] = useState(true);
+
   const { product } = router.query;
   const productKey = (product as string) || 'lending-fund';
 
   useEffect(() => {
     checkWalletConnection();
-    // Fetch real fund rate from live loan book so the yield table is grounded in actual data
     fetch('/api/realestate/fund-stats')
       .then(r => r.ok ? r.json() : null)
       .then((data) => {
@@ -139,7 +167,12 @@ export default function InvestPage() {
         const locked = parseFloat(data?.lockedInLoans || '0');
         if (totalAssets > 0) setPoolUtilizationPct(((locked / totalAssets) * 100).toFixed(1));
       })
-      .catch(() => {/* non-critical — yield table falls back to protocol floor */});
+      .catch(() => {});
+    fetch('/api/euler/earn-stats')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setEarnStats(d as EarnStatsData); })
+      .catch(() => {})
+      .finally(() => setEarnLoading(false));
   }, []);
 
   const checkWalletConnection = async () => {
@@ -370,6 +403,192 @@ export default function InvestPage() {
         </div>
       </div>
 
+      {/* ── Entry Mode Selector ─────────────────────────────────────────── */}
+      <div className="flex gap-0 border-b border-dl-border mb-8">
+        <button
+          onClick={() => setInvestMode('earn-vault')}
+          className={`px-5 py-3 text-sm font-dl-mono border-b-2 -mb-px ${investMode === 'earn-vault' ? 'border-dl-navy text-dl-navy font-semibold' : 'border-transparent text-dl-gray hover:text-dl-navy'}`}
+        >
+          AXUSD Earn Vault
+          <span className="ml-2 px-1.5 py-0.5 text-xs bg-dl-bg-alt text-dl-forest border border-dl-border">Recommended</span>
+        </button>
+        <button
+          onClick={() => setInvestMode('phase6')}
+          className={`px-5 py-3 text-sm font-dl-mono border-b-2 -mb-px ${investMode === 'phase6' ? 'border-dl-navy text-dl-navy font-semibold' : 'border-transparent text-dl-gray hover:text-dl-navy'}`}
+        >
+          Phase 6 Credit Pool
+          <span className="ml-2 px-1.5 py-0.5 text-xs bg-dl-bg-alt text-dl-gray border border-dl-border">Advanced</span>
+        </button>
+      </div>
+
+      {/* ── Euler Earn Vault Panel ────────────────────────────────────────── */}
+      {investMode === 'earn-vault' && (
+        <div className="mb-10">
+          <div className="mb-5">
+            <h2 className="font-dl-serif text-2xl text-dl-navy mb-2">AXUSD Earn Vault</h2>
+            <p className="text-sm text-dl-gray leading-relaxed max-w-2xl">
+              A multi-strategy yield aggregation vault built on Euler Earn. Your AXUSD is automatically
+              allocated across three on-chain strategies — the Phase 6 Credit Market, the EVK Open Money Market,
+              and a T-Bill reserve — to optimize risk-adjusted yield. Blended returns are variable and distributed
+              after a {earnStats?.smearingPeriodDays ?? 14}-day smoothing window.
+            </p>
+          </div>
+
+          {earnLoading && (
+            <div className="border border-dl-border p-6 text-center">
+              <p className="text-sm text-dl-gray font-dl-mono">Loading vault data...</p>
+            </div>
+          )}
+
+          {!earnLoading && earnStats && (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-6">
+                <div className="px-4 py-3 border-r border-dl-border bg-dl-bg">
+                  <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Vault Status</p>
+                  <p className={`font-dl-mono text-sm font-bold ${earnStats.deployed ? 'text-dl-forest' : 'text-dl-gold'}`}>
+                    {earnStats.status}
+                  </p>
+                </div>
+                <div className="px-4 py-3 border-r border-dl-border bg-dl-bg">
+                  <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Total Capital</p>
+                  <p className="font-dl-mono text-sm font-bold text-dl-navy">
+                    ${earnStats.tvlUsd.toLocaleString()} AXUSD
+                  </p>
+                </div>
+                <div className="px-4 py-3 border-r border-dl-border bg-dl-bg">
+                  <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Blended Yield</p>
+                  <p className="font-dl-mono text-sm font-bold text-dl-forest">
+                    {earnStats.blendedApyPct}% <span className="text-dl-gray font-normal text-xs">({earnStats.blendedApyLabel})</span>
+                  </p>
+                  <p className="text-xs text-dl-gray">Net of 10% perf fee</p>
+                </div>
+                <div className="px-4 py-3 bg-dl-bg">
+                  <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">AME Regime</p>
+                  <p className="font-dl-mono text-sm font-bold text-dl-navy">
+                    {earnStats.ameRegime ?? '—'}
+                  </p>
+                  {earnStats.ameConfidence != null && (
+                    <p className="text-xs text-dl-gray">conf {(earnStats.ameConfidence * 100).toFixed(0)}%</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="border border-dl-border mb-6">
+                <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+                  <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">Strategy Allocation</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs font-dl-mono">
+                    <thead>
+                      <tr className="bg-dl-bg-alt border-b border-dl-border">
+                        <th className="px-4 py-2 text-left text-dl-gray font-normal">Strategy</th>
+                        <th className="px-4 py-2 text-right text-dl-gray font-normal">Target Weight</th>
+                        <th className="px-4 py-2 text-left text-dl-gray font-normal">Risk Tier</th>
+                        <th className="px-4 py-2 text-left text-dl-gray font-normal">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {earnStats.strategies.map((s, i) => (
+                        <tr key={s.id} className={`border-b border-dl-border ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                          <td className="px-4 py-3">
+                            <p className="text-dl-navy font-semibold">{s.label}</p>
+                            <p className="text-dl-gray text-xs mt-0.5 leading-relaxed">{s.description}</p>
+                          </td>
+                          <td className="px-4 py-3 text-right text-dl-navy font-bold">{s.weightPct}%</td>
+                          <td className="px-4 py-3">
+                            <span className={s.riskTier === 'LOW' ? 'text-dl-forest' : s.riskTier === 'MEDIUM' ? 'text-dl-gold' : 'text-dl-error'}>
+                              {s.riskTier}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={s.isDeployed ? 'text-dl-forest' : 'text-dl-gold'}>
+                              {s.isDeployed ? 'LIVE' : 'PENDING'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="px-4 py-2 border-t border-dl-border bg-dl-bg-alt">
+                  <p className="text-xs text-dl-gray">
+                    Performance fee: {earnStats.perfFeeBps / 100}% of yield → AxiomFeeBurner.
+                    Yield distributed after {earnStats.smearingPeriodDays}-day smoothing window. Returns variable — not a guarantee.
+                  </p>
+                </div>
+              </div>
+
+              <div className="border border-dl-border mb-6">
+                <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+                  <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">ERC-3643 Identity Gate</p>
+                </div>
+                <div className="px-4 py-4 bg-dl-bg">
+                  <p className="text-xs text-dl-gray leading-relaxed mb-3">
+                    The Euler Earn AXUSD vault only accepts ERC-3643 compliant AXUSD. Depositors must pass the
+                    Axiom identity verification process before the vault can accept a transfer. This ensures
+                    every participant in the vault has completed KYC and satisfies compliance requirements.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      'ERC-3643 Gated',
+                      'KYC Required',
+                      'Axiom Identity Verified',
+                      '14-Day Yield Smearing',
+                    ].map(badge => (
+                      <span key={badge} className="px-2 py-1 text-xs font-dl-mono text-dl-gray border border-dl-border bg-dl-bg-alt">
+                        {badge}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                {earnStats.deployed ? (
+                  <a
+                    href={`https://app.euler.finance/vault/${earnStats.strategies[0]?.address}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block bg-dl-navy text-white px-8 py-3 font-dl-mono text-sm text-center hover:bg-[#1a2530]"
+                  >
+                    Deposit via Euler Finance →
+                  </a>
+                ) : (
+                  <div className="border border-dl-gold px-8 py-3 font-dl-mono text-sm text-dl-gold">
+                    Vault Deployment Pending — Available Soon
+                  </div>
+                )}
+                <button
+                  onClick={() => setInvestMode('phase6')}
+                  className="border border-dl-border px-8 py-3 font-dl-mono text-sm text-dl-gray hover:text-dl-navy hover:border-dl-navy"
+                >
+                  Phase 6 Direct Deposit (Advanced) →
+                </button>
+              </div>
+
+              <div className="mt-6 border border-dl-border bg-dl-bg-alt p-4">
+                <p className="text-xs text-dl-gray leading-relaxed">
+                  <span className="font-semibold text-dl-navy">How it works:</span> Depositors receive
+                  <span className="font-dl-mono"> earnAXUSD</span> shares representing proportional ownership of the vault.
+                  The vault curator (Axiom Sentinel) periodically rebalances allocations across the three strategies based on
+                  current AME regime, utilization, and yield conditions. Withdrawals are processed
+                  according to Euler Earn liquidity constraints. This is not a guaranteed return product.
+                  Review the <Link href="/disclosure" className="underline text-dl-navy">Disclosure</Link> before depositing.
+                </p>
+              </div>
+            </>
+          )}
+
+          {!earnLoading && !earnStats && (
+            <div className="border border-dl-border p-6 text-center">
+              <p className="text-sm text-dl-gray">Vault data unavailable. Try refreshing the page.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Phase 6 Credit Pool (5-step direct deposit wizard) ────────────── */}
+      {investMode === 'phase6' && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
           <div className="sticky top-6 bg-dl-bg-alt border border-dl-border">
@@ -1024,6 +1243,7 @@ export default function InvestPage() {
           )}
         </div>
       </div>
+      )}
     </DesignLawLayout>
   );
 }

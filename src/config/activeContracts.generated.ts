@@ -102,6 +102,18 @@ export function isEvkVaultDeployed(): boolean {
   return EVK_OPEN_MARKET_VAULT_ADDRESS !== '0x0000000000000000000000000000000000000000';
 }
 
+// ── Euler Earn AXUSD Vault (Task #39) ──
+// Status: PENDING_DEPLOYMENT | run scripts/deploy-axusd-euler-earn-vault.js then update these.
+export const EULER_EARN_VAULT_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+export const EULER_EARN_FACTORY_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+/** AxiomFeeBurner — receives 10% performance fee from Euler Earn vault */
+export const AXIOM_FEE_BURNER_ADDRESS = '0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94' as const;
+
+/** Returns true when the Euler Earn AXUSD vault has been deployed */
+export function isEulerEarnDeployed(): boolean {
+  return EULER_EARN_VAULT_ADDRESS !== '0x0000000000000000000000000000000000000000';
+}
+
 export const LEGACY_ADDRESSES = [
   { address: '0x8616E8EA83f048ab9A5eC513c9412dd2993bcE3F', reason: 'handleUSD (fxUSD) — NOT Axiom, false reference' },
   { address: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059', reason: 'Euler AXUSD Vault V4 (eAXUSD-4) — deprecated, WITHDRAW_ONLY mode; hook config issue prevents new deposits; replaced by EVK_OPEN_MARKET_VAULT' },
