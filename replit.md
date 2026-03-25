@@ -32,7 +32,7 @@ The architecture employs a "Product Factory Approach" for scalability. The curre
 Key features include:
 - DEX V2 Ecosystem and Institutional Observer Dashboard.
 - Lending Fund (SEC Reg D 506(c)).
-- Euler V2 AXUSD Lending Markets and EulerSwap AXUSD Liquidity Layer.
+- Euler V2 AXUSD Lending Markets (eAXUSD-6 vault: `0xacdA87801f6409bB5157BA78aF1BD9631d6609B2`, oracle: `0xc894d1500CB1FBf8F045e87bd357A51345197c4e`, IRM: `0x13B4F093C95785a621b928A9fa31Ea7a7fAb1662`) and EulerSwap AXUSD Liquidity Layer.
 - MIRDT (Market Intelligence & Risk Disclosure Terminal) for probabilistic trend-following analysis.
 - Axiom Sentinel: A unified capital decision and risk authorization layer.
 - Founder Operations Dashboard: Internal dashboard for system overview and operations.

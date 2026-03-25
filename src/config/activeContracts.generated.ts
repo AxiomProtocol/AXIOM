@@ -81,25 +81,27 @@ export const IDENTITY_REGISTRY_ADDRESS = '0x58f64a1262d5434d6C7637a2309b0999bB6D
  * Interface: getQuote(uint256 inAmount, address base, address quote) → uint256 outAmount
  * Pairs: USDC↔AXUSD, USDT↔AXUSD, WETH→AXUSD, ARB→AXUSD, WBTC→AXUSD
  */
-export const ERC7726_ORACLE_ADAPTER_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+export const ERC7726_ORACLE_ADAPTER_ADDRESS = '0xc894d1500CB1FBf8F045e87bd357A51345197c4e' as const;
 
 /**
  * EVK Open Money Market — ERC-3643 AXUSD Open Lending Vault (Task #38)
- * Status: PENDING_DEPLOYMENT
- * Deploy: npx hardhat run scripts/deploy-axusd-evk-vault.js --network arbitrumOne
+ * Status: DEPLOYED ✓
+ * Vault name: eAXUSD-6 | Deployed via Euler V2 EVK factory on Arbitrum One
  * Asset: ERC-3643 AXUSD (0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7)
- * Collateral: USDC at 90% borrowLTV / 95% liquidationLTV
- * Borrow Cap: 500K AXUSD | IRM: Linear Kink (1% base, 5%@kink, 100% max)
- * ERC-3643 prerequisite: vault + EVC whitelisted in LendingPlatformModule before deployment
+ * Oracle: AXIOMOracleAdapter v2 (0xc894d1500CB1FBf8F045e87bd357A51345197c4e) — immutable
+ * UoA: USDC | Collateral: USDC at 90% borrowLTV / 95% liquidationLTV
+ * Supply Cap: 1M AXUSD | Borrow Cap: 500K AXUSD
+ * IRM: IRMLinearKink (1% base, 5%@kink 80%, 100% max)
+ * Whitelisted in LendingPlatformModule ✓ | EVC whitelisted in LPM ✓
  */
-export const EVK_OPEN_MARKET_VAULT_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
-export const EVK_OPEN_MARKET_IRM_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+export const EVK_OPEN_MARKET_VAULT_ADDRESS = '0xacdA87801f6409bB5157BA78aF1BD9631d6609B2' as const;
+export const EVK_OPEN_MARKET_IRM_ADDRESS = '0x13B4F093C95785a621b928A9fa31Ea7a7fAb1662' as const;
 /** Governor admin of the EVK vault — Axiom deployer EOA at launch; transfer to multisig post-seeding */
 export const EVK_OPEN_MARKET_GOVERNOR_ADDRESS = '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96' as const;
 
 /** Returns true when the EVK Open Market vault has been deployed */
 export function isEvkVaultDeployed(): boolean {
-  return EVK_OPEN_MARKET_VAULT_ADDRESS !== '0x0000000000000000000000000000000000000000';
+  return true; // eAXUSD-6 is live at 0xacdA87801f6409bB5157BA78aF1BD9631d6609B2
 }
 
 // ── Euler Earn AXUSD Vault (Task #39) ──

@@ -337,16 +337,15 @@ export const EULER_LENDING_CONTRACTS = {
   AXUSD_VAULT_V3_DEPRECATED: '0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429',
 
   // ── EVK Open Money Market (Task #38) — ERC-3643 AXUSD Open Lending Vault ──
-  // Status: PENDING_DEPLOYMENT — run scripts/deploy-axusd-evk-vault.js after oracle deploy
+  // Status: DEPLOYED ✓ — eAXUSD-6, Euler V2 EVK on Arbitrum One
   // Asset: ERC-3643 AXUSD (0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7)
-  // Collateral: USDC only at launch (90% borrowLTV, 95% liquidationLTV)
-  // IRM: LinearKink — baseRate 1%, kink 80%, slope1 5%, slope2 100%
-  // Borrow Cap: $500K AXUSD (conservative launch cap)
-  // Governor: Axiom deployer multisig
-  // NOTE: EVK vault + EVC must be whitelisted in ERC3643_CONTRACTS.LENDING_PLATFORM_MODULE
-  //       before vault can receive ERC-3643 AXUSD transfers.
-  EVK_OPEN_MARKET_VAULT: '0x0000000000000000000000000000000000000000',
-  EVK_OPEN_MARKET_IRM: '0x0000000000000000000000000000000000000000',
+  // Oracle: AXIOMOracleAdapter v2 (0xc894d1500...) — IMMUTABLE (baked into MetaProxy trailing data)
+  // UoA: USDC | Collateral: USDC at 90% borrowLTV / 95% liquidationLTV
+  // Supply Cap: 1M AXUSD | Borrow Cap: 500K AXUSD
+  // IRM: IRMLinearKink — baseRate 1%, kink 80%, slope1 5%, slope2 100%
+  // Whitelisted in LendingPlatformModule ✓ | EVC whitelisted in LPM ✓
+  EVK_OPEN_MARKET_VAULT: '0xacdA87801f6409bB5157BA78aF1BD9631d6609B2',
+  EVK_OPEN_MARKET_IRM: '0x13B4F093C95785a621b928A9fa31Ea7a7fAb1662',
   EVK_OPEN_MARKET_GOVERNOR: '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96',
 
   // Vault Governor (legacy eAXUSD-4 governor — kept for reference)
@@ -358,8 +357,9 @@ export const EULER_LENDING_CONTRACTS = {
   PRICE_ORACLE_DEPRECATED: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15',
 
   // Euler Infrastructure (Arbitrum One) — canonical mainnet addresses
-  EVK_FACTORY: '0x29a56a1b8214D9Cf7c5561811750D5cBDb45CC8e',
-  EVC: '0x0C9a3dd6b8F28529d72d7f9cE918D493519EE383',
+  // EVK_FACTORY and EVC verified via LPM audit — used in deploy-axusd-evk-vault.js
+  EVK_FACTORY: '0x78Df1CF5bf06a7f27f2ACc580B934238C1b80D50',
+  EVC: '0x6302ef0F34100CDDFb5489fbcB6eE1AA95CD1066',
   IRM_FACTORY: '0xE1C43c63EC62E0B8dcE0e98Da08E9fa48cAC4D40',
   PROTOCOL_CONFIG: '0x06c1Ab0A1672E8FC7F7D10BD7B869B4116D18a2c',
   IMPLEMENTATION: '0x832ff4011a3164ea76cea06a313ee0b6cd72ba96',
@@ -394,10 +394,11 @@ export const EULER_LENDING_CONTRACTS = {
 // Interface: getQuote(uint256 inAmount, address base, address quote) → uint256 outAmount
 // Supports pairs: USDC↔AXUSD, USDT↔AXUSD, WETH→AXUSD, ARB→AXUSD, WBTC→AXUSD
 export const ERC7726_ORACLE_CONTRACTS = {
-  // AXIOMOracleAdapter — ERC-7726 compliant price oracle for AXUSD
+  // AXIOMOracleAdapter v2 — DEPLOYED ✓ ERC-7726 compliant price oracle for AXUSD
   // Source: contracts/oracle/AXIOMOracleAdapter.sol
-  // PENDING_DEPLOYMENT: update this address after on-chain deployment
-  AXUSD_ERC7726_ORACLE_ADAPTER: '0x0000000000000000000000000000000000000000',
+  // primaryAxusd = ERC-3643 AXUSD (0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7)
+  // Verified: getQuote(1e18, ERC3643_AXUSD, USDC) = 1,000,000 (peg = $1.00) ✓
+  AXUSD_ERC7726_ORACLE_ADAPTER: '0xc894d1500CB1FBf8F045e87bd357A51345197c4e',
 
   // DEPRECATED legacy oracles (active until AXUSD_ERC7726_ORACLE_ADAPTER is live):
   // Phase 3 OracleAdapter (AXUSD_GENIUS_CONTRACTS.ORACLE_ADAPTER)

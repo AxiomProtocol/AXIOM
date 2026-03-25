@@ -5,30 +5,29 @@
  * AXIOMOracleAdapter implements ERC-7726:
  *   getQuote(uint256 inAmount, address base, address quote) → uint256 outAmount
  *
- * Deployment status: PENDING
- * After deploying contracts/oracle/AXIOMOracleAdapter.sol via
- * `npx hardhat run scripts/deploy-axusd-oracle.js --network arbitrumOne`,
- * update AXUSD_ORACLE_ADAPTER to the deployed address.
+ * Deployment status: DEPLOYED ✓ (AXIOMOracleAdapter v2)
+ * Source: contracts/oracle/AXIOMOracleAdapter.sol
+ * Deployed via: scripts/deploy-axusd-oracle-v2.js
+ * primaryAxusd: 0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7 (ERC-3643 AXUSD)
  *
- * On-chain references:
+ * Verified on-chain:
+ *   getQuote(1e18, ERC3643_AXUSD, USDC) = 1,000,000 ✓  (peg = $1.00)
+ *
+ * Legacy references (kept for compatibility):
  *   Legacy OracleAdapter (Phase 3, Contract 31): 0xE3b1f38AaBAd138d0EF2e2C7429ee57c512fDF3D
  *   Legacy OracleAdapterRegistry (EulerVaultService): 0x91c8B55D234de4b48C1F1F1c5e9c4b6C8CB96f84
  *   Legacy PRICE_ORACLE (vault-stats.ts): 0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15
- *
- * When deployed, also update:
- *   - pages/api/euler/vault-stats.ts → EULER_LENDING_CONFIG.PRICE_ORACLE
- *   - server/services/lending/EulerVaultService.ts → EULER_CONFIG.ORACLE_ADAPTER_REGISTRY
  */
 
 import { ethers } from 'ethers';
 
 /**
- * AXIOMOracleAdapter — ERC-7726 compliant oracle for AXUSD/USD, USDC→AXUSD,
+ * AXIOMOracleAdapter v2 — ERC-7726 compliant oracle for AXUSD/USD, USDC→AXUSD,
  * ETH→AXUSD, ARB→AXUSD pricing on Arbitrum One.
- * Status: PENDING_DEPLOYMENT
- * Source: contracts/oracle/AXIOMOracleAdapter.sol
+ * Status: DEPLOYED ✓ | Source: contracts/oracle/AXIOMOracleAdapter.sol
+ * Also serves as immutable oracle in eAXUSD-6 EVK vault (MetaProxy trailing data).
  */
-export const AXUSD_ORACLE_ADAPTER: string = ethers.ZeroAddress;
+export const AXUSD_ORACLE_ADAPTER: string = '0xc894d1500CB1FBf8F045e87bd357A51345197c4e';
 
 /**
  * Returns true when the ERC-7726 oracle has been deployed to Arbitrum One.
