@@ -31,11 +31,17 @@ const ERC20_ABI = [
   'function symbol() view returns (string)',
 ];
 
+/**
+ * EVK AmountCap decoding: uint16 = (mantissa << 6) | exponent
+ * amount_in_asset_units = (mantissa * 10^exponent) / 1e9
+ * Zero = unlimited cap.
+ */
 function decodeAmountCap(encoded: number): bigint {
   if (encoded === 0) return 0n;
   const exponent = encoded & 0x3F;
   const mantissa = encoded >> 6;
-  return BigInt(mantissa) * (10n ** BigInt(exponent));
+  const raw = BigInt(mantissa) * (10n ** BigInt(exponent));
+  return raw / 1_000_000_000n; // EVK divides by 1e9 to derive asset units
 }
 
 export interface EvkVaultStats {

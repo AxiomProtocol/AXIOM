@@ -205,6 +205,7 @@ export default function BorrowPage() {
   const [market, setMarket] = useState<'private' | 'open'>('private');
   const [evkData, setEvkData] = useState<any>(null);
   const [evkLoading, setEvkLoading] = useState(false);
+  const [identityStatus, setIdentityStatus] = useState<'idle' | 'loading' | 'registered' | 'not_registered' | 'error'>('idle');
   const [phase, setPhase] = useState<PagePhase>('connect');
   const [wallet, setWallet] = useState<string | null>(null);
   const [gefInfo, setGefInfo] = useState<GefInfo | null>(null);
@@ -244,6 +245,16 @@ export default function BorrowPage() {
       .catch(() => {})
       .finally(() => setEvkLoading(false));
   }, [market]);
+
+  // ERC-3643 identity check — triggered when switching to open market with connected wallet
+  useEffect(() => {
+    if (market !== 'open' || !wallet) { setIdentityStatus('idle'); return; }
+    setIdentityStatus('loading');
+    fetch(`/api/erc3643/identity/check?wallet=${encodeURIComponent(wallet)}`)
+      .then(r => r.json())
+      .then(d => setIdentityStatus(d.registered ? 'registered' : 'not_registered'))
+      .catch(() => setIdentityStatus('error'));
+  }, [market, wallet]);
 
   const fetchLoanDetail = useCallback(async (loanId: string) => {
     if (!wallet) return;
@@ -511,13 +522,63 @@ export default function BorrowPage() {
               <SectionHeading>AXUSD EVK Open Money Market</SectionHeading>
               <p className="text-xs text-dl-gray max-w-2xl leading-relaxed">
                 Permissionless AXUSD borrowing via an Euler V2 vault. Deposit USDC as collateral
-                and borrow ERC-3643 AXUSD at a variable rate. Requires on-chain identity verification
-                — complete KYC on the AXUSD dashboard before interacting.
+                and borrow ERC-3643 AXUSD at a variable rate. Requires on-chain ERC-3643 identity
+                verification — complete KYC on the AXUSD dashboard first.
               </p>
             </div>
-            <Link href="/axusd-3643" className="text-xs text-dl-navy underline font-dl-mono whitespace-nowrap">
-              Register Identity &rarr;
-            </Link>
+          </div>
+
+          {/* ── Identity Gate ──────────────────────────────────────────── */}
+          <div className={`border mb-6 ${
+            identityStatus === 'registered' ? 'border-dl-forest' :
+            identityStatus === 'not_registered' ? 'border-dl-error' :
+            'border-dl-border'
+          }`}>
+            <div className={`px-4 py-3 border-b border-dl-border flex items-center justify-between ${
+              identityStatus === 'registered' ? 'bg-green-50' :
+              identityStatus === 'not_registered' ? 'bg-red-50' :
+              'bg-dl-bg-alt'
+            }`}>
+              <p className="text-xs font-semibold font-dl-mono uppercase text-dl-navy">
+                ERC-3643 Identity Verification
+              </p>
+              {identityStatus === 'registered' && (
+                <span className="font-dl-mono text-xs text-dl-forest font-bold">VERIFIED</span>
+              )}
+              {identityStatus === 'not_registered' && (
+                <span className="font-dl-mono text-xs text-dl-error font-bold">NOT REGISTERED</span>
+              )}
+            </div>
+            <div className="px-4 py-3 bg-white">
+              {!wallet && (
+                <p className="text-xs text-dl-gray">
+                  Connect your wallet using the button above to check your ERC-3643 identity status before borrowing.
+                </p>
+              )}
+              {wallet && identityStatus === 'loading' && (
+                <p className="text-xs text-dl-gray font-dl-mono">Checking on-chain identity registry...</p>
+              )}
+              {wallet && identityStatus === 'registered' && (
+                <p className="text-xs text-dl-forest">
+                  Your wallet <span className="font-dl-mono">{wallet.slice(0, 10)}...{wallet.slice(-6)}</span> is registered
+                  in the ERC-3643 IdentityRegistry with verified KYC claims. You are eligible to borrow AXUSD from the open market.
+                </p>
+              )}
+              {wallet && identityStatus === 'not_registered' && (
+                <div>
+                  <p className="text-xs text-dl-error mb-2">
+                    Wallet <span className="font-dl-mono">{wallet.slice(0, 10)}...{wallet.slice(-6)}</span> is not registered
+                    in the ERC-3643 IdentityRegistry. Complete KYC and register an on-chain identity before borrowing.
+                  </p>
+                  <Link href="/axusd-3643" className="font-dl-mono text-xs text-dl-navy underline">
+                    Register Identity on AXUSD Dashboard &rarr;
+                  </Link>
+                </div>
+              )}
+              {wallet && identityStatus === 'error' && (
+                <p className="text-xs text-dl-gray">Could not check identity status — RPC unavailable. Try again later.</p>
+              )}
+            </div>
           </div>
 
           {evkLoading && (
@@ -534,30 +595,24 @@ export default function BorrowPage() {
                     <span className="font-dl-mono text-xs font-semibold text-dl-gold bg-yellow-50 border border-dl-gold px-2 py-0.5">PENDING DEPLOYMENT</span>
                     <span className="text-xs text-dl-gray font-dl-mono">Vault not yet deployed to Arbitrum One</span>
                   </div>
-                  <p className="text-xs text-dl-gray leading-relaxed mb-3">
+                  <p className="text-xs text-dl-gray leading-relaxed mb-2">
                     The EVK Open Money Market vault is pending on-chain deployment. The borrow interface will
                     activate once the vault contract is deployed and the ERC-3643 Lending Platform Module whitelist
-                    is updated. Deploy using Hardhat after the ERC-7726 oracle is live.
+                    is updated. Borrow actions route through the Euler Finance interface once live.
                   </p>
-                  <div className="font-dl-mono text-xs text-dl-gray space-y-1">
-                    <p><span className="text-dl-navy">Step 1:</span> {evkData.deployInstructions?.step1}</p>
-                    <p><span className="text-dl-navy">Step 2:</span> {evkData.deployInstructions?.step2}</p>
-                    <p><span className="text-dl-navy">Step 3:</span> {evkData.deployInstructions?.step3}</p>
-                    <p><span className="text-dl-navy">Step 4:</span> {evkData.deployInstructions?.step4}</p>
-                  </div>
                 </div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div className="border border-dl-border">
                   <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
-                    <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">How to Borrow</p>
+                    <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">Borrow Flow</p>
                   </div>
                   {[
-                    { n: '01', title: 'Verify Identity', desc: 'Register your on-chain identity and complete KYC via the AXUSD dashboard. Your identity must be in the ERC-3643 registry.' },
-                    { n: '02', title: 'Approve USDC', desc: 'Approve the EVK vault to spend your USDC. USDC is deposited as collateral at 90% LTV.' },
-                    { n: '03', title: 'Enable Collateral', desc: 'Deposit USDC into the USDC Euler vault, then enable it as collateral in the EVC for the AXUSD vault.' },
-                    { n: '04', title: 'Borrow AXUSD', desc: 'Call borrow() on the EVK vault specifying your AXUSD amount. Rate is dynamic based on utilization.' },
+                    { n: '01', title: 'Verify Identity', desc: 'Register on-chain identity and complete KYC via the AXUSD dashboard. Your ERC-3643 identity must be in the IdentityRegistry.' },
+                    { n: '02', title: 'Deposit USDC Collateral', desc: 'On Euler Finance, deposit USDC into the USDC Euler vault, then enable it as collateral for the AXUSD vault via the EVC.' },
+                    { n: '03', title: 'Borrow AXUSD', desc: 'On Euler Finance, open the AXUSD EVK vault and borrow. Rate is dynamic (LinearKink: 1%→5%@80%→100%). Vault enforces ERC-3643 identity on receive.' },
+                    { n: '04', title: 'Repay', desc: 'Repay AXUSD plus accrued interest at any time. Collateral is released after full repayment.' },
                   ].map((step, i) => (
                     <div key={step.n} className={`flex gap-4 px-4 py-3 ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'} ${i < 3 ? 'border-b border-dl-border' : ''}`}>
                       <span className="font-dl-mono text-xs font-bold text-dl-navy w-6 flex-shrink-0">{step.n}</span>
@@ -581,7 +636,8 @@ export default function BorrowPage() {
                     { k: 'IRM Model', v: 'LinearKink (1% base, 5%@80%, 100% max)' },
                     { k: 'Borrow APY', v: `${evkData.vault?.borrowApyPct ?? '1.0'}% (variable)` },
                     { k: 'Borrow Cap', v: `${parseFloat(evkData.vault?.borrowCapAxusd ?? '500000').toLocaleString()} AXUSD` },
-                    { k: 'Identity Required', v: 'ERC-3643 on-chain identity (KYC verified)' },
+                    { k: 'Identity Required', v: 'ERC-3643 on-chain (IdentityRegistry)' },
+                    { k: 'Borrow Interface', v: 'Euler Finance app (vault deep-link)' },
                     { k: 'Network', v: 'Arbitrum One (42161)' },
                   ].map((row, i) => (
                     <div key={row.k} className={`flex justify-between px-4 py-2 text-xs font-dl-mono ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
@@ -606,14 +662,70 @@ export default function BorrowPage() {
                 ))}
               </div>
 
-              {evkData.status === 'LIVE' && evkData.vault?.eulerLink && (
-                <div className="text-center py-4">
-                  <a href={evkData.vault.eulerLink} target="_blank" rel="noopener noreferrer"
-                    className="px-6 py-2 bg-dl-navy text-white text-sm font-medium font-dl-mono">
-                    Open on Euler Finance &rarr;
-                  </a>
-                </div>
-              )}
+              {/* ── Primary Action — gated on identity ──────────────────── */}
+              <div className="border border-dl-border p-4 bg-dl-bg-alt">
+                {evkData.status === 'LIVE' ? (
+                  <>
+                    <p className="text-xs text-dl-gray mb-3 leading-relaxed">
+                      Borrow transactions are executed through Euler Finance. Your ERC-3643 identity
+                      is verified by the vault at the point of transfer — the Euler Finance interface
+                      handles the collateral deposit and borrow flow.
+                    </p>
+                    {identityStatus === 'registered' ? (
+                      <a
+                        href={evkData.vault?.eulerLink ?? `https://app.euler.finance/vault/${evkData.vault?.vaultAddress ?? ''}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-6 py-2 bg-dl-navy text-white text-sm font-medium font-dl-mono"
+                      >
+                        Borrow on Euler Finance &rarr;
+                      </a>
+                    ) : (
+                      <div>
+                        <p className="text-xs text-dl-error mb-2">
+                          {!wallet
+                            ? 'Connect your wallet to check identity eligibility.'
+                            : identityStatus === 'not_registered'
+                            ? 'ERC-3643 identity required before borrowing. Register KYC first.'
+                            : 'Checking identity...'}
+                        </p>
+                        {identityStatus === 'not_registered' && (
+                          <Link href="/axusd-3643" className="font-dl-mono text-xs text-dl-navy underline">
+                            Register Identity &rarr;
+                          </Link>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div>
+                    <p className="text-xs text-dl-gray mb-3 leading-relaxed">
+                      The vault is pending deployment. Once live, borrowing routes through
+                      <strong className="text-dl-navy"> Euler Finance</strong> — the industry-standard EVK interface.
+                      Complete identity registration now so you are ready on launch day.
+                    </p>
+                    <div className="flex flex-wrap gap-3 items-center">
+                      {identityStatus === 'registered' ? (
+                        <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-3 py-1">
+                          Identity Verified — Ready for Launch
+                        </span>
+                      ) : (
+                        <Link href="/axusd-3643" className="font-dl-mono text-xs text-white bg-dl-navy px-4 py-2">
+                          Register Identity &rarr;
+                        </Link>
+                      )}
+                      <a
+                        href="https://app.euler.finance"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-dl-mono text-xs text-dl-navy border border-dl-border px-4 py-2"
+                      >
+                        Visit Euler Finance &rarr;
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
             </>
           )}
 
