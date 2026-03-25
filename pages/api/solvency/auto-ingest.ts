@@ -143,23 +143,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // ── EulerSwap AXUSD Liquidity Layer (Task #40) ───────────────────────────
     // Dual-yield AMM pools (swap fees + EVK vault lending yield).
     // Peg stability signal: pool depth as primary liquidity metric.
-    const EULERSWAP_RESERVES_ABI = ['function getReserves() view returns (uint256 reserve0, uint256 reserve1)'];
+    const EULERSWAP_POOL_ABI_LITE = [
+      'function getReserves() view returns (uint256 reserve0, uint256 reserve1)',
+      'function token0() view returns (address)',
+    ];
+    const AXUSD_ADDR_LOWER = '0xd6110f59a978ada6ef5c0e9d6baa04455d46ade7'; // ERC-3643 AXUSD, 6 decimals
     let eulerSwapUsdcTvl = 0;
     let eulerSwapAxmTvl  = 0;
     const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
     if (isEulerSwapDeployed()) {
       if (EULER_SWAP_AXUSD_USDC_POOL_ADDRESS !== ZERO_ADDR) {
         try {
-          const usdcPool = new ethers.Contract(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, EULERSWAP_RESERVES_ABI, provider);
-          const r = await usdcPool.getReserves();
+          const usdcPool = new ethers.Contract(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, EULERSWAP_POOL_ABI_LITE, provider);
+          const [r, token0] = await Promise.all([usdcPool.getReserves(), usdcPool.token0()]);
+          // Both AXUSD and USDC are 6 decimals — sum directly
           eulerSwapUsdcTvl = parseFloat(ethers.formatUnits(r[0], 6)) + parseFloat(ethers.formatUnits(r[1], 6));
+          void token0;
         } catch {}
       }
       if (EULER_SWAP_AXUSD_AXM_POOL_ADDRESS !== ZERO_ADDR) {
         try {
-          const axmPool = new ethers.Contract(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, EULERSWAP_RESERVES_ABI, provider);
-          const r = await axmPool.getReserves();
-          eulerSwapAxmTvl = parseFloat(ethers.formatUnits(r[0], 6)) + parseFloat(ethers.formatUnits(r[1], 6));
+          const axmPool = new ethers.Contract(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, EULERSWAP_POOL_ABI_LITE, provider);
+          const [r, token0] = await Promise.all([axmPool.getReserves(), axmPool.token0()]);
+          // AXM is 18 decimals; avoid 1e12 error by using AXUSD reserve × 2 (balanced-pool proxy)
+          const isAxusdToken0 = (token0 as string).toLowerCase() === AXUSD_ADDR_LOWER;
+          const axusdRaw = isAxusdToken0 ? r[0] : r[1];
+          const axusdReserve = parseFloat(ethers.formatUnits(axusdRaw, 6));
+          eulerSwapAxmTvl = axusdReserve * 2;
         } catch {}
       }
     }

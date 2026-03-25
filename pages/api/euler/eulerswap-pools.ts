@@ -10,7 +10,9 @@ import {
 } from '../../../src/config/activeContracts.generated';
 import { EULER_SWAP } from '../../../shared/contracts';
 
-const ALCHEMY_RPC = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+const ALCHEMY_RPC = process.env.ALCHEMY_API_KEY
+  ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
+  : 'https://arb1.arbitrum.io/rpc';
 const ZERO = '0x0000000000000000000000000000000000000000';
 
 const AXUSD_TOKEN = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';

@@ -53,7 +53,7 @@ async function quoteFromEulerSwap(
   poolAddress: string,
   tokenInLower: string,
   amountIn: number,
-): Promise<{ amountOut: number; fee: number; feeBps: number } | null> {
+): Promise<{ amountOut: number; fee: number; feeBps: number; reserveIn: number; reserveOut: number } | null> {
   if (poolAddress === ZERO) return null;
   try {
     const pool = new ethers.Contract(poolAddress, EULERSWAP_POOL_ABI, provider);
@@ -89,7 +89,7 @@ async function quoteFromEulerSwap(
     // amountIn is already in human-readable units; AMM math works correctly in those units
     const amountOut = ammOut(amountIn, reserveIn, reserveOut, feeMultiplier);
     const fee = amountIn * (feeBps / 10000);
-    return { amountOut, fee, feeBps };
+    return { amountOut, fee, feeBps, reserveIn, reserveOut };
   } catch {
     return null;
   }
@@ -173,13 +173,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (isAxusdUsdcPair && isEulerSwapDeployed()) {
       const eulerResult = await quoteFromEulerSwap(provider, EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, tokenInLower, amountInFloat);
       if (eulerResult && eulerResult.amountOut > 0) {
-        const spotPrice = amountInFloat / eulerResult.amountOut;
-        const execPrice = amountInFloat / eulerResult.amountOut;
-        const priceImpact = Math.abs((spotPrice - execPrice) / spotPrice) * 100;
+        // Compute real price impact from AMM reserves
+        // spotPrice = reserveOut / reserveIn (tokenOut units per tokenIn)
+        // execPrice = amountOut / amountIn
+        // priceImpact = (spotPrice - execPrice) / spotPrice * 100
+        const spotPerUnit = eulerResult.reserveOut / eulerResult.reserveIn;
+        const execPerUnit = eulerResult.amountOut / amountInFloat;
+        const priceImpact = spotPerUnit > 0
+          ? Math.max(0, ((spotPerUnit - execPerUnit) / spotPerUnit) * 100)
+          : 0;
         return res.status(200).json({
           quote: {
             amountOut: eulerResult.amountOut.toFixed(6),
-            priceImpact: Math.min(priceImpact, 100),
+            priceImpact: Math.min(priceImpact, 100).toFixed(4),
             fee: eulerResult.fee.toFixed(6),
             feeBps: eulerResult.feeBps,
             route: [tokenIn, tokenOut],
@@ -194,11 +200,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (isAxusdAxmPair && isEulerSwapDeployed()) {
       const eulerResult = await quoteFromEulerSwap(provider, EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, tokenInLower, amountInFloat);
       if (eulerResult && eulerResult.amountOut > 0) {
-        const priceImpact = 0;
+        const spotPerUnit = eulerResult.reserveOut / eulerResult.reserveIn;
+        const execPerUnit = eulerResult.amountOut / amountInFloat;
+        const priceImpact = spotPerUnit > 0
+          ? Math.max(0, ((spotPerUnit - execPerUnit) / spotPerUnit) * 100)
+          : 0;
         return res.status(200).json({
           quote: {
             amountOut: eulerResult.amountOut.toFixed(6),
-            priceImpact: Math.min(priceImpact, 100),
+            priceImpact: Math.min(priceImpact, 100).toFixed(4),
             fee: eulerResult.fee.toFixed(6),
             feeBps: eulerResult.feeBps,
             route: [tokenIn, tokenOut],

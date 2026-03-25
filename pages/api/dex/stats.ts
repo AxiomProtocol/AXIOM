@@ -9,21 +9,34 @@ import { ethers } from 'ethers';
 import { EULER_SWAP } from '../../../shared/contracts';
 
 const ZERO = '0x0000000000000000000000000000000000000000';
+const AXUSD_ADDR = '0xd6110f59a978ada6ef5c0e9d6baa04455d46ade7'; // ERC-3643 AXUSD, 6 decimals
 const ALCHEMY_RPC = process.env.ALCHEMY_API_KEY
   ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
   : 'https://arb1.arbitrum.io/rpc';
 
-const POOL_ABI = ['function getReserves() view returns (uint256 reserve0, uint256 reserve1)'];
+const POOL_ABI = [
+  'function getReserves() view returns (uint256 reserve0, uint256 reserve1)',
+  'function token0() view returns (address)',
+];
 
-async function fetchEulerSwapTvl(poolAddress: string): Promise<number> {
+// poolType: 'stable' for AXUSD/USDC (both 6 decimals — sum directly);
+//           'axm'    for AXUSD/AXM  (AXM=18 decimals — use AXUSD reserve × 2 proxy)
+async function fetchEulerSwapTvl(poolAddress: string, poolType: 'stable' | 'axm'): Promise<number> {
   if (poolAddress === ZERO) return 0;
   try {
     const provider = new ethers.JsonRpcProvider(ALCHEMY_RPC);
     const pool = new ethers.Contract(poolAddress, POOL_ABI, provider);
-    const reserves = await pool.getReserves();
-    const r0 = Number(ethers.formatUnits(reserves[0], 6));
-    const r1 = Number(ethers.formatUnits(reserves[1], 6));
-    return r0 + r1;
+
+    if (poolType === 'stable') {
+      const reserves = await pool.getReserves();
+      return Number(ethers.formatUnits(reserves[0], 6)) + Number(ethers.formatUnits(reserves[1], 6));
+    }
+
+    // AXM pool: identify AXUSD side (6 decimals), use × 2 to avoid AXM decimal error
+    const [reserves, token0] = await Promise.all([pool.getReserves(), pool.token0()]);
+    const isAxusdToken0 = (token0 as string).toLowerCase() === AXUSD_ADDR;
+    const axusdRaw = isAxusdToken0 ? reserves[0] : reserves[1];
+    return Number(ethers.formatUnits(axusdRaw, 6)) * 2;
   } catch {
     return 0;
   }
@@ -37,8 +50,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const [camelotData, eulerSwapUsdcTvl, eulerSwapAxmTvl] = await Promise.all([
       camelotPoolService.getAllPools().catch(() => []),
-      fetchEulerSwapTvl(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS),
-      fetchEulerSwapTvl(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS),
+      fetchEulerSwapTvl(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, 'stable'),
+      fetchEulerSwapTvl(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, 'axm'),
     ]);
 
     const camelotTVL      = camelotData.reduce((s, p) => s + p.tvl, 0);
