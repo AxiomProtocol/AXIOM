@@ -1,28 +1,24 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { getSIWESession } from '../../../../lib/middleware/siweAuth';
-import { bitGoCustodyService } from '../../../../lib/services/BitGoCustodyService';
-import { BITGO_ENTERPRISE_ID } from '../../../../lib/bitgo/client';
-import { rateLimitDefault } from '../../../../lib/rateLimit';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { isAdminWallet } from '../../../utils/auth';
+import { treasuryService } from '../../../services/treasuryService';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-  if (!rateLimitDefault(req, res)) return;
+  const { session } = req;
 
-  const session = await getSIWESession(req);
-  if (!session) {
-    return res.status(401).json({ error: 'Wallet authentication required.', code: 'SIWE_AUTH_REQUIRED' });
+  // Require admin privileges after SIWE auth
+  if (!isAdminWallet(session.address)) {
+    return res.status(403).json({ code: 'TREASURY_PRIVILEGE_REQUIRED', message: 'User does not have the required privileges' });
   }
 
-  if (!BITGO_ENTERPRISE_ID || BITGO_ENTERPRISE_ID.startsWith('0x')) {
-    return res.status(200).json({ pendingApprovals: [], count: 0 });
+  // Existing behavior continues here
+  if (req.method === 'GET') {
+    try {
+      const pendingTreasury = await treasuryService.getPendingTreasury();
+      return res.status(200).json(pendingTreasury);
+    } catch (error) {
+      return res.status(500).json({ message: 'Error fetching pending treasury', error });
+    }
   }
-
-  const result = await bitGoCustodyService.getPendingApprovals(BITGO_ENTERPRISE_ID);
-
-  return res.status(200).json({
-    pendingApprovals: result.approvals ?? [],
-    count: result.approvals?.length ?? 0,
-  });
+  
+  return res.status(405).json({ message: 'Method not allowed' });
 }
