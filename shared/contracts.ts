@@ -320,10 +320,12 @@ export const EULER_LENDING_CONTRACTS = {
   AXUSD_VAULT_V3_DEPRECATED: '0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429',
   
   // Vault Governor - Manages LTV, caps, and vault parameters
-  VAULT_GOVERNOR: '0xE742Ee9b946043ecc75bFc71B47216C1f8248316',
+  VAULT_GOVERNOR: '0xE742Ee9b946043eCC75bFc71B47216C1f8248316',
   
-  // Oracle - Decimal-corrected price oracle for AXUSD and collateral
-  PRICE_ORACLE: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15',
+  // DEPRECATED: Legacy decimal-corrected price oracle (pre-ERC-7726).
+  // Superseded by AXUSD_ERC7726_ORACLE_ADAPTER once deployed.
+  // Reference: src/config/oracleConfig.ts → LEGACY_ORACLE.PRICE_ORACLE
+  PRICE_ORACLE_DEPRECATED: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15',
   
   // Euler Infrastructure (Arbitrum One)
   EVK_FACTORY: '0x78Df1CF5bf06a7f27f2ACc580B934238C1b80D50',
@@ -336,6 +338,27 @@ export const EULER_LENDING_CONTRACTS = {
   COLLATERAL_USDT_VAULT: '0x37512F45B4ba8808910632323b73783Ca938CD51',
   COLLATERAL_WETH_VAULT: '0x78E3E051D32157AACD550fBB78458762d8f7edFF',
   COLLATERAL_ARB_VAULT: '0x7eD866D2D66c3149FaFE854C30C68a8BA7ceE8B9'
+} as const;
+
+// ERC-7726 Oracle Infrastructure
+// Status: PENDING_DEPLOYMENT | Arbitrum One | Task #37
+// Deploy: npx hardhat run scripts/deploy-axusd-oracle.js --network arbitrumOne
+// After deploying, update AXUSD_ERC7726_ORACLE_ADAPTER below and in src/config/oracleConfig.ts.
+// Interface: getQuote(uint256 inAmount, address base, address quote) → uint256 outAmount
+// Supports pairs: USDC↔AXUSD, USDT↔AXUSD, WETH→AXUSD, ARB→AXUSD, WBTC→AXUSD
+export const ERC7726_ORACLE_CONTRACTS = {
+  // AXIOMOracleAdapter — ERC-7726 compliant price oracle for AXUSD
+  // Source: contracts/oracle/AXIOMOracleAdapter.sol
+  // PENDING_DEPLOYMENT: update this address after on-chain deployment
+  AXUSD_ERC7726_ORACLE_ADAPTER: '0x0000000000000000000000000000000000000000',
+
+  // DEPRECATED legacy oracles (active until AXUSD_ERC7726_ORACLE_ADAPTER is live):
+  // Phase 3 OracleAdapter (AXUSD_GENIUS_CONTRACTS.ORACLE_ADAPTER)
+  LEGACY_ORACLE_ADAPTER: '0xE3b1f38AaBAd138d0EF2e2C7429ee57c512fDF3D',
+  // OracleAdapterRegistry used by EulerVaultService
+  LEGACY_ORACLE_ADAPTER_REGISTRY: '0x91c8B55D234de4b48C1F1F1c5e9c4b6C8CB96f84',
+  // Euler vault PRICE_ORACLE (deprecated, see EULER_LENDING_CONTRACTS.PRICE_ORACLE_DEPRECATED)
+  LEGACY_PRICE_ORACLE: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15',
 } as const;
 
 // Node Economy Contracts (Step 2 - Node Operator Program)
@@ -367,6 +390,7 @@ export const ALL_CONTRACTS = {
   ...LAND_ACQUISITION_CONTRACTS,
   ...GOVERNANCE_CONTRACTS,
   ...EULER_LENDING_CONTRACTS,
+  ...ERC7726_ORACLE_CONTRACTS,
   ...NODE_ECONOMY_CONTRACTS
 } as const;
 

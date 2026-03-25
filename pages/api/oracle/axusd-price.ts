@@ -108,37 +108,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   };
   let erc7726Quote: OraclePriceResponse['erc7726Quote'] = null;
 
-  // ── Step 1: Try on-chain ERC-7726 adapter ──────────────────────────────────
+  // ── Step 1: Try on-chain ERC-7726 adapter via getQuote() ────────────────────
+  // ERC-7726 canonical interface: getQuote(inAmount, base, quote) → outAmount
+  // We call getQuote(1e6, USDC, AXUSD) — "how many AXUSD wei equal 1 USDC?"
+  // outAmount (AXUSD wei, 18 dec) per 1 USDC (6 dec):
+  //   1 AXUSD = (1e18 / outAmount) USDC ≈ USD → priceWad = (1e18 * 1e18) / outAmount
   if (AXUSD_ORACLE_ADAPTER && AXUSD_ORACLE_ADAPTER !== ethers.ZeroAddress && AXUSD_ORACLE_ADAPTER.length === 42) {
     try {
       const oracleContract = new ethers.Contract(AXUSD_ORACLE_ADAPTER, ORACLE_ADAPTER_ABI, provider);
-      const [priceWad, priceSrc] = await oracleContract.axusdUsdPrice();
-      const priceWadBig = BigInt(priceWad.toString());
-      axusdUsdPrice = parseFloat(ethers.formatEther(priceWad));
-      source = 'on_chain_erc7726';
-      sourceLabel = `AXIOMOracleAdapter.axusdUsdPrice() — source=${Number(priceSrc)} (1=PSM, 2=static)`;
+      const ONE_USDC = BigInt(1_000_000); // 1 USDC in 6-dec units
+      const quoteOut: bigint = await oracleContract.getQuote(ONE_USDC, USDC_ADDRESS, ACTIVE_AXUSD);
 
-      // Also get 1 USDC → AXUSD quote as ERC-7726 canonical proof
-      try {
-        const quoteAmount = await oracleContract.getQuote(
-          1_000_000n, // 1 USDC (6 dec)
-          USDC_ADDRESS,
-          ACTIVE_AXUSD
-        );
-        erc7726Quote = {
-          inAmount: '1000000',
-          base: USDC_ADDRESS,
-          quote: ACTIVE_AXUSD,
-          outAmount: quoteAmount.toString(),
-          description: 'getQuote(1 USDC → AXUSD) — ERC-7726 canonical interface',
-        };
-      } catch {}
+      // Derive AXUSD/USD price from ERC-7726 quote
+      // quoteOut = AXUSD wei per 1 USDC → priceUSD of 1 AXUSD = 1e18 / (quoteOut / 1e18) = 1e36 / quoteOut
+      const priceWadBig = quoteOut > 0n
+        ? (BigInt('1000000000000000000') * BigInt('1000000000000000000')) / quoteOut
+        : BigInt('1000000000000000000');
+
+      axusdUsdPrice = parseFloat(ethers.formatEther(priceWadBig));
+      source = 'on_chain_erc7726';
+      sourceLabel = `AXIOMOracleAdapter.getQuote(1 USDC → AXUSD) — ERC-7726 standard interface`;
+
+      erc7726Quote = {
+        inAmount: ONE_USDC.toString(),
+        base: USDC_ADDRESS,
+        quote: ACTIVE_AXUSD,
+        outAmount: quoteOut.toString(),
+        description: 'getQuote(1 USDC → AXUSD) — ERC-7726 canonical interface',
+      };
 
       onChainOracle = {
         address: AXUSD_ORACLE_ADAPTER,
         deployed: true,
         priceWad: priceWadBig.toString(),
-        source: Number(priceSrc),
+        source: null, // source enum is internal to contract; ERC-7726 getQuote() is source-agnostic
       };
     } catch {
       // Oracle not yet deployed — fall through to off-chain sources

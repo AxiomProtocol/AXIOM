@@ -130,16 +130,25 @@ class EulerVaultService {
   }
 
   /**
-   * Returns AXUSD/USD price via ERC-7726 oracle if deployed,
-   * otherwise falls back to the off-chain oracle API.
+   * Returns AXUSD/USD price using the ERC-7726 standardized interface.
    *
-   * ERC-7726: getQuote(1e18, AXUSD_ADDR, USD_DENOMINATION) → 1e18 (price ≈ 1)
-   * Fallback: fetch /api/oracle/axusd-price
+   * When the AXIOMOracleAdapter is deployed on-chain, calls the canonical
+   * ERC-7726 interface: getQuote(1e6, USDC, AXUSD) which returns how many
+   * AXUSD wei equal 1 USDC (normalized from 6-dec USDC to 18-dec AXUSD).
+   * USD price = 1 / (outAmount / 1e18) → price of 1 AXUSD in USD.
+   *
+   * Falls back to the off-chain /api/oracle/axusd-price endpoint (which
+   * internally applies the same PSM-ratio → CoinGecko → static priority).
    */
   async getAxusdOraclePrice(baseUrl?: string): Promise<OraclePriceResult> {
     const WAD = BigInt('1000000000000000000');
+    const USDC_ADDR = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+    const ACTIVE_AXUSD_ADDR = '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C';
 
-    // ── Try on-chain ERC-7726 oracle first ───────────────────────────────────
+    // ── Try on-chain ERC-7726 oracle via getQuote() ───────────────────────────
+    // getQuote(inAmount, base, quote) is the standardized ERC-7726 interface.
+    // We quote 1 USDC (1e6 units, 6 dec) → AXUSD (18 dec).
+    // outAmount ≥ 1e18 means AXUSD is worth ≤ 1 USDC → price = 1e18 / outAmount
     if (isOracleDeployed()) {
       try {
         const oracleContract = new ethers.Contract(
@@ -147,8 +156,11 @@ class EulerVaultService {
           ERC7726_ABI as string[],
           this.provider
         );
-        const [priceWad, srcNum] = await oracleContract.axusdUsdPrice();
-        const priceWadBig = BigInt(priceWad.toString());
+        const ONE_USDC = BigInt(1_000_000); // 1 USDC in 6-dec units
+        const outAmount: bigint = await oracleContract.getQuote(ONE_USDC, USDC_ADDR, ACTIVE_AXUSD_ADDR);
+        // outAmount = AXUSD wei per 1 USDC. Price of 1 AXUSD in USD:
+        // 1 USDC = outAmount / 1e18 AXUSD → 1 AXUSD = (1e18 / outAmount) USDC ≈ USD
+        const priceWadBig = outAmount > 0n ? (WAD * WAD) / outAmount : WAD;
         const priceUsd = parseFloat(ethers.formatEther(priceWadBig));
         return {
           priceUsd,
@@ -162,12 +174,17 @@ class EulerVaultService {
       }
     }
 
-    // ── Off-chain oracle API fallback ────────────────────────────────────────
+    // ── Off-chain oracle API fallback ─────────────────────────────────────────
     if (baseUrl) {
       try {
         const res = await fetch(`${baseUrl}/api/oracle/axusd-price`);
         if (res.ok) {
-          const data = await res.json() as { axusdUsdPrice?: string; axusdUsdPriceWad?: string; source?: string };
+          const data = await res.json() as {
+            axusdUsdPrice?: string;
+            axusdUsdPriceWad?: string;
+            source?: string;
+            erc7726Quote?: { outAmount?: string } | null;
+          };
           if (data.axusdUsdPrice) {
             return {
               priceUsd: parseFloat(data.axusdUsdPrice),
@@ -181,7 +198,7 @@ class EulerVaultService {
       } catch {}
     }
 
-    // ── Static 1:1 parity ────────────────────────────────────────────────────
+    // ── Static 1:1 parity ─────────────────────────────────────────────────────
     return {
       priceUsd: 1.0,
       priceWad: WAD.toString(),

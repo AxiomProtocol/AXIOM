@@ -796,10 +796,45 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
   // The API 'close' action covers active/delinquent → operator must first call
   // 'default' to reach DEFAULTED state, then 'close' to charge off.
   if (action === 'close') {
-    const { fixedLoan } = await getFixedLoanSigner();
+    const { fixedLoan, ethers: ethersLib } = await getFixedLoanSigner();
     const tx = await fixedLoan.chargeOffLoan(loanId32);
     const receipt = await tx.wait(1);
     const chainTxHash: string = receipt?.hash ?? tx.hash;
+
+    // ── ERC-7726 oracle write-down valuation ─────────────────────────────────
+    // Use getQuote(principalWei_6dec, AXUSD, USDC) to compute USD value of the
+    // written-down principal at execution time via the standard ERC-7726 interface.
+    // AXIOMCreditMarket uses 6-decimal AXUSD accounting internally.
+    const AXUSD_6DEC = '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C';
+    const USDC_ADDR  = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+    const ORACLE_ABI_ERC7726 = [
+      'function getQuote(uint256 inAmount, address base, address quote) external view returns (uint256 outAmount)',
+    ] as const;
+
+    let writeDownUsdValue: string | null = null;
+    let oracleUsed: 'erc7726_on_chain' | 'static_parity' = 'static_parity';
+
+    const outstandingPrincipal6dec = parseFloat(loan.outstanding_principal_usd) * 1e6;
+    const principalWei6 = BigInt(Math.round(outstandingPrincipal6dec));
+
+    if (isOracleDeployed() && principalWei6 > 0n) {
+      try {
+        const provider = new ethersLib.JsonRpcProvider(ARBITRUM_RPC);
+        const oracleContract = new ethersLib.Contract(AXUSD_ORACLE_ADAPTER, ORACLE_ABI_ERC7726, provider);
+        // getQuote(principalWei_6dec, AXUSD, USDC) → USDC wei (6 dec) value of the charged-off principal
+        const usdcOut: bigint = await oracleContract.getQuote(principalWei6, AXUSD_6DEC, USDC_ADDR);
+        writeDownUsdValue = (Number(usdcOut) / 1e6).toFixed(2);
+        oracleUsed = 'erc7726_on_chain';
+      } catch {
+        // fallback: USD value equals DB principal amount (static 1:1 parity)
+        writeDownUsdValue = parseFloat(loan.outstanding_principal_usd).toFixed(2);
+      }
+    } else {
+      // Static 1:1 parity: AXUSD ≈ USD until oracle is live
+      writeDownUsdValue = principalWei6 > 0n
+        ? parseFloat(loan.outstanding_principal_usd).toFixed(2)
+        : null;
+    }
 
     await pool.query(
       `UPDATE real_estate_loans
@@ -813,21 +848,55 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
       message: 'Loan charged off on-chain (principal written down via AXIOMFixedLoan.chargeOffLoan)',
       newStatus: transition.to,
       chainTxHash,
+      writeDownUsdValue,
       oracleContext: {
         standard: 'ERC-7726',
+        interface: 'getQuote(principalWei, AXUSD, USDC)',
         oracleAddress: AXUSD_ORACLE_ADAPTER,
         oracleDeployed: isOracleDeployed(),
-        note: 'Write-down amounts are denominated in AXUSD (6 dec). When ERC-7726 oracle is deployed, charge-off USD value can be verified via getQuote(principalWei, AXUSD, USDC).',
+        priceSource: oracleUsed,
+        note: oracleUsed === 'erc7726_on_chain'
+          ? 'Write-down USD value computed via ERC-7726 getQuote(principalWei, AXUSD, USDC) at charge-off time.'
+          : 'ERC-7726 oracle not yet deployed. Write-down USD value uses static 1:1 AXUSD≈USD parity.',
       },
     });
   }
 
   // ── default: defaultLoan() on AXIOMFixedLoan ─────────────────────────────
   if (action === 'default') {
-    const { fixedLoan } = await getFixedLoanSigner();
+    const { fixedLoan, ethers: ethersLib } = await getFixedLoanSigner();
     const tx = await fixedLoan.defaultLoan(loanId32);
     const receipt = await tx.wait(1);
     const chainTxHash: string = receipt?.hash ?? tx.hash;
+
+    // ── ERC-7726 oracle: compute outstanding exposure in USD at default time ─
+    const AXUSD_6DEC = '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C';
+    const USDC_ADDR  = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+    const ORACLE_ABI_ERC7726 = [
+      'function getQuote(uint256 inAmount, address base, address quote) external view returns (uint256 outAmount)',
+    ] as const;
+
+    let exposureUsdValue: string | null = null;
+    let oracleUsed: 'erc7726_on_chain' | 'static_parity' = 'static_parity';
+
+    const outstandingPrincipal6dec = parseFloat(loan.outstanding_principal_usd) * 1e6;
+    const principalWei6 = BigInt(Math.round(outstandingPrincipal6dec));
+
+    if (isOracleDeployed() && principalWei6 > 0n) {
+      try {
+        const provider = new ethersLib.JsonRpcProvider(ARBITRUM_RPC);
+        const oracleContract = new ethersLib.Contract(AXUSD_ORACLE_ADAPTER, ORACLE_ABI_ERC7726, provider);
+        const usdcOut: bigint = await oracleContract.getQuote(principalWei6, AXUSD_6DEC, USDC_ADDR);
+        exposureUsdValue = (Number(usdcOut) / 1e6).toFixed(2);
+        oracleUsed = 'erc7726_on_chain';
+      } catch {
+        exposureUsdValue = parseFloat(loan.outstanding_principal_usd).toFixed(2);
+      }
+    } else {
+      exposureUsdValue = principalWei6 > 0n
+        ? parseFloat(loan.outstanding_principal_usd).toFixed(2)
+        : null;
+    }
 
     await pool.query(
       `UPDATE real_estate_loans SET status = $2, disbursement_tx_hash = $3, updated_at = NOW() WHERE loan_id = $1`,
@@ -838,11 +907,16 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
       message: 'Loan defaulted on-chain (AXIOMFixedLoan.defaultLoan)',
       newStatus: transition.to,
       chainTxHash,
+      exposureUsdValue,
       oracleContext: {
         standard: 'ERC-7726',
+        interface: 'getQuote(principalWei, AXUSD, USDC)',
         oracleAddress: AXUSD_ORACLE_ADAPTER,
         oracleDeployed: isOracleDeployed(),
-        note: 'Default amounts denominated in AXUSD (6 dec). ERC-7726 oracle will provide real-time USD valuation once deployed.',
+        priceSource: oracleUsed,
+        note: oracleUsed === 'erc7726_on_chain'
+          ? 'Default exposure USD value computed via ERC-7726 getQuote(principalWei, AXUSD, USDC) at default time.'
+          : 'ERC-7726 oracle not yet deployed. Exposure USD value uses static 1:1 AXUSD≈USD parity.',
       },
     });
   }

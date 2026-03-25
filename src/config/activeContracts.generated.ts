@@ -72,9 +72,21 @@ export const FIXED_LOAN_NFT_ADDRESS = '0x511A0cD642532585dc87e41C84f7f499a975551
 /** ERC-3643 IdentityRegistry — canonical Axiom protocol registry (Arbitrum One) */
 export const IDENTITY_REGISTRY_ADDRESS = '0x58f64a1262d5434d6C7637a2309b0999bB6D1970' as const;
 
+/**
+ * ERC-7726 Oracle Adapter — PENDING_DEPLOYMENT
+ * Source: contracts/oracle/AXIOMOracleAdapter.sol
+ * Deploy: npx hardhat run scripts/deploy-axusd-oracle.js --network arbitrumOne
+ * After deploying, update this address and AXUSD_ORACLE_ADAPTER in src/config/oracleConfig.ts.
+ * Interface: getQuote(uint256 inAmount, address base, address quote) → uint256 outAmount
+ * Pairs: USDC↔AXUSD, USDT↔AXUSD, WETH→AXUSD, ARB→AXUSD, WBTC→AXUSD
+ */
+export const ERC7726_ORACLE_ADAPTER_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+
 export const LEGACY_ADDRESSES = [
   { address: '0x8616E8EA83f048ab9A5eC513c9412dd2993bcE3F', reason: 'handleUSD (fxUSD) — NOT Axiom, false reference' },
   { address: '0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429', reason: 'Euler AXUSD Vault V3 — deprecated, broken hook config' },
+  { address: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15', reason: 'Legacy Euler PRICE_ORACLE — superseded by ERC7726_ORACLE_ADAPTER_ADDRESS once deployed' },
+  { address: '0xE3b1f38AaBAd138d0EF2e2C7429ee57c512fDF3D', reason: 'Legacy OracleAdapter (Phase 3) — superseded by ERC7726_ORACLE_ADAPTER_ADDRESS once deployed' },
 ] as const;
 
 export function assertActiveContracts(): void {
