@@ -49,6 +49,8 @@ export const ACTIVE_CONTRACTS = {
       euler: 'Original PSM — 500K ceiling (Jan 5, 2026)',
     },
   },
+  /** @deprecated Use eulerVaultDeprecated. Kept for backward-compat across existing callers. */
+  eulerVault: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059' as const,
   eulerVaultDeprecated: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059' as const,
   revenueRouter: '0x39A9Ca593d350450d93aF7F24dC1A682df47F30a' as const,
   seed: '0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046' as const,
@@ -93,6 +95,8 @@ export const ERC7726_ORACLE_ADAPTER_ADDRESS = '0x0000000000000000000000000000000
  */
 export const EVK_OPEN_MARKET_VAULT_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
 export const EVK_OPEN_MARKET_IRM_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+/** Governor admin of the EVK vault — deployer EOA at launch; transfer to multisig post-seeding */
+export const EVK_OPEN_MARKET_GOVERNOR_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
 
 /** Returns true when the EVK Open Market vault has been deployed */
 export function isEvkVaultDeployed(): boolean {
