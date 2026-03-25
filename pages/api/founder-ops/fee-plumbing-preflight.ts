@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { ACTIVE_CONTRACTS, ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM } from '../../../src/config/activeContracts.generated';
 
-const EULER_VAULT = ACTIVE_CONTRACTS.eulerVault;
+const EULER_VAULT = ACTIVE_CONTRACTS.eulerVaultDeprecated;
 const REVENUE_ROUTER = ACTIVE_CONTRACTS.revenueRouter;
 const TREASURY_HUB = ACTIVE_CONTRACTS.treasuryHub;
 const DEPLOYER = ACTIVE_CONTRACTS.deployer;

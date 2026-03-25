@@ -197,7 +197,9 @@ export default function FounderOpsPage() {
   ]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'allocation' | 'checkpoints' | 'log' | 'outcomes' | 'intelligence' | 'variance'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'allocation' | 'checkpoints' | 'log' | 'outcomes' | 'intelligence' | 'variance' | 'evk-whitelist'>('overview');
+  const [lpmPlatforms, setLpmPlatforms] = useState<string[]>([]);
+  const [lpmLoading, setLpmLoading] = useState(false);
   const [pendingOutcomes, setPendingOutcomes] = useState<any[]>([]);
   const [outcomesLoading, setOutcomesLoading] = useState(false);
   const [outcomesUnauthorized, setOutcomesUnauthorized] = useState(false);
@@ -488,6 +490,7 @@ export default function FounderOpsPage() {
     { id: 'outcomes' as const, label: `Outcomes${pendingOutcomes.length > 0 ? ` (${pendingOutcomes.length})` : ''}` },
     { id: 'intelligence' as const, label: 'Intelligence' },
     { id: 'variance' as const, label: 'Variance Tracking' },
+    { id: 'evk-whitelist' as const, label: 'EVK Whitelist' },
   ];
 
   return (
@@ -522,6 +525,14 @@ export default function FounderOpsPage() {
                     if (tab.id === 'outcomes') loadPendingOutcomes();
                     if (tab.id === 'intelligence') loadIntelligence();
                     if (tab.id === 'variance') loadVariances();
+                    if (tab.id === 'evk-whitelist' && !lpmPlatforms.length) {
+                      setLpmLoading(true);
+                      fetch('/api/erc3643/whitelist/platforms')
+                        .then(r => r.json())
+                        .then(d => { if (d.platforms) setLpmPlatforms(d.platforms); })
+                        .catch(() => {})
+                        .finally(() => setLpmLoading(false));
+                    }
                   }}
                   className={`px-4 py-2 text-sm border-b-2 -mb-px transition-none ${
                     activeTab === tab.id
@@ -1440,6 +1451,83 @@ export default function FounderOpsPage() {
                   </div>
                 )}
               </>
+            )}
+
+            {activeTab === 'evk-whitelist' && (
+              <div className="mb-8">
+                <SectionHeading>EVK Open Money Market — LPM Whitelist Admin</SectionHeading>
+                <p className="text-xs text-dl-gray max-w-2xl leading-relaxed mb-6">
+                  The ERC-3643 LendingPlatformModule (LPM) must whitelist both the EVK vault address and
+                  the EVC before the vault can hold or transfer ERC-3643 AXUSD. This panel tracks
+                  whitelisted platforms and provides deployment instructions for Task #38.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border mb-6">
+                  {[
+                    { label: 'LPM Address', value: '0xC0177120Fb5922813031a5857f4dF7F01750Bb6F', sub: 'LendingPlatformModule' },
+                    { label: 'EVK Vault', value: 'PENDING DEPLOYMENT', sub: 'EVK_OPEN_MARKET_VAULT — update after deploy' },
+                    { label: 'EVC', value: '0x0C9a3dd6b8F28529d72d7f9cE918D493519EE383', sub: 'Euler Vault Connector (whitelist required)' },
+                  ].map((m, i) => (
+                    <div key={m.label} className={`px-4 py-4 bg-dl-bg ${i < 2 ? 'border-r border-dl-border' : ''}`}>
+                      <p className="text-xs text-dl-gray mb-1 font-dl-mono uppercase">{m.label}</p>
+                      <p className={`font-dl-mono text-xs font-bold ${m.value === 'PENDING DEPLOYMENT' ? 'text-dl-gold' : 'text-dl-navy'} break-all`}>{m.value}</p>
+                      <p className="text-xs text-dl-muted mt-0.5">{m.sub}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="border border-dl-border mb-6">
+                  <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+                    <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">Whitelisted Platforms (Live from LPM)</p>
+                  </div>
+                  {lpmLoading ? (
+                    <div className="px-4 py-6 text-center text-sm text-dl-gray">Loading platform data...</div>
+                  ) : lpmPlatforms.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-xs text-dl-gray">
+                      No platforms loaded. Click "EVK Whitelist" tab to fetch, or no platforms whitelisted yet.
+                    </div>
+                  ) : (
+                    lpmPlatforms.map((addr, i) => (
+                      <div key={addr} className={`flex justify-between items-center px-4 py-3 text-xs font-dl-mono ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'} border-b border-dl-border`}>
+                        <span className="text-dl-navy">{addr}</span>
+                        <a href={`https://arbiscan.io/address/${addr}`} target="_blank" rel="noopener noreferrer" className="text-dl-gray underline">Arbiscan</a>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="border border-dl-border mb-6">
+                  <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+                    <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">Deployment Sequence (Task #38)</p>
+                  </div>
+                  {[
+                    { n: '01', cmd: 'npx hardhat run scripts/deploy-axusd-oracle.js --network arbitrumOne', desc: 'Deploy ERC-7726 AXIOMOracleAdapter. Update AXUSD_ERC7726_ORACLE_ADAPTER in oracleConfig.ts.' },
+                    { n: '02', cmd: 'AXUSD_ORACLE_ADAPTER=<addr> npx hardhat run scripts/deploy-axusd-evk-vault.js --network arbitrumOne', desc: 'Deploy LinearKink IRM + EVK vault via EVK Factory. Whitelists EVC in LPM automatically.' },
+                    { n: '03', cmd: '# Update shared/contracts.ts + src/config/activeContracts.generated.ts', desc: 'Set EVK_OPEN_MARKET_VAULT and EVK_OPEN_MARKET_IRM to deployed addresses.' },
+                    { n: '04', cmd: '# addPlatform(AXUSD_TOKEN, vaultAddress) on LPM', desc: 'Whitelist the vault address in LendingPlatformModule (deployment script does this automatically).' },
+                    { n: '05', cmd: '# Seed initial AXUSD liquidity via vault.deposit()', desc: 'Deposit initial AXUSD to seed the open market with available liquidity.' },
+                  ].map((step, i) => (
+                    <div key={step.n} className={`px-4 py-3 ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'} ${i < 4 ? 'border-b border-dl-border' : ''}`}>
+                      <div className="flex items-start gap-3">
+                        <span className="font-dl-mono text-xs font-bold text-dl-navy w-5 flex-shrink-0">{step.n}</span>
+                        <div>
+                          <p className="font-dl-mono text-xs text-dl-navy mb-1 break-all">{step.cmd}</p>
+                          <p className="text-xs text-dl-gray">{step.desc}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="border border-dl-border bg-dl-bg-alt p-4">
+                  <p className="text-xs text-dl-gray leading-relaxed">
+                    <span className="font-semibold text-dl-navy">ERC-3643 Compliance:</span> The LendingPlatformModule enforces that
+                    only whitelisted addresses can hold or receive ERC-3643 AXUSD. All vault interactions (deposit, borrow, repay, liquidate)
+                    flow through the vault or EVC, both of which must be whitelisted. Individual borrower wallets do NOT need separate
+                    whitelist entries — the vault is the compliance boundary.
+                  </p>
+                </div>
+              </div>
             )}
           </>
         )}

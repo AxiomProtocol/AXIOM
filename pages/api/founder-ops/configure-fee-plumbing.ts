@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import { pool } from '../../../server/db';
 import { ACTIVE_CONTRACTS } from '../../../src/config/activeContracts.generated';
 
-const EULER_VAULT = ACTIVE_CONTRACTS.eulerVault;
+const EULER_VAULT = ACTIVE_CONTRACTS.eulerVaultDeprecated;
 const REVENUE_ROUTER = ACTIVE_CONTRACTS.revenueRouter;
 
 const VAULT_ABI = [

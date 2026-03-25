@@ -2,8 +2,9 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { pool } from '../../../server/db';
 import crypto from 'crypto';
-import { ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM } from '../../../src/config/activeContracts.generated';
+import { ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM, EVK_OPEN_MARKET_VAULT_ADDRESS, isEvkVaultDeployed } from '../../../src/config/activeContracts.generated';
 import { AXUSD_ORACLE_ADAPTER, isOracleDeployed } from '../../../src/config/oracleConfig';
+import { EULER_LENDING_CONTRACTS } from '../../../shared/contracts';
 
 const PSM_ABI = [
   'function axusd() view returns (address)',
@@ -105,6 +106,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const deployerEthUsd = Math.round(deployerEth * ethPrice * 100) / 100;
     const psmReservesTotal = Math.round((primaryPsmUsdc + eulerPsmUsdc) * 100) / 100;
+
+    // ── EVK Open Market vault TVL (Task #38) ─────────────────────────────────
+    // Reports zero when vault is PENDING_DEPLOYMENT; updates automatically after deploy.
+    let evkVaultTvlAxusd = 0;
+    const EVK_VAULT_ABI_SIMPLE = ['function totalAssets() view returns (uint256)'];
+    if (isEvkVaultDeployed()) {
+      try {
+        const evkVault = new ethers.Contract(EVK_OPEN_MARKET_VAULT_ADDRESS, EVK_VAULT_ABI_SIMPLE, provider);
+        const tvlRaw: bigint = await evkVault.totalAssets();
+        evkVaultTvlAxusd = parseFloat(ethers.formatEther(tvlRaw));
+      } catch {
+        // Non-fatal — EVK vault may be in initialization state
+      }
+    }
+
     const treasuryTotalUsd = Math.round((deployerEthUsd + deployerUsdc + psmReservesTotal) * 100) / 100;
     const liabilitiesTotalUsd = Math.round((primaryAxusdSupply + eulerAxusdSupply) * 100) / 100;
 
@@ -147,6 +163,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       hardBrake: 'OFF',
       gateStatus: 'OPEN',
       composition,
+      evkOpenMarket: {
+        vaultAddress: EVK_OPEN_MARKET_VAULT_ADDRESS,
+        deployed: isEvkVaultDeployed(),
+        tvlAxusd: evkVaultTvlAxusd,
+        status: isEvkVaultDeployed() ? 'LIVE' : 'PENDING_DEPLOYMENT',
+        note: isEvkVaultDeployed()
+          ? `EVK Open Money Market live — ${evkVaultTvlAxusd.toFixed(2)} AXUSD TVL`
+          : 'EVK Open Money Market vault pending on-chain deployment (Task #38)',
+      },
       oracle: {
         axusdUsdPrice: axusdOraclePrice,
         axusdOracleSource,

@@ -49,7 +49,7 @@ export const ACTIVE_CONTRACTS = {
       euler: 'Original PSM — 500K ceiling (Jan 5, 2026)',
     },
   },
-  eulerVault: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059' as const,
+  eulerVaultDeprecated: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059' as const,
   revenueRouter: '0x39A9Ca593d350450d93aF7F24dC1A682df47F30a' as const,
   seed: '0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046' as const,
   axmToken: '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D' as const,
@@ -82,8 +82,26 @@ export const IDENTITY_REGISTRY_ADDRESS = '0x58f64a1262d5434d6C7637a2309b0999bB6D
  */
 export const ERC7726_ORACLE_ADAPTER_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
 
+/**
+ * EVK Open Money Market — ERC-3643 AXUSD Open Lending Vault (Task #38)
+ * Status: PENDING_DEPLOYMENT
+ * Deploy: npx hardhat run scripts/deploy-axusd-evk-vault.js --network arbitrumOne
+ * Asset: ERC-3643 AXUSD (0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7)
+ * Collateral: USDC at 90% borrowLTV / 95% liquidationLTV
+ * Borrow Cap: 500K AXUSD | IRM: Linear Kink (1% base, 5%@kink, 100% max)
+ * ERC-3643 prerequisite: vault + EVC whitelisted in LendingPlatformModule before deployment
+ */
+export const EVK_OPEN_MARKET_VAULT_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+export const EVK_OPEN_MARKET_IRM_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+
+/** Returns true when the EVK Open Market vault has been deployed */
+export function isEvkVaultDeployed(): boolean {
+  return EVK_OPEN_MARKET_VAULT_ADDRESS !== '0x0000000000000000000000000000000000000000';
+}
+
 export const LEGACY_ADDRESSES = [
   { address: '0x8616E8EA83f048ab9A5eC513c9412dd2993bcE3F', reason: 'handleUSD (fxUSD) — NOT Axiom, false reference' },
+  { address: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059', reason: 'Euler AXUSD Vault V4 (eAXUSD-4) — deprecated, WITHDRAW_ONLY mode; hook config issue prevents new deposits; replaced by EVK_OPEN_MARKET_VAULT' },
   { address: '0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429', reason: 'Euler AXUSD Vault V3 — deprecated, broken hook config' },
   { address: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15', reason: 'Legacy Euler PRICE_ORACLE — superseded by ERC7726_ORACLE_ADAPTER_ADDRESS once deployed' },
   { address: '0xE3b1f38AaBAd138d0EF2e2C7429ee57c512fDF3D', reason: 'Legacy OracleAdapter (Phase 3) — superseded by ERC7726_ORACLE_ADAPTER_ADDRESS once deployed' },

@@ -381,6 +381,70 @@ function OverviewTab({ data }: { data: DashboardData }) {
         ))}
       </div>
 
+      <SectionHeading>Active Utility</SectionHeading>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border mb-8">
+        <div className="p-5 border-r border-dl-border">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="font-dl-mono text-xs font-semibold text-dl-gold border border-dl-gold px-2 py-0.5">PENDING DEPLOYMENT</span>
+            <span className="font-dl-mono text-xs text-dl-gray">Task #38</span>
+          </div>
+          <h3 className="font-dl-serif text-sm font-semibold text-dl-navy mb-1">EVK Open Money Market</h3>
+          <p className="text-xs text-dl-gray leading-relaxed mb-3">
+            Euler V2 vault accepting ERC-3643 AXUSD as its base asset. Deposit USDC as collateral
+            to borrow AXUSD at a variable rate. Requires on-chain identity registration via this dashboard.
+          </p>
+          <div className="font-dl-mono text-xs space-y-1 mb-3">
+            <div className="flex justify-between">
+              <span className="text-dl-gray uppercase">Collateral</span>
+              <span className="text-dl-navy">USDC at 90% LTV</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-dl-gray uppercase">IRM</span>
+              <span className="text-dl-navy">LinearKink (1%→100%)</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-dl-gray uppercase">Borrow Cap</span>
+              <span className="text-dl-navy">500K AXUSD</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-dl-gray uppercase">Network</span>
+              <span className="text-dl-navy">Arbitrum One</span>
+            </div>
+          </div>
+          <a href="/lending-fund?tab=open-market" className="text-xs text-dl-navy underline font-dl-mono">View market details &rarr;</a>
+        </div>
+        <div className="p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="font-dl-mono text-xs font-semibold text-dl-forest border border-dl-forest px-2 py-0.5">LIVE</span>
+            <span className="font-dl-mono text-xs text-dl-gray">Phase 6</span>
+          </div>
+          <h3 className="font-dl-serif text-sm font-semibold text-dl-navy mb-1">AXIOMCreditMarket</h3>
+          <p className="text-xs text-dl-gray leading-relaxed mb-3">
+            ERC-3643 gated LP pool for the private credit market. LP capital is committed to verified borrowers
+            via AXIOMFixedLoan. Interest distributes pro-rata on repayment events.
+          </p>
+          <div className="font-dl-mono text-xs space-y-1 mb-3">
+            <div className="flex justify-between">
+              <span className="text-dl-gray uppercase">LP Eligibility</span>
+              <span className="text-dl-navy">Accredited (Reg D 506(c))</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-dl-gray uppercase">Borrower Eligibility</span>
+              <span className="text-dl-navy">GEF Operator+ tier</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-dl-gray uppercase">Rate</span>
+              <span className="text-dl-navy">14% p.a. (fixed, up to 50% cap)</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-dl-gray uppercase">Network</span>
+              <span className="text-dl-navy">Arbitrum One</span>
+            </div>
+          </div>
+          <a href="/lending-fund" className="text-xs text-dl-navy underline font-dl-mono">View lending fund &rarr;</a>
+        </div>
+      </div>
+
       <SectionHeading>Whitelisted Platforms</SectionHeading>
       <div className="border border-dl-border mb-8">
         <div className="grid grid-cols-12 border-b border-dl-border bg-dl-bg px-4 py-2 text-xs text-dl-gray font-dl-mono">

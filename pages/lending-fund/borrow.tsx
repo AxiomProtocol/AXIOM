@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { DesignLawLayout, SectionHeading } from '../../components/design-law';
 
 function BIcoKey() {
@@ -200,6 +201,10 @@ async function getSignedHeaders(
 }
 
 export default function BorrowPage() {
+  const router = useRouter();
+  const [market, setMarket] = useState<'private' | 'open'>('private');
+  const [evkData, setEvkData] = useState<any>(null);
+  const [evkLoading, setEvkLoading] = useState(false);
   const [phase, setPhase] = useState<PagePhase>('connect');
   const [wallet, setWallet] = useState<string | null>(null);
   const [gefInfo, setGefInfo] = useState<GefInfo | null>(null);
@@ -225,6 +230,20 @@ export default function BorrowPage() {
   const [detailLoanId, setDetailLoanId] = useState<string | null>(null);
   const [loanDetail, setLoanDetail] = useState<LoanDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+
+  useEffect(() => {
+    if (router.query.market === 'open') setMarket('open');
+  }, [router.query.market]);
+
+  useEffect(() => {
+    if (market !== 'open' || evkData) return;
+    setEvkLoading(true);
+    fetch('/api/euler/axusd-vault')
+      .then(r => r.json())
+      .then(d => setEvkData(d))
+      .catch(() => {})
+      .finally(() => setEvkLoading(false));
+  }, [market]);
 
   const fetchLoanDetail = useCallback(async (loanId: string) => {
     if (!wallet) return;
@@ -470,6 +489,143 @@ export default function BorrowPage() {
         </div>
       </div>
 
+      <div className="flex gap-0 mb-8 border-b border-dl-border">
+        <button
+          onClick={() => setMarket('private')}
+          className={`px-6 py-3 text-sm font-medium border-b-2 -mb-px ${market === 'private' ? 'border-dl-navy text-dl-navy' : 'border-transparent text-dl-gray'}`}
+        >
+          Private Credit Market
+        </button>
+        <button
+          onClick={() => setMarket('open')}
+          className={`px-6 py-3 text-sm font-medium border-b-2 -mb-px ${market === 'open' ? 'border-dl-navy text-dl-navy' : 'border-transparent text-dl-gray'}`}
+        >
+          Open Money Market
+        </button>
+      </div>
+
+      {market === 'open' && (
+        <div className="mb-12">
+          <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
+            <div>
+              <SectionHeading>AXUSD EVK Open Money Market</SectionHeading>
+              <p className="text-xs text-dl-gray max-w-2xl leading-relaxed">
+                Permissionless AXUSD borrowing via an Euler V2 vault. Deposit USDC as collateral
+                and borrow ERC-3643 AXUSD at a variable rate. Requires on-chain identity verification
+                — complete KYC on the AXUSD dashboard before interacting.
+              </p>
+            </div>
+            <Link href="/axusd-3643" className="text-xs text-dl-navy underline font-dl-mono whitespace-nowrap">
+              Register Identity &rarr;
+            </Link>
+          </div>
+
+          {evkLoading && (
+            <div className="border border-dl-border p-8 text-center">
+              <p className="text-sm text-dl-gray font-dl-mono">Loading market data...</p>
+            </div>
+          )}
+
+          {!evkLoading && evkData && (
+            <>
+              {evkData.status === 'PENDING_DEPLOYMENT' && (
+                <div className="border border-dl-border bg-dl-bg-alt p-4 mb-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-dl-mono text-xs font-semibold text-dl-gold bg-yellow-50 border border-dl-gold px-2 py-0.5">PENDING DEPLOYMENT</span>
+                    <span className="text-xs text-dl-gray font-dl-mono">Vault not yet deployed to Arbitrum One</span>
+                  </div>
+                  <p className="text-xs text-dl-gray leading-relaxed mb-3">
+                    The EVK Open Money Market vault is pending on-chain deployment. The borrow interface will
+                    activate once the vault contract is deployed and the ERC-3643 Lending Platform Module whitelist
+                    is updated. Deploy using Hardhat after the ERC-7726 oracle is live.
+                  </p>
+                  <div className="font-dl-mono text-xs text-dl-gray space-y-1">
+                    <p><span className="text-dl-navy">Step 1:</span> {evkData.deployInstructions?.step1}</p>
+                    <p><span className="text-dl-navy">Step 2:</span> {evkData.deployInstructions?.step2}</p>
+                    <p><span className="text-dl-navy">Step 3:</span> {evkData.deployInstructions?.step3}</p>
+                    <p><span className="text-dl-navy">Step 4:</span> {evkData.deployInstructions?.step4}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="border border-dl-border">
+                  <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+                    <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">How to Borrow</p>
+                  </div>
+                  {[
+                    { n: '01', title: 'Verify Identity', desc: 'Register your on-chain identity and complete KYC via the AXUSD dashboard. Your identity must be in the ERC-3643 registry.' },
+                    { n: '02', title: 'Approve USDC', desc: 'Approve the EVK vault to spend your USDC. USDC is deposited as collateral at 90% LTV.' },
+                    { n: '03', title: 'Enable Collateral', desc: 'Deposit USDC into the USDC Euler vault, then enable it as collateral in the EVC for the AXUSD vault.' },
+                    { n: '04', title: 'Borrow AXUSD', desc: 'Call borrow() on the EVK vault specifying your AXUSD amount. Rate is dynamic based on utilization.' },
+                  ].map((step, i) => (
+                    <div key={step.n} className={`flex gap-4 px-4 py-3 ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'} ${i < 3 ? 'border-b border-dl-border' : ''}`}>
+                      <span className="font-dl-mono text-xs font-bold text-dl-navy w-6 flex-shrink-0">{step.n}</span>
+                      <div>
+                        <p className="text-xs font-semibold text-dl-navy mb-0.5">{step.title}</p>
+                        <p className="text-xs text-dl-gray leading-relaxed">{step.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="border border-dl-border">
+                  <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+                    <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">Market Parameters</p>
+                  </div>
+                  {[
+                    { k: 'Asset', v: 'ERC-3643 AXUSD' },
+                    { k: 'Collateral', v: 'USDC (Euler vault position)' },
+                    { k: 'Borrow LTV', v: `${evkData.vault?.collateral?.[0]?.borrowLTV ?? 90}%` },
+                    { k: 'Liquidation LTV', v: `${evkData.vault?.collateral?.[0]?.liquidationLTV ?? 95}%` },
+                    { k: 'IRM Model', v: 'LinearKink (1% base, 5%@80%, 100% max)' },
+                    { k: 'Borrow APY', v: `${evkData.vault?.borrowApyPct ?? '1.0'}% (variable)` },
+                    { k: 'Borrow Cap', v: `${parseFloat(evkData.vault?.borrowCapAxusd ?? '500000').toLocaleString()} AXUSD` },
+                    { k: 'Identity Required', v: 'ERC-3643 on-chain identity (KYC verified)' },
+                    { k: 'Network', v: 'Arbitrum One (42161)' },
+                  ].map((row, i) => (
+                    <div key={row.k} className={`flex justify-between px-4 py-2 text-xs font-dl-mono ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                      <span className="text-dl-gray uppercase">{row.k}</span>
+                      <span className="text-dl-navy text-right max-w-[60%]">{row.v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-6">
+                {[
+                  { label: 'TVL', value: evkData.status === 'LIVE' ? `${parseFloat(evkData.vault?.tvlAxusd || '0').toLocaleString()} AXUSD` : '—' },
+                  { label: 'Available', value: evkData.status === 'LIVE' ? `${parseFloat(evkData.vault?.availableLiquidityAxusd || '0').toLocaleString()} AXUSD` : '—' },
+                  { label: 'Utilization', value: evkData.status === 'LIVE' ? `${evkData.vault?.utilizationPct || '0'}%` : '—' },
+                  { label: 'Borrow APY', value: `${evkData.vault?.borrowApyPct ?? '1.0'}%` },
+                ].map((m, i) => (
+                  <div key={m.label} className={`px-4 py-4 bg-dl-bg ${i < 3 ? 'border-r border-dl-border' : ''}`}>
+                    <p className="text-xs text-dl-gray mb-1 font-dl-mono uppercase">{m.label}</p>
+                    <p className="font-dl-mono text-base font-bold text-dl-navy">{m.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {evkData.status === 'LIVE' && evkData.vault?.eulerLink && (
+                <div className="text-center py-4">
+                  <a href={evkData.vault.eulerLink} target="_blank" rel="noopener noreferrer"
+                    className="px-6 py-2 bg-dl-navy text-white text-sm font-medium font-dl-mono">
+                    Open on Euler Finance &rarr;
+                  </a>
+                </div>
+              )}
+            </>
+          )}
+
+          {!evkLoading && !evkData && (
+            <div className="border border-dl-border p-6 text-center">
+              <p className="text-sm text-dl-gray">Unable to load market data. Please try again.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {market === 'private' && (<>
       <div className="mb-12">
         <SectionHeading>Use Cases</SectionHeading>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border">
@@ -1125,6 +1281,7 @@ export default function BorrowPage() {
           Overpayment is not permitted — total payment cannot exceed outstanding principal plus accrued interest.
         </p>
       </div>
+      </>)}
     </DesignLawLayout>
   );
 }

@@ -311,29 +311,43 @@ export const GOVERNANCE_CONTRACTS = {
 // Features: Vault-to-vault collateral, external LP yield, supply/borrow enabled
 // V4 Upgrade: Fixed hook configuration issue, deposits/withdrawals fully operational
 export const EULER_LENDING_CONTRACTS = {
-  // AXUSD Lending Vault V4 (eAXUSD-4) - Main lending vault for AXUSD
-  // Users deposit AXUSD to earn yield, borrowers use vault shares as collateral
-  // Supply/Borrow Cap: 1M AXUSD each | Fee Receiver: Revenue Router
-  AXUSD_VAULT: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059',
-  
-  // Deprecated V3 Vault (broken hook configuration - withdraw-only mode)
+  // DEPRECATED: AXUSD Lending Vault V4 (eAXUSD-4)
+  // Status: WITHDRAW_ONLY — hook configuration issue in this vault prevents new deposits.
+  // Replaced by EVK_OPEN_MARKET_VAULT (ERC-3643 compliant, no hooks, Task #38).
+  AXUSD_VAULT_V4_DEPRECATED: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059',
+
+  // DEPRECATED: V3 Vault (broken hook configuration - withdraw-only mode)
   AXUSD_VAULT_V3_DEPRECATED: '0xCf00A6FA6f5bAc1f224Cee029DacF3b8CCC79429',
-  
-  // Vault Governor - Manages LTV, caps, and vault parameters
+
+  // ── EVK Open Money Market (Task #38) — ERC-3643 AXUSD Open Lending Vault ──
+  // Status: PENDING_DEPLOYMENT — run scripts/deploy-axusd-evk-vault.js after oracle deploy
+  // Asset: ERC-3643 AXUSD (0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7)
+  // Collateral: USDC only at launch (90% borrowLTV, 95% liquidationLTV)
+  // IRM: LinearKink — baseRate 1%, kink 80%, slope1 5%, slope2 100%
+  // Borrow Cap: $500K AXUSD (conservative launch cap)
+  // Governor: Axiom deployer multisig
+  // NOTE: EVK vault + EVC must be whitelisted in ERC3643_CONTRACTS.LENDING_PLATFORM_MODULE
+  //       before vault can receive ERC-3643 AXUSD transfers.
+  EVK_OPEN_MARKET_VAULT: '0x0000000000000000000000000000000000000000',
+  EVK_OPEN_MARKET_IRM: '0x0000000000000000000000000000000000000000',
+  EVK_OPEN_MARKET_GOVERNOR: '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96',
+
+  // Vault Governor (legacy eAXUSD-4 governor — kept for reference)
   VAULT_GOVERNOR: '0xE742Ee9b946043eCC75bFc71B47216C1f8248316',
-  
+
   // DEPRECATED: Legacy decimal-corrected price oracle (pre-ERC-7726).
   // Superseded by AXUSD_ERC7726_ORACLE_ADAPTER once deployed.
   // Reference: src/config/oracleConfig.ts → LEGACY_ORACLE.PRICE_ORACLE
   PRICE_ORACLE_DEPRECATED: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15',
-  
-  // Euler Infrastructure (Arbitrum One)
-  EVK_FACTORY: '0x78Df1CF5bf06a7f27f2ACc580B934238C1b80D50',
-  EVC: '0x6302ef0F34100CDDFb5489fbcB6eE1AA95CD1066',
+
+  // Euler Infrastructure (Arbitrum One) — canonical mainnet addresses
+  EVK_FACTORY: '0x29a56a1b8214D9Cf7c5561811750D5cBDb45CC8e',
+  EVC: '0x0C9a3dd6b8F28529d72d7f9cE918D493519EE383',
+  IRM_FACTORY: '0xE1C43c63EC62E0B8dcE0e98Da08E9fa48cAC4D40',
   PROTOCOL_CONFIG: '0x06c1Ab0A1672E8FC7F7D10BD7B869B4116D18a2c',
   IMPLEMENTATION: '0x832ff4011a3164ea76cea06a313ee0b6cd72ba96',
-  
-  // Accepted Collateral Vaults (existing Euler vaults on Arbitrum)
+
+  // Accepted Collateral Vaults (existing Euler vaults on Arbitrum One)
   COLLATERAL_USDC_VAULT: '0x0a1eCC5Fe8C9be3C809844fcBe615B46A869b899',
   COLLATERAL_USDT_VAULT: '0x37512F45B4ba8808910632323b73783Ca938CD51',
   COLLATERAL_WETH_VAULT: '0x78E3E051D32157AACD550fBB78458762d8f7edFF',
