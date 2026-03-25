@@ -4,6 +4,9 @@ import { unitPaymentService } from '../../../../lib/services/UnitPaymentService'
 import { unitAccountService } from '../../../../lib/services/UnitAccountService';
 import { rateLimitStrict } from '../../../../lib/rateLimit';
 import { validateDollarAmount } from '../../../../lib/validation';
+import { db } from '../../../../server/db';
+import { unitRecurringPayments } from '../../../../shared/unitSchema';
+import { eq } from 'drizzle-orm';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!rateLimitStrict(req, res)) return;
@@ -48,7 +51,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { recurringPaymentId } = req.body ?? {};
     if (!recurringPaymentId) return res.status(400).json({ error: 'recurringPaymentId is required.' });
 
-    const result = await unitPaymentService.cancelRecurringPayment(String(recurringPaymentId));
+    // Security: Only the owner of the recurring payment can cancel it.
+    const [rp] = await db
+      .select({ walletAddress: unitRecurringPayments.walletAddress, unitRecurringId: unitRecurringPayments.unitRecurringId })
+      .from(unitRecurringPayments)
+      .where(eq(unitRecurringPayments.id, String(recurringPaymentId)))
+      .limit(1);
+
+    if (!rp) {
+      return res.status(404).json({ error: 'Recurring payment not found.' });
+    }
+
+    if ((rp.walletAddress ?? '').toLowerCase() !== session.address.toLowerCase()) {
+      return res.status(403).json({ error: 'You do not own this recurring payment.' });
+    }
+
+    const unitRecurringId = rp.unitRecurringId;
+    if (!unitRecurringId) {
+      return res.status(400).json({ error: 'Recurring payment is missing its Unit recurring ID.' });
+    }
+
+    const result = await unitPaymentService.cancelRecurringPayment(String(unitRecurringId));
     if (!result.success) return res.status(400).json({ error: result.error });
     return res.status(200).json({ success: true });
   }
