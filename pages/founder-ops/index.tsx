@@ -674,10 +674,10 @@ function EulerEarnCuratorTab() {
               {[
                 { n: '01', cmd: 'npx hardhat run scripts/deploy-axusd-oracle.js --network arbitrumOne', desc: 'Deploy ERC-7726 oracle (Task #37 prerequisite).' },
                 { n: '02', cmd: 'npx hardhat run scripts/deploy-axusd-evk-vault.js --network arbitrumOne', desc: 'Deploy EVK Open Market vault (Task #38 prerequisite). Note address.' },
-                { n: '03', cmd: 'Confirm EULER_EARN_FACTORY at euler.finance/earn (Arbitrum One)', desc: 'Verify the canonical Euler Earn factory address before deployment.' },
-                { n: '04', cmd: 'EVK_VAULT_ADDR=0x... EULER_EARN_FACTORY_ADDR=0x... npx hardhat run scripts/deploy-axusd-euler-earn-vault.js --network arbitrumOne', desc: 'Deploy vault, register 3 strategies, set 10% perf fee → AxiomFeeBurner.' },
-                { n: '05', cmd: 'Update shared/contracts.ts + src/config/activeContracts.generated.ts', desc: 'Set EULER_EARN_VAULT, EULER_EARN_FACTORY to deployed addresses.' },
-                { n: '06', cmd: 'POST /api/erc3643/whitelist/add-platform { "platform": "<vault-addr>" }', desc: 'Whitelist vault in ERC-3643 LPM so it can receive AXUSD.' },
+                { n: '03', cmd: 'DONE ✓ Factory confirmed: 0xB9B5d62B9fE9E1B505466e75817aB178A1D2ec9d', desc: 'Euler Earn Factory verified from euler-interfaces/EulerChains.json (Arbitrum One).' },
+                { n: '04', cmd: 'DONE ✓ Vault deployed: 0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B (Axiom Earn AXUSD)', desc: 'earnAXUSD vault created. Strategy: eAXUSD-6 EVK Open Market (1M AXUSD cap). Fee: 10% WAD → AxiomFeeBurner.' },
+                { n: '05', cmd: 'DONE ✓ shared/contracts.ts + activeContracts.generated.ts updated', desc: 'EULER_EARN_VAULT + EULER_EARN_FACTORY set to live addresses. isEulerEarnDeployed() returns true.' },
+                { n: '06', cmd: 'DONE ✓ Vault whitelisted in ERC-3643 LPM', desc: 'LPM.addPlatform(COMPLIANCE, vault) confirmed in deploy script execution.' },
               ].map((step, i) => (
                 <div key={step.n} className={`px-4 py-3 ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'} ${i < 5 ? 'border-b border-dl-border' : ''}`}>
                   <div className="flex items-start gap-3">

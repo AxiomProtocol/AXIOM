@@ -223,15 +223,17 @@ export const CAMELOT_DEX = {
 
 // EulerSwap AXUSD Liquidity Layer (Task #40)
 // EulerSwap integrates directly with EVK vaults — idle LP capital earns lending yield.
-// All addresses PENDING_DEPLOYMENT. After running scripts/deploy-eulerswap-pools.js,
-// update these values and EULER_SWAP_* constants in activeContracts.generated.ts.
-// ERC-3643 prerequisite: all pool addresses must be registered in the LendingPlatformModule
-// via POST /api/erc3643/whitelist/add-platform before any LP operations can succeed.
+// Factory addresses confirmed from euler-interfaces/addresses/42161 (EulerChains.json).
+// Pool deployment deferred: requires price curve parameters (priceX, priceY, concentration,
+// equilibriumReserves) + initial liquidity + Euler account setup. Use Euler UI for pool creation.
+// ERC-3643 prerequisite: all pool addresses must be registered in the LendingPlatformModule.
 export const EULER_SWAP = {
-  // EulerSwap factory — official Arbitrum One address (confirm at https://euler.finance/swap)
-  FACTORY: '0x0000000000000000000000000000000000000000',
+  // EulerSwap V2 factory — canonical Arbitrum One (euler-interfaces/addresses/42161)
+  FACTORY: '0x138AB9B33741B25bb7BcDa466175c8B2E2b96dc4', // V2 — use for new pools
+  // EulerSwap V1 factory — legacy (still active)
+  FACTORY_V1: '0x7949bE8B154D7B5ce6E75cBfc646AeF3a25970E2',
   // AXUSD/USDC pool — primary peg stability venue; backed by EVK AXUSD vault
-  AXUSD_USDC_POOL: '0x0000000000000000000000000000000000000000',
+  AXUSD_USDC_POOL: '0x0101D5adE5Ce318FE39be50E985e4fa05362a8A8',
   // AXUSD/AXM pool — protocol token liquidity; backed by EVK AXUSD vault
   AXUSD_AXM_POOL: '0x0000000000000000000000000000000000000000',
   // Swap fee: 30 bps (0.30%). Configure at pool creation.
@@ -370,19 +372,17 @@ export const EULER_LENDING_CONTRACTS = {
   COLLATERAL_WETH_VAULT: '0x78E3E051D32157AACD550fBB78458762d8f7edFF',
   COLLATERAL_ARB_VAULT: '0x7eD866D2D66c3149FaFE854C30C68a8BA7ceE8B9',
 
-  // ── Euler Earn AXUSD Vault (Task #39) — Multi-Strategy Yield Aggregation ──
-  // Status: PENDING_DEPLOYMENT | Arbitrum One
+  // ── Euler Earn AXUSD Vault (Task #39) — Yield Aggregation Vault ──
+  // Status: DEPLOYED ✓ | Arbitrum One | 2026-03-25
+  // Vault name: Axiom Earn AXUSD | Symbol: earnAXUSD
   // Asset: ERC-3643 AXUSD (0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7)
-  // Strategies: AXIOMCreditMarket 40%, EVK Open Market 40%, T-Bill Vault 20%
-  // Performance Fee: 10% routed to AXIOM_FEE_BURNER
-  // Curator: Axiom Sentinel (Axiom deployer EOA at launch; transfer to multisig post-seeding)
-  // Smearing Period: 2 weeks (rewards smoothed to prevent front-running)
-  // Deploy: npx hardhat run scripts/deploy-axusd-euler-earn-vault.js --network arbitrumOne
-  // After deploying: update EULER_EARN_VAULT + EULER_EARN_FACTORY in this file and
-  //   src/config/activeContracts.generated.ts, then whitelist vault in LPM.
-  EULER_EARN_VAULT: '0x0000000000000000000000000000000000000000',
-  // Euler Earn Factory — verify canonical address at euler.finance/earn before deployment
-  EULER_EARN_FACTORY: '0x0000000000000000000000000000000000000000',
+  // Strategy: eAXUSD-6 EVK Open Market (Task #38) — 1M AXUSD supply cap
+  // Performance Fee: 10% (1e17 WAD) → AXIOM_FEE_BURNER
+  // Timelock: 0 (instant cap acceptance at launch; increase to 1 week post-seeding)
+  // Whitelisted in LendingPlatformModule ✓
+  EULER_EARN_VAULT: '0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B',
+  // Euler Earn Factory — Arbitrum One canonical (from euler-interfaces/addresses/42161)
+  EULER_EARN_FACTORY: '0xB9B5d62B9fE9E1B505466e75817aB178A1D2ec9d',
   // AxiomFeeBurner — destination for Euler Earn performance fee stream (10%)
   AXIOM_FEE_BURNER: '0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94'
 } as const;

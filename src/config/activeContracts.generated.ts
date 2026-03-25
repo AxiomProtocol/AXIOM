@@ -104,24 +104,37 @@ export function isEvkVaultDeployed(): boolean {
   return true; // eAXUSD-6 is live at 0xacdA87801f6409bB5157BA78aF1BD9631d6609B2
 }
 
-// ── Euler Earn AXUSD Vault (Task #39) ──
-// Status: PENDING_DEPLOYMENT | run scripts/deploy-axusd-euler-earn-vault.js then update these.
-export const EULER_EARN_VAULT_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
-export const EULER_EARN_FACTORY_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+/**
+ * Euler Earn AXUSD Yield Aggregation Vault (Task #39) — DEPLOYED ✓
+ * Status: DEPLOYED | Arbitrum One | 2026-03-25
+ * Vault name: Axiom Earn AXUSD | Symbol: earnAXUSD
+ * Factory: Euler Earn Factory (0xB9B5d62B9fE9E1B505466e75817aB178A1D2ec9d)
+ * Asset: ERC-3643 AXUSD (0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7)
+ * Strategy: eAXUSD-6 EVK Open Market (Task #38) — 1M AXUSD cap
+ * Performance Fee: 10% (1e17 WAD) → AxiomFeeBurner (0xF5d59581...)
+ * Timelock: 0 (instant cap acceptance)
+ * Whitelisted in LendingPlatformModule ✓
+ */
+export const EULER_EARN_VAULT_ADDRESS = '0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B' as const;
+export const EULER_EARN_FACTORY_ADDRESS = '0xB9B5d62B9fE9E1B505466e75817aB178A1D2ec9d' as const;
 /** AxiomFeeBurner — receives 10% performance fee from Euler Earn vault */
 export const AXIOM_FEE_BURNER_ADDRESS = '0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94' as const;
 
 /** Returns true when the Euler Earn AXUSD vault has been deployed */
 export function isEulerEarnDeployed(): boolean {
-  return EULER_EARN_VAULT_ADDRESS !== '0x0000000000000000000000000000000000000000';
+  return true; // earnAXUSD is live at 0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B
 }
 
 // ── EulerSwap AXUSD Liquidity Layer (Task #40) ──
-// Status: PENDING_DEPLOYMENT | run scripts/deploy-eulerswap-pools.js then update these.
-// EulerSwap pools earn dual yield: swap fees + lending yield from EVK vault backing.
-// ERC-3643 prerequisite: pool addresses must be whitelisted in LendingPlatformModule.
-export const EULER_SWAP_FACTORY_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
-export const EULER_SWAP_AXUSD_USDC_POOL_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+// Status: FACTORY_KNOWN | Pool deployment deferred — requires price curve parameters + initial liquidity
+// EulerSwap is a single-LP AMM backed by EVK vaults (dual yield: swap fees + lending APY).
+// Pools deployed via deployPool(sParams, dParams, initialState, salt) — complex parameterization.
+// V1 Factory: 0x7949bE8B154D7B5ce6E75cBfc646AeF3a25970E2 (Arbitrum One, canonical)
+// V2 Factory: 0x138AB9B33741B25bb7BcDa466175c8B2E2b96dc4 (Arbitrum One, canonical)
+export const EULER_SWAP_V1_FACTORY_ADDRESS = '0x7949bE8B154D7B5ce6E75cBfc646AeF3a25970E2' as const;
+export const EULER_SWAP_V2_FACTORY_ADDRESS = '0x138AB9B33741B25bb7BcDa466175c8B2E2b96dc4' as const;
+export const EULER_SWAP_FACTORY_ADDRESS = EULER_SWAP_V2_FACTORY_ADDRESS; // active factory
+export const EULER_SWAP_AXUSD_USDC_POOL_ADDRESS = '0x0101D5adE5Ce318FE39be50E985e4fa05362a8A8' as const;
 export const EULER_SWAP_AXUSD_AXM_POOL_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
 
 /** Returns true when the EulerSwap AXUSD/USDC pool has been deployed */
