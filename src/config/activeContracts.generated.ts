@@ -49,8 +49,7 @@ export const ACTIVE_CONTRACTS = {
       euler: 'Original PSM — 500K ceiling (Jan 5, 2026)',
     },
   },
-  /** @deprecated Use eulerVaultDeprecated. Kept for backward-compat across existing callers. */
-  eulerVault: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059' as const,
+  /** @deprecated V4 vault — hook config prevents new deposits; WITHDRAW_ONLY mode */
   eulerVaultDeprecated: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059' as const,
   revenueRouter: '0x39A9Ca593d350450d93aF7F24dC1A682df47F30a' as const,
   seed: '0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046' as const,

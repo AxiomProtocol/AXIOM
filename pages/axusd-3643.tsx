@@ -5,6 +5,7 @@ import { DesignLawLayout, SectionHeading, DetailGrid } from '../components/desig
 import { StatusBadge } from '../components/design-law/StatusBadge';
 import { SolidButton } from '../components/design-law/SolidButton';
 import type { OraclePriceResponse } from './api/oracle/axusd-price';
+import { isEvkVaultDeployed } from '../src/config/activeContracts.generated';
 
 interface TokenData {
   name: string;
@@ -385,7 +386,11 @@ function OverviewTab({ data }: { data: DashboardData }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border mb-8">
         <div className="p-5 border-r border-dl-border">
           <div className="flex items-center gap-2 mb-2">
-            <span className="font-dl-mono text-xs font-semibold text-dl-gold border border-dl-gold px-2 py-0.5">PENDING DEPLOYMENT</span>
+            {isEvkVaultDeployed() ? (
+              <span className="font-dl-mono text-xs font-semibold text-dl-forest border border-dl-forest px-2 py-0.5">LIVE</span>
+            ) : (
+              <span className="font-dl-mono text-xs font-semibold text-dl-gold border border-dl-gold px-2 py-0.5">PENDING DEPLOYMENT</span>
+            )}
             <span className="font-dl-mono text-xs text-dl-gray">Task #38</span>
           </div>
           <h3 className="font-dl-serif text-sm font-semibold text-dl-navy mb-1">EVK Open Money Market</h3>
