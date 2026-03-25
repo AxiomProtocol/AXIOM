@@ -95,8 +95,8 @@ export const ERC7726_ORACLE_ADAPTER_ADDRESS = '0x0000000000000000000000000000000
  */
 export const EVK_OPEN_MARKET_VAULT_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
 export const EVK_OPEN_MARKET_IRM_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
-/** Governor admin of the EVK vault — deployer EOA at launch; transfer to multisig post-seeding */
-export const EVK_OPEN_MARKET_GOVERNOR_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+/** Governor admin of the EVK vault — Axiom deployer EOA at launch; transfer to multisig post-seeding */
+export const EVK_OPEN_MARKET_GOVERNOR_ADDRESS = '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96' as const;
 
 /** Returns true when the EVK Open Market vault has been deployed */
 export function isEvkVaultDeployed(): boolean {
