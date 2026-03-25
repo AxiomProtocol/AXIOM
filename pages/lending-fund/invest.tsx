@@ -135,8 +135,7 @@ export default function InvestPage() {
     blendedApyLabel: string;
     perfFeeBps: number;
     perfFeeRecipient: string;
-    perfFeeCollectedUsd: number | null;
-    perfFeeNote?: string;
+    perfFeeCollectedUsd: number;
     ameRegime: string | null;
     ameConfidence: number | null;
     smearingPeriodDays: number;

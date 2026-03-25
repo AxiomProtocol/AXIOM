@@ -10,12 +10,26 @@ import { ethers } from 'ethers';
 
 const ALCHEMY_RPC = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 const TOTAL_ASSETS_ABI = ['function totalAssets() view returns (uint256)'];
+const BALANCE_OF_ABI   = ['function balanceOf(address) view returns (uint256)'];
+
+const AXUSD_TOKEN = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
 
 async function fetchOnChainTvl(vaultAddress: string, label: string): Promise<number> {
   try {
     const provider = new ethers.JsonRpcProvider(ALCHEMY_RPC);
     const contract = new ethers.Contract(vaultAddress, TOTAL_ASSETS_ABI, provider);
     const raw: bigint = await contract.totalAssets();
+    return Number(ethers.formatUnits(raw, 6));
+  } catch {
+    return 0;
+  }
+}
+
+async function fetchPerfFeeCollected(): Promise<number> {
+  try {
+    const provider = new ethers.JsonRpcProvider(ALCHEMY_RPC);
+    const axusd = new ethers.Contract(AXUSD_TOKEN, BALANCE_OF_ABI, provider);
+    const raw: bigint = await axusd.balanceOf(AXIOM_FEE_BURNER_ADDRESS);
     return Number(ethers.formatUnits(raw, 6));
   } catch {
     return 0;
@@ -118,11 +132,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const deployed = isEulerEarnDeployed();
 
-    const [ameRegime, creditRateBps, lastRebalance, vaultTvlUsd] = await Promise.all([
+    const [ameRegime, creditRateBps, lastRebalance, vaultTvlUsd, perfFeeCollectedUsd] = await Promise.all([
       getAmeRegime(),
       getFundRateBps(),
       getLastRebalance(),
       deployed ? fetchOnChainTvl(EULER_EARN_VAULT_ADDRESS, 'EulerEarnVault') : Promise.resolve(0),
+      fetchPerfFeeCollected(),
     ]);
 
     const effectiveCreditRate = creditRateBps ?? 1400;
@@ -155,8 +170,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       blendedApyPct: (blendedApyBps / 100).toFixed(2),
       perfFeeBps: PERF_FEE_BPS,
       perfFeeRecipient: AXIOM_FEE_BURNER_ADDRESS,
-      perfFeeCollectedUsd: null,
-      perfFeeNote: 'Performance fees accrue on-chain to AxiomFeeBurner. Indexing available post-deployment via fee recipient balance delta.',
+      perfFeeCollectedUsd,
       strategies,
       lastRebalanceAt: lastRebalance,
       ameRegime: ameRegime?.regime ?? null,
