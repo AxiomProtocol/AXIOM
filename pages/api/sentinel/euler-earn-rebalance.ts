@@ -2,11 +2,12 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
 import { authorizeAction } from '../../../lib/sentinel/authorizeAction';
 import { isEulerEarnDeployed, EULER_EARN_VAULT_ADDRESS } from '../../../src/config/activeContracts.generated';
+import { EULER_LENDING_CONTRACTS, AXUSD_GENIUS_CONTRACTS } from '../../../shared/contracts';
 
 const STRATEGIES = [
   { id: 'credit_market', label: 'Phase 6 Credit Market', address: '0x85074a74774568692128eE97Da661Fe49dcF5fE4', targetWeightBps: 4000 },
-  { id: 'evk_vault',     label: 'EVK Open Money Market', address: '0x0000000000000000000000000000000000000000', targetWeightBps: 4000 },
-  { id: 'tbill_vault',   label: 'T-Bill Reserve',        address: '0x091c146EC7c348552319E8D17cF7D0C9A4b3BCd4', targetWeightBps: 2000 },
+  { id: 'evk_vault',     label: 'EVK Open Money Market', address: EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT,     targetWeightBps: 4000 },
+  { id: 'tbill_vault',   label: 'T-Bill Reserve',        address: AXUSD_GENIUS_CONTRACTS.TBILL_VAULT,               targetWeightBps: 2000 },
 ];
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

@@ -38,8 +38,13 @@ const NOTIONAL_LIMITS: Record<string, number> = {
   EULER_EARN_REBALANCE: 500000,
 };
 
+const DB_ACTION_TYPE_MAP: Record<string, PilotActionType> = {
+  EULER_EARN_REBALANCE: 'EulerEarnRebalance',
+};
+
 function getActionRiskLevel(actionType: string): 'HIGH' | 'MEDIUM' | 'LOW' {
-  const classification = RISK_ACTION_CLASSIFICATION[actionType as PilotActionType];
+  const normalized = DB_ACTION_TYPE_MAP[actionType] ?? actionType;
+  const classification = RISK_ACTION_CLASSIFICATION[normalized as PilotActionType];
   if (classification) return classification;
   const HIGH_ACTIONS = ['AssetPurchased', 'CapitalCallIssued', 'DistributionApproved'];
   const MEDIUM_ACTIONS = ['CapitalCallFunded', 'DistributionCalculated', 'PropertyListedForSale', 'MaintenanceApproved', 'TenantOnboarded', 'LeaseExecuted', 'InspectionCompleted'];

@@ -162,9 +162,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ameConfidence: ameRegime?.confidence ?? null,
       smearingPeriodDays: 14,
       erc3643LpmWhitelist: {
-        note: 'Euler Earn Vault must be registered as an LPM in the ERC-3643 compliance registry after on-chain deployment',
+        note: 'Euler Earn Vault must be registered in the ERC-3643 LPM after deployment. Use POST /api/erc3643/whitelist/add-platform with x-admin-key.',
         vaultAddress: EULER_EARN_VAULT_ADDRESS,
-        registrationHandledByDeployScript: true,
+        registrationHandledByDeployScript: false,
+        registrationEndpoint: '/api/erc3643/whitelist/add-platform',
       },
       deployInstructions: deployed
         ? null

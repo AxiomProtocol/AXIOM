@@ -404,6 +404,8 @@ function EulerEarnCuratorTab() {
   const [adminKey, setAdminKey] = useState('');
   const [rebalancing, setRebalancing] = useState(false);
   const [rebalanceResult, setRebalanceResult] = useState<string | null>(null);
+  const [lpmRegistering, setLpmRegistering] = useState(false);
+  const [lpmResult, setLpmResult] = useState<string | null>(null);
 
   const loadStats = () => {
     setLoading(true);
@@ -439,6 +441,35 @@ function EulerEarnCuratorTab() {
       setRebalanceResult('Request failed.');
     } finally {
       setRebalancing(false);
+    }
+  };
+
+  const handleLpmRegister = async () => {
+    if (!adminKey) { setLpmResult('Admin key required.'); return; }
+    if (!stats?.vaultAddress || stats.vaultAddress === '0x0000000000000000000000000000000000000000') {
+      setLpmResult('Vault not yet deployed — deploy first, then update the vault address config.');
+      return;
+    }
+    setLpmRegistering(true);
+    setLpmResult(null);
+    try {
+      const r = await fetch('/api/erc3643/whitelist/add-platform', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({ platform: stats.vaultAddress }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        setLpmResult(d.alreadyWhitelisted
+          ? `Already registered — ${stats.vaultAddress} was already in LPM.`
+          : `Registered — tx: ${d.txHash ?? 'confirmed'}`);
+      } else {
+        setLpmResult('Error: ' + (d.error ?? 'Unknown error'));
+      }
+    } catch {
+      setLpmResult('Request failed.');
+    } finally {
+      setLpmRegistering(false);
     }
   };
 
@@ -591,30 +622,42 @@ function EulerEarnCuratorTab() {
 
           <div className="border border-dl-border mb-6">
             <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
-              <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">ERC-3643 LPM Whitelist</p>
+              <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">ERC-3643 LPM Whitelist Registration</p>
             </div>
             <div className="px-4 py-4 bg-dl-bg">
-              <p className="text-xs text-dl-gray leading-relaxed mb-3">
-                After on-chain deployment, the Euler Earn vault address must be registered as an authorized
-                platform in the ERC-3643 LendingPlatformModule (LPM) to receive AXUSD. The deploy script
-                (Step 06) handles this registration automatically via <span className="font-dl-mono text-dl-navy">POST /api/erc3643/whitelist/add-platform</span>.
+              <p className="text-xs text-dl-gray leading-relaxed mb-4">
+                After on-chain deployment, the Euler Earn vault must be registered in the ERC-3643
+                LendingPlatformModule (LPM) to receive AXUSD. Use the admin key to trigger registration
+                directly — this calls <span className="font-dl-mono text-dl-navy">POST /api/erc3643/whitelist/add-platform</span> on-chain.
               </p>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Vault to Whitelist</p>
+                  <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Vault to Register</p>
                   <p className="font-dl-mono text-xs text-dl-navy break-all">
                     {stats.vaultAddress === '0x0000000000000000000000000000000000000000'
-                      ? '— (deploy first)'
+                      ? '— deploy vault first'
                       : stats.vaultAddress}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Registration Status</p>
+                  <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Deployment Status</p>
                   <p className={`font-dl-mono text-xs font-bold ${stats.deployed ? 'text-dl-forest' : 'text-dl-gold'}`}>
-                    {stats.deployed ? 'PENDING VERIFICATION' : 'PENDING DEPLOYMENT'}
+                    {stats.deployed ? 'DEPLOYED — READY TO REGISTER' : 'PENDING DEPLOYMENT'}
                   </p>
                 </div>
               </div>
+              <button
+                onClick={handleLpmRegister}
+                disabled={lpmRegistering || !stats.deployed}
+                className="border border-dl-navy px-4 py-2 font-dl-mono text-xs text-dl-navy hover:bg-dl-navy hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {lpmRegistering ? 'Registering...' : 'Register Vault in ERC-3643 LPM'}
+              </button>
+              {lpmResult && (
+                <p className={`mt-3 text-xs font-dl-mono ${lpmResult.startsWith('Error') ? 'text-dl-error' : 'text-dl-forest'}`}>
+                  {lpmResult}
+                </p>
+              )}
             </div>
           </div>
 
