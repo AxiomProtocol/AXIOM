@@ -6,6 +6,21 @@ import {
   AXIOM_FEE_BURNER_ADDRESS,
 } from '../../../src/config/activeContracts.generated';
 import { EULER_LENDING_CONTRACTS, AXUSD_GENIUS_CONTRACTS } from '../../../shared/contracts';
+import { ethers } from 'ethers';
+
+const ALCHEMY_RPC = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+const TOTAL_ASSETS_ABI = ['function totalAssets() view returns (uint256)'];
+
+async function fetchOnChainTvl(vaultAddress: string, label: string): Promise<number> {
+  try {
+    const provider = new ethers.JsonRpcProvider(ALCHEMY_RPC);
+    const contract = new ethers.Contract(vaultAddress, TOTAL_ASSETS_ABI, provider);
+    const raw: bigint = await contract.totalAssets();
+    return Number(ethers.formatUnits(raw, 6));
+  } catch {
+    return 0;
+  }
+}
 
 const ZERO = '0x0000000000000000000000000000000000000000';
 
@@ -70,7 +85,7 @@ async function getLastRebalance(): Promise<string | null> {
   try {
     const result = await pool.query(
       `SELECT created_at FROM sentinel_decisions
-       WHERE action_type = 'LP_ACTION'
+       WHERE action_type = 'EULER_EARN_REBALANCE'
          AND scope = 'EULER_EARN'
        ORDER BY created_at DESC LIMIT 1`
     );
@@ -101,22 +116,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const [ameRegime, creditRateBps, lastRebalance] = await Promise.all([
+    const deployed = isEulerEarnDeployed();
+
+    const [ameRegime, creditRateBps, lastRebalance, vaultTvlUsd] = await Promise.all([
       getAmeRegime(),
       getFundRateBps(),
       getLastRebalance(),
+      deployed ? fetchOnChainTvl(EULER_EARN_VAULT_ADDRESS, 'EulerEarnVault') : Promise.resolve(0),
     ]);
 
-    const deployed = isEulerEarnDeployed();
     const effectiveCreditRate = creditRateBps ?? 1400;
-
     const blendedApyBps = computeBlendedApyBps(STRATEGIES, effectiveCreditRate);
 
-    const strategies = STRATEGIES.map(s => ({
+    const strategyTvlFetches = deployed
+      ? await Promise.all(
+          STRATEGIES.map(s =>
+            s.address !== ZERO ? fetchOnChainTvl(s.address, s.id) : Promise.resolve(0)
+          )
+        )
+      : STRATEGIES.map(() => 0);
+
+    const strategies = STRATEGIES.map((s, i) => ({
       ...s,
       weightPct: (s.targetWeightBps / 100).toFixed(0),
       isDeployed: s.address !== ZERO,
-      tvlUsd: 0,
+      tvlUsd: strategyTvlFetches[i],
     }));
 
     return res.status(200).json({
@@ -125,7 +149,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       status: deployed ? 'LIVE' : 'PENDING_DEPLOYMENT',
       asset: 'AXUSD',
       assetAddress: '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7',
-      tvlUsd: 0,
+      tvlUsd: vaultTvlUsd,
       blendedApyBps,
       blendedApyLabel: 'Variable',
       blendedApyPct: (blendedApyBps / 100).toFixed(2),
@@ -137,6 +161,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ameRegime: ameRegime?.regime ?? null,
       ameConfidence: ameRegime?.confidence ?? null,
       smearingPeriodDays: 14,
+      erc3643LpmWhitelist: {
+        note: 'Euler Earn Vault must be registered as an LPM in the ERC-3643 compliance registry after on-chain deployment',
+        vaultAddress: EULER_EARN_VAULT_ADDRESS,
+        registrationHandledByDeployScript: true,
+      },
       deployInstructions: deployed
         ? null
         : 'npx hardhat run scripts/deploy-axusd-euler-earn-vault.js --network arbitrumOne',

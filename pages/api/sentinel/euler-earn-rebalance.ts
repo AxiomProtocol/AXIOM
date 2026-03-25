@@ -48,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const logPayload = JSON.stringify({
         nonce: nextNonce,
         scope: 'EULER_EARN',
-        actionType: 'LP_ACTION',
+        actionType: 'EULER_EARN_REBALANCE',
         subject: EULER_EARN_VAULT_ADDRESS,
         maxNotional: result.maxNotional,
         decision: result.decision,
@@ -65,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
          VALUES ($1, $2::sentinel_action_type, $3, $4, $5, $6::sentinel_decision_outcome, $7, $8, $9, $10, $11, NOW())`,
         [
           'EULER_EARN',
-          'LP_ACTION',
+          'EULER_EARN_REBALANCE',
           EULER_EARN_VAULT_ADDRESS,
           result.maxNotional,
           expiresAt,

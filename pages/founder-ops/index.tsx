@@ -393,6 +393,7 @@ interface EarnStats {
   ameRegime: string | null;
   ameConfidence: number | null;
   smearingPeriodDays: number;
+  erc3643LpmWhitelist?: { note: string; vaultAddress: string; registrationHandledByDeployScript: boolean };
   deployInstructions: string | null;
 }
 
@@ -585,6 +586,35 @@ function EulerEarnCuratorTab() {
                   {rebalanceResult}
                 </p>
               )}
+            </div>
+          </div>
+
+          <div className="border border-dl-border mb-6">
+            <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+              <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">ERC-3643 LPM Whitelist</p>
+            </div>
+            <div className="px-4 py-4 bg-dl-bg">
+              <p className="text-xs text-dl-gray leading-relaxed mb-3">
+                After on-chain deployment, the Euler Earn vault address must be registered as an authorized
+                platform in the ERC-3643 LendingPlatformModule (LPM) to receive AXUSD. The deploy script
+                (Step 06) handles this registration automatically via <span className="font-dl-mono text-dl-navy">POST /api/erc3643/whitelist/add-platform</span>.
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Vault to Whitelist</p>
+                  <p className="font-dl-mono text-xs text-dl-navy break-all">
+                    {stats.vaultAddress === '0x0000000000000000000000000000000000000000'
+                      ? '— (deploy first)'
+                      : stats.vaultAddress}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Registration Status</p>
+                  <p className={`font-dl-mono text-xs font-bold ${stats.deployed ? 'text-dl-forest' : 'text-dl-gold'}`}>
+                    {stats.deployed ? 'PENDING VERIFICATION' : 'PENDING DEPLOYMENT'}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 

@@ -546,7 +546,7 @@ export default function InvestPage() {
               <div className="flex flex-col sm:flex-row gap-3">
                 {earnStats.deployed ? (
                   <a
-                    href={`https://app.euler.finance/vault/${earnStats.strategies[0]?.address}`}
+                    href={`https://app.euler.finance/vault/${earnStats.vaultAddress}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block bg-dl-navy text-white px-8 py-3 font-dl-mono text-sm text-center hover:bg-[#1a2530]"
