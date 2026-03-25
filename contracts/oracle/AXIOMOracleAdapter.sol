@@ -72,7 +72,7 @@ contract AXIOMOracleAdapter {
 
     // Chainlink price feeds on Arbitrum One (all return 8-decimal prices)
     address public constant CL_ETH_USD  = 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612;
-    address public constant CL_BTC_USD  = 0x6ce185539ad4fdEED739C0a210dCA8BF0D66E8F2;
+    address public constant CL_BTC_USD  = 0x6CE185539Ad4FDEeD739C0A210DCa8bf0D66e8F2;
     address public constant CL_ARB_USD  = 0xb2A824043730FE05F3DA2efaFa1CBbe83fa548D6;
     address public constant CL_USDC_USD = 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3;
     address public constant CL_USDT_USD = 0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7;
