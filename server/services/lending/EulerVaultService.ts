@@ -1,11 +1,13 @@
 import { ethers } from 'ethers';
+import { AXUSD_ORACLE_ADAPTER, ERC7726_ABI, LEGACY_ORACLE, isOracleDeployed } from '../../../src/config/oracleConfig';
 
 const RPC_URL = process.env.ARBITRUM_RPC_URL || 'https://arb1.arbitrum.io/rpc';
 
 export const EULER_CONFIG = {
   EVK_FACTORY: '0x29a56a1b8214D9Cf7c5561811750D5cBDb45CC8e',
   EVC: '0x0C9a3dd6b8F28529d72d7f9cE918D493519EE383',
-  ORACLE_ADAPTER_REGISTRY: '0x91c8B55D234de4b48C1F1F1c5e9c4b6C8CB96f84'
+  ORACLE_ADAPTER_REGISTRY: LEGACY_ORACLE.ORACLE_ADAPTER_REGISTRY,
+  ERC7726_ORACLE: AXUSD_ORACLE_ADAPTER,
 } as const;
 
 export const AXUSD_ADDRESS = '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c';
@@ -110,6 +112,14 @@ export interface ProposedVault {
   blockReason?: string;
 }
 
+export interface OraclePriceResult {
+  priceUsd: number;
+  priceWad: string;
+  source: 'erc7726_on_chain' | 'api_psm' | 'api_static';
+  oracleAddress: string;
+  oracleDeployed: boolean;
+}
+
 class EulerVaultService {
   private provider: ethers.JsonRpcProvider;
   private evkFactory: ethers.Contract;
@@ -117,6 +127,68 @@ class EulerVaultService {
   constructor() {
     this.provider = new ethers.JsonRpcProvider(RPC_URL);
     this.evkFactory = new ethers.Contract(EULER_CONFIG.EVK_FACTORY, EVK_FACTORY_ABI, this.provider);
+  }
+
+  /**
+   * Returns AXUSD/USD price via ERC-7726 oracle if deployed,
+   * otherwise falls back to the off-chain oracle API.
+   *
+   * ERC-7726: getQuote(1e18, AXUSD_ADDR, USD_DENOMINATION) → 1e18 (price ≈ 1)
+   * Fallback: fetch /api/oracle/axusd-price
+   */
+  async getAxusdOraclePrice(baseUrl?: string): Promise<OraclePriceResult> {
+    const WAD = BigInt('1000000000000000000');
+
+    // ── Try on-chain ERC-7726 oracle first ───────────────────────────────────
+    if (isOracleDeployed()) {
+      try {
+        const oracleContract = new ethers.Contract(
+          AXUSD_ORACLE_ADAPTER,
+          ERC7726_ABI as string[],
+          this.provider
+        );
+        const [priceWad, srcNum] = await oracleContract.axusdUsdPrice();
+        const priceWadBig = BigInt(priceWad.toString());
+        const priceUsd = parseFloat(ethers.formatEther(priceWadBig));
+        return {
+          priceUsd,
+          priceWad: priceWadBig.toString(),
+          source: 'erc7726_on_chain',
+          oracleAddress: AXUSD_ORACLE_ADAPTER,
+          oracleDeployed: true,
+        };
+      } catch {
+        // fall through to API
+      }
+    }
+
+    // ── Off-chain oracle API fallback ────────────────────────────────────────
+    if (baseUrl) {
+      try {
+        const res = await fetch(`${baseUrl}/api/oracle/axusd-price`);
+        if (res.ok) {
+          const data = await res.json() as { axusdUsdPrice?: string; axusdUsdPriceWad?: string; source?: string };
+          if (data.axusdUsdPrice) {
+            return {
+              priceUsd: parseFloat(data.axusdUsdPrice),
+              priceWad: data.axusdUsdPriceWad ?? WAD.toString(),
+              source: data.source?.includes('psm') ? 'api_psm' : 'api_static',
+              oracleAddress: AXUSD_ORACLE_ADAPTER,
+              oracleDeployed: false,
+            };
+          }
+        }
+      } catch {}
+    }
+
+    // ── Static 1:1 parity ────────────────────────────────────────────────────
+    return {
+      priceUsd: 1.0,
+      priceWad: WAD.toString(),
+      source: 'api_static',
+      oracleAddress: AXUSD_ORACLE_ADAPTER,
+      oracleDeployed: false,
+    };
   }
 
   getProposedVaults(): ProposedVault[] {

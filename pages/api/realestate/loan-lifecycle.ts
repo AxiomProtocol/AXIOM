@@ -3,6 +3,7 @@ import { pool } from '../../../server/db';
 import { verifyCreditAuth, isAdminRequest } from '../../../lib/community-credit-auth';
 import { CREDIT_MARKET_ADDRESS, FIXED_LOAN_NFT_ADDRESS } from '../../../src/config/activeContracts.generated';
 import { CREDIT_MARKET_ABI as CM_ABI, FIXED_LOAN_ABI as FL_ABI } from '../../../src/config/creditMarket.generated';
+import { AXUSD_ORACLE_ADAPTER, isOracleDeployed } from '../../../src/config/oracleConfig';
 
 const ARBITRUM_RPC = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY ?? ''}`;
 
@@ -812,6 +813,12 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
       message: 'Loan charged off on-chain (principal written down via AXIOMFixedLoan.chargeOffLoan)',
       newStatus: transition.to,
       chainTxHash,
+      oracleContext: {
+        standard: 'ERC-7726',
+        oracleAddress: AXUSD_ORACLE_ADAPTER,
+        oracleDeployed: isOracleDeployed(),
+        note: 'Write-down amounts are denominated in AXUSD (6 dec). When ERC-7726 oracle is deployed, charge-off USD value can be verified via getQuote(principalWei, AXUSD, USDC).',
+      },
     });
   }
 
@@ -831,6 +838,12 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
       message: 'Loan defaulted on-chain (AXIOMFixedLoan.defaultLoan)',
       newStatus: transition.to,
       chainTxHash,
+      oracleContext: {
+        standard: 'ERC-7726',
+        oracleAddress: AXUSD_ORACLE_ADAPTER,
+        oracleDeployed: isOracleDeployed(),
+        note: 'Default amounts denominated in AXUSD (6 dec). ERC-7726 oracle will provide real-time USD valuation once deployed.',
+      },
     });
   }
 

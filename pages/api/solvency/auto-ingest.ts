@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { pool } from '../../../server/db';
 import crypto from 'crypto';
 import { ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM } from '../../../src/config/activeContracts.generated';
+import { AXUSD_ORACLE_ADAPTER, isOracleDeployed } from '../../../src/config/oracleConfig';
 
 const PSM_ABI = [
   'function axusd() view returns (address)',
@@ -114,6 +115,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       { label: 'USDC (Deployer)', valueUsd: deployerUsdc, pct: Math.round(deployerUsdc / totalAssets * 10000) / 100 },
     ].filter(c => c.valueUsd > 0);
 
+    // ── ERC-7726 Oracle price enrichment ────────────────────────────────────
+    let axusdOraclePrice: number | null = null;
+    let axusdOracleSource = 'pending_deployment';
+    try {
+      const hostHeader = req.headers['host'] || 'localhost:5000';
+      const proto = hostHeader.includes('localhost') ? 'http' : 'https';
+      const oracleRes = await fetch(`${proto}://${hostHeader}/api/oracle/axusd-price`, {
+        signal: AbortSignal.timeout(5000),
+      });
+      if (oracleRes.ok) {
+        const oracleData = await oracleRes.json() as { axusdUsdPrice?: string; source?: string };
+        if (oracleData.axusdUsdPrice) {
+          axusdOraclePrice = parseFloat(oracleData.axusdUsdPrice);
+          axusdOracleSource = oracleData.source ?? 'unknown';
+        }
+      }
+    } catch {
+      // Non-fatal — solvency snapshot proceeds without oracle enrichment
+    }
+
     const now = new Date().toISOString();
     const payloadJson = {
       treasuryTotalUsd,
@@ -125,10 +146,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       hardBrake: 'OFF',
       gateStatus: 'OPEN',
       composition,
+      oracle: {
+        axusdUsdPrice: axusdOraclePrice,
+        axusdOracleSource,
+        oracleAddress: AXUSD_ORACLE_ADAPTER,
+        oracleDeployed: isOracleDeployed(),
+        standard: 'ERC-7726',
+        note: isOracleDeployed()
+          ? 'Price sourced from AXIOMOracleAdapter on-chain contract'
+          : 'Oracle pending deployment — price sourced from PSM ratio or static parity',
+      },
       sources: [
         { label: 'Arbitrum One RPC', detail: 'Live on-chain balance queries via Alchemy' },
         { label: 'CoinGecko', detail: `ETH/USD spot price: $${ethPrice}` },
         { label: 'Contract Registry', detail: 'activeContracts.generated.ts — PSM, deployer addresses' },
+        { label: 'ERC-7726 Oracle', detail: axusdOraclePrice ? `AXUSD/USD: $${axusdOraclePrice.toFixed(6)} via ${axusdOracleSource}` : 'Oracle price unavailable' },
       ],
     };
 

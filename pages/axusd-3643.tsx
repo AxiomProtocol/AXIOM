@@ -4,6 +4,7 @@ import { useWallet } from '../components/WalletConnect/WalletContext';
 import { DesignLawLayout, SectionHeading, DetailGrid } from '../components/design-law';
 import { StatusBadge } from '../components/design-law/StatusBadge';
 import { SolidButton } from '../components/design-law/SolidButton';
+import type { OraclePriceResponse } from './api/oracle/axusd-price';
 
 interface TokenData {
   name: string;
@@ -104,7 +105,7 @@ interface KycSubmissionData {
   updatedAt: string;
 }
 
-type Tab = 'overview' | 'identity' | 'compliance' | 'contracts';
+type Tab = 'overview' | 'identity' | 'compliance' | 'contracts' | 'oracle';
 
 function shortAddr(addr: string | null): string {
   if (!addr) return '—';
@@ -160,6 +161,8 @@ export default function AXUSD3643Page() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('overview');
+  const [oracleData, setOracleData] = useState<OraclePriceResponse | null>(null);
+  const [oracleLoading, setOracleLoading] = useState(false);
   const [complianceCheck, setComplianceCheck] = useState<{
     to: string;
     amount: string;
@@ -184,9 +187,24 @@ export default function AXUSD3643Page() {
     }
   }, [address]);
 
+  const fetchOraclePrice = useCallback(async () => {
+    setOracleLoading(true);
+    try {
+      const res = await fetch('/api/oracle/axusd-price');
+      if (res.ok) {
+        const json = await res.json() as OraclePriceResponse;
+        setOracleData(json);
+      }
+    } catch {
+    } finally {
+      setOracleLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchDashboard();
-  }, [fetchDashboard]);
+    fetchOraclePrice();
+  }, [fetchDashboard, fetchOraclePrice]);
 
   const runComplianceCheck = async () => {
     if (!address || !complianceCheck.to || !complianceCheck.amount) return;
@@ -206,6 +224,7 @@ export default function AXUSD3643Page() {
     { key: 'identity', label: 'Identity' },
     { key: 'compliance', label: 'Compliance' },
     { key: 'contracts', label: 'Contracts' },
+    { key: 'oracle', label: 'Oracle' },
   ];
 
   return (
@@ -262,7 +281,22 @@ export default function AXUSD3643Page() {
             />
           )}
           {tab === 'contracts' && <ContractsTab data={data} />}
+          {tab === 'oracle' && (
+            <OracleTab
+              oracleData={oracleData}
+              oracleLoading={oracleLoading}
+              onRefresh={fetchOraclePrice}
+            />
+          )}
         </>
+      )}
+
+      {!data && !loading && tab === 'oracle' && (
+        <OracleTab
+          oracleData={oracleData}
+          oracleLoading={oracleLoading}
+          onRefresh={fetchOraclePrice}
+        />
       )}
     </DesignLawLayout>
   );
@@ -852,6 +886,191 @@ function ComplianceTab({
           ))
         )}
       </div>
+    </>
+  );
+}
+
+function OracleTab({
+  oracleData,
+  oracleLoading,
+  onRefresh,
+}: {
+  oracleData: OraclePriceResponse | null;
+  oracleLoading: boolean;
+  onRefresh: () => void;
+}) {
+  const SOURCE_LABELS: Record<string, string> = {
+    on_chain_erc7726: 'On-Chain ERC-7726 (AXIOMOracleAdapter)',
+    psm_ratio:        'PSM Backing Ratio (off-chain)',
+    coingecko_fallback: 'CoinGecko USDC/USD Proxy',
+    static_parity:    'Static 1:1 USD Parity',
+  };
+
+  const isDeployed = oracleData?.onChainOracle?.deployed ?? false;
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-dl-serif text-lg text-dl-navy">ERC-7726 Oracle Infrastructure</h2>
+        <SolidButton size="sm" onClick={onRefresh} disabled={oracleLoading}>
+          {oracleLoading ? 'Refreshing...' : 'Refresh'}
+        </SolidButton>
+      </div>
+
+      {oracleLoading && !oracleData && (
+        <p className="text-sm text-dl-gray font-dl-mono py-8 text-center">Fetching oracle data...</p>
+      )}
+
+      {oracleData && (
+        <>
+          <SectionHeading>Current AXUSD Price</SectionHeading>
+          <DetailGrid
+            left={[
+              { label: 'AXUSD / USD', value: `$${oracleData.axusdUsdPrice}` },
+              { label: 'Price (WAD)', value: oracleData.axusdUsdPriceWad },
+              { label: 'Price Source', value: SOURCE_LABELS[oracleData.source] ?? oracleData.source },
+            ]}
+            right={[
+              {
+                label: 'Oracle Standard',
+                value: <span className="font-dl-mono text-xs text-dl-navy">ERC-7726</span>,
+                mono: false,
+              },
+              {
+                label: 'Oracle Status',
+                value: <StatusBadge status={isDeployed ? 'ACTIVE' : 'PENDING'} />,
+                mono: false,
+              },
+              { label: 'Timestamp', value: new Date(oracleData.timestamp).toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false }) + ' ET' },
+            ]}
+          />
+
+          {oracleData.sourceLabel && (
+            <p className="text-xs text-dl-gray font-dl-mono mb-6 border border-dl-border px-4 py-2">
+              Source detail: {oracleData.sourceLabel}
+            </p>
+          )}
+
+          <SectionHeading>On-Chain Oracle Contract</SectionHeading>
+          <DetailGrid
+            left={[
+              {
+                label: 'Contract Address',
+                value: isDeployed ? (
+                  <a
+                    href={`https://arbitrum.blockscout.com/address/${oracleData.onChainOracle.address}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-dl-navy underline font-dl-mono text-xs"
+                  >
+                    {oracleData.onChainOracle.address}
+                  </a>
+                ) : (
+                  <span className="text-dl-gray text-xs font-dl-mono">PENDING_DEPLOYMENT</span>
+                ),
+                mono: false,
+              },
+              { label: 'Interface', value: 'ERC-7726 (getQuote)' },
+            ]}
+            right={[
+              {
+                label: 'Deployment Status',
+                value: <StatusBadge status={isDeployed ? 'ACTIVE' : 'PENDING'} />,
+                mono: false,
+              },
+              {
+                label: 'Price WAD (on-chain)',
+                value: oracleData.onChainOracle.priceWad ?? '—',
+              },
+            ]}
+          />
+
+          {!isDeployed && (
+            <div className="border border-dl-border p-4 mb-8">
+              <p className="text-xs text-dl-gray font-dl-mono mb-2">
+                The AXIOMOracleAdapter contract is pending deployment to Arbitrum One.
+                Source code: <code className="text-dl-navy">contracts/oracle/AXIOMOracleAdapter.sol</code>
+              </p>
+              <p className="text-xs text-dl-gray font-dl-mono">
+                Deployment command: <code className="text-dl-navy">npx hardhat run scripts/deploy-axusd-oracle.js --network arbitrumOne</code>
+              </p>
+            </div>
+          )}
+
+          {oracleData.psmBacking && (
+            <>
+              <SectionHeading>PSM Backing Analysis</SectionHeading>
+              <DetailGrid
+                left={[
+                  { label: 'Primary PSM USDC', value: `$${parseFloat(oracleData.psmBacking.primaryPsmUsdcBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+                  { label: 'Euler PSM USDC', value: `$${parseFloat(oracleData.psmBacking.eulerPsmUsdcBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+                  { label: 'Total PSM USDC', value: `$${parseFloat(oracleData.psmBacking.totalPsmUsdc).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+                ]}
+                right={[
+                  { label: 'AXUSD Circulating', value: `${parseFloat(oracleData.psmBacking.primaryAxusdSupply).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} AXUSD` },
+                  { label: 'Backing Ratio', value: `${oracleData.psmBacking.backingRatio}x` },
+                  {
+                    label: 'Fully Backed',
+                    value: <StatusBadge status={oracleData.psmBacking.isFullyBacked ? 'ACTIVE' : 'WARNING'} />,
+                    mono: false,
+                  },
+                ]}
+              />
+            </>
+          )}
+
+          {oracleData.erc7726Quote && (
+            <>
+              <SectionHeading>ERC-7726 Canonical Quote</SectionHeading>
+              <DetailGrid
+                left={[
+                  { label: 'Interface Call', value: 'getQuote(inAmount, base, quote)' },
+                  { label: 'In Amount', value: `${oracleData.erc7726Quote.inAmount} (1 USDC, 6 dec)` },
+                  { label: 'Base Token', value: shortAddr(oracleData.erc7726Quote.base) + ' (USDC)' },
+                ]}
+                right={[
+                  { label: 'Quote Token', value: shortAddr(oracleData.erc7726Quote.quote) + ' (AXUSD)' },
+                  { label: 'Out Amount', value: `${oracleData.erc7726Quote.outAmount} AXUSD wei` },
+                  { label: 'Description', value: oracleData.erc7726Quote.description },
+                ]}
+              />
+            </>
+          )}
+
+          <SectionHeading>Supported Quote Pairs</SectionHeading>
+          <div className="border border-dl-border mb-8">
+            <div className="grid grid-cols-12 border-b border-dl-border bg-dl-bg px-4 py-2 text-xs text-dl-gray font-dl-mono">
+              <div className="col-span-3">Base</div>
+              <div className="col-span-3">Quote</div>
+              <div className="col-span-3">Price Source</div>
+              <div className="col-span-3">Decimal Model</div>
+            </div>
+            {[
+              { base: 'USDC', quote: 'AXUSD', src: 'PSM ratio', dec: '6 dec → 18 dec' },
+              { base: 'AXUSD', quote: 'USDC', src: 'PSM ratio', dec: '18 dec → 6 dec' },
+              { base: 'USDT', quote: 'AXUSD', src: 'Static parity', dec: '6 dec → 18 dec' },
+              { base: 'WETH', quote: 'AXUSD', src: 'Chainlink ETH/USD', dec: '18 dec → 18 dec' },
+              { base: 'ARB', quote: 'AXUSD', src: 'Chainlink ARB/USD', dec: '18 dec → 18 dec' },
+              { base: 'WBTC', quote: 'AXUSD', src: 'Chainlink BTC/USD', dec: '8 dec → 18 dec' },
+            ].map((row, i) => (
+              <div key={i} className="grid grid-cols-12 border-b border-dl-border px-4 py-2 text-xs font-dl-mono">
+                <div className="col-span-3">{row.base}</div>
+                <div className="col-span-3">{row.quote}</div>
+                <div className="col-span-3 text-dl-gray">{row.src}</div>
+                <div className="col-span-3 text-dl-gray">{row.dec}</div>
+              </div>
+            ))}
+          </div>
+
+          <SectionHeading>Legacy Oracle References</SectionHeading>
+          <div className="border border-dl-border p-4 mb-8 text-xs text-dl-gray font-dl-mono space-y-1">
+            <p>Phase 3 OracleAdapter (Contract 31): <span className="text-dl-navy">0xE3b1f38AaBAd138d0EF2e2C7429ee57c512fDF3D</span></p>
+            <p>OracleAdapterRegistry (EulerVaultService): <span className="text-dl-navy">0x91c8B55D234de4b48C1F1F1c5e9c4b6C8CB96f84</span></p>
+            <p>Euler Vault PRICE_ORACLE: <span className="text-dl-navy">0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15</span></p>
+            <p className="mt-2 text-dl-gray">These are superseded by AXIOMOracleAdapter once deployed. All contract references updated automatically via oracleConfig.ts when deployment is complete.</p>
+          </div>
+        </>
+      )}
     </>
   );
 }

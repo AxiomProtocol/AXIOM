@@ -2,11 +2,12 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 
 import { ACTIVE_CONTRACTS, EULER_AXUSD, ACTIVE_AXUSD, ACTIVE_PSM, EULER_PSM } from '../../../src/config/activeContracts.generated';
+import { AXUSD_ORACLE_ADAPTER, LEGACY_ORACLE, isOracleDeployed } from '../../../src/config/oracleConfig';
 
 const EULER_LENDING_CONFIG = {
   AXUSD_VAULT: ACTIVE_CONTRACTS.eulerVault,
   VAULT_GOVERNOR: '0xE742Ee9b946043ecc75bFc71B47216C1f8248316',
-  PRICE_ORACLE: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15',
+  PRICE_ORACLE: isOracleDeployed() ? AXUSD_ORACLE_ADAPTER : LEGACY_ORACLE.PRICE_ORACLE,
   AXUSD_TOKEN: EULER_AXUSD,
   REVENUE_ROUTER: ACTIVE_CONTRACTS.revenueRouter,
   TREASURY_HUB: ACTIVE_CONTRACTS.treasuryHub,
@@ -191,6 +192,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         psm: ACTIVE_PSM,
         eulerPsm: EULER_PSM,
         note: 'Euler Vault uses Original AXUSD (immutable on-chain binding)'
+      },
+      oracle: {
+        address: EULER_LENDING_CONFIG.PRICE_ORACLE,
+        standard: 'ERC-7726',
+        deployed: isOracleDeployed(),
+        statusLabel: isOracleDeployed()
+          ? 'ACTIVE — AXIOMOracleAdapter serving on-chain quotes'
+          : 'PENDING_DEPLOYMENT — using legacy oracle; deploy contracts/oracle/AXIOMOracleAdapter.sol',
+        legacyOracle: LEGACY_ORACLE.PRICE_ORACLE,
+        upgradeAction: isOracleDeployed()
+          ? null
+          : 'Run: npx hardhat run scripts/deploy-axusd-oracle.js --network arbitrumOne, then update src/config/oracleConfig.ts',
       },
       guardRail3,
       warnings: warnings.length > 0 ? warnings : undefined,
