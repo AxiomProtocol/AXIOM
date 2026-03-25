@@ -221,6 +221,23 @@ export const CAMELOT_DEX = {
   FACTORY: '0x6EcCab422D763aC031210895C81787E87B43A652'
 } as const;
 
+// EulerSwap AXUSD Liquidity Layer (Task #40)
+// EulerSwap integrates directly with EVK vaults — idle LP capital earns lending yield.
+// All addresses PENDING_DEPLOYMENT. After running scripts/deploy-eulerswap-pools.js,
+// update these values and EULER_SWAP_* constants in activeContracts.generated.ts.
+// ERC-3643 prerequisite: all pool addresses must be registered in the LendingPlatformModule
+// via POST /api/erc3643/whitelist/add-platform before any LP operations can succeed.
+export const EULER_SWAP = {
+  // EulerSwap factory — official Arbitrum One address (confirm at https://euler.finance/swap)
+  FACTORY: '0x0000000000000000000000000000000000000000',
+  // AXUSD/USDC pool — primary peg stability venue; backed by EVK AXUSD vault
+  AXUSD_USDC_POOL: '0x0000000000000000000000000000000000000000',
+  // AXUSD/AXM pool — protocol token liquidity; backed by EVK AXUSD vault
+  AXUSD_AXM_POOL: '0x0000000000000000000000000000000000000000',
+  // Swap fee: 30 bps (0.30%). Configure at pool creation.
+  SWAP_FEE_BPS: 30,
+} as const;
+
 // Real Estate Lending Fund Contracts (41-52)
 // Status: DEPLOYED & VERIFIED | Arbitrum One | January 25, 2026
 // Features: Fix & Flip bridge loans, DSCR rental loans, ERC4626 vaults, ERC721 loan receipts

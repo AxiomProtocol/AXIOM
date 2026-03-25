@@ -114,6 +114,19 @@ export function isEulerEarnDeployed(): boolean {
   return EULER_EARN_VAULT_ADDRESS !== '0x0000000000000000000000000000000000000000';
 }
 
+// ── EulerSwap AXUSD Liquidity Layer (Task #40) ──
+// Status: PENDING_DEPLOYMENT | run scripts/deploy-eulerswap-pools.js then update these.
+// EulerSwap pools earn dual yield: swap fees + lending yield from EVK vault backing.
+// ERC-3643 prerequisite: pool addresses must be whitelisted in LendingPlatformModule.
+export const EULER_SWAP_FACTORY_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+export const EULER_SWAP_AXUSD_USDC_POOL_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+export const EULER_SWAP_AXUSD_AXM_POOL_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+
+/** Returns true when the EulerSwap AXUSD/USDC pool has been deployed */
+export function isEulerSwapDeployed(): boolean {
+  return EULER_SWAP_AXUSD_USDC_POOL_ADDRESS !== '0x0000000000000000000000000000000000000000';
+}
+
 export const LEGACY_ADDRESSES = [
   { address: '0x8616E8EA83f048ab9A5eC513c9412dd2993bcE3F', reason: 'handleUSD (fxUSD) — NOT Axiom, false reference' },
   { address: '0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059', reason: 'Euler AXUSD Vault V4 (eAXUSD-4) — deprecated, WITHDRAW_ONLY mode; hook config issue prevents new deposits; replaced by EVK_OPEN_MARKET_VAULT' },

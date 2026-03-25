@@ -1,7 +1,7 @@
 # Axiom Protocol - Sovereign Digital-Physical Economy
 
 ## Overview
-The Axiom Protocol is a governance-first wealth infrastructure focused on land acquisition to build a sovereign digital-physical economy. Its core purpose is to build wealth together, on-chain, through self-custody and a non-custodial approach. It offers a new financial operating system for digital-physical economies with capabilities including a governance token (AXM), treasury tools, real estate asset onboarding, DePIN infrastructure, cross-chain interoperability, and sustainability initiatives, aiming to be a reference architecture for future sovereign digital-physical economies.
+The Axiom Protocol is a governance-first wealth infrastructure focused on land acquisition to build a sovereign digital-physical economy. Its core purpose is to build wealth together, on-chain, through self-custody and a non-custodial approach. It offers a new financial operating system for digital-physical economies, aiming to be a reference architecture for future sovereign digital-physical economies. Key capabilities include a governance token (AXM), treasury tools, real estate asset onboarding, DePIN infrastructure, cross-chain interoperability, and sustainability initiatives.
 
 ## User Preferences
 - **Communication style**: Simple, everyday language explaining technical concepts.
@@ -18,13 +18,13 @@ The Axiom Protocol is a governance-first wealth infrastructure focused on land a
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend uses a modular, responsive design adhering to the "Axiom Protocol Design Law," featuring serif headings, monospace data, a navy/forest green/muted gold palette, light mode only, and specific UI patterns like pagination and flat solid buttons.
+The frontend uses a modular, responsive design adhering to the "Axiom Protocol Design Law," featuring serif headings, monospace data, a navy/forest green/muted gold palette, light mode only, and specific UI patterns like pagination and flat solid buttons. Mobile optimization is a key focus for all critical pages.
 
 ### Wallet Connection Architecture
-Wallet connection utilizes Wagmi v2.19 + Reown AppKit v1.8 with SIWE for authentication, configured for the Arbitrum One chain. AppKit provides a built-in modal supporting various wallets.
+Wallet connection utilizes Wagmi v2.19 + Reown AppKit v1.8 with SIWE for authentication, configured for the Arbitrum One chain.
 
 ### Technical Implementations
-The core Axiom Protocol Token (AXM) is an ERC20 governance token on Arbitrum One, with a planned migration to Universe Blockchain (L3). The multi-phase Smart Contract Architecture on Arbitrum One includes identity, treasury, staking, emissions, and asset registries, supported by 72 verified smart contracts. The platform utilizes a HYBRID CUSTODY model for its Complete DeFi Treasury Suite. An "Active Contract Verification System" ensures the integrity of AXUSD and PSM contract addresses. Production deployment uses Replit Autoscale (Vercel) for serverless scaling.
+The core Axiom Protocol Token (AXM) is an ERC20 governance token on Arbitrum One, with a planned migration to Universe Blockchain (L3). The multi-phase Smart Contract Architecture on Arbitrum One includes identity, treasury, staking, emissions, and asset registries, supported by 72 verified smart contracts. The platform utilizes a HYBRID CUSTODY model for its Complete DeFi Treasury Suite. An "Active Contract Verification System" ensures the integrity of AXUSD and PSM contract addresses. Production deployment uses Replit Autoscale (Vercel) for serverless scaling. The system includes an ERC-3643 compliant Unified AXUSD stablecoin with automated KYC, and an ERC-7726 oracle infrastructure for AXUSD pricing.
 
 ### System Design Choices
 The architecture employs a "Product Factory Approach" for scalability. The current blockchain network is Arbitrum One, with a planned migration to Universe Blockchain (L3). Data is managed using PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend features centralized contract configuration, a dedicated contract service, and chain validation middleware.
@@ -32,38 +32,32 @@ The architecture employs a "Product Factory Approach" for scalability. The curre
 Key features include:
 - DEX V2 Ecosystem and Institutional Observer Dashboard.
 - Lending Fund (SEC Reg D 506(c)).
-- Euler V2 AXUSD Lending Markets.
+- Euler V2 AXUSD Lending Markets and EulerSwap AXUSD Liquidity Layer.
 - MIRDT (Market Intelligence & Risk Disclosure Terminal) for probabilistic trend-following analysis.
 - Axiom Sentinel: A unified capital decision and risk authorization layer.
 - Founder Operations Dashboard: Internal dashboard for system overview and operations.
-- Solvency and Reserve Transparency: A page providing a three-mode institutional solvency console.
+- Solvency and Reserve Transparency: Provides a three-mode institutional solvency console.
 - Adaptive Metrics Engine (AME): A deterministic financial computation engine with an AME AI Oracle.
-- MIRDT Execution Model: A deterministic, auditable engine for paper trading.
-- Proof of Execution Playbook: Internal dashboard tracking paper trading P&L.
 - The Wealth Practice: Manages community group economics with a three-stage trust pipeline.
 - Physical-Digital Bridge (Land Acquisition Pipeline): Full land acquisition lifecycle with live governance.
 - Property Analysis Tool: Pay-per-report property analysis tool with free, base, and premium tiers.
-- Graduated Execution Framework (GEF): A behavior-based qualification system.
 - Capital Accounting and Performance Intelligence System: A full-stack capital ledger.
 - DeNet DePIN Node Integration: Provides decentralized storage infrastructure.
 - IVCEE (Institutional Viability & Capital Efficiency Engine): An allocator-grade underwriting intelligence engine.
 - Document Ingestion & Extraction: AI-powered document analysis in the Deal Intelligence workspace.
 - Distressed Property Feed (Deal Flow): Aggregates distressed properties from government sources and a wholesaler submission portal.
 - Agent Governance System: Policy-based autonomous agent authorization.
-- ERC-3643 Unified AXUSD (T-REX Compliant): A unified ERC-3643 compliant stablecoin with a frontend dashboard and automated KYC.
-- Banking Infrastructure (Unit + BitGo): Unified banking layer providing FDIC-insured deposit accounts, ACH, debit cards, KYC, and institutional crypto custody. A Bridge Service connects fiat↔crypto.
+- Banking Infrastructure (Unit + BitGo): Unified banking layer providing FDIC-insured deposit accounts, ACH, debit cards, KYC, and institutional crypto custody, with a Bridge Service connecting fiat↔crypto.
 - Multi-Exit Strategy Engine: Provides 8 underwriting strategies with comparison and ranking.
 - Due Diligence Checklist System: Structured DD workflow.
-- Craftsman Cost Database: `rehab_cost_benchmarks` table seeded with 57 reference costs from Craftsman National Construction Estimator (NCE), used for deterministic scope generation.
+- Craftsman Cost Database: `rehab_cost_benchmarks` table seeded with 57 reference costs from Craftsman National Construction Estimator (NCE).
 - Cost Intelligence Engine: Production-grade rehab underwriting engine grounded in Craftsman NCE data.
 - Capital Readiness Card: Computes capital analysis for funding sources.
 - AI Acquisition Memo Builder: Gemini-powered institutional acquisition memo generator.
 - Syndication Module: Full syndication operating system with an LP Investor Portal.
-- Axiom Secondary Network V1: Permissioned secondary transfer, settlement, registry, and intelligence layer for Axiom-issued private market products. It includes investor portfolio, marketplace, issuer console, and admin functionalities. Key business rules include 10-check compliance gate, 0.5% platform fee, 180-day hold, NAV discount review, and atomic beneficial ownership registry updates.
-- Mobile Optimization: All key pages optimized for mobile screens.
-- Field Capture System (Layer 5): Mobile-first walkthrough system for real-world property inspections with features like tap-optimized condition buttons, real-time rehab cost binding, unit type designation, offline-first draft save, voice note capture, unit replication engine, and session completion summary.
-- **On-Chain Lending Credit Market (Task #31/#33, v8)**: Two production smart contracts deployed and verified on Arbitrum One (2026-03-22). `AXIOMFixedLoan` (`0x511A0cD642532585dc87e41C84f7f499a9755511`) — fixed-term loan engine; AMORTIZED/INTEREST_ONLY modes; draw tranches (up to 3); 8 states (PENDING/APPROVED/ACTIVE/DELINQUENT/DEFAULTED/REPAID/CLOSED/CHARGED_OFF); `accrueAfterMaturity` flag; `chargeOffLoan()` + `closeUndrawnApprovedLoan()`; installment tracking fields; `paymentSchedule()`, `nextPaymentDue()`, `daysDelinquent()`. MAX_RATE_BPS = 5,000 (50% APR hard cap). `AXIOMCreditMarket` (`0x85074a74774568692128eE97Da661Fe49dcF5fE4`) — ERC-3643 gated LP pool; `interestPerShare` pro-rata distribution; reserve ratio; `disburseCommittedLiquidity()` gated `onlyFixedLoan` (no operator-callable disburse); `writeDownOutstanding()` for charge-off; `ArithmeticInvariantViolation` guard on receiveRepayment. Wiring: setCreditMarket tx `0x8b8ed97d5c9bd5371459b96b2a24cd74ccc4133cc66bb5ead9f50073fbafc17a`; setFixedLoan tx `0xdd684dad6a7c38611270a0c49f23fd093ebf30a181b6009c6db49dc00af9bdfe`. API: fail-closed fund flow (getLoan().state check before approveLoan), repayment idempotency (tx_hash dedup). Config: `src/config/activeContracts.generated.ts` + `src/config/creditMarket.generated.ts`.
-- **ERC-7726 Oracle Infrastructure (Task #37)**: Full ERC-7726 oracle infrastructure built and ready for on-chain deployment. `contracts/oracle/AXIOMOracleAdapter.sol` — ERC-7726 compliant price oracle for AXUSD; supports USDC↔AXUSD, USDT↔AXUSD, WETH→AXUSD, ARB→AXUSD, WBTC→AXUSD; pricing sources: PSM backing ratio + Chainlink feeds (ETH/BTC/ARB/USDC/USDT) + static 1:1 fallback; PSM-derived rate clamped [0.90,1.10] to prevent manipulation; `axusdUsdPrice()` returns WAD-precision price + source enum. `scripts/deploy-axusd-oracle.js` — Hardhat deployment script. `src/config/oracleConfig.ts` — central oracle config (`AXUSD_ORACLE_ADAPTER` address, `ERC7726_ABI`, `CHAINLINK_FEEDS`, `LEGACY_ORACLE` refs, `isOracleDeployed()` guard). `pages/api/oracle/axusd-price.ts` — off-chain ERC-7726-compatible endpoint; three-source priority: on-chain contract → PSM ratio → CoinGecko/static. All downstream consumers updated: `EulerVaultService.getAxusdOraclePrice()`, `pages/api/euler/vault-stats.ts` (oracle metadata in response), `pages/api/solvency/auto-ingest.ts` (oracle price in solvency payload), `pages/api/realestate/loan-lifecycle.ts` (oracle context in charge-off/default responses). AXUSD dashboard (`/axusd-3643`) has new Oracle tab showing live price, PSM backing analysis, supported quote pairs, and deployment status. Status: PENDING_DEPLOYMENT — run `npx hardhat run scripts/deploy-axusd-oracle.js --network arbitrumOne` then update `AXUSD_ORACLE_ADAPTER` in `src/config/oracleConfig.ts`.
+- Axiom Secondary Network V1: Permissioned secondary transfer, settlement, registry, and intelligence layer for Axiom-issued private market products with an investor portfolio, marketplace, issuer console, and admin functionalities.
+- Field Capture System (Layer 5): Mobile-first walkthrough system for real-world property inspections.
+- On-Chain Lending Credit Market: Production smart contracts (`AXIOMFixedLoan` and `AXIOMCreditMarket`) deployed on Arbitrum One for fixed-term loans and gated LP pools.
 
 ## External Dependencies
 - **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)

@@ -2,7 +2,12 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { pool } from '../../../server/db';
 import crypto from 'crypto';
-import { ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM, EVK_OPEN_MARKET_VAULT_ADDRESS, isEvkVaultDeployed, EULER_EARN_VAULT_ADDRESS, isEulerEarnDeployed } from '../../../src/config/activeContracts.generated';
+import {
+  ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM,
+  EVK_OPEN_MARKET_VAULT_ADDRESS, isEvkVaultDeployed,
+  EULER_EARN_VAULT_ADDRESS, isEulerEarnDeployed,
+  EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, isEulerSwapDeployed,
+} from '../../../src/config/activeContracts.generated';
 import { AXUSD_ORACLE_ADAPTER, isOracleDeployed } from '../../../src/config/oracleConfig';
 import { EULER_LENDING_CONTRACTS } from '../../../shared/contracts';
 
@@ -135,6 +140,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
+    // ── EulerSwap AXUSD Liquidity Layer (Task #40) ───────────────────────────
+    // Dual-yield AMM pools (swap fees + EVK vault lending yield).
+    // Peg stability signal: pool depth as primary liquidity metric.
+    const EULERSWAP_RESERVES_ABI = ['function getReserves() view returns (uint256 reserve0, uint256 reserve1)'];
+    let eulerSwapUsdcTvl = 0;
+    let eulerSwapAxmTvl  = 0;
+    const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
+    if (isEulerSwapDeployed()) {
+      if (EULER_SWAP_AXUSD_USDC_POOL_ADDRESS !== ZERO_ADDR) {
+        try {
+          const usdcPool = new ethers.Contract(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, EULERSWAP_RESERVES_ABI, provider);
+          const r = await usdcPool.getReserves();
+          eulerSwapUsdcTvl = parseFloat(ethers.formatUnits(r[0], 6)) + parseFloat(ethers.formatUnits(r[1], 6));
+        } catch {}
+      }
+      if (EULER_SWAP_AXUSD_AXM_POOL_ADDRESS !== ZERO_ADDR) {
+        try {
+          const axmPool = new ethers.Contract(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, EULERSWAP_RESERVES_ABI, provider);
+          const r = await axmPool.getReserves();
+          eulerSwapAxmTvl = parseFloat(ethers.formatUnits(r[0], 6)) + parseFloat(ethers.formatUnits(r[1], 6));
+        } catch {}
+      }
+    }
+    const eulerSwapTotalTvl = eulerSwapUsdcTvl + eulerSwapAxmTvl;
+
     const treasuryTotalUsd = Math.round((deployerEthUsd + deployerUsdc + psmReservesTotal) * 100) / 100;
     const liabilitiesTotalUsd = Math.round((primaryAxusdSupply + eulerAxusdSupply) * 100) / 100;
 
@@ -198,6 +228,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ? `Euler Earn AXUSD yield aggregation vault live — ${eulerEarnTvlAxusd.toFixed(2)} AXUSD TVL`
           : 'Euler Earn AXUSD vault pending on-chain deployment (Task #39)',
       },
+      eulerSwap: {
+        deployed: isEulerSwapDeployed(),
+        pools: [
+          {
+            pair: 'AXUSD/USDC',
+            address: EULER_SWAP_AXUSD_USDC_POOL_ADDRESS,
+            tvlUsd: eulerSwapUsdcTvl,
+            status: EULER_SWAP_AXUSD_USDC_POOL_ADDRESS !== ZERO_ADDR ? 'LIVE' : 'PENDING_DEPLOYMENT',
+          },
+          {
+            pair: 'AXUSD/AXM',
+            address: EULER_SWAP_AXUSD_AXM_POOL_ADDRESS,
+            tvlUsd: eulerSwapAxmTvl,
+            status: EULER_SWAP_AXUSD_AXM_POOL_ADDRESS !== ZERO_ADDR ? 'LIVE' : 'PENDING_DEPLOYMENT',
+          },
+        ],
+        totalTvlUsd: eulerSwapTotalTvl,
+        pegDepthUsd: eulerSwapUsdcTvl,
+        status: isEulerSwapDeployed() ? 'LIVE' : 'PENDING_DEPLOYMENT',
+        note: isEulerSwapDeployed()
+          ? `EulerSwap AXUSD pools live — ${eulerSwapTotalTvl.toFixed(2)} USD TVL (peg depth: ${eulerSwapUsdcTvl.toFixed(2)} USD)`
+          : 'EulerSwap AXUSD/USDC + AXUSD/AXM pools pending on-chain deployment (Task #40)',
+      },
       oracle: {
         axusdUsdPrice: axusdOraclePrice,
         axusdOracleSource,
@@ -214,6 +267,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         { label: 'Contract Registry', detail: 'activeContracts.generated.ts — PSM, deployer addresses' },
         { label: 'ERC-7726 Oracle', detail: axusdOraclePrice ? `AXUSD/USD: $${axusdOraclePrice.toFixed(6)} via ${axusdOracleSource}` : 'Oracle price unavailable' },
         { label: 'Euler Earn AXUSD', detail: isEulerEarnDeployed() ? `Multi-strategy vault live — ${eulerEarnTvlAxusd.toFixed(2)} AXUSD TVL` : 'Pending deployment (Task #39)' },
+        { label: 'EulerSwap Pools', detail: isEulerSwapDeployed() ? `AXUSD/USDC + AXUSD/AXM live — ${eulerSwapTotalTvl.toFixed(2)} USD TVL, peg depth ${eulerSwapUsdcTvl.toFixed(2)} USD` : 'Pending deployment (Task #40)' },
       ],
     };
 

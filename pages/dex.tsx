@@ -1,112 +1,293 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { SwapInterface, PoolList, LiquidityManager, DexStats, UserRewards } from '../components/dex';
 import EulerVaultCard from '../components/EulerVaultCard';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
 
-const TradingViewChart = dynamic(() => import('../components/dex/TradingViewChart'), { 
+const TradingViewChart = dynamic(() => import('../components/dex/TradingViewChart'), {
   ssr: false,
   loading: () => (
     <div className="bg-dl-bg border border-dl-border h-[500px] flex items-center justify-center">
       <p className="text-sm text-dl-gray font-dl-mono">Loading chart...</p>
     </div>
-  )
+  ),
 });
 
-type Tab = 'swap' | 'pools' | 'liquidity' | 'rewards' | 'earn';
+type Tab = 'swap' | 'pools' | 'liquidity' | 'eulerswap-lp' | 'rewards' | 'earn';
+
+interface EulerSwapPool {
+  id: string;
+  label: string;
+  address: string;
+  status: string;
+  tvlUsd: number;
+  feeBps: number;
+  swapFeeApyBps: number;
+  lendingApyBps: number;
+  blendedApyBps: number;
+  blendedApyLabel: string;
+  blendedApyPct: string;
+  erc3643WhitelistRequired: boolean;
+  note: string | null;
+}
+
+interface EulerSwapStats {
+  deployed: boolean;
+  totalTvlUsd: number;
+  evkLendingApyBps: number;
+  pools: EulerSwapPool[];
+}
+
+function Mono({ children }: { children: React.ReactNode }) {
+  return <span className="font-dl-mono text-xs">{children}</span>;
+}
+
+function StatusBadge({ status }: { status: string }) {
+  if (status === 'LIVE') return <span className="text-xs font-dl-mono text-dl-forest border border-dl-forest px-2 py-0.5">LIVE</span>;
+  return <span className="text-xs font-dl-mono text-dl-gold border border-dl-gold px-2 py-0.5">PENDING DEPLOYMENT</span>;
+}
+
+function EulerSwapLpTab() {
+  const [stats, setStats] = useState<EulerSwapStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedPool, setSelectedPool] = useState<string>('axusd_usdc');
+
+  useEffect(() => {
+    fetch('/api/euler/eulerswap-pools')
+      .then(r => r.json())
+      .then(d => { setStats(d); setLoading(false); })
+      .catch(() => { setError('Failed to load EulerSwap pool data'); setLoading(false); });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-dl-bg-alt border border-dl-border p-4 animate-pulse h-24" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error || !stats) {
+    return (
+      <div className="bg-dl-bg-alt border border-dl-border p-6 text-center">
+        <p className="text-dl-red font-dl-mono text-sm">{error || 'Failed to load pool data'}</p>
+      </div>
+    );
+  }
+
+  const selectedPoolData = stats.pools.find(p => p.id === selectedPool) ?? stats.pools[0];
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-dl-bg-alt border border-dl-border p-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Primary Liquidity Venue</p>
+            <h2 className="font-dl-serif text-xl text-dl-navy">EulerSwap AXUSD Pools</h2>
+            <p className="text-dl-gray text-sm mt-1">
+              LP capital earns dual yield — swap fees and lending income from the EVK AXUSD vault simultaneously.
+            </p>
+          </div>
+          <StatusBadge status={stats.deployed ? 'LIVE' : 'PENDING_DEPLOYMENT'} />
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-4 border-t border-dl-border pt-4">
+          <div>
+            <p className="font-dl-mono text-xs text-dl-gray uppercase">Total Pool TVL</p>
+            <p className="font-dl-mono text-lg text-dl-navy">${stats.totalTvlUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          </div>
+          <div>
+            <p className="font-dl-mono text-xs text-dl-gray uppercase">EVK Lending APY</p>
+            <p className="font-dl-mono text-lg text-dl-navy">{(stats.evkLendingApyBps / 100).toFixed(2)}%</p>
+          </div>
+          <div>
+            <p className="font-dl-mono text-xs text-dl-gray uppercase">Pools</p>
+            <p className="font-dl-mono text-lg text-dl-navy">{stats.pools.length}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        {stats.pools.map(pool => (
+          <button
+            key={pool.id}
+            onClick={() => setSelectedPool(pool.id)}
+            className={`px-4 py-2 font-dl-mono text-sm border ${
+              selectedPool === pool.id
+                ? 'bg-dl-navy text-white border-dl-navy'
+                : 'border-dl-border text-dl-gray'
+            }`}
+          >
+            {pool.label}
+          </button>
+        ))}
+      </div>
+
+      {selectedPoolData && (
+        <div className="border border-dl-border">
+          <div className="bg-dl-bg-alt border-b border-dl-border p-4 flex items-center justify-between">
+            <div>
+              <h3 className="font-dl-serif text-lg text-dl-navy">{selectedPoolData.label}</h3>
+              <Mono>{selectedPoolData.address === '0x0000000000000000000000000000000000000000' ? 'PENDING DEPLOYMENT' : `${selectedPoolData.address.slice(0, 8)}…${selectedPoolData.address.slice(-6)}`}</Mono>
+            </div>
+            <StatusBadge status={selectedPoolData.status} />
+          </div>
+
+          <div className="p-4 grid grid-cols-2 lg:grid-cols-4 gap-4 border-b border-dl-border">
+            <div>
+              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">TVL</p>
+              <p className="font-dl-mono text-base text-dl-navy">${selectedPoolData.tvlUsd.toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Swap Fee</p>
+              <p className="font-dl-mono text-base text-dl-navy">{selectedPoolData.feeBps} bps</p>
+            </div>
+            <div>
+              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Swap Fee APY</p>
+              <p className="font-dl-mono text-base text-dl-navy">{(selectedPoolData.swapFeeApyBps / 100).toFixed(2)}% <span className="text-dl-gray text-xs">(variable)</span></p>
+            </div>
+            <div>
+              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Lending Yield APY</p>
+              <p className="font-dl-mono text-base text-dl-navy">{(selectedPoolData.lendingApyBps / 100).toFixed(2)}% <span className="text-dl-gray text-xs">(variable)</span></p>
+            </div>
+          </div>
+
+          <div className="p-4 bg-dl-bg-alt border-b border-dl-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Blended APY (Swap Fees + Lending Yield)</p>
+                <p className="font-dl-serif text-2xl text-dl-navy">{selectedPoolData.blendedApyPct}% <span className="text-sm text-dl-gray font-dl-mono">{selectedPoolData.blendedApyLabel}</span></p>
+                <p className="text-dl-gray text-xs mt-1">= {(selectedPoolData.swapFeeApyBps / 100).toFixed(2)}% swap fees + {(selectedPoolData.lendingApyBps / 100).toFixed(2)}% lending — both are variable and not guaranteed.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4">
+            <div className="mb-4">
+              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-2">ERC-3643 Compliance</p>
+              <p className="text-dl-gray text-sm">AXUSD is ERC-3643 compliant. Identity verification is required before adding liquidity. Pool addresses must be registered in the Lending Platform Module.</p>
+            </div>
+
+            {selectedPoolData.status === 'PENDING_DEPLOYMENT' ? (
+              <div className="border border-dl-gold p-4">
+                <p className="font-dl-mono text-xs text-dl-gold uppercase mb-1">Pending Deployment</p>
+                <p className="text-dl-gray text-sm">This pool is pending on-chain deployment. Once live, identity-verified participants can add liquidity to earn dual yield.</p>
+                <p className="text-dl-gray text-xs mt-2">Run <Mono>npx hardhat run scripts/deploy-eulerswap-pools.js --network arbitrumOne</Mono> after confirming the factory address.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="font-dl-mono text-xs text-dl-gray uppercase">Add Liquidity</p>
+                <a
+                  href={`https://app.euler.finance/swap?network=arbitrumone&pool=${selectedPoolData.address}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full py-3 bg-dl-navy text-white text-center font-dl-mono text-sm"
+                >
+                  Add Liquidity via EulerSwap →
+                </a>
+                <p className="text-dl-gray text-xs">Identity verification required. Ensure your address is registered in the Axiom identity registry before proceeding.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="bg-dl-bg-alt border border-dl-border p-5">
+        <h3 className="text-dl-navy font-dl-serif mb-3">How EulerSwap Dual Yield Works</h3>
+        <div className="space-y-3">
+          {[
+            ['Deposit AXUSD + USDC into the EulerSwap pool', 'Your LP position is backed by the EVK AXUSD lending vault'],
+            ['Earn swap fees on every trade', `${selectedPoolData?.feeBps ?? 30} bps fee on each swap routed through the pool`],
+            ['Earn lending yield on idle capital', 'Funds not needed for immediate swaps are deployed to the EVK vault and earn interest from borrowers'],
+            ['Both income streams are variable', 'Rates depend on swap volume and vault utilization — labeled Variable, not guaranteed'],
+          ].map(([title, detail], i) => (
+            <div key={i} className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-dl-navy flex items-center justify-center text-white text-sm font-dl-mono shrink-0">{i + 1}</div>
+              <div>
+                <p className="text-dl-navy text-sm font-medium">{title}</p>
+                <p className="text-dl-gray text-xs">{detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="border border-dl-border p-4">
+        <p className="font-dl-mono text-xs text-dl-gray uppercase mb-2">Camelot DEX — Fallback Venue</p>
+        <p className="text-dl-gray text-sm">The Camelot AXUSD/USDC pool remains active as a swap fallback. EulerSwap is the primary routing venue when pools are live.</p>
+        <a href="https://app.camelot.exchange/liquidity?token1=0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7" target="_blank" rel="noopener noreferrer" className="font-dl-mono text-xs text-dl-navy underline mt-2 block">View Camelot Pool →</a>
+      </div>
+    </div>
+  );
+}
 
 export default function DexPage() {
   const [activeTab, setActiveTab] = useState<Tab>('swap');
 
-  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    {
-      id: 'swap',
-      label: 'Swap',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-        </svg>
-      )
-    },
-    {
-      id: 'pools',
-      label: 'Pools',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-        </svg>
-      )
-    },
-    {
-      id: 'liquidity',
-      label: 'Liquidity',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
-      )
-    },
-    {
-      id: 'rewards',
-      label: 'Rewards',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      )
-    },
-    {
-      id: 'earn',
-      label: 'Earn',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-        </svg>
-      )
-    }
+  const tabs: { id: Tab; label: string; primary?: boolean }[] = [
+    { id: 'swap',         label: 'Swap' },
+    { id: 'eulerswap-lp', label: 'EulerSwap LP', primary: true },
+    { id: 'pools',        label: 'Pools' },
+    { id: 'liquidity',    label: 'Liquidity' },
+    { id: 'rewards',      label: 'Rewards' },
+    { id: 'earn',         label: 'Earn' },
   ];
 
   return (
     <DesignLawLayout>
       <Head>
-        <title>Axiom DEX | Decentralized Exchange</title>
-        <meta name="description" content="Trade tokens, provide liquidity, and earn rewards on Axiom DEX" />
+        <title>Axiom Exchange | AXUSD Liquidity</title>
+        <meta name="description" content="Swap AXUSD, provide liquidity on EulerSwap for dual yield, and earn rewards on Axiom" />
       </Head>
 
-      <div className="mb-8">
-        <h1 className="font-dl-serif text-3xl text-dl-navy">Axiom DEX</h1>
-        <p className="text-dl-gray mt-1">Decentralized Exchange on Arbitrum</p>
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-1">
+          <h1 className="font-dl-serif text-3xl text-dl-navy">Axiom Exchange</h1>
+          <span className="text-xs font-dl-mono border border-dl-forest text-dl-forest px-2 py-0.5">EulerSwap Primary</span>
+        </div>
+        <p className="text-dl-gray">AXUSD liquidity, swaps, and dual-yield LP on Arbitrum One</p>
       </div>
+
       <DexStats />
 
       <div className="mt-8 flex flex-col lg:flex-row gap-6">
-        <nav className="lg:w-48 flex lg:flex-col gap-2 overflow-x-auto pb-2 lg:pb-0">
+        <nav className="lg:w-52 flex lg:flex-col gap-1 overflow-x-auto pb-2 lg:pb-0">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-3 px-4 py-3 font-medium whitespace-nowrap ${
+              className={`flex items-center justify-between px-4 py-3 font-dl-mono text-sm whitespace-nowrap border-b-2 lg:border-b-0 lg:border-l-2 ${
                 activeTab === tab.id
-                  ? 'bg-dl-bg-alt text-dl-navy border-b-2 border-dl-navy'
-                  : 'text-dl-gray'
+                  ? 'border-dl-navy text-dl-navy bg-dl-bg-alt'
+                  : 'border-transparent text-dl-gray'
               }`}
             >
-              {tab.icon}
               <span>{tab.label}</span>
+              {tab.primary && (
+                <span className="hidden lg:inline text-xs border border-dl-forest text-dl-forest px-1 ml-2">Primary</span>
+              )}
             </button>
           ))}
         </nav>
 
-        <main className="flex-1">
+        <main className="flex-1 min-w-0">
           {activeTab === 'swap' && (
             <div className="space-y-6">
+              <div className="bg-dl-bg-alt border border-dl-border p-3">
+                <p className="font-dl-mono text-xs text-dl-gray">
+                  Swap routing: <span className="text-dl-navy">EulerSwap (primary)</span> → Camelot (fallback). Quotes reflect best available liquidity.
+                </p>
+              </div>
               <TradingViewChart />
               <div className="flex justify-center">
                 <SwapInterface />
               </div>
             </div>
           )}
+          {activeTab === 'eulerswap-lp' && <EulerSwapLpTab />}
           {activeTab === 'pools' && <PoolList />}
           {activeTab === 'liquidity' && <LiquidityManager />}
           {activeTab === 'rewards' && <UserRewards />}
@@ -120,34 +301,26 @@ export default function DexPage() {
               <div className="bg-dl-bg-alt p-5 border border-dl-border">
                 <h3 className="text-dl-navy font-dl-serif mb-3">How It Works</h3>
                 <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-dl-navy flex items-center justify-center text-white text-sm font-medium">1</div>
-                    <div>
-                      <p className="text-dl-navy text-sm">Deposit AXUSD into the Euler vault</p>
-                      <p className="text-dl-gray text-xs">Your AXUSD is pooled with other lenders</p>
+                  {[
+                    ['Deposit AXUSD into the Euler vault', 'Your AXUSD is pooled with other lenders'],
+                    ['Borrowers use collateral to borrow AXUSD', 'Collateral: USDC, USDT, WETH, ARB vault shares'],
+                    ['Earn interest from borrowers', 'Interest accrues automatically to your position'],
+                  ].map(([title, detail], i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className="w-6 h-6 bg-dl-navy flex items-center justify-center text-white text-sm font-medium">{i + 1}</div>
+                      <div>
+                        <p className="text-dl-navy text-sm">{title}</p>
+                        <p className="text-dl-gray text-xs">{detail}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-dl-navy flex items-center justify-center text-white text-sm font-medium">2</div>
-                    <div>
-                      <p className="text-dl-navy text-sm">Borrowers use collateral to borrow AXUSD</p>
-                      <p className="text-dl-gray text-xs">Collateral: USDC, USDT, WETH, ARB vault shares</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-dl-navy flex items-center justify-center text-white text-sm font-medium">3</div>
-                    <div>
-                      <p className="text-dl-navy text-sm">Earn interest from borrowers</p>
-                      <p className="text-dl-gray text-xs">Interest accrues automatically to your position</p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
               <div className="flex gap-3">
-                <a href="/earn" className="flex-1 py-3 bg-dl-bg-alt text-dl-navy text-center font-medium border border-dl-border">
+                <a href="/earn" className="flex-1 py-3 bg-dl-bg-alt text-dl-navy text-center font-medium border border-dl-border font-dl-mono text-sm">
                   View All Yield Opportunities
                 </a>
-                <a href="/borrow" className="flex-1 py-3 bg-dl-bg-alt text-dl-navy text-center font-medium border border-dl-border">
+                <a href="/borrow" className="flex-1 py-3 bg-dl-bg-alt text-dl-navy text-center font-medium border border-dl-border font-dl-mono text-sm">
                   Borrow AXUSD
                 </a>
               </div>
