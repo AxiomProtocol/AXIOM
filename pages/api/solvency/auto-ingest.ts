@@ -116,12 +116,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ].filter(c => c.valueUsd > 0);
 
     // ── ERC-7726 Oracle price enrichment ────────────────────────────────────
+    // Use a fixed internal base URL to prevent SSRF via Host header manipulation.
+    // Server-to-server internal calls always target the same process on port 5000.
+    const INTERNAL_BASE = process.env.INTERNAL_API_BASE_URL || 'http://localhost:5000';
     let axusdOraclePrice: number | null = null;
     let axusdOracleSource = 'pending_deployment';
     try {
-      const hostHeader = req.headers['host'] || 'localhost:5000';
-      const proto = hostHeader.includes('localhost') ? 'http' : 'https';
-      const oracleRes = await fetch(`${proto}://${hostHeader}/api/oracle/axusd-price`, {
+      const oracleRes = await fetch(`${INTERNAL_BASE}/api/oracle/axusd-price`, {
         signal: AbortSignal.timeout(5000),
       });
       if (oracleRes.ok) {
@@ -190,9 +191,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     let ameResult = null;
     try {
-      const host = req.headers['host'] || 'localhost:5000';
-      const proto = host.includes('localhost') ? 'http' : 'https';
-      const ameRes = await fetch(`${proto}://${host}/api/solvency/ame/run`, {
+      const ameRes = await fetch(`${INTERNAL_BASE}/api/solvency/ame/run`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

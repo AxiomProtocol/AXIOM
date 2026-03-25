@@ -5,27 +5,41 @@ pragma solidity ^0.8.24;
  * @title AXIOMOracleAdapter
  * @notice ERC-7726 compliant price oracle adapter for AXUSD on Axiom Protocol.
  *
- * ERC-7726 interface:
- *   getQuote(uint256 inAmount, address base, address quote) → uint256 outAmount
+ * === Euler Finance Compatibility ===
+ * This contract is designed as a drop-in oracle adapter for Euler Finance's
+ * Euler Vault Kit (EVK). It implements the same IPriceOracle interface used by
+ * the euler-price-oracle library (github.com/euler-xyz/euler-price-oracle):
  *
- * Pricing sources (in priority order):
- *   1. Chainlink USDC/USD feed (for USDC collateral → AXUSD denominated vault)
- *   2. PSM backing ratio (USDC in PSM / AXUSD circulating supply)
+ *   function getQuote(uint256 inAmount, address base, address quote)
+ *     external view returns (uint256 outAmount);
+ *
+ * The function signature and return semantics are identical to Euler's oracle
+ * adapter pattern, making this contract compatible with:
+ *   - EVK EulerRouter (as a nested adapter via setResolvedVault / setConfig)
+ *   - EulerSwap oracle slot
+ *   - euler-earn vault pricing
+ *
+ * === Pricing sources (priority order) ===
+ *   1. PSM backing ratio  (USDC in PSM / AXUSD circulating supply, clamped [0.90,1.10])
+ *   2. Chainlink price feeds (ETH/USD, BTC/USD, ARB/USD via 8-dec feeds)
  *   3. Static 1:1 parity fallback (AXUSD is a USD-pegged stablecoin)
  *
- * Decimal model:
+ * === Decimal model ===
  *   - AXUSD (ERC-3643, primary):  18 decimals  (0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C)
  *   - AXUSD (Euler/legacy):        18 decimals  (0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c)
  *   - USDC (Arbitrum One):          6 decimals  (0xaf88d065e77c8cC2239327C5EDb3A432268e5831)
  *   - USDT (Arbitrum One):          6 decimals
- *   - WETH (Arbitrum One):         18 decimals
+ *   - WETH / ARB (Arbitrum One):   18 decimals
+ *   - WBTC (Arbitrum One):          8 decimals
  *
- * For Euler Vault usage — AXUSD as borrowable asset, USDC/USDT/WETH as collateral:
- *   getQuote(X, USDC,  AXUSD) → X * 1e12  (6-dec → 18-dec, price ≈ 1)
- *   getQuote(X, AXUSD, USDC)  → X / 1e12  (18-dec → 6-dec, price ≈ 1)
- *   getQuote(X, WETH,  AXUSD) → X * ethPriceUsd (priced via Chainlink ETH/USD)
+ * === Key pair behaviours ===
+ *   getQuote(X, USDC,  AXUSD) → X * 1e12            (6-dec → 18-dec, price ≈ 1)
+ *   getQuote(X, AXUSD, USDC)  → X / 1e12            (18-dec → 6-dec, price ≈ 1)
+ *   getQuote(X, WETH,  AXUSD) → X * ethUsd / 1e8    (Chainlink ETH/USD 8-dec)
+ *   getQuote(X, WBTC,  AXUSD) → X * btcUsd * 1e10   (WBTC 8-dec → 18-dec result)
+ *   getQuote(X, ARB,   AXUSD) → X * arbUsd / 1e8    (Chainlink ARB/USD 8-dec)
  *
- * Deployed: PENDING — run scripts/deploy-axusd-oracle.js after hardhat setup
+ * Deployed: PENDING — run `npx hardhat run scripts/deploy-axusd-oracle.js --network arbitrumOne`
  */
 
 interface AggregatorV3Interface {
