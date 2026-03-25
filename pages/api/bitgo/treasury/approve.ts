@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getSIWESession } from '../../../../lib/middleware/siweAuth';
 import { bitGoCustodyService } from '../../../../lib/services/BitGoCustodyService';
 import { rateLimitStrict } from '../../../../lib/rateLimit';
+import { isAdminWallet } from '../../../../lib/admin/config';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -12,6 +13,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const session = await getSIWESession(req);
   if (!session) {
     return res.status(401).json({ error: 'Wallet authentication required.', code: 'SIWE_AUTH_REQUIRED' });
+  }
+
+  if (!isAdminWallet(session.address)) {
+    return res.status(403).json({
+      error: 'Forbidden: privileged wallet required.',
+      code: 'TREASURY_PRIVILEGE_REQUIRED',
+    });
   }
 
   const { pendingApprovalId, action } = req.body ?? {};
