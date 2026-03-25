@@ -173,6 +173,7 @@ interface EvkWhitelistTabProps {
 
 function EvkWhitelistTab({ lpmPlatforms, lpmLoading, onRefresh }: EvkWhitelistTabProps) {
   const [addingAddr, setAddingAddr] = useState('');
+  const [adminKey, setAdminKey] = useState('');
   const [addResult, setAddResult] = useState<string | null>(null);
   const [addLoading, setAddLoading] = useState(false);
 
@@ -187,12 +188,16 @@ function EvkWhitelistTab({ lpmPlatforms, lpmLoading, onRefresh }: EvkWhitelistTa
       setAddResult('Invalid address format.');
       return;
     }
+    if (!adminKey) {
+      setAddResult('Admin key required.');
+      return;
+    }
     setAddLoading(true);
     setAddResult(null);
     try {
       const r = await fetch('/api/erc3643/whitelist/add-platform', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
         body: JSON.stringify({ platform: addingAddr }),
       });
       const d = await r.json();
@@ -272,10 +277,19 @@ function EvkWhitelistTab({ lpmPlatforms, lpmLoading, onRefresh }: EvkWhitelistTa
         </div>
         <div className="px-4 py-4 bg-dl-bg">
           <p className="text-xs text-dl-gray mb-3 leading-relaxed">
-            Enter the platform address (EVC, EVK Factory, or deployed vault) to whitelist it in the
-            LendingPlatformModule. This calls <span className="font-dl-mono">addPlatform(AXUSD_TOKEN, platform)</span> via
-            the LPM admin API. Requires founder key authorization.
+            Enter the admin key and platform address (EVC, EVK Factory, or deployed vault) to whitelist
+            it in the LendingPlatformModule via <span className="font-dl-mono">addPlatform(AXUSD_TOKEN, platform)</span>.
           </p>
+          <div className="flex flex-col gap-2 mb-3">
+            <input
+              type="password"
+              value={adminKey}
+              onChange={e => setAdminKey(e.target.value)}
+              placeholder="Admin key (ADMIN_SOLVENCY_KEY)"
+              autoComplete="off"
+              className="w-full border border-dl-border px-3 py-2 font-dl-mono text-xs text-dl-text bg-white focus:outline-none"
+            />
+          </div>
           <div className="flex gap-3 items-start">
             <input
               type="text"
@@ -286,7 +300,7 @@ function EvkWhitelistTab({ lpmPlatforms, lpmLoading, onRefresh }: EvkWhitelistTa
             />
             <button
               onClick={handleAddPlatform}
-              disabled={addLoading || !addingAddr}
+              disabled={addLoading || !addingAddr || !adminKey}
               className="bg-dl-navy text-white px-5 py-2 font-dl-mono text-xs disabled:opacity-50"
             >
               {addLoading ? 'Submitting...' : 'Add Platform'}
