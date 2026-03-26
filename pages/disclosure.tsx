@@ -103,10 +103,9 @@ export default function DisclosurePage() {
 
   const liveItems = [
     'AXM governance token (ERC20, verified on Arbiscan)',
-    'AXUSD Primary stablecoin (deployed January 11, 2026)',
-    'AXUSD Euler variant (deployed January 5, 2026)',
-    'Primary Peg Stability Module (USDC collateral, 5M ceiling)',
-    'Euler Peg Stability Module (USDC collateral, 500K ceiling)',
+    'Unified AXUSD (ERC-3643, T-REX) — canonical stablecoin with on-chain identity verification and modular compliance enforcement',
+    'Primary Peg Stability Module (USDC collateral, 5M ceiling) — legacy infrastructure; backing consolidated into Unified AXUSD',
+    'Euler Peg Stability Module (USDC collateral, 500K ceiling) — legacy infrastructure; backing consolidated into Unified AXUSD',
     'Euler V2 Lending Vault (eAXUSD-4, accepting deposits)',
     'Revenue distribution engine (fee routing configured)',
     'Identity and Compliance Hub',

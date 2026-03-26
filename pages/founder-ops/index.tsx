@@ -325,7 +325,7 @@ export default function FounderOpsPage() {
   ];
 
   const TABS: { id: TabId; label: string }[] = [
-    { id: 'framework', label: 'Proof of Execution' },
+    { id: 'framework', label: 'Capital Deployment Record' },
     { id: 'onchain', label: 'On-Chain Layer' },
     { id: 'realassets', label: 'Real Assets' },
     { id: 'community', label: 'Community' },
