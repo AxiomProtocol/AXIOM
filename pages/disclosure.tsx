@@ -152,7 +152,7 @@ export default function DisclosurePage() {
   ];
 
   const layers = [
-    { layer: 'Layer 1 \u2014 Settlement', desc: 'AXUSD stablecoin (designed to align with GENIUS Act, Public Law 119-27, requirements; external compliance attestation pending)' },
+    { layer: 'Layer 1 \u2014 Settlement', desc: 'AXUSD stablecoin (structured with reference to GENIUS Act, Public Law 119-27; compliance posture under ongoing legal evaluation; external attestation pending)' },
     { layer: 'Layer 2 \u2014 Stability', desc: 'Dual Peg Stability Module system (Primary and Euler ecosystems)' },
     { layer: 'Layer 3 \u2014 Yield', desc: 'Euler V2 lending markets and protocol participation programs' },
     { layer: 'Layer 4 \u2014 Governance', desc: 'AXM governance token and community voting' },
@@ -177,7 +177,7 @@ export default function DisclosurePage() {
     { label: 'Contract Risk', text: 'All contracts deployed and source-verified on Arbiscan. No independent third-party security audit has been completed. OpenZeppelin standards mitigate but do not eliminate risk.' },
     { label: 'Liquidity Risk', text: 'PSM redemption capacity is limited to current USDC reserves. Redemption requests exceeding available reserves cannot be fulfilled without additional capital.' },
     { label: 'Concentration Risk', text: 'Treasury composition is concentrated in USDC. Diversification is a Phase 2-3 objective.' },
-    { label: 'Regulatory Risk', text: 'Alignment with GENIUS Act requirements is self-assessed. Changes in federal regulation could require protocol modifications. The Lending Fund 506(c) exemption requires ongoing compliance with SEC requirements.' },
+    { label: 'Regulatory Risk', text: 'GENIUS Act alignment is self-assessed and subject to ongoing legal review. External compliance attestation is pending. Changes in federal stablecoin regulation could require protocol modifications. The Lending Fund 506(c) exemption requires ongoing compliance with SEC requirements. Compliance posture is under continuous legal and operational evaluation.' },
     { label: 'Key Person Risk', text: 'Protocol is currently founder-operated. Governance transition is planned but not yet implemented.' },
     { label: 'Market Risk', text: 'ETH position in treasury is subject to price volatility. Market intelligence systems are in advisory mode only with no automated risk management active.' },
     { label: 'Technology Risk', text: 'Planned migration to Universe Blockchain (L3) introduces migration risk. Arbitrum One dependency means the protocol inherits L2 sequencer risk.' },
@@ -193,15 +193,15 @@ export default function DisclosurePage() {
     { institutional: 'Participation lockup', technical: 'Staking' },
     { institutional: 'Protocol participation program', technical: 'Staking/yield program' },
     { institutional: 'Application/Platform', technical: 'Decentralized application (dApp)' },
-    { institutional: 'Reconciliation snapshot', technical: 'On-chain state capture at a point in time' },
+    { institutional: 'Reconciliation snapshot', technical: 'On-chain state capture at a point in time — not a real-time attestation' },
     { institutional: 'Revenue distribution engine', technical: 'Revenue Router smart contract' },
-    { institutional: 'Capital decision layer', technical: 'Automated trading signal pipeline' },
-    { institutional: 'Capital Intelligence Terminal', technical: 'Multi-dimensional advisory signal engine monitoring nine protocol data streams' },
-    { institutional: 'Protocol Readiness Score (PRS)', technical: 'Weighted composite of nine intelligence dimensions (0–10 scale) indicating capital deployment readiness' },
-    { institutional: 'Signal Validation History', technical: 'SHA-256 hash chain recording signal generation events before capital action — tamper-evident audit log' },
-    { institutional: 'Capital Intelligence Brief', technical: 'Structured advisory signal output with grade, thesis, and logged deployment record' },
-    { institutional: 'Proof of execution', technical: 'Auditable capital deployment record with timestamped operations log and cryptographic signal chain' },
-    { institutional: 'Advisory signal', technical: 'Intelligence output flagged as informational — no automated execution authority' },
+    { institutional: 'Capital decision layer', technical: 'Advisory intelligence layer — Sentinel is in advisory-only mode with no automated execution authority' },
+    { institutional: 'Capital Intelligence Terminal', technical: 'Multi-dimensional advisory signal engine monitoring nine protocol data streams, producing a Protocol Readiness Score' },
+    { institutional: 'Protocol Readiness Score (PRS)', technical: 'Weighted composite advisory score across nine intelligence dimensions (0–10 scale) — informational only, not an execution directive' },
+    { institutional: 'Signal Validation History', technical: 'SHA-256 hash chain recording signal generation events before any capital action — tamper-evident audit log establishing pre-deployment record' },
+    { institutional: 'Capital Intelligence Brief', technical: 'Structured advisory signal output with dimension grade, thesis, and logged operations record — not an execution order' },
+    { institutional: 'Auditable capital deployment record', technical: 'Timestamped operations log and cryptographic signal chain establishing a pre-deployment governance record' },
+    { institutional: 'Advisory signal', technical: 'Intelligence output flagged as informational — carries no automated execution authority' },
   ];
 
   const coreContracts = [
@@ -284,6 +284,38 @@ export default function DisclosurePage() {
         </div>
 
         
+        <div className="mb-8 border border-dl-border border-l-4 border-l-dl-navy px-6 py-5 bg-dl-bg-alt">
+          <div className="flex items-start gap-2 mb-3">
+            <AlertCircle className="w-4 h-4 text-dl-navy flex-shrink-0 mt-0.5" />
+            <p className="text-sm font-semibold text-dl-navy uppercase tracking-wide font-dl-mono">Operational Disclosure Notice</p>
+          </div>
+          <div className="space-y-2 text-sm text-dl-navy leading-relaxed">
+            <p>This page is an operational infrastructure disclosure and status report. It is <span className="font-semibold">not investment advice, legal advice, or tax advice</span>. It does not constitute an offer to sell or a solicitation to purchase any security, except where expressly provided through definitive legal offering documents and applicable regulatory procedures.</p>
+            <p>Inactive, advisory-only, or planned modules described on this page should not be interpreted as currently operational or available for public financial reliance. No future launch date, activation timeline, or roadmap item described herein constitutes a binding commitment.</p>
+            <p className="text-xs text-dl-gray mt-2">Participants, allocators, and counterparties should consult independent legal, financial, and tax counsel before relying on any information contained in this document.</p>
+          </div>
+        </div>
+
+        <div className="mb-8 border border-dl-border px-6 py-4">
+          <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-3">Current Protocol Limitations — Materially Important</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+            {[
+              'No independent third-party security audit completed',
+              'External compliance attestation pending',
+              'Snapshot-based reporting — not real-time attestation',
+              'Sentinel capital decision layer: advisory only, no execution authority',
+              'MIRDT outputs are advisory intelligence — not execution directives',
+              'No live automated capital deployment is currently occurring',
+              'Bootstrap-phase metrics are expected to appear constrained',
+            ].map((item, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <AlertTriangle className="w-3 h-3 text-dl-gold mt-1 flex-shrink-0" />
+                <p className="text-xs text-dl-navy">{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <section className="mb-12">
           <SectionHeading><span className="inline-flex items-center gap-2"><FileText className="w-5 h-5 text-dl-navy" />Executive Summary</span></SectionHeading>
           <div className="text-dl-navy leading-relaxed space-y-4">
@@ -297,26 +329,35 @@ export default function DisclosurePage() {
               <div className="px-5 py-4 border-r border-b sm:border-b-0 border-dl-border border-t-4 border-t-dl-forest">
                 <div className="flex items-center gap-2 mb-2">
                   <Landmark className="w-4 h-4 text-dl-forest" />
-                  <p className="text-xs text-dl-gray">Treasury Total</p>
+                  <p className="text-xs text-dl-gray">Treasury Capital (Snapshot)</p>
                 </div>
                 <p className="text-lg font-dl-mono text-dl-forest font-bold">{snapshot ? fmtUsd(snapshot.treasuryTotalUsd) : '--'}</p>
               </div>
               <div className="px-5 py-4 sm:border-r border-b sm:border-b-0 border-dl-border border-t-4 border-t-dl-gold">
                 <div className="flex items-center gap-2 mb-2">
                   <AlertTriangle className="w-4 h-4 text-dl-gold" />
-                  <p className="text-xs text-dl-gray">AXUSD Outstanding</p>
+                  <p className="text-xs text-dl-gray">AXUSD Outstanding (Protocol Liabilities)</p>
                 </div>
                 <p className="text-lg font-dl-mono text-dl-gold font-bold">{snapshot ? fmtUsd(snapshot.liabilitiesTotalUsd) : '--'}</p>
               </div>
               <div className="px-5 py-4 border-t-4 border-t-dl-navy">
                 <div className="flex items-center gap-2 mb-2">
                   <ShieldCheck className="w-4 h-4 text-dl-navy" />
-                  <p className="text-xs text-dl-gray">Coverage Ratio</p>
+                  <p className="text-xs text-dl-gray">Coverage Ratio (Snapshot Basis)</p>
                 </div>
                 <p className="text-lg font-dl-mono text-dl-navy font-bold">{snapshot ? fmtPct(snapshot.coverageRatio) : '--'}</p>
               </div>
             </div>
-            <p className="text-sm text-dl-gray leading-relaxed">
+
+            <div className="border border-dl-border border-t-0 px-6 py-4 bg-dl-bg-alt">
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">Metric Interpretation Guidance</p>
+              <div className="space-y-2 text-xs text-dl-navy leading-relaxed">
+                <p><span className="font-semibold">AXUSD Outstanding (Protocol Liabilities)</span> is a gross liability measure and should not be interpreted as fully redeemable public circulating supply. Public redemption capacity is constrained by disclosed USDC reserves, PSM ceilings, operational phase, and available liquidity at the time of any redemption request.</p>
+                <p><span className="font-semibold">All snapshot metrics</span> are point-in-time reconciliation figures produced on a controlled cycle — not real-time attestations. Bootstrap-phase figures are expected to appear constrained and should not be extrapolated as indicative of future performance.</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-dl-gray leading-relaxed mt-4">
               The protocol is in early bootstrap with minimal capital deployment. Every metric shown here is derived from a single reconciliation snapshot identified above. This document prioritizes disclosure, controls, reconciliation, and operational reality over marketing.
             </p>
           </div>
@@ -473,7 +514,7 @@ export default function DisclosurePage() {
               </div>
               <div className="px-6 py-3 border-b border-dl-border">
                 <p className="text-xs text-dl-gray mb-1">Compliance Posture</p>
-                <p className="text-sm text-dl-navy">Designed to align with GENIUS Act (Public Law 119-27) requirements. External compliance attestation pending.</p>
+                <p className="text-sm text-dl-navy">Structured with reference to GENIUS Act (Public Law 119-27). Compliance posture is under ongoing legal and operational evaluation. External attestation pending. No settled compliance conclusion is made herein.</p>
               </div>
               <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
                 <p className="text-xs text-dl-gray mb-1">PSM Address</p>
@@ -620,11 +661,19 @@ export default function DisclosurePage() {
             </div>
             <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
               <p className="text-xs text-dl-gray mb-1">Regulatory</p>
-              <p className="text-sm text-dl-navy">Offered under SEC Rule 506(c) {'\u2014'} accredited participants only, verification required</p>
+              <p className="text-sm text-dl-navy">Available to accredited investors only under SEC Rule 506(c) {'\u2014'} accredited status verification required prior to participation</p>
             </div>
-            <div className="px-6 py-3">
-              <p className="text-xs text-dl-gray mb-1">Current Status</p>
-              <p className="text-sm text-dl-navy">Infrastructure deployed. No capital deployed, no active loans. Product activation is planned for Weeks 9-10.</p>
+            <div className="px-6 py-4 border-b border-dl-border">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-dl-navy flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-dl-navy leading-relaxed">
+                  <span className="font-semibold">No offering is made through this disclosure.</span> Infrastructure deployment does not constitute an active offering, a commitment of capital, or a guarantee of offering availability. Any future participation will be made exclusively through definitive legal offering documents and applicable accredited investor verification procedures. Activation timing shown below is an operational estimate and does not constitute a binding commitment.
+                </p>
+              </div>
+            </div>
+            <div className="px-6 py-3 bg-dl-bg-alt">
+              <p className="text-xs text-dl-gray mb-1">Current Infrastructure Status</p>
+              <p className="text-sm text-dl-navy">Vault infrastructure deployed and verified on Arbiscan. No capital deployed, no active loans. Product activation subject to legal readiness review, not only infrastructure readiness. Planned activation: Weeks 9-10 (operational estimate only).</p>
             </div>
           </div>
         </section>
@@ -762,7 +811,7 @@ export default function DisclosurePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
               <div>
                 <p className="text-xs text-dl-gray mb-1">Framework</p>
-                <p className="text-sm font-dl-mono text-dl-navy">$500/month Proof of Execution target across all rails</p>
+                <p className="text-sm font-dl-mono text-dl-navy">$500/month capital activity target across all operational rails</p>
               </div>
               <div>
                 <p className="text-xs text-dl-gray mb-1">Purpose</p>
@@ -1093,12 +1142,17 @@ export default function DisclosurePage() {
 
         
         <div className="border-t border-dl-border pt-6 pb-8">
-          <p className="text-sm font-dl-serif text-dl-navy mb-2">Axiom Protocol {'\u2014'} Sovereign Infrastructure Disclosure</p>
-          <p className="text-xs text-dl-gray leading-relaxed mb-4">
-            This document is produced from reconciliation snapshot data and does not constitute investment advice, a guarantee of performance, or a solicitation except as specifically noted for the SEC Reg D 506(c) Lending Fund.
-          </p>
+          <p className="text-sm font-dl-serif text-dl-navy mb-3">Axiom Protocol {'\u2014'} Sovereign Infrastructure Disclosure</p>
+          <div className="space-y-2 mb-4">
+            <p className="text-xs text-dl-gray leading-relaxed">
+              This document is produced from reconciliation snapshot data and is an operational infrastructure disclosure only. It does not constitute investment advice, legal or tax advice, a guarantee of performance, or a solicitation to participate in any product or offering. It is not an offer to sell or solicitation to purchase any security except as specifically provided through definitive legal offering documents in connection with the SEC Reg D 506(c) Lending Fund.
+            </p>
+            <p className="text-xs text-dl-gray leading-relaxed">
+              Participation in any protocol product or program carries risk of loss. Advisory system outputs — including Protocol Readiness Score, Sentinel signals, and Capital Intelligence Briefs — do not constitute automated execution authority, active capital deployment, or guaranteed outcomes. Infrastructure deployment status does not imply legal offering availability or readiness for public financial reliance.
+            </p>
+          </div>
           {snapshot && (
-            <div className="flex flex-col sm:flex-row sm:justify-between gap-2">
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-2 border-t border-dl-border pt-3">
               <p className="text-xs text-dl-gray font-dl-mono">Snapshot ID: {snapshot.snapshotId}</p>
               <p className="text-xs text-dl-gray font-dl-mono">As of: {fmtTimestamp(snapshot.asOfUtc)}</p>
             </div>

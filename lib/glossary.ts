@@ -42,15 +42,17 @@ export const GLOSSARY = {
   },
 
   MIRDT: {
-    canonical: 'Market Intelligence and Risk Disclosure Terminal',
+    canonical: 'Capital Intelligence Terminal',
     short: 'MIRDT',
-    definition: 'Probabilistic trend-following analysis with full audit trail. Paper trading only with human confirmation gates.',
+    definition: 'Nine-dimension advisory signal engine that monitors live protocol data streams and produces a composite Protocol Readiness Score (PRS, 0–10). All outputs are advisory intelligence only — no automated execution authority.',
+    whatItIsNot: 'Not a trading engine. Not a paper trading simulation. Not an execution system. Not a yield projection tool. PRS is an advisory readiness indicator, not a guarantee of capital performance.',
     maturity: 'LIVE' as const,
   },
 
   AXIOM_SENTINEL: {
     canonical: 'Axiom Sentinel',
-    definition: 'Unified capital decision and risk authorization layer with cryptographic audit trails.',
+    definition: 'Advisory capital decision layer that converts intelligence signals into recommendations with cryptographic audit trails. Currently operating in advisory-only mode — no execution authority until community governance vote.',
+    whatItIsNot: 'Not an autonomous execution system. Not a trading bot. Sentinel has no authority to deploy capital without explicit community governance approval.',
     maturity: 'LIVE' as const,
   },
 
@@ -63,8 +65,15 @@ export const GLOSSARY = {
 
   GENIUS_ACT: {
     canonical: 'GENIUS Act',
-    safePhrase: 'designed to align with',
-    forbiddenPhrases: ['compliant with', 'fully compliant', 'GENIUS Act compliant', 'meets GENIUS Act requirements'],
+    safePhrases: [
+      'designed to align with',
+      'structured with reference to',
+      'designed in contemplation of',
+      'intended to support future compliance alignment, subject to legal review',
+    ],
+    safePhrase: 'structured with reference to',
+    compliancePosture: 'Compliance posture is under ongoing legal and operational evaluation. External attestation pending.',
+    forbiddenPhrases: ['compliant with', 'fully compliant', 'GENIUS Act compliant', 'meets GENIUS Act requirements', 'designed to align with GENIUS Act requirements'],
   },
 } as const;
 
