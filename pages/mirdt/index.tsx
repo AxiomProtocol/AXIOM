@@ -1,10 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
-import {
-  DesignLawLayout,
-  PageShell,
-  SectionHeading,
-} from '../../components/design-law';
+import { DesignLawLayout } from '../../components/design-law';
 import {
   Activity,
   BarChart3,
@@ -119,10 +116,10 @@ function TrendArrow({ trend }: { trend: Dimension['trend'] }) {
 
 function DimensionCard({
   dim,
-  onLogSignal,
+  onViewLog,
 }: {
   dim: Dimension;
-  onLogSignal: (d: Dimension) => void;
+  onViewLog: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const canLog = dim.grade === 'A' || dim.grade === 'B';
@@ -168,10 +165,10 @@ function DimensionCard({
             </div>
             {canLog && (
               <button
-                onClick={() => onLogSignal(dim)}
+                onClick={onViewLog}
                 className="text-xs font-dl-mono text-dl-navy border border-dl-border px-3 py-1 hover:bg-dl-navy hover:text-white transition-colors"
               >
-                Log Signal →
+                View in Log →
               </button>
             )}
           </div>
@@ -216,7 +213,6 @@ export default function MIRDTPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'intelligence' | 'log'>('intelligence');
   const [serverLog, setServerLog] = useState<LogEntry[]>([]);
-  const [logStatus, setLogStatus] = useState<string | null>(null);
 
   const fetchPRS = useCallback(async () => {
     setLoading(true);
@@ -264,46 +260,10 @@ export default function MIRDTPage() {
     fetchServerLog();
   }, [fetchPRS, fetchServerLog]);
 
-  const handleLogSignal = async (dim: Dimension) => {
-    try {
-      const [signalRes] = await Promise.allSettled([
-        fetch('/api/mirdt/signal-log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            eventType: 'BRIEF_GENERATED',
-            dimension: dim.label,
-            grade: dim.grade,
-            keyMetric: dim.keyMetric,
-            thesis: dim.thesis,
-            prsScore: data?.prs ?? null,
-          }),
-        }),
-        fetch('/api/founder-ops/log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            entry_type: 'CAPITAL_INTELLIGENCE_BRIEF',
-            title: `${dim.label} — Grade ${dim.grade}`,
-            details: dim.thesis,
-            metadata: { dimension: dim.id, grade: dim.grade, keyMetric: dim.keyMetric },
-          }),
-        }),
-      ]);
-
-      if (signalRes.status === 'fulfilled' && signalRes.value.ok) {
-        setLogStatus(`Signal persisted to audit log: ${dim.label}`);
-        await fetchServerLog();
-      } else {
-        setLogStatus(`Signal queued: ${dim.label}`);
-      }
-    } catch {
-      setLogStatus('Signal queued locally');
-    }
-
+  const handleViewLog = useCallback(async () => {
+    await fetchServerLog();
     setActiveTab('log');
-    setTimeout(() => setLogStatus(null), 3000);
-  };
+  }, [fetchServerLog]);
 
   const gradeBg: Record<PRSGrade, string> = {
     FAVORABLE: 'bg-dl-forest',
@@ -314,9 +274,11 @@ export default function MIRDTPage() {
 
   return (
     <DesignLawLayout>
-      <PageShell>
-        <div className="max-w-5xl mx-auto">
-          <div className="mb-8">
+      <Head>
+        <title>Capital Intelligence Terminal | Axiom Protocol</title>
+      </Head>
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-8">
             <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest mb-2">
               Intelligence Layer — MIRDT
             </p>
@@ -415,12 +377,6 @@ export default function MIRDTPage() {
                 </div>
               </div>
 
-              {logStatus && (
-                <div className="border border-dl-forest bg-dl-bg-alt px-4 py-2 mb-4 flex items-center gap-2">
-                  <span className="text-xs font-dl-mono text-dl-forest">{logStatus}</span>
-                </div>
-              )}
-
               <div className="flex gap-0 border-b border-dl-border mb-6">
                 <button
                   className={`px-4 py-2 text-sm font-dl-mono border-b-2 -mb-px transition-colors ${
@@ -452,7 +408,7 @@ export default function MIRDTPage() {
               {activeTab === 'intelligence' && (
                 <div className="space-y-2">
                   {data.dimensions.map((dim) => (
-                    <DimensionCard key={dim.id} dim={dim} onLogSignal={handleLogSignal} />
+                    <DimensionCard key={dim.id} dim={dim} onViewLog={handleViewLog} />
                   ))}
 
                   <div className="border border-dl-border px-4 py-3 mt-4 bg-dl-bg-alt">
@@ -513,8 +469,7 @@ export default function MIRDTPage() {
               ))}
             </div>
           </div>
-        </div>
-      </PageShell>
+      </div>
     </DesignLawLayout>
   );
 }

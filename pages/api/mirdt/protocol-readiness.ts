@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
 import axios from 'axios';
 import { ethers } from 'ethers';
+import { createHash } from 'crypto';
 
 const ALCHEMY_RPC = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 const TOTAL_ASSETS_ABI = ['function totalAssets() view returns (uint256)'];
@@ -791,6 +792,40 @@ async function growthVelocityIntelligence(): Promise<DimensionResult> {
   }
 }
 
+async function autoLogSignal(
+  prsScore: number,
+  grade: string,
+  dimensions: DimensionResult[]
+): Promise<void> {
+  try {
+    const topAlert = dimensions
+      .filter((d) => d.grade === 'ALERT')
+      .sort((a, b) => a.score - b.score)[0];
+    const dimension = topAlert?.label ?? 'PRS Computation';
+    const dimGrade = topAlert?.grade ?? grade;
+    const keyMetric = topAlert?.keyMetric ?? `PRS ${prsScore.toFixed(1)}/10`;
+    const thesis =
+      topAlert?.thesis ??
+      `Protocol readiness computed at ${prsScore.toFixed(1)}/10. ${grade} signal across ${dimensions.length} dimensions.`;
+
+    const prevResult = await pool.query(
+      `SELECT checksum FROM mirdt_signal_log ORDER BY created_at DESC LIMIT 1`
+    );
+    const prevChecksum: string | null = prevResult.rows[0]?.checksum ?? null;
+    const ts = new Date().toISOString();
+    const payload = [prevChecksum ?? '', 'PRS_COMPUTED', dimension, dimGrade, keyMetric, thesis, ts].join('|');
+    const checksum = createHash('sha256').update(payload).digest('hex');
+
+    await pool.query(
+      `INSERT INTO mirdt_signal_log (event_type, dimension, grade, key_metric, thesis, prs_score, checksum, prev_checksum)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      ['PRS_COMPUTED', dimension, dimGrade, keyMetric, thesis, prsScore, checksum, prevChecksum]
+    );
+  } catch {
+    // auto-log is best-effort; never block the PRS response
+  }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -822,10 +857,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const prs = dimensions.reduce((acc, d) => acc + d.score * d.weight, 0);
   const normalizedPrs = Math.min(10, Math.max(0, prs));
+  const grade = prsOverallGrade(normalizedPrs);
+
+  autoLogSignal(parseFloat(normalizedPrs.toFixed(1)), grade, dimensions);
 
   const response: PRSResponse = {
     prs: parseFloat(normalizedPrs.toFixed(1)),
-    grade: prsOverallGrade(normalizedPrs),
+    grade,
     dimensions,
     computedAt: new Date().toISOString(),
   };

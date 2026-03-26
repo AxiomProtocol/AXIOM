@@ -2,6 +2,12 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
 import { createHash } from 'crypto';
 
+function isAuthorized(req: NextApiRequest): boolean {
+  const scanKey = process.env.MIRDT_SCAN_KEY;
+  if (!scanKey) return process.env.NODE_ENV === 'development';
+  return req.headers['x-scan-key'] === scanKey;
+}
+
 function computeChecksum(
   prevChecksum: string | null,
   eventType: string,
@@ -44,6 +50,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'POST') {
+    if (!isAuthorized(req)) {
+      return res.status(401).json({ error: 'Unauthorized — write access requires authorization' });
+    }
+
     try {
       const { eventType, dimension, grade, keyMetric, thesis, prsScore } = req.body as {
         eventType: string;
