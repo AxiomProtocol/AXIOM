@@ -4,6 +4,13 @@ import axios from 'axios';
 import { ethers } from 'ethers';
 import { createHash } from 'crypto';
 
+const PRS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes — matches CDN s-maxage
+interface PRSCacheEntry {
+  data: PRSResponse;
+  expiresAt: number;
+}
+let prsCache: PRSCacheEntry | null = null;
+
 const ALCHEMY_RPC = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 const TOTAL_ASSETS_ABI = ['function totalAssets() view returns (uint256)'];
 const EULER_EARN_VAULT = '0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B';
@@ -342,10 +349,11 @@ async function constructionCostIntelligence(): Promise<DimensionResult> {
   try {
     const result = await pool.query(`
       SELECT
-        COUNT(*)::int AS signal_count,
-        AVG(confidence::numeric) AS avg_confidence,
-        AVG(capex_per_unit::numeric) AS avg_capex,
-        MAX(created_at) AS last_updated
+        COUNT(*)::int                    AS signal_count,
+        AVG(confidence::numeric)         AS avg_confidence,
+        AVG(capex_per_unit::numeric)     AS avg_capex,
+        MAX(created_at)                  AS last_updated,
+        BOOL_AND(source_layer = 'nce_benchmark') AS nce_only
       FROM market_cost_signals
       WHERE capex_per_unit IS NOT NULL
     `);
@@ -354,6 +362,7 @@ async function constructionCostIntelligence(): Promise<DimensionResult> {
     const signalCount = parseInt(row.signal_count) || 0;
     const avgConfidence = parseFloat(row.avg_confidence) || 0;
     const avgCapex = parseFloat(row.avg_capex) || 0;
+    const nceOnly: boolean = row.nce_only ?? true;
 
     if (signalCount === 0) {
       return {
@@ -368,6 +377,7 @@ async function constructionCostIntelligence(): Promise<DimensionResult> {
       };
     }
 
+    const sourceLabel = nceOnly ? 'NCE baseline' : 'field + NCE';
     let grade: Grade;
     let trend: DimensionResult['trend'];
     let thesis: string;
@@ -375,11 +385,11 @@ async function constructionCostIntelligence(): Promise<DimensionResult> {
     if (avgConfidence >= 0.75 && signalCount >= 5) {
       grade = 'A';
       trend = 'flat';
-      thesis = `${signalCount} cost signals at ${(avgConfidence * 100).toFixed(0)}% avg confidence — underwriting benchmarks well-calibrated.`;
+      thesis = `${signalCount} cost signals at ${(avgConfidence * 100).toFixed(0)}% avg confidence (${sourceLabel}) — underwriting benchmarks well-calibrated across all strategy types.`;
     } else if (avgConfidence >= 0.50) {
       grade = 'B';
       trend = 'flat';
-      thesis = `${signalCount} cost signals at ${(avgConfidence * 100).toFixed(0)}% confidence — moderate calibration. Add more field data to improve.`;
+      thesis = `${signalCount} cost signals at ${(avgConfidence * 100).toFixed(0)}% confidence (${sourceLabel}) — moderate calibration. Add field data to improve accuracy.`;
     } else {
       grade = 'C';
       trend = 'down-slightly';
@@ -391,7 +401,7 @@ async function constructionCostIntelligence(): Promise<DimensionResult> {
       label: 'Construction Cost Intelligence',
       grade,
       score: gradeToScore(grade),
-      keyMetric: `Avg $${avgCapex.toFixed(0)}/unit | ${signalCount} signals | ${(avgConfidence * 100).toFixed(0)}% confidence`,
+      keyMetric: `Avg $${avgCapex.toFixed(0)}/unit across ${signalCount} strategies | ${(avgConfidence * 100).toFixed(0)}% confidence`,
       trend,
       thesis,
       weight,
@@ -844,6 +854,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Serve from in-process cache if still warm — prevents repeated Alchemy RPC,
+  // Alpha Vantage, and CoinGecko calls within the same 5-minute window.
+  const bust = req.query.bust === '1';
+  if (!bust && prsCache && Date.now() < prsCache.expiresAt) {
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=60');
+    res.setHeader('X-PRS-Cache', 'HIT');
+    return res.status(200).json(prsCache.data);
+  }
+
   const [
     dim1,
     dim2,
@@ -881,6 +900,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     computedAt: new Date().toISOString(),
   };
 
+  // Store in process memory for subsequent requests within the TTL window
+  prsCache = { data: response, expiresAt: Date.now() + PRS_CACHE_TTL_MS };
+
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=60');
+  res.setHeader('X-PRS-Cache', 'MISS');
   return res.status(200).json(response);
 }
