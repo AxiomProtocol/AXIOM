@@ -22,6 +22,12 @@ interface EulerSwapPool {
   address: string;
   status: string;
   tvlUsd: number;
+  reserve0: number;
+  reserve1: number;
+  reserve0Label: string;
+  reserve1Label: string;
+  equilibriumReserve0: number;
+  equilibriumReserve1: number;
   feeBps: number;
   swapFeeApyBps: number;
   lendingApyBps: number;
@@ -139,11 +145,11 @@ function EulerSwapLpTab() {
           <div className="p-4 grid grid-cols-2 lg:grid-cols-4 gap-4 border-b border-dl-border">
             <div>
               <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">TVL</p>
-              <p className="font-dl-mono text-base text-dl-navy">${selectedPoolData.tvlUsd.toLocaleString()}</p>
+              <p className="font-dl-mono text-base text-dl-navy">${selectedPoolData.tvlUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
             <div>
               <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Swap Fee</p>
-              <p className="font-dl-mono text-base text-dl-navy">{selectedPoolData.feeBps} bps</p>
+              <p className="font-dl-mono text-base text-dl-navy">{selectedPoolData.feeBps.toFixed(3)} bps</p>
             </div>
             <div>
               <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Swap Fee APY</p>
@@ -154,6 +160,24 @@ function EulerSwapLpTab() {
               <p className="font-dl-mono text-base text-dl-navy">{(selectedPoolData.lendingApyBps / 100).toFixed(2)}% <span className="text-dl-gray text-xs">(variable)</span></p>
             </div>
           </div>
+
+          {selectedPoolData.status === 'LIVE' && (
+            <div className="p-4 border-b border-dl-border bg-dl-bg">
+              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-3">On-Chain Reserves</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="font-dl-mono text-xs text-dl-gray mb-1">{selectedPoolData.reserve0Label}</p>
+                  <p className="font-dl-mono text-sm text-dl-navy">{selectedPoolData.reserve0.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="font-dl-mono text-xs text-dl-gray">Eq: {selectedPoolData.equilibriumReserve0.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                </div>
+                <div>
+                  <p className="font-dl-mono text-xs text-dl-gray mb-1">{selectedPoolData.reserve1Label}</p>
+                  <p className="font-dl-mono text-sm text-dl-navy">{selectedPoolData.reserve1.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="font-dl-mono text-xs text-dl-gray">Eq: {selectedPoolData.equilibriumReserve1.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="p-4 bg-dl-bg-alt border-b border-dl-border">
             <div className="flex items-center justify-between">

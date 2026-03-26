@@ -8,7 +8,6 @@ import {
   isEulerSwapDeployed,
   isEvkVaultDeployed,
 } from '../../../src/config/activeContracts.generated';
-import { EULER_SWAP } from '../../../shared/contracts';
 
 const ALCHEMY_RPC = process.env.ALCHEMY_API_KEY
   ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
@@ -19,12 +18,10 @@ const AXUSD_TOKEN = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
 const USDC_TOKEN  = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
 const AXM_TOKEN   = '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D';
 
+// EulerSwap uses its own interface — NOT ERC-20 or Uniswap V2 compatible
 const EULERSWAP_POOL_ABI = [
-  'function getReserves() view returns (uint256 reserve0, uint256 reserve1)',
-  'function token0() view returns (address)',
-  'function token1() view returns (address)',
-  'function totalSupply() view returns (uint256)',
-  'function fee() view returns (uint256)',
+  'function getReserves() view returns (uint112 reserve0, uint112 reserve1, uint32 status)',
+  'function getDynamicParams() view returns (uint112 equilibriumReserve0, uint112 equilibriumReserve1, uint112 minReserve0, uint112 minReserve1, uint80 priceX, uint80 priceY, uint64 concentrationX, uint64 concentrationY, uint64 fee0, uint64 fee1, uint40 expiration, uint8 swapHookedOperations, address swapHook)',
 ];
 
 const EVK_ABI = [
@@ -32,57 +29,69 @@ const EVK_ABI = [
   'function interestRate() view returns (uint256)',
 ];
 
-const SWAP_FEE_BPS = EULER_SWAP.SWAP_FEE_BPS;
 const ESTIMATED_VOLUME_MULTIPLIER = 0.15;
 
-// Decimal map for known tokens used in EulerSwap pools
-const TOKEN_DECIMALS: Record<string, number> = {
-  [AXUSD_TOKEN.toLowerCase()]: 6,  // ERC-3643 AXUSD — 6 decimals (confirmed via EVK vault totalAssets)
-  [USDC_TOKEN.toLowerCase()]:  6,  // USDC — 6 decimals
-  [AXM_TOKEN.toLowerCase()]:  18,  // AXM governance token — 18 decimals
+// Pool-specific token configuration (reserve0 and reserve1 for each known pool)
+// AXUSD/USDC: reserve0 = USDC (6 dec), reserve1 = AXUSD (18 dec)
+// (Ordering determined by asset address comparison during activate: USDC 0xaf88.. < AXUSD 0xD611..)
+const POOL_TOKEN_CONFIG: Record<string, {
+  token0: string; dec0: number; label0: string;
+  token1: string; dec1: number; label1: string;
+  axusdIsToken0: boolean;
+}> = {
+  [EULER_SWAP_AXUSD_USDC_POOL_ADDRESS.toLowerCase()]: {
+    token0: USDC_TOKEN, dec0: 6,  label0: 'USDC',
+    token1: AXUSD_TOKEN, dec1: 18, label1: 'AXUSD',
+    axusdIsToken0: false,
+  },
+  [EULER_SWAP_AXUSD_AXM_POOL_ADDRESS.toLowerCase()]: {
+    token0: AXUSD_TOKEN, dec0: 18, label0: 'AXUSD',
+    token1: AXM_TOKEN,   dec1: 18, label1: 'AXM',
+    axusdIsToken0: true,
+  },
 };
-
-function tokenDecimals(addr: string): number {
-  return TOKEN_DECIMALS[addr.toLowerCase()] ?? 18;
-}
 
 async function fetchPoolData(poolAddress: string, label: string): Promise<{
   tvlUsd: number;
   axusdReserveUsd: number;
   reserve0: number;
   reserve1: number;
-  totalSupply: number;
+  equilibriumReserve0: number;
+  equilibriumReserve1: number;
   feeBps: number;
   token0: string;
   token1: string;
+  status: number;
 } | null> {
   if (poolAddress === ZERO) return null;
   try {
     const provider = new ethers.JsonRpcProvider(ALCHEMY_RPC);
     const pool = new ethers.Contract(poolAddress, EULERSWAP_POOL_ABI, provider);
-    const [reserves, token0, token1, totalSupply] = await Promise.all([
+
+    const config = POOL_TOKEN_CONFIG[poolAddress.toLowerCase()];
+    if (!config) throw new Error(`No token config for pool ${poolAddress}`);
+
+    const [reserves, dynParams] = await Promise.all([
       pool.getReserves(),
-      pool.token0(),
-      pool.token1(),
-      pool.totalSupply(),
+      pool.getDynamicParams(),
     ]);
-    let feeBps: number = SWAP_FEE_BPS;
-    try { feeBps = Number(await pool.fee()); } catch {}
 
-    const dec0 = tokenDecimals(token0);
-    const dec1 = tokenDecimals(token1);
+    const r0 = Number(ethers.formatUnits(reserves[0], config.dec0));
+    const r1 = Number(ethers.formatUnits(reserves[1], config.dec1));
+    const eq0 = Number(ethers.formatUnits(dynParams[0], config.dec0));
+    const eq1 = Number(ethers.formatUnits(dynParams[1], config.dec1));
+    const status = Number(reserves[2]);
 
-    const r0 = Number(ethers.formatUnits(reserves[0], dec0));
-    const r1 = Number(ethers.formatUnits(reserves[1], dec1));
+    // fee0 is in WAD (1e18 = 100%); convert to basis points (1 bps = 0.01%)
+    const fee0Raw = BigInt(dynParams[8].toString());
+    const feeBps = Number(fee0Raw) / 1e14; // fee0 / 1e18 * 10000
 
-    const isAxusdToken0 = token0.toLowerCase() === AXUSD_TOKEN.toLowerCase();
-    const axusdReserve = isAxusdToken0 ? r0 : r1;
+    const axusdReserve = config.axusdIsToken0 ? r0 : r1;
 
-    // TVL estimate: for stablecoin pairs (AXUSD/USDC), sum directly.
-    // For token pairs (AXUSD/AXM), use AXUSD reserve × 2 as a balanced-pool proxy
-    // (avoids needing an AXM/USD oracle at this layer).
-    const isStablePair = (isAxusdToken0 ? dec1 : dec0) === 6;
-    const otherReserve = isAxusdToken0 ? r1 : r0;
+    // TVL: for stablecoin pairs (AXUSD+USDC), sum both at $1 parity
+    // For mixed pairs (AXUSD+AXM), use AXUSD reserve × 2 as balanced-pool proxy
+    const isStablePair = !config.axusdIsToken0 ? config.dec0 === 6 : config.dec1 === 6;
+    const otherReserve = config.axusdIsToken0 ? r1 : r0;
     const tvlUsd = isStablePair ? axusdReserve + otherReserve : axusdReserve * 2;
 
     return {
@@ -90,10 +99,12 @@ async function fetchPoolData(poolAddress: string, label: string): Promise<{
       axusdReserveUsd: axusdReserve,
       reserve0: r0,
       reserve1: r1,
-      totalSupply: Number(ethers.formatUnits(totalSupply, 18)),
+      equilibriumReserve0: eq0,
+      equilibriumReserve1: eq1,
       feeBps,
-      token0: token0.toLowerCase(),
-      token1: token1.toLowerCase(),
+      token0: config.token0.toLowerCase(),
+      token1: config.token1.toLowerCase(),
+      status,
     };
   } catch (err: any) {
     console.warn(`[eulerswap-pools] Failed to fetch ${label}:`, err?.message);
@@ -143,10 +154,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return { swapFeeApyBps, lendingApyBps: evkLendingApyBps, blendedApyBps };
   }
 
-  const axusdUsdcApy = computeBlendedApy(axusdUsdcData?.tvlUsd ?? 0, axusdUsdcData?.feeBps ?? SWAP_FEE_BPS);
-  const axusdAxmApy  = computeBlendedApy(axusdAxmData?.tvlUsd ?? 0, axusdAxmData?.feeBps ?? SWAP_FEE_BPS);
+  const DEFAULT_FEE_BPS = 0.3; // 0.003% = 0.3 bps (30e12 in WAD)
+  const axusdUsdcApy = computeBlendedApy(axusdUsdcData?.tvlUsd ?? 0, axusdUsdcData?.feeBps ?? DEFAULT_FEE_BPS);
+  const axusdAxmApy  = computeBlendedApy(axusdAxmData?.tvlUsd ?? 0, axusdAxmData?.feeBps ?? DEFAULT_FEE_BPS);
 
   const totalTvlUsd = (axusdUsdcData?.tvlUsd ?? 0) + (axusdAxmData?.tvlUsd ?? 0);
+
+  // Pool status: 0=unactivated, 1=unlocked (active), 2=locked
+  const axusdUsdcStatus = axusdUsdcData?.status === 1 ? 'LIVE' : axusdUsdcData?.status === 2 ? 'LOCKED' : 'PENDING_DEPLOYMENT';
+  const axusdAxmStatus  = axusdAxmData?.status === 1 ? 'LIVE' : axusdAxmData?.status === 2 ? 'LOCKED' : 'PENDING_DEPLOYMENT';
 
   return res.status(200).json({
     deployed,
@@ -159,18 +175,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         id: 'axusd_usdc',
         label: 'AXUSD / USDC',
         address: EULER_SWAP_AXUSD_USDC_POOL_ADDRESS,
-        token0: AXUSD_TOKEN,
-        token1: USDC_TOKEN,
-        status: deployed ? 'LIVE' : 'PENDING_DEPLOYMENT',
+        token0: USDC_TOKEN,
+        token1: AXUSD_TOKEN,
+        status: axusdUsdcData ? axusdUsdcStatus : (deployed ? 'LIVE' : 'PENDING_DEPLOYMENT'),
         tvlUsd: axusdUsdcData?.tvlUsd ?? 0,
-        feeBps: axusdUsdcData?.feeBps ?? SWAP_FEE_BPS,
+        reserve0: axusdUsdcData?.reserve0 ?? 0,
+        reserve1: axusdUsdcData?.reserve1 ?? 0,
+        reserve0Label: 'USDC',
+        reserve1Label: 'AXUSD',
+        equilibriumReserve0: axusdUsdcData?.equilibriumReserve0 ?? 0,
+        equilibriumReserve1: axusdUsdcData?.equilibriumReserve1 ?? 0,
+        feeBps: axusdUsdcData?.feeBps ?? DEFAULT_FEE_BPS,
         swapFeeApyBps: axusdUsdcApy.swapFeeApyBps,
         lendingApyBps: axusdUsdcApy.lendingApyBps,
         blendedApyBps: axusdUsdcApy.blendedApyBps,
         blendedApyLabel: 'Variable',
         blendedApyPct: (axusdUsdcApy.blendedApyBps / 100).toFixed(2),
         erc3643WhitelistRequired: true,
-        note: deployed ? null : 'Pool pending on-chain deployment. Register via LPM whitelist before deploying.',
+        note: null,
       },
       {
         id: 'axusd_axm',
@@ -178,20 +200,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         address: EULER_SWAP_AXUSD_AXM_POOL_ADDRESS,
         token0: AXUSD_TOKEN,
         token1: AXM_TOKEN,
-        status: deployed ? 'LIVE' : 'PENDING_DEPLOYMENT',
+        status: axusdAxmData ? axusdAxmStatus : 'PENDING_DEPLOYMENT',
         tvlUsd: axusdAxmData?.tvlUsd ?? 0,
-        feeBps: axusdAxmData?.feeBps ?? SWAP_FEE_BPS,
+        reserve0: axusdAxmData?.reserve0 ?? 0,
+        reserve1: axusdAxmData?.reserve1 ?? 0,
+        reserve0Label: 'AXUSD',
+        reserve1Label: 'AXM',
+        equilibriumReserve0: axusdAxmData?.equilibriumReserve0 ?? 0,
+        equilibriumReserve1: axusdAxmData?.equilibriumReserve1 ?? 0,
+        feeBps: axusdAxmData?.feeBps ?? DEFAULT_FEE_BPS,
         swapFeeApyBps: axusdAxmApy.swapFeeApyBps,
         lendingApyBps: axusdAxmApy.lendingApyBps,
         blendedApyBps: axusdAxmApy.blendedApyBps,
         blendedApyLabel: 'Variable',
         blendedApyPct: (axusdAxmApy.blendedApyBps / 100).toFixed(2),
         erc3643WhitelistRequired: true,
-        note: deployed ? null : 'Pool pending on-chain deployment. Register via LPM whitelist before deploying.',
+        note: 'AXUSD/AXM pool pending on-chain deployment.',
       },
     ],
     erc3643Whitelist: {
-      note: 'AXUSD is ERC-3643 compliant. All EulerSwap pool addresses must be registered in the LendingPlatformModule before LP operations. Use POST /api/erc3643/whitelist/add-platform.',
+      note: 'AXUSD is ERC-3643 compliant. All EulerSwap pool addresses must be registered in the LendingPlatformModule before LP operations.',
       registrationHandledByDeployScript: true,
     },
     source: 'on-chain',
