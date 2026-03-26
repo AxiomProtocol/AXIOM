@@ -477,7 +477,7 @@ export const pagesCopy: Record<string, PageCopy> = {
         id: "contracts",
         title: "Smart Contracts",
         body:
-          "29 verified smart contracts on Arbitrum One covering identity, treasury, staking, land registry, DePIN nodes, governance, and more. All built on OpenZeppelin security standards.",
+          "53 active automated control layers on Arbitrum One covering identity, treasury, staking, land registry, DePIN nodes, lending, community coordination, and more. All built on OpenZeppelin security standards.",
         image: "/generated/blockchain_network_3d_visualization.png",
         imageAlt: "Blockchain network representing smart contracts"
       },

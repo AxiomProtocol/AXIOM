@@ -927,7 +927,7 @@ export default function SolvencyPage() {
             ]}
             right={[
               { label: 'Network', value: 'Arbitrum One (L2)', mono: true },
-              { label: 'Contract Registry', value: '72 verified contracts', mono: true },
+              { label: 'Contract Registry', value: '53 active automated control layers', mono: true },
             ]}
           />
           <div className="border border-dl-border border-t-0 px-6 py-4 bg-dl-bg">
@@ -988,7 +988,7 @@ export default function SolvencyPage() {
           {[
             { source: 'On-chain balances', ref: 'Alchemy RPC — Arbitrum One' },
             { source: 'Spot price reference', ref: 'CoinGecko API (mark-to-market)' },
-            { source: 'Contract registry', ref: '72 verified contracts — arbiscan.io' },
+            { source: 'Contract registry', ref: '53 active automated control layers — arbiscan.io' },
             { source: 'Snapshot reference', ref: m ? `${m.snapshotId !== 'none' ? m.snapshotId.slice(0, 12) : '—'}` : '—' },
             { source: 'Integrity checksum', ref: m?.checksum || '—' },
           ].map((row, i) => (

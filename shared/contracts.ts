@@ -1,16 +1,37 @@
 /**
- * AXIOM Smart City - Shared Contract Configuration
- * 
- * Single source of truth for all deployed smart contracts
- * Used by both frontend and backend services
- * 
- * Source: COMPLETE_DEPLOYMENT_MANIFEST.md
- * Deployment Date: November 22, 2025
+ * AXIOM Protocol — Shared Contract Configuration
+ * Single source of truth for all deployed automated control layers.
+ * Used by both frontend and backend services.
+ *
  * Network: Arbitrum One (Chain ID: 42161)
  * Deployer: 0x8d7892CF226B43d48B6e3ce988A1274e6D114C96
- * Status: All 29 contracts deployed & verified
- * 
- * Explorer: https://arbitrum.blockscout.com/
+ * Explorer: https://arbiscan.io/
+ *
+ * ═══════════════════════════════════════════════════════════════════
+ * CONTRACT INTEGRATION STATUS SUMMARY (as of 2026-03-26)
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * SECTION A — ACTIVELY INTEGRATED (53 contracts)
+ *   Live API routes and/or service files call these on-chain.
+ *   Includes: Core, AXUSD (GENIUS), Euler V2, On-Chain Lending,
+ *             Community, DePIN, Land Acquisition, Governance.
+ *
+ * SECTION B — DEPLOYED, NOT YET WIRED (~28 contracts)
+ *   Deployed and verified on Arbitrum One but no app code
+ *   currently imports or calls them. Planned for future product phases.
+ *   Includes: Lease Engine, Transport/Utility, Internal DEX,
+ *             Markets/RWA, Social/Academy/Gamification, Sustainability,
+ *             SUSU Personal Vault, SUSU AXUSD Adapter, KeyGrow Payment,
+ *             Liquidity Bootstrapper, Cross-Chain, IoT Oracle,
+ *             and several GENIUS compliance peripherals.
+ *
+ * SECTION C — DEPRECATED / LEGACY (tracked for audit trail only)
+ *   Superseded by newer deployments. Not callable for new operations.
+ *   Includes: Euler Vault V3/V4, legacy oracles, original AXUSD system.
+ *
+ * ═══════════════════════════════════════════════════════════════════
+ * See: .local/smart-contract-audit.md for the full integration audit.
+ * ═══════════════════════════════════════════════════════════════════
  */
 
 // Network Configuration
@@ -28,7 +49,10 @@ export const NETWORK_CONFIG = {
   }
 } as const;
 
-// Core Infrastructure Contracts (1-6)
+// ═══ SECTION A: ACTIVELY INTEGRATED ═════════════════════════════════════
+// All groups below are imported and called on-chain in API routes or services.
+
+// Core Infrastructure Contracts (1-6) — SECTION A
 export const CORE_CONTRACTS = {
   // Contract 1: AxiomV2 (AXM Token)
   AXM_TOKEN: '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D',
@@ -49,7 +73,9 @@ export const CORE_CONTRACTS = {
   LAND_ASSET_REGISTRY: '0xaB15907b124620E165aB6E464eE45b178d8a6591'
 } as const;
 
-// Real Estate & Rental Contracts (7-9)
+// ═══ SECTION B: DEPLOYED — NOT YET WIRED ════════════════════════════════
+// Lease, Realtor, CapitalPools — deployed on Arbitrum One but no app routes call them yet.
+// Real Estate & Rental Contracts (7-9) — SECTION B
 export const REAL_ESTATE_CONTRACTS = {
   // Contract 7: LeaseAndRentEngine (Security Fixed v2 - Dec 16, 2025)
   LEASE_RENT_ENGINE: '0x00591d360416dE7b016bBedbC6AA1AE798eA873B',
@@ -63,6 +89,8 @@ export const REAL_ESTATE_CONTRACTS = {
 } as const;
 
 // DeFi Banking & Utilities Contracts (10-13)
+// SECTION A: DEPIN_NODES, DEPIN_SALES (depinEventListener.ts)
+// SECTION B: UTILITY_METERING, TRANSPORT_LOGISTICS (no app routes yet)
 export const DEFI_UTILITY_CONTRACTS = {
   // Contract 10: UtilityAndMeteringHub
   UTILITY_METERING: '0xac55BE7E1A6613c5DA66f7AC9520FfD24eF3212d',
@@ -82,6 +110,8 @@ export const DEFI_UTILITY_CONTRACTS = {
 } as const;
 
 // Cross-Chain & Advanced DeFi Contracts (13-16)
+// SECTION A: REPUTATION_ORACLE (fieldIntelligenceAdapter.ts)
+// SECTION B: CROSS_CHAIN_LAUNCH, EXCHANGE_HUB_DEX (only in DEX_CONFIG, no on-chain calls), IOT_ORACLE
 export const ADVANCED_DEFI_CONTRACTS = {
   // Contract 13: CrossChainAndLaunchModule
   CROSS_CHAIN_LAUNCH: '0x28623Ee5806ab9609483F4B68cb1AE212A092e4d',
@@ -96,7 +126,7 @@ export const ADVANCED_DEFI_CONTRACTS = {
   IOT_ORACLE: '0xe38B3443E17A07953d10F7841D5568a27A73ec1a'
 } as const;
 
-// Market Infrastructure Contracts (17-18)
+// Market Infrastructure Contracts (17-18) — SECTION B (no app routes call these yet)
 export const MARKET_CONTRACTS = {
   // Contract 17: MarketsAndListingsHub (Wall Street/RWA)
   MARKETS_RWA_HUB: '0x98a59D4fb5Fa974879E9F043C3174Ae82Fb9D830',
@@ -105,7 +135,7 @@ export const MARKET_CONTRACTS = {
   ORACLE_METRICS: '0x5c17F4621A47b4E8c357bAA6379b4B223BAA5Ac6'
 } as const;
 
-// Community & Engagement Contracts (19-21)
+// Community & Engagement Contracts (19-21) — SECTION B (no app routes call these yet)
 export const COMMUNITY_CONTRACTS = {
   // Contract 19: CommunitySocialHub
   SOCIAL_HUB: '0xC2f82eD5C2585B525E01F19eA5C28811AB43aF49',
@@ -117,12 +147,13 @@ export const COMMUNITY_CONTRACTS = {
   GAMIFICATION: '0x7F455b4614E05820AAD52067Ef223f30b1936f93'
 } as const;
 
-// Sustainability Contracts (22)
+// Sustainability Contracts (22) — SECTION B (no app routes call this yet)
 export const SUSTAINABILITY_CONTRACTS = {
   // Contract 22: SustainabilityHub
   SUSTAINABILITY: '0xAf4dF8a7733BAB64b7Ce83F2494d6446eF9eC046'
 } as const;
 
+// ═══ SECTION A continues: V2 Sovereign Banking ═══════════════════════════
 // AIP-001 V2 Contracts - Sovereign Banking System (26-29)
 // Deployed: December 27, 2025 | All Verified on Blockscout
 export const V2_SOVEREIGN_BANKING_CONTRACTS = {
@@ -146,6 +177,8 @@ export const V2_SOVEREIGN_BANKING_CONTRACTS = {
 } as const;
 
 // Community Savings Contracts (24-25)
+// SECTION A: SUSU_HUB (SusuService.ts, wealth-practice APIs)
+// SECTION B: SUSU_PERSONAL_VAULT (no app routes call this yet)
 export const COMMUNITY_SAVINGS_CONTRACTS = {
   // Contract 24: AxiomSusuHub (Rotating Savings Groups - Pooled Custody)
   // Deployed: December 11, 2025 | Verified on Blockscout
@@ -159,7 +192,10 @@ export const COMMUNITY_SAVINGS_CONTRACTS = {
   SUSU_PERSONAL_VAULT: '0x7F474D9D5aF702D587A126c49aDa43318c1420E5'
 } as const;
 
-// AXUSD Stablecoin System Contracts (30-35)
+// AXUSD Stablecoin System Contracts (30-35) — Original ecosystem
+// SECTION A: AXUSD (Euler vault binding ref), BACKSTOP_VAULT (treasury-health ref)
+// SECTION C (DEPRECATED): ORACLE_ADAPTER, RATE_LIMITER, VAULT_ENGINE, PSM — original ecosystem only,
+//   superseded by AXUSD_GENIUS_CONTRACTS. Do not use for new integrations.
 // Deployed: January 5, 2026 | Arbitrum One
 // Features: CDP-style minting, PSM for USDC swaps, T-bill backing ready
 export const AXUSD_STABLECOIN_CONTRACTS = {
@@ -188,6 +224,9 @@ export const AXUSD_STABLECOIN_CONTRACTS = {
   PSM: '0x4584888cB411E9cc88e3800BAB73A430D90d3793'
 } as const;
 
+// ═══ SECTION A: AXUSD GENIUS Act Aligned Contracts (41-52) ══════════════
+// All fields below are actively used in peg-status, treasury-health, supply, lp-analytics, erc3643, solvency.
+// SECTION B (not yet called by app): ORACLE_ADAPTER, RATE_LIMITER, VAULT_ENGINE, SEGREGATED_CUSTODY, LIQUIDATOR
 // AXUSD GENIUS Act Aligned Contracts (41-52)
 // Deployed: January 11, 2026 | Arbitrum One
 // Features: Designed to align with GENIUS Act framework (Public Law 119-27), 100% reserve backing, peg stability
@@ -241,6 +280,9 @@ export const EULER_SWAP = {
 } as const;
 
 // Real Estate Lending Fund Contracts (41-52)
+// SECTION A: RISK_CONFIG, FIXFLIP_VAULT, FIXFLIP_MANAGER, DSCR_RISK_CONFIG, DSCR_POOL_VAULT, DSCR_LOAN_MANAGER
+// SECTION B (not yet called by app): LOAN_RECEIPT_NFT, REPAYMENT_ROUTER, PRODUCT_REGISTRY,
+//   DSCR_LOAN_RECEIPT_NFT, DSCR_REPAYMENT_ROUTER
 // Status: DEPLOYED & VERIFIED | Arbitrum One | January 25, 2026
 // Features: Fix & Flip bridge loans, DSCR rental loans, ERC4626 vaults, ERC721 loan receipts
 // V3 Upgrade: Governance integration with GovernanceHub for on-chain risk parameter control
@@ -268,6 +310,8 @@ export const STABLECOINS = {
 } as const;
 
 // AXUSD Ecosystem Integration Contracts (36-40)
+// SECTION A: SEED_YIELD_DISTRIBUTOR, REVENUE_ROUTER (solvency/auto-ingest, ACTIVE_CONTRACTS)
+// SECTION B: SUSU_AXUSD_ADAPTER, KEYGROW_PAYMENT, LIQUIDITY_BOOTSTRAPPER (no app routes yet)
 // Deployed: January 5, 2026 | Arbitrum One
 // Features: SUSU adapter, KeyGrow payments, SEED yield, liquidity bootstrapping
 export const AXUSD_INTEGRATION_CONTRACTS = {
@@ -292,6 +336,8 @@ export const AXUSD_INTEGRATION_CONTRACTS = {
   LIQUIDITY_BOOTSTRAPPER: '0xd690F8A987542772FDd65a9813c0Ae55Cfb1AD19'
 } as const;
 
+// ═══ SECTION A: Land Acquisition Contracts (53-56) ══════════════════════
+// All 4 addresses are called in landAcquisitionService.ts and builderFarmerCreditService.ts.
 // Phase 2 Land Acquisition Contracts (53-55)
 // Deployed: January 15, 2026 | Arbitrum One
 // Features: SEC Reg CF compliant land crowdfunding, community pooling, ERC1155 land options
@@ -314,6 +360,7 @@ export const LAND_ACQUISITION_CONTRACTS = {
   BUILDER_FARMER_CREDIT: '0x814A9795bAbEE0DEd433d127dacD03031fB193b4'
 } as const;
 
+// ═══ SECTION A: Governance + Real Estate Lending ════════════════════════
 // Governance Infrastructure Contracts
 // Status: DEPLOYED & VERIFIED | Arbitrum One | January 25, 2026
 // Features: On-chain timelock governance, role-based access, emergency controls
@@ -325,6 +372,10 @@ export const GOVERNANCE_CONTRACTS = {
   GOVERNANCE_HUB: '0x52Dc85fd653a75323b5307f4D2629ab9A070530E'
 } as const;
 
+// ═══ SECTION A: Euler V2 Lending Markets ════════════════════════════════
+// Actively used: EVK_OPEN_MARKET_VAULT, EVK_OPEN_MARKET_IRM, EVC, EULER_EARN_VAULT, EULER_EARN_FACTORY, AXIOM_FEE_BURNER
+// SECTION C (DEPRECATED): AXUSD_VAULT_V4_DEPRECATED, AXUSD_VAULT_V3_DEPRECATED, PRICE_ORACLE_DEPRECATED, VAULT_GOVERNOR
+// External Euler protocol infra (not Axiom-deployed): EVK_FACTORY, IRM_FACTORY, PROTOCOL_CONFIG, IMPLEMENTATION, COLLATERAL_* vaults
 // Euler V2 AXUSD Lending Markets
 // Status: DEPLOYED & LIVE | Arbitrum One | January 30, 2026
 // Features: Vault-to-vault collateral, external LP yield, supply/borrow enabled
@@ -387,8 +438,11 @@ export const EULER_LENDING_CONTRACTS = {
   AXIOM_FEE_BURNER: '0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94'
 } as const;
 
+// ═══ SECTION A: ERC-7726 Oracle + Section C: Legacy Oracles ════════════
+// SECTION A: AXUSD_ERC7726_ORACLE_ADAPTER (oracle/axusd-price.ts, vault oracle baked in)
+// SECTION C (DEPRECATED): LEGACY_ORACLE_ADAPTER, LEGACY_ORACLE_ADAPTER_REGISTRY, LEGACY_PRICE_ORACLE
 // ERC-7726 Oracle Infrastructure
-// Status: PENDING_DEPLOYMENT | Arbitrum One | Task #37
+// Status: DEPLOYED ✓ | Arbitrum One | Task #37
 // Deploy: npx hardhat run scripts/deploy-axusd-oracle.js --network arbitrumOne
 // After deploying, update AXUSD_ERC7726_ORACLE_ADAPTER below and in src/config/oracleConfig.ts.
 // Interface: getQuote(uint256 inAmount, address base, address quote) → uint256 outAmount
@@ -409,6 +463,8 @@ export const ERC7726_ORACLE_CONTRACTS = {
   LEGACY_PRICE_ORACLE: '0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15',
 } as const;
 
+// ═══ SECTION A: Node Economy Contracts ══════════════════════════════════
+// All 4 addresses called in depinEventListener.ts and PolicyGuardService.ts.
 // Node Economy Contracts (Step 2 - Node Operator Program)
 // Status: DEPLOYED & VERIFIED | Arbitrum One | February 2026
 // Features: Node registration, rewards distribution, slashing engine

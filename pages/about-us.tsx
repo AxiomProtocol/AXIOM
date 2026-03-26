@@ -35,7 +35,7 @@ const ACCOUNTABILITY = [
 const PRINCIPLES = [
   { title: 'Transparency', description: 'Every capital movement, governance decision, and operational action is recorded with full audit trails. Verifiable records replace informal trust.', icon: ShieldCheck },
   { title: 'Coordination', description: 'Structure and shared rules create reliable collaboration. Defined roles, accountability loops, and evidence-based processes replace ad-hoc decision making.', icon: Users },
-  { title: 'Security', description: 'Multi-party authorization controls, audited automated control layers, and privacy by default. 72 verified contracts on Arbitrum One provide independent auditability.', icon: Lock },
+  { title: 'Security', description: 'Multi-party authorization controls, audited automated control layers, and privacy by default. 53 active automated control layers on Arbitrum One provide independent auditability.', icon: Lock },
   { title: 'Discipline', description: 'Measured onboarding, fixed treasury allocation policies, and institutional-grade reporting. No speculation, no hype, no shortcuts.', icon: TrendingUp },
 ];
 
