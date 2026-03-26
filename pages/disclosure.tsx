@@ -160,7 +160,7 @@ export default function DisclosurePage() {
     { layer: 'Layer 6 \u2014 Intelligence', desc: 'MIRDT Capital Intelligence Terminal (nine-dimension advisory signal engine), Sentinel capital decision layer (advisory mode only), and Institutional Observer Dashboard' },
     { layer: 'Layer 7 \u2014 Physical', desc: 'Real estate asset onboarding pipeline and decentralized infrastructure nodes' },
     { layer: 'Layer 8 \u2014 Disclosure', desc: 'Solvency console, Adaptive Metrics Engine, and Observer dashboard' },
-    { layer: 'Layer 9 \u2014 Execution', desc: 'Proof of Execution Framework, Signal Validation History (SHA-256 audit chain), and capital deployment operations log' },
+    { layer: 'Layer 9 \u2014 Execution', desc: 'Auditable Capital Deployment Record (operating as Proof of Execution Framework), Signal Validation History (SHA-256 audit chain), and timestamped operations log — establishes pre-deployment governance record. Not performance proof, trading proof, yield evidence, or a return guarantee.' },
   ];
 
   const guardRails = [
@@ -177,7 +177,7 @@ export default function DisclosurePage() {
     { label: 'Contract Risk', text: 'All contracts deployed and source-verified on Arbiscan. No independent third-party security audit has been completed. OpenZeppelin standards mitigate but do not eliminate risk.' },
     { label: 'Liquidity Risk', text: 'PSM redemption capacity is limited to current USDC reserves. Redemption requests exceeding available reserves cannot be fulfilled without additional capital.' },
     { label: 'Concentration Risk', text: 'Treasury composition is concentrated in USDC. Diversification is a Phase 2-3 objective.' },
-    { label: 'Regulatory Risk', text: 'GENIUS Act alignment is self-assessed and subject to ongoing legal review. External compliance attestation is pending. Changes in federal stablecoin regulation could require protocol modifications. The Lending Fund 506(c) exemption requires ongoing compliance with SEC requirements. Compliance posture is under continuous legal and operational evaluation.' },
+    { label: 'Regulatory Risk', text: 'AXUSD is structured with reference to the GENIUS Act (Public Law 119-27). This reference is not a compliance conclusion. No external legal or regulatory body has confirmed compliance. Compliance posture is under continuous legal and operational evaluation; external attestation has not been completed and is pending. Changes in federal stablecoin regulation, SEC interpretive guidance, or enforcement posture could require protocol modifications. The Lending Fund 506(c) exemption requires ongoing legal and operational compliance maintenance; no offering is made through this disclosure.' },
     { label: 'Key Person Risk', text: 'Protocol is currently founder-operated. Governance transition is planned but not yet implemented.' },
     { label: 'Market Risk', text: 'ETH position in treasury is subject to price volatility. Market intelligence systems are in advisory mode only with no automated risk management active.' },
     { label: 'Technology Risk', text: 'Planned migration to Universe Blockchain (L3) introduces migration risk. Arbitrum One dependency means the protocol inherits L2 sequencer risk.' },
@@ -202,6 +202,9 @@ export default function DisclosurePage() {
     { institutional: 'Capital Intelligence Brief', technical: 'Structured advisory signal output with dimension grade, thesis, and logged operations record — not an execution order' },
     { institutional: 'Auditable capital deployment record', technical: 'Timestamped operations log and cryptographic signal chain establishing a pre-deployment governance record' },
     { institutional: 'Advisory signal', technical: 'Intelligence output flagged as informational — carries no automated execution authority' },
+    { institutional: 'Proof of Execution Framework', technical: 'Auditable Capital Deployment Record — timestamped operations log and cryptographic signal chain establishing pre-deployment governance record. Not performance proof, trading proof, yield proof, or a return guarantee.' },
+    { institutional: 'Deployed contract', technical: 'Source-verified smart contract on Arbitrum One. Deployment does not imply the associated product is legally offered, operationally active for public use, or available for public financial reliance.' },
+    { institutional: 'Contract live / status Live', technical: 'Contract is deployed and source-verified on-chain. It does not mean the product is legally available, actively accepting capital, or open for public participation.' },
   ];
 
   const coreContracts = [
@@ -352,8 +355,9 @@ export default function DisclosurePage() {
             <div className="border border-dl-border border-t-0 px-6 py-4 bg-dl-bg-alt">
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">Metric Interpretation Guidance</p>
               <div className="space-y-2 text-xs text-dl-navy leading-relaxed">
-                <p><span className="font-semibold">AXUSD Outstanding (Protocol Liabilities)</span> is a gross liability measure and should not be interpreted as fully redeemable public circulating supply. Public redemption capacity is constrained by disclosed USDC reserves, PSM ceilings, operational phase, and available liquidity at the time of any redemption request.</p>
-                <p><span className="font-semibold">All snapshot metrics</span> are point-in-time reconciliation figures produced on a controlled cycle — not real-time attestations. Bootstrap-phase figures are expected to appear constrained and should not be extrapolated as indicative of future performance.</p>
+                <p><span className="font-semibold">AXUSD Outstanding (Protocol Liabilities)</span> is a gross liability measure and should not be interpreted as fully redeemable public circulating supply. Public redemption capacity is constrained by disclosed USDC reserves, PSM ceilings, operational phase, and available liquidity at the time of any redemption request. This figure does not represent instant public redemption capacity.</p>
+                <p><span className="font-semibold">All snapshot metrics</span> are point-in-time reconciliation figures produced on a controlled cycle — not real-time attestations and not equivalent to live market data or independent audit findings.</p>
+                <p><span className="font-semibold">Bootstrap-phase figures</span> reflect early-stage operational activity under reconciliation snapshot accounting. They are expected to appear constrained and should not be extrapolated as representative of the protocol's intended operating scale or indicative of future performance.</p>
               </div>
             </div>
 
@@ -457,7 +461,7 @@ export default function DisclosurePage() {
 
           <div className="border border-dl-border px-6 py-3 bg-dl-bg-alt">
             <p className="text-xs text-dl-gray leading-relaxed">
-              Week-based activation targets are operational estimates and do not constitute commitments. Timelines may shift based on capital availability, technical readiness, and regulatory considerations.
+              Week-based activation targets are operational estimates and do not constitute commitments. Timelines may shift based on capital availability, technical readiness, and regulatory considerations. <span className="font-semibold">A deployed or Live-status contract does not imply the associated product is legally offered, operationally active for public use, or available for public financial reliance.</span>
             </p>
           </div>
         </section>
@@ -1161,10 +1165,10 @@ export default function DisclosurePage() {
           <p className="text-sm font-dl-serif text-dl-navy mb-3">Axiom Protocol {'\u2014'} Sovereign Infrastructure Disclosure</p>
           <div className="space-y-2 mb-4">
             <p className="text-xs text-dl-gray leading-relaxed">
-              This document is produced from reconciliation snapshot data and is an operational infrastructure disclosure only. It does not constitute investment advice, legal or tax advice, a guarantee of performance, or a solicitation to participate in any product or offering. It is not an offer to sell or solicitation to purchase any security except as specifically provided through definitive legal offering documents in connection with the SEC Reg D 506(c) Lending Fund.
+              This document is produced from reconciliation snapshot data and constitutes an operational infrastructure disclosure only. It does not constitute investment advice, legal advice, tax advice, a guarantee of performance, or a solicitation to participate in any product or offering, except as specifically noted in connection with the SEC Reg D 506(c) Lending Fund through definitive legal offering documents. No information herein should be construed as an offer to sell or a solicitation to purchase any security.
             </p>
             <p className="text-xs text-dl-gray leading-relaxed">
-              Participation in any protocol product or program carries risk of loss. Advisory system outputs — including Protocol Readiness Score, Sentinel signals, and Capital Intelligence Briefs — do not constitute automated execution authority, active capital deployment, or guaranteed outcomes. Infrastructure deployment status does not imply legal offering availability or readiness for public financial reliance.
+              Participation in any protocol product or program carries risk of loss, including loss of principal. Advisory system outputs — including Protocol Readiness Score, Sentinel regime signals, and Capital Intelligence Briefs — do not constitute automated execution authority, capital deployment instructions, trading signals, or guaranteed outcomes. Infrastructure deployment status and Live contract status do not imply legal offering availability, active product status, or readiness for public financial reliance. Inactive and planned modules described in this document are not commitments. Snapshot values are not equivalent to real-time attestation, independent audit findings, or instant public redemption capacity.
             </p>
           </div>
           {snapshot && (

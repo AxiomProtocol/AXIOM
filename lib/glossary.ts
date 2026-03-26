@@ -68,14 +68,24 @@ export const GLOSSARY = {
   GENIUS_ACT: {
     canonical: 'GENIUS Act',
     safePhrases: [
-      'designed to align with',
       'structured with reference to',
       'designed in contemplation of',
       'intended to support future compliance alignment, subject to legal review',
+      'external compliance attestation pending',
+      'compliance posture remains subject to legal and operational review',
     ],
     safePhrase: 'structured with reference to',
-    compliancePosture: 'Compliance posture is under ongoing legal and operational evaluation. External attestation pending.',
-    forbiddenPhrases: ['compliant with', 'fully compliant', 'GENIUS Act compliant', 'meets GENIUS Act requirements', 'designed to align with GENIUS Act requirements'],
+    compliancePosture: 'Compliance posture is under ongoing legal and operational evaluation. External attestation has not been completed. No compliance conclusion is made herein.',
+    forbiddenPhrases: [
+      'compliant with',
+      'fully compliant',
+      'GENIUS Act compliant',
+      'meets GENIUS Act requirements',
+      'designed to align with GENIUS Act requirements',
+      'designed to align with GENIUS Act',
+      'designed to align with',
+      'alignment with GENIUS Act requirements is self-assessed',
+    ],
   },
 } as const;
 
