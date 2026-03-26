@@ -119,7 +119,7 @@ export default function DisclosurePage() {
     'Institutional Observer Dashboard',
     'Founder Operations Dashboard with operational logging',
     'MIRDT Capital Intelligence Terminal (nine-dimension advisory signal engine with cryptographic audit chain)',
-    'Proof of Execution Framework (auditable capital deployment record across on-chain, real asset, and community rails)',
+    'Auditable Capital Deployment Record (Proof of Execution Framework) — timestamped, multi-layer operations log across on-chain, real asset, and community rails; not performance proof, trading proof, or yield evidence',
     'Signal Validation History (SHA-256 signal integrity log — deterministic pre-deployment record)',
   ];
 
@@ -151,8 +151,8 @@ export default function DisclosurePage() {
   ];
 
   const layers = [
-    { layer: 'Layer 1 \u2014 Settlement', desc: 'AXUSD stablecoin (structured with reference to GENIUS Act, Public Law 119-27; compliance posture under ongoing legal evaluation; external attestation pending)' },
-    { layer: 'Layer 2 \u2014 Stability', desc: 'Dual Peg Stability Module system (Primary and Euler ecosystems)' },
+    { layer: 'Layer 1 \u2014 Settlement', desc: 'Unified AXUSD (ERC-3643, T-REX) — canonical stablecoin with on-chain identity verification and modular compliance enforcement. Structured with reference to GENIUS Act, Public Law 119-27; compliance posture under ongoing legal evaluation; external attestation pending.' },
+    { layer: 'Layer 2 \u2014 Stability', desc: 'Legacy Peg Stability Module infrastructure (Primary and Euler variants — now deprecated); backing consolidated into Unified AXUSD ERC-3643 compliance architecture' },
     { layer: 'Layer 3 \u2014 Yield', desc: 'Euler V2 lending markets and protocol participation programs' },
     { layer: 'Layer 4 \u2014 Governance', desc: 'AXM governance token and community voting' },
     { layer: 'Layer 5 \u2014 Revenue', desc: 'Revenue distribution engine (50/30/20 allocation)' },
@@ -194,7 +194,7 @@ export default function DisclosurePage() {
     { institutional: 'Application/Platform', technical: 'Decentralized application (dApp)' },
     { institutional: 'Reconciliation snapshot', technical: 'On-chain state capture at a point in time — not a real-time attestation' },
     { institutional: 'Revenue distribution engine', technical: 'Revenue Router smart contract' },
-    { institutional: 'Capital decision layer', technical: 'Advisory intelligence layer — Sentinel is in advisory-only mode with no automated execution authority' },
+    { institutional: 'Capital decision layer', technical: 'Governance-gated capital recommendation layer — converts MIRDT advisory signal outputs into governance-logged capital action recommendations with cryptographic audit trails. No execution authority is currently active or automated. All outputs are advisory only, pending an explicit community governance vote.' },
     { institutional: 'Capital Intelligence Terminal', technical: 'Multi-dimensional advisory signal engine monitoring nine protocol data streams, producing a Protocol Readiness Score' },
     { institutional: 'Protocol Readiness Score (PRS)', technical: 'Weighted composite advisory score across nine intelligence dimensions (0–10 scale) — informational only, not an execution directive' },
     { institutional: 'Signal Validation History', technical: 'SHA-256 hash chain recording signal generation events before any capital action — tamper-evident audit log establishing pre-deployment record' },
