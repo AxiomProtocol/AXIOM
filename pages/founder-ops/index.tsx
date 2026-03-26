@@ -150,9 +150,9 @@ const LAYERS = [
     label: '1. On-Chain Liquidity Layer',
     monthly: '$225 / month',
     buckets: [
-      { label: 'EulerSwap Pool Depth', amount: '$150', proof: 'Live TVL growth. Visible pool support. Timestamped liquidity deployment. Public execution record.' },
-      { label: 'earnAXUSD Vault', amount: '$50', proof: 'Vault asset growth over time. Live yield accrual. Recurring capital deployment into protocol-native products.' },
-      { label: 'AXM Accumulation', amount: '$25', proof: 'Documented holding history. Governance alignment. Recurring protocol commitment.' },
+      { label: 'EulerSwap Pool Depth', amount: '$150', proof: 'Live TVL growth. Visible pool support. Timestamped liquidity deployment. Public execution record.', route: '/dex', routeLabel: 'Open Exchange' },
+      { label: 'earnAXUSD Vault', amount: '$50', proof: 'Vault asset growth over time. Live yield accrual. Recurring capital deployment into protocol-native products.', route: '/axusd-3643', routeLabel: 'Open Unified AXUSD' },
+      { label: 'AXM Accumulation', amount: '$25', proof: 'Documented holding history. Governance alignment. Recurring protocol commitment.', route: '/dex', routeLabel: 'Open Exchange' },
     ],
   },
   {
@@ -160,9 +160,9 @@ const LAYERS = [
     label: '2. Real Asset Intelligence Layer',
     monthly: '$175 / month',
     buckets: [
-      { label: 'Land Acquisition Pipeline', amount: '$100', proof: 'Documented deal advancement. Capital attached to real asset pipeline activity. Timestamped movement from digital treasury to physical opportunity.' },
-      { label: 'Property Analysis Reports', amount: '$50', proof: 'Recurring underwriting activity. Live report generation. Real property evaluation history. Growing intelligence dataset.' },
-      { label: 'Deal Origination Inputs', amount: '$25', proof: 'Continuous pipeline formation. Evidence of acquisition activity. Real market signal capture.' },
+      { label: 'Land Acquisition Pipeline', amount: '$100', proof: 'Documented deal advancement. Capital attached to real asset pipeline activity. Timestamped movement from digital treasury to physical opportunity.', route: '/land', routeLabel: 'Open Land Console' },
+      { label: 'Property Analysis Reports', amount: '$50', proof: 'Recurring underwriting activity. Live report generation. Real property evaluation history. Growing intelligence dataset.', route: '/property', routeLabel: 'Open Property Analysis' },
+      { label: 'Deal Origination Inputs', amount: '$25', proof: 'Continuous pipeline formation. Evidence of acquisition activity. Real market signal capture.', route: '/distressed-feed', routeLabel: 'Open Deal Flow' },
     ],
   },
   {
@@ -170,8 +170,8 @@ const LAYERS = [
     label: '3. Community Coordination Layer',
     monthly: '$100 / month',
     buckets: [
-      { label: 'Wealth Practice', amount: '$75', proof: 'Live contribution cycles. Recurring community participation. Timestamped group mechanics. Real user coordination history.' },
-      { label: 'Infrastructure Continuity', amount: '$25', proof: 'Continuity of core infrastructure. Evidence that the system remains operational. Support for persistent network activity.' },
+      { label: 'Wealth Practice', amount: '$75', proof: 'Live contribution cycles. Recurring community participation. Timestamped group mechanics. Real user coordination history.', route: '/wealth-practice', routeLabel: 'Open Wealth Practice' },
+      { label: 'Infrastructure Continuity', amount: '$25', proof: 'Continuity of core infrastructure. Evidence that the system remains operational. Support for persistent network activity.', route: '/depin/denet', routeLabel: 'Open DePIN Console' },
     ],
   },
 ];
@@ -393,7 +393,12 @@ export default function FounderOpsPage() {
                               <p className="text-xs font-medium text-dl-navy">{b.label}</p>
                               <span className="font-dl-mono text-xs font-bold text-dl-navy ml-2 flex-shrink-0">{b.amount}</span>
                             </div>
-                            <p className="text-xs text-dl-gray leading-relaxed">Proof: {b.proof}</p>
+                            <p className="text-xs text-dl-gray leading-relaxed mb-2">Proof: {b.proof}</p>
+                            {b.route && (
+                              <a href={b.route} className="font-dl-mono text-xs text-dl-navy underline hover:text-dl-forest">
+                                {b.routeLabel} →
+                              </a>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -543,10 +548,13 @@ export default function FounderOpsPage() {
                       ))}
                     </div>
                   )}
-                  <div className="mt-3 border border-dl-border bg-dl-bg-alt px-4 py-3">
+                  <div className="mt-3 border border-dl-border bg-dl-bg-alt px-4 py-3 flex items-center justify-between gap-4">
                     <p className="font-dl-mono text-xs text-dl-gray">
                       To add liquidity: <span className="text-dl-navy">USDC_AMOUNT=150 node scripts/add-pool-liquidity.js</span> — deposits USDC into EUSDC vault and reconfigures pool equilibrium.
                     </p>
+                    <a href="/dex" className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 whitespace-nowrap hover:bg-dl-navy hover:text-white flex-shrink-0">
+                      Open Exchange →
+                    </a>
                   </div>
                 </div>
 
@@ -578,9 +586,12 @@ export default function FounderOpsPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="px-4 py-2 border-t border-dl-border bg-dl-bg-alt">
+                      <div className="px-4 py-2 border-t border-dl-border bg-dl-bg-alt flex items-center justify-between gap-4">
                         <a href="https://arbiscan.io/address/0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B" target="_blank" rel="noopener noreferrer"
                           className="font-dl-mono text-xs text-dl-gray underline">0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B</a>
+                        <a href="/axusd-3643" className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-1.5 whitespace-nowrap hover:bg-dl-navy hover:text-white flex-shrink-0">
+                          Open Unified AXUSD →
+                        </a>
                       </div>
                     </div>
                   ) : (
@@ -597,7 +608,7 @@ export default function FounderOpsPage() {
                     Each buy is timestamped on-chain. Over 12 months this builds a documented holding history.
                   </p>
                   <div className="border border-dl-border">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-0">
                       <div className="px-4 py-3 border-b lg:border-b-0 border-r border-dl-border">
                         <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Proof Created</p>
                         <p className="text-xs text-dl-navy leading-relaxed">Documented holding history, governance alignment, recurring protocol commitment</p>
@@ -607,9 +618,15 @@ export default function FounderOpsPage() {
                         <a href="https://arbiscan.io/address/0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D" target="_blank" rel="noopener noreferrer"
                           className="font-dl-mono text-xs text-dl-navy underline">0x864F9c6f5…2539D</a>
                       </div>
-                      <div className="px-4 py-3">
+                      <div className="px-4 py-3 border-b lg:border-b-0 border-r border-dl-border">
                         <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">6-Month Target</p>
                         <p className="font-dl-mono text-sm font-bold text-dl-navy">~$150 held</p>
+                      </div>
+                      <div className="px-4 py-3">
+                        <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Execute</p>
+                        <a href="/dex" className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 inline-block hover:bg-dl-navy hover:text-white">
+                          Open Exchange →
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -720,7 +737,7 @@ export default function FounderOpsPage() {
                           <p className="font-dl-mono text-sm font-bold text-dl-navy">24–36 reports</p>
                         </div>
                       </div>
-                      <a href="/property-analysis" className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 inline-block hover:bg-dl-navy hover:text-white">
+                      <a href="/property" className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 inline-block hover:bg-dl-navy hover:text-white">
                         Open Property Analysis →
                       </a>
                     </div>
@@ -737,7 +754,7 @@ export default function FounderOpsPage() {
                     <p className="font-dl-mono text-xs text-dl-gray mb-2">Proof Created</p>
                     <p className="text-xs text-dl-navy leading-relaxed">Continuous pipeline formation. Evidence of acquisition activity. Real market signal capture.</p>
                     <div className="mt-3">
-                      <a href="/deal-flow" className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 inline-block hover:bg-dl-navy hover:text-white">
+                      <a href="/distressed-feed" className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 inline-block hover:bg-dl-navy hover:text-white">
                         Open Deal Flow →
                       </a>
                     </div>
@@ -806,7 +823,7 @@ export default function FounderOpsPage() {
                       )}
                     </div>
                     <div className="px-4 py-4">
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
                         <div>
                           <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Proof Created</p>
                           <p className="text-xs text-dl-navy leading-relaxed">Continuity of core infrastructure. Evidence the system remains operational. Support for persistent network activity.</p>
@@ -820,6 +837,9 @@ export default function FounderOpsPage() {
                           <p className="font-dl-mono text-xl font-bold text-dl-navy">{data?.nodes.total ?? '—'}</p>
                         </div>
                       </div>
+                      <a href="/depin/denet" className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 inline-block hover:bg-dl-navy hover:text-white">
+                        Open DePIN Console →
+                      </a>
                     </div>
                   </div>
                 </div>
