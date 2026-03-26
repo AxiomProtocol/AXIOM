@@ -499,13 +499,28 @@ export default function DisclosurePage() {
         
         <section className="mb-12">
           <SectionHeading><span className="inline-flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-dl-navy" />AXUSD Stablecoin System</span></SectionHeading>
+
+          <div className="border border-dl-border border-l-4 border-l-dl-forest px-6 py-4 mb-6 bg-dl-bg-alt">
+            <div className="flex items-start gap-2">
+              <ShieldCheck className="w-4 h-4 text-dl-forest flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-dl-navy mb-1">Canonical System: Unified AXUSD (ERC-3643)</p>
+                <p className="text-sm text-dl-navy leading-relaxed">
+                  The protocol has migrated to a single <span className="font-semibold">Unified AXUSD</span> token under the ERC-3643 (T-REX) standard at{' '}
+                  <Addr address="0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7" />. All active supply, reserve, and liability figures in this document refer to Unified AXUSD. The legacy Primary and Euler AXUSD contracts below are <span className="font-semibold">deprecated</span> — retained for reference and immutable on-chain binding documentation only.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 sm:gap-6">
-            <div className="border border-dl-border mb-6 sm:mb-0">
-              <div className="px-6 py-3 bg-dl-bg-alt border-b border-dl-border">
+            <div className="border border-dl-border mb-6 sm:mb-0 opacity-75">
+              <div className="px-6 py-3 bg-dl-bg-alt border-b border-dl-border flex items-center justify-between gap-2">
                 <p className="font-dl-serif text-dl-navy font-semibold">PRIMARY AXUSD</p>
+                <StatusPill status="Deprecated" />
               </div>
               <div className="px-6 py-3 border-b border-dl-border">
-                <p className="text-xs text-dl-gray mb-1">Contract</p>
+                <p className="text-xs text-dl-gray mb-1">Contract (Legacy)</p>
                 <Addr address="0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C" />
               </div>
               <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
@@ -513,25 +528,26 @@ export default function DisclosurePage() {
                 <p className="text-sm font-dl-mono text-dl-navy">January 11, 2026</p>
               </div>
               <div className="px-6 py-3 border-b border-dl-border">
-                <p className="text-xs text-dl-gray mb-1">Compliance Posture</p>
-                <p className="text-sm text-dl-navy">Structured with reference to GENIUS Act (Public Law 119-27). Compliance posture is under ongoing legal and operational evaluation. External attestation pending. No settled compliance conclusion is made herein.</p>
+                <p className="text-xs text-dl-gray mb-1">Migration Status</p>
+                <p className="text-sm text-dl-navy">Deprecated. PSM backing recovered and consolidated into Unified AXUSD. No new issuance via this contract.</p>
               </div>
               <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
-                <p className="text-xs text-dl-gray mb-1">PSM Address</p>
+                <p className="text-xs text-dl-gray mb-1">Legacy PSM Address</p>
                 <Addr address="0x5db58d9c21369d1532a48Bdd658E4Fe415404922" />
               </div>
               <div className="px-6 py-3">
-                <p className="text-xs text-dl-gray mb-1">PSM Ceiling</p>
-                <p className="text-sm font-dl-mono text-dl-navy">5,000,000 AXUSD</p>
+                <p className="text-xs text-dl-gray mb-1">Legacy PSM Ceiling</p>
+                <p className="text-sm font-dl-mono text-dl-navy">5,000,000 AXUSD (historical)</p>
               </div>
             </div>
 
-            <div className="border border-dl-border">
-              <div className="px-6 py-3 bg-dl-bg-alt border-b border-dl-border">
+            <div className="border border-dl-border opacity-75">
+              <div className="px-6 py-3 bg-dl-bg-alt border-b border-dl-border flex items-center justify-between gap-2">
                 <p className="font-dl-serif text-dl-navy font-semibold">EULER AXUSD</p>
+                <StatusPill status="Deprecated" />
               </div>
               <div className="px-6 py-3 border-b border-dl-border">
-                <p className="text-xs text-dl-gray mb-1">Contract</p>
+                <p className="text-xs text-dl-gray mb-1">Contract (Legacy)</p>
                 <Addr address="0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c" />
               </div>
               <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
@@ -539,24 +555,24 @@ export default function DisclosurePage() {
                 <p className="text-sm font-dl-mono text-dl-navy">January 5, 2026</p>
               </div>
               <div className="px-6 py-3 border-b border-dl-border">
-                <p className="text-xs text-dl-gray mb-1">Purpose</p>
-                <p className="text-sm text-dl-navy">Euler Vault lending market (immutable on-chain binding via Vault.asset())</p>
+                <p className="text-xs text-dl-gray mb-1">Migration Status</p>
+                <p className="text-sm text-dl-navy">Deprecated. Euler Vault.asset() immutable binding is preserved for historical reference. No new issuance via this contract.</p>
               </div>
               <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
-                <p className="text-xs text-dl-gray mb-1">PSM Address</p>
+                <p className="text-xs text-dl-gray mb-1">Legacy PSM Address</p>
                 <Addr address="0x4584888cB411E9cc88e3800BAB73A430D90d3793" />
               </div>
               <div className="px-6 py-3">
-                <p className="text-xs text-dl-gray mb-1">PSM Ceiling</p>
-                <p className="text-sm font-dl-mono text-dl-navy">500,000 AXUSD</p>
+                <p className="text-xs text-dl-gray mb-1">Legacy PSM Ceiling</p>
+                <p className="text-sm font-dl-mono text-dl-navy">500,000 AXUSD (historical)</p>
               </div>
             </div>
           </div>
 
           <div className="border border-dl-border mt-6 px-6 py-4 bg-dl-bg-alt">
-            <p className="text-sm font-semibold text-dl-navy mb-2">Ecosystem Segregation Rule</p>
+            <p className="text-sm font-semibold text-dl-navy mb-2">Legacy Ecosystem Segregation Rule (Historical)</p>
             <p className="text-sm text-dl-navy leading-relaxed">
-              PRIMARY AXUSD must never be deposited into the Euler Vault. EULER AXUSD must never be reported as public supply. These are separate ecosystems with separate reserves and separate liability accounting.
+              Under the legacy dual-ecosystem architecture: Primary AXUSD was not deposited into the Euler Vault; Euler AXUSD was not reported as public supply. These constraints are now superseded by ERC-3643 modular compliance enforcement in Unified AXUSD. Legacy segregation rules are preserved here for audit trail completeness.
             </p>
           </div>
         </section>
@@ -948,27 +964,27 @@ export default function DisclosurePage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
               <p className="text-sm font-semibold text-dl-navy">Phase 1 {'\u2014'} Foundation</p>
               <p className="text-sm font-dl-mono text-dl-navy">Weeks 1-13</p>
-              <p className="text-sm text-dl-navy">PSM validation, Euler vault activation, revenue router verification, AXM accumulation, lending fund activation, participation program launch</p>
+              <p className="text-sm text-dl-navy">PSM validation, Euler vault activation, revenue router verification, AXM accumulation, lending fund activation (subject to legal readiness), participation program launch</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-3 border-b border-dl-border">
               <p className="text-sm font-semibold text-dl-navy">Phase 2 {'\u2014'} Product Activation</p>
               <p className="text-sm font-dl-mono text-dl-navy">Weeks 14-26</p>
-              <p className="text-sm text-dl-navy">Infrastructure node deployment, Sentinel observation, cross-product integration testing, stress testing</p>
+              <p className="text-sm text-dl-navy">Infrastructure node deployment, Sentinel observation (advisory only), cross-product integration testing, stress testing — subject to capital and technical readiness</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
               <p className="text-sm font-semibold text-dl-navy">Phase 3 {'\u2014'} Revenue Optimization</p>
               <p className="text-sm font-dl-mono text-dl-navy">Weeks 27-39</p>
-              <p className="text-sm text-dl-navy">Yield optimization, treasury growth analysis, governance framework preparation</p>
+              <p className="text-sm text-dl-navy">Yield optimization, treasury growth analysis, governance framework preparation — subject to capital accumulation and regulatory environment at time of execution</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-3 border-b border-dl-border">
               <p className="text-sm font-semibold text-dl-navy">Phase 4 {'\u2014'} Property Acquisition</p>
               <p className="text-sm font-dl-mono text-dl-navy">Weeks 40-52</p>
-              <p className="text-sm text-dl-navy">Property pipeline via data APIs, mandatory go/no-go checkpoint at Week 44, due diligence and asset onboarding, final audit</p>
+              <p className="text-sm text-dl-navy">Property pipeline via data APIs, mandatory go/no-go checkpoint at Week 44, due diligence and asset onboarding, final audit — subject to legal, regulatory, and capital readiness at time of execution</p>
             </div>
           </div>
           <div className="border border-dl-border border-t-0 px-6 py-3 bg-dl-bg-alt">
             <p className="text-sm text-dl-navy leading-relaxed">
-              Budget: $100 per week ($5,200 total). This playbook validates every deployed contract and product through real, small-scale capital deployment before larger-scale operations. Week-based targets are operational estimates, not commitments.
+              Budget: $100 per week ($5,200 total). This playbook validates every deployed contract and product through real, small-scale capital deployment before larger-scale operations. All phase descriptions are operational estimates only. No phase activation date, activity target, or acquisition milestone constitutes a binding commitment. Execution is subject to legal, regulatory, technical, and capital readiness at the time each phase is reached.
             </p>
           </div>
         </section>

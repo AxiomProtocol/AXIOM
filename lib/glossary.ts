@@ -24,8 +24,10 @@ export const GLOSSARY = {
   },
 
   AXUSD: {
-    canonical: 'AXUSD',
-    definition: 'Protocol stablecoin with dual-ecosystem segregation (Primary GENIUS and Euler Original).',
+    canonical: 'Unified AXUSD',
+    short: 'AXUSD',
+    definition: 'Protocol stablecoin issued under ERC-3643 (T-REX) standard on Arbitrum One. Enforces on-chain identity verification and modular compliance. Supersedes the deprecated dual-ecosystem deployment (legacy Primary and Euler variants). All active supply, reserve, and liability figures refer to Unified AXUSD unless explicitly stated otherwise.',
+    whatItIsNot: 'Not FDIC insured. Not a guarantee of redemption in excess of disclosed reserves. Not equivalent to a bank deposit or money-market instrument.',
     maturity: 'LIVE' as const,
   },
 
