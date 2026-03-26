@@ -9639,3 +9639,21 @@ export type DpMatch = typeof dpMatches.$inferSelect;
 export type InsertDpMatch = typeof dpMatches.$inferInsert;
 export type DpWholesalerSubmission = typeof dpWholesalerSubmissions.$inferSelect;
 export type InsertDpWholesalerSubmission = typeof dpWholesalerSubmissions.$inferInsert;
+
+export const mirdtSignalLog = pgTable("mirdt_signal_log", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  eventType: varchar("event_type", { length: 50 }).notNull(),
+  dimension: varchar("dimension", { length: 100 }),
+  grade: varchar("grade", { length: 10 }).notNull(),
+  keyMetric: text("key_metric"),
+  thesis: text("thesis"),
+  prsScore: decimal("prs_score", { precision: 5, scale: 2 }),
+  checksum: varchar("checksum", { length: 64 }).notNull(),
+  prevChecksum: varchar("prev_checksum", { length: 64 }),
+}, (table) => ({
+  createdAtIdx: index("mirdt_signal_log_created_at_idx").on(table.createdAt),
+}));
+
+export type MirdtSignalLog = typeof mirdtSignalLog.$inferSelect;
+export type InsertMirdtSignalLog = typeof mirdtSignalLog.$inferInsert;

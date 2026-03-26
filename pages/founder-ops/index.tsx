@@ -419,7 +419,7 @@ export default function FounderOpsPage() {
                         </a>
                         {prsData && (
                           <div className="flex gap-1 mt-2">
-                            {prsData.dimensions?.map((d: any) => (
+                            {prsData.dimensions?.map((d) => (
                               <div
                                 key={d.id}
                                 className="flex-1 h-1.5"

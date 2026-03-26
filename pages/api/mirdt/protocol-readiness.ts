@@ -1,6 +1,36 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
 import axios from 'axios';
+import { ethers } from 'ethers';
+
+const ALCHEMY_RPC = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+const TOTAL_ASSETS_ABI = ['function totalAssets() view returns (uint256)'];
+const EULER_EARN_VAULT = '0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B';
+const ERC20_TOTAL_SUPPLY_ABI = ['function totalSupply() view returns (uint256)'];
+const AXUSD_TOKEN = '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C';
+
+async function fetchOnChainTotalAssets(address: string, decimals = 6): Promise<number> {
+  try {
+    const provider = new ethers.JsonRpcProvider(ALCHEMY_RPC);
+    const contract = new ethers.Contract(address, TOTAL_ASSETS_ABI, provider);
+    const raw: bigint = await contract.totalAssets();
+    return Number(ethers.formatUnits(raw, decimals));
+  } catch {
+    return 0;
+  }
+}
+
+async function fetchAxusdSupply(): Promise<number> {
+  try {
+    const provider = new ethers.JsonRpcProvider(ALCHEMY_RPC);
+    const decimalsAbi = [...ERC20_TOTAL_SUPPLY_ABI, 'function decimals() view returns (uint8)'];
+    const contract = new ethers.Contract(AXUSD_TOKEN, decimalsAbi, provider);
+    const [raw, decimals]: [bigint, number] = await Promise.all([contract.totalSupply(), contract.decimals()]);
+    return Number(ethers.formatUnits(raw, decimals));
+  } catch {
+    return 0;
+  }
+}
 
 type Grade = 'A' | 'B' | 'C' | 'WATCH' | 'ALERT';
 
@@ -40,27 +70,49 @@ function prsOverallGrade(prs: number): 'FAVORABLE' | 'NEUTRAL' | 'CAUTION' | 'RE
   return 'RESTRICTED';
 }
 
+const AXM_CONTRACT = '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D';
+
 async function digitalCommodityIntelligence(): Promise<DimensionResult> {
   const weight = 0.15;
   try {
-    const { data } = await axios.get(
-      'https://api.coingecko.com/api/v3/simple/price',
-      {
+    const [basketRes, axmRes] = await Promise.allSettled([
+      axios.get('https://api.coingecko.com/api/v3/simple/price', {
         params: {
           ids: 'bitcoin,ethereum,chainlink',
           vs_currencies: 'usd',
           include_24hr_change: true,
         },
         timeout: 6000,
-      }
-    );
+      }),
+      axios.get(
+        `https://api.coingecko.com/api/v3/simple/token_price/arbitrum-one`,
+        {
+          params: {
+            contract_addresses: AXM_CONTRACT.toLowerCase(),
+            vs_currencies: 'usd',
+            include_24hr_change: true,
+          },
+          timeout: 6000,
+        }
+      ),
+    ]);
 
-    const btcChange = data?.bitcoin?.usd_24h_change ?? 0;
-    const ethChange = data?.ethereum?.usd_24h_change ?? 0;
-    const linkChange = data?.chainlink?.usd_24h_change ?? 0;
-    const avgChange = (btcChange + ethChange + linkChange) / 3;
+    const basketData = basketRes.status === 'fulfilled' ? basketRes.value.data : {};
+    const axmData = axmRes.status === 'fulfilled' ? axmRes.value.data : {};
 
-    const btcPrice = data?.bitcoin?.usd ?? 0;
+    const btcChange = basketData?.bitcoin?.usd_24h_change ?? 0;
+    const ethChange = basketData?.ethereum?.usd_24h_change ?? 0;
+    const linkChange = basketData?.chainlink?.usd_24h_change ?? 0;
+    const btcPrice = basketData?.bitcoin?.usd ?? 0;
+
+    const axmEntry = axmData?.[AXM_CONTRACT.toLowerCase()];
+    const axmChange: number = axmEntry?.usd_24h_change ?? null;
+    const axmPrice: number = axmEntry?.usd ?? 0;
+    const hasAxm = axmEntry != null && axmPrice > 0;
+
+    const changes = [btcChange, ethChange, linkChange];
+    if (hasAxm) changes.push(axmChange);
+    const avgChange = changes.reduce((a, b) => a + b, 0) / changes.length;
 
     let grade: Grade;
     let trend: DimensionResult['trend'];
@@ -73,7 +125,7 @@ async function digitalCommodityIntelligence(): Promise<DimensionResult> {
     } else if (avgChange > 0.3) {
       grade = 'B';
       trend = 'up-slightly';
-      thesis = 'Moderate positive momentum across BTC/ETH/LINK — watch for continuation before deploying.';
+      thesis = 'Moderate positive momentum across BTC/ETH/LINK/AXM — watch for continuation before deploying.';
     } else if (avgChange > -1) {
       grade = 'C';
       trend = 'flat';
@@ -88,12 +140,16 @@ async function digitalCommodityIntelligence(): Promise<DimensionResult> {
       thesis = 'Significant drawdown across digital commodity basket — delay new deployments, protect treasury.';
     }
 
+    const axmNote = hasAxm
+      ? ` | AXM $${axmPrice.toFixed(4)} (${axmChange >= 0 ? '+' : ''}${axmChange.toFixed(2)}%)`
+      : ' | AXM on-chain';
+
     return {
       id: 'digital-commodity',
       label: 'Digital Commodity Intelligence',
       grade,
       score: gradeToScore(grade),
-      keyMetric: `BTC $${btcPrice.toLocaleString()} (${avgChange >= 0 ? '+' : ''}${avgChange.toFixed(2)}% avg 24h)`,
+      keyMetric: `BTC $${btcPrice.toLocaleString()} (${avgChange >= 0 ? '+' : ''}${avgChange.toFixed(2)}% avg 24h)${axmNote}`,
       trend,
       thesis,
       weight,
@@ -115,31 +171,33 @@ async function digitalCommodityIntelligence(): Promise<DimensionResult> {
 async function protocolHealthIntelligence(): Promise<DimensionResult> {
   const weight = 0.20;
   try {
-    const result = await pool.query(
-      `SELECT payload_json FROM solvency_snapshots ORDER BY created_at DESC LIMIT 1`
-    );
+    const [snapshotRes, earnTvl, onChainSupply] = await Promise.all([
+      pool.query(`SELECT payload_json FROM solvency_snapshots ORDER BY created_at DESC LIMIT 1`),
+      fetchOnChainTotalAssets(EULER_EARN_VAULT, 6),
+      fetchAxusdSupply(),
+    ]);
 
-    if (result.rows.length === 0) {
+    if (snapshotRes.rows.length === 0) {
       return {
         id: 'protocol-health',
         label: 'Protocol Health Intelligence',
         grade: 'WATCH',
         score: 5,
-        keyMetric: 'No solvency snapshot available',
+        keyMetric: `No solvency snapshot | earnAXUSD TVL $${earnTvl.toFixed(2)} | AXUSD supply $${onChainSupply.toFixed(2)}`,
         trend: 'flat',
         thesis: 'Protocol health snapshot not yet generated. Run solvency computation to initialize.',
         weight,
       };
     }
 
-    const payload = typeof result.rows[0].payload_json === 'string'
-      ? JSON.parse(result.rows[0].payload_json)
-      : result.rows[0].payload_json;
+    const payload = typeof snapshotRes.rows[0].payload_json === 'string'
+      ? JSON.parse(snapshotRes.rows[0].payload_json)
+      : snapshotRes.rows[0].payload_json;
 
     const cr = parseFloat(payload.coverageRatio) || 0;
-    const supply = parseFloat(payload.liabilitiesTotalUsd) || 0;
     const liquidity = parseFloat(payload.treasuryLiquidUsd) || 0;
     const policyMode: string = payload.policyMode || 'UNKNOWN';
+    const axusdSupply = onChainSupply > 0 ? onChainSupply : (parseFloat(payload.liabilitiesTotalUsd) || 0);
 
     let grade: Grade;
     let trend: DimensionResult['trend'];
@@ -148,19 +206,19 @@ async function protocolHealthIntelligence(): Promise<DimensionResult> {
     if (cr >= 1.5) {
       grade = 'A';
       trend = 'up';
-      thesis = `Coverage ratio ${cr.toFixed(2)}x — protocol overcollateralized with strong buffer. AXUSD peg structurally secure.`;
+      thesis = `Coverage ratio ${cr.toFixed(2)}x — protocol overcollateralized. earnAXUSD TVL $${earnTvl.toFixed(0)} | AXUSD supply $${axusdSupply.toLocaleString(undefined, { maximumFractionDigits: 0 })}. Peg structurally secure.`;
     } else if (cr >= 1.1) {
       grade = 'B';
       trend = 'up-slightly';
-      thesis = `Coverage ratio ${cr.toFixed(2)}x — adequate collateral buffer. Peg stable. Monitor for expansion below 1.1x.`;
+      thesis = `Coverage ratio ${cr.toFixed(2)}x — adequate collateral buffer. earnAXUSD TVL $${earnTvl.toFixed(0)}. Peg stable.`;
     } else if (cr >= 1.0) {
       grade = 'C';
       trend = 'flat';
-      thesis = `Coverage ratio ${cr.toFixed(2)}x — minimal buffer. Prioritize reserve growth before further AXUSD issuance.`;
+      thesis = `Coverage ratio ${cr.toFixed(2)}x — minimal buffer. earnAXUSD TVL $${earnTvl.toFixed(0)}. Prioritize reserve growth before further issuance.`;
     } else if (cr > 0) {
       grade = policyMode === 'BOOTSTRAP' ? 'WATCH' : 'ALERT';
       trend = 'down';
-      thesis = `Coverage ratio ${cr.toFixed(6)}x — ${policyMode} phase. Treasury at $${liquidity.toFixed(2)} vs $${supply.toLocaleString(undefined, { maximumFractionDigits: 0 })} AXUSD outstanding. Treasury expansion is the protocol priority.`;
+      thesis = `Coverage ratio ${cr.toFixed(6)}x — ${policyMode} phase. Treasury $${liquidity.toFixed(2)} | AXUSD supply $${axusdSupply.toLocaleString(undefined, { maximumFractionDigits: 0 })} | earnAXUSD TVL $${earnTvl.toFixed(2)}. Treasury expansion is the protocol priority.`;
     } else {
       grade = 'WATCH';
       trend = 'flat';
@@ -172,7 +230,7 @@ async function protocolHealthIntelligence(): Promise<DimensionResult> {
       label: 'Protocol Health Intelligence',
       grade,
       score: gradeToScore(grade),
-      keyMetric: `CR ${cr.toFixed(4)}x | AXUSD $${supply.toLocaleString(undefined, { maximumFractionDigits: 0 })} | Liquid $${liquidity.toFixed(2)} | ${policyMode}`,
+      keyMetric: `CR ${cr.toFixed(4)}x | AXUSD $${axusdSupply.toLocaleString(undefined, { maximumFractionDigits: 0 })} | Liquid $${liquidity.toFixed(2)} | earnTVL $${earnTvl.toFixed(2)} | ${policyMode}`,
       trend,
       thesis,
       weight,
@@ -197,52 +255,69 @@ async function realAssetMarketIntelligence(): Promise<DimensionResult> {
     const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
     if (!apiKey) throw new Error('No Alpha Vantage key');
 
-    const { data } = await axios.get('https://www.alphavantage.co/query', {
-      params: {
-        function: 'GLOBAL_QUOTE',
-        symbol: 'VNQ',
-        apikey: apiKey,
-      },
-      timeout: 8000,
-    });
+    let vnqQuote = null;
+    let xhbQuote = null;
 
-    const quote = data?.['Global Quote'];
-    const changePercent = quote?.['10. change percent']?.replace('%', '') ?? '0';
-    const price = parseFloat(quote?.['05. price'] ?? '0');
-    const change = parseFloat(changePercent);
+    try {
+      const vnqRes = await axios.get('https://www.alphavantage.co/query', {
+        params: { function: 'GLOBAL_QUOTE', symbol: 'VNQ', apikey: apiKey },
+        timeout: 8000,
+      });
+      vnqQuote = vnqRes.data?.['Global Quote'] ?? null;
+    } catch { /* VNQ unavailable */ }
+
+    await new Promise((r) => setTimeout(r, 500));
+
+    try {
+      const xhbRes = await axios.get('https://www.alphavantage.co/query', {
+        params: { function: 'GLOBAL_QUOTE', symbol: 'XHB', apikey: apiKey },
+        timeout: 8000,
+      });
+      xhbQuote = xhbRes.data?.['Global Quote'] ?? null;
+    } catch { /* XHB unavailable */ }
+
+    const vnqChange = parseFloat(vnqQuote?.['10. change percent']?.replace('%', '') ?? '0');
+    const vnqPrice = parseFloat(vnqQuote?.['05. price'] ?? '0');
+    const xhbChange = parseFloat(xhbQuote?.['10. change percent']?.replace('%', '') ?? '0');
+    const xhbPrice = parseFloat(xhbQuote?.['05. price'] ?? '0');
+    const hasXhb = xhbPrice > 0;
+
+    const avgChange = hasXhb ? (vnqChange + xhbChange) / 2 : vnqChange;
 
     let grade: Grade;
     let trend: DimensionResult['trend'];
     let thesis: string;
 
-    if (change > 1) {
+    if (avgChange > 1) {
       grade = 'A';
       trend = 'up';
-      thesis = `REIT index VNQ up ${change.toFixed(2)}% — real estate market momentum favorable for acquisition timing.`;
-    } else if (change > 0) {
+      thesis = `REIT/homebuilder index up (VNQ/XHB avg ${avgChange >= 0 ? '+' : ''}${avgChange.toFixed(2)}%) — real estate momentum favorable for acquisition timing.`;
+    } else if (avgChange > 0) {
       grade = 'B';
       trend = 'up-slightly';
-      thesis = `Real estate market mildly positive (+${change.toFixed(2)}%). Conditions supportive for property pipeline advancement.`;
-    } else if (change > -1) {
+      thesis = `Real asset markets mildly positive (avg ${avgChange >= 0 ? '+' : ''}${avgChange.toFixed(2)}%). Conditions supportive for property pipeline advancement.`;
+    } else if (avgChange > -1) {
       grade = 'C';
       trend = 'flat';
       thesis = 'Real estate market range-bound. Standard underwriting discipline applies.';
-    } else if (change > -2) {
+    } else if (avgChange > -2) {
       grade = 'WATCH';
       trend = 'down-slightly';
-      thesis = `VNQ pulling back (${change.toFixed(2)}%). Review acquisition timing — market softening may create better entry.`;
+      thesis = `REIT/homebuilder indices pulling back (avg ${avgChange.toFixed(2)}%). Review acquisition timing — softening may create better entry.`;
     } else {
       grade = 'ALERT';
       trend = 'down';
-      thesis = `Real estate market under pressure (VNQ ${change.toFixed(2)}%). Pause new acquisition commitments pending stabilization.`;
+      thesis = `Real estate market under pressure (avg ${avgChange.toFixed(2)}%). Pause new acquisition commitments pending stabilization.`;
     }
+
+    const xhbNote = hasXhb ? ` | XHB $${xhbPrice.toFixed(2)} (${xhbChange >= 0 ? '+' : ''}${xhbChange.toFixed(2)}%)` : '';
 
     return {
       id: 'real-asset-market',
       label: 'Real Asset Market Intelligence',
       grade,
       score: gradeToScore(grade),
-      keyMetric: `VNQ $${price.toFixed(2)} (${change >= 0 ? '+' : ''}${change.toFixed(2)}% today)`,
+      keyMetric: `VNQ $${vnqPrice.toFixed(2)} (${vnqChange >= 0 ? '+' : ''}${vnqChange.toFixed(2)}% today)${xhbNote}`,
       trend,
       thesis,
       weight,
@@ -337,39 +412,54 @@ async function constructionCostIntelligence(): Promise<DimensionResult> {
 async function dealFlowVelocityIntelligence(): Promise<DimensionResult> {
   const weight = 0.10;
   try {
-    const result = await pool.query(`
-      SELECT
-        COUNT(*)::int AS total_deals,
-        COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '30 days')::int AS recent_deals,
-        COUNT(*) FILTER (WHERE status NOT IN ('closed', 'rejected', 'archived'))::int AS active_deals
-      FROM re_deals
-    `);
+    const [dealsRes, distressedRes] = await Promise.all([
+      pool.query(`
+        SELECT
+          COUNT(*)::int AS total_deals,
+          COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '30 days')::int AS recent_deals,
+          COUNT(*) FILTER (WHERE status NOT IN ('closed', 'rejected', 'archived'))::int AS active_deals
+        FROM re_deals
+      `),
+      pool.query(`
+        SELECT
+          COUNT(*)::int AS total_listings,
+          COUNT(*) FILTER (WHERE ingested_at > NOW() - INTERVAL '30 days')::int AS recent_listings
+        FROM dp_listings
+      `),
+    ]);
 
-    const row = result.rows[0];
-    const totalDeals = parseInt(row.total_deals) || 0;
-    const recentDeals = parseInt(row.recent_deals) || 0;
-    const activeDeals = parseInt(row.active_deals) || 0;
+    const dealRow = dealsRes.rows[0];
+    const distRow = distressedRes.rows[0];
+
+    const totalDeals = parseInt(dealRow.total_deals) || 0;
+    const recentDeals = parseInt(dealRow.recent_deals) || 0;
+    const activeDeals = parseInt(dealRow.active_deals) || 0;
+    const totalListings = parseInt(distRow.total_listings) || 0;
+    const recentListings = parseInt(distRow.recent_listings) || 0;
+
+    const combinedRecent = recentDeals + recentListings;
+    const combinedTotal = totalDeals + totalListings;
 
     let grade: Grade;
     let trend: DimensionResult['trend'];
     let thesis: string;
 
-    if (recentDeals >= 5 || activeDeals >= 3) {
+    if (combinedRecent >= 10 || activeDeals >= 3) {
       grade = 'A';
       trend = 'up';
-      thesis = `${recentDeals} deals entered in last 30 days — acquisition pipeline active. Strong opportunity window.`;
-    } else if (recentDeals >= 2 || activeDeals >= 1) {
+      thesis = `${combinedRecent} opportunities entered last 30 days (${recentDeals} underwriting + ${recentListings} distressed) — pipeline velocity strong.`;
+    } else if (combinedRecent >= 3 || activeDeals >= 1) {
       grade = 'B';
       trend = 'up-slightly';
-      thesis = `${totalDeals} total deals in pipeline — moderate velocity. Continue sourcing to build selection depth.`;
-    } else if (totalDeals > 0) {
+      thesis = `${combinedTotal} total opportunities tracked — moderate pipeline velocity. Continue sourcing to build selection depth.`;
+    } else if (combinedTotal > 0) {
       grade = 'C';
       trend = 'flat';
-      thesis = `${totalDeals} deals on record — pipeline seeded but not yet active. Accelerate sourcing and underwriting.`;
+      thesis = `${combinedTotal} opportunities on record — pipeline seeded, velocity building. Accelerate distressed sourcing and direct outreach.`;
     } else {
       grade = 'WATCH';
       trend = 'down-slightly';
-      thesis = 'No deals in pipeline yet. Bootstrap phase — distressed feed and direct sourcing are the priority.';
+      thesis = 'No opportunities in pipeline yet. Bootstrap phase — distressed feed activation and direct sourcing are the priority.';
     }
 
     return {
@@ -377,7 +467,7 @@ async function dealFlowVelocityIntelligence(): Promise<DimensionResult> {
       label: 'Deal Flow Velocity Intelligence',
       grade,
       score: gradeToScore(grade),
-      keyMetric: `${totalDeals} total | ${recentDeals} last 30d | ${activeDeals} active`,
+      keyMetric: `${totalDeals} underwriting | ${totalListings} distressed | ${combinedRecent} new (30d)`,
       trend,
       thesis,
       weight,

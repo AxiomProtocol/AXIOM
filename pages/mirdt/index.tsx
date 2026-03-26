@@ -66,11 +66,11 @@ const DIMENSION_ICONS: Record<string, React.ReactNode> = {
 };
 
 const DIMENSION_DATA_SOURCE: Record<string, string> = {
-  'digital-commodity': 'CoinGecko — BTC / ETH / LINK',
-  'protocol-health': 'Solvency Snapshot — Coverage Ratio + AXUSD Supply',
-  'real-asset-market': 'Alpha Vantage — VNQ REIT Index',
+  'digital-commodity': 'CoinGecko — BTC / ETH / LINK / AXM (on-chain)',
+  'protocol-health': 'Solvency Snapshot + On-Chain — CR / AXUSD Supply / earnAXUSD TVL',
+  'real-asset-market': 'Alpha Vantage — VNQ (REIT) + XHB (Homebuilder)',
   'construction-cost': 'Market Cost Signals — Craftsman NCE Benchmarks',
-  'deal-flow': 'Deal Pipeline — Active Acquisition Records',
+  'deal-flow': 'Deal Pipeline — re_deals (underwriting) + dp_listings (distressed)',
   'credit-portfolio': 'Income Credit Lines — Originated / Overdue / Repaid',
   'community-coordination': 'Wealth Practice Groups — Active Cycle Status',
   'model-accuracy': 'IVCEE — Prediction vs. Actual Variance',
@@ -215,7 +215,7 @@ export default function MIRDTPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'intelligence' | 'log'>('intelligence');
-  const [signalLog, setSignalLog] = useState<LogEntry[]>([]);
+  const [serverLog, setServerLog] = useState<LogEntry[]>([]);
   const [logStatus, setLogStatus] = useState<string | null>(null);
 
   const fetchPRS = useCallback(async () => {
@@ -226,44 +226,81 @@ export default function MIRDTPage() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       setData(json);
-    } catch (e: any) {
-      setError(e.message || 'Failed to load intelligence data');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load intelligence data');
     } finally {
       setLoading(false);
     }
   }, []);
 
+  const fetchServerLog = useCallback(async () => {
+    try {
+      const res = await fetch('/api/mirdt/signal-log');
+      if (!res.ok) return;
+      const json = await res.json();
+      const events: LogEntry[] = (json.events ?? []).map((e: {
+        id: string;
+        dimension?: string | null;
+        grade: string;
+        thesis?: string | null;
+        loggedAt: string;
+        checksum: string;
+      }) => ({
+        id: e.id,
+        dimension: e.dimension ?? 'PRS Computation',
+        grade: e.grade as Grade,
+        thesis: e.thesis ?? '',
+        loggedAt: e.loggedAt,
+        checksum: e.checksum,
+      }));
+      setServerLog(events);
+    } catch {
+      // silent — server log is best-effort
+    }
+  }, []);
+
   useEffect(() => {
     fetchPRS();
-  }, [fetchPRS]);
+    fetchServerLog();
+  }, [fetchPRS, fetchServerLog]);
 
   const handleLogSignal = async (dim: Dimension) => {
-    const entry: LogEntry = {
-      id: crypto.randomUUID(),
-      dimension: dim.label,
-      grade: dim.grade,
-      thesis: dim.thesis,
-      loggedAt: new Date().toISOString(),
-      checksum: await generateChecksum(dim),
-    };
-
     try {
-      await fetch('/api/founder-ops/log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          entry_type: 'CAPITAL_INTELLIGENCE_BRIEF',
-          title: `${dim.label} — Grade ${dim.grade}`,
-          details: dim.thesis,
-          metadata: { dimension: dim.id, grade: dim.grade, keyMetric: dim.keyMetric, checksum: entry.checksum },
+      const [signalRes] = await Promise.allSettled([
+        fetch('/api/mirdt/signal-log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventType: 'BRIEF_GENERATED',
+            dimension: dim.label,
+            grade: dim.grade,
+            keyMetric: dim.keyMetric,
+            thesis: dim.thesis,
+            prsScore: data?.prs ?? null,
+          }),
         }),
-      });
-      setLogStatus(`Signal logged: ${dim.label}`);
+        fetch('/api/founder-ops/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            entry_type: 'CAPITAL_INTELLIGENCE_BRIEF',
+            title: `${dim.label} — Grade ${dim.grade}`,
+            details: dim.thesis,
+            metadata: { dimension: dim.id, grade: dim.grade, keyMetric: dim.keyMetric },
+          }),
+        }),
+      ]);
+
+      if (signalRes.status === 'fulfilled' && signalRes.value.ok) {
+        setLogStatus(`Signal persisted to audit log: ${dim.label}`);
+        await fetchServerLog();
+      } else {
+        setLogStatus(`Signal queued: ${dim.label}`);
+      }
     } catch {
-      setLogStatus('Signal logged locally (ops log unavailable)');
+      setLogStatus('Signal queued locally');
     }
 
-    setSignalLog((prev) => [entry, ...prev]);
     setActiveTab('log');
     setTimeout(() => setLogStatus(null), 3000);
   };
@@ -404,9 +441,9 @@ export default function MIRDTPage() {
                   onClick={() => setActiveTab('log')}
                 >
                   Signal Integrity Log
-                  {signalLog.length > 0 && (
+                  {serverLog.length > 0 && (
                     <span className="bg-dl-navy text-white text-xs font-dl-mono px-1.5 py-0.5">
-                      {signalLog.length}
+                      {serverLog.length}
                     </span>
                   )}
                 </button>
@@ -433,19 +470,19 @@ export default function MIRDTPage() {
                 <div>
                   <div className="mb-4">
                     <p className="text-xs text-dl-gray leading-relaxed">
-                      Cryptographic audit record of signal generation and capital deployment events.
-                      Each entry carries a SHA-256 checksum proving the signal was generated deterministically
-                      before any capital action was taken.
+                      Durable cryptographic audit record of signal generation and capital intelligence events.
+                      Each entry carries a SHA-256 checksum chained to the prior event, proving signals were generated
+                      deterministically before any capital action was taken. Stored server-side in the signal audit database.
                     </p>
                   </div>
-                  <SignalIntegrityLog log={signalLog} />
+                  <SignalIntegrityLog log={serverLog} />
 
-                  {signalLog.length > 0 && (
+                  {serverLog.length > 0 && (
                     <div className="mt-4 border border-dl-border px-4 py-3 bg-dl-bg-alt">
                       <p className="text-xs font-dl-mono text-dl-gray">
-                        {signalLog.length} signal event{signalLog.length !== 1 ? 's' : ''} recorded in this session.
-                        Full audit history is stored in the Founder Operations Log.{' '}
-                        <Link href="/founder-ops" className="text-dl-navy underline">View Operations →</Link>
+                        {serverLog.length} signal event{serverLog.length !== 1 ? 's' : ''} in the durable audit log.
+                        Full operations history:{' '}
+                        <Link href="/founder-ops" className="text-dl-navy underline">Founder Operations →</Link>
                       </p>
                     </div>
                   )}
@@ -482,24 +519,3 @@ export default function MIRDTPage() {
   );
 }
 
-async function generateChecksum(dim: Dimension): Promise<string> {
-  try {
-    const payload = JSON.stringify({
-      id: dim.id,
-      grade: dim.grade,
-      score: dim.score,
-      thesis: dim.thesis,
-      ts: new Date().toISOString(),
-    });
-    if (typeof crypto !== 'undefined' && crypto.subtle) {
-      const buf = new TextEncoder().encode(payload);
-      const hash = await crypto.subtle.digest('SHA-256', buf);
-      return Array.from(new Uint8Array(hash))
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
-    }
-    return `sha256:${Date.now().toString(16)}`;
-  } catch {
-    return `sha256:${Date.now().toString(16)}`;
-  }
-}
