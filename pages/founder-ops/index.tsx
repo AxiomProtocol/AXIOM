@@ -5,61 +5,28 @@ import {
   PageShell,
   SectionHeading,
   DataTable,
-  StatusBadge,
-  SolidButton,
 } from '../../components/design-law';
 import type { Column } from '../../components/design-law';
 
-interface SentinelData {
-  regime: string;
-  regimeConfidence: number;
-  systemStance: string;
-  totalSignals: number;
-  qualifiedSignals: number;
-  approvedDecisions: number;
-  deniedDecisions: number;
-  authorityMode?: string;
-  guardRail5?: { status: string; rule: string };
+function formatUTC(dateStr: string): string {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  return d.toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
 }
 
-interface GuardRailStatus {
-  id: number;
-  title: string;
-  status: 'PASS' | 'ENFORCED' | 'WARNING' | 'UNKNOWN' | 'LOADING';
-  detail: string;
-  source: string;
-}
+const REGIME_COLORS: Record<string, string> = {
+  TREND_UP: 'text-dl-forest',
+  TREND_DOWN: 'text-dl-error',
+  RANGE_LOW_VOL: 'text-dl-gray',
+  HIGH_VOL_DISLOCATION: 'text-dl-gold',
+};
 
-interface EulerData {
-  deposited: string;
-  utilization: string;
-  supplyAPY: string;
-  borrowAPY: string;
-  feeRecipientConfigured: boolean;
-  revenueRouterSet: boolean;
-  feeRoutingStatus: string;
-  interestFeePercent: string;
-}
-
-interface FeePlumbing {
-  eulerFeeRecipientSet: boolean;
-  revenueRouterConnected: boolean;
-  feeRoutingStatus: string;
-  status: string;
-}
-
-interface OverviewData {
-  timestamp: string;
-  sentinel: SentinelData;
-  euler: EulerData;
-  axusd: { totalSupply: string };
-  lendingFund: { tvl: string; sharePrice: string; activeLoans: number };
-  dex: { tvl: string; volume24h: string };
-  treasury: { total: string; currentExposure: string };
-  nodes: { total: number; active: number };
-  feePlumbing: FeePlumbing;
-  contracts: Record<string, string>;
-}
+const STANCE_COLORS: Record<string, string> = {
+  RISK_ON: 'text-dl-forest',
+  DEFENSIVE: 'text-dl-gold',
+  HALTED: 'text-dl-error',
+  NEUTRAL: 'text-dl-navy',
+};
 
 interface LogEntry {
   id: string;
@@ -78,939 +45,227 @@ interface LogEntry {
   protocol_change: string | null;
 }
 
-interface OperatorStrategyProfile {
-  operator_wallet: string;
-  strategy_type: string;
-  asset_class: string | null;
-  market: string | null;
-  observations: number;
-  signal_count: number;
-  avg_capex_per_unit: string | null;
-  avg_rent_lift: string | null;
-  avg_noi_lift: string | null;
-  avg_stabilization_days: string | null;
-  avg_confidence: string | null;
-  deal_count: number;
-  last_signal_at: string | null;
-  approved_outcomes: number;
-  reviewed_outcomes: number;
-  success_rate_pct: string | null;
-  avg_cost_error_pct: string | null;
-  avg_timeline_error_pct: string | null;
-  avg_roi_variance_pct: string | null;
+interface SentinelData {
+  regime: string;
+  regimeConfidence: number;
+  systemStance: string;
+  totalSignals: number;
+  qualifiedSignals: number;
+  approvedDecisions: number;
+  deniedDecisions: number;
 }
 
-interface NetworkSignal {
-  strategy_type: string;
-  market: string;
-  avg_capex_per_unit: string | null;
-  avg_confidence: string;
-  total_sample_size: number;
-  signal_count: number;
-}
-
-interface NetworkSnapshot {
-  id: string;
-  snapshot_date: string;
-  scope: string;
-  confidence_score: string;
-  created_at: string;
-  aggregated_signals: NetworkSignal[];
-}
-
-interface CapitalEvent {
-  id: string;
-  deal_id: string | null;
-  offering_id: string | null;
-  event_type: string;
-  capital_source_type: string | null;
-  raise_velocity: string | null;
-  minimum_capital_met: boolean | null;
-  investor_demand_score: string | null;
-  lender_path_chosen: string | null;
-  refi_outcome: string | null;
-  payload: Record<string, unknown> | null;
-  created_at: string;
-  deal_address: string | null;
-  offering_name: string | null;
-}
-
-const REGIME_COLORS: Record<string, string> = {
-  TREND_UP: 'text-dl-forest',
-  TREND_DOWN: 'text-dl-error',
-  RANGE_LOW_VOL: 'text-dl-gray',
-  HIGH_VOL_DISLOCATION: 'text-dl-gold',
-};
-
-const STANCE_COLORS: Record<string, string> = {
-  RISK_ON: 'text-dl-forest',
-  DEFENSIVE: 'text-dl-gold',
-  HALTED: 'text-dl-error',
-  NEUTRAL: 'text-dl-navy',
-};
-
-function formatUTC(dateStr: string): string {
-  if (!dateStr) return '—';
-  const d = new Date(dateStr);
-  return d.toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
-}
-
-function truncateAddr(addr: string): string {
-  if (!addr || addr.length < 12) return addr || '—';
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-}
-
-// ── EVK Whitelist constants ────────────────────────────────────────────────
-const LPM_ADDR     = '0xC0177120Fb5922813031a5857f4dF7F01750Bb6F';
-// Verified: these are whitelisted in LPM (confirmed via deploy-axusd-evk-vault.js audit)
-const EVK_FACTORY  = '0x78Df1CF5bf06a7f27f2ACc580B934238C1b80D50'; // Real Euler V2 factory
-const EVC_ADDR     = '0x6302ef0F34100CDDFb5489fbcB6eE1AA95CD1066'; // Real Euler V2 EVC
-const EVK_VAULT    = '0xacdA87801f6409bB5157BA78aF1BD9631d6609B2'; // eAXUSD-6 (deployed ✓)
-
-interface EvkWhitelistTabProps {
-  lpmPlatforms: string[];
-  lpmLoading: boolean;
-  onRefresh: () => void;
-}
-
-function EvkWhitelistTab({ lpmPlatforms, lpmLoading, onRefresh }: EvkWhitelistTabProps) {
-  const [addingAddr, setAddingAddr] = useState('');
-  const [adminKey, setAdminKey] = useState('');
-  const [addResult, setAddResult] = useState<string | null>(null);
-  const [addLoading, setAddLoading] = useState(false);
-
-  const REQUIRED = [
-    { label: 'EVC', addr: EVC_ADDR, sub: 'Euler Vault Connector — routes all vault calls' },
-    { label: 'EVK Factory', addr: EVK_FACTORY, sub: 'Creates EVK vault proxies; must hold AXUSD during deployment' },
-    { label: 'EVK Vault', addr: EVK_VAULT, sub: 'eAXUSD-6 — open money market, oracle immutable (v2)' },
-  ];
-
-  const handleAddPlatform = async () => {
-    if (!addingAddr.match(/^0x[0-9a-fA-F]{40}$/)) {
-      setAddResult('Invalid address format.');
-      return;
-    }
-    if (!adminKey) {
-      setAddResult('Admin key required.');
-      return;
-    }
-    setAddLoading(true);
-    setAddResult(null);
-    try {
-      const r = await fetch('/api/erc3643/whitelist/add-platform', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({ platform: addingAddr }),
-      });
-      const d = await r.json();
-      if (d.success) {
-        setAddResult('Platform queued for whitelist. Tx: ' + (d.txHash || 'n/a'));
-        setAddingAddr('');
-        onRefresh();
-      } else {
-        setAddResult('Error: ' + (d.error || 'Unknown error'));
-      }
-    } catch {
-      setAddResult('Request failed. Check console.');
-    } finally {
-      setAddLoading(false);
-    }
+interface OverviewData {
+  timestamp: string;
+  sentinel: SentinelData;
+  euler: {
+    deposited: string;
+    utilization: string;
+    supplyAPY: string;
+    feeRoutingStatus: string;
+    interestFeePercent: string;
   };
-
-  return (
-    <div className="mb-8">
-      <SectionHeading>EVK Open Money Market — LPM Whitelist Admin</SectionHeading>
-      <p className="text-xs text-dl-gray max-w-2xl leading-relaxed mb-6">
-        The ERC-3643 LendingPlatformModule (LPM) must whitelist the EVC, EVK Factory, and the
-        deployed vault before any address can hold or transfer ERC-3643 AXUSD through the vault.
-        This panel shows the whitelist status and provides an admin action to add platforms.
-      </p>
-
-      <div className="border border-dl-border mb-6">
-        <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
-          <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">Required Whitelist Addresses</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-0">
-          <div className="px-4 py-3 border-b border-r border-dl-border bg-dl-bg">
-            <p className="text-xs text-dl-gray mb-1 font-dl-mono uppercase">LPM</p>
-            <p className="font-dl-mono text-xs font-bold text-dl-navy break-all">{LPM_ADDR}</p>
-            <p className="text-xs text-dl-muted mt-0.5">LendingPlatformModule</p>
-          </div>
-          {REQUIRED.map((m, i) => (
-            <div key={m.label} className={`px-4 py-3 border-b ${i < 2 ? 'border-r' : ''} border-dl-border bg-dl-bg`}>
-              <p className="text-xs text-dl-gray mb-1 font-dl-mono uppercase">{m.label}</p>
-              <p className={`font-dl-mono text-xs font-bold break-all ${m.addr === 'PENDING DEPLOYMENT' ? 'text-dl-gold' : 'text-dl-navy'}`}>{m.addr}</p>
-              <p className="text-xs text-dl-muted mt-0.5">{m.sub}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="border border-dl-border mb-6">
-        <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border flex items-center justify-between">
-          <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">Whitelisted Platforms (Live from LPM)</p>
-          <button
-            onClick={onRefresh}
-            disabled={lpmLoading}
-            className="font-dl-mono text-xs border border-dl-border px-3 py-1 text-dl-navy hover:bg-dl-bg-alt disabled:opacity-50"
-          >
-            {lpmLoading ? 'Loading...' : 'Refresh'}
-          </button>
-        </div>
-        {lpmLoading ? (
-          <div className="px-4 py-6 text-center text-sm text-dl-gray">Loading platform data...</div>
-        ) : lpmPlatforms.length === 0 ? (
-          <div className="px-4 py-6 text-center text-xs text-dl-gray">
-            No platforms loaded yet — click Refresh, or no platforms have been whitelisted.
-          </div>
-        ) : (
-          lpmPlatforms.map((addr, i) => (
-            <div key={addr} className={`flex justify-between items-center px-4 py-3 text-xs font-dl-mono ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'} border-b border-dl-border`}>
-              <span className="text-dl-navy">{addr}</span>
-              <a href={`https://arbiscan.io/address/${addr}`} target="_blank" rel="noopener noreferrer" className="text-dl-gray underline">Arbiscan</a>
-            </div>
-          ))
-        )}
-      </div>
-
-      <div className="border border-dl-border mb-6">
-        <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
-          <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">Admin Action — Add Platform to Whitelist</p>
-        </div>
-        <div className="px-4 py-4 bg-dl-bg">
-          <p className="text-xs text-dl-gray mb-3 leading-relaxed">
-            Enter the admin key and platform address (EVC, EVK Factory, or deployed vault) to whitelist
-            it in the LendingPlatformModule via <span className="font-dl-mono">addPlatform(AXUSD_TOKEN, platform)</span>.
-          </p>
-          <div className="flex flex-col gap-2 mb-3">
-            <input
-              type="password"
-              value={adminKey}
-              onChange={e => setAdminKey(e.target.value)}
-              placeholder="Admin key (ADMIN_SOLVENCY_KEY)"
-              autoComplete="off"
-              className="w-full border border-dl-border px-3 py-2 font-dl-mono text-xs text-dl-text bg-white focus:outline-none"
-            />
-          </div>
-          <div className="flex gap-3 items-start">
-            <input
-              type="text"
-              value={addingAddr}
-              onChange={e => setAddingAddr(e.target.value)}
-              placeholder="0x... platform address"
-              className="flex-1 border border-dl-border px-3 py-2 font-dl-mono text-xs text-dl-text bg-white focus:outline-none"
-            />
-            <button
-              onClick={handleAddPlatform}
-              disabled={addLoading || !addingAddr || !adminKey}
-              className="bg-dl-navy text-white px-5 py-2 font-dl-mono text-xs disabled:opacity-50"
-            >
-              {addLoading ? 'Submitting...' : 'Add Platform'}
-            </button>
-          </div>
-          {addResult && (
-            <p className={`mt-2 font-dl-mono text-xs ${addResult.startsWith('Error') ? 'text-dl-error' : 'text-dl-forest'}`}>
-              {addResult}
-            </p>
-          )}
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-2">
-            {[
-              { label: 'Quick: EVC', addr: EVC_ADDR },
-              { label: 'Quick: EVK Factory', addr: EVK_FACTORY },
-              { label: 'Quick: EVK Vault (eAXUSD-6)', addr: EVK_VAULT },
-            ].map(q => (
-              <button
-                key={q.addr}
-                onClick={() => setAddingAddr(q.addr)}
-                className="border border-dl-border px-3 py-1.5 font-dl-mono text-xs text-dl-navy text-left hover:bg-dl-bg-alt"
-              >
-                {q.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="border border-dl-border mb-6">
-        <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border flex items-center justify-between">
-          <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">Deployment Sequence (Task #38)</p>
-          <span className="font-dl-mono text-xs font-semibold text-dl-forest border border-dl-forest px-2 py-0.5">DEPLOYED</span>
-        </div>
-        {[
-          { n: '01', done: true, cmd: 'AXIOMOracleAdapter v2 deployed', desc: '0xc894d1500CB1FBf8F045e87bd357A51345197c4e — primaryAxusd = ERC-3643 AXUSD. getQuote verified: 1 AXUSD = $1.00 USDC.' },
-          { n: '02', done: true, cmd: 'eAXUSD-6 EVK vault deployed + configured', desc: '0xacdA87801f6409bB5157BA78aF1BD9631d6609B2 — IRM set, USDC LTV 90%/95%, 1M supply cap / 500K borrow cap. Oracle immutable in MetaProxy trailing data.' },
-          { n: '03', done: true, cmd: 'shared/contracts.ts + activeContracts.generated.ts updated', desc: 'EVK_OPEN_MARKET_VAULT, EVK_OPEN_MARKET_IRM, AXUSD_ERC7726_ORACLE_ADAPTER, EVK_FACTORY, EVC all set to live addresses.' },
-          { n: '04', done: true, cmd: 'LPM whitelist verified', desc: 'EVC (0x6302ef0F…), EVK Factory (0x78Df1CF5…), and eAXUSD-6 vault (0xacdA878…) all confirmed in LendingPlatformModule platform list.' },
-          { n: '05', done: false, cmd: 'vault.deposit(initialAmount, receiverAddr)', desc: 'Seed initial AXUSD liquidity. Governor transfers to multisig after seeding.' },
-        ].map((step, i) => (
-          <div key={step.n} className={`px-4 py-3 ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'} ${i < 4 ? 'border-b border-dl-border' : ''}`}>
-            <div className="flex items-start gap-3">
-              <span className={`font-dl-mono text-xs font-bold w-5 flex-shrink-0 ${step.done ? 'text-dl-forest' : 'text-dl-navy'}`}>{step.done ? '✓' : step.n}</span>
-              <div className="flex-1">
-                <p className={`font-dl-mono text-xs mb-1 ${step.done ? 'text-dl-forest' : 'text-dl-navy'}`}>{step.cmd}</p>
-                <p className="text-xs text-dl-gray">{step.desc}</p>
-              </div>
-              {step.done && <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-1.5 py-0.5 flex-shrink-0">DONE</span>}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="border border-dl-border bg-dl-bg-alt p-4">
-        <p className="text-xs text-dl-gray leading-relaxed">
-          <span className="font-semibold text-dl-navy">ERC-3643 Compliance:</span> The LendingPlatformModule enforces that only
-          whitelisted addresses can hold or receive ERC-3643 AXUSD. Three addresses require whitelist entries: the EVC
-          (routes all vault calls), the EVK Factory (creates vault proxies and briefly holds asset during deployment),
-          and the vault itself (settlement address for all borrows and repayments). Individual borrower wallets do
-          NOT need whitelist entries — the vault is the compliance boundary.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ── Euler Earn Curator Tab ─────────────────────────────────────────────────
-interface EarnStrategy {
-  id: string;
-  label: string;
-  address: string;
-  targetWeightBps: number;
-  weightPct: string;
-  isDeployed: boolean;
-  tvlUsd: number;
-  description: string;
-  riskTier: string;
+  axusd: { totalSupply: string };
+  lendingFund: { tvl: string; sharePrice: string; activeLoans: number };
+  dex: { tvl: string; volume24h: string };
+  treasury: { total: string; currentExposure: string };
+  nodes: { total: number; active: number };
+  feePlumbing: { eulerFeeRecipientSet: boolean; revenueRouterConnected: boolean; status: string };
 }
 
 interface EarnStats {
-  vaultAddress: string;
   deployed: boolean;
   status: string;
   tvlUsd: number;
-  blendedApyBps: number;
   blendedApyPct: string;
-  blendedApyLabel: string;
-  perfFeeBps: number;
-  perfFeeRecipient: string;
-  perfFeeCollectedUsd: number;
-  strategies: EarnStrategy[];
-  lastRebalanceAt: string | null;
   ameRegime: string | null;
   ameConfidence: number | null;
-  smearingPeriodDays: number;
-  erc3643LpmWhitelist?: { note: string; vaultAddress: string; registrationHandledByDeployScript: boolean };
-  deployInstructions: string | null;
 }
 
-function EulerEarnCuratorTab() {
-  const [stats, setStats] = useState<EarnStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
-  const [adminKey, setAdminKey] = useState('');
-  const [rebalancing, setRebalancing] = useState(false);
-  const [rebalanceResult, setRebalanceResult] = useState<string | null>(null);
-  const [lpmRegistering, setLpmRegistering] = useState(false);
-  const [lpmResult, setLpmResult] = useState<string | null>(null);
-
-  const loadStats = () => {
-    setLoading(true);
-    setErr(null);
-    fetch('/api/euler/earn-stats')
-      .then(r => r.json())
-      .then((d: EarnStats) => setStats(d))
-      .catch(e => setErr(String(e)))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { loadStats(); }, []);
-
-  const handleRebalance = async () => {
-    if (!adminKey) { setRebalanceResult('Admin key required.'); return; }
-    setRebalancing(true);
-    setRebalanceResult(null);
-    try {
-      const r = await fetch('/api/sentinel/euler-earn-rebalance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-scan-key': adminKey },
-        body: JSON.stringify({ tvlUsd: stats?.tvlUsd ?? 0, note: 'Manual curator rebalance from Founder Ops' }),
-      });
-      const d = await r.json();
-      if (d.success) {
-        const dec = d.authorization?.decision ?? 'APPROVED';
-        setRebalanceResult(`Sentinel ${dec} — ${d.authorization?.plainLanguage ?? 'Rebalance recorded.'}`);
-        loadStats();
-      } else {
-        setRebalanceResult('Error: ' + (d.error ?? 'Unknown error'));
-      }
-    } catch {
-      setRebalanceResult('Request failed.');
-    } finally {
-      setRebalancing(false);
-    }
-  };
-
-  const handleLpmRegister = async () => {
-    if (!adminKey) { setLpmResult('Admin key required.'); return; }
-    if (!stats?.vaultAddress || stats.vaultAddress === '0x0000000000000000000000000000000000000000') {
-      setLpmResult('Vault not yet deployed — deploy first, then update the vault address config.');
-      return;
-    }
-    setLpmRegistering(true);
-    setLpmResult(null);
-    try {
-      const r = await fetch('/api/erc3643/whitelist/add-platform', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({ platform: stats.vaultAddress }),
-      });
-      const d = await r.json();
-      if (d.success) {
-        setLpmResult(d.alreadyWhitelisted
-          ? `Already registered — ${stats.vaultAddress} was already in LPM.`
-          : `Registered — tx: ${d.txHash ?? 'confirmed'}`);
-      } else {
-        setLpmResult('Error: ' + (d.error ?? 'Unknown error'));
-      }
-    } catch {
-      setLpmResult('Request failed.');
-    } finally {
-      setLpmRegistering(false);
-    }
-  };
-
-  const RISK_COLORS: Record<string, string> = { LOW: 'text-dl-forest', MEDIUM: 'text-dl-gold', HIGH: 'text-dl-error' };
-
-  return (
-    <div className="mb-8">
-      <SectionHeading>Euler Earn AXUSD — Yield Aggregation Curator Panel</SectionHeading>
-      <p className="text-xs text-dl-gray max-w-2xl leading-relaxed mb-6">
-        Axiom Sentinel acts as the curator of the Euler Earn AXUSD vault. This panel shows the
-        current strategy allocation, blended yield, AME regime context, and provides a Sentinel-authorized
-        rebalance trigger. All rebalance decisions are logged in the sentinel decision chain.
-      </p>
-
-      {loading && <p className="text-sm text-dl-gray py-8">Loading vault data...</p>}
-      {err && <p className="text-sm text-dl-error py-4">{err}</p>}
-
-      {stats && (
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-6">
-            <div className="px-4 py-3 border-r border-dl-border bg-dl-bg">
-              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Vault Status</p>
-              <p className={`font-dl-mono text-sm font-bold ${stats.deployed ? 'text-dl-forest' : 'text-dl-gold'}`}>
-                {stats.status}
-              </p>
-            </div>
-            <div className="px-4 py-3 border-r border-dl-border bg-dl-bg">
-              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">TVL</p>
-              <p className="font-dl-mono text-sm font-bold text-dl-navy">
-                ${stats.tvlUsd.toLocaleString()} AXUSD
-              </p>
-            </div>
-            <div className="px-4 py-3 border-r border-dl-border bg-dl-bg">
-              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Blended APY</p>
-              <p className="font-dl-mono text-sm font-bold text-dl-forest">
-                {stats.blendedApyPct}% <span className="text-dl-gray font-normal text-xs">({stats.blendedApyLabel})</span>
-              </p>
-            </div>
-            <div className="px-4 py-3 bg-dl-bg">
-              <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">AME Regime</p>
-              <p className={`font-dl-mono text-sm font-bold ${REGIME_COLORS[stats.ameRegime ?? ''] ?? 'text-dl-navy'}`}>
-                {stats.ameRegime ?? '—'}
-              </p>
-              {stats.ameConfidence != null && (
-                <p className="font-dl-mono text-xs text-dl-gray">
-                  conf {(stats.ameConfidence * 100).toFixed(0)}%
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="border border-dl-border mb-6">
-            <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
-              <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">
-                Strategy Allocation — Target Caps
-              </p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs font-dl-mono">
-                <thead>
-                  <tr className="bg-dl-bg-alt border-b border-dl-border">
-                    <th className="px-4 py-2 text-left text-dl-gray font-normal">Strategy</th>
-                    <th className="px-4 py-2 text-right text-dl-gray font-normal">Weight</th>
-                    <th className="px-4 py-2 text-right text-dl-gray font-normal">TVL</th>
-                    <th className="px-4 py-2 text-left text-dl-gray font-normal">Risk</th>
-                    <th className="px-4 py-2 text-left text-dl-gray font-normal">Address</th>
-                    <th className="px-4 py-2 text-left text-dl-gray font-normal">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.strategies.map((s, i) => (
-                    <tr key={s.id} className={`border-b border-dl-border ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
-                      <td className="px-4 py-3">
-                        <p className="text-dl-navy font-semibold">{s.label}</p>
-                        <p className="text-dl-gray text-xs mt-0.5 leading-relaxed">{s.description}</p>
-                      </td>
-                      <td className="px-4 py-3 text-right text-dl-navy font-bold">{s.weightPct}%</td>
-                      <td className="px-4 py-3 text-right text-dl-navy">${s.tvlUsd.toLocaleString()}</td>
-                      <td className="px-4 py-3">
-                        <span className={RISK_COLORS[s.riskTier] ?? 'text-dl-navy'}>{s.riskTier}</span>
-                      </td>
-                      <td className="px-4 py-3 break-all">
-                        {s.isDeployed ? (
-                          <a href={`https://arbiscan.io/address/${s.address}`} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline">
-                            {truncateAddr(s.address)}
-                          </a>
-                        ) : (
-                          <span className="text-dl-gold">PENDING DEPLOYMENT</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={s.isDeployed ? 'text-dl-forest' : 'text-dl-gold'}>
-                          {s.isDeployed ? 'LIVE' : 'PENDING'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="px-4 py-3 border-t border-dl-border bg-dl-bg-alt flex flex-col md:flex-row md:items-center justify-between gap-2">
-              <div className="text-xs text-dl-gray">
-                <span className="text-dl-navy font-semibold">Performance Fee:</span>{' '}
-                {stats.perfFeeBps / 100}% → {truncateAddr(stats.perfFeeRecipient)} (AxiomFeeBurner)
-                {' '}|{' '}
-                <span className="text-dl-navy font-semibold">Smearing:</span> {stats.smearingPeriodDays}-day window
-              </div>
-              <div className="text-xs text-dl-gray">
-                Last rebalance: <span className="text-dl-navy">{stats.lastRebalanceAt ? formatUTC(stats.lastRebalanceAt) : 'Never'}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="border border-dl-border mb-6">
-            <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
-              <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">
-                Sentinel-Authorized Rebalance
-              </p>
-            </div>
-            <div className="px-4 py-4 bg-dl-bg">
-              <p className="text-xs text-dl-gray mb-3 leading-relaxed">
-                Trigger a Sentinel authorization record for a curator rebalance. The decision is logged
-                in the sentinel chain with current AME regime context. On-chain execution requires
-                calling <span className="font-dl-mono">vault.rebalance(strategies)</span> post-authorization.
-              </p>
-              <div className="flex flex-col gap-2 mb-3">
-                <input
-                  type="password"
-                  value={adminKey}
-                  onChange={e => setAdminKey(e.target.value)}
-                  placeholder="Sentinel scan key (MIRDT_SCAN_KEY)"
-                  autoComplete="off"
-                  className="w-full border border-dl-border px-3 py-2 font-dl-mono text-xs text-dl-text bg-white focus:outline-none"
-                />
-              </div>
-              <button
-                onClick={handleRebalance}
-                disabled={rebalancing || !adminKey || !stats.deployed}
-                className="bg-dl-forest text-white px-6 py-2 font-dl-mono text-xs disabled:opacity-50"
-              >
-                {rebalancing ? 'Submitting...' : stats.deployed ? 'Authorize Rebalance' : 'Vault Not Deployed'}
-              </button>
-              {rebalanceResult && (
-                <p className={`mt-2 font-dl-mono text-xs ${rebalanceResult.startsWith('Error') || rebalanceResult.startsWith('Request') ? 'text-dl-error' : 'text-dl-forest'}`}>
-                  {rebalanceResult}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="border border-dl-border mb-6">
-            <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
-              <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">ERC-3643 LPM Whitelist Registration</p>
-            </div>
-            <div className="px-4 py-4 bg-dl-bg">
-              <p className="text-xs text-dl-gray leading-relaxed mb-4">
-                After on-chain deployment, the Euler Earn vault must be registered in the ERC-3643
-                LendingPlatformModule (LPM) to receive AXUSD. Use the admin key to trigger registration
-                directly — this calls <span className="font-dl-mono text-dl-navy">POST /api/erc3643/whitelist/add-platform</span> on-chain.
-              </p>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Vault to Register</p>
-                  <p className="font-dl-mono text-xs text-dl-navy break-all">
-                    {stats.vaultAddress === '0x0000000000000000000000000000000000000000'
-                      ? '— deploy vault first'
-                      : stats.vaultAddress}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Deployment Status</p>
-                  <p className={`font-dl-mono text-xs font-bold ${stats.deployed ? 'text-dl-forest' : 'text-dl-gold'}`}>
-                    {stats.deployed ? 'DEPLOYED — READY TO REGISTER' : 'PENDING DEPLOYMENT'}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={handleLpmRegister}
-                disabled={lpmRegistering || !stats.deployed}
-                className="border border-dl-navy px-4 py-2 font-dl-mono text-xs text-dl-navy hover:bg-dl-navy hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {lpmRegistering ? 'Registering...' : 'Register Vault in ERC-3643 LPM'}
-              </button>
-              {lpmResult && (
-                <p className={`mt-3 text-xs font-dl-mono ${lpmResult.startsWith('Error') ? 'text-dl-error' : 'text-dl-forest'}`}>
-                  {lpmResult}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {stats.deployInstructions && (
-            <div className="border border-dl-border mb-6">
-              <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
-                <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">Deployment Sequence (Task #39)</p>
-              </div>
-              {[
-                { n: '01', cmd: 'npx hardhat run scripts/deploy-axusd-oracle.js --network arbitrumOne', desc: 'Deploy ERC-7726 oracle (Task #37 prerequisite).' },
-                { n: '02', cmd: 'npx hardhat run scripts/deploy-axusd-evk-vault.js --network arbitrumOne', desc: 'Deploy EVK Open Market vault (Task #38 prerequisite). Note address.' },
-                { n: '03', cmd: 'DONE ✓ Factory confirmed: 0xB9B5d62B9fE9E1B505466e75817aB178A1D2ec9d', desc: 'Euler Earn Factory verified from euler-interfaces/EulerChains.json (Arbitrum One).' },
-                { n: '04', cmd: 'DONE ✓ Vault deployed: 0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B (Axiom Earn AXUSD)', desc: 'earnAXUSD vault created. Strategy: eAXUSD-6 EVK Open Market (1M AXUSD cap). Fee: 10% WAD → AxiomFeeBurner.' },
-                { n: '05', cmd: 'DONE ✓ shared/contracts.ts + activeContracts.generated.ts updated', desc: 'EULER_EARN_VAULT + EULER_EARN_FACTORY set to live addresses. isEulerEarnDeployed() returns true.' },
-                { n: '06', cmd: 'DONE ✓ Vault whitelisted in ERC-3643 LPM', desc: 'LPM.addPlatform(COMPLIANCE, vault) confirmed in deploy script execution.' },
-              ].map((step, i) => (
-                <div key={step.n} className={`px-4 py-3 ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'} ${i < 5 ? 'border-b border-dl-border' : ''}`}>
-                  <div className="flex items-start gap-3">
-                    <span className="font-dl-mono text-xs font-bold text-dl-navy w-5 flex-shrink-0">{step.n}</span>
-                    <div>
-                      <p className="font-dl-mono text-xs text-dl-navy mb-1">{step.cmd}</p>
-                      <p className="text-xs text-dl-gray">{step.desc}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="border border-dl-border bg-dl-bg-alt p-4">
-            <p className="text-xs text-dl-gray leading-relaxed">
-              <span className="font-semibold text-dl-navy">Architecture:</span> Euler Earn acts as a yield router.
-              Depositors receive <span className="font-dl-mono">earnAXUSD</span> shares. The vault
-              rebalances across AXIOMCreditMarket (fix-and-flip loans), EVK Open Market (secured lending),
-              and T-Bill Reserve (treasury). The 14-day smearing window distributes harvested yield gradually to
-              prevent front-running. All rebalances require Sentinel authorization before on-chain execution.
-            </p>
-          </div>
-        </>
-      )}
-
-      {!loading && !stats && (
-        <div className="border border-dl-border p-6 text-center">
-          <p className="text-sm text-dl-gray">
-            Vault data unavailable.{' '}
-            <button onClick={loadStats} className="underline text-dl-navy">Try again</button>
-          </p>
-        </div>
-      )}
-    </div>
-  );
+interface PoolData {
+  pool: string;
+  asset0Symbol: string;
+  asset1Symbol: string;
+  reserve0: string;
+  reserve1: string;
+  tvlUsd: string;
+  status: string;
+  fee: string;
 }
 
-const ALLOCATION_TABLE = [
-  { bucket: 'AXUSD (via PSM)', amount: '$40', purpose: 'Euler Vault + Lending Vault deposits' },
-  { bucket: 'AXM (via Camelot)', amount: '$25', purpose: 'SEED lock — governance + revenue share' },
-  { bucket: 'USDC Buffer', amount: '$20', purpose: 'Gas costs + operating reserve' },
-  { bucket: 'Node/Infrastructure', amount: '$15', purpose: 'DePIN node rewards accumulation' },
+interface GuardRailStatus {
+  id: number;
+  title: string;
+  status: 'PASS' | 'ENFORCED' | 'WARNING' | 'UNKNOWN' | 'LOADING';
+  detail: string;
+  source: string;
+}
+
+type TabId =
+  | 'framework'
+  | 'onchain'
+  | 'realassets'
+  | 'community'
+  | 'log'
+  | 'system';
+
+const FRAMEWORK_PRINCIPLE = `This is not a personal budget. This is a disciplined capital deployment system designed to build a machine-verifiable operating record across Axiom's live rails. The objective is not to maximize short-term return. The objective is to systematically produce proof that Axiom's infrastructure is active, capitalized, measurable, and compounding across on-chain liquidity, real asset intelligence, and community coordination.`;
+
+const MONTH_PROGRESSION = [
+  {
+    month: 1,
+    label: 'Month 1',
+    notes: 'Initial liquidity visible. First vault deposits recorded. First reports generated. First community cycle seeded.',
+  },
+  {
+    month: 3,
+    label: 'Month 3',
+    notes: 'Meaningful pool depth established. Vault history begins to form. Multiple properties underwritten. Recurring execution pattern becomes visible.',
+  },
+  {
+    month: 6,
+    label: 'Month 6',
+    notes: 'Consistent capital behavior is documented. On-chain and off-chain activity reinforce each other. Axiom no longer appears conceptual. Allocator-readable track record begins.',
+  },
+  {
+    month: 12,
+    label: 'Month 12',
+    notes: 'Longitudinal proof-of-execution record across all rails. The protocol has visible operational history across digital, physical, and community layers. Credibility supported by evidence, not presentation.',
+  },
 ];
 
-const CHECKPOINTS = [
-  { week: 4, gate: 'PSM and vault deposits must complete full cycle without contract errors' },
-  { week: 8, gate: 'All Phase 1 products must complete full lifecycle before Phase 2' },
-  { week: 12, gate: 'Revenue Router must have distributed at least once' },
-  { week: 20, gate: 'Expansion gate must return actionable pass/fail result' },
-  { week: 28, gate: 'Land acquisition and crowdfunding must complete full test cycles' },
-  { week: 36, gate: 'Governance timelock must be proven with at least 3 queued actions' },
-  { week: 40, gate: 'Full treasury audit before any real property commitment' },
-  { week: 44, gate: 'HARD PAUSE: If no qualifying property found, Phase 4 pauses — capital compounds' },
-  { week: 52, gate: 'Complete documentation review before any public release' },
+const OUTCOME_ROWS = [
+  { layer: 'On-Chain Pool Depth', m6: '~$1,000 USDC', m12: '~$1,900 USDC' },
+  { layer: 'earnAXUSD Vault', m6: '~300 AXUSD + yield', m12: '~600 AXUSD + yield' },
+  { layer: 'AXM Held', m6: '~$150 worth', m12: '~$300 worth' },
+  { layer: 'Properties Analyzed', m6: '12–18 reports', m12: '24–36 reports' },
+  { layer: 'Land Pipeline Capital', m6: '~$600 deployed', m12: '~$1,200 deployed' },
+  { layer: 'Wealth Practice Cycles', m6: '2–3 groups active', m12: '4–6 groups active' },
 ];
 
-const FOOTER_DISCLOSURE =
-  'INTERNAL USE ONLY: This dashboard is for founder operational validation. All data reflects ' +
-  'real on-chain state on Arbitrum One. Self-borrow tests are tagged as non-representative. ' +
-  'Sentinel is advisory only until post-public governance vote. No investment advice provided.';
+const LAYERS = [
+  {
+    id: 'onchain',
+    label: '1. On-Chain Liquidity Layer',
+    monthly: '$225 / month',
+    buckets: [
+      { label: 'EulerSwap Pool Depth', amount: '$150', proof: 'Live TVL growth. Visible pool support. Timestamped liquidity deployment. Public execution record.' },
+      { label: 'earnAXUSD Vault', amount: '$50', proof: 'Vault asset growth over time. Live yield accrual. Recurring capital deployment into protocol-native products.' },
+      { label: 'AXM Accumulation', amount: '$25', proof: 'Documented holding history. Governance alignment. Recurring protocol commitment.' },
+    ],
+  },
+  {
+    id: 'realassets',
+    label: '2. Real Asset Intelligence Layer',
+    monthly: '$175 / month',
+    buckets: [
+      { label: 'Land Acquisition Pipeline', amount: '$100', proof: 'Documented deal advancement. Capital attached to real asset pipeline activity. Timestamped movement from digital treasury to physical opportunity.' },
+      { label: 'Property Analysis Reports', amount: '$50', proof: 'Recurring underwriting activity. Live report generation. Real property evaluation history. Growing intelligence dataset.' },
+      { label: 'Deal Origination Inputs', amount: '$25', proof: 'Continuous pipeline formation. Evidence of acquisition activity. Real market signal capture.' },
+    ],
+  },
+  {
+    id: 'community',
+    label: '3. Community Coordination Layer',
+    monthly: '$100 / month',
+    buckets: [
+      { label: 'Wealth Practice', amount: '$75', proof: 'Live contribution cycles. Recurring community participation. Timestamped group mechanics. Real user coordination history.' },
+      { label: 'Infrastructure Continuity', amount: '$25', proof: 'Continuity of core infrastructure. Evidence that the system remains operational. Support for persistent network activity.' },
+    ],
+  },
+];
 
 export default function FounderOpsPage() {
+  const [activeTab, setActiveTab] = useState<TabId>('framework');
+
   const [data, setData] = useState<OverviewData | null>(null);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [guardRails, setGuardRails] = useState<GuardRailStatus[]>([
-    { id: 1, title: 'Fee Recipient Assumption Check', status: 'LOADING', detail: 'Checking...', source: '/api/founder-ops/fee-plumbing-preflight' },
-    { id: 2, title: 'Revenue Router Accounting Visibility', status: 'LOADING', detail: 'Checking...', source: '/api/founder-ops/overview' },
-    { id: 3, title: 'ERC4626 Share Math Edge Case', status: 'LOADING', detail: 'Checking...', source: '/api/euler/vault-stats' },
-    { id: 4, title: 'Self-Borrow Risk Contamination', status: 'ENFORCED', detail: 'POST /api/founder-ops/log rejects untagged self-borrow entries', source: 'Code enforcement' },
-    { id: 5, title: 'Sentinel Authority Boundary', status: 'LOADING', detail: 'Checking...', source: '/api/sentinel/overview' },
-    { id: 6, title: 'Property Phase Timing Risk', status: 'ENFORCED', detail: 'POST /api/founder-ops/log blocks Week 44+ property ops without qualifying property or HARD PAUSE', source: 'Code enforcement' },
-  ]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'allocation' | 'checkpoints' | 'log' | 'outcomes' | 'intelligence' | 'variance' | 'evk-whitelist' | 'euler-earn-curator'>('overview');
-  const [lpmPlatforms, setLpmPlatforms] = useState<string[]>([]);
-  const [lpmLoading, setLpmLoading] = useState(false);
-  const [pendingOutcomes, setPendingOutcomes] = useState<any[]>([]);
-  const [outcomesLoading, setOutcomesLoading] = useState(false);
-  const [outcomesUnauthorized, setOutcomesUnauthorized] = useState(false);
-  const [reviewingId, setReviewingId] = useState<string | null>(null);
-  const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
-  const [reviewError, setReviewError] = useState<string | null>(null);
 
-  const [operatorProfiles, setOperatorProfiles] = useState<OperatorStrategyProfile[]>([]);
-  const [networkSnapshot, setNetworkSnapshot] = useState<NetworkSnapshot | null>(null);
-  const [networkSignals, setNetworkSignals] = useState<NetworkSignal[]>([]);
-  const [capitalEvents, setCapitalEvents] = useState<CapitalEvent[]>([]);
-  const [intelligenceLoading, setIntelligenceLoading] = useState(false);
-  const [intelligenceUnauthorized, setIntelligenceUnauthorized] = useState(false);
-  const [snapshotRefreshing, setSnapshotRefreshing] = useState(false);
-  const [snapshotError, setSnapshotError] = useState<string | null>(null);
-  const [matrixEvents, setMatrixEvents] = useState<any[]>([]);
-  const [matrixRooms, setMatrixRooms] = useState<any[]>([]);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+
+  const [guardRails, setGuardRails] = useState<GuardRailStatus[]>([
+    { id: 1, title: 'Capital Preservation', status: 'LOADING', detail: 'Loading...', source: 'sentinel' },
+    { id: 2, title: 'AXUSD Peg Stability', status: 'LOADING', detail: 'Loading...', source: 'psm' },
+    { id: 3, title: 'Treasury Coverage', status: 'LOADING', detail: 'Loading...', source: 'solvency' },
+    { id: 4, title: 'Lending Health', status: 'LOADING', detail: 'Loading...', source: 'lending' },
+    { id: 5, title: 'Regulatory Compliance', status: 'LOADING', detail: 'Loading...', source: 'disclosure' },
+  ]);
+
+  const [earnStats, setEarnStats] = useState<EarnStats | null>(null);
+  const [earnLoading, setEarnLoading] = useState(false);
+
+  const [pools, setPools] = useState<PoolData[]>([]);
+  const [poolsLoading, setPoolsLoading] = useState(false);
+
+  const [reportCount, setReportCount] = useState<number | null>(null);
+  const [dealCount, setDealCount] = useState<number | null>(null);
+  const [groupCount, setGroupCount] = useState<number | null>(null);
 
   const [variances, setVariances] = useState<any[]>([]);
-  const [regionFactors, setRegionFactors] = useState<any[]>([]);
   const [varianceLoading, setVarianceLoading] = useState(false);
   const [calibrating, setCalibrating] = useState(false);
-  const [calibrationResult, setCalibrationResult] = useState<any>(null);
+  const [calibrationResult, setCalibrationResult] = useState<any | null>(null);
   const [calibrationError, setCalibrationError] = useState<string | null>(null);
 
+  const [pendingOutcomes, setPendingOutcomes] = useState<any[]>([]);
+  const [outcomesLoading, setOutcomesLoading] = useState(false);
+
   useEffect(() => {
-    setLoading(true);
     Promise.all([
-      fetch('/api/founder-ops/overview').then(r => r.json()),
-      fetch('/api/founder-ops/log').then(r => r.json()),
-      fetch('/api/founder-ops/fee-plumbing-preflight').then(r => r.json()).catch(() => null),
-      fetch('/api/euler/vault-stats').then(r => r.json()).catch(() => null),
-      fetch('/api/sentinel/overview').then(r => r.json()).catch(() => null),
-      fetch('/api/founder-ops/pending-outcomes').then(r => r.ok ? r.json() : { outcomes: [], count: 0 }).catch(() => ({ outcomes: [], count: 0 })),
-    ])
-      .then(([overviewRes, logRes, preflightRes, vaultRes, sentinelRes, pendingRes]) => {
-        if (overviewRes.success) setData(overviewRes.data);
-        else setError(overviewRes.error || 'Failed to load overview');
-        if (logRes.success) setLogs(logRes.entries || []);
-        if (pendingRes.outcomes) {
-          setPendingOutcomes(pendingRes.outcomes);
-        } else if (pendingRes.code === 'REVIEWER_NOT_AUTHORIZED' || pendingRes.code === 'SIWE_AUTH_REQUIRED') {
-          setOutcomesUnauthorized(true);
-        }
+      fetch('/api/founder-ops/overview').then(r => r.json()).catch(() => null),
+      fetch('/api/founder-ops/log').then(r => r.json()).catch(() => ({ logs: [] })),
+    ]).then(([ov, lg]) => {
+      if (ov && !ov.error) setData(ov);
+      else if (ov?.error) setError(ov.error);
+      setLogs(lg.logs || []);
+      setLoading(false);
+    }).catch(e => {
+      setError(String(e));
+      setLoading(false);
+    });
 
-        setGuardRails(prev => {
-          const updated = [...prev];
+    fetch('/api/euler/earn-stats').then(r => r.json()).then(setEarnStats).catch(() => {});
+    fetch('/api/euler/eulerswap-pools').then(r => r.json()).then(d => {
+      if (d.pools) setPools(d.pools);
+    }).catch(() => {});
 
-          if (preflightRes?.data?.guardRails) {
-            const gr1 = preflightRes.data.guardRails.find((g: any) => g.name?.includes('Fee Recipient') || g.name?.includes('GR1'));
-            const gr2 = preflightRes.data.guardRails.find((g: any) => g.name?.includes('Revenue Router') || g.name?.includes('GR2'));
-            if (gr1) {
-              updated[0] = { ...updated[0], status: gr1.status === 'PASS' ? 'PASS' : 'WARNING', detail: gr1.details?.finding || gr1.status };
-            }
-            if (gr2) {
-              updated[1] = { ...updated[1], status: gr2.status === 'PASS' ? 'PASS' : 'WARNING', detail: gr2.details?.finding || gr2.status };
-            }
-          } else {
-            if (overviewRes.data?.feePlumbing) {
-              const fp = overviewRes.data.feePlumbing;
-              updated[0] = { ...updated[0], status: fp.eulerFeeRecipientSet ? 'PASS' : 'WARNING', detail: fp.eulerFeeRecipientSet ? 'Fee recipient configured' : 'Fee recipient NOT set' };
-              updated[1] = { ...updated[1], status: fp.revenueRouterConnected ? 'PASS' : 'WARNING', detail: fp.revenueRouterConnected ? 'Revenue router connected' : 'Revenue router NOT connected' };
-            }
-          }
+    Promise.all([
+      fetch('/api/property-analysis/reports?limit=1').then(r => r.json()).catch(() => null),
+      fetch('/api/land/deals?limit=1').then(r => r.json()).catch(() => null),
+      fetch('/api/wealth-practice/groups?limit=1').then(r => r.json()).catch(() => null),
+    ]).then(([reports, deals, groups]) => {
+      if (reports?.total != null) setReportCount(reports.total);
+      else if (reports?.reports?.length != null) setReportCount(reports.count ?? null);
+      if (deals?.total != null) setDealCount(deals.total);
+      else if (deals?.deals?.length != null) setDealCount(deals.count ?? null);
+      if (groups?.total != null) setGroupCount(groups.total);
+      else if (groups?.groups?.length != null) setGroupCount(groups.count ?? null);
+    });
 
-          if (vaultRes?.guardRail3) {
-            const gr3 = vaultRes.guardRail3;
-            const gr3Status = gr3.status === 'PASS' ? 'PASS' : gr3.status === 'WARNING' ? 'WARNING' : gr3.status === 'NO_DEPOSITS' ? 'PASS' : 'UNKNOWN';
-            updated[2] = { ...updated[2], status: gr3Status as GuardRailStatus['status'], detail: gr3.detail || `Share price: ${gr3.sharePrice}` };
-          }
-
-          if (sentinelRes?.guardRail5) {
-            const gr5 = sentinelRes.guardRail5;
-            const gr5Status = gr5.status === 'ENFORCED' ? 'ENFORCED' : gr5.status === 'PASS' ? 'PASS' : 'WARNING';
-            updated[4] = { ...updated[4], status: gr5Status as GuardRailStatus['status'], detail: gr5.rule || `Authority mode: ${sentinelRes.authorityMode}` };
-          } else if (sentinelRes?.authorityMode === 'ADVISORY') {
-            updated[4] = { ...updated[4], status: 'ENFORCED', detail: 'Sentinel is ADVISORY ONLY until post-public governance vote' };
-          }
-
-          return updated;
-        });
-      })
-      .catch(() => setError('Failed to connect to server'))
-      .finally(() => setLoading(false));
+    fetch('/api/sentinel/guard-rails').then(r => r.json()).then(d => {
+      if (d.guardRails) setGuardRails(d.guardRails);
+    }).catch(() => {});
   }, []);
-
-  const loadIntelligence = async () => {
-    setIntelligenceLoading(true);
-    setIntelligenceUnauthorized(false);
-    try {
-      const [profilesRes, latestRes, eventsRes, matrixRes] = await Promise.all([
-        fetch('/api/operator-strategy/profiles').then(r => r.json()).catch(() => ({ profiles: [] })),
-        fetch('/api/network-intelligence/latest').then(r => r.json()).catch(() => ({ snapshot: null, currentSignals: [] })),
-        fetch('/api/capital-intelligence/events?limit=50').then(r => r.json()).catch(() => ({ events: [] })),
-        fetch('/api/matrix/events?limit=50').then(r => r.json()).catch(() => ({ events: [], rooms: [] })),
-      ]);
-
-      if (profilesRes.code === 'SIWE_AUTH_REQUIRED' || latestRes.code === 'SIWE_AUTH_REQUIRED' || eventsRes.code === 'SIWE_AUTH_REQUIRED') {
-        setIntelligenceUnauthorized(true);
-        return;
-      }
-
-      setOperatorProfiles(profilesRes.profiles || []);
-      if (latestRes.snapshot) {
-        const snap = latestRes.snapshot;
-        setNetworkSnapshot({
-          ...snap,
-          aggregated_signals: typeof snap.aggregated_signals === 'string'
-            ? JSON.parse(snap.aggregated_signals)
-            : (snap.aggregated_signals || []),
-        });
-      } else {
-        setNetworkSnapshot(null);
-      }
-      setNetworkSignals(latestRes.currentSignals || []);
-      setCapitalEvents(eventsRes.events || []);
-      setMatrixEvents(matrixRes.events || []);
-      setMatrixRooms(matrixRes.rooms || []);
-    } catch {
-    } finally {
-      setIntelligenceLoading(false);
-    }
-  };
-
-  const handleRefreshSnapshot = async () => {
-    setSnapshotRefreshing(true);
-    setSnapshotError(null);
-    try {
-      const res = await fetch('/api/network-intelligence/generate-snapshot', { method: 'POST' });
-      const json = await res.json();
-      if (!res.ok) {
-        setSnapshotError(json.error || 'Snapshot generation failed');
-      } else {
-        const snap = json.snapshot;
-        setNetworkSnapshot({
-          ...snap,
-          aggregated_signals: typeof snap.aggregated_signals === 'string'
-            ? JSON.parse(snap.aggregated_signals)
-            : (snap.aggregated_signals || []),
-        });
-      }
-    } catch {
-      setSnapshotError('Snapshot generation failed — check connection');
-    } finally {
-      setSnapshotRefreshing(false);
-    }
-  };
-
-  const loadPendingOutcomes = async () => {
-    setOutcomesLoading(true);
-    try {
-      const res = await fetch('/api/founder-ops/pending-outcomes');
-      if (res.status === 401 || res.status === 403) {
-        setOutcomesUnauthorized(true);
-        setPendingOutcomes([]);
-      } else if (res.ok) {
-        const json = await res.json();
-        setOutcomesUnauthorized(false);
-        setPendingOutcomes(json.outcomes || []);
-      }
-    } catch {
-    } finally {
-      setOutcomesLoading(false);
-    }
-  };
-
-  const handleReview = async (id: string, decision: 'approved' | 'rejected') => {
-    setReviewingId(id);
-    setReviewError(null);
-    try {
-      const res = await fetch(`/api/verified-outcomes/${id}/review`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decision, notes: reviewNotes[id] || '' }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setReviewError(json.error || 'Review failed');
-      } else {
-        await loadPendingOutcomes();
-      }
-    } catch {
-      setReviewError('Review failed — check connection');
-    } finally {
-      setReviewingId(null);
-    }
-  };
-
-  const logColumns: Column<LogEntry>[] = [
-    {
-      key: 'week',
-      header: 'Wk',
-      render: (e) => <span className="font-dl-mono text-dl-navy">{e.week}</span>,
-    },
-    {
-      key: 'phase',
-      header: 'Ph',
-      render: (e) => <span className="font-dl-mono text-dl-gray">{e.phase}</span>,
-    },
-    {
-      key: 'category',
-      header: 'Category',
-      render: (e) => {
-        const color = e.category === 'failure' ? 'text-dl-error' : e.category === 'fix' ? 'text-dl-forest' : 'text-dl-navy';
-        return <span className={`text-xs uppercase tracking-wider ${color}`}>{e.category}</span>;
-      },
-    },
-    {
-      key: 'title',
-      header: 'Title',
-      render: (e) => <span className="font-medium text-dl-navy">{e.title}</span>,
-    },
-    {
-      key: 'product',
-      header: 'Product',
-      render: (e) => <span className="text-dl-gray text-xs">{e.product || '—'}</span>,
-    },
-    {
-      key: 'amount',
-      header: 'Amount',
-      align: 'right' as const,
-      render: (e) => <span className="font-dl-mono">{e.amount ? `$${parseFloat(e.amount).toFixed(2)}` : '—'}</span>,
-    },
-    {
-      key: 'tx_hash',
-      header: 'Tx',
-      render: (e) => e.tx_hash ? (
-        <a href={`https://arbitrum.blockscout.com/tx/${e.tx_hash}`} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline font-dl-mono text-xs">
-          {truncateAddr(e.tx_hash)}
-        </a>
-      ) : <span className="text-dl-gray">—</span>,
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (e) => <StatusBadge status={e.status === 'completed' ? 'ACTIVE' : e.status === 'failure' ? 'EXPIRED' : 'PENDING'} />,
-    },
-    {
-      key: 'created_at',
-      header: 'Date',
-      render: (e) => <span className="font-dl-mono text-xs text-dl-gray">{formatUTC(e.created_at)}</span>,
-    },
-  ];
 
   const loadVariances = async () => {
     setVarianceLoading(true);
     try {
-      const [varRes, regRes] = await Promise.all([
-        fetch('/api/founder-ops/variances').then(r => r.json()).catch(() => ({ variances: [] })),
-        fetch('/api/cost-intelligence/catalog').then(r => r.json()).catch(() => ({ regions: [] })),
-      ]);
-      setVariances(varRes.variances || []);
-      setRegionFactors(regRes.regions || []);
+      const res = await fetch('/api/founder-ops/variances').then(r => r.json()).catch(() => ({ variances: [] }));
+      setVariances(res.variances || []);
     } finally {
       setVarianceLoading(false);
+    }
+  };
+
+  const loadOutcomes = async () => {
+    setOutcomesLoading(true);
+    try {
+      const res = await fetch('/api/founder-ops/pending-outcomes').then(r => r.json()).catch(() => ({ outcomes: [] }));
+      setPendingOutcomes(res.outcomes || []);
+    } finally {
+      setOutcomesLoading(false);
     }
   };
 
@@ -1025,12 +280,8 @@ export default function FounderOpsPage() {
         body: JSON.stringify({ dryRun }),
       });
       const json = await res.json();
-      if (!res.ok) {
-        setCalibrationError(json.error || 'Calibration failed');
-      } else {
-        setCalibrationResult(json);
-        if (!dryRun) loadVariances();
-      }
+      if (!res.ok) setCalibrationError(json.error || 'Calibration failed');
+      else { setCalibrationResult(json); if (!dryRun) loadVariances(); }
     } catch (err: any) {
       setCalibrationError(err.message);
     } finally {
@@ -1038,60 +289,63 @@ export default function FounderOpsPage() {
     }
   };
 
-  const tabs = [
-    { id: 'overview' as const, label: 'System Overview' },
-    { id: 'allocation' as const, label: 'Capital Allocation' },
-    { id: 'checkpoints' as const, label: 'Risk Checkpoints' },
-    { id: 'log' as const, label: 'Operations Log' },
-    { id: 'outcomes' as const, label: `Outcomes${pendingOutcomes.length > 0 ? ` (${pendingOutcomes.length})` : ''}` },
-    { id: 'intelligence' as const, label: 'Intelligence' },
-    { id: 'variance' as const, label: 'Variance Tracking' },
-    { id: 'evk-whitelist' as const, label: 'EVK Whitelist' },
-    { id: 'euler-earn-curator' as const, label: 'Euler Earn Curator' },
+  const logColumns: Column<LogEntry>[] = [
+    { key: 'created_at', header: 'Date', render: r => <span className="font-dl-mono text-xs">{formatUTC(r.created_at)}</span> },
+    { key: 'category', header: 'Layer', render: r => <span className="font-dl-mono text-xs uppercase text-dl-navy">{r.category}</span> },
+    { key: 'title', header: 'Action', render: r => (
+      <div>
+        <p className="text-xs font-medium text-dl-navy">{r.title}</p>
+        <p className="text-xs text-dl-gray mt-0.5">{r.description}</p>
+      </div>
+    )},
+    { key: 'amount', header: 'Amount', render: r => <span className="font-dl-mono text-xs">{r.amount || '—'}</span> },
+    { key: 'status', header: 'Status', render: r => (
+      <span className={`font-dl-mono text-xs uppercase ${r.status === 'SUCCESS' ? 'text-dl-forest' : r.status === 'FAILURE' ? 'text-dl-error' : 'text-dl-gold'}`}>
+        {r.status}
+      </span>
+    )},
+    { key: 'tx_hash', header: 'TX', render: r => r.tx_hash ? (
+      <a href={`https://arbiscan.io/tx/${r.tx_hash}`} target="_blank" rel="noopener noreferrer"
+        className="font-dl-mono text-xs text-dl-navy underline">
+        {r.tx_hash.slice(0, 6)}…{r.tx_hash.slice(-4)}
+      </a>
+    ) : <span className="text-dl-gray text-xs">—</span> },
   ];
+
+  const TABS: { id: TabId; label: string }[] = [
+    { id: 'framework', label: 'Proof of Execution' },
+    { id: 'onchain', label: 'On-Chain Layer' },
+    { id: 'realassets', label: 'Real Assets' },
+    { id: 'community', label: 'Community' },
+    { id: 'log', label: `Log${logs.length > 0 ? ` (${logs.length})` : ''}` },
+    { id: 'system', label: 'System Status' },
+  ];
+
+  const primaryPool = pools.find(p => p.asset0Symbol && p.asset1Symbol) || null;
+  const poolTvl = primaryPool?.tvlUsd ? parseFloat(primaryPool.tvlUsd) : null;
 
   return (
     <DesignLawLayout>
       <Head>
         <title>Founder Operations | Axiom Protocol</title>
-        <meta name="description" content="Internal founder operations dashboard for Axiom Protocol proof-of-concept validation" />
+        <meta name="description" content="Axiom Protocol Proof-of-Execution Framework — systematic capital deployment across on-chain liquidity, real asset intelligence, and community coordination." />
       </Head>
 
       <PageShell
-        title="Founder Operations Dashboard"
-        subtitle="Internal proof-of-concept validation. $100/week operational playbook. All data is live on-chain state."
-        disclosure={FOOTER_DISCLOSURE}
+        title="Founder Operations"
+        subtitle="Proof-of-Execution Framework — $500/month systematic deployment across on-chain, real asset, and community rails."
+        disclosure="Internal operations dashboard. All on-chain data is live from Arbitrum One. Off-chain metrics reflect database state."
       >
-        <div className="mb-6">
-          <a href="/founder-ops/playbook" className="inline-block font-dl-mono text-sm text-dl-navy border border-dl-border px-4 py-2 hover:underline">
-            View Operational Playbook v2.1
-          </a>
-        </div>
-        {loading ? (
-          <p className="text-sm text-dl-gray py-12 text-center">Loading operational data...</p>
-        ) : error ? (
-          <p className="text-sm text-dl-error py-12 text-center">{error}</p>
-        ) : (
-          <>
-            <div className="flex gap-0 border-b border-dl-border mb-8">
-              {tabs.map(tab => (
+        <>
+            <div className="flex flex-wrap gap-0 border-b border-dl-border mb-8">
+              {TABS.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => {
                     setActiveTab(tab.id);
-                    if (tab.id === 'outcomes') loadPendingOutcomes();
-                    if (tab.id === 'intelligence') loadIntelligence();
-                    if (tab.id === 'variance') loadVariances();
-                    if (tab.id === 'evk-whitelist' && !lpmPlatforms.length) {
-                      setLpmLoading(true);
-                      fetch('/api/erc3643/whitelist/platforms')
-                        .then(r => r.json())
-                        .then(d => { if (d.platforms) setLpmPlatforms(d.platforms); })
-                        .catch(() => {})
-                        .finally(() => setLpmLoading(false));
-                    }
+                    if (tab.id === 'system') { loadOutcomes(); loadVariances(); }
                   }}
-                  className={`px-4 py-2 text-sm border-b-2 -mb-px transition-none ${
+                  className={`px-4 py-2 text-sm border-b-2 -mb-px ${
                     activeTab === tab.id
                       ? 'border-dl-navy text-dl-navy font-medium'
                       : 'border-transparent text-dl-gray hover:text-dl-navy'
@@ -1102,307 +356,479 @@ export default function FounderOpsPage() {
               ))}
             </div>
 
-            {activeTab === 'overview' && data && (
+            {/* ── TAB: PROOF OF EXECUTION ─────────────────────────────── */}
+            {activeTab === 'framework' && (
               <>
-                <div className="mb-8">
-                  <SectionHeading>Sentinel Intelligence</SectionHeading>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="border border-dl-border p-4">
-                      <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">MARKET REGIME</p>
-                      <p className={`font-dl-heading text-xl ${REGIME_COLORS[data.sentinel.regime] || 'text-dl-navy'}`}>
-                        {data.sentinel.regime}
-                      </p>
-                      <p className="font-dl-mono text-xs text-dl-gray mt-1">{data.sentinel.regimeConfidence}% confidence</p>
-                    </div>
-                    <div className="border border-dl-border p-4">
-                      <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">SYSTEM STANCE</p>
-                      <p className={`font-dl-heading text-xl ${STANCE_COLORS[data.sentinel.systemStance] || 'text-dl-navy'}`}>
-                        {data.sentinel.systemStance}
-                      </p>
-                      <p className="text-xs text-dl-gray mt-1">Advisory only — no auto-execution</p>
-                    </div>
-                    <div className="border border-dl-border p-4">
-                      <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">SIGNALS</p>
-                      <p className="font-dl-heading text-xl text-dl-navy">
-                        {data.sentinel.qualifiedSignals} <span className="text-sm text-dl-gray">/ {data.sentinel.totalSignals}</span>
-                      </p>
-                      <p className="text-xs text-dl-gray mt-1">qualified / total</p>
-                    </div>
-                    <div className="border border-dl-border p-4">
-                      <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">DECISIONS</p>
-                      <p className="font-dl-heading text-xl">
-                        <span className="text-dl-forest">{data.sentinel.approvedDecisions}</span>
-                        {' / '}
-                        <span className="text-dl-error">{data.sentinel.deniedDecisions}</span>
-                      </p>
-                      <p className="text-xs text-dl-gray mt-1">approved / denied</p>
-                    </div>
+                <div className="border border-dl-border mb-8 bg-dl-bg-alt">
+                  <div className="px-6 py-5 border-b border-dl-border">
+                    <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray mb-3">Core Principle</p>
+                    <p className="text-sm text-dl-navy leading-relaxed max-w-3xl">{FRAMEWORK_PRINCIPLE}</p>
+                  </div>
+                  <div className="px-6 py-4">
+                    <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">
+                      The asset is not the only thing that matters. <strong className="text-dl-navy">The record matters.</strong>{' '}
+                      Any founder can make claims. Very few can produce a timestamped, multi-layer, machine-verifiable operating history
+                      that shows capital deployed, rails used, assets analyzed, groups coordinated, and infrastructure kept live over time.
+                      That is what this framework builds.
+                    </p>
                   </div>
                 </div>
 
                 <div className="mb-8">
-                  <SectionHeading>Treasury + Vault Positions</SectionHeading>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="border border-dl-border p-4">
-                      <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">EULER VAULT</p>
-                      <p className="font-dl-heading text-xl text-dl-navy">${data.euler.deposited}</p>
-                      <p className="font-dl-mono text-xs text-dl-gray mt-1">
-                        {data.euler.utilization}% util | {data.euler.supplyAPY}% APY
-                      </p>
-                    </div>
-                    <div className="border border-dl-border p-4">
-                      <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">LENDING FUND</p>
-                      <p className="font-dl-heading text-xl text-dl-navy">${data.lendingFund.tvl}</p>
-                      <p className="font-dl-mono text-xs text-dl-gray mt-1">
-                        Share: ${data.lendingFund.sharePrice} | Loans: {data.lendingFund.activeLoans}
-                      </p>
-                    </div>
-                    <div className="border border-dl-border p-4">
-                      <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">AXUSD SUPPLY</p>
-                      <p className="font-dl-heading text-xl text-dl-navy">{parseFloat(data.axusd.totalSupply).toLocaleString()}</p>
-                      <p className="font-dl-mono text-xs text-dl-gray mt-1">Designed to align with GENIUS Act</p>
-                    </div>
-                    <div className="border border-dl-border p-4">
-                      <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">TREASURY</p>
-                      <p className="font-dl-heading text-xl text-dl-navy">{data.treasury.total}</p>
-                      <p className="font-dl-mono text-xs text-dl-gray mt-1">Exposure: {data.treasury.currentExposure}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mb-8">
-                  <SectionHeading>Market Infrastructure</SectionHeading>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="border border-dl-border p-4">
-                      <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">DEX (CAMELOT)</p>
-                      <p className="font-dl-heading text-lg text-dl-navy">TVL: ${data.dex.tvl}</p>
-                      <p className="font-dl-mono text-xs text-dl-gray mt-1">24h Vol: ${data.dex.volume24h}</p>
-                    </div>
-                    <div className="border border-dl-border p-4">
-                      <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">DePIN NODES</p>
-                      <p className="font-dl-heading text-lg text-dl-navy">{data.nodes.total} total</p>
-                      <p className="font-dl-mono text-xs text-dl-gray mt-1">{data.nodes.active} active</p>
-                    </div>
-                    <div className="border border-dl-border p-4">
-                      <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">EULER FEE CONFIG</p>
-                      <p className="font-dl-heading text-lg text-dl-navy">{data.euler.interestFeePercent}%</p>
-                      <p className="font-dl-mono text-xs text-dl-gray mt-1">interest fee rate</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mb-8">
-                  <SectionHeading>Fee Plumbing Status</SectionHeading>
-                  <div className="border border-dl-border p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">FEE RECIPIENT</p>
-                        <p className={`font-dl-mono text-sm ${data.feePlumbing.eulerFeeRecipientSet ? 'text-dl-forest' : 'text-dl-error'}`}>
-                          {data.feePlumbing.eulerFeeRecipientSet ? 'CONFIGURED' : 'NOT SET'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">REVENUE ROUTER</p>
-                        <p className={`font-dl-mono text-sm ${data.feePlumbing.revenueRouterConnected ? 'text-dl-forest' : 'text-dl-error'}`}>
-                          {data.feePlumbing.revenueRouterConnected ? 'CONNECTED' : 'NOT CONNECTED'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">OVERALL STATUS</p>
-                        <p className={`font-dl-mono text-sm ${data.feePlumbing.status === 'OPERATIONAL' ? 'text-dl-forest' : 'text-dl-error'}`}>
-                          {data.feePlumbing.status}
-                        </p>
-                      </div>
-                    </div>
-                    {data.feePlumbing.status !== 'OPERATIONAL' && (
-                      <div className="mt-4 border-t border-dl-border pt-3">
-                        <p className="text-xs text-dl-error">
-                          ACTION REQUIRED: Fee plumbing is not fully wired. Before calling setFeeReceiver(), verify that vault fees are non-zero
-                          and borrow interest exists. If fees are zero, you will falsely validate the plumbing. Check vault fee params and
-                          historical interest accrual first.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mb-8">
-                  <SectionHeading>Mandatory Guard Rails</SectionHeading>
-                  <div className="space-y-3">
-                    {guardRails.map((gr) => {
-                      const statusColor =
-                        gr.status === 'PASS' ? 'text-dl-forest' :
-                        gr.status === 'ENFORCED' ? 'text-dl-forest' :
-                        gr.status === 'WARNING' ? 'text-dl-gold' :
-                        gr.status === 'LOADING' ? 'text-dl-gray' :
-                        'text-dl-error';
-                      const statusBg =
-                        gr.status === 'PASS' || gr.status === 'ENFORCED' ? 'border-l-2 border-l-[#2D5F2D]' :
-                        gr.status === 'WARNING' ? 'border-l-2 border-l-[#8B7355]' :
-                        gr.status === 'LOADING' ? 'border-l-2 border-l-gray-300' :
-                        'border-l-2 border-l-[#8B2500]';
-                      return (
-                        <div key={gr.id} className={`border border-dl-border p-3 ${statusBg}`}>
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs uppercase tracking-wider text-dl-navy">GR #{gr.id} — {gr.title}</p>
-                            <span className={`text-xs font-dl-mono font-bold ${statusColor}`}>{gr.status}</span>
-                          </div>
-                          <p className="text-xs text-dl-gray">{gr.detail}</p>
-                          <p className="text-[10px] font-dl-mono text-dl-gray mt-1">Source: {gr.source}</p>
+                  <SectionHeading>Monthly Deployment — $500 / Month</SectionHeading>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 border border-dl-border">
+                    {LAYERS.map((layer, li) => (
+                      <div key={layer.id} className={`${li < 2 ? 'border-b lg:border-b-0 lg:border-r' : ''} border-dl-border`}>
+                        <div className="px-4 py-3 border-b border-dl-border bg-dl-bg-alt">
+                          <p className="font-dl-mono text-xs font-semibold text-dl-navy uppercase tracking-wider">{layer.label}</p>
+                          <p className="font-dl-mono text-xs text-dl-gold mt-0.5">{layer.monthly}</p>
                         </div>
-                      );
-                    })}
+                        {layer.buckets.map((b, bi) => (
+                          <div key={b.label} className={`px-4 py-3 ${bi < layer.buckets.length - 1 ? 'border-b border-dl-border' : ''}`}>
+                            <div className="flex items-baseline justify-between mb-1">
+                              <p className="text-xs font-medium text-dl-navy">{b.label}</p>
+                              <span className="font-dl-mono text-xs font-bold text-dl-navy ml-2 flex-shrink-0">{b.amount}</span>
+                            </div>
+                            <p className="text-xs text-dl-gray leading-relaxed">Proof: {b.proof}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mb-8">
+                  <SectionHeading>Live Layer Status</SectionHeading>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-0 border border-dl-border">
+                    <div className="px-4 py-4 border-b border-r border-dl-border">
+                      <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray mb-1">EulerSwap Pool TVL</p>
+                      <p className="font-dl-heading text-xl text-dl-navy">
+                        {poolsLoading ? '...' : poolTvl != null ? `$${poolTvl.toLocaleString()}` : '—'}
+                      </p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-1">
+                        {primaryPool ? `${primaryPool.asset0Symbol}/${primaryPool.asset1Symbol} · ${primaryPool.status}` : 'On-chain liquidity layer'}
+                      </p>
+                    </div>
+                    <div className="px-4 py-4 border-b border-r border-dl-border">
+                      <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray mb-1">earnAXUSD Vault</p>
+                      <p className="font-dl-heading text-xl text-dl-navy">
+                        {earnStats ? `$${earnStats.tvlUsd.toLocaleString()}` : '—'}
+                      </p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-1">
+                        {earnStats ? `${earnStats.blendedApyPct}% APY · ${earnStats.status}` : 'Yield aggregation layer'}
+                      </p>
+                    </div>
+                    <div className="px-4 py-4 border-b border-dl-border">
+                      <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray mb-1">AXUSD In Circulation</p>
+                      <p className="font-dl-heading text-xl text-dl-navy">
+                        {data ? parseFloat(data.axusd.totalSupply).toLocaleString() : '—'}
+                      </p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-1">Protocol stablecoin supply</p>
+                    </div>
+                    <div className="px-4 py-4 border-r border-dl-border">
+                      <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray mb-1">Properties Analyzed</p>
+                      <p className="font-dl-heading text-xl text-dl-navy">
+                        {reportCount != null ? reportCount : '—'}
+                      </p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-1">Total underwriting reports</p>
+                    </div>
+                    <div className="px-4 py-4 border-r border-dl-border">
+                      <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray mb-1">Active Deals</p>
+                      <p className="font-dl-heading text-xl text-dl-navy">
+                        {dealCount != null ? dealCount : '—'}
+                      </p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-1">Land acquisition pipeline</p>
+                    </div>
+                    <div className="px-4 py-4">
+                      <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray mb-1">Wealth Practice Groups</p>
+                      <p className="font-dl-heading text-xl text-dl-navy">
+                        {groupCount != null ? groupCount : '—'}
+                      </p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-1">Active coordination cycles</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-8">
+                  <SectionHeading>Month-by-Month Progression</SectionHeading>
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-0 border border-dl-border mb-6">
+                    {MONTH_PROGRESSION.map((m, i) => (
+                      <div key={m.month} className={`px-4 py-4 ${i < 3 ? 'border-b lg:border-b-0 lg:border-r' : ''} border-dl-border`}>
+                        <p className="font-dl-mono text-xs font-semibold text-dl-gold uppercase tracking-wider mb-2">{m.label}</p>
+                        <p className="text-xs text-dl-gray leading-relaxed">{m.notes}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="border border-dl-border">
+                    <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+                      <p className="font-dl-mono text-xs font-semibold text-dl-navy uppercase tracking-wider">Illustrative 12-Month Outcome</p>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-dl-border">
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Layer</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">6 Months</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">12 Months</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {OUTCOME_ROWS.map((row, i) => (
+                            <tr key={i} className={`border-b border-dl-border last:border-0 ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                              <td className="p-3 text-xs text-dl-navy">{row.layer}</td>
+                              <td className="p-3 text-right font-dl-mono text-xs text-dl-gray">{row.m6}</td>
+                              <td className="p-3 text-right font-dl-mono text-xs text-dl-navy font-medium">{row.m12}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </>
             )}
 
-            {activeTab === 'allocation' && (
+            {/* ── TAB: ON-CHAIN LAYER ─────────────────────────────────── */}
+            {activeTab === 'onchain' && (
               <>
-                <SectionHeading>Weekly $100 Capital Allocation</SectionHeading>
-                <div className="border border-dl-border mb-6">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-dl-border">
-                        <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Bucket</th>
-                        <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Amount</th>
-                        <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Purpose</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ALLOCATION_TABLE.map((row, i) => (
-                        <tr key={i} className="border-b border-dl-border last:border-0">
-                          <td className="p-3 font-medium text-dl-navy">{row.bucket}</td>
-                          <td className="p-3 text-right font-dl-mono text-dl-navy">{row.amount}</td>
-                          <td className="p-3 text-dl-gray">{row.purpose}</td>
-                        </tr>
+                <div className="mb-8">
+                  <SectionHeading>EulerSwap Pool Depth — $150 / month</SectionHeading>
+                  <p className="text-xs text-dl-gray mb-4 max-w-2xl leading-relaxed">
+                    Deploy $150/month into the USDC side of the live pool. This creates visible, verifiable on-chain
+                    liquidity that any allocator, partner, or observer can inspect directly from the contract.
+                  </p>
+                  {pools.length === 0 ? (
+                    <div className="border border-dl-border p-6 text-center">
+                      <p className="font-dl-mono text-sm text-dl-muted">Loading pool data...</p>
+                    </div>
+                  ) : (
+                    <div className="border border-dl-border">
+                      <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+                        <p className="font-dl-mono text-xs font-semibold text-dl-navy uppercase">EulerSwap AXUSD / USDC Pool</p>
+                      </div>
+                      {pools.map((pool, i) => (
+                        <div key={pool.pool} className={`${i < pools.length - 1 ? 'border-b border-dl-border' : ''}`}>
+                          <div className="grid grid-cols-2 lg:grid-cols-5 gap-0">
+                            <div className="px-4 py-3 border-r border-dl-border">
+                              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Status</p>
+                              <p className={`font-dl-mono text-sm font-bold ${pool.status === 'LIVE' ? 'text-dl-forest' : 'text-dl-gold'}`}>{pool.status}</p>
+                            </div>
+                            <div className="px-4 py-3 border-r border-dl-border">
+                              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">TVL</p>
+                              <p className="font-dl-mono text-sm font-bold text-dl-navy">${parseFloat(pool.tvlUsd || '0').toLocaleString()}</p>
+                            </div>
+                            <div className="px-4 py-3 border-r border-dl-border">
+                              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">{pool.asset0Symbol || 'USDC'} Reserve</p>
+                              <p className="font-dl-mono text-sm font-bold text-dl-navy">{parseFloat(pool.reserve0 || '0').toFixed(2)}</p>
+                            </div>
+                            <div className="px-4 py-3 border-r border-dl-border">
+                              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">{pool.asset1Symbol || 'AXUSD'} Reserve</p>
+                              <p className="font-dl-mono text-sm font-bold text-dl-navy">{parseFloat(pool.reserve1 || '0').toFixed(2)}</p>
+                            </div>
+                            <div className="px-4 py-3">
+                              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Fee</p>
+                              <p className="font-dl-mono text-sm font-bold text-dl-navy">{pool.fee || '—'}</p>
+                            </div>
+                          </div>
+                          <div className="px-4 py-2 border-t border-dl-border bg-dl-bg-alt">
+                            <a href={`https://arbiscan.io/address/${pool.pool}`} target="_blank" rel="noopener noreferrer"
+                              className="font-dl-mono text-xs text-dl-gray underline">{pool.pool}</a>
+                          </div>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
+                    </div>
+                  )}
+                  <div className="mt-3 border border-dl-border bg-dl-bg-alt px-4 py-3">
+                    <p className="font-dl-mono text-xs text-dl-gray">
+                      To add liquidity: <span className="text-dl-navy">USDC_AMOUNT=150 node scripts/add-pool-liquidity.js</span> — deposits USDC into EUSDC vault and reconfigures pool equilibrium.
+                    </p>
+                  </div>
                 </div>
 
-                <SectionHeading>Sentinel Regime Adjustments</SectionHeading>
-                <div className="border border-dl-border mb-6">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-dl-border">
-                        <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Regime</th>
-                        <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">AXM</th>
-                        <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Buffer</th>
-                        <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Rationale</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b border-dl-border">
-                        <td className="p-3 text-dl-forest font-medium">RISK_ON</td>
-                        <td className="p-3 text-right font-dl-mono">$35</td>
-                        <td className="p-3 text-right font-dl-mono">$10</td>
-                        <td className="p-3 text-dl-gray">Increase AXM accumulation during favorable regime</td>
-                      </tr>
-                      <tr className="border-b border-dl-border">
-                        <td className="p-3 text-dl-navy font-medium">NEUTRAL / DEFENSIVE</td>
-                        <td className="p-3 text-right font-dl-mono">$25</td>
-                        <td className="p-3 text-right font-dl-mono">$20</td>
-                        <td className="p-3 text-dl-gray">Standard allocation</td>
-                      </tr>
-                      <tr>
-                        <td className="p-3 text-dl-error font-medium">HALTED</td>
-                        <td className="p-3 text-right font-dl-mono">$15</td>
-                        <td className="p-3 text-right font-dl-mono">$30</td>
-                        <td className="p-3 text-dl-gray">Reduce exposure, increase cash buffer</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                <div className="mb-8">
+                  <SectionHeading>earnAXUSD Vault — $50 / month</SectionHeading>
+                  <p className="text-xs text-dl-gray mb-4 max-w-2xl leading-relaxed">
+                    Mint 50 AXUSD and deposit into the earnAXUSD vault each month. Creates a live yield history and
+                    demonstrates that Axiom's yield-bearing rails are not theoretical.
+                  </p>
+                  {earnStats ? (
+                    <div className="border border-dl-border">
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-0">
+                        <div className="px-4 py-3 border-r border-dl-border">
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Status</p>
+                          <p className={`font-dl-mono text-sm font-bold ${earnStats.deployed ? 'text-dl-forest' : 'text-dl-gold'}`}>{earnStats.status}</p>
+                        </div>
+                        <div className="px-4 py-3 border-r border-dl-border">
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">TVL</p>
+                          <p className="font-dl-mono text-sm font-bold text-dl-navy">${earnStats.tvlUsd.toLocaleString()} AXUSD</p>
+                        </div>
+                        <div className="px-4 py-3 border-r border-dl-border">
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Blended APY</p>
+                          <p className="font-dl-mono text-sm font-bold text-dl-forest">{earnStats.blendedApyPct}%</p>
+                        </div>
+                        <div className="px-4 py-3">
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">AME Regime</p>
+                          <p className={`font-dl-mono text-sm font-bold ${REGIME_COLORS[earnStats.ameRegime ?? ''] ?? 'text-dl-navy'}`}>
+                            {earnStats.ameRegime ?? '—'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="px-4 py-2 border-t border-dl-border bg-dl-bg-alt">
+                        <a href="https://arbiscan.io/address/0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B" target="_blank" rel="noopener noreferrer"
+                          className="font-dl-mono text-xs text-dl-gray underline">0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B</a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="border border-dl-border p-6 text-center">
+                      <p className="font-dl-mono text-sm text-dl-muted">Loading vault data...</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mb-8">
+                  <SectionHeading>AXM Accumulation — $25 / month</SectionHeading>
+                  <p className="text-xs text-dl-gray mb-4 max-w-2xl leading-relaxed">
+                    Accumulate AXM on a recurring basis. Demonstrates aligned governance exposure and long-term participation.
+                    Each buy is timestamped on-chain. Over 12 months this builds a documented holding history.
+                  </p>
+                  <div className="border border-dl-border">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
+                      <div className="px-4 py-3 border-b lg:border-b-0 border-r border-dl-border">
+                        <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Proof Created</p>
+                        <p className="text-xs text-dl-navy leading-relaxed">Documented holding history, governance alignment, recurring protocol commitment</p>
+                      </div>
+                      <div className="px-4 py-3 border-b lg:border-b-0 border-r border-dl-border">
+                        <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">AXM Token</p>
+                        <a href="https://arbiscan.io/address/0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D" target="_blank" rel="noopener noreferrer"
+                          className="font-dl-mono text-xs text-dl-navy underline">0x864F9c6f5…2539D</a>
+                      </div>
+                      <div className="px-4 py-3">
+                        <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">6-Month Target</p>
+                        <p className="font-dl-mono text-sm font-bold text-dl-navy">~$150 held</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {data && (
-                  <div className="border border-dl-border p-4">
-                    <p className="text-xs uppercase tracking-wider text-dl-gray mb-2">CURRENT RECOMMENDED ALLOCATION</p>
-                    <p className={`font-dl-heading text-lg ${STANCE_COLORS[data.sentinel.systemStance] || 'text-dl-navy'}`}>
-                      Sentinel Stance: {data.sentinel.systemStance}
-                    </p>
-                    <p className="text-sm text-dl-gray mt-1">
-                      {data.sentinel.systemStance === 'HALTED'
-                        ? 'Reduce AXM to $15/week. Increase USDC buffer to $30/week. Capital preservation mode.'
-                        : data.sentinel.systemStance === 'RISK_ON'
-                        ? 'Increase AXM to $35/week. Reduce buffer to $10/week. Accumulation mode.'
-                        : 'Standard allocation: $25 AXM, $20 buffer. Steady execution.'}
-                    </p>
+                  <div className="mb-8">
+                    <SectionHeading>Supporting Infrastructure</SectionHeading>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 border border-dl-border">
+                      <div className="px-4 py-3 border-r border-dl-border">
+                        <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">EVK Vault (eAXUSD-6)</p>
+                        <p className="font-dl-mono text-sm font-bold text-dl-navy">${data.euler.deposited}</p>
+                        <p className="font-dl-mono text-xs text-dl-gray mt-1">{data.euler.utilization}% utilization</p>
+                      </div>
+                      <div className="px-4 py-3 border-r border-dl-border">
+                        <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Supply APY</p>
+                        <p className="font-dl-mono text-sm font-bold text-dl-forest">{data.euler.supplyAPY}%</p>
+                      </div>
+                      <div className="px-4 py-3 border-r border-dl-border">
+                        <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Fee Routing</p>
+                        <p className={`font-dl-mono text-sm font-bold ${data.euler.feeRoutingStatus === 'OPERATIONAL' ? 'text-dl-forest' : 'text-dl-gold'}`}>
+                          {data.euler.feeRoutingStatus}
+                        </p>
+                      </div>
+                      <div className="px-4 py-3">
+                        <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Interest Fee</p>
+                        <p className="font-dl-mono text-sm font-bold text-dl-navy">{data.euler.interestFeePercent}%</p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </>
             )}
 
-            {activeTab === 'checkpoints' && (
+            {/* ── TAB: REAL ASSETS ────────────────────────────────────── */}
+            {activeTab === 'realassets' && (
               <>
-                <SectionHeading>Risk Checkpoints</SectionHeading>
-                <p className="text-sm text-dl-gray mb-6">
-                  If any checkpoint fails, do not proceed to next phase. Fix, re-test, document the fix.
-                </p>
-                <div className="border border-dl-border">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-dl-border">
-                        <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray w-20">Week</th>
-                        <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Gate Requirement</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {CHECKPOINTS.map((cp, i) => (
-                        <tr key={i} className={`border-b border-dl-border last:border-0 ${cp.week === 44 ? 'bg-red-50' : ''}`}>
-                          <td className={`p-3 font-dl-mono font-medium ${cp.week === 44 ? 'text-dl-error' : 'text-dl-navy'}`}>
-                            Wk {cp.week}
-                          </td>
-                          <td className={`p-3 ${cp.week === 44 ? 'text-dl-error' : 'text-dl-gray'}`}>
-                            {cp.gate}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="border border-dl-border mb-8 bg-dl-bg-alt px-5 py-4">
+                  <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray mb-1">Layer Objective — $175 / month</p>
+                  <p className="text-sm text-dl-navy leading-relaxed max-w-2xl">
+                    Link Axiom's digital rails to real-world asset progression. Each month produces documented deal advancement,
+                    live report generation, and evidence of active acquisition activity — not placeholder activity.
+                  </p>
                 </div>
 
-                <div className="mt-8">
-                  <SectionHeading>52-Week Financial Projection</SectionHeading>
+                <div className="mb-8">
+                  <SectionHeading>Land Acquisition Pipeline — $100 / month</SectionHeading>
+                  <p className="text-xs text-dl-gray mb-4 max-w-2xl leading-relaxed">
+                    Deploy toward live deal progression: title work, survey costs, earnest money reserves, or parcel targeting.
+                    Every dollar here has a timestamped deal record in the system.
+                  </p>
                   <div className="border border-dl-border">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-dl-border">
-                          <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Week</th>
-                          <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Invested</th>
-                          <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Revenue (est)</th>
-                          <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Total Position</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[
-                          { week: 8, invested: '$800', revenue: '$10', total: '$810' },
-                          { week: 16, invested: '$1,600', revenue: '$40', total: '$1,640' },
-                          { week: 24, invested: '$2,400', revenue: '$100', total: '$2,500' },
-                          { week: 32, invested: '$3,200', revenue: '$200', total: '$3,400' },
-                          { week: 40, invested: '$4,000', revenue: '$350', total: '$4,350' },
-                          { week: 48, invested: '$4,800', revenue: '$550', total: '$5,350' },
-                          { week: 52, invested: '$5,200', revenue: '$700', total: '$5,900' },
-                        ].map((row, i) => (
-                          <tr key={i} className="border-b border-dl-border last:border-0">
-                            <td className="p-3 font-dl-mono text-dl-navy">{row.week}</td>
-                            <td className="p-3 text-right font-dl-mono text-dl-navy">{row.invested}</td>
-                            <td className="p-3 text-right font-dl-mono text-dl-forest">{row.revenue}</td>
-                            <td className="p-3 text-right font-dl-mono font-medium text-dl-navy">{row.total}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <div className="px-4 py-3 border-b border-dl-border bg-dl-bg-alt flex items-center justify-between">
+                      <p className="font-dl-mono text-xs font-semibold text-dl-navy uppercase">Active Pipeline</p>
+                      {dealCount != null && (
+                        <span className="font-dl-mono text-xs text-dl-forest">{dealCount} deals in system</span>
+                      )}
+                    </div>
+                    <div className="px-4 py-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Proof Created</p>
+                          <p className="text-xs text-dl-navy leading-relaxed">Documented deal advancement, capital attached to real asset pipeline activity, timestamped movement from digital treasury to physical opportunity.</p>
+                        </div>
+                        <div>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">6-Month Target</p>
+                          <p className="font-dl-mono text-sm font-bold text-dl-navy">~$600 deployed</p>
+                        </div>
+                        <div>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">12-Month Target</p>
+                          <p className="font-dl-mono text-sm font-bold text-dl-navy">~$1,200 deployed</p>
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <a href="/land" className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 inline-block hover:bg-dl-navy hover:text-white">
+                          Open Land Acquisition Console →
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-8">
+                  <SectionHeading>Property Analysis Reports — $50 / month</SectionHeading>
+                  <p className="text-xs text-dl-gray mb-4 max-w-2xl leading-relaxed">
+                    Run 1–2 live property analyses per month through the Property Analysis tool. Proves that
+                    the intelligence layer is actively underwriting real opportunities, not sitting dormant.
+                  </p>
+                  <div className="border border-dl-border">
+                    <div className="px-4 py-3 border-b border-dl-border bg-dl-bg-alt flex items-center justify-between">
+                      <p className="font-dl-mono text-xs font-semibold text-dl-navy uppercase">Underwriting History</p>
+                      {reportCount != null && (
+                        <span className="font-dl-mono text-xs text-dl-forest">{reportCount} total reports</span>
+                      )}
+                    </div>
+                    <div className="px-4 py-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                        <div>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Proof Created</p>
+                          <p className="text-xs text-dl-navy leading-relaxed">Recurring underwriting activity, live report generation, real property evaluation history, growing intelligence dataset.</p>
+                        </div>
+                        <div>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">6-Month Target</p>
+                          <p className="font-dl-mono text-sm font-bold text-dl-navy">12–18 reports</p>
+                        </div>
+                        <div>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">12-Month Target</p>
+                          <p className="font-dl-mono text-sm font-bold text-dl-navy">24–36 reports</p>
+                        </div>
+                      </div>
+                      <a href="/property-analysis" className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 inline-block hover:bg-dl-navy hover:text-white">
+                        Open Property Analysis →
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-8">
+                  <SectionHeading>Deal Origination Inputs — $25 / month</SectionHeading>
+                  <p className="text-xs text-dl-gray mb-4 max-w-2xl leading-relaxed">
+                    Sourcing submissions, comps data, distressed lead inputs, or other live origination signals.
+                    Supports the intake side of the real asset pipeline and keeps deal flow active.
+                  </p>
+                  <div className="border border-dl-border px-4 py-4 bg-dl-bg-alt">
+                    <p className="font-dl-mono text-xs text-dl-gray mb-2">Proof Created</p>
+                    <p className="text-xs text-dl-navy leading-relaxed">Continuous pipeline formation. Evidence of acquisition activity. Real market signal capture.</p>
+                    <div className="mt-3">
+                      <a href="/deal-flow" className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 inline-block hover:bg-dl-navy hover:text-white">
+                        Open Deal Flow →
+                      </a>
+                    </div>
                   </div>
                 </div>
               </>
             )}
 
+            {/* ── TAB: COMMUNITY ──────────────────────────────────────── */}
+            {activeTab === 'community' && (
+              <>
+                <div className="border border-dl-border mb-8 bg-dl-bg-alt px-5 py-4">
+                  <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray mb-1">Layer Objective — $100 / month</p>
+                  <p className="text-sm text-dl-navy leading-relaxed max-w-2xl">
+                    Prove that Axiom can coordinate recurring participant behavior, not just passive capital.
+                    The community layer is the only layer that cannot be faked at scale — real participants, real cycles, real coordination.
+                  </p>
+                </div>
+
+                <div className="mb-8">
+                  <SectionHeading>Wealth Practice — $75 / month</SectionHeading>
+                  <p className="text-xs text-dl-gray mb-4 max-w-2xl leading-relaxed">
+                    Seed or contribute to an active group cycle. Proves that Axiom can coordinate recurring participant
+                    behavior, not just passive capital.
+                  </p>
+                  <div className="border border-dl-border">
+                    <div className="px-4 py-3 border-b border-dl-border bg-dl-bg-alt flex items-center justify-between">
+                      <p className="font-dl-mono text-xs font-semibold text-dl-navy uppercase">Active Group Cycles</p>
+                      {groupCount != null && (
+                        <span className="font-dl-mono text-xs text-dl-forest">{groupCount} groups in system</span>
+                      )}
+                    </div>
+                    <div className="px-4 py-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                        <div>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Proof Created</p>
+                          <p className="text-xs text-dl-navy leading-relaxed">Live contribution cycles. Recurring community participation. Timestamped group mechanics. Real user coordination history.</p>
+                        </div>
+                        <div>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">6-Month Target</p>
+                          <p className="font-dl-mono text-sm font-bold text-dl-navy">2–3 active groups</p>
+                        </div>
+                        <div>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">12-Month Target</p>
+                          <p className="font-dl-mono text-sm font-bold text-dl-navy">4–6 active groups</p>
+                        </div>
+                      </div>
+                      <a href="/wealth-practice" className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 inline-block hover:bg-dl-navy hover:text-white">
+                        Open Wealth Practice →
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-8">
+                  <SectionHeading>Infrastructure Continuity — $25 / month</SectionHeading>
+                  <p className="text-xs text-dl-gray mb-4 max-w-2xl leading-relaxed">
+                    Allocate toward DePIN node costs, storage, or related operational continuity that keeps
+                    the infrastructure layer active and observable.
+                  </p>
+                  <div className="border border-dl-border">
+                    <div className="px-4 py-3 border-b border-dl-border bg-dl-bg-alt flex items-center justify-between">
+                      <p className="font-dl-mono text-xs font-semibold text-dl-navy uppercase">DePIN Node Status</p>
+                      {data && (
+                        <span className="font-dl-mono text-xs text-dl-forest">{data.nodes.active} active / {data.nodes.total} total</span>
+                      )}
+                    </div>
+                    <div className="px-4 py-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Proof Created</p>
+                          <p className="text-xs text-dl-navy leading-relaxed">Continuity of core infrastructure. Evidence the system remains operational. Support for persistent network activity.</p>
+                        </div>
+                        <div>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Active Nodes</p>
+                          <p className="font-dl-mono text-xl font-bold text-dl-navy">{data?.nodes.active ?? '—'}</p>
+                        </div>
+                        <div>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Total Nodes</p>
+                          <p className="font-dl-mono text-xl font-bold text-dl-navy">{data?.nodes.total ?? '—'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ── TAB: OPERATIONS LOG ─────────────────────────────────── */}
             {activeTab === 'log' && (
               <>
                 <SectionHeading>Operations Log</SectionHeading>
-                <p className="text-sm text-dl-gray mb-4">
-                  Every action, failure, and fix documented with on-chain evidence. Failures increase credibility when documented.
+                <p className="text-sm text-dl-gray mb-6 max-w-2xl">
+                  Every action, failure, and fix documented with on-chain evidence where applicable.
+                  This log is the timestamped execution record. Failures increase credibility when documented.
                 </p>
                 <DataTable
                   columns={logColumns}
@@ -1413,309 +839,179 @@ export default function FounderOpsPage() {
               </>
             )}
 
-            {activeTab === 'intelligence' && (
+            {/* ── TAB: SYSTEM STATUS ──────────────────────────────────── */}
+            {activeTab === 'system' && data && (
               <>
-                {intelligenceUnauthorized && (
-                  <div className="border border-dl-border p-8 text-center mb-8">
-                    <p className="font-dl-mono text-sm text-dl-muted">Intelligence data requires wallet authentication.</p>
-                    <p className="font-dl-mono text-xs text-dl-muted mt-1">Connect your wallet and sign in to access operator strategy, network intelligence, and capital event data.</p>
-                  </div>
-                )}
-                <div className="mb-10">
-                  <SectionHeading>Operator Strategy Profiles</SectionHeading>
-                  <p className="text-sm text-dl-gray mb-4">
-                    Aggregated execution signals per operator and strategy type. Populated as verified outcomes are approved and signals are recorded.
-                  </p>
-                  {intelligenceLoading ? (
-                    <p className="font-dl-mono text-sm text-dl-gray py-8 text-center">Loading intelligence data...</p>
-                  ) : intelligenceUnauthorized ? null : operatorProfiles.length === 0 ? (
-                    <div className="border border-dl-border p-6 text-center">
-                      <p className="font-dl-mono text-sm text-dl-muted">No operator strategy signals recorded yet.</p>
-                      <p className="font-dl-mono text-xs text-dl-muted mt-1">
-                        Profiles populate after verified outcomes are approved and operator signals are written to the DB.
+                <div className="mb-8">
+                  <SectionHeading>Sentinel Intelligence</SectionHeading>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 border border-dl-border">
+                    <div className="px-4 py-4 border-r border-dl-border">
+                      <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Market Regime</p>
+                      <p className={`font-dl-heading text-lg ${REGIME_COLORS[data.sentinel.regime] || 'text-dl-navy'}`}>{data.sentinel.regime}</p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-1">{data.sentinel.regimeConfidence}% confidence</p>
+                    </div>
+                    <div className="px-4 py-4 border-r border-dl-border">
+                      <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">System Stance</p>
+                      <p className={`font-dl-heading text-lg ${STANCE_COLORS[data.sentinel.systemStance] || 'text-dl-navy'}`}>{data.sentinel.systemStance}</p>
+                    </div>
+                    <div className="px-4 py-4 border-r border-dl-border">
+                      <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Signals</p>
+                      <p className="font-dl-heading text-lg text-dl-navy">
+                        {data.sentinel.qualifiedSignals} <span className="text-sm text-dl-gray">/ {data.sentinel.totalSignals}</span>
                       </p>
                     </div>
-                  ) : (
+                    <div className="px-4 py-4">
+                      <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Decisions</p>
+                      <p className="font-dl-heading text-lg">
+                        <span className="text-dl-forest">{data.sentinel.approvedDecisions}</span>
+                        {' / '}
+                        <span className="text-dl-error">{data.sentinel.deniedDecisions}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-8">
+                  <SectionHeading>Treasury + Vault Positions</SectionHeading>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 border border-dl-border">
+                    <div className="px-4 py-3 border-r border-dl-border">
+                      <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Euler Vault</p>
+                      <p className="font-dl-heading text-lg text-dl-navy">${data.euler.deposited}</p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-1">{data.euler.utilization}% util · {data.euler.supplyAPY}% APY</p>
+                    </div>
+                    <div className="px-4 py-3 border-r border-dl-border">
+                      <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Lending Fund</p>
+                      <p className="font-dl-heading text-lg text-dl-navy">${data.lendingFund.tvl}</p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-1">Share: ${data.lendingFund.sharePrice} · {data.lendingFund.activeLoans} loans</p>
+                    </div>
+                    <div className="px-4 py-3 border-r border-dl-border">
+                      <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">AXUSD Supply</p>
+                      <p className="font-dl-heading text-lg text-dl-navy">{parseFloat(data.axusd.totalSupply).toLocaleString()}</p>
+                    </div>
+                    <div className="px-4 py-3">
+                      <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Treasury</p>
+                      <p className="font-dl-heading text-lg text-dl-navy">{data.treasury.total}</p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-1">Exposure: {data.treasury.currentExposure}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-8">
+                  <SectionHeading>Mandatory Guard Rails</SectionHeading>
+                  <div className="space-y-2">
+                    {guardRails.map((gr) => {
+                      const color = gr.status === 'PASS' || gr.status === 'ENFORCED' ? 'text-dl-forest' :
+                        gr.status === 'WARNING' ? 'text-dl-gold' :
+                        gr.status === 'LOADING' ? 'text-dl-gray' : 'text-dl-error';
+                      const border = gr.status === 'PASS' || gr.status === 'ENFORCED' ? 'border-l-2 border-l-[#2D5F2D]' :
+                        gr.status === 'WARNING' ? 'border-l-2 border-l-[#8B7355]' :
+                        gr.status === 'LOADING' ? 'border-l-2 border-l-gray-300' : 'border-l-2 border-l-[#8B2500]';
+                      return (
+                        <div key={gr.id} className={`border border-dl-border p-3 ${border}`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs uppercase tracking-wider text-dl-navy">GR #{gr.id} — {gr.title}</p>
+                            <span className={`text-xs font-dl-mono font-bold ${color}`}>{gr.status}</span>
+                          </div>
+                          <p className="text-xs text-dl-gray">{gr.detail}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="mb-8">
+                  <SectionHeading>Fee Plumbing</SectionHeading>
+                  <div className="border border-dl-border px-4 py-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      <div>
+                        <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Fee Recipient</p>
+                        <p className={`font-dl-mono text-sm ${data.feePlumbing.eulerFeeRecipientSet ? 'text-dl-forest' : 'text-dl-error'}`}>
+                          {data.feePlumbing.eulerFeeRecipientSet ? 'CONFIGURED' : 'NOT SET'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Revenue Router</p>
+                        <p className={`font-dl-mono text-sm ${data.feePlumbing.revenueRouterConnected ? 'text-dl-forest' : 'text-dl-error'}`}>
+                          {data.feePlumbing.revenueRouterConnected ? 'CONNECTED' : 'NOT CONNECTED'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Overall</p>
+                        <p className={`font-dl-mono text-sm ${data.feePlumbing.status === 'OPERATIONAL' ? 'text-dl-forest' : 'text-dl-gold'}`}>
+                          {data.feePlumbing.status}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {pendingOutcomes.length > 0 && (
+                  <div className="mb-8">
+                    <SectionHeading>Pending Outcome Verification</SectionHeading>
                     <div className="border border-dl-border overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-dl-border">
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Operator</th>
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Strategy</th>
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Market</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Deals</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Success Rate</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Avg ROI Var.</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Cost Err %</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Timeline Err %</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Capex/Unit</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Stab. Days</th>
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Deal</th>
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Type</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Submitted</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {operatorProfiles.map((p, i) => (
-                            <tr key={`${p.operator_wallet}-${p.strategy_type}-${i}`} className="border-b border-dl-border last:border-0">
-                              <td className="p-3 font-dl-mono text-xs text-dl-navy">{truncateAddr(p.operator_wallet)}</td>
-                              <td className="p-3 text-xs text-dl-navy capitalize">{p.strategy_type.replace(/_/g, ' ')}</td>
-                              <td className="p-3 text-xs text-dl-gray">{p.market || '—'}</td>
-                              <td className="p-3 text-right font-dl-mono text-xs">{p.deal_count}</td>
-                              <td className="p-3 text-right font-dl-mono text-xs">
-                                {p.success_rate_pct != null
-                                  ? <span className={Number(p.success_rate_pct) >= 70 ? 'text-dl-forest' : Number(p.success_rate_pct) >= 50 ? 'text-dl-gold' : 'text-dl-error'}>
-                                      {Number(p.success_rate_pct).toFixed(1)}%
-                                    </span>
-                                  : '—'}
-                              </td>
-                              <td className="p-3 text-right font-dl-mono text-xs">
-                                {p.avg_roi_variance_pct != null
-                                  ? <span className={Number(p.avg_roi_variance_pct) >= 0 ? 'text-dl-forest' : 'text-dl-error'}>
-                                      {Number(p.avg_roi_variance_pct) > 0 ? '+' : ''}{Number(p.avg_roi_variance_pct).toFixed(2)}%
-                                    </span>
-                                  : '—'}
-                              </td>
-                              <td className="p-3 text-right font-dl-mono text-xs">
-                                {p.avg_cost_error_pct != null ? `${Number(p.avg_cost_error_pct).toFixed(1)}%` : '—'}
-                              </td>
-                              <td className="p-3 text-right font-dl-mono text-xs">
-                                {p.avg_timeline_error_pct != null ? `${Number(p.avg_timeline_error_pct).toFixed(1)}%` : '—'}
-                              </td>
-                              <td className="p-3 text-right font-dl-mono text-xs">
-                                {p.avg_capex_per_unit ? `$${Number(p.avg_capex_per_unit).toLocaleString()}` : '—'}
-                              </td>
-                              <td className="p-3 text-right font-dl-mono text-xs">
-                                {p.avg_stabilization_days ? Number(p.avg_stabilization_days).toFixed(0) : '—'}
-                              </td>
+                          {pendingOutcomes.map((o: any) => (
+                            <tr key={o.id} className="border-b border-dl-border last:border-0">
+                              <td className="p-3 font-dl-mono text-xs text-dl-navy">{o.deal_name || o.deal_id?.slice(0, 8) + '…'}</td>
+                              <td className="p-3 font-dl-mono text-xs text-dl-gray capitalize">{o.outcome_type || '—'}</td>
+                              <td className="p-3 text-right font-dl-mono text-xs text-dl-gray">{formatUTC(o.created_at)}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                <div className="mb-10">
-                  <div className="flex items-center justify-between mb-2">
-                    <SectionHeading>Network Intelligence</SectionHeading>
-                    <button
-                      onClick={handleRefreshSnapshot}
-                      disabled={snapshotRefreshing}
-                      className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-3 py-1.5 hover:bg-dl-navy hover:text-white disabled:opacity-50"
-                    >
-                      {snapshotRefreshing ? 'Generating...' : 'Refresh Snapshot'}
+                <div className="mb-8">
+                  <SectionHeading>Variance Tracking</SectionHeading>
+                  <div className="flex gap-3 mb-4">
+                    <button onClick={() => runCalibration(true)} disabled={calibrating}
+                      className="border border-dl-navy text-dl-navy px-4 py-2 font-dl-mono text-xs disabled:opacity-50">
+                      {calibrating ? 'Running...' : 'Preview Calibration'}
+                    </button>
+                    <button onClick={() => runCalibration(false)} disabled={calibrating}
+                      className="bg-dl-navy text-white px-4 py-2 font-dl-mono text-xs disabled:opacity-50">
+                      {calibrating ? 'Applying...' : 'Apply Calibration'}
                     </button>
                   </div>
-                  {snapshotError && (
-                    <div className="border border-dl-error p-2 mb-3">
-                      <p className="font-dl-mono text-xs text-dl-error">{snapshotError}</p>
-                    </div>
-                  )}
-                  {networkSnapshot && (
-                    <div className="border border-dl-border p-3 mb-4 flex gap-6 text-xs font-dl-mono">
-                      <span className="text-dl-muted">Snapshot: <span className="text-dl-navy">{networkSnapshot.snapshot_date}</span></span>
-                      <span className="text-dl-muted">Scope: <span className="text-dl-navy capitalize">{networkSnapshot.scope}</span></span>
-                      <span className="text-dl-muted">Confidence: <span className="text-dl-navy">{(Number(networkSnapshot.confidence_score) * 100).toFixed(1)}%</span></span>
-                      <span className="text-dl-muted">ID: <span className="text-dl-navy">{networkSnapshot.id.slice(0, 8)}…</span></span>
-                    </div>
-                  )}
-                  <p className="text-sm text-dl-gray mb-4">
-                    Market cost benchmarks by strategy type. Computed from verified local signals via the market cost signals table.
-                  </p>
-                  {!intelligenceLoading && networkSignals.length === 0 ? (
+                  {calibrationError && <p className="font-dl-mono text-xs text-dl-error mb-4">{calibrationError}</p>}
+                  {varianceLoading ? (
+                    <p className="font-dl-mono text-sm text-dl-gray py-4">Loading variance data...</p>
+                  ) : variances.length === 0 ? (
                     <div className="border border-dl-border p-6 text-center">
-                      <p className="font-dl-mono text-sm text-dl-muted">No market cost signals recorded yet.</p>
-                      <p className="font-dl-mono text-xs text-dl-muted mt-1">
-                        Signals populate as verified deal outcomes feed into the market cost signals table.
-                        Click "Refresh Snapshot" to generate a snapshot from any available data.
-                      </p>
+                      <p className="font-dl-mono text-sm text-dl-muted">No variance records yet.</p>
+                      <p className="font-dl-mono text-xs text-dl-muted mt-1">Created when project outcomes are submitted with Cost Intelligence estimates on record.</p>
                     </div>
                   ) : (
                     <div className="border border-dl-border overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-dl-border">
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Strategy Type</th>
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Market</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Avg Capex/Unit</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Confidence</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Sample Size</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Signal Count</th>
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Deal</th>
+                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Metric</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Predicted</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Actual</th>
+                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Var %</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {networkSignals.map((s, i) => (
-                            <tr key={`${s.strategy_type}-${s.market}-${i}`} className="border-b border-dl-border last:border-0">
-                              <td className="p-3 text-xs text-dl-navy capitalize">{s.strategy_type ? s.strategy_type.replace(/_/g, ' ') : '—'}</td>
-                              <td className="p-3 text-xs text-dl-gray">{s.market || '—'}</td>
-                              <td className="p-3 text-right font-dl-mono text-xs">
-                                {s.avg_capex_per_unit ? `$${Number(s.avg_capex_per_unit).toLocaleString()}` : '—'}
-                              </td>
-                              <td className="p-3 text-right font-dl-mono text-xs">
-                                {(Number(s.avg_confidence) * 100).toFixed(1)}%
-                              </td>
-                              <td className="p-3 text-right font-dl-mono text-xs">{s.total_sample_size}</td>
-                              <td className="p-3 text-right font-dl-mono text-xs">{s.signal_count}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mb-6">
-                  <SectionHeading>Matrix Coordination Layer</SectionHeading>
-                  <p className="text-sm text-dl-gray mb-4">
-                    Structured coordination events across all six intelligence layers. Each room is tied to a real entity (deal, inspection, outcome, offering). Events are written automatically at every workflow step.
-                  </p>
-
-                  {matrixRooms.length > 0 && (
-                    <div className="mb-4">
-                      <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray mb-2">Active Coordination Rooms</p>
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
-                        {(['deal', 'inspection', 'project_outcome', 'offering'] as const).map((et) => {
-                          const count = matrixRooms.filter(r => r.entityType === et).length;
-                          return (
-                            <div key={et} className="border border-dl-border p-3">
-                              <p className="font-dl-mono text-xs text-dl-muted uppercase">{et.replace(/_/g, ' ')}</p>
-                              <p className="font-dl-mono text-2xl text-dl-navy mt-1">{count}</p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {matrixEvents.length === 0 ? (
-                    <div className="border border-dl-border p-6 text-center">
-                      <p className="font-dl-mono text-sm text-dl-muted">No coordination events recorded yet.</p>
-                      <p className="font-dl-mono text-xs text-dl-muted mt-1">
-                        Events are written automatically when deals are created, inspections start, outcomes are submitted, and capital moves.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="border border-dl-border overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-dl-border">
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Event Type</th>
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Layer</th>
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Entity</th>
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Room</th>
-                            <th className="text-center p-3 text-xs uppercase tracking-wider text-dl-gray">Anchored</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Date</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {matrixEvents.map((e) => {
-                            const eventColor =
-                              e.eventType?.includes('created') ? 'text-dl-forest' :
-                              e.eventType?.includes('verified') || e.eventType?.includes('funded') ? 'text-dl-navy' :
-                              e.eventType?.includes('rejected') ? 'text-dl-error' :
-                              e.eventType?.includes('submitted') ? 'text-dl-gold' :
-                              'text-dl-gray';
-                            const layerLabel =
-                              e.entityType === 'deal' ? 'L1 — Deal' :
-                              e.entityType === 'inspection' ? 'L5 — Field' :
-                              e.entityType === 'project_outcome' ? 'L2 — Execution' :
-                              e.entityType === 'offering' ? 'L4 — Capital' :
-                              e.entityType;
-                            const hash = e.payload?._hash as string | undefined;
-                            return (
-                              <tr key={e.id} className="border-b border-dl-border last:border-0">
-                                <td className="p-3">
-                                  <span className={`font-dl-mono text-xs ${eventColor}`}>
-                                    {e.eventType?.replace('axiom.', '').replace(/\./g, ' ') || '—'}
-                                  </span>
-                                </td>
-                                <td className="p-3 font-dl-mono text-xs text-dl-muted">{layerLabel}</td>
-                                <td className="p-3 font-dl-mono text-xs text-dl-gray">
-                                  {e.entityId ? e.entityId.slice(0, 8) + '…' : '—'}
-                                </td>
-                                <td className="p-3 font-dl-mono text-xs text-dl-muted">
-                                  {e.matrixRoomId
-                                    ? e.matrixRoomId.startsWith('axiom-unconfigured:')
-                                      ? <span className="text-dl-muted">Synthetic</span>
-                                      : <span className="text-dl-forest">Live</span>
-                                    : '—'}
-                                </td>
-                                <td className="p-3 text-center font-dl-mono text-xs">
-                                  {hash ? (
-                                    <span className="text-dl-gold" title={hash}>SHA-256</span>
-                                  ) : (
-                                    <span className="text-dl-muted">—</span>
-                                  )}
-                                </td>
-                                <td className="p-3 text-right font-dl-mono text-xs text-dl-gray">
-                                  {formatUTC(e.createdAt)}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mb-6">
-                  <SectionHeading>Capital Intelligence Events</SectionHeading>
-                  <p className="text-sm text-dl-gray mb-4">
-                    Automated capital behavior log. Events are written when subscriptions are submitted, capital calls are paid, and offerings are closed.
-                  </p>
-                  {!intelligenceLoading && capitalEvents.length === 0 ? (
-                    <div className="border border-dl-border p-6 text-center">
-                      <p className="font-dl-mono text-sm text-dl-muted">No capital intelligence events recorded yet.</p>
-                      <p className="font-dl-mono text-xs text-dl-muted mt-1">
-                        Events are automatically written when syndication actions occur (commitment submitted, capital call paid, offering closed).
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="border border-dl-border overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-dl-border">
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Event</th>
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Deal / Offering</th>
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Source</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Raise Velocity</th>
-                            <th className="text-center p-3 text-xs uppercase tracking-wider text-dl-gray">Min Met</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Demand Score</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Date</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {capitalEvents.map((e) => (
-                            <tr key={e.id} className="border-b border-dl-border last:border-0">
-                              <td className="p-3">
-                                <span className={`font-dl-mono text-xs uppercase ${
-                                  e.event_type === 'offering_closed' ? 'text-dl-forest' :
-                                  e.event_type === 'capital_call_paid' ? 'text-dl-navy' :
-                                  'text-dl-gray'
-                                }`}>
-                                  {e.event_type.replace(/_/g, ' ')}
-                                </span>
-                              </td>
-                              <td className="p-3 text-xs text-dl-navy">
-                                {e.offering_name || e.deal_address || (e.offering_id ? e.offering_id.slice(0, 8) + '…' : '—')}
-                              </td>
-                              <td className="p-3 text-xs text-dl-gray capitalize">
-                                {e.capital_source_type || '—'}
-                              </td>
-                              <td className="p-3 text-right font-dl-mono text-xs">
-                                {e.raise_velocity ? `$${Number(e.raise_velocity).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '—'}
-                              </td>
-                              <td className="p-3 text-center font-dl-mono text-xs">
-                                {e.minimum_capital_met === null ? '—' :
-                                  <span className={e.minimum_capital_met ? 'text-dl-forest' : 'text-dl-error'}>
-                                    {e.minimum_capital_met ? 'YES' : 'NO'}
-                                  </span>
-                                }
-                              </td>
-                              <td className="p-3 text-right font-dl-mono text-xs">
-                                {e.investor_demand_score ? `${(Number(e.investor_demand_score) * 100).toFixed(1)}%` : '—'}
-                              </td>
-                              <td className="p-3 text-right font-dl-mono text-xs text-dl-gray">
-                                {formatUTC(e.created_at)}
+                          {variances.map((v: any) => (
+                            <tr key={v.id} className="border-b border-dl-border last:border-0">
+                              <td className="p-3 font-dl-mono text-xs text-dl-navy">{v.deal_name || v.deal_id?.slice(0, 8) + '…'}</td>
+                              <td className="p-3 font-dl-mono text-xs text-dl-gray capitalize">{v.metric_key?.replace(/_/g, ' ')}</td>
+                              <td className="p-3 text-right font-dl-mono text-xs">{Number(v.predicted_value).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                              <td className="p-3 text-right font-dl-mono text-xs text-dl-navy">{Number(v.actual_value).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                              <td className={`p-3 text-right font-dl-mono text-xs font-bold ${Number(v.variance_pct) > 15 ? 'text-dl-error' : Number(v.variance_pct) < -15 ? 'text-dl-forest' : 'text-dl-navy'}`}>
+                                {Number(v.variance_pct) > 0 ? '+' : ''}{Number(v.variance_pct).toFixed(2)}%
                               </td>
                             </tr>
                           ))}
@@ -1725,311 +1021,8 @@ export default function FounderOpsPage() {
                   )}
                 </div>
               </>
-            )}
-
-            {activeTab === 'variance' && (
-              <>
-                <SectionHeading>Variance Tracking</SectionHeading>
-                <p className="text-sm text-dl-gray mb-6">
-                  Predicted vs actual metrics from approved project outcomes. Drives Bayesian calibration of regional cost multipliers in the Cost Intelligence Engine.
-                </p>
-
-                <div className="flex gap-3 mb-6">
-                  <button
-                    onClick={() => runCalibration(true)}
-                    disabled={calibrating}
-                    className="border border-dl-navy text-dl-navy px-4 py-2 font-dl-mono text-sm disabled:opacity-50"
-                  >
-                    {calibrating ? 'Running...' : 'Preview Calibration (Dry Run)'}
-                  </button>
-                  <button
-                    onClick={() => runCalibration(false)}
-                    disabled={calibrating}
-                    className="bg-dl-navy text-white px-4 py-2 font-dl-mono text-sm disabled:opacity-50"
-                  >
-                    {calibrating ? 'Applying...' : 'Apply Calibration'}
-                  </button>
-                </div>
-
-                {calibrationError && (
-                  <div className="border border-dl-error p-3 mb-4 font-dl-mono text-xs text-dl-error">{calibrationError}</div>
-                )}
-
-                {calibrationResult && (
-                  <div className="border border-dl-border p-4 mb-6">
-                    <p className="font-dl-mono text-xs text-dl-muted uppercase tracking-wider mb-3">
-                      {calibrationResult.dryRun ? 'Dry Run Result' : 'Calibration Applied'} — {calibrationResult.signalsProcessed} signals processed, {calibrationResult.regionsUpdated} regions updated
-                    </p>
-                    {calibrationResult.updates && calibrationResult.updates.length > 0 ? (
-                      <table className="w-full font-dl-mono text-xs">
-                        <thead>
-                          <tr className="border-b border-dl-border">
-                            <th className="text-left p-2 text-dl-muted uppercase">Region</th>
-                            <th className="text-right p-2 text-dl-muted uppercase">Prior Factor</th>
-                            <th className="text-right p-2 text-dl-muted uppercase">New Factor</th>
-                            <th className="text-right p-2 text-dl-muted uppercase">Avg Var %</th>
-                            <th className="text-right p-2 text-dl-muted uppercase">Sample</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {calibrationResult.updates.map((u: any) => (
-                            <tr key={u.regionCode} className="border-b border-dl-border last:border-0">
-                              <td className="p-2 text-dl-navy">{u.regionName} ({u.regionCode})</td>
-                              <td className="p-2 text-right text-dl-muted">{u.previousFactor.toFixed(4)}x</td>
-                              <td className={`p-2 text-right font-bold ${u.newFactor > u.previousFactor ? 'text-dl-error' : 'text-dl-forest'}`}>
-                                {u.newFactor.toFixed(4)}x
-                              </td>
-                              <td className={`p-2 text-right ${u.avgVariancePct > 0 ? 'text-dl-error' : 'text-dl-forest'}`}>
-                                {u.avgVariancePct > 0 ? '+' : ''}{u.avgVariancePct}%
-                              </td>
-                              <td className="p-2 text-right text-dl-muted">{u.sampleSize}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <p className="text-sm text-dl-muted">No regions with sufficient signal ({'>'}= 3 approved outcomes) to calibrate yet.</p>
-                    )}
-                  </div>
-                )}
-
-                {varianceLoading ? (
-                  <p className="font-dl-mono text-sm text-dl-gray text-center py-8">Loading variance data...</p>
-                ) : variances.length === 0 ? (
-                  <div className="border border-dl-border p-6 text-center mb-8">
-                    <p className="font-dl-mono text-sm text-dl-muted">No variance records yet.</p>
-                    <p className="font-dl-mono text-xs text-dl-muted mt-1">
-                      Variance records are created when project outcomes are submitted with Cost Intelligence estimates on record for the same deal.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="border border-dl-border overflow-x-auto mb-8">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-dl-border">
-                          <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Deal</th>
-                          <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Metric</th>
-                          <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Predicted</th>
-                          <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Actual</th>
-                          <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Var %</th>
-                          <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {variances.map((v: any) => (
-                          <tr key={v.id} className="border-b border-dl-border last:border-0">
-                            <td className="p-3 font-dl-mono text-xs text-dl-navy truncate max-w-[180px]">
-                              {v.deal_name || v.deal_id?.slice(0, 8) + '…'}
-                            </td>
-                            <td className="p-3 font-dl-mono text-xs text-dl-gray capitalize">
-                              {v.metric_key.replace(/_/g, ' ')}
-                            </td>
-                            <td className="p-3 text-right font-dl-mono text-xs text-dl-muted">
-                              {Number(v.predicted_value).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                            </td>
-                            <td className="p-3 text-right font-dl-mono text-xs text-dl-navy">
-                              {Number(v.actual_value).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                            </td>
-                            <td className={`p-3 text-right font-dl-mono text-xs font-bold ${Number(v.variance_pct) > 15 ? 'text-dl-error' : Number(v.variance_pct) < -15 ? 'text-dl-forest' : 'text-dl-navy'}`}>
-                              {Number(v.variance_pct) > 0 ? '+' : ''}{Number(v.variance_pct).toFixed(2)}%
-                            </td>
-                            <td className="p-3 font-dl-mono text-xs text-dl-gray">
-                              {new Date(v.created_at).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-
-                {regionFactors.length > 0 && (
-                  <div className="mb-8">
-                    <SectionHeading>Current Regional Cost Factors</SectionHeading>
-                    <p className="text-sm text-dl-gray mb-4">
-                      Live multipliers applied to Craftsman NCE benchmarks by market. Calibration adjusts these based on verified outcome variance.
-                    </p>
-                    <div className="border border-dl-border overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-dl-border">
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Region</th>
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Code</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Overall Factor</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {regionFactors.map((r: any) => (
-                            <tr key={r.region_code} className="border-b border-dl-border last:border-0">
-                              <td className="p-3 font-dl-mono text-xs text-dl-navy">{r.region_name}</td>
-                              <td className="p-3 font-dl-mono text-xs text-dl-gray">{r.region_code}</td>
-                              <td className={`p-3 text-right font-dl-mono text-xs font-bold ${Number(r.overall_factor) > 1.1 ? 'text-dl-error' : Number(r.overall_factor) < 0.95 ? 'text-dl-forest' : 'text-dl-navy'}`}>
-                                {Number(r.overall_factor).toFixed(4)}x
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {activeTab === 'outcomes' && (
-              <>
-                <SectionHeading>Outcome Verification Queue</SectionHeading>
-                <p className="text-sm text-dl-gray mb-6">
-                  Deal outcomes submitted for verification review. Approve to confirm the record and mark rewards eligible. Reject to return for correction.
-                </p>
-                {reviewError && (
-                  <div className="border border-dl-error p-3 mb-4">
-                    <p className="font-dl-mono text-xs text-dl-error">{reviewError}</p>
-                  </div>
-                )}
-                {outcomesLoading ? (
-                  <p className="font-dl-mono text-sm text-dl-gray text-center py-8">Loading pending outcomes...</p>
-                ) : outcomesUnauthorized ? (
-                  <div className="border border-dl-border p-8 text-center">
-                    <p className="font-dl-mono text-sm text-dl-muted">Review queue restricted.</p>
-                    <p className="font-dl-mono text-xs text-dl-muted mt-1">
-                      This wallet is not on the authorized reviewer list. Connect as a reviewer wallet or contact the protocol operator.
-                    </p>
-                  </div>
-                ) : pendingOutcomes.length === 0 ? (
-                  <div className="border border-dl-border p-8 text-center">
-                    <p className="font-dl-mono text-sm text-dl-muted">No outcomes pending review.</p>
-                    <p className="font-dl-mono text-xs text-dl-muted mt-1">
-                      Outcomes appear here after operators submit and request verification from the deal workspace.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {pendingOutcomes.map((outcome: any) => (
-                      <div key={outcome.id} className="border border-dl-border p-5">
-                        <div className="flex items-start justify-between mb-4">
-                          <div>
-                            <p className="font-dl-serif text-base text-dl-navy">{outcome.deal_name || 'Deal'}</p>
-                            {outcome.property_address && (
-                              <p className="font-dl-mono text-xs text-dl-forest mt-0.5">{outcome.property_address}</p>
-                            )}
-                            <p className="font-dl-mono text-xs text-dl-muted mt-0.5">
-                              ID: {outcome.id.slice(0, 8)}… · Submitted: {new Date(outcome.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </p>
-                          </div>
-                          <span className="font-dl-mono text-xs text-dl-navy border border-dl-navy px-2 py-0.5">UNDER REVIEW</span>
-                        </div>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                          <div>
-                            <p className="text-xs uppercase tracking-wider text-dl-muted font-dl-mono mb-0.5">Rehab Cost</p>
-                            <p className="font-dl-mono text-sm text-dl-navy">
-                              ${Number(outcome.actual_rehab_cost).toLocaleString()}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs uppercase tracking-wider text-dl-muted font-dl-mono mb-0.5">Timeline</p>
-                            <p className="font-dl-mono text-sm text-dl-navy">{outcome.actual_timeline_days} days</p>
-                          </div>
-                          {outcome.actual_sale_price && (
-                            <div>
-                              <p className="text-xs uppercase tracking-wider text-dl-muted font-dl-mono mb-0.5">Sale Price</p>
-                              <p className="font-dl-mono text-sm text-dl-navy">
-                                ${Number(outcome.actual_sale_price).toLocaleString()}
-                              </p>
-                            </div>
-                          )}
-                          {outcome.actual_monthly_cash_flow && (
-                            <div>
-                              <p className="text-xs uppercase tracking-wider text-dl-muted font-dl-mono mb-0.5">Cash Flow/mo</p>
-                              <p className="font-dl-mono text-sm text-dl-navy">
-                                ${Number(outcome.actual_monthly_cash_flow).toLocaleString()}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-
-                        {outcome.variances && outcome.variances.length > 0 && (
-                          <div className="border border-dl-border mb-4 overflow-x-auto">
-                            <table className="w-full font-dl-mono text-xs">
-                              <thead>
-                                <tr className="border-b border-dl-border">
-                                  <th className="text-left p-2 text-dl-muted uppercase">Metric</th>
-                                  <th className="text-right p-2 text-dl-muted uppercase">Predicted</th>
-                                  <th className="text-right p-2 text-dl-muted uppercase">Actual</th>
-                                  <th className="text-right p-2 text-dl-muted uppercase">Var %</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {outcome.variances.slice(0, 4).map((v: any) => (
-                                  <tr key={v.metric_key} className="border-b border-dl-border last:border-0">
-                                    <td className="p-2 text-dl-navy capitalize">{v.metric_key.replace(/_/g, ' ')}</td>
-                                    <td className="p-2 text-right text-dl-muted">{Number(v.predicted_value).toFixed(2)}</td>
-                                    <td className="p-2 text-right text-dl-navy">{Number(v.actual_value).toFixed(2)}</td>
-                                    <td className={`p-2 text-right font-bold ${Number(v.variance_pct) > 10 ? 'text-dl-error' : Number(v.variance_pct) < -10 ? 'text-dl-forest' : 'text-dl-navy'}`}>
-                                      {Number(v.variance_pct) > 0 ? '+' : ''}{Number(v.variance_pct).toFixed(2)}%
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-
-                        <div className="mb-3">
-                          <label className="block text-xs font-dl-mono text-dl-muted uppercase mb-1">Review Notes</label>
-                          <input
-                            type="text"
-                            value={reviewNotes[outcome.id] || ''}
-                            onChange={e => setReviewNotes(prev => ({ ...prev, [outcome.id]: e.target.value }))}
-                            placeholder="Optional notes for the record..."
-                            className="w-full border border-dl-border px-2 py-1.5 font-dl-mono text-sm text-dl-text bg-white focus:outline-none"
-                          />
-                        </div>
-
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => handleReview(outcome.id, 'approved')}
-                            disabled={reviewingId === outcome.id}
-                            className="bg-dl-forest text-white px-5 py-2 font-dl-mono text-sm disabled:opacity-50"
-                          >
-                            {reviewingId === outcome.id ? 'Processing...' : 'Approve'}
-                          </button>
-                          <button
-                            onClick={() => handleReview(outcome.id, 'rejected')}
-                            disabled={reviewingId === outcome.id}
-                            className="border border-dl-error text-dl-error px-5 py-2 font-dl-mono text-sm disabled:opacity-50"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-
-            {activeTab === 'evk-whitelist' && (
-              <EvkWhitelistTab
-                lpmPlatforms={lpmPlatforms}
-                lpmLoading={lpmLoading}
-                onRefresh={() => {
-                  setLpmLoading(true);
-                  fetch('/api/erc3643/whitelist/platforms')
-                    .then(r => r.json())
-                    .then(d => { if (d.platforms) setLpmPlatforms(d.platforms); })
-                    .catch(() => {})
-                    .finally(() => setLpmLoading(false));
-                }}
-              />
-            )}
-
-            {activeTab === 'euler-earn-curator' && (
-              <EulerEarnCuratorTab />
             )}
           </>
-        )}
       </PageShell>
     </DesignLawLayout>
   );
