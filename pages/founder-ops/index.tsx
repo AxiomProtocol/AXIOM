@@ -83,14 +83,15 @@ interface EarnStats {
 }
 
 interface PoolData {
-  pool: string;
-  asset0Symbol: string;
-  asset1Symbol: string;
-  reserve0: string;
-  reserve1: string;
-  tvlUsd: string;
+  id: string;
+  address: string;
+  reserve0Label: string;
+  reserve1Label: string;
+  reserve0: number;
+  reserve1: number;
+  tvlUsd: number;
   status: string;
-  fee: string;
+  feeBps: number;
 }
 
 interface GuardRailStatus {
@@ -217,7 +218,9 @@ export default function FounderOpsPage() {
       fetch('/api/founder-ops/overview').then(r => r.json()).catch(() => null),
       fetch('/api/founder-ops/log').then(r => r.json()).catch(() => ({ logs: [] })),
     ]).then(([ov, lg]) => {
-      if (ov && !ov.error) setData(ov);
+      // API returns { success: true, data: { sentinel, euler, axusd, ... } }
+      const ovData = ov?.data ?? ov;
+      if (ovData && !ovData.error) setData(ovData);
       else if (ov?.error) setError(ov.error);
       setLogs(lg.logs || []);
       setLoading(false);
@@ -226,22 +229,23 @@ export default function FounderOpsPage() {
       setLoading(false);
     });
 
-    fetch('/api/euler/earn-stats').then(r => r.json()).then(setEarnStats).catch(() => {});
+    fetch('/api/euler/earn-stats').then(r => r.json()).then(d => {
+      if (d && d.tvlUsd != null) setEarnStats(d);
+    }).catch(() => {});
     fetch('/api/euler/eulerswap-pools').then(r => r.json()).then(d => {
       if (d.pools) setPools(d.pools);
     }).catch(() => {});
 
     Promise.all([
-      fetch('/api/property-analysis/reports?limit=1').then(r => r.json()).catch(() => null),
-      fetch('/api/land/deals?limit=1').then(r => r.json()).catch(() => null),
-      fetch('/api/wealth-practice/groups?limit=1').then(r => r.json()).catch(() => null),
-    ]).then(([reports, deals, groups]) => {
-      if (reports?.total != null) setReportCount(reports.total);
-      else if (reports?.reports?.length != null) setReportCount(reports.count ?? null);
-      if (deals?.total != null) setDealCount(deals.total);
-      else if (deals?.deals?.length != null) setDealCount(deals.count ?? null);
+      fetch('/api/land/candidates').then(r => r.json()).catch(() => null),
+      fetch('/api/wealth-practice/groups').then(r => r.json()).catch(() => null),
+    ]).then(([candidates, groups]) => {
+      // Land candidates: { success, candidates: [], stats: { total, byStage } }
+      const landTotal = candidates?.stats?.total ?? candidates?.candidates?.length ?? null;
+      if (landTotal != null) setDealCount(landTotal);
+      // Wealth practice groups: { groups: [], total }
       if (groups?.total != null) setGroupCount(groups.total);
-      else if (groups?.groups?.length != null) setGroupCount(groups.count ?? null);
+      else if (Array.isArray(groups?.groups)) setGroupCount(groups.groups.length);
     });
 
     fetch('/api/sentinel/guard-rails').then(r => r.json()).then(d => {
@@ -321,8 +325,8 @@ export default function FounderOpsPage() {
     { id: 'system', label: 'System Status' },
   ];
 
-  const primaryPool = pools.find(p => p.asset0Symbol && p.asset1Symbol) || null;
-  const poolTvl = primaryPool?.tvlUsd ? parseFloat(primaryPool.tvlUsd) : null;
+  const primaryPool = pools.find(p => p.reserve0Label && p.reserve1Label) || pools[0] || null;
+  const poolTvl = primaryPool?.tvlUsd != null ? Number(primaryPool.tvlUsd) : null;
 
   return (
     <DesignLawLayout>
@@ -406,7 +410,7 @@ export default function FounderOpsPage() {
                         {poolsLoading ? '...' : poolTvl != null ? `$${poolTvl.toLocaleString()}` : '—'}
                       </p>
                       <p className="font-dl-mono text-xs text-dl-gray mt-1">
-                        {primaryPool ? `${primaryPool.asset0Symbol}/${primaryPool.asset1Symbol} · ${primaryPool.status}` : 'On-chain liquidity layer'}
+                        {primaryPool ? `${primaryPool.reserve0Label ?? 'USDC'}/${primaryPool.reserve1Label ?? 'AXUSD'} · ${primaryPool.status}` : 'On-chain liquidity layer'}
                       </p>
                     </div>
                     <div className="px-4 py-4 border-b border-r border-dl-border">
@@ -508,7 +512,7 @@ export default function FounderOpsPage() {
                         <p className="font-dl-mono text-xs font-semibold text-dl-navy uppercase">EulerSwap AXUSD / USDC Pool</p>
                       </div>
                       {pools.map((pool, i) => (
-                        <div key={pool.pool} className={`${i < pools.length - 1 ? 'border-b border-dl-border' : ''}`}>
+                        <div key={pool.id || pool.address} className={`${i < pools.length - 1 ? 'border-b border-dl-border' : ''}`}>
                           <div className="grid grid-cols-2 lg:grid-cols-5 gap-0">
                             <div className="px-4 py-3 border-r border-dl-border">
                               <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Status</p>
@@ -516,24 +520,24 @@ export default function FounderOpsPage() {
                             </div>
                             <div className="px-4 py-3 border-r border-dl-border">
                               <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">TVL</p>
-                              <p className="font-dl-mono text-sm font-bold text-dl-navy">${parseFloat(pool.tvlUsd || '0').toLocaleString()}</p>
+                              <p className="font-dl-mono text-sm font-bold text-dl-navy">${Number(pool.tvlUsd || 0).toLocaleString()}</p>
                             </div>
                             <div className="px-4 py-3 border-r border-dl-border">
-                              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">{pool.asset0Symbol || 'USDC'} Reserve</p>
-                              <p className="font-dl-mono text-sm font-bold text-dl-navy">{parseFloat(pool.reserve0 || '0').toFixed(2)}</p>
+                              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">{pool.reserve0Label || 'Token 0'} Reserve</p>
+                              <p className="font-dl-mono text-sm font-bold text-dl-navy">{Number(pool.reserve0 || 0).toFixed(2)}</p>
                             </div>
                             <div className="px-4 py-3 border-r border-dl-border">
-                              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">{pool.asset1Symbol || 'AXUSD'} Reserve</p>
-                              <p className="font-dl-mono text-sm font-bold text-dl-navy">{parseFloat(pool.reserve1 || '0').toFixed(2)}</p>
+                              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">{pool.reserve1Label || 'Token 1'} Reserve</p>
+                              <p className="font-dl-mono text-sm font-bold text-dl-navy">{Number(pool.reserve1 || 0).toFixed(2)}</p>
                             </div>
                             <div className="px-4 py-3">
                               <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Fee</p>
-                              <p className="font-dl-mono text-sm font-bold text-dl-navy">{pool.fee || '—'}</p>
+                              <p className="font-dl-mono text-sm font-bold text-dl-navy">{pool.feeBps != null ? `${Number(pool.feeBps).toFixed(4)} bps` : '—'}</p>
                             </div>
                           </div>
                           <div className="px-4 py-2 border-t border-dl-border bg-dl-bg-alt">
-                            <a href={`https://arbiscan.io/address/${pool.pool}`} target="_blank" rel="noopener noreferrer"
-                              className="font-dl-mono text-xs text-dl-gray underline">{pool.pool}</a>
+                            <a href={`https://arbiscan.io/address/${pool.address}`} target="_blank" rel="noopener noreferrer"
+                              className="font-dl-mono text-xs text-dl-gray underline">{pool.address}</a>
                           </div>
                         </div>
                       ))}
