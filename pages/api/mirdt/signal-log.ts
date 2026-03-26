@@ -64,8 +64,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         prsScore?: number;
       };
 
+      const validGrades = new Set(['A', 'B', 'C', 'WATCH', 'ALERT']);
       if (!eventType || !grade) {
         return res.status(400).json({ error: 'eventType and grade are required' });
+      }
+      if (!validGrades.has(grade)) {
+        return res.status(400).json({ error: `Invalid grade: must be one of A, B, C, WATCH, ALERT` });
       }
 
       const prevResult = await pool.query(

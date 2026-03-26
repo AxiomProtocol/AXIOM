@@ -38,12 +38,14 @@ async function getAuthorizedAddress(req: NextApiRequest): Promise<string | null>
   }
 }
 
+const VALID_GRADES = new Set(['A', 'B', 'C', 'WATCH', 'ALERT']);
+
 function validatePayload(body: unknown): body is BriefPayload {
   if (!body || typeof body !== 'object') return false;
   const b = body as Record<string, unknown>;
   return (
     typeof b.dimension === 'string' && b.dimension.length > 0 &&
-    typeof b.grade === 'string' && b.grade.length > 0 &&
+    typeof b.grade === 'string' && VALID_GRADES.has(b.grade) &&
     typeof b.keyMetric === 'string' && b.keyMetric.length > 0 &&
     typeof b.thesis === 'string' && b.thesis.length > 0
   );

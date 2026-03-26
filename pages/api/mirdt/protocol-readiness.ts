@@ -792,21 +792,34 @@ async function growthVelocityIntelligence(): Promise<DimensionResult> {
   }
 }
 
+const DIMENSION_GRADES = new Set(['A', 'B', 'C', 'WATCH', 'ALERT']);
+
 async function autoLogSignal(
   prsScore: number,
-  grade: string,
   dimensions: DimensionResult[]
 ): Promise<void> {
   try {
-    const topAlert = dimensions
-      .filter((d) => d.grade === 'ALERT')
-      .sort((a, b) => a.score - b.score)[0];
-    const dimension = topAlert?.label ?? 'PRS Computation';
-    const dimGrade = topAlert?.grade ?? grade;
-    const keyMetric = topAlert?.keyMetric ?? `PRS ${prsScore.toFixed(1)}/10`;
-    const thesis =
-      topAlert?.thesis ??
-      `Protocol readiness computed at ${prsScore.toFixed(1)}/10. ${grade} signal across ${dimensions.length} dimensions.`;
+    // Throttle: only auto-log if no PRS_COMPUTED entry in the last 5 minutes
+    const recentCheck = await pool.query(
+      `SELECT id FROM mirdt_signal_log
+       WHERE event_type = 'PRS_COMPUTED' AND created_at > NOW() - INTERVAL '5 minutes'
+       LIMIT 1`
+    );
+    if (recentCheck.rows.length > 0) return;
+
+    // Pick most significant dimension for the log entry:
+    // 1. Top ALERT dimension (lowest score = most degraded)
+    // 2. Fallback: lowest-scoring WATCH dimension
+    // 3. Final fallback: lowest-scoring dimension overall
+    // Always uses dimension-level grade (A/B/C/WATCH/ALERT) — never PRS aggregate grade
+    const alertDims = dimensions.filter((d) => d.grade === 'ALERT').sort((a, b) => a.score - b.score);
+    const watchDims = dimensions.filter((d) => d.grade === 'WATCH').sort((a, b) => a.score - b.score);
+    const topDim = alertDims[0] ?? watchDims[0] ?? [...dimensions].sort((a, b) => a.score - b.score)[0];
+
+    const dimension = topDim.label;
+    const dimGrade = DIMENSION_GRADES.has(topDim.grade) ? topDim.grade : 'WATCH';
+    const keyMetric = topDim.keyMetric;
+    const thesis = topDim.thesis;
 
     const prevResult = await pool.query(
       `SELECT checksum FROM mirdt_signal_log ORDER BY created_at DESC LIMIT 1`
@@ -859,7 +872,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const normalizedPrs = Math.min(10, Math.max(0, prs));
   const grade = prsOverallGrade(normalizedPrs);
 
-  autoLogSignal(parseFloat(normalizedPrs.toFixed(1)), grade, dimensions);
+  autoLogSignal(parseFloat(normalizedPrs.toFixed(1)), dimensions);
 
   const response: PRSResponse = {
     prs: parseFloat(normalizedPrs.toFixed(1)),
