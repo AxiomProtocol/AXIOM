@@ -722,7 +722,7 @@ export default function DisclosurePage() {
                   <p className="text-sm text-dl-navy">Intelligence dimension signal produced</p>
                 </div>
                 <div className="flex gap-2">
-                  <p className="text-sm font-dl-mono text-dl-navy font-semibold w-32 flex-shrink-0">PRS_COMPUTE</p>
+                  <p className="text-sm font-dl-mono text-dl-navy font-semibold w-32 flex-shrink-0">PRS_COMPUTED</p>
                   <p className="text-sm text-dl-navy">Protocol Readiness Score computed</p>
                 </div>
                 <div className="flex gap-2">

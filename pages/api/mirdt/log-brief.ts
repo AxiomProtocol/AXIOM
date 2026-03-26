@@ -10,6 +10,34 @@ interface BriefPayload {
   prsScore?: number | null;
 }
 
+function parseCookies(cookieHeader: string | undefined): Record<string, string> {
+  if (!cookieHeader) return {};
+  return Object.fromEntries(
+    cookieHeader.split(';')
+      .map((c) => {
+        const [key, ...val] = c.trim().split('=');
+        return [key.trim(), val.join('=')];
+      })
+      .filter(([k]) => k.length > 0)
+  );
+}
+
+async function getAuthorizedAddress(req: NextApiRequest): Promise<string | null> {
+  if (process.env.NODE_ENV === 'development') return 'dev';
+  const cookies = parseCookies(req.headers.cookie);
+  const sessionToken = cookies['siwe_session'];
+  if (!sessionToken) return null;
+  try {
+    const result = await pool.query(
+      `SELECT wallet_address FROM wallet_sessions WHERE session_token = $1 AND expires_at > NOW() LIMIT 1`,
+      [sessionToken]
+    );
+    return result.rows[0]?.wallet_address ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function validatePayload(body: unknown): body is BriefPayload {
   if (!body || typeof body !== 'object') return false;
   const b = body as Record<string, unknown>;
@@ -24,6 +52,11 @@ function validatePayload(body: unknown): body is BriefPayload {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const authorizedAddress = await getAuthorizedAddress(req);
+  if (!authorizedAddress) {
+    return res.status(401).json({ error: 'Wallet authentication required — connect wallet and sign in to log briefs' });
   }
 
   if (!validatePayload(req.body)) {

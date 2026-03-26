@@ -280,6 +280,8 @@ export default function MIRDTPage() {
         setBriefStatus(`Capital Intelligence Brief logged: ${dim.label}`);
         await fetchServerLog();
         setActiveTab('log');
+      } else if (res.status === 401) {
+        setBriefStatus('Connect wallet and sign in to log briefs to Operations');
       } else {
         setBriefStatus('Unable to log brief — check operations access');
       }
