@@ -116,10 +116,10 @@ function TrendArrow({ trend }: { trend: Dimension['trend'] }) {
 
 function DimensionCard({
   dim,
-  onViewLog,
+  onLogBrief,
 }: {
   dim: Dimension;
-  onViewLog: () => void;
+  onLogBrief: (d: Dimension) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const canLog = dim.grade === 'A' || dim.grade === 'B';
@@ -165,10 +165,10 @@ function DimensionCard({
             </div>
             {canLog && (
               <button
-                onClick={onViewLog}
+                onClick={() => onLogBrief(dim)}
                 className="text-xs font-dl-mono text-dl-navy border border-dl-border px-3 py-1 hover:bg-dl-navy hover:text-white transition-colors"
               >
-                View in Log →
+                Log to Operations →
               </button>
             )}
           </div>
@@ -260,10 +260,34 @@ export default function MIRDTPage() {
     fetchServerLog();
   }, [fetchPRS, fetchServerLog]);
 
-  const handleViewLog = useCallback(async () => {
-    await fetchServerLog();
-    setActiveTab('log');
-  }, [fetchServerLog]);
+  const [briefStatus, setBriefStatus] = useState<string | null>(null);
+
+  const handleLogBrief = useCallback(async (dim: Dimension) => {
+    try {
+      setBriefStatus(`Logging ${dim.label}…`);
+      const res = await fetch('/api/mirdt/log-brief', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dimension: dim.label,
+          grade: dim.grade,
+          keyMetric: dim.keyMetric,
+          thesis: dim.thesis,
+          prsScore: data?.prs ?? null,
+        }),
+      });
+      if (res.ok) {
+        setBriefStatus(`Capital Intelligence Brief logged: ${dim.label}`);
+        await fetchServerLog();
+        setActiveTab('log');
+      } else {
+        setBriefStatus('Unable to log brief — check operations access');
+      }
+    } catch {
+      setBriefStatus('Brief log failed');
+    }
+    setTimeout(() => setBriefStatus(null), 4000);
+  }, [data?.prs, fetchServerLog]);
 
   const gradeBg: Record<PRSGrade, string> = {
     FAVORABLE: 'bg-dl-forest',
@@ -377,6 +401,12 @@ export default function MIRDTPage() {
                 </div>
               </div>
 
+              {briefStatus && (
+                <div className="border border-dl-forest bg-dl-bg-alt px-4 py-2 mb-4 flex items-center gap-2">
+                  <span className="text-xs font-dl-mono text-dl-forest">{briefStatus}</span>
+                </div>
+              )}
+
               <div className="flex gap-0 border-b border-dl-border mb-6">
                 <button
                   className={`px-4 py-2 text-sm font-dl-mono border-b-2 -mb-px transition-colors ${
@@ -408,7 +438,7 @@ export default function MIRDTPage() {
               {activeTab === 'intelligence' && (
                 <div className="space-y-2">
                   {data.dimensions.map((dim) => (
-                    <DimensionCard key={dim.id} dim={dim} onViewLog={handleViewLog} />
+                    <DimensionCard key={dim.id} dim={dim} onLogBrief={handleLogBrief} />
                   ))}
 
                   <div className="border border-dl-border px-4 py-3 mt-4 bg-dl-bg-alt">
