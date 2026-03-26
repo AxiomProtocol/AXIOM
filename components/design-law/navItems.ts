@@ -31,6 +31,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: 'Intelligence',
     children: [
+      { href: '/mirdt', label: 'MIRDT' },
       { href: '/sentinel', label: 'Sentinel' },
       { href: '/observer', label: 'Observer' },
       { href: '/re', label: 'RE Intelligence' },

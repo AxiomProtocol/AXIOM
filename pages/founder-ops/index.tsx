@@ -197,6 +197,9 @@ export default function FounderOpsPage() {
   const [earnStats, setEarnStats] = useState<EarnStats | null>(null);
   const [earnLoading, setEarnLoading] = useState(false);
 
+  const [prsData, setPrsData] = useState<{ prs: number; grade: string; dimensions: { id: string; label: string; grade: string }[] } | null>(null);
+  const [prsLoading, setPrsLoading] = useState(false);
+
   const [pools, setPools] = useState<PoolData[]>([]);
   const [poolsLoading, setPoolsLoading] = useState(false);
 
@@ -251,6 +254,11 @@ export default function FounderOpsPage() {
     fetch('/api/sentinel/guard-rails').then(r => r.json()).then(d => {
       if (d.guardRails) setGuardRails(d.guardRails);
     }).catch(() => {});
+
+    setPrsLoading(true);
+    fetch('/api/mirdt/protocol-readiness').then(r => r.json()).then(d => {
+      if (d.prs != null) setPrsData(d);
+    }).catch(() => {}).finally(() => setPrsLoading(false));
   }, []);
 
   const loadVariances = async () => {
@@ -375,6 +383,60 @@ export default function FounderOpsPage() {
                       that shows capital deployed, rails used, assets analyzed, groups coordinated, and infrastructure kept live over time.
                       That is what this framework builds.
                     </p>
+                  </div>
+                </div>
+
+                <div className="mb-8">
+                  <SectionHeading>Protocol Readiness Score</SectionHeading>
+                  <div className="border border-dl-border">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-dl-border">
+                      <div className="px-5 py-4">
+                        <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">PRS Score</p>
+                        {prsLoading ? (
+                          <p className="font-dl-mono text-2xl font-bold text-dl-gray">—</p>
+                        ) : prsData ? (
+                          <p className="font-dl-mono text-2xl font-bold text-dl-navy">{prsData.prs.toFixed(1)} <span className="text-sm text-dl-gray font-normal">/ 10</span></p>
+                        ) : (
+                          <p className="font-dl-mono text-sm text-dl-gray">Unavailable</p>
+                        )}
+                      </div>
+                      <div className="px-5 py-4">
+                        <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Signal</p>
+                        {prsData ? (
+                          <p className={`font-dl-mono text-sm font-semibold ${
+                            prsData.grade === 'FAVORABLE' ? 'text-dl-forest' :
+                            prsData.grade === 'NEUTRAL' ? 'text-dl-navy' :
+                            prsData.grade === 'CAUTION' ? 'text-dl-gold' : 'text-red-600'
+                          }`}>{prsData.grade}</p>
+                        ) : (
+                          <p className="font-dl-mono text-sm text-dl-gray">—</p>
+                        )}
+                      </div>
+                      <div className="px-5 py-4">
+                        <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Intelligence Terminal</p>
+                        <a href="/mirdt" className="font-dl-mono text-xs text-dl-navy underline hover:text-dl-forest">
+                          Open Capital Intelligence Terminal →
+                        </a>
+                        {prsData && (
+                          <div className="flex gap-1 mt-2">
+                            {prsData.dimensions?.map((d: any) => (
+                              <div
+                                key={d.id}
+                                className="flex-1 h-1.5"
+                                style={{
+                                  backgroundColor:
+                                    d.grade === 'A' ? '#1D3D2A' :
+                                    d.grade === 'B' ? '#1B2A4A' :
+                                    d.grade === 'ALERT' ? '#DC2626' :
+                                    '#B8973A',
+                                }}
+                                title={`${d.label}: ${d.grade}`}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
