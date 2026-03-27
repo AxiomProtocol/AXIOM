@@ -18,15 +18,23 @@ export function verifyCreditAuth(req: NextApiRequest, claimedWallet: string): Au
   }
 
   const sig = req.headers['x-wallet-signature'] as string | undefined;
-  const msgHeader = req.headers['x-wallet-message'] as string | undefined;
+  const rawMsgHeader = req.headers['x-wallet-message'] as string | undefined;
 
-  if (!sig || !msgHeader) {
+  if (!sig || !rawMsgHeader) {
     return {
       ok: false,
       reason:
         'Wallet ownership proof required. Obtain a nonce from GET /api/community-credit/nonce, ' +
         'sign the message, then provide x-wallet-signature and x-wallet-message headers.',
     };
+  }
+
+  // Decode URL-encoding applied by the client to keep the header ISO-8859-1 safe
+  let msgHeader: string;
+  try {
+    msgHeader = decodeURIComponent(rawMsgHeader);
+  } catch {
+    msgHeader = rawMsgHeader;
   }
 
   if (!msgHeader.includes('Nonce:') || !msgHeader.includes('Axiom Protocol')) {

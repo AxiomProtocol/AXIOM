@@ -47,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   nonceStore.set(key, { nonce, expiresAt });
 
   const message =
-    `Axiom Protocol — Community Entry Credit wallet verification\n` +
+    `Axiom Protocol - Community Entry Credit wallet verification\n` +
     `Wallet: ${walletAddress.toLowerCase()}\n` +
     `Nonce: ${nonce}\n` +
     `Expires: ${new Date(expiresAt).toISOString()}`;

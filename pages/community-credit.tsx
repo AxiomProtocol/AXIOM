@@ -163,7 +163,7 @@ export default function CommunityCreditPage() {
         method: 'personal_sign',
         params: [message, addr],
       });
-      return { headers: { 'x-wallet-signature': sig, 'x-wallet-message': message }, error: null };
+      return { headers: { 'x-wallet-signature': sig, 'x-wallet-message': encodeURIComponent(message) }, error: null };
     } catch (err: unknown) {
       const raw = err instanceof Error ? err.message : String(err);
       const lower = raw.toLowerCase();
