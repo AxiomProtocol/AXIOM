@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useAccount, useSignMessage } from 'wagmi';
+import { useAccount, useWalletClient } from 'wagmi';
 import { DesignLawLayout, SectionHeading, SolidButton } from '../components/design-law';
 
 interface CreditLine {
@@ -100,7 +100,7 @@ const STATUS_STYLES: Record<string, string> = {
 
 export default function CommunityCreditPage() {
   const { address: connectedAddress, isConnected } = useAccount();
-  const { signMessageAsync } = useSignMessage();
+  const { data: walletClient, isLoading: walletClientLoading } = useWalletClient();
 
   const [walletAddress, setWalletAddress] = useState('');
   const [status, setStatus] = useState<StatusResponse | null>(null);
@@ -126,19 +126,35 @@ export default function CommunityCreditPage() {
     }
   }, [connectedAddress]);
 
-  const buildAuthHeaders = async (addr: string): Promise<Record<string, string> | null> => {
+  const buildAuthHeaders = async (
+    addr: string
+  ): Promise<{ headers: Record<string, string> | null; error: string | null }> => {
+    if (!walletClient) {
+      return { headers: null, error: 'Wallet not ready — try disconnecting and reconnecting via the Access Platform button.' };
+    }
+    let message = '';
     try {
       const nonceRes = await fetch(`/api/community-credit/nonce?walletAddress=${encodeURIComponent(addr)}`);
-      if (!nonceRes.ok) return null;
-      const { message } = await nonceRes.json();
-      if (!message) return null;
-      const sig = await signMessageAsync({ message });
-      return {
-        'x-wallet-signature': sig,
-        'x-wallet-message': message,
-      };
+      if (!nonceRes.ok) return { headers: null, error: 'Failed to request signing nonce. Please try again.' };
+      const body = await nonceRes.json();
+      message = body.message;
+      if (!message) return { headers: null, error: 'Invalid nonce response. Please try again.' };
     } catch {
-      return null;
+      return { headers: null, error: 'Network error fetching nonce. Please try again.' };
+    }
+    try {
+      const sig = await walletClient.signMessage({ message });
+      return {
+        headers: { 'x-wallet-signature': sig, 'x-wallet-message': message },
+        error: null,
+      };
+    } catch (err: unknown) {
+      const raw = err instanceof Error ? err.message : String(err);
+      const lower = raw.toLowerCase();
+      if (lower.includes('reject') || lower.includes('cancel') || lower.includes('denied') || lower.includes('user refused')) {
+        return { headers: null, error: 'Signature request rejected. Open your wallet and approve the signing request.' };
+      }
+      return { headers: null, error: `Signing error: ${raw.slice(0, 120)}` };
     }
   };
 
@@ -151,9 +167,9 @@ export default function CommunityCreditPage() {
     setStatusError('');
     setStatus(null);
     try {
-      const authHeaders = await buildAuthHeaders(addr);
+      const { headers: authHeaders, error: authError } = await buildAuthHeaders(addr);
       if (!authHeaders) {
-        setStatusError('Signature cancelled or wallet not ready. Approve the signature request in your wallet to continue.');
+        setStatusError(authError ?? 'Signing failed. Please try again.');
         setStatusLoading(false);
         return;
       }
@@ -196,9 +212,9 @@ export default function CommunityCreditPage() {
     setApplyError('');
     setApplyResult(null);
     try {
-      const authHeaders = await buildAuthHeaders(walletAddress);
+      const { headers: authHeaders, error: authError } = await buildAuthHeaders(walletAddress);
       if (!authHeaders) {
-        setApplyError('Signature cancelled or wallet not ready. Approve the signature request in your wallet to continue.');
+        setApplyError(authError ?? 'Signing failed. Please try again.');
         setApplying(false);
         return;
       }
@@ -371,10 +387,14 @@ export default function CommunityCreditPage() {
                 </p>
                 <button
                   onClick={handleLookup}
-                  disabled={statusLoading}
+                  disabled={statusLoading || walletClientLoading}
                   className="border border-dl-navy bg-dl-bg text-dl-navy px-6 py-2.5 min-h-[44px] text-sm font-bold hover:bg-dl-navy hover:text-white disabled:opacity-50"
                 >
-                  {statusLoading ? 'Requesting signature...' : 'Sign & Look Up'}
+                  {walletClientLoading
+                    ? 'Initialising wallet...'
+                    : statusLoading
+                    ? 'Requesting signature...'
+                    : 'Sign & Look Up'}
                 </button>
               </div>
               <p className="text-xs text-dl-gray mb-4">
