@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useAccount, useWalletClient } from 'wagmi';
+import { useAccount } from 'wagmi';
+import { useAppKitProvider } from '@reown/appkit/react';
 import { DesignLawLayout, SectionHeading, SolidButton } from '../components/design-law';
 
 interface CreditLine {
@@ -100,7 +101,7 @@ const STATUS_STYLES: Record<string, string> = {
 
 export default function CommunityCreditPage() {
   const { address: connectedAddress, isConnected } = useAccount();
-  const { data: walletClient, isLoading: walletClientLoading } = useWalletClient();
+  const { walletProvider } = useAppKitProvider<any>('eip155');
 
   const [walletAddress, setWalletAddress] = useState('');
   const [status, setStatus] = useState<StatusResponse | null>(null);
@@ -129,6 +130,12 @@ export default function CommunityCreditPage() {
   const buildAuthHeaders = async (
     addr: string
   ): Promise<{ headers: Record<string, string> | null; error: string | null }> => {
+    // Resolve the EIP-1193 provider: AppKit's managed provider first, then window.ethereum
+    const provider: any = walletProvider ?? (typeof window !== 'undefined' ? (window as any).ethereum : null);
+    if (!provider) {
+      return { headers: null, error: 'No wallet provider found. Connect your wallet via the Access Platform button and try again.' };
+    }
+
     // Fetch a nonce-bound message to sign
     let message = '';
     try {
@@ -141,43 +148,22 @@ export default function CommunityCreditPage() {
       return { headers: null, error: 'Network error fetching nonce. Please try again.' };
     }
 
-    // Attempt 1: Viem wallet client (preferred — works when Wagmi has the connector registered)
-    if (walletClient) {
-      try {
-        const sig = await walletClient.signMessage({ message });
-        return { headers: { 'x-wallet-signature': sig, 'x-wallet-message': message }, error: null };
-      } catch (err: unknown) {
-        const raw = err instanceof Error ? err.message : String(err);
-        const lower = raw.toLowerCase();
-        // Hard rejection — don't fall through, respect the user's action
-        if (lower.includes('reject') || lower.includes('cancel') || lower.includes('denied') || lower.includes('user refused')) {
-          return { headers: null, error: 'Signature request rejected. Open your wallet and approve the signing request.' };
-        }
-        // Other error (network, chain mismatch, etc.) — fall through to provider fallback
+    // Sign via EIP-1193 personal_sign — works for injected wallets and WalletConnect alike
+    try {
+      const sig = await provider.request({
+        method: 'personal_sign',
+        params: [message, addr],
+      });
+      return { headers: { 'x-wallet-signature': sig, 'x-wallet-message': message }, error: null };
+    } catch (err: unknown) {
+      const raw = err instanceof Error ? err.message : String(err);
+      const lower = raw.toLowerCase();
+      const code = (err as any)?.code;
+      if (code === 4001 || lower.includes('reject') || lower.includes('cancel') || lower.includes('denied') || lower.includes('user refused')) {
+        return { headers: null, error: 'Signature request rejected. Open your wallet and approve the signing request.' };
       }
+      return { headers: null, error: `Signing error: ${raw.slice(0, 120)}` };
     }
-
-    // Attempt 2: Direct window.ethereum fallback (works regardless of connected chain;
-    // message signing does not require a specific network)
-    const eth = typeof window !== 'undefined' ? (window as any).ethereum : null;
-    if (eth) {
-      try {
-        const sig = await eth.request({
-          method: 'personal_sign',
-          params: [message, addr],
-        });
-        return { headers: { 'x-wallet-signature': sig, 'x-wallet-message': message }, error: null };
-      } catch (err: unknown) {
-        const raw = err instanceof Error ? err.message : String(err);
-        const lower = raw.toLowerCase();
-        if (lower.includes('reject') || lower.includes('cancel') || lower.includes('denied') || lower.includes('user refused') || (err as any)?.code === 4001) {
-          return { headers: null, error: 'Signature request rejected. Open your wallet and approve the signing request.' };
-        }
-        return { headers: null, error: `Signing error: ${raw.slice(0, 120)}` };
-      }
-    }
-
-    return { headers: null, error: 'No wallet provider found. Connect your wallet via the Access Platform button and try again.' };
   };
 
   const fetchStatus = async (addr: string) => {
@@ -409,14 +395,10 @@ export default function CommunityCreditPage() {
                 </p>
                 <button
                   onClick={handleLookup}
-                  disabled={statusLoading || walletClientLoading}
+                  disabled={statusLoading}
                   className="border border-dl-navy bg-dl-bg text-dl-navy px-6 py-2.5 min-h-[44px] text-sm font-bold hover:bg-dl-navy hover:text-white disabled:opacity-50"
                 >
-                  {walletClientLoading
-                    ? 'Initialising wallet...'
-                    : statusLoading
-                    ? 'Requesting signature...'
-                    : 'Sign & Look Up'}
+                  {statusLoading ? 'Requesting signature...' : 'Sign & Look Up'}
                 </button>
               </div>
               <p className="text-xs text-dl-gray mb-4">
