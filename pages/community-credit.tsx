@@ -101,7 +101,7 @@ const STATUS_STYLES: Record<string, string> = {
 
 export default function CommunityCreditPage() {
   const { address: connectedAddress, isConnected } = useAccount();
-  const { walletProvider, walletProviderType } = useAppKitProvider<any>('eip155');
+  const { walletProvider } = useAppKitProvider<any>('eip155');
 
   const [walletAddress, setWalletAddress] = useState('');
   const [status, setStatus] = useState<StatusResponse | null>(null);
@@ -415,14 +415,9 @@ export default function CommunityCreditPage() {
           ) : (
             <>
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-dl-gray font-dl-mono truncate">
-                    Connected: {walletAddress || connectedAddress}
-                  </p>
-                  <p className="text-xs text-dl-gray font-dl-mono">
-                    Provider: {walletProviderType ?? 'none'} {walletProvider ? '✓' : '✗'}
-                  </p>
-                </div>
+                <p className="text-xs text-dl-gray font-dl-mono truncate flex-1">
+                  Connected: {walletAddress || connectedAddress}
+                </p>
                 <button
                   onClick={handleLookup}
                   disabled={statusLoading}
