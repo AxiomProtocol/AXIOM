@@ -67,6 +67,28 @@ const STRATEGIES = [
 
 const PERF_FEE_BPS = 1000;
 
+interface DbCache {
+  ameRegime: { regime: string; confidence: number } | null;
+  creditRateBps: number | null;
+  lastRebalance: string | null;
+  fetchedAt: number;
+}
+let dbCache: DbCache | null = null;
+const DB_CACHE_TTL_MS = 60_000;
+
+async function getCachedDbData(): Promise<Pick<DbCache, 'ameRegime' | 'creditRateBps' | 'lastRebalance'>> {
+  if (dbCache && Date.now() - dbCache.fetchedAt < DB_CACHE_TTL_MS) {
+    return dbCache;
+  }
+  const [ameRegime, creditRateBps, lastRebalance] = await Promise.all([
+    getAmeRegime(),
+    getFundRateBps(),
+    getLastRebalance(),
+  ]);
+  dbCache = { ameRegime, creditRateBps, lastRebalance, fetchedAt: Date.now() };
+  return dbCache;
+}
+
 async function getAmeRegime(): Promise<{ regime: string; confidence: number } | null> {
   try {
     const result = await pool.query(
@@ -132,13 +154,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const deployed = isEulerEarnDeployed();
 
-    const [ameRegime, creditRateBps, lastRebalance, vaultTvlUsd, perfFeeCollectedUsd] = await Promise.all([
-      getAmeRegime(),
-      getFundRateBps(),
-      getLastRebalance(),
+    const [dbData, vaultTvlUsd, perfFeeCollectedUsd] = await Promise.all([
+      getCachedDbData(),
       deployed ? fetchOnChainTvl(EULER_EARN_VAULT_ADDRESS, 'EulerEarnVault') : Promise.resolve(0),
       fetchPerfFeeCollected(),
     ]);
+    const { ameRegime, creditRateBps, lastRebalance } = dbData;
 
     const effectiveCreditRate = creditRateBps ?? 1400;
     const blendedApyBps = computeBlendedApyBps(STRATEGIES, effectiveCreditRate);
