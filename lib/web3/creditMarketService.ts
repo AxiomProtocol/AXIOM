@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import { CREDIT_MARKET_ADDRESS, ACTIVE_AXUSD } from '../../src/config/activeContracts.generated';
 import { CREDIT_MARKET_ABI } from '../../src/config/creditMarket.generated';
 
-const AXUSD_DECIMALS = 6;
+const AXUSD_DECIMALS = 18;
 const AXUSD_SCALE = BigInt(10 ** AXUSD_DECIMALS);
 
 const ERC20_ABI = [
@@ -90,7 +90,7 @@ export async function approveCreditMarket(amountUsd: string): Promise<{ txHash: 
   const signer = await getSigner();
   const axusd  = new ethers.Contract(ACTIVE_AXUSD, ERC20_ABI, signer);
 
-  const amountRaw = BigInt(Math.round(parseFloat(amountUsd) * 10 ** AXUSD_DECIMALS));
+  const amountRaw = ethers.parseUnits(amountUsd, AXUSD_DECIMALS);
   const tx = await axusd.approve(CREDIT_MARKET_ADDRESS, amountRaw);
   const receipt = await tx.wait(1);
   return { txHash: receipt.hash };
@@ -103,7 +103,7 @@ export async function depositToCreditMarket(
   const signer = await getSigner();
   const market  = new ethers.Contract(CREDIT_MARKET_ADDRESS, [...CREDIT_MARKET_ABI], signer);
 
-  const amountRaw = BigInt(Math.round(parseFloat(amountUsd) * 10 ** AXUSD_DECIMALS));
+  const amountRaw = ethers.parseUnits(amountUsd, AXUSD_DECIMALS);
   const tx = await market.depositLiquidity(amountRaw);
   const receipt = await tx.wait(1);
 

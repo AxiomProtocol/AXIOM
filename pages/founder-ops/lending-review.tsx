@@ -125,6 +125,30 @@ export default function LendingReviewPage() {
   const [kycMessage, setKycMessage] = useState('');
   const [kycFilter, setKycFilter] = useState('all');
 
+  const [claimLoading, setClaimLoading] = useState(false);
+  const [claimResult, setClaimResult] = useState<{ status: string; message: string; txHash?: string } | null>(null);
+
+  const handleIssueAccredClaim = async () => {
+    setClaimLoading(true);
+    setClaimResult(null);
+    try {
+      const res = await fetch('/api/admin/issue-accred-claim', {
+        method: 'POST',
+        headers: { 'x-admin-key': adminToken },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setClaimResult({ status: data.status, message: data.message, txHash: data.txHash });
+      } else {
+        setClaimResult({ status: 'error', message: data.message ?? data.error ?? 'Unknown error' });
+      }
+    } catch (e) {
+      setClaimResult({ status: 'error', message: String(e) });
+    } finally {
+      setClaimLoading(false);
+    }
+  };
+
   const fetchApplications = async () => {
     try {
       const res = await fetch('/api/realestate/loan-application', {
@@ -579,6 +603,40 @@ export default function LendingReviewPage() {
 
       {activeTab === 'kyc' && (
         <>
+          {/* On-Chain Identity Fix Panel */}
+          <div className="border border-dl-border mb-6 p-4 bg-yellow-50">
+            <h3 className="font-dl-serif text-base text-dl-navy mb-1">On-Chain LP Claim Issuance</h3>
+            <p className="text-xs text-dl-gray mb-3">
+              Issues the missing ACCREDITED_INVESTOR claim (topic 2) to the deployer&apos;s ERC-3643 identity.
+              Required for <code className="font-dl-mono bg-yellow-100 px-1">isVerified()</code> to return true and allow credit market deposits.
+              Topics 1 (KYC) and 3 (Sanctions) already issued; topic 2 was skipped in initial deployment.
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleIssueAccredClaim}
+                disabled={claimLoading}
+                className="px-4 py-2 text-sm bg-dl-navy text-white font-medium disabled:opacity-50"
+              >
+                {claimLoading ? 'Issuing Claim...' : 'Issue Accreditation Claim (Topic 2)'}
+              </button>
+              {claimResult && (
+                <div className={`text-xs font-dl-mono flex-1 ${claimResult.status === 'error' ? 'text-red-700' : 'text-green-800'}`}>
+                  <span className="font-bold">{claimResult.status.toUpperCase()}</span>: {claimResult.message}
+                  {claimResult.txHash && (
+                    <a
+                      href={`https://arbiscan.io/tx/${claimResult.txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-2 underline"
+                    >
+                      {claimResult.txHash.slice(0, 12)}...
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-6">
             {[
               { label: 'Total', value: kycCounts.all, bg: 'bg-dl-bg' },
