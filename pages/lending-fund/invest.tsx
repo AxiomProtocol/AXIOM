@@ -188,6 +188,7 @@ export default function InvestPage() {
         updateStep(1, true);
         setCurrentStep(2);
         fetchVaultPosition(accounts[0]);
+        restoreAccreditationState(accounts[0]);
       }
     } catch (error) {
       console.error('Wallet check error:', error);
@@ -201,6 +202,19 @@ export default function InvestPage() {
       setAxusdBalance(position.axusdBalanceUsd);
     } catch (error) {
       console.error('Failed to fetch credit market position:', error);
+    }
+  };
+
+  const restoreAccreditationState = async (address: string) => {
+    try {
+      const res = await fetch(`/api/realestate/accreditation?walletAddress=${encodeURIComponent(address)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.records && data.records.length > 0) {
+        updateStep(3, true);
+      }
+    } catch {
+      // Silently fail — accreditation state defaults to incomplete
     }
   };
 
@@ -250,6 +264,7 @@ export default function InvestPage() {
         updateStep(1, true);
         setCurrentStep(2);
         fetchVaultPosition(accounts[0]);
+        restoreAccreditationState(accounts[0]);
       }
     } catch (error) {
       console.error('Failed to connect wallet:', error);
@@ -763,6 +778,22 @@ export default function InvestPage() {
 
           {currentStep === 3 && (
             <StepCard title="Step 3: Accredited Investor Verification">
+              {steps[2]?.completed ? (
+                <div className="border border-dl-border bg-dl-bg p-6 mb-6">
+                  <p className="text-xs text-dl-gray uppercase tracking-widest font-dl-mono mb-2">Verification On File</p>
+                  <p className="text-sm text-dl-gray mb-4 leading-relaxed">
+                    Your accredited investor self-certification has been received and is under review.
+                    No further action is required at this step.
+                  </p>
+                  <button
+                    onClick={() => { updateStep(3, true); setCurrentStep(4); }}
+                    className="px-6 py-2 bg-dl-navy text-white text-sm font-medium"
+                  >
+                    Continue to Invest
+                  </button>
+                </div>
+              ) : (
+              <>
               <p className="mb-6 text-dl-gray">
                 Under SEC Rule 506(c), we must verify your accredited investor status per SEC Rule 501(a).
                 Please select your qualification method and complete the questionnaire.
@@ -982,6 +1013,8 @@ export default function InvestPage() {
               >
                 {accreditationSubmitting ? 'Submitting...' : 'Submit Accreditation & Continue'}
               </button>
+              </>
+              )}
             </StepCard>
           )}
 

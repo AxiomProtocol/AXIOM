@@ -71,9 +71,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const { walletAddress } = req.query;
       if (walletAddress) {
+        const { sql } = await import('drizzle-orm');
         const records = await db.select()
           .from(lfAccreditationRecords)
-          .where(eq(lfAccreditationRecords.walletAddress, walletAddress as string))
+          .where(sql`LOWER(${lfAccreditationRecords.walletAddress}) = LOWER(${walletAddress as string})`)
           .orderBy(desc(lfAccreditationRecords.createdAt));
 
         return res.status(200).json({ records });
