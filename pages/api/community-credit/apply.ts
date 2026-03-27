@@ -21,16 +21,16 @@ const VALID_PURPOSES = ['wealth_practice_entry', 'contribution_smoothing', 'earn
 
 async function getGefTier(walletAddress: string): Promise<string> {
   try {
-    const result = await pool.query<{ tier_name: string }>(
-      `SELECT gef_tier_thresholds.tier_name
+    const result = await pool.query<{ name: string }>(
+      `SELECT gef_tier_thresholds.name
        FROM gef_user_execution_profiles
        JOIN gef_tier_thresholds ON gef_user_execution_profiles.current_tier_id = gef_tier_thresholds.tier_id
        WHERE LOWER(gef_user_execution_profiles.wallet_address) = LOWER($1)
        LIMIT 1`,
       [walletAddress]
     );
-    if (result.rows.length > 0 && result.rows[0].tier_name) {
-      return result.rows[0].tier_name;
+    if (result.rows.length > 0 && result.rows[0].name) {
+      return result.rows[0].name;
     }
   } catch (_err) {
     // Wallet not found in GEF — default to Observer

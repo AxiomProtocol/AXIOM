@@ -23,15 +23,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let gefTier = 'Observer';
     try {
       const gefResult = await pool.query(
-        `SELECT gef_tier_thresholds.tier_name
+        `SELECT gef_tier_thresholds.name
          FROM gef_user_execution_profiles
          JOIN gef_tier_thresholds ON gef_user_execution_profiles.current_tier_id = gef_tier_thresholds.tier_id
          WHERE LOWER(gef_user_execution_profiles.wallet_address) = LOWER($1)
          LIMIT 1`,
         [walletAddress]
       );
-      if (gefResult.rows.length > 0 && gefResult.rows[0].tier_name) {
-        gefTier = gefResult.rows[0].tier_name;
+      if (gefResult.rows.length > 0 && gefResult.rows[0].name) {
+        gefTier = gefResult.rows[0].name;
       }
     } catch {}
 
