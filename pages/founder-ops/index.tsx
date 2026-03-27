@@ -349,6 +349,21 @@ export default function FounderOpsPage() {
         disclosure="Internal operations dashboard. All on-chain data is live from Arbitrum One. Off-chain metrics reflect database state."
       >
         <>
+            <div className="flex flex-wrap gap-0 border border-dl-border mb-6 bg-dl-bg-alt">
+              <a href="/founder-ops/lending-review#kyc" className="flex items-center gap-2 px-5 py-3 border-r border-dl-border text-sm text-dl-navy hover:bg-dl-bg group">
+                <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider">Admin</span>
+                <span className="font-medium group-hover:text-dl-forest">KYC / Accreditation Review →</span>
+              </a>
+              <a href="/founder-ops/lending-review" className="flex items-center gap-2 px-5 py-3 border-r border-dl-border text-sm text-dl-navy hover:bg-dl-bg group">
+                <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider">Admin</span>
+                <span className="font-medium group-hover:text-dl-forest">Loan Applications →</span>
+              </a>
+              <a href="/founder-ops/playbook" className="flex items-center gap-2 px-5 py-3 text-sm text-dl-navy hover:bg-dl-bg group">
+                <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider">Admin</span>
+                <span className="font-medium group-hover:text-dl-forest">Founder Playbook →</span>
+              </a>
+            </div>
+
             <div className="flex flex-wrap gap-0 border-b border-dl-border mb-8">
               {TABS.map(tab => (
                 <button
@@ -1029,6 +1044,30 @@ export default function FounderOpsPage() {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <div className="mb-8">
+                  <SectionHeading>Admin Tools</SectionHeading>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border">
+                    <a href="/founder-ops/lending-review" className="block px-5 py-4 border-r border-dl-border hover:bg-dl-bg-alt group">
+                      <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Investor Verification</p>
+                      <p className="font-dl-serif text-base text-dl-navy group-hover:text-dl-forest font-medium">KYC / Accreditation Review →</p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-1">Approve or reject pending investor accreditation records</p>
+                    </a>
+                    <a href="/founder-ops/lending-review" className="block px-5 py-4 border-r border-dl-border hover:bg-dl-bg-alt group">
+                      <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Loan Applications</p>
+                      <p className="font-dl-serif text-base text-dl-navy group-hover:text-dl-forest font-medium">Lending Review →</p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-1">Review and approve Fix &amp; Flip loan applications</p>
+                    </a>
+                    <a href="/founder-ops/playbook" className="block px-5 py-4 hover:bg-dl-bg-alt group">
+                      <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Operations</p>
+                      <p className="font-dl-serif text-base text-dl-navy group-hover:text-dl-forest font-medium">Founder Playbook →</p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-1">Monthly capital deployment playbook and action items</p>
+                    </a>
+                  </div>
+                  <p className="font-dl-mono text-xs text-dl-gray mt-2">
+                    All admin tools require the <span className="text-dl-navy">ADMIN_SOLVENCY_KEY</span> token to access.
+                  </p>
                 </div>
 
                 {pendingOutcomes.length > 0 && (

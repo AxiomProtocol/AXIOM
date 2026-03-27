@@ -63,7 +63,10 @@ function verifyAdminToken(req: NextApiRequest): boolean {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) return false;
   const token = authHeader.split(' ')[1];
-  return token === process.env.ADMIN_SETUP_SECRET;
+  return (
+    token === process.env.ADMIN_SOLVENCY_KEY ||
+    token === process.env.ADMIN_SETUP_SECRET
+  );
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

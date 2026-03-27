@@ -161,15 +161,13 @@ export default function LendingReviewPage() {
 
   const handleAuth = async () => {
     setLoading(true);
-    const res = await fetch('/api/realestate/loan-application', {
+    const res = await fetch('/api/realestate/accreditation', {
       headers: { 'Authorization': `Bearer ${adminToken}` }
     });
     if (res.ok) {
       setAuthenticated(true);
-      const data = await res.json();
-      setApplications(data.applications || []);
-      setStats(data.stats || null);
       fetchKycRecords();
+      fetchApplications();
     } else {
       alert('Invalid admin token');
     }
