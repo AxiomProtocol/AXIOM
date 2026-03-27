@@ -101,12 +101,21 @@ const STATUS_STYLES: Record<string, string> = {
 
 export default function CommunityCreditPage() {
   const { address: connectedAddress, isConnected } = useAccount();
-  const { walletProvider } = useAppKitProvider<any>('eip155');
+  const { walletProvider, walletProviderType } = useAppKitProvider<any>('eip155');
 
   const [walletAddress, setWalletAddress] = useState('');
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState('');
+  const [isInIframe, setIsInIframe] = useState(false);
+
+  useEffect(() => {
+    try {
+      setIsInIframe(window.self !== window.top);
+    } catch {
+      setIsInIframe(true);
+    }
+  }, []);
 
   const [form, setForm] = useState({
     statedMonthlyIncomeUsd: '',
@@ -190,8 +199,10 @@ export default function CommunityCreditPage() {
       } else {
         setStatusError(data.error || 'Failed to load status');
       }
-    } catch {
-      setStatusError('Network error — please try again.');
+    } catch (err: unknown) {
+      const raw = err instanceof Error ? err.message : String(err);
+      console.error('[community-credit] fetchStatus error:', raw, err);
+      setStatusError(`Error: ${raw.slice(0, 160)}`);
     } finally {
       setStatusLoading(false);
     }
@@ -382,6 +393,20 @@ export default function CommunityCreditPage() {
 
       <div className="mb-12">
         <SectionHeading>Check Your Credit Status</SectionHeading>
+        {isInIframe && (
+          <div className="border border-amber-600 bg-amber-50 px-4 py-3 mb-4 text-sm text-amber-900">
+            <strong>Open in a browser tab to sign.</strong> Wallet extensions cannot sign inside embedded preview panes.{' '}
+            <a
+              href="/community-credit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-semibold"
+            >
+              Open this page in a new tab →
+            </a>{' '}
+            then connect your wallet and sign.
+          </div>
+        )}
         <div className="border border-dl-border p-6">
           {!isConnected ? (
             <div className="border border-dl-border px-4 py-4 bg-dl-bg-alt text-sm text-dl-navy">
@@ -390,9 +415,14 @@ export default function CommunityCreditPage() {
           ) : (
             <>
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-                <p className="text-xs text-dl-gray font-dl-mono truncate flex-1">
-                  Connected: {walletAddress || connectedAddress}
-                </p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-dl-gray font-dl-mono truncate">
+                    Connected: {walletAddress || connectedAddress}
+                  </p>
+                  <p className="text-xs text-dl-gray font-dl-mono">
+                    Provider: {walletProviderType ?? 'none'} {walletProvider ? '✓' : '✗'}
+                  </p>
+                </div>
                 <button
                   onClick={handleLookup}
                   disabled={statusLoading}
