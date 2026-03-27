@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useAccount, useSignMessage } from 'wagmi';
 import { DesignLawLayout, SectionHeading, SolidButton } from '../components/design-law';
-
-interface EthereumProvider {
-  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
-}
 
 interface CreditLine {
   credit_line_id: string;
@@ -101,36 +98,11 @@ const STATUS_STYLES: Record<string, string> = {
   expired: 'border border-dl-gray text-dl-gray',
 };
 
-function getEthereum(): EthereumProvider | null {
-  if (typeof window === 'undefined') return null;
-  return (window as Window & { ethereum?: EthereumProvider }).ethereum ?? null;
-}
-
-async function getSignedHeaders(walletAddress: string): Promise<Record<string, string> | null> {
-  try {
-    const eth = getEthereum();
-    if (!eth) return null;
-    const nonceRes = await fetch(`/api/community-credit/nonce?walletAddress=${encodeURIComponent(walletAddress)}`);
-    if (!nonceRes.ok) return null;
-    const { message } = await nonceRes.json();
-    if (!message) return null;
-    const sig = await eth.request({
-      method: 'personal_sign',
-      params: [message, walletAddress],
-    });
-    if (typeof sig !== 'string') return null;
-    return {
-      'x-wallet-signature': sig,
-      'x-wallet-message': message,
-    };
-  } catch {
-    return null;
-  }
-}
-
 export default function CommunityCreditPage() {
+  const { address: connectedAddress, isConnected } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+
   const [walletAddress, setWalletAddress] = useState('');
-  const [walletInput, setWalletInput] = useState('');
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState('');
@@ -145,27 +117,43 @@ export default function CommunityCreditPage() {
   const [applyError, setApplyError] = useState('');
 
   useEffect(() => {
-    const eth = getEthereum();
-    if (eth) {
-      eth.request({ method: 'eth_accounts' }).then((result) => {
-        const accounts = result as string[];
-        if (accounts.length > 0) {
-          setWalletAddress(accounts[0]);
-          setWalletInput(accounts[0]);
-          fetchStatus(accounts[0]);
-        }
-      }).catch(() => {});
+    if (connectedAddress) {
+      setWalletAddress(connectedAddress);
+    } else {
+      setWalletAddress('');
+      setStatus(null);
+      setStatusError('');
     }
-  }, []);
+  }, [connectedAddress]);
+
+  const buildAuthHeaders = async (addr: string): Promise<Record<string, string> | null> => {
+    try {
+      const nonceRes = await fetch(`/api/community-credit/nonce?walletAddress=${encodeURIComponent(addr)}`);
+      if (!nonceRes.ok) return null;
+      const { message } = await nonceRes.json();
+      if (!message) return null;
+      const sig = await signMessageAsync({ message });
+      return {
+        'x-wallet-signature': sig,
+        'x-wallet-message': message,
+      };
+    } catch {
+      return null;
+    }
+  };
 
   const fetchStatus = async (addr: string) => {
+    if (!isConnected || !addr) {
+      setStatusError('Connect your wallet using the Access Platform button to view credit status.');
+      return;
+    }
     setStatusLoading(true);
     setStatusError('');
     setStatus(null);
     try {
-      const authHeaders = await getSignedHeaders(addr);
+      const authHeaders = await buildAuthHeaders(addr);
       if (!authHeaders) {
-        setStatusError('Connect a wallet with MetaMask to view your credit status. Signature required.');
+        setStatusError('Signature cancelled or wallet not ready. Approve the signature request in your wallet to continue.');
         setStatusLoading(false);
         return;
       }
@@ -179,22 +167,25 @@ export default function CommunityCreditPage() {
         setStatusError(data.error || 'Failed to load status');
       }
     } catch {
-      setStatusError('Failed to load status');
+      setStatusError('Network error — please try again.');
     } finally {
       setStatusLoading(false);
     }
   };
 
   const handleLookup = () => {
-    const addr = walletInput.trim();
+    if (!isConnected) {
+      setStatusError('Connect your wallet using the Access Platform button first.');
+      return;
+    }
+    const addr = connectedAddress || walletAddress;
     if (!addr) return;
-    setWalletAddress(addr);
     fetchStatus(addr);
   };
 
   const handleApply = async () => {
-    if (!walletAddress) {
-      setApplyError('Enter a wallet address first');
+    if (!isConnected || !walletAddress) {
+      setApplyError('Connect your wallet using the Access Platform button first.');
       return;
     }
     if (!form.requestedAmountUsd || !form.requestedPurpose) {
@@ -205,9 +196,9 @@ export default function CommunityCreditPage() {
     setApplyError('');
     setApplyResult(null);
     try {
-      const authHeaders = await getSignedHeaders(walletAddress);
+      const authHeaders = await buildAuthHeaders(walletAddress);
       if (!authHeaders) {
-        setApplyError('Wallet signature required. Connect MetaMask and approve the signature request to continue.');
+        setApplyError('Signature cancelled or wallet not ready. Approve the signature request in your wallet to continue.');
         setApplying(false);
         return;
       }
@@ -227,7 +218,7 @@ export default function CommunityCreditPage() {
         fetchStatus(walletAddress);
       }
     } catch {
-      setApplyError('Failed to submit application');
+      setApplyError('Failed to submit application. Please try again.');
     } finally {
       setApplying(false);
     }
@@ -368,28 +359,31 @@ export default function CommunityCreditPage() {
       <div className="mb-12">
         <SectionHeading>Check Your Credit Status</SectionHeading>
         <div className="border border-dl-border p-6">
-          <p className="text-xs text-dl-gray mb-4 border border-dl-border px-3 py-2 bg-dl-bg-alt">
-            Wallet signature required to view credit status. Your signature proves wallet ownership and protects your financial data.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <input
-              type="text"
-              placeholder="0x wallet address"
-              value={walletInput}
-              onChange={(e) => setWalletInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
-              className="flex-1 border border-dl-border bg-dl-bg px-4 py-2.5 text-sm font-dl-mono text-dl-navy focus:outline-none min-h-[44px]"
-            />
-            <button
-              onClick={handleLookup}
-              className="border border-dl-navy bg-dl-bg text-dl-navy px-6 py-2.5 min-h-[44px] text-sm font-bold hover:bg-dl-navy hover:text-white"
-            >
-              Sign &amp; Look Up
-            </button>
-          </div>
+          {!isConnected ? (
+            <div className="border border-dl-border px-4 py-4 bg-dl-bg-alt text-sm text-dl-navy">
+              Connect your wallet using the <span className="font-semibold">Access Platform</span> button in the navigation to view your credit status.
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+                <p className="text-xs text-dl-gray font-dl-mono truncate flex-1">
+                  Connected: {walletAddress || connectedAddress}
+                </p>
+                <button
+                  onClick={handleLookup}
+                  disabled={statusLoading}
+                  className="border border-dl-navy bg-dl-bg text-dl-navy px-6 py-2.5 min-h-[44px] text-sm font-bold hover:bg-dl-navy hover:text-white disabled:opacity-50"
+                >
+                  {statusLoading ? 'Requesting signature...' : 'Sign & Look Up'}
+                </button>
+              </div>
+              <p className="text-xs text-dl-gray mb-4">
+                Your wallet will be prompted to sign a message proving ownership. No gas is spent.
+              </p>
+            </>
+          )}
 
-          {statusLoading && <p className="text-sm text-dl-gray">Requesting wallet signature...</p>}
-          {statusError && <p className="text-sm" style={{ color: '#991b1b' }}>{statusError}</p>}
+          {statusError && <p className="text-sm mt-2" style={{ color: '#991b1b' }}>{statusError}</p>}
 
           {status && (
             <div>
