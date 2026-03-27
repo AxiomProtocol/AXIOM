@@ -129,9 +129,7 @@ export default function CommunityCreditPage() {
   const buildAuthHeaders = async (
     addr: string
   ): Promise<{ headers: Record<string, string> | null; error: string | null }> => {
-    if (!walletClient) {
-      return { headers: null, error: 'Wallet not ready — try disconnecting and reconnecting via the Access Platform button.' };
-    }
+    // Fetch a nonce-bound message to sign
     let message = '';
     try {
       const nonceRes = await fetch(`/api/community-credit/nonce?walletAddress=${encodeURIComponent(addr)}`);
@@ -142,20 +140,44 @@ export default function CommunityCreditPage() {
     } catch {
       return { headers: null, error: 'Network error fetching nonce. Please try again.' };
     }
-    try {
-      const sig = await walletClient.signMessage({ message });
-      return {
-        headers: { 'x-wallet-signature': sig, 'x-wallet-message': message },
-        error: null,
-      };
-    } catch (err: unknown) {
-      const raw = err instanceof Error ? err.message : String(err);
-      const lower = raw.toLowerCase();
-      if (lower.includes('reject') || lower.includes('cancel') || lower.includes('denied') || lower.includes('user refused')) {
-        return { headers: null, error: 'Signature request rejected. Open your wallet and approve the signing request.' };
+
+    // Attempt 1: Viem wallet client (preferred — works when Wagmi has the connector registered)
+    if (walletClient) {
+      try {
+        const sig = await walletClient.signMessage({ message });
+        return { headers: { 'x-wallet-signature': sig, 'x-wallet-message': message }, error: null };
+      } catch (err: unknown) {
+        const raw = err instanceof Error ? err.message : String(err);
+        const lower = raw.toLowerCase();
+        // Hard rejection — don't fall through, respect the user's action
+        if (lower.includes('reject') || lower.includes('cancel') || lower.includes('denied') || lower.includes('user refused')) {
+          return { headers: null, error: 'Signature request rejected. Open your wallet and approve the signing request.' };
+        }
+        // Other error (network, chain mismatch, etc.) — fall through to provider fallback
       }
-      return { headers: null, error: `Signing error: ${raw.slice(0, 120)}` };
     }
+
+    // Attempt 2: Direct window.ethereum fallback (works regardless of connected chain;
+    // message signing does not require a specific network)
+    const eth = typeof window !== 'undefined' ? (window as any).ethereum : null;
+    if (eth) {
+      try {
+        const sig = await eth.request({
+          method: 'personal_sign',
+          params: [message, addr],
+        });
+        return { headers: { 'x-wallet-signature': sig, 'x-wallet-message': message }, error: null };
+      } catch (err: unknown) {
+        const raw = err instanceof Error ? err.message : String(err);
+        const lower = raw.toLowerCase();
+        if (lower.includes('reject') || lower.includes('cancel') || lower.includes('denied') || lower.includes('user refused') || (err as any)?.code === 4001) {
+          return { headers: null, error: 'Signature request rejected. Open your wallet and approve the signing request.' };
+        }
+        return { headers: null, error: `Signing error: ${raw.slice(0, 120)}` };
+      }
+    }
+
+    return { headers: null, error: 'No wallet provider found. Connect your wallet via the Access Platform button and try again.' };
   };
 
   const fetchStatus = async (addr: string) => {
