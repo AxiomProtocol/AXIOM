@@ -5,9 +5,14 @@ import {
   isEulerSwapDeployed,
 } from '../../../src/config/activeContracts.generated';
 
+// Canonical addresses for supported tokens
 const AXUSD = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7'.toLowerCase();
 const AXM   = '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D'.toLowerCase();
 const ZERO  = '0x0000000000000000000000000000000000000000';
+
+// Fix 2 & 7: Use getAssets() to dynamically determine token ordering,
+// eliminating any assumption about which token is reserve0/reserve1.
+// Also add basic input validation.
 
 const ALCHEMY_RPC = process.env.ALCHEMY_API_KEY
   ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
@@ -15,26 +20,36 @@ const ALCHEMY_RPC = process.env.ALCHEMY_API_KEY
 
 const POOL_ABI = [
   'function getReserves() view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)',
+  'function getAssets() view returns (address asset0, address asset1)',
 ];
 
-// Derive AXM/USD price from the on-chain AXM/AXUSD pool reserves.
-// token0 = AXUSD (18 dec, $1 peg), token1 = AXM (18 dec)
-// Spot price = reserve0 / reserve1  (AXUSD per AXM)
 async function getAxmPriceFromPool(): Promise<string> {
   const poolAddress = EULER_SWAP_AXUSD_AXM_POOL_ADDRESS;
   if (!isEulerSwapDeployed() || poolAddress === ZERO) return '0';
   try {
     const provider = new ethers.JsonRpcProvider(ALCHEMY_RPC);
     const pool = new ethers.Contract(poolAddress, POOL_ABI, provider);
-    const reserves = await pool.getReserves();
-    const axusdReserve = Number(ethers.formatUnits(reserves[0], 18)); // token0 = AXUSD
-    const axmReserve   = Number(ethers.formatUnits(reserves[1], 18)); // token1 = AXM
+    const [reserves, assets] = await Promise.all([pool.getReserves(), pool.getAssets()]);
+
+    const asset0Lower = (assets[0] as string).toLowerCase();
+
+    // Determine which reserve is AXM and which is AXUSD using on-chain asset list
+    const axmIsAsset0 = asset0Lower === AXM;
+    const axmReserve   = Number(ethers.formatUnits(axmIsAsset0 ? reserves[0] : reserves[1], 18));
+    const axusdReserve = Number(ethers.formatUnits(axmIsAsset0 ? reserves[1] : reserves[0], 18));
+
     if (axmReserve <= 0) return '0';
+    // AXM price in USD = AXUSD reserve / AXM reserve  (AXUSD is pegged to $1)
     const price = axusdReserve / axmReserve;
     return price.toFixed(6);
   } catch {
     return '0';
   }
+}
+
+// Fix 7: Validate that token looks like an Ethereum address
+function isValidAddress(addr: string): boolean {
+  return /^0x[0-9a-fA-F]{40}$/.test(addr);
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -43,14 +58,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { token } = req.query;
-  if (!token) return res.status(400).json({ error: 'Missing token address' });
+  if (!token || typeof token !== 'string') {
+    return res.status(400).json({ error: 'Missing token address' });
+  }
 
-  const tokenLower = (token as string).toLowerCase();
+  // Fix 7: Reject obviously invalid inputs before hitting the RPC
+  if (!isValidAddress(token)) {
+    return res.status(400).json({ error: 'Invalid token address format' });
+  }
+
+  const tokenLower = token.toLowerCase();
 
   try {
     if (tokenLower === AXUSD) {
-      // AXUSD is the protocol stablecoin, pegged to $1.00
-      return res.status(200).json({ token, price: '1.000000', source: 'peg' });
+      return res.status(200).json({
+        token,
+        price: '1.000000',
+        source: 'peg',
+        note: 'AXUSD is the Axiom protocol stablecoin, maintained at $1.00 peg',
+      });
     }
 
     if (tokenLower === AXM) {

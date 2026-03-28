@@ -84,6 +84,13 @@ async function quoteFromEulerSwap(
   }
 }
 
+// Fix 7: Validate that an address looks like an Ethereum address
+function isValidAddress(addr: string): boolean {
+  return /^0x[0-9a-fA-F]{40}$/.test(addr);
+}
+
+const MAX_AMOUNT_IN = 1_000_000_000; // 1B units — sanity cap, not a protocol limit
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -94,12 +101,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Missing required parameters: tokenIn, tokenOut, amountIn' });
   }
 
-  const tokenInLower  = (tokenIn as string).toLowerCase();
-  const tokenOutLower = (tokenOut as string).toLowerCase();
+  // Fix 7: Reject bad address formats before hitting the RPC
+  if (typeof tokenIn !== 'string' || !isValidAddress(tokenIn)) {
+    return res.status(400).json({ error: 'Invalid tokenIn address format' });
+  }
+  if (typeof tokenOut !== 'string' || !isValidAddress(tokenOut)) {
+    return res.status(400).json({ error: 'Invalid tokenOut address format' });
+  }
+
+  const tokenInLower  = tokenIn.toLowerCase();
+  const tokenOutLower = tokenOut.toLowerCase();
   const amountInFloat = parseFloat(amountIn as string);
 
-  if (!amountInFloat || amountInFloat <= 0) {
-    return res.status(400).json({ error: 'amountIn must be a positive number' });
+  if (!isFinite(amountInFloat) || amountInFloat <= 0) {
+    return res.status(400).json({ error: 'amountIn must be a finite positive number' });
+  }
+  if (amountInFloat > MAX_AMOUNT_IN) {
+    return res.status(400).json({ error: `amountIn exceeds maximum allowed value of ${MAX_AMOUNT_IN}` });
   }
 
   const isAxusdIn  = isAxusd(tokenInLower);
