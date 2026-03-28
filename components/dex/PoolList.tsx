@@ -91,16 +91,20 @@ function PoolRow({ pool }: { pool: Pool }) {
       <div className="col-span-2 flex items-center gap-3">
         <div className="flex -space-x-2">
           <div className="w-8 h-8 bg-teal-500/20 border-2 border-gray-800 rounded-full flex items-center justify-center">
-            <span className="text-xs font-bold text-teal-600">A</span>
+            <span className="text-xs font-bold text-teal-600">{(pool.tokenASymbol || 'A').slice(0, 2)}</span>
           </div>
           <div className="w-8 h-8 bg-blue-500/20 border-2 border-gray-800 rounded-full flex items-center justify-center">
-            <span className="text-xs font-bold text-blue-400">B</span>
+            <span className="text-xs font-bold text-blue-400">{(pool.tokenBSymbol || 'B').slice(0, 2)}</span>
           </div>
         </div>
         <div>
-          <div className="text-sm font-medium text-gray-900">Pool #{pool.id}</div>
+          <div className="text-sm font-medium text-gray-900">
+            {pool.tokenASymbol && pool.tokenBSymbol
+              ? `${pool.tokenASymbol} / ${pool.tokenBSymbol}`
+              : `Pool #${pool.id}`}
+          </div>
           <div className="text-xs text-gray-500">
-            {truncateAddress(pool.tokenA)} / {truncateAddress(pool.tokenB)}
+            {pool.protocol || 'DEX'}{pool.pairAddress ? ` · ${truncateAddress(pool.pairAddress)}` : ''}
           </div>
         </div>
       </div>

@@ -17,6 +17,9 @@ export interface Pool {
   id: number;
   tokenA: string;
   tokenB: string;
+  tokenASymbol?: string;
+  tokenBSymbol?: string;
+  protocol?: string;
   reserveA: string;
   reserveB: string;
   totalLiquidity: string;
@@ -76,6 +79,9 @@ export function useDexPools() {
           id: typeof p.id === 'number' ? p.id : idx + 1,
           tokenA: p.tokenA || p.poolAddress || '',
           tokenB: p.tokenB || '',
+          tokenASymbol: p.tokenASymbol || 'Token A',
+          tokenBSymbol: p.tokenBSymbol || 'Token B',
+          protocol: 'Camelot',
           reserveA: p.reserveA || '0',
           reserveB: p.reserveB || '0',
           totalLiquidity: p.totalLiquidity || '0',
@@ -87,6 +93,9 @@ export function useDexPools() {
           id: camelotPools.length + idx + 1,
           tokenA: p.poolAddress || '',
           tokenB: '',
+          tokenASymbol: p.tokenASymbol || 'Token A',
+          tokenBSymbol: p.tokenBSymbol || 'Token B',
+          protocol: 'EulerSwap',
           reserveA: '0',
           reserveB: '0',
           totalLiquidity: String(p.tvl || 0),
