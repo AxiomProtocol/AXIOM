@@ -27,6 +27,8 @@ interface EulerSwapPoolEntry {
   status: string;
   tvl: number;
   tvlNote: string | null;
+  reserveA: number;
+  reserveB: number;
   feeBps: number;
   swapFeeApyBps: number;
   lendingApyBps: number;
@@ -54,6 +56,8 @@ async function fetchEulerSwapPool(
     status: poolAddress === ZERO ? 'PENDING_DEPLOYMENT' : 'ACTIVE',
     tvl: 0,
     tvlNote: null,
+    reserveA: 0,
+    reserveB: 0,
     feeBps: EULER_SWAP.SWAP_FEE_BPS,
     swapFeeApyBps: 0,
     lendingApyBps: 0,
@@ -92,7 +96,7 @@ async function fetchEulerSwapPool(
     // Set to 0 until volume history exists; label as Variable.
     const swapFeeApyBps = 0;
 
-    return { ...base, tvl, tvlNote, feeBps, swapFeeApyBps, blendedApyBps: 0, blendedApyLabel: 'Variable', status: 'ACTIVE' };
+    return { ...base, tvl, tvlNote, reserveA: r0, reserveB: r1, feeBps, swapFeeApyBps, blendedApyBps: 0, blendedApyLabel: 'Variable', status: 'ACTIVE' };
   } catch {
     return base;
   }

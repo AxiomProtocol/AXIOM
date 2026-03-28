@@ -1,17 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+// Fix 3 (regression) + Fix 6 (dead code) + Fix 7 (pool mapping)
+// - DEX_V2_CONTRACTS removed — those contracts are not deployed; it was dead exported code
+// - useDexPools now maps real token addresses (from lib/tokens.ts) and real reserves from API
+// - useUserRewards returns a typed TradingRewardsData object + available flag (not a raw string)
 
-export const DEX_V2_CONTRACTS = {
-  EXCHANGE_HUB_V2: '0x31eF3DCB076ba97229113F4e58Cc9315cb8Dcd28',
-  ORACLE_ADAPTER: '0xe0074F15EFe0E39fdc39c8e13f752DDC63AB35c7',
-  LP_STAKING: '0x066623787044440015f7Ea2eC04cA58126cA00a5',
-  FEE_DISTRIBUTOR: '0xD981748E2ed17681D8088be84480FE294d635ae8',
-  TRADING_REWARDS: '0xb75b6e3D02116421fbd7c830a0f24d9a42420984',
-  DEX_ROUTER: '0x05c655801dbf4ce8Db5aaE159769B7a1a0bFC0d8',
-  DEX_ANALYTICS: '0x93cDF4AeCE237C62032e40C82d8b09dd76Fdf3E9',
-  LIMIT_ORDERS: '0xBdC968773915095b71156bf265b0b10B23B9F8E2',
-  DEX_GOVERNOR: '0x9A86CF2715D4c4Bb6728FB401ACd103527ABf96d',
-  INSURANCE_FUND: '0x449769453e5bc43345092EeD31780bbbfc400F39'
-} as const;
+import { useState, useEffect, useCallback } from 'react';
+import { getAddressBySymbol } from '../tokens';
 
 export interface Pool {
   id: number;
@@ -55,6 +48,13 @@ export interface DexStats {
   totalFees24h: string;
 }
 
+// Fix 1 (regression): typed rewards object replaces the bare string that caused NaN
+export interface TradingRewardsData {
+  earned: string;
+  claimable: string;
+  claimed: string;
+}
+
 export function useDexPools() {
   const [pools, setPools] = useState<Pool[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +66,7 @@ export function useDexPools() {
       const response = await fetch('/api/dex/pools');
       if (!response.ok) throw new Error(`Pool data unavailable (${response.status})`);
       const data = await response.json();
-      
+
       if (data.error) {
         throw new Error(data.error);
       }
@@ -75,19 +75,21 @@ export function useDexPools() {
       if (Array.isArray(rawPools)) {
         setPools(rawPools);
       } else if (rawPools && typeof rawPools === 'object') {
+        // Fix 3: tokenA/tokenB were wrongly set to poolAddress/''; map to real token addresses
         const eulerSwapPools: Pool[] = (rawPools.eulerSwap || []).map((p: any, idx: number) => ({
           id: idx + 1,
-          tokenA: p.poolAddress || '',
-          tokenB: '',
+          tokenA: getAddressBySymbol(p.tokenASymbol) || p.tokenAAddress || '',
+          tokenB: getAddressBySymbol(p.tokenBSymbol) || p.tokenBAddress || '',
           tokenASymbol: p.tokenASymbol || 'Token A',
           tokenBSymbol: p.tokenBSymbol || 'Token B',
-          protocol: 'EulerSwap',
-          reserveA: '0',
-          reserveB: '0',
+          protocol: p.protocol || 'EulerSwap',
+          // Fix 3: reserveA/reserveB were always '0'; now use real on-chain values from API
+          reserveA: p.reserveA !== undefined ? String(p.reserveA) : '0',
+          reserveB: p.reserveB !== undefined ? String(p.reserveB) : '0',
           totalLiquidity: String(p.tvl || 0),
           swapFee: p.feeBps || 0,
           isActive: p.status === 'ACTIVE',
-          pairAddress: p.poolAddress,
+          pairAddress: p.poolAddress || '',
         }));
         setPools(eulerSwapPools);
       } else {
@@ -119,16 +121,16 @@ export function useDexStats() {
       const response = await fetch('/api/dex/stats');
       if (!response.ok) throw new Error(`Stats unavailable (${response.status})`);
       const data = await response.json();
-      
+
       if (data.error && !data.totalPools) {
         throw new Error(data.error);
       }
-      
+
       setStats({
         totalPools: data.totalPools || 0,
         totalTVL: data.totalTVL || '0',
         totalVolume24h: data.totalVolume24h || '0',
-        totalFees24h: data.totalFees24h || '0'
+        totalFees24h: data.totalFees24h || '0',
       });
       setError(null);
     } catch (err) {
@@ -162,11 +164,11 @@ export function useSwapQuote(tokenIn: string, tokenOut: string, amountIn: string
       const response = await fetch(`/api/dex/quote?${params}`);
       if (!response.ok) throw new Error(`Quote unavailable (${response.status})`);
       const data = await response.json();
-      
+
       if (data.error) {
         throw new Error(data.error);
       }
-      
+
       setQuote(data.quote);
       setError(null);
     } catch (err) {
@@ -202,11 +204,11 @@ export function useUserLiquidity(address: string | undefined) {
       const response = await fetch(`/api/dex/user/liquidity?address=${address}`);
       if (!response.ok) throw new Error(`Liquidity data unavailable (${response.status})`);
       const data = await response.json();
-      
+
       if (data.error) {
         throw new Error(data.error);
       }
-      
+
       setPositions(data.positions || []);
       setError(null);
     } catch (err) {
@@ -223,14 +225,20 @@ export function useUserLiquidity(address: string | undefined) {
   return { positions, loading, error, refetch: fetchPositions };
 }
 
+// Fix 1 (regression): returns typed TradingRewardsData + available flag.
+// The API now returns tradingRewards as { earned, claimable, claimed } — not a string.
+// Old code: setTradingRewards(data.tradingRewards || '0') → caused parseFloat(object) = NaN
 export function useUserRewards(address: string | undefined) {
-  const [tradingRewards, setTradingRewards] = useState('0');
+  const EMPTY: TradingRewardsData = { earned: '0', claimable: '0', claimed: '0' };
+  const [rewards, setRewards] = useState<TradingRewardsData>(EMPTY);
+  const [available, setAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchRewards = useCallback(async () => {
     if (!address) {
-      setTradingRewards('0');
+      setRewards(EMPTY);
+      setAvailable(false);
       setLoading(false);
       return;
     }
@@ -240,29 +248,37 @@ export function useUserRewards(address: string | undefined) {
       const response = await fetch(`/api/dex/user/rewards?address=${address}`);
       if (!response.ok) throw new Error(`Rewards data unavailable (${response.status})`);
       const data = await response.json();
-      
+
       if (data.error) {
         throw new Error(data.error);
       }
-      
-      setTradingRewards(data.tradingRewards || '0');
+
+      const tr = data.tradingRewards;
+      setRewards(
+        tr && typeof tr === 'object'
+          ? { earned: tr.earned ?? '0', claimable: tr.claimable ?? '0', claimed: tr.claimed ?? '0' }
+          : EMPTY,
+      );
+      setAvailable(data.available === true);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch rewards');
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address]);
 
   useEffect(() => {
     fetchRewards();
   }, [fetchRewards]);
 
-  return { tradingRewards, loading, error, refetch: fetchRewards };
+  return { rewards, available, loading, error, refetch: fetchRewards };
 }
 
 export function useUserLimitOrders(address: string | undefined) {
   const [orders, setOrders] = useState<any[]>([]);
+  const [available, setAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -278,12 +294,13 @@ export function useUserLimitOrders(address: string | undefined) {
       const response = await fetch(`/api/dex/user/orders?address=${address}`);
       if (!response.ok) throw new Error(`Orders data unavailable (${response.status})`);
       const data = await response.json();
-      
+
       if (data.error) {
         throw new Error(data.error);
       }
-      
+
       setOrders(data.orders || []);
+      setAvailable(data.available === true);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch orders');
@@ -296,7 +313,7 @@ export function useUserLimitOrders(address: string | undefined) {
     fetchOrders();
   }, [fetchOrders]);
 
-  return { orders, loading, error, refetch: fetchOrders };
+  return { orders, available, loading, error, refetch: fetchOrders };
 }
 
 export function useTokenPrice(tokenAddress: string | undefined) {
@@ -316,11 +333,11 @@ export function useTokenPrice(tokenAddress: string | undefined) {
       const response = await fetch(`/api/dex/price?token=${tokenAddress}`);
       if (!response.ok) throw new Error(`Price data unavailable (${response.status})`);
       const data = await response.json();
-      
+
       if (data.error) {
         throw new Error(data.error);
       }
-      
+
       setPrice(data.price);
       setError(null);
     } catch (err) {

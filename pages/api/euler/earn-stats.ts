@@ -19,7 +19,8 @@ async function fetchOnChainTvl(vaultAddress: string, label: string): Promise<num
     const provider = new ethers.JsonRpcProvider(ALCHEMY_RPC);
     const contract = new ethers.Contract(vaultAddress, TOTAL_ASSETS_ABI, provider);
     const raw: bigint = await contract.totalAssets();
-    return Number(ethers.formatUnits(raw, 6));
+    // AXUSD is 18 decimals — formatUnits(raw, 6) was wrong (off by 1e12)
+    return Number(ethers.formatUnits(raw, 18));
   } catch {
     return 0;
   }
@@ -30,7 +31,8 @@ async function fetchPerfFeeCollected(): Promise<number> {
     const provider = new ethers.JsonRpcProvider(ALCHEMY_RPC);
     const axusd = new ethers.Contract(AXUSD_TOKEN, BALANCE_OF_ABI, provider);
     const raw: bigint = await axusd.balanceOf(AXIOM_FEE_BURNER_ADDRESS);
-    return Number(ethers.formatUnits(raw, 6));
+    // AXUSD is 18 decimals
+    return Number(ethers.formatUnits(raw, 18));
   } catch {
     return 0;
   }

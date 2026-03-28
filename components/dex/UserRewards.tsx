@@ -1,59 +1,99 @@
+// Fix 1 (regression) + Fix 7 (stale UI) + Fix 8 (Design Law)
+// - Uses typed TradingRewardsData from fixed useUserRewards hook
+// - Shows "not yet available" informational state when available===false (from API)
+// - No teal/rounded-xl/shadow; uses Design Law navy/forest palette
+
 import { useUserRewards, useUserLimitOrders } from '../../lib/hooks/useDex';
 import { useWallet } from '../../lib/web3/useWallet';
 
+const DL_NAVY = '#1B2A4A';
+const DL_BORDER = '#D4CFC5';
+const DL_BG = '#FAFAF8';
+const DL_MUTED = '#6B7280';
+
 export default function UserRewards() {
   const { isConnected, address } = useWallet();
-  const { tradingRewards, loading: rewardsLoading, refetch: refetchRewards } = useUserRewards(address ?? undefined);
-  const { orders, loading: ordersLoading, refetch: refetchOrders } = useUserLimitOrders(address ?? undefined);
+  const {
+    rewards,
+    available: rewardsAvailable,
+    loading: rewardsLoading,
+    refetch: refetchRewards,
+  } = useUserRewards(address ?? undefined);
+  const {
+    orders,
+    available: ordersAvailable,
+    loading: ordersLoading,
+    refetch: refetchOrders,
+  } = useUserLimitOrders(address ?? undefined);
 
   if (!isConnected) {
     return (
-      <div className="bg-white border border-gray-200 rounded-xl p-6 text-center">
-        <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
-          <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <p className="text-gray-500 text-sm">Connect wallet to view rewards</p>
+      <div
+        style={{ border: `1px solid ${DL_BORDER}`, background: DL_BG }}
+        className="p-6 text-center"
+      >
+        <p style={{ color: DL_MUTED }} className="font-mono text-sm">
+          Connect wallet to view rewards and orders.
+        </p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
+      {/* Trading Rewards */}
+      <div style={{ border: `1px solid ${DL_BORDER}`, background: DL_BG }} className="p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-900">Trading Rewards</h3>
+          <h3 style={{ color: DL_NAVY }} className="font-serif text-base font-semibold tracking-wide">
+            Trading Rewards
+          </h3>
           <button
             onClick={refetchRewards}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            style={{ color: DL_NAVY }}
+            className="opacity-50 hover:opacity-100 p-1"
+            aria-label="Refresh rewards"
           >
-            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
             </svg>
           </button>
         </div>
 
         {rewardsLoading ? (
-          <div className="flex items-center gap-3">
-            <div className="animate-spin w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full" />
-            <span className="text-gray-500 text-sm">Loading...</span>
+          <p style={{ color: DL_MUTED }} className="font-mono text-xs">Loading…</p>
+        ) : !rewardsAvailable ? (
+          // Fix 7: feature-gated by available flag — shows informational state, not misleading UI
+          <div style={{ borderLeft: `3px solid ${DL_BORDER}` }} className="pl-3">
+            <p style={{ color: DL_NAVY }} className="font-mono text-sm">
+              Trading rewards are not yet active.
+            </p>
+            <p style={{ color: DL_MUTED }} className="font-mono text-xs mt-1">
+              Rewards will accrue automatically once the rewards module launches.
+            </p>
           </div>
         ) : (
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-2xl font-bold text-teal-600">
-                {parseFloat(tradingRewards).toFixed(4)} AXM
+              <div style={{ color: DL_NAVY }} className="font-mono text-2xl font-semibold">
+                {parseFloat(rewards.claimable).toFixed(4)} AXM
               </div>
-              <div className="text-sm text-gray-500">Pending rewards</div>
+              <div style={{ color: DL_MUTED }} className="font-mono text-xs mt-0.5">
+                Claimable · {parseFloat(rewards.earned).toFixed(4)} earned · {parseFloat(rewards.claimed).toFixed(4)} claimed
+              </div>
             </div>
             <button
-              disabled={parseFloat(tradingRewards) === 0}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                parseFloat(tradingRewards) > 0
-                  ? 'bg-teal-500 hover:bg-teal-600 text-gray-900'
-                  : 'bg-gray-100 text-gray-500 cursor-not-allowed'
-              }`}
+              disabled={parseFloat(rewards.claimable) === 0}
+              style={{
+                background: parseFloat(rewards.claimable) > 0 ? DL_NAVY : 'transparent',
+                color: parseFloat(rewards.claimable) > 0 ? '#FAFAF8' : DL_MUTED,
+                border: `1px solid ${parseFloat(rewards.claimable) > 0 ? DL_NAVY : DL_BORDER}`,
+              }}
+              className="px-4 py-2 font-mono text-sm disabled:cursor-not-allowed"
             >
               Claim
             </button>
@@ -61,48 +101,69 @@ export default function UserRewards() {
         )}
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
+      {/* Limit Orders */}
+      <div style={{ border: `1px solid ${DL_BORDER}`, background: DL_BG }} className="p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-900">Limit Orders</h3>
+          <h3 style={{ color: DL_NAVY }} className="font-serif text-base font-semibold tracking-wide">
+            Limit Orders
+          </h3>
           <button
             onClick={refetchOrders}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            style={{ color: DL_NAVY }}
+            className="opacity-50 hover:opacity-100 p-1"
+            aria-label="Refresh orders"
           >
-            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
             </svg>
           </button>
         </div>
 
         {ordersLoading ? (
-          <div className="flex items-center gap-3">
-            <div className="animate-spin w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full" />
-            <span className="text-gray-500 text-sm">Loading...</span>
+          <p style={{ color: DL_MUTED }} className="font-mono text-xs">Loading…</p>
+        ) : !ordersAvailable ? (
+          // Fix 7: limit orders not live — clear informational state
+          <div style={{ borderLeft: `3px solid ${DL_BORDER}` }} className="pl-3">
+            <p style={{ color: DL_NAVY }} className="font-mono text-sm">
+              Limit orders are not yet active.
+            </p>
+            <p style={{ color: DL_MUTED }} className="font-mono text-xs mt-1">
+              This feature will be enabled in a future protocol upgrade.
+            </p>
           </div>
         ) : orders.length === 0 ? (
-          <div className="text-center py-4">
-            <p className="text-gray-500 text-sm">No active limit orders</p>
-          </div>
+          <p style={{ color: DL_MUTED }} className="font-mono text-sm text-center py-3">
+            No active limit orders.
+          </p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {orders.map((order) => (
               <div
                 key={order.id}
-                className="flex items-center justify-between p-3 bg-gray-50/50 rounded-lg"
+                style={{ border: `1px solid ${DL_BORDER}` }}
+                className="flex items-center justify-between px-3 py-3"
               >
                 <div>
-                  <div className="text-sm font-medium text-gray-900">
+                  <div style={{ color: DL_NAVY }} className="font-mono text-sm font-semibold">
                     Order #{order.id}
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div style={{ color: DL_MUTED }} className="font-mono text-xs">
                     {parseFloat(order.amountIn).toFixed(4)} @ {parseFloat(order.targetPrice).toFixed(6)}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-gray-500">
+                  <div style={{ color: DL_MUTED }} className="font-mono text-xs">
                     Expires {new Date(order.expiresAt * 1000).toLocaleDateString()}
                   </div>
-                  <button className="text-xs text-red-400 hover:text-red-300 transition-colors">
+                  <button
+                    style={{ color: '#8B1A1A' }}
+                    className="font-mono text-xs hover:opacity-70 mt-0.5"
+                  >
                     Cancel
                   </button>
                 </div>

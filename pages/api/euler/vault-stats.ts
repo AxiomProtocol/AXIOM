@@ -76,9 +76,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const totalBorrowsNum = parseFloat(ethers.formatEther(totalBorrows));
     const utilization = totalAssetsNum > 0 ? (totalBorrowsNum / totalAssetsNum) * 100 : 0;
     
+    // interestRate() returns a per-second rate as a 1e27 ray.
+    // Annualize: multiply by seconds per year (linear APR approximation).
+    const SECONDS_PER_YEAR = 31_536_000;
     const interestRateNum = Number(interestRate);
-    const supplyAPY = interestRateNum > 0 ? (interestRateNum / 1e27) * 100 * (utilization / 100) * 0.9 : 0;
-    const borrowAPY = interestRateNum > 0 ? (interestRateNum / 1e27) * 100 : 0;
+    const perSecondRate = interestRateNum / 1e27;
+    const borrowAPY = interestRateNum > 0 ? perSecondRate * SECONDS_PER_YEAR * 100 : 0;
+    // Supply APY = borrow APY × utilization × (1 − interest fee)
+    const interestFeeRatio = Number(interestFee) / 10000; // interestFee is uint16, 10000 = 100%
+    const supplyAPY = interestRateNum > 0 ? borrowAPY * (utilization / 100) * (1 - interestFeeRatio) : 0;
 
     const supplyCap = decodeAmountCap(Number(caps[0]));
     const borrowCap = decodeAmountCap(Number(caps[1]));

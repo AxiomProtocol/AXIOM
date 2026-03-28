@@ -1,26 +1,36 @@
+// Fix 3 (pool mapping) + Fix 8 (Design Law)
+// - reserveA/reserveB now populated from fixed useDexPools hook (real on-chain values)
+// - Removed bg-teal-500/20, text-teal-600, text-blue-400 token badge colours
+// - Removed rounded-xl, shadow-sm, animate-spin with border-teal-500
+// - No border-radius, consistent Design Law palette (navy/forest/muted gold)
+
 import { useDexPools, Pool } from '../../lib/hooks/useDex';
+
+const DL_NAVY = '#1B2A4A';
+const DL_FOREST = '#1D3D2A';
+const DL_BORDER = '#D4CFC5';
+const DL_BG = '#FAFAF8';
+const DL_MUTED = '#6B7280';
 
 export default function PoolList() {
   const { pools, loading, error, refetch } = useDexPools();
 
   if (loading) {
     return (
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <div className="flex items-center gap-3">
-          <div className="animate-spin w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full" />
-          <span className="text-gray-500">Loading pools...</span>
-        </div>
+      <div style={{ border: `1px solid ${DL_BORDER}`, background: DL_BG }} className="p-6">
+        <p style={{ color: DL_MUTED }} className="font-mono text-sm">Loading pools…</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <div className="text-red-400">{error}</div>
+      <div style={{ border: `1px solid ${DL_BORDER}`, background: DL_BG }} className="p-6">
+        <p style={{ color: '#8B1A1A' }} className="font-mono text-sm">{error}</p>
         <button
           onClick={refetch}
-          className="mt-3 px-4 py-2 bg-gray-100 hover:bg-gray-600 rounded-lg text-gray-900 text-sm"
+          style={{ border: `1px solid ${DL_BORDER}`, color: DL_NAVY }}
+          className="mt-3 px-4 py-2 font-mono text-xs hover:opacity-70"
         >
           Retry
         </button>
@@ -30,44 +40,55 @@ export default function PoolList() {
 
   if (pools.length === 0) {
     return (
-      <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-          <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-          </svg>
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Pools Yet</h3>
-        <p className="text-gray-500 text-sm">Liquidity pools will appear here once created.</p>
+      <div style={{ border: `1px solid ${DL_BORDER}`, background: DL_BG }} className="p-8 text-center">
+        <p style={{ color: DL_NAVY }} className="font-serif text-base mb-1">No Pools</p>
+        <p style={{ color: DL_MUTED }} className="font-mono text-sm">
+          Liquidity pools will appear here once deployed and active.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-900">Liquidity Pools</h3>
-          <button
-            onClick={refetch}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Refresh"
-          >
-            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
-        </div>
+    <div style={{ border: `1px solid ${DL_BORDER}`, background: DL_BG }}>
+      {/* Header row */}
+      <div
+        style={{ borderBottom: `1px solid ${DL_BORDER}` }}
+        className="px-4 py-3 flex items-center justify-between"
+      >
+        <h3 style={{ color: DL_NAVY }} className="font-serif text-base font-semibold tracking-wide">
+          Liquidity Pools
+        </h3>
+        <button
+          onClick={refetch}
+          style={{ color: DL_NAVY }}
+          className="opacity-50 hover:opacity-100 p-1"
+          aria-label="Refresh pools"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
+          </svg>
+        </button>
       </div>
 
-      <div className="hidden md:grid grid-cols-6 gap-4 px-4 py-3 bg-gray-50/50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+      {/* Column headers — desktop only */}
+      <div
+        style={{ borderBottom: `1px solid ${DL_BORDER}`, color: DL_MUTED, background: '#F0EDE6' }}
+        className="hidden md:grid grid-cols-6 gap-4 px-4 py-2 font-mono text-xs tracking-widest uppercase"
+      >
         <div className="col-span-2">Pool</div>
-        <div className="text-right">Liquidity</div>
+        <div className="text-right">TVL</div>
         <div className="text-right">Reserve A</div>
         <div className="text-right">Reserve B</div>
         <div className="text-right">Fee</div>
       </div>
 
-      <div className="divide-y divide-gray-700">
+      <div>
         {pools.map((pool) => (
           <PoolRow key={pool.id} pool={pool} />
         ))}
@@ -77,54 +98,95 @@ export default function PoolList() {
 }
 
 function PoolRow({ pool }: { pool: Pool }) {
-  const formatAmount = (amount: string) => {
-    const num = parseFloat(amount);
-    if (num >= 1000000) return `${(num / 1000000).toFixed(2)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(2)}K`;
-    return num.toFixed(4);
+  const fmtAmount = (amount: string) => {
+    const n = parseFloat(amount);
+    if (!isFinite(n) || n === 0) return '—';
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
+    if (n >= 1_000) return `${(n / 1_000).toFixed(2)}K`;
+    return n.toFixed(2);
   };
 
-  const truncateAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  const fmtUSD = (amount: string) => {
+    const n = parseFloat(amount);
+    if (!isFinite(n) || n === 0) return '—';
+    if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
+    if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
+    return `$${n.toFixed(2)}`;
+  };
+
+  const truncAddr = (addr: string) =>
+    addr && addr.length > 10 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr;
+
+  const initials = (sym: string | undefined) => (sym || 'X').slice(0, 2).toUpperCase();
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-6 gap-4 px-4 py-4 hover:bg-gray-100/30 transition-colors">
+    <div
+      style={{ borderBottom: `1px solid ${DL_BORDER}` }}
+      className="grid grid-cols-2 md:grid-cols-6 gap-4 px-4 py-4 hover:bg-gray-50/60"
+    >
+      {/* Pool identity */}
       <div className="col-span-2 flex items-center gap-3">
-        <div className="flex -space-x-2">
-          <div className="w-8 h-8 bg-teal-500/20 border-2 border-gray-800 rounded-full flex items-center justify-center">
-            <span className="text-xs font-bold text-teal-600">{(pool.tokenASymbol || 'A').slice(0, 2)}</span>
+        {/* Token badges — Design Law: flat squares, navy + forest, no teal/blue */}
+        <div className="flex -space-x-1.5">
+          <div
+            style={{ background: DL_NAVY, color: '#FAFAF8', width: 28, height: 28 }}
+            className="flex items-center justify-center font-mono text-xs font-bold flex-shrink-0"
+          >
+            {initials(pool.tokenASymbol)}
           </div>
-          <div className="w-8 h-8 bg-blue-500/20 border-2 border-gray-800 rounded-full flex items-center justify-center">
-            <span className="text-xs font-bold text-blue-400">{(pool.tokenBSymbol || 'B').slice(0, 2)}</span>
+          <div
+            style={{ background: DL_FOREST, color: '#FAFAF8', width: 28, height: 28, outline: '2px solid #FAFAF8' }}
+            className="flex items-center justify-center font-mono text-xs font-bold flex-shrink-0"
+          >
+            {initials(pool.tokenBSymbol)}
           </div>
         </div>
+
         <div>
-          <div className="text-sm font-medium text-gray-900">
+          <div style={{ color: DL_NAVY }} className="font-mono text-sm font-semibold">
             {pool.tokenASymbol && pool.tokenBSymbol
               ? `${pool.tokenASymbol} / ${pool.tokenBSymbol}`
               : `Pool #${pool.id}`}
           </div>
-          <div className="text-xs text-gray-500">
-            {pool.protocol || 'DEX'}{pool.pairAddress ? ` · ${truncateAddress(pool.pairAddress)}` : ''}
+          <div style={{ color: DL_MUTED }} className="font-mono text-xs">
+            {pool.protocol ?? 'EulerSwap'}
+            {pool.pairAddress ? ` · ${truncAddr(pool.pairAddress)}` : ''}
           </div>
         </div>
       </div>
 
+      {/* TVL */}
       <div className="hidden md:flex flex-col items-end justify-center">
-        <span className="text-sm font-semibold text-teal-600">{formatAmount(pool.totalLiquidity)}</span>
-        <span className="text-xs text-gray-500">Total LP</span>
+        <span style={{ color: DL_NAVY }} className="font-mono text-sm font-semibold">
+          {fmtUSD(pool.totalLiquidity)}
+        </span>
+        <span style={{ color: DL_MUTED }} className="font-mono text-xs">TVL</span>
       </div>
 
+      {/* Reserve A */}
       <div className="hidden md:flex flex-col items-end justify-center">
-        <span className="text-sm text-gray-900">{formatAmount(pool.reserveA)}</span>
+        <span style={{ color: DL_NAVY }} className="font-mono text-sm">
+          {fmtAmount(pool.reserveA)}
+        </span>
+        <span style={{ color: DL_MUTED }} className="font-mono text-xs">{pool.tokenASymbol ?? 'A'}</span>
       </div>
 
+      {/* Reserve B */}
       <div className="hidden md:flex flex-col items-end justify-center">
-        <span className="text-sm text-gray-900">{formatAmount(pool.reserveB)}</span>
+        <span style={{ color: DL_NAVY }} className="font-mono text-sm">
+          {fmtAmount(pool.reserveB)}
+        </span>
+        <span style={{ color: DL_MUTED }} className="font-mono text-xs">{pool.tokenBSymbol ?? 'B'}</span>
       </div>
 
+      {/* Fee */}
       <div className="flex flex-col items-end justify-center">
-        <span className="text-sm font-medium text-green-400">{(pool.swapFee / 100).toFixed(2)}%</span>
-        <span className="text-xs text-gray-500 md:hidden">{formatAmount(pool.totalLiquidity)} LP</span>
+        <span style={{ color: DL_FOREST }} className="font-mono text-sm font-semibold">
+          {(pool.swapFee / 100).toFixed(2)}%
+        </span>
+        <span style={{ color: DL_MUTED }} className="font-mono text-xs md:hidden">
+          {fmtUSD(pool.totalLiquidity)} TVL
+        </span>
       </div>
     </div>
   );
