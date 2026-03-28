@@ -26,6 +26,7 @@ interface EulerSwapPoolEntry {
   protocol: 'EulerSwap';
   status: string;
   tvl: number;
+  tvlNote: string | null;
   feeBps: number;
   swapFeeApyBps: number;
   lendingApyBps: number;
@@ -34,12 +35,15 @@ interface EulerSwapPoolEntry {
   erc3643Required: boolean;
 }
 
+// tvlMode: 'stable' = both tokens are USD-pegged (sum directly)
+//          'axusd-proxy' = one token has no price feed; use the AXUSD side × 2 as a proxy
 async function fetchEulerSwapPool(
   poolAddress: string,
   labelA: string,
   labelB: string,
   decimalsA: number,
   decimalsB: number,
+  tvlMode: 'stable' | 'axusd-proxy' = 'stable',
 ): Promise<EulerSwapPoolEntry> {
   const base: EulerSwapPoolEntry = {
     id: `eulerswap_${labelA.toLowerCase()}_${labelB.toLowerCase()}`,
@@ -49,6 +53,7 @@ async function fetchEulerSwapPool(
     protocol: 'EulerSwap',
     status: poolAddress === ZERO ? 'PENDING_DEPLOYMENT' : 'ACTIVE',
     tvl: 0,
+    tvlNote: null,
     feeBps: EULER_SWAP.SWAP_FEE_BPS,
     swapFeeApyBps: 0,
     lendingApyBps: 0,
@@ -62,18 +67,32 @@ async function fetchEulerSwapPool(
   try {
     const provider = new ethers.JsonRpcProvider(ALCHEMY_RPC);
     const pool = new ethers.Contract(poolAddress, EULERSWAP_POOL_ABI, provider);
-    const [reserves] = await Promise.all([pool.getReserves()]);
+    const reserves = await pool.getReserves();
 
     let feeBps = EULER_SWAP.SWAP_FEE_BPS;
     try { feeBps = Number(await pool.fee()); } catch {}
 
     const r0 = Number(ethers.formatUnits(reserves[0], decimalsA));
     const r1 = Number(ethers.formatUnits(reserves[1], decimalsB));
-    const tvl = r0 + r1;
-    const estimatedDailyVol = tvl * 0.15;
-    const swapFeeApyBps = tvl > 0 ? Math.round((estimatedDailyVol * (feeBps / 10000) * 365 / tvl) * 10000) : 0;
 
-    return { ...base, tvl, feeBps, swapFeeApyBps, blendedApyBps: swapFeeApyBps, status: 'ACTIVE' };
+    let tvl: number;
+    let tvlNote: string | null = null;
+
+    if (tvlMode === 'axusd-proxy') {
+      // AXM has no external price oracle — use AXUSD reserve × 2 as a balanced-pool proxy
+      // r1 = AXUSD side (18 dec, USD-pegged)
+      tvl = r1 * 2;
+      tvlNote = 'Estimated — AXUSD reserve × 2 proxy (no AXM market price)';
+    } else {
+      // Both tokens are USD-pegged; sum directly
+      tvl = r0 + r1;
+    }
+
+    // Swap fee APY requires real on-chain volume data — not available for new pools.
+    // Set to 0 until volume history exists; label as Variable.
+    const swapFeeApyBps = 0;
+
+    return { ...base, tvl, tvlNote, feeBps, swapFeeApyBps, blendedApyBps: 0, blendedApyLabel: 'Variable', status: 'ACTIVE' };
   } catch {
     return base;
   }
@@ -88,8 +107,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const [eulerSwapUsdcPool, eulerSwapAxmPool] = await Promise.all([
-      fetchEulerSwapPool(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, 'USDC', 'AXUSD', 6, 18),
-      fetchEulerSwapPool(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, 'AXM', 'AXUSD', 18, 18),
+      fetchEulerSwapPool(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, 'USDC', 'AXUSD', 6, 18, 'stable'),
+      fetchEulerSwapPool(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, 'AXM', 'AXUSD', 18, 18, 'axusd-proxy'),
     ]);
 
     const eulerSwapPools = [eulerSwapUsdcPool, eulerSwapAxmPool];

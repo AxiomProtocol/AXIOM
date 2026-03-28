@@ -53,22 +53,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ]);
 
     const eulerSwapTVL = eulerSwapUsdcTvl + eulerSwapAxmTvl;
-    const feeBps = EULER_SWAP.SWAP_FEE_BPS;
-    const eulerSwapEstVolume24h = eulerSwapTVL * 0.15;
-    const eulerSwapFees24h      = eulerSwapEstVolume24h * (feeBps / 10000);
     const totalPools = isEulerSwapDeployed() ? 2 : 0;
 
+    // Volume and fees are not estimated — they require on-chain swap event indexing.
+    // Pools are newly deployed with no trade history. Show 0 until real data exists.
     return res.status(200).json({
       totalPools,
       totalTVL: eulerSwapTVL.toFixed(2),
-      totalVolume24h: eulerSwapEstVolume24h.toFixed(2),
-      totalFees24h: eulerSwapFees24h.toFixed(2),
+      totalVolume24h: '0.00',
+      totalFees24h: '0.00',
+      volumeNote: 'On-chain swap indexing not yet available — no trade history',
       primaryVenue: 'EulerSwap',
       breakdown: {
         eulerSwap: {
           tvl: eulerSwapTVL.toFixed(2),
-          estimatedVolume24h: eulerSwapEstVolume24h.toFixed(2),
-          estimatedFees24h: eulerSwapFees24h.toFixed(2),
+          volume24h: '0.00',
+          fees24h: '0.00',
           pools: totalPools,
           status: isEulerSwapDeployed() ? 'LIVE' : 'PENDING_DEPLOYMENT',
         },
