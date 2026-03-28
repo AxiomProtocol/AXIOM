@@ -17,9 +17,9 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
 } from 'wagmi';
-import { parseUnits, formatUnits, maxUint256 } from 'viem';
+import { parseUnits, formatUnits, maxUint256, type Address } from 'viem';
 import { useWallet } from '../../lib/web3/useWallet';
-import { useUserLiquidity } from '../../lib/hooks/useDex';
+import { useUserLiquidity, type UserLiquidity } from '../../lib/hooks/useDex';
 
 // ── Contract addresses ─────────────────────────────────────────────────────
 const AXUSD_TOKEN    = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7' as const;
@@ -176,7 +176,7 @@ function PositionsTab({
   isConnected: boolean;
   address: string | null;
   loading: boolean;
-  positions: any[];
+  positions: UserLiquidity[];
   onAddLiquidity: () => void;
 }) {
   if (!isConnected) {
@@ -230,7 +230,7 @@ function PositionsTab({
 }
 
 function VaultShareRow({ vault, address }: { vault: VaultConfig; address: string | null }) {
-  const addr = address as `0x${string}` | undefined;
+  const addr = address as Address | undefined;
 
   const { data: shares } = useReadContract({
     address: vault.vault,
@@ -297,7 +297,7 @@ function AddLiquidityTab({
   const [depositTxHash, setDepositTxHash] = useState<`0x${string}` | undefined>(undefined);
   const [inputError, setInputError]       = useState<string | null>(null);
 
-  const addr = address as `0x${string}` | undefined;
+  const addr = address as Address | undefined;
 
   // ── On-chain reads ──────────────────────────────────────────────────────
   const { data: tokenBalance, refetch: refetchBalance } = useReadContract({
@@ -409,13 +409,22 @@ function AddLiquidityTab({
     balanceBigInt !== undefined &&
     parsedAmount > balanceBigInt;
 
+  // Vault at capacity when maxDeposit returns 0 (non-trivially)
+  const vaultAtCapacity =
+    maxDepBigInt !== undefined &&
+    maxDepBigInt < maxUint256 - 1n &&
+    maxDepBigInt === 0n;
+
   const exceedsMax =
     !!parsedAmount &&
     maxDepBigInt !== undefined &&
     maxDepBigInt < maxUint256 - 1n &&
+    maxDepBigInt > 0n &&
     parsedAmount > maxDepBigInt;
 
-  const notWhitelisted = selectedVault.erc3643 && isWhitelisted === false;
+  // ERC-3643: only hard-block when confirmed false; undefined = still loading (allow with caution)
+  const notWhitelisted   = selectedVault.erc3643 && isWhitelisted === false;
+  const whitelistLoading = selectedVault.erc3643 && !!addr && isWhitelisted === undefined;
 
   const canDeposit =
     isConnected &&
@@ -424,6 +433,7 @@ function AddLiquidityTab({
     !exceedsBalance &&
     !exceedsMax &&
     !notWhitelisted &&
+    !vaultAtCapacity &&
     step !== 'done';
 
   // ── Handlers ────────────────────────────────────────────────────────────
@@ -556,16 +566,36 @@ function AddLiquidityTab({
 
       {/* ERC-3643 notice for AXUSD vault */}
       {selectedVault.erc3643 && (
-        <div style={{ borderLeft: `3px solid ${DL.gold}`, paddingLeft: 12, background: 'rgba(184,151,58,0.05)' }}>
+        <div style={{ borderLeft: `3px solid ${notWhitelisted ? DL.error : DL.gold}`, paddingLeft: 12, background: notWhitelisted ? 'rgba(139,26,26,0.04)' : 'rgba(184,151,58,0.05)' }}>
           <p style={{ color: DL.navy, fontFamily: 'monospace', fontSize: 11, lineHeight: 1.6, margin: '8px 0' }}>
             <strong>ERC-3643 required.</strong> AXUSD is a permissioned token. Your wallet must be identity-verified
             to hold and transfer AXUSD. If you received AXUSD through the Capital Program, you are already whitelisted.
           </p>
-          {notWhitelisted && (
-            <p style={{ color: DL.error, fontFamily: 'monospace', fontSize: 11, margin: '4px 0 8px' }}>
-              Your wallet is not registered in the identity registry. Contact Axiom to complete verification.
+          {whitelistLoading && (
+            <p style={{ color: DL.muted, fontFamily: 'monospace', fontSize: 10, margin: '4px 0 8px' }}>
+              Checking identity registry…
             </p>
           )}
+          {isWhitelisted === true && (
+            <p style={{ color: DL.forest, fontFamily: 'monospace', fontSize: 10, margin: '4px 0 8px', fontWeight: 600 }}>
+              ✓ Wallet verified in identity registry.
+            </p>
+          )}
+          {notWhitelisted && (
+            <p style={{ color: DL.error, fontFamily: 'monospace', fontSize: 11, margin: '4px 0 8px' }}>
+              This wallet is not registered in the identity registry. Contact Axiom to complete KYC verification.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Vault capacity warning */}
+      {vaultAtCapacity && (
+        <div style={{ border: `1px solid ${DL.error}`, padding: '10px 14px', background: 'rgba(139,26,26,0.04)' }}>
+          <p style={{ color: DL.error, fontFamily: 'monospace', fontSize: 11, margin: 0 }}>
+            This vault is currently at capacity — <code>maxDeposit()</code> returned 0.
+            Check back later or contact Axiom.
+          </p>
         </div>
       )}
 
@@ -687,6 +717,8 @@ function AddLiquidityTab({
             >
               {depositIsPending
                 ? 'CONFIRMING IN WALLET…'
+                : vaultAtCapacity
+                ? 'VAULT AT CAPACITY'
                 : !amountStr
                 ? 'ENTER AN AMOUNT'
                 : exceedsBalance
