@@ -273,8 +273,13 @@ export const EULER_SWAP = {
   FACTORY_V1: '0x7949bE8B154D7B5ce6E75cBfc646AeF3a25970E2',
   // AXUSD/USDC pool — primary peg stability venue; backed by EVK AXUSD vault
   AXUSD_USDC_POOL: '0x0101D5adE5Ce318FE39be50E985e4fa05362a8A8',
-  // AXUSD/AXM pool — protocol token liquidity; backed by EVK AXUSD vault
-  AXUSD_AXM_POOL: '0x0000000000000000000000000000000000000000',
+  // AXUSD/AXM pool — protocol token liquidity; backed by EVK AXUSD + EVK AXM vaults
+  // DEPLOYED ✓ 2026-03-28 | Arbitrum One | tx 0x98f1b5504ab007ffb507a8d03f6c005893630887874c53efb9e9f381f168dfee
+  // token0=AXM (0x864F...) < token1=AXUSD (0xD611...) | status=UNLOCKED | salt=0x...1451
+  AXUSD_AXM_POOL: '0x981763699D269E129a08E216b1AeC7caa376A8a8',
+  // AXM EVK Vault — supply-only vault for AXM collateral in the AXM/AXUSD EulerSwap pool
+  // DEPLOYED ✓ 2026-03-28 | symbol: eAXM-1 | oracle=address(0) (no borrowing)
+  AXM_EVK_VAULT: '0x8e28ffa89d168599156004db4f4d12c2af7c250e',
   // Swap fee: 30 bps (0.30%). Configure at pool creation.
   SWAP_FEE_BPS: 30,
 } as const;

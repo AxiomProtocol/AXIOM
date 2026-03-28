@@ -89,7 +89,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const [eulerSwapUsdcPool, eulerSwapAxmPool] = await Promise.all([
       fetchEulerSwapPool(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, 'AXUSD', 'USDC', 6, 6),
-      fetchEulerSwapPool(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, 'AXUSD', 'AXM', 6, 18),
+      fetchEulerSwapPool(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, 'AXM', 'AXUSD', 18, 18),
     ]);
 
     const eulerSwapPools = [eulerSwapUsdcPool, eulerSwapAxmPool];

@@ -125,21 +125,53 @@ export function isEulerEarnDeployed(): boolean {
   return true; // earnAXUSD is live at 0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B
 }
 
-// ── EulerSwap AXUSD Liquidity Layer (Task #40) ──
-// Status: FACTORY_KNOWN | Pool deployment deferred — requires price curve parameters + initial liquidity
+// ── EulerSwap AXUSD Liquidity Layer (Task #40 + AXM/AXUSD pool) ──
+// Status: DEPLOYED ✓ | Both pools live on Arbitrum One
 // EulerSwap is a single-LP AMM backed by EVK vaults (dual yield: swap fees + lending APY).
-// Pools deployed via deployPool(sParams, dParams, initialState, salt) — complex parameterization.
 // V1 Factory: 0x7949bE8B154D7B5ce6E75cBfc646AeF3a25970E2 (Arbitrum One, canonical)
 // V2 Factory: 0x138AB9B33741B25bb7BcDa466175c8B2E2b96dc4 (Arbitrum One, canonical)
 export const EULER_SWAP_V1_FACTORY_ADDRESS = '0x7949bE8B154D7B5ce6E75cBfc646AeF3a25970E2' as const;
 export const EULER_SWAP_V2_FACTORY_ADDRESS = '0x138AB9B33741B25bb7BcDa466175c8B2E2b96dc4' as const;
-export const EULER_SWAP_FACTORY_ADDRESS = EULER_SWAP_V2_FACTORY_ADDRESS; // active factory
+export const EULER_SWAP_FACTORY_ADDRESS = EULER_SWAP_V2_FACTORY_ADDRESS;
+
+/**
+ * EulerSwap AXUSD/USDC Pool (Task #40) — DEPLOYED ✓ (2026-03-26)
+ * token0=USDC, token1=AXUSD | equilibriumReserve=100 each | peg 1:1
+ * Status: UNLOCKED | LPM whitelisted at index [10]
+ */
 export const EULER_SWAP_AXUSD_USDC_POOL_ADDRESS = '0x0101D5adE5Ce318FE39be50E985e4fa05362a8A8' as const;
-export const EULER_SWAP_AXUSD_AXM_POOL_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+
+/**
+ * EulerSwap AXM/AXUSD Pool — DEPLOYED ✓ (2026-03-28)
+ * token0=AXM (0x864F...) < token1=AXUSD (0xD611...) — ordered by address
+ * supplyVault0=eAXM-1 (0x8e28...) | supplyVault1=eAXUSD-6 (0xacdA...)
+ * salt=0x...1451 | status=UNLOCKED | feeRecipient=AxiomFeeBurner
+ * tx: 0x98f1b5504ab007ffb507a8d03f6c005893630887874c53efb9e9f381f168dfee
+ */
+export const EULER_SWAP_AXUSD_AXM_POOL_ADDRESS = '0x981763699D269E129a08E216b1AeC7caa376A8a8' as const;
+
+/**
+ * AXM EVK Vault (eAXM-1) — DEPLOYED ✓ (2026-03-28)
+ * Supply-only vault for AXM collateral in AXM/AXUSD EulerSwap pool.
+ * Asset: AXM (0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D)
+ * Oracle: address(0) — no borrowing, no price oracle required
+ * hookTarget=address(0), hookedOps=32767 → no hook calls, all ops enabled
+ */
+export const AXM_EVK_VAULT_ADDRESS = '0x8e28ffa89d168599156004db4f4d12c2af7c250e' as const;
 
 /** Returns true when the EulerSwap AXUSD/USDC pool has been deployed */
 export function isEulerSwapDeployed(): boolean {
   return EULER_SWAP_AXUSD_USDC_POOL_ADDRESS !== '0x0000000000000000000000000000000000000000';
+}
+
+/** Returns true when the AXM/AXUSD EulerSwap pool has been deployed */
+export function isAXMAXUSDPoolDeployed(): boolean {
+  return EULER_SWAP_AXUSD_AXM_POOL_ADDRESS !== '0x0000000000000000000000000000000000000000';
+}
+
+/** Returns true when the AXM EVK vault has been deployed */
+export function isAXMEVKVaultDeployed(): boolean {
+  return AXM_EVK_VAULT_ADDRESS !== '0x0000000000000000000000000000000000000000';
 }
 
 export const LEGACY_ADDRESSES = [
