@@ -14,7 +14,7 @@ const ZERO          = '0x0000000000000000000000000000000000000000';
 
 // Per-token decimal map for EulerSwap pools
 const POOL_TOKEN_DECIMALS: Record<string, number> = {
-  [AXUSD_ERC3643]: 6,  // ERC-3643 AXUSD — 6 decimals
+  [AXUSD_ERC3643]: 18, // ERC-3643 AXUSD — 18 decimals
   [USDC]:          6,  // USDC — 6 decimals
   [AXM]:           18, // AXM governance token — 18 decimals
 };
@@ -24,15 +24,13 @@ function poolTokenDecimals(addr: string): number {
 }
 
 const EULERSWAP_POOL_ABI = [
-  'function getReserves() view returns (uint256 reserve0, uint256 reserve1)',
-  'function token0() view returns (address)',
-  'function token1() view returns (address)',
+  'function getReserves() view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)',
+  'function getAssets() view returns (address asset0, address asset1)',
   'function fee() view returns (uint256)',
 ];
 
 function isAxusd(addr: string): boolean {
-  const l = addr.toLowerCase();
-  return l === AXUSD_ERC3643 || l === AXUSD_ORIG;
+  return addr.toLowerCase() === AXUSD_ERC3643;
 }
 
 function ammOut(amountIn: number, reserveIn: number, reserveOut: number, feeMultiplier: number): number {
@@ -49,17 +47,16 @@ async function quoteFromEulerSwap(
   if (poolAddress === ZERO) return null;
   try {
     const pool = new ethers.Contract(poolAddress, EULERSWAP_POOL_ABI, provider);
-    const [reserves, token0Raw, token1Raw] = await Promise.all([
+    const [reserves, assets] = await Promise.all([
       pool.getReserves(),
-      pool.token0(),
-      pool.token1(),
+      pool.getAssets(),
     ]);
     let feeBps: number = EULER_SWAP.SWAP_FEE_BPS;
     try { feeBps = Number(await pool.fee()); } catch {}
 
     const feeMultiplier = 1 - feeBps / 10000;
-    const token0Lower = token0Raw.toLowerCase();
-    const token1Lower = token1Raw.toLowerCase();
+    const token0Lower = (assets[0] as string).toLowerCase();
+    const token1Lower = (assets[1] as string).toLowerCase();
 
     // Look up correct decimals per token using the known-decimal map
     // This prevents 1e12 errors when one side is AXM (18 decimals) vs USDC/AXUSD (6 decimals)

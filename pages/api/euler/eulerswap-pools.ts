@@ -29,7 +29,6 @@ const EVK_ABI = [
   'function interestRate() view returns (uint256)',
 ];
 
-const ESTIMATED_VOLUME_MULTIPLIER = 0.15;
 
 // Pool-specific token configuration (reserve0 and reserve1 for each known pool)
 // AXUSD/USDC: reserve0 = USDC (6 dec), reserve1 = AXUSD (18 dec)
@@ -45,9 +44,9 @@ const POOL_TOKEN_CONFIG: Record<string, {
     axusdIsToken0: false,
   },
   [EULER_SWAP_AXUSD_AXM_POOL_ADDRESS.toLowerCase()]: {
-    token0: AXUSD_TOKEN, dec0: 18, label0: 'AXUSD',
-    token1: AXM_TOKEN,   dec1: 18, label1: 'AXM',
-    axusdIsToken0: true,
+    token0: AXM_TOKEN,   dec0: 18, label0: 'AXM',
+    token1: AXUSD_TOKEN, dec1: 18, label1: 'AXUSD',
+    axusdIsToken0: false,
   },
 };
 
@@ -139,18 +138,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     fetchEvkLendingApyBps(),
   ]);
 
-  function computeBlendedApy(tvlUsd: number, feeBps: number): {
+  // Swap fee APY requires real on-chain volume history.
+  // These pools are newly deployed — swapFeeApyBps stays 0 until indexing is available.
+  function computeBlendedApy(_tvlUsd: number, _feeBps: number): {
     swapFeeApyBps: number;
     lendingApyBps: number;
     blendedApyBps: number;
   } {
-    if (tvlUsd <= 0) {
-      return { swapFeeApyBps: 0, lendingApyBps: evkLendingApyBps, blendedApyBps: evkLendingApyBps };
-    }
-    const dailyVolume = tvlUsd * ESTIMATED_VOLUME_MULTIPLIER;
-    const annualFees = dailyVolume * (feeBps / 10000) * 365;
-    const swapFeeApyBps = Math.round((annualFees / tvlUsd) * 10000);
-    const blendedApyBps = swapFeeApyBps + evkLendingApyBps;
+    const swapFeeApyBps = 0;
+    const blendedApyBps = evkLendingApyBps;
     return { swapFeeApyBps, lendingApyBps: evkLendingApyBps, blendedApyBps };
   }
 
@@ -198,14 +194,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         id: 'axusd_axm',
         label: 'AXUSD / AXM',
         address: EULER_SWAP_AXUSD_AXM_POOL_ADDRESS,
-        token0: AXUSD_TOKEN,
-        token1: AXM_TOKEN,
+        token0: AXM_TOKEN,
+        token1: AXUSD_TOKEN,
         status: axusdAxmData ? axusdAxmStatus : 'PENDING_DEPLOYMENT',
         tvlUsd: axusdAxmData?.tvlUsd ?? 0,
         reserve0: axusdAxmData?.reserve0 ?? 0,
         reserve1: axusdAxmData?.reserve1 ?? 0,
-        reserve0Label: 'AXUSD',
-        reserve1Label: 'AXM',
+        reserve0Label: 'AXM',
+        reserve1Label: 'AXUSD',
         equilibriumReserve0: axusdAxmData?.equilibriumReserve0 ?? 0,
         equilibriumReserve1: axusdAxmData?.equilibriumReserve1 ?? 0,
         feeBps: axusdAxmData?.feeBps ?? DEFAULT_FEE_BPS,

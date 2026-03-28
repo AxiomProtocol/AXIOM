@@ -79,8 +79,8 @@ async function fetchEulerSwapPool(
     let tvlNote: string | null = null;
 
     if (tvlMode === 'axusd-proxy') {
-      // AXM has no external price oracle — use AXUSD reserve × 2 as a balanced-pool proxy
-      // r1 = AXUSD side (18 dec, USD-pegged)
+      // AXM has no external price oracle — use AXUSD reserve × 2 as a balanced-pool proxy.
+      // Pool ordering: token0=AXM (r0), token1=AXUSD (r1, USD-pegged)
       tvl = r1 * 2;
       tvlNote = 'Estimated — AXUSD reserve × 2 proxy (no AXM market price)';
     } else {
