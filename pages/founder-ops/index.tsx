@@ -198,7 +198,7 @@ export default function FounderOpsPage() {
   const [earnLoading, setEarnLoading] = useState(false);
 
   const [prsData, setPrsData] = useState<{ prs: number; grade: string; dimensions: { id: string; label: string; grade: string }[] } | null>(null);
-  const [prsLoading, setPrsLoading] = useState(false);
+  const [prsLoading, setPrsLoading] = useState(true);
 
   const [pools, setPools] = useState<PoolData[]>([]);
   const [poolsLoading, setPoolsLoading] = useState(false);
@@ -974,6 +974,11 @@ export default function FounderOpsPage() {
             )}
 
             {/* ── TAB: SYSTEM STATUS ──────────────────────────────────── */}
+            {activeTab === 'system' && !data && (
+              <div className="border border-dl-border px-6 py-10 text-center">
+                <p className="font-dl-mono text-sm text-dl-gray">{loading ? 'Loading system data…' : (error || 'System data unavailable.')}</p>
+              </div>
+            )}
             {activeTab === 'system' && data && (
               <>
                 <div className="mb-8">
