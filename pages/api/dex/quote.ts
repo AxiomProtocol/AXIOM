@@ -7,9 +7,7 @@ import {
 } from '../../../src/config/activeContracts.generated';
 import { EULER_SWAP } from '../../../shared/contracts';
 
-const CAMELOT_PAIR = '0x266F6Cf7eA36d3f676eb292B274EAb25172790a2';
 const AXUSD_ERC3643 = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7'.toLowerCase();
-const AXUSD_ORIG    = '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c'.toLowerCase();
 const USDC          = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831'.toLowerCase();
 const AXM           = '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D'.toLowerCase();
 const ZERO          = '0x0000000000000000000000000000000000000000';
@@ -17,7 +15,6 @@ const ZERO          = '0x0000000000000000000000000000000000000000';
 // Per-token decimal map for EulerSwap pools
 const POOL_TOKEN_DECIMALS: Record<string, number> = {
   [AXUSD_ERC3643]: 6,  // ERC-3643 AXUSD — 6 decimals
-  [AXUSD_ORIG]:    18, // Original AXUSD (Camelot only) — 18 decimals
   [USDC]:          6,  // USDC — 6 decimals
   [AXM]:           18, // AXM governance token — 18 decimals
 };
@@ -25,11 +22,6 @@ const POOL_TOKEN_DECIMALS: Record<string, number> = {
 function poolTokenDecimals(addr: string): number {
   return POOL_TOKEN_DECIMALS[addr.toLowerCase()] ?? 18;
 }
-
-const CAMELOT_PAIR_ABI = [
-  'function getReserves() view returns (uint112, uint112, uint16)',
-  'function token0() view returns (address)',
-];
 
 const EULERSWAP_POOL_ABI = [
   'function getReserves() view returns (uint256 reserve0, uint256 reserve1)',
@@ -90,40 +82,6 @@ async function quoteFromEulerSwap(
     const amountOut = ammOut(amountIn, reserveIn, reserveOut, feeMultiplier);
     const fee = amountIn * (feeBps / 10000);
     return { amountOut, fee, feeBps, reserveIn, reserveOut };
-  } catch {
-    return null;
-  }
-}
-
-async function quoteFromCamelot(
-  provider: ethers.JsonRpcProvider,
-  tokenInLower: string,
-  amountIn: number,
-): Promise<{ amountOut: number; fee: number } | null> {
-  try {
-    const pair = new ethers.Contract(CAMELOT_PAIR, CAMELOT_PAIR_ABI, provider);
-    const [reserves, token0Raw] = await Promise.all([pair.getReserves(), pair.token0()]);
-    const token0Lower = token0Raw.toLowerCase();
-
-    const isAxusdToken0 = isAxusd(token0Lower);
-    const isTokenInAxusd = isAxusd(tokenInLower);
-
-    let reserveIn: number;
-    let reserveOut: number;
-    if ((isTokenInAxusd && isAxusdToken0) || (!isTokenInAxusd && !isAxusdToken0)) {
-      reserveIn  = Number(reserves[0]);
-      reserveOut = Number(reserves[1]);
-    } else {
-      reserveIn  = Number(reserves[1]);
-      reserveOut = Number(reserves[0]);
-    }
-
-    const feeMultiplier = 0.997;
-    const amountInScaled = isTokenInAxusd ? amountIn * 1e18 : amountIn * 1e6;
-    const amountOutRaw = ammOut(amountInScaled, reserveIn, reserveOut, feeMultiplier);
-    const amountOut = isTokenInAxusd ? amountOutRaw / 1e6 : amountOutRaw / 1e12;
-    const fee = amountIn * 0.003;
-    return { amountOut, fee };
   } catch {
     return null;
   }
@@ -215,24 +173,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             pool: EULER_SWAP_AXUSD_AXM_POOL_ADDRESS,
             protocol: 'EulerSwap',
             note: 'Dual yield: swap fees + lending yield from EVK vault backing',
-          },
-        });
-      }
-    }
-
-    if (isAxusdUsdcPair) {
-      const camelotResult = await quoteFromCamelot(provider, tokenInLower, amountInFloat);
-      if (camelotResult) {
-        return res.status(200).json({
-          quote: {
-            amountOut: camelotResult.amountOut.toFixed(6),
-            priceImpact: 0,
-            fee: camelotResult.fee.toFixed(6),
-            feeBps: 30,
-            route: [tokenIn, tokenOut],
-            pair: CAMELOT_PAIR,
-            protocol: 'Camelot',
-            note: isEulerSwapDeployed() ? 'Routed via Camelot (EulerSwap returned insufficient liquidity)' : 'Routed via Camelot (EulerSwap pools pending deployment)',
           },
         });
       }

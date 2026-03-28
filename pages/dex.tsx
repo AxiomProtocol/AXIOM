@@ -239,11 +239,6 @@ function EulerSwapLpTab() {
         </div>
       </div>
 
-      <div className="border border-dl-border p-4">
-        <p className="font-dl-mono text-xs text-dl-gray uppercase mb-2">Camelot DEX — Fallback Venue</p>
-        <p className="text-dl-gray text-sm">The Camelot AXUSD/USDC pool remains active as a swap fallback. EulerSwap is the primary routing venue when pools are live.</p>
-        <a href="https://app.camelot.exchange/liquidity?token1=0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7" target="_blank" rel="noopener noreferrer" className="font-dl-mono text-xs text-dl-navy underline mt-2 block">View Camelot Pool →</a>
-      </div>
     </div>
   );
 }
@@ -302,7 +297,7 @@ export default function DexPage() {
             <div className="space-y-6">
               <div className="bg-dl-bg-alt border border-dl-border p-3">
                 <p className="font-dl-mono text-xs text-dl-gray">
-                  Swap routing: <span className="text-dl-navy">EulerSwap (primary)</span> → Camelot (fallback). Quotes reflect best available liquidity.
+                  Swap routing: <span className="text-dl-navy">EulerSwap</span>. Quotes reflect on-chain pool reserves.
                 </p>
               </div>
               <TradingViewChart />

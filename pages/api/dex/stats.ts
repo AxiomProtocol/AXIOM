@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import camelotPoolService from '../../../lib/services/CamelotPoolService';
 import {
   EULER_SWAP_AXUSD_USDC_POOL_ADDRESS,
   EULER_SWAP_AXUSD_AXM_POOL_ADDRESS,
@@ -48,50 +47,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const [camelotData, eulerSwapUsdcTvl, eulerSwapAxmTvl] = await Promise.all([
-      camelotPoolService.getAllPools().catch(() => []),
+    const [eulerSwapUsdcTvl, eulerSwapAxmTvl] = await Promise.all([
       fetchEulerSwapTvl(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, 'stable'),
       fetchEulerSwapTvl(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, 'axm'),
     ]);
-
-    const camelotTVL      = camelotData.reduce((s, p) => s + p.tvl, 0);
-    const camelotVolume24h = camelotData.reduce((s, p) => s + p.volume24h, 0);
-    const camelotFees24h   = camelotData.reduce((s, p) => s + p.fees24h, 0);
 
     const eulerSwapTVL = eulerSwapUsdcTvl + eulerSwapAxmTvl;
     const feeBps = EULER_SWAP.SWAP_FEE_BPS;
     const eulerSwapEstVolume24h = eulerSwapTVL * 0.15;
     const eulerSwapFees24h      = eulerSwapEstVolume24h * (feeBps / 10000);
-
-    const totalTVL      = camelotTVL + eulerSwapTVL;
-    const totalVolume24h = camelotVolume24h + eulerSwapEstVolume24h;
-    const totalFees24h   = camelotFees24h + eulerSwapFees24h;
-    const totalPools     = camelotData.length + (isEulerSwapDeployed() ? 2 : 0);
+    const totalPools = isEulerSwapDeployed() ? 2 : 0;
 
     return res.status(200).json({
       totalPools,
-      totalTVL: totalTVL.toFixed(2),
-      totalVolume24h: totalVolume24h.toFixed(2),
-      totalFees24h: totalFees24h.toFixed(2),
-      primaryVenue: isEulerSwapDeployed() ? 'EulerSwap' : 'Camelot',
+      totalTVL: eulerSwapTVL.toFixed(2),
+      totalVolume24h: eulerSwapEstVolume24h.toFixed(2),
+      totalFees24h: eulerSwapFees24h.toFixed(2),
+      primaryVenue: 'EulerSwap',
       breakdown: {
         eulerSwap: {
           tvl: eulerSwapTVL.toFixed(2),
           estimatedVolume24h: eulerSwapEstVolume24h.toFixed(2),
           estimatedFees24h: eulerSwapFees24h.toFixed(2),
-          pools: isEulerSwapDeployed() ? 2 : 0,
+          pools: totalPools,
           status: isEulerSwapDeployed() ? 'LIVE' : 'PENDING_DEPLOYMENT',
         },
-        camelot: {
-          tvl: camelotTVL.toFixed(2),
-          volume24h: camelotVolume24h.toFixed(2),
-          fees24h: camelotFees24h.toFixed(2),
-          pools: camelotData.length,
-          status: 'LIVE',
-          note: 'Retained as fallback venue',
-        },
       },
-      source: isEulerSwapDeployed() ? 'eulerswap+camelot' : 'camelot',
+      source: 'eulerswap',
     });
   } catch (error) {
     console.error('[dex/stats] Error:', error);

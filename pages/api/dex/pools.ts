@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import camelotPoolService from '../../../lib/services/CamelotPoolService';
 import {
   EULER_SWAP_AXUSD_USDC_POOL_ADDRESS,
   EULER_SWAP_AXUSD_AXM_POOL_ADDRESS,
@@ -88,46 +87,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userAddress = req.query.userAddress as string | undefined;
 
   try {
-    const [camelotPoolData, eulerSwapUsdcPool, eulerSwapAxmPool] = await Promise.all([
-      camelotPoolService.getAllPools(userAddress).catch(() => []),
+    const [eulerSwapUsdcPool, eulerSwapAxmPool] = await Promise.all([
       fetchEulerSwapPool(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, 'AXUSD', 'USDC', 6, 6),
       fetchEulerSwapPool(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, 'AXUSD', 'AXM', 6, 18),
     ]);
-
-    const camelotPools = camelotPoolData.map((pool, index) => ({
-      id: `camelot_${index}`,
-      tokenASymbol: pool.token0,
-      tokenBSymbol: pool.token1,
-      tokenA: pool.token0Address,
-      tokenB: pool.token1Address,
-      reserveA: pool.reserve0,
-      reserveB: pool.reserve1,
-      totalLiquidity: pool.totalSupply,
-      swapFee: Math.round(pool.feePercent * 100),
-      isActive: true,
-      tvl: pool.tvl,
-      volume24h: pool.volume24h,
-      fees24h: pool.fees24h,
-      apr: pool.apr,
-      pairAddress: pool.pairAddress,
-      yourLiquidity: pool.yourLiquidity || 0,
-      yourShare: pool.yourShare || 0,
-      swapCount24h: pool.swapCount24h || 0,
-      protocol: 'Camelot' as const,
-      status: 'ACTIVE',
-    }));
 
     const eulerSwapPools = [eulerSwapUsdcPool, eulerSwapAxmPool];
 
     return res.status(200).json({
       pools: {
         eulerSwap: eulerSwapPools,
-        camelot: camelotPools,
       },
-      primaryVenue: isEulerSwapDeployed() ? 'EulerSwap' : 'Camelot',
-      count: eulerSwapPools.length + camelotPools.length,
-      source: isEulerSwapDeployed() ? 'eulerswap+camelot' : 'camelot',
-      message: `${eulerSwapPools.length} EulerSwap pool(s), ${camelotPools.length} Camelot pool(s)`,
+      primaryVenue: 'EulerSwap',
+      count: eulerSwapPools.length,
+      source: 'eulerswap',
+      message: `${eulerSwapPools.length} EulerSwap pool(s)`,
     });
   } catch (error) {
     console.error('[dex/pools] Error:', error);
