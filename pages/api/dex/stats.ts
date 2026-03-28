@@ -8,34 +8,34 @@ import { ethers } from 'ethers';
 import { EULER_SWAP } from '../../../shared/contracts';
 
 const ZERO = '0x0000000000000000000000000000000000000000';
-const AXUSD_ADDR = '0xd6110f59a978ada6ef5c0e9d6baa04455d46ade7'; // ERC-3643 AXUSD, 6 decimals
 const ALCHEMY_RPC = process.env.ALCHEMY_API_KEY
   ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
   : 'https://arb1.arbitrum.io/rpc';
 
 const POOL_ABI = [
-  'function getReserves() view returns (uint256 reserve0, uint256 reserve1)',
-  'function token0() view returns (address)',
+  'function getReserves() view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)',
 ];
 
-// poolType: 'stable' for AXUSD/USDC (both 6 decimals — sum directly);
-//           'axm'    for AXUSD/AXM  (AXM=18 decimals — use AXUSD reserve × 2 proxy)
+// poolType: 'stable' for USDC/AXUSD (USDC=6 dec, AXUSD=18 dec);
+//           'axm'    for AXM/AXUSD  (AXM=18 dec token0, AXUSD=18 dec token1 — use AXUSD reserve × 2 proxy)
 async function fetchEulerSwapTvl(poolAddress: string, poolType: 'stable' | 'axm'): Promise<number> {
   if (poolAddress === ZERO) return 0;
   try {
     const provider = new ethers.JsonRpcProvider(ALCHEMY_RPC);
     const pool = new ethers.Contract(poolAddress, POOL_ABI, provider);
+    const reserves = await pool.getReserves();
 
     if (poolType === 'stable') {
-      const reserves = await pool.getReserves();
-      return Number(ethers.formatUnits(reserves[0], 6)) + Number(ethers.formatUnits(reserves[1], 6));
+      // token0=USDC (6 dec), token1=AXUSD (18 dec)
+      const usdcAmt  = Number(ethers.formatUnits(reserves[0], 6));
+      const axusdAmt = Number(ethers.formatUnits(reserves[1], 18));
+      return usdcAmt + axusdAmt;
     }
 
-    // AXM pool: identify AXUSD side (6 decimals), use × 2 to avoid AXM decimal error
-    const [reserves, token0] = await Promise.all([pool.getReserves(), pool.token0()]);
-    const isAxusdToken0 = (token0 as string).toLowerCase() === AXUSD_ADDR;
-    const axusdRaw = isAxusdToken0 ? reserves[0] : reserves[1];
-    return Number(ethers.formatUnits(axusdRaw, 6)) * 2;
+    // AXM pool: token0=AXM (18 dec), token1=AXUSD (18 dec)
+    // No reliable AXM/USD price feed yet — use AXUSD reserve × 2 as a balanced-pool proxy
+    const axusdAmt = Number(ethers.formatUnits(reserves[1], 18));
+    return axusdAmt * 2;
   } catch {
     return 0;
   }

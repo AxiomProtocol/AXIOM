@@ -13,7 +13,7 @@ const ALCHEMY_RPC = process.env.ALCHEMY_API_KEY
   : 'https://arb1.arbitrum.io/rpc';
 
 const EULERSWAP_POOL_ABI = [
-  'function getReserves() view returns (uint256 reserve0, uint256 reserve1)',
+  'function getReserves() view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)',
   'function totalSupply() view returns (uint256)',
   'function fee() view returns (uint256)',
 ];
@@ -88,7 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const [eulerSwapUsdcPool, eulerSwapAxmPool] = await Promise.all([
-      fetchEulerSwapPool(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, 'AXUSD', 'USDC', 6, 6),
+      fetchEulerSwapPool(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, 'USDC', 'AXUSD', 6, 18),
       fetchEulerSwapPool(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, 'AXM', 'AXUSD', 18, 18),
     ]);
 
