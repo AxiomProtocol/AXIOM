@@ -67,8 +67,37 @@ export function useDexPools() {
       if (data.error) {
         throw new Error(data.error);
       }
-      
-      setPools(data.pools || []);
+
+      const rawPools = data.pools;
+      if (Array.isArray(rawPools)) {
+        setPools(rawPools);
+      } else if (rawPools && typeof rawPools === 'object') {
+        const camelotPools: Pool[] = (rawPools.camelot || []).map((p: any, idx: number) => ({
+          id: typeof p.id === 'number' ? p.id : idx + 1,
+          tokenA: p.tokenA || p.poolAddress || '',
+          tokenB: p.tokenB || '',
+          reserveA: p.reserveA || '0',
+          reserveB: p.reserveB || '0',
+          totalLiquidity: p.totalLiquidity || '0',
+          swapFee: p.swapFee || p.feeBps || 0,
+          isActive: p.isActive ?? p.status === 'ACTIVE',
+          pairAddress: p.pairAddress || p.poolAddress,
+        }));
+        const eulerSwapPools: Pool[] = (rawPools.eulerSwap || []).map((p: any, idx: number) => ({
+          id: camelotPools.length + idx + 1,
+          tokenA: p.poolAddress || '',
+          tokenB: '',
+          reserveA: '0',
+          reserveB: '0',
+          totalLiquidity: String(p.tvl || 0),
+          swapFee: p.feeBps || 0,
+          isActive: p.status === 'ACTIVE',
+          pairAddress: p.poolAddress,
+        }));
+        setPools([...camelotPools, ...eulerSwapPools]);
+      } else {
+        setPools([]);
+      }
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch pools');
