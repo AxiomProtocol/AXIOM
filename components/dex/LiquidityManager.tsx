@@ -47,7 +47,8 @@ const ERC4626_ABI = [
 ] as const;
 
 const IDENTITY_ABI = [
-  { type: 'function', name: 'contains',  inputs: [{ name: 'u', type: 'address' }], outputs: [{ type: 'bool' }], stateMutability: 'view' },
+  { type: 'function', name: 'contains',    inputs: [{ name: 'u', type: 'address' }], outputs: [{ type: 'bool' }], stateMutability: 'view' },
+  { type: 'function', name: 'isVerified',  inputs: [{ name: 'u', type: 'address' }], outputs: [{ type: 'bool' }], stateMutability: 'view' },
 ] as const;
 
 // ── Vault configuration ───────────────────────────────────────────────────
@@ -324,10 +325,11 @@ function AddLiquidityTab({
   });
 
   // ERC-3643 whitelist check — only relevant for AXUSD vault
+  // isVerified() validates both registration AND that all required claims are current
   const { data: isWhitelisted } = useReadContract({
     address: IDENTITY_REG,
     abi:     IDENTITY_ABI,
-    functionName: 'contains',
+    functionName: 'isVerified',
     args:    addr ? [addr] : undefined,
     query:   { enabled: !!addr && selectedVault.erc3643 },
   });
