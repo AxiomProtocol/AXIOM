@@ -20,10 +20,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       provider
     );
 
-    const platforms: string[] = await lpm.getPlatforms(ERC3643_CONTRACTS.AXUSD_TOKEN);
+    const platforms: string[] = await lpm.getPlatforms(ERC3643_CONTRACTS.MODULAR_COMPLIANCE);
 
     return res.status(200).json({
-      token: ERC3643_CONTRACTS.AXUSD_TOKEN,
+      compliance: ERC3643_CONTRACTS.MODULAR_COMPLIANCE,
       lpm: ERC3643_CONTRACTS.LENDING_PLATFORM_MODULE,
       platforms,
       count: platforms.length,

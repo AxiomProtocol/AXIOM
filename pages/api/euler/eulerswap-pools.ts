@@ -215,7 +215,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         blendedApyLabel: 'Variable',
         blendedApyPct: (axusdAxmApy.blendedApyBps / 100).toFixed(2),
         erc3643WhitelistRequired: true,
-        note: 'AXUSD/AXM pool pending on-chain deployment.',
+        note: null,
       },
     ],
     erc3643Whitelist: {

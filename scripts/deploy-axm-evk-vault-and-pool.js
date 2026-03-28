@@ -38,8 +38,8 @@ const EVK_IMPL         = '0x832fF4011A3164ea76ceA06A313EE0B6CD72ba96';
 const EVK_AXUSD_VAULT  = '0xacdA87801f6409bB5157BA78aF1BD9631d6609B2'; // eAXUSD-6 (token1 vault)
 const EULERSWAP_FACTORY = '0x138AB9B33741B25bb7BcDa466175c8B2E2b96dc4'; // V2
 const EULERSWAP_IMPL   = '0xaf6412d58024874b0ffc4138fff95fc73b372977'; // MetaProxy implementation
-const LPM_ADDRESS      = '0x5db58d9c21369d1532a48Bdd658E4Fe415404922';
-const COMPLIANCE_ADDR  = '0xaC9E1A91D1C7F584C9FC04E283fae30Ae2F636DD';
+const LPM_ADDRESS      = '0xC0177120Fb5922813031a5857f4dF7F01750Bb6F'; // LendingPlatformModule
+const COMPLIANCE_ADDR  = '0xaC9E1A91D1C7F584C9FC04E283fae30Ae2F636DD'; // ModularCompliance (1st param to addPlatform)
 const EVC_ADDRESS      = '0x6302ef0F34100CDDFb5489fbcB6eE1AA95CD1066';
 const AXIOM_FEE_BURNER = '0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94';
 
@@ -293,19 +293,21 @@ async function main() {
   console.log('  AXM EVK Vault:  ', AXM_EVK_VAULT);
   console.log('  vault.asset():  ', vaultAsset, vaultAsset.toLowerCase() === AXM.toLowerCase() ? '✓' : '✗ MISMATCH');
   console.log('  vault.symbol(): ', vaultSymbol);
-  console.log('  hookConfig:     ', hookCfg[0], hookCfg[1]?.toString(),
-    '(hookTarget=0 → no hook blocks ops)');
+  console.log('  hookConfig:     target=', hookCfg[0], 'hookedOps=', hookCfg[1]?.toString());
 
-  // Only call setHookConfig if hookTarget is non-zero (currently 0x00 = no blocking)
-  // hookedOps=32767 with hookTarget=0x00 means hook is not called → ops proceed freely
-  if (hookCfg[0] && hookCfg[0] !== ZERO && hookCfg[0] !== '0x0000000000000000000000000000000000000000') {
-    console.log('  [INFO] hookTarget non-zero — clearing hook config...');
+  // ALWAYS call setHookConfig(address(0), 0) after vault creation.
+  // EVK vaults deploy with hookedOps=32767 (all ops flagged) + hookTarget=address(0).
+  // In Euler V2, hookedOps>0 + hookTarget=address(0) BLOCKS deposits — maxDeposit()=0.
+  // setHookConfig(0, 0) clears the block so deposits/withdrawals work freely.
+  const hookedOps = hookCfg[1] ?? 0;
+  if (hookedOps !== 0) {
+    console.log('  [INFO] hookedOps=' + hookedOps + ' — clearing to 0 (required for deposits)...');
     const n = freshNonce();
     const tx = await axmVault.setHookConfig(ZERO, 0, { gasLimit: 300_000, nonce: n });
     await tx.wait();
-    console.log('  [OK] setHookConfig cleared:', tx.hash);
+    console.log('  [OK] setHookConfig(0, 0) applied:', tx.hash);
   } else {
-    console.log('  [OK] hookTarget=0x00 — operations proceed freely (no blocking)');
+    console.log('  [OK] hookedOps=0 — deposits/withdrawals enabled');
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

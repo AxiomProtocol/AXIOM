@@ -34,23 +34,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     // Check if already whitelisted to avoid redundant tx
-    const already: boolean = await lpm.isPlatformWhitelisted(ERC3643_CONTRACTS.AXUSD_TOKEN, platform);
+    const already: boolean = await lpm.isPlatformWhitelisted(ERC3643_CONTRACTS.MODULAR_COMPLIANCE, platform);
     if (already) {
       return res.status(200).json({
         success: true,
         alreadyWhitelisted: true,
-        message: `${platform} already whitelisted for AXUSD_TOKEN`,
+        message: `${platform} already whitelisted (compliance=${ERC3643_CONTRACTS.MODULAR_COMPLIANCE})`,
       });
     }
 
-    const tx = await lpm.addPlatform(ERC3643_CONTRACTS.AXUSD_TOKEN, platform);
+    const tx = await lpm.addPlatform(ERC3643_CONTRACTS.MODULAR_COMPLIANCE, platform);
     await tx.wait(1);
 
     return res.status(200).json({
       success: true,
       txHash: tx.hash,
       platform,
-      token: ERC3643_CONTRACTS.AXUSD_TOKEN,
+      compliance: ERC3643_CONTRACTS.MODULAR_COMPLIANCE,
       lpm: ERC3643_CONTRACTS.LENDING_PLATFORM_MODULE,
     });
   } catch (err: unknown) {

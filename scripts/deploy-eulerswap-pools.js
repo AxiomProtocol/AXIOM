@@ -43,8 +43,8 @@ const EVK_AXUSD_VAULT     = '0xacdA87801f6409bB5157BA78aF1BD9631d6609B2'; // eAX
 const EULER_USDC_VAULT    = '0x44C10DA836d2aBe881b77bbB0b3DCE5f85C0C1Cc'; // Euler USDC supply vault, Arbitrum
 const AXIOM_FEE_BURNER    = '0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94';
 const EULERSWAP_FACTORY   = '0x138AB9B33741B25bb7BcDa466175c8B2E2b96dc4'; // EulerSwap V2, Arbitrum
-const LPM_ADDRESS         = '0x5db58d9c21369d1532a48Bdd658E4Fe415404922'; // LendingPlatformModule
-const COMPLIANCE_ADDRESS  = '0xaC9E1A91D1C7F584C9FC04E283fae30Ae2F636DD'; // compliance contract for LPM
+const LPM_ADDRESS         = '0xC0177120Fb5922813031a5857f4dF7F01750Bb6F'; // LendingPlatformModule
+const COMPLIANCE_ADDRESS  = '0xaC9E1A91D1C7F584C9FC04E283fae30Ae2F636DD'; // ModularCompliance (1st param to addPlatform)
 // EVC (Euler Vault Controller) on Arbitrum One (verified from live EulerSwap pool.EVC()):
 const EVC_ADDRESS         = '0x6302ef0F34100CDDFb5489fbcB6eE1AA95CD1066';
 

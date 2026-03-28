@@ -32,7 +32,7 @@ The architecture employs a "Product Factory Approach" for scalability. The curre
 Key features include:
 - DEX V2 Ecosystem and Institutional Observer Dashboard.
 - Lending Fund (SEC Reg D 506(c)).
-- Euler V2 AXUSD Lending Markets (eAXUSD-6: `0xacdA87801f6409bB5157BA78aF1BD9631d6609B2`), Euler Earn vault (`0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B`), and EulerSwap Liquidity Layer: USDC/AXUSD pool (`0x0101D5adE5Ce318FE39be50E985e4fa05362a8A8`, DEPLOYED+CONFIGURED 2026-03-26) and AXM/AXUSD pool (`0x981763699D269E129a08E216b1AeC7caa376A8a8`, DEPLOYED 2026-03-28). AXM EVK vault (eAXM-1): `0x8e28ffa89d168599156004db4f4d12c2af7c250e` (supply-only, oracle=address(0)). Pending: LPM whitelist for AXM pool, liquidity seeding.
+- Euler V2 AXUSD Lending Markets (eAXUSD-6: `0xacdA87801f6409bB5157BA78aF1BD9631d6609B2`), Euler Earn vault (`0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B`), and EulerSwap Liquidity Layer: USDC/AXUSD pool (`0x0101D5adE5Ce318FE39be50E985e4fa05362a8A8`, DEPLOYED+CONFIGURED 2026-03-26) and AXM/AXUSD pool (`0x981763699D269E129a08E216b1AeC7caa376A8a8`, DEPLOYED+SEEDED 2026-03-28). AXM EVK vault (eAXM-1): `0x8e28ffa89d168599156004db4f4d12c2af7c250e` (supply-only, oracle=address(0), hookConfig fixed). Pool reserves: 10,000 AXM / 9,000 AXUSD | fee=0.3% | concentration=0.5. LPM whitelist ✓ (correct LPM=`0xC0177120...Bb6F`, first param=MODULAR_COMPLIANCE).
 - MIRDT Capital Intelligence Terminal (`/mirdt`): Nine-dimension advisory signal engine producing a Protocol Readiness Score (PRS, 0-10).
 - Axiom Sentinel: A unified capital decision and risk authorization layer.
 - Founder Operations Dashboard: Internal dashboard for system overview and operations.

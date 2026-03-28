@@ -274,11 +274,14 @@ export const EULER_SWAP = {
   // AXUSD/USDC pool — primary peg stability venue; backed by EVK AXUSD vault
   AXUSD_USDC_POOL: '0x0101D5adE5Ce318FE39be50E985e4fa05362a8A8',
   // AXUSD/AXM pool — protocol token liquidity; backed by EVK AXUSD + EVK AXM vaults
-  // DEPLOYED ✓ 2026-03-28 | Arbitrum One | tx 0x98f1b5504ab007ffb507a8d03f6c005893630887874c53efb9e9f381f168dfee
+  // DEPLOYED+SEEDED ✓ 2026-03-28 | Arbitrum One | tx 0x98f1b5504ab007ffb507a8d03f6c005893630887874c53efb9e9f381f168dfee
   // token0=AXM (0x864F...) < token1=AXUSD (0xD611...) | status=UNLOCKED | salt=0x...1451
+  // reserves: 10,000 AXM / 9,000 AXUSD | fee=0.3% | concentration=0.5 | priceX/Y=1:1 (placeholder)
+  // LPM whitelisted ✓ (tx 0x4dcbed26...) | eAXM-1 hookConfig fixed ✓ | reconfigure ✓ (tx 0xfcce2cff...)
   AXUSD_AXM_POOL: '0x981763699D269E129a08E216b1AeC7caa376A8a8',
   // AXM EVK Vault — supply-only vault for AXM collateral in the AXM/AXUSD EulerSwap pool
-  // DEPLOYED ✓ 2026-03-28 | symbol: eAXM-1 | oracle=address(0) (no borrowing)
+  // DEPLOYED+ACTIVE ✓ 2026-03-28 | symbol: eAXM-1 | oracle=address(0) (no borrowing)
+  // hookConfig: hookTarget=address(0), hookedOps=0 (fixed from 32767) | 10,000 AXM seeded
   AXM_EVK_VAULT: '0x8e28ffa89d168599156004db4f4d12c2af7c250e',
   // Swap fee: 30 bps (0.30%). Configure at pool creation.
   SWAP_FEE_BPS: 30,
