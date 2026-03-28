@@ -215,6 +215,10 @@ export default function FounderOpsPage() {
 
   const [pendingOutcomes, setPendingOutcomes] = useState<any[]>([]);
   const [outcomesLoading, setOutcomesLoading] = useState(false);
+  const [outcomeAdminKey, setOutcomeAdminKey] = useState('');
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
+  const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
+  const [reviewMsg, setReviewMsg] = useState<{ id: string; type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -271,13 +275,42 @@ export default function FounderOpsPage() {
     }
   };
 
-  const loadOutcomes = async () => {
+  const loadOutcomes = async (key?: string) => {
     setOutcomesLoading(true);
     try {
-      const res = await fetch('/api/founder-ops/pending-outcomes').then(r => r.json()).catch(() => ({ outcomes: [] }));
+      const headers: Record<string, string> = {};
+      const k = key ?? outcomeAdminKey;
+      if (k) headers['x-admin-solvency-key'] = k;
+      const res = await fetch('/api/founder-ops/pending-outcomes', { headers }).then(r => r.json()).catch(() => ({ outcomes: [] }));
       setPendingOutcomes(res.outcomes || []);
     } finally {
       setOutcomesLoading(false);
+    }
+  };
+
+  const reviewOutcome = async (outcomeId: string, decision: 'approved' | 'rejected' | 'delete') => {
+    setReviewingId(outcomeId);
+    setReviewMsg(null);
+    try {
+      const res = await fetch('/api/admin/review-outcome', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-solvency-key': outcomeAdminKey,
+        },
+        body: JSON.stringify({ outcomeId, decision, notes: reviewNotes[outcomeId] || '' }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setReviewMsg({ id: outcomeId, type: 'error', text: json.error || 'Review failed' });
+      } else {
+        setReviewMsg({ id: outcomeId, type: 'success', text: `Outcome ${decision} successfully.` });
+        setPendingOutcomes(prev => prev.filter(o => o.id !== outcomeId));
+      }
+    } catch (e: any) {
+      setReviewMsg({ id: outcomeId, type: 'error', text: e.message });
+    } finally {
+      setReviewingId(null);
     }
   };
 
@@ -1070,31 +1103,157 @@ export default function FounderOpsPage() {
                   </p>
                 </div>
 
-                {pendingOutcomes.length > 0 && (
-                  <div className="mb-8">
-                    <SectionHeading>Pending Outcome Verification</SectionHeading>
-                    <div className="border border-dl-border overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-dl-border">
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Deal</th>
-                            <th className="text-left p-3 text-xs uppercase tracking-wider text-dl-gray">Type</th>
-                            <th className="text-right p-3 text-xs uppercase tracking-wider text-dl-gray">Submitted</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {pendingOutcomes.map((o: any) => (
-                            <tr key={o.id} className="border-b border-dl-border last:border-0">
-                              <td className="p-3 font-dl-mono text-xs text-dl-navy">{o.deal_name || o.deal_id?.slice(0, 8) + '…'}</td>
-                              <td className="p-3 font-dl-mono text-xs text-dl-gray capitalize">{o.outcome_type || '—'}</td>
-                              <td className="p-3 text-right font-dl-mono text-xs text-dl-gray">{formatUTC(o.created_at)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                <div className="mb-8">
+                  <SectionHeading>Outcome Verification Queue</SectionHeading>
+
+                  {/* Admin key + load */}
+                  <div className="flex gap-2 mb-4">
+                    <input
+                      type="password"
+                      placeholder="Admin key"
+                      value={outcomeAdminKey}
+                      onChange={e => setOutcomeAdminKey(e.target.value)}
+                      className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-bg w-48"
+                    />
+                    <button
+                      onClick={() => loadOutcomes()}
+                      disabled={outcomesLoading || !outcomeAdminKey}
+                      className="bg-dl-navy text-white px-4 py-2 font-dl-mono text-xs disabled:opacity-50"
+                    >
+                      {outcomesLoading ? 'Loading…' : 'Load Queue'}
+                    </button>
                   </div>
-                )}
+
+                  {outcomesLoading && (
+                    <p className="font-dl-mono text-sm text-dl-gray py-4">Loading pending outcomes…</p>
+                  )}
+
+                  {!outcomesLoading && pendingOutcomes.length === 0 && (
+                    <div className="border border-dl-border p-6 text-center">
+                      <p className="font-dl-mono text-sm text-dl-gray">No pending outcomes in queue.</p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-1">Enter your admin key and click Load Queue to check.</p>
+                    </div>
+                  )}
+
+                  {pendingOutcomes.map((o: any) => (
+                    <div key={o.id} className="border border-dl-border mb-4 bg-dl-bg">
+                      {/* Header */}
+                      <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-dl-border bg-dl-bg-alt">
+                        <span className="font-dl-mono text-xs text-blue-700 bg-blue-50 border border-blue-300 px-1.5 py-0.5">UNDER REVIEW</span>
+                        <p className="font-dl-serif text-sm text-dl-navy font-medium">
+                          {o.deal_name || `Deal ${o.deal_id?.slice(0, 8)}…`}
+                        </p>
+                        {o.property_address && (
+                          <p className="font-dl-mono text-xs text-dl-gray">{o.property_address}</p>
+                        )}
+                        <span className="ml-auto font-dl-mono text-xs text-dl-gray">
+                          Submitted {formatUTC(o.submitted_at)}
+                        </span>
+                      </div>
+
+                      {/* Deal metrics */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border-b border-dl-border">
+                        {[
+                          { label: 'Rehab Cost', value: o.actual_rehab_cost ? `$${Number(o.actual_rehab_cost).toLocaleString()}` : '—' },
+                          { label: 'Sale Price', value: o.actual_sale_price ? `$${Number(o.actual_sale_price).toLocaleString()}` : '—' },
+                          { label: 'DSCR', value: o.actual_dscr ? Number(o.actual_dscr).toFixed(2) : '—' },
+                          { label: 'Cash Flow / mo', value: o.actual_monthly_cash_flow ? `$${Number(o.actual_monthly_cash_flow).toLocaleString()}` : '—' },
+                        ].map((m, i) => (
+                          <div key={m.label} className={`px-4 py-3 ${i < 3 ? 'border-r border-dl-border' : ''}`}>
+                            <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">{m.label}</p>
+                            <p className="font-dl-mono text-sm text-dl-navy font-bold">{m.value}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Metadata */}
+                      <div className="px-4 py-3 border-b border-dl-border grid grid-cols-2 md:grid-cols-3 gap-3 text-xs font-dl-mono text-dl-gray">
+                        <div><span className="uppercase text-dl-gray mr-2">Funding:</span><span className="text-dl-navy">{o.funding_path?.replace(/_/g, ' ') || '—'}</span></div>
+                        <div><span className="uppercase text-dl-gray mr-2">Lender:</span><span className="text-dl-navy">{o.lender_path_chosen || '—'}</span></div>
+                        <div><span className="uppercase text-dl-gray mr-2">Timeline:</span><span className="text-dl-navy">{o.actual_timeline_days ? `${o.actual_timeline_days} days` : '—'}</span></div>
+                        {o.meta?.contractorName && <div><span className="uppercase text-dl-gray mr-2">Contractor:</span><span className="text-dl-navy">{o.meta.contractorName}</span></div>}
+                        {o.meta?.dispositionType && <div><span className="uppercase text-dl-gray mr-2">Disposition:</span><span className="text-dl-navy capitalize">{o.meta.dispositionType}</span></div>}
+                        <div><span className="uppercase text-dl-gray mr-2">Submitted by:</span><span className="text-dl-navy">{o.submitted_by || '—'}</span></div>
+                      </div>
+
+                      {/* Variance data */}
+                      {o.variances && o.variances.length > 0 && (
+                        <div className="px-4 py-3 border-b border-dl-border">
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-2">Prediction vs Actual</p>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-xs font-dl-mono">
+                              <thead>
+                                <tr className="text-dl-gray">
+                                  <th className="text-left pb-1">Metric</th>
+                                  <th className="text-right pb-1">Predicted</th>
+                                  <th className="text-right pb-1">Actual</th>
+                                  <th className="text-right pb-1">Var %</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {o.variances.map((v: any) => {
+                                  const pct = Number(v.variance_pct);
+                                  const color = pct > 15 ? 'text-dl-error' : pct < -15 ? 'text-dl-forest' : 'text-dl-navy';
+                                  return (
+                                    <tr key={v.metric_key} className="border-t border-dl-border">
+                                      <td className="py-1 capitalize text-dl-gray">{v.metric_key.replace(/_/g, ' ')}</td>
+                                      <td className="py-1 text-right">{Number(v.predicted_value).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                                      <td className="py-1 text-right text-dl-navy">{Number(v.actual_value).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                                      <td className={`py-1 text-right font-bold ${color}`}>{pct > 0 ? '+' : ''}{pct.toFixed(1)}%</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Review actions */}
+                      <div className="px-4 py-4">
+                        <textarea
+                          placeholder="Review notes (optional)"
+                          value={reviewNotes[o.id] || ''}
+                          onChange={e => setReviewNotes(prev => ({ ...prev, [o.id]: e.target.value }))}
+                          rows={2}
+                          className="w-full font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-bg resize-none mb-3"
+                        />
+                        {reviewMsg && reviewMsg.id === o.id && (
+                          <p className={`font-dl-mono text-xs mb-3 ${reviewMsg.type === 'success' ? 'text-dl-forest' : 'text-dl-error'}`}>
+                            {reviewMsg.text}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => reviewOutcome(o.id, 'approved')}
+                            disabled={!!reviewingId || !outcomeAdminKey}
+                            className="bg-dl-forest text-white px-4 py-2 font-dl-mono text-xs disabled:opacity-50"
+                          >
+                            {reviewingId === o.id ? 'Processing…' : 'Approve'}
+                          </button>
+                          <button
+                            onClick={() => reviewOutcome(o.id, 'rejected')}
+                            disabled={!!reviewingId || !outcomeAdminKey}
+                            className="border border-dl-error text-dl-error px-4 py-2 font-dl-mono text-xs disabled:opacity-50"
+                          >
+                            {reviewingId === o.id ? 'Processing…' : 'Reject'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm('Permanently delete this outcome and all linked data?')) {
+                                reviewOutcome(o.id, 'delete');
+                              }
+                            }}
+                            disabled={!!reviewingId || !outcomeAdminKey}
+                            className="border border-dl-border text-dl-gray px-4 py-2 font-dl-mono text-xs disabled:opacity-50 ml-auto"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
                 <div className="mb-8">
                   <SectionHeading>Variance Tracking</SectionHeading>

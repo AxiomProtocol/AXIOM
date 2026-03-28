@@ -3,21 +3,27 @@ import { pool } from '../../../lib/db';
 import { getSIWESession } from '../../../lib/middleware/siweAuth';
 import { isAuthorizedReviewer } from '../../../lib/reviewerAuth';
 
+function hasAdminKey(req: NextApiRequest): boolean {
+  const key = req.headers['x-admin-solvency-key'] || req.headers['x-admin-key'];
+  return !!process.env.ADMIN_SOLVENCY_KEY && key === process.env.ADMIN_SOLVENCY_KEY;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const session = await getSIWESession(req);
-  if (!session) {
-    return res.status(401).json({ error: 'Wallet authentication required.', code: 'SIWE_AUTH_REQUIRED' });
-  }
-
-  if (!isAuthorizedReviewer(session.address)) {
-    return res.status(403).json({
-      error: 'This wallet is not authorized to view the review queue.',
-      code: 'REVIEWER_NOT_AUTHORIZED',
-    });
+  if (!hasAdminKey(req)) {
+    const session = await getSIWESession(req);
+    if (!session) {
+      return res.status(401).json({ error: 'Admin key or wallet authentication required.', code: 'AUTH_REQUIRED' });
+    }
+    if (!isAuthorizedReviewer(session.address)) {
+      return res.status(403).json({
+        error: 'This wallet is not authorized to view the review queue.',
+        code: 'REVIEWER_NOT_AUTHORIZED',
+      });
+    }
   }
 
   try {
