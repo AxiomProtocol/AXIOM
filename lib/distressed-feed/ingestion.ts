@@ -9,8 +9,13 @@ import { fetchUsdaListings } from './sources/usda';
 import { fetchTaxLienListings } from './sources/tax-liens';
 import { fetchSheriffSaleListings } from './sources/sheriff-sales';
 import { fetchAttomListings } from './sources/attom';
+import { fetchGeorgiaCourthouseListings } from './sources/courthouse-georgia';
+import { fetchFloridaCourthouseListings } from './sources/courthouse-florida';
+import { fetchTexasCourthouseListings } from './sources/courthouse-texas';
+import { fetchArizonaCourthouseListings } from './sources/courthouse-arizona';
+import { fetchMichiganCourthouseListings } from './sources/courthouse-michigan';
 
-const TARGET_STATES = ['GA', 'TX', 'NC', 'MS', 'AL', 'TN', 'SC', 'FL'];
+const TARGET_STATES = ['GA', 'TX', 'NC', 'MS', 'AL', 'TN', 'SC', 'FL', 'AZ', 'MI'];
 
 async function upsertListing(listing: NormalizedListing): Promise<'inserted' | 'updated' | 'skipped'> {
   const existing = await db.select({ id: dpListings.id })
@@ -98,6 +103,12 @@ export async function runIngestion(states?: string[]): Promise<IngestionResult> 
     { name: 'ATTOM Pre-Foreclosure', fn: () => fetchAttomListings(targetStates) },
     ...(taxLienStates.length > 0 ? [{ name: 'Tax Liens', fn: () => fetchTaxLienListings(taxLienStates).then(r => ({ source: r.source, listings: r.listings, errors: r.errors, fetchedAt: r.fetchedAt } as SourceResult)) }] : []),
     ...(sheriffStates.length > 0 ? [{ name: 'Sheriff Sales', fn: () => fetchSheriffSaleListings(sheriffStates).then(r => ({ source: r.source, listings: r.listings, errors: r.errors, fetchedAt: r.fetchedAt } as SourceResult)) }] : []),
+    // Courthouse scraper network — public government record sources
+    ...(targetStates.includes('GA') ? [{ name: 'Courthouse GA', fn: () => fetchGeorgiaCourthouseListings() }] : []),
+    ...(targetStates.includes('FL') ? [{ name: 'Courthouse FL', fn: () => fetchFloridaCourthouseListings() }] : []),
+    ...(targetStates.includes('TX') ? [{ name: 'Courthouse TX', fn: () => fetchTexasCourthouseListings() }] : []),
+    ...(targetStates.includes('AZ') ? [{ name: 'Courthouse AZ', fn: () => fetchArizonaCourthouseListings() }] : []),
+    ...(targetStates.includes('MI') ? [{ name: 'Courthouse MI', fn: () => fetchMichiganCourthouseListings() }] : []),
   ];
 
   for (const source of sources) {

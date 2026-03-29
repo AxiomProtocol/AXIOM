@@ -10,7 +10,7 @@ export interface AttomListingMetadata {
 }
 
 export interface NormalizedListing {
-  source: 'hud' | 'fannie_mae' | 'freddie_mac' | 'usda' | 'wholesaler' | 'tax_sale' | 'manual' | 'attom';
+  source: 'hud' | 'fannie_mae' | 'freddie_mac' | 'usda' | 'wholesaler' | 'tax_sale' | 'manual' | 'attom' | 'courthouse';
   sourceId: string;
   address: string;
   city: string;

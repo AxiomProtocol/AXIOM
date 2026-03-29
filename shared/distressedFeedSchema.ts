@@ -15,7 +15,7 @@ import {
 export const dpDistressTypeEnum = pgEnum('dp_distress_type', ['foreclosure', 'tax_lien', 'reo', 'wholesale', 'short_sale', 'auction', 'government', 'pre_foreclosure', 'lis_pendens']);
 export const dpListingStatusEnum = pgEnum('dp_listing_status', ['active', 'under_contract', 'sold', 'expired', 'pending_review']);
 export const dpSubmissionStatusEnum = pgEnum('dp_submission_status', ['pending', 'approved', 'rejected', 'expired']);
-export const dpSourceEnum = pgEnum('dp_source', ['hud', 'fannie_mae', 'freddie_mac', 'usda', 'wholesaler', 'tax_sale', 'manual', 'attom']);
+export const dpSourceEnum = pgEnum('dp_source', ['hud', 'fannie_mae', 'freddie_mac', 'usda', 'wholesaler', 'tax_sale', 'manual', 'attom', 'courthouse']);
 
 export const dpListings = pgTable("dp_listings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -129,3 +129,36 @@ export type DpMatch = typeof dpMatches.$inferSelect;
 export type InsertDpMatch = typeof dpMatches.$inferInsert;
 export type DpWholesalerSubmission = typeof dpWholesalerSubmissions.$inferSelect;
 export type InsertDpWholesalerSubmission = typeof dpWholesalerSubmissions.$inferInsert;
+
+// ---------------------------------------------------------------------------
+// API key tier system for /api/v1/properties
+// ---------------------------------------------------------------------------
+export const dpApiTierEnum = pgEnum('dp_api_tier', ['free', 'starter', 'pro', 'enterprise']);
+
+export const dpApiKeys = pgTable("dp_api_keys", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  apiKey: varchar("api_key", { length: 64 }).notNull().unique(),
+  ownerEmail: varchar("owner_email").notNull(),
+  ownerWallet: varchar("owner_wallet"),
+  tier: dpApiTierEnum("tier").notNull().default('free'),
+  dailyLimit: integer("daily_limit").notNull().default(10),
+  requestsToday: integer("requests_today").notNull().default(0),
+  resetDate: varchar("reset_date", { length: 10 }).notNull().default(''),
+  active: boolean("active").notNull().default(true),
+  label: varchar("label"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastUsedAt: timestamp("last_used_at"),
+}, (table) => ({
+  apiKeyIdx: index("dp_api_keys_key_idx").on(table.apiKey),
+  ownerEmailIdx: index("dp_api_keys_email_idx").on(table.ownerEmail),
+}));
+
+export type DpApiKey = typeof dpApiKeys.$inferSelect;
+export type InsertDpApiKey = typeof dpApiKeys.$inferInsert;
+
+export const TIER_DAILY_LIMITS: Record<string, number> = {
+  free: 10,
+  starter: 500,
+  pro: 5000,
+  enterprise: 9999999,
+};
