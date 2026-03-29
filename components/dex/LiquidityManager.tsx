@@ -11,7 +11,7 @@
  * TX flow: check balance → approve (if needed) → deposit → confirm
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
   useReadContract,
   useWriteContract,
@@ -20,13 +20,16 @@ import {
 import { parseUnits, formatUnits, maxUint256, type Address } from 'viem';
 import { useWallet } from '../../lib/web3/useWallet';
 import { useUserLiquidity, type UserLiquidity } from '../../lib/hooks/useDex';
+import { CANONICAL_TOKENS } from '../../lib/tokens';
+import { EULER_LENDING_CONTRACTS, EULER_SWAP } from '../../shared/contracts';
+import { ERC3643_CONTRACTS } from '../../shared/contracts-3643';
 
-// ── Contract addresses ─────────────────────────────────────────────────────
-const AXUSD_TOKEN    = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7' as const;
-const AXM_TOKEN      = '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D' as const;
-const EAXUSD_VAULT   = '0xacdA87801f6409bB5157BA78aF1BD9631d6609B2' as const; // eAXUSD-6
-const EAXM_VAULT     = '0x8e28ffa89d168599156004db4f4d12c2af7c250e' as const; // eAXM-1
-const IDENTITY_REG   = '0x58f64a1262d5434d6C7637a2309b0999bB6D1970' as const;
+// ── Contract addresses — all sourced from canonical registries, never hardcoded ──
+const AXUSD_TOKEN  = CANONICAL_TOKENS.AXUSD.address as Address;
+const AXM_TOKEN    = CANONICAL_TOKENS.AXM.address   as Address;
+const EAXUSD_VAULT = EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT as Address; // eAXUSD-6
+const EAXM_VAULT   = EULER_SWAP.AXM_EVK_VAULT       as Address;                // eAXM-1
+const IDENTITY_REG = ERC3643_CONTRACTS.IDENTITY_REGISTRY as Address;
 
 // ── Minimal ABIs ───────────────────────────────────────────────────────────
 const ERC20_ABI = [
@@ -731,8 +734,15 @@ function AddLiquidityTab({
         </>
       )}
 
-      {/* Approving → then deposit */}
-      {step === 'approving' && approveConfirmed && (
+      {/* Approving → then deposit.
+          Show when:
+          (a) step='approving' and approve just confirmed — normal flow, user sees button
+          (b) step='depositing' but no depositTxHash and no pending tx — the useEffect
+              auto-advanced the step before the user clicked; keep button visible so
+              the user is never left in a stuck state without a way to initiate the deposit.
+      */}
+      {((step === 'approving' && approveConfirmed) ||
+        (step === 'depositing' && !depositTxHash && !depositIsPending)) && (
         <button
           onClick={handleDeposit}
           disabled={depositIsPending}

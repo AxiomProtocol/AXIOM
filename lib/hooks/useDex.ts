@@ -55,6 +55,21 @@ export interface TradingRewardsData {
   claimed: string;
 }
 
+// Typed shape of a single pool entry returned by /api/dex/pools → eulerSwap[]
+interface EulerSwapPoolAPIEntry {
+  tokenASymbol?: string;
+  tokenBSymbol?: string;
+  tokenAAddress?: string;
+  tokenBAddress?: string;
+  protocol?: string;
+  reserveA?: number | string;
+  reserveB?: number | string;
+  tvl?: number | string;
+  feeBps?: number;
+  status?: string;
+  poolAddress?: string;
+}
+
 export function useDexPools() {
   const [pools, setPools] = useState<Pool[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,7 +91,7 @@ export function useDexPools() {
         setPools(rawPools);
       } else if (rawPools && typeof rawPools === 'object') {
         // Fix 3: tokenA/tokenB were wrongly set to poolAddress/''; map to real token addresses
-        const eulerSwapPools: Pool[] = (rawPools.eulerSwap || []).map((p: any, idx: number) => ({
+        const eulerSwapPools: Pool[] = (rawPools.eulerSwap || []).map((p: EulerSwapPoolAPIEntry, idx: number) => ({
           id: idx + 1,
           tokenA: getAddressBySymbol(p.tokenASymbol) || p.tokenAAddress || '',
           tokenB: getAddressBySymbol(p.tokenBSymbol) || p.tokenBAddress || '',

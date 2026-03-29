@@ -76,15 +76,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const totalBorrowsNum = parseFloat(ethers.formatEther(totalBorrows));
     const utilization = totalAssetsNum > 0 ? (totalBorrowsNum / totalAssetsNum) * 100 : 0;
     
-    // interestRate() returns a per-second rate as a 1e27 ray.
-    // Annualize: multiply by seconds per year (linear APR approximation).
+    // interestRate() returns a per-second rate as a 1e27 ray (uint256 BigInt from ethers v6).
+    // Number(ray) loses precision when ray > Number.MAX_SAFE_INTEGER (~9e15).
+    // A 10% APR ray ≈ 3.17e18 — well above MAX_SAFE_INTEGER — so we use BigInt arithmetic
+    // to annualise before converting to float, preserving full precision.
     const SECONDS_PER_YEAR = 31_536_000;
-    const interestRateNum = Number(interestRate);
-    const perSecondRate = interestRateNum / 1e27;
-    const borrowAPY = interestRateNum > 0 ? perSecondRate * SECONDS_PER_YEAR * 100 : 0;
+    const SECONDS_PER_YEAR_BI = BigInt(SECONDS_PER_YEAR);
+    // borrowAPY% = (rate * SPY * 10000) / 1e27 / 100  (10000 factor keeps bps precision in BigInt)
+    const borrowAPY = interestRate > 0n
+      ? Number(interestRate * SECONDS_PER_YEAR_BI * 10_000n / (10n ** 27n)) / 100
+      : 0;
     // Supply APY = borrow APY × utilization × (1 − interest fee)
-    const interestFeeRatio = Number(interestFee) / 10000; // interestFee is uint16, 10000 = 100%
-    const supplyAPY = interestRateNum > 0 ? borrowAPY * (utilization / 100) * (1 - interestFeeRatio) : 0;
+    const interestFeeRatio = Number(interestFee) / 10_000; // interestFee is uint16, 10000 = 100%
+    const supplyAPY = borrowAPY > 0 ? borrowAPY * (utilization / 100) * (1 - interestFeeRatio) : 0;
 
     const supplyCap = decodeAmountCap(Number(caps[0]));
     const borrowCap = decodeAmountCap(Number(caps[1]));
