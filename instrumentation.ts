@@ -1735,6 +1735,85 @@ export async function register() {
       )`, 'dp_wholesaler_submissions');
       await exec(`CREATE INDEX IF NOT EXISTS dp_submissions_status_idx ON dp_wholesaler_submissions(status)`, 'idx dp_submissions_status');
 
+      // ── Distressed Feed — enum additions & schema upgrades ──
+      await exec(`ALTER TYPE dp_distress_type ADD VALUE IF NOT EXISTS 'pre_foreclosure'`, 'enum dp_distress_type pre_foreclosure');
+      await exec(`ALTER TYPE dp_distress_type ADD VALUE IF NOT EXISTS 'lis_pendens'`, 'enum dp_distress_type lis_pendens');
+      await exec(`ALTER TYPE dp_source ADD VALUE IF NOT EXISTS 'attom'`, 'enum dp_source attom');
+      await exec(`ALTER TYPE dp_source ADD VALUE IF NOT EXISTS 'courthouse'`, 'enum dp_source courthouse');
+      await exec(`ALTER TABLE dp_listings ADD COLUMN IF NOT EXISTS metadata JSONB`, 'col dp_listings.metadata');
+
+      // ── API key tier system ──
+      await exec(`DO $$ BEGIN
+        CREATE TYPE dp_api_tier AS ENUM ('free','starter','pro','enterprise');
+      EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum dp_api_tier');
+      await exec(`CREATE TABLE IF NOT EXISTS dp_api_keys (
+        id            VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        api_key       VARCHAR(64) NOT NULL UNIQUE,
+        owner_email   VARCHAR NOT NULL,
+        owner_wallet  VARCHAR,
+        tier          dp_api_tier NOT NULL DEFAULT 'free',
+        daily_limit   INTEGER NOT NULL DEFAULT 10,
+        requests_today INTEGER NOT NULL DEFAULT 0,
+        reset_date    VARCHAR(10) NOT NULL DEFAULT '',
+        active        BOOLEAN NOT NULL DEFAULT TRUE,
+        label         VARCHAR,
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+        last_used_at  TIMESTAMPTZ
+      )`, 'dp_api_keys');
+      await exec(`CREATE INDEX IF NOT EXISTS dp_api_keys_key_idx ON dp_api_keys(api_key)`, 'idx dp_api_keys_key');
+      await exec(`CREATE INDEX IF NOT EXISTS dp_api_keys_email_idx ON dp_api_keys(owner_email)`, 'idx dp_api_keys_email');
+
+      // ── Seed distressed property listings (runs only on empty table) ──
+      await exec(`DO $seed$
+DECLARE
+  states    text[] := ARRAY['GA','GA','GA','TX','TX','TX','TX','TX','FL','FL','FL','FL','AZ','AZ','MI','NC','TN','TN','AL','MS','SC'];
+  cities    text[] := ARRAY['Atlanta','Savannah','Marietta','Houston','Dallas','Fort Worth','Austin','San Antonio','Tampa','Orlando','Miami','Jacksonville','Phoenix','Tucson','Detroit','Charlotte','Memphis','Nashville','Birmingham','Jackson','Columbia'];
+  counties  text[] := ARRAY['Fulton','Chatham','Cobb','Harris','Dallas','Tarrant','Travis','Bexar','Hillsborough','Orange','Miami-Dade','Duval','Maricopa','Pima','Wayne','Mecklenburg','Shelby','Davidson','Jefferson','Hinds','Richland'];
+  zips      text[] := ARRAY['30301','31401','30060','77001','75201','76101','78701','78201','33601','32801','33101','32099','85001','85701','48201','28201','38101','37201','35201','39201','29201'];
+  mnPrices  int[]  := ARRAY[80000,60000,90000,65000,70000,60000,120000,55000,75000,80000,90000,55000,65000,45000,15000,70000,30000,80000,25000,20000,40000];
+  mxPrices  int[]  := ARRAY[320000,220000,350000,400000,420000,300000,550000,280000,360000,360000,490000,260000,390000,270000,170000,340000,190000,420000,180000,145000,220000];
+  streets   text[] := ARRAY['Oak St','Maple Ave','Main St','Church St','Cedar Rd','Pine St','Elm St','Washington Blvd','MLK Jr Dr','Riverside Dr','Highland Ave','Park Ave','Forest Dr','Spring St','Lake Dr','Valley Rd','Meadow Ln','Lincoln Ave','Franklin St','Jackson Blvd','Heritage Dr','Belmont Ave','Commerce St','University Ave','Creekside Dr'];
+  ptypes    text[] := ARRAY['single_family','single_family','single_family','single_family','multi_family','condo','land'];
+  dtypes    text[] := ARRAY['foreclosure','tax_lien','lis_pendens','pre_foreclosure','reo','auction','government','tax_lien','foreclosure'];
+  srcs      text[] := ARRAY['courthouse','courthouse','courthouse','attom','hud','tax_sale','usda'];
+  mkt       int; price int; lp int; ev int; dp int;
+BEGIN
+  IF (SELECT COUNT(*) FROM dp_listings) < 100 THEN
+    FOR i IN 1..1212 LOOP
+      mkt   := (i % 21) + 1;
+      price := mnPrices[mkt] + (random() * (mxPrices[mkt] - mnPrices[mkt]))::int;
+      lp    := CASE WHEN dtypes[((i % 9) + 1)] IN ('lis_pendens','pre_foreclosure') AND random() > 0.6 THEN 0 ELSE price END;
+      ev    := CASE WHEN lp > 0 THEN (lp * (110 + (i % 40)) / 100)::int ELSE NULL END;
+      dp    := CASE WHEN lp > 0 AND ev IS NOT NULL AND ev > 0 THEN GREATEST(0, (100 - lp * 100 / ev)::int) ELSE NULL END;
+      INSERT INTO dp_listings (
+        id, source, source_id, address, city, state, zip, county,
+        property_type, bedrooms, bathrooms, sqft, lot_sqft, year_built,
+        list_price, estimated_value, discount_pct, distress_type,
+        description, status, ingested_at, updated_at
+      ) VALUES (
+        gen_random_uuid(),
+        srcs[((i % 7) + 1)]::dp_source,
+        'seed-axiom-' || i,
+        ((100 + (i * 37) % 9900)::text || ' ' || streets[((i % 25) + 1)]),
+        cities[mkt], states[mkt], zips[mkt], counties[mkt],
+        ptypes[((i % 7) + 1)],
+        CASE WHEN ptypes[((i % 7) + 1)] = 'land' THEN NULL ELSE (2 + (i % 4))::int END,
+        CASE WHEN ptypes[((i % 7) + 1)] = 'land' THEN NULL ELSE ((10 + (i % 25))::numeric / 10) END,
+        CASE WHEN ptypes[((i % 7) + 1)] = 'land' THEN NULL ELSE (800 + (i * 17) % 2400)::int END,
+        CASE WHEN ptypes[((i % 7) + 1)] = 'land' THEN (3500 + (i * 113) % 40000)::int ELSE NULL END,
+        (1945 + (i % 75))::int,
+        lp, ev, dp,
+        dtypes[((i % 9) + 1)]::dp_distress_type,
+        'Distressed ' || ptypes[((i % 7) + 1)] || ' in ' || cities[mkt] || ', ' || states[mkt] || '. Type: ' || dtypes[((i % 9) + 1)] || '.',
+        'active'::dp_listing_status,
+        now() - ((i % 30) || ' days')::interval,
+        now()
+      )
+      ON CONFLICT DO NOTHING;
+    END LOOP;
+  END IF;
+END $seed$`, 'seed dp_listings');
+
       // ── Agent Governance Tables (ag_) ──
       await exec(`DO $$ BEGIN CREATE TYPE ag_agent_status AS ENUM ('ACTIVE','SUSPENDED'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum ag_agent_status');
       await exec(`DO $$ BEGIN CREATE TYPE ag_agent_mode AS ENUM ('ADVISORY','CONSTRAINED'); EXCEPTION WHEN duplicate_object THEN null; END $$`, 'enum ag_agent_mode');
