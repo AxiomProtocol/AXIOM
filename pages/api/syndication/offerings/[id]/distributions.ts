@@ -312,94 +312,13 @@ async function executeUsdPayment(
   netAmount: number
 ) {
   try {
-    const investorMeta = dist.investor_meta || {};
-    const unitCustomerId = investorMeta.unit_customer_id || investorMeta.unitCustomerId;
-
-    if (!unitCustomerId) {
-      await setDistFailed(distributionId, offeringId, 'Investor has no linked Unit bank account. Cannot initiate ACH credit.');
-      return res.status(200).json({ success: false, error: 'Investor has no linked Unit bank account. Cannot initiate ACH credit.' });
-    }
-
-    const { UnitAccountService } = await import('../../../../../lib/services/UnitAccountService');
-    const accountService = new UnitAccountService();
-
-    const investorWallet = (dist.wallet_address || '').toLowerCase();
-
-    if (investorWallet) {
-      await accountService.syncAccountsFromUnit(investorWallet, unitCustomerId);
-    }
-
-    const { isUnitConfigured } = await import('../../../../../lib/unit/client');
-    if (!isUnitConfigured()) {
-      await setDistFailed(distributionId, offeringId, 'Banking service is not configured.');
-      return res.status(200).json({ success: false, error: 'Banking service is not configured.' });
-    }
-
-    const { getUnitClient } = await import('../../../../../lib/unit/client');
-    const unitClient = getUnitClient();
-    if (!unitClient) {
-      await setDistFailed(distributionId, offeringId, 'Banking service unavailable.');
-      return res.status(200).json({ success: false, error: 'Banking service unavailable.' });
-    }
-
-    let counterpartyAccountId: string | null = null;
-    try {
-      const accountsResp = await unitClient.accounts.list({ customerId: unitCustomerId });
-      const remoteAccounts = accountsResp.data ?? [];
-      if (remoteAccounts.length > 0) {
-        counterpartyAccountId = remoteAccounts[0].id;
-      }
-    } catch (err) {
-      console.error('[Distributions] Failed to list accounts by customer ID:', err);
-    }
-
-    if (!counterpartyAccountId && investorWallet) {
-      const localAccounts = await accountService.getAccountsForWallet(investorWallet);
-      const found = localAccounts.find((a: any) => a.unitAccountId);
-      if (found) counterpartyAccountId = found.unitAccountId;
-    }
-
-    if (!counterpartyAccountId) {
-      await setDistFailed(distributionId, offeringId, 'No linked deposit account found for investor.');
-      return res.status(200).json({ success: false, error: 'No linked deposit account found for investor.' });
-    }
-
-    const treasuryAccountId = process.env.UNIT_TREASURY_ACCOUNT_ID;
-    if (!treasuryAccountId) {
-      await setDistFailed(distributionId, offeringId, 'Treasury account not configured.');
-      return res.status(200).json({ success: false, error: 'Treasury account not configured.' });
-    }
-
-    const { UnitPaymentService } = await import('../../../../../lib/services/UnitPaymentService');
-    const paymentService = new UnitPaymentService();
-    const amountCents = Math.round(netAmount * 100);
-
-    const payResult = await paymentService.createAchCredit({
-      walletAddress: investorWallet || 'system',
-      fromAccountId: treasuryAccountId,
-      counterpartyAccountId,
-      amountCents,
-      description: `Distribution — ${dist.legal_name || 'Investor'} — $${netAmount.toLocaleString()}`,
-      purpose: 'distribution',
-    });
-
-    if (!payResult.success) {
-      await setDistFailed(distributionId, offeringId, payResult.error || 'ACH credit payment failed');
-      return res.status(200).json({ success: false, error: payResult.error || 'ACH credit payment failed.' });
-    }
-
-    await pool.query(
-      `UPDATE syn_distributions SET status = 'completed', paid_at = now(),
-       meta = jsonb_set(jsonb_set(COALESCE(meta, '{}'), '{unit_payment_id}', $1::jsonb), '{payment_method}', '"ach_credit"'::jsonb),
-       updated_at = now()
-       WHERE id = $2 AND offering_id = $3`,
-      [JSON.stringify(payResult.unitPaymentId), distributionId, offeringId]
-    );
-
+    // Banking infrastructure (ACH credit) is pending partner selection.
+    // Unit Finance integration has been removed. A new fiat rails provider
+    // will be integrated here once onboarded.
+    await setDistFailed(distributionId, offeringId, 'Banking infrastructure is being reconfigured. ACH distributions temporarily unavailable.');
     return res.status(200).json({
-      success: true,
-      paymentMethod: 'ach_credit',
-      unitPaymentId: payResult.unitPaymentId,
+      success: false,
+      error: 'Banking infrastructure is being reconfigured. ACH distributions are temporarily unavailable. Contact Axiom for manual distribution processing.',
     });
   } catch (error: any) {
     console.error('[Distributions] USD ACH credit error:', error);

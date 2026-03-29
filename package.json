@@ -182,7 +182,6 @@
     "@transak/transak-sdk": "^4.0.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/pg": "^8.16.0",
-    "@unit-finance/unit-node-sdk": "^1.4.1",
     "@uppy/aws-s3": "^5.1.0",
     "@uppy/core": "^5.2.0",
     "@uppy/dashboard": "^5.1.0",

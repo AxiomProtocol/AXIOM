@@ -1,718 +1,117 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
-import { KycForm, KycFormData } from '../../components/banking/KycForm';
-import { AccountCard } from '../../components/banking/AccountCard';
-import { WealthPoolCard } from '../../components/banking/WealthPoolCard';
-import { CustodyWalletCard } from '../../components/banking/CustodyWalletCard';
-import { BridgeWidget } from '../../components/banking/BridgeWidget';
-import { CardDisplay } from '../../components/banking/CardDisplay';
-import { TransactionList } from '../../components/banking/TransactionList';
-import { PendingApprovals } from '../../components/banking/PendingApprovals';
-import { BankingLanding } from '../../components/banking/BankingLanding';
-import { AchFundingFlow } from '../../components/banking/AchFundingFlow';
-import { AchSendFlow } from '../../components/banking/AchSendFlow';
-import { useWallet } from '../../components/WalletConnect/WalletContext';
-import { openAppKit } from '../../lib/web3/appKitModal';
+import DesignLawLayout from '../components/design-law/DesignLawLayout';
 
-type Tab = 'overview' | 'identity' | 'account' | 'wealth' | 'custody' | 'bridge';
+const DL = {
+  navy:   '#1B2A4A',
+  forest: '#1D3D2A',
+  gold:   '#B8973A',
+  muted:  'rgba(27,42,74,0.50)',
+  border: 'rgba(27,42,74,0.18)',
+  surface: '#F8F6F0',
+};
 
-interface BankingStatus {
-  hasCustomer: boolean;
-  isApproved: boolean;
-  applicationStatus: string | null;
-  customerId: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  accounts: Array<{
-    id: string;
-    unitAccountId: string;
-    accountType: string;
-    status: string;
-    balanceCents: number;
-    availableBalanceCents?: number;
-    routingNumber?: string;
-    maskedAccountNumber?: string;
-    susuGroupId?: string | null;
-  }>;
-}
-
-interface CustodyData {
-  wallets: Array<{
-    id: string;
-    bitgoWalletId: string;
-    coin: string;
-    receiveAddress: string;
-    confirmedBalanceStr: string;
-    spendableBalanceStr: string;
-  }>;
-}
-
-export default function BankingPage() {
-  const { walletState, siweState, signInWithEthereum } = useWallet();
-  const { address, isConnected } = walletState;
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
-
-  const [status, setStatus] = useState<BankingStatus | null>(null);
-  const [statusLoading, setStatusLoading] = useState(false);
-  const [custody, setCustody] = useState<CustodyData | null>(null);
-  const [custodyLoading, setCustodyLoading] = useState(false);
-  const [custodyCreating, setCustodyCreating] = useState(false);
-  const [custodyTxs, setCustodyTxs] = useState<unknown[]>([]);
-  const [custodyTxLoading, setCustodyTxLoading] = useState(false);
-  const [transactions, setTransactions] = useState<unknown[]>([]);
-  const [txLoading, setTxLoading] = useState(false);
-  const [pendingApprovals, setPendingApprovals] = useState<unknown[]>([]);
-  const [bridgeHistory, setBridgeHistory] = useState<unknown[]>([]);
-
-  const [serverIp, setServerIp] = useState<string | null>(null);
-
-  const [kycLoading, setKycLoading] = useState(false);
-  const [kycError, setKycError] = useState<string | null>(null);
-  const [actionMsg, setActionMsg] = useState<string | null>(null);
-  const [actionErr, setActionErr] = useState<string | null>(null);
-  const [showAchFlow, setShowAchFlow] = useState(false);
-  const [showAchSend, setShowAchSend] = useState(false);
-  const [contributePool, setContributePool] = useState<{ poolAccountId: string; label: string } | null>(null);
-  const [contributeAmount, setContributeAmount] = useState('');
-  const [contributeLoading, setContributeLoading] = useState(false);
-
-  const fetchStatus = useCallback(async () => {
-    if (!isConnected) return;
-    setStatusLoading(true);
-    try {
-      const r = await fetch('/api/unit/status', { credentials: 'include' });
-      if (r.ok) setStatus(await r.json());
-    } catch {
-    } finally {
-      setStatusLoading(false);
-    }
-  }, [isConnected]);
-
-  const fetchCustody = useCallback(async () => {
-    if (!isConnected) return;
-    setCustodyLoading(true);
-    try {
-      const r = await fetch('/api/bitgo/wallets/list', { credentials: 'include' });
-      if (r.ok) {
-        const data = await r.json();
-        setCustody(data);
-      }
-    } catch {
-    } finally {
-      setCustodyLoading(false);
-    }
-  }, [isConnected]);
-
-  const fetchCustodyTxs = useCallback(async (walletId: string) => {
-    setCustodyTxLoading(true);
-    try {
-      const r = await fetch(`/api/bitgo/wallets/${walletId}/transactions`, { credentials: 'include' });
-      if (r.ok) {
-        const data = await r.json();
-        setCustodyTxs(data.transactions ?? []);
-      }
-    } catch {
-    } finally {
-      setCustodyTxLoading(false);
-    }
-  }, []);
-
-  const fetchApprovals = useCallback(async () => {
-    if (!isConnected) return;
-    try {
-      const r = await fetch('/api/bitgo/treasury/pending', { credentials: 'include' });
-      if (r.ok) {
-        const data = await r.json();
-        setPendingApprovals(data.pendingApprovals ?? []);
-      }
-    } catch {}
-  }, [isConnected]);
-
-  const fetchBridgeHistory = useCallback(async () => {
-    if (!isConnected) return;
-    try {
-      const r = await fetch('/api/bridge/history', { credentials: 'include' });
-      if (r.ok) {
-        const data = await r.json();
-        setBridgeHistory(data.transfers ?? []);
-      }
-    } catch {}
-  }, [isConnected]);
-
-  useEffect(() => {
-    fetchStatus();
-  }, [fetchStatus]);
-
-  useEffect(() => {
-    if (activeTab === 'custody') {
-      fetchCustody();
-      fetchApprovals();
-    }
-    if (activeTab === 'bridge') {
-      fetchBridgeHistory();
-    }
-  }, [activeTab, fetchCustody, fetchApprovals, fetchBridgeHistory]);
-
-  const primaryAccount = status?.accounts?.find((a) => a.accountType === 'member');
-  const poolAccounts = status?.accounts?.filter((a) => a.accountType === 'susu_pool') ?? [];
-  const custodyWallet = custody?.wallets?.[0] ?? null;
-
-  useEffect(() => {
-    if (activeTab === 'custody' && custodyWallet?.bitgoWalletId) {
-      fetchCustodyTxs(custodyWallet.bitgoWalletId);
-    }
-  }, [activeTab, custodyWallet?.bitgoWalletId, fetchCustodyTxs]);
-
-  useEffect(() => {
-    if (activeTab === 'custody' && !serverIp) {
-      fetch('/api/server-ip').then(r => r.json()).then(d => setServerIp(d.ip)).catch(() => {});
-    }
-  }, [activeTab, serverIp]);
-
-  const fetchTxForAccount = async (unitAccountId: string) => {
-    setTxLoading(true);
-    try {
-      const account = status?.accounts?.find((a) => a.unitAccountId === unitAccountId);
-      if (!account) return;
-      const r = await fetch(`/api/unit/accounts/${account.id}/transactions?limit=20`);
-      if (r.ok) {
-        const data = await r.json();
-        setTransactions(data.transactions ?? []);
-      }
-    } catch {
-    } finally {
-      setTxLoading(false);
-    }
-  };
-
-  const handleKycSubmit = async (data: KycFormData) => {
-    setKycLoading(true);
-    setKycError(null);
-    try {
-      const r = await fetch('/api/unit/onboard', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      const json = await r.json();
-      if (!r.ok) { setKycError(json.error ?? 'Submission failed.'); return; }
-      await fetchStatus();
-      setActionMsg('Application submitted. We will notify you once your identity is verified.');
-    } catch {
-      setKycError('Network error. Please try again.');
-    } finally {
-      setKycLoading(false);
-    }
-  };
-
-  const handleCreateAccount = async () => {
-    setActionErr(null);
-    const r = await fetch('/api/unit/accounts/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ accountType: 'member' }),
-    });
-    const json = await r.json();
-    if (!r.ok) { setActionErr(json.error); return; }
-    await fetchStatus();
-    setActionMsg('Account created successfully.');
-  };
-
-  const handleCreateWallet = async () => {
-    setCustodyCreating(true);
-    setActionErr(null);
-    try {
-      const r = await fetch('/api/bitgo/wallets/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({}),
-      });
-      const json = await r.json();
-      if (!r.ok) { setActionErr(json.error); return; }
-      await fetchCustody();
-      setActionMsg('Custody wallet created.');
-    } catch {
-      setActionErr('Failed to create wallet.');
-    } finally {
-      setCustodyCreating(false);
-    }
-  };
-
-  const handleSend = async (params: { toAddress: string; amount: string }) => {
-    if (!custodyWallet) return;
-    setActionErr(null);
-    const r = await fetch('/api/bitgo/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        walletId: custodyWallet.bitgoWalletId,
-        toAddress: params.toAddress,
-        amount: params.amount,
-      }),
-    });
-    const json = await r.json();
-    if (!r.ok) { setActionErr(json.error); return; }
-    setActionMsg(`Transaction submitted. Tx ID: ${json.txId ?? 'pending'}`);
-    await fetchCustody();
-  };
-
-  const handleApprove = async (approvalId: string) => {
-    const r = await fetch('/api/bitgo/treasury/approve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ pendingApprovalId: approvalId, action: 'approve' }),
-    });
-    if (r.ok) { await fetchApprovals(); setActionMsg('Authorization approved.'); }
-  };
-
-  const handleReject = async (approvalId: string) => {
-    const r = await fetch('/api/bitgo/treasury/approve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ pendingApprovalId: approvalId, action: 'reject' }),
-    });
-    if (r.ok) { await fetchApprovals(); setActionMsg('Authorization rejected.'); }
-  };
-
-  const handleGetQuote = async (params: {
-    direction: 'fiat_to_crypto' | 'crypto_to_fiat';
-    fiatAmountCents: number;
-    cryptoAsset: string;
-  }) => {
-    const r = await fetch('/api/bridge/quote', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(params),
-    });
-    const json = await r.json();
-    return r.ok ? json.quote : null;
-  };
-
-  const handleTransfer = async (params: {
-    direction: 'fiat_to_crypto' | 'crypto_to_fiat';
-    fiatAmountCents: number;
-    cryptoAsset: string;
-    quoteSnapshotId?: string;
-  }) => {
-    if (!primaryAccount || !custodyWallet) return null;
-    const r = await fetch('/api/bridge/transfer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        ...params,
-        unitAccountId: primaryAccount.unitAccountId,
-        bitgoWalletId: custodyWallet.bitgoWalletId,
-      }),
-    });
-    const json = await r.json();
-    if (r.ok) { await fetchBridgeHistory(); }
-    return r.ok ? { transferId: json.transferId } : null;
-  };
-
-  const TABS: { id: Tab; label: string }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'identity', label: 'Identity' },
-    { id: 'account', label: 'Account' },
-    { id: 'wealth', label: 'Wealth Practice' },
-    { id: 'custody', label: 'Crypto Custody' },
-    { id: 'bridge', label: 'Bridge' },
-  ];
-
-  const kycStatus = status?.applicationStatus;
-  const kycApproved = status?.isApproved;
-
-  function KycStatusBadge() {
-    if (!status?.hasCustomer) return null;
-    const colors: Record<string, string> = {
-      Approved: 'border-dl-forest text-dl-forest',
-      Denied: 'border-red-400 text-red-500',
-      PendingReview: 'border-yellow-500 text-yellow-600',
-      AwaitingDocuments: 'border-yellow-500 text-yellow-600',
-      Pending: 'border-dl-muted text-dl-muted',
-    };
-    const label = kycApproved ? 'Verified' : (kycStatus ?? 'Pending');
-    const cls = colors[kycApproved ? 'Approved' : (kycStatus ?? 'Pending')] ?? colors['Pending'];
-    return (
-      <span className={`text-xs font-dl-mono uppercase px-2 py-0.5 border ${cls}`}>{label}</span>
-    );
-  }
-
+export default function BankingComingSoon() {
   return (
     <DesignLawLayout>
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-2xl font-dl-serif text-dl-navy">Banking Infrastructure</h1>
-          {status && <KycStatusBadge />}
+      <div style={{ maxWidth: 560, margin: '80px auto', textAlign: 'center' }}>
+
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            border: `1px solid ${DL.border}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 24px',
+          }}
+        >
+          <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={DL.navy} strokeWidth={1.5}>
+            <rect x="3" y="10" width="18" height="11" rx="0" />
+            <path d="M7 10V7a5 5 0 0 1 10 0v3" />
+          </svg>
         </div>
-        <p className="text-sm font-dl-mono text-dl-muted">
-          FDIC-insured banking rails (Unit) + institutional crypto custody (BitGo). Wallet:{' '}
-          {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not connected'}
+
+        <h1
+          style={{
+            fontFamily: 'Georgia, serif',
+            fontSize: 26,
+            fontWeight: 400,
+            color: DL.navy,
+            marginBottom: 12,
+            letterSpacing: '-0.01em',
+          }}
+        >
+          Banking Infrastructure
+        </h1>
+
+        <p
+          style={{
+            fontFamily: 'monospace',
+            fontSize: 12,
+            color: DL.muted,
+            lineHeight: 1.7,
+            marginBottom: 32,
+          }}
+        >
+          Fiat on/off ramp and banking rails are being configured with a new
+          infrastructure partner. This module will provide FDIC-insured deposit
+          accounts, ACH transfers, and stablecoin ↔ fiat conversion directly
+          within the Axiom Protocol.
         </p>
-      </div>
 
-      {!isConnected && (
-        <BankingLanding onConnect={() => openAppKit()} />
-      )}
-
-      {isConnected && (
-        <>
-          {actionMsg && (
-            <div className="border border-dl-forest bg-green-50 p-3 mb-4">
-              <p className="text-sm font-dl-mono text-dl-forest">{actionMsg}</p>
-              <button onClick={() => setActionMsg(null)} className="text-xs font-dl-mono text-dl-muted underline mt-1">Dismiss</button>
-            </div>
-          )}
-          {actionErr && (
-            <div className="border border-red-300 bg-red-50 p-3 mb-4">
-              <p className="text-sm font-dl-mono text-red-600">{actionErr}</p>
-              <button onClick={() => setActionErr(null)} className="text-xs font-dl-mono text-dl-muted underline mt-1">Dismiss</button>
-            </div>
-          )}
-
-          <div className="flex border-b border-dl-border mb-6 overflow-x-auto">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-3 text-sm font-dl-mono whitespace-nowrap border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-dl-navy text-dl-navy'
-                    : 'border-transparent text-dl-muted hover:text-dl-navy'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+        <div
+          style={{
+            border: `1px solid ${DL.border}`,
+            background: DL.surface,
+            padding: '16px 24px',
+            marginBottom: 32,
+          }}
+        >
+          <div style={{ fontFamily: 'monospace', fontSize: 10, color: DL.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
+            Planned capabilities
           </div>
-
-          {activeTab === 'overview' && (
-            <div>
-              <BankingLanding />
-              <div className="mt-8">
-                <div className="border border-[#2c3e50]">
-                  <div className="border-b border-[#2c3e50] px-5 py-3">
-                    <span className="font-mono text-xs uppercase tracking-widest text-[#5a6c7d]">System Architecture</span>
-                    <h3 className="font-serif text-lg text-[#2c3e50] mt-0.5">Banking as the Capital Rail</h3>
-                  </div>
-                  <div className="p-5">
-                    <p className="font-mono text-sm text-[#5a6c7d] mb-5 leading-relaxed">
-                      Your Axiom bank account is not a standalone product — it is the foundation all other products run on.
-                      FDIC-insured deposits ($250K protection), ACH rails, and a single KYC verification cover your participation
-                      in every Axiom capital product. Capital moves in once, and routes automatically to wherever you deploy it.
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 border border-[#2c3e50]">
-                      {[
-                        { product: 'Wealth Practice', desc: 'Monthly contributions auto-debit from your account. Rotation payouts deposit directly back.', step: '01' },
-                        { product: 'Syndications', desc: 'Capital calls draw from your account balance. LP distributions settle back in via ACH.', step: '02' },
-                        { product: 'Lending Fund', desc: 'Loan disbursements route through your account. Repayments are scheduled ACH debits.', step: '03' },
-                      ].map((item, i) => (
-                        <div key={i} className={`p-4 ${i < 2 ? 'border-b sm:border-b-0 sm:border-r border-[#2c3e50]' : ''}`}>
-                          <div className="font-mono text-xs text-[#5a6c7d] mb-1">{item.step}</div>
-                          <div className="font-serif text-[#2c3e50] mb-1">{item.product}</div>
-                          <div className="font-mono text-xs text-[#5a6c7d] leading-relaxed">{item.desc}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-4 border border-[#2d5016] bg-[#f0f5ec] p-4">
-                      <div className="font-mono text-xs text-[#2d5016] leading-relaxed">
-                        <span className="font-bold">Why FDIC insurance matters for community capital:</span>{' '}
-                        When 10 members pool contributions into a Wealth Practice group, their individual shares stay protected up to $250,000 per depositor.
-                        Members can participate in community wealth-building without exposing their principal to uninsured risk.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {[
+            'Fiat on-ramp → AXUSD stablecoin',
+            'AXUSD off-ramp → fiat withdrawal',
+            'FDIC-insured USD deposit accounts',
+            'ACH and wire transfer rails',
+            'Institutional crypto custody',
+          ].map((cap) => (
+            <div
+              key={cap}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '6px 0',
+                borderTop: `1px solid ${DL.border}`,
+                fontFamily: 'monospace',
+                fontSize: 11,
+                color: DL.navy,
+              }}
+            >
+              <span style={{ color: DL.gold, flexShrink: 0 }}>—</span>
+              {cap}
             </div>
-          )}
-
-          {activeTab === 'identity' && (
-            <div className="max-w-lg">
-              {kycApproved ? (
-                <div className="border border-dl-forest p-6">
-                  <p className="text-xs font-dl-mono text-dl-muted uppercase tracking-widest mb-2">Identity Verification</p>
-                  <p className="text-base font-dl-serif text-dl-forest mb-1">Identity Verified</p>
-                  <p className="text-sm font-dl-mono text-dl-muted">
-                    Welcome back, {status?.firstName ?? 'Member'}. Your identity has been verified.
-                  </p>
-                </div>
-              ) : status?.hasCustomer ? (
-                <div className="border border-dl-border p-6">
-                  <p className="text-xs font-dl-mono text-dl-muted uppercase tracking-widest mb-2">Identity Verification</p>
-                  <p className="text-base font-dl-serif text-dl-navy mb-2">Application Under Review</p>
-                  <p className="text-sm font-dl-mono text-dl-muted mb-1">
-                    Status: <span className="text-dl-navy">{kycStatus ?? 'Pending'}</span>
-                  </p>
-                  <p className="text-sm font-dl-mono text-dl-muted">
-                    Our banking partner is reviewing your application. This typically takes 1–2 business days.
-                  </p>
-                  <button
-                    onClick={fetchStatus}
-                    className="mt-4 text-xs font-dl-mono text-dl-navy underline"
-                  >
-                    Refresh status
-                  </button>
-                </div>
-              ) : !siweState.isAuthenticated ? (
-                <div>
-                  <p className="text-sm font-dl-mono text-dl-muted mb-6">
-                    Complete identity verification to open an FDIC-insured bank account. Required by our banking partner under US regulations.
-                  </p>
-                  <div className="border border-dl-border p-6">
-                    <p className="text-xs font-dl-mono text-dl-muted uppercase tracking-widest mb-2">Wallet Verification Required</p>
-                    <p className="text-base font-dl-serif text-dl-navy mb-3">
-                      Sign in with your wallet to continue
-                    </p>
-                    <p className="text-sm font-dl-mono text-dl-muted mb-4">
-                      Before submitting your identity verification, you must sign a message to prove wallet ownership. This does not cost any gas fees.
-                    </p>
-                    {siweState.authError && (
-                      <p className="text-sm font-dl-mono text-red-600 mb-4">{siweState.authError}</p>
-                    )}
-                    <button
-                      onClick={signInWithEthereum}
-                      disabled={siweState.isAuthenticating}
-                      className="min-h-[44px] px-6 py-3 bg-dl-navy text-white font-dl-mono text-sm border border-dl-navy hover:bg-opacity-90 disabled:opacity-50"
-                    >
-                      {siweState.isAuthenticating ? 'Awaiting Signature...' : 'Sign In with Ethereum'}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <p className="text-sm font-dl-mono text-dl-muted mb-6">
-                    Complete identity verification to open an FDIC-insured bank account. Required by our banking partner under US regulations.
-                  </p>
-                  {actionMsg && <p className="text-sm font-dl-mono text-dl-forest mb-4">{actionMsg}</p>}
-                  <KycForm onSubmit={handleKycSubmit} loading={kycLoading} error={kycError} />
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'account' && (
-            <div className="space-y-6">
-              {statusLoading ? (
-                <div className="border border-dl-border p-6">
-                  <div className="h-8 bg-dl-border animate-pulse w-48 mb-2" />
-                  <div className="h-4 bg-dl-border animate-pulse w-32" />
-                </div>
-              ) : primaryAccount ? (
-                <>
-                  <AccountCard
-                    account={primaryAccount}
-                    onFundAccount={() => setShowAchFlow(true)}
-                    onTransfer={() => setShowAchSend(true)}
-                  />
-                  <div>
-                    <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-sm font-dl-mono text-dl-muted uppercase tracking-widest">Recent Transactions</h3>
-                      <button onClick={() => fetchTxForAccount(primaryAccount.unitAccountId)} className="text-xs font-dl-mono text-dl-navy underline">
-                        Refresh
-                      </button>
-                    </div>
-                    <TransactionList transactions={transactions as never[]} loading={txLoading} />
-                  </div>
-                </>
-              ) : kycApproved ? (
-                <div className="border border-dl-border p-6">
-                  <p className="text-sm font-dl-mono text-dl-muted mb-4">
-                    Your identity is verified. Open your Axiom banking account to access FDIC-insured deposits and ACH transfers.
-                  </p>
-                  <button
-                    onClick={handleCreateAccount}
-                    className="bg-dl-navy text-white text-sm font-dl-mono px-6 py-2.5 hover:opacity-90"
-                  >
-                    Open Banking Account
-                  </button>
-                </div>
-              ) : (
-                <div className="border border-dl-border p-6">
-                  <p className="text-sm font-dl-mono text-dl-muted">
-                    Complete identity verification on the Identity tab before opening a bank account.
-                  </p>
-                  <button onClick={() => setActiveTab('identity')} className="text-xs font-dl-mono text-dl-navy underline mt-2">
-                    Go to Identity Verification
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'wealth' && (
-            <div className="space-y-6">
-              <WealthPoolCard
-                pools={poolAccounts}
-                onContribute={(accountId) => {
-                  setContributeAmount('');
-                  setContributePool({ poolAccountId: accountId, label: 'Wealth Practice Pool' });
-                }}
-                onAutoContribute={(accountId) => {
-                  setContributeAmount('');
-                  setContributePool({ poolAccountId: accountId, label: 'Wealth Practice Pool (Auto)' });
-                }}
-              />
-            </div>
-          )}
-
-          {activeTab === 'custody' && (
-            <div className="border border-dl-border p-8">
-              <p className="text-xs font-dl-mono text-dl-muted uppercase tracking-widest mb-3">Institutional Custody</p>
-              <p className="font-dl-serif text-xl text-dl-navy mb-3">Crypto Custody — Available Shortly</p>
-              <p className="text-sm font-dl-mono text-dl-muted leading-relaxed max-w-xl">
-                BitGo institutional custody wallets (AXM, AXUSD, ETH on Arbitrum) are being configured for
-                production infrastructure. This feature will be active within two weeks. FDIC-insured banking,
-                ACH transfers, and debit cards are fully operational now.
-              </p>
-            </div>
-          )}
-
-          {activeTab === 'bridge' && (
-            <div className="space-y-6">
-              <BridgeWidget
-                unitAccountId={primaryAccount?.unitAccountId}
-                bitgoWalletId={custodyWallet?.bitgoWalletId}
-                onGetQuote={handleGetQuote}
-                onTransfer={handleTransfer}
-              />
-
-              {bridgeHistory.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-dl-mono text-dl-muted uppercase tracking-widest mb-3">Transfer History</h3>
-                  <div className="border border-dl-border divide-y divide-dl-border">
-                    {(bridgeHistory as Array<{
-                      id: string;
-                      direction: string;
-                      status: string;
-                      fiatAmountCents: number;
-                      cryptoAsset: string;
-                      cryptoAmountStr?: string;
-                      createdAt: string;
-                    }>).map((t) => (
-                      <div key={t.id} className="p-4 flex justify-between items-center">
-                        <div>
-                          <p className="text-sm font-dl-mono text-dl-navy">
-                            {t.direction === 'fiat_to_crypto' ? 'USD → ' : '→ USD '}{t.cryptoAsset}
-                          </p>
-                          <p className="text-xs font-dl-mono text-dl-muted mt-0.5">
-                            ${(t.fiatAmountCents / 100).toFixed(2)}
-                            {t.cryptoAmountStr ? ` · ${t.cryptoAmountStr} ${t.cryptoAsset}` : ''}
-                          </p>
-                          <p className="text-xs font-dl-mono text-dl-muted">
-                            {new Date(t.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <span className={`text-xs font-dl-mono uppercase px-2 py-0.5 border ${
-                          t.status === 'completed' ? 'border-dl-forest text-dl-forest' :
-                          t.status === 'failed' ? 'border-red-400 text-red-500' :
-                          'border-yellow-500 text-yellow-600'
-                        }`}>
-                          {t.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </>
-      )}
-
-      {showAchFlow && (
-        <AchFundingFlow
-          customerName={status ? `${status.firstName ?? ''} ${status.lastName ?? ''}`.trim() : undefined}
-          onClose={() => setShowAchFlow(false)}
-          onLinked={() => fetchStatus()}
-        />
-      )}
-
-      {showAchSend && primaryAccount && (
-        <AchSendFlow
-          unitAccountId={primaryAccount.unitAccountId}
-          availableBalanceCents={primaryAccount.availableBalanceCents ?? primaryAccount.balanceCents}
-          onClose={() => setShowAchSend(false)}
-          onComplete={() => { fetchStatus(); if (primaryAccount) fetchTxForAccount(primaryAccount.unitAccountId); }}
-        />
-      )}
-
-      {contributePool && primaryAccount && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm border border-dl-border p-6">
-            <p className="text-xs font-dl-mono text-dl-muted uppercase tracking-widest mb-1">Contribute</p>
-            <h2 className="text-lg font-dl-serif text-dl-navy mb-4">{contributePool.label}</h2>
-            {actionErr && (
-              <div className="bg-red-50 border border-red-200 px-3 py-2 mb-4">
-                <p className="text-xs font-dl-mono text-red-700">{actionErr}</p>
-              </div>
-            )}
-            <label className="block text-xs font-dl-mono text-dl-muted uppercase tracking-widest mb-1">Amount (USD)</label>
-            <div className="relative mb-4">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-dl-mono text-dl-muted">$</span>
-              <input
-                type="number"
-                step="0.01"
-                min="1"
-                className="w-full border border-dl-border pl-7 pr-3 py-2 text-sm font-dl-mono focus:outline-none focus:border-dl-navy"
-                value={contributeAmount}
-                onChange={(e) => setContributeAmount(e.target.value)}
-                placeholder="0.00"
-                autoFocus
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setContributePool(null); setActionErr(null); }}
-                className="flex-1 border border-dl-border text-dl-muted text-sm font-dl-mono py-2 hover:border-dl-navy hover:text-dl-navy"
-              >
-                Cancel
-              </button>
-              <button
-                disabled={contributeLoading || !contributeAmount}
-                onClick={async () => {
-                  const amountCents = Math.round(parseFloat(contributeAmount) * 100);
-                  if (!amountCents || amountCents < 100) { setActionErr('Minimum $1.00'); return; }
-                  setContributeLoading(true);
-                  setActionErr(null);
-                  try {
-                    const r = await fetch('/api/unit/payments/send', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      credentials: 'include',
-                      body: JSON.stringify({
-                        fromAccountId: primaryAccount.unitAccountId,
-                        toAccountId: contributePool.poolAccountId,
-                        amountCents,
-                        description: 'Pool contribution',
-                      }),
-                    });
-                    const json = await r.json();
-                    if (!r.ok) throw new Error(json.error);
-                    setContributePool(null);
-                    setActionMsg(`Contributed $${(amountCents / 100).toFixed(2)} to pool.`);
-                    fetchStatus();
-                  } catch (err) {
-                    setActionErr(err instanceof Error ? err.message : 'Contribution failed.');
-                  } finally {
-                    setContributeLoading(false);
-                  }
-                }}
-                className="flex-1 flex items-center justify-center gap-2 bg-dl-navy text-white text-sm font-dl-mono py-2 hover:opacity-90 disabled:opacity-50"
-              >
-                {contributeLoading ? 'Sending...' : 'Contribute'}
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
-      )}
+
+        <div
+          style={{
+            display: 'inline-block',
+            padding: '6px 16px',
+            border: `1px solid ${DL.gold}`,
+            fontFamily: 'monospace',
+            fontSize: 10,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: DL.gold,
+          }}
+        >
+          Infrastructure partner selection in progress
+        </div>
+
+      </div>
     </DesignLawLayout>
   );
 }
