@@ -248,7 +248,7 @@ export default function InstitutionalPage() {
                     Treasury Integration. AXUSD is not currently mintable by users.
                   </div>
                   <p>
-                    <strong>Contract:</strong> <code className="text-xs bg-dl-bg-alt px-1 py-0.5 font-dl-mono">0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C</code>
+                    <strong>Contract (ERC-3643):</strong> <code className="text-xs bg-dl-bg-alt px-1 py-0.5 font-dl-mono">0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7</code>
                   </p>
                   <p>
                     <strong>Constraints:</strong> No redemption promises. Integration with lending, The Wealth Practice, land acquisition,

@@ -803,12 +803,12 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
 
     // ── ERC-7726 oracle write-down valuation ─────────────────────────────────
     // AXIOMOracleAdapter.getQuote(inAmount, AXUSD, USDC):
-    //   inAmount: AXUSD in 18 decimals (ACTIVE_AXUSD is ERC-3643, 18 dec on-chain)
+    //   inAmount: AXUSD in 18 decimals (canonical ERC-3643, 18 dec on-chain)
     //   outAmount: USDC in 6 decimals
     //   getQuote(X, AXUSD, USDC) → X / 1e12  (18-dec → 6-dec, price ≈ 1)
     // outstanding_principal_usd DB field: USD decimal string e.g. "50000.00"
     // → multiply by 1e18 to get AXUSD wei (18 dec)
-    const ACTIVE_AXUSD_ADDR = '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C';
+    const ACTIVE_AXUSD_ADDR = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7'; // Canonical ERC-3643 Unified AXUSD
     const USDC_ADDR  = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
     const ORACLE_ABI_ERC7726 = [
       'function getQuote(uint256 inAmount, address base, address quote) external view returns (uint256 outAmount)',
@@ -873,10 +873,10 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
 
     // ── ERC-7726 oracle: compute outstanding exposure in USD at default time ─
     // AXIOMOracleAdapter.getQuote(inAmount, AXUSD, USDC):
-    //   inAmount: AXUSD in 18 decimals (ACTIVE_AXUSD is 18 dec on Arbitrum One)
+    //   inAmount: AXUSD in 18 decimals (canonical ERC-3643, 18 dec on Arbitrum One)
     //   outAmount: USDC in 6 decimals
     //   getQuote(X, AXUSD, USDC) → X / 1e12  (18-dec → 6-dec, price ≈ 1)
-    const ACTIVE_AXUSD_ADDR = '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C';
+    const ACTIVE_AXUSD_ADDR = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7'; // Canonical ERC-3643 Unified AXUSD
     const USDC_ADDR  = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
     const ORACLE_ABI_ERC7726 = [
       'function getQuote(uint256 inAmount, address base, address quote) external view returns (uint256 outAmount)',

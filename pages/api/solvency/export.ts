@@ -366,7 +366,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     drawSectionTitle(doc, 'Key Contract Addresses');
 
     const contracts = [
-      { label: 'AXUSD Primary', address: '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C' },
+      { label: 'Unified AXUSD (ERC-3643)', address: '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7' },
       { label: 'PSM (USDC)', address: '0x5db58d9c21369d1532a48Bdd658E4Fe415404922' },
       { label: 'PSM (USDT)', address: '0x4584888cB411E9cc88e3800BAB73A430D90d3793' },
       { label: 'Treasury Hub', address: '0x3fD63728288546AC41dAe3bf25ca383061c3A929' },

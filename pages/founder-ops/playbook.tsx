@@ -40,7 +40,8 @@ interface PhaseInfo {
 }
 
 const CORE_CONTRACTS: ContractEntry[] = [
-  { label: 'PRIMARY AXUSD', address: '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C' },
+  { label: 'Unified AXUSD (ERC-3643) — CANONICAL', address: '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7' },
+  { label: 'Legacy Primary AXUSD (GENIUS) — DEPRECATED', address: '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C' },
   { label: 'PRIMARY PSM', address: '0x5db58d9c21369d1532a48Bdd658E4Fe415404922' },
   { label: 'EULER AXUSD', address: '0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c' },
   { label: 'EULER PSM', address: '0x4584888cB411E9cc88e3800BAB73A430D90d3793' },

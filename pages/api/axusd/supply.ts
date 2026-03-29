@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
+import { ERC3643_CONTRACTS } from '../../../shared/contracts-3643';
 import { AXUSD_GENIUS_CONTRACTS, CORE_CONTRACTS } from '../../../shared/contracts';
-import { ACTIVE_AXUSD, EULER_AXUSD } from '../../../src/config/activeContracts.generated';
+import { ACTIVE_AXUSD, LEGACY_GENIUS_AXUSD, EULER_AXUSD } from '../../../src/config/activeContracts.generated';
 
 const ARBITRUM_RPC = process.env.ALCHEMY_API_KEY 
   ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
@@ -20,22 +21,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
-    const axusdContract = new ethers.Contract(AXUSD_GENIUS_CONTRACTS.AXUSD, ERC20_ABI, provider);
+    // Canonical ERC-3643 Unified AXUSD supply tracking
+    const axusdContract = new ethers.Contract(ERC3643_CONTRACTS.AXUSD_TOKEN, ERC20_ABI, provider);
 
-    const [totalSupplyRaw, decimals, backstopBalanceRaw, psmBalanceRaw, treasuryBalanceRaw] = await Promise.all([
+    const [totalSupplyRaw, decimals, backstopBalanceRaw, treasuryBalanceRaw] = await Promise.all([
       axusdContract.totalSupply(),
       axusdContract.decimals(),
+      // ERC-3643 token balance at backstop — PSM holds legacy GENIUS AXUSD, not ERC-3643
       axusdContract.balanceOf(AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_USDC).catch(() => BigInt(0)),
-      axusdContract.balanceOf(AXUSD_GENIUS_CONTRACTS.PSM).catch(() => BigInt(0)),
       axusdContract.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => BigInt(0))
     ]);
 
     const totalSupply = parseFloat(ethers.formatUnits(totalSupplyRaw, decimals));
     const backstopBalance = parseFloat(ethers.formatUnits(backstopBalanceRaw, decimals));
-    const psmBalance = parseFloat(ethers.formatUnits(psmBalanceRaw, decimals));
     const treasuryBalance = parseFloat(ethers.formatUnits(treasuryBalanceRaw, decimals));
     
-    const lockedSupply = backstopBalance + psmBalance + treasuryBalance;
+    const lockedSupply = backstopBalance + treasuryBalance;
     const circulatingSupply = Math.max(0, totalSupply - lockedSupply);
 
     res.json({
@@ -46,15 +47,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         lockedSupply: lockedSupply.toFixed(2),
         breakdown: {
           backstopReserve: backstopBalance.toFixed(2),
-          psmReserve: psmBalance.toFixed(2),
           treasuryReserve: treasuryBalance.toFixed(2)
         },
         maxSupply: '1000000000',
         decimals: Number(decimals),
-        contractAddress: AXUSD_GENIUS_CONTRACTS.AXUSD,
+        contractAddress: ERC3643_CONTRACTS.AXUSD_TOKEN,
         activeAxusd: ACTIVE_AXUSD,
+        legacyGeniusAxusd: LEGACY_GENIUS_AXUSD,
         eulerAxusd: EULER_AXUSD,
-        geniusCompliant: true,
+        note: 'Supply tracks canonical ERC-3643 Unified AXUSD. Legacy GENIUS AXUSD (0x73585df5) is deprecated.',
         timestamp: new Date().toISOString()
       }
     });

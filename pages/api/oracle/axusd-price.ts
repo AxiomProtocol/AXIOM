@@ -23,7 +23,8 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import { ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM } from '../../../src/config/activeContracts.generated';
+import { ERC3643_CONTRACTS } from '../../../shared/contracts-3643';
+import { ACTIVE_AXUSD, ACTIVE_PSM, EULER_PSM } from '../../../src/config/activeContracts.generated';
 import { AXUSD_ORACLE_ADAPTER } from '../../../src/config/oracleConfig';
 
 const ARBITRUM_RPC = process.env.ALCHEMY_API_KEY
@@ -94,7 +95,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
   const usdc = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, provider);
-  const primaryAxusdToken = new ethers.Contract(ACTIVE_AXUSD, ERC20_ABI, provider);
+  // Canonical ERC-3643 Unified AXUSD — supply used for backing ratio computation
+  const primaryAxusdToken = new ethers.Contract(ERC3643_CONTRACTS.AXUSD_TOKEN, ERC20_ABI, provider);
 
   let psmBacking: OraclePriceResponse['psmBacking'] = null;
   let axusdUsdPrice = 1.0;
@@ -117,7 +119,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     try {
       const oracleContract = new ethers.Contract(AXUSD_ORACLE_ADAPTER, ORACLE_ADAPTER_ABI, provider);
       const ONE_USDC = BigInt(1_000_000); // 1 USDC in 6-dec units
-      const quoteOut: bigint = await oracleContract.getQuote(ONE_USDC, USDC_ADDRESS, ACTIVE_AXUSD);
+      const quoteOut: bigint = await oracleContract.getQuote(ONE_USDC, USDC_ADDRESS, ERC3643_CONTRACTS.AXUSD_TOKEN);
 
       // Derive AXUSD/USD price from ERC-7726 quote
       // quoteOut = AXUSD wei per 1 USDC → priceUSD of 1 AXUSD = 1e18 / (quoteOut / 1e18) = 1e36 / quoteOut
@@ -132,9 +134,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       erc7726Quote = {
         inAmount: ONE_USDC.toString(),
         base: USDC_ADDRESS,
-        quote: ACTIVE_AXUSD,
+        quote: ERC3643_CONTRACTS.AXUSD_TOKEN,
         outAmount: quoteOut.toString(),
-        description: 'getQuote(1 USDC → AXUSD) — ERC-7726 canonical interface',
+        description: 'getQuote(1 USDC → Unified AXUSD ERC-3643) — ERC-7726 canonical interface',
       };
 
       onChainOracle = {

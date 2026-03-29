@@ -126,7 +126,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       bankDetails,
       treasuryWallet,
       network: 'Arbitrum One',
-      axusdContract: '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C',
+      axusdContract: '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7', // Canonical ERC-3643 Unified AXUSD
     });
   } catch (error: any) {
     return res.status(500).json({ success: false, error: error.message });

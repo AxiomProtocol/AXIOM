@@ -2,7 +2,9 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../../server/db';
 import { rateLimitDistPay } from '../../../../../lib/rateLimit';
 
-const AXUSD_CONTRACT = '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C';
+// Canonical ERC-3643 Unified AXUSD — compliance-enforced on-chain transfers
+// ERC-3643 enforces identity verification (Topics 1+2+3) before transfer succeeds
+const AXUSD_CONTRACT = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
 const IDENTITY_REGISTRY = '0x7856b3597389D34789512f43A0270a688846313B';
 
 const OPERATOR_WALLETS = [

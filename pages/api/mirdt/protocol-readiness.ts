@@ -15,7 +15,8 @@ const ALCHEMY_RPC = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_
 const TOTAL_ASSETS_ABI = ['function totalAssets() view returns (uint256)'];
 const EULER_EARN_VAULT = '0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B';
 const ERC20_TOTAL_SUPPLY_ABI = ['function totalSupply() view returns (uint256)'];
-const AXUSD_TOKEN = '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C';
+// Canonical ERC-3643 Unified AXUSD — supply tracking for protocol readiness score
+const AXUSD_TOKEN = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
 
 async function fetchOnChainTotalAssets(address: string, decimals = 6): Promise<number> {
   try {

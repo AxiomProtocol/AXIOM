@@ -221,9 +221,9 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
               <p style="margin:0 0 4px;word-break:break-all;">${treasuryWallet || 'Contact operations'}</p>
               <p style="margin:0 0 4px;">Network: Arbitrum One</p>
               <p style="margin:0 0 4px;">Memo: <strong>${memoCode}</strong></p>
-              <p style="margin:0;font-size:12px;color:#666;">AXUSD Contract: 0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C</p>
+              <p style="margin:0;font-size:12px;color:#666;">AXUSD Contract (ERC-3643): 0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7</p>
             </div>`;
-          instructionsText = `\nAXUSD Payment Instructions\nSend ${callAmount.toLocaleString()} AXUSD to ${treasuryWallet || 'Contact operations'} on Arbitrum One.\nMemo: ${memoCode}\nContract: 0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C`;
+          instructionsText = `\nAXUSD Payment Instructions\nSend ${callAmount.toLocaleString()} AXUSD to ${treasuryWallet || 'Contact operations'} on Arbitrum One.\nMemo: ${memoCode}\nContract (ERC-3643 Unified AXUSD): 0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7`;
         } else {
           instructionsHtml = `
             <div style="background:#f0f4ff;padding:20px;margin:16px 0;font-family:monospace;">

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
+import { ERC3643_CONTRACTS } from '../../../shared/contracts-3643';
 import { AXUSD_GENIUS_CONTRACTS, STABLECOINS } from '../../../shared/contracts';
 
 const ARBITRUM_RPC = process.env.ALCHEMY_API_KEY 
@@ -31,8 +32,8 @@ export default async function handler(
 
   try {
     const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
-    
-    const axusd = new ethers.Contract(AXUSD_GENIUS_CONTRACTS.AXUSD, ERC20_ABI, provider);
+    // Canonical ERC-3643 Unified AXUSD — supply is the protocol liability figure
+    const axusd = new ethers.Contract(ERC3643_CONTRACTS.AXUSD_TOKEN, ERC20_ABI, provider);
     const usdc = new ethers.Contract(STABLECOINS.USDC, ERC20_ABI, provider);
     const psm = new ethers.Contract(AXUSD_GENIUS_CONTRACTS.PSM, PSM_ABI, provider);
 
@@ -131,7 +132,7 @@ export default async function handler(
           pegRisk: 'low'
         },
         contracts: {
-          axusd: AXUSD_GENIUS_CONTRACTS.AXUSD,
+          axusd: ERC3643_CONTRACTS.AXUSD_TOKEN,
           psm: AXUSD_GENIUS_CONTRACTS.PSM,
           backstop: AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_USDC,
           compliance: AXUSD_GENIUS_CONTRACTS.GENIUS_COMPLIANCE

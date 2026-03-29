@@ -35,7 +35,7 @@ export const CREDIT_MARKET_DEPLOYMENT = {
   deployedAt:        '2026-03-22',
   deployer:          '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96',
 
-  axusd:             '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C',
+  axusd:             '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7', // Canonical ERC-3643 Unified AXUSD
   identityRegistry:  '0x58f64a1262d5434d6C7637a2309b0999bB6D1970',
   creditMarket:      '0x85074a74774568692128eE97Da661Fe49dcF5fE4',
   fixedLoan:         '0x511A0cD642532585dc87e41C84f7f499a9755511',
