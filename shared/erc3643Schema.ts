@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   index,
+  uniqueIndex,
   pgTable,
   timestamp,
   varchar,
@@ -146,6 +147,7 @@ export const adminRoles = pgTable("admin_roles", {
   roleIdx: index("idx_admin_roles_role").on(table.roleName),
   holderIdx: index("idx_admin_roles_holder").on(table.holderAddress),
   activeIdx: index("idx_admin_roles_active").on(table.isActive),
+  roleHolderUnique: uniqueIndex("uq_admin_roles_role_holder").on(table.roleName, table.holderAddress),
 }));
 
 export type AdminRole = typeof adminRoles.$inferSelect;

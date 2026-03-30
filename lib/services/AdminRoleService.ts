@@ -76,23 +76,38 @@ export class AdminRoleService {
     contractName?: string;
     notes?: string;
   }) {
-    const [inserted] = await db.insert(adminRoles).values({
-      roleName: params.roleName,
-      holderAddress: params.holderAddress.toLowerCase(),
-      holderType: params.holderType,
-      contractName: params.contractName,
-      grantedBy: params.grantedBy.toLowerCase(),
-      notes: params.notes,
-      isActive: true,
-    }).onConflictDoUpdate({
-      target: [adminRoles.roleName, adminRoles.holderAddress],
-      set: {
-        isActive: true,
+    const existing = await db.select({ id: adminRoles.id })
+      .from(adminRoles)
+      .where(
+        and(
+          eq(adminRoles.roleName, params.roleName),
+          eq(adminRoles.holderAddress, params.holderAddress.toLowerCase())
+        )
+      )
+      .limit(1);
+
+    let inserted;
+    if (existing.length > 0) {
+      [inserted] = await db.update(adminRoles)
+        .set({
+          isActive: true,
+          holderType: params.holderType,
+          contractName: params.contractName,
+          notes: params.notes,
+        })
+        .where(eq(adminRoles.id, existing[0].id))
+        .returning();
+    } else {
+      [inserted] = await db.insert(adminRoles).values({
+        roleName: params.roleName,
+        holderAddress: params.holderAddress.toLowerCase(),
         holderType: params.holderType,
         contractName: params.contractName,
+        grantedBy: params.grantedBy.toLowerCase(),
         notes: params.notes,
-      },
-    }).returning();
+        isActive: true,
+      }).returning();
+    }
     return inserted;
   }
 
