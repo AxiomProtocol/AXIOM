@@ -1,4 +1,4 @@
-import DesignLawLayout from '../../components/design-law/DesignLawLayout';
+import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
 
 const DL = {
   navy:   '#1B2A4A',

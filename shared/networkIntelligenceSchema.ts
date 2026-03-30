@@ -4,7 +4,7 @@
  * Creates benchmarks and discovered opportunity insights
  */
 
-import { pgTable, text, numeric, timestamp, uuid, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, numeric, timestamp, uuid, jsonb, boolean } from 'drizzle-orm/pg-core';
 
 export const networkMarketBenchmarks = pgTable('network_market_benchmarks', {
   id: uuid('id').primaryKey().defaultRandom(),

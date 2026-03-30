@@ -6229,6 +6229,159 @@ END $seed$`, 'seed dp_listings');
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )`, 'table bridge_quotes');
 
+      // ── ERC-3643 / Admin Action Log / Admin Roles ──
+      await exec(enumSafe('income_credit_application_status', ['pending','approved','rejected']), 'enum income_credit_application_status');
+      await exec(enumSafe('income_credit_line_status', ['active','drawn','repaid','defaulted','expired']), 'enum income_credit_line_status');
+      await exec(enumSafe('income_credit_purpose', ['wealth_practice_entry','contribution_smoothing','earnest_money']), 'enum income_credit_purpose');
+      await exec(enumSafe('treasury_ledger_event_type', ['disbursement','repayment_received','interest_distribution','reserve_allocation']), 'enum treasury_ledger_event_type');
+
+      await exec(`CREATE TABLE IF NOT EXISTS admin_action_log (
+        id SERIAL PRIMARY KEY,
+        action_type VARCHAR(64) NOT NULL,
+        caller_address VARCHAR(42) NOT NULL,
+        target_address VARCHAR(42),
+        amount VARCHAR(78),
+        tx_hash VARCHAR(66),
+        role VARCHAR(64),
+        status VARCHAR(20) NOT NULL DEFAULT 'success',
+        error_message TEXT,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table admin_action_log');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_admin_action_type ON admin_action_log(action_type)`, 'index admin_action_type');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_admin_action_caller ON admin_action_log(caller_address)`, 'index admin_action_caller');
+
+      await exec(`CREATE TABLE IF NOT EXISTS admin_roles (
+        id SERIAL PRIMARY KEY,
+        role_name VARCHAR(64) NOT NULL,
+        holder_address VARCHAR(42) NOT NULL,
+        holder_type VARCHAR(16) NOT NULL,
+        contract_name VARCHAR(128),
+        granted_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        granted_by VARCHAR(42),
+        revoked_at TIMESTAMP,
+        revoked_by VARCHAR(42),
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        notes TEXT
+      )`, 'table admin_roles');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_admin_roles_role ON admin_roles(role_name)`, 'index admin_roles_role');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_admin_roles_holder ON admin_roles(holder_address)`, 'index admin_roles_holder');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS uq_admin_roles_role_holder ON admin_roles(role_name, holder_address)`, 'index admin_roles_unique');
+
+      await exec(`CREATE TABLE IF NOT EXISTS t3_accreditation_submissions (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        wallet_address VARCHAR(42) NOT NULL,
+        self_certification BOOLEAN NOT NULL DEFAULT FALSE,
+        accreditation_basis VARCHAR(64),
+        document_urls TEXT,
+        notes TEXT,
+        status VARCHAR(20) NOT NULL DEFAULT 'submitted',
+        review_note TEXT,
+        reviewed_by VARCHAR(42),
+        reviewed_at TIMESTAMP,
+        claim_id VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table t3_accreditation_submissions');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_t3_accred_wallet ON t3_accreditation_submissions(wallet_address)`, 'index t3_accred_wallet');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_t3_accred_status ON t3_accreditation_submissions(status)`, 'index t3_accred_status');
+
+      await exec(`CREATE TABLE IF NOT EXISTS t3_compliance_ops_log (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        wallet VARCHAR(42) NOT NULL,
+        action VARCHAR(32) NOT NULL,
+        topic INTEGER,
+        claim_id VARCHAR,
+        operator_address VARCHAR(42),
+        tx_hash VARCHAR(66),
+        result VARCHAR(16) NOT NULL DEFAULT 'success',
+        notes TEXT,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table t3_compliance_ops_log');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_t3_comp_ops_wallet ON t3_compliance_ops_log(wallet)`, 'index t3_comp_ops_wallet');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_t3_comp_ops_action ON t3_compliance_ops_log(action)`, 'index t3_comp_ops_action');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_t3_comp_ops_created ON t3_compliance_ops_log(created_at)`, 'index t3_comp_ops_created');
+
+      await exec(`CREATE TABLE IF NOT EXISTS mirdt_signal_log (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        event_type VARCHAR(50) NOT NULL,
+        dimension VARCHAR(100),
+        grade VARCHAR(10) NOT NULL,
+        key_metric TEXT,
+        thesis TEXT,
+        prs_score DECIMAL(5,2),
+        checksum VARCHAR(64) NOT NULL,
+        prev_checksum VARCHAR(64)
+      )`, 'table mirdt_signal_log');
+      await exec(`CREATE INDEX IF NOT EXISTS mirdt_signal_log_created_at_idx ON mirdt_signal_log(created_at)`, 'index mirdt_signal_log_created');
+
+      await exec(`CREATE TABLE IF NOT EXISTS community_credit_treasury_ledger (
+        id SERIAL PRIMARY KEY,
+        event_type treasury_ledger_event_type NOT NULL,
+        credit_line_id VARCHAR(66),
+        wallet_address VARCHAR(42) NOT NULL,
+        amount_usd NUMERIC NOT NULL,
+        direction VARCHAR(4) NOT NULL,
+        tranche VARCHAR(20) NOT NULL,
+        axusd_tx_ref VARCHAR(255),
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )`, 'table community_credit_treasury_ledger');
+
+      await exec(`CREATE TABLE IF NOT EXISTS income_credit_applications (
+        id SERIAL PRIMARY KEY,
+        application_id VARCHAR(66) NOT NULL,
+        wallet_address VARCHAR(42) NOT NULL,
+        gef_tier_at_application VARCHAR(50) NOT NULL DEFAULT 'Observer',
+        stated_monthly_income_usd NUMERIC,
+        requested_amount_usd NUMERIC NOT NULL,
+        requested_purpose income_credit_purpose NOT NULL,
+        approved_credit_limit_usd NUMERIC,
+        rejection_reason TEXT,
+        status income_credit_application_status DEFAULT 'pending',
+        reviewed_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )`, 'table income_credit_applications');
+
+      await exec(`CREATE TABLE IF NOT EXISTS income_credit_lines (
+        id SERIAL PRIMARY KEY,
+        credit_line_id VARCHAR(66) NOT NULL,
+        application_id INTEGER NOT NULL,
+        wallet_address VARCHAR(42) NOT NULL,
+        credit_limit_usd NUMERIC NOT NULL,
+        drawn_amount_usd NUMERIC DEFAULT 0,
+        available_balance_usd NUMERIC NOT NULL,
+        outstanding_balance_usd NUMERIC DEFAULT 0,
+        interest_rate_bps INTEGER DEFAULT 500,
+        purpose income_credit_purpose NOT NULL,
+        repayment_due_days INTEGER NOT NULL,
+        repayment_due_date TIMESTAMP,
+        drawn_at TIMESTAMP,
+        repaid_at TIMESTAMP,
+        expires_at TIMESTAMP NOT NULL,
+        gef_violation_flagged BOOLEAN DEFAULT FALSE,
+        interest_earned_usd NUMERIC DEFAULT 0,
+        status income_credit_line_status DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )`, 'table income_credit_lines');
+
+      await exec(`CREATE TABLE IF NOT EXISTS income_credit_repayment_history (
+        id SERIAL PRIMARY KEY,
+        credit_line_id VARCHAR(66) NOT NULL,
+        wallet_address VARCHAR(42) NOT NULL,
+        repayment_amount_usd NUMERIC NOT NULL,
+        principal_repaid_usd NUMERIC NOT NULL,
+        interest_repaid_usd NUMERIC NOT NULL,
+        outstanding_before_usd NUMERIC NOT NULL,
+        outstanding_after_usd NUMERIC NOT NULL,
+        fully_repaid BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW()
+      )`, 'table income_credit_repayment_history');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
