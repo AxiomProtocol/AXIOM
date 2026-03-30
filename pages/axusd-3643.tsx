@@ -1496,12 +1496,11 @@ function PsmMintRedeemPanel({
         </label>
         <div className="flex gap-2 items-center">
           <input
-            type="number"
-            min="0"
-            step={op === 'mint' ? '1' : '1'}
+            type="text"
+            inputMode="decimal"
             value={amountStr}
             onChange={e => { setAmountStr(e.target.value); if (phase !== 'idle') reset(); }}
-            placeholder={op === 'mint' ? '100.00 USDC' : '100.00 AXUSD'}
+            placeholder={op === 'mint' ? '100.000000 USDC' : '100.000000 AXUSD'}
             className="flex-1 border border-dl-border px-3 py-1.5 text-sm font-dl-mono bg-white"
           />
           <span className="text-xs font-dl-mono text-dl-gray">{op === 'mint' ? 'USDC' : 'AXUSD'}</span>
