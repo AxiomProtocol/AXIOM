@@ -50,8 +50,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!submissionId || typeof submissionId !== 'string') {
     return res.status(400).json({ error: 'submissionId required' });
   }
-  if (!action || !['approve', 'reject'].includes(action)) {
-    return res.status(400).json({ error: 'action required: approve or reject' });
+  if (!action || !['approve', 'reject', 'mark_under_review'].includes(action)) {
+    return res.status(400).json({ error: 'action required: approve, reject, or mark_under_review' });
   }
 
   try {
@@ -66,6 +66,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!['submitted', 'under_review'].includes(submission.status)) {
       return res.status(400).json({ error: `Cannot review submission in status: ${submission.status}` });
+    }
+
+    if (action === 'mark_under_review') {
+      await db.update(t3KycSubmissions)
+        .set({ status: 'under_review', reviewNote: reviewNote || null, updatedAt: new Date() })
+        .where(eq(t3KycSubmissions.id, submissionId));
+      return res.status(200).json({ success: true, data: { submissionId, status: 'under_review' } });
     }
 
     if (action === 'reject') {

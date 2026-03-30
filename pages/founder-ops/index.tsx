@@ -238,6 +238,10 @@ export default function FounderOpsPage() {
   const [complianceLogLoading, setComplianceLogLoading] = useState(false);
   const [revokeMsg, setRevokeMsg] = useState<{ id: string; type: 'success' | 'error'; text: string } | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [kycClaimsMap, setKycClaimsMap] = useState<Record<string, any[]>>({});
+  const [loadingClaimsFor, setLoadingClaimsFor] = useState<string | null>(null);
+  const [expiryTriggering, setExpiryTriggering] = useState(false);
+  const [expiryTriggerMsg, setExpiryTriggerMsg] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -400,6 +404,69 @@ export default function FounderOpsPage() {
       }
     } catch (e: unknown) {
       setAccredMsg({ id: submissionId, type: 'error', text: e instanceof Error ? e.message : String(e) });
+    }
+  };
+
+  const handleMarkUnderReview = async (submissionId: string) => {
+    setKycMsg(null);
+    try {
+      const res = await fetch('/api/erc3643/identity/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': complianceAdminKey },
+        body: JSON.stringify({ submissionId, action: 'mark_under_review' }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setKycMsg({ id: submissionId, type: 'error', text: json.error || 'Failed to mark under review' });
+      } else {
+        setKycMsg({ id: submissionId, type: 'success', text: 'Marked as Under Review.' });
+        setKycQueue(prev => prev.map(s => s.id === submissionId ? { ...s, status: 'under_review' } : s));
+      }
+    } catch (e: unknown) {
+      setKycMsg({ id: submissionId, type: 'error', text: e instanceof Error ? e.message : String(e) });
+    }
+  };
+
+  const handleFetchClaimsForWallet = async (submissionId: string, wallet: string) => {
+    if (kycClaimsMap[submissionId]) {
+      setKycClaimsMap(prev => { const n = { ...prev }; delete n[submissionId]; return n; });
+      return;
+    }
+    setLoadingClaimsFor(submissionId);
+    try {
+      const res = await fetch(`/api/erc3643/identity/status?wallet=${wallet}`, {
+        headers: { 'x-admin-key': complianceAdminKey },
+      });
+      const json = await res.json();
+      const claims = (json?.data?.claims ?? []).filter((c: any) => !c.revoked);
+      setKycClaimsMap(prev => ({ ...prev, [submissionId]: claims }));
+    } catch (e) {
+      console.error('Failed to fetch claims:', e);
+    } finally {
+      setLoadingClaimsFor(null);
+    }
+  };
+
+  const handleTriggerExpiryCheck = async () => {
+    if (!complianceAdminKey) return;
+    setExpiryTriggering(true);
+    setExpiryTriggerMsg(null);
+    try {
+      const res = await fetch('/api/cron/expiry-check', {
+        method: 'POST',
+        headers: { 'x-admin-key': complianceAdminKey },
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setExpiryTriggerMsg(`Error: ${json.error}`);
+      } else {
+        setExpiryTriggerMsg(`Done — ${json.expiring} claim(s) expiring, email sent: ${json.emailSent ? 'yes' : 'no'}`);
+        loadComplianceLog(complianceAdminKey);
+      }
+    } catch (e: unknown) {
+      setExpiryTriggerMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setExpiryTriggering(false);
     }
   };
 
@@ -1798,7 +1865,13 @@ export default function FounderOpsPage() {
                           {kycMsg && kycMsg.id === sub.id && (
                             <p className={`font-dl-mono text-xs mb-3 ${kycMsg.type === 'success' ? 'text-dl-forest' : 'text-dl-error'}`}>{kycMsg.text}</p>
                           )}
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {sub.status === 'submitted' && (
+                              <button onClick={() => handleMarkUnderReview(sub.id)} disabled={!complianceAdminKey}
+                                className="border border-dl-navy text-dl-navy px-4 py-2 font-dl-mono text-xs disabled:opacity-40">
+                                Mark Under Review
+                              </button>
+                            )}
                             <button onClick={() => handleKycAction(sub.id, 'approve')} disabled={!complianceAdminKey}
                               className="bg-dl-forest text-white px-4 py-2 font-dl-mono text-xs disabled:opacity-40">
                               Approve + Issue Claims
@@ -1807,7 +1880,38 @@ export default function FounderOpsPage() {
                               className="border border-dl-error text-dl-error px-4 py-2 font-dl-mono text-xs disabled:opacity-40">
                               Reject
                             </button>
+                            <button onClick={() => handleFetchClaimsForWallet(sub.id, sub.walletAddress)} disabled={!complianceAdminKey}
+                              className="border border-dl-border text-dl-gray px-4 py-2 font-dl-mono text-xs disabled:opacity-40">
+                              {loadingClaimsFor === sub.id ? 'Loading…' : kycClaimsMap[sub.id] ? 'Hide Claims' : 'View Active Claims'}
+                            </button>
                           </div>
+                          {kycClaimsMap[sub.id] && kycClaimsMap[sub.id].length === 0 && (
+                            <p className="font-dl-mono text-xs text-dl-muted mt-1">No active claims for this wallet.</p>
+                          )}
+                          {kycClaimsMap[sub.id] && kycClaimsMap[sub.id].length > 0 && (
+                            <div className="mt-2 border border-dl-border bg-white p-3">
+                              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-2">Active Claims — Revoke</p>
+                              <div className="space-y-1">
+                                {kycClaimsMap[sub.id].map((claim: any) => (
+                                  <div key={claim.id} className="flex items-center justify-between gap-4">
+                                    <span className="font-dl-mono text-xs text-dl-navy">
+                                      T{claim.topic} ({({ 1: 'KYC', 2: 'Accred', 3: 'Sanctions' } as Record<number, string>)[claim.topic] ?? claim.topic}) — exp: {claim.expiresAt ? new Date(claim.expiresAt).toISOString().slice(0, 10) : '—'}
+                                    </span>
+                                    {revokeMsg && revokeMsg.id === claim.id && (
+                                      <span className={`font-dl-mono text-xs ${revokeMsg.type === 'success' ? 'text-dl-forest' : 'text-dl-error'}`}>{revokeMsg.text}</span>
+                                    )}
+                                    <button
+                                      onClick={() => handleRevoke(claim.id)}
+                                      disabled={!!revokingId || !complianceAdminKey}
+                                      className="border border-dl-error text-dl-error px-3 py-1 font-dl-mono text-xs disabled:opacity-40"
+                                    >
+                                      {revokingId === claim.id ? 'Revoking…' : 'Revoke'}
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1852,6 +1956,21 @@ export default function FounderOpsPage() {
                       ))}
                     </div>
                   )}
+                </div>
+
+                {/* Expiry Check Trigger */}
+                <div className="mb-8 border border-dl-border p-4 bg-dl-bg-alt">
+                  <SectionHeading>Expiry Alert Job</SectionHeading>
+                  <p className="font-dl-mono text-xs text-dl-gray mb-3">Daily expiry scan runs automatically at 08:00 UTC via Vercel Cron (<code className="font-dl-mono">0 8 * * *</code>). Run manually to scan now and send email alerts for claims expiring within 30 days.</p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={handleTriggerExpiryCheck} disabled={!complianceAdminKey || expiryTriggering}
+                      className="border border-dl-navy text-dl-navy px-4 py-2 font-dl-mono text-xs disabled:opacity-40">
+                      {expiryTriggering ? 'Running…' : 'Run Expiry Check Now'}
+                    </button>
+                    {expiryTriggerMsg && (
+                      <span className={`font-dl-mono text-xs ${expiryTriggerMsg.startsWith('Error') ? 'text-dl-error' : 'text-dl-forest'}`}>{expiryTriggerMsg}</span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Compliance Event Log */}

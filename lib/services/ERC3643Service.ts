@@ -280,6 +280,14 @@ export class ERC3643Service {
    * Note: true all-or-nothing atomicity across a blockchain tx and a relational
    * DB transaction is architecturally impossible. The partial_bridge status is
    * the canonical sentinel for ops teams to detect and recover from split state.
+   *
+   * Why inline claim insertion (not calling issueClaim)?
+   *   issueClaim() performs its own independent DB insert and commit. To guarantee
+   *   both T1 and T3 claim rows are inserted in the SAME Drizzle transaction as the
+   *   status='bridged' update (so no partial claim state lands in DB), the claim
+   *   preparation logic is intentionally inlined within the db.transaction() block.
+   *   Shared preparation uses the same `computeClaimInsertValues()` helper for DRY
+   *   claim value derivation while keeping the actual inserts transactional.
    */
   static async atomicKycApproval(params: {
     submissionId: string;
