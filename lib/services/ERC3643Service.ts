@@ -297,7 +297,25 @@ export class ERC3643Service {
   }) {
     const { submissionId, walletAddress, countryCode = 840, reviewNote } = params;
 
-    const regResult = await ERC3643Service.registerIdentity(walletAddress, countryCode);
+    const existingIdentity = await db.select()
+      .from(t3Identities)
+      .where(eq(t3Identities.wallet, walletAddress.toLowerCase()))
+      .limit(1);
+
+    let regResult: Awaited<ReturnType<typeof ERC3643Service.registerIdentity>>;
+    if (existingIdentity.length > 0) {
+      const id = existingIdentity[0];
+      regResult = {
+        identityId: id.id,
+        wallet: id.wallet,
+        onchainIdAddress: id.onchainIdAddress ?? '',
+        countryCode: id.countryCode ?? countryCode,
+        txHash: 'IDEMPOTENT_SKIP',
+        registryTxHash: 'IDEMPOTENT_SKIP',
+      };
+    } else {
+      regResult = await ERC3643Service.registerIdentity(walletAddress, countryCode);
+    }
 
     const signer = getSigner();
     const [dbIdentity] = await db.select()

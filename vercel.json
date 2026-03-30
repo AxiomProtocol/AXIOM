@@ -12,7 +12,7 @@
   },
   "crons": [
     {
-      "path": "/api/cron/expiry-check",
+      "path": "/api/erc3643/identity/expiry-check",
       "schedule": "0 8 * * *"
     }
   ],

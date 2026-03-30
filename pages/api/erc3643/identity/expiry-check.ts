@@ -115,8 +115,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'POST') {
-    const adminKey = req.headers['x-admin-key'];
-    if (!adminKey || adminKey !== process.env.ADMIN_SOLVENCY_KEY) {
+    const adminKey = req.headers['x-admin-key'] as string | undefined;
+    const authHeader = req.headers['authorization'] as string | undefined;
+    const cronSecret = process.env.CRON_SECRET;
+    const isVercelCron = cronSecret && authHeader === `Bearer ${cronSecret}`;
+    const isAdminKey = adminKey && adminKey === process.env.ADMIN_SOLVENCY_KEY;
+    if (!isVercelCron && !isAdminKey) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
