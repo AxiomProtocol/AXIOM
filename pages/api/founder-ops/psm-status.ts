@@ -6,6 +6,7 @@ import {
   EULER_AXUSD,
   EULER_PSM,
   CANONICAL_PSM,
+  LEGACY_GENIUS_AXUSD,
 } from '../../../src/config/activeContracts.generated';
 
 const CANONICAL_PSM_ABI = [
@@ -170,7 +171,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const [canonical, primary, euler] = await Promise.all([
       readCanonicalPsm(provider),
-      readLegacyPsm(provider, ACTIVE_PSM, '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C', 'GENIUS PSM (Legacy)'),
+      readLegacyPsm(provider, ACTIVE_PSM, LEGACY_GENIUS_AXUSD, 'GENIUS PSM (Legacy)'),
       readLegacyPsm(provider, EULER_PSM, EULER_AXUSD, 'Euler PSM (Deprecated)'),
     ]);
 
