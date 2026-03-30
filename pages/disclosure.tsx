@@ -393,6 +393,30 @@ export default function DisclosurePage() {
               </p>
             </div>
           </div>
+
+          <div className="mt-6">
+            <h3 className="font-dl-serif text-dl-navy text-lg mb-3">Canonical PSM — Peg Stability Module Migration Notice</h3>
+            <div className="border border-dl-border px-6 py-4 bg-dl-bg-alt">
+              <p className="text-sm text-dl-navy leading-relaxed mb-3">
+                A Canonical Peg Stability Module (Canonical PSM) was deployed to Arbitrum One on 2026-03-30 at address <span className="font-dl-mono text-xs">0xDB669bb6cA07215C5B055B62072AAED2F821E53F</span>. This replaces the Legacy GENIUS PSM as the primary on-chain automated control layer for AXUSD peg stability. Key parameters: 1M AXUSD debt ceiling, 10 basis points (0.10%) symmetric mint/redeem fee, identity-gated via ERC-3643 IdentityRegistry (requires KYC_VERIFIED and SANCTIONS_CLEAR claims).
+              </p>
+              <p className="text-sm text-dl-navy leading-relaxed mb-3">
+                The Canonical PSM was subject to a Slither static analysis audit prior to deployment. The audit identified six issues (two medium: divide-before-multiply; two medium: reentrancy state ordering; one low: event ordering in fee sweep; one informational: Solidity compiler version). All six findings were resolved in the v2 deployment and the final audit returned zero findings.
+              </p>
+              <p className="text-sm text-dl-navy leading-relaxed mb-3">
+                Ownership of the Canonical PSM has been transferred to the Governance Safe (<span className="font-dl-mono text-xs">0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d</span>, 3-of-5 multi-party authorization) via two-step ownership transfer. All parameter changes — ceiling adjustments, fee updates, pausing, fee sweeps — require Governance Safe authorization.
+              </p>
+              <div className="border border-dl-border bg-white px-4 py-3 mt-3">
+                <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-wider mb-2">Pending Activation Steps (Not Yet Live for Public Mint/Redeem)</p>
+                <p className="text-xs text-dl-navy leading-relaxed">
+                  The Canonical PSM requires two additional Governance Safe transactions before it can process public mint and redeem operations: (1) <span className="font-dl-mono">addAgent(CANONICAL_PSM)</span> on the AXUSD token contract to authorize mint and burn, and (2) <span className="font-dl-mono">LendingPlatformModule.addPlatform(AXUSD, CANONICAL_PSM)</span> to whitelist it in the compliance module. Until these are executed, the PSM is deployed, audited, and owned by governance but is not processing volume. Reserve figures reflect this status.
+                </p>
+              </div>
+              <p className="text-xs text-dl-gray font-dl-mono mt-3">
+                Legacy GENIUS PSM: <span className="text-dl-navy">0x5db58d9c21369d1532a48Bdd658E4Fe415404922</span> — Configured-Inactive. USDC reserves (if present) remain valid for solvency accounting. No new mint/redeem activity intended via this PSM. Legacy GENIUS AXUSD paired with this PSM is deprecated with no new issuance planned.
+              </p>
+            </div>
+          </div>
         </section>
 
         

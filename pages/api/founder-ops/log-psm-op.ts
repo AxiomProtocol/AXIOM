@@ -67,7 +67,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`
     );
 
-    let receipt: any, tx: any;
+    let receipt: ethers.TransactionReceipt | null = null;
+    let tx: ethers.TransactionResponse | null = null;
     for (let attempt = 1; attempt <= 3; attempt++) {
       [receipt, tx] = await Promise.all([
         provider.getTransactionReceipt(txHash),

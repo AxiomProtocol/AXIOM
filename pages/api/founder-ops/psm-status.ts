@@ -188,7 +188,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       },
     });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, error: err.message });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ success: false, error: msg });
   }
 }

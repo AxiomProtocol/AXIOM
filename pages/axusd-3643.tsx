@@ -5,7 +5,7 @@ import { DesignLawLayout, SectionHeading, DetailGrid } from '../components/desig
 import { StatusBadge } from '../components/design-law/StatusBadge';
 import { SolidButton } from '../components/design-law/SolidButton';
 import type { OraclePriceResponse } from './api/oracle/axusd-price';
-import { isEvkVaultDeployed } from '../src/config/activeContracts.generated';
+import { isEvkVaultDeployed, isCanonicalPsmDeployed } from '../src/config/activeContracts.generated';
 
 interface TokenData {
   name: string;
@@ -106,7 +106,49 @@ interface KycSubmissionData {
   updatedAt: string;
 }
 
-type Tab = 'overview' | 'identity' | 'compliance' | 'contracts' | 'oracle';
+type Tab = 'overview' | 'identity' | 'compliance' | 'psm' | 'contracts' | 'oracle';
+
+interface PsmApiData {
+  canonical: {
+    address: string;
+    axusdToken: string;
+    label: string;
+    deployedAt: string;
+    mintFeePct: string;
+    redeemFeePct: string;
+    debtCeiling: string;
+    debtOutstanding: string;
+    utilizationPct: string;
+    availableCapacity: string;
+    usdcReserves: string;
+    availableLiquidity: string;
+    feesAccrued: string;
+    canonicalAxusdSupply: string;
+    paused: boolean;
+    owner: string;
+    note: string;
+  };
+  legacy: {
+    address: string;
+    axusdToken: string;
+    label: string;
+    mintFeePct: string;
+    redeemFeePct: string;
+    debtCeiling: string;
+    debtOutstanding: string;
+    usdcReserves: string;
+    paused: boolean;
+    deprecated: boolean;
+    note: string;
+  };
+  eulerPsm: {
+    address: string;
+    label: string;
+    deprecated: boolean;
+    note: string;
+  };
+  timestamp: string;
+}
 
 function shortAddr(addr: string | null): string {
   if (!addr) return '—';
@@ -164,6 +206,9 @@ export default function AXUSD3643Page() {
   const [tab, setTab] = useState<Tab>('overview');
   const [oracleData, setOracleData] = useState<OraclePriceResponse | null>(null);
   const [oracleLoading, setOracleLoading] = useState(false);
+  const [psmData, setPsmData] = useState<PsmApiData | null>(null);
+  const [psmLoading, setPsmLoading] = useState(false);
+  const [psmError, setPsmError] = useState<string | null>(null);
   const [complianceCheck, setComplianceCheck] = useState<{
     to: string;
     amount: string;
@@ -181,8 +226,8 @@ export default function AXUSD3643Page() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to load');
       setData(json.data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -202,10 +247,27 @@ export default function AXUSD3643Page() {
     }
   }, []);
 
+  const fetchPsmData = useCallback(async () => {
+    if (!isCanonicalPsmDeployed()) return;
+    setPsmLoading(true);
+    setPsmError(null);
+    try {
+      const res = await fetch('/api/axusd/psm');
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to fetch PSM data');
+      setPsmData(json.data);
+    } catch (err: unknown) {
+      setPsmError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setPsmLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchDashboard();
     fetchOraclePrice();
-  }, [fetchDashboard, fetchOraclePrice]);
+    fetchPsmData();
+  }, [fetchDashboard, fetchOraclePrice, fetchPsmData]);
 
   const runComplianceCheck = async () => {
     if (!address || !complianceCheck.to || !complianceCheck.amount) return;
@@ -215,8 +277,8 @@ export default function AXUSD3643Page() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Check failed');
       setComplianceCheck(prev => ({ ...prev, result: json.data, loading: false }));
-    } catch (err: any) {
-      setComplianceCheck(prev => ({ ...prev, error: err.message, loading: false }));
+    } catch (err: unknown) {
+      setComplianceCheck(prev => ({ ...prev, error: err instanceof Error ? err.message : String(err), loading: false }));
     }
   };
 
@@ -224,6 +286,7 @@ export default function AXUSD3643Page() {
     { key: 'overview', label: 'Overview' },
     { key: 'identity', label: 'Identity' },
     { key: 'compliance', label: 'Compliance' },
+    { key: 'psm', label: 'PSM' },
     { key: 'contracts', label: 'Contracts' },
     { key: 'oracle', label: 'Oracle' },
   ];
@@ -290,6 +353,17 @@ export default function AXUSD3643Page() {
             />
           )}
         </>
+      )}
+
+      {tab === 'psm' && (
+        <PsmTab
+          psmData={psmData}
+          psmLoading={psmLoading}
+          psmError={psmError}
+          address={address}
+          isConnected={isConnected}
+          onRefresh={fetchPsmData}
+        />
       )}
 
       {!data && !loading && tab === 'oracle' && (
@@ -1138,6 +1212,154 @@ function OracleTab({
             <p>Euler Vault PRICE_ORACLE: <span className="text-dl-navy">0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15</span></p>
             <p className="mt-2 text-dl-gray">These are superseded by AXIOMOracleAdapter once deployed. All contract references updated automatically via oracleConfig.ts when deployment is complete.</p>
           </div>
+        </>
+      )}
+    </>
+  );
+}
+
+function PsmTab({
+  psmData,
+  psmLoading,
+  psmError,
+  address,
+  isConnected,
+  onRefresh,
+}: {
+  psmData: PsmApiData | null;
+  psmLoading: boolean;
+  psmError: string | null;
+  address: string | null;
+  isConnected: boolean;
+  onRefresh: () => void;
+}) {
+  const canonicalDeployed = isCanonicalPsmDeployed();
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-dl-serif text-lg text-dl-navy">Peg Stability Modules</h2>
+        <SolidButton size="sm" onClick={onRefresh} disabled={psmLoading}>
+          {psmLoading ? 'Refreshing...' : 'Refresh'}
+        </SolidButton>
+      </div>
+
+      {!canonicalDeployed && (
+        <div className="border border-dl-border p-4 mb-8 text-sm text-dl-gray font-dl-mono">
+          Canonical PSM not yet deployed. Check back after deployment.
+        </div>
+      )}
+
+      {psmLoading && !psmData && (
+        <p className="text-sm text-dl-gray font-dl-mono py-8 text-center">Loading PSM data...</p>
+      )}
+
+      {psmError && (
+        <p className="text-sm text-dl-error font-dl-mono py-4">Error: {psmError}</p>
+      )}
+
+      {psmData && (
+        <>
+          <SectionHeading>Canonical PSM (ERC-3643 Identity-Gated)</SectionHeading>
+          <div className="border border-dl-border p-4 mb-4 text-xs text-dl-gray font-dl-mono bg-dl-bg-alt">
+            {psmData.canonical.note}
+          </div>
+          <DetailGrid
+            left={[
+              { label: 'PSM Address', value: (
+                <a href={blockscoutLink(psmData.canonical.address)} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline font-dl-mono text-xs">
+                  {psmData.canonical.address}
+                </a>
+              ), mono: false },
+              { label: 'AXUSD Token (ERC-3643)', value: (
+                <a href={blockscoutLink(psmData.canonical.axusdToken)} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline font-dl-mono text-xs">
+                  {shortAddr(psmData.canonical.axusdToken)}
+                </a>
+              ), mono: false },
+              { label: 'Deployed', value: psmData.canonical.deployedAt },
+              { label: 'Owner', value: shortAddr(psmData.canonical.owner) },
+            ]}
+            right={[
+              { label: 'Status', value: <StatusBadge status={psmData.canonical.paused ? 'PAUSED' : 'ACTIVE'} />, mono: false },
+              { label: 'Mint Fee', value: psmData.canonical.mintFeePct },
+              { label: 'Redeem Fee', value: psmData.canonical.redeemFeePct },
+              { label: 'Slither Audit', value: '0 findings (v2)' },
+            ]}
+          />
+
+          <SectionHeading>Canonical PSM — Reserve Metrics</SectionHeading>
+          <DetailGrid
+            left={[
+              { label: 'USDC Reserves', value: `${parseFloat(psmData.canonical.usdcReserves).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC` },
+              { label: 'Available Liquidity', value: `${parseFloat(psmData.canonical.availableLiquidity).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDC` },
+              { label: 'Fees Accrued', value: `${parseFloat(psmData.canonical.feesAccrued).toLocaleString('en-US', { minimumFractionDigits: 6 })} USDC` },
+              { label: 'AXUSD Total Supply', value: `${parseFloat(psmData.canonical.canonicalAxusdSupply).toLocaleString('en-US', { minimumFractionDigits: 2 })} AXUSD` },
+            ]}
+            right={[
+              { label: 'Debt Ceiling', value: `${parseFloat(psmData.canonical.debtCeiling).toLocaleString('en-US', { maximumFractionDigits: 0 })} AXUSD` },
+              { label: 'Debt Outstanding', value: `${parseFloat(psmData.canonical.debtOutstanding).toLocaleString('en-US', { minimumFractionDigits: 2 })} AXUSD` },
+              { label: 'Utilization', value: `${psmData.canonical.utilizationPct}%` },
+              { label: 'Available Capacity', value: `${parseFloat(psmData.canonical.availableCapacity).toLocaleString('en-US', { maximumFractionDigits: 0 })} AXUSD` },
+            ]}
+          />
+
+          <SectionHeading>Mint / Redeem</SectionHeading>
+          <div className="border border-dl-border p-4 mb-8">
+            {!isConnected ? (
+              <p className="text-sm text-dl-gray text-center py-4">Connect your wallet to use the PSM.</p>
+            ) : (
+              <div className="space-y-3">
+                <div className="border border-dl-border bg-dl-bg-alt px-4 py-3 text-xs text-dl-gray font-dl-mono">
+                  <p className="mb-1 font-semibold text-dl-navy">Identity Gate Active</p>
+                  <p>Your wallet must hold a registered on-chain identity with KYC_VERIFIED (Topic 1) and SANCTIONS_CLEAR (Topic 3) claims to use the Canonical PSM. Unverified wallets will be rejected.</p>
+                </div>
+                <div className="border border-dl-border bg-white px-4 py-3 text-xs text-dl-gray font-dl-mono">
+                  <p className="font-semibold text-dl-navy mb-1">Activation Pending</p>
+                  <p>
+                    The Canonical PSM is deployed and audited but awaiting two Governance Safe transactions before mint/redeem are live: <span className="text-dl-navy">addAgent(CANONICAL_PSM)</span> on the AXUSD token, and <span className="text-dl-navy">LendingPlatformModule.addPlatform(AXUSD, CANONICAL_PSM)</span>.
+                    On-chain activity will appear here once activated.
+                  </p>
+                </div>
+                <div className="text-xs text-dl-gray font-dl-mono pt-2">
+                  <p>Connected wallet: <span className="text-dl-navy">{address ? shortAddr(address) : '—'}</span></p>
+                  <p className="mt-1">To check your identity status, visit the <button className="text-dl-navy underline cursor-pointer bg-transparent border-0 p-0 font-dl-mono text-xs" onClick={() => {}}>Identity tab</button>.</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <SectionHeading>Legacy PSM (GENIUS — Configured-Inactive)</SectionHeading>
+          <div className="border border-dl-border p-4 mb-4 text-xs text-dl-gray font-dl-mono bg-dl-bg-alt">
+            {psmData.legacy.note}
+          </div>
+          <DetailGrid
+            left={[
+              { label: 'PSM Address', value: (
+                <a href={blockscoutLink(psmData.legacy.address)} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline font-dl-mono text-xs">
+                  {shortAddr(psmData.legacy.address)}
+                </a>
+              ), mono: false },
+              { label: 'Paired AXUSD', value: shortAddr(psmData.legacy.axusdToken) },
+              { label: 'Mint Fee', value: psmData.legacy.mintFeePct },
+              { label: 'Redeem Fee', value: psmData.legacy.redeemFeePct },
+            ]}
+            right={[
+              { label: 'Status', value: <StatusBadge status="PENDING" />, mono: false },
+              { label: 'USDC Reserves', value: `${parseFloat(psmData.legacy.usdcReserves).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDC` },
+              { label: 'Debt Ceiling', value: `${parseFloat(psmData.legacy.debtCeiling).toLocaleString('en-US', { maximumFractionDigits: 0 })} AXUSD` },
+              { label: 'Deprecated', value: 'Yes — no new issuance' },
+            ]}
+          />
+
+          <SectionHeading>Euler PSM (Deprecated)</SectionHeading>
+          <div className="border border-dl-border p-4 mb-8 text-xs text-dl-gray font-dl-mono">
+            <p className="mb-1"><span className="text-dl-navy">Address:</span> {shortAddr(psmData.eulerPsm.address)}</p>
+            <p>{psmData.eulerPsm.note}</p>
+          </div>
+
+          <p className="text-xs text-dl-gray font-dl-mono mb-8">
+            Last fetched: {new Date(psmData.timestamp).toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false })} ET
+          </p>
         </>
       )}
     </>

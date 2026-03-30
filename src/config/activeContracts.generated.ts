@@ -213,11 +213,22 @@ export const LEGACY_ADDRESSES = [
   { address: '0xE3b1f38AaBAd138d0EF2e2C7429ee57c512fDF3D', reason: 'Legacy OracleAdapter (Phase 3) — superseded by ERC7726_ORACLE_ADAPTER_ADDRESS once deployed' },
 ] as const;
 
+/** Returns true when the Canonical PSM (ERC-3643 identity-gated) has been deployed */
+export function isCanonicalPsmDeployed(): boolean {
+  return CANONICAL_PSM !== '0x0000000000000000000000000000000000000000';
+}
+
 export function assertActiveContracts(): void {
-  const required = [ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM];
-  for (const addr of required) {
+  const required: Array<readonly [string, string]> = [
+    [ACTIVE_AXUSD, 'ACTIVE_AXUSD (ERC-3643 Unified)'],
+    [CANONICAL_PSM, 'CANONICAL_PSM (ERC-3643 PSM)'],
+    [ACTIVE_PSM,   'ACTIVE_PSM (GENIUS legacy)'],
+    [EULER_AXUSD,  'EULER_AXUSD (deprecated)'],
+    [EULER_PSM,    'EULER_PSM (deprecated)'],
+  ];
+  for (const [addr, name] of required) {
     if (!addr || !addr.match(/^0x[0-9a-fA-F]{40}$/)) {
-      throw new Error(`Invalid active contract address: ${addr}`);
+      throw new Error(`Invalid active contract address for ${name}: "${addr}"`);
     }
   }
 }
