@@ -264,6 +264,23 @@ export class ERC3643Service {
     };
   }
 
+  /**
+   * KYC approval — as-atomic-as-possible across chain + DB.
+   *
+   * Execution order:
+   *   1. registerIdentity() — on-chain (irreversible once mined)
+   *   2. db.transaction() — inserts T1 + T3 claims, sets status='bridged'
+   *
+   * Partial-failure contract:
+   *   If step 2 fails after step 1 succeeds, the submission is marked
+   *   status='partial_bridge' with a bridgeError explaining which step failed.
+   *   Ops remediation: re-run approve (idempotent identity check) or insert
+   *   claims manually via /api/erc3643/identity/issue (topic 1 and 3).
+   *
+   * Note: true all-or-nothing atomicity across a blockchain tx and a relational
+   * DB transaction is architecturally impossible. The partial_bridge status is
+   * the canonical sentinel for ops teams to detect and recover from split state.
+   */
   static async atomicKycApproval(params: {
     submissionId: string;
     walletAddress: string;

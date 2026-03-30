@@ -16,16 +16,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const statusFilter = (req.query.status as string) || 'submitted';
 
     try {
+      const MULTI_STATUS = ['submitted', 'under_review', 'approved', 'rejected'];
+      const whereClause = statusFilter === 'all'
+        ? undefined
+        : MULTI_STATUS.includes(statusFilter)
+          ? eq(t3AccreditationSubmissions.status, statusFilter)
+          : or(
+              eq(t3AccreditationSubmissions.status, 'submitted'),
+              eq(t3AccreditationSubmissions.status, 'under_review')
+            );
+
       const rows = await db.select()
         .from(t3AccreditationSubmissions)
-        .where(
-          statusFilter === 'all'
-            ? undefined
-            : or(
-                eq(t3AccreditationSubmissions.status, 'submitted'),
-                eq(t3AccreditationSubmissions.status, 'under_review')
-              )
-        )
+        .where(whereClause)
         .orderBy(t3AccreditationSubmissions.createdAt);
       const parsed = rows.map((r) => ({
         ...r,
