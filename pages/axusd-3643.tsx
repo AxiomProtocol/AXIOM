@@ -5,7 +5,12 @@ import { DesignLawLayout, SectionHeading, DetailGrid } from '../components/desig
 import { StatusBadge } from '../components/design-law/StatusBadge';
 import { SolidButton } from '../components/design-law/SolidButton';
 import type { OraclePriceResponse } from './api/oracle/axusd-price';
-import { isEvkVaultDeployed, isCanonicalPsmDeployed } from '../src/config/activeContracts.generated';
+import {
+  isEvkVaultDeployed,
+  isCanonicalPsmDeployed,
+  CANONICAL_PSM,
+  ACTIVE_AXUSD,
+} from '../src/config/activeContracts.generated';
 
 interface TokenData {
   name: string;
@@ -1235,9 +1240,10 @@ const USDC_APPROVE_ABI  = ['function approve(address spender, uint256 amount) re
 const AXUSD_APPROVE_ABI = ['function approve(address spender, uint256 amount) returns (bool)'];
 const PSM_MINT_ABI      = ['function mint(uint256 usdcAmount) external returns (uint256 axusdMinted)'];
 const PSM_REDEEM_ABI    = ['function redeem(uint256 axusdAmount) external returns (uint256 usdcReturned)'];
-const CANONICAL_PSM_ADDR  = '0xDB669bb6cA07215C5B055B62072AAED2F821E53F';
-const CANONICAL_AXUSD_ADDR = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
-const USDC_ADDR           = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+// Addresses sourced from activeContracts.generated.ts — single source of truth
+const CANONICAL_PSM_ADDR   = CANONICAL_PSM;     // from activeContracts
+const CANONICAL_AXUSD_ADDR = ACTIVE_AXUSD;      // from activeContracts
+const USDC_ADDR            = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831'; // Arbitrum One USDC (immutable)
 
 type PsmOp = 'mint' | 'redeem';
 type TxPhase = 'idle' | 'approve_pending' | 'approve_done' | 'tx_pending' | 'success' | 'error';
@@ -1248,21 +1254,40 @@ interface IdentityStatus {
   identityAddress: string | null;
 }
 
+const USDC_AXUSD_SCALE = 1_000_000_000_000n; // 1e12: scale USDC (6 dec) → AXUSD (18 dec)
+
 // Mint: user provides USDC (6 dec). Preview = AXUSD out (18 dec)
 // AXUSD received = (usdcAmount - fee) * 1e12  where fee = usdcAmount * mintFee / 10000
 function computeAxusdFromMint(usdcAmount6: bigint, mintFeeBps: number): bigint {
-  const fee = (usdcAmount6 * BigInt(mintFeeBps)) / BigInt(10000);
+  const fee = (usdcAmount6 * BigInt(mintFeeBps)) / 10000n;
   const netUsdc = usdcAmount6 - fee;
-  return netUsdc * BigInt(1e12); // scale 6→18 dec
+  return netUsdc * USDC_AXUSD_SCALE;
 }
 
 // Redeem: user provides AXUSD (18 dec). Preview = USDC out (6 dec)
 // USDC received = axusdAmount / 1e12 - fee  where fee = (axusdAmount * redeemFee / 10000) / 1e12
 function computeUsdcFromRedeem(axusdWei: bigint, redeemFeeBps: number): bigint {
-  const axusdFee = (axusdWei * BigInt(redeemFeeBps)) / BigInt(10000);
-  const usdcFee  = axusdFee / BigInt(1e12);
-  const usdcGross = axusdWei / BigInt(1e12);
+  const axusdFee = (axusdWei * BigInt(redeemFeeBps)) / 10000n;
+  const usdcFee  = axusdFee / USDC_AXUSD_SCALE;
+  const usdcGross = axusdWei / USDC_AXUSD_SCALE;
   return usdcGross - usdcFee;
+}
+
+/**
+ * Safely parse a user-entered decimal string to BigInt with a given number of decimals.
+ * Avoids float arithmetic entirely to prevent precision loss on large values.
+ * e.g. parseDecimalToBigInt("100.005001", 6) → 100005001n
+ */
+function parseDecimalToBigInt(val: string, decimals: number): bigint | null {
+  const trimmed = val.trim();
+  if (!trimmed || trimmed === '' || trimmed === '.') return null;
+  const [intStr, fracStr = ''] = trimmed.split('.');
+  if (!/^\d*$/.test(intStr) || !/^\d*$/.test(fracStr)) return null;
+  const frac = fracStr.padEnd(decimals, '0').slice(0, decimals);
+  const intPart = BigInt(intStr || '0') * (10n ** BigInt(decimals));
+  const fracPart = BigInt(frac);
+  const result = intPart + fracPart;
+  return result > 0n ? result : null;
 }
 
 function PsmMintRedeemPanel({
@@ -1303,23 +1328,17 @@ function PsmMintRedeemPanel({
       .finally(() => setIdentityLoading(false));
   }, [address]);
 
-  // For MINT: amount is in USDC (6 dec)
-  // For REDEEM: amount is in AXUSD (18 dec, must be multiple of 1e12)
+  // For MINT: amount is in USDC (6 dec); for REDEEM: amount is in AXUSD (18 dec)
+  // Use string-based BigInt parsing to eliminate float precision risk.
   const inputWei = (() => {
-    try {
-      const n = parseFloat(amountStr);
-      if (!n || n <= 0) return null;
-      if (op === 'mint') {
-        // USDC 6 dec
-        return BigInt(Math.floor(n * 1e6));
-      } else {
-        // AXUSD 18 dec — round to nearest whole USDC unit (1e12 precision)
-        const axusd18 = BigInt(Math.floor(n * 1e18));
-        // Snap to nearest 1e12 to satisfy PSM precision guard
-        const scale = BigInt(1e12);
-        return (axusd18 / scale) * scale;
-      }
-    } catch { return null; }
+    if (op === 'mint') {
+      return parseDecimalToBigInt(amountStr, 6); // USDC 6 dec
+    } else {
+      // AXUSD 18 dec — snap to nearest whole USDC unit (1e12 multiple) per PSM precision guard
+      const raw = parseDecimalToBigInt(amountStr, 18);
+      if (!raw) return null;
+      return (raw / USDC_AXUSD_SCALE) * USDC_AXUSD_SCALE;
+    }
   })();
 
   const outputPreview = inputWei
