@@ -413,7 +413,7 @@ export default function DisclosurePage() {
                 </p>
               </div>
               <p className="text-xs text-dl-gray font-dl-mono mt-3">
-                Legacy GENIUS PSM: <span className="text-dl-navy">0x5db58d9c21369d1532a48Bdd658E4Fe415404922</span> — Configured-Inactive. USDC reserves (if present) remain valid for solvency accounting. No new mint/redeem activity intended via this PSM. Legacy GENIUS AXUSD paired with this PSM is deprecated with no new issuance planned.
+                Legacy GENIUS PSM: <span className="text-dl-navy">0x5db58d9c21369d1532a48Bdd658E4Fe415404922</span> — Configured-Inactive. USDC reserves held in this module remain valid for solvency accounting and will be transferred to the Canonical PSM upon migration completion via a Governance Safe transaction. No new mint/redeem activity is intended via this PSM. The paired Legacy GENIUS AXUSD is deprecated with no new issuance planned.
               </p>
             </div>
           </div>

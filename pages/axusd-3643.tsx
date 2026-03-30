@@ -166,6 +166,10 @@ function blockscoutLink(addr: string): string {
   return `https://arbitrum.blockscout.com/address/${addr}`;
 }
 
+function blockscoutTxLink(txHash: string): string {
+  return `https://arbitrum.blockscout.com/tx/${txHash}`;
+}
+
 function fmtAmount(val: string | number): string {
   const n = typeof val === 'string' ? parseFloat(val) : val;
   if (isNaN(n)) return '—';
@@ -1530,7 +1534,7 @@ function PsmMintRedeemPanel({
         <p className="text-xs text-dl-gray font-dl-mono mb-3">
           Step 2/2 — Transaction submitted. Awaiting confirmation...
           {txHash && (
-            <> <a href={blockscoutLink(txHash)} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline ml-1">View on Blockscout</a></>
+            <> <a href={blockscoutTxLink(txHash)} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline ml-1">View on Blockscout</a></>
           )}
         </p>
       )}
@@ -1538,7 +1542,7 @@ function PsmMintRedeemPanel({
         <div className="border border-green-200 bg-green-50 px-3 py-2 mb-3 text-xs font-dl-mono text-green-700">
           Transaction confirmed.
           {txHash && (
-            <> <a href={blockscoutLink(txHash)} target="_blank" rel="noopener noreferrer" className="underline ml-1">View TX</a></>
+            <> <a href={blockscoutTxLink(txHash)} target="_blank" rel="noopener noreferrer" className="underline ml-1">View TX</a></>
           )}
           <button onClick={reset} className="ml-4 text-dl-navy underline bg-transparent border-0 p-0 text-xs font-dl-mono cursor-pointer">New operation</button>
         </div>
