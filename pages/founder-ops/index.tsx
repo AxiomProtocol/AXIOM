@@ -227,6 +227,11 @@ export default function FounderOpsPage() {
   const [adminActions, setAdminActions] = useState<any[]>([]);
   const [adminActionsLoading, setAdminActionsLoading] = useState(false);
 
+  const [ingestAdminKey, setIngestAdminKey] = useState('');
+  const [ingesting, setIngesting] = useState(false);
+  const [ingestResult, setIngestResult] = useState<any | null>(null);
+  const [ingestError, setIngestError] = useState<string | null>(null);
+
   const [complianceAdminKey, setComplianceAdminKey] = useState('');
   const [kycQueue, setKycQueue] = useState<any[]>([]);
   const [kycLoading, setKycLoading] = useState(false);
@@ -1613,6 +1618,101 @@ export default function FounderOpsPage() {
                   <p className="font-dl-mono text-xs text-dl-gray mt-2">
                     All admin tools require the <span className="text-dl-navy">ADMIN_SOLVENCY_KEY</span> token to access.
                   </p>
+                </div>
+
+                <div className="mb-8">
+                  <SectionHeading>Feed Ingestion</SectionHeading>
+                  <p className="font-dl-mono text-xs text-dl-gray mb-3">
+                    Triggers a full distressed property ingestion across all 10 target states (HUD, USDA, courthouse scrapers, tax liens, ATTOM). Requires admin key. This operation takes 2–5 minutes.
+                  </p>
+                  <div className="flex gap-2 mb-4">
+                    <input
+                      type="password"
+                      placeholder="Admin key"
+                      value={ingestAdminKey}
+                      onChange={e => setIngestAdminKey(e.target.value)}
+                      className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-bg w-48"
+                    />
+                    <button
+                      onClick={async () => {
+                        if (!ingestAdminKey) return;
+                        setIngesting(true);
+                        setIngestResult(null);
+                        setIngestError(null);
+                        try {
+                          const res = await fetch('/api/distressed-feed/ingest', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'x-admin-key': ingestAdminKey },
+                            body: JSON.stringify({}),
+                          });
+                          const data = await res.json();
+                          if (!res.ok) throw new Error(data.error || 'Ingestion failed');
+                          setIngestResult(data.ingestion);
+                        } catch (err: any) {
+                          setIngestError(err.message);
+                        } finally {
+                          setIngesting(false);
+                        }
+                      }}
+                      disabled={ingesting || !ingestAdminKey}
+                      className="bg-dl-navy text-white px-4 py-2 font-dl-mono text-xs disabled:opacity-50"
+                    >
+                      {ingesting ? 'Running…' : 'Run Ingestion'}
+                    </button>
+                  </div>
+                  {ingesting && (
+                    <div className="border border-dl-border p-4 bg-dl-bg-alt">
+                      <p className="font-dl-mono text-xs text-dl-gray animate-pulse">Ingestion in progress — fetching all sources. Do not close this tab…</p>
+                    </div>
+                  )}
+                  {ingestError && (
+                    <div className="border border-dl-error p-4">
+                      <p className="font-dl-mono text-xs text-dl-error">{ingestError}</p>
+                    </div>
+                  )}
+                  {ingestResult && (
+                    <div className="border border-dl-border p-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                        {[
+                          { label: 'Fetched', value: ingestResult.totalFetched },
+                          { label: 'Inserted', value: ingestResult.totalInserted },
+                          { label: 'Updated', value: ingestResult.totalUpdated },
+                          { label: 'Skipped', value: ingestResult.totalSkipped },
+                        ].map(m => (
+                          <div key={m.label}>
+                            <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">{m.label}</p>
+                            <p className="font-dl-heading text-lg text-dl-navy">{m.value ?? 0}</p>
+                          </div>
+                        ))}
+                      </div>
+                      {ingestResult.sourceResults && (
+                        <div className="border-t border-dl-border pt-3">
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-2">By Source</p>
+                          <div className="flex flex-wrap gap-2">
+                            {ingestResult.sourceResults.map((sr: any) => (
+                              <div key={sr.source} className="border border-dl-border px-2 py-1">
+                                <span className="font-dl-mono text-xs text-dl-gray uppercase">{sr.source}</span>
+                                <span className="font-dl-mono text-xs text-dl-navy ml-2">{sr.listings?.length ?? 0}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {ingestResult.errors && ingestResult.errors.length > 0 && (
+                        <div className="border-t border-dl-border pt-3 mt-3">
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Errors ({ingestResult.errors.length})</p>
+                          <div className="max-h-32 overflow-y-auto space-y-1">
+                            {ingestResult.errors.slice(0, 10).map((e: string, i: number) => (
+                              <p key={i} className="font-dl-mono text-xs text-dl-error">{e}</p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <p className="font-dl-mono text-xs text-dl-gray mt-3">
+                        Completed {new Date(ingestResult.completedAt).toLocaleString()}. Refresh the Deal Flow page to see updated listings.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mb-8">

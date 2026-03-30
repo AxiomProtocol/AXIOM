@@ -70,6 +70,7 @@ const SOURCE_LABELS: Record<string, string> = {
   sheriff_sale: 'Sheriff Sale',
   manual: 'Manual',
   attom: 'ATTOM',
+  courthouse: 'Courthouse',
 };
 
 interface SourceStatusInfo {
@@ -110,8 +111,9 @@ const GOVERNMENT_SOURCES = [
 ];
 
 const EXPANSION_SOURCES = [
-  { name: 'County Tax Lien Auctions', type: 'tax_sale', states: ['GA', 'TX', 'NC'], status: 'manual_only' as const, description: 'County tax lien/deed sales — most require manual lookup or PDF parsing' },
-  { name: 'Sheriff / Foreclosure Sales', type: 'sheriff_sale', states: ['GA', 'TX', 'NC'], status: 'manual_only' as const, description: 'Sheriff sales and trustee foreclosure auctions — county courthouse sales' },
+  { name: 'Courthouse Public Records', type: 'courthouse', states: ['GA', 'FL', 'TX', 'AZ', 'MI', 'NC', 'AL', 'MS', 'TN', 'SC'], status: 'active' as const, description: 'Public foreclosure filings, lis pendens, and tax forfeitures scraped from county courthouses and state registries across all 10 target states' },
+  { name: 'County Tax Lien Auctions', type: 'tax_sale', states: ['GA', 'FL', 'TX', 'AZ', 'MI', 'NC', 'AL', 'MS', 'TN', 'SC'], status: 'active' as const, description: 'County tax lien/deed sales — government delinquent tax auctions' },
+  { name: 'Sheriff / Trustee Sales', type: 'sheriff_sale', states: ['GA', 'TX', 'NC'], status: 'active' as const, description: 'Sheriff sales and trustee foreclosure auctions — county courthouse sales' },
 ];
 
 const PROPERTY_TYPES = [
