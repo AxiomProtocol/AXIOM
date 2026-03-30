@@ -20,6 +20,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { validateAdminKey } from '../../../src/config/adminRoles';
+import { AdminRoleService } from '../../../lib/services/AdminRoleService';
 
 const RPC_URL = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 
@@ -51,6 +52,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const pk = process.env.DEPLOYER_PRIVATE_KEY;
   if (!pk) {
     return res.status(500).json({ error: 'DEPLOYER_PRIVATE_KEY not configured' });
+  }
+
+  const callerAddress = new ethers.Wallet(pk).address;
+  const hasRole = await AdminRoleService.hasRoleDb(callerAddress, 'COMPLIANCE_ROLE');
+  if (!hasRole) {
+    return res.status(403).json({
+      error: 'Forbidden — deployer does not hold COMPLIANCE_ROLE in the admin_roles registry',
+      callerAddress,
+      role: 'COMPLIANCE_ROLE',
+    });
   }
 
   try {

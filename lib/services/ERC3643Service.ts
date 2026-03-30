@@ -12,7 +12,7 @@ import {
   MODULAR_COMPLIANCE_ABI,
   LENDING_PLATFORM_MODULE_ABI,
 } from '../../shared/contracts-3643';
-import { GOVERNANCE_SAFE, SAFE_MINT_THRESHOLD_AXUSD } from '../../src/config/adminRoles';
+import { GOVERNANCE_SAFE, SAFE_MINT_THRESHOLD_AXUSD, DEPLOYER_EOA } from '../../src/config/adminRoles';
 
 function getProvider() {
   const rpcUrl = process.env.ALCHEMY_API_KEY
@@ -376,11 +376,11 @@ export class ERC3643Service {
    * Mint AXUSD via Safe proposal (amounts >= SAFE_MINT_THRESHOLD) or direct EOA signing.
    *
    * For amounts below the threshold, the deployer EOA signs directly.
-   * For amounts at or above the threshold, a Safe transaction proposal is created
-   * that must be approved by Safe owners at app.safe.global before execution.
+   * For amounts at or above the threshold, a real Safe transaction proposal is created
+   * and submitted to the Safe Transaction Service (Arbitrum One) via @safe-global/api-kit.
+   * The proposal appears in app.safe.global for the remaining owners to sign and execute.
    *
    * NOTE: On-chain minting requires the caller to hold MINTER_ROLE on the AXUSD token.
-   * The ERC-3643 T-REX token exposes mint(address,uint256) gated by MINTER_ROLE.
    */
   static async mintAXUSD(params: {
     toAddress: string;
@@ -393,27 +393,87 @@ export class ERC3643Service {
     const requiresSafe = amountFloat >= SAFE_MINT_THRESHOLD_AXUSD;
 
     if (requiresSafe) {
+      const pk = process.env.DEPLOYER_PRIVATE_KEY;
+      if (!pk) throw new Error('DEPLOYER_PRIVATE_KEY not set');
+
+      const provider = getProvider();
+      const signer = new ethers.Wallet(pk, provider);
+      const signerAddress = await signer.getAddress();
+
+      const MINT_ABI = ['function mint(address to, uint256 amount) external'];
+      const tokenInterface = new ethers.Interface(MINT_ABI);
+      const mintData = tokenInterface.encodeFunctionData('mint', [
+        toAddress,
+        ethers.parseUnits(amountAxusd, 18),
+      ]);
+
+      let safeTxHash: string | undefined;
+      let proposalError: string | undefined;
+
+      try {
+        const Safe = (await import('@safe-global/protocol-kit')).default;
+        const SafeApiKit = (await import('@safe-global/api-kit')).default;
+
+        const protocolKit = await Safe.init({
+          provider: process.env.ALCHEMY_API_KEY
+            ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
+            : 'https://arb1.arbitrum.io/rpc',
+          signer: pk,
+          safeAddress: GOVERNANCE_SAFE,
+        });
+
+        const safeTransaction = await protocolKit.createTransaction({
+          transactions: [{
+            to: ERC3643_CONTRACTS.AXUSD_TOKEN,
+            value: '0',
+            data: mintData,
+          }],
+        });
+
+        safeTxHash = await protocolKit.getTransactionHash(safeTransaction);
+        const signature = await protocolKit.signHash(safeTxHash);
+
+        const apiKit = new SafeApiKit({ chainId: 42161n });
+        await apiKit.proposeTransaction({
+          safeAddress: GOVERNANCE_SAFE,
+          safeTransactionData: safeTransaction.data,
+          safeTxHash,
+          senderAddress: signerAddress,
+          senderSignature: signature.data,
+        });
+      } catch (err) {
+        proposalError = err instanceof Error ? err.message : String(err);
+        console.error('[ERC3643Service] Safe proposal failed:', proposalError);
+      }
+
       await writeAdminLog({
         actionType: 'mint',
         callerAddress,
         targetAddress: toAddress,
         amount: amountAxusd,
+        txHash: safeTxHash,
         role: 'MINTER_ROLE',
         status: 'pending_safe',
         metadata: {
           reason,
           safeAddress: GOVERNANCE_SAFE,
-          note: `Amount ${amountAxusd} AXUSD >= threshold ${SAFE_MINT_THRESHOLD_AXUSD}. Safe proposal required at app.safe.global`,
+          safeTxHash,
+          proposalError,
+          note: `Amount ${amountAxusd} AXUSD >= threshold ${SAFE_MINT_THRESHOLD_AXUSD}. Safe proposal submitted to Transaction Service.`,
         },
       });
 
       return {
         status: 'pending_safe',
-        message: `Amount ${amountAxusd} AXUSD meets or exceeds the ${SAFE_MINT_THRESHOLD_AXUSD} AXUSD Safe-proposal threshold. A multisig transaction must be proposed and executed at app.safe.global/arb1:${GOVERNANCE_SAFE}`,
+        message: proposalError
+          ? `Safe proposal attempted but encountered an error: ${proposalError}. Navigate to app.safe.global to create manually.`
+          : `Safe transaction proposal submitted. Navigate to app.safe.global for remaining signatures.`,
         safeUrl: `https://app.safe.global/transactions/queue?safe=arb1:${GOVERNANCE_SAFE}`,
+        safeTxHash,
         requiresSafe: true,
         amountAxusd,
         toAddress,
+        proposalError,
       };
     }
 

@@ -4,12 +4,19 @@
  *
  * Required role: COMPLIANCE_ROLE
  * Auth: x-admin-key header (ADMIN_SOLVENCY_KEY)
- * Optional: callerAddress in body for role validation
+ *
+ * The caller identity is derived server-side from DEPLOYER_PRIVATE_KEY,
+ * not from the request body, to prevent spoofing. DB-backed role check
+ * verifies the deployer address holds COMPLIANCE_ROLE in admin_roles table.
+ *
+ * Body: { contractAddress: string, platformName: string }
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { ethers } from 'ethers';
 import { ERC3643Service } from '../../../../lib/services/ERC3643Service';
-import { validateAdminKey, hasRole } from '../../../../src/config/adminRoles';
+import { AdminRoleService } from '../../../../lib/services/AdminRoleService';
+import { validateAdminKey } from '../../../../src/config/adminRoles';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -18,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Unauthorized — invalid admin key' });
   }
 
-  const { contractAddress, platformName, callerAddress } = req.body ?? {};
+  const { contractAddress, platformName } = req.body ?? {};
 
   if (!contractAddress || typeof contractAddress !== 'string' || !/^0x[a-fA-F0-9]{40}$/.test(contractAddress)) {
     return res.status(400).json({ error: 'Valid contract address required' });
@@ -27,15 +34,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Platform name required' });
   }
 
-  if (callerAddress) {
-    if (!hasRole(callerAddress, 'COMPLIANCE_ROLE')) {
-      return res.status(403).json({
-        error: 'Forbidden — caller does not hold COMPLIANCE_ROLE',
-        callerAddress,
-        role: 'COMPLIANCE_ROLE',
-        allowedHolders: ['DEPLOYER_EOA (0x8d7892CF...)'],
-      });
-    }
+  const pk = process.env.DEPLOYER_PRIVATE_KEY;
+  if (!pk) return res.status(500).json({ error: 'DEPLOYER_PRIVATE_KEY not configured' });
+
+  const callerAddress = new ethers.Wallet(pk).address;
+
+  const hasRole = await AdminRoleService.hasRoleDb(callerAddress, 'COMPLIANCE_ROLE');
+  if (!hasRole) {
+    return res.status(403).json({
+      error: 'Forbidden — deployer does not hold COMPLIANCE_ROLE in the admin_roles registry',
+      callerAddress,
+      role: 'COMPLIANCE_ROLE',
+    });
   }
 
   try {

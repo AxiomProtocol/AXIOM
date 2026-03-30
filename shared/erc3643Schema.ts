@@ -129,3 +129,24 @@ export const adminActionLog = pgTable("admin_action_log", {
 
 export type AdminActionLog = typeof adminActionLog.$inferSelect;
 export type InsertAdminActionLog = typeof adminActionLog.$inferInsert;
+
+export const adminRoles = pgTable("admin_roles", {
+  id: serial("id").primaryKey(),
+  roleName: varchar("role_name", { length: 64 }).notNull(),
+  holderAddress: varchar("holder_address", { length: 42 }).notNull(),
+  holderType: varchar("holder_type", { length: 16 }).notNull(),
+  contractName: varchar("contract_name", { length: 128 }),
+  grantedAt: timestamp("granted_at").defaultNow().notNull(),
+  grantedBy: varchar("granted_by", { length: 42 }),
+  revokedAt: timestamp("revoked_at"),
+  revokedBy: varchar("revoked_by", { length: 42 }),
+  isActive: boolean("is_active").notNull().default(true),
+  notes: text("notes"),
+}, (table) => ({
+  roleIdx: index("idx_admin_roles_role").on(table.roleName),
+  holderIdx: index("idx_admin_roles_holder").on(table.holderAddress),
+  activeIdx: index("idx_admin_roles_active").on(table.isActive),
+}));
+
+export type AdminRole = typeof adminRoles.$inferSelect;
+export type InsertAdminRole = typeof adminRoles.$inferInsert;
