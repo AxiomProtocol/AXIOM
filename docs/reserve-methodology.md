@@ -132,11 +132,11 @@ USDC on Arbitrum One: `0xaf88d065e77c8cC2239327C5EDb3A432268e5831`
 | Fee sweeps | Governance Safe `sweepFees(recipient)` |
 | PSM ownership | Governance Safe `0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d` |
 
-The Canonical PSM uses an `owner`-only access model (OpenZeppelin `Ownable2Step`). There is **no separate operator role** — this is an intentional design decision. The Governance Safe (3-of-5 multisig) serves as the sole control authority. Its multi-party authorization threshold provides the same security guarantees as a separate operator key without introducing an additional privileged account surface.
+The Canonical PSM uses an `owner`-only access model (single-step `transferOwnership`). There is **no separate operator role** — this is an intentional design decision. The Governance Safe (3-of-5 multisig) serves as the sole control authority. Its multi-party authorization threshold provides the same security guarantees as a separate operator key without introducing an additional privileged account surface.
 
 All administrative functions (`pause`, `unpause`, `setDebtCeiling`, `setMintFee`, `setRedeemFee`, `sweepFees`) require the Governance Safe as caller. Operational transactions flow through the Safe's queue, ensuring every admin action is reviewed and approved by a quorum of signers before execution.
 
-Ownership transfer requires two transactions: `transferOwnership()` by the current owner, then `acceptOwnership()` by the new owner (Ownable2Step). This prevents accidental ownership loss.
+Ownership transfer is single-step: `transferOwnership(newOwner)` called by the current owner immediately sets the new owner. The deployer must transfer ownership to the Governance Safe immediately after deployment.
 
 ---
 

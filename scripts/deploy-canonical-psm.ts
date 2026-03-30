@@ -17,12 +17,14 @@
  *   CANONICAL_PSM_DRY_RUN     Set to "true" to simulate only, no on-chain tx (default: false)
  *
  * Access control model:
- *   This contract uses OpenZeppelin Ownable2Step (owner-only).
+ *   This contract uses a single-step owner-only model (custom Ownable).
  *   There is no separate operator role. All admin functions
  *   (pause, setFee, setCeiling, sweepFees, transferOwnership)
  *   require the Governance Safe. This is intentional — the Safe's 3-of-5
  *   threshold provides the multi-party authorization guarantee without
  *   a separate on-chain operator key.
+ *   Ownership transfer is single-step: transferOwnership(newOwner) takes
+ *   effect immediately. No acceptOwnership() call is required.
  *
  * Post-deploy (must be executed via Governance Safe):
  *   1. axusd.addAgent(PSM_ADDRESS)                 → enables PSM mint/burn authority
@@ -86,7 +88,7 @@ async function main() {
   console.log(`  redeemFee   : ${redeemFee} bps (${Number(redeemFee) / 100}%)`);
   console.log(`  finalOwner  : ${finalOwner}`);
   console.log(`  dryRun      : ${dryRun}`);
-  console.log(`\nAccess Control: owner-only (Ownable2Step). No separate operator role.`);
+  console.log(`\nAccess Control: owner-only (single-step transferOwnership). No separate operator role.`);
   console.log(`All admin ops require Governance Safe authorization.\n`);
 
   if (dryRun) {
@@ -111,7 +113,7 @@ async function main() {
     const tx = await psm.transferOwnership(finalOwner);
     await tx.wait();
     console.log(`transferOwnership TX: ${tx.hash}`);
-    console.log(`Note: final owner must call acceptOwnership() to complete the 2-step transfer.`);
+    console.log(`Ownership transferred immediately (single-step). ${finalOwner} is now the owner.`);
   } else {
     console.log(`\nOwner is deployer — no ownership transfer needed.`);
   }
@@ -126,11 +128,10 @@ async function main() {
   console.log(`Debt Ceiling   : ${ethers.formatUnits(ceiling, 18)} AXUSD`);
   console.log(`Mint Fee       : ${mintFee} bps`);
   console.log(`Redeem Fee     : ${redeemFee} bps`);
-  console.log(`Pending Owner  : ${finalOwner}`);
+  console.log(`Owner          : ${finalOwner}  (effective immediately — single-step transfer)`);
   console.log(`\nPost-Deploy (Governance Safe required):`);
-  console.log(`  1. finalOwner.acceptOwnership()                    (completes Ownable2Step)`);
-  console.log(`  2. axusd.addAgent(${psmAddress})  (enables mint/burn)`);
-  console.log(`  3. LendingPlatformModule.addPlatform(axusd, ${psmAddress})`);
+  console.log(`  1. axusd.addAgent(${psmAddress})  (enables mint/burn)`);
+  console.log(`  2. LendingPlatformModule.addPlatform(axusd, ${psmAddress})`);
 }
 
 main().catch(err => {

@@ -1221,12 +1221,23 @@ function OracleTab({
 }
 
 // ─── PSM Mint/Redeem Panel ──────────────────────────────────────────────────
-// PSM contract ABIs (minimal, just what the UI needs)
-const USDC_APPROVE_ABI = ['function approve(address spender, uint256 amount) returns (bool)'];
-const PSM_MINT_ABI     = ['function mint(uint256 axusdAmount) external'];
-const PSM_REDEEM_ABI   = ['function redeem(uint256 axusdAmount) external'];
-const CANONICAL_PSM_ADDR = '0xDB669bb6cA07215C5B055B62072AAED2F821E53F';
-const USDC_ADDR          = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+//
+// Contract interface (verified against deployed CanonicalPSM.sol):
+//   mint(uint256 usdcAmount)   — caller deposits USDC (6 dec); receives AXUSD (18 dec)
+//   redeem(uint256 axusdAmount) — caller burns AXUSD (18 dec); receives USDC (6 dec)
+//                                 caller must approve AXUSD to PSM before redeem
+//
+// UX:
+//   Mint:   input USDC amount → approve USDC → psm.mint(usdcAmount_6dec)
+//   Redeem: input AXUSD amount → approve AXUSD → psm.redeem(axusdAmount_18dec)
+//
+const USDC_APPROVE_ABI  = ['function approve(address spender, uint256 amount) returns (bool)'];
+const AXUSD_APPROVE_ABI = ['function approve(address spender, uint256 amount) returns (bool)'];
+const PSM_MINT_ABI      = ['function mint(uint256 usdcAmount) external returns (uint256 axusdMinted)'];
+const PSM_REDEEM_ABI    = ['function redeem(uint256 axusdAmount) external returns (uint256 usdcReturned)'];
+const CANONICAL_PSM_ADDR  = '0xDB669bb6cA07215C5B055B62072AAED2F821E53F';
+const CANONICAL_AXUSD_ADDR = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
+const USDC_ADDR           = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
 
 type PsmOp = 'mint' | 'redeem';
 type TxPhase = 'idle' | 'approve_pending' | 'approve_done' | 'tx_pending' | 'success' | 'error';
@@ -1237,21 +1248,21 @@ interface IdentityStatus {
   identityAddress: string | null;
 }
 
-function computeUsdcForMint(axusdWei: bigint, mintFeeBps: number): bigint {
-  // axusd is 18 dec, USDC is 6 dec; scale = 1e12
-  // USDC cost = ceil(axusdWei * (10000 + fee) / 10000 / 1e12)
-  const numerator = axusdWei * BigInt(10000 + mintFeeBps);
-  const gross = numerator / BigInt(10000);
-  const usdc6 = gross / BigInt(1e12);
-  const remainder = gross % BigInt(1e12);
-  return remainder > 0n ? usdc6 + 1n : usdc6;
+// Mint: user provides USDC (6 dec). Preview = AXUSD out (18 dec)
+// AXUSD received = (usdcAmount - fee) * 1e12  where fee = usdcAmount * mintFee / 10000
+function computeAxusdFromMint(usdcAmount6: bigint, mintFeeBps: number): bigint {
+  const fee = (usdcAmount6 * BigInt(mintFeeBps)) / BigInt(10000);
+  const netUsdc = usdcAmount6 - fee;
+  return netUsdc * BigInt(1e12); // scale 6→18 dec
 }
 
+// Redeem: user provides AXUSD (18 dec). Preview = USDC out (6 dec)
+// USDC received = axusdAmount / 1e12 - fee  where fee = (axusdAmount * redeemFee / 10000) / 1e12
 function computeUsdcFromRedeem(axusdWei: bigint, redeemFeeBps: number): bigint {
-  // USDC received = axusdWei * (10000 - fee) / 10000 / 1e12
-  const numerator = axusdWei * BigInt(10000 - redeemFeeBps);
-  const gross = numerator / BigInt(10000);
-  return gross / BigInt(1e12);
+  const axusdFee = (axusdWei * BigInt(redeemFeeBps)) / BigInt(10000);
+  const usdcFee  = axusdFee / BigInt(1e12);
+  const usdcGross = axusdWei / BigInt(1e12);
+  return usdcGross - usdcFee;
 }
 
 function PsmMintRedeemPanel({
@@ -1292,22 +1303,33 @@ function PsmMintRedeemPanel({
       .finally(() => setIdentityLoading(false));
   }, [address]);
 
-  const axusdWei = (() => {
+  // For MINT: amount is in USDC (6 dec)
+  // For REDEEM: amount is in AXUSD (18 dec, must be multiple of 1e12)
+  const inputWei = (() => {
     try {
       const n = parseFloat(amountStr);
       if (!n || n <= 0) return null;
-      return BigInt(Math.floor(n * 1e18));
+      if (op === 'mint') {
+        // USDC 6 dec
+        return BigInt(Math.floor(n * 1e6));
+      } else {
+        // AXUSD 18 dec — round to nearest whole USDC unit (1e12 precision)
+        const axusd18 = BigInt(Math.floor(n * 1e18));
+        // Snap to nearest 1e12 to satisfy PSM precision guard
+        const scale = BigInt(1e12);
+        return (axusd18 / scale) * scale;
+      }
     } catch { return null; }
   })();
 
-  const usdcPreview = axusdWei
+  const outputPreview = inputWei
     ? (op === 'mint'
-        ? computeUsdcForMint(axusdWei, mintFeeBps)
-        : computeUsdcFromRedeem(axusdWei, redeemFeeBps))
+        ? computeAxusdFromMint(inputWei, mintFeeBps)
+        : computeUsdcFromRedeem(inputWei, redeemFeeBps))
     : null;
 
-  const fmtUsdc6 = (wei: bigint) =>
-    (Number(wei) / 1e6).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 });
+  const fmtUsdc6  = (wei: bigint) => (Number(wei) / 1e6).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 });
+  const fmtAxusd18 = (wei: bigint) => (Number(wei) / 1e18).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 });
 
   async function getProvider() {
     if (typeof window === 'undefined') throw new Error('Browser only');
@@ -1320,23 +1342,22 @@ function PsmMintRedeemPanel({
     return { ethers, signer };
   }
 
-  async function handleApproveAndMint() {
-    if (!axusdWei || !address) return;
+  async function handleMint() {
+    if (!inputWei || !address) return;
     setPhase('approve_pending'); setErrMsg(null); setTxHash(null);
     try {
       const { ethers, signer } = await getProvider();
-      const usdcNeeded = computeUsdcForMint(axusdWei, mintFeeBps);
 
-      // Step 1: approve USDC
+      // Step 1: approve USDC to PSM
       const usdc = new ethers.Contract(USDC_ADDR, USDC_APPROVE_ABI, signer);
-      const approveTx = await usdc.approve(CANONICAL_PSM_ADDR, usdcNeeded);
+      const approveTx = await usdc.approve(CANONICAL_PSM_ADDR, inputWei);
       await approveTx.wait();
       setPhase('approve_done');
 
-      // Step 2: mint
+      // Step 2: call mint(usdcAmount) — PSM pulls USDC, mints AXUSD to caller
       setPhase('tx_pending');
       const psm = new ethers.Contract(CANONICAL_PSM_ADDR, PSM_MINT_ABI, signer);
-      const mintTx = await psm.mint(axusdWei);
+      const mintTx = await psm.mint(inputWei);
       setTxHash(mintTx.hash);
       await mintTx.wait();
       setPhase('success');
@@ -1347,14 +1368,23 @@ function PsmMintRedeemPanel({
   }
 
   async function handleRedeem() {
-    if (!axusdWei || !address) return;
-    setPhase('tx_pending'); setErrMsg(null); setTxHash(null);
+    if (!inputWei || !address) return;
+    setPhase('approve_pending'); setErrMsg(null); setTxHash(null);
     try {
       const { ethers, signer } = await getProvider();
+
+      // Step 1: approve AXUSD to PSM (PSM burns via agent authority, needs allowance)
+      const axusd = new ethers.Contract(CANONICAL_AXUSD_ADDR, AXUSD_APPROVE_ABI, signer);
+      const approveTx = await axusd.approve(CANONICAL_PSM_ADDR, inputWei);
+      await approveTx.wait();
+      setPhase('approve_done');
+
+      // Step 2: call redeem(axusdAmount) — PSM burns AXUSD, sends USDC to caller
+      setPhase('tx_pending');
       const psm = new ethers.Contract(CANONICAL_PSM_ADDR, PSM_REDEEM_ABI, signer);
-      const tx = await psm.redeem(axusdWei);
-      setTxHash(tx.hash);
-      await tx.wait();
+      const redeemTx = await psm.redeem(inputWei);
+      setTxHash(redeemTx.hash);
+      await redeemTx.wait();
       setPhase('success');
     } catch (err: unknown) {
       setErrMsg(err instanceof Error ? err.message : String(err));
@@ -1396,7 +1426,7 @@ function PsmMintRedeemPanel({
   if (paused) {
     return (
       <div className="border border-dl-border p-4 mb-8 text-xs text-dl-gray font-dl-mono">
-        <span className="text-dl-navy font-semibold">PSM Paused</span> — Mint and redeem are currently suspended. Contact governance.
+        <span className="text-dl-navy font-semibold">PSM Paused</span> — Mint and redeem are currently suspended by governance.
       </div>
     );
   }
@@ -1424,40 +1454,47 @@ function PsmMintRedeemPanel({
       {/* Amount input */}
       <div className="mb-3">
         <label className="text-xs text-dl-gray mb-1 block font-dl-mono">
-          {op === 'mint' ? 'AXUSD to Mint' : 'AXUSD to Redeem'}
+          {op === 'mint' ? 'USDC to Deposit' : 'AXUSD to Redeem'}
         </label>
-        <input
-          type="number"
-          min="0"
-          step="1"
-          value={amountStr}
-          onChange={e => { setAmountStr(e.target.value); if (phase !== 'idle') reset(); }}
-          placeholder="100.00"
-          className="w-full border border-dl-border px-3 py-1.5 text-sm font-dl-mono bg-white"
-        />
+        <div className="flex gap-2 items-center">
+          <input
+            type="number"
+            min="0"
+            step={op === 'mint' ? '1' : '1'}
+            value={amountStr}
+            onChange={e => { setAmountStr(e.target.value); if (phase !== 'idle') reset(); }}
+            placeholder={op === 'mint' ? '100.00 USDC' : '100.00 AXUSD'}
+            className="flex-1 border border-dl-border px-3 py-1.5 text-sm font-dl-mono bg-white"
+          />
+          <span className="text-xs font-dl-mono text-dl-gray">{op === 'mint' ? 'USDC' : 'AXUSD'}</span>
+        </div>
       </div>
 
       {/* Preview */}
-      {usdcPreview !== null && axusdWei !== null && (
+      {outputPreview !== null && inputWei !== null && (
         <div className="border border-dl-border bg-dl-bg-alt px-3 py-2 mb-4 text-xs font-dl-mono">
           {op === 'mint' ? (
-            <p>USDC to approve + deposit: <span className="text-dl-navy font-semibold">{fmtUsdc6(usdcPreview)} USDC</span> (includes {mintFeeBps / 100}% fee)</p>
+            <p>AXUSD to receive: <span className="text-dl-navy font-semibold">{fmtAxusd18(outputPreview)} AXUSD</span> (after {mintFeeBps / 100}% fee on USDC deposit)</p>
           ) : (
-            <p>USDC to receive: <span className="text-dl-navy font-semibold">{fmtUsdc6(usdcPreview)} USDC</span> (after {redeemFeeBps / 100}% fee)</p>
+            <p>USDC to receive: <span className="text-dl-navy font-semibold">{fmtUsdc6(outputPreview)} USDC</span> (after {redeemFeeBps / 100}% fee)</p>
           )}
         </div>
       )}
 
       {/* Status messages */}
       {phase === 'approve_pending' && (
-        <p className="text-xs text-dl-gray font-dl-mono mb-3">Step 1/2 — Awaiting USDC approval in wallet...</p>
+        <p className="text-xs text-dl-gray font-dl-mono mb-3">
+          Step 1/2 — Awaiting {op === 'mint' ? 'USDC' : 'AXUSD'} approval in wallet...
+        </p>
       )}
       {phase === 'approve_done' && (
-        <p className="text-xs text-dl-gray font-dl-mono mb-3">Step 1/2 complete — USDC approved. Awaiting mint transaction...</p>
+        <p className="text-xs text-dl-gray font-dl-mono mb-3">
+          Step 1/2 complete — {op === 'mint' ? 'USDC' : 'AXUSD'} approved. Awaiting {op === 'mint' ? 'mint' : 'redeem'} transaction...
+        </p>
       )}
       {phase === 'tx_pending' && (
         <p className="text-xs text-dl-gray font-dl-mono mb-3">
-          {op === 'mint' ? 'Step 2/2' : 'Step 1/1'} — Transaction submitted. Awaiting confirmation...
+          Step 2/2 — Transaction submitted. Awaiting confirmation...
           {txHash && (
             <> <a href={blockscoutLink(txHash)} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline ml-1">View on Blockscout</a></>
           )}
@@ -1480,13 +1517,13 @@ function PsmMintRedeemPanel({
       )}
 
       {/* Action button */}
-      {phase === 'idle' && (
+      {(phase === 'idle') && (
         <SolidButton
-          onClick={op === 'mint' ? handleApproveAndMint : handleRedeem}
-          disabled={!axusdWei || !isConnected}
+          onClick={op === 'mint' ? handleMint : handleRedeem}
+          disabled={!inputWei || !isConnected}
           size="sm"
         >
-          {op === 'mint' ? 'Approve USDC + Mint AXUSD' : 'Redeem AXUSD for USDC'}
+          {op === 'mint' ? 'Approve USDC + Mint AXUSD' : 'Approve AXUSD + Redeem for USDC'}
         </SolidButton>
       )}
 
