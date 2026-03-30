@@ -1516,12 +1516,12 @@ function PsmMintRedeemPanel({
       {/* Status messages */}
       {phase === 'approve_pending' && (
         <p className="text-xs text-dl-gray font-dl-mono mb-3">
-          Step 1/2 — Awaiting {op === 'mint' ? 'USDC' : 'AXUSD'} approval in wallet...
+          Step 1/2 — Awaiting USDC approval in wallet...
         </p>
       )}
       {phase === 'approve_done' && (
         <p className="text-xs text-dl-gray font-dl-mono mb-3">
-          Step 1/2 complete — {op === 'mint' ? 'USDC' : 'AXUSD'} approved. Awaiting {op === 'mint' ? 'mint' : 'redeem'} transaction...
+          Step 1/2 complete — USDC approved. Awaiting mint transaction...
         </p>
       )}
       {phase === 'tx_pending' && (
@@ -1556,7 +1556,7 @@ function PsmMintRedeemPanel({
           size="sm"
           title={!agentRegistered ? 'PSM not yet activated — awaiting addAgent() governance call' : undefined}
         >
-          {op === 'mint' ? 'Approve USDC + Mint AXUSD' : 'Approve AXUSD + Redeem for USDC'}
+          {op === 'mint' ? 'Approve USDC + Mint AXUSD' : 'Redeem AXUSD for USDC'}
         </SolidButton>
       )}
 
