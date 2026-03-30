@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
+import type { OnChainTx } from './api/activity/on-chain-feed';
 
 interface OpsEntry {
   week: number;
@@ -130,7 +131,7 @@ interface POEData {
   generatedAt: string;
 }
 
-type RailKey = 'ops' | 'solvency' | 'chain' | 'outcomes' | 'assets' | 'inspections' | 'syndication';
+type RailKey = 'ops' | 'solvency' | 'chain' | 'outcomes' | 'assets' | 'inspections' | 'syndication' | 'onchain';
 
 function fmtDate(d: string | null | undefined) {
   if (!d) return '—';
@@ -189,6 +190,11 @@ export default function ProofOfExecutionPage() {
   const [error, setError] = useState('');
   const [activeRail, setActiveRail] = useState<RailKey>('ops');
 
+  const [onChainTxs, setOnChainTxs] = useState<OnChainTx[]>([]);
+  const [onChainLoading, setOnChainLoading] = useState(false);
+  const [onChainError, setOnChainError] = useState('');
+  const [onChainTypeCounts, setOnChainTypeCounts] = useState<Record<string, number>>({});
+
   useEffect(() => {
     fetch('/api/proof-of-execution')
       .then(r => r.json())
@@ -200,10 +206,29 @@ export default function ProofOfExecutionPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (activeRail !== 'onchain') return;
+    if (onChainTxs.length > 0) return;
+    setOnChainLoading(true);
+    setOnChainError('');
+    fetch('/api/activity/on-chain-feed')
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) setOnChainError(d.error);
+        else {
+          setOnChainTxs(d.transactions ?? []);
+          setOnChainTypeCounts(d.typeCounts ?? {});
+        }
+      })
+      .catch(() => setOnChainError('Failed to fetch on-chain activity'))
+      .finally(() => setOnChainLoading(false));
+  }, [activeRail]);
+
   const summary = data?.summary;
   const rails = data?.rails;
 
   const RAILS: { key: RailKey; label: string; count?: number }[] = [
+    { key: 'onchain',      label: 'On-Chain Activity',    count: onChainTxs.length || undefined },
     { key: 'ops',          label: 'Operations Log',       count: summary?.totalOpsEntries },
     { key: 'assets',       label: 'Real Asset Pipeline',  count: summary?.totalDeals },
     { key: 'inspections',  label: 'Field Inspections',    count: summary?.totalInspections },
@@ -411,6 +436,135 @@ export default function ProofOfExecutionPage() {
               </button>
             ))}
           </div>
+
+          {/* ── On-Chain Activity ─────────────────────────────────── */}
+          {activeRail === 'onchain' && (
+            <>
+              <div className="border border-dl-border bg-dl-bg-alt px-4 py-3 mb-4">
+                <p className="font-dl-mono text-xs text-dl-gray">
+                  Live protocol activity on Arbitrum One (chainId: 42161) — PSM mints and redeems, Euler vault deposits,
+                  EulerSwap liquidity events, and AXUSD token transfers involving canonical protocol contracts.
+                  Sourced directly from chain; up to 50 most recent events across monitored addresses.
+                </p>
+              </div>
+
+              {onChainLoading && (
+                <div className="border border-dl-border p-8 text-center">
+                  <p className="font-dl-mono text-sm text-dl-gray">Fetching on-chain activity…</p>
+                </div>
+              )}
+
+              {onChainError && (
+                <div className="border border-red-300 bg-red-50 p-4">
+                  <p className="font-dl-mono text-xs text-red-700">{onChainError}</p>
+                </div>
+              )}
+
+              {!onChainLoading && !onChainError && onChainTxs.length === 0 && (
+                <p className="font-dl-mono text-sm text-dl-gray py-8 text-center">No on-chain activity found for monitored addresses.</p>
+              )}
+
+              {!onChainLoading && onChainTxs.length > 0 && (
+                <>
+                  {Object.keys(onChainTypeCounts).length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {Object.entries(onChainTypeCounts)
+                        .sort(([, a], [, b]) => b - a)
+                        .map(([type, count]) => (
+                          <div key={type} className="border border-dl-border px-3 py-1.5 bg-dl-bg-alt">
+                            <span className="font-dl-mono text-xs text-dl-gray">{type}</span>
+                            <span className="font-dl-mono text-xs font-bold text-dl-navy ml-2">{count}</span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+
+                  <div className="border border-dl-border">
+                    <div className="hidden md:grid grid-cols-12 bg-dl-navy px-4 py-2">
+                      <p className="col-span-3 text-xs text-white uppercase tracking-widest font-dl-mono">Type</p>
+                      <p className="col-span-2 text-xs text-white uppercase tracking-widest font-dl-mono">Asset</p>
+                      <p className="col-span-2 text-xs text-white uppercase tracking-widest font-dl-mono">Amount</p>
+                      <p className="col-span-2 text-xs text-white uppercase tracking-widest font-dl-mono">From</p>
+                      <p className="col-span-2 text-xs text-white uppercase tracking-widest font-dl-mono">To</p>
+                      <p className="col-span-1 text-xs text-white uppercase tracking-widest font-dl-mono">Block</p>
+                    </div>
+                    {onChainTxs.map((tx, i) => (
+                      <div
+                        key={`${tx.hash}-${i}`}
+                        className={`px-4 py-3 border-b border-dl-border last:border-b-0 ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}
+                      >
+                        <div className="md:hidden space-y-1 mb-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-dl-mono text-xs font-bold text-dl-navy border border-dl-border px-1.5 py-0.5">
+                              {tx.type}
+                            </span>
+                            <span className="font-dl-mono text-xs text-dl-gray">{tx.asset}</span>
+                            <span className="font-dl-mono text-xs text-dl-navy font-semibold">{tx.value}</span>
+                          </div>
+                          {tx.timestamp && (
+                            <p className="font-dl-mono text-xs text-dl-gray">{fmtDate(tx.timestamp)}</p>
+                          )}
+                          <div className="flex gap-3 text-xs font-dl-mono text-dl-gray">
+                            <span>From: {tx.from.slice(0, 8)}…</span>
+                            <span>To: {tx.to.slice(0, 8)}…</span>
+                          </div>
+                          <a
+                            href={tx.arbiscanUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-dl-mono text-xs text-dl-navy underline block"
+                          >
+                            {tx.hash.slice(0, 14)}… →
+                          </a>
+                        </div>
+
+                        <div className="hidden md:grid grid-cols-12 items-center gap-1">
+                          <div className="col-span-3">
+                            <a
+                              href={tx.arbiscanUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-dl-mono text-xs text-dl-navy underline"
+                            >
+                              {tx.type}
+                            </a>
+                            {tx.timestamp && (
+                              <p className="font-dl-mono text-xs text-dl-gray mt-0.5">
+                                {fmtDate(tx.timestamp)}
+                              </p>
+                            )}
+                          </div>
+                          <p className="col-span-2 font-dl-mono text-xs text-dl-gray uppercase">{tx.asset}</p>
+                          <p className="col-span-2 font-dl-mono text-xs text-dl-navy font-semibold">{tx.value}</p>
+                          <p className="col-span-2 font-dl-mono text-xs text-dl-gray">
+                            {tx.from.slice(0, 6)}…{tx.from.slice(-4)}
+                          </p>
+                          <p className="col-span-2 font-dl-mono text-xs text-dl-gray">
+                            {tx.to ? `${tx.to.slice(0, 6)}…${tx.to.slice(-4)}` : '—'}
+                          </p>
+                          <p className="col-span-1 font-dl-mono text-xs text-dl-gray">{tx.blockNum}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between">
+                    <p className="font-dl-mono text-xs text-dl-gray">
+                      Showing {onChainTxs.length} most recent events. Addresses monitored: PSM, Euler vaults, EulerSwap pools.
+                    </p>
+                    <a
+                      href="https://arbiscan.io/address/0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-dl-mono text-xs text-dl-navy underline"
+                    >
+                      AXUSD on Arbiscan →
+                    </a>
+                  </div>
+                </>
+              )}
+            </>
+          )}
 
           {/* ── Operations Log ────────────────────────────────────── */}
           {activeRail === 'ops' && rails && (
