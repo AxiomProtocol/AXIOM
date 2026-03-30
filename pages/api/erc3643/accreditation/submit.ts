@@ -27,12 +27,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'documentUrls required: provide at least one supporting document URL' });
   }
 
+  const serializedUrls = JSON.stringify(documentUrls as string[]);
+
   try {
     const result = await ERC3643Service.submitAccreditation({
       walletAddress,
       selfCertification,
       accreditationBasis,
-      documentUrls: documentUrls ?? undefined,
+      documentUrls: serializedUrls,
       notes: notes ?? undefined,
     });
     return res.status(201).json({ success: true, data: result });

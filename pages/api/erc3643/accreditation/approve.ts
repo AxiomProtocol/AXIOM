@@ -27,7 +27,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               )
         )
         .orderBy(t3AccreditationSubmissions.createdAt);
-      return res.status(200).json({ success: true, data: rows });
+      const parsed = rows.map((r) => ({
+        ...r,
+        documentUrls: r.documentUrls
+          ? (() => { try { return JSON.parse(r.documentUrls as string); } catch { return [r.documentUrls]; } })()
+          : [],
+      }));
+      return res.status(200).json({ success: true, data: parsed });
     } catch (err: unknown) {
       return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }

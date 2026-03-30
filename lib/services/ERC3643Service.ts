@@ -467,6 +467,19 @@ export class ERC3643Service {
       metadata: { oldClaimId: claimId, newClaimId: result.claimId, topic: existing.topic },
     });
 
+    await db.insert(t3ComplianceOpsLog).values({
+      wallet: identity.wallet.toLowerCase(),
+      action: 'renewal',
+      topic: existing.topic,
+      claimId: result.claimId,
+      operatorAddress: adminWallet.toLowerCase(),
+      result: 'success',
+      notes: `Topic ${existing.topic} claim renewed — old claim ${claimId} revoked, new claim ${result.claimId} issued`,
+      metadata: { oldClaimId: claimId, expiresAt: result.expiresAt, refreshRequiredBy: result.refreshRequiredBy },
+    }).catch((e) => {
+      console.error('[renewClaim] compliance log insert failed (non-fatal):', e);
+    });
+
     return {
       oldClaimId: claimId,
       newClaimId: result.claimId,
