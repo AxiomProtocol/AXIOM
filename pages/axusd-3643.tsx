@@ -1347,8 +1347,23 @@ function PsmMintRedeemPanel({
         : computeUsdcFromRedeem(inputWei, redeemFeeBps))
     : null;
 
-  const fmtUsdc6  = (wei: bigint) => (Number(wei) / 1e6).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 });
-  const fmtAxusd18 = (wei: bigint) => (Number(wei) / 1e18).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 });
+  // Bigint-safe display formatters — no float precision loss for large values
+  const fmtUsdc6 = (wei: bigint): string => {
+    const intPart  = wei / 1_000_000n;
+    const fracPart = wei % 1_000_000n;
+    const frac     = fracPart.toString().padStart(6, '0'); // always 6 digits
+    // Trim trailing zeros but keep at least 2
+    const trimmed  = frac.replace(/0+$/, '').padEnd(2, '0');
+    return `${intPart.toLocaleString('en-US')}.${trimmed}`;
+  };
+  const fmtAxusd18 = (wei: bigint): string => {
+    const scale18  = 1_000_000_000_000_000_000n;
+    const intPart  = wei / scale18;
+    const fracPart = wei % scale18;
+    const frac     = fracPart.toString().padStart(18, '0').slice(0, 6); // 6 frac digits
+    const trimmed  = frac.replace(/0+$/, '').padEnd(2, '0');
+    return `${intPart.toLocaleString('en-US')}.${trimmed}`;
+  };
 
   async function getProvider() {
     if (typeof window === 'undefined') throw new Error('Browser only');
