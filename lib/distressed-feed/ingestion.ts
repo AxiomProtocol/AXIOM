@@ -14,6 +14,11 @@ import { fetchFloridaCourthouseListings } from './sources/courthouse-florida';
 import { fetchTexasCourthouseListings } from './sources/courthouse-texas';
 import { fetchArizonaCourthouseListings } from './sources/courthouse-arizona';
 import { fetchMichiganCourthouseListings } from './sources/courthouse-michigan';
+import { fetchNorthCarolinaCourthouseListings } from './sources/courthouse-northcarolina';
+import { fetchAlabamaCourthouseListings } from './sources/courthouse-alabama';
+import { fetchMississippiCourthouseListings } from './sources/courthouse-mississippi';
+import { fetchTennesseeCourthouseListings } from './sources/courthouse-tennessee';
+import { fetchSouthCarolinaCourthouseListings } from './sources/courthouse-southcarolina';
 
 const TARGET_STATES = ['GA', 'TX', 'NC', 'MS', 'AL', 'TN', 'SC', 'FL', 'AZ', 'MI'];
 
@@ -109,6 +114,11 @@ export async function runIngestion(states?: string[]): Promise<IngestionResult> 
     ...(targetStates.includes('TX') ? [{ name: 'Courthouse TX', fn: () => fetchTexasCourthouseListings() }] : []),
     ...(targetStates.includes('AZ') ? [{ name: 'Courthouse AZ', fn: () => fetchArizonaCourthouseListings() }] : []),
     ...(targetStates.includes('MI') ? [{ name: 'Courthouse MI', fn: () => fetchMichiganCourthouseListings() }] : []),
+    ...(targetStates.includes('NC') ? [{ name: 'Courthouse NC', fn: () => fetchNorthCarolinaCourthouseListings() }] : []),
+    ...(targetStates.includes('AL') ? [{ name: 'Courthouse AL', fn: () => fetchAlabamaCourthouseListings() }] : []),
+    ...(targetStates.includes('MS') ? [{ name: 'Courthouse MS', fn: () => fetchMississippiCourthouseListings() }] : []),
+    ...(targetStates.includes('TN') ? [{ name: 'Courthouse TN', fn: () => fetchTennesseeCourthouseListings() }] : []),
+    ...(targetStates.includes('SC') ? [{ name: 'Courthouse SC', fn: () => fetchSouthCarolinaCourthouseListings() }] : []),
   ];
 
   for (const source of sources) {
