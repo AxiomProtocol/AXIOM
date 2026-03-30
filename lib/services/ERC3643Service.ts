@@ -14,6 +14,8 @@ import {
 } from '../../shared/contracts-3643';
 import { GOVERNANCE_SAFE, SAFE_MINT_THRESHOLD_AXUSD, DEPLOYER_EOA } from '../../src/config/adminRoles';
 
+type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 function getProvider() {
   const rpcUrl = process.env.ALCHEMY_API_KEY
     ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
@@ -177,7 +179,7 @@ export class ERC3643Service {
   }
 
   private static async _buildAndInsertClaim(
-    tx: typeof db,
+    tx: DbTx,
     wallet: string,
     topic: number,
     identityRecord: { id: string; onchainIdAddress: string },
@@ -200,7 +202,7 @@ export class ERC3643Service {
       )
     );
     const signature = await signer.signMessage(ethers.getBytes(dataHash));
-    const [inserted] = await (tx as typeof db).insert(t3Claims).values({
+    const [inserted] = await tx.insert(t3Claims).values({
       identityId: identityRecord.id,
       topic,
       issuerAddress: ERC3643_CONTRACTS.CLAIM_ISSUER.toLowerCase(),
@@ -235,7 +237,7 @@ export class ERC3643Service {
     const now = new Date();
     const { inserted, expiresAt, refreshRequiredBy, signature } = await db.transaction(async (tx) => {
       return ERC3643Service._buildAndInsertClaim(
-        tx as any,
+        tx,
         wallet,
         topic,
         { id: dbIdentity[0].id, onchainIdAddress: identityAddr ?? '' },
@@ -312,7 +314,16 @@ export class ERC3643Service {
         registryTxHash: 'IDEMPOTENT_SKIP',
       };
     } else {
-      regResult = await ERC3643Service.registerIdentity(walletAddress, countryCode);
+      try {
+        regResult = await ERC3643Service.registerIdentity(walletAddress, countryCode);
+      } catch (regErr: unknown) {
+        const errMsg = regErr instanceof Error ? regErr.message : String(regErr);
+        await db.update(t3KycSubmissions)
+          .set({ status: 'failed_bridge', bridgeError: `registerIdentity failed: ${errMsg}`, updatedAt: new Date() })
+          .where(eq(t3KycSubmissions.id, submissionId))
+          .catch(() => {});
+        throw new Error(`Identity registration failed: ${errMsg}`);
+      }
     }
 
     const signer = getSigner();
@@ -330,12 +341,12 @@ export class ERC3643Service {
     try {
       const txResult = await db.transaction(async (tx) => {
         const t1 = await ERC3643Service._buildAndInsertClaim(
-          tx as any, walletAddress, 1,
+          tx, walletAddress, 1,
           { id: dbIdentity.id, onchainIdAddress: dbIdentity.onchainIdAddress ?? '' },
           signer, now
         );
         const t3 = await ERC3643Service._buildAndInsertClaim(
-          tx as any, walletAddress, 3,
+          tx, walletAddress, 3,
           { id: dbIdentity.id, onchainIdAddress: dbIdentity.onchainIdAddress ?? '' },
           signer, now
         );

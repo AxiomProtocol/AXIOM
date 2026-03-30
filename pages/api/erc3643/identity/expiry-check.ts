@@ -61,10 +61,54 @@ async function sendExpiryAlertEmail(entries: { wallet: string; topic: number; da
   }
 }
 
+async function runExpiryJob() {
+  const now = new Date();
+  const warningCutoff = new Date(now.getTime() + CLAIM_REFRESH_WARNING_DAYS * 24 * 3600 * 1000);
+
+  const results = await db.select({ claim: t3Claims, wallet: t3Identities.wallet })
+    .from(t3Claims)
+    .innerJoin(t3Identities, eq(t3Claims.identityId, t3Identities.id))
+    .where(and(eq(t3Claims.revoked, false), lte(t3Claims.expiresAt, warningCutoff)));
+
+  const entries = results.map(r => ({
+    wallet: r.wallet,
+    topic: r.claim.topic,
+    expiresAt: r.claim.expiresAt,
+    daysRemaining: r.claim.expiresAt
+      ? Math.max(0, Math.ceil((r.claim.expiresAt.getTime() - now.getTime()) / (24 * 3600 * 1000)))
+      : null,
+  }));
+
+  let emailSent = false;
+  if (entries.length > 0) {
+    emailSent = await sendExpiryAlertEmail(entries);
+    await db.insert(t3ComplianceOpsLog).values({
+      wallet: 'system',
+      action: 'expiry_alert',
+      notes: `${entries.length} claim(s) expiring within ${CLAIM_REFRESH_WARNING_DAYS} days. Email sent: ${emailSent}`,
+      result: emailSent ? 'success' : 'partial',
+      metadata: { count: entries.length, wallets: entries.map(e => e.wallet) },
+    }).catch(() => {});
+  }
+
+  return { checked: results.length, alertsSent: entries.length, emailSent, entries };
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const wallet = req.query.wallet as string | undefined;
+  const authHeader = req.headers['authorization'] as string | undefined;
+  const cronSecret = process.env.CRON_SECRET;
+  const isVercelCron = !!cronSecret && authHeader === `Bearer ${cronSecret}`;
 
   if (req.method === 'GET') {
+    if (isVercelCron) {
+      try {
+        return res.status(200).json({ success: true, data: await runExpiryJob() });
+      } catch (err: unknown) {
+        return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+      }
+    }
+
     try {
       let query;
       if (wallet && /^0x[a-fA-F0-9]{40}$/.test(wallet)) {
@@ -116,54 +160,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     const adminKey = req.headers['x-admin-key'] as string | undefined;
-    const authHeader = req.headers['authorization'] as string | undefined;
-    const cronSecret = process.env.CRON_SECRET;
-    const isVercelCron = cronSecret && authHeader === `Bearer ${cronSecret}`;
     const isAdminKey = adminKey && adminKey === process.env.ADMIN_SOLVENCY_KEY;
     if (!isVercelCron && !isAdminKey) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     try {
-      const now = new Date();
-      const warningCutoff = new Date(now.getTime() + CLAIM_REFRESH_WARNING_DAYS * 24 * 3600 * 1000);
-
-      const results = await db.select({ claim: t3Claims, wallet: t3Identities.wallet })
-        .from(t3Claims)
-        .innerJoin(t3Identities, eq(t3Claims.identityId, t3Identities.id))
-        .where(and(eq(t3Claims.revoked, false), lte(t3Claims.expiresAt, warningCutoff)));
-
-      const alertEntries = results.map(r => ({
-        wallet: r.wallet,
-        topic: r.claim.topic,
-        expiresAt: r.claim.expiresAt,
-        daysRemaining: r.claim.expiresAt
-          ? Math.max(0, Math.ceil((r.claim.expiresAt.getTime() - now.getTime()) / (24 * 3600 * 1000)))
-          : null,
-      }));
-
-      let emailSent = false;
-      if (alertEntries.length > 0) {
-        emailSent = await sendExpiryAlertEmail(alertEntries);
-
-        await db.insert(t3ComplianceOpsLog).values({
-          wallet: 'system',
-          action: 'expiry_alert',
-          notes: `${alertEntries.length} claim(s) expiring within ${CLAIM_REFRESH_WARNING_DAYS} days. Email sent: ${emailSent}`,
-          result: emailSent ? 'success' : 'partial',
-          metadata: { count: alertEntries.length, wallets: alertEntries.map(e => e.wallet) },
-        }).catch(() => {});
-      }
-
-      return res.status(200).json({
-        success: true,
-        data: {
-          checked: results.length,
-          alertsSent: alertEntries.length,
-          emailSent,
-          entries: alertEntries,
-        },
-      });
+      return res.status(200).json({ success: true, data: await runExpiryJob() });
     } catch (err: unknown) {
       return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
