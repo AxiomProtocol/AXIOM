@@ -6,6 +6,7 @@ import {
   EULER_AXUSD,
   EULER_PSM,
   CANONICAL_PSM,
+  CANONICAL_PSM_DEPLOYED_AT,
   LEGACY_GENIUS_AXUSD,
 } from '../../../src/config/activeContracts.generated';
 
@@ -99,7 +100,7 @@ async function readCanonicalPsm(provider: ethers.JsonRpcProvider) {
     paused,
     pegRatio: pegRatio.toFixed(6),
     pegRatioPct: `${(pegRatio * 100).toFixed(4)}%`,
-    deployedAt: '2026-03-30',
+    deployedAt: CANONICAL_PSM_DEPLOYED_AT,
   };
 }
 

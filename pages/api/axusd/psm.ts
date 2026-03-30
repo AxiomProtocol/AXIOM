@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import { CANONICAL_PSM, ACTIVE_AXUSD, ACTIVE_PSM, EULER_PSM, LEGACY_GENIUS_AXUSD, EULER_AXUSD } from '../../../src/config/activeContracts.generated';
+import { CANONICAL_PSM, CANONICAL_PSM_DEPLOYED_AT, ACTIVE_AXUSD, ACTIVE_PSM, EULER_PSM, LEGACY_GENIUS_AXUSD, EULER_AXUSD } from '../../../src/config/activeContracts.generated';
 import { STABLECOINS } from '../../../shared/contracts';
 
 const ARBITRUM_RPC = process.env.ALCHEMY_API_KEY
@@ -112,7 +112,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           address: CANONICAL_PSM,
           axusdToken: ACTIVE_AXUSD,
           label: 'Canonical PSM (ERC-3643)',
-          deployedAt: '2026-03-30',
+          deployedAt: CANONICAL_PSM_DEPLOYED_AT,
           mintFee: Number(canonicalMintFee),
           redeemFee: Number(canonicalRedeemFee),
           mintFeePct: (Number(canonicalMintFee) / 100).toFixed(2) + '%',

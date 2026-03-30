@@ -16,6 +16,7 @@ export const ACTIVE_AXUSD = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7' as cons
 
 /** Canonical PSM — ERC-3643 identity-gated PSM. Deployed 2026-03-30. Owner: Governance Safe. */
 export const CANONICAL_PSM = '0xDB669bb6cA07215C5B055B62072AAED2F821E53F' as const;
+export const CANONICAL_PSM_DEPLOYED_AT = '2026-03-30' as const;
 
 export const ACTIVE_PSM = '0x5db58d9c21369d1532a48Bdd658E4Fe415404922' as const;
 
