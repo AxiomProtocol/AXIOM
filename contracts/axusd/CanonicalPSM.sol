@@ -2,33 +2,17 @@
 pragma solidity 0.8.24;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CanonicalPSM — ERC-3643 AXUSD Peg Stability Module  (v2, Slither-hardened)
+// CanonicalPSM — ERC-3643 AXUSD Peg Stability Module
 //
-// Provides permissioned 1:1 mint/redeem between USDC and Unified AXUSD.
-// Callers must hold a valid on-chain ONCHAINID registered in the AXUSD
-// IdentityRegistry, verified with all required claim topics (KYC + sanctions).
+// Permissioned 1:1 mint/redeem between USDC and ERC-3643 Unified AXUSD.
+// Callers must be registered and verified in the AXUSD IdentityRegistry.
 //
-// Mint:   Deposit USDC → receive AXUSD  (PSM mints AXUSD to caller via agent)
-// Redeem: Deposit AXUSD → receive USDC  (PSM burns AXUSD from caller via agent)
+// Mint:   Deposit USDC → receive AXUSD  (PSM mints AXUSD to caller as agent)
+// Redeem: Deposit AXUSD → receive USDC  (PSM burns AXUSD from caller as agent)
 //
-// Fees are collected in USDC and accumulate in the contract.
-// Owner (Governance Safe 3-of-5) may sweep fees to treasury at any time.
-//
-// Security properties:
-//   - Full Checks-Effects-Interactions on every external call path
-//   - nonReentrant guard on mint, redeem, sweepFees
-//   - Divide-before-multiply eliminated: fee arithmetic is done in AXUSD units
-//     (18-decimal) before scaling down, avoiding precision distortion
-//   - Hard fee cap: 100 bps (1.00%) enforced at construction and in setters
-//
-// Deployment parameters:
-//   AXUSD Token:       0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7
-//   USDC:              0xaf88d065e77c8cC2239327C5EDb3A432268e5831
-//   IdentityRegistry:  0x58f64a1262d5434d6C7637a2309b0999bB6D1970
-//   Debt Ceiling:      1,000,000 AXUSD
-//   Mint Fee:          10 bps (0.10%)
-//   Redeem Fee:        10 bps (0.10%)
-//   Owner:             0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d (Governance Safe)
+// Access control: owner-only (single-step transferOwnership).
+// Fees accumulate in USDC; owner may sweep to treasury.
+// Fee arithmetic uses full-precision integer math with no divide-before-multiply.
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface IERC20 {

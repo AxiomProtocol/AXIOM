@@ -1621,7 +1621,7 @@ function PsmTab({
               { label: 'Status', value: <StatusBadge status={psmData.canonical.paused ? 'PAUSED' : 'ACTIVE'} />, mono: false },
               { label: 'Mint Fee', value: psmData.canonical.mintFeePct },
               { label: 'Redeem Fee', value: psmData.canonical.redeemFeePct },
-              { label: 'Slither Audit', value: '0 findings (v2)' },
+              { label: 'Access Control', value: 'Owner (Governance Safe)' },
             ]}
           />
 

@@ -154,13 +154,14 @@ export default async function handler(
             paused: canonicalPaused,
           },
           legacy: {
-            label: 'Legacy GENIUS PSM',
+            label: 'Legacy PSM USDC (Migrating)',
             address: AXUSD_GENIUS_CONTRACTS.PSM,
             usdcReserves: legacyUsdcNum.toFixed(6),
             debtCeiling: legacyCeilNum.toFixed(2),
             debtOutstanding: legacyDebtNum.toFixed(2),
             utilization: legacyUtil.toFixed(2),
             deprecated: true,
+            migrating: true,
           },
           backstop: {
             label: 'Backstop Vault (USDC)',
