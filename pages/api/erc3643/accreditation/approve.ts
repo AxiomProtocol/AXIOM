@@ -3,6 +3,7 @@ import { db } from '../../../../server/db';
 import { t3AccreditationSubmissions } from '../../../../shared/erc3643Schema';
 import { eq, or } from 'drizzle-orm';
 import { ERC3643Service } from '../../../../lib/services/ERC3643Service';
+import { DEPLOYER_EOA } from '../../../../src/config/adminRoles';
 
 function checkAdminKey(req: NextApiRequest): boolean {
   const key = req.headers['x-admin-key'];
@@ -46,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'action must be approve or reject' });
   }
 
-  const operator = 'compliance-operator';
+  const operator = DEPLOYER_EOA;
 
   try {
     if (action === 'approve') {

@@ -181,6 +181,17 @@ export class ERC3643Service {
     const dbIdentity = await db.select().from(t3Identities).where(eq(t3Identities.wallet, wallet.toLowerCase())).limit(1);
     if (dbIdentity.length === 0) throw new Error('Identity not found for wallet');
 
+    const existingActiveClaim = await db.select({ id: t3Claims.id })
+      .from(t3Claims)
+      .where(and(
+        eq(t3Claims.identityId, dbIdentity[0].id),
+        eq(t3Claims.topic, topic),
+        eq(t3Claims.revoked, false),
+        gte(t3Claims.expiresAt, new Date()),
+      ))
+      .limit(1);
+    const isRenewal = existingActiveClaim.length > 0;
+
     const identityAddr = dbIdentity[0].onchainIdAddress;
     const validityDays = CLAIM_VALIDITY_DAYS[topic] || 365;
     const validityMs = validityDays * 24 * 3600 * 1000;
@@ -216,17 +227,36 @@ export class ERC3643Service {
       revoked: false,
     }).returning();
 
+    const callerAddress = await signer.getAddress();
+
     await writeAdminLog({
-      actionType: 'issueClaim',
-      callerAddress: await signer.getAddress(),
+      actionType: isRenewal ? 'renewClaim' : 'issueClaim',
+      callerAddress,
       targetAddress: wallet,
       role: 'COMPLIANCE_ROLE',
-      metadata: { topic, claimId: inserted.id, expiresAt: expiresAt.toISOString() },
+      metadata: { topic, claimId: inserted.id, expiresAt: expiresAt.toISOString(), isRenewal },
     });
+
+    if (isRenewal) {
+      await db.insert(t3ComplianceOpsLog).values({
+        wallet: wallet.toLowerCase(),
+        action: 'renewal',
+        topic,
+        claimId: inserted.id,
+        operatorAddress: callerAddress.toLowerCase(),
+        result: 'success',
+        notes: `Topic ${topic} claim renewed — new expiry: ${expiresAt.toISOString()}`,
+        metadata: { expiresAt: expiresAt.toISOString(), refreshRequiredBy: refreshRequiredBy.toISOString() },
+      }).catch((e) => {
+        console.error('[issueClaim] renewal compliance log insert failed (non-fatal):', e);
+      });
+    }
 
     return {
       claimId: inserted.id,
       topic,
+      isRenewal,
+      txHash: undefined as string | undefined,
       signature,
       identityAddress: identityAddr,
       expiresAt,
@@ -278,46 +308,65 @@ export class ERC3643Service {
     const t1Sig = await signer.signMessage(ethers.getBytes(t1Meta.dataHash));
     const t3Sig = await signer.signMessage(ethers.getBytes(t3Meta.dataHash));
 
-    const { t1Claim, t3Claim } = await db.transaction(async (tx) => {
-      const [t1Claim] = await tx.insert(t3Claims).values({
-        identityId: dbIdentity.id,
-        topic: 1,
-        issuerAddress: ERC3643_CONTRACTS.CLAIM_ISSUER.toLowerCase(),
-        claimData: ethers.hexlify(t1Meta.claimData),
-        signature: t1Sig,
-        validFrom: now,
-        validUntil: t1Meta.expiresAt,
-        expiresAt: t1Meta.expiresAt,
-        refreshRequiredBy: t1Meta.refreshRequiredBy,
-        revoked: false,
-      }).returning();
+    let t1Claim!: { id: string; [key: string]: unknown };
+    let t3Claim!: { id: string; [key: string]: unknown };
 
-      const [t3Claim] = await tx.insert(t3Claims).values({
-        identityId: dbIdentity.id,
-        topic: 3,
-        issuerAddress: ERC3643_CONTRACTS.CLAIM_ISSUER.toLowerCase(),
-        claimData: ethers.hexlify(t3Meta.claimData),
-        signature: t3Sig,
-        validFrom: now,
-        validUntil: t3Meta.expiresAt,
-        expiresAt: t3Meta.expiresAt,
-        refreshRequiredBy: t3Meta.refreshRequiredBy,
-        revoked: false,
-      }).returning();
+    try {
+      const txResult = await db.transaction(async (tx) => {
+        const [c1] = await tx.insert(t3Claims).values({
+          identityId: dbIdentity.id,
+          topic: 1,
+          issuerAddress: ERC3643_CONTRACTS.CLAIM_ISSUER.toLowerCase(),
+          claimData: ethers.hexlify(t1Meta.claimData),
+          signature: t1Sig,
+          validFrom: now,
+          validUntil: t1Meta.expiresAt,
+          expiresAt: t1Meta.expiresAt,
+          refreshRequiredBy: t1Meta.refreshRequiredBy,
+          revoked: false,
+        }).returning();
 
-      await tx.update(t3KycSubmissions)
+        const [c3] = await tx.insert(t3Claims).values({
+          identityId: dbIdentity.id,
+          topic: 3,
+          issuerAddress: ERC3643_CONTRACTS.CLAIM_ISSUER.toLowerCase(),
+          claimData: ethers.hexlify(t3Meta.claimData),
+          signature: t3Sig,
+          validFrom: now,
+          validUntil: t3Meta.expiresAt,
+          expiresAt: t3Meta.expiresAt,
+          refreshRequiredBy: t3Meta.refreshRequiredBy,
+          revoked: false,
+        }).returning();
+
+        await tx.update(t3KycSubmissions)
+          .set({
+            status: 'bridged',
+            reviewNote: reviewNote ?? null,
+            reviewedAt: now,
+            bridgedAt: now,
+            bridgeError: null,
+            updatedAt: now,
+          })
+          .where(eq(t3KycSubmissions.id, submissionId));
+
+        return { c1, c3 };
+      });
+
+      t1Claim = txResult.c1 as typeof t1Claim;
+      t3Claim = txResult.c3 as typeof t3Claim;
+    } catch (txErr: unknown) {
+      const errMsg = txErr instanceof Error ? txErr.message : String(txErr);
+      await db.update(t3KycSubmissions)
         .set({
-          status: 'bridged',
-          reviewNote: reviewNote ?? null,
-          reviewedAt: now,
-          bridgedAt: now,
-          bridgeError: null,
+          status: 'partial_bridge',
+          bridgeError: `registerIdentity succeeded (on-chain) but claim/status DB transaction failed: ${errMsg}`,
           updatedAt: now,
         })
-        .where(eq(t3KycSubmissions.id, submissionId));
-
-      return { t1Claim, t3Claim };
-    });
+        .where(eq(t3KycSubmissions.id, submissionId))
+        .catch(() => {});
+      throw new Error(`Claim issuance DB transaction failed after on-chain identity registration: ${errMsg}`);
+    }
 
     await db.insert(t3ComplianceOpsLog).values([
       {
@@ -325,20 +374,20 @@ export class ERC3643Service {
         action: 'issuance',
         topic: 1,
         claimId: t1Claim.id,
-        operatorAddress: 'compliance-operator',
+        operatorAddress: DEPLOYER_EOA.toLowerCase(),
         result: 'success',
-        notes: 'Topic 1 (KYC) issued — part of atomic KYC approval (registerIdentity + T1 + T3)',
-        metadata: { identityAddress: regResult.onchainIdAddress, registryTxHash: regResult.registryTxHash, expiresAt: t1Meta.expiresAt },
+        notes: 'Topic 1 (KYC) issued — atomic KYC approval; ERC-3643 off-chain claim (ClaimIssuer signature, verified by IdentityRegistry on transfer)',
+        metadata: { identityAddress: regResult.onchainIdAddress, registryTxHash: regResult.registryTxHash, expiresAt: t1Meta.expiresAt, claimScheme: 'erc3643_offchain_sig' },
       },
       {
         wallet: walletAddress,
         action: 'issuance',
         topic: 3,
         claimId: t3Claim.id,
-        operatorAddress: 'compliance-operator',
+        operatorAddress: DEPLOYER_EOA.toLowerCase(),
         result: 'success',
-        notes: 'Topic 3 (Sanctions) issued — part of atomic KYC approval',
-        metadata: { expiresAt: t3Meta.expiresAt },
+        notes: 'Topic 3 (Sanctions) issued — atomic KYC approval; ERC-3643 off-chain claim',
+        metadata: { expiresAt: t3Meta.expiresAt, claimScheme: 'erc3643_offchain_sig' },
       },
     ]).catch((e) => {
       console.error('[atomicKycApproval] compliance log insert failed (non-fatal):', e);

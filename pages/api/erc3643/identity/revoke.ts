@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ERC3643Service } from '../../../../lib/services/ERC3643Service';
+import { DEPLOYER_EOA } from '../../../../src/config/adminRoles';
 
 function checkAdminKey(req: NextApiRequest): boolean {
   const key = req.headers['x-admin-key'];
@@ -16,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'claimId required' });
   }
 
-  const operator = 'compliance-operator';
+  const operator = DEPLOYER_EOA;
 
   try {
     const result = await ERC3643Service.revokeClaim(claimId, operator);

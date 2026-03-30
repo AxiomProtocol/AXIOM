@@ -23,6 +23,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!accreditationBasis || !VALID_BASES.includes(accreditationBasis)) {
     return res.status(400).json({ error: `accreditationBasis required. Valid: ${VALID_BASES.join(', ')}` });
   }
+  if (!documentUrls || !Array.isArray(documentUrls) || documentUrls.length === 0) {
+    return res.status(400).json({ error: 'documentUrls required: provide at least one supporting document URL' });
+  }
 
   try {
     const result = await ERC3643Service.submitAccreditation({
