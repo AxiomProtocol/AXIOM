@@ -99,7 +99,6 @@ async function readCanonicalPsm(provider: ethers.JsonRpcProvider) {
     pegRatio: pegRatio.toFixed(6),
     pegRatioPct: `${(pegRatio * 100).toFixed(4)}%`,
     deployedAt: '2026-03-30',
-    slitherAudit: '0 findings',
   };
 }
 

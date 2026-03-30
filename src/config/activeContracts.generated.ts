@@ -2,42 +2,19 @@
  * AXIOM Protocol — Active Contract Configuration
  * Last updated: 2026-03-30
  *
- * CANONICAL AXUSD: ERC-3643 Unified AXUSD (0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7)
- * All supply metrics, oracle pricing, solvency computation, and settlement
- * must reference ACTIVE_AXUSD (ERC-3643). Legacy GENIUS contracts below are
- * retained for reference and legacy PSM USDC reserve tracking only.
- *
- * CANONICAL_PSM:      ERC-3643 identity-gated PSM — deployed 2026-03-30 (0xDB669bb6)
- *                     Pairs with ACTIVE_AXUSD (ERC-3643). 1M AXUSD ceiling, 10 bps fee.
- *                     Owner: Governance Safe (3-of-5). Slither audit: 0 findings.
- * ACTIVE_AXUSD:       ERC-3643 Unified AXUSD — canonical production token (0xD6110F59)
+ * CANONICAL_PSM:       ERC-3643 identity-gated PSM — deployed 2026-03-30 (0xDB669bb6)
+ * ACTIVE_AXUSD:        ERC-3643 Unified AXUSD — canonical production token (0xD6110F59)
  * LEGACY_GENIUS_AXUSD: Legacy Primary AXUSD — deprecated, ACTIVE_PSM-paired (0x73585df5)
- * EULER_AXUSD:        Original AxiomStable — deprecated, Euler Vault.asset() binding only
- * ACTIVE_PSM:         GENIUS PSM — USDC reserves valid; paired with LEGACY_GENIUS_AXUSD only
- * EULER_PSM:          Legacy PSM — paired with EULER_AXUSD (deprecated)
- *
- * Evidence (as of 2026-03-30):
- *   CANONICAL_PSM deployed tx: 0xe8e50e8a6239e7f86d5d8b9248cf2b5ae144245c1d937fa83d717b28b54f1ec0
- *   ACTIVE_AXUSD (ERC-3643) address: 0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7
- *   LEGACY_GENIUS_AXUSD supply: ~1,000,048 AXUSD
- *   EULER_AXUSD supply:          ~156 AXUSD
- *   Euler Vault asset():         0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c
+ * EULER_AXUSD:         Original AxiomStable — deprecated, Euler Vault.asset() binding only
+ * ACTIVE_PSM:          GENIUS PSM — USDC reserves valid; paired with LEGACY_GENIUS_AXUSD only
+ * EULER_PSM:           Legacy PSM — paired with EULER_AXUSD (deprecated)
  */
 
 export const DO_NOT_MIX = 'Canonical AXUSD is ERC-3643 (ACTIVE_AXUSD). Legacy GENIUS and Euler tokens are deprecated. Never deposit legacy AXUSD into Euler Vault and never report legacy supply as canonical supply.' as const;
 
 export const ACTIVE_AXUSD = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7' as const;
 
-/**
- * Canonical PSM — ERC-3643 identity-gated Peg Stability Module
- * Deployed: 2026-03-30 | Arbitrum One
- * Deploy TX: 0xe8e50e8a6239e7f86d5d8b9248cf2b5ae144245c1d937fa83d717b28b54f1ec0
- * Pairs with: ACTIVE_AXUSD (ERC-3643 Unified AXUSD)
- * Ceiling: 1,000,000 AXUSD | Mint fee: 10 bps | Redeem fee: 10 bps
- * Owner: Governance Safe 0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d (3-of-5)
- * Slither audit: 0 findings (v2, all CEI + divide-before-multiply fixed)
- * Post-deploy required: addAgent on AXUSD token, whitelist in LendingPlatformModule
- */
+/** Canonical PSM — ERC-3643 identity-gated PSM. Deployed 2026-03-30. Owner: Governance Safe. */
 export const CANONICAL_PSM = '0xDB669bb6cA07215C5B055B62072AAED2F821E53F' as const;
 
 export const ACTIVE_PSM = '0x5db58d9c21369d1532a48Bdd658E4Fe415404922' as const;

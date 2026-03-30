@@ -171,4 +171,4 @@ Until these are executed, the PSM is deployed but cannot process mint or redeem 
 
 | Version | Date | Change |
 |---------|------|--------|
-| 1.0 | 2026-03-30 | Initial document. Canonical PSM deployed at `0xDB669bb6`. Slither audit: 0 findings on v2. |
+| 1.0 | 2026-03-30 | Initial document. Canonical PSM deployed at `0xDB669bb6cA07215C5B055B62072AAED2F821E53F`. |
