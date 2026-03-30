@@ -1857,7 +1857,7 @@ export default function FounderOpsPage() {
                 {/* Compliance Event Log */}
                 <div className="mb-8">
                   <SectionHeading>Compliance Event Log</SectionHeading>
-                  <p className="font-dl-mono text-xs text-dl-gray mb-4">All claim issuances, renewals, revocations, and expiry alerts. Use the Revoke button to call ClaimIssuer.revokeClaimBySignature on-chain.</p>
+                  <p className="font-dl-mono text-xs text-dl-gray mb-4">Unified compliance stream: claim issuances, renewals, revocations, expiry alerts, and AXUSD transfer-block events. Operator / issuer column shows the authorizing address for each event.</p>
                   {complianceLogLoading ? (
                     <p className="font-dl-mono text-sm text-dl-gray py-4">Loading compliance log...</p>
                   ) : complianceLog.length === 0 ? (
@@ -1873,6 +1873,7 @@ export default function FounderOpsPage() {
                             <th className="text-left p-3 font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Wallet</th>
                             <th className="text-left p-3 font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Action</th>
                             <th className="text-left p-3 font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Topic</th>
+                            <th className="text-left p-3 font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Issuer / Operator</th>
                             <th className="text-left p-3 font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Result</th>
                             <th className="text-left p-3 font-dl-mono text-xs uppercase tracking-wider text-dl-gray">TX / Claim</th>
                             <th className="text-left p-3 font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Revoke</th>
@@ -1880,13 +1881,22 @@ export default function FounderOpsPage() {
                         </thead>
                         <tbody>
                           {complianceLog.map((entry: any) => (
-                            <tr key={entry.id} className="border-b border-dl-border last:border-0 hover:bg-dl-bg-alt">
+                            <tr key={entry.id} className={`border-b border-dl-border last:border-0 hover:bg-dl-bg-alt ${entry.eventType === 'transfer_compliance' ? 'bg-yellow-50/30' : ''}`}>
                               <td className="p-3 font-dl-mono text-xs text-dl-gray whitespace-nowrap">{entry.createdAt ? new Date(entry.createdAt).toISOString().replace('T', ' ').slice(0, 19) + ' UTC' : '—'}</td>
                               <td className="p-3 font-dl-mono text-xs text-dl-navy break-all max-w-[120px]">{entry.wallet?.slice(0, 8)}…{entry.wallet?.slice(-4)}</td>
-                              <td className="p-3 font-dl-mono text-xs uppercase text-dl-navy">{entry.action}</td>
-                              <td className="p-3 font-dl-mono text-xs">{entry.topic ? ({ 1: 'KYC', 2: 'Accred', 3: 'Sanctions' } as Record<number, string>)[entry.topic] ?? `T${entry.topic}` : '—'}</td>
+                              <td className="p-3 font-dl-mono text-xs uppercase text-dl-navy">
+                                {entry.eventType === 'transfer_compliance'
+                                  ? <span className={entry.action === 'transfer_blocked' ? 'text-dl-error' : 'text-dl-forest'}>{entry.action.replace('_', ' ')}</span>
+                                  : entry.action}
+                              </td>
+                              <td className="p-3 font-dl-mono text-xs">{entry.topic ? ({ 1: 'KYC', 2: 'Accred', 3: 'Sanctions' } as Record<number, string>)[entry.topic] ?? `T${entry.topic}` : (entry.eventType === 'transfer_compliance' ? 'Transfer' : '—')}</td>
+                              <td className="p-3 font-dl-mono text-xs text-dl-gray">
+                                {entry.operatorAddress
+                                  ? <span title={entry.operatorAddress}>{entry.operatorAddress.slice(0, 6)}…{entry.operatorAddress.slice(-4)}</span>
+                                  : <span className="text-dl-muted">ClaimIssuer</span>}
+                              </td>
                               <td className="p-3 font-dl-mono text-xs">
-                                <span className={`uppercase ${entry.result === 'success' ? 'text-dl-forest' : entry.result === 'rejected' ? 'text-dl-error' : 'text-dl-gold'}`}>
+                                <span className={`uppercase ${entry.result === 'success' ? 'text-dl-forest' : entry.result === 'blocked' || entry.result === 'rejected' ? 'text-dl-error' : 'text-dl-gold'}`}>
                                   {entry.result}
                                 </span>
                               </td>
