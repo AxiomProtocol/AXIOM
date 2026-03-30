@@ -1176,6 +1176,96 @@ export default function DisclosurePage() {
 
         
         <section className="mb-12">
+          <SectionHeading><span className="inline-flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-dl-navy" />Assurance and Diligence Package</span></SectionHeading>
+          <div className="border border-dl-border border-l-4 border-l-dl-navy px-6 py-4 bg-dl-bg-alt mb-6">
+            <p className="text-sm text-dl-navy leading-relaxed">
+              The following reference documents are produced and maintained by Axiom Protocol for institutional
+              due diligence review, regulatory assessment, and audit preparation. All documents reflect the
+              protocol state as of 2026-03-30 and will be revised as the system evolves.
+            </p>
+          </div>
+          <div className="border border-dl-border mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-2 bg-dl-bg border-b border-dl-border">
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Document</p>
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Purpose</p>
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Version</p>
+            </div>
+            {[
+              {
+                title: 'Reserve Methodology',
+                path: '/docs/reserve-methodology.md',
+                purpose: 'AXUSD reserve pool definitions, backing ratio formula, PSM utilization, stress scenarios, and on-chain data sources',
+                version: '1.0 — 2026-03-30',
+              },
+              {
+                title: 'Solvency Methodology',
+                path: '/docs/solvency-methodology.md',
+                purpose: 'Coverage ratio, reserve ratio, loss buffer, liquidity depth formulas; policy mode thresholds; snapshot construction and checksum logic',
+                version: '1.0 — 2026-03-30',
+              },
+              {
+                title: 'Admin Controls Disclosure',
+                path: '/docs/admin-controls-disclosure.md',
+                purpose: 'Every privileged function across the ERC-3643 stack; authority holders; migration status toward multi-party governance',
+                version: '1.0 — 2026-03-30',
+              },
+              {
+                title: 'Claim Topic Registry',
+                path: '/docs/claim-topic-registry.md',
+                purpose: 'ERC-3643 claim topics (KYC_VERIFIED, ACCREDITED_INVESTOR, SANCTIONS_CLEAR); validity periods; revocation mechanics; country allowlist',
+                version: '1.0 — 2026-03-30',
+              },
+              {
+                title: 'Legal Entity Disclosure',
+                path: '/docs/legal-entity-disclosure.md',
+                purpose: 'Axiom Nexus LLC entity description; regulatory framework; token classification notice; no-guarantee disclaimer',
+                version: '1.0 — 2026-03-30',
+              },
+              {
+                title: 'Whitepaper v1.1 Corrections',
+                path: '/docs/whitepaper-v1.1-corrections.md',
+                purpose: 'Corrections and supersessions relative to prior protocol descriptions; dual-ecosystem retirement; vault version updates; GENIUS Act language standardization',
+                version: '1.1 — 2026-03-30',
+              },
+              {
+                title: 'Audit Readiness Checklist',
+                path: '/docs/audit-readiness-checklist.md',
+                purpose: 'Contract inventory; access control review; code quality status; known issues; blockers to audit commencement',
+                version: '1.0 — 2026-03-30',
+              },
+            ].map((doc, i) => (
+              <div key={i} className={`grid grid-cols-1 sm:grid-cols-3 px-6 py-3 border-b border-dl-border ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
+                <p className="text-sm text-dl-navy font-semibold">{doc.title}</p>
+                <p className="text-sm text-dl-gray">{doc.purpose}</p>
+                <p className="text-xs font-dl-mono text-dl-gray">{doc.version}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="border border-dl-border px-6 py-4 bg-dl-bg">
+            <div className="flex items-start gap-2 mb-2">
+              <FileText className="w-4 h-4 text-dl-navy flex-shrink-0 mt-0.5" />
+              <p className="text-sm font-semibold text-dl-navy">Machine-Readable Diligence Pack</p>
+            </div>
+            <p className="text-sm text-dl-gray mb-3">
+              A structured JSON endpoint combines the live solvency snapshot, canonical contract addresses,
+              claim topic definitions, admin controls summary, and known issues into a single machine-readable
+              diligence artifact for allocator systems and compliance platforms.
+            </p>
+            <a
+              href="/api/solvency/diligence-pack"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block text-sm font-dl-mono text-dl-navy underline"
+            >
+              /api/solvency/diligence-pack
+            </a>
+            <span className="text-xs text-dl-gray font-dl-mono ml-3">GET — JSON — Public</span>
+          </div>
+        </section>
+
+        
+        <section className="mb-12">
           <SectionHeading><span className="inline-flex items-center gap-2"><BookOpen className="w-5 h-5 text-dl-navy" />Glossary {'\u2014'} Vocabulary Reference</span></SectionHeading>
           <div className="border border-dl-border">
             <div className="grid grid-cols-2 px-6 py-3 bg-dl-bg border-b border-dl-border">
