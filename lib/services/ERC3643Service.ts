@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { db } from '../../server/db';
-import { t3Identities, t3Claims, t3ComplianceEvents, t3PlatformWhitelist, CLAIM_VALIDITY_DAYS, CLAIM_REFRESH_WARNING_DAYS, adminActionLog } from '../../shared/erc3643Schema';
+import { t3Identities, t3Claims, t3ComplianceEvents, t3PlatformWhitelist, t3AccreditationSubmissions, t3ComplianceOpsLog, CLAIM_VALIDITY_DAYS, CLAIM_REFRESH_WARNING_DAYS, adminActionLog } from '../../shared/erc3643Schema';
 import { eq, and, lte, gte, or, isNull, desc } from 'drizzle-orm';
 import {
   ERC3643_CONTRACTS,
@@ -657,6 +657,165 @@ export class ERC3643Service {
     return db.select()
       .from(adminActionLog)
       .orderBy(desc(adminActionLog.createdAt))
+      .limit(limit);
+  }
+
+  static async revokeClaim(claimId: string, adminWallet: string) {
+    const signer = getSigner();
+
+    const [claim] = await db.select()
+      .from(t3Claims)
+      .where(eq(t3Claims.id, claimId))
+      .limit(1);
+    if (!claim) throw new Error('Claim not found');
+    if (claim.revoked) throw new Error('Claim is already revoked');
+    if (!claim.signature) throw new Error('Claim has no stored signature — cannot revoke on-chain');
+
+    const [identity] = await db.select()
+      .from(t3Identities)
+      .where(eq(t3Identities.id, claim.identityId))
+      .limit(1);
+    if (!identity) throw new Error('Identity not found for claim');
+
+    const claimIssuer = new ethers.Contract(
+      ERC3643_CONTRACTS.CLAIM_ISSUER,
+      CLAIM_ISSUER_ABI,
+      signer
+    );
+
+    const tx = await claimIssuer.revokeClaimBySignature(claim.signature);
+    await tx.wait();
+
+    await db.update(t3Claims)
+      .set({ revoked: true })
+      .where(eq(t3Claims.id, claimId));
+
+    await db.insert(t3ComplianceOpsLog).values({
+      wallet: identity.wallet,
+      action: 'revocation',
+      topic: claim.topic,
+      claimId,
+      operatorAddress: adminWallet.toLowerCase(),
+      txHash: tx.hash,
+      result: 'success',
+      notes: `Claim topic ${claim.topic} revoked by ${adminWallet}`,
+    });
+
+    await writeAdminLog({
+      actionType: 'revokeClaim',
+      callerAddress: adminWallet,
+      targetAddress: identity.wallet,
+      txHash: tx.hash,
+      role: 'COMPLIANCE_ROLE',
+      metadata: { claimId, topic: claim.topic },
+    });
+
+    return { claimId, wallet: identity.wallet, topic: claim.topic, txHash: tx.hash };
+  }
+
+  static async submitAccreditation(params: {
+    walletAddress: string;
+    selfCertification: boolean;
+    accreditationBasis: string;
+    documentUrls?: string;
+    notes?: string;
+  }) {
+    const existing = await db.select()
+      .from(t3AccreditationSubmissions)
+      .where(and(
+        eq(t3AccreditationSubmissions.walletAddress, params.walletAddress.toLowerCase()),
+        eq(t3AccreditationSubmissions.status, 'submitted')
+      ))
+      .limit(1);
+
+    if (existing.length > 0) throw new Error('A pending accreditation submission already exists for this wallet');
+
+    const [inserted] = await db.insert(t3AccreditationSubmissions).values({
+      walletAddress: params.walletAddress.toLowerCase(),
+      selfCertification: params.selfCertification,
+      accreditationBasis: params.accreditationBasis,
+      documentUrls: params.documentUrls ?? null,
+      notes: params.notes ?? null,
+      status: 'submitted',
+    }).returning();
+
+    return { id: inserted.id, walletAddress: inserted.walletAddress, status: inserted.status, createdAt: inserted.createdAt };
+  }
+
+  static async approveAccreditation(submissionId: string, adminWallet: string) {
+    const [submission] = await db.select()
+      .from(t3AccreditationSubmissions)
+      .where(eq(t3AccreditationSubmissions.id, submissionId))
+      .limit(1);
+    if (!submission) throw new Error('Accreditation submission not found');
+    if (!['submitted', 'under_review'].includes(submission.status)) {
+      throw new Error(`Cannot approve submission in status: ${submission.status}`);
+    }
+
+    const claimResult = await this.issueClaim(submission.walletAddress, CLAIM_TOPICS.ACCREDITED_INVESTOR);
+
+    await db.update(t3AccreditationSubmissions)
+      .set({
+        status: 'approved',
+        reviewedBy: adminWallet.toLowerCase(),
+        reviewedAt: new Date(),
+        claimId: claimResult.claimId,
+        updatedAt: new Date(),
+      })
+      .where(eq(t3AccreditationSubmissions.id, submissionId));
+
+    await db.insert(t3ComplianceOpsLog).values({
+      wallet: submission.walletAddress,
+      action: 'issuance',
+      topic: CLAIM_TOPICS.ACCREDITED_INVESTOR,
+      claimId: claimResult.claimId,
+      operatorAddress: adminWallet.toLowerCase(),
+      result: 'success',
+      notes: `Accreditation (Topic 2) approved for ${submission.walletAddress}`,
+    });
+
+    return {
+      submissionId,
+      walletAddress: submission.walletAddress,
+      claimId: claimResult.claimId,
+      topic: CLAIM_TOPICS.ACCREDITED_INVESTOR,
+      expiresAt: claimResult.expiresAt,
+    };
+  }
+
+  static async rejectAccreditation(submissionId: string, adminWallet: string, reviewNote?: string) {
+    const [submission] = await db.select()
+      .from(t3AccreditationSubmissions)
+      .where(eq(t3AccreditationSubmissions.id, submissionId))
+      .limit(1);
+    if (!submission) throw new Error('Accreditation submission not found');
+
+    await db.update(t3AccreditationSubmissions)
+      .set({
+        status: 'rejected',
+        reviewedBy: adminWallet.toLowerCase(),
+        reviewedAt: new Date(),
+        reviewNote: reviewNote ?? null,
+        updatedAt: new Date(),
+      })
+      .where(eq(t3AccreditationSubmissions.id, submissionId));
+
+    await db.insert(t3ComplianceOpsLog).values({
+      wallet: submission.walletAddress,
+      action: 'rejection',
+      topic: CLAIM_TOPICS.ACCREDITED_INVESTOR,
+      operatorAddress: adminWallet.toLowerCase(),
+      result: 'rejected',
+      notes: reviewNote ?? 'Accreditation rejected',
+    });
+
+    return { submissionId, walletAddress: submission.walletAddress, status: 'rejected' };
+  }
+
+  static async getComplianceOpsLog(limit = 100) {
+    return db.select()
+      .from(t3ComplianceOpsLog)
+      .orderBy(desc(t3ComplianceOpsLog.createdAt))
       .limit(limit);
   }
 }

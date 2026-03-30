@@ -153,3 +153,46 @@ export const adminRoles = pgTable("admin_roles", {
 
 export type AdminRole = typeof adminRoles.$inferSelect;
 export type InsertAdminRole = typeof adminRoles.$inferInsert;
+
+export const t3AccreditationSubmissions = pgTable("t3_accreditation_submissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  selfCertification: boolean("self_certification").notNull().default(false),
+  accreditationBasis: varchar("accreditation_basis", { length: 64 }),
+  documentUrls: text("document_urls"),
+  notes: text("notes"),
+  status: varchar("status", { length: 20 }).notNull().default("submitted"),
+  reviewNote: text("review_note"),
+  reviewedBy: varchar("reviewed_by", { length: 42 }),
+  reviewedAt: timestamp("reviewed_at"),
+  claimId: varchar("claim_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  walletIdx: index("idx_t3_accred_wallet").on(table.walletAddress),
+  statusIdx: index("idx_t3_accred_status").on(table.status),
+}));
+
+export type T3AccreditationSubmission = typeof t3AccreditationSubmissions.$inferSelect;
+export type InsertT3AccreditationSubmission = typeof t3AccreditationSubmissions.$inferInsert;
+
+export const t3ComplianceOpsLog = pgTable("t3_compliance_ops_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  wallet: varchar("wallet", { length: 42 }).notNull(),
+  action: varchar("action", { length: 32 }).notNull(),
+  topic: integer("topic"),
+  claimId: varchar("claim_id"),
+  operatorAddress: varchar("operator_address", { length: 42 }),
+  txHash: varchar("tx_hash", { length: 66 }),
+  result: varchar("result", { length: 16 }).notNull().default("success"),
+  notes: text("notes"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  walletIdx: index("idx_t3_comp_ops_wallet").on(table.wallet),
+  actionIdx: index("idx_t3_comp_ops_action").on(table.action),
+  createdIdx: index("idx_t3_comp_ops_created").on(table.createdAt),
+}));
+
+export type T3ComplianceOpsLog = typeof t3ComplianceOpsLog.$inferSelect;
+export type InsertT3ComplianceOpsLog = typeof t3ComplianceOpsLog.$inferInsert;
