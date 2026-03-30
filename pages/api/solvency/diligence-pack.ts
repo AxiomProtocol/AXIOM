@@ -317,11 +317,78 @@ export default async function handler(
         },
       },
 
+      legalEntitySummary: {
+        documentUrl: '/docs/legal-entity-disclosure.md',
+        entityName: 'Axiom Nexus LLC',
+        entityType: 'Limited Liability Company',
+        jurisdiction: 'United States',
+        role: 'Protocol operator; off-chain compliance operator for ERC-3643 identity system; Lending Fund manager',
+        registeredAddress: 'Pending founder confirmation — available to verified counterparties on request',
+        wireBeneficiary: 'Axiom Nexus LLC — banking details provided under separate cover upon verified request',
+        signOffRequired: 'Outside counsel + founder confirmation (registered address field currently pending)',
+        affiliates: [
+          { entity: 'Axiom Protocol (smart contracts)', relationship: 'Not a legal entity; operated by Axiom Nexus LLC' },
+          { entity: 'Deployer EOA (0x8d7892CF…)', relationship: 'Protocol deployment key; held by founding member; migrating to Governance Safe' },
+          { entity: 'Governance Safe (0x2Bb2c2A7…)', relationship: '3-of-5 multisig; multi-party control; signers are Axiom Protocol principals' },
+        ],
+        noSeparateAffiliatedFunds: 'Confirmed as of 2026-03-30',
+        tokenClassificationNote: 'AXM and AXUSD have not been the subject of any SEC, CFTC, or state regulatory ruling. No legal conclusion on classification. Independent counsel required.',
+      },
+
+      whitepaperCorrectionsSummary: {
+        documentUrl: '/docs/whitepaper-v1.1-corrections.md',
+        format: 'Each entry: Section Reference, Category, Prior Text, Corrected Text, Effective Date',
+        totalCorrections: 14,
+        categories: {
+          SUPERSEDED: 3,
+          CLARIFICATION: 6,
+          STATUS_UPDATE: 4,
+          RETRACTION: 1,
+        },
+        keyCorrections: [
+          { correction: 'C-01', description: 'Dual-ecosystem model retired; single ERC-3643 AXUSD canonical', category: 'SUPERSEDED' },
+          { correction: 'C-03', description: 'eAXUSD-4 deprecated; eAXUSD-6 is canonical Euler vault', category: 'SUPERSEDED' },
+          { correction: 'C-08', description: 'CreditMarket v7 canonical addresses replace ACTIVE_CONTRACTS entries', category: 'SUPERSEDED' },
+          { correction: 'C-11', description: 'GENIUS Act language standardized — "designed to align with" only', category: 'CLARIFICATION' },
+          { correction: 'C-13', description: 'eAXUSD-4 deposit claim retracted — WITHDRAW_ONLY permanently', category: 'RETRACTION' },
+        ],
+        signOffRequired: 'Protocol operator self-attestation; outside counsel review recommended for §8.1 (GENIUS Act language)',
+      },
+
+      auditReadinessSummary: {
+        documentUrl: '/docs/audit-readiness-checklist.md',
+        signOffRequired: 'Smart contract auditor required — no third-party audit has been completed',
+        auditStatus: 'Pre-audit',
+        contractsInventoried: 14,
+        arbiscanVerified: 8,
+        arbiscanUnverified: 6,
+        accessControlReview: 'In progress — Deployer EOA migration to Governance Safe (Task #42)',
+        codeQuality: {
+          compiler: 'Solidity 0.8.17–0.8.22',
+          framework: 'Hardhat + OpenZeppelin',
+          testCoverage: 'Partial — unit tests present, no formal coverage report',
+          staticAnalysis: 'Not completed',
+        },
+        knownIssuesCount: 6,
+        blockersToAudit: [
+          'Access control migration from Deployer EOA not complete (KI-001)',
+          'Canonical PSM not yet activated via governance transactions (KI-003)',
+          'No source verification on 6 contracts (KI-005)',
+          'No formal test coverage report (KI-006)',
+        ],
+      },
+
       attestationStatus: {
         thirdPartyAudit:            'Pending — not completed',
         independentReserveAttestation: 'Pending — not completed',
         geniusActCompliance:        'Designed to align with GENIUS Act (Public Law 119-27). No external confirmation of compliance. Posture under ongoing legal evaluation.',
-        solvencyDataType:           'Point-in-time on-chain snapshot. Not a real-time attestation.',
+        solvencyDataType:           'Point-in-time on-chain snapshot fetched at request time from Arbitrum One via Alchemy RPC.',
+        dataFreshness: {
+          source: 'Arbitrum One RPC (Alchemy)',
+          derivation: 'On-demand at request time — AXUSD totalSupply(), USDC balanceOf(PSM), ETH price from CoinGecko, policy mode from PostgreSQL solvency_snapshots latest row',
+          latencyNote: 'Supply and PSM balance are live on-chain reads. ETH price may lag CoinGecko by up to 60 seconds. Policy mode reflects most recent protocol snapshot.',
+          notRealTime: 'This endpoint is not a streaming attestation. Each request generates a fresh point-in-time computation.',
+        },
       },
 
       knownIssues: [
@@ -329,6 +396,8 @@ export default async function handler(
         { id: 'KI-002', description: 'No time-lock delay on ERC-3643 agent functions', severity: 'Medium', mitigation: 'Agent function migration planned' },
         { id: 'KI-003', description: 'Canonical PSM requires addAgent() + LPM whitelist before activation', severity: 'Medium', mitigation: 'Post-deployment governance transactions pending' },
         { id: 'KI-004', description: 'eAXUSD-4 vault in WITHDRAW_ONLY mode due to hook config issue', severity: 'Informational', mitigation: 'Deprecated; no new deposits; use eAXUSD-6' },
+        { id: 'KI-005', description: '6 deployed contracts lack Arbiscan source verification', severity: 'Medium', mitigation: 'Verification submissions in progress' },
+        { id: 'KI-006', description: 'No formal test coverage report produced', severity: 'Low', mitigation: 'Coverage tooling setup planned pre-audit' },
       ],
     };
 

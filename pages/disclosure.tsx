@@ -1184,64 +1184,72 @@ export default function DisclosurePage() {
               protocol state as of 2026-03-30 and will be revised as the system evolves.
             </p>
           </div>
-          <div className="border border-dl-border mb-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 px-6 py-2 bg-dl-bg border-b border-dl-border">
+          <div className="border border-dl-border mb-2">
+            <div className="grid grid-cols-1 sm:grid-cols-4 px-6 py-2 bg-dl-bg border-b border-dl-border">
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Document</p>
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Purpose</p>
-              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Version</p>
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Sign-off Required</p>
+              <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">Version / Updated</p>
             </div>
             {[
               {
                 title: 'Reserve Methodology',
                 path: '/docs/reserve-methodology.md',
-                purpose: 'AXUSD reserve pool definitions, backing ratio formula, PSM utilization, stress scenarios, and on-chain data sources',
+                purpose: 'Reserve pool definitions, backing ratio formula, PSM treatment, stress scenarios, and on-chain data sources',
+                signOff: 'Accounting firm attestation (pending)',
                 lastUpdated: '2026-03-30',
                 version: 'v1.0',
               },
               {
                 title: 'Solvency Methodology',
                 path: '/docs/solvency-methodology.md',
-                purpose: 'Coverage ratio, reserve ratio, loss buffer, liquidity depth formulas; policy mode thresholds; snapshot construction and checksum logic',
+                purpose: 'Coverage ratio, reserve ratio, loss buffer, liquidity depth formulas; policy mode thresholds; snapshot construction',
+                signOff: 'Accounting firm attestation (pending)',
                 lastUpdated: '2026-03-30',
                 version: 'v1.0',
               },
               {
                 title: 'Admin Controls Disclosure',
                 path: '/docs/admin-controls-disclosure.md',
-                purpose: 'Every privileged function across the ERC-3643 stack; authority holders; migration status toward multi-party governance',
+                purpose: 'Privileged functions across the ERC-3643 stack; authority holders; migration status toward multi-party governance',
+                signOff: 'Protocol operator self-attestation; outside counsel review recommended',
                 lastUpdated: '2026-03-30',
                 version: 'v1.0',
               },
               {
                 title: 'Claim Topic Registry',
                 path: '/docs/claim-topic-registry.md',
-                purpose: 'ERC-3643 claim topics (KYC_VERIFIED, ACCREDITED_INVESTOR, SANCTIONS_CLEAR); validity periods; revocation mechanics; country allowlist',
+                purpose: 'ERC-3643 claim topics (KYC, Accredited Investor, Sanctions); validity periods; revocation mechanics; country allowlist',
+                signOff: 'Outside counsel — regulatory classification review required',
                 lastUpdated: '2026-03-30',
                 version: 'v1.0',
               },
               {
                 title: 'Legal Entity Disclosure',
                 path: '/docs/legal-entity-disclosure.md',
-                purpose: 'Axiom Nexus LLC entity description; regulatory framework; token classification notice; no-guarantee disclaimer',
+                purpose: 'Axiom Nexus LLC entity description; regulatory posture; token classification notice; affiliate table; no-guarantee disclaimer',
+                signOff: 'Outside counsel + founder confirmation (registered address field pending)',
                 lastUpdated: '2026-03-30',
                 version: 'v1.0',
               },
               {
                 title: 'Whitepaper v1.1 Corrections',
                 path: '/docs/whitepaper-v1.1-corrections.md',
-                purpose: 'Section-level corrections and supersessions relative to prior protocol descriptions; 14 correction entries covering dual-ecosystem retirement, vault versioning, and GENIUS Act language',
+                purpose: '14 section-level corrections with Prior Text / Corrected Text — dual-ecosystem retirement, vault versioning, GENIUS Act language',
+                signOff: 'Protocol operator self-attestation; outside counsel review recommended for §8.1',
                 lastUpdated: '2026-03-30',
                 version: 'v1.1',
               },
               {
                 title: 'Audit Readiness Checklist',
                 path: '/docs/audit-readiness-checklist.md',
-                purpose: 'Contract inventory with Arbiscan status; access control review; code quality; known issues KI-001–KI-006; blockers to audit commencement',
+                purpose: 'Contract inventory with Arbiscan verification status; access control review; known issues KI-001–KI-006; audit blockers',
+                signOff: 'Smart contract auditor required — no third-party audit completed',
                 lastUpdated: '2026-03-30',
                 version: 'v1.0',
               },
             ].map((doc, i) => (
-              <div key={i} className={`grid grid-cols-1 sm:grid-cols-3 px-6 py-3 border-b border-dl-border ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
+              <div key={i} className={`grid grid-cols-1 sm:grid-cols-4 px-6 py-3 border-b border-dl-border ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
                 <div>
                   <a
                     href={doc.path}
@@ -1254,6 +1262,7 @@ export default function DisclosurePage() {
                   <p className="text-xs font-dl-mono text-dl-gray mt-0.5">{doc.version}</p>
                 </div>
                 <p className="text-sm text-dl-gray">{doc.purpose}</p>
+                <p className="text-xs font-dl-mono text-dl-gold">{doc.signOff}</p>
                 <p className="text-xs font-dl-mono text-dl-gray">Last updated: {doc.lastUpdated}</p>
               </div>
             ))}
