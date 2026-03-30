@@ -111,9 +111,7 @@ async function fetchFrom(fromAddress: string, contractAddresses?: string[]): Pro
 function fmtValue(v: number | null, asset: string | null): string {
   if (v == null) return '—';
   const decimals = (asset ?? '').toUpperCase() === 'USDC' ? 2 : 4;
-  if (v >= 1_000_000) return (v / 1_000_000).toFixed(2) + 'M';
-  if (v >= 1_000)     return (v / 1_000).toFixed(2) + 'K';
-  return v.toFixed(decimals);
+  return v.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: decimals });
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
