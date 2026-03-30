@@ -1235,17 +1235,15 @@ function OracleTab({
 // Contract interface (verified against deployed CanonicalPSM.sol):
 //   mint(uint256 usdcAmount)    — caller deposits USDC (6 dec); receives AXUSD (18 dec)
 //   redeem(uint256 axusdAmount) — caller burns AXUSD (18 dec); receives USDC (6 dec)
-//     T-REX agent-burn does not require ERC20 allowance from the user.
-//     An AXUSD approve step is included for compatibility; it is a no-op if not needed.
+//     T-REX agent-burn does not require ERC20 allowance — PSM burns directly as agent.
 //
 // UX:
 //   Mint:   input USDC amount → approve USDC → psm.mint(usdcAmount_6dec)
-//   Redeem: input AXUSD amount → [approve AXUSD, no-op if not needed] → psm.redeem(axusdAmount_18dec)
+//   Redeem: input AXUSD amount → psm.redeem(axusdAmount_18dec)  [no approve needed]
 //
-const USDC_APPROVE_ABI  = ['function approve(address spender, uint256 amount) returns (bool)'];
-const AXUSD_APPROVE_ABI = ['function approve(address spender, uint256 amount) returns (bool)'];
-const PSM_MINT_ABI      = ['function mint(uint256 usdcAmount) external returns (uint256 axusdMinted)'];
-const PSM_REDEEM_ABI    = ['function redeem(uint256 axusdAmount) external returns (uint256 usdcReturned)'];
+const USDC_APPROVE_ABI = ['function approve(address spender, uint256 amount) returns (bool)'];
+const PSM_MINT_ABI     = ['function mint(uint256 usdcAmount) external returns (uint256 axusdMinted)'];
+const PSM_REDEEM_ABI   = ['function redeem(uint256 axusdAmount) external returns (uint256 usdcReturned)'];
 // Addresses sourced from activeContracts.generated.ts — single source of truth
 const CANONICAL_PSM_ADDR   = CANONICAL_PSM;     // from activeContracts
 const CANONICAL_AXUSD_ADDR = ACTIVE_AXUSD;      // from activeContracts
@@ -1411,18 +1409,11 @@ function PsmMintRedeemPanel({
 
   async function handleRedeem() {
     if (!inputWei || !address) return;
-    setPhase('approve_pending'); setErrMsg(null); setTxHash(null);
+    setPhase('tx_pending'); setErrMsg(null); setTxHash(null);
     try {
       const { ethers, signer } = await getProvider();
 
-      // Step 1: approve AXUSD to PSM (PSM burns via agent authority, needs allowance)
-      const axusd = new ethers.Contract(CANONICAL_AXUSD_ADDR, AXUSD_APPROVE_ABI, signer);
-      const approveTx = await axusd.approve(CANONICAL_PSM_ADDR, inputWei);
-      await approveTx.wait();
-      setPhase('approve_done');
-
-      // Step 2: call redeem(axusdAmount) — PSM burns AXUSD, sends USDC to caller
-      setPhase('tx_pending');
+      // T-REX agent-burn does not require ERC20 allowance — call redeem directly.
       const psm = new ethers.Contract(CANONICAL_PSM_ADDR, PSM_REDEEM_ABI, signer);
       const redeemTx = await psm.redeem(inputWei);
       setTxHash(redeemTx.hash);
@@ -1535,7 +1526,7 @@ function PsmMintRedeemPanel({
       )}
       {phase === 'tx_pending' && (
         <p className="text-xs text-dl-gray font-dl-mono mb-3">
-          Step 2/2 — Transaction submitted. Awaiting confirmation...
+          {op === 'mint' ? 'Step 2/2' : 'Step 1/1'} — Transaction submitted. Awaiting confirmation...
           {txHash && (
             <> <a href={blockscoutTxLink(txHash)} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline ml-1">View on Blockscout</a></>
           )}
