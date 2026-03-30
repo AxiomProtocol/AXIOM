@@ -119,6 +119,10 @@ contract CanonicalPSM is ReentrancyGuard {
         require(_identityRegistry != address(0), "PSM: zero registry");
         require(_mintFee   <= MAX_FEE_BPS, "PSM: mint fee too high");
         require(_redeemFee <= MAX_FEE_BPS, "PSM: redeem fee too high");
+        require(
+            IAXUSD(_axusd).identityRegistry() == _identityRegistry,
+            "PSM: registry mismatch"
+        );
 
         axusd            = _axusd;
         collateral       = _usdc;

@@ -1300,12 +1300,14 @@ function PsmMintRedeemPanel({
   mintFeeBps,
   redeemFeeBps,
   paused,
+  agentRegistered,
 }: {
   address: string | null;
   isConnected: boolean;
   mintFeeBps: number;
   redeemFeeBps: number;
   paused: boolean;
+  agentRegistered: boolean;
 }) {
   const [op, setOp] = useState<PsmOp>('mint');
   const [amountStr, setAmountStr] = useState('');
@@ -1564,12 +1566,14 @@ function PsmMintRedeemPanel({
         </SolidButton>
       )}
 
-      {/* Pending activation banner */}
-      <div className="mt-4 border border-dl-border bg-white px-3 py-2 text-xs font-dl-mono text-dl-gray">
-        <span className="text-dl-navy font-semibold">Activation Pending:</span> Canonical PSM requires Governance Safe to call{' '}
-        <span className="text-dl-navy">addAgent(CANONICAL_PSM)</span> on the AXUSD token before mint/redeem succeed on-chain.
-        The form is ready — transactions will revert until activated.
-      </div>
+      {/* Activation status banner — only shown when PSM is not yet registered as agent */}
+      {!agentRegistered && (
+        <div className="mt-4 border border-dl-border bg-white px-3 py-2 text-xs font-dl-mono text-dl-gray">
+          <span className="text-dl-navy font-semibold">Activation Pending:</span> Canonical PSM requires Governance Safe to call{' '}
+          <span className="text-dl-navy">addAgent(CANONICAL_PSM)</span> on the AXUSD token before mint/redeem succeed on-chain.
+          The form is ready — transactions will revert until activated.
+        </div>
+      )}
     </div>
   );
 }
@@ -1666,6 +1670,7 @@ function PsmTab({
             mintFeeBps={psmData.canonical.mintFee ?? 10}
             redeemFeeBps={psmData.canonical.redeemFee ?? 10}
             paused={psmData.canonical.paused}
+            agentRegistered={psmData.canonical.agentRegistered ?? false}
           />
 
           <SectionHeading>Legacy PSM (GENIUS — Configured-Inactive)</SectionHeading>
