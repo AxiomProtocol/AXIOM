@@ -266,8 +266,8 @@ contract CanonicalPSM is ReentrancyGuard {
         feesAccrued += usdcFee;
 
         // ── Interactions ──
-        // Burn from caller (PSM must be AXUSD agent).
-        // Caller must have approved AXUSD to this contract.
+        // Agent-privileged burn — PSM must be registered as AXUSD agent.
+        // T-REX burn(address, amount) does not require ERC20 allowance from the user.
         IAXUSD(axusd).burn(msg.sender, axusdAmount);
 
         require(

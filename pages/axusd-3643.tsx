@@ -1233,13 +1233,14 @@ function OracleTab({
 // ─── PSM Mint/Redeem Panel ──────────────────────────────────────────────────
 //
 // Contract interface (verified against deployed CanonicalPSM.sol):
-//   mint(uint256 usdcAmount)   — caller deposits USDC (6 dec); receives AXUSD (18 dec)
+//   mint(uint256 usdcAmount)    — caller deposits USDC (6 dec); receives AXUSD (18 dec)
 //   redeem(uint256 axusdAmount) — caller burns AXUSD (18 dec); receives USDC (6 dec)
-//                                 caller must approve AXUSD to PSM before redeem
+//     T-REX agent-burn does not require ERC20 allowance from the user.
+//     An AXUSD approve step is included for compatibility; it is a no-op if not needed.
 //
 // UX:
 //   Mint:   input USDC amount → approve USDC → psm.mint(usdcAmount_6dec)
-//   Redeem: input AXUSD amount → approve AXUSD → psm.redeem(axusdAmount_18dec)
+//   Redeem: input AXUSD amount → [approve AXUSD, no-op if not needed] → psm.redeem(axusdAmount_18dec)
 //
 const USDC_APPROVE_ABI  = ['function approve(address spender, uint256 amount) returns (bool)'];
 const AXUSD_APPROVE_ABI = ['function approve(address spender, uint256 amount) returns (bool)'];
