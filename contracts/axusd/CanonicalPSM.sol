@@ -229,8 +229,8 @@ contract CanonicalPSM is ReentrancyGuard {
      *           usdcGross = axusdAmount / USDC_AXUSD_SCALE
      *           usdcOut   = usdcGross - usdcFee
      *
-     *         Caller must approve AXUSD to this contract for at least axusdAmount.
      *         PSM must be a registered agent on the AXUSD token.
+     *         T-REX agent-burn does not require ERC20 allowance from the caller.
      *
      * @param  axusdAmount  AXUSD to redeem (18 decimals, must be multiple of 1e12)
      * @return usdcReturned USDC received (6 decimals)
@@ -254,8 +254,9 @@ contract CanonicalPSM is ReentrancyGuard {
         usdcReturned      = usdcGross - usdcFee;
 
         uint256 available = IERC20(collateral).balanceOf(address(this));
-        // feesAccrued is already reserved — only liquid USDC is available for redemptions.
-        require(available - feesAccrued >= usdcReturned, "PSM: insufficient liquidity");
+        // feesAccrued is already reserved — check that remaining balance covers the payout.
+        // Written as (available >= feesAccrued + usdcReturned) to avoid subtraction underflow.
+        require(available >= feesAccrued + usdcReturned, "PSM: insufficient liquidity");
 
         // ── Effects (before any external call) ──
         if (debtOutstanding >= axusdAmount) {
