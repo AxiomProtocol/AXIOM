@@ -1556,12 +1556,13 @@ function PsmMintRedeemPanel({
         </div>
       )}
 
-      {/* Action button */}
+      {/* Action button — disabled until PSM is activated as AXUSD agent */}
       {(phase === 'idle') && (
         <SolidButton
           onClick={op === 'mint' ? handleMint : handleRedeem}
-          disabled={!inputWei || !isConnected}
+          disabled={!inputWei || !isConnected || !agentRegistered}
           size="sm"
+          title={!agentRegistered ? 'PSM not yet activated — awaiting addAgent() governance call' : undefined}
         >
           {op === 'mint' ? 'Approve USDC + Mint AXUSD' : 'Approve AXUSD + Redeem for USDC'}
         </SolidButton>
