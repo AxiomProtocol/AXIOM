@@ -363,13 +363,15 @@ export class ERC3643Service {
       throw new Error(`Claim issuance DB transaction failed after on-chain identity registration: ${errMsg}`);
     }
 
+    const callerAddress = (await signer.getAddress()).toLowerCase();
+
     await db.insert(t3ComplianceOpsLog).values([
       {
         wallet: walletAddress,
         action: 'issuance',
         topic: 1,
         claimId: t1Claim.id,
-        operatorAddress: DEPLOYER_EOA.toLowerCase(),
+        operatorAddress: callerAddress,
         result: 'success',
         notes: 'Topic 1 (KYC) issued — atomic KYC approval; ERC-3643 off-chain claim (ClaimIssuer signature, verified by IdentityRegistry on transfer)',
         metadata: { identityAddress: regResult.onchainIdAddress, registryTxHash: regResult.registryTxHash, expiresAt: t1ExpiresAt, claimScheme: 'erc3643_offchain_sig' },
@@ -379,7 +381,7 @@ export class ERC3643Service {
         action: 'issuance',
         topic: 3,
         claimId: t3Claim.id,
-        operatorAddress: DEPLOYER_EOA.toLowerCase(),
+        operatorAddress: callerAddress,
         result: 'success',
         notes: 'Topic 3 (Sanctions) issued — atomic KYC approval; ERC-3643 off-chain claim',
         metadata: { expiresAt: t3ExpiresAt, claimScheme: 'erc3643_offchain_sig' },

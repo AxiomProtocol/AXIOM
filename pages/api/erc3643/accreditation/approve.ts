@@ -13,13 +13,13 @@ function checkAdminKey(req: NextApiRequest): boolean {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     if (!checkAdminKey(req)) return res.status(401).json({ error: 'Unauthorized' });
-    const statusFilter = (req.query.status as string) || 'submitted';
+    const statusFilter = (req.query.status as string) || 'pending';
 
     try {
-      const MULTI_STATUS = ['submitted', 'under_review', 'approved', 'rejected'];
+      const SINGLE_STATUS = ['submitted', 'under_review', 'approved', 'rejected'];
       const whereClause = statusFilter === 'all'
         ? undefined
-        : MULTI_STATUS.includes(statusFilter)
+        : SINGLE_STATUS.includes(statusFilter)
           ? eq(t3AccreditationSubmissions.status, statusFilter)
           : or(
               eq(t3AccreditationSubmissions.status, 'submitted'),
