@@ -133,6 +133,7 @@ interface PsmApiData {
     canonicalAxusdSupply: string;
     paused: boolean;
     owner: string;
+    agentRegistered: boolean;
     note: string;
   };
   legacy: {
