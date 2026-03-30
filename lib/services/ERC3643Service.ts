@@ -176,6 +176,45 @@ export class ERC3643Service {
     };
   }
 
+  private static async _buildAndInsertClaim(
+    tx: typeof db,
+    wallet: string,
+    topic: number,
+    identityRecord: { id: string; onchainIdAddress: string },
+    signer: ethers.Signer,
+    now: Date
+  ) {
+    const validityDays = CLAIM_VALIDITY_DAYS[topic] || 365;
+    const validityMs = validityDays * 24 * 3600 * 1000;
+    const refreshWarningMs = CLAIM_REFRESH_WARNING_DAYS * 24 * 3600 * 1000;
+    const expiresAt = new Date(now.getTime() + validityMs);
+    const refreshRequiredBy = new Date(expiresAt.getTime() - refreshWarningMs);
+    const claimData = ethers.AbiCoder.defaultAbiCoder().encode(
+      ['address', 'uint256', 'uint256'],
+      [wallet, topic, Math.floor(now.getTime() / 1000) + validityDays * 24 * 3600]
+    );
+    const dataHash = ethers.keccak256(
+      ethers.AbiCoder.defaultAbiCoder().encode(
+        ['address', 'uint256', 'bytes'],
+        [identityRecord.onchainIdAddress, topic, claimData]
+      )
+    );
+    const signature = await signer.signMessage(ethers.getBytes(dataHash));
+    const [inserted] = await (tx as typeof db).insert(t3Claims).values({
+      identityId: identityRecord.id,
+      topic,
+      issuerAddress: ERC3643_CONTRACTS.CLAIM_ISSUER.toLowerCase(),
+      claimData: ethers.hexlify(claimData),
+      signature,
+      validFrom: now,
+      validUntil: expiresAt,
+      expiresAt,
+      refreshRequiredBy,
+      revoked: false,
+    }).returning();
+    return { inserted, expiresAt, refreshRequiredBy, signature };
+  }
+
   static async issueClaim(wallet: string, topic: number, data: string = '') {
     const signer = getSigner();
     const dbIdentity = await db.select().from(t3Identities).where(eq(t3Identities.wallet, wallet.toLowerCase())).limit(1);
@@ -193,39 +232,17 @@ export class ERC3643Service {
     const isRenewal = existingActiveClaim.length > 0;
 
     const identityAddr = dbIdentity[0].onchainIdAddress;
-    const validityDays = CLAIM_VALIDITY_DAYS[topic] || 365;
-    const validityMs = validityDays * 24 * 3600 * 1000;
-    const refreshWarningMs = CLAIM_REFRESH_WARNING_DAYS * 24 * 3600 * 1000;
-
-    const claimData = ethers.AbiCoder.defaultAbiCoder().encode(
-      ['address', 'uint256', 'uint256'],
-      [wallet, topic, Math.floor(Date.now() / 1000) + validityDays * 24 * 3600]
-    );
-
-    const dataHash = ethers.keccak256(
-      ethers.AbiCoder.defaultAbiCoder().encode(
-        ['address', 'uint256', 'bytes'],
-        [identityAddr, topic, claimData]
-      )
-    );
-    const signature = await signer.signMessage(ethers.getBytes(dataHash));
-
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + validityMs);
-    const refreshRequiredBy = new Date(expiresAt.getTime() - refreshWarningMs);
-
-    const [inserted] = await db.insert(t3Claims).values({
-      identityId: dbIdentity[0].id,
-      topic,
-      issuerAddress: ERC3643_CONTRACTS.CLAIM_ISSUER.toLowerCase(),
-      claimData: ethers.hexlify(claimData),
-      signature,
-      validFrom: now,
-      validUntil: expiresAt,
-      expiresAt,
-      refreshRequiredBy,
-      revoked: false,
-    }).returning();
+    const { inserted, expiresAt, refreshRequiredBy, signature } = await db.transaction(async (tx) => {
+      return ERC3643Service._buildAndInsertClaim(
+        tx as any,
+        wallet,
+        topic,
+        { id: dbIdentity[0].id, onchainIdAddress: identityAddr ?? '' },
+        signer,
+        now
+      );
+    });
 
     const callerAddress = await signer.getAddress();
 
@@ -264,31 +281,7 @@ export class ERC3643Service {
     };
   }
 
-  /**
-   * KYC approval — as-atomic-as-possible across chain + DB.
-   *
-   * Execution order:
-   *   1. registerIdentity() — on-chain (irreversible once mined)
-   *   2. db.transaction() — inserts T1 + T3 claims, sets status='bridged'
-   *
-   * Partial-failure contract:
-   *   If step 2 fails after step 1 succeeds, the submission is marked
-   *   status='partial_bridge' with a bridgeError explaining which step failed.
-   *   Ops remediation: re-run approve (idempotent identity check) or insert
-   *   claims manually via /api/erc3643/identity/issue (topic 1 and 3).
-   *
-   * Note: true all-or-nothing atomicity across a blockchain tx and a relational
-   * DB transaction is architecturally impossible. The partial_bridge status is
-   * the canonical sentinel for ops teams to detect and recover from split state.
-   *
-   * Why inline claim insertion (not calling issueClaim)?
-   *   issueClaim() performs its own independent DB insert and commit. To guarantee
-   *   both T1 and T3 claim rows are inserted in the SAME Drizzle transaction as the
-   *   status='bridged' update (so no partial claim state lands in DB), the claim
-   *   preparation logic is intentionally inlined within the db.transaction() block.
-   *   Shared preparation uses the same `computeClaimInsertValues()` helper for DRY
-   *   claim value derivation while keeping the actual inserts transactional.
-   */
+  // KYC approval flow: mark approved, bridge on-chain identity, then finalize DB claims/status atomically.
   static async atomicKycApproval(params: {
     submissionId: string;
     walletAddress: string;
@@ -296,6 +289,11 @@ export class ERC3643Service {
     reviewNote?: string;
   }) {
     const { submissionId, walletAddress, countryCode = 840, reviewNote } = params;
+    const now = new Date();
+
+    await db.update(t3KycSubmissions)
+      .set({ status: 'approved', reviewedAt: now, reviewNote: reviewNote ?? null, updatedAt: now })
+      .where(eq(t3KycSubmissions.id, submissionId));
 
     const existingIdentity = await db.select()
       .from(t3Identities)
@@ -324,80 +322,33 @@ export class ERC3643Service {
       .limit(1);
     if (!dbIdentity) throw new Error('Identity record not found after registration');
 
-    const now = new Date();
-
-    function computeClaimInsertValues(topic: number) {
-      const validityDays = CLAIM_VALIDITY_DAYS[topic] || 365;
-      const validityMs = validityDays * 24 * 3600 * 1000;
-      const refreshWarningMs = CLAIM_REFRESH_WARNING_DAYS * 24 * 3600 * 1000;
-      const expiresAt = new Date(now.getTime() + validityMs);
-      const refreshRequiredBy = new Date(expiresAt.getTime() - refreshWarningMs);
-      const claimData = ethers.AbiCoder.defaultAbiCoder().encode(
-        ['address', 'uint256', 'uint256'],
-        [walletAddress, topic, Math.floor(now.getTime() / 1000) + validityDays * 24 * 3600]
-      );
-      const dataHash = ethers.keccak256(
-        ethers.AbiCoder.defaultAbiCoder().encode(
-          ['address', 'uint256', 'bytes'],
-          [dbIdentity.onchainIdAddress, topic, claimData]
-        )
-      );
-      return { validityDays, validityMs, refreshWarningMs, expiresAt, refreshRequiredBy, claimData, dataHash };
-    }
-
-    const t1Meta = computeClaimInsertValues(1);
-    const t3Meta = computeClaimInsertValues(3);
-
-    const t1Sig = await signer.signMessage(ethers.getBytes(t1Meta.dataHash));
-    const t3Sig = await signer.signMessage(ethers.getBytes(t3Meta.dataHash));
-
     let t1Claim!: { id: string; [key: string]: unknown };
     let t3Claim!: { id: string; [key: string]: unknown };
+    let t1ExpiresAt!: Date;
+    let t3ExpiresAt!: Date;
 
     try {
       const txResult = await db.transaction(async (tx) => {
-        const [c1] = await tx.insert(t3Claims).values({
-          identityId: dbIdentity.id,
-          topic: 1,
-          issuerAddress: ERC3643_CONTRACTS.CLAIM_ISSUER.toLowerCase(),
-          claimData: ethers.hexlify(t1Meta.claimData),
-          signature: t1Sig,
-          validFrom: now,
-          validUntil: t1Meta.expiresAt,
-          expiresAt: t1Meta.expiresAt,
-          refreshRequiredBy: t1Meta.refreshRequiredBy,
-          revoked: false,
-        }).returning();
-
-        const [c3] = await tx.insert(t3Claims).values({
-          identityId: dbIdentity.id,
-          topic: 3,
-          issuerAddress: ERC3643_CONTRACTS.CLAIM_ISSUER.toLowerCase(),
-          claimData: ethers.hexlify(t3Meta.claimData),
-          signature: t3Sig,
-          validFrom: now,
-          validUntil: t3Meta.expiresAt,
-          expiresAt: t3Meta.expiresAt,
-          refreshRequiredBy: t3Meta.refreshRequiredBy,
-          revoked: false,
-        }).returning();
-
+        const t1 = await ERC3643Service._buildAndInsertClaim(
+          tx as any, walletAddress, 1,
+          { id: dbIdentity.id, onchainIdAddress: dbIdentity.onchainIdAddress ?? '' },
+          signer, now
+        );
+        const t3 = await ERC3643Service._buildAndInsertClaim(
+          tx as any, walletAddress, 3,
+          { id: dbIdentity.id, onchainIdAddress: dbIdentity.onchainIdAddress ?? '' },
+          signer, now
+        );
         await tx.update(t3KycSubmissions)
-          .set({
-            status: 'bridged',
-            reviewNote: reviewNote ?? null,
-            reviewedAt: now,
-            bridgedAt: now,
-            bridgeError: null,
-            updatedAt: now,
-          })
+          .set({ status: 'bridged', bridgedAt: now, bridgeError: null, updatedAt: now })
           .where(eq(t3KycSubmissions.id, submissionId));
-
-        return { c1, c3 };
+        return { t1, t3 };
       });
 
-      t1Claim = txResult.c1 as typeof t1Claim;
-      t3Claim = txResult.c3 as typeof t3Claim;
+      t1Claim = txResult.t1.inserted as typeof t1Claim;
+      t3Claim = txResult.t3.inserted as typeof t3Claim;
+      t1ExpiresAt = txResult.t1.expiresAt;
+      t3ExpiresAt = txResult.t3.expiresAt;
     } catch (txErr: unknown) {
       const errMsg = txErr instanceof Error ? txErr.message : String(txErr);
       await db.update(t3KycSubmissions)
@@ -420,7 +371,7 @@ export class ERC3643Service {
         operatorAddress: DEPLOYER_EOA.toLowerCase(),
         result: 'success',
         notes: 'Topic 1 (KYC) issued — atomic KYC approval; ERC-3643 off-chain claim (ClaimIssuer signature, verified by IdentityRegistry on transfer)',
-        metadata: { identityAddress: regResult.onchainIdAddress, registryTxHash: regResult.registryTxHash, expiresAt: t1Meta.expiresAt, claimScheme: 'erc3643_offchain_sig' },
+        metadata: { identityAddress: regResult.onchainIdAddress, registryTxHash: regResult.registryTxHash, expiresAt: t1ExpiresAt, claimScheme: 'erc3643_offchain_sig' },
       },
       {
         wallet: walletAddress,
@@ -430,7 +381,7 @@ export class ERC3643Service {
         operatorAddress: DEPLOYER_EOA.toLowerCase(),
         result: 'success',
         notes: 'Topic 3 (Sanctions) issued — atomic KYC approval; ERC-3643 off-chain claim',
-        metadata: { expiresAt: t3Meta.expiresAt, claimScheme: 'erc3643_offchain_sig' },
+        metadata: { expiresAt: t3ExpiresAt, claimScheme: 'erc3643_offchain_sig' },
       },
     ]).catch((e) => {
       console.error('[atomicKycApproval] compliance log insert failed (non-fatal):', e);
@@ -438,9 +389,10 @@ export class ERC3643Service {
 
     return {
       identityAddress: regResult.onchainIdAddress,
-      registryTxHash: regResult.registryTxHash,
-      t1Claim: { claimId: t1Claim.id, expiresAt: t1Meta.expiresAt },
-      t3Claim: { claimId: t3Claim.id, expiresAt: t3Meta.expiresAt },
+      registerIdentityTxHash: regResult.txHash === 'IDEMPOTENT_SKIP' ? undefined : regResult.txHash,
+      registryTxHash: regResult.registryTxHash === 'IDEMPOTENT_SKIP' ? undefined : regResult.registryTxHash,
+      t1Claim: { claimId: t1Claim.id, expiresAt: t1ExpiresAt },
+      t3Claim: { claimId: t3Claim.id, expiresAt: t3ExpiresAt },
     };
   }
 

@@ -452,7 +452,7 @@ export default function FounderOpsPage() {
     setExpiryTriggering(true);
     setExpiryTriggerMsg(null);
     try {
-      const res = await fetch('/api/cron/expiry-check', {
+      const res = await fetch('/api/erc3643/identity/expiry-check', {
         method: 'POST',
         headers: { 'x-admin-key': complianceAdminKey },
       });
@@ -460,7 +460,7 @@ export default function FounderOpsPage() {
       if (!res.ok) {
         setExpiryTriggerMsg(`Error: ${json.error}`);
       } else {
-        setExpiryTriggerMsg(`Done — ${json.expiring} claim(s) expiring, email sent: ${json.emailSent ? 'yes' : 'no'}`);
+        setExpiryTriggerMsg(`Done — ${json?.data?.alertsSent ?? 0} claim(s) expiring, email sent: ${json?.data?.emailSent ? 'yes' : 'no'}`);
         loadComplianceLog(complianceAdminKey);
       }
     } catch (e: unknown) {
