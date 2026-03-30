@@ -248,6 +248,11 @@ export default function FounderOpsPage() {
   const [expiryTriggering, setExpiryTriggering] = useState(false);
   const [expiryTriggerMsg, setExpiryTriggerMsg] = useState<string | null>(null);
 
+  const [psmActivating, setPsmActivating] = useState(false);
+  const [psmActivateKey, setPsmActivateKey] = useState('');
+  const [psmActivateMsg, setPsmActivateMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [psmAgentStatus, setPsmAgentStatus] = useState<boolean | null>(null);
+
   useEffect(() => {
     Promise.all([
       fetch('/api/founder-ops/overview').then(r => r.json()).catch(() => null),
@@ -472,6 +477,45 @@ export default function FounderOpsPage() {
       setExpiryTriggerMsg(e instanceof Error ? e.message : String(e));
     } finally {
       setExpiryTriggering(false);
+    }
+  };
+
+  const checkPsmAgentStatus = async () => {
+    try {
+      const res = await fetch('/api/axusd/psm');
+      const json = await res.json();
+      setPsmAgentStatus(json?.data?.canonical?.agentRegistered ?? false);
+    } catch {
+      setPsmAgentStatus(false);
+    }
+  };
+
+  const handleActivatePsm = async () => {
+    if (!psmActivateKey || psmActivating) return;
+    setPsmActivating(true);
+    setPsmActivateMsg(null);
+    try {
+      const res = await fetch('/api/erc3643/admin/activate-psm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': psmActivateKey },
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        const d = json.data;
+        setPsmActivateMsg({
+          type: 'success',
+          text: d.status === 'already_active'
+            ? 'PSM is already registered as AXUSD agent — mint/redeem are live.'
+            : `PSM activated. TX: ${d.txHash?.slice(0, 20)}… Mint and redeem are now live.`,
+        });
+        setPsmAgentStatus(true);
+      } else {
+        setPsmActivateMsg({ type: 'error', text: json.error ?? 'Unknown error' });
+      }
+    } catch (e: unknown) {
+      setPsmActivateMsg({ type: 'error', text: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setPsmActivating(false);
     }
   };
 
@@ -848,6 +892,56 @@ export default function FounderOpsPage() {
             {/* ── TAB: ON-CHAIN LAYER ─────────────────────────────────── */}
             {activeTab === 'onchain' && (
               <>
+                {/* ── PSM ACTIVATION ───────────────────────────────────── */}
+                <div className="mb-8">
+                  <SectionHeading>Canonical PSM Activation</SectionHeading>
+                  <p className="text-xs text-dl-gray mb-4 max-w-2xl leading-relaxed font-dl-mono">
+                    The Canonical PSM (<span className="text-dl-navy">0xDB669bb6…</span>) must be registered as an agent on the AXUSD T-REX token before
+                    mint and redeem are live. This calls <span className="text-dl-navy">addAgent(CANONICAL_PSM)</span> on
+                    the AXUSD token using the deployer key. Safe to run multiple times — idempotent.
+                  </p>
+
+                  <div className="border border-dl-border p-4 bg-dl-bg-alt">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="font-dl-mono text-xs text-dl-gray uppercase">Agent Status:</span>
+                        {psmAgentStatus === null ? (
+                          <button onClick={checkPsmAgentStatus} className="font-dl-mono text-xs border border-dl-border text-dl-gray px-3 py-1">
+                            Check On-Chain
+                          </button>
+                        ) : (
+                          <span className={`font-dl-mono text-xs font-semibold px-2 py-0.5 border ${psmAgentStatus ? 'border-dl-forest text-dl-forest' : 'border-dl-gold text-dl-gold'}`}>
+                            {psmAgentStatus ? 'ACTIVE' : 'PENDING ACTIVATION'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 items-center mb-3">
+                      <input
+                        type="password"
+                        placeholder="Admin key"
+                        value={psmActivateKey}
+                        onChange={e => setPsmActivateKey(e.target.value)}
+                        className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-bg w-48"
+                      />
+                      <button
+                        onClick={handleActivatePsm}
+                        disabled={!psmActivateKey || psmActivating || psmAgentStatus === true}
+                        className="bg-dl-navy text-white px-5 py-2 font-dl-mono text-xs disabled:opacity-40"
+                      >
+                        {psmActivating ? 'Activating…' : psmAgentStatus === true ? 'Already Active' : 'Activate PSM'}
+                      </button>
+                    </div>
+
+                    {psmActivateMsg && (
+                      <p className={`font-dl-mono text-xs ${psmActivateMsg.type === 'success' ? 'text-dl-forest' : 'text-red-600'}`}>
+                        {psmActivateMsg.text}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
                 <div className="mb-8">
                   <SectionHeading>EulerSwap Pool Depth — $150 / month</SectionHeading>
                   <p className="text-xs text-dl-gray mb-4 max-w-2xl leading-relaxed">
